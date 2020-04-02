@@ -13,6 +13,7 @@ import vueMoment from 'vue-moment';
 // @ts-ignore
 // import VueMarkdown from 'vue-markdown';
 import VueShowdown, {showdown} from 'vue-showdown';
+import moment from 'moment';
 // @ts-ignore
 import vSelectMenu from 'v-selectmenu';
 import '@/assets/tailwind.scss';
@@ -85,6 +86,13 @@ Vue.mixin({
             shell.openExternal(link);
         },
     },
+});
+
+// tslint:disable-next-line:only-arrow-functions
+Vue.filter('moment', function(value: any) {
+    if (!value) { return ''; }
+    value = value.toString();
+    return moment.unix(value).format('Do MMMM YYYY');
 });
 
 
