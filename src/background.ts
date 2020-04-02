@@ -19,7 +19,7 @@ function createWindow() {
         title: 'FTB Desktop App',
 
         // Other
-        icon: path.join(__static, 'logo_ftb.png'),
+        icon: path.join(__static, 'logo_ftb.ico'),
         // Size Settings
         minWidth: 1000,
         minHeight: 626,
