@@ -25,8 +25,8 @@
           </div>
           <ftb-toggle label="Keep launcher open when game starts: " :value="settingsCopy.keepLauncherOpen" @change="keepLauncherOpen"
             onColor="bg-primary-button"/>
-          <ftb-slider label="Default Memory" v-model="settingsCopy.memory" :currentValue="settingsCopy.memory" minValue="512" :maxValue="settingsState.hardware.totalMemory" @change="doSave"
-                      unit="MB" @blur="doSave" step="128"/>
+<!--          <ftb-slider label="Default Memory" v-model="settingsCopy.memory" :currentValue="settingsCopy.memory" minValue="512" :maxValue="settingsState.hardware.totalMemory" @change="doSave"-->
+<!--                      unit="MB" @blur="doSave" step="128"/>-->
           <ftb-input label="Custom Arguments" :value="settingsCopy.jvmargs" v-model="settingsCopy.jvmargs" @blur="doSave"/>
         </div>
       </div>
