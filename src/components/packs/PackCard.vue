@@ -45,9 +45,10 @@
     <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
       <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions"/>
     </FTBModal>
-    <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction" :cancel-action="msgBox.cancelAction"/>
-    </FTBModal>
+      <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
+          <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction"
+                         :cancel-action="msgBox.cancelAction" :type="msgBox.type"/>
+      </FTBModal>
   </div>
   <!-- <div class="text-gray-700 text-center flex-1 m-2 sm:min-w-psm sm:max-w-psm sm:min-h-psm sm:max-h-psm md:min-w-pmd md:max-w-pmd md:min-h-pmd md:max-h-pmd lg:min-w-plg lg:max-w-plg lg:min-h-plg lg:max-h-plg card">
     <div class="bg-image" v-bind:style="{'background-image': `url(${art})`}" :class="installing ? 'blur' : ''">
@@ -161,14 +162,14 @@ export default class PackCard extends Vue {
 
     public checkMemory() {
         if (this.instance.memory < this.instance.minMemory) {
-            this.showMsgBox = true;
             this.msgBox.type = 'okCancel';
             this.msgBox.title = 'Low Memory';
             this.msgBox.okAction = this.launch;
             this.msgBox.cancelAction = this.hideMsgBox;
-            this.msgBox.content = `You are trying to launch the modpack with memory settings that are below the
-                minimum required.This may cause the modpack to not start or crash frequently. We recommend that you
-                increase the assigned memory to at least ${this.instance.recMemory}MB`;
+            this.msgBox.content = `You are trying to launch the modpack with memory settings that are below the` +
+                `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
+                `increase the assigned memory to **${this.instance?.recMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
+            this.showMsgBox = true;
         } else {
             this.launch();
         }

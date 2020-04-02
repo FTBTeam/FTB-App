@@ -2,7 +2,7 @@
   <div class="flex flex-col min-w-1/2">
     <h1 class="text-3xl mb-2">{{title}}</h1>
     <div>
-      <VueShowdown :markdown="content" :extensions="['classMap', 'attribMap']"></VueShowdown>
+      <VueShowdown :markdown="content" :extensions="['classMap', 'attribMap', 'newLine']"></VueShowdown>
 <!--      <p>{{content}}</p>-->
     </div>
     <hr class="mt-4 mb-2">

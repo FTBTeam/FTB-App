@@ -47,7 +47,7 @@
         <div class="tab-content h-91%">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
             <div class="flex flex-wrap" v-if="modpacks.currentModpack != null">
-              <VueShowdown :markdown="modpacks.currentModpack.description" :extensions="['classMap', 'attribMap']"/>
+              <VueShowdown :markdown="modpacks.currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
             </div>
             <hr/>
 
@@ -86,7 +86,7 @@
                 <!--                <code class="p-0">-->
                 <!--                  {{changelogs[version.id]}}-->
                 <!--                </code>-->
-                <VueShowdown :markdown="changelogs[version.id]" :extensions="['classMap']"/>
+                <VueShowdown :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
               </div>
             </div>
           </div>

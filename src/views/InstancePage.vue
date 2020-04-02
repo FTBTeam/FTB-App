@@ -90,7 +90,7 @@
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
             <div class="flex flex-wrap" v-if="modpacks.currentModpack != null">
               <hr/>
-              <VueShowdown :markdown="modpacks.currentModpack.description" :extensions="['classMap', 'attribMap']"/>
+              <VueShowdown :markdown="modpacks.currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
             </div>
             <hr/>
           </div>
@@ -126,7 +126,7 @@
 <!--                <code class="p-0">-->
 <!--                  {{changelogs[version.id]}}-->
 <!--                </code>-->
-                <VueShowdown :markdown="changelogs[version.id]" :extensions="['classMap']"/>
+                <VueShowdown :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
               </div>
             </div>
           </div>
@@ -441,9 +441,9 @@ export default class InstancePage extends Vue {
             this.msgBox.title = 'Low Memory';
             this.msgBox.okAction = this.launch;
             this.msgBox.cancelAction = this.hideMsgBox;
-            this.msgBox.content = `You are trying to launch the modpack with memory settings that are below the
-            minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you
-            increase the assigned memory to at least **${this.instance?.recMemory}MB**`;
+            this.msgBox.content = `You are trying to launch the modpack with memory settings that are below the` +
+            `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
+            `increase the assigned memory to **${this.instance?.recMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
             this.showMsgBox = true;
         } else {
             this.launch();

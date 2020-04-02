@@ -57,6 +57,12 @@ showdown.extension('attribMap', Object.keys(attributeMap).map((key) => ({
     replace: `<${key} ${attributeMap[key]} $1>`,
 })));
 
+showdown.extension('newLine', () => [{
+    type: 'output',
+    regex: new RegExp(`\n`, 'g'),
+    replace: '<br>',
+}])
+
 
 library.add(fas);
 library.add(far);
