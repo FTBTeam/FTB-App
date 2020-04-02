@@ -14,7 +14,7 @@
           <div class="progress-bar" v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
             <div class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-if="modpack.error">Error installing {{modpack.pack.name}} - {{modpack.errorMessage}} - <span @click="retry(modpack)">Retry?</span></div>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'INIT'">Creating environment...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'API'">Downloding modpack metadata...</p>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'API'">Downloading modpack metadata...</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'VANILLA'">Installing Vanilla Launcher...</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'FORGE'">Installing Forge...</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'DOWNLOADS'">Installing {{modpack.pack.name}} - {{modpack.progress.toFixed(2)}}% ({{(modpack.downloadSpeed / 1000000).toFixed(2)}} mbps)</p>
