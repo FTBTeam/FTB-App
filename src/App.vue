@@ -12,7 +12,7 @@
         </div>
         <div v-if="modpacks.installing != null">
           <div class="progress-bar" v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
-            <div class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-if="modpack.error">Error installing {{modpack.pack.name}} - {{modpack.errorMessage}} - <span @click="retry(modpack)">Retry?</span></div>
+            <div class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-if="modpack.error">Error installing {{modpack.pack.name}} - {{modpack.errorMessage}} - <button class="bg-orange-500 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer" @click="retry(modpack)"><span class="cursor-pointer">Retry?</span></button></div>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'INIT'">Creating environment...</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'API'">Downloading modpack metadata...</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'VANILLA'">Installing Vanilla Launcher...</p>

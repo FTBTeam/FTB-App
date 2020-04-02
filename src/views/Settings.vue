@@ -88,7 +88,7 @@ export default class SettingsPage extends Vue {
     public settingsCopy: Settings = {
       width: 1720,
       height: 840,
-      memory: 512,
+      memory: 3072,
       keepLauncherOpen: true,
       jvmargs: '',
       enableAnalytics: true,
