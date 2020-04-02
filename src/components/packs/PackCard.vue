@@ -168,7 +168,7 @@ export default class PackCard extends Vue {
             this.msgBox.cancelAction = this.hideMsgBox;
             this.msgBox.content = `You are trying to launch the modpack with memory settings that are below the` +
                 `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
-                `increase the assigned memory to **${this.instance?.recMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
+                `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
             this.showMsgBox = true;
         } else {
             this.launch();
