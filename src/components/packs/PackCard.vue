@@ -204,7 +204,7 @@ export default class PackCard extends Vue {
         } else if (data.status === 'error') {
           this.updateInstall({modpackID: this.$props.packID, messageID: data.requestId, error: true, errorMessage: data.message, instanceID: data.uuid});
         } else if (data.currentStage === 'POSTINSTALL') {
-          // We don't care about this, keep progress bar showing.
+          this.updateInstall({modpackID: this.$props.packID, messageID: data.requestId, stage: data.currentStage});
         } else if (data.status === 'init') {
           this.updateInstall({modpackID: this.$props.packID, messageID: data.requestId, stage: 'INIT', message: data.message});
         } else if (data.overallPercentage <= 100) {

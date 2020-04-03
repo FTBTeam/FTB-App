@@ -27,6 +27,21 @@
             <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->
           </div>
         </div>
+        <div v-if="$store.state && $store.state.alert != null">
+          <div class="progress-bar" >
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}"><span class="font-bold">{{$store.state.alert.title}}</span> {{$store.state.alert.message}}</p>
+            <div class="w-full h-full bg-grey-light justify-center -mr-200px">
+              <div class="h-full text-xs leading-none py-1 text-white" :class="`bg-${$store.state.alert.type}-button`"></div>
+            </div>
+             <div class="alert-close" @click="hideAlert">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+                <line x1="0.71" y1="11.12" x2="11.11" y2="0.72" stroke-width="2" />
+                <line x1="0.77" y1="0.71" x2="11.18" y2="11.12" stroke-width="2" />
+              </svg>
+            </div>
+            <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->
+          </div>
+        </div>
       </div>
     </div>
     <div class="container flex pt-1 flex-wrap overflow-x-auto justify-center" v-else>
@@ -50,6 +65,7 @@ import {
   ModpackState,
   InstallProgress,
 } from './modules/modpacks/types';
+import { RootState } from './types';
 
 @Component({ components: { Sidebar, TitleBar } })
 export default class App extends Vue {
@@ -64,7 +80,7 @@ export default class App extends Vue {
   public finishInstall: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   private haveLoaded: boolean = false;
-
+  @Action('hideAlert') public hideAlert: any;
   @Watch('websockets', { deep: true })
   public onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (this.websockets.socket.isConnected && !this.haveLoaded) {
@@ -161,5 +177,10 @@ export default class App extends Vue {
   width: 100%;
   background-color: var(--color-navbar);
   height: 40px;
+}
+.alert-close {
+  position: fixed;
+  stroke: #fff;
+  right: 10px;
 }
 </style>

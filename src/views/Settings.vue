@@ -51,7 +51,7 @@
         <div class="flex flex-col my-2">
           <span>UI Version: {{webVersion}}</span>
           <span>App Version: {{appVersion}}</span>
-          <a @click="goTo('/license')" class="hover:underline">License Information</a>
+          <a @click="goTo('/license')" class="hover:underline cursor-pointer">License Information</a>
           <button @click="uploadLogData()" class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">Upload App Logs</button>
         </div>
       </div>
@@ -60,7 +60,7 @@
 </template>
 
 <script lang="ts">
-import {readdirSync, readFileSync} from 'fs';
+import {readdirSync, readFileSync, existsSync} from 'fs';
 import {createPaste} from 'hastebin';
 import {Component, Vue, Watch} from 'vue-property-decorator';
 import FTBInput from '@/components/FTBInput.vue';
@@ -71,6 +71,7 @@ import {State, Action} from 'vuex-class';
 import {SettingsState, Settings} from '@/modules/settings/types';
 import config from '@/config';
 import {clipboard} from 'electron';
+import path from 'path';
 
 @Component({
     components: {
@@ -84,6 +85,8 @@ export default class SettingsPage extends Vue {
     @State('settings') public settingsState!: SettingsState;
     @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
     @Action('loadSettings', {namespace: 'settings'}) public loadSettings: any;
+    @Action('showAlert') public showAlert: any;
+    @Action('hideAlert') public hideAlert: any;
 
     public settingsCopy: Settings = {
       width: 1720,
@@ -123,7 +126,7 @@ export default class SettingsPage extends Vue {
       if (workingDir.trimEnd().endsWith('bin')) {
         process.chdir('../');
         r = true;
-        }
+      }
       workingDir = process.cwd();
       // Get directory to check for files, if they're there we can proceed.
       let appFolder = readdirSync(workingDir);
@@ -131,15 +134,40 @@ export default class SettingsPage extends Vue {
         // Launcher log should always be there, if it isn't we won't do anything.
         const launcherLog = readFileSync(`${workingDir}/launcher.log`);
         const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`) : 'Not available';
-        const data = '=====================================launcher.log=====================================\n' + launcherLog + '\n\n\n' + '=======================================error.log======================================\n' + errorLog;
+        let frontendLog = new Buffer("");
+        if(appFolder.indexOf('logs') > -1){
+          if(existsSync(path.join(workingDir, 'logs', 'main.log'))){
+            frontendLog = readFileSync(path.join(workingDir, 'logs', 'main.log'));
+          }
+        }
+        const data = '=====================================launcher.log=====================================\n' + launcherLog + '\n\n\n' + '=======================================error.log======================================\n' + errorLog + '\n\n\n' + '=====================================main.log=====================================\n' + frontendLog;
         // Upload logs to pste.ch and copy URL to clipboard
         createPaste(data, {
           raw: false,
           server: 'https://pste.ch'
         })
-        // TODO: Add user feedback that something has been copied to their clipboard.
-        .then((data) => clipboard.writeText(data))
-        .catch((rejected) => console.log(rejected));
+        .then((data) => {
+          clipboard.writeText(data);
+          this.showAlert({
+            title: "Uploaded!",
+            message: "The URL has been copied to your clipboard",
+            type: "primary"
+          })
+          setTimeout(() => {
+            this.hideAlert();
+          }, 5000);
+        })
+        .catch((rejected) =>{ 
+          console.log(rejected);
+          this.showAlert({
+            title: "Error!",
+            message: "There was an error uploading your logs - " + rejected,
+            type: "danger"
+          })
+          setTimeout(() => {
+            this.hideAlert();
+          }, 5000);
+        });
       }
       // Change back to the bin folder
       if (r) process.chdir('./bin');

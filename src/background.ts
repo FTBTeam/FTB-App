@@ -3,6 +3,9 @@
 import { app, protocol, BrowserWindow, remote, shell } from 'electron';
 import path from 'path';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
+import * as log from 'electron-log';
+Object.assign(console, log.functions);
+app.console = log;
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const userPath = (app || remote.app).getPath('userData');
