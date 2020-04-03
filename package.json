@@ -27,6 +27,7 @@
     "core-js": "^3.6.4",
     "electron": "^8.2.0",
     "electron-dl": "^3.0.0",
+    "hastebin": "^0.2.1",
     "license-checker": "25.0.1",
     "moment": "^2.24.0",
     "semver": "^7.1.3",

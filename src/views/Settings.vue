@@ -51,11 +51,8 @@
         <div class="flex flex-col my-2">
           <span>UI Version: {{webVersion}}</span>
           <span>App Version: {{appVersion}}</span>
-          <button @click="goTo('/license')" class="appearance-none block w-1/6 bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">
-            License
-          </button>
-
-          <span>???: Profit</span>
+          <a @click="goTo('/license')" class="hover:underline">License Information</a>
+          <button @click="uploadLogData()" class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">Upload App Logs</button>
         </div>
       </div>
     </div>
@@ -63,6 +60,8 @@
 </template>
 
 <script lang="ts">
+import {readdirSync, readFileSync} from 'fs';
+import {createPaste} from 'hastebin';
 import {Component, Vue, Watch} from 'vue-property-decorator';
 import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
@@ -71,6 +70,7 @@ import FTBSlider from '@/components/FTBSlider.vue';
 import {State, Action} from 'vuex-class';
 import {SettingsState, Settings} from '@/modules/settings/types';
 import config from '@/config';
+import {clipboard} from 'electron';
 
 @Component({
     components: {
@@ -113,6 +113,34 @@ export default class SettingsPage extends Vue {
     public goTo(page: string): void {
         // We don't care about this error!
         this.$router.push(page).catch((err) => { return; });
+    }
+
+
+    public uploadLogData(): void {
+      let workingDir = process.cwd();
+      // Change directory up one level temporarily to get log files.
+      if (workingDir.trimEnd().endsWith('bin')) {
+        process.chdir('../');
+        }
+      workingDir = process.cwd();
+      // Get directory to check for files, if they're there we can proceed.
+      let appFolder = readdirSync(workingDir);
+      if (appFolder.indexOf('launcher.log') > -1) {
+        // Launcher log should always be there, if it isn't we won't do anything.
+        let launcherLog = readFileSync(`${workingDir}/launcher.log`);
+        let errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`) : 'Not available';
+        let data = '=====================================launcher.log=====================================\n' + launcherLog + '\n\n\n' + '=======================================error.log======================================\n' + errorLog;
+        // Upload logs to pste.ch and copy URL to clipboard
+        createPaste(data, {
+          raw: false,
+          server: 'https://pste.ch'
+        })
+        // TODO: Add user feedback that something has been copied to their clipboard.
+        .then((data) => clipboard.writeText(data))
+        .catch((rejected) => console.log(rejected));
+      }
+      // Change back to the bin folder
+      process.chdir('./bin');
     }
 
     public resChange(data: any) {
