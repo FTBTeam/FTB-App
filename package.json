@@ -5,7 +5,7 @@
   "scripts": {
     "serve": "cross-env NODE_ENV=development vue-cli-service electron:serve",
     "build": "vue-cli-service electron:build",
-    "license":  "license-checker --json > licenses.json",
+    "license": "license-checker --json > licenses.json",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint",
     "buildall": "vue-cli-service electron:build -mwl",
