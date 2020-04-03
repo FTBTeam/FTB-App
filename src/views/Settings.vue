@@ -119,8 +119,10 @@ export default class SettingsPage extends Vue {
     public uploadLogData(): void {
       let workingDir = process.cwd();
       // Change directory up one level temporarily to get log files.
+      let r = false;
       if (workingDir.trimEnd().endsWith('bin')) {
         process.chdir('../');
+        r = true;
         }
       workingDir = process.cwd();
       // Get directory to check for files, if they're there we can proceed.
@@ -140,7 +142,7 @@ export default class SettingsPage extends Vue {
         .catch((rejected) => console.log(rejected));
       }
       // Change back to the bin folder
-      process.chdir('./bin');
+      if (r) process.chdir('./bin');
     }
 
     public resChange(data: any) {
