@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "serve": "cross-env NODE_ENV=development vue-cli-service electron:serve",
-    "build": "vue-cli-service electron:build -c.mac.identity=null",
+    "build": "vue-cli-service electron:build",
     "license": "license-checker --json > licenses.json",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint",
-    "buildall": "vue-cli-service electron:build -mwl -c.mac.identity=null",
+    "buildall": "vue-cli-service electron:build -mwl",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",
     "vue:build": "vue-cli-service build",
