@@ -1,7 +1,8 @@
 
 
 import {remote, shell} from 'electron';
-console = remote.app.console;
+// console = remote.app.console;
+// Object.assign(console, remote.app.console.functions);
 import Vue from 'vue';
 import App from './App.vue';
 import router from './router';

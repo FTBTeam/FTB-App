@@ -135,9 +135,9 @@ export default class SettingsPage extends Vue {
         const launcherLog = readFileSync(`${workingDir}/launcher.log`);
         const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`) : 'Not available';
         let frontendLog = new Buffer("");
-        if(appFolder.indexOf('logs') > -1){
-          if(existsSync(path.join(workingDir, 'logs', 'main.log'))){
-            frontendLog = readFileSync(path.join(workingDir, 'logs', 'main.log'));
+        if(appFolder.indexOf('bin') > -1){
+          if(existsSync(path.join(workingDir, 'bin', 'logs', 'main.log'))){
+            frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
           }
         }
         const data = '=====================================launcher.log=====================================\n' + launcherLog + '\n\n\n' + '=======================================error.log======================================\n' + errorLog + '\n\n\n' + '=====================================main.log=====================================\n' + frontendLog;
