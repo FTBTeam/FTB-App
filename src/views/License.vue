@@ -1,6 +1,10 @@
 <template>
+
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full">
     <div class="flex flex-col md:w-full lg:w-9/12 xl:w-8/12 mx-auto">
+    <button @click="goTo('/settings')" class="appearance-none block w-15 bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">
+            Back
+          </button>
       <h1 class="text-2xl">NodeJS Package Licenses</h1>
       <div class="bg-sidebar-item p-5 rounded my-4">
         <div class="flex flex-col my-2">
@@ -48,7 +52,7 @@
     import FTBButton from '@/components/FTBButton.vue';
     import FTBSlider from '@/components/FTBSlider.vue';
     import Config from '@/config';
-    import Licenses from '../../licenses.json';
+    // import Licenses from '../../licenses.json';
 
     @Component({
         components: {
@@ -58,8 +62,17 @@
             'ftb-button': FTBButton,
         },
     })
-    export default class SettingsPage extends Vue {
-        private licenses = Licenses;
+
+    
+    export default class LicensePage extends Vue {
+        private licenses = {};
         private config = Config;
+
+        public goTo(page: string): void {
+        // We don't care about this error!
+        this.$router.push(page).catch((err) => { return; });
     }
+    }
+
+    
 </script>
