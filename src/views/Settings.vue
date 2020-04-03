@@ -127,9 +127,9 @@ export default class SettingsPage extends Vue {
       let appFolder = readdirSync(workingDir);
       if (appFolder.indexOf('launcher.log') > -1) {
         // Launcher log should always be there, if it isn't we won't do anything.
-        let launcherLog = readFileSync(`${workingDir}/launcher.log`);
-        let errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`) : 'Not available';
-        let data = '=====================================launcher.log=====================================\n' + launcherLog + '\n\n\n' + '=======================================error.log======================================\n' + errorLog;
+        const launcherLog = readFileSync(`${workingDir}/launcher.log`);
+        const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`) : 'Not available';
+        const data = '=====================================launcher.log=====================================\n' + launcherLog + '\n\n\n' + '=======================================error.log======================================\n' + errorLog;
         // Upload logs to pste.ch and copy URL to clipboard
         createPaste(data, {
           raw: false,
