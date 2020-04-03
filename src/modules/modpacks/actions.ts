@@ -134,8 +134,6 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('storeInstalledPacks', packs);
     },
     async updateInstall({commit}, install: InstallProgress): Promise<any> {
-        install.pack = await fetch(`${config.apiURL}/public/modpack/${install.modpackID}`)
-                .then((response) => response.json());
         commit('updateInstall', install);
     },
     finishInstall({commit}, install: InstallProgress): any {
