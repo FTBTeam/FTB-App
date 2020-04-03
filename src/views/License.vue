@@ -52,7 +52,7 @@
     import FTBButton from '@/components/FTBButton.vue';
     import FTBSlider from '@/components/FTBSlider.vue';
     import Config from '@/config';
-    // import Licenses from '../../licenses.json';
+    import Licenses from '../../licenses.json';
 
     @Component({
         components: {
