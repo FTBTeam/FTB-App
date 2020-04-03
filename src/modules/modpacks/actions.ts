@@ -38,35 +38,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     getPopularInstalls({commit}): any {
         commit('setLoading', true);
-        fetch(`${config.apiURL}/public/modpack/popular/installs/12`)
-        .then((response) => response.json())
-        .then(async (data) => {
-            const packIDs = data.packs;
-            if (packIDs == null) {
-                return;
-            }
-            const packs: ModPack[] = [];
-            await asyncForEach(packIDs, async (packID: number) => {
-                let pack: any;
-                pack = await fetch(`${config.apiURL}/public/modpack/${packID}`)
-                .then((response) => response.json());
-                if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
-                    console.log(`ERR: Modpack ID ${packID} has no versions`);
-                    return;
-                }
-                packs.push(pack);
-            });
-            commit('popularPlays', packs);
-            commit('setLoading', false);
-        }).catch((err) => {
-            commit('popularPlaysError', err);
-            commit('setLoading', false);
-            console.error(err);
-        });
-    },
-    getPopularPlays({commit}): any {
-        commit('setLoading', true);
-        fetch(`${config.apiURL}/public/modpack/popular/plays/12`)
+        fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
         .then((response) => response.json())
         .then(async (data) => {
             const packIDs = data.packs;
@@ -88,6 +60,34 @@ export const actions: ActionTree<ModpackState, RootState> = {
             commit('setLoading', false);
         }).catch((err) => {
             commit('popularInstallsError', err);
+            commit('setLoading', false);
+            console.error(err);
+        });
+    },
+    getPopularPlays({commit}): any {
+        commit('setLoading', true);
+        fetch(`${config.apiURL}/public/modpack/popular/plays/10`)
+        .then((response) => response.json())
+        .then(async (data) => {
+            const packIDs = data.packs;
+            if (packIDs == null) {
+                return;
+            }
+            const packs: ModPack[] = [];
+            await asyncForEach(packIDs, async (packID: number) => {
+                let pack: any;
+                pack = await fetch(`${config.apiURL}/public/modpack/${packID}`)
+                .then((response) => response.json());
+                if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
+                    console.log(`ERR: Modpack ID ${packID} has no versions`);
+                    return;
+                }
+                packs.push(pack);
+            });
+            commit('popularPlays', packs);
+            commit('setLoading', false);
+        }).catch((err) => {
+            commit('popularPlaysError', err);
             commit('setLoading', false);
             console.error(err);
         });
