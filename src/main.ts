@@ -61,7 +61,7 @@ showdown.extension('newLine', () => [{
     type: 'output',
     regex: new RegExp(`\n`, 'g'),
     replace: '<br>',
-}])
+}]);
 
 
 library.add(fas);

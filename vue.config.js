@@ -7,6 +7,7 @@ module.exports = {
                 appId: "com.feedthebeast.Launcher",
                 mac: {
                     // #TODO https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/
+                    identity: 'null',
                     hardenedRuntime : true,
                     gatekeeperAssess: false,
                     entitlements: "build/entitlements.mac.plist",
