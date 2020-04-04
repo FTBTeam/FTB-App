@@ -49,8 +49,8 @@
       <h1 class="text-2xl">App Info</h1>
       <div class="bg-sidebar-item p-5 rounded my-4">
         <div class="flex flex-col my-2">
-          <span>UI Version: {{webVersion}}</span>
-          <span>App Version: {{appVersion}}</span>
+          <span><a class="cursor-pointer hover:underline" href="https://github.com/FTBTeam/FTB-App" target="_blank">UI Version: {{webVersion}} <font-awesome-icon class="ml-2" :icon="['fab', 'github']" size="1x"/></a></span>
+          <span><a class="cursor-pointer hover:underline" href="https://github.com/CreeperHost/modpacklauncher" target="_blank">App Version: {{appVersion}} <font-awesome-icon class="ml-2" :icon="['fab', 'github']" size="1x"/></a></span>
           <a @click="goTo('/license')" class="hover:underline cursor-pointer">License Information</a>
           <button @click="uploadLogData()" class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">Upload App Logs</button>
         </div>
@@ -157,7 +157,7 @@ export default class SettingsPage extends Vue {
             this.hideAlert();
           }, 5000);
         })
-        .catch((rejected) =>{ 
+        .catch((rejected) =>{
           console.log(rejected);
           this.showAlert({
             title: "Error!",
