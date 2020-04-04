@@ -75,7 +75,7 @@
                   <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>
                 </button>
                 <v-selectmenu :title="false" :query="false" :data="serverDownloadMenu(version.id)" align="right" type="regular">
-                  <button type="button" class="bg-orange-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>
+                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>
                 </v-selectmenu>
 <!--                <button @click="downloadServer"-->
 <!--                        class="bg-orange-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer">-->
