@@ -5,6 +5,7 @@
         <p class="text-gray-300">
             <slot></slot>
         </p>
+        <p><a @click="openExternal" :href="link" class="text-gray-400 hover:text-white leading-none cursor-pointer hover:underline">Continue Reading...</a></p>
     </div>
 </template>
 
