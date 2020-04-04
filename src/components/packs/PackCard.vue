@@ -1,10 +1,11 @@
 <template>
-  <div class="w-1/3 md:w-1/3 lg:w-1/11 xl:w-1/11 m-2 card">
-  <div v-if="!fake" style="height: 100%">
+  <div class="w-1/3 md:w-1/3 lg:w-1/11 xl:w-1/11 m-2 card" >
+  <div v-if="!fake && currentModpack !== undefined" style="height: 100%">
     <article class="overflow-hidden shadow-lg" style="height: 100%">
       <img class="w-full pack-image rounded-sm" :src="art.length > 0 ? art : '../../assets/placeholder_art.png'" alt="placeholder" :class="installing ? 'blur' : ''"/>
       <div class="content" :class="installing ? 'hide' : ''">
 <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
+        <div v-if="instance && !isLatestVersion" class="update-box">Update Available</div>
         <div class="name-box">{{name}}</div>
       </div>
       <div class="hoverContent" v-if="!installing">
@@ -105,6 +106,7 @@ import InstallModal from '@/components/modals/InstallModal.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import {Action, State} from 'vuex-class';
 import { ModpackState, Versions, Instance } from '../../modules/modpacks/types';
+import semver from 'semver';
 const namespace: string = 'websocket';
 
 export interface MsgBox {
@@ -140,9 +142,10 @@ export interface MsgBox {
     ],
 })
 export default class PackCard extends Vue {
-    @State('modpacks') public modpacks: ModpackState | undefined = undefined;
+    @State('modpacks') public modpacks!: ModpackState;
     @Action('sendMessage') public sendMessage: any;
     @Action('updateInstall', {namespace: 'modpacks'}) public updateInstall: any;
+    @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack: any;
     @Action('finishInstall', {namespace: 'modpacks'}) public finishInstall: any;
     @Action('errorInstall', {namespace: 'modpacks'}) public errorInstall: any;
     @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks: any;
@@ -150,6 +153,8 @@ export default class PackCard extends Vue {
     public name!: string;
     @Prop()
     public instance!: Instance;
+    @Prop()
+    public packID!: number;
     private showInstall: boolean = false;
     private showMsgBox: boolean = false;
     private msgBox: MsgBox = {
@@ -159,6 +164,18 @@ export default class PackCard extends Vue {
         okAction: Function,
         cancelAction: Function,
     };
+
+    @Watch('modpacks', {deep: true})
+    public onModpacksChange(newState: ModpackState, oldState: ModpackState){
+      console.log("State updated");
+      this.$forceUpdate();
+    }
+
+    public async mounted(){
+      if(this.instance !== undefined){
+        this.fetchModpack(this.instance.id);
+      }
+    }
 
     public checkMemory() {
         if (this.instance.memory < this.instance.minMemory) {
@@ -236,6 +253,27 @@ export default class PackCard extends Vue {
     public hideInstall(): void {
       this.showInstall = false;
     }
+
+    get latestVersion(){
+      return this.modpacks?.packsCache[this.instance.id].versions.sort((a, b) => {
+          return semver.rcompare(a.name, b.name);
+      });
+    }
+
+    get currentModpack(){
+      if(this.instance?.id){
+        return this.modpacks?.packsCache[this.instance?.id];
+      } else {
+        return this.modpacks?.packsCache[this.packID];
+      }
+    }
+
+    get isLatestVersion(){
+      if(this.currentModpack === undefined){
+        return true;
+      }
+      return this.instance.versionId === this.currentModpack?.versions[0].id;
+    }
 }
 </script>
 
@@ -306,6 +344,15 @@ export default class PackCard extends Vue {
     background: rgba(0, 0, 0, 0.6);
     width: 100%;
     text-align: left;
+    font-weight: 700;
+    padding: 2px 2px 2px 6px;
+  }
+
+  .content .update-box {
+    background: rgba(	255, 193, 7, 0.9);
+    width: 100%;
+    text-align: left;
+    color: #000;
     font-weight: 700;
     padding: 2px 2px 2px 6px;
   }

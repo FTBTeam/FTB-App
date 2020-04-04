@@ -94,8 +94,12 @@ export interface ModpackState {
     loading: boolean;
     installing: InstallProgress[];
     currentModpack: ModPack | null;
+    packsCache: ModPacks;
 }
 
+interface ModPacks{
+    [index: number]: ModPack;
+}
 export interface Changelog {
     content: string;
     updated: number;

@@ -4,15 +4,18 @@
       <div>
         <div
             class="header-image"
-            v-bind:style="{'background-image': `url(${modpacks.currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? modpacks.currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+            v-bind:style="{'background-image': `url(${currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
           <span class="instance-name text-4xl">{{instance.name}}</span>
           <span class="instance-info">
             <small>
-              {{modpacks.currentModpack.name}} <span v-for="author in modpacks.currentModpack.authors">By {{author.name}}</span> - {{instance.version}} -
-              <em>{{modpacks.currentModpack.synopsis}}</em>
+              {{currentModpack.name}} <span v-for="author in currentModpack.authors">By {{author.name}}</span> - {{instance.version}} -
+              <em>{{currentModpack.synopsis}}</em>
             </small>
           </span>
+          <div class="update-bar"  v-if="instance && !isLatestVersion">
+            A new update is available
+          </div>
           <div class="instance-buttons flex flex-row">
             <div class="instance-button mr-1">
               <button
@@ -23,7 +26,7 @@
               </button>
             </div>
             <div class="instance-button mr-1"
-                 v-if="instance.versionId && instance.versionId !== modpacks.currentModpack.versions[0].id">
+                  v-if="instance && !isLatestVersion">
               <button
                   class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
                   @click="update()"
@@ -58,8 +61,8 @@
           </div>
         </div>
       </div>
-      <div class="p-2 h-full">
-        <ul class="flex border-b border-gray-600 mb-3">
+      <div style="height: auto; flex:1; overflow-y: auto;">
+        <ul class="flex border-b border-gray-600 mb-3 p-2" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
           <li class="-mb-px mr-1">
             <a
                 class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
@@ -85,19 +88,18 @@
             >Settings</a>
           </li>
         </ul>
-
-        <div class="tab-content h-91%">
+        <div class="tab-content p-2" style="overflow-y: auto; flex: 1; margin-bottom: 40px;">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
-            <div class="flex flex-wrap" v-if="modpacks.currentModpack != null">
+            <div class="flex flex-wrap" v-if="currentModpack != null">
               <hr/>
-              <VueShowdown :markdown="modpacks.currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
+              <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
             </div>
             <hr/>
           </div>
           <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
-            <div v-for="(version, index) in modpacks.currentModpack.versions" :key="index">
+            <div v-for="(version, index) in currentModpack.versions" :key="index">
               <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
-                <p>{{modpacks.currentModpack.name}} - {{version.name}}</p>
+                <p>{{currentModpack.name}} - {{version.name}}</p>
                 <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"><font-awesome-icon
                     :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'" class="cursor-pointer"
                     size="1x"/> Changelog</span>
@@ -126,7 +128,8 @@
 <!--                <code class="p-0">-->
 <!--                  {{changelogs[version.id]}}-->
 <!--                </code>-->
-                <VueShowdown :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
+                <VueShowdown v-if="changelogs[version.id]" :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
+                <p v-else>No changelog available</p>
               </div>
             </div>
           </div>
@@ -260,6 +263,14 @@
     padding: 2px 2px 2px 6px;
   }
 
+  .update-bar {
+    background: rgba(	255, 193, 7, 0.9);
+    width: 100%;
+    height: 25px;
+    text-align: left;
+    font-weight: 700;
+    padding: 2px 2px 2px 6px;
+  }
   .instance-button {
     display: flex;
     justify-content: center;
@@ -328,10 +339,17 @@ export default class InstancePage extends Vue {
         return resList;
     }
 
+    get currentModpack(){
+      if(!this.instance){
+        return null;
+      }
+      return this.modpacks?.packsCache[this.instance.id];
+    }
+
 
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
     @State('settings') public settingsState!: SettingsState;
-    @Action('loadModpack', {namespace: 'modpacks'}) public loadModpack!: any;
+    @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: any;
     @Action('storeInstalledPacks', {namespace: 'modpacks'})
     public storePacks!: any;
     @Action('updateInstall', {namespace: 'modpacks'})
@@ -454,7 +472,6 @@ export default class InstancePage extends Vue {
         this.sendMessage({
             payload: {type: 'launchInstance', uuid: this.instance?.uuid},
             callback: (data: any) => {
-                // Instance launched
             },
         });
     }
@@ -462,9 +479,9 @@ export default class InstancePage extends Vue {
     public update(versionID?: number): void {
         const modpackID = this.instance?.id;
         this.updateInstall({modpackID: this.instance?.id, progress: 0});
-        if (this.modpacks != null && this.modpacks.currentModpack != null) {
+        if (this.modpacks != null && this.currentModpack != null) {
             if (versionID === undefined) {
-                versionID = this.modpacks.currentModpack.versions[0].id;
+                versionID = this.currentModpack.versions[0].id;
             }
             this.sendMessage({
                 payload: {
@@ -554,9 +571,8 @@ export default class InstancePage extends Vue {
             this.$router.push('/modpacks');
             return;
         }
-        await this.loadModpack(this.instance.id);
+        await this.fetchModpack(this.instance.id);
         this.toggleChangelog(this.modpacks?.currentModpack?.versions[0].id);
-        // this.activeChangelog = this.modpacks?.currentModpack?.versions[0].id;
     }
 
     private async toggleChangelog(id: number | undefined) {
@@ -568,6 +584,13 @@ export default class InstancePage extends Vue {
             this.changelogs[id] = changelog.content;
         }
         this.activeChangelog = id;
+    }
+    
+    get isLatestVersion(){
+      if(this.currentModpack === undefined){
+        return true;
+      }
+      return this.instance?.versionId === this.currentModpack?.versions[0].id;
     }
 }
 </script>

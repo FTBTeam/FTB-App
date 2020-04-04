@@ -1,22 +1,22 @@
 <template>
   <div class="flex flex-1 flex-col h-full overflow-hidden">
-    <div class="flex flex-col h-full" v-if="modpacks.currentModpack != undefined">
+    <div class="flex flex-col h-full" v-if="currentModpack != undefined">
       <div>
         <div
             class="header-image"
-            v-bind:style="{'background-image': `url(${modpacks.currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? modpacks.currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+            v-bind:style="{'background-image': `url(${currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
-          <span class="instance-name text-4xl">{{modpacks.currentModpack.name}}</span>
+          <span class="instance-name text-4xl">{{currentModpack.name}}</span>
           <span class="instance-info">
             <small>
-              <em>{{modpacks.currentModpack.synopsis}}</em>
+              <em>{{currentModpack.synopsis}}</em>
             </small>
           </span>
           <div class="instance-buttons flex flex-row">
             <div class="instance-button mr-1">
               <button
                   class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center"
-                  @click="install(modpacks.currentModpack.versions[0].id)"
+                  @click="install(currentModpack.versions[0].id)"
               >
                 <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>
               </button>
@@ -24,8 +24,8 @@
           </div>
         </div>
       </div>
-      <div class="p-2">
-        <ul class="flex border-b border-gray-600 mb-3">
+      <div style="height: auto; flex:1; overflow-y: auto;">
+        <ul class="flex border-b border-gray-600 mb-3 p-2" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
           <li class="-mb-px mr-1">
             <a
                 class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
@@ -44,15 +44,15 @@
           </li>
         </ul>
 
-        <div class="tab-content h-91%">
+        <div class="tab-content p-2" style="overflow-y: auto; flex: 1; margin-bottom: 40px;">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
-            <div class="flex flex-wrap" v-if="modpacks.currentModpack != null">
-              <VueShowdown :markdown="modpacks.currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
+            <div class="flex flex-wrap" v-if="currentModpack != null">
+              <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
             </div>
             <hr/>
 
-            <!-- <div class="versions" v-if="modpacks.currentModpack != null && modpacks.currentModpack.versions != null">
-          <div v-for="(version, index) in modpacks.currentModpack.versions" v-bind:key="index">
+            <!-- <div class="versions" v-if="currentModpack != null && currentModpack.versions != null">
+          <div v-for="(version, index) in currentModpack.versions" v-bind:key="index">
             {{version.name}}
 
             <span class="inline-flex bg-blue-600 text-white rounded-full h-6 px-3 justify-center items-center" v-if="version.type == 'Beta'">{{version.type}}</span>
@@ -62,9 +62,9 @@
             <!-- </div> -->
           </div>
           <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
-            <div v-for="(version, index) in modpacks.currentModpack.versions" :key="index">
+            <div v-for="(version, index) in currentModpack.versions" :key="index">
               <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
-                <p>{{modpacks.currentModpack.name}} - {{version.name}}</p>
+                <p>{{currentModpack.name}} - {{version.name}}</p>
                 <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"><font-awesome-icon
                     :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'" class="cursor-pointer"
                     size="1x"/> Changelog</span>
@@ -193,7 +193,7 @@ interface Changelogs {
 })
 export default class ModpackPage extends Vue {
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-    @Action('loadModpack', {namespace: 'modpacks'}) public loadModpack!: any;
+    @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: any;
     @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks!: any;
     @Action('updateInstall', {namespace: 'modpacks'}) public updateInstall!: any;
     @Action('finishInstall', {namespace: 'modpacks'}) public finishInstall!: any;
@@ -215,8 +215,8 @@ export default class ModpackPage extends Vue {
 
     public serverDownloadMenu(versionID: number) {
         const links = [];
-        links.push({content: 'Windows', url: `${config.apiURL}/public/modpack/${this.modpacks?.currentModpack?.id}/${versionID}/server/windows`, open: '_blank'});
-        links.push({content: 'Linux', url: `${config.apiURL}/public/modpack/${this.modpacks?.currentModpack?.id}/${versionID}/server/linux`, open: '_blank'});
+        links.push({content: 'Windows', url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/windows`, open: '_blank'});
+        links.push({content: 'Linux', url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/linux`, open: '_blank'});
         return links;
     }
 
@@ -299,8 +299,14 @@ export default class ModpackPage extends Vue {
     }
 
     private async mounted() {
-        await this.loadModpack(this.$route.query.modpackid);
-        this.toggleChangelog(this.modpacks?.currentModpack?.versions[0].id);
+        await this.fetchModpack(this.$route.query.modpackid);
+        this.toggleChangelog(this.currentModpack?.versions[0].id);
+    }
+
+    
+    get currentModpack(){
+      let id: number = Number(this.$route.query.modpackid);
+      return this.modpacks?.packsCache[id];
     }
 
     private async toggleChangelog(id: number | undefined) {
@@ -308,10 +314,11 @@ export default class ModpackPage extends Vue {
             return;
         }
         if (!this.changelogs[id]) {
-            const changelog = await this.getChangelog({packID: this.modpacks?.currentModpack?.id, versionID: id});
+            const changelog = await this.getChangelog({packID: this.currentModpack?.id, versionID: id});
             this.changelogs[id] = changelog.content;
         }
         this.activeChangelog = id;
     }
+
 }
 </script>

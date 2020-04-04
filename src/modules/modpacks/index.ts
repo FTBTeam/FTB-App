@@ -6,6 +6,7 @@ import {ModpackState} from './types';
 import {RootState} from '@/types';
 
 export const state: ModpackState = {
+    packsCache: {},
     installedPacks: [],
     search: [],
     popularInstalls: [],

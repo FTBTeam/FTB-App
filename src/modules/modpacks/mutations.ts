@@ -70,4 +70,13 @@ export const mutations: MutationTree<ModpackState> = {
     storeModpack(state, modpack: ModPack) {
         state.currentModpack = modpack;
     },
+    addToCache(state, modpack: ModPack){
+        if(modpack === undefined){
+            return;
+        }
+        if(!state.packsCache[modpack.id]){
+            console.log("Adding to cache", modpack);
+            state.packsCache[modpack.id] = modpack;
+        }
+    }
 };

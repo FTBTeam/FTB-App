@@ -6,7 +6,7 @@ import {asyncForEach} from '@/utils';
 import semver from 'semver';
 
 export const actions: ActionTree<ModpackState, RootState> = {
-    doSearch({commit}, searchTerm): any {
+    doSearch({commit, rootState, dispatch}: any, searchTerm): any {
         if (searchTerm.trim().length <= 3) {
             return;
         }
@@ -25,8 +25,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
             }
             const packs: ModPack[] = [];
             await asyncForEach(packIDs, async (packID: number) => {
-                packs.push(await fetch(`${config.apiURL}/public/modpack/${packID}`)
-                .then((response) => response.json()));
+                let pack = await dispatch('fetchModpack', packID);
+                packs.push(pack);
             });
             commit('searchLoaded', packs);
             commit('setLoading', false);
@@ -36,7 +36,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             console.error(err);
         });
     },
-    getPopularInstalls({commit}): any {
+    getPopularInstalls({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
         fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
         .then((response) => response.json())
@@ -47,9 +47,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             }
             const packs: ModPack[] = [];
             await asyncForEach(packIDs, async (packID: number) => {
-                let pack: any;
-                pack = await fetch(`${config.apiURL}/public/modpack/${packID}`)
-                .then((response) => response.json());
+                let pack = await dispatch('fetchModpack', packID);
                 if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
                     console.log(`ERR: Modpack ID ${packID} has no versions`);
                     return;
@@ -64,7 +62,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             console.error(err);
         });
     },
-    getPopularPlays({commit}): any {
+    getPopularPlays({commit, rootState, dispatch}:any): any {
         commit('setLoading', true);
         fetch(`${config.apiURL}/public/modpack/popular/plays/10`)
         .then((response) => response.json())
@@ -75,9 +73,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             }
             const packs: ModPack[] = [];
             await asyncForEach(packIDs, async (packID: number) => {
-                let pack: any;
-                pack = await fetch(`${config.apiURL}/public/modpack/${packID}`)
-                .then((response) => response.json());
+                let pack = await dispatch('fetchModpack', packID);
                 if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
                     console.log(`ERR: Modpack ID ${packID} has no versions`);
                     return;
@@ -97,7 +93,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('searchLoaded', packs);
         commit('setLoading', false);
     },
-    loadFeaturedPacks({commit}): any {
+    loadFeaturedPacks({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
         fetch(`${config.apiURL}/public/modpack/featured/5`)
         .then((response) => response.json()).then(async (data) => {
@@ -107,9 +103,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             }
             const packs: ModPack[] = [];
             await asyncForEach(packIDs, async (packID: number) => {
-                let pack: any;
-                pack = await fetch(`${config.apiURL}/public/modpack/${packID}`)
-                .then((response) => response.json());
+                let pack = await dispatch('fetchModpack', packID);
                 if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
                     console.log(`ERR: Modpack ID ${packID} has no versions`);
                     return;
@@ -133,9 +127,15 @@ export const actions: ActionTree<ModpackState, RootState> = {
         });
         commit('storeInstalledPacks', packs);
     },
-    async updateInstall({commit}, install: InstallProgress): Promise<any> {
-        install.pack = await fetch(`${config.apiURL}/public/modpack/${install.modpackID}`)
-                .then((response) => response.json());
+    async updateInstall({commit, rootState}: any, install: InstallProgress): Promise<any> {
+        if(rootState.modpacks.packsCache[install.modpackID]){
+            install.pack = rootState.modpacks.packsCache[install.modpackID];
+        } else {
+            let pack = await fetch(`${config.apiURL}/public/modpack/${install.modpackID}`)
+            .then((response) => response.json());
+            install.pack = pack;
+            commit('addToCache', pack);
+        }
         commit('updateInstall', install);
     },
     finishInstall({commit}, install: InstallProgress): any {
@@ -166,17 +166,6 @@ export const actions: ActionTree<ModpackState, RootState> = {
             }}, {root: true});
         });
     },
-    loadModpack({commit}, packID: number): Promise<any> {
-        return new Promise(async (resolve, reject) => {
-            const pack = await fetch(`${config.apiURL}/public/modpack/${packID}`)
-            .then((response) => response.json()) as ModPack;
-            pack.versions = pack.versions.filter((v) => v.name.length > 0).sort((a, b) => {
-                return semver.rcompare(a.name, b.name);
-            });
-            commit('storeModpack', pack);
-            resolve();
-        });
-    },
     getChangelog({commit}, {packID, versionID}): Promise<any> {
         return new Promise(async (resolve, reject) => {
             const changelog = await fetch(`${config.apiURL}/public/modpack/${packID}/${versionID}/changelog`).catch((err) =>  console.error(err))
@@ -185,7 +174,26 @@ export const actions: ActionTree<ModpackState, RootState> = {
                 return response.json();
             }) as Changelog;
             resolve(changelog);
-            // Ok thats good
+        });
+    },
+    fetchModpack({commit, rootState}: any, packID): Promise<any> {
+        if(rootState.modpacks.packsCache[packID]){
+            return rootState.modpacks.packsCache[packID];
+        }
+        return new Promise(async (resolve, reject) => {
+            await fetch(`${config.apiURL}/public/modpack/${packID}`).catch((err) =>  console.error(err))
+            .then(async (response: any) => {
+                response = response as Response;
+                let pack: ModPack = await response.json() as ModPack;
+                pack.versions = pack.versions.sort((a, b) => {
+                    return semver.rcompare(a.name, b.name);
+                });
+                commit('addToCache', pack);
+                resolve(pack);
+            }).catch((err) => {
+                console.error("Error getting modpack", err);
+                reject(err);
+            });
         });
     },
 };
