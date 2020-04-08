@@ -217,6 +217,7 @@ export default class ModpackPage extends Vue {
         const links = [];
         links.push({content: 'Windows', url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/windows`, open: '_blank'});
         links.push({content: 'Linux', url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/linux`, open: '_blank'});
+        links.push({content: 'MacOS', url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/mac`, open: '_blank'});
         return links;
     }
 
@@ -303,7 +304,7 @@ export default class ModpackPage extends Vue {
         this.toggleChangelog(this.currentModpack?.versions[0].id);
     }
 
-    
+
     get currentModpack(){
       let id: number = Number(this.$route.query.modpackid);
       return this.modpacks?.packsCache[id];

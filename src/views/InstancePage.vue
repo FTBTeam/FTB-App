@@ -379,6 +379,7 @@ export default class InstancePage extends Vue {
         const links = [];
         links.push({content: 'Windows', url: `${config.apiURL}/public/modpack/${this.modpacks?.currentModpack?.id}/${versionID}/server/windows`, open: '_blank'});
         links.push({content: 'Linux', url: `${config.apiURL}/public/modpack/${this.modpacks?.currentModpack?.id}/${versionID}/server/linux`, open: '_blank'});
+        links.push({content: 'MacOS', url: `${config.apiURL}/public/modpack/${this.modpacks?.currentModpack?.id}/${versionID}/server/mac`, open: '_blank'});
         return links;
     }
 
@@ -585,7 +586,7 @@ export default class InstancePage extends Vue {
         }
         this.activeChangelog = id;
     }
-    
+
     get isLatestVersion(){
       if(this.currentModpack === undefined){
         return true;
