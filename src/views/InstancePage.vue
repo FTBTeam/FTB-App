@@ -81,6 +81,14 @@
           </li>
           <li class="-mb-px mr-1">
             <a
+                    class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                    @click.prevent="setActiveTab('modlist')"
+                    :class="{ 'border-l border-t border-r border-gray-600': isTabActive('modlist'), 'text-gray-600 hover:text-gray-500': !isTabActive('modlist') }"
+                    href="#versions"
+            >ModList</a>
+          </li>
+          <li class="-mb-px mr-1">
+            <a
                 class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('settings')"
                 :class="{ 'border-l border-t border-r border-gray-600': isTabActive('settings'), 'text-gray-600 hover:text-gray-500': !isTabActive('settings') }"
@@ -198,6 +206,15 @@
               </button>
             </div>
           </div>
+
+          <div class="tab-pane" v-if="isTabActive('modlist')" id="modlist">
+            <div v-for="file in modlist">
+              <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
+                <p>{{file.name.replace('.jar', '')}} - {{file.version}} (Size: {{parseInt(file.size) | prettyBytes}})</p>
+                <p class="ml-auto">SHA1: {{file.sha1}}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -293,13 +310,23 @@ import * as semver from 'semver';
 import config from '@/config';
 import moment from 'moment';
 import {SettingsState} from '@/modules/settings/types';
+import fs from 'fs';
 
-export interface MsgBox {
+interface MsgBox {
     title: string;
     content: string;
     type: string;
     okAction: () => void;
     cancelAction: () => void;
+}
+
+interface Modlist {
+  name: string;
+  version: string;
+  type: string;
+  size: string;
+  updated: string;
+  sha1: string;
 }
 
 interface Changelogs {
@@ -372,6 +399,7 @@ export default class InstancePage extends Vue {
 
     private activeChangelog: number | undefined = -1;
     private changelogs: Changelogs = [];
+    private modlist: any = [];
 
     private resSelectedValue: string = '0';
 
@@ -574,6 +602,17 @@ export default class InstancePage extends Vue {
         }
         await this.fetchModpack(this.instance.id);
         this.toggleChangelog(this.modpacks?.currentModpack?.versions[0].id);
+        this.getModList();
+    }
+
+    private getModList(){
+      const modlistRaw = fs.readFileSync(this.instance?.path + '/version.json', 'utf-8')
+      const modlistJson = JSON.parse(modlistRaw);
+      modlistJson.files.forEach((mod: Modlist) => {
+        if (mod.type === 'mod') {
+          this.modlist.push({name: mod.name, version: mod.version, sha1: mod.sha1, size: mod.size})
+        }
+      });
     }
 
     private async toggleChangelog(id: number | undefined) {

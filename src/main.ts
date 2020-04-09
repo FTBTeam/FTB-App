@@ -107,6 +107,33 @@ Vue.filter('moment', function(value: any) {
     return moment.unix(value).format('Do MMMM YYYY');
 });
 
+Vue.filter('prettyBytes', function (num:number) {
+    // jacked from: https://github.com/sindresorhus/pretty-bytes
+    if (isNaN(num)) {
+        throw new TypeError('Expected a number');
+    }
+
+    var exponent;
+    var unit;
+    var neg = num < 0;
+    var units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+    if (neg) {
+        num = -num;
+    }
+
+    if (num < 1) {
+        return (neg ? '-' : '') + num + ' B';
+    }
+
+    exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1);
+    // @ts-ignore
+    num = (num / Math.pow(1000, exponent)).toFixed(2) * 1;
+    unit = units[exponent];
+
+    return (neg ? '-' : '') + num + ' ' + unit;
+});
+
 
 new Vue({
     router,
