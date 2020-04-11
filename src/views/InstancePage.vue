@@ -106,6 +106,8 @@
           </div>
           <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
             <div v-for="(version, index) in currentModpack.versions" :key="index">
+              {{debugLog("Version")}}
+              {{debugLog(version)}}
               <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
                 <p>{{currentModpack.name}} - {{version.name}}</p>
                 <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"><font-awesome-icon
@@ -127,15 +129,10 @@
                 <v-selectmenu :title="false" :query="false" :data="serverDownloadMenu(version.id)" align="right" type="regular">
                   <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>
                 </v-selectmenu>
-<!--                <button @click="downloadServer"-->
-<!--                        class="bg-orange-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer">-->
-<!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> Download Server</span>-->
-<!--                </button>-->
               </div>
+              {{debugLog("Version ID: " + version.id)}}
+              {{debugLog("activeChangelog: " + activeChangelog)}}
               <div class="pl-5" v-if="activeChangelog === version.id">
-<!--                <code class="p-0">-->
-<!--                  {{changelogs[version.id]}}-->
-<!--                </code>-->
                 <VueShowdown v-if="changelogs[version.id]" :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
                 <p v-else>No changelog available</p>
               </div>
@@ -601,7 +598,7 @@ export default class InstancePage extends Vue {
             return;
         }
         await this.fetchModpack(this.instance.id);
-        this.toggleChangelog(this.modpacks?.currentModpack?.versions[0].id);
+        this.toggleChangelog(this.currentModpack?.versions[0].id);
         this.getModList();
     }
 
@@ -616,11 +613,12 @@ export default class InstancePage extends Vue {
     }
 
     private async toggleChangelog(id: number | undefined) {
+      console.log(id);
         if (typeof id === 'undefined') {
             return;
         }
         if (!this.changelogs[id]) {
-            const changelog = await this.getChangelog({packID: this.modpacks?.currentModpack?.id, versionID: id});
+            const changelog = await this.getChangelog({packID: this.instance?.id, versionID: id});
             this.changelogs[id] = changelog.content;
         }
         this.activeChangelog = id;
@@ -631,6 +629,10 @@ export default class InstancePage extends Vue {
         return true;
       }
       return this.instance?.versionId === this.currentModpack?.versions[0].id;
+    }
+
+    private debugLog(thing:any){
+      console.log(thing);
     }
 }
 </script>
