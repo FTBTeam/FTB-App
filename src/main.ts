@@ -1,6 +1,6 @@
 
 
-import {remote, shell} from 'electron';
+import {ipcRenderer, shell} from 'electron';
 // console = remote.app.console;
 // Object.assign(console, remote.app.console.functions);
 import Vue from 'vue';
@@ -24,6 +24,12 @@ import vSelectMenu from 'v-selectmenu';
 import '@/assets/tailwind.scss';
 
 import store from './store';
+
+ipcRenderer.send('sendMeSecret');
+ipcRenderer.on('hereIsSecret', (event, data) => {
+    store.commit('STORE_WS', data);
+    Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {store, format: 'json', reconnection: true});
+});
 
 
 const classMap: object = {
@@ -85,7 +91,6 @@ Vue.use(VueShowdown, {
     },
 });
 Vue.component('font-awesome-icon', FontAwesomeIcon);
-Vue.use(VueNativeSock, 'ws://localhost:13377', {store, format: 'json', reconnection: true});
 
 Vue.config.productionTip = false;
 Vue.config.devtools = true;

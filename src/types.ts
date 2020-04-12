@@ -1,6 +1,8 @@
 export interface RootState {
     version: string;
     alert: Alert | null;
+    wsPort: number;
+    wsSecret: string;
 }
 
 export interface Alert {

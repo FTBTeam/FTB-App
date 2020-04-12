@@ -8,6 +8,11 @@ import { settings } from './modules/settings';
 
 Vue.use(Vuex);
 
+interface SecretMessage {
+    port: number;
+    secret: string;
+}
+
 
 export const mutations: MutationTree<RootState> = {
     SHOW_ALERT(state: any, alert: Alert){
@@ -15,6 +20,10 @@ export const mutations: MutationTree<RootState> = {
     },
     CLEAR_ALERT(state: any){
         state.alert = null;
+    },
+    STORE_WS(state: any, data: SecretMessage){
+        state.wsPort = data.port;
+        state.wsSecret = data.secret;
     }
 };
 
@@ -22,7 +31,9 @@ export const mutations: MutationTree<RootState> = {
 const store: StoreOptions<RootState> = {
     state: {
         version: '1.0.0',
-        alert: null
+        alert: null,
+        wsPort: 0,
+        wsSecret: ""
     },
     actions: {
         "showAlert": ({commit}: any, alert: Alert) => {
