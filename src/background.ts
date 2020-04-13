@@ -46,7 +46,7 @@ if (process.argv.indexOf('--pid') === -1) {
     if (operatingSystem === 'win32') {
         binaryFile += '.exe';
     }
-    binaryFile = path.join(currentPath, binaryFile);
+    binaryFile = path.join(currentPath, "..", binaryFile);
     if (fs.existsSync(binaryFile)) {
         childProcess.exec(binaryFile + ' --pid ' + ourPID);
     } else {
