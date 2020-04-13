@@ -18,12 +18,10 @@ declare const __static: string;
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
 
-const wsArg = app.commandLine.getSwitchValue('ws');
-console.log(wsArg);
+const wsArg =  process.argv[process.argv.indexOf('--ws') + 1];
 let wsPort: number;
 let wsSecret: string;
-if (wsArg.length !== 0) {
-    console.log("Splitting");
+if (wsArg.length !== 0 && wsArg.indexOf(":") !== -1) {
     const wsArgSplit = wsArg.split(':');
     wsPort = Number(wsArgSplit[0]);
     wsSecret = wsArgSplit[1];
@@ -31,12 +29,11 @@ if (wsArg.length !== 0) {
     wsPort = 13377;
     wsSecret = '';
 }
-console.log("Port is", wsPort, wsSecret);
 ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret});
 });
 
-const pid = app.commandLine.getSwitchValue('pid');
+const pid = process.argv[process.argv.indexOf('--pid') + 1];
 if (pid.length === 0) {
     const ourPID = process.pid;
     const currentPath =  process.cwd();
@@ -45,7 +42,7 @@ if (pid.length === 0) {
     if (operatingSystem === 'win32') {
         binaryFile += '.exe';
     }
-    binaryFile = path.join(currentPath, '..', binaryFile);
+    binaryFile = path.join(currentPath, binaryFile);
     if (fs.existsSync(binaryFile)) {
         childProcess.exec(binaryFile + ' --pid ' + ourPID);
     } else {
