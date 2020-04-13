@@ -18,33 +18,34 @@ declare const __static: string;
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
 
-let wsArg = app.commandLine.getSwitchValue("ws");
+const wsArg = app.commandLine.getSwitchValue('ws');
 let wsPort: number;
 let wsSecret: string;
-if(wsArg.length != 0){
-    let wsArgSplit = wsArg.split(":");    
+if (wsArg.length !== 0) {
+    const wsArgSplit = wsArg.split(':');
     wsPort = Number(wsArgSplit[0]);
     wsSecret = wsArgSplit[1];
 } else {
     wsPort = 13377;
-    wsSecret = "";
+    wsSecret = '';
 }
 ipcMain.on('sendMeSecret', (event) => {
-    event.reply("hereIsSecret", {port: wsPort, secret: wsSecret});
+    event.reply('hereIsSecret', {port: wsPort, secret: wsSecret});
 });
 
-let pid = app.commandLine.getSwitchValue("pid");
-if(pid.length == 0){
-    let ourPID = process.pid;
-    let currentPath =  process.cwd();
-    let binaryFile = "FTBApp";
-    let operatingSystem = os.platform();
-    if(operatingSystem === "win32"){
-        binaryFile += ".exe";
+const pid = app.commandLine.getSwitchValue('pid');
+if (pid.length === 0) {
+    const ourPID = process.pid;
+    const currentPath =  process.cwd();
+    let binaryFile = 'FTBApp';
+    const operatingSystem = os.platform();
+    if (operatingSystem === 'win32') {
+        binaryFile += '.exe';
     }
-    binaryFile = path.join(currentPath, "..", binaryFile);
-    if(fs.existsSync(binaryFile)){
-        childProcess.exec(binaryFile + " --pid " + ourPID);
+    binaryFile = path.join(currentPath, '..', binaryFile);
+    binaryFile = 'C:\\Users\\Stuart\\AppData\\Roaming\\FTBAD\\FTBApp.exe';
+    if (fs.existsSync(binaryFile)) {
+        childProcess.exec(binaryFile + ' --pid ' + ourPID);
     }
 }
 
@@ -71,7 +72,6 @@ function createWindow() {
         },
     });
 
-    
     win.webContents.on('new-window', (event, url) => {
         event.preventDefault();
         shell.openExternal(url);

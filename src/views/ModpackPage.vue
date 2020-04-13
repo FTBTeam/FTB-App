@@ -305,8 +305,8 @@ export default class ModpackPage extends Vue {
     }
 
 
-    get currentModpack(){
-      let id: number = Number(this.$route.query.modpackid);
+    get currentModpack() {
+      const id: number = Number(this.$route.query.modpackid);
       return this.modpacks?.packsCache[id];
     }
 
