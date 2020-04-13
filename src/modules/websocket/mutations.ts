@@ -7,12 +7,14 @@ export const mutations: MutationTree<SocketState> = {
     SOCKET_ONOPEN(state: any, event: any)  {
         Vue.prototype.$socket = event.currentTarget;
         state.socket.isConnected = true;
+        state.firstConnect = false;
     },
     SOCKET_ONCLOSE(state: any, event: any)  {
         state.socket.isConnected = false;
     },
     SOCKET_ONERROR(state: any, event: any)  {
         // console.error(state, event);
+        state.firstConnect = false;
     },
     SOCKET_ONMESSAGE(state: any, message: any)  {
         if (message.requestId) {

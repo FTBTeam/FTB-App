@@ -25,12 +25,6 @@ import '@/assets/tailwind.scss';
 
 import store from './store';
 
-ipcRenderer.send('sendMeSecret');
-ipcRenderer.on('hereIsSecret', (event, data) => {
-    store.commit('STORE_WS', data);
-    Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {store, format: 'json', reconnection: true});
-});
-
 
 const classMap: object = {
     h1: 'text-4xl',
@@ -140,7 +134,7 @@ Vue.filter('prettyBytes', function (num:number) {
 });
 
 
-new Vue({
+let vm = new Vue({
     router,
     store,
     components: {
@@ -148,3 +142,24 @@ new Vue({
     },
     render: (h: any) => h(App),
 }).$mount('#app');
+
+ipcRenderer.send('sendMeSecret');
+ipcRenderer.on('hereIsSecret', (event, data) => {
+    if(data.port === 13377){
+        Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {format: 'json', reconnection: true, connectManually: true});
+        vm.$connect();
+        vm.$socket.onmessage = (msgData: MessageEvent) => {
+            let wsInfo = JSON.parse(msgData.data);
+            store.commit('STORE_WS', wsInfo);
+            vm.$disconnect();
+            let index = Vue._installedPlugins.indexOf(VueNativeSock)
+            if(index > -1){
+                Vue._installedPlugins.splice(index, 1)
+            }
+            Vue.use(VueNativeSock, 'ws://localhost:' + wsInfo.port, {store, format: 'json', reconnection: true});
+        }
+    } else {
+        store.commit('STORE_WS', data);
+        Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {store, format: 'json', reconnection: true});
+    }
+});

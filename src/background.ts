@@ -36,7 +36,6 @@ ipcMain.on('sendMeSecret', (event) => {
 let pid = app.commandLine.getSwitchValue("pid");
 if(pid.length == 0){
     let ourPID = process.pid;
-    console.log("our pid is" + ourPID);
     let currentPath =  process.cwd();
     let binaryFile = "FTBApp";
     let operatingSystem = os.platform();
@@ -44,8 +43,6 @@ if(pid.length == 0){
         binaryFile += ".exe";
     }
     binaryFile = path.join(currentPath, "..", binaryFile);
-    binaryFile = "C:\\Users\\Stuart\\AppData\\Roaming\\FTBAD\\FTBApp.exe";
-    console.log(binaryFile);
     if(fs.existsSync(binaryFile)){
         childProcess.exec(binaryFile + " --pid " + ourPID);
     }
@@ -74,6 +71,7 @@ function createWindow() {
         },
     });
 
+    
     win.webContents.on('new-window', (event, url) => {
         event.preventDefault();
         shell.openExternal(url);

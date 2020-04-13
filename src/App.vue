@@ -47,8 +47,11 @@
     <div class="container flex pt-1 flex-wrap overflow-x-auto justify-center" v-else>
       <!-- TODO: Make this pretty -->
       <span
+      v-if="!websockets.firstStart"
         v-bind:style="{'margin-top': '40vh'}"
       >Issue connecting to backend... Please wait or relaunch.</span>
+      <span v-else 
+        v-bind:style="{'margin-top': '40vh'}">Starting FTB App, please wait.</span>
     </div>
   </div>
 </template>

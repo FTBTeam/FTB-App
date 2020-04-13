@@ -10,6 +10,7 @@ export const state: SocketState = {
         message: '',
         reconnectError: false,
     },
+    firstStart: true,
     messages: {},
 };
 
