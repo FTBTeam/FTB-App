@@ -43,7 +43,6 @@ if (pid.length === 0) {
         binaryFile += '.exe';
     }
     binaryFile = path.join(currentPath, '..', binaryFile);
-    binaryFile = 'C:\\Users\\Stuart\\AppData\\Roaming\\FTBAD\\FTBApp.exe';
     if (fs.existsSync(binaryFile)) {
         childProcess.exec(binaryFile + ' --pid ' + ourPID);
     }
