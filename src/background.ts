@@ -18,10 +18,10 @@ declare const __static: string;
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
 
-const wsArg =  process.argv[process.argv.indexOf('--ws') + 1];
 let wsPort: number;
 let wsSecret: string;
-if (wsArg.length !== 0 && wsArg.indexOf(":") !== -1) {
+if(process.argv.indexOf('--ws') !== -1){
+    const wsArg =  process.argv[process.argv.indexOf('--ws') + 1];
     const wsArgSplit = wsArg.split(':');
     wsPort = Number(wsArgSplit[0]);
     wsSecret = wsArgSplit[1];
@@ -33,8 +33,12 @@ ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret});
 });
 
-const pid = process.argv[process.argv.indexOf('--pid') + 1];
-if (pid.length === 0) {
+ipcMain.on('updateSecret', (event, data) => {
+    wsPort = data.port;
+    wsSecret = data.secret;
+});
+
+if (process.argv.indexOf('--pid') === -1) {
     const ourPID = process.pid;
     const currentPath =  process.cwd();
     let binaryFile = 'FTBApp';
