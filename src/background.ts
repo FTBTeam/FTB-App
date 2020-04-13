@@ -19,9 +19,11 @@ declare const __static: string;
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
 
 const wsArg = app.commandLine.getSwitchValue('ws');
+console.log(wsArg);
 let wsPort: number;
 let wsSecret: string;
 if (wsArg.length !== 0) {
+    console.log("Splitting");
     const wsArgSplit = wsArg.split(':');
     wsPort = Number(wsArgSplit[0]);
     wsSecret = wsArgSplit[1];
@@ -29,6 +31,7 @@ if (wsArg.length !== 0) {
     wsPort = 13377;
     wsSecret = '';
 }
+console.log("Port is", wsPort, wsSecret);
 ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret});
 });
@@ -45,6 +48,8 @@ if (pid.length === 0) {
     binaryFile = path.join(currentPath, '..', binaryFile);
     if (fs.existsSync(binaryFile)) {
         childProcess.exec(binaryFile + ' --pid ' + ourPID);
+    } else {
+        console.log("Could not find the binary to launch backend", binaryFile);
     }
 }
 
