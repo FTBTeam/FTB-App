@@ -55,7 +55,7 @@ if (process.argv.indexOf('--pid') === -1) {
     binaryFile = path.join(currentPath, "..", binaryFile);
     if (fs.existsSync(binaryFile)) {
         console.log("Starting process of backend", binaryFile);
-        let child = childProcess.exec(binaryFile + ' --pid ' + ourPID);
+        let child = childProcess.execFile(binaryFile, ['--pid', ourPID.toString()]);
         child.on('exit', (code, signal) => {
             console.log('child process exited with ' +
             `code ${code} and signal ${signal}`);
