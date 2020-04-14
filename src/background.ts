@@ -63,10 +63,12 @@ if (process.argv.indexOf('--pid') === -1) {
         child.on('error', (err) => {
             console.error("Error starting binary", err);
         });
-        child.stdout?.on('data', (data) => {
+        //@ts-ignore
+        child.stdout.on('data', (data) => {
             console.log(`child stdout:\n${data}`);
         });
-        child.stderr?.on('data', (data) => {
+        //@ts-ignore
+        child.stderr.on('data', (data) => {
             console.error(`child stderr:\n${data}`);
         });
     } else {
