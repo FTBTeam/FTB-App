@@ -55,7 +55,20 @@ if (process.argv.indexOf('--pid') === -1) {
     binaryFile = path.join(currentPath, "..", binaryFile);
     if (fs.existsSync(binaryFile)) {
         console.log("Starting process of backend", binaryFile);
-        childProcess.exec(binaryFile + ' --pid ' + ourPID);
+        let child = childProcess.exec(binaryFile + ' --pid ' + ourPID);
+        child.on('exit', (code, signal) => {
+            console.log('child process exited with ' +
+            `code ${code} and signal ${signal}`);
+        });
+        child.on('error', (err) => {
+            console.error("Error starting binary", err);
+        });
+        child.stdout?.on('data', (data) => {
+            console.log(`child stdout:\n${data}`);
+        });
+        child.stderr?.on('data', (data) => {
+            console.error(`child stderr:\n${data}`);
+        });
     } else {
         console.log("Could not find the binary to launch backend", binaryFile);
     }
