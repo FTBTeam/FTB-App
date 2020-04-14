@@ -21,14 +21,17 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: tru
 let wsPort: number;
 let wsSecret: string;
 if(process.argv.indexOf('--ws') !== -1){
+    console.log("We have a --ws");
     const wsArg =  process.argv[process.argv.indexOf('--ws') + 1];
     const wsArgSplit = wsArg.split(':');
     wsPort = Number(wsArgSplit[0]);
     wsSecret = wsArgSplit[1];
 } else {
+    console.log("Setting default port and secret");
     wsPort = 13377;
     wsSecret = '';
 }
+
 ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret});
 });
@@ -39,8 +42,11 @@ ipcMain.on('updateSecret', (event, data) => {
 });
 
 if (process.argv.indexOf('--pid') === -1) {
+    console.log("No backend found, starting our own");
     const ourPID = process.pid;
+    console.log("Our PID is", ourPID);
     const currentPath =  process.cwd();
+    console.log("Current working directory is", currentPath);
     let binaryFile = 'FTBApp';
     const operatingSystem = os.platform();
     if (operatingSystem === 'win32') {
@@ -48,6 +54,7 @@ if (process.argv.indexOf('--pid') === -1) {
     }
     binaryFile = path.join(currentPath, "..", binaryFile);
     if (fs.existsSync(binaryFile)) {
+        console.log("Starting process of backend", binaryFile);
         childProcess.exec(binaryFile + ' --pid ' + ourPID);
     } else {
         console.log("Could not find the binary to launch backend", binaryFile);
