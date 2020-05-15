@@ -63,16 +63,16 @@ if (process.argv.indexOf('--pid') === -1) {
         child.on('error', (err) => {
             console.error("Error starting binary", err);
         });
-        //@ts-ignore
+        // @ts-ignore
         child.stdout.on('data', (data) => {
             console.log(`child stdout:\n${data}`);
         });
-        //@ts-ignore
+        // @ts-ignore
         child.stderr.on('data', (data) => {
             console.error(`child stderr:\n${data}`);
         });
     } else {
-        console.log("Could not find the binary to launch backend", binaryFile);
+        console.log('Could not find the binary to launch backend', binaryFile);
     }
 }
 
