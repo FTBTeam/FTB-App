@@ -16,7 +16,7 @@ export const actions: ActionTree<NewsState, RootState> = {
             const payload: NewsItem[] = [];
             feed.items.forEach((item) => {
                 // const content: string = item['content:encoded'].replace(/<a\b[^>]*>(.*?)<\/a>/gi, '');
-                const content: string = item['content:encoded'].replace(/<a\b[^>]*class=\"internalLink\">(.*?)<\/a>/gi, '');
+                const content: string = item['content:encoded'].replace(/<a\b[^>]* class="link link--internal">(.*?)<\/a>/gi, '');
                 payload.push({
                     title: item.title || '',
                     content: content || '',
