@@ -163,3 +163,6 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
         Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {store, format: 'json', reconnection: true});
     }
 });
+ipcRenderer.on('hereAuthData', (event, data) => {
+    store.commit('auth/storeAuthDetails', {key: data.modpackskey, secret: data.modpackssecret})
+})

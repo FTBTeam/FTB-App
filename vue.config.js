@@ -33,7 +33,7 @@ module.exports = {
                     output: "release"
                 }
             },
-            mainProcessArgs: ['--ws', '18623:b3d2a72d-9876-483f-add7-2c3c3ce85b44']
+            mainProcessArgs: ['--ws', '18797:2dcef192-f33c-4a5f-8ecf-f6603c8dc87e']
         }
     }
 };
