@@ -5,6 +5,7 @@ import { news } from './modules/news';
 import { modpacks } from './modules/modpacks';
 import { websocket } from './modules/websocket';
 import { settings } from './modules/settings';
+import { auth } from './modules/auth';
 
 Vue.use(Vuex);
 
@@ -49,6 +50,7 @@ const store: StoreOptions<RootState> = {
         modpacks,
         websocket,
         settings,
+        auth
     },
 };
 

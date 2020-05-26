@@ -312,7 +312,6 @@ export default class PackCard extends Vue {
   }
 
   .buttons {
-
     display: flex;
     flex-direction: row;
     justify-content: center;

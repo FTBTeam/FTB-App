@@ -33,14 +33,20 @@ ipcMain.on('sendMeSecret', (event) => {
     event.reply("hereIsSecret", {port: wsPort, secret: wsSecret});
 });
 
-let pid = app.commandLine.getSwitchValue("pid");
-if(pid.length == 0){
-    let ourPID = process.pid;
-    let currentPath =  process.cwd();
-    let binaryFile = "FTBApp";
-    let operatingSystem = os.platform();
-    if(operatingSystem === "win32"){
-        binaryFile += ".exe";
+ipcMain.on('openOauthWindow', (event, data) => {
+    createOauthWindow();
+});
+
+if (process.argv.indexOf('--pid') === -1) {
+    console.log("No backend found, starting our own");
+    const ourPID = process.pid;
+    console.log("Our PID is", ourPID);
+    const currentPath =  process.cwd();
+    console.log("Current working directory is", currentPath);
+    let binaryFile = 'FTBApp';
+    const operatingSystem = os.platform();
+    if (operatingSystem === 'win32') {
+        binaryFile += '.exe';
     }
     binaryFile = path.join(currentPath, "..", binaryFile);
     if(fs.existsSync(binaryFile)){
@@ -124,4 +130,31 @@ if (isDevelopment) {
             app.quit();
         });
     }
+}
+
+
+// Oauth Window
+
+function createOauthWindow(){
+    const window = new BrowserWindow({
+        title: 'FTB Desktop App',
+
+        // Other
+        icon: path.join(__static, 'favicon.ico'),
+        // Size Settings
+        minWidth: 0,
+        minHeight: 0,
+        // maxWidth: 1000,
+        // maxHeight: 626,
+        height: 800,
+        width: 550,
+        // frame: false,
+        titleBarStyle: 'hidden',
+        webPreferences: {
+            nodeIntegration: true,
+            disableBlinkFeatures: 'Auxclick',
+        },
+    });
+    window.setMenu(null);
+    window.loadURL('https://auth.minetogether.io/auth/realms/MineTogether/protocol/openid-connect/auth?response_type=code&client_id=packmanager&redirect_uri=http://localhost:8080/auth&scope=email%20roles');
 }

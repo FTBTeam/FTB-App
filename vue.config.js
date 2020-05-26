@@ -32,7 +32,8 @@ module.exports = {
                 directories: {
                     output: "release"
                 }
-            }
+            },
+            mainProcessArgs: ['--ws', '18623:b3d2a72d-9876-483f-add7-2c3c3ce85b44']
         }
     }
 };
