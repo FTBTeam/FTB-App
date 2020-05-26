@@ -129,14 +129,14 @@ export default class SettingsPage extends Vue {
       }
       workingDir = process.cwd();
       // Get directory to check for files, if they're there we can proceed.
-      let appFolder = readdirSync(workingDir);
+      const appFolder = readdirSync(workingDir);
       if (appFolder.indexOf('launcher.log') > -1) {
         // Launcher log should always be there, if it isn't we won't do anything.
         const launcherLog = readFileSync(`${workingDir}/launcher.log`);
         const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`) : 'Not available';
-        let frontendLog = new Buffer("");
-        if(appFolder.indexOf('bin') > -1){
-          if(existsSync(path.join(workingDir, 'bin', 'logs', 'main.log'))){
+        let frontendLog = new Buffer('');
+        if (appFolder.indexOf('bin') > -1) {
+          if (existsSync(path.join(workingDir, 'bin', 'logs', 'main.log'))) {
             frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
           }
         }
@@ -144,33 +144,33 @@ export default class SettingsPage extends Vue {
         // Upload logs to pste.ch and copy URL to clipboard
         createPaste(data, {
           raw: false,
-          server: 'https://pste.ch'
+          server: 'https://pste.ch',
         })
         .then((data) => {
           clipboard.writeText(data);
           this.showAlert({
-            title: "Uploaded!",
-            message: "The URL has been copied to your clipboard",
-            type: "primary"
-          })
+            title: 'Uploaded!',
+            message: 'The URL has been copied to your clipboard',
+            type: 'primary',
+          });
           setTimeout(() => {
             this.hideAlert();
           }, 5000);
         })
-        .catch((rejected) =>{
+        .catch((rejected) => {
           console.log(rejected);
           this.showAlert({
-            title: "Error!",
-            message: "There was an error uploading your logs - " + rejected,
-            type: "danger"
-          })
+            title: 'Error!',
+            message: 'There was an error uploading your logs - ' + rejected,
+            type: 'danger',
+          });
           setTimeout(() => {
             this.hideAlert();
           }, 5000);
         });
       }
       // Change back to the bin folder
-      if (r) process.chdir('./bin');
+      if (r) { process.chdir('./bin'); }
     }
 
     public resChange(data: any) {

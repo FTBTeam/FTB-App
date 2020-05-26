@@ -22,18 +22,18 @@ protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true,
 let wsPort: number;
 let wsSecret: string;
 if (process.argv.indexOf('--ws') !== -1) {
-    console.log("We have a --ws");
+    console.log('We have a --ws');
     const wsArg = process.argv[process.argv.indexOf('--ws') + 1];
     const wsArgSplit = wsArg.split(':');
     wsPort = Number(wsArgSplit[0]);
     wsSecret = wsArgSplit[1];
 } else {
-    console.log("Setting default port and secret");
+    console.log('Setting default port and secret');
     wsPort = 13377;
     wsSecret = '';
 }
 ipcMain.on('sendMeSecret', (event) => {
-    event.reply("hereIsSecret", {port: wsPort, secret: wsSecret});
+    event.reply('hereIsSecret', {port: wsPort, secret: wsSecret});
 });
 
 ipcMain.on('openOauthWindow', (event, data) => {
@@ -42,24 +42,24 @@ ipcMain.on('openOauthWindow', (event, data) => {
 
 ipcMain.on('authData', (_, data) => {
     // @ts-ignore
-    win.webContents.send('hereAuthData', JSON.parse(data.replace(/(<([^>]+)>)/ig,"")));
-    console.log(data.replace(/(<([^>]+)>)/ig,""))
-})
+    win.webContents.send('hereAuthData', JSON.parse(data.replace(/(<([^>]+)>)/ig, '')));
+    console.log(data.replace(/(<([^>]+)>)/ig, ''));
+});
 
 if (process.argv.indexOf('--pid') === -1) {
-    console.log("No backend found, starting our own");
+    console.log('No backend found, starting our own');
     const ourPID = process.pid;
-    console.log("Our PID is", ourPID);
+    console.log('Our PID is', ourPID);
     const currentPath = process.cwd();
-    console.log("Current working directory is", currentPath);
+    console.log('Current working directory is', currentPath);
     let binaryFile = 'FTBApp';
     const operatingSystem = os.platform();
     if (operatingSystem === 'win32') {
         binaryFile += '.exe';
     }
-    binaryFile = path.join(currentPath, "..", binaryFile);
+    binaryFile = path.join(currentPath, '..', binaryFile);
     if (fs.existsSync(binaryFile)) {
-        childProcess.exec(binaryFile + " --pid " + ourPID);
+        childProcess.exec(binaryFile + ' --pid ' + ourPID);
     }
 }
 

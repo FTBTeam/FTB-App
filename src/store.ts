@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Vuex, { StoreOptions,MutationTree } from 'vuex';
+import Vuex, { StoreOptions, MutationTree } from 'vuex';
 import { RootState, Alert } from './types';
 import { news } from './modules/news';
 import { modpacks } from './modules/modpacks';
@@ -16,16 +16,16 @@ interface SecretMessage {
 
 
 export const mutations: MutationTree<RootState> = {
-    SHOW_ALERT(state: any, alert: Alert){
+    SHOW_ALERT(state: any, alert: Alert) {
         state.alert = alert;
     },
-    CLEAR_ALERT(state: any){
+    CLEAR_ALERT(state: any) {
         state.alert = null;
     },
-    STORE_WS(state: any, data: SecretMessage){
+    STORE_WS(state: any, data: SecretMessage) {
         state.wsPort = data.port;
         state.wsSecret = data.secret;
-    }
+    },
 };
 
 
@@ -34,15 +34,15 @@ const store: StoreOptions<RootState> = {
         version: '1.0.0',
         alert: null,
         wsPort: 0,
-        wsSecret: ""
+        wsSecret: '',
     },
     actions: {
-        "showAlert": ({commit}: any, alert: Alert) => {
+        showAlert: ({commit}: any, alert: Alert) => {
             commit('SHOW_ALERT', alert);
         },
-        "hideAlert": ({commit}: any) => {
+        hideAlert: ({commit}: any) => {
             commit('CLEAR_ALERT');
-        }
+        },
     },
     mutations,
     modules: {
@@ -50,7 +50,7 @@ const store: StoreOptions<RootState> = {
         modpacks,
         websocket,
         settings,
-        auth
+        auth,
     },
 };
 

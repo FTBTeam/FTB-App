@@ -100,22 +100,22 @@ Vue.mixin({
 });
 
 // tslint:disable-next-line:only-arrow-functions
-Vue.filter('moment', function(value: any) {
+Vue.filter('moment', (value: any) => {
     if (!value) { return ''; }
-    value = value.toString();
+    value = value.toString();   ``
     return moment.unix(value).format('Do MMMM YYYY');
 });
 
-Vue.filter('prettyBytes', function (num:number) {
+Vue.filter('prettyBytes', (num: number) => {
     // jacked from: https://github.com/sindresorhus/pretty-bytes
     if (isNaN(num)) {
         throw new TypeError('Expected a number');
     }
 
-    var exponent;
-    var unit;
-    var neg = num < 0;
-    var units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    let exponent;
+    let unit;
+    const neg = num < 0;
+    const units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
     if (neg) {
         num = -num;
@@ -134,7 +134,7 @@ Vue.filter('prettyBytes', function (num:number) {
 });
 
 
-let vm = new Vue({
+const vm = new Vue({
     router,
     store,
     components: {
@@ -145,24 +145,24 @@ let vm = new Vue({
 
 ipcRenderer.send('sendMeSecret');
 ipcRenderer.on('hereIsSecret', (event, data) => {
-    if(data.port === 13377){
+    if (data.port === 13377) {
         Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {format: 'json', reconnection: true, connectManually: true});
         vm.$connect();
         vm.$socket.onmessage = (msgData: MessageEvent) => {
-            let wsInfo = JSON.parse(msgData.data);
+            const wsInfo = JSON.parse(msgData.data);
             store.commit('STORE_WS', wsInfo);
             vm.$disconnect();
-            let index = Vue._installedPlugins.indexOf(VueNativeSock)
-            if(index > -1){
-                Vue._installedPlugins.splice(index, 1)
+            const index = Vue._installedPlugins.indexOf(VueNativeSock);
+            if (index > -1) {
+                Vue._installedPlugins.splice(index, 1);
             }
             Vue.use(VueNativeSock, 'ws://localhost:' + wsInfo.port, {store, format: 'json', reconnection: true});
-        }
+        };
     } else {
         store.commit('STORE_WS', data);
         Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {store, format: 'json', reconnection: true});
     }
 });
 ipcRenderer.on('hereAuthData', (event, data) => {
-    store.commit('auth/storeAuthDetails', {key: data.modpackskey, secret: data.modpackssecret})
-})
+    store.commit('auth/storeAuthDetails', {key: data.modpackskey, secret: data.modpackssecret, username: data.username, mcUUID: data.mcUUID});
+});

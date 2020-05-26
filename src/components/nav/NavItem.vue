@@ -33,7 +33,7 @@ export default class NavItem extends Vue {
             name: 'Browse',
             icon: 'search',
             link: 'browseModpacks',
-        }
+        },
     ];
     public isActiveFunc(page: string): boolean {
         return page === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${page}`);

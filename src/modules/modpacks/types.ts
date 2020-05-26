@@ -97,7 +97,7 @@ export interface ModpackState {
     packsCache: ModPacks;
 }
 
-interface ModPacks{
+interface ModPacks {
     [index: number]: ModPack;
 }
 export interface Changelog {

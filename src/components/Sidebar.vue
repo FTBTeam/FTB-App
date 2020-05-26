@@ -10,7 +10,7 @@
     <div class="nav-items flex-col mt-auto mb-0">
       <nav-item :isActive="isActiveTab('settings')" @click="goTo('/settings')"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>
       <nav-item v-if="auth.token === null" :isActive="isActiveTab('modpacks')" @click="openLogin()"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
-      <nav-item v-else><img src="https://minotar.net/avatar/Rushmead" style="margin-right: 0.75em;" width="21px" class="rounded-full" />Rushmead</nav-item>
+      <nav-item v-else class="capitalize"><img :src="`https://minotar.net/helm/${auth.token.mcUUID}`" style="margin-right: 0.75em;" width="21px" class="rounded-full" />{{auth.token.username}}</nav-item>
     </div>
     <img src="../assets/ch-logo.svg" width="90%" class="mb-2 cursor-pointer" draggable="false" @click="openPromo()"/>
   </div>
@@ -23,10 +23,11 @@ import Logo from './Logo.vue';
 import {shell, ipcRenderer} from 'electron';
 import {AuthState} from '../modules/auth/types';
 import {State, Action} from 'vuex-class';
+import store from '@/store';
 
 @Component({components: {NavItem, Logo}})
 export default class Sidebar extends Vue {
-  @State("auth")
+  @State('auth')
   private auth!: AuthState;
 
 
@@ -43,8 +44,12 @@ export default class Sidebar extends Vue {
     shell.openExternal('https://creeperhost.net/applyPromo/FEEDME');
   }
 
-  private openLogin(){
+  private openLogin() {
     ipcRenderer.send('openOauthWindow');
+  }
+
+  private debugLog(data: any) {
+    console.log(data);
   }
 }
 </script>

@@ -363,8 +363,8 @@ export default class InstancePage extends Vue {
         return resList;
     }
 
-    get currentModpack(){
-      if(!this.instance){
+    get currentModpack() {
+      if (!this.instance) {
         return null;
       }
       return this.modpacks?.packsCache[this.instance.id];
@@ -612,36 +612,36 @@ export default class InstancePage extends Vue {
         this.getModList();
     }
 
-    private getModList(){
-      const modlistRaw = fs.readFileSync(this.instance?.path + '/version.json', 'utf-8')
+    private getModList() {
+      const modlistRaw = fs.readFileSync(this.instance?.path + '/version.json', 'utf-8');
       const modlistJson = JSON.parse(modlistRaw);
       modlistJson.files.forEach((mod: Modlist) => {
         if (mod.type === 'mod') {
-          this.modlist.push({name: mod.name, version: mod.version, sha1: mod.sha1, size: mod.size})
+          this.modlist.push({name: mod.name, version: mod.version, sha1: mod.sha1, size: mod.size});
         }
       });
     }
 
     private async toggleChangelog(id: number | undefined) {
       console.log(id);
-        if (typeof id === 'undefined') {
+      if (typeof id === 'undefined') {
             return;
         }
-        if (!this.changelogs[id]) {
+      if (!this.changelogs[id]) {
             const changelog = await this.getChangelog({packID: this.instance?.id, versionID: id});
             this.changelogs[id] = changelog.content;
         }
-        this.activeChangelog = id;
+      this.activeChangelog = id;
     }
 
-    get isLatestVersion(){
-      if(this.currentModpack === undefined){
+    get isLatestVersion() {
+      if (this.currentModpack === undefined) {
         return true;
       }
       return this.instance?.versionId === this.currentModpack?.versions[0].id;
     }
 
-    private debugLog(thing:any){
+    private debugLog(thing: any) {
       console.log(thing);
     }
 }

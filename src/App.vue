@@ -82,8 +82,8 @@ export default class App extends Vue {
   @Action('finishInstall', { namespace: 'modpacks' })
   public finishInstall: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  private haveLoaded: boolean = false;
   @Action('hideAlert') public hideAlert: any;
+  private haveLoaded: boolean = false;
   @Watch('websockets', { deep: true })
   public onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (this.websockets.socket.isConnected && !this.haveLoaded) {

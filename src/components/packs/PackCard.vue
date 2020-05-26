@@ -166,13 +166,13 @@ export default class PackCard extends Vue {
     };
 
     @Watch('modpacks', {deep: true})
-    public onModpacksChange(newState: ModpackState, oldState: ModpackState){
-      console.log("State updated");
+    public onModpacksChange(newState: ModpackState, oldState: ModpackState) {
+      console.log('State updated');
       this.$forceUpdate();
     }
 
-    public async mounted(){
-      if(this.instance !== undefined){
+    public async mounted() {
+      if (this.instance !== undefined) {
         this.fetchModpack(this.instance.id);
       }
     }
@@ -254,22 +254,22 @@ export default class PackCard extends Vue {
       this.showInstall = false;
     }
 
-    get latestVersion(){
+    get latestVersion() {
       return this.modpacks?.packsCache[this.instance.id].versions.sort((a, b) => {
           return semver.rcompare(a.name, b.name);
       });
     }
 
-    get currentModpack(){
-      if(this.instance?.id){
+    get currentModpack() {
+      if (this.instance?.id) {
         return this.modpacks?.packsCache[this.instance?.id];
       } else {
         return this.modpacks?.packsCache[this.packID];
       }
     }
 
-    get isLatestVersion(){
-      if(this.currentModpack === undefined){
+    get isLatestVersion() {
+      if (this.currentModpack === undefined) {
         return true;
       }
       return this.instance.versionId === this.currentModpack?.versions[0].id;
