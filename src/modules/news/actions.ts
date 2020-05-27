@@ -8,7 +8,7 @@ const parser: Parser = new Parser();
 export const actions: ActionTree<NewsState, RootState> = {
     fetchNews({commit}): any {
         commit('newsLoading');
-        parser.parseURL('https://forum.feed-the-beast.com/forum/feed-the-beast-news.35/index.rss').then((feed) => {
+        parser.parseURL('https://forum.feed-the-beast.com/forum/feed-the-beast-news.35/index.rss?order=post_date').then((feed) => {
             if (feed === undefined || feed.items === undefined) {
                 commit('newsError');
                 return;
