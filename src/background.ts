@@ -43,7 +43,6 @@ ipcMain.on('openOauthWindow', (event, data) => {
 ipcMain.on('authData', (_, data) => {
     // @ts-ignore
     win.webContents.send('hereAuthData', JSON.parse(data.replace(/(<([^>]+)>)/ig, '')));
-    console.log(data.replace(/(<([^>]+)>)/ig, ''));
 });
 
 if (process.argv.indexOf('--pid') === -1) {
