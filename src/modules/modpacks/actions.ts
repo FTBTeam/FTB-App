@@ -11,7 +11,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             return;
         }
         commit('setLoading', true);
-        fetch(`${config.apiURL}/public/modpack/search/8?term=${searchTerm}`)
+        return fetch(`${config.apiURL}/public/modpack/search/8?term=${searchTerm}`)
         .then((response) => response.json())
         .then(async (data) => {
             if (data.status === 'error') {
@@ -38,7 +38,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     getPopularInstalls({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
+        return fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
         .then((response) => response.json())
         .then(async (data) => {
             const packIDs = data.packs;
@@ -64,7 +64,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     getPopularPlays({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        fetch(`${config.apiURL}/public/modpack/popular/plays/10`)
+        return fetch(`${config.apiURL}/public/modpack/popular/plays/10`)
         .then((response) => response.json())
         .then(async (data) => {
             const packIDs = data.packs;
@@ -95,7 +95,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     loadFeaturedPacks({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        fetch(`${config.apiURL}/public/modpack/featured/5`)
+        return fetch(`${config.apiURL}/public/modpack/featured/5`)
         .then((response) => response.json()).then(async (data) => {
             const packIDs = data.packs;
             if (packIDs == null) {

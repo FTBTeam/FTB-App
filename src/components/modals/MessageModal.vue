@@ -16,6 +16,16 @@
           @click="cancelAction"> Cancel
       </button>
     </div>
+    <div v-if="type==='YesNo'">
+      <button
+              class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right"
+              @click="yesAction"> Yes
+      </button>
+      <button
+              class="bg-red-500 hover:bg-red-400 text-white-600 font-bold py-2 px-4 mx-4 inline-flex items-center cursor-pointer float-right"
+              @click="noAction"> No
+      </button>
+    </div>
     <div v-if="type==='okOnly'">
       <button
           class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right"
@@ -38,6 +48,8 @@ import FTBButton from '@/components/FTBButton.vue';
         content: String,
         type: String,
         okAction: Function,
+        yesAction: Function,
+        noAction: Function,
         cancelAction: Function,
     },
 })

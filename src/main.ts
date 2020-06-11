@@ -99,7 +99,6 @@ Vue.mixin({
     },
 });
 
-// tslint:disable-next-line:only-arrow-functions
 Vue.filter('moment', (value: any) => {
     if (!value) { return ''; }
     value = value.toString();   ``
@@ -157,6 +156,7 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
                 Vue._installedPlugins.splice(index, 1);
             }
             Vue.use(VueNativeSock, 'ws://localhost:' + wsInfo.port, {store, format: 'json', reconnection: true});
+            ipcRenderer.send('updateSecret', wsInfo);
         };
     } else {
         store.commit('STORE_WS', data);

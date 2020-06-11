@@ -20,3 +20,15 @@ declare module 'electron' {
     console: any;
   }
 }
+
+
+declare module 'vue/types/vue' {
+  interface Vue {
+    $connect: () => {};
+    $socket: any;
+    $disconnect: () => {};
+  }
+  interface VueConstructor {
+    _installedPlugins: any;
+  }
+}

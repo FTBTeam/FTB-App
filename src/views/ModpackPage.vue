@@ -12,6 +12,9 @@
               <em>{{currentModpack.synopsis}}</em>
             </small>
           </span>
+          <div class="update-bar"  v-if="currentModpack && currentModpack.notification">
+            {{currentModpack.notification}}
+          </div>
           <div class="instance-buttons flex flex-row">
             <div class="instance-button mr-1">
               <button
@@ -152,6 +155,15 @@
     justify-content: center;
     flex-direction: column;
     text-align: center;
+  }
+  .update-bar {
+    background: rgba(	255, 193, 7, 0.9);
+    width: 100%;
+    height: 25px;
+    text-align: left;
+    font-weight: 700;
+    padding: 2px 2px 2px 6px;
+    color: black;
   }
 </style>
 

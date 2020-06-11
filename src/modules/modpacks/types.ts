@@ -13,6 +13,7 @@ export interface ModPack {
     type: string;
     updated: number;
     tags: string[];
+    notification: string;
 }
 
 export interface Instance {
@@ -32,6 +33,7 @@ export interface Instance {
     recMemory: number;
     width: number;
     height: number;
+    notification: string;
 }
 
 export interface Art {

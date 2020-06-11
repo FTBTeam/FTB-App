@@ -16,6 +16,9 @@
           <div class="update-bar"  v-if="instance && !isLatestVersion">
             A new update is available
           </div>
+          <div class="update-bar"  v-if="currentModpack && currentModpack.notification">
+            {{currentModpack.notification}}
+          </div>
           <div class="instance-buttons flex flex-row">
             <div class="instance-button mr-1">
               <button
