@@ -1,5 +1,5 @@
 <template>
-    <div v-if="settingsState !== undefined" class="m-2 card" :class="`w-size-${size ? size : settingsState.settings.packCardSize}`">
+    <div v-if="settingsState !== undefined" class="m-2 card" :class="`w-size-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}`">
         <div v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo" style="height: 100%">
             <article class="overflow-hidden shadow-lg" style="height: 100%">
                 <img class="w-full pack-image rounded-sm"
@@ -12,23 +12,23 @@
                 </div>
                 <div class="hoverContent" v-if="!installing">
                     <div class="row mb-2">
-                        <p :class="`font-bold text-text-color lg:text-${size ? size : settingsState.settings.packCardSize}xl text-center`">{{name}}</p>
+                        <p :class="`font-bold text-text-color lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl text-center`">{{name}}</p>
                     </div>
                     <div class="row" v-if="!isDemo">
                         <div class="buttons" v-if="installed">
                             <font-awesome-icon @click="checkMemory()" :icon="'play'" size="3x"
-                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize}xl sm:text-base button-shadow`"/>
+                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base button-shadow`"/>
                             <div class="divider"></div>
                             <font-awesome-icon :icon="'ellipsis-h'" size="3x"
-                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize}xl sm:text-base button-shadow`"
+                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base button-shadow`"
                                                @click="goToInstance"/>
                         </div>
                         <div class="buttons" v-if="!installed">
                             <font-awesome-icon @click="openInstall" :icon="'download'" size="3x"
-                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize}xl sm:text-base button-shadow`"/>
+                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base button-shadow`"/>
                             <div class="divider"></div>
                             <font-awesome-icon :icon="'info-circle'" size="3x"
-                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize}xl sm:text-base button-shadow`"
+                                               :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base button-shadow`"
                                                @click="openInfo"/>
                         </div>
                     </div>
