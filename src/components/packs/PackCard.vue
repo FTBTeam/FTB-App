@@ -356,16 +356,12 @@ import { SettingsState } from '@/modules/settings/types';
         opacity: 0;
     }
 
-    .content.hide {
-        opacity: 0;
-    }
-
-    .buttons {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-    }
+  .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
 
     .row {
         display: flex;
