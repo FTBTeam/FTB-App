@@ -57,6 +57,7 @@ import PackCard from '@/components/packs/PackCard.vue';
 import { asyncForEach } from '@/utils';
 import { State, Action } from 'vuex-class';
 import { ModpackState } from '@/modules/modpacks/types';
+import { SettingsState } from '@/modules/settings/types';
 
 const namespace: string = 'modpacks';
 
@@ -66,6 +67,7 @@ const namespace: string = 'modpacks';
   },
 })
 export default class Home extends Vue {
+  @State("settings") public settingsState!: SettingsState;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
   private isLoaded: boolean = false;
@@ -76,26 +78,27 @@ export default class Home extends Vue {
       await this.loadFeaturedPacks();
     }
     this.isLoaded = true;
-    if (window.innerWidth <= 1023) {
-      this.cardsToShow = 3;
-    }
-    if (window.innerWidth >= 1024) {
-      this.cardsToShow = 4;
-    }
-    if (window.innerWidth >= 1280) {
-      this.cardsToShow = 5;
-    }
-    window.onresize = () => {
-      if (window.innerWidth <= 1023) {
+    //@ts-ignore
+    switch (parseInt(this.settingsState.settings.packCardSize, 10)) {
+      case 5:
         this.cardsToShow = 3;
-      }
-      if (window.innerWidth >= 1024) {
+        break;
+      case 4:
         this.cardsToShow = 4;
-      }
-      if (window.innerWidth >= 1280) {
+        break;
+      case 3:
         this.cardsToShow = 5;
-      }
-    };
+        break;
+      case 2:
+        this.cardsToShow = 7;
+        break;
+      case 1:
+        this.cardsToShow = 10;
+        break;
+      default:
+        this.cardsToShow = 10;
+        break;
+    }
   }
 
   get recentlyPlayed() {

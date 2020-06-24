@@ -2,12 +2,21 @@
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full">
     <h1 class="text-3xl">Browse Modpacks</h1>
     <div class="w-1/2 self-center text-center">
-      <FTBSearchBar v-model="searchValue" placeholder="Search (4 characters minimum)" :doSearch="onSearch" />
+      <FTBSearchBar
+        v-model="searchValue"
+        placeholder="Search (4 characters minimum)"
+        :doSearch="onSearch"
+      />
     </div>
-    <div v-if="modpacks.error" class="m-4 p-3" style="background-color: #e55812"><span>{{modpacks.errorMsg}}</span></div>
+    <div v-if="modpacks.error" class="m-4 p-3" style="background-color: #e55812">
+      <span>{{modpacks.errorMsg}}</span>
+    </div>
     <transition name="fade" appear mode="out-in">
       <div class="flex flex-col" v-if="!modpacks.loading">
-        <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" v-if="modpacks.search.length > 0">
+        <div
+          class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
+          v-if="modpacks.search.length > 0"
+        >
           <pack-card
             v-for="(modpack, index) in modpacks.search"
             :key="index"
@@ -74,7 +83,7 @@
             appear
           >
             <pack-card
-              v-for="(modpack, index) in modpacks.popularInstalls.slice(0,cardsToShow)"
+              v-for="(modpack, index) in modpacks.popularPlays.slice(0,cardsToShow)"
               :key="index"
               :packID="modpack.id"
               :versions="modpack.versions"
@@ -97,32 +106,34 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import PackCard from '@/components/packs/PackCard.vue';
-import Loading from '@/components/Loading.vue';
-import FTBSearchBar from '@/components/FTBSearchBar.vue';
-import { ModpackState } from '../modules/modpacks/types';
-import { debounce } from '@/utils';
+import { Component, Vue } from "vue-property-decorator";
+import { Action, State } from "vuex-class";
+import PackCard from "@/components/packs/PackCard.vue";
+import Loading from "@/components/Loading.vue";
+import { SettingsState, Settings } from "@/modules/settings/types";
+import FTBSearchBar from "@/components/FTBSearchBar.vue";
+import { ModpackState } from "../modules/modpacks/types";
+import { debounce } from "@/utils";
 
-const namespace: string = 'modpacks';
+const namespace: string = "modpacks";
 
 @Component({
   components: {
     PackCard,
     FTBSearchBar,
-    Loading,
-  },
+    Loading
+  }
 })
 export default class BrowseModpacks extends Vue {
-  @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-  @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
-  @Action('getPopularInstalls', { namespace }) public getPopularInstalls: any;
-  @Action('getPopularPlays', { namespace }) public getPopularPlays: any;
-  @Action('doSearch', { namespace }) public doSearch: any;
-  @Action('clearSearch', { namespace }) public clearSearch: any;
+  @State("settings") public settingsState!: SettingsState;
+  @State("modpacks") public modpacks: ModpackState | undefined = undefined;
+  @Action("loadFeaturedPacks", { namespace }) public loadFeaturedPacks: any;
+  @Action("getPopularInstalls", { namespace }) public getPopularInstalls: any;
+  @Action("getPopularPlays", { namespace }) public getPopularPlays: any;
+  @Action("doSearch", { namespace }) public doSearch: any;
+  @Action("clearSearch", { namespace }) public clearSearch: any;
 
-  private searchValue: string = '';
+  private searchValue: string = "";
   private cardsToShow = 3;
   private debounceSearch: () => void = () => {};
 
@@ -140,32 +151,44 @@ export default class BrowseModpacks extends Vue {
       await this.getPopularInstalls();
       await this.getPopularPlays();
     }
-
-    if (window.innerWidth <= 1023) {
-      this.cardsToShow = 4;
-    }
-    if (window.innerWidth >= 1024) {
-      this.cardsToShow = 5;
-    }
-    if (window.innerWidth >= 1280) {
-      this.cardsToShow = 7;
-    }
-
-    window.onresize = () => {
-      if (window.innerWidth <= 1023) {
+    //@ts-ignore
+    switch (parseInt(this.settingsState.settings.packCardSize, 10)) {
+      case 5:
+        this.cardsToShow = 3;
+        break;
+      case 4:
         this.cardsToShow = 4;
-      }
-      if (window.innerWidth >= 1024) {
+        break;
+      case 3:
         this.cardsToShow = 5;
-      }
-      if (window.innerWidth >= 1280) {
+        break;
+      case 2:
         this.cardsToShow = 7;
-      }
-    };
+        break;
+      case 1:
+        this.cardsToShow = 10;
+        break;
+      default:
+        this.cardsToShow = 10;
+        break;
+    }
+
+    // if (this.settingsState.settings.packCardSize === 5) {
+    //   this.cardsToShow = 4;
+    // }
+    // if (this.settingsState.settings.packCardSize === 2) {
+    //   this.cardsToShow = 7;
+    // }
+    // if (this.settingsState.settings.packCardSize >= 2) {
+    //   this.cardsToShow = 7;
+    // }
+    // if (this.settingsState.settings.packCardSize < 2) {
+    //   this.cardsToShow = 10;
+    // }
   }
 
   private onSearch() {
-    if (this.searchValue === '' || this.searchValue == null) {
+    if (this.searchValue === "" || this.searchValue == null) {
       this.clearSearch();
     } else {
       this.debounceSearch();

@@ -101,7 +101,7 @@ Vue.mixin({
 
 Vue.filter('moment', (value: any) => {
     if (!value) { return ''; }
-    value = value.toString();
+    value = value.toString();   ``
     return moment.unix(value).format('Do MMMM YYYY');
 });
 
@@ -162,4 +162,7 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
         store.commit('STORE_WS', data);
         Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {store, format: 'json', reconnection: true});
     }
+});
+ipcRenderer.on('hereAuthData', (event, data) => {
+    store.commit('auth/storeAuthDetails', {key: data.modpackskey, secret: data.modpackssecret, username: data.username, mcUUID: data.mcUUID});
 });

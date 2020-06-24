@@ -95,7 +95,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     loadFeaturedPacks({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        return fetch(`${config.apiURL}/public/modpack/featured/5`)
+        return fetch(`${config.apiURL}/public/modpack/featured/10`)
         .then((response) => response.json()).then(async (data) => {
             const packIDs = data.packs;
             if (packIDs == null) {
@@ -185,9 +185,14 @@ export const actions: ActionTree<ModpackState, RootState> = {
             .then(async (response: any) => {
                 response = response as Response;
                 const pack: ModPack = await response.json() as ModPack;
-                pack.versions = pack.versions.sort((a, b) => {
-                    return semver.rcompare(a.name, b.name);
-                });
+                if(pack === undefined){
+                    return;
+                }
+                if(pack.versions !== undefined){
+                    pack.versions = pack.versions.sort((a, b) => {
+                        return semver.rcompare(a.name, b.name);
+                    });
+                }
                 commit('addToCache', pack);
                 resolve(pack);
             }).catch((err) => {

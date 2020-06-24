@@ -386,6 +386,8 @@ export default class InstancePage extends Vue {
     @Action('saveInstance', {namespace: 'modpacks'}) public saveInstance: any;
     @Action('sendMessage') public sendMessage!: any;
     @Action('getChangelog', {namespace: 'modpacks'}) public getChangelog!: any;
+    @Action('showAlert') public showAlert: any;
+    @Action('hideAlert') public hideAlert: any;
 
     private activeTab: string = 'overview';
     private showMsgBox: boolean = false;
@@ -568,6 +570,14 @@ export default class InstancePage extends Vue {
 
     public async saveSettings() {
         await this.saveInstance(this.instance);
+        this.showAlert({
+          title: 'Saved!',
+          message: 'The settings for this instance have been saved',
+          type: 'primary',
+        });
+        setTimeout(() => {
+          this.hideAlert();
+        }, 5000);
     }
 
     public resChange(data: any) {

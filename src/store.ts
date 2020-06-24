@@ -1,10 +1,11 @@
 import Vue from 'vue';
 import Vuex, { StoreOptions, MutationTree } from 'vuex';
-import { RootState, Alert, ModalBox } from './types';
+import { RootState, Alert } from './types';
 import { news } from './modules/news';
 import { modpacks } from './modules/modpacks';
 import { websocket } from './modules/websocket';
 import { settings } from './modules/settings';
+import { auth } from './modules/auth';
 
 Vue.use(Vuex);
 
@@ -25,12 +26,6 @@ export const mutations: MutationTree<RootState> = {
         state.wsPort = data.port;
         state.wsSecret = data.secret;
     },
-    SHOW_MODAL(state: any, modal: ModalBox) {
-        state.modal = modal;
-    },
-    HIDE_MODAL(state: any){
-        state.modal = null;
-    }
 };
 
 
@@ -40,7 +35,6 @@ const store: StoreOptions<RootState> = {
         alert: null,
         wsPort: 0,
         wsSecret: '',
-        modal: null
     },
     actions: {
         showAlert: ({commit}: any, alert: Alert) => {
@@ -49,9 +43,6 @@ const store: StoreOptions<RootState> = {
         hideAlert: ({commit}: any) => {
             commit('CLEAR_ALERT');
         },
-        hideModal: ({commit}: any) => {
-            commit('HIDE_MODAL');
-        },
     },
     mutations,
     modules: {
@@ -59,6 +50,7 @@ const store: StoreOptions<RootState> = {
         modpacks,
         websocket,
         settings,
+        auth,
     },
 };
 

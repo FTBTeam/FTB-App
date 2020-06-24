@@ -9,6 +9,7 @@ export interface Settings {
     threadLimit: number;
     speedLimit: number;
     cacheLife: number;
+    packCardSize: number;
 }
 
 export interface Hardware {
