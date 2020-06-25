@@ -3,7 +3,6 @@ export interface RootState {
     alert: Alert | null;
     wsPort: number;
     wsSecret: string;
-    modal: ModalBox | null; 
 }
 
 export interface Alert {
