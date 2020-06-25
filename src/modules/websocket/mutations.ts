@@ -33,7 +33,7 @@ export const mutations: MutationTree<SocketState> = {
             state.modal = null;
         }
         state.socket.message = message;
-        // console.log(JSON.stringify(message));
+        console.log(JSON.stringify(message));
     },
     SOCKET_RECONNECT(state: any, count: number) {
         console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
