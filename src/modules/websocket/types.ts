@@ -1,3 +1,5 @@
+import { ModalBox } from '@/types';
+
 export interface SocketState {
     firstStart: boolean;
     socket: Socket;

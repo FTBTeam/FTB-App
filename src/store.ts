@@ -27,10 +27,10 @@ export const mutations: MutationTree<RootState> = {
         state.wsSecret = data.secret;
     },
     SHOW_MODAL(state: any, modal: ModalBox) {
-        state.modal = modal;
+        state.websocket.modal = modal;
     },
     HIDE_MODAL(state: any){
-        state.modal = null;
+        state.websocket.modal = null;
     }
 };
 
@@ -40,8 +40,7 @@ const store: StoreOptions<RootState> = {
         version: '1.0.0',
         alert: null,
         wsPort: 0,
-        wsSecret: '',
-        modal: null
+        wsSecret: ''
     },
     actions: {
         showAlert: ({commit}: any, alert: Alert) => {

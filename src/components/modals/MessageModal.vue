@@ -48,7 +48,7 @@ import { Action } from 'vuex-class';
         yesAction: Function,
         noAction: Function,
         cancelAction: Function,
-        buttons: [],
+        buttons: Array,
         modalID: String
     },
 })
