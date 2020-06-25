@@ -23,18 +23,6 @@ import SubNavItem from '@/components/nav/SubNavItem.vue';
     },
 })
 export default class NavItem extends Vue {
-    public modpackSubnav = [
-        {
-            name: 'My Modpacks',
-            icon: 'folder',
-            link: 'modpacks',
-        },
-        {
-            name: 'Browse',
-            icon: 'search',
-            link: 'browseModpacks',
-        },
-    ];
     public isActiveFunc(page: string): boolean {
         return page === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${page}`);
     }

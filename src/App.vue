@@ -148,7 +148,7 @@ export default class App extends Vue {
 <style lang="scss">
 #app {
   margin: 0;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Raleway', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);

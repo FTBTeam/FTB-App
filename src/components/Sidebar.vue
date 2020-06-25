@@ -5,7 +5,7 @@
     <div class="nav-items flex-col">
       <nav-item :isActive="isActiveTab('news')" @click="goTo('news')"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" />News</nav-item>
       <nav-item :isActive="isActiveTab('home')" @click="goTo('/')"><font-awesome-icon icon="home" size="lg" class="mr-3" />Home</nav-item>
-      <nav-item :isActive="isActiveTab('modpacks') || isActiveTab('browseModpacks')" @click="goTo('modpacks')" :hasSub="true"><font-awesome-icon icon="box-open" size="lg" class="mr-3" />Modpacks</nav-item>
+      <nav-item :isActive="isActiveTab('modpacks') || isActiveTab('browseModpacks')" @click="goTo('modpacks')"><font-awesome-icon icon="box-open" size="lg" class="mr-3" />Modpacks</nav-item>
     </div>
     <div class="nav-items flex-col mt-auto mb-0">
       <nav-item :isActive="isActiveTab('settings')" @click="goTo('/settings')"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>

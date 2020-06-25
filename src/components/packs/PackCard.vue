@@ -388,6 +388,7 @@ import { SettingsState } from '@/modules/settings/types';
         background: rgba(0, 0, 0, 0.6);
         width: 100%;
         text-align: left;
+        font-size: 15px;
         font-weight: 700;
         padding: 2px 2px 2px 6px;
     }
