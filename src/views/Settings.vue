@@ -34,6 +34,8 @@
                     <!--                      unit="MB" @blur="doSave" step="128"/>-->
                     <ftb-input label="Custom Arguments" :value="settingsCopy.jvmargs" v-model="settingsCopy.jvmargs"
                                @blur="doSave"/>
+                    <ftb-input label="Instance Location" :value="settingsCopy.instanceLocation" v-model="settingsCopy.instanceLocation"
+                            @blur="doSave" button="true" buttonText="Browse" buttonColor="primary" :buttonClick="browseForFolder" />
                 </div>
             </div>
             <h1 class="text-2xl">App Settings</h1>
@@ -119,7 +121,7 @@
     import {State, Action} from 'vuex-class';
     import {SettingsState, Settings} from '@/modules/settings/types';
     import config from '@/config';
-    import {clipboard} from 'electron';
+    import {ipcRenderer, clipboard} from 'electron';
     import path from 'path';
 
     @Component({
@@ -150,6 +152,7 @@
             speedLimit: 0,
             cacheLife: 5184000,
             packCardSize: 2,
+            instanceLocation: "",
         };
 
         private resSelectedValue: string = '0';
@@ -169,6 +172,13 @@
             this.$router.push(page).catch((err) => {
                 return;
             });
+        }
+
+        public browseForFolder() {
+            ipcRenderer.send('selectFolder', this.settingsCopy.instanceLocation);
+            ipcRenderer.on('setInstanceFolder', (event, dir) => {
+                this.settingsCopy.instanceLocation = dir;
+            })
         }
 
 

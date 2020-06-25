@@ -10,6 +10,7 @@ export interface Settings {
     speedLimit: number;
     cacheLife: number;
     packCardSize: number;
+    instanceLocation: string;
 }
 
 export interface Hardware {

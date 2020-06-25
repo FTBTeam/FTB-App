@@ -4,7 +4,7 @@
       <div>
         <div
             class="header-image"
-            v-bind:style="{'background-image': `url(${currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+            v-bind:style="{'background-image': `url(${currentModpack !== undefined && typeof currentModpack.art === 'Array' && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
           <span class="instance-name text-4xl">{{instance.name}}</span>
           <span class="instance-info">
@@ -74,7 +74,7 @@
                 href="#overview"
             >Overview</a>
           </li>
-          <li class="-mb-px mr-1">
+          <li class="-mb-px mr-1" v-if="currentModpack != null && currentModpack.versions !== undefined">
             <a
                 class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('versions')"
@@ -101,9 +101,12 @@
         </ul>
         <div class="tab-content p-2" style="overflow-y: auto; flex: 1; margin-bottom: 40px;">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
-            <div class="flex flex-wrap" v-if="currentModpack != null">
+            <div class="flex flex-wrap" v-if="currentModpack != null && currentModpack.description !== undefined">
               <hr/>
               <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
+            </div>
+            <div v-else>
+              <h2>No description available</h2>
             </div>
             <hr/>
           </div>
@@ -370,6 +373,9 @@ export default class InstancePage extends Vue {
       if (!this.instance) {
         return null;
       }
+      if(this.modpacks?.packsCache[this.instance.id] === undefined){
+        return this.instance;
+      }
       return this.modpacks?.packsCache[this.instance.id];
     }
 
@@ -511,7 +517,7 @@ export default class InstancePage extends Vue {
         const modpackID = this.instance?.id;
         this.updateInstall({modpackID: this.instance?.id, progress: 0});
         if (this.modpacks != null && this.currentModpack != null) {
-            if (versionID === undefined) {
+            if (versionID === undefined && (this.currentModpack instanceof ModPack)) {
                 versionID = this.currentModpack.versions[0].id;
             }
             this.sendMessage({
@@ -611,7 +617,9 @@ export default class InstancePage extends Vue {
             return;
         }
         await this.fetchModpack(this.instance.id);
-        this.toggleChangelog(this.currentModpack?.versions[0].id);
+        if((<ModPack>this.currentModpack).versions !== undefined){
+          this.toggleChangelog(this.currentModpack?.versions[0].id);
+        }
         this.getModList();
     }
 
@@ -626,7 +634,6 @@ export default class InstancePage extends Vue {
     }
 
     private async toggleChangelog(id: number | undefined) {
-      console.log(id);
       if (typeof id === 'undefined') {
             return;
         }
@@ -638,7 +645,7 @@ export default class InstancePage extends Vue {
     }
 
     get isLatestVersion() {
-      if (this.currentModpack === undefined) {
+      if (this.currentModpack === undefined || this.currentModpack.versions === undefined) {
         return true;
       }
       return this.instance?.versionId === this.currentModpack?.versions[0].id;

@@ -1,6 +1,6 @@
 'use strict';
 
-import {app, protocol, BrowserWindow, remote, shell, ipcMain} from 'electron';
+import {app, protocol, BrowserWindow, remote, shell, ipcMain, dialog} from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -44,6 +44,20 @@ ipcMain.on('openOauthWindow', (event, data) => {
 ipcMain.on('authData', (_, data) => {
     // @ts-ignore
     win.webContents.send('hereAuthData', JSON.parse(data.replace(/(<([^>]+)>)/ig, '')));
+});
+
+ipcMain.on('selectFolder', async (event, data) => {
+    if(win === null){
+        return;
+    }
+    console.log(data);
+    const result = await dialog.showOpenDialog(win, {
+        properties: ['openDirectory'],
+        defaultPath: data
+    })
+    if(result.filePaths.length > 0){
+        event.reply('setInstanceFolder', result.filePaths[0]);
+    }
 });
 
 if (process.argv.indexOf('--pid') === -1) {
