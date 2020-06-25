@@ -151,8 +151,10 @@ export default class BrowseModpacks extends Vue {
       await this.getPopularInstalls();
       await this.getPopularPlays();
     }
+    
+    const cardSize =  this.settingsState.settings.packCardSize || 2
     //@ts-ignore
-    switch (parseInt(this.settingsState.settings.packCardSize, 10)) {
+    switch (parseInt(cardSize, 10)) {
       case 5:
         this.cardsToShow = 3;
         break;

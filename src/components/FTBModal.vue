@@ -2,10 +2,10 @@
   <Transition name="fade">
   <div
     v-if="visible"
-    class="left-0 top-0 fixed flex items-center justify-center bg-transparent-black h-screen w-full z-10"
+    class="left-0 top-0 fixed flex items-center justify-center bg-transparent-black h-screen w-full z-10 "
     v-on:click.self="hide">
     <div
-      class="bg-navbar rounded shadow px-8 m-4 py-4 max-w-lg max-h-full text-white pointer-events-auto">
+      class="bg-navbar rounded shadow px-8 m-4 py-4 max-w-lg max-h-full text-white pointer-events-auto min-w-1/4">
       <slot></slot>
     </div>
   </div>

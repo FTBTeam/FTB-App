@@ -34,6 +34,8 @@
                     <!--                      unit="MB" @blur="doSave" step="128"/>-->
                     <ftb-input label="Custom Arguments" :value="settingsCopy.jvmargs" v-model="settingsCopy.jvmargs"
                                @blur="doSave"/>
+                    <ftb-input label="Instance Location" :value="settingsCopy.instanceLocation" v-model="settingsCopy.instanceLocation"
+                            @blur="doSave" button="true" buttonText="Browse" buttonColor="primary" :buttonClick="browseForFolder" />
                 </div>
             </div>
             <h1 class="text-2xl">App Settings</h1>
@@ -96,10 +98,14 @@
                     <span><a class="cursor-pointer hover:underline"
                              href="https://github.com/CreeperHost/modpacklauncher" target="_blank">App Version: {{appVersion}} <font-awesome-icon
                             class="ml-2" :icon="['fab', 'github']" size="1x"/></a></span>
-                    <a @click="goTo('/license')" class="hover:underline cursor-pointer">License Information</a>
+                    <router-link @click.native="scrollToTop" to="/license" class="hover:underline cursor-pointer">License Information</router-link >
                     <button @click="uploadLogData()"
-                            class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">
+                            class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 my-2 py-3 px-4 leading-tight cursor-pointer">
                         Upload App Logs
+                    </button>
+                    <button @click="refreshCache()"
+                            class="appearance-none block w-full bg-orange-400 text-white-600 border border-orange-500 my-2 py-3 px-4 leading-tight cursor-pointer">
+                       Refresh Cache
                     </button>
                 </div>
             </div>
@@ -119,7 +125,7 @@
     import {State, Action} from 'vuex-class';
     import {SettingsState, Settings} from '@/modules/settings/types';
     import config from '@/config';
-    import {clipboard} from 'electron';
+    import {ipcRenderer, clipboard} from 'electron';
     import path from 'path';
 
     @Component({
@@ -133,6 +139,7 @@
     })
     export default class SettingsPage extends Vue {
         @State('settings') public settingsState!: SettingsState;
+        @Action('refreshCache', {namespace: 'modpacks'}) public refreshCache!: any;
         @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
         @Action('loadSettings', {namespace: 'settings'}) public loadSettings: any;
         @Action('showAlert') public showAlert: any;
@@ -150,6 +157,7 @@
             speedLimit: 0,
             cacheLife: 5184000,
             packCardSize: 2,
+            instanceLocation: "",
         };
 
         private resSelectedValue: string = '0';
@@ -164,11 +172,19 @@
             return resList;
         }
 
-        public goTo(page: string): void {
-            // We don't care about this error!
-            this.$router.push(page).catch((err) => {
-                return;
-            });
+        public scrollToTop(): void {
+            document.querySelectorAll('.content-container')[0].scrollTo(0,0);
+            // // We don't care about this error!
+            // this.$router.push(page).catch((err) => {
+            //     return;
+            // });
+        }
+
+        public browseForFolder() {
+            ipcRenderer.send('selectFolder', this.settingsCopy.instanceLocation);
+            ipcRenderer.on('setInstanceFolder', (event, dir) => {
+                this.settingsCopy.instanceLocation = dir;
+            })
         }
 
 

@@ -201,4 +201,14 @@ export const actions: ActionTree<ModpackState, RootState> = {
             });
         });
     },
+    async refreshCache({commit, rootState, dispatch}: any): Promise<any> {
+        let packIDs = Object.keys(rootState.modpacks.packsCache);
+        commit('clearCache');
+        await Promise.all(packIDs.map(async (id: any) => {
+            return await dispatch('fetchModpack', id);
+        }));
+        await dispatch('loadFeaturedPacks');
+        await dispatch('getPopularPlays');
+        await dispatch('getPopularInstalls');
+    }
 };
