@@ -98,7 +98,7 @@
                     <span><a class="cursor-pointer hover:underline"
                              href="https://github.com/CreeperHost/modpacklauncher" target="_blank">App Version: {{appVersion}} <font-awesome-icon
                             class="ml-2" :icon="['fab', 'github']" size="1x"/></a></span>
-                    <a @click="goTo('/license')" class="hover:underline cursor-pointer">License Information</a>
+                    <router-link @click.native="scrollToTop" to="/license" class="hover:underline cursor-pointer">License Information</router-link >
                     <button @click="uploadLogData()"
                             class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">
                         Upload App Logs
@@ -167,11 +167,12 @@
             return resList;
         }
 
-        public goTo(page: string): void {
-            // We don't care about this error!
-            this.$router.push(page).catch((err) => {
-                return;
-            });
+        public scrollToTop(): void {
+            document.querySelectorAll('.content-container')[0].scrollTo(0,0);
+            // // We don't care about this error!
+            // this.$router.push(page).catch((err) => {
+            //     return;
+            // });
         }
 
         public browseForFolder() {
