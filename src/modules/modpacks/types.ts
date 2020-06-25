@@ -1,4 +1,5 @@
 export interface ModPack {
+    kind: 'modpack';
     synopsis: string;
     description: string;
     art: Art[];
@@ -17,6 +18,7 @@ export interface ModPack {
 }
 
 export interface Instance {
+    kind: 'instance';
     id: number;
     uuid: string;
     name: string;
