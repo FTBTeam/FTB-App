@@ -17,6 +17,7 @@ export const mutations: MutationTree<SocketState> = {
         state.firstConnect = false;
     },
     SOCKET_ONMESSAGE(state: any, message: any)  {
+        console.log("State", state);
         if (message.requestId) {
             if (state.messages[message.requestId]) {
                 state.messages[message.requestId](message);
