@@ -43,8 +43,8 @@
           </div>
         </div>
       </div>
-      <FTBModal v-if="$store.state.modal !== null" :visible="$store.state.modal !== null" @dismiss-modal="hideModal">
-        <message-modal :title="$store.state.modal.title" :content="$store.state.modal.message" type="custom" :buttons="$store.state.modal.buttons" :modalID="$store.state.modal.id"/>
+      <FTBModal v-if="$store.state.websocket.modal !== null" :visible="$store.state.websocket.modal !== null" @dismiss-modal="hideModal">
+        <message-modal :title="$store.state.websocket.modal.title" :content="$store.state.websocket.modal.message" type="custom" :buttons="$store.state.websocket.modal.buttons" :modalID="$store.state.websocket.modal.id"/>
       </FTBModal>
     </div>
     <div class="container flex pt-1 flex-wrap overflow-x-auto justify-center" v-else>
