@@ -518,7 +518,7 @@ export default class InstancePage extends Vue {
         const modpackID = this.instance?.id;
         this.updateInstall({modpackID: this.instance?.id, progress: 0});
         if (this.modpacks != null && this.currentModpack != null) {
-            if (versionID === undefined && (this.currentModpack instanceof ModPack)) {
+            if (versionID === undefined && this.currentModpack.kind === "modpack") {
                 versionID = this.currentModpack.versions[0].id;
             }
             this.sendMessage({
@@ -618,7 +618,7 @@ export default class InstancePage extends Vue {
             return;
         }
         await this.fetchModpack(this.instance.id);
-        if((<ModPack>this.currentModpack).versions !== undefined){
+        if(this.currentModpack?.kind === "modpack"){
           this.toggleChangelog(this.currentModpack?.versions[0].id);
         }
         this.getModList();
@@ -646,7 +646,7 @@ export default class InstancePage extends Vue {
     }
 
     get isLatestVersion() {
-      if (this.currentModpack === undefined || this.currentModpack.versions === undefined) {
+      if (this.currentModpack === undefined || this.currentModpack?.kind !== "modpack") {
         return true;
       }
       return this.instance?.versionId === this.currentModpack?.versions[0].id;
