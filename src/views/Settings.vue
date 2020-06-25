@@ -184,7 +184,7 @@
             ipcRenderer.send('selectFolder', this.settingsCopy.instanceLocation);
             ipcRenderer.on('setInstanceFolder', (event, dir) => {
                 this.settingsCopy.instanceLocation = dir;
-                this.doSave();
+                this.saveSettings(this.settingsCopy);
             })
         }
 
