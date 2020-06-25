@@ -43,6 +43,9 @@
           </div>
         </div>
       </div>
+      <FTBModal v-if="$store.state.modal !== null" :visible="$store.state.modal !== null" @dismiss-modal="hideModal">
+        <message-modal :title="$store.state.modal.title" :content="$store.state.modal.message" type="custom" :buttons="$store.state.modal.buttons" :modalID="$store.state.modal.id"/>
+      </FTBModal>
     </div>
     <div class="container flex pt-1 flex-wrap overflow-x-auto justify-center" v-else>
       <!-- TODO: Make this pretty -->
@@ -62,6 +65,8 @@ import TitleBar from '@/components/TitleBar.vue';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from './modules/websocket/types';
+import FTBModal from '@/components/FTBModal.vue';
+import MessageModal from '@/components/modals/MessageModal.vue';
 import { asyncForEach } from './utils';
 import {
   Instance,
@@ -70,7 +75,7 @@ import {
 } from './modules/modpacks/types';
 import { RootState } from './types';
 
-@Component({ components: { Sidebar, TitleBar } })
+@Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal} })
 export default class App extends Vue {
   @State('websocket') public websockets!: SocketState;
   @State('modpacks') public modpacks!: ModpackState;
@@ -83,6 +88,7 @@ export default class App extends Vue {
   public finishInstall: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('hideAlert') public hideAlert: any;
+  @Action('hideModal') public hideModal: any;
   private haveLoaded: boolean = false;
   @Watch('websockets', { deep: true })
   public onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
