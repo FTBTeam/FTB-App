@@ -17,7 +17,6 @@ export const mutations: MutationTree<SocketState> = {
         state.firstConnect = false;
     },
     SOCKET_ONMESSAGE(state: any, message: any)  {
-        console.log("State", state);
         if (message.requestId) {
             if (state.messages[message.requestId]) {
                 state.messages[message.requestId](message);
@@ -28,17 +27,13 @@ export const mutations: MutationTree<SocketState> = {
                 }
             }
         }
-        console.log("MessageType: ", message.type);
         if(message.type === "openModal"){
-            console.log("Opening modal");
             state.modal = message;
-            console.log("Opened modal", state.modal);
         } else if (message.type === "closeModal"){
-            console.log("Closing modal");
             state.modal = null;
         }
         state.socket.message = message;
-        console.log(JSON.stringify(message));
+        // console.log(JSON.stringify(message));
     },
     SOCKET_RECONNECT(state: any, count: number) {
         console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
