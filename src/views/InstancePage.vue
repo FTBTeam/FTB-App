@@ -199,6 +199,7 @@
                   :maxValue="settingsState.hardware.totalMemory"
                   @blur="saveSettings"
                   @change="saveSettings"
+                  step="64"
                   unit="MB"
               />
               <ftb-input label="Custom Arguments" v-model="instance.jvmArgs" @blur="saveSettings"/>

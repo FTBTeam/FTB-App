@@ -19,7 +19,8 @@ module.exports = {
                 "danger-button": "var(--color-red-button)",
             },
             minWidth: {
-                '1/4': '24%',
+                '1/4': '25%',
+                '1/2': '50%',
                 '1/3': '40%',
                 'unset': 'unset',
                 '200': '400px',

@@ -317,7 +317,7 @@ import { SettingsState } from '@/modules/settings/types';
         }
 
         get isLatestVersion() {
-            if (this.currentModpack === undefined) {
+            if (this.currentModpack === undefined || this.currentModpack === null) {
                 return true;
             }
             return this.instance.versionId === this.currentModpack?.versions[0].id;
