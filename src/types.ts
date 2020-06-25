@@ -11,6 +11,17 @@ export interface Alert {
     message: string;
 }
 
+export interface ModalBox {
+  title: string;
+  message: string;
+  buttons: Button[];
+}
+
+export interface Button {
+  name: string;
+  message: string;
+  colour: string;
+}
 
 // 2. Specify a file with the types you want to augment
 //    Vue has the constructor type in types/vue.d.ts

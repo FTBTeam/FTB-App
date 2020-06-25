@@ -12,6 +12,7 @@ export const state: SocketState = {
     },
     firstStart: true,
     messages: {},
+    modal: null,
 };
 
 export const websocket: Module<SocketState, RootState> = {

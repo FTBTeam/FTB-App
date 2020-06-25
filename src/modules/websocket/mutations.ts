@@ -27,6 +27,11 @@ export const mutations: MutationTree<SocketState> = {
                 }
             }
         }
+        if(message.type === "openModal"){
+            state.modal = message;
+        } else if (message.type === "closeModal"){
+            state.modal = null;
+        }
         state.socket.message = message;
         // console.log(JSON.stringify(message));
     },

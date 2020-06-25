@@ -16,14 +16,9 @@
           @click="cancelAction"> Cancel
       </button>
     </div>
-    <div v-if="type==='YesNo'">
-      <button
-              class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right"
-              @click="yesAction"> Yes
-      </button>
-      <button
-              class="bg-red-500 hover:bg-red-400 text-white-600 font-bold py-2 px-4 mx-4 inline-flex items-center cursor-pointer float-right"
-              @click="noAction"> No
+    <div v-if="type === 'custom'" class="buttons">
+      <button v-for="(button, index) in buttons" :key="index" class="text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right" @click="sendMessage(button.message)" :class="`bg-${button.colour}-500 hover:bg-${button.colour}-400`">
+        {{button.name}}
       </button>
     </div>
     <div v-if="type==='okOnly'">
@@ -37,6 +32,8 @@
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import FTBButton from '@/components/FTBButton.vue';
+import {Button} from '@/types';
+import { Action } from 'vuex-class';
 
 @Component({
     name: 'MessageModal',
@@ -51,10 +48,18 @@ import FTBButton from '@/components/FTBButton.vue';
         yesAction: Function,
         noAction: Function,
         cancelAction: Function,
+        buttons: Array,
+        modalID: String
     },
 })
 export default class MessageModal extends Vue {
+  @Action('sendMessage') public sendWSMessage: any;
+  @Prop()
+  private modalID!: String;
 
+  sendMessage(message: string){
+    this.sendWSMessage({payload: {type: 'modalCallback', id: this.modalID, message}, callback: () => {}});
+  }
 }
 </script>
 <style></style>
