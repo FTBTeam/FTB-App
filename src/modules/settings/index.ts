@@ -19,6 +19,7 @@ export const state: SettingsState = {
         cacheLife: 5184000,
         packCardSize: 2,
         instanceLocation: "",
+        enablePreview: false,
     },
     error: false,
     hardware: {
