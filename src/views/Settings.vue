@@ -43,8 +43,8 @@
                 <div class="flex flex-col my-2">
                     <!-- <ftb-toggle label="Enable Analytics: " :value="settingsCopy.enableAnalytics" @change="enableAnalytics"
                                 onColor="bg-primary-button"/> -->
-                    <!-- <ftb-toggle label="Enable Beta Launcher: " :value="settingsCopy.enableBeta" @change="enableBetaVersions"
-                                onColor="bg-primary-button"/> -->
+                    <ftb-toggle label="Enable Preview Versions: " :value="settingsCopy.enablePreview" @change="enablePreview"
+                                onColor="bg-primary-button"/>
                     <ftb-slider label="Download Threads" v-model="settingsCopy.threadLimit"
                                 :currentValue="settingsCopy.threadLimit" minValue="1"
                                 :maxValue="settingsState.hardware.totalCores * 2" @change="doSave"
@@ -150,6 +150,7 @@
             height: 840,
             memory: 3072,
             keepLauncherOpen: true,
+            enablePreview: false,
             jvmargs: '',
             enableAnalytics: true,
             enableBeta: false,
@@ -284,6 +285,11 @@
 
         public keepLauncherOpen(value: boolean): void {
             this.settingsCopy.keepLauncherOpen = value;
+            this.saveSettings(this.settingsCopy);
+        }
+
+        public enablePreview(value: boolean): void {
+            this.settingsCopy.enablePreview = value;
             this.saveSettings(this.settingsCopy);
         }
 

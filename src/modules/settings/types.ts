@@ -6,6 +6,7 @@ export interface Settings {
     jvmargs: string;
     enableAnalytics: boolean;
     enableBeta: boolean;
+    enablePreview: boolean;
     threadLimit: number;
     speedLimit: number;
     cacheLife: number;
