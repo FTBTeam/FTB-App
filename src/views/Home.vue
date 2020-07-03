@@ -8,8 +8,9 @@
         class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch"
         appear
       >
-        <pack-card
+        <pack-card-wrapper
           v-for="modpack in recentlyPlayed"
+          :list-mode="settingsState.settings.listMode"
           :key="modpack.uuid"
           :versions="modpack.versions"
           :art="modpack.art"
@@ -18,7 +19,7 @@
           :name="modpack.name"
           :instance="modpack"
           :instanceID="modpack.uuid"
-        ></pack-card>
+        ></pack-card-wrapper>
       </transition-group>
     </div>
     <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow">
@@ -29,9 +30,10 @@
         class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch"
         appear
       >
-        <pack-card
+        <pack-card-wrapper
           v-for="(modpack, index) in modpacks.featuredPacks.slice(0,cardsToShow)"
           :key="index"
+          :list-mode="settingsState.settings.listMode"
           :packID="modpack.id"
           :versions="modpack.versions"
           :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
@@ -41,7 +43,7 @@
           :versionID="modpack.versions[0].id"
           :name="modpack.name"
           :description="modpack.synopsis"
-        >{{modpack.id}}</pack-card>
+        >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
   </div>
@@ -53,7 +55,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import PackCard from '@/components/packs/PackCard.vue';
+import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 import { asyncForEach } from '@/utils';
 import { State, Action } from 'vuex-class';
 import { ModpackState } from '@/modules/modpacks/types';
@@ -63,11 +65,11 @@ const namespace: string = 'modpacks';
 
 @Component({
   components: {
-    PackCard,
+    PackCardWrapper,
   },
 })
 export default class Home extends Vue {
-  @State("settings") public settingsState!: SettingsState;
+  @State('settings') public settingsState!: SettingsState;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
   private isLoaded: boolean = false;
@@ -78,8 +80,8 @@ export default class Home extends Vue {
       await this.loadFeaturedPacks();
     }
     this.isLoaded = true;
-    const cardSize =  this.settingsState.settings.packCardSize || 2
-    //@ts-ignore
+    const cardSize =  this.settingsState.settings.packCardSize || 2;
+    // @ts-ignore
     switch (parseInt(cardSize, 10)) {
       case 5:
         this.cardsToShow = 3;

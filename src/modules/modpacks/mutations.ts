@@ -81,5 +81,5 @@ export const mutations: MutationTree<ModpackState> = {
     },
     clearCache(state) {
         state.packsCache = [];
-    }
+    },
 };

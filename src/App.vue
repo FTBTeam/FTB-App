@@ -2,7 +2,7 @@
   <div id="app" class="theme-dark">
     <title-bar />
     <div class="container" v-if="websockets.socket.isConnected">
-      <div id="nav" class="w-22 md:w-12">
+      <div id="nav" style="width: 220px;">
         <sidebar />
       </div>
       <div class="content-container">
@@ -21,7 +21,7 @@
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'POSTINSTALL'">Finalizing Installation...</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'FINISHED'">Install Finished</p>
             <div class=" w-full h-full bg-grey-light justify-center -mr-200px">
-              <div v-if="!modpack.error" class="h-full bg-primary-button text-xs leading-none py-1 text-white" v-bind:style="{'width': `${modpack.progress}%`, 'transition': 'width 0.5s ease'}"></div>
+              <div v-if="!modpack.error" class="h-full bg-primary text-xs leading-none py-1 text-white" v-bind:style="{'width': `${modpack.progress}%`, 'transition': 'width 0.5s ease'}"></div>
               <div v-else class="h-full bg-error-button text-xs leading-none py-1 text-white" v-bind:style="{'width': `100%`, 'transition': 'width 0.5s ease'}"></div>
             </div>
             <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->
@@ -31,7 +31,7 @@
           <div class="progress-bar" >
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}"><span class="font-bold">{{$store.state.alert.title}}</span> {{$store.state.alert.message}}</p>
             <div class="w-full h-full bg-grey-light justify-center -mr-200px">
-              <div class="h-full text-xs leading-none py-1 text-white" :class="`bg-${$store.state.alert.type}-button`"></div>
+              <div class="h-full text-xs leading-none py-1 text-white" :class="`bg-${$store.state.alert.type}`"></div>
             </div>
              <div class="alert-close" @click="hideAlert">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
@@ -53,7 +53,7 @@
       v-if="!websockets.firstStart"
         v-bind:style="{'margin-top': '40vh'}"
       >Issue connecting to backend... Please wait or relaunch.</span>
-      <span v-else 
+      <span v-else
         v-bind:style="{'margin-top': '40vh'}">Starting FTB App, please wait.</span>
     </div>
   </div>
@@ -148,7 +148,7 @@ export default class App extends Vue {
 <style lang="scss">
 #app {
   margin: 0;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Raleway', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);
@@ -156,7 +156,7 @@ export default class App extends Vue {
   display: flex;
   flex-direction: column;
   .container {
-    height: calc(100% - 24px);
+    height: 100%;
     display: flex;
     flex-direction: row;
     background-color: var(--color-background);

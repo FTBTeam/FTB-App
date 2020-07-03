@@ -1,3 +1,4 @@
+import { ModpackState } from './modules/modpacks/types';
 import Vue from 'vue';
 import Vuex, { StoreOptions, MutationTree } from 'vuex';
 import { RootState, Alert, ModalBox } from './types';
@@ -6,6 +7,7 @@ import { modpacks } from './modules/modpacks';
 import { websocket } from './modules/websocket';
 import { settings } from './modules/settings';
 import { auth } from './modules/auth';
+import { discovery } from './modules/discovery';
 
 Vue.use(Vuex);
 
@@ -29,9 +31,9 @@ export const mutations: MutationTree<RootState> = {
     SHOW_MODAL(state: any, modal: ModalBox) {
         state.websocket.modal = modal;
     },
-    HIDE_MODAL(state: any){
+    HIDE_MODAL(state: any) {
         state.websocket.modal = null;
-    }
+    },
 };
 
 
@@ -40,7 +42,8 @@ const store: StoreOptions<RootState> = {
         version: '1.0.0',
         alert: null,
         wsPort: 0,
-        wsSecret: ''
+        wsSecret: '',
+        modpacks: null
     },
     actions: {
         showAlert: ({commit}: any, alert: Alert) => {
@@ -60,6 +63,7 @@ const store: StoreOptions<RootState> = {
         websocket,
         settings,
         auth,
+        discovery
     },
 };
 

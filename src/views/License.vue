@@ -2,10 +2,7 @@
 
     <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full">
         <div class="flex flex-col md:w-full lg:w-9/12 xl:w-8/12 mx-auto">
-            <button @click="goTo('/settings')"
-                    class="appearance-none block w-15 bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight cursor-pointer">
-                Back
-            </button>
+            <ftb-button class="my-2 w-15" color="primary" css-class="text-center text-l" @click="goTo('/settings')">Back</ftb-button>
             <h1 class="text-2xl">NodeJS Package Licenses</h1>
             <div class="bg-sidebar-item p-5 rounded my-4">
                 <div class="flex flex-col my-2">

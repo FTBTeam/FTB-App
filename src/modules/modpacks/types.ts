@@ -13,7 +13,7 @@ export interface ModPack {
     name: string;
     type: string;
     updated: number;
-    tags: string[];
+    tags: ModPackTag[];
     notification: string;
 }
 
@@ -108,4 +108,9 @@ export interface Changelog {
     content: string;
     updated: number;
     status: string;
+}
+
+export interface ModPackTag {
+    id: number;
+    name: string;
 }

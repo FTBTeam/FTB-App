@@ -11,6 +11,7 @@ export interface Settings {
     speedLimit: number;
     cacheLife: number;
     packCardSize: number;
+    listMode: boolean;
     instanceLocation: string;
 }
 

@@ -7,7 +7,7 @@ import semver from 'semver';
 
 export const actions: ActionTree<ModpackState, RootState> = {
     doSearch({commit, rootState, dispatch}: any, searchTerm): any {
-        if (searchTerm.trim().length <= 3) {
+        if (searchTerm.trim().length < 3) {
             return;
         }
         commit('setLoading', true);
@@ -144,13 +144,14 @@ export const actions: ActionTree<ModpackState, RootState> = {
     errorInstall({commit}, install: InstallProgress): any {
         commit('errorInstall', install);
     },
-    refreshPacks({dispatch}): any {
+    refreshPacks({dispatch}): Promise<any> {
         return new Promise((resolve, reject) => {
             dispatch('sendMessage', {
                 payload: { type: 'installedInstances' },
                 callback: (data: any) => {
+                    console.log("Storing installed packs", data);
                 dispatch('storeInstalledPacks', data);
-                resolve();
+                resolve(data.instances);
             }}, {root: true});
         });
     },
@@ -185,10 +186,10 @@ export const actions: ActionTree<ModpackState, RootState> = {
             .then(async (response: any) => {
                 response = response as Response;
                 const pack: ModPack = await response.json() as ModPack;
-                if(pack === undefined){
+                if (pack === undefined) {
                     return;
                 }
-                if(pack.versions !== undefined){
+                if (pack.versions !== undefined) {
                     pack.versions = pack.versions.sort((a, b) => {
                         return semver.rcompare(a.name, b.name);
                     });
@@ -202,7 +203,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         });
     },
     async refreshCache({commit, rootState, dispatch}: any): Promise<any> {
-        let packIDs = Object.keys(rootState.modpacks.packsCache);
+        const packIDs = Object.keys(rootState.modpacks.packsCache);
         commit('clearCache');
         await Promise.all(packIDs.map(async (id: any) => {
             return await dispatch('fetchModpack', id);
@@ -210,5 +211,5 @@ export const actions: ActionTree<ModpackState, RootState> = {
         await dispatch('loadFeaturedPacks');
         await dispatch('getPopularPlays');
         await dispatch('getPopularInstalls');
-    }
+    },
 };

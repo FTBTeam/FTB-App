@@ -9,7 +9,7 @@
         {{label}}
       </label>
       <div class="flex flex-row items-center">
-        <input class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none " type="text" :placeholder="placeholder" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
+        <input class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded" type="text" :placeholder="placeholder" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
         <ftb-button v-if="button" :color="buttonColor" @click="handleClick" class="rounded-l-none py-2">{{buttonText}}</ftb-button>
       </div>
     </div>

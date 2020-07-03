@@ -12,8 +12,10 @@ module.exports = {
                 "background": "var(--color-background)",
                 "background-lighten": "var(--color-background-lighten)",
                 "navbar": "var(--color-navbar)",
-                "primary-button": "var(--color-primary-button)",
-                "secondary-button": "var(--color-secondary-button)",
+                "primary": "var(--color-primary-button)",
+                "secondary": "var(--color-secondary-button)",
+                "warning": "var(--color-warning-button)",
+                "info": "var(--color-info-button)",
                 "text-color": "var(--color-text)",
                 "transparent-black": "rgba(0,0,0,.6)",
                 "danger-button": "var(--color-red-button)",
@@ -29,8 +31,14 @@ module.exports = {
                 'plg': '350px'
             },
             height: {
+                '1/2': '50%',
                 '91%': '91%',
                 '82%': '82%',
+                'size-1': '125px',
+                'size-2': '200px',
+                'size-3': '275px',
+                'size-4': '350px',
+                'size-5': '425px',
             },
             width: {
                 '10': '10%',
@@ -53,7 +61,12 @@ module.exports = {
                 '100': '100%',
                 'psm': '200px',
                 'pmd': '200px',
-                'plg': '200px'
+                'plg': '200px',
+                'size-1': '48px',
+                'size-2': '72px',
+                'size-3': '90px',
+                'size-4': '108px',
+                'size-5': '144px',
             },
             maxHeight: {
                 '50': '50%',
@@ -61,7 +74,7 @@ module.exports = {
                 '250px': '250px',
                 'psm': '200px',
                 'pmd': '220px',
-                'plg': '250px'
+                'plg': '250px',
             },
             maxWidth: {
                 '200px': '200px',
