@@ -21,20 +21,20 @@ protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true,
 
 let wsPort: number;
 let wsSecret: string;
-if(process.argv.indexOf('--ws') !== -1){
-    console.log("We have a --ws");
+if (process.argv.indexOf('--ws') !== -1) {
+    console.log('We have a --ws');
     const wsArg =  process.argv[process.argv.indexOf('--ws') + 1];
     const wsArgSplit = wsArg.split(':');
     wsPort = Number(wsArgSplit[0]);
     wsSecret = wsArgSplit[1];
 } else {
-    console.log("Setting default port and secret");
+    console.log('Setting default port and secret');
     wsPort = 13377;
     wsSecret = '';
 }
 
 ipcMain.on('sendMeSecret', (event) => {
-    event.reply('hereIsSecret', {port: wsPort, secret: wsSecret});
+    event.reply('hereIsSecret', {port: wsPort, secret: wsSecret, isDevMode: process.env.NODE_ENV !== 'production'});
 });
 
 ipcMain.on('openOauthWindow', (event, data) => {
@@ -47,15 +47,15 @@ ipcMain.on('authData', (_, data) => {
 });
 
 ipcMain.on('selectFolder', async (event, data) => {
-    if(win === null){
+    if (win === null) {
         return;
     }
     console.log(data);
     const result = await dialog.showOpenDialog(win, {
         properties: ['openDirectory'],
-        defaultPath: data
-    })
-    if(result.filePaths.length > 0){
+        defaultPath: data,
+    });
+    if (result.filePaths.length > 0) {
         event.reply('setInstanceFolder', result.filePaths[0]);
     }
 });
@@ -71,9 +71,9 @@ if (process.argv.indexOf('--pid') === -1) {
     if (operatingSystem === 'win32') {
         binaryFile += '.exe';
     }
-    binaryFile = path.join(currentPath, "..", binaryFile);
+    binaryFile = path.join(currentPath, '..', binaryFile);
     if (fs.existsSync(binaryFile)) {
-        console.log("Starting process of backend", binaryFile);
+        console.log('Starting process of backend', binaryFile);
         const child = childProcess.execFile(binaryFile, ['--pid', ourPID.toString()]);
         child.on('exit', (code, signal) => {
             console.log('child process exited with ' +

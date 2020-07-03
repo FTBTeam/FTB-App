@@ -33,7 +33,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 export default class FTBToggle extends Vue {
     @Prop({default: ''})
     public label!: string;
-    @Prop({default: 'bg-primary-button'})
+    @Prop({default: 'bg-primary'})
     public onColor!: string;
     @Prop({default: ''})
     public offColor!: string;

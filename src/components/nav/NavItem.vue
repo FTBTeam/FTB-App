@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="flex flex-1 w-100 flex-row p-5 bg-sidebar-item hover:bg-sidebar-item-active cursor-pointer" v-bind:class="{'bg-sidebar-item-active': isActive}" @click="$emit('click')">
+        <div class="flex flex-1 w-100 flex-row p-3 bg-sidebar-item hover:bg-sidebar-item-active cursor-pointer" v-bind:class="{'bg-sidebar-item-active': isActive}" @click="$emit('click')">
             <slot></slot>
         </div>
         <div class="flex flex-1 w-100 flex-row pt-0 bg-sidebar-item cursor-pointer" v-if="hasSub">

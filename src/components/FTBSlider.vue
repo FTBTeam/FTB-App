@@ -20,7 +20,7 @@
       <div class="flex flex-row justify-center">
         <p class="text-white mx-2" style="min-width: 4rem;">{{(unit == 's' ? ((currentValue > 3600) ? ((currentValue > 86400) ? (currentValue / 86400).toFixed(2) + 'd' : (currentValue / 3600).toFixed(2) + 'h' ) : currentValue + unit) : (currentValue == 0 ? 'Unlimited' : (currentValue > 1024 ? (currentValue / 1024).toFixed(2) : currentValue) + (currentValue > 1024 ? 'GB' : unit)))}}</p>
         <!-- <input class="slider" id="grid-last-name" type="range" :value="value" :min="minValue" :max="maxValue" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" :step="step === undefined ? 1 : step"> -->
-        <input type="range" :value="value" :min="minValue" :max="maxValue" @change="$emit('input', $event.target.value)" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" class="slider" :step="step === undefined ? 1 : step">
+        <input type="range" :value="value" :min="minValue" :max="maxValue" @change="$emit('input', $event.target.value)" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" class="slider" :class="cssClass" :step="step === undefined ? 1 : step" :style="rawStyle">
         <!-- <p class="text-white mx-2">{{maxValueLabel === undefined ? maxValue : maxValueLabel}}{{unit}}</p> -->
       </div>
     </div>
@@ -40,6 +40,8 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
         'maxValueLabel',
         'step',
         'description',
+        'cssClass',
+        'rawStyle',
     ],
 })
 export default class FTBSlider extends Vue {
@@ -55,6 +57,10 @@ export default class FTBSlider extends Vue {
     public unit!: string;
     @Prop({default: ''})
     public description!: string;
+    @Prop({default: ''})
+    public cssClass!: string;
+    @Prop({default: ''})
+    public rawStyle!: string;
 }
 </script>
 
@@ -95,7 +101,7 @@ border-radius: 50%;
 .slider::-moz-range-thumb {
   width: 25px; /* Set a specific slider handle width */
   height: 25px; /* Slider handle height */
-  @apply bg-primary-button;
+  @apply bg-primary;
   cursor: pointer; /* Cursor on hover */
     border-radius: 50%;
 
@@ -103,4 +109,10 @@ border-radius: 50%;
 
 input[type='range'] {
     }
+
+.memory{
+  /*background: linear-gradient(to right, #8e0c25 25%, #a55805 30%, #a55805 50%, #005540 55%);*/
+  height: 10px;
+  opacity: 1;
+}
 </style>

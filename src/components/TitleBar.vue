@@ -81,7 +81,8 @@ export default class TitleBar extends Vue {
 .titlebar {
   width: 100%;
   height: 1.5rem;
-  background-color: #313131;
+  position: absolute;
+  background-color: transparent;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -91,6 +92,8 @@ export default class TitleBar extends Vue {
   .icons {
     display: flex;
     flex-direction: row-reverse;
+    padding: 0 8px;
+    background-color: #313131;
   }
 
   -webkit-user-select: none;

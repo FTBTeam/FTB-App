@@ -1,6 +1,9 @@
 <template>
-    <div class="w-full flex flex-col">
-        <input class="bg-background focus:bg-background-lighten focus:outline-none border border-gray-700 block w-full p-2 appearance-none leading-normal text-gray-300" v-bind:value="value" :placeholder="placeholder" @keydown="doSearch" @focusout="doSearch" @input="$emit('input', $event.target.value)"/>
+    <div class="w-full flex flex-row items-center relative">
+        <input :class="`bg-navbar focus:outline-none border block w-full transition-all duration-200 ease-in-out p-4 rounded appearance-none leading-normal text-gray-300 ${value.length > 0 && value.length < 3 ? 'border-red-700 shadow-error' : 'border-background-lighten shadow'}`"  v-bind:value="value" :placeholder="placeholder" @keydown="doSearch" @focusout="doSearch" @input="$emit('input', $event.target.value)"/>
+        <div class="absolute right-0 bg-background-lighten p-4 h-full">
+            <font-awesome-icon icon="search" />
+        </div>
     </div>
 </template>
 
@@ -27,5 +30,7 @@ export default class FTBSearchBar extends Vue {
 </script>
 
 <style lang="scss">
-
+.shadow-error {
+    box-shadow: 0 1px 3px 0 rgba(199, 13, 13, 0.74), 0 1px 2px 0 rgba(199, 13, 13, 0.74);
+}
 </style>

@@ -1,14 +1,10 @@
 <template>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full">
     <!--    <h1 class="text-3xl">Browse Modpacks</h1>-->
-    <div class="w-full flex flex-row justify-start mb-10">
-      <h1 class="text-3xl mr-5 cursor-pointer text-muted hover:text-white" @click="goTo('modpacks')">My Modpacks</h1>
-      <h1 class="text-3xl cursor-pointer" v-bind:class="[{'border-b-2': isActiveTab('browseModpacks')}, {'text-muted': !isActiveTab('browseModpacks')}]" @click="goTo('browseModpacks')">Browse</h1>
-    </div>
     <div class="w-1/2 self-center text-center">
       <FTBSearchBar
               v-model="searchValue"
-              placeholder="Search (4 characters minimum)"
+              placeholder="Search"
               :doSearch="onSearch"
       />
     </div>
@@ -21,9 +17,10 @@
                 class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
                 v-if="modpacks.search.length > 0"
         >
-          <pack-card
+          <pack-card-wrapper
                   v-for="(modpack, index) in modpacks.search"
                   :key="index"
+                  :list-mode="settingsState.settings.listMode"
                   :packID="modpack.id"
                   :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
                   :installed="false"
@@ -32,9 +29,10 @@
                   :versionID="modpack.versions[0].id"
                   :name="modpack.name"
                   :versions="modpack.versions"
-                  :description="modpack.synopsis"
+                  :tags="modpack.tags"
+                  :description="modpack.description"
           >{{modpack.id}}
-          </pack-card>
+          </pack-card-wrapper>
         </div>
 
         <div v-else>
@@ -45,9 +43,10 @@
                   class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
                   appear
           >
-            <pack-card
+            <pack-card-wrapper
                     v-for="(modpack, index) in modpacks.featuredPacks.slice(0,cardsToShow)"
                     :key="index"
+                  :list-mode="settingsState.settings.listMode"
                     :packID="modpack.id"
                     :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
                     :installed="false"
@@ -56,9 +55,10 @@
                     :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
                     :versionID="modpack.versions[0].id"
                     :name="modpack.name"
+                    :tags="modpack.tags"
                     :description="modpack.synopsis"
             >{{modpack.id}}
-            </pack-card>
+            </pack-card-wrapper>
           </transition-group>
           <h1 class="text-2xl">Top Installs</h1>
           <transition-group
@@ -67,9 +67,10 @@
                   class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
                   appear
           >
-            <pack-card
+            <pack-card-wrapper
                     v-for="(modpack, index) in modpacks.popularInstalls.slice(0,cardsToShow)"
                     :key="index"
+                  :list-mode="settingsState.settings.listMode"
                     :versions="modpack.versions"
                     :packID="modpack.id"
                     :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
@@ -77,9 +78,10 @@
                     :minecraft="'1.7.10'"
                     :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
                     :name="modpack.name"
+                    :tags="modpack.tags"
                     :description="modpack.synopsis"
             >{{modpack.id}}
-            </pack-card>
+            </pack-card-wrapper>
           </transition-group>
 
           <h1 class="text-2xl">Top Plays</h1>
@@ -89,9 +91,10 @@
                   class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
                   appear
           >
-            <pack-card
+            <pack-card-wrapper
                     v-for="(modpack, index) in modpacks.popularPlays.slice(0,cardsToShow)"
                     :key="index"
+                  :list-mode="settingsState.settings.listMode"
                     :packID="modpack.id"
                     :versions="modpack.versions"
                     :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
@@ -100,9 +103,10 @@
                     :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
                     :versionID="modpack.versions[0].id"
                     :name="modpack.name"
+                    :tags="modpack.tags"
                     :description="modpack.synopsis"
             >{{modpack.id}}
-            </pack-card>
+            </pack-card-wrapper>
           </transition-group>
         </div>
       </div>
@@ -114,109 +118,109 @@
 </template>
 
 <script lang="ts">
-    import {Component, Vue} from "vue-property-decorator";
-    import {Action, State} from "vuex-class";
-    import PackCard from "@/components/packs/PackCard.vue";
-    import Loading from "@/components/Loading.vue";
-    import {SettingsState, Settings} from "@/modules/settings/types";
-    import FTBSearchBar from "@/components/FTBSearchBar.vue";
-    import {ModpackState} from "../modules/modpacks/types";
-    import {debounce} from "@/utils";
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
+import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
+import Loading from '@/components/Loading.vue';
+import {SettingsState, Settings} from '@/modules/settings/types';
+import FTBSearchBar from '@/components/FTBSearchBar.vue';
+import {ModpackState} from '../modules/modpacks/types';
+import {debounce} from '@/utils';
 
-    const namespace: string = "modpacks";
+const namespace: string = 'modpacks';
 
-    @Component({
-        components: {
-            PackCard,
-            FTBSearchBar,
-            Loading
-        }
-    })
-    export default class BrowseModpacks extends Vue {
-        @State("settings") public settingsState!: SettingsState;
-        @State("modpacks") public modpacks: ModpackState | undefined = undefined;
-        @Action("loadFeaturedPacks", {namespace}) public loadFeaturedPacks: any;
-        @Action("getPopularInstalls", {namespace}) public getPopularInstalls: any;
-        @Action("getPopularPlays", {namespace}) public getPopularPlays: any;
-        @Action("doSearch", {namespace}) public doSearch: any;
-        @Action("clearSearch", {namespace}) public clearSearch: any;
+@Component({
+    components: {
+        PackCardWrapper,
+        FTBSearchBar,
+        Loading,
+    },
+})
+export default class BrowseModpacks extends Vue {
+    @State('settings') public settingsState!: SettingsState;
+    @State('modpacks') public modpacks: ModpackState | undefined = undefined;
+    @Action('loadFeaturedPacks', {namespace}) public loadFeaturedPacks: any;
+    @Action('getPopularInstalls', {namespace}) public getPopularInstalls: any;
+    @Action('getPopularPlays', {namespace}) public getPopularPlays: any;
+    @Action('doSearch', {namespace}) public doSearch: any;
+    @Action('clearSearch', {namespace}) public clearSearch: any;
 
-        private searchValue: string = "";
-        private cardsToShow = 3;
-        private debounceSearch: () => void = () => {
-        };
+    private searchValue: string = '';
+    private cardsToShow = 3;
 
-        public isActiveTab(tab: string): boolean {
-            return tab === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${tab}`);
-        }
+    public isActiveTab(tab: string): boolean {
+        return tab === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${tab}`);
+    }
 
-        private async mounted() {
-            this.debounceSearch = debounce(() => {
-                this.doSearch(this.searchValue);
-            }, 1000);
-            if (
-                this.modpacks === undefined ||
-                this.modpacks.popularInstalls === undefined ||
-                this.modpacks.popularInstalls.length <= 0 ||
-                this.modpacks.popularPlays.length <= 0
-            ) {
-                await this.loadFeaturedPacks();
-                await this.getPopularInstalls();
-                await this.getPopularPlays();
-            }
+    public goTo(page: string): void {
+        // We don't care about this error!
+        this.$router.push(page).catch((err) => {
+            return;
+        });
+    }
+    private debounceSearch: () => void = () => {
+    }
 
-            const cardSize = this.settingsState.settings.packCardSize || 2
-            //@ts-ignore
-            switch (parseInt(cardSize, 10)) {
-                case 5:
-                    this.cardsToShow = 3;
-                    break;
-                case 4:
-                    this.cardsToShow = 4;
-                    break;
-                case 3:
-                    this.cardsToShow = 5;
-                    break;
-                case 2:
-                    this.cardsToShow = 7;
-                    break;
-                case 1:
-                    this.cardsToShow = 10;
-                    break;
-                default:
-                    this.cardsToShow = 10;
-                    break;
-            }
-
-            // if (this.settingsState.settings.packCardSize === 5) {
-            //   this.cardsToShow = 4;
-            // }
-            // if (this.settingsState.settings.packCardSize === 2) {
-            //   this.cardsToShow = 7;
-            // }
-            // if (this.settingsState.settings.packCardSize >= 2) {
-            //   this.cardsToShow = 7;
-            // }
-            // if (this.settingsState.settings.packCardSize < 2) {
-            //   this.cardsToShow = 10;
-            // }
+    private async mounted() {
+        this.debounceSearch = debounce(() => {
+            this.doSearch(this.searchValue);
+        }, 1000);
+        if (
+            this.modpacks === undefined ||
+            this.modpacks.popularInstalls === undefined ||
+            this.modpacks.popularInstalls.length <= 0 ||
+            this.modpacks.popularPlays.length <= 0
+        ) {
+            await this.loadFeaturedPacks();
+            await this.getPopularInstalls();
+            await this.getPopularPlays();
         }
 
-        private onSearch() {
-            if (this.searchValue === "" || this.searchValue == null) {
-                this.clearSearch();
-            } else {
-                this.debounceSearch();
-            }
+        const cardSize = this.settingsState.settings.packCardSize || 2;
+        // @ts-ignore
+        switch (parseInt(cardSize, 10)) {
+            case 5:
+                this.cardsToShow = 3;
+                break;
+            case 4:
+                this.cardsToShow = 4;
+                break;
+            case 3:
+                this.cardsToShow = 5;
+                break;
+            case 2:
+                this.cardsToShow = 7;
+                break;
+            case 1:
+                this.cardsToShow = 10;
+                break;
+            default:
+                this.cardsToShow = 10;
+                break;
         }
 
-        public goTo(page: string): void {
-            // We don't care about this error!
-            this.$router.push(page).catch((err) => {
-                return;
-            });
+        // if (this.settingsState.settings.packCardSize === 5) {
+        //   this.cardsToShow = 4;
+        // }
+        // if (this.settingsState.settings.packCardSize === 2) {
+        //   this.cardsToShow = 7;
+        // }
+        // if (this.settingsState.settings.packCardSize >= 2) {
+        //   this.cardsToShow = 7;
+        // }
+        // if (this.settingsState.settings.packCardSize < 2) {
+        //   this.cardsToShow = 10;
+        // }
+    }
+
+    private onSearch() {
+        if (this.searchValue === '' || this.searchValue == null) {
+            this.clearSearch();
+        } else {
+            this.debounceSearch();
         }
     }
+}
 </script>
 
 <style lang="scss">

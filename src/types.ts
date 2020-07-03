@@ -1,8 +1,10 @@
+import { ModpackState } from './modules/modpacks/types';
 export interface RootState {
     version: string;
     alert: Alert | null;
     wsPort: number;
     wsSecret: string;
+    modpacks: ModpackState | null;
 }
 
 export interface Alert {

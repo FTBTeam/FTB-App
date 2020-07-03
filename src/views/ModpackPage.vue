@@ -17,18 +17,19 @@
           </div>
           <div class="instance-buttons flex flex-row">
             <div class="instance-button mr-1">
-              <button
-                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center"
-                  @click="install(currentModpack.versions[0].id)"
-              >
-                <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>
-              </button>
+              <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="install(currentModpack.versions[0].id)"><font-awesome-icon icon="download" size="1x"/> Install</ftb-button>
+<!--              <button-->
+<!--                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center"-->
+<!--                  @click="install(currentModpack.versions[0].id)"-->
+<!--              >-->
+<!--                <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>-->
+<!--              </button>-->
             </div>
           </div>
         </div>
       </div>
-      <div style="height: auto; flex:1; overflow-y: auto;">
-        <ul class="flex border-b border-gray-600 mb-3 p-2" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
+      <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col">
+        <ul class="flex p-2 pb-0" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
           <li class="-mb-px mr-1">
             <a
                 class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
@@ -47,7 +48,7 @@
           </li>
         </ul>
 
-        <div class="tab-content p-2" style="overflow-y: auto; flex: 1; margin-bottom: 40px;">
+        <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
             <div class="flex flex-wrap" v-if="currentModpack != null">
               <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
@@ -71,14 +72,16 @@
                 <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"><font-awesome-icon
                     :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'" class="cursor-pointer"
                     size="1x"/> Changelog</span>
-                <button
-                    class="bg-blue-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"
-                    @click="install(version.id)"
-                >
-                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>
-                </button>
+                <ftb-button class="py-2 px-4 ml-auto" color="primary" css-class="text-center text-l" @click="install(version.id)"><font-awesome-icon icon="download" size="1x"/> Install</ftb-button>
+<!--                <button-->
+<!--                    class="bg-blue-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"-->
+<!--                    @click="install(version.id)"-->
+<!--                >-->
+<!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>-->
+<!--                </button>-->
                 <v-selectmenu :title="false" :query="false" :data="serverDownloadMenu(version.id)" align="right" type="regular">
-                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>
+                  <ftb-button class="py-2 px-4 ml-5" color="info" css-class="text-center text-l"><font-awesome-icon icon="download" size="1x"/> Download Server</ftb-button>
+<!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
                 </v-selectmenu>
 <!--                <button @click="downloadServer"-->
 <!--                        class="bg-orange-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer">-->
@@ -108,7 +111,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 300px;
+    height: 200px;
     transition: all 0.2s ease-in-out;
   }
 

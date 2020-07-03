@@ -1,11 +1,5 @@
 <template>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full">
-
-    <div class="w-full flex flex-row justify-start mb-10">
-      <h1 class="text-3xl mr-5 cursor-pointer" @click="goTo('modpacks')" v-bind:class="{'border-b-2': isActiveTab('modpacks')}">My Modpacks</h1>
-      <h1 class="text-3xl cursor-pointer text-muted hover:text-white" @click="goTo('browseModpacks')">Browse</h1>
-    </div>
-
     <!-- My Modpacks Stuff -->
     <div class="">
       <!--      <div class="w-1/2 self-center">-->
@@ -15,22 +9,24 @@
         <div class="justify-center">
           <transition-group name="list" tag="div" class="flex pt-1 flex-wrap overflow-x-auto px-auto"
                             v-if="modpacks.installedPacks.length > 0" appear>
-            <pack-card
+            <pack-card-wrapper
                     v-for="modpack in packs"
+                    :list-mode="settings.settings.listMode"
                     :key="modpack.uuid"
                     :art="modpack.art"
                     :installed="true"
                     :minecraft="'1.7.10'"
                     :version="modpack.version"
+                    :description="getModpack(modpack.id).synopsis"
                     :versions="modpack.versions"
                     :name="modpack.name"
                     :instance="modpack"
                     :instanceID="modpack.uuid">
-            </pack-card>
-            <pack-card :fake=true key="fake_1"></pack-card>
-            <pack-card :fake=true key="fake_2"></pack-card>
-            <pack-card :fake=true key="fake_3"></pack-card>
-            <pack-card :fake=true key="fake_4"></pack-card>
+            </pack-card-wrapper>
+            <pack-card-wrapper :fake=true :list-mode="settings.settings.listMode" key="fake_1"></pack-card-wrapper>
+            <pack-card-wrapper :fake=true :list-mode="settings.settings.listMode" key="fake_2"></pack-card-wrapper>
+            <pack-card-wrapper :fake=true :list-mode="settings.settings.listMode" key="fake_3"></pack-card-wrapper>
+            <pack-card-wrapper :fake=true  :list-mode="settings.settings.listMode" key="fake_4"></pack-card-wrapper>
           </transition-group>
           <div class="flex pt-1 flex-wrap overflow-x-auto justify-center" v-else>
             <!-- TODO: Make this pretty -->
@@ -44,19 +40,21 @@
 
 <script lang="ts">
     import {Component, Vue} from 'vue-property-decorator';
-    import PackCard from '@/components/packs/PackCard.vue';
+    import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
     import FTBSearchBar from '@/components/FTBSearchBar.vue';
     import {ModpackState, ModPack, Instance} from '@/modules/modpacks/types';
     import {State} from 'vuex-class';
     import {asyncForEach} from '../utils';
+import { SettingsState } from '../modules/settings/types';
 
     @Component({
         components: {
-            PackCard,
+            PackCardWrapper,
             FTBSearchBar,
         },
     })
     export default class Modpacks extends Vue {
+        @State('settings') public settings!: SettingsState;
         @State('modpacks') public modpacks: ModpackState | undefined = undefined;
         private searchTerm: string = '';
         private activeTab: string = 'overview';
@@ -84,6 +82,10 @@
 
         public isActiveTab(tab: string): boolean {
             return tab === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${tab}`);
+        }
+
+        public getModpack(id: number): ModPack | undefined{
+          return this.modpacks?.packsCache[id];
         }
 
     }

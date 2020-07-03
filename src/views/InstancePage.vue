@@ -21,15 +21,15 @@
           </div>
           <div class="instance-buttons flex flex-row">
             <div class="instance-button mr-1">
-              <button
-                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
-                  @click="checkMemory()"
-              >
-                <span class="cursor-pointer"><font-awesome-icon icon="play" size="1x"/> Play</span>
-              </button>
+              <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="checkMemory()"><font-awesome-icon icon="play" size="1x"/> Play</ftb-button>
+<!--              <button-->
+<!--                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
+<!--                  @click="checkMemory()"-->
+<!--              >-->
+<!--                <span class="cursor-pointer"><font-awesome-icon icon="play" size="1x"/> Play</span>-->
+<!--              </button>-->
             </div>
-            <div class="instance-button mr-1"
-                  v-if="instance && !isLatestVersion">
+            <div class="instance-button mr-1" v-if="instance && !isLatestVersion">
               <button
                   class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
                   @click="update()"
@@ -46,60 +46,62 @@
               </div>
             </div>
             <div class="instance-button mr-2 ml-auto">
-              <button
-                  class="bg-red-700 hover:bg-red-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
-                  @click="confirmDelete()"
-              >
-                <span class="cursor-pointer"><font-awesome-icon icon="trash" size="1x"/> Delete</span>
-              </button>
+              <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()"><font-awesome-icon icon="trash" size="1x"/> Delete</ftb-button>
+<!--              <button-->
+<!--                  class="bg-red-700 hover:bg-red-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
+<!--                  @click="confirmDelete()"-->
+<!--              >-->
+<!--                <span class="cursor-pointer"><font-awesome-icon icon="trash" size="1x"/> Delete</span>-->
+<!--              </button>-->
             </div>
             <div class="instance-button mr-2">
-              <button
-                  class="bg-orange-700 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
-                  @click="browseInstance()"
-              >
-                <span class="cursor-pointer"><font-awesome-icon icon="folder" size="1x"/> Open Folder</span>
-              </button>
+              <ftb-button class="py-2 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()"><font-awesome-icon icon="folder" size="1x"/> Open Folder</ftb-button>
+<!--              <button-->
+<!--                  class="bg-orange-700 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
+<!--                  @click="browseInstance()"-->
+<!--              >-->
+<!--                <span class="cursor-pointer"><font-awesome-icon icon="folder" size="1x"/> Open Folder</span>-->
+<!--              </button>-->
             </div>
           </div>
         </div>
       </div>
-      <div style="height: auto; flex:1; overflow-y: auto;">
-        <ul class="flex border-b border-gray-600 mb-3 p-2" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
+      <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col">
+        <ul class="flex p-2 pb-0" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
           <li class="-mb-px mr-1">
             <a
-                class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('overview')"
-                :class="{ 'border-l border-t border-r border-gray-600': isTabActive('overview'), 'text-gray-600 hover:text-gray-500': !isTabActive('overview') }"
+                :class="{ 'border-l border-t border-r border-navbar': isTabActive('overview'), 'text-gray-600 hover:text-gray-500': !isTabActive('overview') }"
                 href="#overview"
             >Overview</a>
           </li>
           <li class="-mb-px mr-1" v-if="currentModpack != null && currentModpack.versions !== undefined">
             <a
-                class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('versions')"
-                :class="{ 'border-l border-t border-r border-gray-600': isTabActive('versions'), 'text-gray-600 hover:text-gray-500': !isTabActive('versions') }"
+                :class="{ 'border-l border-t border-r border-navbar': isTabActive('versions'), 'text-gray-600 hover:text-gray-500': !isTabActive('versions') }"
                 href="#versions"
             >Versions</a>
           </li>
           <li class="-mb-px mr-1">
             <a
-                    class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                    class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
                     @click.prevent="setActiveTab('modlist')"
-                    :class="{ 'border-l border-t border-r border-gray-600': isTabActive('modlist'), 'text-gray-600 hover:text-gray-500': !isTabActive('modlist') }"
+                    :class="{ 'border-l border-t border-r border-navbar': isTabActive('modlist'), 'text-gray-600 hover:text-gray-500': !isTabActive('modlist') }"
                     href="#versions"
             >ModList</a>
           </li>
           <li class="-mb-px mr-1">
             <a
-                class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('settings')"
-                :class="{ 'border-l border-t border-r border-gray-600': isTabActive('settings'), 'text-gray-600 hover:text-gray-500': !isTabActive('settings') }"
+                :class="{ 'border-l border-t border-r border-navbar': isTabActive('settings'), 'text-gray-600 hover:text-gray-500': !isTabActive('settings') }"
                 href="#settings"
             >Settings</a>
           </li>
         </ul>
-        <div class="tab-content p-2" style="overflow-y: auto; flex: 1; margin-bottom: 40px;">
+        <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
             <div class="flex flex-wrap" v-if="currentModpack != null && currentModpack.description !== undefined">
               <hr/>
@@ -119,21 +121,25 @@
                 <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"><font-awesome-icon
                     :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'" class="cursor-pointer"
                     size="1x"/> Changelog</span>
-                <button
-                    v-if="instance.versionId && instance.versionId !== version.id"
-                    class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"
-                    @click="update(version.id)"
-                >
-                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> {{isOlderVersion(version.name) ? 'Downgrade' : 'Update'}}</span>
-                </button>
-                <button
-                    v-if="instance.versionId && instance.versionId === version.id"
-                    class="bg-blue-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-not-allowed"
-                >
-                  <span class="cursor-not-allowed"><font-awesome-icon icon="check" size="1x"/> Current</span>
-                </button>
+
+                <ftb-button v-if="instance.versionId && instance.versionId !== version.id" class="py-2 px-4 ml-auto mr-1" color="warning" css-class="text-center text-l" @click="update(version.id)"><font-awesome-icon icon="download" size="1x"/> {{isOlderVersion(version.name) ? 'Downgrade' : 'Update'}}</ftb-button>
+<!--                <button-->
+<!--                    v-if="instance.versionId && instance.versionId !== version.id"-->
+<!--                    class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"-->
+<!--                    @click="update(version.id)"-->
+<!--                >-->
+<!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> {{isOlderVersion(version.name) ? 'Downgrade' : 'Update'}}</span>-->
+<!--                </button>-->
+                <ftb-button v-if="instance.versionId && instance.versionId === version.id" class="py-2 px-4 ml-auto mr-1 cursor-not-allowed" color="primary" css-class="text-center text-l cursor-not-allowed"><font-awesome-icon icon="check" size="1x"/> Current</ftb-button>
+<!--                <button-->
+<!--                    v-if="instance.versionId && instance.versionId === version.id"-->
+<!--                    class="bg-blue-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-not-allowed"-->
+<!--                >-->
+<!--                  <span class="cursor-not-allowed"><font-awesome-icon icon="check" size="1x"/> Current</span>-->
+<!--                </button>-->
                 <v-selectmenu :title="false" :query="false" :data="serverDownloadMenu(version.id)" align="right" type="regular">
-                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>
+                  <ftb-button class="py-2 px-4 ml-2" color="info" css-class="text-center text-l"><font-awesome-icon icon="download" size="1x"/> Download Server</ftb-button>
+<!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
                 </v-selectmenu>
               </div>
               {{debugLog("Version ID: " + version.id)}}
@@ -165,11 +171,7 @@
                       :value="resSelectedValue"
                       @values="resChange"
                   >
-                    <button
-                        class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 py-3 px-4 leading-tight"
-                    >
-                      <font-awesome-icon icon="desktop" size="1x"/>
-                    </button>
+                    <ftb-button class="py-2 px-4 my-1 w-full" color="primary" css-class="text-center text-l"><font-awesome-icon icon="desktop" size="1x"/></ftb-button>
                   </v-selectmenu>
                 </div>
 
@@ -201,21 +203,30 @@
                   @change="saveSettings"
                   step="64"
                   unit="MB"
+                  css-class="memory"
+                  :raw-style="`background: linear-gradient(to right, #8e0c25 ${((this.instance.minMemory / settingsState.hardware.totalMemory) * 100) - 5}%, #a55805 ${((this.instance.minMemory / settingsState.hardware.totalMemory) * 100)}%, #a55805 ${((this.instance.recMemory / settingsState.hardware.totalMemory) * 100) - 5}%, #005540 ${((this.instance.recMemory / settingsState.hardware.totalMemory) * 100)}%);`"
               />
               <ftb-input label="Custom Arguments" v-model="instance.jvmArgs" @blur="saveSettings"/>
-              <button
-                  class="cursor-pointer bg-green-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto mr-2 mb-2"
-              >
-                <font-awesome-icon icon="save" size="1x"/>&nbsp;Save
-              </button>
+              <ftb-button class="w-10 ml-auto mr-2" color="primary" css-class="text-center text-l"><font-awesome-icon icon="save" size="1x"/>&nbsp;Save</ftb-button>
+<!--              <button-->
+<!--                  class="cursor-pointer bg-green-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto mr-2 mb-2"-->
+<!--              >-->
+<!--                <font-awesome-icon icon="save" size="1x"/>&nbsp;Save-->
+<!--              </button>-->
             </div>
           </div>
 
           <div class="tab-pane" v-if="isTabActive('modlist')" id="modlist">
             <div v-for="file in modlist">
-              <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
-                <p>{{file.name.replace('.jar', '')}} - {{file.version}} (Size: {{parseInt(file.size) | prettyBytes}})</p>
-                <p class="ml-auto">SHA1: {{file.sha1}}</p>
+              <div class="flex flex-row bg-background p-5 my-4 items-center">
+                <p :title="`Version ${file.version}`">{{file.name.replace('.jar', '')}}</p>
+                <div class="ml-auto">
+                  <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2">{{parseInt(file.size) | prettyBytes}}</span>
+                  <v-selectmenu :title="false" :query="false" :data="modHashData(file)" align="right" type="regular">
+                  <ftb-button class="py-2 px-4 ml-2" color="info" css-class="text-center text-l"><font-awesome-icon icon="shield-alt"></font-awesome-icon></ftb-button>
+<!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
+                  </v-selectmenu>
+                </div>
               </div>
             </div>
           </div>
@@ -226,7 +237,6 @@
       <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction"
                      :cancel-action="msgBox.cancelAction" :type="msgBox.type"/>
     </FTBModal>
-    <iframe></iframe>
   </div>
 </template>
 
@@ -235,13 +245,12 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 300px;
+    height: 200px;
     transition: all 0.2s ease-in-out;
   }
 
   @media screen and (max-height: 800px) {
     .header-image {
-      height: 150px;
       transition: all 0.2s ease-in-out;
     }
   }
@@ -314,6 +323,7 @@ import * as semver from 'semver';
 import config from '@/config';
 import moment from 'moment';
 import {SettingsState} from '@/modules/settings/types';
+import { clipboard} from 'electron';
 import fs from 'fs';
 
 interface MsgBox {
@@ -374,7 +384,7 @@ export default class InstancePage extends Vue {
       if (!this.instance) {
         return null;
       }
-      if(this.modpacks?.packsCache[this.instance.id] === undefined){
+      if (this.modpacks?.packsCache[this.instance.id] === undefined) {
         return this.instance;
       }
       return this.modpacks?.packsCache[this.instance.id];
@@ -417,6 +427,27 @@ export default class InstancePage extends Vue {
         links.push({content: 'Windows', url: `${config.apiURL}/public/modpack/${this.instance?.id}/${versionID}/server/windows`, open: '_blank'});
         links.push({content: 'Linux', url: `${config.apiURL}/public/modpack/${this.instance?.id}/${versionID}/server/linux`, open: '_blank'});
         links.push({content: 'MacOS', url: `${config.apiURL}/public/modpack/${this.instance?.id}/${versionID}/server/mac`, open: '_blank'});
+        return links;
+    }
+
+    public copy(text: string){
+      clipboard.writeText(text);
+      this.showAlert({
+          title: 'Copied!',
+          message: 'The value has been copied to your clipboard',
+          type: 'primary',
+      });
+      setTimeout(() => {
+          this.hideAlert();
+      }, 5000);
+    }
+
+    public modHashData(file: any) {
+        const links = [];
+        let isMatched = true;
+        links.push({content: `${isMatched ? '&#x2705;':  '&#x274E;'}  SHA1`, callback: this.copy.bind(this, file.sha1)});
+        links.push({content: '&#x274E;  MD5', callback: this.copy.bind(this, file.md5)});
+        links.push({content: '&#x274E;  SHA256', callback: this.copy.bind(this, file.sha256)});
         return links;
     }
 
@@ -518,7 +549,7 @@ export default class InstancePage extends Vue {
         const modpackID = this.instance?.id;
         this.updateInstall({modpackID: this.instance?.id, progress: 0});
         if (this.modpacks != null && this.currentModpack != null) {
-            if (versionID === undefined && this.currentModpack.kind === "modpack") {
+            if (versionID === undefined && this.currentModpack.kind === 'modpack') {
                 versionID = this.currentModpack.versions[0].id;
             }
             this.sendMessage({
@@ -618,7 +649,7 @@ export default class InstancePage extends Vue {
             return;
         }
         await this.fetchModpack(this.instance.id);
-        if(this.currentModpack?.kind === "modpack"){
+        if (this.currentModpack?.kind === 'modpack') {
           this.toggleChangelog(this.currentModpack?.versions[0].id);
         }
         this.getModList();
@@ -646,7 +677,7 @@ export default class InstancePage extends Vue {
     }
 
     get isLatestVersion() {
-      if (this.currentModpack === undefined || this.currentModpack?.kind !== "modpack") {
+      if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack') {
         return true;
       }
       return this.instance?.versionId === this.currentModpack?.versions[0].id;
