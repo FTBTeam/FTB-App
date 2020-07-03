@@ -19,8 +19,8 @@
           :name="modpack.name"
           :instance="modpack"
           :instanceID="modpack.uuid"
-          :description="getModpack(modpack.id).synopsis"
-          :tags="getModpack(modpack.id).tags"
+          :description="getModpack(modpack.id) !== null ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
+          :tags="getModpack(modpack.id) !== null ? getModpack(modpack.id).tags : []"
         ></pack-card-wrapper>
       </transition-group>
     </div>
