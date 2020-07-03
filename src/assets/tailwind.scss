@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400,700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import "~balloon-css/src/balloon";
+
+$primary: #27AE60;
+$secondary: #27AE60;
+$success: #27AE60;
+$info: #008BF8;
+$warning: #ff801e;
+$danger: #D00000;
+
+.theme-dark {
+  --color-sidebar-item: #313131;
+  --color-sidebar-item-active: #2A2A2A;
+  --color-background: #2A2A2A;
+  --color-navbar: #313131;
+
+  --color-primary-button: #27AE60;
+  --color-secondary-button: #27AE60;
+  --color-success-button: #27AE60;
+  --color-info-button: #008BF8;
+  --color-warning-button: #ff801e;
+  --color-danger-button: #D00000;
+
+  --color-text: #FFFFFF;
+  --color-text-muted: #bbbbbb;
+  --color-background-lighten: rgba(68, 68, 68, 0.2);
+}
+
+
+:not(input):not(textarea):not(path),
+:not(input):not(textarea):not(path)::after,
+:not(input):not(textarea):not(path)::before {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+input, button, textarea, :focus {
+  outline: none; // You should add some other style for :focus to help UX/a11y
+}
+
+
+/* width */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  border-radius: 40%;
+  z-index: 10;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--color-navbar);
+  z-index: 10;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #414141;
+  border-radius: 25px;
+  z-index: 10;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.list-enter-active, .list-leave-active {
+  transition: all 1s;
+  transition-delay: .2s;
+}
+
+.list-enter, .list-leave-to /* .list-leave-active below version 2.1.8 */
+{
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}

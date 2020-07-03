@@ -1,0 +1,25 @@
+{
+    "clientToken" : "",
+    "launcherVersion" : {
+      "format" : 21,
+      "name" : "",
+      "profilesFormat" : 2
+    },
+    "profiles" : {},
+    "settings" : {
+      "channel" : "release",
+      "crashAssistance" : true,
+      "enableAdvanced" : false,
+      "enableAnalytics" : true,
+      "enableHistorical" : false,
+      "enableReleases" : true,
+      "enableSnapshots" : false,
+      "keepLauncherOpen" : false,
+      "locale" : "en-GB",
+      "profileSorting" : "ByLastPlayed",
+      "showGameLog" : false,
+      "showMenu" : false,
+      "soundOn" : false
+    }
+  }
+  
