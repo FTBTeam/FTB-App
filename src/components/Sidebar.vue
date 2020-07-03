@@ -22,13 +22,12 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import NavItem from './nav/NavItem.vue';
-import Logo from './Logo.vue';
 import {shell, ipcRenderer} from 'electron';
 import {AuthState} from '../modules/auth/types';
 import {State, Action} from 'vuex-class';
 import store from '@/store';
 
-@Component({components: {NavItem, Logo}})
+@Component({components: {NavItem}})
 export default class Sidebar extends Vue {
   @State('auth')
   private auth!: AuthState;
