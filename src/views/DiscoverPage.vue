@@ -25,7 +25,7 @@
         </div>
     </div>
     <pack-card-list
-        class=" mx-auto"
+        class="mx-auto"
         size="1"
         :packID="pack.id"
         :art="pack.art.length > 0 ? pack.art.filter((art) => art.type === 'square')[0].url : ''"

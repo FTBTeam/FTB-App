@@ -40,6 +40,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                 console.log("Tag list", tagList);
                 allTags = allTags.concat(tagList)
             });
+            allTags = allTags.filter((tag) => tag !== undefined)
             console.log("All tags", allTags);
             // for each tag get top 3 most popular modpack ID's
             let foundPackIDs = await Promise.all(allTags.map(async (tag: ModPackTag) => {
