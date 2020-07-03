@@ -12,6 +12,12 @@
               {{currentModpack.name}} <span v-for="author in currentModpack.authors">By {{author.name}}</span> - {{instance.version}} -
               <em>{{currentModpack.synopsis}}</em>
             </small>
+            <div v-if="tags.length > 0" class="flex flex-row items-center">
+                <div class="flex flex-row">
+                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2">{{tag.name}}</span>
+                    <span v-if="tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2">+{{tags.length - 5}}</span>
+                </div>
+            </div>
           </span>
           <div class="update-bar"  v-if="instance && !isLatestVersion">
             A new update is available
@@ -19,7 +25,7 @@
           <div class="update-bar"  v-if="currentModpack && currentModpack.notification">
             {{currentModpack.notification}}
           </div>
-          <div class="instance-buttons flex flex-row">
+          <div class="instance-buttons flex flex-row frosted-glass">
             <div class="instance-button mr-1">
               <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="checkMemory()"><font-awesome-icon icon="play" size="1x"/> Play</ftb-button>
 <!--              <button-->
@@ -307,6 +313,11 @@
     flex-direction: column;
     text-align: center;
   }
+   .frosted-glass {
+      backdrop-filter: blur(8px);
+      background: linear-gradient(to top, rgba(36, 40, 47, 0) 0%, rgba(43, 57, 66, 0.2) calc( 100% - 2px), rgba(193, 202, 207, 0.1) calc( 100% - 1px), rgba(29, 29, 29, 0.3) 100%);
+    //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+  }
 </style>
 
 <script lang="ts">
@@ -388,6 +399,25 @@ export default class InstancePage extends Vue {
         return this.instance;
       }
       return this.modpacks?.packsCache[this.instance.id];
+    }
+
+    get tags(){
+       if(this.instance){
+            return this.modpacks?.packsCache[this.instance.id].tags;
+        } else {
+            return [];
+        }
+    }
+
+    public clickTag(tagName: string){
+        this.$router.push({name: 'browseModpacks', params: {search: tagName}})
+    }
+
+    get limitedTags(){
+      if(this.tags){
+        return this.tags.slice(0, 5); 
+      }
+      return [];
     }
 
 

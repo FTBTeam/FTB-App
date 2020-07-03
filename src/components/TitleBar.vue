@@ -80,6 +80,7 @@ export default class TitleBar extends Vue {
 <style scoped lang="scss">
 .titlebar {
   width: 100%;
+  z-index: 10;
   height: 1.5rem;
   position: absolute;
   background-color: transparent;

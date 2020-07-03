@@ -69,10 +69,8 @@
                                 :currentValue="settingsCopy.packCardSize" minValue="1" maxValue="5" step="1"
                                 @change="doSave"
                                 unit="" @blur="doSave" description="Change size of pack cards"/>
-                    <div class="mx-auto flex flex-row flex-wrap">
+                    <div class="mx-auto flex flex-row flex-wrap" style="width: 90%">
                         <pack-card-wrapper
-                            v-for="n in 5"
-                            :key="n"
                             :list-mode="settingsCopy.listMode.toString()"
                             :isDemo="true"
                             packID="6"
@@ -182,10 +180,6 @@ export default class SettingsPage extends Vue {
 
     public scrollToTop(): void {
         document.querySelectorAll('.content-container')[0].scrollTo(0, 0);
-        // // We don't care about this error!
-        // this.$router.push(page).catch((err) => {
-        //     return;
-        // });
     }
 
     public browseForFolder() {

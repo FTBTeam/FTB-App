@@ -30,7 +30,7 @@
                   :name="modpack.name"
                   :versions="modpack.versions"
                   :tags="modpack.tags"
-                  :description="modpack.description"
+                  :description="modpack.synopsis"
           >{{modpack.id}}
           </pack-card-wrapper>
         </div>
@@ -118,7 +118,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
+import {Component, Vue, Watch} from 'vue-property-decorator';
 import {Action, State} from 'vuex-class';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 import Loading from '@/components/Loading.vue';
@@ -126,6 +126,7 @@ import {SettingsState, Settings} from '@/modules/settings/types';
 import FTBSearchBar from '@/components/FTBSearchBar.vue';
 import {ModpackState} from '../modules/modpacks/types';
 import {debounce} from '@/utils';
+import { Route } from 'vue-router';
 
 const namespace: string = 'modpacks';
 
@@ -134,7 +135,7 @@ const namespace: string = 'modpacks';
         PackCardWrapper,
         FTBSearchBar,
         Loading,
-    },
+    }
 })
 export default class BrowseModpacks extends Vue {
     @State('settings') public settingsState!: SettingsState;
@@ -161,7 +162,20 @@ export default class BrowseModpacks extends Vue {
     private debounceSearch: () => void = () => {
     }
 
+    
+    @Watch('$route')
+    onPropertyChanged(value: Route, oldValue: Route) {
+      if(value.params.search !== oldValue.params.search){
+          this.searchValue = value.params.search;
+          this.doSearch(this.searchValue);
+      }
+    }
+
     private async mounted() {
+        if(this.$route.params.search){
+          this.searchValue = this.$route.params.search;
+          this.doSearch(this.searchValue);
+        }
         this.debounceSearch = debounce(() => {
             this.doSearch(this.searchValue);
         }, 1000);

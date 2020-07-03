@@ -5,10 +5,12 @@
       <div id="nav" style="width: 220px;">
         <sidebar />
       </div>
-      <div class="content-container">
-        <router-view />
-        <div v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
-          <!-- {{debugLog(modpack)}} -->
+      <div class="flex-1 flex flex-col overflow-x-hidden">
+        <div class="content-container">
+          <router-view />
+          <div v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
+            <!-- {{debugLog(modpack)}} -->
+          </div>
         </div>
         <div v-if="modpacks.installing != null">
           <div class="progress-bar" v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
@@ -27,34 +29,36 @@
             <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->
           </div>
         </div>
-        <div v-if="$store.state && $store.state.alert != null">
-          <div class="progress-bar" >
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}"><span class="font-bold">{{$store.state.alert.title}}</span> {{$store.state.alert.message}}</p>
-            <div class="w-full h-full bg-grey-light justify-center -mr-200px">
-              <div class="h-full text-xs leading-none py-1 text-white" :class="`bg-${$store.state.alert.type}`"></div>
+        <transition name="slide">
+          <div v-if="$store.state && $store.state.alert != null">
+            <div class="progress-bar relative" >
+              <p class="pl-4 w-full absolute"><span class="font-bold">{{$store.state.alert.title}}</span> {{$store.state.alert.message}}</p>
+              <div class="w-full h-full bg-grey-light justify-center ">
+                <div class="h-full text-xs leading-none py-1 text-white" :class="`bg-${$store.state.alert.type}`"></div>
+              </div>
+              <div class="alert-close" @click="hideAlert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+                  <line x1="0.71" y1="11.12" x2="11.11" y2="0.72" stroke-width="2" />
+                  <line x1="0.77" y1="0.71" x2="11.18" y2="11.12" stroke-width="2" />
+                </svg>
+              </div>
+              <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->
             </div>
-             <div class="alert-close" @click="hideAlert">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-                <line x1="0.71" y1="11.12" x2="11.11" y2="0.72" stroke-width="2" />
-                <line x1="0.77" y1="0.71" x2="11.18" y2="11.12" stroke-width="2" />
-              </svg>
-            </div>
-            <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->
           </div>
-        </div>
+        </transition>
       </div>
       <FTBModal v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null" :visible="$store.state.websocket.modal !== null" @dismiss-modal="hideModal">
         <message-modal :title="$store.state.websocket.modal.title" :content="$store.state.websocket.modal.message" type="custom" :buttons="$store.state.websocket.modal.buttons" :modalID="$store.state.websocket.modal.id"/>
       </FTBModal>
     </div>
-    <div class="container flex pt-1 flex-wrap overflow-x-auto justify-center" v-else>
+    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else>
+      <div class="background-animation"></div>
       <!-- TODO: Make this pretty -->
+      <img src="./assets/logo_ftb.png" width="500px" style="margin-top: 10px;" class="loader-logo-animation"/>
       <span
       v-if="!websockets.firstStart"
-        v-bind:style="{'margin-top': '40vh'}"
       >Issue connecting to backend... Please wait or relaunch.</span>
-      <span v-else
-        v-bind:style="{'margin-top': '40vh'}">Starting FTB App, please wait.</span>
+      <span v-else>Please wait....</span>
     </div>
   </div>
 </template>
@@ -180,7 +184,6 @@ export default class App extends Vue {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: fixed;
   bottom: 0;
   z-index: 4;
   width: 100%;
@@ -191,5 +194,53 @@ export default class App extends Vue {
   position: fixed;
   stroke: #fff;
   right: 10px;
+}
+.slide-enter-active {
+  transition: all .3s ease;
+}
+.slide-leave-active {
+  transition: all .3s ease;
+}
+.slide-enter, .slide-leave-to
+/* .slide-fade-leave-active below version 2.1.8 */ {
+  height: 0;
+}
+.loader-logo-animation {
+  animation-name: saturation;
+  animation-duration: 2.5s;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.background-animation {
+    background-image: url("./assets/ftb-tiny-desat.png");
+    filter: brightness(0.5);
+    animation-name: background-animation;
+    animation-duration: 20s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+    -webkit-mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,0.4)), to(rgba(0,0,0,0)));
+}
+
+@keyframes background-animation {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100vh;
+  }
+}
+
+@keyframes saturation {
+  from {
+    filter: saturate(0);
+  }
+  to {
+    filter: saturate(1);
+  }
 }
 </style>

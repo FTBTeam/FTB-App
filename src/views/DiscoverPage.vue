@@ -13,8 +13,9 @@
         <div class="absolute top-0 left-0 bg-transparent-black w-full z-10 frosted-glass" style="height: 3rem;" v-if="!swapping">
             <p class="pt-2 p-4 pb-1 font-bold uppercase" style="line-height: 3rem;">Direwolf20 plays FTB Revelations</p>
         </div>
-        <div class="absolute  right-0 pl-2 flex flex-row z-10" style="bottom: 10px">
-            <span v-for="(tag, i) in pack.tags" :key="`tag-${i}`" class="rounded mx-2 text-xs bg-green-700 py-1 px-1">{{tag.name}}</span>
+        <div class="absolute right-0 pl-2 flex flex-row z-10" style="bottom: 45px">
+            <span v-for="(tag, i) in pack.tags.slice(0, 5)" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
+            <span v-if="pack.tags.length > 5" key="tag-more"  class="rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+ {{pack.tags.length - 5}}</span>
         </div>
         <div class="flex-1 flex flex-row justify-center items-center" style="z-index: 2;" v-if="swapping">
             <font-awesome-icon icon="spinner" spin size="4x" />
@@ -80,6 +81,10 @@ export default class DiscoverPage extends Vue {
 
     load(){
         this.swapping = false;
+    }
+
+    public clickTag(tagName: string){
+        this.$router.push({name: 'browseModpacks', params: {search: tagName}})
     }
 
     previous(){

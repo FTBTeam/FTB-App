@@ -4,14 +4,14 @@
     <div class="miniftb"></div>
     <img src="../assets/logo_ftb.png" width="125px" style="margin-top: 10px;"/>
     <div class="nav-items flex-col mt-5">
-      <nav-item :isActive="isActiveTab('home')" @click="goTo('/')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
+      <nav-item :isActive="isActiveTab('home')" @click="goTo('home')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
       <nav-item :isActive="isActiveTab('news')" @click="goTo('news')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" /></div>News</nav-item>
       <nav-item :isActive="isActiveTab('discover')" @click="goTo('discover')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="globe-europe" size="lg" class="mr-3" /></div>Discover</nav-item>
       <nav-item :isActive="isActiveTab('browseModpacks')" @click="goTo('browseModpacks')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="search" size="lg" class="mr-3" /></div>Browse</nav-item>
       <nav-item :isActive="isActiveTab('modpacks')" @click="goTo('modpacks')" class="text-left"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="box-open" size="lg" class="mr-3"/></div>My Modpacks</nav-item>
     </div>
     <div class="nav-items flex-col mt-auto mb-0">
-      <nav-item :isActive="isActiveTab('settings')" @click="goTo('/settings')"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>
+      <nav-item :isActive="isActiveTab('settings')" @click="goTo('settings')"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>
       <!-- <nav-item v-if="auth.token === null" :isActive="isActiveTab('modpacks')" @click="openLogin()"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
       <nav-item v-else class="capitalize"><img :src="`https://minotar.net/helm/${auth.token.mcUUID}`" style="margin-right: 0.75em;" width="21px" class="rounded-full" />{{auth.token.username}}</nav-item> -->
     </div>
@@ -40,7 +40,7 @@ export default class Sidebar extends Vue {
 
   public goTo(page: string): void {
     // We don't care about this error!
-    this.$router.push(page).catch((err) => { return; });
+    this.$router.push({name: page}).catch((err) => { return; });
   }
 
   public openPromo(): void {

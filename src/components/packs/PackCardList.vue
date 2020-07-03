@@ -15,9 +15,9 @@
             <div class="flex-1 p-2 bg-background-lighten flex flex-col">
                 <p class="mb-auto">{{description}}</p>
                 <div  v-if="tags" class="flex flex-row items-center">
-                    <p>Tags:</p>
                     <div class="flex flex-row">
-                        <span v-for="(tag, i) in tags" :key="`tag-${i}`" class="rounded mx-2 text-sm bg-green-700 py-1 px-2">{{tag.name}}</span>
+                        <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2">{{tag.name}}</span>
+                        <span v-if="tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2">+{{tags.length - 5}}</span>
                     </div>
                 </div>
             </div>
@@ -26,7 +26,7 @@
                 <FTBButton @click="goToInstance" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton>
             </div>
             <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="!installed">
-                <FTBButton @click="openInstall" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="download" size="sm" class="cursor-pointer"/><p>Install</p></FTBButton>
+                <FTBButton @click="openInstall" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="download" size="sm" class="cursor-pointer"/><p>Get</p></FTBButton>
                 <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="info-circle" size="sm" class="cursor-pointer"/><p>Info</p></FTBButton>
             </div>
         </div>
@@ -101,12 +101,15 @@ export interface MsgBox {
         @Action('errorInstall', {namespace: 'modpacks'}) public errorInstall: any;
         @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks: any;
         @State('settings') public settingsState!: SettingsState;
+        @Action('doSearch', {namespace: 'modpacks'}) public doSearch: any;
 
         public name!: string;
         @Prop()
         public instance!: Instance;
         @Prop()
         public packID!: number;
+        @Prop()
+        public tags!: [];
         private showInstall: boolean = false;
         private showMsgBox: boolean = false;
         private defaultImage: any = placeholderImage;
@@ -122,6 +125,10 @@ export interface MsgBox {
         public onModpacksChange(newState: ModpackState, oldState: ModpackState) {
             console.log('State updated');
             this.$forceUpdate();
+        }
+
+        public clickTag(tagName: string){
+            this.$router.push({name: 'browseModpacks', params: {search: tagName}})
         }
 
         public async mounted() {
@@ -152,6 +159,14 @@ export interface MsgBox {
                     // Instance launched
                 },
             });
+        }
+
+        get limitedTags(){
+            if(this.tags){
+                return this.tags.slice(0, 5);
+            } else {
+                return [];
+            }
         }
 
         public hideMsgBox(): void {

@@ -19,6 +19,8 @@
           :name="modpack.name"
           :instance="modpack"
           :instanceID="modpack.uuid"
+          :description="getModpack(modpack.id).synopsis"
+          :tags="getModpack(modpack.id).tags"
         ></pack-card-wrapper>
       </transition-group>
     </div>
@@ -43,6 +45,7 @@
           :versionID="modpack.versions[0].id"
           :name="modpack.name"
           :description="modpack.synopsis"
+          :tags="modpack.tags"
         >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
@@ -54,11 +57,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Watch} from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 import { asyncForEach } from '@/utils';
-import { State, Action } from 'vuex-class';
-import { ModpackState } from '@/modules/modpacks/types';
+import { State, Action} from 'vuex-class';
+import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 
 const namespace: string = 'modpacks';
@@ -72,14 +75,40 @@ export default class Home extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
-  private isLoaded: boolean = false;
   private cardsToShow = 3;
+  @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
+  private isLoaded: boolean = false;
+
+  @Watch('modpacks', {deep: true})
+  public async onModpacksChange(newVal: ModpackState, oldVal:ModpackState){
+    this.isLoaded = false;
+    try {
+      await Promise.all(newVal.installedPacks.map(async (instance) =>{
+        let pack = await this.fetchModpack(instance.id);
+        return pack;
+      }));
+    this.isLoaded = true;
+    } catch(err) {
+      this.isLoaded = true;
+    }
+  }
 
   private async mounted() {
     if (this.modpacks == null || this.modpacks.featuredPacks.length <= 0) {
       await this.loadFeaturedPacks();
     }
-    this.isLoaded = true;
+    if(this.modpacks){
+      this.isLoaded = false;
+      try {
+        await Promise.all(this.modpacks.installedPacks.map(async (instance) =>{
+            let pack = await this.fetchModpack(instance.id);
+            return pack;
+        }));
+        this.isLoaded = true;
+      } catch(err) {
+        this.isLoaded = true;
+      }
+    }
     const cardSize =  this.settingsState.settings.packCardSize || 2;
     // @ts-ignore
     switch (parseInt(cardSize, 10)) {
@@ -112,6 +141,10 @@ export default class Home extends Vue {
           })
           .slice(0, 4)
       : [];
+  }
+
+  public getModpack(id: number): ModPack | undefined{
+      return this.modpacks?.packsCache[id];
   }
 }
 </script>

@@ -178,10 +178,13 @@ export const actions: ActionTree<ModpackState, RootState> = {
         });
     },
     fetchModpack({commit, rootState}: any, packID): Promise<any> {
+        // console.log("Fetching modpack");
         if (rootState.modpacks.packsCache[packID]) {
-            return rootState.modpacks.packsCache[packID];
+            // console.log("Found in cache");
+            return new Promise((resolve, reject) => resolve(rootState.modpacks.packsCache[packID]));
         }
         return new Promise(async (resolve, reject) => {
+            // console.log("Fetching...");
             await fetch(`${config.apiURL}/public/modpack/${packID}`).catch((err) =>  console.error(err))
             .then(async (response: any) => {
                 response = response as Response;
@@ -194,8 +197,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
                         return semver.rcompare(a.name, b.name);
                     });
                 }
-                commit('addToCache', pack);
+                console.log("Resolving...");
                 resolve(pack);
+                commit('addToCache', pack);
             }).catch((err) => {
                 console.error('Error getting modpack', err);
                 reject(err);

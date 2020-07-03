@@ -18,7 +18,7 @@ module.exports = {
                 "info": "var(--color-info-button)",
                 "text-color": "var(--color-text)",
                 "transparent-black": "rgba(0,0,0,.6)",
-                "danger-button": "var(--color-red-button)",
+                "danger": "var(--color-danger-button)",
             },
             minWidth: {
                 '1/4': '25%',
@@ -86,6 +86,9 @@ module.exports = {
             },
             margin: {
                 '-200px': '200px',
+            },
+            padding: {
+                '0-5': '0.15rem',
             }
         }
     },

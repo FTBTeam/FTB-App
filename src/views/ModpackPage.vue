@@ -11,11 +11,17 @@
             <small>
               <em>{{currentModpack.synopsis}}</em>
             </small>
+            <div v-if="currentModpack.tags" class="flex flex-row items-center">
+                <div class="flex flex-row">
+                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2">{{tag.name}}</span>
+                    <span v-if="currentModpack.tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2">+{{currentModpack.tags.length - 5}}</span>
+                </div>
+            </div>
           </span>
           <div class="update-bar"  v-if="currentModpack && currentModpack.notification">
             {{currentModpack.notification}}
           </div>
-          <div class="instance-buttons flex flex-row">
+          <div class="instance-buttons flex flex-row frosted-glass">
             <div class="instance-button mr-1">
               <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="install(currentModpack.versions[0].id)"><font-awesome-icon icon="download" size="1x"/> Install</ftb-button>
 <!--              <button-->
@@ -168,6 +174,11 @@
     padding: 2px 2px 2px 6px;
     color: black;
   }
+    .frosted-glass {
+      backdrop-filter: blur(8px);
+      background: linear-gradient(to top, rgba(36, 40, 47, 0) 0%, rgba(43, 57, 66, 0.2) calc( 100% - 2px), rgba(193, 202, 207, 0.1) calc( 100% - 1px), rgba(29, 29, 29, 0.3) 100%);
+    //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+  }
 </style>
 
 <script lang="ts">
@@ -319,7 +330,17 @@ export default class ModpackPage extends Vue {
         this.toggleChangelog(this.currentModpack?.versions[0].id);
     }
 
+    public clickTag(tagName: string){
+        this.$router.push({name: 'browseModpacks', params: {search: tagName}})
+    }
 
+    get limitedTags(){
+        if(this.currentModpack && this.currentModpack.tags){
+            return this.currentModpack.tags.slice(0, 5);
+        } else {
+            return [];
+        }
+    }
     get currentModpack() {
       const id: number = Number(this.$route.query.modpackid);
       return this.modpacks?.packsCache[id];

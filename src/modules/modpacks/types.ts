@@ -36,6 +36,7 @@ export interface Instance {
     width: number;
     height: number;
     notification: string;
+    modpack: ModPack | undefined;
 }
 
 export interface Art {
@@ -101,7 +102,7 @@ export interface ModpackState {
     packsCache: ModPacks;
 }
 
-interface ModPacks {
+export interface ModPacks {
     [index: number]: ModPack;
 }
 export interface Changelog {

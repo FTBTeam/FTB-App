@@ -7,6 +7,9 @@ Vue.use(Router);
 export default new Router({
     // mode: 'history',
     base: process.env.BASE_URL,
+    scrollBehavior (to, from, savedPosition) {
+        return { x: 0, y: 0 }
+    },
     routes: [
         {
             path: '/',
@@ -22,7 +25,7 @@ export default new Router({
             component: () => import(/* webpackChunkName: "about" */ './views/Modpacks.vue'),
         },
         {
-            path: '/browseModpacks',
+            path: '/browseModpacks/:search?',
             name: 'browseModpacks',
             // route level code-splitting
             // this generates a separate chunk (about.[hash].js) for this route
