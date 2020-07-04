@@ -28,7 +28,7 @@ export function logVerbose(state: RootState | SettingsState, ...message: any[]){
         }
     } else {
         //@ts-ignore
-        if((state.settings?.settings.verbose){
+        if(state.settings?.settings.verbose){
             console.log("[DEBUG]", ...message);
         }
     }
