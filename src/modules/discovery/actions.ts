@@ -59,7 +59,11 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
             }));
             let allPacks: number[] = [];
             foundPackIDs.forEach((packList) => {
-                allPacks = allPacks.concat(packList);
+                packList.forEach((p: number) => {
+                    if(allPacks.indexOf(p) === -1){
+                        allPacks.push(p)
+                    }
+                })
             });
             logVerbose(rootState, 'Found pack ids', allPacks);
             // for each modpack id get modpack
@@ -71,6 +75,16 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
             logVerbose(rootState, 'Found packs', packs);
             packs = packs.filter((pack) => {
                 if (packIDs.indexOf(pack.id) !== -1) {
+                    return false;
+                }
+                return true;
+            });
+
+            packs = packs.filter((pack) => {
+                if (pack.links.length < 1) {
+                    return false;
+                }
+                if(pack.links.filter((l) => l.type === 'video').length < 1) {
                     return false;
                 }
                 return true;

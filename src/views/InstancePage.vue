@@ -1,18 +1,18 @@
 <template>
   <div class="flex flex-1 flex-col h-full overflow-hidden">
-    <div class="flex flex-col h-full" v-if="instance != undefined">
+    <div class="flex flex-col h-full" v-if="instance != undefined " :key="instance.uuid">
       <div>
         <div
             class="header-image"
-            v-bind:style="{'background-image': `url(${currentModpack !== undefined && typeof currentModpack.art === 'Array' && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+            v-bind:style="{'background-image': `url(${currentModpack !== null && typeof currentModpack.art === 'Array' && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
-          <span class="instance-name text-4xl">{{instance.name}}</span>
+          <span class="instance-name text-4xl pb-2">{{instance.name}}</span>
           <span class="instance-info">
-            <small>
+            <small v-if="currentModpack !== null">
               {{currentModpack.name}} <span v-for="author in currentModpack.authors">By {{author.name}}</span> - {{instance.version}} -
               <em>{{currentModpack.synopsis}}</em>
             </small>
-            <div v-if="tags.length > 0" class="flex flex-row items-center">
+            <div v-if="currentModpack !== null && tags.length > 0" class="flex flex-row items-center">
                 <div class="flex flex-row">
                     <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
                     <span v-if="tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+{{tags.length - 5}}</span>
@@ -36,12 +36,12 @@
 <!--              </button>-->
             </div>
             <div class="instance-button mr-1" v-if="instance && !isLatestVersion">
-              <button
-                  class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
+              <ftb-button
+                  class="py-2 px-4" color="warning"
                   @click="update()"
               >
                 <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> Update</span>
-              </button>
+              </ftb-button>
             </div>
             <div class="instance-button mr-1">
               <div class="text-white-500 py-2 px-4 inline-flex items-center">
@@ -82,7 +82,7 @@
                 href="#overview"
             >Overview</a>
           </li>
-          <li class="-mb-px mr-1" v-if="currentModpack != null && currentModpack.versions !== undefined">
+          <li class="-mb-px mr-1" v-if="currentModpack != undefined && currentModpack.versions !== undefined">
             <a
                 class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('versions')"
@@ -109,7 +109,7 @@
         </ul>
         <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
-            <div class="flex flex-wrap" v-if="currentModpack != null && currentModpack.description !== undefined">
+            <div class="flex flex-wrap" v-if="currentModpack != undefined && currentModpack.description !== undefined">
               <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
             </div>
             <div v-else>
@@ -148,7 +148,7 @@
               </div>
               {{debugLog("Version ID: " + version.id)}}
               {{debugLog("activeChangelog: " + activeChangelog)}}
-              <div class="pl-5 bg-background" v-if="activeChangelog === version.id">
+              <div class="pl-5 p-2 bg-background" v-if="activeChangelog === version.id">
                 <VueShowdown v-if="changelogs[version.id]" :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
                 <p v-else>No changelog available</p>
               </div>
@@ -370,6 +370,9 @@ interface Changelogs {
 
 export default class InstancePage extends Vue {
 
+    private currentModpack: ModPack | null = null;
+    private cheaty: string = "";
+
     get instance() {
         if (this.modpacks == null) {
             return null;
@@ -389,18 +392,8 @@ export default class InstancePage extends Vue {
         return resList;
     }
 
-    get currentModpack() {
-      if (!this.instance) {
-        return null;
-      }
-      if (this.modpacks?.packsCache[this.instance.id] === undefined) {
-        return this.instance;
-      }
-      return this.modpacks?.packsCache[this.instance.id];
-    }
-
     get tags() {
-       if (this.instance) {
+       if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
             return this.modpacks?.packsCache[this.instance.id].tags;
         } else {
             return [];
@@ -415,6 +408,7 @@ export default class InstancePage extends Vue {
     }
 
     get isLatestVersion() {
+      console.log(this.currentModpack === undefined, this.currentModpack?.kind !== 'modpack')
       if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack') {
         return true;
       }
@@ -683,7 +677,8 @@ export default class InstancePage extends Vue {
             this.$router.push('/modpacks');
             return;
         }
-        await this.fetchModpack(this.instance.id);
+        this.currentModpack = await this.fetchModpack(this.instance.id);
+        this.$forceUpdate();
         if (this.currentModpack?.kind === 'modpack') {
           this.toggleChangelog(this.currentModpack?.versions[0].id);
         }

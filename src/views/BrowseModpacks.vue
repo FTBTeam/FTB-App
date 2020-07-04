@@ -189,6 +189,9 @@ export default class BrowseModpacks extends Vue {
         if (this.$route.params.search) {
           this.searchValue = this.$route.params.search;
           this.doSearch(this.searchValue);
+        } else {
+          this.searchValue = "";
+          this.clearSearch();
         }
         this.debounceSearch = debounce(() => {
             this.doSearch(this.searchValue);

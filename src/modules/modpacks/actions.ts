@@ -123,6 +123,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
 
         asyncForEach(Object.keys(packsPayload.instances), async (index) => {
             const instance: Instance = packsPayload.instances[index];
+            instance.kind = 'instance';
             packs.push(instance);
         });
         commit('storeInstalledPacks', packs);
@@ -197,6 +198,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
                         return semver.rcompare(a.name, b.name);
                     });
                 }
+                pack.kind = 'modpack';
                 console.log('Resolving...');
                 resolve(pack);
                 commit('addToCache', pack);
