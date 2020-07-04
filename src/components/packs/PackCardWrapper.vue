@@ -1,5 +1,5 @@
 <template>
-<pack-card v-if="listMode === 'false' || listMode === false" v-bind="$props" ></pack-card>
+<pack-card v-if="listMode === undefined || listMode === 'false' || listMode === false" v-bind="$props" ></pack-card>
 <pack-card-list v-else v-bind="$props" ></pack-card-list>
 </template>
 

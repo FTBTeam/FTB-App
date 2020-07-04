@@ -59,7 +59,6 @@
             <div class="flex flex-wrap" v-if="currentModpack != null">
               <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
             </div>
-            <hr/>
 
             <!-- <div class="versions" v-if="currentModpack != null && currentModpack.versions != null">
           <div v-for="(version, index) in currentModpack.versions" v-bind:key="index">

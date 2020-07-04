@@ -110,13 +110,11 @@
         <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
             <div class="flex flex-wrap" v-if="currentModpack != null && currentModpack.description !== undefined">
-              <hr/>
               <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']"/>
             </div>
             <div v-else>
               <h2>No description available</h2>
             </div>
-            <hr/>
           </div>
           <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
             <div v-for="(version, index) in currentModpack.versions" :key="index">

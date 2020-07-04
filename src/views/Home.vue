@@ -33,8 +33,8 @@
         appear
       >
         <pack-card-wrapper
-          v-for="(modpack, index) in modpacks.featuredPacks.slice(0,cardsToShow)"
-          :key="index"
+          v-for="modpack in modpacks.featuredPacks.slice(0,cardsToShow)"
+          :key="modpack.id"
           :list-mode="settingsState.settings.listMode"
           :packID="modpack.id"
           :versions="modpack.versions"
