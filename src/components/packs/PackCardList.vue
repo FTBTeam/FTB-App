@@ -13,7 +13,7 @@
             </article>
             <div class="flex-1 p-2 bg-background-lighten flex flex-col">
                 <div class="name-box font-bold">{{name}}</div>
-                <p class="mb-auto">{{description}}</p>
+                <p class="mb-auto max-2-lines">{{description}}</p>
                 <div  v-if="tags" class="flex flex-row items-center">
                     <div class="flex flex-row">
                         <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
@@ -408,5 +408,13 @@ export interface MsgBox {
     .button-shadow {
         // text-shadow: 3px 6px #272634;
         filter: drop-shadow(10px 10px 5px rgba(0, 0, 0, .8));
+    }
+
+    .max-2-lines {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
 </style>

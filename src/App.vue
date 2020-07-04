@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="theme-dark">
     <title-bar />
-    <div class="container" v-if="websockets.socket.isConnected">
+    <div class="container" v-if="websockets.socket.isConnected && !loading">
       <div id="nav" style="width: 220px;">
         <sidebar />
       </div>
@@ -93,22 +93,32 @@ export default class App extends Vue {
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('hideAlert') public hideAlert: any;
   @Action('hideModal') public hideModal: any;
-  private haveLoaded: boolean = false;
-  @Watch('websockets', { deep: true })
-  public onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
-    if (this.websockets.socket.isConnected && !this.haveLoaded) {
-      this.fetchStartData();
-      this.haveLoaded = true;
+  private loading: boolean = false;
+  private hasLoaded: boolean = false;
+
+  @Watch('websockets', {deep: true})
+  public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
+    if(newVal.socket.isConnected && !this.loading && !this.hasLoaded){
+      this.loading = true;
+      await this.fetchStartData();
+      this.hasLoaded = true;
+      this.loading = false;
+    } else if(!newVal.socket.isConnected && !this.loading){
+      this.loading = true;
+      this.hasLoaded = false;
     }
   }
 
   public fetchStartData() {
-    this.loadSettings();
-    this.sendMessage({
-      payload: { type: 'installedInstances' },
-      callback: (data: any) => {
-        this.storePacks(data);
-    }});
+    return new Promise(async (resolve, reject) => {
+      await this.loadSettings();
+      this.sendMessage({
+        payload: { type: 'installedInstances' },
+        callback: (data: any) => {
+          this.storePacks(data);
+          resolve();
+      }});
+    })
   }
 
   public retry(modpack: InstallProgress) {

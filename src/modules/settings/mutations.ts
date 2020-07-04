@@ -3,7 +3,23 @@ import {SettingsState, Settings, Resolution} from './types';
 
 export const mutations: MutationTree<SettingsState> = {
     loadSettings(state, payload: Settings) {
-        state.settings = payload;
+        let defaultSettings: Settings = {
+            width: 1720,
+            height: 840,
+            memory: 3072,
+            keepLauncherOpen: true,
+            enablePreview: false,
+            jvmargs: '',
+            enableAnalytics: true,
+            enableBeta: false,
+            threadLimit: 2,
+            speedLimit: 0,
+            cacheLife: 5184000,
+            packCardSize: 1,
+            instanceLocation: '',
+            listMode: false,
+        };
+        state.settings = {...defaultSettings, ...payload};
     },
     saveSettings(state, payload: Settings) {
         state.settings = payload;

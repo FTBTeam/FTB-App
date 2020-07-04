@@ -40,7 +40,7 @@
             <a
                 class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('overview')"
-                :class="{ 'border-l border-t border-r border-gray-600': isTabActive('overview'), 'text-gray-600 hover:text-gray-500': !isTabActive('overview') }"
+                :class="{ 'border-l border-t border-r border-navbar': isTabActive('overview'), 'text-gray-600 hover:text-gray-500': !isTabActive('overview') }"
                 href="#overview"
             >Overview</a>
           </li>
@@ -48,7 +48,7 @@
             <a
                 class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
                 @click.prevent="setActiveTab('versions')"
-                :class="{ 'border-l border-t border-r border-gray-600': isTabActive('versions'), 'text-gray-600 hover:text-gray-500': !isTabActive('versions') }"
+                :class="{ 'border-l border-t border-r border-navbar': isTabActive('versions'), 'text-gray-600 hover:text-gray-500': !isTabActive('versions') }"
                 href="#versions"
             >Versions</a>
           </li>

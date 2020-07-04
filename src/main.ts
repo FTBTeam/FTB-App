@@ -35,7 +35,7 @@ const classMap: object = {
     h6: 'title is-6',
     em: 'italic',
     ul: 'list-inside',
-    a: 'leading-none cursor-pointer underline hover:bold',
+    a: 'text-gray-400 hover:text-white leading-none cursor-pointer hover:underline',
     // li: 'ui item'
 };
 
