@@ -218,6 +218,18 @@ interface Changelogs {
     },
 })
 export default class ModpackPage extends Vue {
+
+    get limitedTags() {
+        if (this.currentModpack && this.currentModpack.tags) {
+            return this.currentModpack.tags.slice(0, 5);
+        } else {
+            return [];
+        }
+    }
+    get currentModpack() {
+      const id: number = Number(this.$route.query.modpackid);
+      return this.modpacks?.packsCache[id];
+    }
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
     @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: any;
     @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks!: any;
@@ -325,25 +337,13 @@ export default class ModpackPage extends Vue {
         });
     }
 
+    public clickTag(tagName: string) {
+        this.$router.push({name: 'browseModpacks', params: {search: tagName}});
+    }
+
     private async mounted() {
         await this.fetchModpack(this.$route.query.modpackid);
         this.toggleChangelog(this.currentModpack?.versions[0].id);
-    }
-
-    public clickTag(tagName: string){
-        this.$router.push({name: 'browseModpacks', params: {search: tagName}})
-    }
-
-    get limitedTags(){
-        if(this.currentModpack && this.currentModpack.tags){
-            return this.currentModpack.tags.slice(0, 5);
-        } else {
-            return [];
-        }
-    }
-    get currentModpack() {
-      const id: number = Number(this.$route.query.modpackid);
-      return this.modpacks?.packsCache[id];
     }
 
     private async toggleChangelog(id: number | undefined) {

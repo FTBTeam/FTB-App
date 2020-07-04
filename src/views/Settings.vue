@@ -163,7 +163,7 @@ export default class SettingsPage extends Vue {
         cacheLife: 5184000,
         packCardSize: 2,
         instanceLocation: '',
-        listMode: false
+        listMode: false,
     };
 
     private resSelectedValue: string = '0';

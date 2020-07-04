@@ -401,23 +401,26 @@ export default class InstancePage extends Vue {
       return this.modpacks?.packsCache[this.instance.id];
     }
 
-    get tags(){
-       if(this.instance){
+    get tags() {
+       if (this.instance) {
             return this.modpacks?.packsCache[this.instance.id].tags;
         } else {
             return [];
         }
     }
 
-    public clickTag(tagName: string){
-        this.$router.push({name: 'browseModpacks', params: {search: tagName}})
-    }
-
-    get limitedTags(){
-      if(this.tags){
-        return this.tags.slice(0, 5); 
+    get limitedTags() {
+      if (this.tags) {
+        return this.tags.slice(0, 5);
       }
       return [];
+    }
+
+    get isLatestVersion() {
+      if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack') {
+        return true;
+      }
+      return this.instance?.versionId === this.currentModpack?.versions[0].id;
     }
 
 
@@ -452,6 +455,10 @@ export default class InstancePage extends Vue {
 
     private resSelectedValue: string = '0';
 
+    public clickTag(tagName: string) {
+        this.$router.push({name: 'browseModpacks', params: {search: tagName}});
+    }
+
     public serverDownloadMenu(versionID: number) {
         const links = [];
         links.push({content: 'Windows', url: `${config.apiURL}/public/modpack/${this.instance?.id}/${versionID}/server/windows`, open: '_blank'});
@@ -460,7 +467,7 @@ export default class InstancePage extends Vue {
         return links;
     }
 
-    public copy(text: string){
+    public copy(text: string) {
       clipboard.writeText(text);
       this.showAlert({
           title: 'Copied!',
@@ -474,8 +481,8 @@ export default class InstancePage extends Vue {
 
     public modHashData(file: any) {
         const links = [];
-        let isMatched = true;
-        links.push({content: `${isMatched ? '&#x2705;':  '&#x274E;'}  SHA1`, callback: this.copy.bind(this, file.sha1)});
+        const isMatched = true;
+        links.push({content: `${isMatched ? '&#x2705;' :  '&#x274E;'}  SHA1`, callback: this.copy.bind(this, file.sha1)});
         links.push({content: '&#x274E;  MD5', callback: this.copy.bind(this, file.md5)});
         links.push({content: '&#x274E;  SHA256', callback: this.copy.bind(this, file.sha256)});
         return links;
@@ -704,13 +711,6 @@ export default class InstancePage extends Vue {
             this.changelogs[id] = changelog.content;
         }
       this.activeChangelog = id;
-    }
-
-    get isLatestVersion() {
-      if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack') {
-        return true;
-      }
-      return this.instance?.versionId === this.currentModpack?.versions[0].id;
     }
 
     private debugLog(thing: any) {

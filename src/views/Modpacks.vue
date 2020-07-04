@@ -45,89 +45,89 @@
 </template>
 
 <script lang="ts">
-    import {Component, Vue, Watch, } from 'vue-property-decorator';
-    import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-    import FTBSearchBar from '@/components/FTBSearchBar.vue';
-    import FTBButton from '@/components/FTBButton.vue';
-    import {ModpackState, ModPack, Instance} from '@/modules/modpacks/types';
-    import {State, namespace, Action, Getter} from 'vuex-class';
-    import {asyncForEach} from '../utils';
-    import { SettingsState } from '../modules/settings/types';
+import {Component, Vue, Watch } from 'vue-property-decorator';
+import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
+import FTBSearchBar from '@/components/FTBSearchBar.vue';
+import FTBButton from '@/components/FTBButton.vue';
+import {ModpackState, ModPack, Instance} from '@/modules/modpacks/types';
+import {State, namespace, Action, Getter} from 'vuex-class';
+import {asyncForEach} from '../utils';
+import { SettingsState } from '../modules/settings/types';
 
-    @Component({
-        components: {
-            PackCardWrapper,
-            FTBSearchBar,
-            'ftb-button': FTBButton,
-        },
-    })
-    export default class Modpacks extends Vue {
-        @State('settings') public settings!: SettingsState;
-        @State('modpacks') public modpacks!: ModpackState;
-        @Getter('packsCache', {namespace: 'modpacks'}) public packsCache!: ModPack[];
-        @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
-        
-        private searchTerm: string = '';
-        private activeTab: string = 'overview';
-        private isLoaded: boolean = false;
+@Component({
+    components: {
+        PackCardWrapper,
+        FTBSearchBar,
+        'ftb-button': FTBButton,
+    },
+})
+export default class Modpacks extends Vue {
+    @State('settings') public settings!: SettingsState;
+    @State('modpacks') public modpacks!: ModpackState;
+    @Getter('packsCache', {namespace: 'modpacks'}) public packsCache!: ModPack[];
+    @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
 
-        @Watch('modpacks', {deep: true})
-        public async onModpacksChange(newVal: ModpackState, oldVal:ModpackState){
-          this.isLoaded = false;
-          try {
-           await Promise.all(this.modpacks.installedPacks.map(async (instance) =>{
-              let pack = await this.fetchModpack(instance.id);
-              return pack;
-            }));
-          this.isLoaded = true;
-          } catch(err) {
-            this.isLoaded = true;
-          }
-        }
+    private searchTerm: string = '';
+    private activeTab: string = 'overview';
+    private isLoaded: boolean = false;
 
-        async mounted(){
-          if(this.modpacks){
-            this.isLoaded = false;
-            try {
-            await Promise.all(this.modpacks.installedPacks.map(async (instance) =>{
-                let pack = await this.fetchModpack(instance.id);
-                return pack;
-            }));
-            this.isLoaded = true;
-            } catch(err) {
-              this.isLoaded = true;
-            }
-          }
-        }
-
-        get packs(): Instance[] {
-            return this.modpacks == null ? [] : this.searchTerm.length > 0 ? this.modpacks.installedPacks.filter((pack) => {
-                return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
-            }) : this.modpacks.installedPacks.sort((a, b) => {
-                return b.lastPlayed - a.lastPlayed;
-            });
-        }
-
-        public isTabActive(tabItem: string) {
-            return this.activeTab === tabItem;
-        }
-
-        public setActiveTab(tabItem: string) {
-            this.activeTab = tabItem;
-        }
-
-        public goTo(page: string): void {
-            // We don't care about this error!
-            this.$router.push(page).catch((err) => { return; });
-        }
-
-        public isActiveTab(tab: string): boolean {
-            return tab === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${tab}`);
-        }
-
-        public getModpack(id: number): ModPack | null {
-          return this.packsCache[id] ? this.packsCache[id] : null;
-        }
-
+    @Watch('modpacks', {deep: true})
+    public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
+      this.isLoaded = false;
+      try {
+       await Promise.all(this.modpacks.installedPacks.map(async (instance) => {
+          const pack = await this.fetchModpack(instance.id);
+          return pack;
+        }));
+       this.isLoaded = true;
+      } catch (err) {
+        this.isLoaded = true;
+      }
     }
+
+    public async mounted() {
+      if (this.modpacks) {
+        this.isLoaded = false;
+        try {
+        await Promise.all(this.modpacks.installedPacks.map(async (instance) => {
+            const pack = await this.fetchModpack(instance.id);
+            return pack;
+        }));
+        this.isLoaded = true;
+        } catch (err) {
+          this.isLoaded = true;
+        }
+      }
+    }
+
+    get packs(): Instance[] {
+        return this.modpacks == null ? [] : this.searchTerm.length > 0 ? this.modpacks.installedPacks.filter((pack) => {
+            return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
+        }) : this.modpacks.installedPacks.sort((a, b) => {
+            return b.lastPlayed - a.lastPlayed;
+        });
+    }
+
+    public isTabActive(tabItem: string) {
+        return this.activeTab === tabItem;
+    }
+
+    public setActiveTab(tabItem: string) {
+        this.activeTab = tabItem;
+    }
+
+    public goTo(page: string): void {
+        // We don't care about this error!
+        this.$router.push(page).catch((err) => { return; });
+    }
+
+    public isActiveTab(tab: string): boolean {
+        return tab === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${tab}`);
+    }
+
+    public getModpack(id: number): ModPack | null {
+      return this.packsCache[id] ? this.packsCache[id] : null;
+    }
+
+}
 </script>

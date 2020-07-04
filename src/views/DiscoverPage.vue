@@ -48,7 +48,7 @@
   </div>
 </template>
 
-<script lang="ts">  
+<script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 import PackCardList from '@/components/packs/PackCardList.vue';
 import FTBButton from '@/components/FTBButton.vue';
@@ -63,8 +63,8 @@ import { ModPack } from '../modules/modpacks/types';
     components: {
         PackCardList,
         FTBButton,
-        Loading
-    }
+        Loading,
+    },
 })
 export default class DiscoverPage extends Vue {
     @State('settings') public settingsState!: SettingsState;
@@ -75,37 +75,37 @@ export default class DiscoverPage extends Vue {
     private swapping: boolean = false;
 
 
-    mounted(){
+    public mounted() {
         this.fetchQueue();
     }
 
-    load(){
+    public load() {
         this.swapping = false;
     }
 
-    public clickTag(tagName: string){
-        this.$router.push({name: 'browseModpacks', params: {search: tagName}})
+    public clickTag(tagName: string) {
+        this.$router.push({name: 'browseModpacks', params: {search: tagName}});
     }
 
-    previous(){
-        if(!this.discovery){
+    public previous() {
+        if (!this.discovery) {
             return;
         }
-        const first: ModPack | undefined = this.discovery.discoveryQueue.pop()
-        if(first !== undefined){
+        const first: ModPack | undefined = this.discovery.discoveryQueue.pop();
+        if (first !== undefined) {
             this.swapping = true;
-            this.discovery.discoveryQueue = [first].concat(this.discovery.discoveryQueue)
+            this.discovery.discoveryQueue = [first].concat(this.discovery.discoveryQueue);
         }
     }
 
-    next(){
-        if(!this.discovery){
+    public next() {
+        if (!this.discovery) {
             return;
         }
-        const first: ModPack | undefined = this.discovery.discoveryQueue.shift()
-        if(first !== undefined){
+        const first: ModPack | undefined = this.discovery.discoveryQueue.shift();
+        if (first !== undefined) {
             this.swapping = true;
-            this.discovery.discoveryQueue = this.discovery.discoveryQueue.concat(first)
+            this.discovery.discoveryQueue = this.discovery.discoveryQueue.concat(first);
         }
     }
 }

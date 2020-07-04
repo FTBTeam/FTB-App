@@ -7,22 +7,22 @@
 </template>
 
 <script lang="ts">
-    import {Component, Prop, Vue} from 'vue-property-decorator';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 
-    @Component({
-        name: 'ftb-button',
-        props: {
-            'click': Function,
-            'color': String,
-            'cssClass':  String,
-            isRounded: {
-              type: Boolean,
-              default: true
-            }
+@Component({
+    name: 'ftb-button',
+    props: {
+        click: Function,
+        color: String,
+        cssClass:  String,
+        isRounded: {
+          type: Boolean,
+          default: true,
         },
-    })
-    export default class FTBButton extends Vue {
-    }
+    },
+})
+export default class FTBButton extends Vue {
+}
 </script>
 
 <style lang="scss">

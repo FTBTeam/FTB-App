@@ -14,7 +14,7 @@ export const mutations: MutationTree<DiscoveryState> = {
     },
     queueError(state) {
         state.error = true;
-        if(state.discoveryQueue.length === 0){
+        if (state.discoveryQueue.length === 0) {
             state.discoveryQueue = [];
         }
         state.loading = false;

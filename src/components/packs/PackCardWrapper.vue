@@ -13,7 +13,7 @@ import { SettingsState } from '@/modules/settings/types';
 @Component({
         components: {
             PackCard,
-            PackCardList
+            PackCardList,
         },
         props: [
             'listMode',
@@ -31,11 +31,11 @@ import { SettingsState } from '@/modules/settings/types';
             'fake',
             'isDemo',
             'size',
-            'tags'
+            'tags',
         ],
     })
     export default class PackCardWrapper extends Vue {
-        
+
     }
 </script>
 

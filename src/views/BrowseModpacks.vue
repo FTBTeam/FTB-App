@@ -144,7 +144,7 @@ const namespace: string = 'modpacks';
         PackCardWrapper,
         FTBSearchBar,
         Loading,
-    }
+    },
 })
 export default class BrowseModpacks extends Vue {
     @State('settings') public settingsState!: SettingsState;
@@ -169,24 +169,24 @@ export default class BrowseModpacks extends Vue {
             return;
         });
     }
-    private debounceSearch: () => void = () => {
-    }
 
-    private changeTab(tab: string){
-      this.currentTab = tab;
-    }
 
-    
     @Watch('$route')
-    onPropertyChanged(value: Route, oldValue: Route) {
-      if(value.params.search !== oldValue.params.search){
+    public onPropertyChanged(value: Route, oldValue: Route) {
+      if (value.params.search !== oldValue.params.search) {
           this.searchValue = value.params.search;
           this.doSearch(this.searchValue);
       }
     }
+    private debounceSearch: () => void = () => {
+    }
+
+    private changeTab(tab: string) {
+      this.currentTab = tab;
+    }
 
     private async mounted() {
-        if(this.$route.params.search){
+        if (this.$route.params.search) {
           this.searchValue = this.$route.params.search;
           this.doSearch(this.searchValue);
         }

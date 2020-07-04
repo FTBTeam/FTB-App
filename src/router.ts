@@ -7,8 +7,8 @@ Vue.use(Router);
 export default new Router({
     // mode: 'history',
     base: process.env.BASE_URL,
-    scrollBehavior (to, from, savedPosition) {
-        return { x: 0, y: 0 }
+    scrollBehavior(to, from, savedPosition) {
+        return { x: 0, y: 0 };
     },
     routes: [
         {

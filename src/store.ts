@@ -43,7 +43,7 @@ const store: StoreOptions<RootState> = {
         alert: null,
         wsPort: 0,
         wsSecret: '',
-        modpacks: null
+        modpacks: null,
     },
     actions: {
         showAlert: ({commit}: any, alert: Alert) => {
@@ -63,7 +63,7 @@ const store: StoreOptions<RootState> = {
         websocket,
         settings,
         auth,
-        discovery
+        discovery,
     },
 };
 

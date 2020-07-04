@@ -5,10 +5,10 @@ import { DiscoveryState } from './types';
 import {RootState} from '@/types';
 import Parser from 'rss-parser';
 
-function inCommon(a: any[], b: any[]){
+function inCommon(a: any[], b: any[]) {
     let count = 0;
-    for (var i = 0; i < a.length; i++){
-        if(b.indexOf(a[i]) > -1){
+    for (let i = 0; i < a.length; i++) {
+        if (b.indexOf(a[i]) > -1) {
             count++;
         }
     }
@@ -17,38 +17,38 @@ function inCommon(a: any[], b: any[]){
 
 export const actions: ActionTree<DiscoveryState, RootState> = {
     async fetchQueue({rootState, commit}): Promise<any> {
-        let installedPacks: ModPack[] = await this.dispatch('modpacks/refreshPacks', {}, {root: true});
-        console.log("Fetching queue", installedPacks);
+        const installedPacks: ModPack[] = await this.dispatch('modpacks/refreshPacks', {}, {root: true});
+        console.log('Fetching queue', installedPacks);
         commit('setLoading', true);
-        if(installedPacks.length > 0) {
-            console.log("Getting discovery based on installed modpacks");
+        if (installedPacks.length > 0) {
+            console.log('Getting discovery based on installed modpacks');
             // Get all installed pack IDS
-            let packIDs: number[] = installedPacks.map((pack) => {
+            const packIDs: number[] = installedPacks.map((pack) => {
                 return pack.id;
             });
-            console.log("Pack IDs is", packIDs);
-            
+            console.log('Pack IDs is', packIDs);
+
             let allTags: ModPackTag[] = [];
             // Get list of tags for all the installed packs
-            let tags: ModPackTag[][] = await Promise.all(packIDs.map(async (packID) => {
-                let pack: ModPack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
-                console.log("pack", pack);
+            const tags: ModPackTag[][] = await Promise.all(packIDs.map(async (packID) => {
+                const pack: ModPack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
+                console.log('pack', pack);
                 return pack.tags;
             }));
             // Merge tag lists into one list
             tags.forEach((tagList) => {
-                console.log("Tag list", tagList);
-                allTags = allTags.concat(tagList)
+                console.log('Tag list', tagList);
+                allTags = allTags.concat(tagList);
             });
-            allTags = allTags.filter((tag) => tag !== undefined)
-            console.log("All tags", allTags);
+            allTags = allTags.filter((tag) => tag !== undefined);
+            console.log('All tags', allTags);
             // for each tag get top 3 most popular modpack ID's
-            let foundPackIDs = await Promise.all(allTags.map(async (tag: ModPackTag) => {
+            const foundPackIDs = await Promise.all(allTags.map(async (tag: ModPackTag) => {
                 console.log(tag);
                 return await fetch(`${config.apiURL}/public/modpack/popular/installs/${tag.name}/3`).catch((err) =>  console.error(err))
                 .then(async (response: any) => {
                     response = response as Response;
-                    let packs = (await response.json()).packs;
+                    const packs = (await response.json()).packs;
                     return packs.slice(0, 3);
                 }).catch((err) => {
                     console.error('Error getting modpacks', err);
@@ -56,31 +56,31 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
             }));
             let allPacks: number[] = [];
             foundPackIDs.forEach((packList) => {
-                allPacks = allPacks.concat(packList)
+                allPacks = allPacks.concat(packList);
             });
-            console.log("Found pack ids", allPacks);
+            console.log('Found pack ids', allPacks);
             // for each modpack id get modpack
             let packs: ModPack[] = await Promise.all(allPacks.map(async (packID) => {
-                let pack: ModPack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
+                const pack: ModPack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
                 return pack;
             }));
 
-            console.log("Found packs", packs);
+            console.log('Found packs', packs);
             packs = packs.filter((pack) => {
-                if(packIDs.indexOf(pack.id) !== -1){
+                if (packIDs.indexOf(pack.id) !== -1) {
                     return false;
                 }
                 return true;
-            })
+            });
 
-            // Sort by most amount of tags incommon            
+            // Sort by most amount of tags incommon
             packs = packs.sort((a, b) => {
                 return inCommon(a.tags, allTags) - inCommon(b.tags, allTags);
-            })
+            });
             commit('loadQueue', packs);
 
             // Sort by most amount of installs
-            
+
         } else {
             fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
             .then((response) => response.json())

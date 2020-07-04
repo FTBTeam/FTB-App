@@ -72,40 +72,54 @@ const namespace: string = 'modpacks';
   },
 })
 export default class Home extends Vue {
+
+  get recentlyPlayed() {
+    return this.modpacks !== undefined
+      ? this.modpacks.installedPacks
+          .sort((a, b) => {
+            return b.lastPlayed - a.lastPlayed;
+          })
+          .slice(0, 4)
+      : [];
+  }
   @State('settings') public settingsState!: SettingsState;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
-  private cardsToShow = 3;
   @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
+  private cardsToShow = 3;
   private isLoaded: boolean = false;
 
   @Watch('modpacks', {deep: true})
-  public async onModpacksChange(newVal: ModpackState, oldVal:ModpackState){
+  public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
     this.isLoaded = false;
     try {
-      await Promise.all(newVal.installedPacks.map(async (instance) =>{
-        let pack = await this.fetchModpack(instance.id);
+      await Promise.all(newVal.installedPacks.map(async (instance) => {
+        const pack = await this.fetchModpack(instance.id);
         return pack;
       }));
-    this.isLoaded = true;
-    } catch(err) {
+      this.isLoaded = true;
+    } catch (err) {
       this.isLoaded = true;
     }
+  }
+
+  public getModpack(id: number): ModPack | undefined {
+      return this.modpacks?.packsCache[id];
   }
 
   private async mounted() {
     if (this.modpacks == null || this.modpacks.featuredPacks.length <= 0) {
       await this.loadFeaturedPacks();
     }
-    if(this.modpacks){
+    if (this.modpacks) {
       this.isLoaded = false;
       try {
-        await Promise.all(this.modpacks.installedPacks.map(async (instance) =>{
-            let pack = await this.fetchModpack(instance.id);
+        await Promise.all(this.modpacks.installedPacks.map(async (instance) => {
+            const pack = await this.fetchModpack(instance.id);
             return pack;
         }));
         this.isLoaded = true;
-      } catch(err) {
+      } catch (err) {
         this.isLoaded = true;
       }
     }
@@ -131,20 +145,6 @@ export default class Home extends Vue {
         this.cardsToShow = 10;
         break;
     }
-  }
-
-  get recentlyPlayed() {
-    return this.modpacks !== undefined
-      ? this.modpacks.installedPacks
-          .sort((a, b) => {
-            return b.lastPlayed - a.lastPlayed;
-          })
-          .slice(0, 4)
-      : [];
-  }
-
-  public getModpack(id: number): ModPack | undefined{
-      return this.modpacks?.packsCache[id];
   }
 }
 </script>

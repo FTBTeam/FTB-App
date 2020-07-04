@@ -149,9 +149,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
             dispatch('sendMessage', {
                 payload: { type: 'installedInstances' },
                 callback: (data: any) => {
-                    console.log("Storing installed packs", data);
-                dispatch('storeInstalledPacks', data);
-                resolve(data.instances);
+                    console.log('Storing installed packs', data);
+                    dispatch('storeInstalledPacks', data);
+                    resolve(data.instances);
             }}, {root: true});
         });
     },
@@ -197,7 +197,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
                         return semver.rcompare(a.name, b.name);
                     });
                 }
-                console.log("Resolving...");
+                console.log('Resolving...');
                 resolve(pack);
                 commit('addToCache', pack);
             }).catch((err) => {

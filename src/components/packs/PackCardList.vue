@@ -127,8 +127,8 @@ export interface MsgBox {
             this.$forceUpdate();
         }
 
-        public clickTag(tagName: string){
-            this.$router.push({name: 'browseModpacks', params: {search: tagName}})
+        public clickTag(tagName: string) {
+            this.$router.push({name: 'browseModpacks', params: {search: tagName}});
         }
 
         public async mounted() {
@@ -161,8 +161,8 @@ export interface MsgBox {
             });
         }
 
-        get limitedTags(){
-            if(this.tags){
+        get limitedTags() {
+            if (this.tags) {
                 return this.tags.slice(0, 5);
             } else {
                 return [];
@@ -268,7 +268,7 @@ export interface MsgBox {
                 }
                 return this.modpacks?.packsCache[this.instance?.id];
             } else {
-                return this.modpacks?.packsCache[this.packID];  
+                return this.modpacks?.packsCache[this.packID];
             }
         }
 

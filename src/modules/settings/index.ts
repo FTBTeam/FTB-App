@@ -20,7 +20,7 @@ export const state: SettingsState = {
         packCardSize: 2,
         instanceLocation: '',
         enablePreview: false,
-        listMode: true
+        listMode: true,
     },
     error: false,
     hardware: {
