@@ -105,6 +105,12 @@ Vue.filter('moment', (value: any) => {
     return moment.unix(value).format('Do MMMM YYYY');
 });
 
+
+Vue.filter('formatNumber', (value: number) => {
+    if(!value) {return '';}
+    return new Intl.NumberFormat().format(value)
+})
+
 Vue.filter('prettyBytes', (num: number) => {
     // jacked from: https://github.com/sindresorhus/pretty-bytes
     if (isNaN(num)) {

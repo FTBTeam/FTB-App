@@ -43,7 +43,7 @@
                 <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> Update</span>
               </ftb-button>
             </div>
-            <div class="instance-button mr-1">
+            <div class="instance-button mr-1" title="Last played">
               <div class="text-white-500 py-2 px-4 inline-flex items-center">
                 <font-awesome-icon icon="stopwatch" size="1x"/>&nbsp;
                 <small

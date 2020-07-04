@@ -6,6 +6,8 @@
             class="header-image"
             v-bind:style="{'background-image': `url(${currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
+          <span class="instance-name"><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded" @click="goBack"><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button></span>
+
           <span class="instance-name text-4xl">{{currentModpack.name}}</span>
           <span class="instance-info">
             <small>
@@ -30,6 +32,12 @@
 <!--              >-->
 <!--                <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>-->
 <!--              </button>-->
+            </div>
+            <div class="instance-button mr-1">
+              <div class="text-white-500 py-2 px-4 inline-flex items-center" title="Play count">
+                <font-awesome-icon icon="gamepad" size="1x"/>&nbsp;
+                <small class="ml-2 text-gray-400">{{currentModpack.plays | formatNumber}}</small>
+              </div>
             </div>
           </div>
         </div>
@@ -261,6 +269,10 @@ export default class ModpackPage extends Vue {
 
     public hideMsgBox(): void {
         this.showMsgBox = false;
+    }
+
+    public goBack(): void {
+        this.$router.go(-1)
     }
 
     public isTabActive(tabItem: string) {
