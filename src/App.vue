@@ -229,7 +229,7 @@ export default class App extends Vue {
     background-image: url("./assets/ftb-tiny-desat.png");
     filter: brightness(0.5);
     animation-name: background-animation;
-    animation-duration: 20s;
+    animation-duration: 10s;
     animation-iteration-count: 1;
     animation-fill-mode: forwards;
     width: 100vw;
