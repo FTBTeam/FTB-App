@@ -18,6 +18,7 @@ export const mutations: MutationTree<SettingsState> = {
             packCardSize: 1,
             instanceLocation: '',
             listMode: false,
+            verbose: false,
         };
         state.settings = {...defaultSettings, ...payload};
     },
