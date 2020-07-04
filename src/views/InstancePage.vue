@@ -47,7 +47,7 @@
               <div class="text-white-500 py-2 px-4 inline-flex items-center">
                 <font-awesome-icon icon="stopwatch" size="1x"/>&nbsp;
                 <small
-                    class="text-gray-400 italic"
+                    class="ml-2 text-gray-400 "
                 >{{instance.lastPlayed | moment("from", "now")}}</small>
               </div>
             </div>
@@ -148,7 +148,7 @@
               </div>
               {{debugLog("Version ID: " + version.id)}}
               {{debugLog("activeChangelog: " + activeChangelog)}}
-              <div class="pl-5" v-if="activeChangelog === version.id">
+              <div class="pl-5 bg-background" v-if="activeChangelog === version.id">
                 <VueShowdown v-if="changelogs[version.id]" :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
                 <p v-else>No changelog available</p>
               </div>

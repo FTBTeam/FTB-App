@@ -37,9 +37,9 @@
 
         <div v-else>
           <div class="flex flex-row items-center w-full mt-4">
-            <h1 @click="changeTab('featured')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featured' ? 'border-b-2' : ''} hover:border-b-2 border-red-700`">Featured</h1>
-            <h1 @click="changeTab('topInstalls')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topInstalls' ? 'border-b-2' : ''} hover:border-b-2 border-red-700`">Top Installs</h1>
-            <h1 @click="changeTab('topPlays')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topPlays' ? 'border-b-2' : ''} hover:border-b-2 border-red-700`">Top Plays</h1>
+            <h1 @click="changeTab('featured')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featured' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured</h1>
+            <h1 @click="changeTab('topInstalls')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topInstalls' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Top Installs</h1>
+            <h1 @click="changeTab('topPlays')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topPlays' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Top Plays</h1>
           </div>
           <transition name="fade" mode="out-in">
             <div v-if="currentTab === 'featured'" key="featured">
