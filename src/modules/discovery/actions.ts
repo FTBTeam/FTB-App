@@ -72,7 +72,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
             // for each tag get top 3 most popular modpack ID's
             const foundPackIDs = await Promise.all(allTags.map(async (tag: ModPackTag) => {
                 logVerbose(rootState, tag);
-                return await fetch(`${config.apiURL}/public/modpack/popular/installs/${tag.name}/3`).catch((err) =>  console.error(err))
+                return await fetch(`${config.apiURL}/public/modpack/popular/installs/${tag.name}/50`).catch((err) =>  console.error(err))
                 .then(async (response: any) => {
                     response = response as Response;
                     const packs = (await response.json()).packs;
@@ -118,6 +118,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
             packs = packs.sort((a, b) => {
                 return inCommon(a.tags, allTags) - inCommon(b.tags, allTags);
             });
+            packs = packs.slice(0, packs.length > 10 ? 9 : packs.length - 1)
             commit('loadQueue', packs);
 
             // Sort by most amount of installs
@@ -130,7 +131,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                 if (packIDs == null) {
                     return;
                 }
-                const packs: ModPack[] = await Promise.all(packIDs.map(async (packID: number) => {
+                let packs: ModPack[] = await Promise.all(packIDs.map(async (packID: number) => {
                     const pack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
                     if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
                         logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
@@ -138,6 +139,15 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                     }
                     return pack;
                 }));
+                packs = packs.filter((pack) => {
+                    if (pack.links.length < 1) {
+                        return false;
+                    }
+                    if(pack.links.filter((l) => l.type === 'video').length < 1) {
+                        return false;
+                    } 
+                    return true;
+                });
                 commit('loadQueue', packs);
                 commit('setLoading', false);
             }).catch((err) => {

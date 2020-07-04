@@ -1,5 +1,6 @@
 <template>
   <div class="flex flex-1 flex-col min-h-full overflow-x-hidden">
+    <h1 class="m-1 mb-1 text-sm opacity-0 ">Discover</h1>
     <transition-group
       class='carousel max-w-full flex flex-row flex-1'
       tag="div">
@@ -9,7 +10,7 @@
         style="min-width: 100%; padding: 0 20px;">
     <div class="m-4 flex-1 relative flex mt-2 mb-3">
         <div class="placeholder"></div>
-        <div class="absolute top-0 left-0 bg-transparent-black w-full frosted-glass" style="height: 3rem; z-index: 5;" v-if="!swapping">
+        <div class="absolute top-0 left-0 bg-transparent-black w-full z-10 frosted-glass" style="height: 3rem;" v-if="!swapping">
             <p class="px-4 font-bold uppercase" style="line-height: 3rem;" v-if="getDisplayVideo(pack) !== null" >{{getDisplayVideo(pack).name}}</p>
         </div>
         <div class="absolute right-0 pl-2 flex flex-row z-10" style="bottom: 45px">
