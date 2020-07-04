@@ -44,6 +44,30 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                 allTags = allTags.concat(tagList);
             });
             allTags = allTags.filter((tag) => tag !== undefined);
+            if(allTags.length == 0 ){
+                fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
+                .then((response) => response.json())
+                .then(async (data) => {
+                    const packIDs = data.packs;
+                    if (packIDs == null) {
+                        return;
+                    }
+                    const packs: ModPack[] = await Promise.all(packIDs.map(async (packID: number) => {
+                        const pack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
+                        if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
+                            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
+                            return;
+                        }
+                        return pack;
+                    }));
+                    commit('loadQueue', packs);
+                    commit('setLoading', false);
+                }).catch((err) => {
+                    commit('setLoading', false);
+                    console.error(err);
+                });
+                return;
+            }
             logVerbose(rootState, 'All tags', allTags);
             // for each tag get top 3 most popular modpack ID's
             const foundPackIDs = await Promise.all(allTags.map(async (tag: ModPackTag) => {
