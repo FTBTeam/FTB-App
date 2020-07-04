@@ -268,6 +268,9 @@ export default class SettingsPage extends Vue {
         // console.log(this.settingsState.settings);
         this.settingsCopy = {...this.settingsCopy, ...this.settingsState.settings};
         Object.keys(this.settingsCopy).forEach((key: string) => {
+            if(key === "listMode" && this.settingsCopy[key] === undefined){
+                this.settingsCopy[key] = false;
+            }
             // @ts-ignore
             if (this.settingsCopy[key] === 'true') {
                 // @ts-ignore

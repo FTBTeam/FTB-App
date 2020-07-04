@@ -16,12 +16,12 @@
                     </div>
                     <div class="row w-full" v-if="!isDemo">
                         <div class="buttons action-buttons w-full" v-if="installed">
-                            <div @click="checkMemory()" class="cursor-pointer action-icon flex justify-center w-full items-center">
+                            <div @click="checkMemory()" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
                                 <font-awesome-icon  :icon="'play'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"/>
                                 <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Play</p>
                             </div>
-                            <div class="action-icon  flex justify-center w-full cursor-pointer items-center" @click="goToInstance">
+                            <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2" @click="goToInstance">
                                 <font-awesome-icon :icon="'ellipsis-h'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"
                                                />
@@ -29,12 +29,12 @@
                             </div>
                         </div>
                         <div class="buttons action-buttons w-full" v-if="!installed">
-                            <div @click="openInstall" class="cursor-pointer action-icon flex justify-center w-full items-center">
+                            <div @click="openInstall" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
                             <font-awesome-icon :icon="'download'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base `"/>
                                 <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Install</p>
                             </div>
-                            <div class="action-icon  flex justify-center w-full cursor-pointer items-center"  @click="openInfo">
+                            <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2"  @click="openInfo">
                             <font-awesome-icon :icon="'info-circle'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base `"
                                               />
