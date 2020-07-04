@@ -101,15 +101,17 @@ export default class Home extends Vue {
 
   @Watch('modpacks', {deep: true})
   public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
-    this.isLoaded = false;
-    try {
-      await Promise.all(newVal.installedPacks.map(async (instance) => {
-        const pack = await this.fetchModpack(instance.id);
-        return pack;
-      }));
-      this.isLoaded = true;
-    } catch (err) {
-      this.isLoaded = true;
+    if(newVal.installedPacks !== oldVal.installedPacks){
+      this.isLoaded = false;
+      try {
+        await Promise.all(newVal.installedPacks.map(async (instance) => {
+          const pack = await this.fetchModpack(instance.id);
+          return pack;
+        }));
+        this.isLoaded = true;
+      } catch (err) {
+        this.isLoaded = true;
+      }
     }
   }
 
