@@ -48,11 +48,11 @@
                 </div>
                 <div class="hoverContent show" v-else>
                     <div class="row mb-2">
-                        <p class="font-bold text-text-color lg:text-2xl text-center">Installing {{name}}</p>
+                        <p :class="`font-bold text-text-color lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl`">Installing {{name}}</p>
                     </div>
                     <div class="row">
-                        <font-awesome-icon :icon="'spinner'" size="5x"
-                                           class="cursor-pointer button hover-scale lg:text-5xl sm:text-base" spin/>
+                        <font-awesome-icon :icon="'spinner'"
+                                           :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`" spin/>
                     </div>
                 </div>
             </article>
