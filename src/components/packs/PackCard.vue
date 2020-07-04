@@ -1,14 +1,14 @@
 <template>
     <div v-if="settingsState !== undefined" class="m-2 card" :class="`w-size-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}`">
         <div v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo" style="height: 100%">
-            <article class="overflow-hidden shadow-lg" style="height: 100%">
+            <article class="overflow-hidden shadow-lg relative" style="height: 100%">
                 <img class="w-full pack-image rounded-sm"
                      :src="art !== undefined && art.length > 0 ? art : defaultImage" alt="placeholder"
                      :class="installing ? 'blur' : ''"/>
                 <div class="content" :class="installing ? 'hide' : ''">
                     <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
                     <div v-if="instance && !isLatestVersion" class="update-box">Update Available</div>
-                    <div class="name-box">{{name}}</div>
+                    <div class="name-box"><p>{{name}}</p></div>
                 </div>
                 <div class="hoverContent" v-if="!installing">
                     <div :class="`row mb-2 min-h-size-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}`" >
@@ -19,26 +19,26 @@
                             <div @click="checkMemory()" class="cursor-pointer action-icon flex justify-center w-full items-center">
                                 <font-awesome-icon  :icon="'play'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"/>
-                                <p class="ml-2 cursor-pointer">Play</p>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Play</p>
                             </div>
                             <div class="action-icon  flex justify-center w-full cursor-pointer items-center" @click="goToInstance">
                                 <font-awesome-icon :icon="'ellipsis-h'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"
                                                />
-                                <p class="ml-2 cursor-pointer">Info</p>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Info</p>
                             </div>
                         </div>
                         <div class="buttons action-buttons w-full" v-if="!installed">
                             <div @click="openInstall" class="cursor-pointer action-icon flex justify-center w-full items-center">
                             <font-awesome-icon :icon="'download'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base `"/>
-                                <p class="ml-2 cursor-pointer">Install</p>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Install</p>
                             </div>
                             <div class="action-icon  flex justify-center w-full cursor-pointer items-center"  @click="openInfo">
                             <font-awesome-icon :icon="'info-circle'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base `"
                                               />
-                                <p class="ml-2 cursor-pointer">Info</p>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Info</p>
                             </div>
                         </div>
                     </div>
@@ -335,7 +335,7 @@ export interface MsgBox {
     }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
     .card {
         position: relative;
     }
@@ -382,9 +382,10 @@ export interface MsgBox {
 
     .content {
         position: absolute;
-        bottom: 0;
+        height: 100%;
         width: 100%;
         color: #fff;
+        bottom: 0;
         opacity: 1;
         transition: opacity .3s;
         z-index: 2;
@@ -395,21 +396,33 @@ export interface MsgBox {
     }
 
     .content .name-box {
-        background: rgba(0, 0, 0, 0.6);
-        width: 100%;
+        backdrop-filter: blur(8px);
+        background: linear-gradient(to top, rgba(36, 40, 47, 0) 0%, rgba(43, 57, 66, 0.2) calc( 100% - 2px), rgba(193, 202, 207, 0.1) calc( 100% - 1px), rgba(29, 29, 29, 0.3) 100%);
         text-align: left;
+        width: 100%;
         font-size: 15px;
         font-weight: 700;
         padding: 2px 2px 2px 6px;
+        & p {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            max-height: 100%;
+        }
     }
 
     .content .update-box {
+        text-align: center;
         background: rgba(255, 193, 7, 0.9);
         width: 100%;
-        text-align: left;
         color: #000;
         font-weight: 700;
         padding: 2px 2px 2px 6px;
+        top: 0;
+        position: absolute;
     }
 
     .hoverContent {

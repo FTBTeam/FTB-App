@@ -103,12 +103,12 @@ export default class App extends Vue {
   }
 
   public fetchStartData() {
+    this.loadSettings();
     this.sendMessage({
       payload: { type: 'installedInstances' },
       callback: (data: any) => {
         this.storePacks(data);
     }});
-    this.loadSettings();
   }
 
   public retry(modpack: InstallProgress) {

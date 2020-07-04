@@ -1,7 +1,6 @@
 <template>
-  <div class="flex items-center pt-10">
-      <h1 class="text-4xl">Loading...</h1>
-      <font-awesome-icon icon="spinner" spin size="2x" />
+  <div class="flex flex-1 flex-col justify-center items-center pt-10">
+      <font-awesome-icon icon="sync-alt" spin style="font-size: 30vh; color: rgba(0,0,0,0.1);" class="mb-4"/>
   </div>
 </template>
 

@@ -36,81 +36,90 @@
         </div>
 
         <div v-else>
-          <h1 class="text-2xl">Featured</h1>
-          <transition-group
-                  name="list"
-                  tag="div"
-                  class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
-                  appear
-          >
-            <pack-card-wrapper
-                    v-for="(modpack, index) in modpacks.featuredPacks.slice(0,cardsToShow)"
-                    :key="index"
-                  :list-mode="settingsState.settings.listMode"
-                    :packID="modpack.id"
-                    :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
-                    :installed="false"
-                    :versions="modpack.versions"
-                    :minecraft="'1.7.10'"
-                    :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-                    :versionID="modpack.versions[0].id"
-                    :name="modpack.name"
-                    :tags="modpack.tags"
-                    :description="modpack.synopsis"
-            >{{modpack.id}}
-            </pack-card-wrapper>
-          </transition-group>
-          <h1 class="text-2xl">Top Installs</h1>
-          <transition-group
-                  name="list"
-                  tag="div"
-                  class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
-                  appear
-          >
-            <pack-card-wrapper
-                    v-for="(modpack, index) in modpacks.popularInstalls.slice(0,cardsToShow)"
-                    :key="index"
-                  :list-mode="settingsState.settings.listMode"
-                    :versions="modpack.versions"
-                    :packID="modpack.id"
-                    :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
-                    :installed="false"
-                    :minecraft="'1.7.10'"
-                    :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-                    :name="modpack.name"
-                    :tags="modpack.tags"
-                    :description="modpack.synopsis"
-            >{{modpack.id}}
-            </pack-card-wrapper>
-          </transition-group>
-
-          <h1 class="text-2xl">Top Plays</h1>
-          <transition-group
-                  name="list"
-                  tag="div"
-                  class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
-                  appear
-          >
-            <pack-card-wrapper
-                    v-for="(modpack, index) in modpacks.popularPlays.slice(0,cardsToShow)"
-                    :key="index"
-                  :list-mode="settingsState.settings.listMode"
-                    :packID="modpack.id"
-                    :versions="modpack.versions"
-                    :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
-                    :installed="false"
-                    :minecraft="'1.7.10'"
-                    :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-                    :versionID="modpack.versions[0].id"
-                    :name="modpack.name"
-                    :tags="modpack.tags"
-                    :description="modpack.synopsis"
-            >{{modpack.id}}
-            </pack-card-wrapper>
-          </transition-group>
+          <div class="flex flex-row items-center w-full mt-4">
+            <h1 @click="changeTab('featured')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featured' ? 'border-b-2' : ''} hover:border-b-2 border-red-700`">Featured</h1>
+            <h1 @click="changeTab('topInstalls')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topInstalls' ? 'border-b-2' : ''} hover:border-b-2 border-red-700`">Top Installs</h1>
+            <h1 @click="changeTab('topPlays')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topPlays' ? 'border-b-2' : ''} hover:border-b-2 border-red-700`">Top Plays</h1>
+          </div>
+          <transition name="fade" mode="out-in">
+            <div v-if="currentTab === 'featured'" key="featured">
+              <transition-group
+                      name="list"
+                      tag="div"
+                      class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
+                      appear
+              >
+                <pack-card-wrapper
+                        v-for="modpack in modpacks.featuredPacks.slice(0,cardsToShow)"
+                        :key="`featured-${modpack.id}`"
+                        :list-mode="settingsState.settings.listMode"
+                        :packID="modpack.id"
+                        :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                        :installed="false"
+                        :versions="modpack.versions"
+                        :minecraft="'1.7.10'"
+                        :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
+                        :versionID="modpack.versions[0].id"
+                        :name="modpack.name"
+                        :tags="modpack.tags"
+                        :description="modpack.synopsis"
+                >{{modpack.id}}
+                </pack-card-wrapper>
+              </transition-group>
+            </div>
+            <div v-else-if="currentTab === 'topInstalls'" key="topInstalls">
+              <transition-group
+                      name="list"
+                      tag="div"
+                      class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
+                      appear
+              >
+              <pack-card-wrapper
+                      v-for="modpack in modpacks.popularInstalls.slice(0,cardsToShow)"
+                      :key="`installs-${modpack.id}`"
+                    :list-mode="settingsState.settings.listMode"
+                      :versions="modpack.versions"
+                      :packID="modpack.id"
+                      :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                      :installed="false"
+                      :minecraft="'1.7.10'"
+                      :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
+                      :name="modpack.name"
+                      :tags="modpack.tags"
+                      :description="modpack.synopsis"
+              >{{modpack.id}}
+              </pack-card-wrapper>
+              </transition-group>
+            </div>
+            <div v-else-if="currentTab === 'topPlays'" key="topPlays">
+              <transition-group
+                      name="list"
+                      tag="div"
+                      class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
+                      appear
+              >
+                <pack-card-wrapper
+                        v-for="modpack in modpacks.popularPlays.slice(0,cardsToShow)"
+                        :key="`plays-${modpack.id}`"
+                        :list-mode="settingsState.settings.listMode"
+                        :packID="modpack.id"
+                        :versions="modpack.versions"
+                        :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                        :installed="false"
+                        :minecraft="'1.7.10'"
+                        :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
+                        :versionID="modpack.versions[0].id"
+                        :name="modpack.name"
+                        :tags="modpack.tags"
+                        :description="modpack.synopsis"
+                >{{modpack.id}}
+                </pack-card-wrapper>
+              </transition-group>
+            </div>
+          </transition>
         </div>
       </div>
-      <div v-else>
+      <div v-else class="flex flex-1">
         <Loading/>
       </div>
     </transition>
@@ -147,6 +156,7 @@ export default class BrowseModpacks extends Vue {
     @Action('clearSearch', {namespace}) public clearSearch: any;
 
     private searchValue: string = '';
+    private currentTab: string = 'featured';
     private cardsToShow = 3;
 
     public isActiveTab(tab: string): boolean {
@@ -160,6 +170,10 @@ export default class BrowseModpacks extends Vue {
         });
     }
     private debounceSearch: () => void = () => {
+    }
+
+    private changeTab(tab: string){
+      this.currentTab = tab;
     }
 
     
@@ -252,5 +266,13 @@ export default class BrowseModpacks extends Vue {
   .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */
   {
     opacity: 0;
+  }
+
+  .slide-enter-active, .slide-leave-active {
+    transition: all .05s ease;
+  }
+  .slide-enter, .slide-leave-to
+  /* .slide-fade-leave-active below version 2.1.8 */ {
+    transform: translateX(-10px);
   }
 </style>

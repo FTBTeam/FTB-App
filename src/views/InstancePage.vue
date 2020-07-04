@@ -14,8 +14,8 @@
             </small>
             <div v-if="tags.length > 0" class="flex flex-row items-center">
                 <div class="flex flex-row">
-                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2">{{tag.name}}</span>
-                    <span v-if="tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2">+{{tags.length - 5}}</span>
+                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
+                    <span v-if="tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+{{tags.length - 5}}</span>
                 </div>
             </div>
           </span>
