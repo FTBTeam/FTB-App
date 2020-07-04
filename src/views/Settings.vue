@@ -103,6 +103,9 @@
                     <router-link @click.native="scrollToTop" to="/license" class="hover:underline cursor-pointer">License Information</router-link >
                     <ftb-button class="py-2 px-4 my-2" color="primary" css-class="text-center text-l" @click="uploadLogData()">Upload App Logs</ftb-button>
                     <ftb-button class="py-2 px-4 my-2" color="warning" css-class="text-center text-l" @click="refreshCache()">Refresh Cache</ftb-button>
+                    <ftb-toggle label="Verbose" :value="settingsCopy.verbose"
+                                @change="enableVerbose"
+                                onColor="bg-primary"/>
 <!--                    <button @click="uploadLogData()"-->
 <!--                            class="appearance-none block w-full bg-green-400 text-white-600 border border-green-400 my-2 py-3 px-4 leading-tight cursor-pointer">-->
 <!--                        Upload App Logs-->
@@ -164,6 +167,7 @@ export default class SettingsPage extends Vue {
         packCardSize: 2,
         instanceLocation: '',
         listMode: false,
+        verbose: false,
     };
 
     private resSelectedValue: string = '0';
@@ -309,6 +313,11 @@ export default class SettingsPage extends Vue {
 
     public enableList(value: boolean): void {
         this.settingsCopy.listMode = value;
+        this.saveSettings(this.settingsCopy);
+    }
+
+    public enableVerbose(value: boolean): void {
+        this.settingsCopy.verbose = value;
         this.saveSettings(this.settingsCopy);
     }
 

@@ -13,6 +13,7 @@ export interface Settings {
     packCardSize: number;
     listMode: boolean;
     instanceLocation: string;
+    verbose: boolean;
 }
 
 export interface Hardware {

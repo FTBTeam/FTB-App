@@ -1,6 +1,7 @@
 import { ModpackState, ModPack, ModPackTag } from './../modpacks/types';
 import {ActionTree} from 'vuex';
 import config from '@/config';
+import {logVerbose} from '@/utils';
 import { DiscoveryState } from './types';
 import {RootState} from '@/types';
 import Parser from 'rss-parser';
@@ -15,41 +16,43 @@ function inCommon(a: any[], b: any[]) {
     return count;
 }
 
+
+
 export const actions: ActionTree<DiscoveryState, RootState> = {
     async fetchQueue({rootState, commit}): Promise<any> {
         const installedPacks: ModPack[] = await this.dispatch('modpacks/refreshPacks', {}, {root: true});
-        console.log('Fetching queue', installedPacks);
+        logVerbose(rootState, 'Fetching queue', installedPacks);
         commit('setLoading', true);
         if (installedPacks.length > 0) {
-            console.log('Getting discovery based on installed modpacks');
+            logVerbose(rootState, 'Getting discovery based on installed modpacks');
             // Get all installed pack IDS
             const packIDs: number[] = installedPacks.map((pack) => {
                 return pack.id;
             });
-            console.log('Pack IDs is', packIDs);
+            logVerbose(rootState, 'Pack IDs is', packIDs);
 
             let allTags: ModPackTag[] = [];
             // Get list of tags for all the installed packs
             const tags: ModPackTag[][] = await Promise.all(packIDs.map(async (packID) => {
                 const pack: ModPack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
-                console.log('pack', pack);
+                logVerbose(rootState, 'pack', pack);
                 return pack.tags;
             }));
             // Merge tag lists into one list
             tags.forEach((tagList) => {
-                console.log('Tag list', tagList);
+                logVerbose(rootState, 'Tag list', tagList);
                 allTags = allTags.concat(tagList);
             });
             allTags = allTags.filter((tag) => tag !== undefined);
-            console.log('All tags', allTags);
+            logVerbose(rootState, 'All tags', allTags);
             // for each tag get top 3 most popular modpack ID's
             const foundPackIDs = await Promise.all(allTags.map(async (tag: ModPackTag) => {
-                console.log(tag);
+                logVerbose(rootState, tag);
                 return await fetch(`${config.apiURL}/public/modpack/popular/installs/${tag.name}/3`).catch((err) =>  console.error(err))
                 .then(async (response: any) => {
                     response = response as Response;
                     const packs = (await response.json()).packs;
-                    return packs.slice(0, 3);
+                    return packs;
                 }).catch((err) => {
                     console.error('Error getting modpacks', err);
                 });
@@ -58,14 +61,14 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
             foundPackIDs.forEach((packList) => {
                 allPacks = allPacks.concat(packList);
             });
-            console.log('Found pack ids', allPacks);
+            logVerbose(rootState, 'Found pack ids', allPacks);
             // for each modpack id get modpack
             let packs: ModPack[] = await Promise.all(allPacks.map(async (packID) => {
                 const pack: ModPack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
                 return pack;
             }));
 
-            console.log('Found packs', packs);
+            logVerbose(rootState, 'Found packs', packs);
             packs = packs.filter((pack) => {
                 if (packIDs.indexOf(pack.id) !== -1) {
                     return false;
@@ -92,7 +95,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                 const packs: ModPack[] = await Promise.all(packIDs.map(async (packID: number) => {
                     const pack = await this.dispatch('modpacks/fetchModpack', packID, {root: true});
                     if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
-                        console.log(`ERR: Modpack ID ${packID} has no versions`);
+                        logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
                         return;
                     }
                     return pack;

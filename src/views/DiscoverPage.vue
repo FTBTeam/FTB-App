@@ -5,13 +5,13 @@
       class='carousel max-w-full flex flex-row flex-1'
       tag="div">
       <div 
-        v-for="pack in discovery.discoveryQueue"
+        v-for="(pack, index) in discovery.discoveryQueue"
         :key="pack.id" class="slide flex flex-col" 
         style="min-width: 100%; padding: 0 20px;">
     <div class="m-4 flex-1 relative flex mt-2 mb-3">
         <div class="placeholder"></div>
         <div class="absolute top-0 left-0 bg-transparent-black w-full z-10 frosted-glass" style="height: 3rem;" v-if="!swapping">
-            <p class="pt-2 p-4 pb-1 font-bold uppercase" style="line-height: 3rem;">Direwolf20 plays FTB Revelations</p>
+            <p class="pt-2 p-4 pb-1 font-bold uppercase" style="line-height: 3rem;" v-if="getDisplayVideo(pack) !== null" >{{getDisplayVideo(pack).name}}</p>
         </div>
         <div class="absolute right-0 pl-2 flex flex-row z-10" style="bottom: 45px">
             <span v-for="(tag, i) in pack.tags.slice(0, 5)" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
@@ -21,7 +21,7 @@
             <font-awesome-icon icon="spinner" spin size="4x" />
         </div>
         <div :class="`flex-1 ${swapping ? 'hidden' : 'block'}`" style="z-index: 2;" >
-            <iframe width="100%" height="100%" @load="load"  src="https://www.youtube-nocookie.com/embed/MxbYy4ROFVc?autoplay=1&mute=1" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe v-if="index === 0 && getDisplayVideo(pack) !== null" width="100%" height="100%" @load="load" :src="iFrameURL(getDisplayVideo(pack).link)" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
     </div>
     <pack-card-list
@@ -57,7 +57,11 @@ import {State, Action, Getter} from 'vuex-class';
 import {NewsState, NewsItem} from '@/modules/news/types';
 import { SettingsState } from '../modules/settings/types';
 import { DiscoveryState } from '../modules/discovery/types';
-import { ModPack } from '../modules/modpacks/types';
+import { ModPack, ModPackLink } from '../modules/modpacks/types';
+
+interface ModPackVideo {
+    [index: number]: ModPackLink;
+}
 
 @Component({
     components: {
@@ -73,6 +77,7 @@ export default class DiscoverPage extends Vue {
 
     private index: number = 0;
     private swapping: boolean = false;
+    private videos: ModPackVideo = [];
 
 
     public mounted() {
@@ -106,6 +111,34 @@ export default class DiscoverPage extends Vue {
         if (first !== undefined) {
             this.swapping = true;
             this.discovery.discoveryQueue = this.discovery.discoveryQueue.concat(first);
+        }
+    }
+
+    public getDisplayVideo(modpack: ModPack): ModPackLink | null{
+        if(modpack === undefined || modpack.links === undefined){
+            return null;
+        }
+        if(this.videos[modpack.id]){
+            return this.videos[modpack.id];
+        }
+        if(modpack.links.length > 0){
+            let videos = modpack.links.filter((l) => l.type === "video");
+            if(videos.length > 0){
+                let video = videos[Math.floor(Math.random()*videos.length)];
+                this.videos[modpack.id] = video;
+                return video;
+            }
+        }
+        return null;
+    }
+
+    public iFrameURL(link: string) {
+        if(link.indexOf('youtube.com') !== -1){
+            let videoID = link.substring(link.indexOf('?v=') + '?v='.length, link.indexOf('&') === -1 ? link.length : link.indexOf('&'));
+            return `https://www.youtube-nocookie.com/embed/${videoID}?autoplay=1&mute=1`
+        } else if (link.indexOf('twitch.tv') !== -1){
+            let videoID = link.substring(link.indexOf('videos/') + 'videos/'.length, link.length);
+            return `https://player.twitch.tv/?video=${videoID}&autoplay=true&muted=true&parent=feed-the-beast.com`
         }
     }
 }

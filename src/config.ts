@@ -24,7 +24,7 @@ if (fs.existsSync(path.join(__static, 'version.json'))) {
 }
 
 const config: Config = {
-    apiURL: `https://api.modpacks.ch`,
+    apiURL: process.env.NODE_ENV === 'production' ? `https://api.modpacks.ch` : `https://modpack-api-production.ch.tools`,
     appVersion,
     webVersion,
     dateCompiled,

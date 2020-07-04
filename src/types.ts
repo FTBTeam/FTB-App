@@ -1,3 +1,4 @@
+import { SettingsState } from './modules/settings/types';
 import { ModpackState } from './modules/modpacks/types';
 export interface RootState {
     version: string;
@@ -5,6 +6,7 @@ export interface RootState {
     wsPort: number;
     wsSecret: string;
     modpacks: ModpackState | null;
+    settings: SettingsState | null;
 }
 
 export interface Alert {

@@ -1,6 +1,6 @@
 'use strict';
 
-import {app, protocol, BrowserWindow, remote, shell, ipcMain, dialog} from 'electron';
+import {app, protocol, BrowserWindow, remote, shell, ipcMain, dialog, session} from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -157,6 +157,16 @@ app.on('activate', () => {
 
 app.on('ready', async () => {
     createWindow();
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+        if(details.url.indexOf('twitch.tv') !== -1){
+            if(details.responseHeaders){
+                if(details.responseHeaders['Content-Security-Policy'] !== undefined){
+                    details.responseHeaders['Content-Security-Policy'] = [];
+                }
+            }
+        }
+        callback({ responseHeaders: details.responseHeaders })
+    }) 
 });
 
 if (isDevelopment) {

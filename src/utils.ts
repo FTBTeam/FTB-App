@@ -1,3 +1,5 @@
+import { SettingsState } from './modules/settings/types';
+import { RootState } from '@/types';
 
 export function debounce(func: () => void, wait: number): () => void {
     let timeout: number | undefined;
@@ -14,5 +16,20 @@ export function debounce(func: () => void, wait: number): () => void {
 export async function asyncForEach(items: any[], callback: (item: any) => Promise<any>): Promise<any> {
     for (let i = 0; i < items.length; i++) {
         await callback(items[i]);
+    }
+}
+
+export function logVerbose(state: RootState | SettingsState, ...message: any[]){
+    //@ts-ignore
+    if(state.settings?.settings === undefined){
+        //@ts-ignore
+        if(state.settings?.verbose){
+            console.log("[DEBUG]", ...message);
+        }
+    } else {
+        //@ts-ignore
+        if((state.settings?.settings.verbose){
+            console.log("[DEBUG]", ...message);
+        }
     }
 }

@@ -15,6 +15,14 @@ export interface ModPack {
     updated: number;
     tags: ModPackTag[];
     notification: string;
+    links: ModPackLink[];
+}
+
+export interface ModPackLink {
+    id: number;
+    name: string;
+    link: string;
+    type: string;
 }
 
 export interface Instance {
