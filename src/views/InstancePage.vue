@@ -703,7 +703,11 @@ export default class InstancePage extends Vue {
     private async toggleChangelog(id: number | undefined) {
       if (typeof id === 'undefined') {
             return;
-        }
+      }
+      if(this.activeChangelog == id){
+        this.activeChangelog = -1;
+        return;
+      }
       if (!this.changelogs[id]) {
             const changelog = await this.getChangelog({packID: this.instance?.id, versionID: id});
             this.changelogs[id] = changelog.content;

@@ -1,8 +1,8 @@
 <template>
   <div class="sidebar">
 <!--     <logo width="80%" class="logo" draggable="false"/>-->
-    <div class="miniftb"></div>
-    <img src="../assets/logo_ftb.png" width="125px" style="margin-top: 10px;"/>
+    <div class="miniftb pointer-events-none" ></div>
+    <img src="../assets/logo_ftb.png" width="125px" class="cursor-pointer" @click="openFTB()" style="margin-top: 10px;"  draggable="false" />
     <div class="nav-items flex-col mt-5">
       <nav-item :isActive="isActiveTab('home')" @click="goTo('home')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
       <nav-item :isActive="isActiveTab('news')" @click="goTo('news')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" /></div>News</nav-item>
@@ -44,6 +44,10 @@ export default class Sidebar extends Vue {
 
   public openPromo(): void {
     shell.openExternal('https://creeperhost.net/applyPromo/FEEDME');
+  }
+
+  public openFTB(): void {
+    shell.openExternal('https://feed-the-beast.com');
   }
 
   private openLogin() {

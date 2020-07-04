@@ -27,7 +27,7 @@
             </div>
             <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="!installed">
                 <FTBButton @click="openInstall" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="download" size="sm" class="cursor-pointer"/><p>Get</p></FTBButton>
-                <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="info-circle" size="sm" class="cursor-pointer"/><p>Info</p></FTBButton>
+                <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton>
             </div>
         </div>
         <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">

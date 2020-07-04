@@ -13,7 +13,7 @@
             </small>
             <div v-if="currentModpack.tags" class="flex flex-row items-center">
                 <div class="flex flex-row">
-                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
+                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
                     <span v-if="currentModpack.tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+{{currentModpack.tags.length - 5}}</span>
                 </div>
             </div>
@@ -93,11 +93,12 @@
 <!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> Download Server</span>-->
 <!--                </button>-->
               </div>
-              <div class="pl-5" v-if="activeChangelog === version.id">
+              <div class="pl-5 bg-background" v-if="activeChangelog === version.id">
                 <!--                <code class="p-0">-->
                 <!--                  {{changelogs[version.id]}}-->
                 <!--                </code>-->
-                <VueShowdown :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
+                <VueShowdown v-if="changelogs[version.id]" :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
+                <p v-else>No changelog available</p>
               </div>
             </div>
           </div>
@@ -348,6 +349,10 @@ export default class ModpackPage extends Vue {
     private async toggleChangelog(id: number | undefined) {
         if (typeof id === 'undefined') {
             return;
+        }
+        if(this.activeChangelog == id){
+          this.activeChangelog = -1;
+          return;
         }
         if (!this.changelogs[id]) {
             const changelog = await this.getChangelog({packID: this.currentModpack?.id, versionID: id});

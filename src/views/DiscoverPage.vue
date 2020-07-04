@@ -123,6 +123,7 @@ export default class DiscoverPage extends Vue {
   .placeholder{
     background-image: url("../assets/backgrounds/background1.png");
     background-size: cover;
+    opacity: 0.2;
     background-position: center;
     width: 100%;
     height: 100%;
