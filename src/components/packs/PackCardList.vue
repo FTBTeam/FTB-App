@@ -21,7 +21,7 @@
                     </div>
                 </div>
             </div>
-            <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="installed">  
+            <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="installed">
                 <FTBButton @click="checkMemory()" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="play" size="sm" class="cursor-pointer"/><p>Play</p></FTBButton>
                 <FTBButton @click="goToInstance" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton>
             </div>
@@ -342,6 +342,7 @@ export interface MsgBox {
 
     .content {
         position: absolute;
+        height: 100%;
         bottom: 0;
         width: 100%;
         color: #fff;
@@ -370,6 +371,8 @@ export interface MsgBox {
         color: #000;
         font-weight: 700;
         padding: 2px 2px 2px 6px;
+        top: 0;
+        position: absolute;
     }
 
     .hoverContent {

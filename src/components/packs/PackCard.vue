@@ -7,7 +7,7 @@
                      :class="installing ? 'blur' : ''"/>
                 <div class="content" :class="installing ? 'hide' : ''">
                     <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
-                    <div v-if="instance && !isLatestVersion" class="update-box">Update Available</div>
+                    <div v-if="instance && !isLatestVersion" class="update-box">New Version</div>
                     <div class="name-box"><p>{{name}}</p></div>
                 </div>
                 <div class="hoverContent" v-if="!installing">
@@ -415,7 +415,7 @@ export interface MsgBox {
     }
 
     .content .update-box {
-        text-align: center;
+        /*text-align: center;*/
         background: rgba(255, 193, 7, 0.9);
         width: 100%;
         color: #000;
