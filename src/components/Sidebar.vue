@@ -2,7 +2,7 @@
   <div class="sidebar">
 <!--     <logo width="80%" class="logo" draggable="false"/>-->
     <div class="miniftb pointer-events-none" ></div>
-    <img src="../assets/logo_ftb.png" width="125px" class="cursor-pointer" @click="openFTB()" style="margin-top: 10px;"  draggable="false" />
+    <img src="../assets/logo_ftb.png" width="125px" class="cursor-pointer logo-hover" @click="openFTB()" style="margin-top: 10px;"  draggable="false" />
     <div class="nav-items flex-col mt-5">
       <nav-item :isActive="isActiveTab('home')" @click="goTo('home')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
       <nav-item :isActive="isActiveTab('news')" @click="goTo('news')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" /></div>News</nav-item>
@@ -15,7 +15,7 @@
       <!-- <nav-item v-if="auth.token === null" :isActive="isActiveTab('modpacks')" @click="openLogin()"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
       <nav-item v-else class="capitalize"><img :src="`https://minotar.net/helm/${auth.token.mcUUID}`" style="margin-right: 0.75em;" width="21px" class="rounded-full" />{{auth.token.username}}</nav-item> -->
     </div>
-    <img src="../assets/ch-logo.svg" width="90%" class="mb-2 cursor-pointer" draggable="false" @click="openPromo()"/>
+    <img src="../assets/ch-logo.svg" width="90%" class="mb-2 cursor-pointer logo-hover" style="" draggable="false" @click="openPromo()"/>
   </div>
 </template>
 
@@ -88,5 +88,11 @@ export default class Sidebar extends Vue {
     text-align: center;
     filter: brightness(0.7);
     -webkit-mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,0.4)), to(rgba(0,0,0,0)));
+  }
+  .logo-hover {
+    transition: all .2s ease;
+  }
+  .logo-hover:hover {
+    filter: drop-shadow(1px 1px 2px #000000);
   }
 </style>
