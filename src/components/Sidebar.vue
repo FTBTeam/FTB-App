@@ -1,8 +1,9 @@
 <template>
-  <div class="sidebar">
+  <div class="sidebar relative">
 <!--     <logo width="80%" class="logo" draggable="false"/>-->
     <div class="miniftb pointer-events-none" ></div>
     <img src="../assets/logo_ftb.png" width="125px" class="cursor-pointer logo-hover z-10" @click="openFTB()" style="margin-top: 10px;"  draggable="false" />
+    <font-awesome-icon v-if="isDevelop" title="Give feedback!" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="right: 10px; top: 100px;" @click="openGithub()" icon="comments" size="lg"></font-awesome-icon>
     <div class="nav-items flex-col mt-5">
       <nav-item :isActive="isActiveTab('home')" @click="goTo('home')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
       <nav-item :isActive="isActiveTab('news')" @click="goTo('news')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" /></div>News</nav-item>
@@ -26,11 +27,22 @@ import {shell, ipcRenderer} from 'electron';
 import {AuthState} from '../modules/auth/types';
 import {State, Action} from 'vuex-class';
 import store from '@/store';
+import config from '@/config';
 
 @Component({components: {NavItem}})
 export default class Sidebar extends Vue {
   @State('auth')
   private auth!: AuthState;
+  private appVersion: string = config.appVersion;
+
+
+  get isDevelop(){
+    let splits = this.appVersion.split('-');
+    if(splits.length == 0){
+      return true;
+    }
+    return !splits[splits.length - 1].match(/\d/);
+  }
 
 
   public isActiveTab(tab: string): boolean {
@@ -48,6 +60,10 @@ export default class Sidebar extends Vue {
 
   public openFTB(): void {
     shell.openExternal('https://feed-the-beast.com');
+  }
+
+  public openGithub(): void {
+    shell.openExternal('https://github.com/FTBTeam/FTB-App/issues');
   }
 
   private openLogin() {

@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-1 flex-col min-h-full overflow-x-hidden">
-    <h1 class="m-4 mb-1 text-2xl">Discover</h1>
     <transition-group
       class='carousel max-w-full flex flex-row flex-1'
       tag="div">
@@ -10,12 +9,12 @@
         style="min-width: 100%; padding: 0 20px;">
     <div class="m-4 flex-1 relative flex mt-2 mb-3">
         <div class="placeholder"></div>
-        <div class="absolute top-0 left-0 bg-transparent-black w-full z-10 frosted-glass" style="height: 3rem;" v-if="!swapping">
+        <div class="absolute top-0 left-0 bg-transparent-black w-full frosted-glass" style="height: 3rem; z-index: 5;" v-if="!swapping">
             <p class="px-4 font-bold uppercase" style="line-height: 3rem;" v-if="getDisplayVideo(pack) !== null" >{{getDisplayVideo(pack).name}}</p>
         </div>
         <div class="absolute right-0 pl-2 flex flex-row z-10" style="bottom: 45px">
-            <span v-for="(tag, i) in pack.tags.slice(0, 5)" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
-            <span v-if="pack.tags.length > 5" key="tag-more"  class="rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+ {{pack.tags.length - 5}}</span>
+            <span v-for="(tag, i) in pack.tags.slice(0, 5)" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
+            <span v-if="pack.tags.length > 5" key="tag-more"  class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+ {{pack.tags.length - 5}}</span>
         </div>
         <div class="flex-1 flex flex-row justify-center items-center" style="z-index: 2;" v-if="swapping">
             <font-awesome-icon icon="spinner" spin size="4x" />

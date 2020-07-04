@@ -1,7 +1,15 @@
 <template>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-if="isLoaded">
+    <div class="absolute z-50 display-mode-switcher ml-auto top-0" style="right: 118px; -webkit-app-region: no-drag;">
+        <div :class="`cursor-pointer px-2 py-1 ${settings.settings.listMode === true || settings.settings.listMode === 'true' ? 'bg-gray-600' : 'bg-background-lighten'}`" @click="changeToList">
+          <font-awesome-icon icon="list" class="cursor-pointer"></font-awesome-icon>
+        </div>
+        <div :class="`cursor-pointer px-2 py-1 ${settings.settings.listMode === false || settings.settings.listMode === 'false' ? 'bg-gray-600' : 'bg-background-lighten'}`"  @click="changeToGrid">
+          <font-awesome-icon icon="th" class="cursor-pointer"></font-awesome-icon>
+        </div>
+    </div>
     <!-- My Modpacks Stuff -->
-    <div class="" v-if="modpacks.installedPacks.length > 0"  >
+    <div class="mt-2" v-if="modpacks.installedPacks.length > 0"  >
       <!--      <div class="w-1/2 self-center">-->
       <!--        <FTBSearchBar v-model="searchTerm" placeholder="Search" :doSearch="() => {}"/>-->
       <!--      </div>-->
@@ -64,6 +72,7 @@ import { SettingsState } from '../modules/settings/types';
 export default class Modpacks extends Vue {
     @State('settings') public settings!: SettingsState;
     @State('modpacks') public modpacks!: ModpackState;
+    @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
     @Getter('packsCache', {namespace: 'modpacks'}) public packsCache!: ModPack[];
     @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
 
@@ -100,6 +109,18 @@ export default class Modpacks extends Vue {
       }
     }
 
+    public changeToList(){
+      let settingsCopy = this.settings.settings;
+      settingsCopy.listMode = true;
+      this.saveSettings(settingsCopy);
+    }
+
+    public changeToGrid(){
+      let settingsCopy = this.settings.settings;
+      settingsCopy.listMode = false;
+      this.saveSettings(settingsCopy);
+    }
+
     get packs(): Instance[] {
         return this.modpacks == null ? [] : this.searchTerm.length > 0 ? this.modpacks.installedPacks.filter((pack) => {
             return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
@@ -131,3 +152,10 @@ export default class Modpacks extends Vue {
 
 }
 </script>
+<style lang="scss" scoped>
+  .display-mode-switcher {
+    display: flex;
+    flex-direction: row-reverse;
+    background-color: #313131;
+  }
+</style>

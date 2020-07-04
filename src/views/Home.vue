@@ -1,5 +1,13 @@
 <template>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5" style="margin-bottom: 60px;" v-if="isLoaded">
+    <div class="absolute z-50 display-mode-switcher ml-auto top-0" style="right: 118px; -webkit-app-region: no-drag;">
+        <div :class="`cursor-pointer px-2 py-1 ${settingsState.settings.listMode === true || settingsState.settings.listMode === 'true' ? 'bg-gray-600' : 'bg-background-lighten'}`" @click="changeToList">
+          <font-awesome-icon icon="list" class="cursor-pointer"></font-awesome-icon>
+        </div>
+        <div :class="`cursor-pointer px-2 py-1 ${settingsState.settings.listMode === false || settingsState.settings.listMode === 'false' ? 'bg-gray-600' : 'bg-background-lighten'}`"  @click="changeToGrid">
+          <font-awesome-icon icon="th" class="cursor-pointer"></font-awesome-icon>
+        </div>
+    </div>
     <div class="sm:mt-auto lg:mt-unset flex flex-col flex-grow" v-if="recentlyPlayed.length >= 1">
       <h1 class="text-2xl">Recently Played Packs</h1>
       <transition-group
@@ -63,6 +71,7 @@ import { asyncForEach } from '@/utils';
 import { State, Action} from 'vuex-class';
 import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
+import { settings } from 'cluster';
 
 const namespace: string = 'modpacks';
 
@@ -83,6 +92,7 @@ export default class Home extends Vue {
       : [];
   }
   @State('settings') public settingsState!: SettingsState;
+  @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
   @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
@@ -101,6 +111,18 @@ export default class Home extends Vue {
     } catch (err) {
       this.isLoaded = true;
     }
+  }
+
+  public changeToList(){
+    let settingsCopy = this.settingsState.settings;
+    settingsCopy.listMode = true;
+    this.saveSettings(settingsCopy);
+  }
+
+  public changeToGrid(){
+    let settingsCopy = this.settingsState.settings;
+    settingsCopy.listMode = false;
+    this.saveSettings(settingsCopy);
   }
 
   public getModpack(id: number): ModPack | undefined {
@@ -148,3 +170,10 @@ export default class Home extends Vue {
   }
 }
 </script>
+<style lang="scss" scoped>
+  .display-mode-switcher {
+    display: flex;
+    flex-direction: row-reverse;
+    background-color: #313131;
+  }
+</style>

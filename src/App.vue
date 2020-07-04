@@ -12,7 +12,7 @@
             <!-- {{debugLog(modpack)}} -->
           </div>
         </div>
-        <transition name="slide">
+        <transition name="slide-down-up">
         <div v-if="modpacks.installing != null">
           <div class="progress-bar relative" v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
             <div class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-if="modpack.error">Error installing {{modpack.pack.name}} - {{modpack.errorMessage}} - <button class="bg-orange-500 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer" @click="retry(modpack)"><span class="cursor-pointer">Retry?</span></button></div>
@@ -30,6 +30,8 @@
             <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->
           </div>
         </div>
+        </transition>
+        <transition name="slide-down-up">
           <div v-if="$store.state && $store.state.alert != null">
             <div class="progress-bar relative" >
               <p class="pl-4 w-full absolute"><span class="font-bold">{{$store.state.alert.title}}</span> {{$store.state.alert.message}}</p>
@@ -199,21 +201,22 @@ export default class App extends Vue {
   width: 100%;
   background-color: var(--color-navbar);
   height: 40px;
+  max-height: 40px;
 }
 .alert-close {
   position: fixed;
   stroke: #fff;
   right: 10px;
 }
-.slide-enter-active {
-  transition: all .3s ease;
+.slide-down-up-enter-active {
+  transition: all .5s ease;
 }
-.slide-leave-active {
-  transition: all .3s ease;
+.slide-down-up-leave-active {
+  transition: all .5s ease;
 }
-.slide-enter, .slide-leave-to
+.slide-down-up-enter, .slide-leave-to
 /* .slide-fade-leave-active below version 2.1.8 */ {
-  height: 0;
+  max-height: 0;
 }
 .loader-logo-animation {
   animation-name: saturation;

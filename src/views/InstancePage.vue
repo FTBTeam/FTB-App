@@ -14,8 +14,8 @@
             </small>
             <div v-if="currentModpack !== null && tags.length > 0" class="flex flex-row items-center">
                 <div class="flex flex-row">
-                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
-                    <span v-if="tags.length > 5" :key="`tag-more`" class="rounded mx-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+{{tags.length - 5}}</span>
+                    <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
+                    <span v-if="tags.length > 5" :key="`tag-more`" class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">+{{tags.length - 5}}</span>
                 </div>
             </div>
           </span>
@@ -227,6 +227,10 @@
                 <div class="ml-auto">
                   <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2">{{parseInt(file.size) | prettyBytes}}</span>
                   <v-selectmenu :title="false" :query="false" :data="modHashData(file)" align="right" type="regular">
+                    <template #row="{ row }">
+                      <font-awesome-icon :color="row.color" :icon="row.icon"></font-awesome-icon>
+                      <span v-html="row.content" :title="row.hover" class="ml-2 cursor-pointer"></span>
+                    </template>
                   <ftb-button class="py-2 px-4 ml-2" color="info" css-class="text-center text-l"><font-awesome-icon icon="shield-alt"></font-awesome-icon></ftb-button>
 <!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
                   </v-selectmenu>
@@ -474,9 +478,9 @@ export default class InstancePage extends Vue {
     public modHashData(file: any) {
         const links = [];
         const isMatched = true;
-        links.push({content: `${isMatched ? '&#x2705;' :  '&#x274E;'}  SHA1`, callback: this.copy.bind(this, file.sha1)});
-        links.push({content: '&#x274E;  MD5', callback: this.copy.bind(this, file.md5)});
-        links.push({content: '&#x274E;  SHA256', callback: this.copy.bind(this, file.sha256)});
+        links.push({icon: "check-circle", color: isMatched ? 'green' : 'red', content: `SHA1`, callback: this.copy.bind(this, file.sha1)});
+        links.push({icon: "times-circle", color:  'red',  hover: "Coming Soon", content: 'MD5'});
+        links.push({icon: "times-circle", color:  'red',  hover: "Coming Soon", content: 'SHA256'});
         return links;
     }
 

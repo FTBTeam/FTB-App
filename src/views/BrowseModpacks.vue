@@ -1,5 +1,13 @@
 <template>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full">
+    <div class="absolute z-50 display-mode-switcher ml-auto top-0" style="right: 118px; -webkit-app-region: no-drag;">
+        <div :class="`cursor-pointer px-2 py-1 ${settingsState.settings.listMode === true || settingsState.settings.listMode === 'true' ? 'bg-gray-600' : 'bg-background-lighten'}`" @click="changeToList">
+          <font-awesome-icon icon="list" class="cursor-pointer"></font-awesome-icon>
+        </div>
+        <div :class="`cursor-pointer px-2 py-1 ${settingsState.settings.listMode === false || settingsState.settings.listMode === 'false' ? 'bg-gray-600' : 'bg-background-lighten'}`"  @click="changeToGrid">
+          <font-awesome-icon icon="th" class="cursor-pointer"></font-awesome-icon>
+        </div>
+    </div>
     <!--    <h1 class="text-3xl">Browse Modpacks</h1>-->
     <div class="w-1/2 self-center text-center">
       <FTBSearchBar
@@ -150,6 +158,7 @@ export default class BrowseModpacks extends Vue {
     @State('settings') public settingsState!: SettingsState;
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
     @Action('loadFeaturedPacks', {namespace}) public loadFeaturedPacks: any;
+    @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
     @Action('getPopularInstalls', {namespace}) public getPopularInstalls: any;
     @Action('getPopularPlays', {namespace}) public getPopularPlays: any;
     @Action('doSearch', {namespace}) public doSearch: any;
@@ -170,6 +179,17 @@ export default class BrowseModpacks extends Vue {
         });
     }
 
+public changeToList(){
+    let settingsCopy = this.settingsState.settings;
+    settingsCopy.listMode = true;
+    this.saveSettings(settingsCopy);
+  }
+
+  public changeToGrid(){
+    let settingsCopy = this.settingsState.settings;
+    settingsCopy.listMode = false;
+    this.saveSettings(settingsCopy);
+  }
 
     @Watch('$route')
     public onPropertyChanged(value: Route, oldValue: Route) {
@@ -277,5 +297,10 @@ export default class BrowseModpacks extends Vue {
   .slide-enter, .slide-leave-to
   /* .slide-fade-leave-active below version 2.1.8 */ {
     transform: translateX(-10px);
+  }
+    .display-mode-switcher {
+    display: flex;
+    flex-direction: row-reverse;
+    background-color: #313131;
   }
 </style>
