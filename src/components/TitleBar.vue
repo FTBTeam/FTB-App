@@ -2,18 +2,18 @@
   <div class="titlebar">
     <div class="icons" v-if="!isMac">
       <div class="title-action close" @click="close">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" class="pointer-events-none">
           <line x1="0.71" y1="11.12" x2="11.11" y2="0.72" stroke-width="2" />
           <line x1="0.77" y1="0.71" x2="11.18" y2="11.12" stroke-width="2" />
         </svg>
       </div>
       <div class="title-action" @click="max">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" class="pointer-events-none">
           <rect x="1" y="1" width="10" height="10" stroke-width="2" />
         </svg>
       </div>
       <div class="title-action" @click="minimise">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 1" class="pointer-events-none">
           <line y1="0.5" x2="11" y2="0.5" stroke-width="2" />
         </svg>
       </div>

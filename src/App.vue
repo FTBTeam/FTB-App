@@ -38,8 +38,8 @@
               <div class="w-full h-full bg-grey-light justify-center ">
                 <div class="h-full text-xs leading-none py-1 text-white" :class="`bg-${$store.state.alert.type}`"></div>
               </div>
-              <div class="alert-close" @click="hideAlert">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+              <div class="alert-close cursor-pointer" @click="hideAlert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" class="pointer-events-none">
                   <line x1="0.71" y1="11.12" x2="11.11" y2="0.72" stroke-width="2" />
                   <line x1="0.77" y1="0.71" x2="11.18" y2="11.12" stroke-width="2" />
                 </svg>
