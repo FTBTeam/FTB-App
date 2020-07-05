@@ -36,6 +36,7 @@
                   :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
                   :versionID="modpack.versions[0].id"
                   :name="modpack.name"
+                  :authors="modpack.authors"
                   :versions="modpack.versions"
                   :tags="modpack.tags"
                   :description="modpack.synopsis"
@@ -69,6 +70,7 @@
                         :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
                         :versionID="modpack.versions[0].id"
                         :name="modpack.name"
+                        :authors="modpack.authors"
                         :tags="modpack.tags"
                         :description="modpack.synopsis"
                 >{{modpack.id}}
@@ -93,6 +95,7 @@
                       :minecraft="'1.7.10'"
                       :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
                       :name="modpack.name"
+                      :authors="modpack.authors"
                       :tags="modpack.tags"
                       :description="modpack.synopsis"
               >{{modpack.id}}
@@ -118,6 +121,7 @@
                         :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
                         :versionID="modpack.versions[0].id"
                         :name="modpack.name"
+                        :authors="modpack.authors"
                         :tags="modpack.tags"
                         :description="modpack.synopsis"
                 >{{modpack.id}}

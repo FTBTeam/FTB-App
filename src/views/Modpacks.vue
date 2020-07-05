@@ -28,6 +28,7 @@
                     :tags="getModpack(modpack.id) !== null ? getModpack(modpack.id).tags : []"
                     :versions="modpack.versions"
                     :name="modpack.name"
+                    :authors="modpack.authors"
                     :instance="modpack"
                     :instanceID="modpack.uuid">
             </pack-card-wrapper>

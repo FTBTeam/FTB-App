@@ -25,6 +25,7 @@
           :installed="true"
           :version="modpack.version"
           :name="modpack.name"
+          :authors="modpack.authors"
           :instance="modpack"
           :instanceID="modpack.uuid"
           :description="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
@@ -52,6 +53,7 @@
           :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
           :versionID="modpack.versions[0].id"
           :name="modpack.name"
+          :authors="modpack.authors"
           :description="modpack.synopsis"
           :tags="modpack.tags"
         >{{modpack.id}}</pack-card-wrapper>

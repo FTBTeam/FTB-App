@@ -34,6 +34,7 @@
         :version="pack.versions.length > 0 ? pack.versions[0].name : 'unknown'"
         :versionID="pack.versions[0].id"
         :name="pack.name"
+        :authors="pack.authors"
         :versions="pack.versions"
         :description="pack.synopsis"
     >

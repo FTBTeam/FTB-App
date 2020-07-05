@@ -20,6 +20,7 @@ import { SettingsState } from '@/modules/settings/types';
             'packID',
             'art',
             'name',
+            'authors',
             'installed',
             'version',
             'versionID',

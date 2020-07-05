@@ -79,6 +79,7 @@
                             :version="'1.3.6'"
                             :versionID="1"
                             :name="'Example Modpack'"
+                            :authors="['Testing']"
                             :versions="''"
                             :description="'A Example'"
                             :size="settingsCopy.packCardSize">

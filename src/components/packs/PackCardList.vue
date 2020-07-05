@@ -12,7 +12,14 @@
                 </div>
             </article>
             <div class="flex-1 p-2 bg-background-lighten flex flex-col">
-                <div class="name-box font-bold">{{name}}</div>
+                <div class="flex flex-row">
+                    <div class="name-box font-bold">{{name}}</div>
+                    <div class="ml-auto mr-2 text-sm text-gray-500" >By
+                        <span v-for="author in authors" v-if="typeof author === 'string'">{{author}} {{authors.length > 1 ? ', ' : ''}}</span>
+                        <span v-else v-for="author in authors">{{author.name}} {{authors.length > 1 ? ', ' : ''}}</span>
+                    </div>
+                </div>
+
                 <p class="mb-auto max-2-lines">{{description}}</p>
                 <div  v-if="tags" class="flex flex-row items-center">
                     <div class="flex flex-row">
@@ -78,6 +85,7 @@ export interface MsgBox {
             'packID',
             'art',
             'name',
+            'authors',
             'installed',
             'version',
             'versionID',
