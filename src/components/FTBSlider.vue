@@ -18,7 +18,7 @@
         <span class="normal-case" v-if="description" data-balloon-length="medium" :aria-label="description" data-balloon-pos="up"><font-awesome-icon icon="info-circle"/></span>
       </label>
       <div class="flex flex-row justify-center">
-        <p class="text-white mx-2" style="min-width: 4rem;">{{(unit == 's' ? ((currentValue > 3600) ? ((currentValue > 86400) ? (currentValue / 86400).toFixed(2) + 'd' : (currentValue / 3600).toFixed(2) + 'h' ) : currentValue + unit) : (currentValue == 0 ? 'Unlimited' : (currentValue > 1024 ? (currentValue / 1024).toFixed(2) : currentValue) + (currentValue > 1024 ? 'GB' : unit)))}}</p>
+        <p class="text-white mx-2" style="min-width: 6rem; width: auto">{{(unit == 's' ? ((currentValue > 3600) ? ((currentValue > 86400) ? (currentValue / 86400).toFixed(2) + 'd' : (currentValue / 3600).toFixed(2) + 'h' ) : currentValue + unit) : (currentValue == 0 ? 'Unlimited' : (currentValue > 1024 ? (currentValue / 1024).toFixed(2) : currentValue) + (unit === 'threads' ? ' threads' : (currentValue > 1024 ? 'GB' : unit))))}}</p>
         <!-- <input class="slider" id="grid-last-name" type="range" :value="value" :min="minValue" :max="maxValue" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" :step="step === undefined ? 1 : step"> -->
         <input type="range" :value="value" :min="minValue" :max="maxValue" @change="$emit('input', $event.target.value)" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" class="slider" :class="cssClass" :step="step === undefined ? 1 : step" :style="rawStyle">
         <!-- <p class="text-white mx-2">{{maxValueLabel === undefined ? maxValue : maxValueLabel}}{{unit}}</p> -->
