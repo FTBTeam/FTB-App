@@ -12,9 +12,9 @@
       <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
         {{label}}
       </label>
-      <span class="toggle border border-grey flex items-center cursor-pointer" style="width: 56px" :class="toggleClasses" @click="toggle">
-        <span class="border w-6 h-6 border-grey shadow-inner bg-white shadow cursor-pointer">
-        </span>
+      <span class="toggle border border-input flex items-center cursor-pointer rounded" style="width: 56px" :class="toggleClasses" @click="toggle">
+        <span class="w-6 h-6 shadow-inner bg-input cursor-pointer rounded-sm bg-gray-400">
+      </span>
     </span>
     </div>
     </div>
