@@ -108,6 +108,7 @@ export interface ModpackState {
     installing: InstallProgress[];
     currentModpack: ModPack | null;
     packsCache: ModPacks;
+    searchString: string;
 }
 
 export interface ModPacks {

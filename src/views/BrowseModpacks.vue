@@ -206,8 +206,12 @@ public changeToList(){
     }
 
     private async mounted() {
+      console.log(this.modpacks?.searchString)
         if (this.$route.params.search) {
           this.searchValue = this.$route.params.search;
+          this.doSearch(this.searchValue);
+        } else if(this.modpacks !== undefined && this.modpacks.searchString.length > 0){
+          this.searchValue =  this.modpacks.searchString;
           this.doSearch(this.searchValue);
         } else {
           this.searchValue = "";

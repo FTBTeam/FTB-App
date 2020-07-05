@@ -1,3 +1,4 @@
+import { state } from './index';
 import {MutationTree} from 'vuex';
 import { ModpackState, ModPack, Instance, InstallProgress } from './types';
 
@@ -82,4 +83,10 @@ export const mutations: MutationTree<ModpackState> = {
     clearCache(state) {
         state.packsCache = [];
     },
+    setSearch(state, search: string) {
+        state.searchString = search;
+    },
+    clearSearch(state) {
+        state.searchString = "";
+    }
 };

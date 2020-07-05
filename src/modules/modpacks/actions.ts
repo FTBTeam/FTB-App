@@ -11,6 +11,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             return;
         }
         commit('setLoading', true);
+        commit('setSearch', searchTerm);
         return fetch(`${config.apiURL}/public/modpack/search/8?term=${searchTerm}`)
         .then((response) => response.json())
         .then(async (data) => {
@@ -91,6 +92,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     clearSearch({commit}): any {
         const packs: ModPack[] = [];
         commit('searchLoaded', packs);
+        commit('setSearch', "");
         commit('setLoading', false);
     },
     loadFeaturedPacks({commit, rootState, dispatch}: any): any {
