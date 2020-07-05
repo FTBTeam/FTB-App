@@ -4,9 +4,9 @@
     <transition-group
       class='carousel max-w-full flex flex-row flex-1'
       tag="div">
-      <div 
+      <div
         v-for="(pack, index) in discovery.discoveryQueue"
-        :key="pack.id" class="slide flex flex-col" 
+        :key="pack.id" class="slide flex flex-col"
         style="min-width: 100%; padding: 0 20px;">
     <div class="m-4 flex-1 relative flex mt-2 mb-3">
         <div class="placeholder"></div>
@@ -42,8 +42,8 @@
       </div>
     </transition-group>
     <div class="flex flex-row justify-between my-2">
-        <FTBButton color="primary" class="mx-2 text-center w-32" @click="previous">Previous</FTBButton>
-        <FTBButton color="primary" class="mx-2 text-center w-32" @click="next">Next</FTBButton>
+        <FTBButton color="primary" class="py-2 px-4 mx-2 text-center w-32" @click="previous">Previous</FTBButton>
+        <FTBButton color="primary" class="py-2 px-4 mx-2 text-center w-32" @click="next">Next</FTBButton>
     </div>
   </div>
 </template>
