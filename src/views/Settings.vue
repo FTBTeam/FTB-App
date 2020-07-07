@@ -71,7 +71,7 @@
                                 unit="" @blur="doSave" description="Change size of pack cards"/>
                     <div class="mx-auto flex flex-row flex-wrap" style="width: 90%">
                         <pack-card-wrapper
-                            :list-mode="settingsCopy.listMode.toString()"
+                            :list-mode="settingsCopy.listMode"
                             :isDemo="true"
                             packID="6"
                             :installed="false"
@@ -323,6 +323,9 @@ export default class SettingsPage extends Vue {
     }
 
     public doSave() {
+        if(this.settingsCopy.packCardSize > 2 && this.settingsCopy.listMode){
+            this.settingsCopy.listMode = false;
+        }
         this.saveSettings(this.settingsCopy);
     }
 }
