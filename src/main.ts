@@ -170,5 +170,5 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
     }
 });
 ipcRenderer.on('hereAuthData', (event, data) => {
-    store.commit('auth/storeAuthDetails', {key: data.modpackskey, secret: data.modpackssecret, username: data.username, mcUUID: data.mcUUID});
+    store.commit('auth/storeAuthDetails', {key: data.modpackskey, secret: data.modpackssecret, username: data.username, mc: data.mc});
 });

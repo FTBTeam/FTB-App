@@ -2,7 +2,13 @@ export interface TokenData {
     key: string;
     secret: string;
     username: string;
-    mcUUID: string;
+    mc: McData;
+}
+
+export interface McData {
+    uuid: string;
+    hash: string;
+    mtusername: string;
 }
 
 // oauth -> creates the key -> stores that info into MineTogether -> sends to app backend
