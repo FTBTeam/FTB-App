@@ -46,8 +46,8 @@
       <h1 class="text-5xl">Oh no!</h1>
       <span>Seems you don't have any modpacks installed!</span>
       <div class="flex flex-row justify-between my-2">
-        <ftb-button color="primary" class="mx-2" @click="goTo('/browseModpacks')">Browse</ftb-button>
-        <ftb-button color="primary" class="mx-2" @click="goTo('/discover')">Discover</ftb-button>
+        <ftb-button color="primary" class="py-2 px-4 mx-2" @click="goTo('/browseModpacks')">Browse</ftb-button>
+        <ftb-button color="primary" class="py-2 px-4 mx-2" @click="goTo('/discover')">Discover</ftb-button>
       </div>
     </div>
   </div>

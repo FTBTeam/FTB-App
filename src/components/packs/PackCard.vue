@@ -32,7 +32,7 @@
                             <div @click="openInstall" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
                             <font-awesome-icon :icon="'download'" size="3x"
                                                :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base `"/>
-                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Install</p>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Get</p>
                             </div>
                             <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2"  @click="openInfo">
                             <font-awesome-icon :icon="'ellipsis-h'" size="3x"

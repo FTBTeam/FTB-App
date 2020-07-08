@@ -23,7 +23,7 @@
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'DOWNLOADS'">Installing {{modpack.pack.name}} - {{modpack.progress.toFixed(2)}}% ({{(modpack.downloadSpeed / 1000000).toFixed(2)}} mbps)</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'POSTINSTALL'">Finalizing Installation...</p>
             <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'FINISHED'">Install Finished</p>
-            <div class=" w-full h-full bg-grey-light justify-center -mr-200px">
+            <div class=" w-full h-full bg-grey-light justify-center">
               <div v-if="!modpack.error" class="h-full bg-primary text-xs leading-none py-1 text-white" v-bind:style="{'width': `${modpack.progress}%`, 'transition': 'width 0.5s ease'}"></div>
               <div v-else class="h-full bg-error-button text-xs leading-none py-1 text-white" v-bind:style="{'width': `100%`, 'transition': 'width 0.5s ease'}"></div>
             </div>

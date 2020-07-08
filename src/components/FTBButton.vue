@@ -39,4 +39,7 @@ export default class FTBButton extends Vue {
   .backbtn:hover{
     opacity: 0.8;
   }
+  .ftb-button svg {
+    cursor: pointer;
+  }
 </style>
