@@ -196,13 +196,13 @@ export const actions: ActionTree<ModpackState, RootState> = {
         });
     },
     fetchModpack({commit, rootState}: any, packID): Promise<any> {
-        logVerbose(rootState, "Fetching modpack", packID);
+        logVerbose(rootState, 'Fetching modpack', packID);
         if (rootState.modpacks.packsCache[packID]) {
-            logVerbose(rootState, "Found in cache", packID);
+            logVerbose(rootState, 'Found in cache', packID);
             return new Promise((resolve, reject) => resolve(rootState.modpacks.packsCache[packID]));
         }
         return new Promise(async (resolve, reject) => {
-            logVerbose(rootState, "Fetching...", packID);
+            logVerbose(rootState, 'Fetching...', packID);
             await getAPIRequest(rootState, `modpack/${packID}`).catch((err) =>  console.error(err))
             .then(async (response: any) => {
                 response = response as Response;

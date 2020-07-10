@@ -632,7 +632,7 @@ export default class InstancePage extends Vue {
                             stage: data.currentStage,
                         });
                     }
-                    logVerbose(this.settingsState, "Update data", JSON.stringify(data));
+                    logVerbose(this.settingsState, 'Update data', JSON.stringify(data));
                 },
             });
         }

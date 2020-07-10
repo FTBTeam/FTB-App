@@ -9,7 +9,7 @@ import * as log from 'electron-log';
 import childProcess from 'child_process';
 // @ts-ignore
 import {Client} from 'irc-framework';
-import fetch from 'node-fetch';
+import fetch, {Response} from 'node-fetch';
 
 Object.assign(console, log.functions);
 app.console = log;

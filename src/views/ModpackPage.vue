@@ -347,7 +347,7 @@ export default class ModpackPage extends Vue {
                         stage: data.currentStage,
                     });
                 }
-                logVerbose(this.settings, "Update data", JSON.stringify(data));
+                logVerbose(this.settings, 'Update data', JSON.stringify(data));
             },
         });
     }

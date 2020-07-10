@@ -38,11 +38,11 @@ export const mutations: MutationTree<RootState> = {
 };
 const wsLoggerPlugin = (store: Store<RootState>) => {
     store.subscribe((mutation, state) => {
-        if(mutation.type === "SOCKET_ONMESSAGE"){
-            logVerbose(state, "New WebSocket message", JSON.stringify(mutation.payload))
+        if (mutation.type === 'SOCKET_ONMESSAGE') {
+            logVerbose(state, 'New WebSocket message', JSON.stringify(mutation.payload));
         }
-    })
-}
+    });
+};
 
 const store: StoreOptions<RootState> = {
     state: {

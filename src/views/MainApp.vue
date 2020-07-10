@@ -149,7 +149,7 @@ export default class MainApp extends Vue {
               } else if (data.overallPercentage <= 100) {
                 this.updateInstall({modpackID: foundPack.id, messageID: data.requestId, progress: data.overallPercentage, downloadSpeed: data.speed, downloadedBytes: data.currentBytes, totalBytes: data.overallBytes, stage: data.currentStage});
               }
-              logVerbose(this.settings, "Update Data", JSON.stringify(data));
+              logVerbose(this.settings, 'Update Data', JSON.stringify(data));
             }});
           }});
       }});

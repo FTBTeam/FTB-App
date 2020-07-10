@@ -23,12 +23,12 @@ export function logVerbose(state: RootState | SettingsState, ...message: any[]) 
     // @ts-ignore
     if (state.settings?.settings === undefined) {
         // @ts-ignore
-        if (state.settings?.verbose === true || state.settings?.verbose === "true") {
+        if (state.settings?.verbose === true || state.settings?.verbose === 'true') {
             console.log('[DEBUG]', ...message);
         }
     } else {
         // @ts-ignore
-        if (state.settings?.settings.verbose === true || state.settings?.settings.verbose === "true") {
+        if (state.settings?.settings.verbose === true || state.settings?.settings.verbose === 'true') {
             console.log('[DEBUG]', ...message);
         }
     }
