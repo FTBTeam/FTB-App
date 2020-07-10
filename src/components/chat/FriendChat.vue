@@ -21,12 +21,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { shell, ipcRenderer, clipboard } from "electron";
-import { State, Action } from "vuex-class";
-import store from "@/store";
-import config from "@/config";
-import { AuthState, Friend } from "../../modules/auth/types";
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { shell, ipcRenderer, clipboard } from 'electron';
+import { State, Action } from 'vuex-class';
+import store from '@/store';
+import config from '@/config';
+import { AuthState, Friend } from '../../modules/auth/types';
 import FTBInput from '../FTBInput.vue';
 import FTBButton from '../FTBButton.vue';
 import { Message } from '../../types';
@@ -36,14 +36,14 @@ import { Message } from '../../types';
 @Component({
     components: {
         'ftb-input': FTBInput,
-        'ftb-button': FTBButton
+        'ftb-button': FTBButton,
     },
     props: [
         'friend',
         'shortHash',
         'messages',
-        'sendMessage'
-    ]
+        'sendMessage',
+    ],
 })
 export default class FriendChat extends Vue {
 
@@ -52,46 +52,46 @@ export default class FriendChat extends Vue {
     @Prop()
     private shortHash!: string;
 
-    private newMessage: string = "";
+    private newMessage: string = '';
 
     @Prop()
     private messages!: Message[];
     @Prop()
-    private sendMessage!: (message:string) => void;
+    private sendMessage!: (message: string) => void;
 
-    get sortedMessages(){
-        if(!this.messages){
+    get sortedMessages() {
+        if (!this.messages) {
             return [];
         }
-        return this.messages.sort((a:Message,b:Message) => a.date-b.date);
+        return this.messages.sort((a: Message, b: Message) => a.date - b.date);
     }
 
-    scrollToLastChild(){
-        let chat: Element = <Element>this.$refs.chat;
-        const el:Element = <Element>chat.lastChild;
-        if(el !== null){
+    public scrollToLastChild() {
+        const chat: Element = this.$refs.chat as Element;
+        const el: Element = chat.lastChild as Element;
+        if (el !== null) {
             el.scrollIntoView({behavior: 'smooth'});
         }
     }
 
-    beforeUpdate(){
-        let chat: Element = <Element>this.$refs.chat;
-        let pos = chat.scrollTop;
-        let maximum = chat.scrollHeight - chat.clientHeight
+    public beforeUpdate() {
+        const chat: Element = this.$refs.chat as Element;
+        const pos = chat.scrollTop;
+        const maximum = chat.scrollHeight - chat.clientHeight;
         if (pos >= maximum) {
             setTimeout(() => {
                this.scrollToLastChild();
-            }, 20)
+            }, 20);
         }
     }
 
-    mounted(){
+    public mounted() {
         this.scrollToLastChild();
     }
 
-    send(){
+    public send() {
         this.sendMessage(this.newMessage);
-        this.newMessage = "";
+        this.newMessage = '';
     }
 }
 </script>

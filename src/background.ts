@@ -1,6 +1,5 @@
-import { Friend } from './modules/auth/types';
 'use strict';
-
+import { Friend } from './modules/auth/types';
 import {app, protocol, BrowserWindow, remote, shell, ipcMain, dialog, session} from 'electron';
 import path from 'path';
 import os from 'os';
@@ -8,9 +7,8 @@ import fs from 'fs';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
-//@ts-ignore
+// @ts-ignore
 import {Client} from 'irc-framework';
-//@ts-ignore
 import fetch from 'node-fetch';
 
 Object.assign(console, log.functions);
@@ -46,7 +44,7 @@ export interface MTModpacks {
 }
 
 let authData: any;
-let seenModpacks: MTModpacks = {};
+const seenModpacks: MTModpacks = {};
 let friends: Friend[] = [];
 
 ipcMain.on('sendMeSecret', (event) => {
@@ -59,12 +57,12 @@ ipcMain.on('openOauthWindow', (event, data) => {
 
 ipcMain.on('showFriends', () => {
     createFriendsWindow();
-})
+});
 
 ipcMain.on('getFriends', (event) => {
     // If only I had some friends...
     event.reply('ooohFriend', friends);
-})
+});
 
 ipcMain.on('checkFriends', async (event) => {
     friends = await getFriends();
@@ -74,39 +72,39 @@ ipcMain.on('checkFriends', async (event) => {
 });
 
 ipcMain.on('sendMessage', async (event, data) => {
-    if(!mtIRCCLient){
+    if (!mtIRCCLient) {
         return;
     }
-    let friend: Friend = data.friend;
-    let message = data.message;
+    const friend: Friend = data.friend;
+    const message = data.message;
     mtIRCCLient.say(friend.shortHash, message);
 });
 
-async function getMTIRC(){
-    return fetch(`https://api.creeper.host/minetogether/chatserver`).then((resp) => resp.json()).then((data) => {
+async function getMTIRC() {
+    return fetch(`https://api.creeper.host/minetogether/chatserver`).then((resp: Response) => resp.json()).then((data: any) => {
         return {
             host: data.server.address,
             port: data.server.port,
-        }
-    }).catch((err) => {
-        log.error("Failed to get details about MineTogether servers", err);
+        };
+    }).catch((err: any) => {
+        log.error('Failed to get details about MineTogether servers', err);
         return undefined;
-    })
+    });
 }
 
-async function getFriends(): Promise<Friend[]>{
+async function getFriends(): Promise<Friend[]> {
     return fetch(`https://api.creeper.host/minetogether/listfriend`, {headers: {
-        'Content-Type': "application/json"
-    }, method: "POST", body: JSON.stringify({hash: authData.mc.hash})})
+        'Content-Type': 'application/json',
+    }, method: 'POST', body: JSON.stringify({hash: authData.mc.hash})})
     .then((response: any) => response.json())
     .then(async (data: any) => {
         return data.friends.map((friend: Friend) => {
-            let shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`
+            const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
             friend.shortHash = shortHash;
             return friend;
         });
     }).catch((err: any) => {
-        log.error("Failed to get details about MineTogether friends", err);
+        log.error('Failed to get details about MineTogether friends', err);
         return [];
     });
 }
@@ -116,12 +114,12 @@ ipcMain.on('authData', async (event, data) => {
     // @ts-ignore
     win.webContents.send('hereAuthData', authData);
     // @ts-ignore
-    if(friendsWindow !== undefined && friendsWindow !== null){
+    if (friendsWindow !== undefined && friendsWindow !== null) {
         friendsWindow.webContents.send('hereAuthData', authData);
     }
-    let mtDetails = await getMTIRC();
-    if(mtDetails === undefined){
-        log.error("Failed to get details about MineTogether servers");
+    const mtDetails = await getMTIRC();
+    if (mtDetails === undefined) {
+        log.error('Failed to get details about MineTogether servers');
         return;
     }
     mtIRCCLient = new Client();
@@ -135,89 +133,89 @@ ipcMain.on('authData', async (event, data) => {
         mtIRCCLient.whois(friend.shortHash);
     });
     mtIRCCLient.on('whois', async (event: any) => {
-        if(event.nick){
-            let friend = friends.find((f: Friend) => f.shortHash === event.nick);   
-            if(friend === undefined){
+        if (event.nick) {
+            const friend = friends.find((f: Friend) => f.shortHash === event.nick);
+            if (friend === undefined) {
                 return;
             }
-            if(event.error){
+            if (event.error) {
                 friend.online = false;
             } else {
                 friend.online  = true;
-                if(event.real_name){
-                    let realName = JSON.parse(event.real_name);
-                    friend.currentPack = "";
-                    if(realName.b){
+                if (event.real_name) {
+                    const realName = JSON.parse(event.real_name);
+                    friend.currentPack = '';
+                    if (realName.b) {
                         friend.currentPack = realName.b;
-                    } else if(realName.p){
+                    } else if (realName.p) {
                         friend.currentPack = realName.p;
                     }
-                    if(friend.currentPack === undefined){
+                    if (friend.currentPack === undefined) {
                         return;
                     }
-                    if(seenModpacks[friend.currentPack] !== undefined){
+                    if (seenModpacks[friend.currentPack] !== undefined) {
                         friend.currentPack = seenModpacks[friend.currentPack];
                     } else {
-                        if(!isNaN(parseInt(friend.currentPack, 10))){
-                            await fetch(`https://creeperhost.net/json/modpacks/twitch/${friend.currentPack}`).then((resp) => resp.json()).then((data) => {
-                                if(data.name){
-                                    let fixedString = data.name.replace(/[CurseForge/UNSUPPORTED]/, '');
-                                    //@ts-ignore
-                                    seenModpacks[friend.currentPack] = fixedString
-                                    //@ts-ignore
-                                    friend.currentPack = fixedString
+                        if (!isNaN(parseInt(friend.currentPack, 10))) {
+                            await fetch(`https://creeperhost.net/json/modpacks/twitch/${friend.currentPack}`).then((resp: Response) => resp.json()).then((data: any) => {
+                                if (data.name) {
+                                    const fixedString = data.name.replace(/[CurseForge/UNSUPPORTED]/, '');
+                                    // @ts-ignore
+                                    seenModpacks[friend.currentPack] = fixedString;
+                                    // @ts-ignore
+                                    friend.currentPack = fixedString;
                                 }
                             });
-                        } else if(friend.currentPack.length > 0) {
-                            let fixedString = friend.currentPack.replace(/\\u003/, '=');
-                            await fetch(`https://creeperhost.net/json/modpacks/modpacksch/${fixedString}`).then((resp) => resp.json()).then((data) => {
-                                if(data.name){
-                                    //@ts-ignore
-                                    seenModpacks[friend.currentPack] = data.name
-                                    //@ts-ignore
-                                    friend.currentPack = data.name
+                        } else if (friend.currentPack.length > 0) {
+                            const fixedString = friend.currentPack.replace(/\\u003/, '=');
+                            await fetch(`https://creeperhost.net/json/modpacks/modpacksch/${fixedString}`).then((resp: Response) => resp.json()).then((data: any) => {
+                                if (data.name) {
+                                    // @ts-ignore
+                                    seenModpacks[friend.currentPack] = data.name;
+                                    // @ts-ignore
+                                    friend.currentPack = data.name;
                                 }
                             });
                         }
                     }
                 }
             }
-            if(win){
+            if (win) {
                 win.webContents.send('ooohFriend', friends);
             }
-            if(friendsWindow){
+            if (friendsWindow) {
                 friendsWindow.webContents.send('ooohFriend', friends);
             }
         }
     });
     mtIRCCLient.on('message', (event: any) => {
-        if(event.type === "privmsg"){
-            if(friendsWindow){
-                let friend = friends.find((f: Friend) => f.shortHash === event.nick);   
-                if(friend === undefined){
+        if (event.type === 'privmsg') {
+            if (friendsWindow) {
+                const friend = friends.find((f: Friend) => f.shortHash === event.nick);
+                if (friend === undefined) {
                     return;
                 }
-                friendsWindow.webContents.send('newMessage', {from: event.nick, friend: friend, message: event.message, date: new Date().getTime()})
+                friendsWindow.webContents.send('newMessage', {from: event.nick, friend, message: event.message, date: new Date().getTime()});
             }
         }
-    })
+    });
 });
 
 ipcMain.on('gimmeAuthData', (event) => {
-    if(authData){
+    if (authData) {
         event.reply('hereAuthData', authData);
     }
 });
 
 ipcMain.on('expandMeScotty', (event, data) => {
-    let window = BrowserWindow.fromWebContents(event.sender);
-    if(window){
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window) {
         let [width, height] = window.getSize();
-        if(data.width){
-            width = data.width
+        if (data.width) {
+            width = data.width;
         }
-        if(data.height){
-            height = data.height
+        if (data.height) {
+            height = data.height;
         }
         window.setSize(width, height);
     }
@@ -272,8 +270,8 @@ if (process.argv.indexOf('--pid') === -1) {
     }
 }
 
-function createFriendsWindow(){
-    if(friendsWindow !== null && friendsWindow !== undefined){
+function createFriendsWindow() {
+    if (friendsWindow !== null && friendsWindow !== undefined) {
         friendsWindow.focus();
         return;
     }
@@ -291,7 +289,7 @@ function createFriendsWindow(){
         width: 300,
         frame: false,
         titleBarStyle: 'hidden',
-        backgroundColor: '#313131', 
+        backgroundColor: '#313131',
         webPreferences: {
             webSecurity: false,
             nodeIntegration: true,
@@ -381,15 +379,15 @@ app.on('activate', () => {
 app.on('ready', async () => {
     createWindow();
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-        if(details.url.indexOf('twitch.tv') !== -1){
-            if(details.responseHeaders){
-                if(details.responseHeaders['Content-Security-Policy'] !== undefined){
+        if (details.url.indexOf('twitch.tv') !== -1) {
+            if (details.responseHeaders) {
+                if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
                     details.responseHeaders['Content-Security-Policy'] = [];
                 }
             }
         }
-        callback({ responseHeaders: details.responseHeaders })
-    }) 
+        callback({ responseHeaders: details.responseHeaders });
+    });
 });
 
 if (isDevelopment) {

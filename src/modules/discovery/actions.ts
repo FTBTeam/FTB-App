@@ -44,7 +44,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                 allTags = allTags.concat(tagList);
             });
             allTags = allTags.filter((tag) => tag !== undefined);
-            if(allTags.length == 0 ){
+            if (allTags.length === 0 ) {
                 fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
                 .then((response) => response.json())
                 .then(async (data) => {
@@ -81,13 +81,13 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                     console.error('Error getting modpacks', err);
                 });
             }));
-            let allPacks: number[] = [];
+            const allPacks: number[] = [];
             foundPackIDs.forEach((packList) => {
                 packList.forEach((p: number) => {
-                    if(allPacks.indexOf(p) === -1){
-                        allPacks.push(p)
+                    if (allPacks.indexOf(p) === -1) {
+                        allPacks.push(p);
                     }
-                })
+                });
             });
             logVerbose(rootState, 'Found pack ids', allPacks);
             // for each modpack id get modpack
@@ -108,7 +108,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                 if (pack.links.length < 1) {
                     return false;
                 }
-                if(pack.links.filter((l) => l.type === 'video').length < 1) {
+                if (pack.links.filter((l) => l.type === 'video').length < 1) {
                     return false;
                 }
                 return true;
@@ -118,7 +118,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
             packs = packs.sort((a, b) => {
                 return inCommon(a.tags, allTags) - inCommon(b.tags, allTags);
             });
-            packs = packs.slice(0, packs.length > 10 ? 9 : packs.length - 1)
+            packs = packs.slice(0, packs.length > 10 ? 9 : packs.length - 1);
             commit('loadQueue', packs);
 
             // Sort by most amount of installs
@@ -143,9 +143,9 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
                     if (pack.links.length < 1) {
                         return false;
                     }
-                    if(pack.links.filter((l) => l.type === 'video').length < 1) {
+                    if (pack.links.filter((l) => l.type === 'video').length < 1) {
                         return false;
-                    } 
+                    }
                     return true;
                 });
                 commit('loadQueue', packs);

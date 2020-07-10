@@ -36,9 +36,9 @@ export default class Sidebar extends Vue {
   private appVersion: string = config.appVersion;
 
 
-  get isDevelop(){
-    let splits = this.appVersion.split('-');
-    if(splits.length == 0){
+  get isDevelop() {
+    const splits = this.appVersion.split('-');
+    if (splits.length === 0) {
       return true;
     }
     return !splits[splits.length - 1].match(/\d/);
@@ -66,7 +66,7 @@ export default class Sidebar extends Vue {
     shell.openExternal('https://github.com/FTBTeam/FTB-App/issues');
   }
 
-  public openFriends(){
+  public openFriends() {
     ipcRenderer.send('showFriends');
   }
 

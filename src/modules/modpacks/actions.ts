@@ -7,15 +7,15 @@ import semver from 'semver';
 import { AuthState } from '../auth/types';
 
 function getAPIRequest(rootState: RootState, url: string): Promise<Response> {
-    if(rootState.auth === null){
+    if (rootState.auth === null) {
         return fetch(`${config.apiURL}/public/${url}`);
     }
-    let auth: AuthState = <AuthState>rootState.auth;
-    if(auth.token === null || auth.token.modpackskey === undefined){
+    const auth: AuthState = rootState.auth as AuthState;
+    if (auth.token === null || auth.token.modpackskey === undefined) {
         return fetch(`${config.apiURL}/public/${url}`);
     }
     return fetch(`${config.apiURL}/${auth.token.modpackskey}/${url}`, {headers: {
-        'Secret': auth.token.modpackssecret
+        Secret: auth.token.modpackssecret,
     }});
 }
 
@@ -106,7 +106,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     clearSearch({commit}): any {
         const packs: ModPack[] = [];
         commit('searchLoaded', packs);
-        commit('setSearch', "");
+        commit('setSearch', '');
         commit('setLoading', false);
     },
     loadFeaturedPacks({commit, rootState, dispatch}: any): any {

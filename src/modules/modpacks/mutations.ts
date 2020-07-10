@@ -87,6 +87,6 @@ export const mutations: MutationTree<ModpackState> = {
         state.searchString = search;
     },
     clearSearch(state) {
-        state.searchString = "";
-    }
+        state.searchString = '';
+    },
 };

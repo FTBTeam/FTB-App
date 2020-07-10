@@ -21,7 +21,7 @@ export const state: SettingsState = {
         instanceLocation: '',
         enablePreview: false,
         listMode: true,
-        verbose: false
+        verbose: false,
     },
     error: false,
     hardware: {

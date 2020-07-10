@@ -3,7 +3,7 @@ import {SettingsState, Settings, Resolution} from './types';
 
 export const mutations: MutationTree<SettingsState> = {
     loadSettings(state, payload: Settings) {
-        let defaultSettings: Settings = {
+        const defaultSettings: Settings = {
             width: 1720,
             height: 840,
             memory: 3072,

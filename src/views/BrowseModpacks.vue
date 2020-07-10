@@ -183,14 +183,14 @@ export default class BrowseModpacks extends Vue {
         });
     }
 
-public changeToList(){
-    let settingsCopy = this.settingsState.settings;
+public changeToList() {
+    const settingsCopy = this.settingsState.settings;
     settingsCopy.listMode = true;
     this.saveSettings(settingsCopy);
   }
 
-  public changeToGrid(){
-    let settingsCopy = this.settingsState.settings;
+  public changeToGrid() {
+    const settingsCopy = this.settingsState.settings;
     settingsCopy.listMode = false;
     this.saveSettings(settingsCopy);
   }
@@ -210,21 +210,21 @@ public changeToList(){
     }
 
     private async mounted() {
-      console.log(this.modpacks?.searchString)
-        if (this.$route.params.search) {
+      console.log(this.modpacks?.searchString);
+      if (this.$route.params.search) {
           this.searchValue = this.$route.params.search;
           this.doSearch(this.searchValue);
-        } else if(this.modpacks !== undefined && this.modpacks.searchString.length > 0){
+        } else if (this.modpacks !== undefined && this.modpacks.searchString.length > 0) {
           this.searchValue =  this.modpacks.searchString;
           this.doSearch(this.searchValue);
         } else {
-          this.searchValue = "";
+          this.searchValue = '';
           this.clearSearch();
         }
-        this.debounceSearch = debounce(() => {
+      this.debounceSearch = debounce(() => {
             this.doSearch(this.searchValue);
         }, 1000);
-        if (
+      if (
             this.modpacks === undefined ||
             this.modpacks.popularInstalls === undefined ||
             this.modpacks.popularInstalls.length <= 0 ||
@@ -235,9 +235,9 @@ public changeToList(){
             await this.getPopularPlays();
         }
 
-        const cardSize = this.settingsState.settings.packCardSize || 2;
+      const cardSize = this.settingsState.settings.packCardSize || 2;
         // @ts-ignore
-        switch (parseInt(cardSize, 10)) {
+      switch (parseInt(cardSize, 10)) {
             case 5:
                 this.cardsToShow = 3;
                 break;

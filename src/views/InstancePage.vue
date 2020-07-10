@@ -374,9 +374,6 @@ interface Changelogs {
 
 export default class InstancePage extends Vue {
 
-    private currentModpack: ModPack | null = null;
-    private cheaty: string = "";
-
     get instance() {
         if (this.modpacks == null) {
             return null;
@@ -412,7 +409,7 @@ export default class InstancePage extends Vue {
     }
 
     get isLatestVersion() {
-      console.log(this.currentModpack === undefined, this.currentModpack?.kind !== 'modpack')
+      console.log(this.currentModpack === undefined, this.currentModpack?.kind !== 'modpack');
       if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack') {
         return true;
       }
@@ -434,6 +431,9 @@ export default class InstancePage extends Vue {
     @Action('getChangelog', {namespace: 'modpacks'}) public getChangelog!: any;
     @Action('showAlert') public showAlert: any;
     @Action('hideAlert') public hideAlert: any;
+
+    private currentModpack: ModPack | null = null;
+    private cheaty: string = '';
 
     private activeTab: string = 'overview';
     private showMsgBox: boolean = false;
@@ -478,9 +478,9 @@ export default class InstancePage extends Vue {
     public modHashData(file: any) {
         const links = [];
         const isMatched = true;
-        links.push({icon: "check-circle", color: isMatched ? 'green' : 'red', content: `SHA1`, callback: this.copy.bind(this, file.sha1)});
-        links.push({icon: "times-circle", color:  'red',  hover: "Coming Soon", content: 'MD5'});
-        links.push({icon: "times-circle", color:  'red',  hover: "Coming Soon", content: 'SHA256'});
+        links.push({icon: 'check-circle', color: isMatched ? 'green' : 'red', content: `SHA1`, callback: this.copy.bind(this, file.sha1)});
+        links.push({icon: 'times-circle', color:  'red',  hover: 'Coming Soon', content: 'MD5'});
+        links.push({icon: 'times-circle', color:  'red',  hover: 'Coming Soon', content: 'SHA256'});
         return links;
     }
 
@@ -703,7 +703,7 @@ export default class InstancePage extends Vue {
       if (typeof id === 'undefined') {
             return;
       }
-      if(this.activeChangelog == id){
+      if (this.activeChangelog === id) {
         this.activeChangelog = -1;
         return;
       }

@@ -111,9 +111,9 @@ Vue.filter('momentFromNow', (value: any) => {
     return moment.duration(moment.unix(value).diff(moment())).humanize(true);
 });
 Vue.filter('formatNumber', (value: number) => {
-    if(!value) {return '';}
-    return new Intl.NumberFormat().format(value)
-})
+    if (!value) {return ''; }
+    return new Intl.NumberFormat().format(value);
+});
 
 Vue.filter('prettyBytes', (num: number) => {
     // jacked from: https://github.com/sindresorhus/pretty-bytes
@@ -174,9 +174,9 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
     }
 });
 ipcRenderer.on('hereAuthData', (event, data) => {
-    console.log("Received auth data", data);
-    store.dispatch('auth/storeAuthDetails', data, {root: true})
+    console.log('Received auth data', data);
+    store.dispatch('auth/storeAuthDetails', data, {root: true});
     // store.commit('auth/storeAuthDetails', );
 });
-console.log("Asking for auth data")
+console.log('Asking for auth data');
 ipcRenderer.send('gimmeAuthData');

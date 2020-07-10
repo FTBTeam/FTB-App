@@ -115,17 +115,17 @@ export default class DiscoverPage extends Vue {
         }
     }
 
-    public getDisplayVideo(modpack: ModPack): ModPackLink | null{
-        if(modpack === undefined || modpack.links === undefined){
+    public getDisplayVideo(modpack: ModPack): ModPackLink | null {
+        if (modpack === undefined || modpack.links === undefined) {
             return null;
         }
-        if(this.videos[modpack.id]){
+        if (this.videos[modpack.id]) {
             return this.videos[modpack.id];
         }
-        if(modpack.links.length > 0){
-            let videos = modpack.links.filter((l) => l.type === "video");
-            if(videos.length > 0){
-                let video = videos[Math.floor(Math.random()*videos.length)];
+        if (modpack.links.length > 0) {
+            const videos = modpack.links.filter((l) => l.type === 'video');
+            if (videos.length > 0) {
+                const video = videos[Math.floor(Math.random() * videos.length)];
                 this.videos[modpack.id] = video;
                 return video;
             }
@@ -134,12 +134,12 @@ export default class DiscoverPage extends Vue {
     }
 
     public iFrameURL(link: string) {
-        if(link.indexOf('youtube.com') !== -1){
-            let videoID = link.substring(link.indexOf('?v=') + '?v='.length, link.indexOf('&') === -1 ? link.length : link.indexOf('&'));
-            return `https://www.youtube-nocookie.com/embed/${videoID}?autoplay=1&mute=1`
-        } else if (link.indexOf('twitch.tv') !== -1){
-            let videoID = link.substring(link.indexOf('videos/') + 'videos/'.length, link.length);
-            return `https://player.twitch.tv/?video=${videoID}&autoplay=true&muted=true&parent=feed-the-beast.com`
+        if (link.indexOf('youtube.com') !== -1) {
+            const videoID = link.substring(link.indexOf('?v=') + '?v='.length, link.indexOf('&') === -1 ? link.length : link.indexOf('&'));
+            return `https://www.youtube-nocookie.com/embed/${videoID}?autoplay=1&mute=1`;
+        } else if (link.indexOf('twitch.tv') !== -1) {
+            const videoID = link.substring(link.indexOf('videos/') + 'videos/'.length, link.length);
+            return `https://player.twitch.tv/?video=${videoID}&autoplay=true&muted=true&parent=feed-the-beast.com`;
         }
     }
 }

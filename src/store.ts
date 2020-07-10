@@ -44,7 +44,8 @@ const store: StoreOptions<RootState> = {
         wsPort: 0,
         wsSecret: '',
         modpacks: null,
-        settings: null
+        settings: null,
+        auth: null,
     },
     actions: {
         showAlert: ({commit}: any, alert: Alert) => {

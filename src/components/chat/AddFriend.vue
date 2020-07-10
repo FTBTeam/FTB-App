@@ -10,32 +10,32 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { shell, ipcRenderer, clipboard } from "electron";
-import { State, Action } from "vuex-class";
-import store from "@/store";
-import config from "@/config";
-import { AuthState } from "../../modules/auth/types";
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { shell, ipcRenderer, clipboard } from 'electron';
+import { State, Action } from 'vuex-class';
+import store from '@/store';
+import config from '@/config';
+import { AuthState } from '../../modules/auth/types';
 import FTBInput from '../FTBInput.vue';
 import FTBButton from '../FTBButton.vue';
 
 @Component({
     components: {
         'ftb-input': FTBInput,
-        'ftb-button': FTBButton
+        'ftb-button': FTBButton,
     },
 })
 export default class AddFriend extends Vue {
     @Action('submitFriendRequest', {namespace: 'auth'})
     private submitFriendRequest!: (payload: {friendCode: string, display: string}) => void;
-  private friendCode: string = "";
-  private displayName: string = "";
+  private friendCode: string = '';
+  private displayName: string = '';
 
-  submit(){
-      if(this.friendCode.length == 0 || this.displayName.length == 0){
+  public submit() {
+      if (this.friendCode.length === 0 || this.displayName.length === 0) {
           return;
       }
-      this.submitFriendRequest({friendCode: this.friendCode, display: this.displayName})
+      this.submitFriendRequest({friendCode: this.friendCode, display: this.displayName});
   }
 }
 </script>

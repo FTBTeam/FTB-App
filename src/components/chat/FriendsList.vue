@@ -56,7 +56,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue,Watch } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import {shell, ipcRenderer, clipboard} from 'electron';
 import {State, Action} from 'vuex-class';
 import store from '@/store';
@@ -74,8 +74,8 @@ interface UnreadMessages {
         'hidePage',
         'currentPage',
         'messages',
-        'friends'
-    ]
+        'friends',
+    ],
 })
 export default class MainChat extends Vue {
     @State('auth')
@@ -86,10 +86,10 @@ export default class MainChat extends Vue {
     private copied: boolean = false;
     private showSearch: boolean = false;
     private showRequests: boolean = true;
-    private search: string = "";
+    private search: string = '';
 
     @Prop()
-    private friends!: Friend[]; 
+    private friends!: Friend[];
     @Prop()
     private currentPage!: string;
     @Prop()
@@ -99,35 +99,35 @@ export default class MainChat extends Vue {
     @Prop()
     private showPage!: (page: string, friend?: Friend) => void;
 
-    toggleSearch(){
-        this.showSearch = !this.showSearch;   
+    public toggleSearch() {
+        this.showSearch = !this.showSearch;
     }
-    toggleRequests(){
-        this.showRequests = !this.showRequests;   
+    public toggleRequests() {
+        this.showRequests = !this.showRequests;
     }
 
     @Watch('auth', {deep: true})
     public async onAuthChange(newVal: AuthState, oldVal: AuthState) {
-      if((newVal.token !== null && newVal.token.mc.friendCode === undefined)|| (JSON.stringify(newVal.token) !== JSON.stringify(oldVal.token))){
+      if ((newVal.token !== null && newVal.token.mc.friendCode === undefined) || (JSON.stringify(newVal.token) !== JSON.stringify(oldVal.token))) {
         this.getFriendCode();
       }
     }
 
-    openFriendChat(friend: Friend){
+    public openFriendChat(friend: Friend) {
         this.showPage('chatFriend', friend);
         this.$forceUpdate();
     }
 
-    openAddFriendUI(){
-        if(this.currentPage === "addFriend"){
+    public openAddFriendUI() {
+        if (this.currentPage === 'addFriend') {
             this.hidePage();
         } else {
             this.showPage('addFriend');
         }
     }
 
-    get unreadMessages(){
-        let unread: UnreadMessages = {};
+    get unreadMessages() {
+        const unread: UnreadMessages = {};
         Object.keys(this.messages).forEach((shortHash) => {
             unread[shortHash] = this.messages[shortHash].filter((m) => !m.read).length;
         });
@@ -135,30 +135,30 @@ export default class MainChat extends Vue {
     }
 
 
-    get currentFriends(){
+    get currentFriends() {
         // return [{name: "Gaz492"}, {name: "Paul_T"}, {name: "Jake_Evans"}];
-        let friends = this.friends.filter((a) => a.accepted).sort((a,b) => Number(a.online)-Number(b.online));
-        if(this.search.length > 0) {
+        let friends = this.friends.filter((a) => a.accepted).sort((a, b) => Number(a.online) - Number(b.online));
+        if (this.search.length > 0) {
             friends = friends.filter((a) => a.name.indexOf(this.search) !== -1);
         }
         return friends;
     }
 
-    get friendRequests(){
-        if(this.auth === undefined){
+    get friendRequests() {
+        if (this.auth === undefined) {
             return [];
         }
-        
+
         // return [{name: "Gaz492"}, {name: "Paul_T"}, {name: "Jake_Evans"}];
         return this.friends.filter((a) => !a.accepted);
     }
 
-    mounted(){
+    public mounted() {
         this.showRequests = this.friendRequests.length > 0;
     }
- 
-    copyFriendCode(){ 
-        if(this.auth.token){
+
+    public copyFriendCode() {
+        if (this.auth.token) {
             clipboard.writeText(this.auth.token.mc.friendCode);
             this.copied = true;
             setTimeout(() => this.copied = false, 2000);

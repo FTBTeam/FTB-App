@@ -103,7 +103,7 @@ export default class Home extends Vue {
 
   @Watch('modpacks', {deep: true})
   public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
-    if(JSON.stringify(newVal.installedPacks) !== JSON.stringify(oldVal.installedPacks)){
+    if (JSON.stringify(newVal.installedPacks) !== JSON.stringify(oldVal.installedPacks)) {
       this.isLoaded = false;
       try {
         await Promise.all(newVal.installedPacks.map(async (instance) => {
@@ -117,14 +117,14 @@ export default class Home extends Vue {
     }
   }
 
-  public changeToList(){
-    let settingsCopy = this.settingsState.settings;
+  public changeToList() {
+    const settingsCopy = this.settingsState.settings;
     settingsCopy.listMode = true;
     this.saveSettings(settingsCopy);
   }
 
-  public changeToGrid(){
-    let settingsCopy = this.settingsState.settings;
+  public changeToGrid() {
+    const settingsCopy = this.settingsState.settings;
     settingsCopy.listMode = false;
     this.saveSettings(settingsCopy);
   }

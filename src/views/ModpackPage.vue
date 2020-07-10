@@ -272,7 +272,7 @@ export default class ModpackPage extends Vue {
     }
 
     public goBack(): void {
-        this.$router.go(-1)
+        this.$router.go(-1);
     }
 
     public isTabActive(tabItem: string) {
@@ -362,7 +362,7 @@ export default class ModpackPage extends Vue {
         if (typeof id === 'undefined') {
             return;
         }
-        if(this.activeChangelog == id){
+        if (this.activeChangelog === id) {
           this.activeChangelog = -1;
           return;
         }

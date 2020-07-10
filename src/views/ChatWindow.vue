@@ -12,12 +12,12 @@
 </template>
 
 <script lang="ts">
-import TitleBar from "@/components/TitleBar.vue";
-import { Component, Vue, Watch } from "vue-property-decorator";
-import { ipcRenderer } from "electron";
-import FriendsList from "@/components/chat/FriendsList.vue";
-import AddFriend from "@/components/chat/AddFriend.vue";
-import FriendChat from "@/components/chat/FriendChat.vue";
+import TitleBar from '@/components/TitleBar.vue';
+import { Component, Vue, Watch } from 'vue-property-decorator';
+import { ipcRenderer } from 'electron';
+import FriendsList from '@/components/chat/FriendsList.vue';
+import AddFriend from '@/components/chat/AddFriend.vue';
+import FriendChat from '@/components/chat/FriendChat.vue';
 import { Friend, AuthState } from '../modules/auth/types';
 import {State} from 'vuex-class';
 import { Messages, UnreadMessages, Message } from '../types';
@@ -25,44 +25,44 @@ import { Messages, UnreadMessages, Message } from '../types';
 @Component({
   components: {
     TitleBar,
-    "friends-list": FriendsList,
+    'friends-list': FriendsList,
     AddFriend,
-    FriendChat
-  }
+    FriendChat,
+  },
 })
 export default class ChatWindow extends Vue {
     @State('auth')
     private auth!: AuthState;
-    private currentPage: string = "";
+    private currentPage: string = '';
     private friend!: Friend | undefined;
     private messages: Messages = {};
     private friends: Friend[] = [];
 
-    expand() {
-        ipcRenderer.send("expandMeScotty", { width: 800 });
+    public expand() {
+        ipcRenderer.send('expandMeScotty', { width: 800 });
     }
 
-    retract() {
-        ipcRenderer.send("expandMeScotty", { width: 300 });
+    public retract() {
+        ipcRenderer.send('expandMeScotty', { width: 300 });
     }
 
-    showPage(page: string, friend?: Friend){
-        if(this.currentPage === page){
-            if(this.friend && friend && this.friend.hash === friend.hash){
+    public showPage(page: string, friend?: Friend) {
+        if (this.currentPage === page) {
+            if (this.friend && friend && this.friend.hash === friend.hash) {
                 this.hidePage();
                 return;
             }
         }
         this.expand();
-        if(friend){
+        if (friend) {
             this.friend = friend;
-            if(this.messages[friend.shortHash]){
+            if (this.messages[friend.shortHash]) {
                 let messages = this.messages[friend.shortHash];
                 messages = messages.map((message) => {
                     message.read = true;
                     return message;
-                })
-                Vue.set(this.messages, this.friend.shortHash, messages)
+                });
+                Vue.set(this.messages, this.friend.shortHash, messages);
             }
         }
         setTimeout(() => {
@@ -70,49 +70,49 @@ export default class ChatWindow extends Vue {
         }, 100);
     }
 
-    hidePage(){
+    public hidePage() {
         this.retract();
         this.friend = undefined;
-        this.currentPage = "";
+        this.currentPage = '';
     }
 
 
 
-    sendMessage(message: string){
-        if(this.friend === undefined || this.auth.token === null){
+    public sendMessage(message: string) {
+        if (this.friend === undefined || this.auth.token === null) {
             return;
         }
-        ipcRenderer.send('sendMessage', {friend: this.friend, message: message});
+        ipcRenderer.send('sendMessage', {friend: this.friend, message});
         let messages: Message[];
-        if(this.messages[this.friend.shortHash] === undefined){
+        if (this.messages[this.friend.shortHash] === undefined) {
             messages = [];
         } else {
             messages = this.messages[this.friend.shortHash];
         }
-        messages.push({content: message, date: new Date().getTime(), author: this.auth.token.mc.mtusername, read:true})
-        Vue.set(this.messages, this.friend.shortHash, messages)
+        messages.push({content: message, date: new Date().getTime(), author: this.auth.token.mc.mtusername, read: true});
+        Vue.set(this.messages, this.friend.shortHash, messages);
     }
 
-    mounted(){
+    public mounted() {
         this.retract();
         ipcRenderer.on('newMessage', (event, data) => {
             let messages: Message[];
-            if(this.messages[data.from] === undefined){
+            if (this.messages[data.from] === undefined) {
                 messages = [];
             } else {
                 messages = this.messages[data.from];
             }
-            messages.push({content: data.message, author: data.from, date: data.date, read: this.currentPage === "chatFriend" && this.friend?.shortHash === data.from});
-            Vue.set(this.messages, data.from, messages)
-        })
-        ipcRenderer.send('checkFriends')
+            messages.push({content: data.message, author: data.from, date: data.date, read: this.currentPage === 'chatFriend' && this.friend?.shortHash === data.from});
+            Vue.set(this.messages, data.from, messages);
+        });
+        ipcRenderer.send('checkFriends');
         setInterval(() => {
-            ipcRenderer.send('checkFriends')
+            ipcRenderer.send('checkFriends');
         }, 30 * 1000);
         ipcRenderer.send('getFriends');
         ipcRenderer.on('ooohFriend', (_, data) => {
             this.friends = data;
-        })
+        });
     }
 }
 </script>
