@@ -13,6 +13,7 @@ export const actions: ActionTree<SocketState, RootState> = {
         const messageID = Math.round(Math.random() * 1000);
         payload.payload.requestId = messageID;
         payload.payload.secret = rootState.wsSecret;
+        console.log(payload.payload);
         Vue.prototype.$socket.sendObj(payload.payload);
         commit('ADD_CALLBACK', {id: messageID, callback: payload.callback});
     },

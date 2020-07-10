@@ -1,4 +1,12 @@
 module.exports = {
+    configureWebpack: {
+        output: {
+            publicPath: "/"
+        },
+        devServer: {
+            historyApiFallback: true
+        }
+    },
     pluginOptions: {
         electronBuilder: {
             builderOptions: {

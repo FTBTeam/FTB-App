@@ -12,3 +12,5 @@ declare global {
     }
   }
 }
+
+declare module 'irc-framework';

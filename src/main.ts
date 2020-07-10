@@ -105,7 +105,11 @@ Vue.filter('moment', (value: any) => {
     return moment.unix(value).format('Do MMMM YYYY');
 });
 
-
+Vue.filter('momentFromNow', (value: any) => {
+    if (!value) { return ''; }
+    value = value.toString();
+    return moment.duration(moment.unix(value).diff(moment())).humanize(true);
+});
 Vue.filter('formatNumber', (value: number) => {
     if(!value) {return '';}
     return new Intl.NumberFormat().format(value)
@@ -170,5 +174,9 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
     }
 });
 ipcRenderer.on('hereAuthData', (event, data) => {
-    store.commit('auth/storeAuthDetails', {key: data.modpackskey, secret: data.modpackssecret, username: data.username, mc: data.mc});
+    console.log("Received auth data", data);
+    store.dispatch('auth/storeAuthDetails', data, {root: true})
+    // store.commit('auth/storeAuthDetails', );
 });
+console.log("Asking for auth data")
+ipcRenderer.send('gimmeAuthData');

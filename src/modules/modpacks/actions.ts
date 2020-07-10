@@ -4,6 +4,20 @@ import config from '@/config';
 import {RootState} from '@/types';
 import {asyncForEach} from '@/utils';
 import semver from 'semver';
+import { AuthState } from '../auth/types';
+
+function getAPIRequest(rootState: RootState, url: string): Promise<Response> {
+    if(rootState.auth === null){
+        return fetch(`${config.apiURL}/public/${url}`);
+    }
+    let auth: AuthState = <AuthState>rootState.auth;
+    if(auth.token === null || auth.token.modpackskey === undefined){
+        return fetch(`${config.apiURL}/public/${url}`);
+    }
+    return fetch(`${config.apiURL}/${auth.token.modpackskey}/${url}`, {headers: {
+        'Secret': auth.token.modpackssecret
+    }});
+}
 
 export const actions: ActionTree<ModpackState, RootState> = {
     doSearch({commit, rootState, dispatch}: any, searchTerm): any {
@@ -12,7 +26,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         }
         commit('setLoading', true);
         commit('setSearch', searchTerm);
-        return fetch(`${config.apiURL}/public/modpack/search/8?term=${searchTerm}`)
+        return getAPIRequest(rootState, `modpack/search/8?term=${searchTerm}`)
         .then((response) => response.json())
         .then(async (data) => {
             if (data.status === 'error') {
@@ -39,7 +53,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     getPopularInstalls({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        return fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
+        return getAPIRequest(rootState, `modpack/popular/installs/10`)
         .then((response) => response.json())
         .then(async (data) => {
             const packIDs = data.packs;
@@ -65,7 +79,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     getPopularPlays({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        return fetch(`${config.apiURL}/public/modpack/popular/plays/10`)
+        return getAPIRequest(rootState, `modpack/popular/plays/10`)
         .then((response) => response.json())
         .then(async (data) => {
             const packIDs = data.packs;
@@ -97,7 +111,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     loadFeaturedPacks({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        return fetch(`${config.apiURL}/public/modpack/featured/10`)
+        return getAPIRequest(rootState, `modpack/featured/10`)
         .then((response) => response.json()).then(async (data) => {
             const packIDs = data.packs;
             if (packIDs == null) {
@@ -170,9 +184,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
             }}, {root: true});
         });
     },
-    getChangelog({commit}, {packID, versionID}): Promise<any> {
+    getChangelog({commit, rootState}, {packID, versionID}): Promise<any> {
         return new Promise(async (resolve, reject) => {
-            const changelog = await fetch(`${config.apiURL}/public/modpack/${packID}/${versionID}/changelog`).catch((err) =>  console.error(err))
+            const changelog = await getAPIRequest(rootState, `modpack/${packID}/${versionID}/changelog`).catch((err) =>  console.error(err))
             .then((response: any) => {
                 response = response as Response;
                 return response.json();
@@ -188,7 +202,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         }
         return new Promise(async (resolve, reject) => {
             // console.log("Fetching...");
-            await fetch(`${config.apiURL}/public/modpack/${packID}`).catch((err) =>  console.error(err))
+            await getAPIRequest(rootState, `modpack/${packID}`).catch((err) =>  console.error(err))
             .then(async (response: any) => {
                 response = response as Response;
                 const pack: ModPack = await response.json() as ModPack;

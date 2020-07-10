@@ -90,7 +90,7 @@
     flex-direction: row;
     align-items: center;
     height: 1.5rem;
-    /*margin-right: 5px;*/
+    margin-right: 5px;
     padding: 0 10px;
     fill: none;
     stroke: #989898;

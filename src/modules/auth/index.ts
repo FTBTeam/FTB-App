@@ -9,6 +9,7 @@ export const state: AuthState = {
     token: null,
     loading: false,
     error: false,
+    friends: []
 };
 
 export const auth: Module<AuthState, RootState> = {

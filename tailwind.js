@@ -11,6 +11,7 @@ module.exports = {
                 'sidebar-item-active': "var(--color-sidebar-item-active)",
                 "background": "var(--color-background)",
                 "background-lighten": "var(--color-background-lighten)",
+                "background-darken": "var(--color-background-darken)",
                 "navbar": "var(--color-navbar)",
                 "primary": "var(--color-primary-button)",
                 "secondary": "var(--color-secondary-button)",

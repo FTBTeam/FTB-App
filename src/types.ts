@@ -1,5 +1,6 @@
 import { SettingsState } from './modules/settings/types';
 import { ModpackState } from './modules/modpacks/types';
+import { AuthState } from './modules/auth/types';
 export interface RootState {
     version: string;
     alert: Alert | null;
@@ -7,6 +8,7 @@ export interface RootState {
     wsSecret: string;
     modpacks: ModpackState | null;
     settings: SettingsState | null;
+    auth: AuthState | null;
 }
 
 export interface Alert {
@@ -27,6 +29,22 @@ export interface Button {
   colour: string;
 }
 
+export interface Messages {
+  [index: string]: Message[];
+}
+
+export interface UnreadMessages {
+  [index: string]: number;
+}
+
+export interface Message {
+  content: string;
+  author: string;
+  date: number;
+  read: boolean;
+}
+
+
 // 2. Specify a file with the types you want to augment
 //    Vue has the constructor type in types/vue.d.ts
 declare module 'electron' {
@@ -35,7 +53,6 @@ declare module 'electron' {
     console: any;
   }
 }
-
 
 declare module 'vue/types/vue' {
   interface Vue {
