@@ -14,19 +14,16 @@ import { FriendListResponse } from './types';
 
 Object.assign(console, log.functions);
 app.console = log;
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.indexOf('--dev') !== -1;
 
 log.transports.file.resolvePath = (variables, message): string => {
-    if (isDevelopment) {
-        return path.join(process.cwd(), 'electron.log');
-    }
-    return path.join(process.cwd(), '..', 'electron.log');
+    return path.join(process.cwd(), 'electron.log');
 }
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
 
-let mtIRCCLient: Client | null;
+let mtIRCCLient: Client;
 declare const __static: string;
 
 protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true, standard: true}}]);
@@ -90,7 +87,7 @@ const seenModpacks: MTModpacks = {};
 let friends: FriendListResponse = {friends: [], requests: []};
 
 ipcMain.on('sendMeSecret', (event) => {
-    event.reply('hereIsSecret', {port: wsPort, secret: wsSecret, isDevMode: process.env.NODE_ENV !== 'production'});
+    event.reply('hereIsSecret', {port: wsPort, secret: wsSecret, isDevMode: isDevelopment});
 });
 
 ipcMain.on('openOauthWindow', (event, data) => {
@@ -150,6 +147,33 @@ async function getProfile(hash: string) {
     });
 }
 
+
+async function getFriendCode(hash: string) {
+    return fetch(`https://api.creeper.host/minetogether/friendcode`, {headers: {
+        'Content-Type': 'application/json'
+    }, method: 'POST', body: JSON.stringify({target: hash})}).then((resp: Response) => resp.json()).then((data: any) => {
+        return data.code;
+    }).catch((err: any) => {
+        log.error('Failed to get details about MineTogether profile', hash, err);
+        return undefined;
+    });
+}
+
+async function addFriend(code: string, display: string) {
+    return fetch(`https://api.creeper.host/minetogether/requestfriend`, {headers: {
+        'Content-Type': 'application/json'
+    }, method: 'POST', body: JSON.stringify({target: code, hash: authData.mc.hash, display: display})}).then((resp: Response) => resp.json()).then((data: any) => {
+        if(data.status === "success"){
+            return true;
+        } else {
+            return false;
+        }
+    }).catch((err: any) => {
+        log.error('Failed to add new friend', code, display, err);
+        return undefined;
+    });
+}
+
 async function getFriends(): Promise<FriendListResponse> {
     return fetch(`https://api.creeper.host/minetogether/listfriend`, {headers: {
         'Content-Type': 'application/json',
@@ -159,14 +183,18 @@ async function getFriends(): Promise<FriendListResponse> {
         console.log(data);
         let friendsList: Friend[] = data.friends as Friend[];
         friendsList = friendsList.map((friend: Friend) => {
-            const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
-            friend.shortHash = shortHash;
+            if(friend.hash){
+                const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
+                friend.shortHash = shortHash;
+            }
             return friend;
         }) ;
         let requests: Friend[] = data.requests as Friend[]
         requests = requests.map((friend: Friend) => {
-            const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
-            friend.shortHash = shortHash;
+            if(friend.hash){
+                const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
+                friend.shortHash = shortHash;
+            }
             return friend;
         });
         return {
@@ -190,28 +218,29 @@ ipcMain.on('disconnect', (event) => {
 })
 
 ipcMain.on('sendFriendRequest', async (event, data) => {
+    console.log("Going to send friend request", data)
     if(mtIRCCLient){
-        let profile = await getProfile(data.hash);
-        let displayName = profile.profileData[data.hash].hash.short;
+        let profile = await getProfile(authData.mc.hash);
+        let displayName = profile.profileData[authData.mc.hash].hash.short;
+        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, displayName);
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, displayName)
     }
 });
 
 ipcMain.on('acceptFriendRequest', async (event, data) => {
+    console.log("Going to accept friend request", data)
     if(mtIRCCLient){
-        let profile = await getProfile(data.hash);
-        let displayName = profile.profileData[data.hash].hash.short;
+        let profile = await getProfile(authData.mc.hash);
+        let displayName = profile.profileData[authData.mc.hash].hash.short;
+        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, displayName);
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, displayName)
     }
 });
 
-ipcMain.on('authData', async (event, data) => {
-    authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
-    // @ts-ignore
-    win.webContents.send('hereAuthData', authData);
-    // @ts-ignore
-    if (friendsWindow !== undefined && friendsWindow !== null) {
-        friendsWindow.webContents.send('hereAuthData', authData);
+async function connectToIRC(){
+    if(mtIRCCLient !== undefined){
+        log.error("Tried to connect to IRC when we're already connected");
+        return;
     }
     const mtDetails = await getMTIRC();
     if (mtDetails === undefined) {
@@ -303,6 +332,19 @@ ipcMain.on('authData', async (event, data) => {
             }
         }
     });
+    mtIRCCLient.on('ctcp request', (event: any) => {
+        console.log("CTCP event", event)
+        if (friendsWindow !== undefined && friendsWindow !== null){
+            if(event.type === "FRIENDREQ"){
+                let args = event.message.substring("FRIENDREQ".length, event.message.length).split(" ");
+                friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: args[], friendCode: args});
+            } else if(event.type === "FRIENDACC"){
+                let args = event.message.substring("FRIENDACC".length, event.message.length).split(" ");
+                let [code, ...rest] = args;
+                addFriend(code, rest.join(' '))
+            }
+        }
+    })
     mtIRCCLient.on('message', (event: any) => {
         console.log(event);
         if (event.type === 'privmsg') {
@@ -315,6 +357,18 @@ ipcMain.on('authData', async (event, data) => {
             }
         }
     });
+}
+
+ipcMain.on('authData', async (event, data) => {
+    authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
+    authData.mc.friendCode = await getFriendCode(authData.mc.hash);
+    // @ts-ignore
+    win.webContents.send('hereAuthData', authData);
+    // @ts-ignore
+    if (friendsWindow !== undefined && friendsWindow !== null) {
+        friendsWindow.webContents.send('hereAuthData', authData);
+    }
+    connectToIRC();
 });
 
 ipcMain.on('gimmeAuthData', (event) => {

@@ -103,6 +103,7 @@ import InstallModal from '@/components/modals/InstallModal.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import {Action, State} from 'vuex-class';
 import { ModpackState, Versions, Instance } from '../../modules/modpacks/types';
+import { ipcRenderer } from 'electron';
 const namespace: string = 'websocket';
 
 export interface MsgBox {
@@ -176,6 +177,7 @@ export default class PackCard extends Vue {
     // @ts-ignore
     public launch(): void {
         this.sendMessage({payload: {type: 'launchInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
+          ipcRenderer.send('disconnect');
                 // Instance launched
             }});
     }

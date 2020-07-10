@@ -81,7 +81,7 @@ export default class ChatWindow extends Vue {
     }
 
     public async removeFriend(){
-        if(this.friend === null){
+        if(this.friend === null || this.friend.hash === undefined){
             return;
         }
         let success = await this.removeFriendAction(this.friend.hash);
@@ -122,6 +122,11 @@ export default class ChatWindow extends Vue {
             }
             messages.push({content: data.message, author: data.from, date: data.date, read: this.currentPage === 'chatFriend' && this.friend?.shortHash === data.from});
             Vue.set(this.messages, data.from, messages);
+        });
+        ipcRenderer.on('newFriendRequest', (event, data) => {
+            let requests = this.friends.requests;
+            requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false})
+            Vue.set(this.friends, 'requests', requests);
         });
         ipcRenderer.send('checkFriends');
         setInterval(() => {

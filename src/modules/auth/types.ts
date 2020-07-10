@@ -22,12 +22,13 @@ export interface AuthState {
 }
 
 export interface Friend {
-    id: number;
-    hash: string;
+    id?: number;
+    hash?: string;
     accepted: boolean;
     name: string;
     online?: boolean;
     currentPack?: string;
     shortHash: string;
     notifications?: number;
+    friendCode?: string;
 }

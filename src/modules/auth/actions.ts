@@ -78,7 +78,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         .then((response) => response.json())
         .then(async (data) => {
             commit('setLoading', false);
-            if (data.success) {
+            if (data.status === "success") {
                 return true;
             } else {
                 return data.message;

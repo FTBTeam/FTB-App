@@ -125,6 +125,7 @@ import placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '../../utils';
+import { ipcRenderer } from 'electron';
 
 const namespace: string = 'websocket';
 
@@ -219,6 +220,7 @@ export interface MsgBox {
         public launch(): void {
             this.sendMessage({
                 payload: {type: 'launchInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
+                    ipcRenderer.send('disconnect');
                     // Instance launched
                 },
             });

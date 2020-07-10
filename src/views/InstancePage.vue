@@ -335,7 +335,7 @@ import * as semver from 'semver';
 import config from '@/config';
 import moment from 'moment';
 import {SettingsState} from '@/modules/settings/types';
-import { clipboard} from 'electron';
+import { clipboard, ipcRenderer} from 'electron';
 import fs from 'fs';
 import { logVerbose } from '../utils';
 
@@ -573,6 +573,7 @@ export default class InstancePage extends Vue {
         this.sendMessage({
             payload: {type: 'launchInstance', uuid: this.instance?.uuid},
             callback: (data: any) => {
+              ipcRenderer.send('disconnect');
             },
         });
     }
