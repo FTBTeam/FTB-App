@@ -188,13 +188,9 @@ interface AddFriendResponse {
 }
 
 async function addFriend(code: string, display: string): Promise<boolean> {
-    console.log("Adding friend with code", code, display)
     try {
         const response = await axios.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display: display}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
-        if(friendCodeResponse.status !== "success"){
-            console.log(response);
-        }
         return friendCodeResponse.status === "success";
     } catch(err) {
         log.error(`Error adding new MineTogether friend`, code, display, authData.mc.hash, err);
@@ -238,7 +234,6 @@ ipcMain.on('disconnect', (event) => {
 })
 
 ipcMain.on('sendFriendRequest', async (event, data) => {
-    console.log("Going to send friend request", data)
     if(mtIRCCLient){
         if(data.name === undefined){
             let profile = await getProfile(authData.mc.hash);
@@ -247,13 +242,11 @@ ipcMain.on('sendFriendRequest', async (event, data) => {
             }
             data.name = profile.hash.short;
         }
-        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, data.name);
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, data.name)
     }
 });
 
 ipcMain.on('acceptFriendRequest', async (event, data) => {
-    console.log("Going to accept friend request", data)
     if(mtIRCCLient){
         if(data.ourName === undefined){
             let profile = await getProfile(authData.mc.hash);
@@ -262,7 +255,6 @@ ipcMain.on('acceptFriendRequest', async (event, data) => {
             }
             data.ourName = profile.hash.short;
         }
-        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, data.ourName);
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, data.ourName)
         addFriend(data.friendCode, data.name);
     }
@@ -379,7 +371,6 @@ async function connectToIRC(){
         }
     });
     mtIRCCLient.on('ctcp request', (event: any) => {
-        console.log("CTCP event", event)
         if (friendsWindow !== undefined && friendsWindow !== null){
             if(event.type === "FRIENDREQ"){
                 let args = event.message.substring("FRIENDREQ".length, event.message.length).split(" ");
@@ -387,21 +378,19 @@ async function connectToIRC(){
                     args.shift()
                 }
                 let [code, ...rest] = args;
-                console.log("Friend request", args, code, rest.join(' '));
                 friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: rest.join(' '), friendCode: code});
+                mtIRCCLient.whois(event.nick);
             } else if(event.type === "FRIENDACC"){
                 let args = event.message.substring("FRIENDACC".length, event.message.length).split(" ");
                 if(args[0] === ""){
                     args.shift()
                 }
                 let [code, ...rest] = args;
-                console.log("Friend accept", args, code, rest.join(' '));
                 addFriend(code, rest.join(' '));
             }
         }
     })
     mtIRCCLient.on('message', (event: any) => {
-        console.log(event);
         if (event.type === 'privmsg') {
             if (friendsWindow) {
                 const friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);
