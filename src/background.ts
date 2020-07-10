@@ -374,11 +374,17 @@ async function connectToIRC(){
         if (friendsWindow !== undefined && friendsWindow !== null){
             if(event.type === "FRIENDREQ"){
                 let args = event.message.substring("FRIENDREQ".length, event.message.length).split(" ");
+                if(args[0] === ""){
+                    args.shift()
+                }
                 let [code, ...rest] = args;
                 console.log("Friend request", args, code, rest.join(' '));
                 friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: rest.join(' '), friendCode: code});
             } else if(event.type === "FRIENDACC"){
                 let args = event.message.substring("FRIENDACC".length, event.message.length).split(" ");
+                if(args[0] === ""){
+                    args.shift()
+                }
                 let [code, ...rest] = args;
                 console.log("Friend accept", args, code, rest.join(' '));
                 addFriend(code, rest.join(' '))
