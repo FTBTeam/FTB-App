@@ -87,7 +87,7 @@ export interface MTModpacks {
 
 let authData: any;
 const seenModpacks: MTModpacks = {};
-let friends: FriendListResponse = {};
+let friends: FriendListResponse = {friends: [], requests: []};
 
 ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret, isDevMode: process.env.NODE_ENV !== 'production'});
@@ -110,6 +110,9 @@ ipcMain.on('checkFriends', async (event) => {
     friends = await getFriends();
     if(mtIRCCLient !== undefined){
         friends.friends.forEach((friend: Friend) => {
+            mtIRCCLient.whois(friend.shortHash);
+        });
+        friends.requests.forEach((friend: Friend) => {
             mtIRCCLient.whois(friend.shortHash);
         });
     }
@@ -136,12 +139,24 @@ async function getMTIRC() {
     });
 }
 
+async function getProfile(hash: string) {
+    return fetch(`https://api.creeper.host/minetogether/profile`, {headers: {
+        'Content-Type': 'application/json'
+    }, method: 'POST', body: JSON.stringify({target: hash})}).then((resp: Response) => resp.json()).then((data: any) => {
+        return data;
+    }).catch((err: any) => {
+        log.error('Failed to get details about MineTogether profile', hash, err);
+        return undefined;
+    });
+}
+
 async function getFriends(): Promise<FriendListResponse> {
     return fetch(`https://api.creeper.host/minetogether/listfriend`, {headers: {
         'Content-Type': 'application/json',
     }, method: 'POST', body: JSON.stringify({hash: authData.mc.hash})})
     .then((response: any) => response.json())
     .then(async (data: any) => {
+        console.log(data);
         let friendsList: Friend[] = data.friends as Friend[];
         friendsList = friendsList.map((friend: Friend) => {
             const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
@@ -174,9 +189,19 @@ ipcMain.on('disconnect', (event) => {
     }
 })
 
-ipcMain.on('friendRequest', (event, data) => {
+ipcMain.on('sendFriendRequest', async (event, data) => {
     if(mtIRCCLient){
-        // mtIRCCLient.ctcpRequest()
+        let profile = await getProfile(data.hash);
+        let displayName = profile.profileData[data.hash].hash.short;
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, displayName)
+    }
+});
+
+ipcMain.on('acceptFriendRequest', async (event, data) => {
+    if(mtIRCCLient){
+        let profile = await getProfile(data.hash);
+        let displayName = profile.profileData[data.hash].hash.short;
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, displayName)
     }
 });
 
@@ -204,11 +229,17 @@ ipcMain.on('authData', async (event, data) => {
     friends.friends.forEach((friend: Friend) => {
         mtIRCCLient.whois(friend.shortHash);
     });
+    friends.requests.forEach((friend: Friend) => {
+        mtIRCCLient.whois(friend.shortHash);
+    });
     mtIRCCLient.on('whois', async (event: any) => {
         if (event.nick) {
-            const friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);
+            let friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);
             if (friend === undefined) {
-                return;
+                friend = friends.requests.find((f: Friend) => f.shortHash === event.nick);
+                if(friend === undefined){
+                    return;
+                }
             }
             if (event.error) {
                 friend.online = false;
@@ -273,6 +304,7 @@ ipcMain.on('authData', async (event, data) => {
         }
     });
     mtIRCCLient.on('message', (event: any) => {
+        console.log(event);
         if (event.type === 'privmsg') {
             if (friendsWindow) {
                 const friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);

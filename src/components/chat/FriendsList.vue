@@ -47,9 +47,9 @@
         <div v-if="showRequests">
             <div class="flex flex-row p-2 items-center hover:bg-background-lighten cursor-pointer" v-for="friend in friendRequests" :key="friend.id">
                 <p class="ml-2">{{friend.name}}</p>
-                <div class="icons ml-auto">
+                <div class="icons ml-auto" v-if="friend.online">
                     <font-awesome-icon icon="times" class="mx-2 cursor-pointer hover:text-red-500" />
-                    <font-awesome-icon icon="check" class="mx-2 cursor-pointer hover:text-green-500" />
+                    <font-awesome-icon icon="check" class="mx-2 cursor-pointer hover:text-green-500" @click="acceptFriendRequest(friend.hash)" />
                 </div>
             </div>
         </div>
@@ -65,6 +65,7 @@ import store from '@/store';
 import config from '@/config';
 import { AuthState, Friend } from '../../modules/auth/types';
 import { Messages, FriendListResponse } from '../../types';
+import { shortenHash } from '../../utils';
 
 interface UnreadMessages {
     [index: string]: number;
@@ -127,6 +128,10 @@ export default class MainChat extends Vue {
         } else {
             this.showPage('addFriend');
         }
+    }
+
+    public acceptFriendRequest(hash: string){
+        ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash)});
     }
 
     get unreadMessages() {

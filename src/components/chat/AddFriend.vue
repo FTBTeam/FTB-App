@@ -21,6 +21,8 @@ import config from '@/config';
 import { AuthState } from '../../modules/auth/types';
 import FTBInput from '../FTBInput.vue';
 import FTBButton from '../FTBButton.vue';
+import { FriendRequestResponse } from '../../modules/auth/actions';
+import { shortenHash } from '../../utils';
 
 @Component({
     components: {
@@ -32,7 +34,7 @@ export default class AddFriend extends Vue {
   @State('auth')
   private auth!: AuthState;
   @Action('submitFriendRequest', {namespace: 'auth'})
-  private submitFriendRequest!: (payload: {friendCode: string, display: string}) => Promise<boolean | string>;
+  private submitFriendRequest!: (payload: {friendCode: string, display: string}) => Promise<FriendRequestResponse>;
 
   private message: string = '';
   private messageType: 'danger' | 'success' = 'success';
@@ -44,17 +46,18 @@ export default class AddFriend extends Vue {
       if (this.friendCode.length === 0 || this.displayName.length === 0) {
           return;
       }
-      let success = await this.submitFriendRequest({friendCode: this.friendCode, display: this.displayName});
-      if (typeof success === "string"){
-        this.messageType = 'danger';
-        this.message = success;
-      } else {
-        if(success){  
+      let response: FriendRequestResponse = await this.submitFriendRequest({friendCode: this.friendCode, display: this.displayName});
+      if(response.status === "success"){
           this.message = 'Friend Request Sent';
           this.messageType = 'success';
           this.friendCode = "";
           this.displayName = "";
-        }
+          if(response.hash){
+            ipcRenderer.send('sendFriendRequest', {target: shortenHash(response.hash), hash: response.hash})
+          }
+      } else {
+        this.messageType = 'danger';
+        this.message = response.message;
       }
   }
 }

@@ -1,6 +1,13 @@
 import {ActionTree} from 'vuex';
 import { AuthState } from './types';
 import {RootState} from '@/types';
+
+export interface FriendRequestResponse {
+    status: string;
+    message: string;
+    hash?: string;
+}
+
 export const actions: ActionTree<AuthState, RootState> = {
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';
@@ -35,11 +42,39 @@ export const actions: ActionTree<AuthState, RootState> = {
             commit('setLoading', false);
         });
     },
-    submitFriendRequest({rootState, commit, dispatch, state}, payload: {friendCode: string, display: string}): Promise<boolean | string> {
+    submitFriendRequest({rootState, commit, dispatch, state}, payload: {friendCode: string, display: string}): Promise<FriendRequestResponse> {
         commit('setLoading', true);
         return fetch(`https://api.creeper.host/minetogether/requestfriend`, {headers: {
             'Content-Type': 'application/json',
         }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash, target: payload.friendCode, display: payload.display})})
+        .then((response) => response.json())
+        .then(async (data) => {
+            commit('setLoading', false);
+            if (data.status === "success") {
+                return {
+                    status: data.status,
+                    message: data.message,
+                    hash: data.hash
+                };
+            } else {
+                return {
+                    status: data.status,
+                    message: data.message,
+                }
+            }
+        }).catch((err) => {
+            commit('setLoading', false);
+            return {
+                status: "error",
+                message: "unable to send friend request",
+            }
+        });
+    },
+    removeFriend({rootState, commit, dispatch, state}, payload: string): Promise<boolean | string> {
+        commit('setLoading', true);
+        return fetch(`https://api.creeper.host/minetogether/removeFriend`, {headers: {
+            'Content-Type': 'application/json',
+        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash, target: payload})})
         .then((response) => response.json())
         .then(async (data) => {
             commit('setLoading', false);

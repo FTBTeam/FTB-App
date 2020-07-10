@@ -2,10 +2,10 @@
   <div id="app" class="theme-dark">
     <title-bar />
     <div class="flex flex-row h-full">
-        <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages" :friends="friends" :activeFriend="friend ? friend.shortHash : undefiend"></friends-list>
+        <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages"  :friends="friends" :activeFriend="friend !== null ? friend.shortHash : undefined"></friends-list>
         <div class="bg-navbar flex-1">
             <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
-            <FriendChat v-if="currentPage === 'chatFriend' && friend" :key="friend.shortHash" :friend="friend" :shortHash="auth.token.mc.mtusername" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
+            <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.shortHash" :friend="friend" :removeFriend="removeFriend" :shortHash="auth.token.mc.mtusername" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
         </div>
     </div>
   </div>
@@ -19,7 +19,7 @@ import FriendsList from '@/components/chat/FriendsList.vue';
 import AddFriend from '@/components/chat/AddFriend.vue';
 import FriendChat from '@/components/chat/FriendChat.vue';
 import { Friend, AuthState } from '../modules/auth/types';
-import {State} from 'vuex-class';
+import {State, Action} from 'vuex-class';
 import { Messages, UnreadMessages, Message, FriendListResponse } from '../types';
 
 @Component({
@@ -34,9 +34,12 @@ export default class ChatWindow extends Vue {
     @State('auth')
     private auth!: AuthState;
     private currentPage: string = '';
-    private friend!: Friend | undefined;
+    private friend: Friend | null = null;
     private messages: Messages = {};
     private friends: FriendListResponse = {friends: [], requests: []};
+
+    @Action('removeFriend', {namespace: "auth"})
+    private removeFriendAction!: (hash: string) => Promise<boolean | string>
 
     public expand() {
         ipcRenderer.send('expandMeScotty', { width: 800 });
@@ -73,14 +76,28 @@ export default class ChatWindow extends Vue {
 
     public hidePage() {
         this.retract();
-        this.friend = undefined;
+        this.friend = null;
         this.currentPage = '';
     }
 
+    public async removeFriend(){
+        if(this.friend === null){
+            return;
+        }
+        let success = await this.removeFriendAction(this.friend.hash);
+        if(typeof success === "string"){
 
+        } else {
+            if(success){
+                this.hidePage();
+                ipcRenderer.send('getFriends');
+                ipcRenderer.send('checkFriends');
+            }
+        }
+    }
 
     public sendMessage(message: string) {
-        if (this.friend === undefined || this.auth.token === null) {
+        if (this.friend === null || this.auth.token === null) {
             return;
         }
         ipcRenderer.send('sendMessage', {friend: this.friend, message});

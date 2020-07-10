@@ -4,7 +4,7 @@
         <h1 class="text-4xl ">{{friend.name}}</h1>
         <div class="ml-auto mr-2 mt-2">
             <font-awesome-icon icon="ban" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg"/>
-            <font-awesome-icon icon="trash" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" />
+            <font-awesome-icon icon="trash" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" @click="removeFriend" />
             <font-awesome-icon icon="globe" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" />
         </div>
       </div>
@@ -51,16 +51,18 @@ import { Message } from '../../types';
         'shortHash',
         'messages',
         'sendMessage',
+        'removeFriend'
     ],
 })
 export default class FriendChat extends Vue {
-
     @Prop()
     private friend!: Friend;
     @Prop()
     private shortHash!: string;
 
     private newMessage: string = '';
+    @Prop()
+    private removeFriend!: () => void;
 
     @Prop()
     private messages!: Message[];
