@@ -201,6 +201,8 @@ import config from '@/config';
 import moment from 'moment';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
+import { logVerbose } from '../utils';
+import { SettingsState } from '../modules/settings/types';
 
 export interface MsgBox {
     title: string;
@@ -239,6 +241,7 @@ export default class ModpackPage extends Vue {
       return this.modpacks?.packsCache[id];
     }
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
+    @State('settings') public settings!: SettingsState;
     @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: any;
     @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks!: any;
     @Action('updateInstall', {namespace: 'modpacks'}) public updateInstall!: any;
@@ -344,7 +347,7 @@ export default class ModpackPage extends Vue {
                         stage: data.currentStage,
                     });
                 }
-                console.log(JSON.stringify(data));
+                logVerbose(this.settings, "Update data", JSON.stringify(data));
             },
         });
     }

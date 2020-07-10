@@ -124,6 +124,7 @@ import {ModpackState, Versions, Instance} from '../../modules/modpacks/types';
 import placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
+import { logVerbose } from '../../utils';
 
 const namespace: string = 'websocket';
 
@@ -189,7 +190,7 @@ export interface MsgBox {
 
         @Watch('modpacks', {deep: true})
         public onModpacksChange(newState: ModpackState, oldState: ModpackState) {
-            console.log('State updated');
+            logVerbose(this.settingsState, 'State updated');
             this.$forceUpdate();
         }
 

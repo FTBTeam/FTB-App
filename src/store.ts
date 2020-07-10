@@ -1,6 +1,7 @@
+import { logVerbose } from '@/utils';
 import { ModpackState } from './modules/modpacks/types';
 import Vue from 'vue';
-import Vuex, { StoreOptions, MutationTree } from 'vuex';
+import Vuex, { StoreOptions, MutationTree, Store } from 'vuex';
 import { RootState, Alert, ModalBox } from './types';
 import { news } from './modules/news';
 import { modpacks } from './modules/modpacks';
@@ -35,7 +36,13 @@ export const mutations: MutationTree<RootState> = {
         state.websocket.modal = null;
     },
 };
-
+const wsLoggerPlugin = (store: Store<RootState>) => {
+    store.subscribe((mutation, state) => {
+        if(mutation.type === "SOCKET_ONMESSAGE"){
+            logVerbose(state, "New WebSocket message", JSON.stringify(mutation.payload))
+        }
+    })
+}
 
 const store: StoreOptions<RootState> = {
     state: {
@@ -47,6 +54,7 @@ const store: StoreOptions<RootState> = {
         settings: null,
         auth: null,
     },
+    plugins: [wsLoggerPlugin],
     actions: {
         showAlert: ({commit}: any, alert: Alert) => {
             commit('SHOW_ALERT', alert);

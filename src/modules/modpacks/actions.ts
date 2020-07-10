@@ -2,7 +2,7 @@ import {ActionTree} from 'vuex';
 import {ModpackState, ModPack, Instance, InstallProgress, Changelog} from './types';
 import config from '@/config';
 import {RootState} from '@/types';
-import {asyncForEach} from '@/utils';
+import {asyncForEach, logVerbose} from '@/utils';
 import semver from 'semver';
 import { AuthState } from '../auth/types';
 
@@ -64,7 +64,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             await asyncForEach(packIDs, async (packID: number) => {
                 const pack = await dispatch('fetchModpack', packID);
                 if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
-                    console.log(`ERR: Modpack ID ${packID} has no versions`);
+                    logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
                     return;
                 }
                 packs.push(pack);
@@ -90,7 +90,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             await asyncForEach(packIDs, async (packID: number) => {
                 const pack = await dispatch('fetchModpack', packID);
                 if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
-                    console.log(`ERR: Modpack ID ${packID} has no versions`);
+                    logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
                     return;
                 }
                 packs.push(pack);
@@ -121,7 +121,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             await asyncForEach(packIDs, async (packID: number) => {
                 const pack = await dispatch('fetchModpack', packID);
                 if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
-                    console.log(`ERR: Modpack ID ${packID} has no versions`);
+                    logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
                     return;
                 }
                 packs.push(pack);
@@ -151,6 +151,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             const pack = await fetch(`${config.apiURL}/public/modpack/${install.modpackID}`)
             .then((response) => response.json());
             install.pack = pack;
+            logVerbose(rootState, 'Adding to cache', pack);
             commit('addToCache', pack);
         }
         commit('updateInstall', install);
@@ -161,12 +162,12 @@ export const actions: ActionTree<ModpackState, RootState> = {
     errorInstall({commit}, install: InstallProgress): any {
         commit('errorInstall', install);
     },
-    refreshPacks({dispatch}): Promise<any> {
+    refreshPacks({dispatch, rootState}): Promise<any> {
         return new Promise((resolve, reject) => {
             dispatch('sendMessage', {
                 payload: { type: 'installedInstances' },
                 callback: (data: any) => {
-                    console.log('Storing installed packs', data);
+                    logVerbose(rootState, 'Storing installed packs', data);
                     dispatch('storeInstalledPacks', data);
                     resolve(data.instances);
             }}, {root: true});
@@ -195,13 +196,13 @@ export const actions: ActionTree<ModpackState, RootState> = {
         });
     },
     fetchModpack({commit, rootState}: any, packID): Promise<any> {
-        // console.log("Fetching modpack");
+        logVerbose(rootState, "Fetching modpack", packID);
         if (rootState.modpacks.packsCache[packID]) {
-            // console.log("Found in cache");
+            logVerbose(rootState, "Found in cache", packID);
             return new Promise((resolve, reject) => resolve(rootState.modpacks.packsCache[packID]));
         }
         return new Promise(async (resolve, reject) => {
-            // console.log("Fetching...");
+            logVerbose(rootState, "Fetching...", packID);
             await getAPIRequest(rootState, `modpack/${packID}`).catch((err) =>  console.error(err))
             .then(async (response: any) => {
                 response = response as Response;
@@ -215,8 +216,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
                     });
                 }
                 pack.kind = 'modpack';
-                console.log('Resolving...');
+                logVerbose(rootState, 'Resolving...', packID);
                 resolve(pack);
+                logVerbose(rootState, 'Adding to cache', pack);
                 commit('addToCache', pack);
             }).catch((err) => {
                 console.error('Error getting modpack', err);

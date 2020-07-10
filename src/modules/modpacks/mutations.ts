@@ -76,7 +76,6 @@ export const mutations: MutationTree<ModpackState> = {
             return;
         }
         if (!state.packsCache[modpack.id]) {
-            console.log('Adding to cache', modpack);
             state.packsCache[modpack.id] = modpack;
         }
     },

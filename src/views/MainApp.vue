@@ -9,7 +9,6 @@
         <div class="content-container">
           <router-view />
           <div v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
-            <!-- {{debugLog(modpack)}} -->
           </div>
         </div>
         <transition name="slide-down-up">
@@ -73,18 +72,20 @@ import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/FTBModal.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
-import { asyncForEach } from '@/utils';
+import { asyncForEach, logVerbose } from '@/utils';
 import {
   Instance,
   ModpackState,
   InstallProgress,
 } from '@/modules/modpacks/types';
 import { RootState } from '@/types';
+import { SettingsState } from '../modules/settings/types';
 
 @Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal} })
 export default class MainApp extends Vue {
   @State('websocket') public websockets!: SocketState;
   @State('modpacks') public modpacks!: ModpackState;
+  @State('settings') public settings!: SettingsState;
   @Action('sendMessage') public sendMessage: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' })
   public storePacks: any;
@@ -125,9 +126,9 @@ export default class MainApp extends Vue {
 
   public retry(modpack: InstallProgress) {
     if (this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID).length > 0) {
-      console.log('The instance already exists, assume an update.');
+      logVerbose(this.settings, 'The instance already exists, assume an update.');
     } else {
-      console.log('Instance does not exist, we can assume delete is fine');
+      logVerbose(this.settings, 'Instance does not exist, we can assume delete is fine');
       const foundPack = this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID)[0];
       this.sendMessage({payload: {type: 'uninstallInstance', uuid: foundPack.uuid}, callback: (data: any) => {
         this.sendMessage({payload: {type: 'installedInstances'}, callback: (data: any) => {
@@ -148,15 +149,11 @@ export default class MainApp extends Vue {
               } else if (data.overallPercentage <= 100) {
                 this.updateInstall({modpackID: foundPack.id, messageID: data.requestId, progress: data.overallPercentage, downloadSpeed: data.speed, downloadedBytes: data.currentBytes, totalBytes: data.overallBytes, stage: data.currentStage});
               }
-              console.log(JSON.stringify(data));
+              logVerbose(this.settings, "Update Data", JSON.stringify(data));
             }});
           }});
       }});
     }
-  }
-
-  private debugLog(log: any) {
-    console.log(log);
   }
 }
 </script>

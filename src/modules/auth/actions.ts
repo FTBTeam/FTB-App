@@ -9,7 +9,6 @@ export const actions: ActionTree<AuthState, RootState> = {
     },
     getFriends({rootState, commit, dispatch, state}, payload: any): Promise<void> {
         commit('setLoading', true);
-        console.log(state.token);
         return fetch(`https://api.creeper.host/minetogether/listfriend`, {headers: {
             'Content-Type': 'application/json',
         }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash})})
@@ -34,7 +33,6 @@ export const actions: ActionTree<AuthState, RootState> = {
             commit('setLoading', false);
         }).catch((err) => {
             commit('setLoading', false);
-            console.error(err);
         });
     },
     submitFriendRequest({rootState, commit, dispatch, state}, payload: {friendCode: string, display: string}): Promise<any> {
@@ -44,11 +42,9 @@ export const actions: ActionTree<AuthState, RootState> = {
         }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash, target: payload.friendCode, display: payload.display})})
         .then((response) => response.json())
         .then(async (data) => {
-            console.log(data);
             commit('setLoading', false);
         }).catch((err) => {
             commit('setLoading', false);
-            console.error(err);
         });
     },
 };

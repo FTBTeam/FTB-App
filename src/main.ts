@@ -174,9 +174,7 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
     }
 });
 ipcRenderer.on('hereAuthData', (event, data) => {
-    console.log('Received auth data', data);
     store.dispatch('auth/storeAuthDetails', data, {root: true});
     // store.commit('auth/storeAuthDetails', );
 });
-console.log('Asking for auth data');
 ipcRenderer.send('gimmeAuthData');

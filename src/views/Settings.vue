@@ -135,6 +135,7 @@ import {SettingsState, Settings} from '@/modules/settings/types';
 import config from '@/config';
 import {ipcRenderer, clipboard} from 'electron';
 import path from 'path';
+import { logVerbose } from '../utils';
 
 @Component({
     components: {
@@ -235,7 +236,7 @@ export default class SettingsPage extends Vue {
                     }, 5000);
                 })
                 .catch((rejected) => {
-                    console.log(rejected);
+                    logVerbose(this.settingsState, rejected);
                     this.showAlert({
                         title: 'Error!',
                         message: 'There was an error uploading your logs - ' + rejected,
@@ -269,8 +270,6 @@ export default class SettingsPage extends Vue {
 
     public async created() {
         await this.loadSettings();
-        // @ts-ignore
-        // console.log(this.settingsState.settings);
         this.settingsCopy = {...this.settingsCopy, ...this.settingsState.settings};
         Object.keys(this.settingsCopy).forEach((key: string) => {
             if (key === 'listMode' && this.settingsCopy[key] === undefined) {

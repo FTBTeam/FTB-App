@@ -28,11 +28,15 @@ import {AuthState} from '../modules/auth/types';
 import {State, Action} from 'vuex-class';
 import store from '@/store';
 import config from '@/config';
+import { SettingsState } from '../modules/settings/types';
+import { logVerbose } from '../utils';
 
 @Component({components: {NavItem}})
 export default class Sidebar extends Vue {
   @State('auth')
   private auth!: AuthState;
+  @State('settings')
+  private settings!: SettingsState;
   private appVersion: string = config.appVersion;
 
 
@@ -75,7 +79,7 @@ export default class Sidebar extends Vue {
   }
 
   private debugLog(data: any) {
-    console.log(data);
+    logVerbose(this.settings, data);
   }
 }
 </script>

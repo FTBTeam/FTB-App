@@ -118,8 +118,7 @@
           </div>
           <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
             <div v-for="(version, index) in currentModpack.versions" :key="index">
-              {{debugLog("Version")}}
-              {{debugLog(version)}}
+              {{debugLog("Version", version)}}
               <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
                 <p>{{currentModpack.name}} - {{version.name}}</p>
                 <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"><font-awesome-icon
@@ -146,8 +145,8 @@
 <!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
                 </v-selectmenu>
               </div>
-              {{debugLog("Version ID: " + version.id)}}
-              {{debugLog("activeChangelog: " + activeChangelog)}}
+              {{debugLog("Version ID", version.id)}}
+              {{debugLog("activeChangelog", activeChangelog)}}
               <div class="pl-5 p-2 bg-background" v-if="activeChangelog === version.id">
                 <VueShowdown v-if="changelogs[version.id]" :markdown="changelogs[version.id]" :extensions="['classMap', 'newLine']"/>
                 <p v-else>No changelog available</p>
@@ -338,6 +337,7 @@ import moment from 'moment';
 import {SettingsState} from '@/modules/settings/types';
 import { clipboard} from 'electron';
 import fs from 'fs';
+import { logVerbose } from '../utils';
 
 interface MsgBox {
     title: string;
@@ -409,7 +409,6 @@ export default class InstancePage extends Vue {
     }
 
     get isLatestVersion() {
-      console.log(this.currentModpack === undefined, this.currentModpack?.kind !== 'modpack');
       if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack') {
         return true;
       }
@@ -633,7 +632,7 @@ export default class InstancePage extends Vue {
                             stage: data.currentStage,
                         });
                     }
-                    console.log(JSON.stringify(data));
+                    logVerbose(this.settingsState, "Update data", JSON.stringify(data));
                 },
             });
         }
@@ -714,8 +713,8 @@ export default class InstancePage extends Vue {
       this.activeChangelog = id;
     }
 
-    private debugLog(thing: any) {
-      console.log(thing);
+    private debugLog(title: any, data: any) {
+      logVerbose(this.settingsState, title, data);
     }
 }
 </script>
