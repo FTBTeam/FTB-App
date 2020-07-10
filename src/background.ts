@@ -151,7 +151,7 @@ async function getProfile(hash: string) {
 async function getFriendCode(hash: string) {
     return fetch(`https://api.creeper.host/minetogether/friendcode`, {headers: {
         'Content-Type': 'application/json'
-    }, method: 'POST', body: JSON.stringify({target: hash})}).then((resp: Response) => resp.json()).then((data: any) => {
+    }, method: 'POST', body: JSON.stringify({hash: hash})}).then((resp: Response) => resp.json()).then((data: any) => {
         return data.code;
     }).catch((err: any) => {
         log.error('Failed to get details about MineTogether profile', hash, err);
