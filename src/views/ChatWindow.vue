@@ -2,10 +2,10 @@
   <div id="app" class="theme-dark">
     <title-bar />
     <div class="flex flex-row h-full">
-        <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages" :friends="friends"></friends-list>
+        <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages" :friends="friends" :activeFriend="friend ? friend.shortHash : undefiend"></friends-list>
         <div class="bg-navbar flex-1">
             <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
-            <FriendChat v-if="currentPage === 'chatFriend' && friend" :friend="friend" :shortHash="auth.token.mc.mtusername" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
+            <FriendChat v-if="currentPage === 'chatFriend' && friend" :key="friend.shortHash" :friend="friend" :shortHash="auth.token.mc.mtusername" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
         </div>
     </div>
   </div>
@@ -20,7 +20,7 @@ import AddFriend from '@/components/chat/AddFriend.vue';
 import FriendChat from '@/components/chat/FriendChat.vue';
 import { Friend, AuthState } from '../modules/auth/types';
 import {State} from 'vuex-class';
-import { Messages, UnreadMessages, Message } from '../types';
+import { Messages, UnreadMessages, Message, FriendListResponse } from '../types';
 
 @Component({
   components: {
@@ -36,7 +36,7 @@ export default class ChatWindow extends Vue {
     private currentPage: string = '';
     private friend!: Friend | undefined;
     private messages: Messages = {};
-    private friends: Friend[] = [];
+    private friends: FriendListResponse = {friends: [], requests: []};
 
     public expand() {
         ipcRenderer.send('expandMeScotty', { width: 800 });
@@ -64,6 +64,7 @@ export default class ChatWindow extends Vue {
                 });
                 Vue.set(this.messages, this.friend.shortHash, messages);
             }
+            this.$forceUpdate();
         }
         setTimeout(() => {
             this.currentPage = page;

@@ -10,12 +10,18 @@ import childProcess from 'child_process';
 // @ts-ignore
 import {Client} from 'irc-framework';
 import fetch, {Response} from 'node-fetch';
+import { FriendListResponse } from './types';
 
 Object.assign(console, log.functions);
 app.console = log;
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-const userPath = (app || remote.app).getPath('userData');
+log.transports.file.resolvePath = (variables, message): string => {
+    if (isDevelopment) {
+        return path.join(process.cwd(), 'electron.log');
+    }
+    return path.join(process.cwd(), '..', 'electron.log');
+}
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
@@ -39,13 +45,49 @@ if (process.argv.indexOf('--ws') !== -1) {
     wsSecret = '';
 }
 
+
+if (process.argv.indexOf('--pid') === -1) {
+    console.log('No backend found, starting our own');
+    const ourPID = process.pid;
+    console.log('Our PID is', ourPID);
+    const currentPath = process.cwd();
+    console.log('Current working directory is', currentPath);
+    let binaryFile = 'FTBApp';
+    const operatingSystem = os.platform();
+    if (operatingSystem === 'win32') {
+        binaryFile += '.exe';
+    }
+    binaryFile = path.join(currentPath, '..', binaryFile);
+    if (fs.existsSync(binaryFile)) {
+        console.log('Starting process of backend', binaryFile);
+        const child = childProcess.execFile(binaryFile, ['--pid', ourPID.toString()]);
+        child.on('exit', (code, signal) => {
+            console.log('child process exited with ' +
+            `code ${code} and signal ${signal}`);
+        });
+        child.on('error', (err) => {
+            console.error('Error starting binary', err);
+        });
+        // @ts-ignore
+        child.stdout.on('data', (data) => {
+            console.log(`child stdout:\n${data}`);
+        });
+        // @ts-ignore
+        child.stderr.on('data', (data) => {
+            console.error(`child stderr:\n${data}`);
+        });
+    } else {
+        console.log('Could not find the binary to launch backend', binaryFile);
+    }
+}
+
 export interface MTModpacks {
     [index: string]: string;
 }
 
 let authData: any;
 const seenModpacks: MTModpacks = {};
-let friends: Friend[] = [];
+let friends: FriendListResponse = {};
 
 ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret, isDevMode: process.env.NODE_ENV !== 'production'});
@@ -66,9 +108,11 @@ ipcMain.on('getFriends', (event) => {
 
 ipcMain.on('checkFriends', async (event) => {
     friends = await getFriends();
-    friends.forEach((friend: Friend) => {
-        mtIRCCLient.whois(friend.shortHash);
-    });
+    if(mtIRCCLient !== undefined){
+        friends.friends.forEach((friend: Friend) => {
+            mtIRCCLient.whois(friend.shortHash);
+        });
+    }
 });
 
 ipcMain.on('sendMessage', async (event, data) => {
@@ -92,22 +136,49 @@ async function getMTIRC() {
     });
 }
 
-async function getFriends(): Promise<Friend[]> {
+async function getFriends(): Promise<FriendListResponse> {
     return fetch(`https://api.creeper.host/minetogether/listfriend`, {headers: {
         'Content-Type': 'application/json',
     }, method: 'POST', body: JSON.stringify({hash: authData.mc.hash})})
     .then((response: any) => response.json())
     .then(async (data: any) => {
-        return data.friends.map((friend: Friend) => {
+        let friendsList: Friend[] = data.friends as Friend[];
+        friendsList = friendsList.map((friend: Friend) => {
+            const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
+            friend.shortHash = shortHash;
+            return friend;
+        }) ;
+        let requests: Friend[] = data.requests as Friend[]
+        requests = requests.map((friend: Friend) => {
             const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
             friend.shortHash = shortHash;
             return friend;
         });
+        return {
+            friends: friendsList,
+            requests,
+        }
     }).catch((err: any) => {
         log.error('Failed to get details about MineTogether friends', err);
-        return [];
+        return {
+            friends: [],
+            requests: [],
+        };
     });
 }
+
+ipcMain.on('disconnect', (event) => {
+    if(mtIRCCLient){
+        mtIRCCLient.quit();
+        mtIRCCLient = undefined;
+    }
+})
+
+ipcMain.on('friendRequest', (event, data) => {
+    if(mtIRCCLient){
+        // mtIRCCLient.ctcpRequest()
+    }
+});
 
 ipcMain.on('authData', async (event, data) => {
     authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
@@ -127,14 +198,15 @@ ipcMain.on('authData', async (event, data) => {
         host: mtDetails.host,
         port: mtDetails.port,
         nick: authData.mc.mtusername,
+        gecos: '{"p":""}',
     });
     friends = await getFriends();
-    friends.forEach((friend: Friend) => {
+    friends.friends.forEach((friend: Friend) => {
         mtIRCCLient.whois(friend.shortHash);
     });
     mtIRCCLient.on('whois', async (event: any) => {
         if (event.nick) {
-            const friend = friends.find((f: Friend) => f.shortHash === event.nick);
+            const friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);
             if (friend === undefined) {
                 return;
             }
@@ -143,7 +215,19 @@ ipcMain.on('authData', async (event, data) => {
             } else {
                 friend.online  = true;
                 if (event.real_name) {
-                    const realName = JSON.parse(event.real_name);
+                    let realName;
+                    try {
+                        realName = JSON.parse(event.real_name);
+                    } catch (e){
+                        console.log('Invalid real name', event.real_name);
+                        if (win) {
+                            win.webContents.send('ooohFriend', friends);
+                        }
+                        if (friendsWindow) {
+                            friendsWindow.webContents.send('ooohFriend', friends);
+                        }
+                        return;
+                    }
                     friend.currentPack = '';
                     if (realName.b) {
                         friend.currentPack = realName.b;
@@ -191,7 +275,7 @@ ipcMain.on('authData', async (event, data) => {
     mtIRCCLient.on('message', (event: any) => {
         if (event.type === 'privmsg') {
             if (friendsWindow) {
-                const friend = friends.find((f: Friend) => f.shortHash === event.nick);
+                const friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);
                 if (friend === undefined) {
                     return;
                 }
@@ -235,40 +319,6 @@ ipcMain.on('selectFolder', async (event, data) => {
     }
 });
 
-if (process.argv.indexOf('--pid') === -1) {
-    console.log('No backend found, starting our own');
-    const ourPID = process.pid;
-    console.log('Our PID is', ourPID);
-    const currentPath = process.cwd();
-    console.log('Current working directory is', currentPath);
-    let binaryFile = 'FTBApp';
-    const operatingSystem = os.platform();
-    if (operatingSystem === 'win32') {
-        binaryFile += '.exe';
-    }
-    binaryFile = path.join(currentPath, '..', binaryFile);
-    if (fs.existsSync(binaryFile)) {
-        console.log('Starting process of backend', binaryFile);
-        const child = childProcess.execFile(binaryFile, ['--pid', ourPID.toString()]);
-        child.on('exit', (code, signal) => {
-            console.log('child process exited with ' +
-            `code ${code} and signal ${signal}`);
-        });
-        child.on('error', (err) => {
-            console.error('Error starting binary', err);
-        });
-        // @ts-ignore
-        child.stdout.on('data', (data) => {
-            console.log(`child stdout:\n${data}`);
-        });
-        // @ts-ignore
-        child.stderr.on('data', (data) => {
-            console.error(`child stderr:\n${data}`);
-        });
-    } else {
-        console.log('Could not find the binary to launch backend', binaryFile);
-    }
-}
 
 function createFriendsWindow() {
     if (friendsWindow !== null && friendsWindow !== undefined) {

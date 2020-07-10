@@ -35,7 +35,7 @@ export const actions: ActionTree<AuthState, RootState> = {
             commit('setLoading', false);
         });
     },
-    submitFriendRequest({rootState, commit, dispatch, state}, payload: {friendCode: string, display: string}): Promise<any> {
+    submitFriendRequest({rootState, commit, dispatch, state}, payload: {friendCode: string, display: string}): Promise<boolean | string> {
         commit('setLoading', true);
         return fetch(`https://api.creeper.host/minetogether/requestfriend`, {headers: {
             'Content-Type': 'application/json',
@@ -43,8 +43,14 @@ export const actions: ActionTree<AuthState, RootState> = {
         .then((response) => response.json())
         .then(async (data) => {
             commit('setLoading', false);
+            if (data.success) {
+                return true;
+            } else {
+                return data.message;
+            }
         }).catch((err) => {
             commit('setLoading', false);
+            return 'Error sending request';
         });
     },
 };

@@ -4,7 +4,10 @@
       <div class=" ">
         <ftb-input label="Friend Code" v-model="friendCode" :value="friendCode" />
         <ftb-input label="Display Name" v-model="displayName" :value="displayName" />
-        <ftb-button color="primary" class="text-center px-2 py-1" @click="submit">Add</ftb-button>
+        <ftb-button color="primary" class="text-center px-2 py-1" @click="submit" :disabled="auth.loading">Add</ftb-button>
+        <div v-if="message.length > 0" :class="`p-4 bg-${messageType} text-white mt-2 rounded`">
+          {{message}}
+        </div>
       </div>
   </div>
 </template>
@@ -26,16 +29,33 @@ import FTBButton from '../FTBButton.vue';
     },
 })
 export default class AddFriend extends Vue {
-    @Action('submitFriendRequest', {namespace: 'auth'})
-    private submitFriendRequest!: (payload: {friendCode: string, display: string}) => void;
+  @State('auth')
+  private auth!: AuthState;
+  @Action('submitFriendRequest', {namespace: 'auth'})
+  private submitFriendRequest!: (payload: {friendCode: string, display: string}) => Promise<boolean | string>;
+
+  private message: string = '';
+  private messageType: 'danger' | 'success' = 'success';
   private friendCode: string = '';
   private displayName: string = '';
 
-  public submit() {
+  public async submit() {
+      this.message = '';
       if (this.friendCode.length === 0 || this.displayName.length === 0) {
           return;
       }
-      this.submitFriendRequest({friendCode: this.friendCode, display: this.displayName});
+      let success = await this.submitFriendRequest({friendCode: this.friendCode, display: this.displayName});
+      if (typeof success === "string"){
+        this.messageType = 'danger';
+        this.message = success;
+      } else {
+        if(success){  
+          this.message = 'Friend Request Sent';
+          this.messageType = 'success';
+          this.friendCode = "";
+          this.displayName = "";
+        }
+      }
   }
 }
 </script>

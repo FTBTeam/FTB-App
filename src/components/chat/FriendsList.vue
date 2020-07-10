@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full bg-background" style="width: 300px;">
       <div class="profile bg-navbar flex flex-row items-center relative" style="height: 75px;">
-        <div class="miniftb pointer-events-none" ></div>
+        <div class="minimtg pointer-events-none" ></div>
         <div class="p-4 flex flex-row items-center">
         <img :src="`https://minotar.net/helm/e1949d31-4f97-423a-8229-690fd6756b1c`" style="margin-right: 0.75em;" width="30px" class="rounded-full" />
         <div class="flex flex-col">
@@ -10,7 +10,7 @@
         </div>
         </div>
       </div>
-      <div class="friends flex flex-col"> 
+      <div class="friends flex flex-col overflow-y-auto" style="max-height: 300px;"> 
         <div class="bg-background-lighten p-2 flex flex-row">
             <p class="ml-2">Friends</p>
             <input type="search" class="bg-input text-xs mx-2" style="padding: 0 2px;" placeholder="Search..." v-if="showSearch" v-model="search"/>
@@ -19,8 +19,8 @@
                 <font-awesome-icon icon="user-plus" @click="openAddFriendUI" class="mx-2 cursor-pointer" />
             </div>
         </div>
-        <div class="flex flex-row p-2 items-center hover:bg-background-lighten cursor-pointer" v-for="friend in currentFriends" :key="friend.id" @click="openFriendChat(friend)">
-            <p :class="`ml-2 ${friend.online ? 'text-white' : 'text-muted'}`">{{friend.name}} </p>
+        <div :class="`flex flex-row p-2 items-center ${currentPage === 'chatFriend' && activeFriend !== undefined && activeFriend === friend.shortHash ? 'bg-background-lighten' : 'hover:bg-background-lighten'} cursor-pointer`" v-for="friend in currentFriends" :key="friend.id" @click="openFriendChat(friend)">
+            <p :class="`ml-2 cursor-pointer ${friend.online ? 'text-white font-bold' : 'text-muted font-normal'}`">{{friend.name}} </p>
             <p v-if="unreadMessages[friend.shortHash] > 0" class="bg-red-600 rounded-full px-2 ml-2 text-xs">{{unreadMessages[friend.shortHash]}}</p>
             <div class="icons ml-auto">
                 <font-awesome-icon v-if="friend.currentPack && friend.currentPack.length > 0" icon="gamepad" class="mx-2 cursor-pointer" :title="friend.currentPack"/>
@@ -29,12 +29,14 @@
         </div>
         <div v-if="currentFriends.length === 0 && search.length > 0" class="flex flex-col items-center mt-4 text-sm">
             <font-awesome-icon icon="sad-tear" size="lg"/>
-            <p>No results</p>
+            <p class="p-2 text-center">No results</p>
         </div>
         <div v-else-if="currentFriends.length === 0 && search.length === 0" class="flex flex-col items-center mt-4 text-sm">
             <font-awesome-icon icon="sad-tear" size="lg"/>
-            <p>It looks like you don't have any friends added at the moment!</p>
+            <p class="p-2 text-center">It looks like you don't have any friends added at the moment!</p>
         </div>
+      </div>
+      <div class="friends flex flex-col overflow-y-auto">
         <div class="bg-background-lighten p-2 flex flex-row mt-10 cursor-pointer"  @click="toggleRequests">
             <p class="ml-2 cursor-pointer">Pending Requests</p>
             <p v-if="friendRequests.length > 0 && !showRequests" class="bg-red-600 rounded-full px-2 ml-2 text-xs">{{friendRequests.length}}</p>
@@ -62,7 +64,7 @@ import {State, Action} from 'vuex-class';
 import store from '@/store';
 import config from '@/config';
 import { AuthState, Friend } from '../../modules/auth/types';
-import { Messages } from '../../types';
+import { Messages, FriendListResponse } from '../../types';
 
 interface UnreadMessages {
     [index: string]: number;
@@ -75,6 +77,7 @@ interface UnreadMessages {
         'currentPage',
         'messages',
         'friends',
+        'activeFriend'
     ],
 })
 export default class MainChat extends Vue {
@@ -89,7 +92,7 @@ export default class MainChat extends Vue {
     private search: string = '';
 
     @Prop()
-    private friends!: Friend[];
+    private friends!: FriendListResponse;
     @Prop()
     private currentPage!: string;
     @Prop()
@@ -137,7 +140,7 @@ export default class MainChat extends Vue {
 
     get currentFriends() {
         // return [{name: "Gaz492"}, {name: "Paul_T"}, {name: "Jake_Evans"}];
-        let friends = this.friends.filter((a) => a.accepted).sort((a, b) => Number(a.online) - Number(b.online));
+        let friends = this.friends.friends.filter((a) => a.accepted).sort((a, b) => Number(b.online) - Number(a.online));
         if (this.search.length > 0) {
             friends = friends.filter((a) => a.name.indexOf(this.search) !== -1);
         }
@@ -145,12 +148,7 @@ export default class MainChat extends Vue {
     }
 
     get friendRequests() {
-        if (this.auth === undefined) {
-            return [];
-        }
-
-        // return [{name: "Gaz492"}, {name: "Paul_T"}, {name: "Jake_Evans"}];
-        return this.friends.filter((a) => !a.accepted);
+        return this.friends.requests;
     }
 
     public mounted() {
@@ -168,8 +166,8 @@ export default class MainChat extends Vue {
 </script>
 
 <style>
-  .miniftb{
-    background-image: url("../../assets/ftb-tiny-desat.png");
+  .minimtg{
+    background-image: url("../../assets/mtg-tiny-desat.png");
     width: 300px;
     height: 100%;
     position: absolute;

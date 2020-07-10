@@ -1,6 +1,13 @@
 <template>
   <div class="flex flex-col h-full w-full p-2">
-      <h1 class="text-4xl ">{{friend.name}}</h1>
+      <div class="flex flex-row items-center">
+        <h1 class="text-4xl ">{{friend.name}}</h1>
+        <div class="ml-auto mr-2 mt-2">
+            <font-awesome-icon icon="ban" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg"/>
+            <font-awesome-icon icon="trash" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" />
+            <font-awesome-icon icon="globe" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" />
+        </div>
+      </div>
       <div class="chat-area flex-1 overflow-y-scroll overflow-x-hidden mb-2" ref="chat">
         <div class="flex flex-row" v-for="m in sortedMessages" :key="JSON.stringify(m)">
             <div :class="`${m.author === shortHash ? 'ml-auto mr-2 text-right' : 'ml-2 text-left'} my-2 flex flex-col`">
@@ -9,10 +16,11 @@
             </div>
         </div>
       </div>
-      <div class="flex flex-row items-stretch">
+      <div class="flex flex-col items-stretch">
+          <small v-if="!friend.online" class="text-xs text-center">{{friend.name}} is currently offline</small>
         <div class="w-full flex flex-row items-center relative">
-        <input :class="`bg-background focus:outline-none border block w-full text-2xl transition-all duration-200 ease-in-out p-2 rounded appearance-none leading-normal text-gray-300 border-background-lighten shadow`" v-model="newMessage" @keydown.enter="send" :disabled="!friend.online" />
-            <div class="absolute right-0 bg-background-lighten p-4 h-full">
+        <input :class="`bg-background focus:outline-none border block flex-1 text-2xl transition-all duration-200 ease-in-out p-2 rounded appearance-none leading-normal text-gray-300 border-background-lighten shadow`" v-model="newMessage" @keydown.enter="send" :disabled="!friend.online" />
+            <div class="bg-background-lighten p-4 h-full">
                 <font-awesome-icon icon="paper-plane" />
             </div>
         </div>

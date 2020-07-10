@@ -1,6 +1,6 @@
 import { SettingsState } from './modules/settings/types';
 import { ModpackState } from './modules/modpacks/types';
-import { AuthState } from './modules/auth/types';
+import { AuthState, Friend } from './modules/auth/types';
 export interface RootState {
     version: string;
     alert: Alert | null;
@@ -21,6 +21,11 @@ export interface ModalBox {
   title: string;
   message: string;
   buttons: Button[];
+}
+
+export interface FriendListResponse {
+  friends: Friend[];
+  requests: Friend[];
 }
 
 export interface Button {
