@@ -47,9 +47,9 @@
         <div v-if="showRequests">
             <div class="flex flex-row p-2 items-center hover:bg-background-lighten cursor-pointer" v-for="friend in friendRequests" :key="friend.id">
                 <p class="ml-2">{{friend.name}}</p>
-                <div class="icons ml-auto" v-if="friend.online">
+                <div class="icons ml-auto" v-if="friend.online && friend.friendCode">
                     <font-awesome-icon icon="times" class="mx-2 cursor-pointer hover:text-red-500" />
-                    <font-awesome-icon icon="check" class="mx-2 cursor-pointer hover:text-green-500" @click="acceptFriendRequest(friend.hash)" />
+                    <font-awesome-icon icon="check" class="mx-2 cursor-pointer hover:text-green-500" @click="acceptFriendRequest(friend.hash, friend.friendCode, friend.name)" />
                 </div>
             </div>
         </div>
@@ -130,8 +130,8 @@ export default class MainChat extends Vue {
         }
     }
 
-    public acceptFriendRequest(hash: string){
-        ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash)});
+    public acceptFriendRequest(hash: string, friendCode: string, name: string){
+        ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash), friendCode, name, ourName: this.auth.token?.username});
     }
 
     get unreadMessages() {

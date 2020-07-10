@@ -187,14 +187,18 @@ interface AddFriendResponse {
     status: string;
 }
 
-async function addFriend(code: string, display: string) {
+async function addFriend(code: string, display: string): Promise<boolean> {
+    console.log("Adding friend with code", code, display)
     try {
         const response = await axios.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display: display}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
+        if(friendCodeResponse.status !== "success"){
+            console.log(response);
+        }
         return friendCodeResponse.status === "success";
     } catch(err) {
         log.error(`Error adding new MineTogether friend`, code, display, authData.mc.hash, err);
-        return undefined;
+        return false;
     }
 }
 
@@ -236,26 +240,31 @@ ipcMain.on('disconnect', (event) => {
 ipcMain.on('sendFriendRequest', async (event, data) => {
     console.log("Going to send friend request", data)
     if(mtIRCCLient){
-        let profile = await getProfile(authData.mc.hash);
-        if(profile === undefined){
-            return;
+        if(data.name === undefined){
+            let profile = await getProfile(authData.mc.hash);
+            if(profile === undefined){
+                return;
+            }
+            data.name = profile.hash.short;
         }
-        let displayName = profile.hash.short;
-        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, displayName);
-        mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, displayName)
+        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, data.name);
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, data.name)
     }
 });
 
 ipcMain.on('acceptFriendRequest', async (event, data) => {
     console.log("Going to accept friend request", data)
     if(mtIRCCLient){
-        let profile = await getProfile(authData.mc.hash);
-        if(profile === undefined){
-            return;
+        if(data.ourName === undefined){
+            let profile = await getProfile(authData.mc.hash);
+            if(profile === undefined){
+                return;
+            }
+            data.ourName = profile.hash.short;
         }
-        let displayName = profile.hash.short;
-        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, displayName);
-        mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, displayName)
+        console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, data.ourName);
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, data.ourName)
+        addFriend(data.friendCode, data.name);
     }
 });
 
@@ -387,7 +396,7 @@ async function connectToIRC(){
                 }
                 let [code, ...rest] = args;
                 console.log("Friend accept", args, code, rest.join(' '));
-                addFriend(code, rest.join(' '))
+                addFriend(code, rest.join(' '));
             }
         }
     })

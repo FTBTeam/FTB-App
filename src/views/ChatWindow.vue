@@ -125,6 +125,10 @@ export default class ChatWindow extends Vue {
         });
         ipcRenderer.on('newFriendRequest', (event, data) => {
             let requests = this.friends.requests;
+            let existing = requests.find((r) => r.shortHash === data.from);
+            if(existing !== undefined){
+                return;
+            }
             requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false})
             Vue.set(this.friends, 'requests', requests);
         });
@@ -134,7 +138,17 @@ export default class ChatWindow extends Vue {
         }, 30 * 1000);
         ipcRenderer.send('getFriends');
         ipcRenderer.on('ooohFriend', (_, data) => {
-            this.friends = data;
+            Vue.set(this.friends, 'friends',  data.friends);
+            let requests = this.friends.requests;
+            requests = data.requests.map((request: Friend) => {
+                let existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
+                if(existing !== undefined){
+                    request.friendCode = existing.friendCode;
+                    request.name = existing.name;
+                }
+                return request;
+            });
+            Vue.set(this.friends, 'requests', requests);
         });
     }
 }
