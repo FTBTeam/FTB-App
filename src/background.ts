@@ -449,6 +449,28 @@ ipcMain.on('selectFolder', async (event, data) => {
     }
 });
 
+ipcMain.on('windowControls', (event, data) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if(window){
+        log.info(data);
+        switch(data.action){
+            case 'close':
+                window.close();
+                break;
+            case 'minimize':
+                window.minimize();
+                break;
+            case 'maximize':
+                if(!window.isMaximized()){
+                    window.maximize();
+                }else{
+                    window.unmaximize();
+                }
+                break;
+        }
+    }
+})
+
 
 function createFriendsWindow() {
     if (friendsWindow !== null && friendsWindow !== undefined) {

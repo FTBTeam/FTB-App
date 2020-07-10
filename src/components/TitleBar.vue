@@ -24,7 +24,7 @@
 <script lang="ts">
     import {Component, Prop, Vue} from 'vue-property-decorator';
     import {Action} from 'vuex-class';
-    import {remote} from 'electron';
+    import {ipcRenderer, remote} from 'electron';
     import os from 'os';
 
     @Component
@@ -42,21 +42,18 @@
 
         // @ts-ignore
         public close(): void {
-            remote.getCurrentWindow().close();
+            ipcRenderer.send('windowControls', {action: 'close'})
+            // remote.getCurrentWindow().close();
         }
 
         // @ts-ignore
         public minimise(): void {
-            remote.getCurrentWindow().minimize();
+            ipcRenderer.send('windowControls', {action: 'minimize'})
         }
 
         // @ts-ignore
         public max(): void {
-            if (!remote.getCurrentWindow().isMaximized()) {
-                remote.getCurrentWindow().maximize();
-            } else {
-                remote.getCurrentWindow().unmaximize();
-            }
+            ipcRenderer.send('windowControls', {action: 'maximize'})
         }
     }
 </script>
