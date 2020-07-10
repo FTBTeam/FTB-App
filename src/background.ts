@@ -7,9 +7,9 @@ import fs from 'fs';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
+import axios from 'axios';
 // @ts-ignore
 import {Client} from 'irc-framework';
-import fetch, {Response} from 'node-fetch';
 import { FriendListResponse } from './types';
 
 Object.assign(console, log.functions);
@@ -124,90 +124,106 @@ ipcMain.on('sendMessage', async (event, data) => {
     mtIRCCLient.say(friend.shortHash, message);
 });
 
+interface ChatServerResponse {
+    server: {address: string, port: number}
+}
+
 async function getMTIRC() {
-    return fetch(`https://api.creeper.host/minetogether/chatserver`).then((resp: Response) => resp.json()).then((data: any) => {
+    try {
+        const response = await axios.get<ChatServerResponse>(`https://api.creeper.host/minetogether/chatserver`);
+        const chatServer = response.data;
         return {
-            host: data.server.address,
-            port: data.server.port,
+            host: chatServer.server.address,
+            port: chatServer.server.port
         };
-    }).catch((err: any) => {
-        log.error('Failed to get details about MineTogether servers', err);
+    } catch(err) {
+        log.error(`Error getting MineTogether chat servers`, err);
         return undefined;
-    });
+    }
+}
+
+interface Profile {
+    hash: {short: string, long: string}
+    display: string
+    premium: boolean
+}
+
+interface Profiles {
+    [index: string]: Profile
+}
+
+interface ProfileResponse {
+    profileData: Profiles
 }
 
 async function getProfile(hash: string) {
-    return fetch(`https://api.creeper.host/minetogether/profile`, {headers: {
-        'Content-Type': 'application/json'
-    }, method: 'POST', body: JSON.stringify({target: hash})}).then((resp: Response) => resp.json()).then((data: any) => {
-        return data;
-    }).catch((err: any) => {
-        log.error('Failed to get details about MineTogether profile', hash, err);
+    try {
+        const response = await axios.post<ProfileResponse>(`https://api.creeper.host/minetogether/profile`, {target: hash}, {headers: {'Content-Type': 'application/json'}});
+        const profileResponse = response.data;
+        return profileResponse.profileData[hash];
+    } catch(err) {
+        log.error(`Error getting MineTogether profile`, hash, err);
         return undefined;
-    });
+    }
 }
 
+interface FriendCodeResponse {
+    code: string;
+    message: string;
+}
 
 async function getFriendCode(hash: string) {
-    return fetch(`https://api.creeper.host/minetogether/friendcode`, {headers: {
-        'Content-Type': 'application/json'
-    }, method: 'POST', body: JSON.stringify({hash: hash})}).then((resp: Response) => resp.json()).then((data: any) => {
-        return data.code;
-    }).catch((err: any) => {
-        log.error('Failed to get details about MineTogether profile', hash, err);
+    try {
+        const response = await axios.post<FriendCodeResponse>(`https://api.creeper.host/minetogether/friendcode`, {hash: hash}, {headers: {'Content-Type': 'application/json'}});
+        const friendCodeResponse = response.data;
+        return friendCodeResponse.code;
+    } catch(err) {
+        log.error(`Error getting MineTogether friend code`, hash, err);
         return undefined;
-    });
+    }
+}
+
+interface AddFriendResponse {
+    status: string;
 }
 
 async function addFriend(code: string, display: string) {
-    return fetch(`https://api.creeper.host/minetogether/requestfriend`, {headers: {
-        'Content-Type': 'application/json'
-    }, method: 'POST', body: JSON.stringify({target: code, hash: authData.mc.hash, display: display})}).then((resp: Response) => resp.json()).then((data: any) => {
-        if(data.status === "success"){
-            return true;
-        } else {
-            return false;
-        }
-    }).catch((err: any) => {
-        log.error('Failed to add new friend', code, display, err);
+    try {
+        const response = await axios.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display: display}, {headers: {'Content-Type': 'application/json'}});
+        const friendCodeResponse = response.data;
+        return friendCodeResponse.status === "success";
+    } catch(err) {
+        log.error(`Error adding new MineTogether friend`, code, display, authData.mc.hash, err);
         return undefined;
-    });
+    }
 }
 
 async function getFriends(): Promise<FriendListResponse> {
-    return fetch(`https://api.creeper.host/minetogether/listfriend`, {headers: {
-        'Content-Type': 'application/json',
-    }, method: 'POST', body: JSON.stringify({hash: authData.mc.hash})})
-    .then((response: any) => response.json())
-    .then(async (data: any) => {
-        console.log(data);
-        let friendsList: Friend[] = data.friends as Friend[];
-        friendsList = friendsList.map((friend: Friend) => {
+    try {
+        const response = await axios.post<FriendListResponse>(`https://api.creeper.host/minetogether/listfriend`, {hash: authData.mc.hash}, {headers: {'Content-Type': 'application/json'}});
+        const friendCodeResponse = response.data;
+        friendCodeResponse.friends = friendCodeResponse.friends.map((friend: Friend) => {
             if(friend.hash){
                 const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
                 friend.shortHash = shortHash;
             }
             return friend;
         }) ;
-        let requests: Friend[] = data.requests as Friend[]
-        requests = requests.map((friend: Friend) => {
+        friendCodeResponse.requests = friendCodeResponse.requests.map((friend: Friend) => {
             if(friend.hash){
                 const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
                 friend.shortHash = shortHash;
             }
             return friend;
         });
-        return {
-            friends: friendsList,
-            requests,
-        }
-    }).catch((err: any) => {
+        return friendCodeResponse;
+    } catch(err) {
         log.error('Failed to get details about MineTogether friends', err);
         return {
             friends: [],
             requests: [],
         };
-    });
+    }
 }
 
 ipcMain.on('disconnect', (event) => {
@@ -221,7 +237,10 @@ ipcMain.on('sendFriendRequest', async (event, data) => {
     console.log("Going to send friend request", data)
     if(mtIRCCLient){
         let profile = await getProfile(authData.mc.hash);
-        let displayName = profile.profileData[authData.mc.hash].hash.short;
+        if(profile === undefined){
+            return;
+        }
+        let displayName = profile.hash.short;
         console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, displayName);
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, displayName)
     }
@@ -231,11 +250,19 @@ ipcMain.on('acceptFriendRequest', async (event, data) => {
     console.log("Going to accept friend request", data)
     if(mtIRCCLient){
         let profile = await getProfile(authData.mc.hash);
-        let displayName = profile.profileData[authData.mc.hash].hash.short;
+        if(profile === undefined){
+            return;
+        }
+        let displayName = profile.hash.short;
         console.log("Going to send CTCP request to", data.target, authData.mc.friendCode, displayName);
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, displayName)
     }
 });
+
+interface PackResponse {
+    id: number;
+    name: string;
+}
 
 async function connectToIRC(){
     if(mtIRCCLient !== undefined){
@@ -301,25 +328,35 @@ async function connectToIRC(){
                         friend.currentPack = seenModpacks[friend.currentPack];
                     } else {
                         if (!isNaN(parseInt(friend.currentPack, 10))) {
-                            await fetch(`https://creeperhost.net/json/modpacks/twitch/${friend.currentPack}`).then((resp: Response) => resp.json()).then((data: any) => {
-                                if (data.name) {
-                                    const fixedString = data.name.replace(/[CurseForge/UNSUPPORTED]/, '');
+                            try {
+                                const response = await axios.get<PackResponse>(`https://creeperhost.net/json/modpacks/twitch/${friend.currentPack}`);
+                                const friendCodeResponse = response.data;
+                                if (friendCodeResponse.name) {
+                                    const fixedString = friendCodeResponse.name.replace(/[CurseForge/UNSUPPORTED]/, '');
                                     // @ts-ignore
                                     seenModpacks[friend.currentPack] = fixedString;
                                     // @ts-ignore
                                     friend.currentPack = fixedString;
                                 }
-                            });
+                            } catch(err) {
+                                log.error(`Error getting modpack from id`, friend.currentPack);
+                                friend.currentPack = "";
+                            }
                         } else if (friend.currentPack.length > 0) {
                             const fixedString = friend.currentPack.replace(/\\u003/, '=');
-                            await fetch(`https://creeperhost.net/json/modpacks/modpacksch/${fixedString}`).then((resp: Response) => resp.json()).then((data: any) => {
-                                if (data.name) {
+                            try {
+                                const response = await axios.get<PackResponse>(`https://creeperhost.net/json/modpacks/modpacksch/${fixedString}`);
+                                const friendCodeResponse = response.data;
+                                if (friendCodeResponse.name) {
                                     // @ts-ignore
-                                    seenModpacks[friend.currentPack] = data.name;
+                                    seenModpacks[friend.currentPack] = friendCodeResponse.name;
                                     // @ts-ignore
-                                    friend.currentPack = data.name;
+                                    friend.currentPack = friendCodeResponse.name;
                                 }
-                            });
+                            } catch(err) {
+                                log.error(`Error getting modpack from id`, friend.currentPack);
+                                friend.currentPack = "";
+                            }
                         }
                     }
                 }
@@ -338,10 +375,12 @@ async function connectToIRC(){
             if(event.type === "FRIENDREQ"){
                 let args = event.message.substring("FRIENDREQ".length, event.message.length).split(" ");
                 let [code, ...rest] = args;
+                console.log("Friend request", args, code, rest.join(' '));
                 friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: rest.join(' '), friendCode: code});
             } else if(event.type === "FRIENDACC"){
                 let args = event.message.substring("FRIENDACC".length, event.message.length).split(" ");
                 let [code, ...rest] = args;
+                console.log("Friend accept", args, code, rest.join(' '));
                 addFriend(code, rest.join(' '))
             }
         }
