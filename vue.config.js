@@ -1,12 +1,4 @@
 module.exports = {
-    configureWebpack: {
-        output: {
-            publicPath: "/"
-        },
-        devServer: {
-            historyApiFallback: true
-        }
-    },
     pluginOptions: {
         electronBuilder: {
             builderOptions: {
@@ -38,7 +30,8 @@ module.exports = {
                     artifactName: "${productName}.${ext}"
                 },
                 directories: {
-                    output: "release"
+                    output: "release",
+                    buildResources: "resources"
                 }
             }
         }
