@@ -31,7 +31,7 @@
             <font-awesome-icon icon="sad-tear" size="lg"/>
             <p>No results</p>
         </div>
-        <div v-else-if="currentFriends.length === 0 && search.length === 0">
+        <div v-else-if="currentFriends.length === 0 && search.length === 0" class="flex flex-col items-center mt-4 text-sm">
             <font-awesome-icon icon="sad-tear" size="lg"/>
             <p>It looks like you don't have any friends added at the moment!</p>
         </div>

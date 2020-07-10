@@ -308,8 +308,7 @@ function createFriendsWindow() {
             friendsWindow.webContents.openDevTools();
         }
     } else {
-        createProtocol('app');
-        friendsWindow.loadURL('app://./index.html#friends');
+        friendsWindow.loadURL('app://./index.html#chat');
     }
 
     friendsWindow.on('closed', () => {
