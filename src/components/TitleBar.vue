@@ -78,6 +78,7 @@
       display: flex;
       flex-direction: row-reverse;
       background-color: #313131;
+      margin-right: 8px;
     }
 
     -webkit-user-select: none;
