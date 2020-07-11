@@ -72,6 +72,7 @@ export interface Versions {
     name: string;
     type: string;
     updated: number;
+    mtgID?: string;
 }
 
 export interface VersionSpecs {

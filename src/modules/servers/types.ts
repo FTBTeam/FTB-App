@@ -1,6 +1,6 @@
 
 export interface ServerList {
-    [index: number]: Server;
+    [index: string]: Server[];
 }
 
 export interface ServersState {
@@ -31,4 +31,21 @@ export interface Server {
     featured: boolean;
     uptime: number;
     port: number;
+    protoResponse?: MCProtocol;
+}
+
+export interface MCProtocol {
+    description: MCProtocolDescription;
+    favicon: string;
+    players: MCProtocolPlayers;
+    // version: object;
+}
+
+export interface MCProtocolDescription {
+    text: string;
+}
+
+export interface MCProtocolPlayers {
+    max: string;
+    online: string;
 }

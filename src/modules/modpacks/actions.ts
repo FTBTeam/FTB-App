@@ -210,7 +210,13 @@ export const actions: ActionTree<ModpackState, RootState> = {
                 if (pack === undefined) {
                     return;
                 }
+
                 if (pack.versions !== undefined) {
+
+                    pack.versions.forEach((version) => {
+                        version.mtgID = btoa(pack.id+""+version.id);
+                    });
+
                     pack.versions = pack.versions.sort((a, b) => {
                         return semver.rcompare(a.name, b.name);
                     });
