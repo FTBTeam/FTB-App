@@ -27,6 +27,7 @@ let mtIRCCLient: Client;
 declare const __static: string;
 
 protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true, standard: true}}]);
+app.setAsDefaultProtocolClient('ftb')
 
 let wsPort: number;
 let wsSecret: string;
@@ -575,21 +576,56 @@ app.on('activate', () => {
         createWindow();
     }
 });
+const gotTheLock = app.requestSingleInstanceLock();
 
+if (!gotTheLock) {
+    log.debug('Not got the lock')
+    app.quit()
+} else {
+    log.debug('Got the lock')
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        // console.log(`Event: ${event.s}`)
+        log.info(`CommandLine: ${commandLine}`)
+        log.info(`Working DIR: ${workingDirectory}`)
+        if (win) {
+            if (win.isMinimized()) win.restore()
+            win.focus()
+        }
+    })
 
-app.on('ready', async () => {
-    createWindow();
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-        if (details.url.indexOf('twitch.tv') !== -1) {
-            if (details.responseHeaders) {
-                if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
-                    details.responseHeaders['Content-Security-Policy'] = [];
+    // Create myWindow, load the rest of the app, etc...
+    // app.whenReady().then(() => {
+    // })
+    app.on('ready', async () => {
+        createWindow();
+        session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+            if (details.url.indexOf('twitch.tv') !== -1) {
+                if (details.responseHeaders) {
+                    if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
+                        details.responseHeaders['Content-Security-Policy'] = [];
+                    }
                 }
             }
-        }
-        callback({ responseHeaders: details.responseHeaders });
+            callback({ responseHeaders: details.responseHeaders });
+        });
     });
-});
+}
+
+
+// app.on('ready', async () => {
+//     createWindow();
+//     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+//         if (details.url.indexOf('twitch.tv') !== -1) {
+//             if (details.responseHeaders) {
+//                 if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
+//                     details.responseHeaders['Content-Security-Policy'] = [];
+//                 }
+//             }
+//         }
+//         callback({ responseHeaders: details.responseHeaders });
+//     });
+// });
 
 if (isDevelopment) {
     if (process.platform === 'win32') {
