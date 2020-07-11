@@ -9,6 +9,7 @@ import { websocket } from './modules/websocket';
 import { settings } from './modules/settings';
 import { auth } from './modules/auth';
 import { discovery } from './modules/discovery';
+import { servers } from './modules/servers';
 
 Vue.use(Vuex);
 
@@ -74,6 +75,7 @@ const store: StoreOptions<RootState> = {
         settings,
         auth,
         discovery,
+        servers
     },
 };
 

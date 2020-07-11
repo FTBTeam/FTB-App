@@ -24,7 +24,7 @@
 <script lang="ts">
     import {Component, Prop, Vue} from 'vue-property-decorator';
     import {Action} from 'vuex-class';
-    import {ipcRenderer, remote} from 'electron';
+    import {ipcRenderer} from 'electron';
     import os from 'os';
 
     @Component
