@@ -8,8 +8,12 @@
           <font-awesome-icon icon="th" class="cursor-pointer"></font-awesome-icon>
         </div>
     </div>
-    <div class="sm:mt-auto lg:mt-unset flex flex-col flex-grow" v-if="recentlyPlayed.length >= 1">
-      <h1 class="text-2xl">Recently Played Packs</h1>
+    <div class="flex flex-row items-center w-full mt-4">
+      <h1 v-if="recentlyPlayed.length >= 1" @click="changeTab('recentlyPlayed')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'recentlyPlayed' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Recently Played</h1>
+      <h1 @click="changeTab('featuredPacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredPacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Packs</h1>
+      <h1 v-if="serverListState.servers.length > 0" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
+    </div>
+    <div class="sm:mt-auto lg:mt-unset flex flex-col flex-grow" v-if="recentlyPlayed.length >= 1 && currentTab === 'recentlyPlayed'" key="recentlyPlayed">
       <transition-group
         name="list"
         tag="div"
@@ -33,8 +37,7 @@
         ></pack-card-wrapper>
       </transition-group>
     </div>
-    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow">
-      <h1 class="text-2xl">Featured Packs</h1>
+    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredPacks'" key="featuredPacks">
       <transition-group
         name="list"
         tag="div"
@@ -59,6 +62,16 @@
         >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
+    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredPacks'" key="featuredPacks">
+      <transition-group
+        name="list"
+        tag="div"
+        class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch"
+        appear
+      >
+        <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers" :key="server.id" :server="server"></server-card>
+      </transition-group>
+    </div>
   </div>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
     <!-- TODO: Add some kinda of loady spinner thing in the middle of the screen -->
@@ -69,17 +82,20 @@
 <script lang="ts">
 import { Component, Vue, Watch} from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
+import ServerCard from '@/components/ServerCard.vue';
 import { asyncForEach } from '@/utils';
 import { State, Action} from 'vuex-class';
 import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { settings } from 'cluster';
+import {ServersState} from "@/modules/servers/types";
 
 const namespace: string = 'modpacks';
 
 @Component({
   components: {
     PackCardWrapper,
+    ServerCard
   },
 })
 export default class Home extends Vue {
@@ -98,8 +114,12 @@ export default class Home extends Vue {
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
   @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
+  @State('servers') public serverListState!: ServersState;
+  @Action('fetchFeaturedServers', {namespace: 'servers'}) public fetchFeaturedServers!: any;
+
   private cardsToShow = 3;
   private isLoaded: boolean = false;
+  public currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
 
   @Watch('modpacks', {deep: true})
   public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
@@ -133,7 +153,13 @@ export default class Home extends Vue {
       return this.modpacks?.packsCache[id];
   }
 
+    private changeTab(tab: string) {
+        this.currentTab = tab;
+    }
+
   private async mounted() {
+    this.fetchFeaturedServers();
+    this.currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
     if (this.modpacks == null || this.modpacks.featuredPacks.length <= 0) {
       await this.loadFeaturedPacks();
     }

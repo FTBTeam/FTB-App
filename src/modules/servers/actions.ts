@@ -18,7 +18,7 @@ export const actions: ActionTree<ServersState, RootState> = {
                 'Content-Type': 'application/json',
             },
         })
-            .then(async (response: AxiosResponse<ServerListResponse>) => {
+            .then((response: AxiosResponse<ServerListResponse>) => {
                 let servers = response.data.servers;
                 servers.forEach(async (server) => {
                     server.protoResponse = await queryServer(server.ip)
@@ -33,16 +33,18 @@ export const actions: ActionTree<ServersState, RootState> = {
     },
     fetchFeaturedServers({rootState, commit, dispatch, state}): Promise<void> {
         commit('setLoading', true);
-        return axios.post<ServerListResponse>('https://api.creeper.host/minetogether/list', {
+        return axios.get<ServerListResponse>('https://api.creeper.host/minetogether/list', {
             headers: {
                 'Content-Type': 'application/json',
             },
         })
-            .then(async (response: AxiosResponse<ServerListResponse>) => {
-                //@ts-ignore
-                let ftbServers = response.data.servers.filter((f) => isNaN(f.project))
-                // const servers = data.servers;
-                commit('loadFeaturedServers', ftbServers);
+            .then((response: AxiosResponse<ServerListResponse>) => {
+                let servers = response.data.servers;
+                servers.forEach(async (server) => {
+                    server.protoResponse = await queryServer(server.ip)
+                    commit('updateServer', {server})
+                });
+                commit('loadServers', {servers});
                 commit('setLoading', false);
             }).catch((err) => {
                 commit('setLoading', false);

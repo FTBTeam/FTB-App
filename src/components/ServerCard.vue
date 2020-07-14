@@ -12,9 +12,9 @@
       <div class="flex-1 p-2 bg-background-lighten flex flex-col">
         <div class="flex flex-row">
           <div class="name-box font-bold">{{server.name}}</div>
-          <div class="ml-auto mr-2 text-sm text-gray-500">
+          <div class="ml-auto mr-2 text-sm text-gray-500" v-if="server.protoResponse && server.protoResponse.players">
             Players
-            <span v-if="server.protoResponse && server.protoResponse.players">{{server.protoResponse.players.online}}/{{server.protoResponse.players.max}}</span>
+            <span>{{server.protoResponse.players.online}}/{{server.protoResponse.players.max}}</span>
           </div>
         </div>
 
