@@ -4,7 +4,7 @@
       <div>
         <div
                 class="header-image"
-                v-bind:style="{'background-image': `url(${currentModpack !== null && typeof currentModpack.art === 'Array' && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+                v-bind:style="{'background-image': `url(${currentModpack !== null && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
           <span class="instance-name"><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded" @click="goBack"><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button></span>
 
