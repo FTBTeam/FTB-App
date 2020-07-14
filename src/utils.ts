@@ -78,7 +78,6 @@ export function queryServer(serverInfo: string): Promise<MCProtocol | undefined>
                     reject(err);
                     return undefined
                 }
-                console.log(res)
                 resolve(res);
             })
         }
