@@ -28,16 +28,20 @@
         </div> -->
       </div>
       <div style="width:50px;" class="flex flex-col list-action-button-holder">
-        <FTBButton :isRounded="false" color="primary"
+        <FTBButton @click="comingSoonMsg" :isRounded="false" color="primary"
                    class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr">
           <font-awesome-icon icon="play" size="sm" class="cursor-pointer"/>
           <p>Join</p></FTBButton>
-        <FTBButton :isRounded="false" color="info"
+        <FTBButton @click="comingSoonMsg" :isRounded="false" color="info"
                    class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br">
           <font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/>
           <p>More</p></FTBButton>
       </div>
     </div>
+    <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
+      <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction"
+                     :cancel-action="msgBox.cancelAction" :type="msgBox.type"/>
+    </FTBModal>
   </div>
 </template>
 
@@ -47,6 +51,8 @@
     // @ts-ignore
     import placeholderImage from '@/assets/placeholder_art.png';
     import {logVerbose} from '@/utils';
+    import MessageModal from "@/components/modals/MessageModal.vue";
+    import FTBModal from "@/components/FTBModal.vue";
 
     const namespace: string = 'websocket';
 
@@ -61,6 +67,8 @@
     @Component({
         components: {
             FTBButton,
+            FTBModal,
+            'message-modal': MessageModal,
         },
         props: [
             'server',
@@ -68,6 +76,29 @@
         ],
     })
     export default class ServerCard extends Vue {
+        private defaultImage: any = placeholderImage;
+        private showMsgBox:boolean = false;
+
+        private msgBox: MsgBox = {
+            title: '',
+            content: '',
+            type: '',
+            okAction: Function,
+            cancelAction: Function,
+        };
+
+        public comingSoonMsg() {
+            this.msgBox.type = 'okOnly';
+            this.msgBox.title = 'Coming Soon';
+            this.msgBox.okAction = this.hideMsgBox;
+            this.msgBox.cancelAction = this.hideMsgBox;
+            this.msgBox.content = `This feature is currently not available, we do however aim to have this feature implemented in the near future`;
+            this.showMsgBox = true;
+        }
+
+        public hideMsgBox(): void {
+            this.showMsgBox = false;
+        }
 
     }
 </script>

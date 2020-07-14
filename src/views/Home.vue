@@ -11,7 +11,7 @@
     <div class="flex flex-row items-center w-full mt-4">
       <h1 v-if="recentlyPlayed.length >= 1" @click="changeTab('recentlyPlayed')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'recentlyPlayed' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Recently Played</h1>
       <h1 @click="changeTab('featuredPacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredPacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Packs</h1>
-      <h1 v-if="serverListState.servers.length > 0" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
+      <h1 v-if="serverListState.servers !== undefined" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
     </div>
     <div class="sm:mt-auto lg:mt-unset flex flex-col flex-grow" v-if="recentlyPlayed.length >= 1 && currentTab === 'recentlyPlayed'" key="recentlyPlayed">
       <transition-group
@@ -62,14 +62,14 @@
         >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
-    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredPacks'" key="featuredPacks">
+    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredServers'" key="featuredServers">
       <transition-group
         name="list"
         tag="div"
-        class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch"
+        class="flex pt-1 flex-wrap flex-grow items-stretch"
         appear
       >
-        <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers" :key="server.id" :server="server"></server-card>
+        <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers['featured']" :key="server.id" :server="server"></server-card>
       </transition-group>
     </div>
   </div>

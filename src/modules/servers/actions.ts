@@ -42,9 +42,9 @@ export const actions: ActionTree<ServersState, RootState> = {
                 let servers = response.data.servers;
                 servers.forEach(async (server) => {
                     server.protoResponse = await queryServer(server.ip)
-                    commit('updateServer', {server})
+                    commit('updateServer', {id: 'featured',server})
                 });
-                commit('loadServers', {servers});
+                commit('loadServers', {id: 'featured', servers});
                 commit('setLoading', false);
             }).catch((err) => {
                 commit('setLoading', false);

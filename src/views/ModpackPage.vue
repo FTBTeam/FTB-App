@@ -68,6 +68,14 @@
               Versions
             </a>
           </li>
+          <li class="-mb-px mr-1">
+            <a class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+               @click.prevent="setActiveTab('multiplayer')"
+               :class="{ 'border-l border-t border-r border-navbar': isTabActive('multiplayer'), 'text-gray-600 hover:text-gray-500': !isTabActive('multiplayer') }"
+               href="#multiplayer">
+              Multiplayer
+            </a>
+          </li>
         </ul>
 
         <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
@@ -125,6 +133,18 @@
                              :extensions="['classMap', 'newLine']"/>
                 <p v-else>No changelog available</p>
               </div>
+            </div>
+          </div>
+
+          <div class="tab-pane" v-if="isTabActive('multiplayer')" id="multiplayer">
+            <div v-if="currentVersionObject !== null && shuffledServers.length > 0">
+              <server-card v-for="server in shuffledServers" :key="server.id" :server="server" :art="currentModpack.art.length > 0 ? currentModpack.art.filter((art) => art.type === 'square')[0].url : ''"></server-card>
+            </div>
+            <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
+              <!-- TODO: Make this pretty -->
+              <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
+              <h1 class="text-5xl">Oh no!</h1>
+              <span>It doesn't looks like there are any public MineTogether servers</span>
             </div>
           </div>
         </div>
@@ -210,7 +230,7 @@
 
 <script lang="ts">
     import {Component, Prop, Vue} from 'vue-property-decorator';
-    import {ModpackState, ModPack, Instance} from '@/modules/modpacks/types';
+    import {ModpackState, ModPack, Instance, Versions} from '@/modules/modpacks/types';
     import {State, Action} from 'vuex-class';
     import FTBInput from '@/components/FTBInput.vue';
     import FTBToggle from '@/components/FTBToggle.vue';
@@ -220,8 +240,10 @@
     import moment from 'moment';
     import MessageModal from '@/components/modals/MessageModal.vue';
     import FTBModal from '@/components/FTBModal.vue';
-    import {logVerbose} from '../utils';
+    import {logVerbose, shuffle} from '../utils';
     import {SettingsState} from '../modules/settings/types';
+    import {ServersState} from "@/modules/servers/types";
+    import ServerCard from "@/components/ServerCard.vue";
 
     export interface MsgBox {
         title: string;
@@ -244,6 +266,7 @@
             'ftb-button': FTBButton,
             FTBModal,
             'message-modal': MessageModal,
+            ServerCard,
         },
     })
     export default class ModpackPage extends Vue {
@@ -269,6 +292,8 @@
         @Action('finishInstall', {namespace: 'modpacks'}) public finishInstall!: any;
         @Action('sendMessage') public sendMessage!: any;
         @Action('getChangelog', {namespace: 'modpacks'}) public getChangelog!: any;
+        @State('servers') public serverListState!: ServersState;
+        @Action('fetchServers', {namespace: 'servers'}) public fetchServers!: (projectid: string) => void;
 
         private activeTab: string = 'overview';
         private showMsgBox: boolean = false;
@@ -392,6 +417,40 @@
         private async mounted() {
             await this.fetchModpack(this.$route.query.modpackid);
             this.toggleChangelog(this.currentModpack?.versions[0].id);
+            if(this.currentVersionObject !== null){
+                if(this.currentVersionObject.mtgID){
+                    this.fetchServers(this.currentVersionObject.mtgID)
+                }
+            }
+        }
+
+        get currentVersionObject(): Versions | null {
+            if (this.currentModpack !== null){
+                let version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
+                if (version !== undefined){
+                    console.log(version)
+                    return version;
+                }
+            }
+            return null;
+        }
+
+        get shuffledServers(){
+            if(this.currentVersionObject !== null && this.currentVersionObject.mtgID !== undefined){
+                return shuffle(this.serverListState.servers[this.currentVersionObject.mtgID]);
+            }
+            return [];
+        }
+
+        get latestRelease(){
+            if (this.currentModpack !== undefined) {
+                let version = this.currentModpack?.versions.find((f: Versions) => f.type.toLowerCase() === 'release');
+                if(version !== undefined){
+                    return version.id;
+                }
+                return null;
+            }
+            return null;
         }
 
         private async toggleChangelog(id: number | undefined) {

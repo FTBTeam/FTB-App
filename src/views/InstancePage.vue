@@ -282,7 +282,15 @@
           </div>
 
           <div class="tab-pane" v-if="isTabActive('servers')" id="servers">
-            <server-card v-if="currentVersionObject !== null" v-for="server in shuffledServers" :key="server.id" :server="server" :art="currentModpack.art.length > 0 ? currentModpack.art.filter((art) => art.type === 'square')[0].url : ''"></server-card>
+            <div v-if="currentVersionObject !== null && shuffledServers.length > 0">
+              <server-card v-for="server in shuffledServers" :key="server.id" :server="server" :art="currentModpack.art.length > 0 ? currentModpack.art.filter((art) => art.type === 'square')[0].url : ''"></server-card>
+            </div>
+            <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
+              <!-- TODO: Make this pretty -->
+              <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
+              <h1 class="text-5xl">Oh no!</h1>
+              <span>It doesn't looks like there are any public MineTogether servers</span>
+            </div>
           </div>
         </div>
       </div>
