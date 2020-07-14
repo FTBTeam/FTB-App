@@ -19,9 +19,10 @@
 <!--      </button>-->
     </div>
     <div v-if="type === 'custom'" class="buttons">
-      <button v-for="(button, index) in buttons" :key="index" class="text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right" @click="sendMessage(button.message)" :class="`bg-${button.colour}-500 hover:bg-${button.colour}-400`">
-        {{button.name}}
-      </button>
+<!--      <button v-for="(button, index) in buttons" :key="index" class="text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right" @click="sendMessage(button.message)" :class="`bg-${button.colour}-500 hover:bg-${button.colour}-400`">-->
+<!--        {{button.name}}-->
+<!--      </button>-->
+      <ftb-button v-for="(button, index) in buttons" :key="index" class="py-2 px-4 mx-2 text-center float-right" :color="button.colour" css-class="text-center text-l" @click="sendMessage(button.message)">{{button.name}}</ftb-button>
     </div>
     <div v-if="type==='okOnly'">
       <ftb-button class="py-2 px-4 mx-2 text-center float-right" color="primary" css-class="text-center text-l" @click="okAction">Ok</ftb-button>
