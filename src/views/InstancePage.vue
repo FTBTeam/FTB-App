@@ -4,8 +4,10 @@
       <div>
         <div
                 class="header-image"
-                v-bind:style="{'background-image': `url(${currentModpack !== null && typeof currentModpack.art === 'Array' && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+                v-bind:style="{'background-image': `url(${currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
+          <span class="instance-name"><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded" @click="goBack"><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button></span>
+
           <span class="instance-name text-4xl pb-2">{{instance.name}}</span>
           <span class="instance-info">
             <small v-if="currentModpack !== null">
@@ -528,6 +530,10 @@
                 open: '_blank'
             });
             return links;
+        }
+
+        public goBack(): void {
+            this.$router.go(-1);
         }
 
         public copy(text: string) {
