@@ -49,6 +49,7 @@ if (process.argv.indexOf('--pid') === -1) {
     const ourPID = process.pid;
     console.log('Our PID is', ourPID);
     const currentPath = process.cwd();
+    const currentPath = path.join(process.execPath, '..');
     console.log('Current working directory is', currentPath);
     let binaryFile = 'FTBApp';
     const operatingSystem = os.platform();
