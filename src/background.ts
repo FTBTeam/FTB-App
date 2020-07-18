@@ -18,7 +18,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.inde
 
 log.transports.file.resolvePath = (variables, message): string => {
     return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
-}
+};
 
 const httpClient = axios.create();
 httpClient.defaults.timeout = 500;
@@ -28,8 +28,8 @@ let friendsWindow: BrowserWindow | null;
 
 let protocolURL: string | null;
 
-for(var i = 0; i < process.argv.length; i++){
-    if(process.argv[i].indexOf("ftb://") !== -1){
+for (let i = 0; i < process.argv.length; i++) {
+    if (process.argv[i].indexOf('ftb://') !== -1) {
         protocolURL = process.argv[i];
         break;
     }
@@ -39,7 +39,7 @@ let mtIRCCLient: Client;
 declare const __static: string;
 
 protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true, standard: true}}]);
-app.setAsDefaultProtocolClient('ftb')
+app.setAsDefaultProtocolClient('ftb');
 
 let wsPort: number;
 let wsSecret: string;
@@ -59,7 +59,7 @@ if (process.argv.indexOf('--pid') === -1) {
     console.log('No backend found, starting our own');
     const ourPID = process.pid;
     console.log('Our PID is', ourPID);
-    console.log('Exec path is', process.execPath)
+    console.log('Exec path is', process.execPath);
     const currentPath = process.execPath.substring(0, process.execPath.lastIndexOf(path.sep));
     console.log('Current working directory is', currentPath);
     let binaryFile = 'FTBApp';
@@ -118,7 +118,7 @@ ipcMain.on('getFriends', (event) => {
 
 ipcMain.on('checkFriends', async (event) => {
     friends = await getFriends();
-    if(mtIRCCLient !== undefined){
+    if (mtIRCCLient !== undefined) {
         friends.friends.forEach((friend: Friend) => {
             mtIRCCLient.whois(friend.shortHash);
         });
@@ -129,8 +129,8 @@ ipcMain.on('checkFriends', async (event) => {
 });
 
 ipcMain.on('appReady', async (event) => {
-    if(protocolURL !== null){
-        event.reply('parseProtocolURL', protocolURL)
+    if (protocolURL !== null) {
+        event.reply('parseProtocolURL', protocolURL);
     }
 });
 
@@ -145,7 +145,7 @@ ipcMain.on('sendMessage', async (event, data) => {
 });
 
 interface ChatServerResponse {
-    server: {address: string, port: number}
+    server: {address: string, port: number};
 }
 
 async function getMTIRC() {
@@ -154,26 +154,26 @@ async function getMTIRC() {
         const chatServer = response.data;
         return {
             host: chatServer.server.address,
-            port: chatServer.server.port
+            port: chatServer.server.port,
         };
-    } catch(err) {
+    } catch (err) {
         log.error(`Error getting MineTogether chat servers`, err);
         return undefined;
     }
 }
 
 interface Profile {
-    hash: {short: string, long: string}
-    display: string
-    premium: boolean
+    hash: {short: string, long: string};
+    display: string;
+    premium: boolean;
 }
 
 interface Profiles {
-    [index: string]: Profile
+    [index: string]: Profile;
 }
 
 interface ProfileResponse {
-    profileData: Profiles
+    profileData: Profiles;
 }
 
 async function getProfile(hash: string) {
@@ -181,7 +181,7 @@ async function getProfile(hash: string) {
         const response = await httpClient.post<ProfileResponse>(`https://api.creeper.host/minetogether/profile`, {target: hash}, {headers: {'Content-Type': 'application/json'}});
         const profileResponse = response.data;
         return profileResponse.profileData[hash];
-    } catch(err) {
+    } catch (err) {
         log.error(`Error getting MineTogether profile`, hash, err);
         return undefined;
     }
@@ -194,10 +194,10 @@ interface FriendCodeResponse {
 
 async function getFriendCode(hash: string) {
     try {
-        const response = await httpClient.post<FriendCodeResponse>(`https://api.creeper.host/minetogether/friendcode`, {hash: hash}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<FriendCodeResponse>(`https://api.creeper.host/minetogether/friendcode`, {hash}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
         return friendCodeResponse.code;
-    } catch(err) {
+    } catch (err) {
         log.error(`Error getting MineTogether friend code`, hash, err);
         return undefined;
     }
@@ -209,10 +209,10 @@ interface AddFriendResponse {
 
 async function addFriend(code: string, display: string): Promise<boolean> {
     try {
-        const response = await httpClient.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display: display}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
-        return friendCodeResponse.status === "success";
-    } catch(err) {
+        return friendCodeResponse.status === 'success';
+    } catch (err) {
         log.error(`Error adding new MineTogether friend`, code, display, authData.mc.hash, err);
         return false;
     }
@@ -223,21 +223,21 @@ async function getFriends(): Promise<FriendListResponse> {
         const response = await httpClient.post<FriendListResponse>(`https://api.creeper.host/minetogether/listfriend`, {hash: authData.mc.hash}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
         friendCodeResponse.friends = friendCodeResponse.friends.map((friend: Friend) => {
-            if(friend.hash){
+            if (friend.hash) {
                 const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
                 friend.shortHash = shortHash;
             }
             return friend;
         }) ;
         friendCodeResponse.requests = friendCodeResponse.requests.map((friend: Friend) => {
-            if(friend.hash){
+            if (friend.hash) {
                 const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
                 friend.shortHash = shortHash;
             }
             return friend;
         });
         return friendCodeResponse;
-    } catch(err) {
+    } catch (err) {
         log.error('Failed to get details about MineTogether friends', err);
         return {
             friends: [],
@@ -247,35 +247,35 @@ async function getFriends(): Promise<FriendListResponse> {
 }
 
 ipcMain.on('disconnect', (event) => {
-    if(mtIRCCLient){
+    if (mtIRCCLient) {
         mtIRCCLient.quit();
         mtIRCCLient = undefined;
     }
-})
+});
 
 ipcMain.on('sendFriendRequest', async (event, data) => {
-    if(mtIRCCLient){
-        if(data.name === undefined){
-            let profile = await getProfile(authData.mc.hash);
-            if(profile === undefined){
+    if (mtIRCCLient) {
+        if (data.name === undefined) {
+            const profile = await getProfile(authData.mc.hash);
+            if (profile === undefined) {
                 return;
             }
             data.name = profile.hash.short;
         }
-        mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, data.name)
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, data.name);
     }
 });
 
 ipcMain.on('acceptFriendRequest', async (event, data) => {
-    if(mtIRCCLient){
-        if(data.ourName === undefined){
-            let profile = await getProfile(authData.mc.hash);
-            if(profile === undefined){
+    if (mtIRCCLient) {
+        if (data.ourName === undefined) {
+            const profile = await getProfile(authData.mc.hash);
+            if (profile === undefined) {
                 return;
             }
             data.ourName = profile.hash.short;
         }
-        mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, data.ourName)
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, data.ourName);
         addFriend(data.friendCode, data.name);
     }
 });
@@ -285,9 +285,9 @@ interface PackResponse {
     name: string;
 }
 
-async function connectToIRC(){
-    if(mtIRCCLient !== undefined){
-        log.error("Tried to connect to IRC when we're already connected");
+async function connectToIRC() {
+    if (mtIRCCLient !== undefined) {
+        log.error('Tried to connect to IRC when we\'re already connected');
         return;
     }
     const mtDetails = await getMTIRC();
@@ -314,7 +314,7 @@ async function connectToIRC(){
             let friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);
             if (friend === undefined) {
                 friend = friends.requests.find((f: Friend) => f.shortHash === event.nick);
-                if(friend === undefined){
+                if (friend === undefined) {
                     return;
                 }
             }
@@ -326,7 +326,7 @@ async function connectToIRC(){
                     let realName;
                     try {
                         realName = JSON.parse(event.real_name);
-                    } catch (e){
+                    } catch (e) {
                         console.log('Invalid real name', event.real_name);
                         if (win) {
                             win.webContents.send('ooohFriend', friends);
@@ -359,9 +359,9 @@ async function connectToIRC(){
                                     // @ts-ignore
                                     friend.currentPack = fixedString;
                                 }
-                            } catch(err) {
+                            } catch (err) {
                                 log.error(`Error getting modpack from id`, friend.currentPack);
-                                friend.currentPack = "";
+                                friend.currentPack = '';
                             }
                         } else if (friend.currentPack.length > 0) {
                             const fixedString = friend.currentPack.replace(/\\u003/, '=');
@@ -374,9 +374,9 @@ async function connectToIRC(){
                                     // @ts-ignore
                                     friend.currentPack = friendCodeResponse.name;
                                 }
-                            } catch(err) {
+                            } catch (err) {
                                 log.error(`Error getting modpack from id`, friend.currentPack);
-                                friend.currentPack = "";
+                                friend.currentPack = '';
                             }
                         }
                     }
@@ -391,25 +391,25 @@ async function connectToIRC(){
         }
     });
     mtIRCCLient.on('ctcp request', (event: any) => {
-        if (friendsWindow !== undefined && friendsWindow !== null){
-            if(event.type === "FRIENDREQ"){
-                let args = event.message.substring("FRIENDREQ".length, event.message.length).split(" ");
-                if(args[0] === ""){
-                    args.shift()
+        if (friendsWindow !== undefined && friendsWindow !== null) {
+            if (event.type === 'FRIENDREQ') {
+                const args = event.message.substring('FRIENDREQ'.length, event.message.length).split(' ');
+                if (args[0] === '') {
+                    args.shift();
                 }
-                let [code, ...rest] = args;
+                const [code, ...rest] = args;
                 friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: rest.join(' '), friendCode: code});
                 mtIRCCLient.whois(event.nick);
-            } else if(event.type === "FRIENDACC"){
-                let args = event.message.substring("FRIENDACC".length, event.message.length).split(" ");
-                if(args[0] === ""){
-                    args.shift()
+            } else if (event.type === 'FRIENDACC') {
+                const args = event.message.substring('FRIENDACC'.length, event.message.length).split(' ');
+                if (args[0] === '') {
+                    args.shift();
                 }
-                let [code, ...rest] = args;
+                const [code, ...rest] = args;
                 addFriend(code, rest.join(' '));
             }
         }
-    })
+    });
     mtIRCCLient.on('message', (event: any) => {
         if (event.type === 'privmsg') {
             if (friendsWindow) {
@@ -471,9 +471,9 @@ ipcMain.on('selectFolder', async (event, data) => {
 
 ipcMain.on('windowControls', (event, data) => {
     const window = BrowserWindow.fromWebContents(event.sender);
-    if(window){
+    if (window) {
         log.info(data);
-        switch(data.action){
+        switch (data.action) {
             case 'close':
                 window.close();
                 break;
@@ -481,15 +481,15 @@ ipcMain.on('windowControls', (event, data) => {
                 window.minimize();
                 break;
             case 'maximize':
-                if(!window.isMaximized()){
+                if (!window.isMaximized()) {
                     window.maximize();
-                }else{
+                } else {
                     window.unmaximize();
                 }
                 break;
         }
     }
-})
+});
 
 
 function createFriendsWindow() {
@@ -598,27 +598,27 @@ app.on('activate', () => {
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
-    log.debug('Not got the lock')
-    app.quit()
+    log.debug('Not got the lock');
+    app.quit();
 } else {
-    log.debug('Got the lock')
+    log.debug('Got the lock');
     app.on('second-instance', (event, commandLine, workingDirectory) => {
         // Someone tried to run a second instance, we should focus our window.
         // console.log(`Event: ${event.s}`)
         if (win) {
-            if (win.isMinimized()) win.restore()
-            win.focus()
+            if (win.isMinimized()) { win.restore(); }
+            win.focus();
             commandLine.forEach((c) => {
-                log.info(c)
-                if(c.indexOf('ftb://') !== -1){
-                    log.info("parsing through protocol")
-                    //@ts-ignore
-                    win.webContents.send('parseProtocolURL', c)
+                log.info(c);
+                if (c.indexOf('ftb://') !== -1) {
+                    log.info('parsing through protocol');
+                    // @ts-ignore
+                    win.webContents.send('parseProtocolURL', c);
                 }
-            })
+            });
         }
-        
-    })
+
+    });
 
     // Create myWindow, load the rest of the app, etc...
     // app.whenReady().then(() => {
@@ -632,10 +632,10 @@ if (!gotTheLock) {
                         details.responseHeaders['Content-Security-Policy'] = [];
                     }
                 }
-            } else if (details.url.indexOf("https://www.creeperhost.net/json/modpacks/modpacksch/") !== -1){
+            } else if (details.url.indexOf('https://www.creeperhost.net/json/modpacks/modpacksch/') !== -1) {
                 if (details.responseHeaders) {
                     if (details.responseHeaders['access-control-allow-origin'] !== undefined) {
-                        details.responseHeaders['access-control-allow-origin'] = ["*"];
+                        details.responseHeaders['access-control-allow-origin'] = ['*'];
                     }
                 }
             }

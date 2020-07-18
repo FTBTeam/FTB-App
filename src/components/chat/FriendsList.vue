@@ -78,7 +78,7 @@ interface UnreadMessages {
         'currentPage',
         'messages',
         'friends',
-        'activeFriend'
+        'activeFriend',
     ],
 })
 export default class MainChat extends Vue {
@@ -130,7 +130,7 @@ export default class MainChat extends Vue {
         }
     }
 
-    public acceptFriendRequest(hash: string, friendCode: string, name: string){
+    public acceptFriendRequest(hash: string, friendCode: string, name: string) {
         ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash), friendCode, name, ourName: this.auth.token?.username});
     }
 

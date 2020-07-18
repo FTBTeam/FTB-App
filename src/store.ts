@@ -75,7 +75,7 @@ const store: StoreOptions<RootState> = {
         settings,
         auth,
         discovery,
-        servers
+        servers,
     },
 };
 

@@ -1,7 +1,7 @@
 import {ActionTree} from 'vuex';
 import {ServersState, Server, ServerList} from './types';
 import {RootState} from '@/types';
-import axios, {AxiosResponse} from 'axios'
+import axios, {AxiosResponse} from 'axios';
 import {asyncForEach, logVerbose, queryServer} from '@/utils';
 
 
@@ -13,16 +13,16 @@ export interface ServerListResponse {
 export const actions: ActionTree<ServersState, RootState> = {
     fetchServers({rootState, commit, dispatch, state}, projectid?): Promise<void> {
         commit('setLoading', true);
-        return axios.post<ServerListResponse>('https://api.creeper.host/minetogether/list', {projectid: projectid}, {
+        return axios.post<ServerListResponse>('https://api.creeper.host/minetogether/list', {projectid}, {
             headers: {
                 'Content-Type': 'application/json',
             },
         })
             .then((response: AxiosResponse<ServerListResponse>) => {
-                let servers = response.data.servers;
+                const servers = response.data.servers;
                 servers.forEach(async (server) => {
-                    server.protoResponse = await queryServer(server.ip)
-                    commit('updateServer', {id: projectid, server})
+                    server.protoResponse = await queryServer(server.ip);
+                    commit('updateServer', {id: projectid, server});
                 });
                 commit('loadServers', {id: projectid, servers});
                 commit('setLoading', false);
@@ -39,10 +39,10 @@ export const actions: ActionTree<ServersState, RootState> = {
             },
         })
             .then((response: AxiosResponse<ServerListResponse>) => {
-                let servers = response.data.servers;
+                const servers = response.data.servers;
                 servers.forEach(async (server) => {
-                    server.protoResponse = await queryServer(server.ip)
-                    commit('updateServer', {id: 'featured',server})
+                    server.protoResponse = await queryServer(server.ip);
+                    commit('updateServer', {id: 'featured', server});
                 });
                 commit('loadServers', {id: 'featured', servers});
                 commit('setLoading', false);

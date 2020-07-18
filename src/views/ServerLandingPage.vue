@@ -183,37 +183,37 @@
 }
 </style>
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import { State, Action, Getter } from "vuex-class";
-import { NewsState, NewsItem } from "@/modules/news/types";
-import { ModpackState, ModPack, Versions } from "../modules/modpacks/types";
-import { getAPIRequest } from "../modules/modpacks/actions";
-import FTBButton from "@/components/FTBButton.vue";
-import { queryServer, logVerbose } from "../utils";
-import { SettingsState } from "../modules/settings/types";
-import PackCardWrapper from "@/components/packs/PackCardWrapper.vue";
+import { Component, Vue } from 'vue-property-decorator';
+import { State, Action, Getter } from 'vuex-class';
+import { NewsState, NewsItem } from '@/modules/news/types';
+import { ModpackState, ModPack, Versions } from '../modules/modpacks/types';
+import { getAPIRequest } from '../modules/modpacks/actions';
+import FTBButton from '@/components/FTBButton.vue';
+import { queryServer, logVerbose } from '../utils';
+import { SettingsState } from '../modules/settings/types';
+import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 
 @Component({
   components: {
-    "ftb-button": FTBButton,
-    PackCardWrapper
-  }
+    'ftb-button': FTBButton,
+    PackCardWrapper,
+  },
 })
 export default class ServerLandingPage extends Vue {
-  @State("modpacks") public modpacks!: ModpackState;
-  @State("settings") public settings!: SettingsState;
-  @Getter("packsCache", { namespace: "modpacks" })
+  @State('modpacks') public modpacks!: ModpackState;
+  @State('settings') public settings!: SettingsState;
+  @Getter('packsCache', { namespace: 'modpacks' })
   public packsCache!: ModPack[];
-  @Action("fetchModpack", { namespace: "modpacks" }) public fetchModpack!: (
-    packID: number
+  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (
+    packID: number,
   ) => Promise<ModPack>;
-  @Action("updateInstall", { namespace: "modpacks" })
+  @Action('updateInstall', { namespace: 'modpacks' })
   public updateInstall!: any;
-  @Action("finishInstall", { namespace: "modpacks" })
+  @Action('finishInstall', { namespace: 'modpacks' })
   public finishInstall!: any;
-  @Action("storeInstalledPacks", { namespace: "modpacks" })
+  @Action('storeInstalledPacks', { namespace: 'modpacks' })
   public storePacks!: any;
-  @Action("sendMessage") public sendMessage!: any;
+  @Action('sendMessage') public sendMessage!: any;
 
   private server: any = null;
   private modpack: ModPack | null = null;
@@ -222,7 +222,7 @@ export default class ServerLandingPage extends Vue {
 
   get installedPacks() {
     return this.modpacks.installedPacks
-      .filter(f => btoa(`${f.id}${f.versionId}`) === this.server.project)
+      .filter((f) => btoa(`${f.id}${f.versionId}`) === this.server.project)
       .sort((a, b) => b.lastPlayed - a.lastPlayed);
   }
 
@@ -238,44 +238,44 @@ export default class ServerLandingPage extends Vue {
   }
 
   public install(version: number): void {
-      if(this.modpack === null){
+      if (this.modpack === null) {
           return;
       }
-    this.updateInstall({ modpackID: this.modpack.id, progress: 0 });
-    this.sendMessage({
+      this.updateInstall({ modpackID: this.modpack.id, progress: 0 });
+      this.sendMessage({
       payload: {
-        type: "installInstance",
+        type: 'installInstance',
         id: this.modpack.id,
-        version
+        version,
       },
       callback: (data: any) => {
-        if (data.status === "success") {
+        if (data.status === 'success') {
           this.sendMessage({
-            payload: { type: "installedInstances" },
+            payload: { type: 'installedInstances' },
             callback: async (installList: any) => {
               await this.storePacks(installList);
               await this.finishInstall({
                 modpackID: this.modpack?.id,
-                messageID: installList.requestId
+                messageID: installList.requestId,
               });
-            }
+            },
           });
-        } else if (data.status === "error") {
+        } else if (data.status === 'error') {
           this.updateInstall({
             modpackID: this.modpack?.id,
             messageID: data.requestId,
             error: true,
             errorMessage: data.message,
-            instanceID: data.uuid
+            instanceID: data.uuid,
           });
-        } else if (data.currentStage === "POSTINSTALL") {
+        } else if (data.currentStage === 'POSTINSTALL') {
           // We don't care about this, keep progress bar showing.
-        } else if (data.status === "init") {
+        } else if (data.status === 'init') {
           this.updateInstall({
             modpackID: this.modpack?.id,
             messageID: data.requestId,
-            stage: "INIT",
-            message: data.message
+            stage: 'INIT',
+            message: data.message,
           });
         } else if (data.overallPercentage <= 100) {
           this.updateInstall({
@@ -285,30 +285,30 @@ export default class ServerLandingPage extends Vue {
             downloadSpeed: data.speed,
             downloadedBytes: data.currentBytes,
             totalBytes: data.overallBytes,
-            stage: data.currentStage
+            stage: data.currentStage,
           });
         }
-        logVerbose(this.settings, "Update data", JSON.stringify(data));
-      }
+        logVerbose(this.settings, 'Update data', JSON.stringify(data));
+      },
     });
   }
 
   public mounted() {
     this.serverID = parseInt(this.$route.query.serverid as string, 10);
     fetch(`https://api.creeper.host/minetogether/server`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify({ serverid: this.serverID }),
-      headers: { "Content-Type": "application/json" }
+      headers: { 'Content-Type': 'application/json' },
     })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === 'success') {
           this.server = data.server;
-          queryServer(this.server.ip).then(protoResponse => {
-            Vue.set(this.server, "protoResponse", protoResponse);
+          queryServer(this.server.ip).then((protoResponse) => {
+            Vue.set(this.server, 'protoResponse', protoResponse);
           });
           Object.values(this.modpacks.packsCache).forEach((pack: ModPack) => {
-              if(pack.versions){
+              if (pack.versions) {
                 pack.versions.forEach((v: Versions) => {
                     if (v.mtgID === this.server.project) {
                         this.modpack = pack;
@@ -318,19 +318,19 @@ export default class ServerLandingPage extends Vue {
           });
           if (this.modpack === null) {
             fetch(
-              `https://www.creeperhost.net/json/modpacks/modpacksch/${this.server.project}`
+              `https://www.creeperhost.net/json/modpacks/modpacksch/${this.server.project}`,
             )
-              .then(resp => resp.json())
-              .then(data => {
-                if (data.status === "success") {
+              .then((resp) => resp.json())
+              .then((data) => {
+                if (data.status === 'success') {
                   console.log(data.name);
                   getAPIRequest(
                     this.$store.state,
-                    `modpack/search/8?term=${data.name}`
+                    `modpack/search/8?term=${data.name}`,
                   )
-                    .then(response => response.json())
-                    .then(async data => {
-                      if (data.status === "error") {
+                    .then((response) => response.json())
+                    .then(async (data) => {
+                      if (data.status === 'error') {
                         return;
                       }
                       const packIDs = data.packs;
@@ -340,7 +340,7 @@ export default class ServerLandingPage extends Vue {
                       if (packIDs.length === 0) {
                         return;
                       }
-                      let pack: ModPack = await this.fetchModpack(packIDs[0]);
+                      const pack: ModPack = await this.fetchModpack(packIDs[0]);
                       pack.versions.forEach((v: Versions) => {
                         if (v.mtgID === this.server.project) {
                           this.modpack = pack;
@@ -348,7 +348,7 @@ export default class ServerLandingPage extends Vue {
                         }
                       });
                     })
-                    .catch(err => {
+                    .catch((err) => {
                       console.error(err);
                     });
                 }

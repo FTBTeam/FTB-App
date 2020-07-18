@@ -32,7 +32,7 @@ import { Versions } from '../../modules/modpacks/types';
         'packDescription',
         'versions',
         'doInstall',
-        'selectedVersion'
+        'selectedVersion',
     ],
 })
 export default class InstallModal extends Vue {

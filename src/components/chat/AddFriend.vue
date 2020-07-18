@@ -44,13 +44,13 @@ export default class AddFriend extends Vue {
       if (this.friendCode.length === 0) {
           return;
       }
-      let response: FriendRequestResponse = await this.submitFriendRequest({friendCode: this.friendCode});
-      if(response.status === "success"){
+      const response: FriendRequestResponse = await this.submitFriendRequest({friendCode: this.friendCode});
+      if (response.status === 'success') {
           this.message = 'Friend Request Sent';
           this.messageType = 'success';
-          this.friendCode = "";
-          if(response.hash){
-            ipcRenderer.send('sendFriendRequest', {target: shortenHash(response.hash), hash: response.hash, name: this.auth.token?.username})
+          this.friendCode = '';
+          if (response.hash) {
+            ipcRenderer.send('sendFriendRequest', {target: shortenHash(response.hash), hash: response.hash, name: this.auth.token?.username});
           }
       } else {
         this.messageType = 'danger';

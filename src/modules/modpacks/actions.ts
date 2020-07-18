@@ -214,7 +214,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
                 if (pack.versions !== undefined) {
 
                     pack.versions.forEach((version) => {
-                        version.mtgID = btoa(pack.id+""+version.id);
+                        version.mtgID = btoa(pack.id + '' + version.id);
                     });
 
                     pack.versions = pack.versions.sort((a, b) => {

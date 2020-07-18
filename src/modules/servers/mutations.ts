@@ -9,15 +9,15 @@ export const mutations: MutationTree<ServersState> = {
         state.servers[payload.id] = payload.servers;
     },
     updateServer(state, payload) {
-        if(state.servers[payload.id]){
-            let servers = state.servers[payload.id];
+        if (state.servers[payload.id]) {
+            const servers = state.servers[payload.id];
             let server = servers.find((s) => s.id === payload.server.id);
-            if (server !== undefined){
-                let i = servers.indexOf(server);
+            if (server !== undefined) {
+                const i = servers.indexOf(server);
                 server = payload.server as Server;
                 servers[i] = server;
             }
             state.servers[payload.id] = servers;
         }
-    }
-}
+    },
+};

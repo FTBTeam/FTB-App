@@ -38,8 +38,8 @@ export default class ChatWindow extends Vue {
     private messages: Messages = {};
     private friends: FriendListResponse = {friends: [], requests: []};
 
-    @Action('removeFriend', {namespace: "auth"})
-    private removeFriendAction!: (hash: string) => Promise<boolean | string>
+    @Action('removeFriend', {namespace: 'auth'})
+    private removeFriendAction!: (hash: string) => Promise<boolean | string>;
 
     public expand() {
         ipcRenderer.send('expandMeScotty', { width: 800 });
@@ -80,15 +80,15 @@ export default class ChatWindow extends Vue {
         this.currentPage = '';
     }
 
-    public async removeFriend(){
-        if(this.friend === null || this.friend.hash === undefined){
+    public async removeFriend() {
+        if (this.friend === null || this.friend.hash === undefined) {
             return;
         }
-        let success = await this.removeFriendAction(this.friend.hash);
-        if(typeof success === "string"){
+        const success = await this.removeFriendAction(this.friend.hash);
+        if (typeof success === 'string') {
 
         } else {
-            if(success){
+            if (success) {
                 this.hidePage();
                 ipcRenderer.send('getFriends');
                 ipcRenderer.send('checkFriends');
@@ -124,12 +124,12 @@ export default class ChatWindow extends Vue {
             Vue.set(this.messages, data.from, messages);
         });
         ipcRenderer.on('newFriendRequest', (event, data) => {
-            let requests = this.friends.requests;
-            let existing = requests.find((r) => r.shortHash === data.from);
-            if(existing !== undefined){
+            const requests = this.friends.requests;
+            const existing = requests.find((r) => r.shortHash === data.from);
+            if (existing !== undefined) {
                 return;
             }
-            requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false})
+            requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false});
             Vue.set(this.friends, 'requests', requests);
         });
         ipcRenderer.send('checkFriends');
@@ -141,8 +141,8 @@ export default class ChatWindow extends Vue {
             Vue.set(this.friends, 'friends',  data.friends);
             let requests = this.friends.requests;
             requests = data.requests.map((request: Friend) => {
-                let existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
-                if(existing !== undefined){
+                const existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
+                if (existing !== undefined) {
                     request.friendCode = existing.friendCode;
                     request.name = existing.name;
                 }

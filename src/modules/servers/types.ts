@@ -11,9 +11,9 @@ export interface ServersState {
 
 export interface Location {
     country: string;
-    country_code:string;
-    city:string;
-    continent:string;
+    country_code: string;
+    city: string;
+    continent: string;
     subdivisionlocation_provider: string;
     cached: boolean;
 }

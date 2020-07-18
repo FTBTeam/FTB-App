@@ -232,24 +232,24 @@
 </style>
 
 <script lang="ts">
-    import {Component, Prop, Vue} from 'vue-property-decorator';
-    import {ModpackState, ModPack, Instance, Versions} from '@/modules/modpacks/types';
-    import {State, Action} from 'vuex-class';
-    import FTBInput from '@/components/FTBInput.vue';
-    import FTBToggle from '@/components/FTBToggle.vue';
-    import FTBButton from '@/components/FTBButton.vue';
-    import FTBSlider from '@/components/FTBSlider.vue';
-    import config from '@/config';
-    import moment from 'moment';
-    import MessageModal from '@/components/modals/MessageModal.vue';
-    import FTBModal from '@/components/FTBModal.vue';
-    import {logVerbose, shuffle} from '../utils';
-    import {SettingsState} from '../modules/settings/types';
-    import {ServersState} from "@/modules/servers/types";
-    import ServerCard from "@/components/ServerCard.vue";
+import {Component, Prop, Vue} from 'vue-property-decorator';
+import {ModpackState, ModPack, Instance, Versions} from '@/modules/modpacks/types';
+import {State, Action} from 'vuex-class';
+import FTBInput from '@/components/FTBInput.vue';
+import FTBToggle from '@/components/FTBToggle.vue';
+import FTBButton from '@/components/FTBButton.vue';
+import FTBSlider from '@/components/FTBSlider.vue';
+import config from '@/config';
+import moment from 'moment';
+import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBModal from '@/components/FTBModal.vue';
+import {logVerbose, shuffle} from '../utils';
+import {SettingsState} from '../modules/settings/types';
+import {ServersState} from '@/modules/servers/types';
+import ServerCard from '@/components/ServerCard.vue';
 import InstallModal from '@/components/modals/InstallModal.vue';
 
-    export interface MsgBox {
+export interface MsgBox {
         title: string;
         content: string;
         type: string;
@@ -257,11 +257,11 @@ import InstallModal from '@/components/modals/InstallModal.vue';
         cancelAction: () => void;
     }
 
-    interface Changelogs {
+interface Changelogs {
         [id: number]: string;
     }
 
-    @Component({
+@Component({
         name: 'ModpackPage',
         components: {
             'ftb-input': FTBInput,
@@ -286,7 +286,7 @@ import InstallModal from '@/components/modals/InstallModal.vue';
 
         get currentModpack() {
           const id: number = parseInt(this.$route.query.modpackid as string, 10);
-          if(this.modpacks.packsCache[id] === undefined){
+          if (this.modpacks.packsCache[id] === undefined) {
             return null;
           }
           return this.modpacks.packsCache[id];
@@ -324,17 +324,17 @@ import InstallModal from '@/components/modals/InstallModal.vue';
             links.push({
                 content: 'Windows',
                 url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/windows`,
-                open: '_blank'
+                open: '_blank',
             });
             links.push({
                 content: 'Linux',
                 url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/linux`,
-                open: '_blank'
+                open: '_blank',
             });
             links.push({
                 content: 'MacOS',
                 url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/mac`,
-                open: '_blank'
+                open: '_blank',
             });
             return links;
         }
@@ -378,11 +378,11 @@ import InstallModal from '@/components/modals/InstallModal.vue';
         }
 
         public install(version: number): void {
-          if(this.showInstallBox){
+          if (this.showInstallBox) {
             this.showInstallBox = false;
           }
-            this.updateInstall({modpackID: this.$route.query.modpackid, progress: 0});
-            this.sendMessage({
+          this.updateInstall({modpackID: this.$route.query.modpackid, progress: 0});
+          this.sendMessage({
                 payload: {type: 'installInstance', id: this.$route.query.modpackid, version}, callback: (data: any) => {
                     if (data.status === 'success') {
                         this.sendMessage({
@@ -433,48 +433,48 @@ import InstallModal from '@/components/modals/InstallModal.vue';
         }
 
         private async mounted() {
-          let packID: number = parseInt(this.$route.query.modpackid as string, 10);
+          const packID: number = parseInt(this.$route.query.modpackid as string, 10);
           await this.fetchModpack(packID);
-          if(this.modpacks.packsCache[packID] !== undefined){
+          if (this.modpacks.packsCache[packID] !== undefined) {
             this.loading = false;
           }
-          if(this.$route.query.showInstall === "true"){
+          if (this.$route.query.showInstall === 'true') {
             console.log(this.$route.query.version);
-            if(this.$route.query.version !== undefined){
+            if (this.$route.query.version !== undefined) {
               this.installSelectedVersion = parseInt(this.$route.query.version as string, 10);
             }
             this.showInstallBox = true;
           }
           this.toggleChangelog(this.currentModpack?.versions[0].id);
-          if(this.currentVersionObject !== null){
-              if(this.currentVersionObject.mtgID){
-                  this.fetchServers(this.currentVersionObject.mtgID)
+          if (this.currentVersionObject !== null) {
+              if (this.currentVersionObject.mtgID) {
+                  this.fetchServers(this.currentVersionObject.mtgID);
               }
           }
         }
 
         get currentVersionObject(): Versions | null {
-            if (this.currentModpack !== null){
-                let version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
-                if (version !== undefined){
-                    console.log(version)
+            if (this.currentModpack !== null) {
+                const version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
+                if (version !== undefined) {
+                    console.log(version);
                     return version;
                 }
             }
             return null;
         }
 
-        get shuffledServers(){
-            if(this.currentVersionObject !== null && this.currentVersionObject.mtgID !== undefined){
+        get shuffledServers() {
+            if (this.currentVersionObject !== null && this.currentVersionObject.mtgID !== undefined) {
                 return shuffle(this.serverListState.servers[this.currentVersionObject.mtgID]);
             }
             return [];
         }
 
-        get latestRelease(){
+        get latestRelease() {
             if (this.currentModpack !== undefined) {
-                let version = this.currentModpack?.versions.find((f: Versions) => f.type.toLowerCase() === 'release');
-                if(version !== undefined){
+                const version = this.currentModpack?.versions.find((f: Versions) => f.type.toLowerCase() === 'release');
+                if (version !== undefined) {
                     return version.id;
                 }
                 return null;

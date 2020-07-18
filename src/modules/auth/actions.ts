@@ -50,24 +50,24 @@ export const actions: ActionTree<AuthState, RootState> = {
         .then((response) => response.json())
         .then(async (data) => {
             commit('setLoading', false);
-            if (data.status === "success") {
+            if (data.status === 'success') {
                 return {
                     status: data.status,
                     message: data.message,
-                    hash: data.hash
+                    hash: data.hash,
                 };
             } else {
                 return {
                     status: data.status,
                     message: data.message,
-                }
+                };
             }
         }).catch((err) => {
             commit('setLoading', false);
             return {
-                status: "error",
-                message: "unable to send friend request",
-            }
+                status: 'error',
+                message: 'unable to send friend request',
+            };
         });
     },
     removeFriend({rootState, commit, dispatch, state}, payload: string): Promise<boolean | string> {
@@ -78,7 +78,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         .then((response) => response.json())
         .then(async (data) => {
             commit('setLoading', false);
-            if (data.status === "success") {
+            if (data.status === 'success') {
                 return true;
             } else {
                 return data.message;

@@ -18,7 +18,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
         'title',
         'message',
         'yesAction',
-        'noAction'
+        'noAction',
     ],
 })
 export default class ConfirmationModal extends Vue {

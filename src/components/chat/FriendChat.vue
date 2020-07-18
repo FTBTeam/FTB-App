@@ -51,7 +51,7 @@ import { Message } from '../../types';
         'shortHash',
         'messages',
         'sendMessage',
-        'removeFriend'
+        'removeFriend',
     ],
 })
 export default class FriendChat extends Vue {

@@ -22,40 +22,40 @@
 </template>
 
 <script lang="ts">
-    import {Component, Prop, Vue} from 'vue-property-decorator';
-    import {Action} from 'vuex-class';
-    import {ipcRenderer} from 'electron';
-    import os from 'os';
+import {Component, Prop, Vue} from 'vue-property-decorator';
+import {Action} from 'vuex-class';
+import {ipcRenderer} from 'electron';
+import os from 'os';
 
-    @Component
-    export default class TitleBar extends Vue {
-        @Action('sendMessage') public sendMessage: any;
-        public isMac: boolean = false;
+@Component
+export default class TitleBar extends Vue {
+    @Action('sendMessage') public sendMessage: any;
+    public isMac: boolean = false;
 
-        public mounted() {
-            if (os.type() === 'Darwin') {
-                this.isMac = true;
-            } else {
-                this.isMac = false;
-            }
-        }
-
-        // @ts-ignore
-        public close(): void {
-            ipcRenderer.send('windowControls', {action: 'close'})
-            // remote.getCurrentWindow().close();
-        }
-
-        // @ts-ignore
-        public minimise(): void {
-            ipcRenderer.send('windowControls', {action: 'minimize'})
-        }
-
-        // @ts-ignore
-        public max(): void {
-            ipcRenderer.send('windowControls', {action: 'maximize'})
+    public mounted() {
+        if (os.type() === 'Darwin') {
+            this.isMac = true;
+        } else {
+            this.isMac = false;
         }
     }
+
+    // @ts-ignore
+    public close(): void {
+        ipcRenderer.send('windowControls', {action: 'close'});
+        // remote.getCurrentWindow().close();
+    }
+
+    // @ts-ignore
+    public minimise(): void {
+        ipcRenderer.send('windowControls', {action: 'minimize'});
+    }
+
+    // @ts-ignore
+    public max(): void {
+        ipcRenderer.send('windowControls', {action: 'maximize'});
+    }
+}
 </script>
 
 <style scoped lang="scss">

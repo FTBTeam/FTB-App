@@ -88,14 +88,14 @@ import { State, Action} from 'vuex-class';
 import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { settings } from 'cluster';
-import {ServersState} from "@/modules/servers/types";
+import {ServersState} from '@/modules/servers/types';
 
 const namespace: string = 'modpacks';
 
 @Component({
   components: {
     PackCardWrapper,
-    ServerCard
+    ServerCard,
   },
 })
 export default class Home extends Vue {
@@ -116,10 +116,10 @@ export default class Home extends Vue {
   @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
   @State('servers') public serverListState!: ServersState;
   @Action('fetchFeaturedServers', {namespace: 'servers'}) public fetchFeaturedServers!: any;
+  public currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
 
   private cardsToShow = 3;
   private isLoaded: boolean = false;
-  public currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
 
   @Watch('modpacks', {deep: true})
   public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {

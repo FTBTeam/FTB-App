@@ -46,61 +46,61 @@
 </template>
 
 <script lang="ts">
-    import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
-    import FTBButton from '@/components/FTBButton.vue';
-    // @ts-ignore
-    import placeholderImage from '@/assets/placeholder_art.png';
-    import {logVerbose} from '@/utils';
-    import MessageModal from "@/components/modals/MessageModal.vue";
-    import FTBModal from "@/components/FTBModal.vue";
+import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
+import FTBButton from '@/components/FTBButton.vue';
+// @ts-ignore
+import placeholderImage from '@/assets/placeholder_art.png';
+import {logVerbose} from '@/utils';
+import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBModal from '@/components/FTBModal.vue';
 
-    const namespace: string = 'websocket';
+const namespace: string = 'websocket';
 
-    export interface MsgBox {
-        title: string;
-        content: string;
-        type: string;
-        okAction: () => void;
-        cancelAction: () => void;
+export interface MsgBox {
+    title: string;
+    content: string;
+    type: string;
+    okAction: () => void;
+    cancelAction: () => void;
+}
+
+@Component({
+    components: {
+        FTBButton,
+        FTBModal,
+        'message-modal': MessageModal,
+    },
+    props: [
+        'server',
+        'art',
+    ],
+})
+export default class ServerCard extends Vue {
+    private defaultImage: any = placeholderImage;
+    private showMsgBox: boolean = false;
+
+    private msgBox: MsgBox = {
+        title: '',
+        content: '',
+        type: '',
+        okAction: Function,
+        cancelAction: Function,
+    };
+
+    public comingSoonMsg() {
+        this.msgBox.type = 'okOnly';
+        this.msgBox.title = 'Coming Soon';
+        this.msgBox.okAction = this.hideMsgBox;
+        this.msgBox.cancelAction = this.hideMsgBox;
+        this.msgBox.content = `This feature is currently not available, we do however aim to have this feature implemented in the near future`;
+        this.showMsgBox = true;
     }
 
-    @Component({
-        components: {
-            FTBButton,
-            FTBModal,
-            'message-modal': MessageModal,
-        },
-        props: [
-            'server',
-            'art',
-        ],
-    })
-    export default class ServerCard extends Vue {
-        private defaultImage: any = placeholderImage;
-        private showMsgBox:boolean = false;
-
-        private msgBox: MsgBox = {
-            title: '',
-            content: '',
-            type: '',
-            okAction: Function,
-            cancelAction: Function,
-        };
-
-        public comingSoonMsg() {
-            this.msgBox.type = 'okOnly';
-            this.msgBox.title = 'Coming Soon';
-            this.msgBox.okAction = this.hideMsgBox;
-            this.msgBox.cancelAction = this.hideMsgBox;
-            this.msgBox.content = `This feature is currently not available, we do however aim to have this feature implemented in the near future`;
-            this.showMsgBox = true;
-        }
-
-        public hideMsgBox(): void {
-            this.showMsgBox = false;
-        }
-
+    public hideMsgBox(): void {
+        this.showMsgBox = false;
     }
+
+}
 </script>
 
 <style scoped lang="scss">

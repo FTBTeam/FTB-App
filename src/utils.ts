@@ -1,8 +1,8 @@
 import { SettingsState } from './modules/settings/types';
 import { RootState } from '@/types';
-import {MCProtocol} from "@/modules/servers/types";
-//@ts-ignore
-import mcQuery from 'mcping-js'
+import {MCProtocol} from '@/modules/servers/types';
+// @ts-ignore
+import mcQuery from 'mcping-js';
 
 export function debounce(func: () => void, wait: number): () => void {
     let timeout: number | undefined;
@@ -38,12 +38,13 @@ export function logVerbose(state: RootState | SettingsState, ...message: any[]) 
 }
 
 export function shortenHash(longHash: string): string {
-    return `MT${longHash.substring(0, 15).toUpperCase()}`
+    return `MT${longHash.substring(0, 15).toUpperCase()}`;
 }
 
-export function shuffle(array: any[]){
-    var i = array.length, j, temp;
-    if ( i == 0 ) return array;
+export function shuffle(array: any[]) {
+    // @ts-ignore
+    let i = array.length, j, temp;
+    if ( i === 0 ) { return array; }
     while ( --i ) {
        j = Math.floor( Math.random() * ( i + 1 ) );
        temp = array[i];
@@ -53,33 +54,33 @@ export function shuffle(array: any[]){
     return array;
 }
 
-export function queryServer(serverInfo: string): Promise<MCProtocol | undefined>{
+export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
     return new Promise((resolve, reject) => {
         if (serverInfo.includes(':')) {
             const address = serverInfo.split(':');
             const serverIP = address[0];
             const serverPort = address[1];
 
-            const query = new mcQuery.MinecraftServer(serverIP, serverPort)
+            const query = new mcQuery.MinecraftServer(serverIP, serverPort);
 
             query.ping(10000, async (err: any, res: any) => {
                 if (err) {
                     console.error(err);
                     reject(err);
-                    return undefined
+                    return undefined;
                 }
                 resolve(res);
             });
         } else {
-            const query = new mcQuery.MinecraftServer(serverInfo)
+            const query = new mcQuery.MinecraftServer(serverInfo);
             query.ping(10000, 5, async (err: any, res: any) => {
                 if (err) {
                     console.error(err);
                     reject(err);
-                    return undefined
+                    return undefined;
                 }
                 resolve(res);
-            })
+            });
         }
-    })
+    });
 }
