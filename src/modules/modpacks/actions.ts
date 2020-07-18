@@ -6,7 +6,7 @@ import {asyncForEach, logVerbose} from '@/utils';
 import semver from 'semver';
 import { AuthState } from '../auth/types';
 
-function getAPIRequest(rootState: RootState, url: string): Promise<Response> {
+export function getAPIRequest(rootState: RootState, url: string): Promise<Response> {
     if (rootState.auth === null) {
         return fetch(`${config.apiURL}/public/${url}`);
     }
@@ -222,10 +222,10 @@ export const actions: ActionTree<ModpackState, RootState> = {
                     });
                 }
                 pack.kind = 'modpack';
-                logVerbose(rootState, 'Resolving...', packID);
-                resolve(pack);
                 logVerbose(rootState, 'Adding to cache', pack);
                 commit('addToCache', pack);
+                logVerbose(rootState, 'Resolving...', packID);
+                resolve(pack);
             }).catch((err) => {
                 console.error('Error getting modpack', err);
                 reject(err);

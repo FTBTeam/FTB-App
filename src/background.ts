@@ -17,11 +17,23 @@ app.console = log;
 const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.indexOf('--dev') !== -1;
 
 log.transports.file.resolvePath = (variables, message): string => {
-    return path.join(process.cwd(), 'electron.log');
+    return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
 }
+
+const httpClient = axios.create();
+httpClient.defaults.timeout = 500;
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
+
+let protocolURL: string | null;
+
+for(var i = 0; i < process.argv.length; i++){
+    if(process.argv[i].indexOf("ftb://") !== -1){
+        protocolURL = process.argv[i];
+        break;
+    }
+}
 
 let mtIRCCLient: Client;
 declare const __static: string;
@@ -43,12 +55,12 @@ if (process.argv.indexOf('--ws') !== -1) {
     wsSecret = '';
 }
 
-
 if (process.argv.indexOf('--pid') === -1) {
     console.log('No backend found, starting our own');
     const ourPID = process.pid;
     console.log('Our PID is', ourPID);
-    const currentPath = process.cwd();
+    console.log('Exec path is', process.execPath)
+    const currentPath = process.execPath.substring(0, process.execPath.lastIndexOf(path.sep));
     console.log('Current working directory is', currentPath);
     let binaryFile = 'FTBApp';
     const operatingSystem = os.platform();
@@ -116,6 +128,13 @@ ipcMain.on('checkFriends', async (event) => {
     }
 });
 
+ipcMain.on('appReady', async (event) => {
+    if(protocolURL !== null){
+        event.reply('parseProtocolURL', protocolURL)
+    }
+});
+
+
 ipcMain.on('sendMessage', async (event, data) => {
     if (!mtIRCCLient) {
         return;
@@ -131,7 +150,7 @@ interface ChatServerResponse {
 
 async function getMTIRC() {
     try {
-        const response = await axios.get<ChatServerResponse>(`https://api.creeper.host/minetogether/chatserver`);
+        const response = await httpClient.get<ChatServerResponse>(`https://api.creeper.host/minetogether/chatserver`);
         const chatServer = response.data;
         return {
             host: chatServer.server.address,
@@ -159,7 +178,7 @@ interface ProfileResponse {
 
 async function getProfile(hash: string) {
     try {
-        const response = await axios.post<ProfileResponse>(`https://api.creeper.host/minetogether/profile`, {target: hash}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<ProfileResponse>(`https://api.creeper.host/minetogether/profile`, {target: hash}, {headers: {'Content-Type': 'application/json'}});
         const profileResponse = response.data;
         return profileResponse.profileData[hash];
     } catch(err) {
@@ -175,7 +194,7 @@ interface FriendCodeResponse {
 
 async function getFriendCode(hash: string) {
     try {
-        const response = await axios.post<FriendCodeResponse>(`https://api.creeper.host/minetogether/friendcode`, {hash: hash}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<FriendCodeResponse>(`https://api.creeper.host/minetogether/friendcode`, {hash: hash}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
         return friendCodeResponse.code;
     } catch(err) {
@@ -190,7 +209,7 @@ interface AddFriendResponse {
 
 async function addFriend(code: string, display: string): Promise<boolean> {
     try {
-        const response = await axios.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display: display}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display: display}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
         return friendCodeResponse.status === "success";
     } catch(err) {
@@ -201,7 +220,7 @@ async function addFriend(code: string, display: string): Promise<boolean> {
 
 async function getFriends(): Promise<FriendListResponse> {
     try {
-        const response = await axios.post<FriendListResponse>(`https://api.creeper.host/minetogether/listfriend`, {hash: authData.mc.hash}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<FriendListResponse>(`https://api.creeper.host/minetogether/listfriend`, {hash: authData.mc.hash}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
         friendCodeResponse.friends = friendCodeResponse.friends.map((friend: Friend) => {
             if(friend.hash){
@@ -331,7 +350,7 @@ async function connectToIRC(){
                     } else {
                         if (!isNaN(parseInt(friend.currentPack, 10))) {
                             try {
-                                const response = await axios.get<PackResponse>(`https://creeperhost.net/json/modpacks/twitch/${friend.currentPack}`);
+                                const response = await httpClient.get<PackResponse>(`https://creeperhost.net/json/modpacks/twitch/${friend.currentPack}`);
                                 const friendCodeResponse = response.data;
                                 if (friendCodeResponse.name) {
                                     const fixedString = friendCodeResponse.name.replace(/[CurseForge/UNSUPPORTED]/, '');
@@ -347,7 +366,7 @@ async function connectToIRC(){
                         } else if (friend.currentPack.length > 0) {
                             const fixedString = friend.currentPack.replace(/\\u003/, '=');
                             try {
-                                const response = await axios.get<PackResponse>(`https://creeperhost.net/json/modpacks/modpacksch/${fixedString}`);
+                                const response = await httpClient.get<PackResponse>(`https://creeperhost.net/json/modpacks/modpacksch/${fixedString}`);
                                 const friendCodeResponse = response.data;
                                 if (friendCodeResponse.name) {
                                     // @ts-ignore
@@ -586,12 +605,19 @@ if (!gotTheLock) {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
         // Someone tried to run a second instance, we should focus our window.
         // console.log(`Event: ${event.s}`)
-        log.info(`CommandLine: ${commandLine}`)
-        log.info(`Working DIR: ${workingDirectory}`)
         if (win) {
             if (win.isMinimized()) win.restore()
             win.focus()
+            commandLine.forEach((c) => {
+                log.info(c)
+                if(c.indexOf('ftb://') !== -1){
+                    log.info("parsing through protocol")
+                    //@ts-ignore
+                    win.webContents.send('parseProtocolURL', c)
+                }
+            })
         }
+        
     })
 
     // Create myWindow, load the rest of the app, etc...
@@ -604,6 +630,12 @@ if (!gotTheLock) {
                 if (details.responseHeaders) {
                     if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
                         details.responseHeaders['Content-Security-Policy'] = [];
+                    }
+                }
+            } else if (details.url.indexOf("https://www.creeperhost.net/json/modpacks/modpacksch/") !== -1){
+                if (details.responseHeaders) {
+                    if (details.responseHeaders['access-control-allow-origin'] !== undefined) {
+                        details.responseHeaders['access-control-allow-origin'] = ["*"];
                     }
                 }
             }

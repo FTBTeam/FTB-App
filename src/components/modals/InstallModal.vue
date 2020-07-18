@@ -26,12 +26,13 @@ import { Versions } from '../../modules/modpacks/types';
     components: {
         FTBButton,
     },
-    name: 'InformationModal',
+    name: 'InstallModal',
     props: [
         'packName',
         'packDescription',
         'versions',
         'doInstall',
+        'selectedVersion'
     ],
 })
 export default class InstallModal extends Vue {
@@ -39,8 +40,10 @@ export default class InstallModal extends Vue {
     private versions!: Versions[];
     @Prop()
     private doInstall!: (version: number) => {};
+    @Prop()
+    private selectedVersion!: number | null;
 
-    private version: number = this.versions[0].id;
+    private version: number = this.selectedVersion === null || this.selectedVersion === undefined ? this.versions[0].id : this.selectedVersion;
 
     public install(): void {
         this.doInstall(this.version);

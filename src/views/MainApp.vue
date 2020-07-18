@@ -80,6 +80,7 @@ import {
 } from '@/modules/modpacks/types';
 import { RootState } from '@/types';
 import { SettingsState } from '../modules/settings/types';
+import { ipcRenderer } from 'electron';
 
 @Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal} })
 export default class MainApp extends Vue {
@@ -106,6 +107,7 @@ export default class MainApp extends Vue {
       await this.fetchStartData();
       this.hasLoaded = true;
       this.loading = false;
+      ipcRenderer.send('appReady');
     } else if (!newVal.socket.isConnected && !this.loading) {
       this.loading = true;
       this.hasLoaded = false;

@@ -24,6 +24,7 @@ import vSelectMenu from 'v-selectmenu';
 import '@/assets/tailwind.scss';
 
 import store from './store';
+import { logVerbose } from './utils';
 
 
 const classMap: object = {
@@ -178,3 +179,51 @@ ipcRenderer.on('hereAuthData', (event, data) => {
     // store.commit('auth/storeAuthDetails', );
 });
 ipcRenderer.send('gimmeAuthData');
+ipcRenderer.on('parseProtocolURL', (event, data) => {
+    let protocolURL = data;
+    protocolURL = protocolURL.substring(6, protocolURL.length);
+    let parts = protocolURL.split("/");
+    let command = parts[0];
+    let args = parts.slice(1, parts.length);
+    if(command === "modpack"){
+        if(args.length === 0){
+            return;
+        }
+        logVerbose(store.state, "Received modpack protocol message", args);
+        let modpackID = args[0];
+        if(args.length === 1){
+            // Navigate to page for modpack
+            logVerbose(store.state, "Navigating to page for modpack", modpackID);
+            router.push({name: 'modpackpage', query: {modpackid: modpackID}})
+        } else if (args.length === 2){
+            if(args[1] === "install"){
+                // Popup install for modpack
+                logVerbose(store.state, "Popping up install for modpack", modpackID);
+                router.push({name: 'modpackpage', query: {modpackid: modpackID, showInstall: "true"}})
+            }
+        } else if (args.length === 3) {
+            if(args[2] === "install"){
+                // Popup install for modpack with version default selected
+                router.push({name: 'modpackpage', query: {modpackid: modpackID, showInstall: "true", version: args[1]}})
+            }
+        }
+    } else if (command === "instance"){
+        if(args.length === 0){
+            return;
+        }
+        let instanceID = args[0];
+        if(args.length === 1){
+            // Open instance page
+            router.push({name: 'instancepage', query: {uuid: instanceID}})
+        } else if (args.length === 2){
+            // Start instance
+            router.push({name: 'instancepage', query: {uuid: instanceID, shouldPlay: "true"}})
+        }
+    } else if (command === "server"){
+        if(args.length === 0){
+            return;
+        }
+        let serverID = args[0];
+        router.push({name: 'server', query: {serverid: serverID}})
+    }
+});

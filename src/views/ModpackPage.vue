@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-1 flex-col h-full overflow-hidden">
-    <div class="flex flex-col h-full" v-if="currentModpack != undefined">
+    <div class="flex flex-col h-full" v-if="!loading && currentModpack !== null" key="main-window">
       <div>
         <div class="header-image"
              v-bind:style="{'background-image': `url(${currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}">
@@ -149,6 +149,9 @@
           </div>
         </div>
       </div>
+    <FTBModal :visible="showInstallBox" @dismiss-modal="hideInstall">
+        <InstallModal :pack-name="currentModpack.name" :doInstall="install" :pack-description="currentModpack.synopsis" :versions="currentModpack.versions" :selectedVersion="installSelectedVersion"/>
+    </FTBModal>
     </div>
     <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction"
@@ -244,6 +247,7 @@
     import {SettingsState} from '../modules/settings/types';
     import {ServersState} from "@/modules/servers/types";
     import ServerCard from "@/components/ServerCard.vue";
+import InstallModal from '@/components/modals/InstallModal.vue';
 
     export interface MsgBox {
         title: string;
@@ -264,6 +268,7 @@
             'ftb-toggle': FTBToggle,
             'ftb-slider': FTBSlider,
             'ftb-button': FTBButton,
+            InstallModal,
             FTBModal,
             'message-modal': MessageModal,
             ServerCard,
@@ -280,11 +285,14 @@
         }
 
         get currentModpack() {
-            const id: number = Number(this.$route.query.modpackid);
-            return this.modpacks?.packsCache[id];
+          const id: number = parseInt(this.$route.query.modpackid as string, 10);
+          if(this.modpacks.packsCache[id] === undefined){
+            return null;
+          }
+          return this.modpacks.packsCache[id];
         }
 
-        @State('modpacks') public modpacks: ModpackState | undefined = undefined;
+        @State('modpacks') public modpacks!: ModpackState;
         @State('settings') public settings!: SettingsState;
         @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: any;
         @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks!: any;
@@ -297,6 +305,8 @@
 
         private activeTab: string = 'overview';
         private showMsgBox: boolean = false;
+        private showInstallBox: boolean = false;
+        private installSelectedVersion: number | null = null;
         private msgBox: MsgBox = {
             title: '',
             content: '',
@@ -304,6 +314,7 @@
             okAction: Function,
             cancelAction: Function,
         };
+        private loading: boolean = true;
 
         private activeChangelog: number | undefined = -1;
         private changelogs: Changelogs = [];
@@ -330,6 +341,10 @@
 
         public hideMsgBox(): void {
             this.showMsgBox = false;
+        }
+
+        public hideInstall(): void {
+            this.showInstallBox = false;
         }
 
         public goBack(): void {
@@ -363,6 +378,9 @@
         }
 
         public install(version: number): void {
+          if(this.showInstallBox){
+            this.showInstallBox = false;
+          }
             this.updateInstall({modpackID: this.$route.query.modpackid, progress: 0});
             this.sendMessage({
                 payload: {type: 'installInstance', id: this.$route.query.modpackid, version}, callback: (data: any) => {
@@ -415,13 +433,24 @@
         }
 
         private async mounted() {
-            await this.fetchModpack(this.$route.query.modpackid);
-            this.toggleChangelog(this.currentModpack?.versions[0].id);
-            if(this.currentVersionObject !== null){
-                if(this.currentVersionObject.mtgID){
-                    this.fetchServers(this.currentVersionObject.mtgID)
-                }
+          let packID: number = parseInt(this.$route.query.modpackid as string, 10);
+          await this.fetchModpack(packID);
+          if(this.modpacks.packsCache[packID] !== undefined){
+            this.loading = false;
+          }
+          if(this.$route.query.showInstall === "true"){
+            console.log(this.$route.query.version);
+            if(this.$route.query.version !== undefined){
+              this.installSelectedVersion = parseInt(this.$route.query.version as string, 10);
             }
+            this.showInstallBox = true;
+          }
+          this.toggleChangelog(this.currentModpack?.versions[0].id);
+          if(this.currentVersionObject !== null){
+              if(this.currentVersionObject.mtgID){
+                  this.fetchServers(this.currentVersionObject.mtgID)
+              }
+          }
         }
 
         get currentVersionObject(): Versions | null {

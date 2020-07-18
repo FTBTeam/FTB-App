@@ -657,7 +657,19 @@
             }
         }
 
+        public confirmLaunch(){
+            this.msgBox.type = 'okCancel';
+            this.msgBox.title = 'Do you want to launch this modpack?';
+            this.msgBox.okAction = this.launch;
+            this.msgBox.cancelAction = this.hideMsgBox;
+            this.msgBox.content = `We've been asked to launch ${this.instance?.name}, do you want to do this?`;
+            this.showMsgBox = true;
+        }
+
         public launch(): void {
+          if(this.showMsgBox){
+            this.hideMsgBox();
+          }
             this.sendMessage({
                 payload: {type: 'launchInstance', uuid: this.instance?.uuid},
                 callback: (data: any) => {
@@ -773,6 +785,9 @@
             this.$forceUpdate();
             if (this.currentModpack?.kind === 'modpack') {
                 this.toggleChangelog(this.currentModpack?.versions[0].id);
+            }
+            if(this.$route.query.shouldPlay === "true"){
+              this.confirmLaunch();
             }
             this.getModList();
             if(this.currentVersionObject !== null){
