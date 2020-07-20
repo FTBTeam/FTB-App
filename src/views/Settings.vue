@@ -210,15 +210,15 @@ export default class SettingsPage extends Vue {
         const appFolder = readdirSync(workingDir);
         if (appFolder.indexOf('launcher.log') > -1) {
             // Launcher log should always be there, if it isn't we won't do anything.
-            const launcherLog = readFileSync(`${workingDir}/launcher.log`);
-            const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`) : 'Not available';
+            const launcherLog = readFileSync(`${workingDir}/launcher.log`, {encoding: 'utf8'});
+            const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`, {encoding: 'utf8'}) : 'Not available';
             let frontendLog = new Buffer('');
             if (appFolder.indexOf('bin') > -1) {
                 if (existsSync(path.join(workingDir, 'bin', 'logs', 'main.log'))) {
                     frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
                 }
             }
-            const data = '=====================================launcher.log=====================================\n' + launcherLog + '\n\n\n' + '=======================================error.log======================================\n' + errorLog + '\n\n\n' + '=====================================main.log=====================================\n' + frontendLog;
+            const data = `UI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
             // Upload logs to pste.ch and copy URL to clipboard
             createPaste(data, {
                 raw: false,
