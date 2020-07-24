@@ -14,6 +14,8 @@ export interface Settings {
     listMode: boolean;
     instanceLocation: string;
     verbose: boolean;
+    cloudSaves: boolean;
+    autoOpenChat: boolean | string;
 }
 
 export interface Hardware {

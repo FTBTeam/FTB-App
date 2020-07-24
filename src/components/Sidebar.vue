@@ -4,6 +4,7 @@
     <div class="miniftb pointer-events-none" ></div>
     <img src="../assets/logo_ftb.png" width="125px" class="cursor-pointer logo-hover z-10" @click="openFTB()" style="margin-top: 10px;"  draggable="false" />
     <font-awesome-icon v-if="isDevelop" title="Give feedback!" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="right: 10px; top: 100px;" @click="openGithub()" icon="comments" size="lg"></font-awesome-icon>
+    <font-awesome-icon v-if="auth.token !== null && !auth.isFriendsWindowOpen" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 100px;" @click="openFriends()" icon="user-friends" size="lg"></font-awesome-icon>
     <div class="nav-items flex-col mt-5">
       <nav-item :isActive="isActiveTab('home')" @click="goTo('home')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
       <nav-item :isActive="isActiveTab('news')" @click="goTo('news')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" /></div>News</nav-item>
@@ -14,7 +15,7 @@
     <div class="nav-items flex-col mt-auto mb-0">
       <nav-item :isActive="isActiveTab('settings')" @click="goTo('settings')"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>
       <nav-item v-if="auth.token === null" @click="openLogin()"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
-      <nav-item v-else class="capitalize" @click="openFriends"><img :src="`https://minotar.net/helm/${auth.token.mc.uuid}`" style="margin-right: 0.75em;" width="21px" class="rounded-full" />{{auth.token.username}}</nav-item>
+      <nav-item v-else class="capitalize" @click="goTo('profile')"><img :src="`https://minotar.net/helm/${auth.token.mc.uuid}`" style="margin-right: 0.75em;" width="21px" class="rounded-full" />{{auth.token.username}}</nav-item>
     </div>
     <img src="../assets/ch-logo.svg" width="90%" class="mb-2 cursor-pointer logo-hover" style="" draggable="false" @click="openPromo()"/>
   </div>
@@ -71,6 +72,7 @@ export default class Sidebar extends Vue {
   }
 
   public openFriends() {
+    // this.$router.push({name: 'profile'})
     ipcRenderer.send('showFriends');
   }
 

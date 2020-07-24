@@ -21,7 +21,7 @@ log.transports.file.resolvePath = (variables, message): string => {
 };
 
 const httpClient = axios.create();
-httpClient.defaults.timeout = 500;
+httpClient.defaults.timeout = 5000;
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
@@ -34,6 +34,7 @@ for (let i = 0; i < process.argv.length; i++) {
         break;
     }
 }
+
 
 let mtIRCCLient: Client;
 declare const __static: string;
@@ -108,7 +109,9 @@ ipcMain.on('openOauthWindow', (event, data) => {
 });
 
 ipcMain.on('showFriends', () => {
-    createFriendsWindow();
+    if(authData){
+        createFriendsWindow();
+    }
 });
 
 ipcMain.on('getFriends', (event) => {
@@ -147,6 +150,7 @@ ipcMain.on('sendMessage', async (event, data) => {
 interface ChatServerResponse {
     server: {address: string, port: number};
 }
+
 
 async function getMTIRC() {
     try {
@@ -491,10 +495,20 @@ ipcMain.on('windowControls', (event, data) => {
     }
 });
 
+ipcMain.on('logout', (event, data) => {
+    if(friendsWindow){
+        friendsWindow.close();
+    }
+    authData = undefined;
+})
+
 
 function createFriendsWindow() {
     if (friendsWindow !== null && friendsWindow !== undefined) {
         friendsWindow.focus();
+        if(win){
+            win.webContents.send('setFriendsWindow', true)
+        }
         return;
     }
     friendsWindow = new BrowserWindow({
@@ -532,9 +546,14 @@ function createFriendsWindow() {
     } else {
         friendsWindow.loadURL('app://./index.html#chat');
     }
-
+    if(win){
+        win.webContents.send('setFriendsWindow', true)
+    }
     friendsWindow.on('closed', () => {
         friendsWindow = null;
+        if(win){
+            win.webContents.send('setFriendsWindow', false)
+        }
     });
 }
 

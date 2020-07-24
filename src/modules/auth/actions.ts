@@ -9,6 +9,12 @@ export interface FriendRequestResponse {
 }
 
 export const actions: ActionTree<AuthState, RootState> = {
+    logout({rootState, commit, dispatch}): void {
+        commit('storeAuthDetails', null);
+    },
+    setWindow({rootState, commit}, data: boolean): void {
+        commit('setFriendsWindow', data);
+    },
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';
         commit('storeAuthDetails', payload);

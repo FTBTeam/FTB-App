@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col min-w-1/2">
-    <h1 class="text-3xl mb-2">{{title}}</h1>
+    <h1 class="text-2xl mb-2">{{title}}</h1>
     <div>
       <VueShowdown :markdown="content" :extensions="['classMap', 'attribMap', 'newLine']"></VueShowdown>
 <!--      <p>{{content}}</p>-->

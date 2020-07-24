@@ -19,6 +19,8 @@ export const mutations: MutationTree<SettingsState> = {
             instanceLocation: '',
             listMode: false,
             verbose: false,
+            cloudSaves: false,
+            autoOpenChat: true
         };
         state.settings = {...defaultSettings, ...payload};
     },

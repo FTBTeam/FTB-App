@@ -22,6 +22,8 @@ export const state: SettingsState = {
         enablePreview: false,
         listMode: true,
         verbose: false,
+        cloudSaves: false,
+        autoOpenChat: true
     },
     error: false,
     hardware: {

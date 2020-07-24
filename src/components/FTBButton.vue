@@ -1,6 +1,6 @@
 <template>
-  <div :class="`ftb-button ${!noPadding ? '' : 'p-2'} ${color ? 'bg-' + color : ''} cursor-pointer ${isRounded ? 'rounded' : ''}`" @click="$emit('click')">
-    <p class="cursor-pointer" :class="cssClass">
+  <div :class="`ftb-button ${!noPadding ? '' : 'p-2'} ${color ? 'bg-' + color : ''} ${disabled ? 'cursor-not-allowed disabled' : 'cursor-pointer'} ${isRounded ? 'rounded' : ''}`" @click="handleClick">
+    <p :class="`${cssClass} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`">
       <slot></slot>
     </p>
   </div>
@@ -12,6 +12,7 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 @Component({
     name: 'ftb-button',
     props: {
+        disabled: Boolean,
         click: Function,
         color: String,
         cssClass:  String,
@@ -23,6 +24,14 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
     },
 })
 export default class FTBButton extends Vue {
+  @Prop({default: false})
+  private disabled!: boolean;
+  private handleClick(){
+    if(this.disabled){
+      return;
+    }
+    this.$emit('click')
+  }
 }
 </script>
 
@@ -41,5 +50,8 @@ export default class FTBButton extends Vue {
   }
   .ftb-button svg {
     cursor: pointer;
+  }
+  .disabled {
+    filter: grayscale(0.8) brightness(0.5);
   }
 </style>

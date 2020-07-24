@@ -250,6 +250,8 @@
                       :raw-style="`background: linear-gradient(to right, #8e0c25 ${((this.instance.minMemory / settingsState.hardware.totalMemory) * 100) - 5}%, #a55805 ${((this.instance.minMemory / settingsState.hardware.totalMemory) * 100)}%, #a55805 ${((this.instance.recMemory / settingsState.hardware.totalMemory) * 100) - 5}%, #005540 ${((this.instance.recMemory / settingsState.hardware.totalMemory) * 100)}%);`"
               />
               <ftb-input label="Custom Arguments" v-model="instance.jvmArgs" @blur="saveSettings"/>
+              <ftb-toggle label="Enable cloud save uploads" :disabled="settingsState.settings.cloudSaves !== true && settingsState.settings.cloudSaves !=='true'"
+                        onColor="bg-primary" inline="true"/>
               <ftb-button class="py-2 px-4 w-10 ml-auto mr-2" color="primary" css-class="text-center text-l">
                 <font-awesome-icon icon="save" size="1x"/>&nbsp;Save
               </ftb-button>

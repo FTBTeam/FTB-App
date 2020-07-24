@@ -3,6 +3,7 @@ export interface TokenData {
     modpackssecret: string;
     username: string;
     mc: McData;
+    autoopenchat: boolean;
 }
 
 export interface McData {
@@ -19,6 +20,7 @@ export interface AuthState {
     error: boolean;
     loading: boolean;
     friends: Friend[];
+    isFriendsWindowOpen: boolean;
 }
 
 export interface Friend {

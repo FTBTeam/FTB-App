@@ -16,4 +16,7 @@ export const mutations: MutationTree<AuthState> = {
             state.token.mc.friendCode = payload;
         }
     },
+    setFriendsWindow(state, payload){
+        state.isFriendsWindowOpen = payload;
+    }
 };

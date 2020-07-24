@@ -176,9 +176,16 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
 });
 ipcRenderer.on('hereAuthData', (event, data) => {
     store.dispatch('auth/storeAuthDetails', data, {root: true});
+    console.log("Auto open chat", store.state.settings?.settings.autoOpenChat)
+    if(store.state.settings?.settings.autoOpenChat === true || store.state.settings?.settings.autoOpenChat === "true"){
+        ipcRenderer.send('showFriends')
+    }
     // store.commit('auth/storeAuthDetails', );
 });
 ipcRenderer.send('gimmeAuthData');
+ipcRenderer.on('setFriendsWindow', (event, data) => {
+    store.dispatch('auth/setWindow', data, {root: true})
+})
 ipcRenderer.on('parseProtocolURL', (event, data) => {
     let protocolURL = data;
     protocolURL = protocolURL.substring(6, protocolURL.length);

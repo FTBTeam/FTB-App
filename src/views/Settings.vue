@@ -170,6 +170,8 @@ export default class SettingsPage extends Vue {
         instanceLocation: '',
         listMode: false,
         verbose: false,
+        cloudSaves: false,
+        autoOpenChat: true,
     };
 
     private resSelectedValue: string = '0';
