@@ -11,7 +11,7 @@
           <span class="instance-name text-4xl pb-2">{{instance.name}}</span>
           <span class="instance-info">
             <small v-if="currentModpack !== null">
-              {{currentModpack.name}} <span v-for="author in currentModpack.authors" v-bind:key="author.name">By {{author.name}}</span> - {{instance.version}} -
+              {{currentModpack.name}} <span v-for="author in currentModpack.authors" v-bind:key="author.name">By {{author.name}}</span> - {{versionName}} -
               <em>{{currentModpack.synopsis}}</em>
             </small>
             <div v-if="currentModpack !== null && tags.length > 0" class="flex flex-row items-center">
@@ -477,6 +477,13 @@ export default class InstancePage extends Vue {
             return true;
         }
         return this.instance?.versionId === this.currentModpack?.versions[0].id;
+    }
+
+    get versionName(){
+      if(this.instance && this.modpacks?.packsCache[this.instance.id]){
+        return this.modpacks?.packsCache[this.instance.id].versions.find((v) => v.id === this.instance?.versionId)?.name;
+      }
+      return this.instance?.version;
     }
 
 
