@@ -280,7 +280,19 @@ ipcMain.on('acceptFriendRequest', async (event, data) => {
             data.ourName = profile.hash.short;
         }
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, data.ourName);
-        addFriend(data.friendCode, data.name);
+        let success = await addFriend(data.friendCode, data.name);
+        if(success){
+            friends = await getFriends();
+            if (mtIRCCLient !== undefined) {
+                friends.friends.forEach((friend: Friend) => {
+                    mtIRCCLient.whois(friend.shortHash);
+                });
+                friends.requests.forEach((friend: Friend) => {
+                    mtIRCCLient.whois(friend.shortHash);
+                });
+            }
+        }
+        event.reply("acceptedFriendRequest", data.hash)
     }
 });
 
@@ -350,6 +362,7 @@ async function connectToIRC() {
                         return;
                     }
                     if (seenModpacks[friend.currentPack] !== undefined) {
+                        friend.currentPackID = friend.currentPack;
                         friend.currentPack = seenModpacks[friend.currentPack];
                     } else {
                         if (!isNaN(parseInt(friend.currentPack, 10))) {
@@ -377,6 +390,7 @@ async function connectToIRC() {
                                     seenModpacks[friend.currentPack] = friendCodeResponse.name;
                                     // @ts-ignore
                                     friend.currentPack = friendCodeResponse.name;
+                                    friend.currentPackID = fixedString
                                 }
                             } catch (err) {
                                 log.error(`Error getting modpack from id`, friend.currentPack);
@@ -402,7 +416,9 @@ async function connectToIRC() {
                     args.shift();
                 }
                 const [code, ...rest] = args;
-                friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: rest.join(' '), friendCode: code});
+                let displayName = rest.join(' ');
+                friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: displayName, friendCode: code});
+                friends.requests.push({shortHash: event.nick, accepted: false, name: displayName})
                 mtIRCCLient.whois(event.nick);
             } else if (event.type === 'FRIENDACC') {
                 const args = event.message.substring('FRIENDACC'.length, event.message.length).split(' ');
@@ -411,6 +427,17 @@ async function connectToIRC() {
                 }
                 const [code, ...rest] = args;
                 addFriend(code, rest.join(' '));
+            } else if(event.type === 'SERVERID'){
+                const args = event.message.substring('SERVERID'.length, event.message.length).split(' ');
+                if (args[0] === '') {
+                    args.shift();
+                }
+                let serverID = args[0];
+                let friend = friends.friends.find((f: Friend) => f.shortHash === event.nick);
+                if (friend === undefined) {
+                    return;
+                }
+                friend.currentServer = serverID;
             }
         }
     });
@@ -427,6 +454,22 @@ async function connectToIRC() {
     });
 }
 
+ipcMain.on('checkServer', async (event, data) => {
+    mtIRCCLient.ctcpRequest(data, 'SERVERID');
+});
+
+ipcMain.on('blockFriend', async (event, data) => {
+    if(win !== null){
+        win.webContents.send('blockFriend', data)
+    }
+})
+
+ipcMain.on('updateSettings', async (event, data) => {
+    if(friendsWindow !== null && friendsWindow !== undefined){
+        friendsWindow.webContents.send('updateSettings', data)
+    }
+})
+
 ipcMain.on('authData', async (event, data) => {
     authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
     authData.mc.friendCode = await getFriendCode(authData.mc.hash);
@@ -442,6 +485,13 @@ ipcMain.on('authData', async (event, data) => {
 ipcMain.on('gimmeAuthData', (event) => {
     if (authData) {
         event.reply('hereAuthData', authData);
+    }
+});
+
+
+ipcMain.on('openModpack', (event, data) => {
+    if(win !== null && win !== undefined){
+        win.webContents.send('openModpack', data);
     }
 });
 
@@ -500,6 +550,10 @@ ipcMain.on('logout', (event, data) => {
         friendsWindow.close();
     }
     authData = undefined;
+})
+
+ipcMain.on('openLink', (event, data) => {
+    shell.openExternal(data);  
 })
 
 

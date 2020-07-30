@@ -102,7 +102,7 @@
                         :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'" class="cursor-pointer"
                         size="1x"/> Changelog</span>
                 <ftb-button class="py-2 px-4 ml-auto" color="primary" css-class="text-center text-l"
-                            @click="install(version.id)">
+                            @click="install(version.id)" :disabled="modpacks.installing !== null">
                   <font-awesome-icon icon="download" size="1x"/>
                   Install
                 </ftb-button>
@@ -439,7 +439,6 @@ interface Changelogs {
             this.loading = false;
           }
           if (this.$route.query.showInstall === 'true') {
-            console.log(this.$route.query.version);
             if (this.$route.query.version !== undefined) {
               this.installSelectedVersion = parseInt(this.$route.query.version as string, 10);
             }
@@ -457,7 +456,6 @@ interface Changelogs {
             if (this.currentModpack !== null) {
                 const version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
                 if (version !== undefined) {
-                    console.log(version);
                     return version;
                 }
             }

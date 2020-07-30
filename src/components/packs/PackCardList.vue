@@ -185,10 +185,13 @@ export interface MsgBox {
         }
 
         get installing() {
-            return this.modpacks !== undefined && this.modpacks.installing.indexOf(this.modpacks.installing.filter((pack) => pack.modpackID === this.$props.packID)[0]) !== -1;
+            return this.modpacks !== undefined && this.modpacks.installing !== null && this.modpacks.installing.modpackID === this.$props.packID;
         }
 
         public install(version: number): void {
+            if(this.modpacks.installing !== null){
+                return;
+            }
             this.updateInstall({modpackID: this.$props.packID, progress: 0});
             this.sendMessage({
                 payload: {type: 'installInstance', id: this.$props.packID, version}, callback: (data: any) => {

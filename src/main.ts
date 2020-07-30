@@ -1,3 +1,4 @@
+import { ModPack } from './modules/modpacks/types';
 
 
 import {ipcRenderer, shell} from 'electron';
@@ -7,7 +8,7 @@ import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
 import {library} from '@fortawesome/fontawesome-svg-core';
-import {fas} from '@fortawesome/free-solid-svg-icons';
+import {fas, faToriiGate} from '@fortawesome/free-solid-svg-icons';
 import {far} from '@fortawesome/free-regular-svg-icons';
 import {fab} from '@fortawesome/free-brands-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
@@ -25,6 +26,7 @@ import '@/assets/tailwind.scss';
 
 import store from './store';
 import { logVerbose } from './utils';
+import { getAPIRequest } from './modules/modpacks/actions';
 
 
 const classMap: object = {
@@ -176,7 +178,6 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
 });
 ipcRenderer.on('hereAuthData', (event, data) => {
     store.dispatch('auth/storeAuthDetails', data, {root: true});
-    console.log("Auto open chat", store.state.settings?.settings.autoOpenChat)
     if(store.state.settings?.settings.autoOpenChat === true || store.state.settings?.settings.autoOpenChat === "true"){
         ipcRenderer.send('showFriends')
     }
@@ -186,6 +187,48 @@ ipcRenderer.send('gimmeAuthData');
 ipcRenderer.on('setFriendsWindow', (event, data) => {
     store.dispatch('auth/setWindow', data, {root: true})
 })
+ipcRenderer.on('blockFriend', (event, data) => {
+    let settings = store.state.settings?.settings;
+    if(settings !== undefined && settings.blockedUsers === undefined){
+        settings.blockedUsers = [];
+    }
+    settings?.blockedUsers.push(data);
+    store.dispatch('settings/saveSettings', settings, {root: true});
+});
+ipcRenderer.on('openModpack', (event, data) => {
+    let {name, id} = data;
+    getAPIRequest(
+        store.state,
+        `modpack/search/8?term=${name}`,
+    )
+        .then((response) => response.json())
+        .then(async (data) => {
+        if (data.status === 'error') {
+            return;
+        }
+        const packIDs = data.packs;
+        if (packIDs == null) {
+            return;
+        }
+        if (packIDs.length === 0) {
+            return;
+        }
+        for(var i = 0; i < packIDs.length; i++){
+            let packID = packIDs[i];
+            let pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, {root: true})
+            if(pack !== undefined){
+                let foundVersion = pack.versions.find((v) => v.mtgID === id);
+                if(foundVersion !== undefined){
+                    router.push({name: 'modpackpage', query: {modpackid: packID}});           
+                    return;
+                }
+            }
+        }
+        })
+        .catch((err) => {
+        console.error(err);
+        });
+});
 ipcRenderer.on('parseProtocolURL', (event, data) => {
     let protocolURL = data;
     protocolURL = protocolURL.substring(6, protocolURL.length);

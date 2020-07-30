@@ -23,7 +23,8 @@ export const state: SettingsState = {
         listMode: true,
         verbose: false,
         cloudSaves: false,
-        autoOpenChat: true
+        autoOpenChat: true,
+        blockedUsers: []
     },
     error: false,
     hardware: {

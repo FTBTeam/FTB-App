@@ -40,9 +40,8 @@ export const mutations: MutationTree<ModpackState> = {
         state.installedPacks = payload;
     },
     updateInstall(state, payload: InstallProgress) {
-        if (state.installing.filter((pack) => pack.modpackID === payload.modpackID).length > 0) {
+        if (state.installing !== null) {
             const foundPack = state.installing
-            .filter((pack) => pack.modpackID === payload.modpackID)[0];
             foundPack.progress = payload.progress;
             foundPack.error = payload.error || false;
             foundPack.errorMessage = payload.errorMessage || '';
@@ -52,15 +51,13 @@ export const mutations: MutationTree<ModpackState> = {
             foundPack.totalBytes = payload.totalBytes;
             foundPack.instanceID = payload.instanceID;
             foundPack.message = payload.message;
-            state.installing[state.installing.indexOf(foundPack)] = foundPack;
+            state.installing = foundPack;
         } else {
-            state.installing.push(payload);
+            state.installing = payload;
         }
     },
     finishInstall(state, payload: InstallProgress) {
-        state.installing = state.installing.filter((installing) => {
-            return installing.modpackID !== payload.modpackID;
-        });
+        state.installing = null;
     },
     errorInstall(state, payload: InstallProgress) {
 

@@ -30,7 +30,9 @@ export interface Friend {
     name: string;
     online?: boolean;
     currentPack?: string;
+    currentPackID?: string;
     shortHash: string;
     notifications?: number;
     friendCode?: string;
+    currentServer?: number;
 }

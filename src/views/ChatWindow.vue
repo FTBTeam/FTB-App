@@ -5,7 +5,7 @@
         <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages"  :friends="friends" :activeFriend="friend !== null ? friend.shortHash : undefined"></friends-list>
         <div class="bg-navbar flex-1">
             <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
-            <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.shortHash" :friend="friend" :removeFriend="removeFriend" :shortHash="auth.token.mc.mtusername" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
+            <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.shortHash" :friend="friend" :removeFriend="removeFriend" :blockFriend="blockFriend" :shortHash="auth.token.mc.mtusername" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
         </div>
     </div>
   </div>
@@ -21,6 +21,7 @@ import FriendChat from '@/components/chat/FriendChat.vue';
 import { Friend, AuthState } from '../modules/auth/types';
 import {State, Action} from 'vuex-class';
 import { Messages, UnreadMessages, Message, FriendListResponse } from '../types';
+import { SettingsState, Settings } from '../modules/settings/types';
 
 @Component({
   components: {
@@ -33,6 +34,8 @@ import { Messages, UnreadMessages, Message, FriendListResponse } from '../types'
 export default class ChatWindow extends Vue {
     @State('auth')
     private auth!: AuthState;
+    @State('settings')
+    private settings!: SettingsState;
     private currentPage: string = '';
     private friend: Friend | null = null;
     private messages: Messages = {};
@@ -40,6 +43,9 @@ export default class ChatWindow extends Vue {
 
     @Action('removeFriend', {namespace: 'auth'})
     private removeFriendAction!: (hash: string) => Promise<boolean | string>;
+
+    @Action('saveSettings', {namespace: 'settings'})
+    private saveSettings!: (settings: Settings) => Promise<boolean | string>;
 
     public expand() {
         ipcRenderer.send('expandMeScotty', { width: 800 });
@@ -80,6 +86,22 @@ export default class ChatWindow extends Vue {
         this.currentPage = '';
     }
 
+    public async blockFriend(){
+         if (this.friend === null || this.friend.hash === undefined) {
+            return;
+        }
+        const success = true;
+        if (typeof success === 'string') {
+
+        } else {
+            if (success) {
+                ipcRenderer.send('blockFriend', this.friend.hash)
+                this.hidePage();
+                ipcRenderer.send('checkFriends');
+            }
+        }
+    }
+
     public async removeFriend() {
         if (this.friend === null || this.friend.hash === undefined) {
             return;
@@ -90,7 +112,6 @@ export default class ChatWindow extends Vue {
         } else {
             if (success) {
                 this.hidePage();
-                ipcRenderer.send('getFriends');
                 ipcRenderer.send('checkFriends');
             }
         }
@@ -113,7 +134,13 @@ export default class ChatWindow extends Vue {
 
     public mounted() {
         this.retract();
+        ipcRenderer.on('updateSettings', (event, data) => {
+            this.settings.settings = data;
+        });
         ipcRenderer.on('newMessage', (event, data) => {
+            if(this.settings.settings.blockedUsers.indexOf(data.from) !== -1){
+                return;
+            }
             let messages: Message[];
             if (this.messages[data.from] === undefined) {
                 messages = [];

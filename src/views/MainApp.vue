@@ -8,22 +8,20 @@
       <div class="flex-1 flex flex-col overflow-x-hidden">
         <div class="content-container">
           <router-view />
-          <div v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
-          </div>
         </div>
         <transition name="slide-down-up">
         <div v-if="modpacks.installing != null">
-          <div class="progress-bar relative" v-for="(modpack, index) in modpacks.installing" v-bind:key="index" >
-            <div class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-if="modpack.error">Error installing {{modpack.pack.name}} - {{modpack.errorMessage}} - <button class="bg-orange-500 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer" @click="retry(modpack)"><span class="cursor-pointer">Retry?</span></button></div>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'INIT'">Creating environment...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'API'">Downloading modpack metadata...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'VANILLA'">Installing Vanilla Launcher...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'FORGE'">Installing Forge...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'DOWNLOADS'">Installing {{modpack.pack.name}} - {{modpack.progress.toFixed(2)}}% ({{(modpack.downloadSpeed / 1000000).toFixed(2)}} mbps)</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'POSTINSTALL'">Finalizing Installation...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpack.stage == 'FINISHED'">Install Finished</p>
+          <div class="progress-bar relative"  >
+            <div class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-if="modpacks.installing.error">Error installing {{modpacks.installing.pack.name}} - {{modpacks.installing.errorMessage}} - <button class="bg-orange-500 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer" @click="retry(modpacks.installing)"><span class="cursor-pointer">Retry?</span></button></div>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'INIT'">Creating environment...</p>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'API'">Downloading modpack metadata...</p>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'VANILLA'">Installing Vanilla Launcher...</p>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'FORGE'">Installing Forge...</p>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'DOWNLOADS'">Installing {{modpacks.installing.pack.name}} - {{modpacks.installing.progress.toFixed(2)}}% ({{(modpacks.installing.downloadSpeed / 1000000).toFixed(2)}} mbps)</p>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'POSTINSTALL'">Finalizing Installation...</p>
+            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'FINISHED'">Install Finished</p>
             <div class=" w-full h-full bg-grey-light justify-center">
-              <div v-if="!modpack.error" class="h-full bg-primary text-xs leading-none py-1 text-white" v-bind:style="{'width': `${modpack.progress}%`, 'transition': 'width 0.5s ease'}"></div>
+              <div v-if="!modpacks.installing.error" class="h-full bg-primary text-xs leading-none py-1 text-white" v-bind:style="{'width': `${modpacks.installing.progress}%`, 'transition': 'width 0.5s ease'}"></div>
               <div v-else class="h-full bg-error-button text-xs leading-none py-1 text-white" v-bind:style="{'width': `100%`, 'transition': 'width 0.5s ease'}"></div>
             </div>
             <!-- <p class="pl-4" v-bind:style="{'position': 'absolute', 'z-index':'0'}" >Installing {{modpack.pack.name}} - {{modpack.progress}}%</p> -->

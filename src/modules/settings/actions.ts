@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron';
 import {ActionTree} from 'vuex';
 import {SettingsState, Settings} from './types';
 import {RootState} from '@/types';
@@ -7,6 +8,7 @@ export const actions: ActionTree<SettingsState, RootState> = {
         return new Promise((resolve, reject) => {
             dispatch('sendMessage', {payload: {type: 'getSettings'}, callback: (msg: any) => {
                 commit('loadSettings', msg.settingsInfo);
+                ipcRenderer.send('updateSettings', msg.settingsInfo)
                 commit('loadHardware', msg);
                 resolve();
             }}, {root: true});

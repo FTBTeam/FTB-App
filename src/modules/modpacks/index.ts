@@ -16,7 +16,7 @@ export const state: ModpackState = {
     error: false,
     errorMsg: '',
     currentModpack: null,
-    installing: [],
+    installing: null,
     loading: false,
     searchString: '',
 };

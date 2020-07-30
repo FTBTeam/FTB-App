@@ -187,7 +187,7 @@ export default class PackCard extends Vue {
     }
 
     get installing() {
-        return this.modpacks !== undefined && this.modpacks.installing.indexOf(this.modpacks.installing.filter((pack) => pack.modpackID === this.$props.packID)[0]) !== -1;
+        return this.modpacks !== undefined && this.modpacks.installing !== null && this.modpacks.installing.modpackID === this.$props.packID;
     }
 
     public install(version: number): void {

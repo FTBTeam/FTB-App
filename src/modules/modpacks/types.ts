@@ -106,7 +106,7 @@ export interface ModpackState {
     error: boolean;
     errorMsg: string;
     loading: boolean;
-    installing: InstallProgress[];
+    installing: InstallProgress | null;
     currentModpack: ModPack | null;
     packsCache: ModPacks;
     searchString: string;

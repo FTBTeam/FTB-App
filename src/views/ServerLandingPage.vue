@@ -323,7 +323,6 @@ export default class ServerLandingPage extends Vue {
               .then((resp) => resp.json())
               .then((data) => {
                 if (data.status === 'success') {
-                  console.log(data.name);
                   getAPIRequest(
                     this.$store.state,
                     `modpack/search/8?term=${data.name}`,

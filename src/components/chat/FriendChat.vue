@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col h-full w-full p-2">
       <div class="flex flex-row items-center">
-        <h1 class="text-4xl ">{{friend.name}}</h1>
-        <div class="ml-auto mr-2 mt-2">
-            <font-awesome-icon icon="ban" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg"/>
-            <font-awesome-icon icon="trash" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" @click="removeFriend" />
-            <font-awesome-icon icon="globe" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" />
+        <h1 class="text-2xl max-w-xs overflow-hidden" style="text-overflow: ellipsis;">{{friend.name}}</h1>
+        <div class="ml-auto mr-2 mt-4">
+            <font-awesome-icon icon="ban" class="mx-2 cursor-pointer text-muted hover:text-white" title="Block" size="lg" @click="blockFriend"/>
+            <font-awesome-icon icon="trash" class="mx-2 cursor-pointer text-muted hover:text-white" title="Remove" size="lg" @click="removeFriend" />
+            <font-awesome-icon icon="globe" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg"  @click="openServer" />
         </div>
       </div>
       <div class="chat-area flex-1 overflow-y-scroll overflow-x-hidden mb-2" ref="chat">
@@ -52,6 +52,7 @@ import { Message } from '../../types';
         'messages',
         'sendMessage',
         'removeFriend',
+        'blockFriend'
     ],
 })
 export default class FriendChat extends Vue {
@@ -62,7 +63,9 @@ export default class FriendChat extends Vue {
 
     private newMessage: string = '';
     @Prop()
-    private removeFriend!: () => void;
+    private removeFriend!: () => Promise<boolean | string>;
+    @Prop()
+    private blockFriend!: () => Promise<boolean | string>;
 
     @Prop()
     private messages!: Message[];
@@ -102,6 +105,10 @@ export default class FriendChat extends Vue {
     public send() {
         this.sendMessage(this.newMessage);
         this.newMessage = '';
+    }
+
+    public openServer(){
+        ipcRenderer.send('openLink', `ftb://server/994183`)
     }
 }
 </script>

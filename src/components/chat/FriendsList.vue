@@ -10,7 +10,7 @@
         </div>
         </div>
       </div>
-      <div class="friends flex flex-col overflow-y-auto" style="max-height: 300px;"> 
+      <div class="friends flex flex-col overflow-hidden" style="max-height: 300px;"> 
         <div class="bg-background-lighten p-2 flex flex-row">
             <p class="ml-2">Friends</p>
             <input type="search" class="bg-input text-xs mx-2" style="padding: 0 2px;" placeholder="Search..." v-if="showSearch" v-model="search"/>
@@ -19,12 +19,14 @@
                 <font-awesome-icon icon="user-plus" @click="openAddFriendUI" class="mx-2 cursor-pointer" />
             </div>
         </div>
-        <div :class="`flex flex-row p-2 items-center ${currentPage === 'chatFriend' && activeFriend !== undefined && activeFriend === friend.shortHash ? 'bg-background-lighten' : 'hover:bg-background-lighten'} cursor-pointer`" v-for="friend in currentFriends" :key="friend.id" @click="openFriendChat(friend)">
-            <p :class="`ml-2 cursor-pointer ${friend.online ? 'text-white font-bold' : 'text-muted font-normal'}`">{{friend.name}} </p>
-            <p v-if="unreadMessages[friend.shortHash] > 0" class="bg-red-600 rounded-full px-2 ml-2 text-xs">{{unreadMessages[friend.shortHash]}}</p>
-            <div class="icons ml-auto">
-                <font-awesome-icon v-if="friend.currentPack && friend.currentPack.length > 0" icon="gamepad" class="mx-2 cursor-pointer" :title="friend.currentPack"/>
-                <font-awesome-icon v-if="friend.online" icon="comments" class="mx-2 cursor-pointer" />
+        <div class="overflow-y-auto">
+            <div :class="`flex flex-row p-2 items-center ${currentPage === 'chatFriend' && activeFriend !== undefined && activeFriend === friend.shortHash ? 'bg-background-lighten' : 'hover:bg-background-lighten'} cursor-pointer`" v-for="friend in currentFriends" :key="friend.id" @click="openFriendChat(friend)">
+                <p :class="`ml-2 cursor-pointer overflow-hidden ${friend.online ? 'text-white font-bold' : 'text-muted font-normal'}`" style="text-overflow: ellipsis;">{{friend.name}} </p>
+                <p v-if="unreadMessages[friend.shortHash] > 0" class="bg-red-600 rounded-full px-2 ml-2 text-xs">{{unreadMessages[friend.shortHash]}}</p>
+                <div class="icons ml-auto">
+                    <font-awesome-icon v-if="friend.currentPack && friend.currentPack.length > 0" icon="gamepad" class="mx-2 cursor-pointer" :title="friend.currentPack" @click="openModpack(friend)"/>
+                    <font-awesome-icon v-if="friend.online" icon="comments" class="mx-2 cursor-pointer" />
+                </div>
             </div>
         </div>
         <div v-if="currentFriends.length === 0 && search.length > 0" class="flex flex-col items-center mt-4 text-sm">
@@ -47,9 +49,12 @@
         <div v-if="showRequests">
             <div class="flex flex-row p-2 items-center hover:bg-background-lighten cursor-pointer" v-for="friend in friendRequests" :key="friend.id">
                 <p class="ml-2">{{friend.name}}</p>
-                <div class="icons ml-auto" v-if="friend.online && friend.friendCode">
+                <div class="icons ml-auto" v-if="friend.online && friend.friendCode && acceptingFriends.indexOf(friend.hash) === -1">
                     <font-awesome-icon icon="times" class="mx-2 cursor-pointer hover:text-red-500" />
                     <font-awesome-icon icon="check" class="mx-2 cursor-pointer hover:text-green-500" @click="acceptFriendRequest(friend.hash, friend.friendCode, friend.name)" />
+                </div>
+                <div v-else-if="friend.online && friend.friendCode && acceptingFriends.indexOf(friend.hash) !== -1">
+                    <font-awesome-icon icon="sync-alt" spin class="mx-2" />
                 </div>
             </div>
         </div>
@@ -92,6 +97,8 @@ export default class MainChat extends Vue {
     private showRequests: boolean = true;
     private search: string = '';
 
+    private acceptingFriends: string[] = [];
+
     @Prop()
     private friends!: FriendListResponse;
     @Prop()
@@ -131,7 +138,15 @@ export default class MainChat extends Vue {
     }
 
     public acceptFriendRequest(hash: string, friendCode: string, name: string) {
+        this.acceptingFriends.push(hash)
         ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash), friendCode, name, ourName: this.auth.token?.username});
+        ipcRenderer.on('acceptedFriendRequest', (event, data) => {
+            ipcRenderer.send('checkFriends')
+        });
+    }
+
+    public openModpack(friend: Friend){
+        ipcRenderer.send('openModpack', {name: friend.currentPack, id: friend.currentPackID});
     }
 
     get unreadMessages() {
@@ -141,7 +156,6 @@ export default class MainChat extends Vue {
         });
         return unread;
     }
-
 
     get currentFriends() {
         // return [{name: "Gaz492"}, {name: "Paul_T"}, {name: "Jake_Evans"}];

@@ -48,6 +48,7 @@
               <ftb-button
                       class="py-2 px-4" color="warning"
                       @click="update()"
+                      :disabled="modpacks.installing !== null"
               >
                 <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> Update</span>
               </ftb-button>
@@ -150,9 +151,9 @@
 
                 <ftb-button v-if="instance.versionId && instance.versionId !== version.id"
                             class="py-2 px-4 ml-auto mr-1" color="warning" css-class="text-center text-l"
-                            @click="update(version.id)">
+                            @click="update(version.id)" :disabled="modpacks.installing !== null">
                   <font-awesome-icon icon="download" size="1x"/>
-                  {{isOlderVersion(version.name) ? 'Downgrade' : 'Update'}}
+                  {{isOlderVersion(version.id) ? 'Downgrade' : 'Update'}}
                 </ftb-button>
                 <!--                <button-->
                 <!--                    v-if="instance.versionId && instance.versionId !== version.id"-->
@@ -587,11 +588,11 @@ export default class InstancePage extends Vue {
         this.activeTab = tabItem;
     }
 
-    public isOlderVersion(version: string) {
+    public isOlderVersion(version: number) {
         if (this.instance == null) {
             return false;
         }
-        return semver.lt(version, this.instance.version);
+        return this.instance?.versionId > version;
     }
 
     public isCurrentVersion(version: number) {
@@ -688,6 +689,9 @@ export default class InstancePage extends Vue {
     }
 
     public update(versionID?: number): void {
+      if(this.modpacks?.installing !== null){
+        return;
+      }
         const modpackID = this.instance?.id;
         this.updateInstall({modpackID: this.instance?.id, progress: 0});
         if (this.modpacks != null && this.currentModpack != null) {

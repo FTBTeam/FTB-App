@@ -16,6 +16,7 @@ export interface Settings {
     verbose: boolean;
     cloudSaves: boolean;
     autoOpenChat: boolean | string;
+    blockedUsers: string[];
 }
 
 export interface Hardware {
