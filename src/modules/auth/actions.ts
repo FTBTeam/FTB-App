@@ -1,6 +1,8 @@
 import {ActionTree} from 'vuex';
 import { AuthState } from './types';
+import axios, {AxiosResponse} from 'axios';
 import {RootState} from '@/types';
+import { ipcRenderer } from 'electron';
 
 export interface FriendRequestResponse {
     status: string;
@@ -15,10 +17,52 @@ export const actions: ActionTree<AuthState, RootState> = {
     setWindow({rootState, commit}, data: boolean): void {
         commit('setFriendsWindow', data);
     },
+    async setSessionID({rootState, commit}, payload: any): Promise<void> {
+        commit('storeSession', payload);
+        let response = await axios.get(`http://modpack-curator.ch.tools/api/me`, {headers: {
+            Cookie: 'PHPSESSID=' + payload, Accept: "application/json"
+        },
+            withCredentials: true,
+        });
+        let user = response.data;
+        if(user.accounts.find((s) => s.identityProvider === 'mcauth') !== undefined){
+            let mc = user.accounts.find((s) => s.identityProvider === 'mcauth');
+            try {
+                const response = await axios.post(`https://api.creeper.host/minetogether/profile`, {target: mc.userName}, {headers: {'Content-Type': 'application/json'}});
+                const profileResponse = response.data;
+                user.mc = profileResponse.profileData[mc.userName];
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        ipcRenderer.send('user', user);
+        commit('storeAuthDetails', user);
+    },
+    async getNewSession({rootState, commit}, payload: any): Promise<void> {
+        let response = await axios.get(`http://modpack-curator.ch.tools/api/me`, {headers: {
+                'App-Auth': payload, Accept: "application/json"
+            }
+        });
+        let user = response.data;
+        if(user.accounts.find((s) => s.identityProvider === 'mcauth') !== undefined){
+            let mc = user.accounts.find((s) => s.identityProvider === 'mcauth');
+            try {
+                const response = await axios.post(`https://api.creeper.host/minetogether/profile`, {target: mc.userName}, {headers: {'Content-Type': 'application/json'}});
+                const profileResponse = response.data;
+                user.mc = profileResponse.profileData[mc.userName];
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        ipcRenderer.send('user', user);
+        commit('storeAuthDetails', user);
+        commit('storeSession', response.headers['app-token']);
+    },
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';
         commit('storeAuthDetails', payload);
-        dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: payload.modpackskey, mpSecret: payload.modpackssecret}}, {root: true});
+        console.log(payload);
+        // dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: payload.modpackskey, mpSecret: payload.modpackssecret}}, {root: true});
     },
     getFriends({rootState, commit, dispatch, state}, payload: any): Promise<void> {
         commit('setLoading', true);

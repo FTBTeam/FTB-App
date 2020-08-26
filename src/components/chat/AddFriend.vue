@@ -50,7 +50,7 @@ export default class AddFriend extends Vue {
           this.messageType = 'success';
           this.friendCode = '';
           if (response.hash) {
-            ipcRenderer.send('sendFriendRequest', {target: shortenHash(response.hash), hash: response.hash, name: this.auth.token?.username});
+            ipcRenderer.send('sendFriendRequest', {target: shortenHash(response.hash), hash: response.hash, name: this.auth.token?.mc.display});
           }
       } else {
         this.messageType = 'danger';

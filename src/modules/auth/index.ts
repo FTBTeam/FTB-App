@@ -10,7 +10,8 @@ export const state: AuthState = {
     loading: false,
     error: false,
     friends: [],
-    isFriendsWindowOpen: false
+    isFriendsWindowOpen: false,
+    session: '',
 };
 
 export const auth: Module<AuthState, RootState> = {

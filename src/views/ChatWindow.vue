@@ -5,7 +5,7 @@
         <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages"  :friends="friends" :activeFriend="friend !== null ? friend.shortHash : undefined"></friends-list>
         <div class="bg-navbar flex-1">
             <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
-            <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.shortHash" :friend="friend" :removeFriend="removeFriend" :blockFriend="blockFriend" :shortHash="auth.token.mc.mtusername" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
+            <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.shortHash" :friend="friend" :removeFriend="removeFriend" :blockFriend="blockFriend" :shortHash="auth.token.mc.chat.hash.short" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
         </div>
     </div>
   </div>
@@ -128,7 +128,7 @@ export default class ChatWindow extends Vue {
         } else {
             messages = this.messages[this.friend.shortHash];
         }
-        messages.push({content: message, date: new Date().getTime(), author: this.auth.token.mc.mtusername, read: true});
+        messages.push({content: message, date: new Date().getTime(), author: this.auth.token.mc.chat.hash.short, read: true});
         Vue.set(this.messages, this.friend.shortHash, messages);
     }
 

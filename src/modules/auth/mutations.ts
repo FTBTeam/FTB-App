@@ -2,6 +2,9 @@ import {MutationTree} from 'vuex';
 import {AuthState} from './types';
 
 export const mutations: MutationTree<AuthState> = {
+    storeSession(state, payload) {
+        state.session = payload;
+    },
     storeAuthDetails(state, payload) {
         state.token = payload;
     },

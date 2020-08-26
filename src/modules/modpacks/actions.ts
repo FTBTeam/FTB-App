@@ -11,11 +11,11 @@ export function getAPIRequest(rootState: RootState, url: string): Promise<Respon
         return fetch(`${config.apiURL}/public/${url}`);
     }
     const auth: AuthState = rootState.auth as AuthState;
-    if (auth.token === null || auth.token.modpackskey === undefined) {
+    if (auth.token === null || auth.token.attributes.modpackskey === undefined) {
         return fetch(`${config.apiURL}/public/${url}`);
     }
-    return fetch(`${config.apiURL}/${auth.token.modpackskey}/${url}`, {headers: {
-        Secret: auth.token.modpackssecret,
+    return fetch(`${config.apiURL}/${auth.token.attributes.modpackskey}/${url}`, {headers: {
+        Secret: auth.token.attributes.modpackssecret,
     }});
 }
 

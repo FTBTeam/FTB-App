@@ -5,7 +5,7 @@
         <div class="p-4 flex flex-row items-center">
         <img :src="`https://minotar.net/helm/e1949d31-4f97-423a-8229-690fd6756b1c`" style="margin-right: 0.75em;" width="30px" class="rounded-full" />
         <div class="flex flex-col">
-            <p class="text-lg" v-if="auth.token !== null">{{auth.token.username}}</p>
+            <p class="text-lg" v-if="auth.token !== null">{{auth.token.mc.display}}</p>
             <p class="text-xs cursor-pointer" v-if="auth.token !== null" key="friendCode" @click="copyFriendCode">{{auth.token.mc.friendCode}} <transition name="fade"><span key="copied" v-if="copied"> - Copied!</span></transition></p>
         </div>
         </div>
@@ -139,7 +139,7 @@ export default class MainChat extends Vue {
 
     public acceptFriendRequest(hash: string, friendCode: string, name: string) {
         this.acceptingFriends.push(hash)
-        ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash), friendCode, name, ourName: this.auth.token?.username});
+        ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash), friendCode, name, ourName: this.auth.token?.mc.display});
         ipcRenderer.on('acceptedFriendRequest', (event, data) => {
             ipcRenderer.send('checkFriends')
         });

@@ -1,15 +1,29 @@
 export interface TokenData {
-    modpackskey: string;
-    modpackssecret: string;
+    id: string;
     username: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    attributes: {displayName: string, modpackskey: string, modpackssecret: string};
     mc: McData;
     autoopenchat: boolean;
+    accounts: [{identityProvider: string; userId?: string; userName?: string;}];
+}
+
+export interface HashData {
+    long: string;
+}
+
+export interface ChatData {
+    hash: {medium: string, short: string};
+    online: boolean;
 }
 
 export interface McData {
-    uuid: string;
-    hash: string;
-    mtusername: string;
+    hash: HashData;
+    chat: ChatData;
+    display: string;
+    premium: boolean;
     friendCode: string;
 }
 
@@ -17,6 +31,7 @@ export interface McData {
 
 export interface AuthState {
     token: TokenData | null;
+    session: string;
     error: boolean;
     loading: boolean;
     friends: Friend[];

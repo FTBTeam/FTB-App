@@ -96,7 +96,9 @@ export interface MTModpacks {
     [index: string]: string;
 }
 
+let userData: any;
 let authData: any;
+let sessionString: string;
 const seenModpacks: MTModpacks = {};
 let friends: FriendListResponse = {friends: [], requests: []};
 
@@ -213,18 +215,19 @@ interface AddFriendResponse {
 
 async function addFriend(code: string, display: string): Promise<boolean> {
     try {
-        const response = await httpClient.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: authData.mc.hash, display}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<AddFriendResponse>(`https://api.creeper.host/minetogether/requestfriend`, {target: code, hash: userData.mc.hash.long, display}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
         return friendCodeResponse.status === 'success';
     } catch (err) {
-        log.error(`Error adding new MineTogether friend`, code, display, authData.mc.hash, err);
+        log.error(`Error adding new MineTogether friend`, code, display, userData.mc.hash.long, err);
         return false;
     }
 }
 
+
 async function getFriends(): Promise<FriendListResponse> {
     try {
-        const response = await httpClient.post<FriendListResponse>(`https://api.creeper.host/minetogether/listfriend`, {hash: authData.mc.hash}, {headers: {'Content-Type': 'application/json'}});
+        const response = await httpClient.post<FriendListResponse>(`https://api.creeper.host/minetogether/listfriend`, {hash: userData.mc.hash.long}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
         friendCodeResponse.friends = friendCodeResponse.friends.map((friend: Friend) => {
             if (friend.hash) {
@@ -260,26 +263,26 @@ ipcMain.on('disconnect', (event) => {
 ipcMain.on('sendFriendRequest', async (event, data) => {
     if (mtIRCCLient) {
         if (data.name === undefined) {
-            const profile = await getProfile(authData.mc.hash);
+            const profile = await getProfile(userData.mc.hash.long);
             if (profile === undefined) {
                 return;
             }
             data.name = profile.hash.short;
         }
-        mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', authData.mc.friendCode, data.name);
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDREQ', userData.mc.friendCode, data.name);
     }
 });
 
 ipcMain.on('acceptFriendRequest', async (event, data) => {
     if (mtIRCCLient) {
         if (data.ourName === undefined) {
-            const profile = await getProfile(authData.mc.hash);
+            const profile = await getProfile(userData.mc.hash.long);
             if (profile === undefined) {
                 return;
             }
             data.ourName = profile.hash.short;
         }
-        mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', authData.mc.friendCode, data.ourName);
+        mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', userData.mc.friendCode, data.ourName);
         let success = await addFriend(data.friendCode, data.name);
         if(success){
             friends = await getFriends();
@@ -315,7 +318,7 @@ async function connectToIRC() {
     mtIRCCLient.connect({
         host: mtDetails.host,
         port: mtDetails.port,
-        nick: authData.mc.mtusername,
+        nick: userData.mc.display,
         gecos: '{"p":""}',
     });
     friends = await getFriends();
@@ -465,26 +468,44 @@ ipcMain.on('blockFriend', async (event, data) => {
 })
 
 ipcMain.on('updateSettings', async (event, data) => {
+    console.log("Got settings from frontend", data);
     if(friendsWindow !== null && friendsWindow !== undefined){
         friendsWindow.webContents.send('updateSettings', data)
     }
+    if(data.sessionString){
+        console.log("Got session string", data.sessionString);
+        sessionString = data.sessionString;
+        if(!userData && win){
+            win.webContents.send('getNewSession', sessionString);
+        }
+    }
 })
 
-ipcMain.on('authData', async (event, data) => {
-    authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
-    authData.mc.friendCode = await getFriendCode(authData.mc.hash);
-    // @ts-ignore
-    win.webContents.send('hereAuthData', authData);
-    // @ts-ignore
-    if (friendsWindow !== undefined && friendsWindow !== null) {
-        friendsWindow.webContents.send('hereAuthData', authData);
+ipcMain.on('user', (event, data) => {
+    if(!userData){
+        userData = data;
+        if (friendsWindow !== undefined && friendsWindow !== null) {
+            friendsWindow.webContents.send('hereAuthData', userData);
+        }
+        connectToIRC();
     }
-    connectToIRC();
 });
 
+// ipcMain.on('authData', async (event, data) => {
+//     authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
+//     authData.mc.friendCode = await getFriendCode(authData.mc.hash);
+//     // @ts-ignore
+//     win.webContents.send('hereAuthData', authData);
+//     // @ts-ignore
+//     if (friendsWindow !== undefined && friendsWindow !== null) {
+//         friendsWindow.webContents.send('hereAuthData', authData);
+//     }
+//     connectToIRC();
+// });
+
 ipcMain.on('gimmeAuthData', (event) => {
-    if (authData) {
-        event.reply('hereAuthData', authData);
+    if (userData) {
+        event.reply('hereAuthData', userData);
     }
 });
 
@@ -549,7 +570,7 @@ ipcMain.on('logout', (event, data) => {
     if(friendsWindow){
         friendsWindow.close();
     }
-    authData = undefined;
+    userData = undefined;
 })
 
 ipcMain.on('openLink', (event, data) => {
@@ -746,7 +767,16 @@ if (isDevelopment) {
     }
 }
 
-
+async function getMTSelf(cookie: string) {
+    // try {
+    //     const response = await httpClient.get(`http://modpack-curator.ch.tools/api/me`, {headers: {Cookie: 'PHPSESSID=' + cookie, 'App-Auth': }});
+    //     const user = response.data;
+    //     return user;
+    // } catch (err) {
+    //     log.error(`Error getting MineTogether chat servers`, err);
+    //     return undefined;
+    // }
+}
 // Oauth Window
 
 function createOauthWindow() {
@@ -769,13 +799,36 @@ function createOauthWindow() {
             disableBlinkFeatures: 'Auxclick',
         },
     });
+
     // window.setMenu(null);
-    window.loadURL('https://auth.modpacks.ch/login');
+    window.loadURL('http://modpack-curator.ch.tools/api/login');
+    window.webContents.session.webRequest.onHeadersReceived({urls: []}, (details, callback) => {
+        if(details.url.indexOf('http://modpack-curator.ch.tools/api/redirect') !== -1){
+            console.log("Received headers", details.url);
+            console.log(details.responseHeaders);
+            if(details.responseHeaders){
+                console.log("Got response headers");
+                if(details.responseHeaders['App-Auth'] && win){
+                    console.log("Setting session string", details.responseHeaders['App-Auth'][0]);
+                    win.webContents.send('setSessionString', details.responseHeaders['App-Auth'][0]);
+                }
+            }
+        }
+        callback({});
+    });
     window.webContents.on('did-redirect-navigation', async (event, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) => {
-        if (url.startsWith('https://auth.modpacks.ch/auth')) {
-            await window.webContents.executeJavaScript(`
-                require('electron').ipcRenderer.send('authData', document.body.innerHTML);
-            `);
+        if (url.startsWith('http://modpack-curator.ch.tools/profile')) {
+            window.webContents.session.cookies.get({name: 'PHPSESSID'})
+            .then(async (cookies) => {
+                if(cookies.length === 1){
+                    if(win){
+                        win.webContents.send('setSessionID', cookies[0].value);
+                    }
+                    authData = cookies[0].value;
+                }
+            }).catch((error) => {
+              console.log(error);
+            });
             window.close();
         }
     });

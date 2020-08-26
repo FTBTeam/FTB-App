@@ -176,17 +176,26 @@ ipcRenderer.on('hereIsSecret', (event, data) => {
         Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {store, format: 'json', reconnection: true});
     }
 });
-ipcRenderer.on('hereAuthData', (event, data) => {
-    store.dispatch('auth/storeAuthDetails', data, {root: true});
-    if(store.state.settings?.settings.autoOpenChat === true || store.state.settings?.settings.autoOpenChat === "true"){
-        ipcRenderer.send('showFriends')
-    }
-    // store.commit('auth/storeAuthDetails', );
-});
 ipcRenderer.send('gimmeAuthData');
+ipcRenderer.on('hereAuthData', (event, data) => {
+    store.commit('auth/storeAuthDetails', data, {root: true});
+});
 ipcRenderer.on('setFriendsWindow', (event, data) => {
     store.dispatch('auth/setWindow', data, {root: true})
-})
+});
+ipcRenderer.on('setSessionString', (event, data) => {
+    let settings = store.state.settings?.settings;
+    if(settings !== undefined){
+        settings.sessionString = data;
+    }
+    store.dispatch('settings/saveSettings', settings, {root: true});
+});
+ipcRenderer.on('getNewSession', (event, data) => {
+    store.dispatch('auth/getNewSession', data, {root: true});
+});
+ipcRenderer.on('setSessionID', (event, data) => {
+    store.dispatch('auth/setSessionID', data, {root: true});
+});
 ipcRenderer.on('blockFriend', (event, data) => {
     let settings = store.state.settings?.settings;
     if(settings !== undefined && settings.blockedUsers === undefined){
@@ -231,6 +240,9 @@ ipcRenderer.on('openModpack', (event, data) => {
 });
 ipcRenderer.on('parseProtocolURL', (event, data) => {
     let protocolURL = data;
+    if(protocolURL === undefined){
+        return;
+    }
     protocolURL = protocolURL.substring(6, protocolURL.length);
     const parts = protocolURL.split('/');
     const command = parts[0];
