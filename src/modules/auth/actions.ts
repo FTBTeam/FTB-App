@@ -19,14 +19,14 @@ export const actions: ActionTree<AuthState, RootState> = {
     },
     async setSessionID({rootState, commit}, payload: any): Promise<void> {
         commit('storeSession', payload);
-        let response = await axios.get(`http://modpack-curator.ch.tools/api/me`, {headers: {
+        let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
             Cookie: 'PHPSESSID=' + payload, Accept: "application/json"
         },
             withCredentials: true,
         });
         let user = response.data;
-        if(user.accounts.find((s) => s.identityProvider === 'mcauth') !== undefined){
-            let mc = user.accounts.find((s) => s.identityProvider === 'mcauth');
+        if(user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
+            let mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
             try {
                 const response = await axios.post(`https://api.creeper.host/minetogether/profile`, {target: mc.userName}, {headers: {'Content-Type': 'application/json'}});
                 const profileResponse = response.data;
@@ -39,13 +39,13 @@ export const actions: ActionTree<AuthState, RootState> = {
         commit('storeAuthDetails', user);
     },
     async getNewSession({rootState, commit}, payload: any): Promise<void> {
-        let response = await axios.get(`http://modpack-curator.ch.tools/api/me`, {headers: {
+        let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
                 'App-Auth': payload, Accept: "application/json"
             }
         });
         let user = response.data;
-        if(user.accounts.find((s) => s.identityProvider === 'mcauth') !== undefined){
-            let mc = user.accounts.find((s) => s.identityProvider === 'mcauth');
+        if(user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
+            let mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
             try {
                 const response = await axios.post(`https://api.creeper.host/minetogether/profile`, {target: mc.userName}, {headers: {'Content-Type': 'application/json'}});
                 const profileResponse = response.data;
@@ -57,6 +57,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         ipcRenderer.send('user', user);
         commit('storeAuthDetails', user);
         commit('storeSession', response.headers['app-token']);
+        ipcRenderer.send('session', response.headers['app-token']);
     },
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';
@@ -68,7 +69,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         commit('setLoading', true);
         return fetch(`https://api.creeper.host/minetogether/listfriend`, {headers: {
             'Content-Type': 'application/json',
-        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash})})
+        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash.long})})
         .then((response) => response.json())
         .then(async (data) => {
             const friends = data.friends;
@@ -83,7 +84,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         commit('setLoading', true);
         return fetch(`https://api.creeper.host/minetogether/friendcode`, {headers: {
             'Content-Type': 'application/json',
-        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash})})
+        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash.long})})
         .then((response) => response.json())
         .then(async (data) => {
             commit('setFriendCode', data.code);
@@ -96,7 +97,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         commit('setLoading', true);
         return fetch(`https://api.creeper.host/minetogether/requestfriend`, {headers: {
             'Content-Type': 'application/json',
-        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash, target: payload.friendCode, display: payload.display})})
+        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash.long, target: payload.friendCode, display: payload.display})})
         .then((response) => response.json())
         .then(async (data) => {
             commit('setLoading', false);
@@ -124,7 +125,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         commit('setLoading', true);
         return fetch(`https://api.creeper.host/minetogether/removeFriend`, {headers: {
             'Content-Type': 'application/json',
-        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash, target: payload})})
+        }, method: 'POST', body: JSON.stringify({hash: state.token?.mc.hash.long, target: payload})})
         .then((response) => response.json())
         .then(async (data) => {
             commit('setLoading', false);

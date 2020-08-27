@@ -188,6 +188,7 @@ ipcRenderer.on('setSessionString', (event, data) => {
     if(settings !== undefined){
         settings.sessionString = data;
     }
+    console.log("Saving settings", settings);
     store.dispatch('settings/saveSettings', settings, {root: true});
 });
 ipcRenderer.on('getNewSession', (event, data) => {
@@ -201,7 +202,9 @@ ipcRenderer.on('blockFriend', (event, data) => {
     if(settings !== undefined && settings.blockedUsers === undefined){
         settings.blockedUsers = [];
     }
-    settings?.blockedUsers.push(data);
+    if(typeof settings?.blockedUsers !== 'string'){
+        settings?.blockedUsers.push(data);
+    }
     store.dispatch('settings/saveSettings', settings, {root: true});
 });
 ipcRenderer.on('openModpack', (event, data) => {

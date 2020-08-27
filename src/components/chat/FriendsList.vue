@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col h-full bg-background" style="width: 300px;">
-      <div class="profile bg-navbar flex flex-row items-center relative" style="height: 75px;">
+      <div class="profile bg-navbar flex flex-row items-center relative" style="height: 92px;">
         <div class="minimtg pointer-events-none" ></div>
         <div class="p-4 flex flex-row items-center">
         <img :src="`https://minotar.net/helm/e1949d31-4f97-423a-8229-690fd6756b1c`" style="margin-right: 0.75em;" width="30px" class="rounded-full" />

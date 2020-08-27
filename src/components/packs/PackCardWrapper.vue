@@ -33,6 +33,7 @@ import { SettingsState } from '@/modules/settings/types';
             'isDemo',
             'size',
             'tags',
+            'preLaunch'
         ],
     })
     export default class PackCardWrapper extends Vue {

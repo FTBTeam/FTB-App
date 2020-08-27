@@ -161,6 +161,7 @@ export interface MsgBox {
             'fake',
             'isDemo',
             'size',
+            'preLaunch',
         ],
     })
     export default class PackCard extends Vue {
@@ -178,6 +179,8 @@ export interface MsgBox {
         public instance!: Instance;
         @Prop()
         public packID!: number;
+        @Prop()
+        public preLaunch?: (id: Instance) => Promise<void>;
         private showInstall: boolean = false;
         private showMsgBox: boolean = false;
         private defaultImage: any = placeholderImage;
@@ -217,7 +220,10 @@ export interface MsgBox {
         }
 
         // @ts-ignore
-        public launch(): void {
+        public async launch(): void {
+            if(this.preLaunch){
+                await this.preLaunch(this.instance);
+            }
             this.sendMessage({
                 payload: {type: 'launchInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
                     ipcRenderer.send('disconnect');

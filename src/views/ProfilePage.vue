@@ -9,8 +9,8 @@
                     <p>{{auth.token.activePlan !== undefined && auth.token.activePlan !== null ? auth.token.activePlan.name : ''}}</p>
 
                     <div class="mt-6 w-1/2">  
-                        <ftb-button color="primary" class="text-center px-2 py-1" title="Coming Soon" disabled="true">Upgrade / Modify Subscription</ftb-button>
-                        <ftb-button color="primary" class="text-center px-2 py-1 my-2" title="Coming Soon" disabled="true">Update Profile</ftb-button>
+                        <ftb-button color="primary" class="text-center px-2 py-1" title="Coming Soon"  @click="openSubscriptions">Upgrade / Modify Subscription</ftb-button>
+                        <ftb-button color="primary" class="text-center px-2 py-1 my-2" title="Coming Soon"  @click="openProfile">Update Profile</ftb-button>
                     </div>
                     <div class="mt-6 w-1/2">
                         <ftb-toggle label="Automatically open friends list" :value="settings.settings.autoOpenChat === true || settings.settings.autoOpenChat ==='true'"
@@ -74,6 +74,14 @@ export default class ProfilePage extends Vue {
     public toggleAutoOpenChat(value: boolean) {
         this.settings.settings.autoOpenChat = value;
         this.saveSettings(this.settings.settings);
+    }
+
+    public openSubscriptions(){
+        ipcRenderer.send('openLink', "https://minetogether.io/profile/subscriptions");
+    }
+
+    public openProfile(){
+        ipcRenderer.send('openLink', "https://minetogether.io/profile/edit");
     }
 
     public logout(){

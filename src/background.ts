@@ -26,7 +26,7 @@ httpClient.defaults.timeout = 5000;
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
 
-let protocolURL: string | null;
+let protocolURL: string | null = "ftb://server/994183";
 
 for (let i = 0; i < process.argv.length; i++) {
     if (process.argv[i].indexOf('ftb://') !== -1) {
@@ -34,7 +34,6 @@ for (let i = 0; i < process.argv.length; i++) {
         break;
     }
 }
-
 
 let mtIRCCLient: Client;
 declare const __static: string;
@@ -229,20 +228,28 @@ async function getFriends(): Promise<FriendListResponse> {
     try {
         const response = await httpClient.post<FriendListResponse>(`https://api.creeper.host/minetogether/listfriend`, {hash: userData.mc.hash.long}, {headers: {'Content-Type': 'application/json'}});
         const friendCodeResponse = response.data;
-        friendCodeResponse.friends = friendCodeResponse.friends.map((friend: Friend) => {
+        friendCodeResponse.friends = await Promise.all(friendCodeResponse.friends.map(async (friend: Friend) => {
             if (friend.hash) {
                 const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
                 friend.shortHash = shortHash;
+                let profile = await getProfile(friend.hash);
+                if(profile){
+                    friend.name = profile.display;
+                }
             }
             return friend;
-        }) ;
-        friendCodeResponse.requests = friendCodeResponse.requests.map((friend: Friend) => {
+        }));
+        friendCodeResponse.requests = await Promise.all(friendCodeResponse.requests.map(async (friend: Friend) => {
             if (friend.hash) {
                 const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
                 friend.shortHash = shortHash;
+                let profile = await getProfile(friend.hash);
+                if(profile){
+                    friend.name = profile.display;
+                }
             }
             return friend;
-        });
+        }));
         return friendCodeResponse;
     } catch (err) {
         log.error('Failed to get details about MineTogether friends', err);
@@ -280,7 +287,8 @@ ipcMain.on('acceptFriendRequest', async (event, data) => {
             if (profile === undefined) {
                 return;
             }
-            data.ourName = profile.hash.short;
+            if(profile.display)
+            data.ourName = profile.display;
         }
         mtIRCCLient.ctcpRequest(data.target, 'FRIENDACC', userData.mc.friendCode, data.ourName);
         let success = await addFriend(data.friendCode, data.name);
@@ -480,6 +488,12 @@ ipcMain.on('updateSettings', async (event, data) => {
         }
     }
 })
+
+ipcMain.on('session', (event, data) => {
+    if(!authData){
+        authData = data;
+    }
+});
 
 ipcMain.on('user', (event, data) => {
     if(!userData){
@@ -769,7 +783,7 @@ if (isDevelopment) {
 
 async function getMTSelf(cookie: string) {
     // try {
-    //     const response = await httpClient.get(`http://modpack-curator.ch.tools/api/me`, {headers: {Cookie: 'PHPSESSID=' + cookie, 'App-Auth': }});
+    //     const response = await httpClient.get(`https://minetogether.io/api/me`, {headers: {Cookie: 'PHPSESSID=' + cookie, 'App-Auth': }});
     //     const user = response.data;
     //     return user;
     // } catch (err) {
@@ -801,23 +815,23 @@ function createOauthWindow() {
     });
 
     // window.setMenu(null);
-    window.loadURL('http://modpack-curator.ch.tools/api/login');
+    window.loadURL('https://minetogether.io/api/login');
     window.webContents.session.webRequest.onHeadersReceived({urls: []}, (details, callback) => {
-        if(details.url.indexOf('http://modpack-curator.ch.tools/api/redirect') !== -1){
+        if(details.url.indexOf('https://minetogether.io/api/redirect') !== -1){
             console.log("Received headers", details.url);
             console.log(details.responseHeaders);
             if(details.responseHeaders){
                 console.log("Got response headers");
-                if(details.responseHeaders['App-Auth'] && win){
-                    console.log("Setting session string", details.responseHeaders['App-Auth'][0]);
-                    win.webContents.send('setSessionString', details.responseHeaders['App-Auth'][0]);
+                if(details.responseHeaders['app-auth'] && win){
+                    console.log("Setting session string", details.responseHeaders['app-auth'][0]);
+                    win.webContents.send('setSessionString', details.responseHeaders['app-auth'][0]);
                 }
             }
         }
         callback({});
     });
     window.webContents.on('did-redirect-navigation', async (event, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) => {
-        if (url.startsWith('http://modpack-curator.ch.tools/profile')) {
+        if (url.startsWith('https://minetogether.io/profile')) {
             window.webContents.session.cookies.get({name: 'PHPSESSID'})
             .then(async (cookies) => {
                 if(cookies.length === 1){

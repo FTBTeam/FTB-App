@@ -6,6 +6,9 @@ import Vue from 'vue';
 
 export const mutations: MutationTree<SocketState> = {
     SOCKET_ONOPEN(state: any, event: any)  {
+        if(state.socket.reconnectError){
+            state.socket.reconnectError = false;
+        }
         Vue.prototype.$socket = event.currentTarget;
         state.socket.isConnected = true;
         state.firstStart = false;

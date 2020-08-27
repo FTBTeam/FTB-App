@@ -82,6 +82,7 @@
                     :authors="modpack.authors"
                     :instance="modpack"
                     :instanceID="modpack.uuid"
+                    :preLaunch="preLaunch"
                   ></pack-card-wrapper>
                 </transition-group>
               </div>
@@ -186,7 +187,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Action, Getter } from 'vuex-class';
 import { NewsState, NewsItem } from '@/modules/news/types';
-import { ModpackState, ModPack, Versions } from '../modules/modpacks/types';
+import { ModpackState, ModPack, Versions, Instance } from '../modules/modpacks/types';
 import { getAPIRequest } from '../modules/modpacks/actions';
 import FTBButton from '@/components/FTBButton.vue';
 import { queryServer, logVerbose } from '../utils';
@@ -291,6 +292,27 @@ export default class ServerLandingPage extends Vue {
         logVerbose(this.settings, 'Update data', JSON.stringify(data));
       },
     });
+  }
+
+  public preLaunch(instance: Instance){
+    let newArgs = instance.jvmArgs;
+    if(newArgs.indexOf("-Dmt.server") !== 1){
+      let args = newArgs.split(" ");
+      args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
+      newArgs = args.join(" ");
+    }
+    if(newArgs[newArgs.length - 1] === " " || newArgs.length === 0){
+      newArgs += "-Dmt.server=" + this.serverID;
+    } else {
+      newArgs += " -Dmt.server=" + this.serverID;
+    }
+    return new Promise((res, rej) => {
+      this.sendMessage({
+          payload: {type: 'instanceConfigure', uuid: instance.id, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
+              res();
+          },
+      });
+    })
   }
 
   public mounted() {

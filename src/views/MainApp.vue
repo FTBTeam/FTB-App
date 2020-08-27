@@ -54,10 +54,10 @@
       <div class="background-animation"></div>
       <!-- TODO: Make this pretty -->
       <img src="../assets/logo_ftb.png" width="500px" style="margin-top: 10px;" class="loader-logo-animation"/>
-      <span
+      <!-- <span
       v-if="!websockets.firstStart"
       >Issue connecting to backend... Please wait or relaunch.</span>
-      <span v-else>Please wait....</span>
+      <span v-else>Please wait....</span> -->
     </div>
   </div>
 </template>

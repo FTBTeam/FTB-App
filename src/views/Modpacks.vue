@@ -30,7 +30,8 @@
                     :name="modpack.name"
                     :authors="modpack.authors"
                     :instance="modpack"
-                    :instanceID="modpack.uuid">
+                    :instanceID="modpack.uuid"
+                    :preLaunch="preLaunch">
             </pack-card-wrapper>
             <pack-card-wrapper v-if="!settings.settings.listMode" :fake=true :list-mode="settings.settings.listMode" key="fake_1"></pack-card-wrapper>
             <pack-card-wrapper v-if="!settings.settings.listMode" :fake=true :list-mode="settings.settings.listMode" key="fake_2"></pack-card-wrapper>
@@ -76,6 +77,7 @@ export default class Modpacks extends Vue {
     @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
     @Getter('packsCache', {namespace: 'modpacks'}) public packsCache!: ModPack[];
     @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
+    @Action('sendMessage') public sendMessage!: any;
 
     private searchTerm: string = '';
     private activeTab: string = 'overview';
@@ -96,6 +98,28 @@ export default class Modpacks extends Vue {
         }
       }
     }
+
+    public preLaunch(instance: Instance){
+    //   let serverID = "283861";
+    // let newArgs = instance.jvmArgs;
+    // if(newArgs.indexOf("-Dmt.server") !== 1){
+    //   let args = newArgs.split(" ");
+    //   args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
+    //   newArgs = args.join(" ");
+    // }
+    // if(newArgs[newArgs.length - 1] === " " || newArgs.length === 0){
+    //   newArgs += "-Dmt.server=" + serverID;
+    // } else {
+    //   newArgs += " -Dmt.server=" + serverID;
+    // }
+    // return new Promise((res, rej) => {
+    //   this.sendMessage({
+    //       payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
+    //           res();
+    //       },
+    //   });
+    // })
+  }
 
     public async mounted() {
       if (this.modpacks) {

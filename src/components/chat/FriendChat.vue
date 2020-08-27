@@ -5,7 +5,7 @@
         <div class="ml-auto mr-2 mt-4">
             <font-awesome-icon icon="ban" class="mx-2 cursor-pointer text-muted hover:text-white" title="Block" size="lg" @click="blockFriend"/>
             <font-awesome-icon icon="trash" class="mx-2 cursor-pointer text-muted hover:text-white" title="Remove" size="lg" @click="removeFriend" />
-            <font-awesome-icon icon="globe" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg"  @click="openServer" />
+            <font-awesome-icon icon="globe" class="mx-2 cursor-pointer text-muted hover:text-white" size="lg" v-if="friend.currentServer"  @click="openServer" />
         </div>
       </div>
       <div class="chat-area flex-1 overflow-y-scroll overflow-x-hidden mb-2" ref="chat">

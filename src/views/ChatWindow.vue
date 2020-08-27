@@ -90,7 +90,7 @@ export default class ChatWindow extends Vue {
          if (this.friend === null || this.friend.hash === undefined) {
             return;
         }
-        const success = true;
+        const success = await this.removeFriendAction(this.friend.hash);
         if (typeof success === 'string') {
 
         } else {
