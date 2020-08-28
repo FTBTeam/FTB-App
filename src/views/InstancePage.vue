@@ -251,8 +251,9 @@
                       :raw-style="`background: linear-gradient(to right, #8e0c25 ${((this.instance.minMemory / settingsState.hardware.totalMemory) * 100) - 5}%, #a55805 ${((this.instance.minMemory / settingsState.hardware.totalMemory) * 100)}%, #a55805 ${((this.instance.recMemory / settingsState.hardware.totalMemory) * 100) - 5}%, #005540 ${((this.instance.recMemory / settingsState.hardware.totalMemory) * 100)}%);`"
               />
               <ftb-input label="Custom Arguments" v-model="instance.jvmArgs" @blur="saveSettings"/>
-              <ftb-toggle label="Enable cloud save uploads" :disabled="settingsState.settings.cloudSaves !== true && settingsState.settings.cloudSaves !=='true'"
-                        onColor="bg-primary" inline="true"/>
+              <ftb-toggle label="Enable cloud save uploads" :disabled="auth.token !== undefined && auth.token !== null && auth.token.activePlan !== undefined && auth.token.activePlan !== null && settingsState.settings.cloudSaves !== true && settingsState.settings.cloudSaves !=='true'"
+                        onColor="bg-primary" inline="true" :value="instance.cloudSaves"
+                                @change="toggleCloudSaves" />
               <ftb-button class="py-2 px-4 w-10 ml-auto mr-2" color="primary" css-class="text-center text-l">
                 <font-awesome-icon icon="save" size="1x"/>&nbsp;Save
               </ftb-button>
@@ -402,6 +403,7 @@ import {logVerbose, shuffle} from '../utils';
 import {ServersState, ServerList} from '../modules/servers/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
+import { AuthState } from '@/modules/auth/types';
 
 interface MsgBox {
     title: string;
@@ -491,6 +493,7 @@ export default class InstancePage extends Vue {
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
     @State('settings') public settingsState!: SettingsState;
     @State('servers') public serverListState!: ServersState;
+    @State('auth') public auth!: AuthState;
     @Action('fetchServers', {namespace: 'servers'}) public fetchServers!: (projectid: string) => void;
     @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: any;
     @Action('storeInstalledPacks', {namespace: 'modpacks'})
@@ -597,6 +600,12 @@ export default class InstancePage extends Vue {
 
     public isCurrentVersion(version: number) {
         return this.instance?.versionId && this.instance?.versionId === version;
+    }
+
+    public toggleCloudSaves(){
+      if(this.instance){
+        this.instance.cloudSaves = !this.instance.cloudSaves;
+      }
     }
 
     public confirmDelete() {

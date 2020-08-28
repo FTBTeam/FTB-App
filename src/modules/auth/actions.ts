@@ -17,7 +17,7 @@ export const actions: ActionTree<AuthState, RootState> = {
     setWindow({rootState, commit}, data: boolean): void {
         commit('setFriendsWindow', data);
     },
-    async setSessionID({rootState, commit}, payload: any): Promise<void> {
+    async setSessionID({rootState, commit, dispatch}, payload: any): Promise<void> {
         commit('storeSession', payload);
         let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
             Cookie: 'PHPSESSID=' + payload, Accept: "application/json"
@@ -36,9 +36,9 @@ export const actions: ActionTree<AuthState, RootState> = {
             }
         }
         ipcRenderer.send('user', user);
-        commit('storeAuthDetails', user);
+        dispatch('storeAuthDetails', user);
     },
-    async getNewSession({rootState, commit}, payload: any): Promise<void> {
+    async getNewSession({rootState, commit, dispatch}, payload: any): Promise<void> {
         let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
                 'App-Auth': payload, Accept: "application/json"
             }
@@ -55,15 +55,31 @@ export const actions: ActionTree<AuthState, RootState> = {
             }
         }
         ipcRenderer.send('user', user);
-        commit('storeAuthDetails', user);
+        dispatch('storeAuthDetails', user);
         commit('storeSession', response.headers['app-token']);
         ipcRenderer.send('session', response.headers['app-token']);
     },
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';
         commit('storeAuthDetails', payload);
-        console.log(payload);
-        // dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: payload.modpackskey, mpSecret: payload.modpackssecret}}, {root: true});
+        console.log("STORE AUTH DETAILS", payload);
+        if(payload === null){
+            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: "", mpSecret: "", s3Bucket: "", s3Host: "", s3Key: "", s3Secret: ""}}, {root: true});            
+        } else {
+            let s3Bucket, s3Host, s3Key, s3Secret = "";
+            let mpKey = "";
+            if(payload.activePlan !== null){
+                let fields = payload.activePlan.customFields.customfield;
+                s3Bucket = fields.find((f: any) => f.name === "S3 Bucket").value;
+                s3Host = fields.find((f: any) => f.name === "S3 Server").value;
+                s3Key = fields.find((f: any) => f.name === "S3 Key").value;
+                s3Secret = fields.find((f: any) => f.name === "S3 Secret").value;
+            }
+            if(payload.attributes['modpackschkey'] !== undefined){
+                mpKey = payload.attributes['modpackschkey'][0];
+            }
+            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: mpKey, mpSecret: "", s3Bucket, s3Host, s3Key, s3Secret}}, {root: true});            
+        }
     },
     getFriends({rootState, commit, dispatch, state}, payload: any): Promise<void> {
         commit('setLoading', true);

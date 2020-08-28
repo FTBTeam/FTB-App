@@ -45,6 +45,7 @@ export interface Instance {
     height: number;
     notification: string;
     modpack: ModPack | undefined;
+    cloudSaves: boolean;
 }
 
 export interface Art {

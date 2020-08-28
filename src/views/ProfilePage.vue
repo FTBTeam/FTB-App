@@ -16,7 +16,7 @@
                         <ftb-toggle label="Automatically open friends list" :value="settings.settings.autoOpenChat === true || settings.settings.autoOpenChat ==='true'"
                                 onColor="bg-primary" inline="true" @change="toggleAutoOpenChat"/>
                         <ftb-toggle label="Enable cloud save uploads " :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves ==='true'"
-                                @change="toggleCloudSaves" disabled="true"
+                                @change="toggleCloudSaves" :disabled="auth.token.activePlan === null"
                         onColor="bg-primary" inline="true"/>
                     </div>
                     <div class="mt-4 w-1/2">

@@ -26,7 +26,7 @@ httpClient.defaults.timeout = 5000;
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
 
-let protocolURL: string | null = "ftb://server/994183";
+let protocolURL: string | null;
 
 for (let i = 0; i < process.argv.length; i++) {
     if (process.argv[i].indexOf('ftb://') !== -1) {
@@ -484,6 +484,7 @@ ipcMain.on('updateSettings', async (event, data) => {
         console.log("Got session string", data.sessionString);
         sessionString = data.sessionString;
         if(!userData && win){
+            console.log("getting new session");
             win.webContents.send('getNewSession', sessionString);
         }
     }

@@ -50,6 +50,24 @@
         <message-modal :title="$store.state.websocket.modal.title" :content="$store.state.websocket.modal.message" type="custom" :buttons="$store.state.websocket.modal.buttons" :modalID="$store.state.websocket.modal.id"/>
       </FTBModal>
     </div>
+    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else-if="!websockets.firstStart">
+      <!-- <div class="background-animation"></div> -->
+      <!-- TODO: Make this pretty -->
+      <img src="../assets/logo_ftb.png" width="200px" />
+      <font-awesome-icon icon="heart-broken" style="font-size: 20vh"></font-awesome-icon>
+      <!-- <svg version="1.1"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+        viewBox="0 0 512 240" width="100px">
+        <path class="st0" fill="#fff" d="M196,0C134.8,0,84.3,45.8,76.9,105H16v30h60.9c7.4,59.2,57.9,105,119.1,105h15c8.3,0,15-6.7,15-15v-30h45v-30
+          h-45V75h45V45h-45V15c0-8.3-6.7-15-15-15H196z"/>
+        <path class="st0" fill="#fff" d="M406,0c-8.3,0-15,6.7-15,15v30h30v30h-30v90h30v30h-30v30c0,8.3,6.7,15,15,15h90V0H406z"/>
+      </svg> -->
+      <h1 class="text-2xl text-center">There was an error whilst connecting to the backend.</h1>
+      <h2 class="text-xl text-center">Please wait or relaunch the app</h2>
+      <!-- <span
+      v-if="!websockets.firstStart"
+      >Issue connecting to backend... Please wait or relaunch.</span>
+      <span v-else>Please wait....</span> -->
+    </div>
     <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else>
       <div class="background-animation"></div>
       <!-- TODO: Make this pretty -->
