@@ -26,7 +26,7 @@ export interface ModPackLink {
 }
 
 export interface Instance {
-    kind: 'instance';
+    kind: string;
     id: number;
     uuid: string;
     name: string;

@@ -4,17 +4,17 @@
             <article class="overflow-hidden shadow-lg relative" style="height: 100%">
                 <img class="w-full pack-image rounded-sm"
                      :src="art !== undefined && art.length > 0 ? art : defaultImage" alt="placeholder"
-                     :class="installing ? 'blur' : ''"/>
+                     :class="[installing ? 'blur' : '', kind === 'cloudInstance' ? 'cloud-pack-image' : '']"/>
                 <div class="content" :class="installing ? 'hide' : ''">
                     <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
-                    <div v-if="instance && !isLatestVersion" class="update-box">New Version</div>
-                    <div class="name-box"><p>{{name}}</p></div>
+                    <div v-if="instance && !isLatestVersion && kind === 'instance'" class="update-box">New Version</div>
+                  <div class="name-box"><p>{{name}}</p></div>
                 </div>
                 <div class="hoverContent" v-if="!installing">
                     <div :class="`row mb-2 min-h-size-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}`" >
                         <p :class="`font-bold text-text-color lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl text-center`">{{name}}</p>
                     </div>
-                    <div class="row w-full" v-if="!isDemo">
+                    <div class="row w-full" v-if="!isDemo && kind !== 'cloudInstance'">
                         <div class="buttons action-buttons w-full" v-if="installed">
                             <div @click="checkMemory()" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
                                 <font-awesome-icon  :icon="'play'" size="3x"
@@ -41,6 +41,15 @@
                                 <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">More</p>
                             </div>
                         </div>
+                    </div>
+                    <div class="row w-full" v-if="!isDemo && kind === 'cloudInstance'">
+                      <div class="buttons action-buttons w-full" v-if="installed">
+                        <div @click="" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
+                          <font-awesome-icon  :icon="'cloud-download-alt'" size="3x"
+                                              :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"/>
+                          <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Sync</p>
+                        </div>
+                      </div>
                     </div>
                     <div class="row mt-2">
                         <p class="font-bold text-text-color sm:text-sm lg:text-lg">v{{version}}</p>
@@ -162,6 +171,7 @@ export interface MsgBox {
             'isDemo',
             'size',
             'preLaunch',
+            'kind'
         ],
     })
     export default class PackCard extends Vue {
@@ -356,6 +366,10 @@ export interface MsgBox {
         transition: filter .5s;
         height: 100%;
         object-fit: cover;
+    }
+
+    .cloud-pack-image{
+      filter: grayscale(0.7);
     }
 
     .card:hover .pack-image {

@@ -136,10 +136,14 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     storeInstalledPacks({commit}, packsPayload): any {
         const packs: Instance[] = [];
-
         asyncForEach(Object.keys(packsPayload.instances), async (index) => {
             const instance: Instance = packsPayload.instances[index];
             instance.kind = 'instance';
+            packs.push(instance);
+        });
+        asyncForEach(Object.keys(packsPayload.cloudInstances), async (index) => {
+            const instance: Instance = packsPayload.cloudInstances[index];
+            instance.kind = 'cloudInstance';
             packs.push(instance);
         });
         commit('storeInstalledPacks', packs);

@@ -3,11 +3,11 @@
         <div v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo" style="height: 100%" class="flex flex-row">
             <article :class="`relative overflow-hidden shadow-lg w-size-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}`" style="height: 100%">
                 <img class="pack-image rounded-sm"
-                     :src="art !== undefined && art.length > 0 ? art : defaultImage" alt="placeholder"
+                     :src="art !== undefined && art.length > 0 ? art : defaultImage" alt="placeholder" :class="kind === 'cloudInstance' ? 'cloud-pack-image' : ''"
                      />
                 <div class="content" >
                     <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
-                    <div v-if="instance && !isLatestVersion" class="update-box">New Version</div>
+                    <div v-if="instance && !isLatestVersion && kind === 'instance'" class="update-box">New Version</div>
                     <div v-if="installing" class="update-box">Installing...</div>
                 </div>
             </article>
@@ -28,7 +28,7 @@
                     </div>
                 </div>
             </div>
-            <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="installed">
+            <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="installed && kind === 'instance'">
                 <FTBButton @click="checkMemory()" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="play" size="sm" class="cursor-pointer"/><p>Play</p></FTBButton>
                 <FTBButton @click="goToInstance" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton>
             </div>
@@ -36,6 +36,9 @@
                 <FTBButton @click="openInstall" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="download" size="sm" class="cursor-pointer"/><p>Get</p></FTBButton>
                 <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton>
             </div>
+          <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="kind === 'cloudInstance'">
+            <FTBButton @click="" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="cloud-download-alt" size="sm" class="cursor-pointer"/><p>Sync</p></FTBButton>
+          </div>
         </div>
         <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
             <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions"/>
@@ -101,6 +104,7 @@ export interface MsgBox {
             'size',
             'tags',
             'preLaunch',
+            'kind'
         ],
     })
     export default class PackCardList extends Vue {
@@ -310,6 +314,9 @@ export interface MsgBox {
         transition: filter .5s;
         height: 100%;
         object-fit: cover;
+    }
+    .cloud-pack-image{
+      filter: grayscale(0.7);
     }
     .card-list .list-action-button {
         filter: brightness(0.7);

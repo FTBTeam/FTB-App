@@ -31,6 +31,7 @@
                     :authors="modpack.authors"
                     :instance="modpack"
                     :instanceID="modpack.uuid"
+                    :kind="modpack.kind"
                     :preLaunch="preLaunch">
             </pack-card-wrapper>
             <pack-card-wrapper v-if="!settings.settings.listMode" :fake=true :list-mode="settings.settings.listMode" key="fake_1"></pack-card-wrapper>
