@@ -86,6 +86,7 @@ export default class ProfilePage extends Vue {
 
     public logout(){
         this.logoutAction();
+        // get instances and store
         ipcRenderer.send('logout');
         this.$router.push('/');
     }

@@ -166,7 +166,7 @@ export interface MsgBox {
                     }
                     if (data.status === 'success') {
                         this.sendMessage({
-                            payload: {type: 'installedInstances'}, callback: (data: any) => {
+                            payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                                 this.storePacks(data);
                                 this.finishInstall({modpackID: this.$props.packID, messageID: data.requestId});
                             },
@@ -264,7 +264,7 @@ export interface MsgBox {
                     }
                     if (data.status === 'success') {
                         this.sendMessage({
-                            payload: {type: 'installedInstances'}, callback: (data: any) => {
+                            payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                                 this.storePacks(data);
                                 this.finishInstall({modpackID: this.$props.packID, messageID: data.requestId});
                             },
@@ -309,7 +309,7 @@ export interface MsgBox {
             this.sendMessage({
                 payload: {type: 'uninstallInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
                     this.sendMessage({
-                        payload: {type: 'installedInstances'}, callback: (data: any) => {
+                        payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                             this.storePacks(data);
                         },
                     });

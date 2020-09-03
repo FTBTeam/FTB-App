@@ -252,7 +252,7 @@ export default class ServerLandingPage extends Vue {
       callback: (data: any) => {
         if (data.status === 'success') {
           this.sendMessage({
-            payload: { type: 'installedInstances' },
+            payload: { type: 'installedInstances', refresh: true},
             callback: async (installList: any) => {
               await this.storePacks(installList);
               await this.finishInstall({

@@ -386,7 +386,7 @@ interface Changelogs {
                 payload: {type: 'installInstance', id: this.$route.query.modpackid, version}, callback: (data: any) => {
                     if (data.status === 'success') {
                         this.sendMessage({
-                            payload: {type: 'installedInstances'}, callback: async (installList: any) => {
+                            payload: {type: 'installedInstances', refresh: true}, callback: async (installList: any) => {
                                 await this.storePacks(installList);
                                 await this.finishInstall({
                                     modpackID: this.$route.query.modpackid,

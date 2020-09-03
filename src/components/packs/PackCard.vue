@@ -220,13 +220,13 @@ export interface MsgBox {
             }
             this.updateInstall({modpackID: this.$props.packID, progress: 0});
              this.sendMessage({
-                payload: {type: 'syncInstance'}, callback: (data: any) => {
+                payload: {type: 'syncInstance', uuid: this.instance.uuid}, callback: (data: any) => {
                      if (this.showInstall) {
                         this.showInstall = false;
                     }
                     if (data.status === 'success') {
                         this.sendMessage({
-                            payload: {type: 'installedInstances'}, callback: (data: any) => {
+                            payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                                 this.storePacks(data);
                                 this.finishInstall({modpackID: this.$props.packID, messageID: data.requestId});
                             },
@@ -300,6 +300,9 @@ export interface MsgBox {
         }
 
         get installing() {
+            if(this.instance !== undefined && this.instance !== null){
+                return this.modpacks !== undefined && this.modpacks.installing !== null && this.modpacks.installing.instanceID === this.instance.uuid;
+            }
             return this.modpacks !== undefined && this.modpacks.installing !== null && this.modpacks.installing.modpackID === this.$props.packID;
         }
 
@@ -315,7 +318,7 @@ export interface MsgBox {
                     }
                     if (data.status === 'success') {
                         this.sendMessage({
-                            payload: {type: 'installedInstances'}, callback: (data: any) => {
+                            payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                                 this.storePacks(data);
                                 this.finishInstall({modpackID: this.$props.packID, messageID: data.requestId});
                             },
@@ -360,7 +363,7 @@ export interface MsgBox {
             this.sendMessage({
                 payload: {type: 'uninstallInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
                     this.sendMessage({
-                        payload: {type: 'installedInstances'}, callback: (data: any) => {
+                        payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                             this.storePacks(data);
                         },
                     });

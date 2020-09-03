@@ -622,7 +622,7 @@ export default class InstancePage extends Vue {
             payload: {type: 'uninstallInstance', uuid: this.instance?.uuid},
             callback: (data: any) => {
                 this.sendMessage({
-                    payload: {type: 'installedInstances'},
+                    payload: {type: 'installedInstances', refresh: true},
                     callback: (data: any) => {
                         this.storePacks(data);
                         this.$router.push({name: 'modpacks'});
@@ -717,7 +717,7 @@ export default class InstancePage extends Vue {
                 callback: (data: any) => {
                     if (data.status === 'success') {
                         this.sendMessage({
-                            payload: {type: 'installedInstances'},
+                            payload: {type: 'installedInstances', refresh: true},
                             callback: (data: any) => {
                                 this.storePacks(data);
                                 this.finishInstall({
