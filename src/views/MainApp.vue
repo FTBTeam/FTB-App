@@ -54,15 +54,20 @@
       <!-- <div class="background-animation"></div> -->
       <!-- TODO: Make this pretty -->
       <img src="../assets/logo_ftb.png" width="200px" />
-      <font-awesome-icon icon="heart-broken" style="font-size: 20vh"></font-awesome-icon>
+      <!-- <font-awesome-icon icon="heart-broken" style="font-size: 20vh"></font-awesome-icon> -->
       <!-- <svg version="1.1"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
         viewBox="0 0 512 240" width="100px">
         <path class="st0" fill="#fff" d="M196,0C134.8,0,84.3,45.8,76.9,105H16v30h60.9c7.4,59.2,57.9,105,119.1,105h15c8.3,0,15-6.7,15-15v-30h45v-30
           h-45V75h45V45h-45V15c0-8.3-6.7-15-15-15H196z"/>
         <path class="st0" fill="#fff" d="M406,0c-8.3,0-15,6.7-15,15v30h30v30h-30v90h30v30h-30v30c0,8.3,6.7,15,15,15h90V0H406z"/>
       </svg> -->
-      <h1 class="text-2xl text-center">There was an error whilst connecting to the backend.</h1>
-      <h2 class="text-xl text-center">Please wait or relaunch the app</h2>
+      <h1 class="text-2xl text-center">There was an error starting the FTB App.</h1>
+      <ftb-input label="Email" class="w-1/2" />
+      <p>Please describe what happened in the box below and submit.</p>
+      <textarea class="bg-navbar border-background-darken w-1/2 p-2"></textarea>
+      <ftb-button color="danger"
+                   class="my-2 py-2 px-4 text-center rounded-br">Submit</ftb-button>
+      <!-- <h2 class="text-xl text-center">Please wait or relaunch the app</h2> -->
       <!-- <span
       v-if="!websockets.firstStart"
       >Issue connecting to backend... Please wait or relaunch.</span>
@@ -81,14 +86,20 @@
 </template>
 
 <script lang="ts">
+import {readdirSync, readFileSync, existsSync} from 'fs';
+import {createPaste} from 'hastebin';
+import path from 'path';
 import Sidebar from '@/components/Sidebar.vue';
 import TitleBar from '@/components/TitleBar.vue';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/FTBModal.vue';
+import FTBButton from '@/components/FTBButton.vue';
+import FTBInput from '@/components/FTBInput.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { asyncForEach, logVerbose } from '@/utils';
+import config from '@/config';
 import {
   Instance,
   ModpackState,
@@ -96,9 +107,10 @@ import {
 } from '@/modules/modpacks/types';
 import { RootState } from '@/types';
 import { SettingsState } from '../modules/settings/types';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, clipboard} from 'electron';
 
-@Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal} })
+@Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal, 
+        'ftb-button': FTBButton, 'ftb-input': FTBInput} })
 export default class MainApp extends Vue {
   @State('websocket') public websockets!: SocketState;
   @State('modpacks') public modpacks!: ModpackState;
@@ -115,6 +127,9 @@ export default class MainApp extends Vue {
   @Action('hideModal') public hideModal: any;
   private loading: boolean = false;
   private hasLoaded: boolean = false;
+
+  private webVersion: string = config.webVersion;
+  private appVersion: string = config.appVersion;
 
   @Watch('websockets', {deep: true})
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
@@ -140,6 +155,54 @@ export default class MainApp extends Vue {
           resolve();
       }});
     });
+  }
+
+  public async submitError(){
+    let logLink = await this.uploadLogData();
+    //Send request
+  }
+
+  public uploadLogData(): Promise<String> {
+    return new Promise((resolve, reject) => {
+      let workingDir = process.cwd();
+      // Change directory up one level temporarily to get log files.
+      let r = false;
+      if (workingDir.trimEnd().endsWith('bin')) {
+          process.chdir('../');
+          r = true;
+      }
+      workingDir = process.cwd();
+      // Get directory to check for files, if they're there we can proceed.
+      const appFolder = readdirSync(workingDir);
+      if (appFolder.indexOf('launcher.log') > -1) {
+          // Launcher log should always be there, if it isn't we won't do anything.
+          const launcherLog = readFileSync(`${workingDir}/launcher.log`, {encoding: 'utf8'});
+          const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`, {encoding: 'utf8'}) : 'Not available';
+          let frontendLog = new Buffer('');
+          if (appFolder.indexOf('bin') > -1) {
+              if (existsSync(path.join(workingDir, 'bin', 'logs', 'main.log'))) {
+                  frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
+              }
+          }
+          const data = `UI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
+          // Upload logs to pste.ch and copy URL to clipboard
+          createPaste(data, {
+              raw: false,
+              server: 'https://pste.ch',
+          })
+              .then((data) => {
+                resolve(data);
+              })
+              .catch((rejected) => {
+                  logVerbose(this.settings, rejected);
+                  reject(rejected);
+              });
+      }
+      // Change back to the bin folder
+      if (r) {
+          process.chdir('./bin');
+      }
+    })
   }
 
   public retry(modpack: InstallProgress) {

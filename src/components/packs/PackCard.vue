@@ -44,7 +44,7 @@
                     </div>
                     <div class="row w-full" v-if="!isDemo && kind === 'cloudInstance'">
                       <div class="buttons action-buttons w-full" v-if="installed">
-                        <div @click="" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
+                        <div @click="sync" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
                           <font-awesome-icon  :icon="'cloud-download-alt'" size="3x"
                                               :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"/>
                           <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Sync</p>
@@ -212,6 +212,59 @@ export interface MsgBox {
             if (this.instance !== undefined) {
                 this.fetchModpack(this.instance.id);
             }
+        }
+
+        public async sync(){
+            if(this.modpacks.installing !== null){
+                return;
+            }
+            this.updateInstall({modpackID: this.$props.packID, progress: 0});
+             this.sendMessage({
+                payload: {type: 'syncInstance'}, callback: (data: any) => {
+                     if (this.showInstall) {
+                        this.showInstall = false;
+                    }
+                    if (data.status === 'success') {
+                        this.sendMessage({
+                            payload: {type: 'installedInstances'}, callback: (data: any) => {
+                                this.storePacks(data);
+                                this.finishInstall({modpackID: this.$props.packID, messageID: data.requestId});
+                            },
+                        });
+                    } else if (data.status === 'error') {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            error: true,
+                            errorMessage: data.message,
+                            instanceID: data.uuid,
+                        });
+                    } else if (data.currentStage === 'POSTINSTALL') {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            stage: data.currentStage,
+                        });
+                    } else if (data.status === 'init') {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            stage: 'INIT',
+                            message: data.message,
+                        });
+                    } else if (data.overallPercentage <= 100) {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            progress: data.overallPercentage,
+                            downloadSpeed: data.speed,
+                            downloadedBytes: data.currentBytes,
+                            totalBytes: data.overallBytes,
+                            stage: data.currentStage,
+                        });
+                    }
+                },
+            });
         }
 
         public checkMemory() {

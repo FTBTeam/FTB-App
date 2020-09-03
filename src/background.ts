@@ -585,6 +585,10 @@ ipcMain.on('logout', (event, data) => {
     if(friendsWindow){
         friendsWindow.close();
     }
+    if (mtIRCCLient) {
+        mtIRCCLient.quit();
+        mtIRCCLient = undefined;
+    }
     userData = undefined;
 })
 

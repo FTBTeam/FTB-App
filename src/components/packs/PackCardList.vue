@@ -37,7 +37,7 @@
                 <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton>
             </div>
           <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="kind === 'cloudInstance'">
-            <FTBButton @click="" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="cloud-download-alt" size="sm" class="cursor-pointer"/><p>Sync</p></FTBButton>
+            <FTBButton @click="sync" :isRounded="false" color="primary" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"><font-awesome-icon icon="cloud-download-alt" size="sm" class="cursor-pointer"/><p>Sync</p></FTBButton>
           </div>
         </div>
         <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
@@ -153,6 +153,60 @@ export interface MsgBox {
                 this.fetchModpack(this.instance.id);
             }
         }
+
+        public async sync(){
+            if(this.modpacks.installing !== null){
+                return;
+            }
+            this.updateInstall({modpackID: this.$props.packID, progress: 0});
+             this.sendMessage({
+                payload: {type: 'syncInstance'}, callback: (data: any) => {
+                     if (this.showInstall) {
+                        this.showInstall = false;
+                    }
+                    if (data.status === 'success') {
+                        this.sendMessage({
+                            payload: {type: 'installedInstances'}, callback: (data: any) => {
+                                this.storePacks(data);
+                                this.finishInstall({modpackID: this.$props.packID, messageID: data.requestId});
+                            },
+                        });
+                    } else if (data.status === 'error') {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            error: true,
+                            errorMessage: data.message,
+                            instanceID: data.uuid,
+                        });
+                    } else if (data.currentStage === 'POSTINSTALL') {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            stage: data.currentStage,
+                        });
+                    } else if (data.status === 'init') {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            stage: 'INIT',
+                            message: data.message,
+                        });
+                    } else if (data.overallPercentage <= 100) {
+                        this.updateInstall({
+                            modpackID: this.$props.packID,
+                            messageID: data.requestId,
+                            progress: data.overallPercentage,
+                            downloadSpeed: data.speed,
+                            downloadedBytes: data.currentBytes,
+                            totalBytes: data.overallBytes,
+                            stage: data.currentStage,
+                        });
+                    }
+                },
+            });
+        }
+
 
         public checkMemory() {
             if (this.instance.memory < this.instance.minMemory) {
