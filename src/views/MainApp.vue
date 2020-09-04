@@ -62,10 +62,10 @@
         <path class="st0" fill="#fff" d="M406,0c-8.3,0-15,6.7-15,15v30h30v30h-30v90h30v30h-30v30c0,8.3,6.7,15,15,15h90V0H406z"/>
       </svg> -->
       <h1 class="text-2xl text-center">There was an error with the FTB App.</h1>
-      <div v-if="!submitted">
-        <ftb-input label="Email" class="w-1/2" v-model="errorEmail"/>
+      <div v-if="!submitted" class="flex flex-col">
+        <ftb-input label="Email" v-model="errorEmail"/>
         <p>Please describe what happened in the box below and submit.</p>
-        <textarea class="bg-navbar border-background-darken w-1/2 p-2" v-model="errorDescription"></textarea>
+        <textarea class="bg-navbar border-background-darken p-2" v-model="errorDescription"></textarea>
         <ftb-button color="danger"
                     class="my-2 py-2 px-4 text-center rounded-br" @click="submitError">{{submittingError ? 'Submitting...' : 'Submit'}}</ftb-button>
       </div>
@@ -152,8 +152,7 @@ export default class MainApp extends Vue {
       this.hasLoaded = true;
       this.loading = false;
       ipcRenderer.send('appReady');
-    } else if (!newVal.socket.isConnected && !this.loading) {
-      this.loading = true;
+    } else if (!newVal.socket.isConnected) {
       this.hasLoaded = false;
     }
   }
