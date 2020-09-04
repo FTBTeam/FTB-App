@@ -502,7 +502,9 @@ ipcMain.on('user', (event, data) => {
         if (friendsWindow !== undefined && friendsWindow !== null) {
             friendsWindow.webContents.send('hereAuthData', userData);
         }
-        connectToIRC();
+        if(userData.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
+            connectToIRC();
+        }
     }
 });
 
@@ -530,6 +532,7 @@ ipcMain.on('openModpack', (event, data) => {
         win.webContents.send('openModpack', data);
     }
 });
+
 
 ipcMain.on('expandMeScotty', (event, data) => {
     const window = BrowserWindow.fromWebContents(event.sender);

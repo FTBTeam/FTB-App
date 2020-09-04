@@ -145,8 +145,9 @@ export default class MainApp extends Vue {
 
   @Watch('websockets', {deep: true})
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
-    if (newVal.socket.isConnected && this.loading && !this.hasLoaded) {
+    if (newVal.socket.isConnected && !this.loading && !this.hasLoaded) {
       this.loading = true;
+      console.log("Fetching start data");
       await this.fetchStartData();
       this.hasLoaded = true;
       this.loading = false;
@@ -163,6 +164,7 @@ export default class MainApp extends Vue {
 
   public fetchStartData() {
     return new Promise(async (resolve, reject) => {
+      console.log("Loading settings");
       await this.loadSettings();
       this.sendMessage({
         payload: { type: 'installedInstances' },
