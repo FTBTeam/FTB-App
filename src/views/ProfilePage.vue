@@ -4,8 +4,8 @@
             <h1 class="text-2xl">Profile</h1>
             <div class="bg-sidebar-item p-5 rounded my-4">
                 <div class="flex flex-col my-2 items-center">
-                    <img :src="`https://minotar.net/helm/${auth.token.accounts.find((s) => s.identityProvider === 'mcauth').userId}`" class="rounded-full" />
-                    <p class="text-lg mt-2">{{auth.token.mc.display}}</p>
+                    <img :src="`https://minotar.net/helm/${avatarName}`" class="rounded-full" />
+                    <p class="text-lg mt-2">{{auth.token.mc !== undefined ? auth.token.mc.display : auth.token.username}}</p>
                     <p>{{auth.token.activePlan !== undefined && auth.token.activePlan !== null ? auth.token.activePlan.name : ''}}</p>
 
                     <div class="mt-6 w-1/2">  
@@ -65,6 +65,11 @@ export default class ProfilePage extends Vue {
 
     public async created() {
     
+    }
+
+    get avatarName(){
+        let provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
+        return provider !== undefined && provider !== null ? provider.userId : "MHF_Steve";
     }
 
     public toggleCloudSaves(value: boolean) {

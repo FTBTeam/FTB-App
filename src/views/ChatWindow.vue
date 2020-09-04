@@ -1,18 +1,24 @@
 <template>
   <div id="app" class="theme-dark">
     <title-bar />
-    <div class="flex flex-row h-full">
+    <div class="flex flex-row h-full" v-if="isMinecraftLinked">
         <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages"  :friends="friends" :activeFriend="friend !== null ? friend.shortHash : undefined"></friends-list>
         <div class="bg-navbar flex-1">
             <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
             <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.shortHash" :friend="friend" :removeFriend="removeFriend" :blockFriend="blockFriend" :shortHash="auth.token.mc.chat.hash.short" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
         </div>
     </div>
+    <div class="flex flex-col h-full justify-center"  v-else>
+        <font-awesome-icon icon="user" class="mx-auto" style="font-size: 25vw;"></font-awesome-icon>
+        <h2 class="text-center">In order to use this feature, you must complete your account setup</h2>
+        <ftb-button color="primary" class="mx-auto py-2 px-4 my-2" @click="openProfile">Click here to continue</ftb-button>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import TitleBar from '@/components/TitleBar.vue';
+import FTBButton from '@/components/FTBButton.vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { ipcRenderer } from 'electron';
 import FriendsList from '@/components/chat/FriendsList.vue';
@@ -29,6 +35,7 @@ import { SettingsState, Settings } from '../modules/settings/types';
     'friends-list': FriendsList,
     AddFriend,
     FriendChat,
+    'ftb-button': FTBButton,
   },
 })
 export default class ChatWindow extends Vue {
@@ -46,6 +53,15 @@ export default class ChatWindow extends Vue {
 
     @Action('saveSettings', {namespace: 'settings'})
     private saveSettings!: (settings: Settings) => Promise<boolean | string>;
+
+    get isMinecraftLinked(){
+        let p = this.auth.token?.accounts.find((s) => s.identityProvider === "mcauth");
+        return p !== undefined && p != null;
+    }
+
+    public openProfile(){
+        ipcRenderer.send('openLink', "https://minetogether.io/profile/connections");
+    }
 
     public expand() {
         ipcRenderer.send('expandMeScotty', { width: 800 });
@@ -159,24 +175,26 @@ export default class ChatWindow extends Vue {
             requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false});
             Vue.set(this.friends, 'requests', requests);
         });
-        ipcRenderer.send('checkFriends');
-        setInterval(() => {
+        if(this.isMinecraftLinked){
             ipcRenderer.send('checkFriends');
-        }, 30 * 1000);
-        ipcRenderer.send('getFriends');
-        ipcRenderer.on('ooohFriend', (_, data) => {
-            Vue.set(this.friends, 'friends',  data.friends);
-            let requests = this.friends.requests;
-            requests = data.requests.map((request: Friend) => {
-                const existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
-                if (existing !== undefined) {
-                    request.friendCode = existing.friendCode;
-                    request.name = existing.name;
-                }
-                return request;
+            setInterval(() => {
+                ipcRenderer.send('checkFriends');
+            }, 30 * 1000);
+            ipcRenderer.send('getFriends');
+            ipcRenderer.on('ooohFriend', (_, data) => {
+                Vue.set(this.friends, 'friends',  data.friends);
+                let requests = this.friends.requests;
+                requests = data.requests.map((request: Friend) => {
+                    const existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
+                    if (existing !== undefined) {
+                        request.friendCode = existing.friendCode;
+                        request.name = existing.name;
+                    }
+                    return request;
+                });
+                Vue.set(this.friends, 'requests', requests);
             });
-            Vue.set(this.friends, 'requests', requests);
-        });
+        }
     }
 }
 </script>
