@@ -43,6 +43,8 @@ export default class ChatWindow extends Vue {
     private auth!: AuthState;
     @State('settings')
     private settings!: SettingsState;
+
+    private hasLoaded: boolean = false;
     private currentPage: string = '';
     private friend: Friend | null = null;
     private messages: Messages = {};
@@ -53,6 +55,35 @@ export default class ChatWindow extends Vue {
 
     @Action('saveSettings', {namespace: 'settings'})
     private saveSettings!: (settings: Settings) => Promise<boolean | string>;
+
+    @Watch('auth', {deep: true})
+    public async onAuthChange(newVal: AuthState, oldVal: AuthState) {
+        console.log("Checking if Minecraft is linked", newVal.token);
+        if(newVal.token?.accounts.find((s: any) => s.identityProvider === "mcauth") !== undefined && !this.hasLoaded){
+            this.hasLoaded = true;
+            console.log("Checking friends")
+            ipcRenderer.send('checkFriends');
+            setInterval(() => {
+                ipcRenderer.send('checkFriends');
+            }, 30 * 1000);
+            console.log("Getting friends")
+            ipcRenderer.send('getFriends');
+            ipcRenderer.on('ooohFriend', (_, data) => {
+                console.log("Received friends")
+                Vue.set(this.friends, 'friends',  data.friends);
+                let requests = this.friends.requests;
+                requests = data.requests.map((request: Friend) => {
+                    const existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
+                    if (existing !== undefined) {
+                        request.friendCode = existing.friendCode;
+                        request.name = existing.name;
+                    }
+                    return request;
+                });
+                Vue.set(this.friends, 'requests', requests);
+            });
+        }
+    }
 
     get isMinecraftLinked(){
         let p = this.auth.token?.accounts.find((s) => s.identityProvider === "mcauth");
@@ -175,49 +206,25 @@ export default class ChatWindow extends Vue {
             requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false});
             Vue.set(this.friends, 'requests', requests);
         });
-        console.log("Checking if Minecraft is linked")
-        if(this.isMinecraftLinked){
-            console.log("Checking friends")
-            ipcRenderer.send('checkFriends');
-            setInterval(() => {
-                ipcRenderer.send('checkFriends');
-            }, 30 * 1000);
-            console.log("Getting friends")
-            ipcRenderer.send('getFriends');
-            ipcRenderer.on('ooohFriend', (_, data) => {
-                console.log("Received friends")
-                Vue.set(this.friends, 'friends',  data.friends);
-                let requests = this.friends.requests;
-                requests = data.requests.map((request: Friend) => {
-                    const existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
-                    if (existing !== undefined) {
-                        request.friendCode = existing.friendCode;
-                        request.name = existing.name;
-                    }
-                    return request;
-                });
-                Vue.set(this.friends, 'requests', requests);
-            });
-        }
     }
 }
 </script>
 
 <style lang="scss">
 #app {
-  margin: 0;
-  font-family: "Raleway", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: var(--color-text);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  .container {
-    height: 100%;
+    margin: 0;
+    font-family: "Raleway", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: var(--color-text);
+    height: 100vh;
     display: flex;
-    flex-direction: row;
-    background-color: var(--color-background);
-  }
+    flex-direction: column;
+    .container {
+        height: 100%;
+        display: flex;
+        flex-direction: row;
+        background-color: var(--color-background);
+    }
 }
 </style>
