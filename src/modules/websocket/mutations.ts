@@ -40,6 +40,7 @@ export const mutations: MutationTree<SocketState> = {
     },
     SOCKET_RECONNECT(state: any, count: number) {
         console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
+        state.reconnects = count;
     },
     SOCKET_RECONNECT_ERROR(state: any) {
         state.socket.reconnectError = true;

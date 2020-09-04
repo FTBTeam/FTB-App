@@ -5,6 +5,7 @@ export interface SocketState {
     socket: Socket;
     messages: {[index: string]: (data: any) => void};
     modal: ModalBox | null;
+    reconnects: number;
 }
 
 export interface Socket {
