@@ -50,7 +50,7 @@
         <message-modal :title="$store.state.websocket.modal.title" :content="$store.state.websocket.modal.message" type="custom" :buttons="$store.state.websocket.modal.buttons" :modalID="$store.state.websocket.modal.id"/>
       </FTBModal>
     </div>
-    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else-if="!websockets.firstStart && !loading">
+    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20">
       <!-- <div class="background-animation"></div> -->
       <!-- TODO: Make this pretty -->
       <img src="../assets/logo_ftb.png" width="200px" />
@@ -61,16 +61,17 @@
           h-45V75h45V45h-45V15c0-8.3-6.7-15-15-15H196z"/>
         <path class="st0" fill="#fff" d="M406,0c-8.3,0-15,6.7-15,15v30h30v30h-30v90h30v30h-30v30c0,8.3,6.7,15,15,15h90V0H406z"/>
       </svg> -->
-      <h1 class="text-2xl text-center">There was an error starting the FTB App.</h1>
+      <h1 class="text-2xl text-center">There was an error with the FTB App.</h1>
       <div v-if="!submitted">
         <ftb-input label="Email" class="w-1/2" v-model="errorEmail"/>
         <p>Please describe what happened in the box below and submit.</p>
         <textarea class="bg-navbar border-background-darken w-1/2 p-2" v-model="errorDescription"></textarea>
         <ftb-button color="danger"
-                    class="my-2 py-2 px-4 text-center rounded-br" >{{submittingError ? 'Submitting...' : 'Submit'}}</ftb-button>
+                    class="my-2 py-2 px-4 text-center rounded-br" @click="submitError">{{submittingError ? 'Submitting...' : 'Submit'}}</ftb-button>
       </div>
       <div v-else>
         <p>Thanks for submitting the bug report!</p>
+        <ftb-button color="danger" class="my-2 py-2 px-4 text-center rounded-br" @click="quitApp">Quit</ftb-button>
       </div>
       <!-- <h2 class="text-xl text-center">Please wait or relaunch the app</h2> -->
       <!-- <span
@@ -144,7 +145,7 @@ export default class MainApp extends Vue {
 
   @Watch('websockets', {deep: true})
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
-    if (newVal.socket.isConnected && !this.loading && !this.hasLoaded) {
+    if (newVal.socket.isConnected && this.loading && !this.hasLoaded) {
       this.loading = true;
       await this.fetchStartData();
       this.hasLoaded = true;
@@ -154,6 +155,10 @@ export default class MainApp extends Vue {
       this.loading = true;
       this.hasLoaded = false;
     }
+  }
+
+  private quitApp() {
+    ipcRenderer.send('quit_app');
   }
 
   public fetchStartData() {
@@ -170,20 +175,32 @@ export default class MainApp extends Vue {
 
   public async submitError(){
     if(!emailRegex.test(this.errorEmail)){
+      console.log('Email regex not passing');
       return;
     }
     if(this.errorDescription.length === 0){
       return;
     }
     this.submittingError = true;
-    let logLink = await this.uploadLogData();
+    console.log('Uploading log data');
+    let logLink = await this.uploadLogData().catch((err) => {
+      if(err) {
+        this.submittingError = false;
+        // Show an error here...
+        return;
+      }
+      });
+    console.log('Log data uploaded', logLink);
     //Send request
+    console.log('Sending request to log error...');
     fetch(`https://minetogether.io/api/ftbAppError`, {method: 'PUT', body: JSON.stringify({email: this.errorEmail, logs: logLink, description: this.errorDescription})});
+    console.log('Send request to log error');
     this.submittingError = false;
     this.submitted = true;
   }
 
   public uploadLogData(): Promise<String> {
+    console.log('Getting data');
     return new Promise((resolve, reject) => {
       let workingDir = process.cwd();
       // Change directory up one level temporarily to get log files.
@@ -193,6 +210,7 @@ export default class MainApp extends Vue {
           r = true;
       }
       workingDir = process.cwd();
+      console.log('In ', workingDir);
       // Get directory to check for files, if they're there we can proceed.
       const appFolder = readdirSync(workingDir);
       if (appFolder.indexOf('launcher.log') > -1) {
@@ -218,6 +236,8 @@ export default class MainApp extends Vue {
                   logVerbose(this.settings, rejected);
                   reject(rejected);
               });
+      } else {
+        reject('No logs found');
       }
       // Change back to the bin folder
       if (r) {

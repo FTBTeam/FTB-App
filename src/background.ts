@@ -110,7 +110,7 @@ ipcMain.on('openOauthWindow', (event, data) => {
 });
 
 ipcMain.on('showFriends', () => {
-    if(authData){
+    if(userData){
         createFriendsWindow();
     }
 });
@@ -580,6 +580,10 @@ ipcMain.on('windowControls', (event, data) => {
         }
     }
 });
+
+ipcMain.on('quit_app', (event, data) => {
+    process.exit(1);
+})
 
 ipcMain.on('logout', (event, data) => {
     if(friendsWindow){
