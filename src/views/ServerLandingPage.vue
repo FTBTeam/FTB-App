@@ -308,7 +308,7 @@ export default class ServerLandingPage extends Vue {
     }
     return new Promise((res, rej) => {
       this.sendMessage({
-          payload: {type: 'instanceConfigure', uuid: instance.id, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
+          payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
               res();
           },
       });
