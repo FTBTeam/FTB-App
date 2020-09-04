@@ -3,7 +3,7 @@
       <div class="profile bg-navbar flex flex-row items-center relative" style="height: 92px;">
         <div class="minimtg pointer-events-none" ></div>
         <div class="p-4 flex flex-row items-center">
-        <img :src="`https://minotar.net/helm/e1949d31-4f97-423a-8229-690fd6756b1c`" style="margin-right: 0.75em;" width="30px" class="rounded-full" />
+        <img :src="`https://minotar.net/helm/${avatarName}`" style="margin-right: 0.75em;" width="30px" class="rounded-full" />
         <div class="flex flex-col">
             <p class="text-lg" v-if="auth.token !== null">{{auth.token.mc.display}}</p>
             <p class="text-xs cursor-pointer" v-if="auth.token !== null" key="friendCode" @click="copyFriendCode">{{auth.token.mc.friendCode}} <transition name="fade"><span key="copied" v-if="copied"> - Copied!</span></transition></p>
@@ -115,6 +115,11 @@ export default class MainChat extends Vue {
     }
     public toggleRequests() {
         this.showRequests = !this.showRequests;
+    }
+
+    get avatarName(){
+        let provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
+        return provider !== undefined && provider !== null ? provider.userId : "MHF_Steve";
     }
 
     @Watch('auth', {deep: true})

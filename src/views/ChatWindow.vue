@@ -175,13 +175,17 @@ export default class ChatWindow extends Vue {
             requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false});
             Vue.set(this.friends, 'requests', requests);
         });
+        console.log("Checking if Minecraft is linked")
         if(this.isMinecraftLinked){
+            console.log("Checking friends")
             ipcRenderer.send('checkFriends');
             setInterval(() => {
                 ipcRenderer.send('checkFriends');
             }, 30 * 1000);
+            console.log("Getting friends")
             ipcRenderer.send('getFriends');
             ipcRenderer.on('ooohFriend', (_, data) => {
+                console.log("Received friends")
                 Vue.set(this.friends, 'friends',  data.friends);
                 let requests = this.friends.requests;
                 requests = data.requests.map((request: Friend) => {
