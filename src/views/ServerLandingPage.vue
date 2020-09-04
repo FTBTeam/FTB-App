@@ -83,6 +83,7 @@
                     :instance="modpack"
                     :instanceID="modpack.uuid"
                     :preLaunch="preLaunch"
+                    :postLaunch="postLaunch"
                   ></pack-card-wrapper>
                 </transition-group>
               </div>
@@ -307,6 +308,22 @@ export default class ServerLandingPage extends Vue {
       newArgs += " -Dmt.server=" + this.serverID;
     }
     return new Promise((res, rej) => {
+      this.sendMessage({
+          payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
+              res();
+          },
+      });
+    })
+  }
+
+  public postLaunch(instance: Instance){
+    return new Promise((res, rej) => {
+      let newArgs = instance.jvmArgs;
+      if(newArgs.indexOf("-Dmt.server") !== 1){
+        let args = newArgs.split(" ");
+        args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
+        newArgs = args.join(" ");
+      }
       this.sendMessage({
           payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
               res();

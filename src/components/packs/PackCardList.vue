@@ -104,6 +104,7 @@ export interface MsgBox {
             'size',
             'tags',
             'preLaunch',
+            'postLaunch',
             'kind'
         ],
     })
@@ -127,6 +128,8 @@ export interface MsgBox {
         public tags!: [];
         @Prop()
         public preLaunch!: (id: Instance) => Promise<void>;
+        @Prop()
+        public postLaunch!: (id: Instance) => Promise<void>;
         private showInstall: boolean = false;
         private showMsgBox: boolean = false;
         private defaultImage: any = placeholderImage;
@@ -231,6 +234,9 @@ export interface MsgBox {
             this.sendMessage({
                 payload: {type: 'launchInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
                     ipcRenderer.send('disconnect');
+                    if(this.postLaunch){
+                        this.postLaunch(this.instance);
+                    }
                     // Instance launched
                 },
             });

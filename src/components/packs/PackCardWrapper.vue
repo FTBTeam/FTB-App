@@ -34,6 +34,7 @@ import { SettingsState } from '@/modules/settings/types';
             'size',
             'tags',
             'preLaunch',
+            'postLaunch',
             'kind'
         ],
     })
