@@ -50,7 +50,7 @@
         <message-modal :title="$store.state.websocket.modal.title" :content="$store.state.websocket.modal.message" type="custom" :buttons="$store.state.websocket.modal.buttons" :modalID="$store.state.websocket.modal.id"/>
       </FTBModal>
     </div>
-    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else-if="!websockets.firstStart">
+    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else-if="!websockets.firstStart && !loading">
       <!-- <div class="background-animation"></div> -->
       <!-- TODO: Make this pretty -->
       <img src="../assets/logo_ftb.png" width="200px" />
