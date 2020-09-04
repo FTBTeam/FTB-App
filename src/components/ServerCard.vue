@@ -28,11 +28,11 @@
         </div> -->
       </div>
       <div style="width:50px;" class="flex flex-col list-action-button-holder">
-        <FTBButton @click="comingSoonMsg" :isRounded="false" color="primary"
+        <FTBButton @click="goToPage" :isRounded="false" color="primary"
                    class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr">
           <font-awesome-icon icon="play" size="sm" class="cursor-pointer"/>
           <p>Join</p></FTBButton>
-        <FTBButton @click="comingSoonMsg" :isRounded="false" color="info"
+        <FTBButton @click="goToPage" :isRounded="false" color="info"
                    class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br">
           <font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/>
           <p>More</p></FTBButton>
@@ -53,6 +53,7 @@ import placeholderImage from '@/assets/placeholder_art.png';
 import {logVerbose} from '@/utils';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
+import { ipcRenderer } from 'electron';
 
 const namespace: string = 'websocket';
 
@@ -79,6 +80,9 @@ export default class ServerCard extends Vue {
     private defaultImage: any = placeholderImage;
     private showMsgBox: boolean = false;
 
+    @Prop()
+    private server: any;
+
     private msgBox: MsgBox = {
         title: '',
         content: '',
@@ -86,6 +90,10 @@ export default class ServerCard extends Vue {
         okAction: Function,
         cancelAction: Function,
     };
+
+    public goToPage(){
+      ipcRenderer.send('openLink', `ftb://server/${this.server.id}`)
+    }
 
     public comingSoonMsg() {
         this.msgBox.type = 'okOnly';
