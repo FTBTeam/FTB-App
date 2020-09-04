@@ -62,11 +62,16 @@
         <path class="st0" fill="#fff" d="M406,0c-8.3,0-15,6.7-15,15v30h30v30h-30v90h30v30h-30v30c0,8.3,6.7,15,15,15h90V0H406z"/>
       </svg> -->
       <h1 class="text-2xl text-center">There was an error starting the FTB App.</h1>
-      <ftb-input label="Email" class="w-1/2" />
-      <p>Please describe what happened in the box below and submit.</p>
-      <textarea class="bg-navbar border-background-darken w-1/2 p-2"></textarea>
-      <ftb-button color="danger"
-                   class="my-2 py-2 px-4 text-center rounded-br">Submit</ftb-button>
+      <div v-if="!submitted">
+        <ftb-input label="Email" class="w-1/2" v-model="errorEmail"/>
+        <p>Please describe what happened in the box below and submit.</p>
+        <textarea class="bg-navbar border-background-darken w-1/2 p-2" v-model="errorDescription"></textarea>
+        <ftb-button color="danger"
+                    class="my-2 py-2 px-4 text-center rounded-br" >{{submittingError ? 'Submitting...' : 'Submit'}}</ftb-button>
+      </div>
+      <div v-else>
+        <p>Thanks for submitting the bug report!</p>
+      </div>
       <!-- <h2 class="text-xl text-center">Please wait or relaunch the app</h2> -->
       <!-- <span
       v-if="!websockets.firstStart"
@@ -86,6 +91,7 @@
 </template>
 
 <script lang="ts">
+let emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 import {readdirSync, readFileSync, existsSync} from 'fs';
 import {createPaste} from 'hastebin';
 import path from 'path';
@@ -128,6 +134,11 @@ export default class MainApp extends Vue {
   private loading: boolean = false;
   private hasLoaded: boolean = false;
 
+  private errorEmail: string = "";
+  private errorDescription: string = "";
+  private submittingError: boolean = false;
+  private submitted: boolean = false;
+
   private webVersion: string = config.webVersion;
   private appVersion: string = config.appVersion;
 
@@ -158,8 +169,18 @@ export default class MainApp extends Vue {
   }
 
   public async submitError(){
+    if(!emailRegex.test(this.errorEmail)){
+      return;
+    }
+    if(this.errorDescription.length === 0){
+      return;
+    }
+    this.submittingError = true;
     let logLink = await this.uploadLogData();
     //Send request
+    fetch(`https://minetogether.io/api/ftbAppError`, {method: 'PUT', body: JSON.stringify({email: this.errorEmail, logs: logLink, description: this.errorDescription})});
+    this.submittingError = false;
+    this.submitted = true;
   }
 
   public uploadLogData(): Promise<String> {
