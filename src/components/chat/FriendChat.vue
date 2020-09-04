@@ -108,7 +108,7 @@ export default class FriendChat extends Vue {
     }
 
     public openServer(){
-        ipcRenderer.send('openLink', `ftb://server/994183`)
+        ipcRenderer.send('openLink', `ftb://server/${this.friend.currentServer}`)
     }
 }
 </script>
