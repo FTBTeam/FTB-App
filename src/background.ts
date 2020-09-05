@@ -322,12 +322,16 @@ async function connectToIRC() {
         log.error('Failed to get details about MineTogether servers');
         return;
     }
+    log.info("Connecting to Minetogether IRC");
     mtIRCCLient = new Client();
     mtIRCCLient.connect({
         host: mtDetails.host,
         port: mtDetails.port,
-        nick: userData.mc.display,
+        nick: userData.fullMTHash,
         gecos: '{"p":""}',
+    });
+    mtIRCCLient.on('registered', (event: any) => {
+        log.info("Connected to Minetogether IRC");
     });
     friends = await getFriends();
     friends.friends.forEach((friend: Friend) => {
@@ -476,15 +480,12 @@ ipcMain.on('blockFriend', async (event, data) => {
 })
 
 ipcMain.on('updateSettings', async (event, data) => {
-    console.log("Got settings from frontend", data);
     if(friendsWindow !== null && friendsWindow !== undefined){
         friendsWindow.webContents.send('updateSettings', data)
     }
     if(data.sessionString){
-        console.log("Got session string", data.sessionString);
         sessionString = data.sessionString;
         if(!userData && win){
-            console.log("getting new session");
             win.webContents.send('getNewSession', sessionString);
         }
     }
@@ -502,7 +503,9 @@ ipcMain.on('user', (event, data) => {
         if (friendsWindow !== undefined && friendsWindow !== null) {
             friendsWindow.webContents.send('hereAuthData', userData);
         }
+        console.log("Checking if linked Minecraft Account", userData);
         if(userData.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
+            console.log("Linked Minecraft account, connecting to IRC");
             connectToIRC();
         }
     }
@@ -830,12 +833,8 @@ function createOauthWindow() {
     window.loadURL('https://minetogether.io/api/login');
     window.webContents.session.webRequest.onHeadersReceived({urls: []}, (details, callback) => {
         if(details.url.indexOf('https://minetogether.io/api/redirect') !== -1){
-            console.log("Received headers", details.url);
-            console.log(details.responseHeaders);
             if(details.responseHeaders){
-                console.log("Got response headers");
                 if(details.responseHeaders['app-auth'] && win){
-                    console.log("Setting session string", details.responseHeaders['app-auth'][0]);
                     win.webContents.send('setSessionString', details.responseHeaders['app-auth'][0]);
                 }
             }

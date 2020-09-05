@@ -79,6 +79,7 @@
                     :tags="getModpack(modpack.id) !== null ? getModpack(modpack.id).tags : []"
                     :versions="modpack.versions"
                     :name="modpack.name"
+                    :kind="modpack.kind"
                     :authors="modpack.authors"
                     :instance="modpack"
                     :instanceID="modpack.uuid"
