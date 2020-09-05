@@ -230,7 +230,7 @@ async function getFriends(): Promise<FriendListResponse> {
         const friendCodeResponse = response.data;
         friendCodeResponse.friends = await Promise.all(friendCodeResponse.friends.map(async (friend: Friend) => {
             if (friend.hash) {
-                const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
+                const shortHash = `MT${friend.hash.substring(0, 28).toUpperCase()}`;
                 friend.shortHash = shortHash;
                 let profile = await getProfile(friend.hash);
                 if(profile){
@@ -241,7 +241,7 @@ async function getFriends(): Promise<FriendListResponse> {
         }));
         friendCodeResponse.requests = await Promise.all(friendCodeResponse.requests.map(async (friend: Friend) => {
             if (friend.hash) {
-                const shortHash = `MT${friend.hash.substring(0, 15).toUpperCase()}`;
+                const shortHash = `MT${friend.hash.substring(0, 28).toUpperCase()}`;
                 friend.shortHash = shortHash;
                 let profile = await getProfile(friend.hash);
                 if(profile){
@@ -327,7 +327,7 @@ async function connectToIRC() {
     mtIRCCLient.connect({
         host: mtDetails.host,
         port: mtDetails.port,
-        nick: userData.fullMTHash,
+        nick: userData.mc.chat.hash.medium,
         gecos: '{"p":""}',
     });
     mtIRCCLient.on('registered', (event: any) => {
@@ -503,9 +503,9 @@ ipcMain.on('user', (event, data) => {
         if (friendsWindow !== undefined && friendsWindow !== null) {
             friendsWindow.webContents.send('hereAuthData', userData);
         }
-        console.log("Checking if linked Minecraft Account", userData);
+        log.info("Checking if linked Minecraft Account");
         if(userData.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
-            console.log("Linked Minecraft account, connecting to IRC");
+            log.info("Linked Minecraft account, connecting to IRC");
             connectToIRC();
         }
     }
