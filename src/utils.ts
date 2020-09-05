@@ -38,7 +38,7 @@ export function logVerbose(state: RootState | SettingsState, ...message: any[]) 
 }
 
 export function shortenHash(longHash: string): string {
-    return `MT${longHash.substring(0, 15).toUpperCase()}`;
+    return `MT${longHash.substring(0, 28).toUpperCase()}`;
 }
 
 export function shuffle(array: any[]) {
