@@ -34,6 +34,7 @@
           :instanceID="modpack.uuid"
           :description="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
           :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"
+          :kind="modpack.kind"
         ></pack-card-wrapper>
       </transition-group>
     </div>
@@ -59,6 +60,7 @@
           :authors="modpack.authors"
           :description="modpack.synopsis"
           :tags="modpack.tags"
+          :kind="modpack.kind"
         >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
