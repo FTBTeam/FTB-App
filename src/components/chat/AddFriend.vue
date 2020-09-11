@@ -2,11 +2,11 @@
   <div class="flex flex-col h-full w-full p-2">
       <h1 class="text-4xl ">Add Friend</h1>
       <div class=" ">
-        <ftb-input label="Friend Code" v-model="friendCode" :value="friendCode" />
-        <ftb-button color="primary" class="text-center px-2 py-1" @click="submit" :disabled="auth.loading">Add</ftb-button>
         <div v-if="message.length > 0" :class="`p-4 bg-${messageType} text-white mt-2 rounded`">
           {{message}}
         </div>
+        <ftb-input label="Friend Code" v-model="friendCode" :value="friendCode" />
+        <ftb-button color="primary" class="text-center px-2 py-1" @click="submit" :disabled="auth.loading">Add</ftb-button>
       </div>
   </div>
 </template>
@@ -36,7 +36,7 @@ export default class AddFriend extends Vue {
   private submitFriendRequest!: (payload: {friendCode: string}) => Promise<FriendRequestResponse>;
 
   private message: string = '';
-  private messageType: 'danger' | 'success' = 'success';
+  private messageType: 'danger' | 'primary' = 'primary';
   private friendCode: string = '';
 
   public async submit() {
@@ -44,10 +44,15 @@ export default class AddFriend extends Vue {
       if (this.friendCode.length === 0) {
           return;
       }
+      if(this.friendCode === this.auth.token?.mc.friendCode){
+        this.messageType = 'danger';
+        this.message = "You cannot add yourself as a friend!";
+        return;
+      }
       const response: FriendRequestResponse = await this.submitFriendRequest({friendCode: this.friendCode});
       if (response.status === 'success') {
           this.message = 'Friend Request Sent';
-          this.messageType = 'success';
+          this.messageType = 'primary';
           this.friendCode = '';
           if (response.hash) {
             ipcRenderer.send('sendFriendRequest', {target: shortenHash(response.hash), hash: response.hash, name: this.auth.token?.mc.display});

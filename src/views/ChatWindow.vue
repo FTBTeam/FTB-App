@@ -165,6 +165,9 @@ export default class ChatWindow extends Vue {
     }
 
     public sendMessage(message: string) {
+        if(message.length < 1){
+            return;
+        }
         if (this.friend === null || this.auth.token === null) {
             return;
         }
