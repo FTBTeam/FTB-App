@@ -123,6 +123,7 @@
 
 <script lang="ts">
 import {readdirSync, readFileSync, existsSync} from 'fs';
+import os from 'os';
 import {createPaste} from 'hastebin';
 import {Component, Vue, Watch} from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
@@ -199,6 +200,12 @@ export default class SettingsPage extends Vue {
         });
     }
 
+    private calcMem(memory:any){
+      let total_mem_in_kb = memory/1024;
+      let total_mem_in_mb = total_mem_in_kb/1024;
+      let total_mem_in_gb = total_mem_in_mb/1024;
+      return Math.round(total_mem_in_gb);
+    }
 
     public uploadLogData(): void {
         let workingDir = process.cwd();
@@ -221,7 +228,7 @@ export default class SettingsPage extends Vue {
                     frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
                 }
             }
-            const data = `UI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
+            const data = `=====================================General Information=====================================\nUI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\nOperating System: ${os.type()} ${os.release()}\nFree/Total Memory: ${this.calcMem(os.freemem())}GB/${this.calcMem(os.totalmem())}GB\nCPU Info: ${os.cpus()[0].model}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
             // Upload logs to pste.ch and copy URL to clipboard
             createPaste(data, {
                 raw: false,
