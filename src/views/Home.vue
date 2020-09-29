@@ -11,7 +11,7 @@
     <div class="flex flex-row items-center w-full mt-4">
       <h1 v-if="recentlyPlayed.length >= 1" @click="changeTab('recentlyPlayed')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'recentlyPlayed' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Recently Played</h1>
       <h1 @click="changeTab('featuredPacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredPacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Packs</h1>
-      <h1 v-if="serverListState.servers !== undefined && serverListState.servers['featured'].length > 0" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
+      <h1 v-if="serverListState.servers !== undefined" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
     </div>
     <div class="sm:mt-auto lg:mt-unset flex flex-col flex-grow" v-if="recentlyPlayed.length >= 1 && currentTab === 'recentlyPlayed'" key="recentlyPlayed">
       <transition-group
@@ -71,7 +71,15 @@
         class="flex pt-1 flex-wrap flex-grow items-stretch"
         appear
       >
-        <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers['featured']" :key="server.id" :server="server"></server-card>
+        <div v-if="serverListState.servers['featured'].length > 0" :key="'servers'">
+          <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers['featured']" :key="server.id" :server="server"></server-card>
+        </div>
+        <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" :key="'no-servers'" v-else>
+          <!-- TODO: Make this pretty -->
+          <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
+          <h1 class="text-5xl">Oh no!</h1>
+          <span>It doesn't looks like there are any featured MineTogether servers</span>
+        </div>
       </transition-group>
     </div>
   </div>
