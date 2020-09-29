@@ -5,6 +5,7 @@ export interface Settings {
     keepLauncherOpen: boolean;
     jvmargs: string;
     enableAnalytics: boolean;
+    enableChat: boolean;
     enableBeta: boolean;
     enablePreview: boolean;
     threadLimit: number;

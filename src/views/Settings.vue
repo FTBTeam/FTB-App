@@ -46,6 +46,8 @@
                                 onColor="bg-primary"/> -->
                     <ftb-toggle label="Enable Preview Versions: " :value="settingsCopy.enablePreview" @change="enablePreview"
                                 onColor="bg-primary"/>
+                    <ftb-toggle label="Enable MineTogether Chat: " :value="settingsCopy.enableChat" @change="enableChat"
+                                onColor="bg-primary" :disabled="auth.token === null ? 'true' : ''"/>
                     <ftb-slider label="Download Threads" v-model="settingsCopy.threadLimit"
                                 :currentValue="settingsCopy.threadLimit" minValue="1"
                                 :maxValue="settingsState.hardware.totalCores * 2" @change="doSave"
@@ -137,6 +139,7 @@ import config from '@/config';
 import {ipcRenderer, clipboard} from 'electron';
 import path from 'path';
 import { logVerbose } from '../utils';
+import {AuthState} from "@/modules/auth/types";
 
 @Component({
     components: {
@@ -148,6 +151,7 @@ import { logVerbose } from '../utils';
     },
 })
 export default class SettingsPage extends Vue {
+    @State('auth') private auth!: AuthState;
     @State('settings') public settingsState!: SettingsState;
     @Action('refreshCache', {namespace: 'modpacks'}) public refreshCache!: any;
     @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
@@ -163,6 +167,7 @@ export default class SettingsPage extends Vue {
         enablePreview: false,
         jvmargs: '',
         enableAnalytics: true,
+        enableChat: true,
         enableBeta: false,
         threadLimit: 2,
         speedLimit: 0,
@@ -309,6 +314,13 @@ export default class SettingsPage extends Vue {
     public enablePreview(value: boolean): void {
         this.settingsCopy.enablePreview = value;
         this.saveSettings(this.settingsCopy);
+    }
+
+    public enableChat(value: boolean): void {
+      if(this.auth.token !== null){
+        this.settingsCopy.enableChat = value;
+        this.saveSettings(this.settingsCopy);
+      }
     }
 
     public enableBetaVersions(value: boolean): void {

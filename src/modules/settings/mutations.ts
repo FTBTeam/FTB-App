@@ -11,6 +11,7 @@ export const mutations: MutationTree<SettingsState> = {
             enablePreview: false,
             jvmargs: '',
             enableAnalytics: true,
+            enableChat: true,
             enableBeta: false,
             threadLimit: 2,
             speedLimit: 0,
