@@ -11,8 +11,8 @@
             </div>
         </template>
         <template v-else>
-                <span class="toggle border border-input flex items-center  rounded" style="width: 56px" :class="toggleClasses" @click="toggle">
-                    <span class="w-6 h-6 shadow-inner bg-inputrounded-sm bg-gray-400" :class="`${disabled ? 'cursor-not-allowed' : ' cursor-pointer '}`"></span>
+                <span class="toggle border border-input flex items-center rounded" style="width: 56px" :class="toggleClasses" @click="toggle">
+                    <span class="w-6 h-6 shadow-inner bg-input rounded-sm bg-gray-400" :class="`${disabled ? 'cursor-not-allowed' : ' cursor-pointer '}`"></span>
                 </span>
                 <label class="block uppercase tracking-wide text-xs font-bold mx-2" :class="`${disabled ? 'text-gray-600' : ''}`">
                     {{label}}
