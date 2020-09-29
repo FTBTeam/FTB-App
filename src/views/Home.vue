@@ -79,6 +79,9 @@
           <font-awesome-icon icon="server" style="font-size: 25vh"></font-awesome-icon>
           <h1 class="text-5xl">Oh no!</h1>
           <span>It doesn't looks like there are any featured MineTogether servers</span>
+          <br/>
+          <span>If you are a server owner and would like to have your server featured,</span>
+          <span>you can find more information by clicking the button below</span>
           <a href="https://feed-the-beast.com/featuredServers" target="_blank"><ftb-button class="py-2 px-4 my-2" color="info" css-class="text-center text-l">Become a featured server</ftb-button></a>
         </div>
       </transition-group>
