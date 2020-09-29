@@ -76,9 +76,10 @@
         </div>
         <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" :key="'no-servers'" v-else>
           <!-- TODO: Make this pretty -->
-          <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
+          <font-awesome-icon icon="server" style="font-size: 25vh"></font-awesome-icon>
           <h1 class="text-5xl">Oh no!</h1>
           <span>It doesn't looks like there are any featured MineTogether servers</span>
+          <a href="https://feed-the-beast.com/featuredServers" target="_blank"><ftb-button class="py-2 px-4 my-2" color="info" css-class="text-center text-l">Become a featured server</ftb-button></a>
         </div>
       </transition-group>
     </div>
@@ -99,11 +100,13 @@ import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { settings } from 'cluster';
 import {ServersState} from '@/modules/servers/types';
+import FtbButton from "@/components/FTBButton.vue";
 
 const namespace: string = 'modpacks';
 
 @Component({
   components: {
+    FtbButton,
     PackCardWrapper,
     ServerCard,
   },
