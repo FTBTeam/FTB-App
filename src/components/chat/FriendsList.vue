@@ -49,11 +49,11 @@
         <div v-if="showRequests">
             <div class="flex flex-row p-2 items-center hover:bg-background-lighten cursor-pointer" v-for="friend in friendRequests" :key="friend.id">
                 <p class="ml-2">{{friend.name}}</p>
-                <div class="icons ml-auto" v-if="friend.friendCode && acceptingFriends.indexOf(friend.hash) === -1">
+                <div class="icons ml-auto" v-if="acceptingFriends.indexOf(friend.hash) === -1">
                     <font-awesome-icon icon="times" class="mx-2 cursor-pointer text-white hover:text-red-500" />
-                    <font-awesome-icon icon="check" class="mx-2 cursor-pointer text-white hover:text-green-500" @click="acceptFriendRequest(friend.hash, friend.friendCode, friend.name)" />
+                    <font-awesome-icon icon="check" class="mx-2 cursor-pointer text-white hover:text-green-500" @click="acceptFriendRequest(friend.hash, friend.name, friend.friendCode)" />
                 </div>
-                <div v-else-if="friend.online && friend.friendCode && acceptingFriends.indexOf(friend.hash) !== -1">
+                <div v-else-if="acceptingFriends.indexOf(friend.hash) !== -1">
                     <font-awesome-icon icon="sync-alt" spin class="mx-2" />
                 </div>
             </div>
@@ -142,11 +142,26 @@ export default class MainChat extends Vue {
         }
     }
 
-    public acceptFriendRequest(hash: string, friendCode: string, name: string) {
+    public async acceptFriendRequest(hash: string, name: string, friendCode?: string) {
         this.acceptingFriends.push(hash)
-        ipcRenderer.send('acceptFriendRequest', {hash, target: shortenHash(hash), friendCode, name, ourName: this.auth.token?.mc.display});
+        if(friendCode === undefined){
+            friendCode = await this.getFriendCodeFromHash(hash);
+        }
+        ipcRenderer.send('acceptFriendRequest', {hash, target: hash, friendCode, name, ourName: this.auth.token?.mc.display});
         ipcRenderer.on('acceptedFriendRequest', (event, data) => {
             ipcRenderer.send('checkFriends')
+        });
+    }
+
+    public getFriendCodeFromHash(hash: string): Promise<string> {
+        return fetch(`https://api.creeper.host/minetogether/friendcode`, {headers: {
+            'Content-Type': 'application/json',
+        }, method: 'POST', body: JSON.stringify({hash: hash})})
+        .then((response) => response.json())
+        .then(async (data) => {
+            return data.code;
+        }).catch((err) => {
+            throw err;
         });
     }
 

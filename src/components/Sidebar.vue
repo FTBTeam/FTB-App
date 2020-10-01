@@ -14,7 +14,8 @@
     </div>
     <div class="nav-items flex-col mt-auto mb-0">
       <nav-item :isActive="isActiveTab('settings')" @click="goTo('settings')"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>
-      <nav-item v-if="auth.token === null" @click="openLogin()"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
+      <nav-item v-if="auth.token === null && !auth.loggingIn" @click="openLogin()"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
+      <nav-item v-else-if="auth.loggingIn"><font-awesome-icon icon="spinner" spin size="lg" class="mr-3" />Loading....</nav-item>
       <nav-item v-else class="capitalize" @click="goTo('profile')"><img :src="`https://minotar.net/helm/${avatarName}`" style="margin-right: 0.75em;" width="40px" height="40px" class="rounded-full" /><div class="flex flex-col"><span>{{auth.token.mc !== undefined ? auth.token.mc.display.split("#")[0] : auth.token.username}}</span><span v-if="auth.token.mc !== undefined " class="text-sm text-gray-600">#{{auth.token.mc.display.split("#")[1]}}</span></div></nav-item>
     </div>
     <img src="../assets/ch-logo.svg" width="90%" class="mb-2 cursor-pointer logo-hover" style="" draggable="false" @click="openPromo()"/>

@@ -12,6 +12,7 @@ export const state: AuthState = {
     friends: [],
     isFriendsWindowOpen: false,
     session: '',
+    loggingIn: false,
 };
 
 export const auth: Module<AuthState, RootState> = {

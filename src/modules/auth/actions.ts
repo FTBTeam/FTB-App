@@ -19,6 +19,7 @@ export const actions: ActionTree<AuthState, RootState> = {
     },
     async setSessionID({rootState, commit, dispatch}, payload: any): Promise<void> {
         commit('storeSession', payload);
+        commit('startLoggingIn');
         let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
             Cookie: 'PHPSESSID=' + payload, Accept: "application/json"
         },
@@ -37,8 +38,10 @@ export const actions: ActionTree<AuthState, RootState> = {
         }
         ipcRenderer.send('user', user);
         dispatch('storeAuthDetails', user);
+        commit('loggedIn');
     },
     async getNewSession({rootState, commit, dispatch}, payload: any): Promise<void> {
+        commit('startLoggingIn');
         let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
                 'App-Auth': payload, Accept: "application/json"
             }
@@ -58,6 +61,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         dispatch('storeAuthDetails', user);
         commit('storeSession', response.headers['app-token']);
         ipcRenderer.send('session', response.headers['app-token']);
+        commit('loggedIn');
     },
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';
