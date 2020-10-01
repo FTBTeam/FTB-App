@@ -290,6 +290,7 @@ export default class MainApp extends Vue {
 .content-container {
   flex: 1;
   overflow-y: auto;
+  display: flex;
 }
 .progress-bar {
   display: flex;
