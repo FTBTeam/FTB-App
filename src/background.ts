@@ -250,7 +250,6 @@ async function getFriends(): Promise<FriendListResponse> {
             }
             return friend;
         }));
-        console.log(JSON.stringify(friendCodeResponse));
         return friendCodeResponse;
     } catch (err) {
         log.error('Failed to get details about MineTogether friends', err);
