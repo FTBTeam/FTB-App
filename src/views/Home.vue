@@ -38,7 +38,7 @@
         ></pack-card-wrapper>
       </transition-group>
     </div>
-    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredPacks'" key="featuredPacks">
+    <div class="flex flex-col" v-if="currentTab === 'featuredPacks'" key="featuredPacks">
       <transition-group
         name="list"
         tag="div"
@@ -64,7 +64,7 @@
         >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
-    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredServers'" key="featuredServers">
+    <div class="flex flex-col" v-if="currentTab === 'featuredServers'" key="featuredServers">
       <transition-group
         name="list"
         tag="div"
