@@ -187,7 +187,7 @@ export default class MainChat extends Vue {
     }
 
     get friendRequests() {
-        return this.friends.requests;
+        return this.friends.requests.filter((friend) => this.currentFriends.find((f) => f.id === friend.id) === undefined);
     }
 
     public mounted() {

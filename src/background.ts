@@ -121,12 +121,25 @@ ipcMain.on('getFriends', (event) => {
 });
 
 ipcMain.on('checkFriends', async (event) => {
-    friends = await getFriends();
+    let ourfriends = await getFriends();
+    friends.friends.forEach((friend) => {
+        let ourNewFriend = ourfriends.friends.find((f) => f.id === friend.id);
+        if(ourNewFriend !== undefined){
+            ourNewFriend.online = friend.online;
+        }
+    });
+    friends.requests.forEach((request) => {
+        let ourNewRequest = ourfriends.requests.find((f) => f.id === request.id);
+        if(ourNewRequest !== undefined){
+            ourNewRequest.online = request.online;
+        }
+    })
+    friends = ourfriends;
     if (mtIRCCLient !== undefined) {
-        friends.friends.forEach((friend: Friend) => {
+        ourfriends.friends.forEach((friend: Friend) => {
             mtIRCCLient.whois(friend.shortHash);
         });
-        friends.requests.forEach((friend: Friend) => {
+        ourfriends.requests.forEach((friend: Friend) => {
             mtIRCCLient.whois(friend.shortHash);
         });
     }
@@ -349,6 +362,7 @@ async function connectToIRC() {
                     return;
                 }
             }
+            let originalFriend = Object.assign({}, friend);
             if (event.error) {
                 friend.online = false;
             } else {
@@ -415,11 +429,13 @@ async function connectToIRC() {
                     }
                 }
             }
-            if (win) {
-                win.webContents.send('ooohFriend', friends);
-            }
-            if (friendsWindow) {
-                friendsWindow.webContents.send('ooohFriend', friends);
+            if(friend !== originalFriend){
+                if (win) {
+                    win.webContents.send('ooohFriend', friends);
+                }
+                if (friendsWindow) {
+                    friendsWindow.webContents.send('ooohFriend', friends);
+                }
             }
         }
     });
@@ -606,7 +622,6 @@ ipcMain.on('logout', (event, data) => {
 ipcMain.on('openLink', (event, data) => {
     shell.openExternal(data);  
 })
-
 
 function createFriendsWindow() {
     if (friendsWindow !== null && friendsWindow !== undefined) {

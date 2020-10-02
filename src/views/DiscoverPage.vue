@@ -3,6 +3,7 @@
     <h1 class="m-1 mb-1 text-sm opacity-0 ">Discover</h1>
     <transition-group
       class='carousel max-w-full flex flex-row flex-1'
+      v-if="discovery.discoveryQueue.length < 0"
       tag="div">
       <div
         v-for="(pack, index) in discovery.discoveryQueue"
@@ -42,7 +43,19 @@
 
       </div>
     </transition-group>
-    <div class="flex flex-row justify-between my-2">
+    <div v-else class='carousel max-w-full flex flex-row flex-1'>
+        <div class="slide flex flex-col"
+        style="min-width: 100%; padding: 0 20px; opacity:1;">
+            <div class="m-4 flex-1 relative flex mt-2 mb-3">
+                <div class="placeholder"></div>
+                <div class="flex-1 flex flex-col justify-center items-center" style="z-index: 2;">
+                    <font-awesome-icon icon="sad-tear" size="6x" style="margin-bottom: 20px"/>
+                    <h2>Unfortunately we have nothing for you to discover at this time</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="flex flex-row justify-between my-2" v-if="discovery.discoveryQueue.length > 0">
         <FTBButton color="primary" class="py-2 px-4 mx-2 text-center w-32" @click="previous">Previous</FTBButton>
         <FTBButton color="primary" class="py-2 px-4 mx-2 text-center w-32" @click="next">Next</FTBButton>
     </div>
