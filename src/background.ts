@@ -716,7 +716,7 @@ function createWindow() {
 
     win.on('closed', () => {
         win = null;
-        if(friendsWindow !== null){
+        if(friendsWindow !== undefined && friendsWindow !== null){
             friendsWindow.close();
         }
     });
