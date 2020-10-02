@@ -3,7 +3,7 @@
     <h1 class="m-1 mb-1 text-sm opacity-0 ">Discover</h1>
     <transition-group
       class='carousel max-w-full flex flex-row flex-1'
-      v-if="discovery.discoveryQueue.length < 0"
+      v-if="discovery.discoveryQueue.length > 0"
       tag="div">
       <div
         v-for="(pack, index) in discovery.discoveryQueue"

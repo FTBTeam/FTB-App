@@ -170,4 +170,7 @@ export default class FriendChat extends Vue {
 </script>
 
 <style>
+a {
+    cursor:pointer;
+}
 </style>

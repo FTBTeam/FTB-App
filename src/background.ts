@@ -716,6 +716,9 @@ function createWindow() {
 
     win.on('closed', () => {
         win = null;
+        if(friendsWindow !== null){
+            friendsWindow.close();
+        }
     });
     if (process.env.NODE_ENV !== 'production') {
         BrowserWindow.addDevToolsExtension('node_modules/vue-devtools/vender');
