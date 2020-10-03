@@ -36,6 +36,7 @@ export interface AuthState {
     loading: boolean;
     friends: Friend[];
     isFriendsWindowOpen: boolean;
+    loggingIn: boolean;
 }
 
 export interface Friend {

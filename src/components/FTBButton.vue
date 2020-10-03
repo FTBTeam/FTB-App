@@ -1,5 +1,5 @@
 <template>
-  <div :class="`ftb-button ${!noPadding ? '' : 'p-2'} ${color ? 'bg-' + color : ''} ${disabled ? 'cursor-not-allowed disabled' : 'cursor-pointer'} ${isRounded ? 'rounded' : ''}`" @click="handleClick">
+  <div :class="`ftb-button ${!noPadding ? '' : 'p-2'} ${color ? 'bg-' + color : ''} ${color ? 'hover:bg-light-' + color : ''} ${disabled ? 'cursor-not-allowed disabled' : 'cursor-pointer'} ${isRounded ? 'rounded' : ''}`" @click="handleClick">
     <p :class="`${cssClass} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`">
       <slot></slot>
     </p>

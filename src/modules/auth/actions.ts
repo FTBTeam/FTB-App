@@ -19,11 +19,18 @@ export const actions: ActionTree<AuthState, RootState> = {
     },
     async setSessionID({rootState, commit, dispatch}, payload: any): Promise<void> {
         commit('storeSession', payload);
-        let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
-            Cookie: 'PHPSESSID=' + payload, Accept: "application/json"
-        },
-            withCredentials: true,
-        });
+        commit('startLoggingIn');
+        let response;
+        try {
+            response = await axios.get(`https://minetogether.io/api/me`, {headers: {
+                Cookie: 'PHPSESSID=' + payload, Accept: "application/json"
+            },
+                withCredentials: true,
+            });
+        }catch(err){
+            commit('loggedIn');
+            return;
+        }
         let user = response.data;
         if(user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
             let mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
@@ -33,16 +40,25 @@ export const actions: ActionTree<AuthState, RootState> = {
                 user.mc = profileResponse.profileData[mc.userName];
             } catch (err) {
                 console.error(err);
+                commit('loggedIn');
             }
         }
         ipcRenderer.send('user', user);
         dispatch('storeAuthDetails', user);
+        commit('loggedIn');
     },
     async getNewSession({rootState, commit, dispatch}, payload: any): Promise<void> {
-        let response = await axios.get(`https://minetogether.io/api/me`, {headers: {
-                'App-Auth': payload, Accept: "application/json"
-            }
-        });
+        commit('startLoggingIn');
+        let response;
+        try {
+            response = await axios.get(`https://minetogether.io/api/me`, {headers: {
+                    'App-Auth': payload, Accept: "application/json"
+                }
+            });
+        }catch(err){
+            commit('loggedIn');
+            return;
+        }
         let user = response.data;
         if(user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
             let mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
@@ -52,12 +68,14 @@ export const actions: ActionTree<AuthState, RootState> = {
                 user.mc = profileResponse.profileData[mc.userName];
             } catch (err) {
                 console.error(err);
+                commit('loggedIn');
             }
         }
         ipcRenderer.send('user', user);
         dispatch('storeAuthDetails', user);
         commit('storeSession', response.headers['app-token']);
         ipcRenderer.send('session', response.headers['app-token']);
+        commit('loggedIn');
     },
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';

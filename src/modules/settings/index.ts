@@ -13,6 +13,7 @@ export const state: SettingsState = {
         keepLauncherOpen: false,
         jvmargs: '',
         enableAnalytics: false,
+        enableChat: true,
         enableBeta: false,
         threadLimit: 2,
         speedLimit: 0,

@@ -11,9 +11,9 @@
     <div class="flex flex-row items-center w-full mt-4">
       <h1 v-if="recentlyPlayed.length >= 1" @click="changeTab('recentlyPlayed')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'recentlyPlayed' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Recently Played</h1>
       <h1 @click="changeTab('featuredPacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredPacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Packs</h1>
-      <h1 v-if="serverListState.servers !== undefined && serverListState.servers['featured'].length > 0" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
+      <h1 v-if="serverListState.servers !== undefined" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
     </div>
-    <div class="sm:mt-auto lg:mt-unset flex flex-col flex-grow" v-if="recentlyPlayed.length >= 1 && currentTab === 'recentlyPlayed'" key="recentlyPlayed">
+    <div class="flex flex-col" v-if="recentlyPlayed.length >= 1 && currentTab === 'recentlyPlayed'" key="recentlyPlayed">
       <transition-group
         name="list"
         tag="div"
@@ -34,10 +34,11 @@
           :instanceID="modpack.uuid"
           :description="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
           :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"
+          :kind="modpack.kind"
         ></pack-card-wrapper>
       </transition-group>
     </div>
-    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredPacks'" key="featuredPacks">
+    <div class="flex flex-col" v-if="currentTab === 'featuredPacks'" key="featuredPacks">
       <transition-group
         name="list"
         tag="div"
@@ -59,17 +60,30 @@
           :authors="modpack.authors"
           :description="modpack.synopsis"
           :tags="modpack.tags"
+          :kind="modpack.kind"
         >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
-    <div class="sm:mb-auto lg:mb-unset flex flex-col flex-grow" v-if="currentTab === 'featuredServers'" key="featuredServers">
+    <div class="flex flex-col" v-if="currentTab === 'featuredServers'" key="featuredServers">
       <transition-group
         name="list"
         tag="div"
         class="flex pt-1 flex-wrap flex-grow items-stretch"
         appear
       >
-        <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers['featured']" :key="server.id" :server="server"></server-card>
+        <div v-if="serverListState.servers['featured'].length > 0" :key="'servers'">
+          <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers['featured']" :key="server.id" :server="server"></server-card>
+        </div>
+        <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" :key="'no-servers'" v-else>
+          <!-- TODO: Make this pretty -->
+          <font-awesome-icon icon="server" style="font-size: 25vh"></font-awesome-icon>
+          <h1 class="text-5xl">Oh no!</h1>
+          <span>It doesn't looks like there are any featured MineTogether servers</span>
+          <br/>
+          <span>If you are a server owner and would like to have your server featured,</span>
+          <span>you can find more information by clicking the button below</span>
+          <a href="https://feed-the-beast.com/featuredServers" target="_blank"><ftb-button class="py-2 px-4 my-2" color="info" css-class="text-center text-l">Become a featured server</ftb-button></a>
+        </div>
       </transition-group>
     </div>
   </div>
@@ -89,11 +103,13 @@ import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { settings } from 'cluster';
 import {ServersState} from '@/modules/servers/types';
+import FtbButton from "@/components/FTBButton.vue";
 
 const namespace: string = 'modpacks';
 
 @Component({
   components: {
+    FtbButton,
     PackCardWrapper,
     ServerCard,
   },

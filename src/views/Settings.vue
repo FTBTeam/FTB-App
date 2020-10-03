@@ -46,6 +46,8 @@
                                 onColor="bg-primary"/> -->
                     <ftb-toggle label="Enable Preview Versions: " :value="settingsCopy.enablePreview" @change="enablePreview"
                                 onColor="bg-primary"/>
+                    <ftb-toggle label="Enable MineTogether Chat: " :value="settingsCopy.enableChat" @change="enableChat"
+                                onColor="bg-primary" :disabled="auth.token === null ? 'true' : ''"/>
                     <ftb-slider label="Download Threads" v-model="settingsCopy.threadLimit"
                                 :currentValue="settingsCopy.threadLimit" minValue="1"
                                 :maxValue="settingsState.hardware.totalCores * 2" @change="doSave"
@@ -123,6 +125,7 @@
 
 <script lang="ts">
 import {readdirSync, readFileSync, existsSync} from 'fs';
+import os from 'os';
 import {createPaste} from 'hastebin';
 import {Component, Vue, Watch} from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
@@ -136,6 +139,7 @@ import config from '@/config';
 import {ipcRenderer, clipboard} from 'electron';
 import path from 'path';
 import { logVerbose } from '../utils';
+import {AuthState} from "@/modules/auth/types";
 
 @Component({
     components: {
@@ -147,6 +151,7 @@ import { logVerbose } from '../utils';
     },
 })
 export default class SettingsPage extends Vue {
+    @State('auth') private auth!: AuthState;
     @State('settings') public settingsState!: SettingsState;
     @Action('refreshCache', {namespace: 'modpacks'}) public refreshCache!: any;
     @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
@@ -162,6 +167,7 @@ export default class SettingsPage extends Vue {
         enablePreview: false,
         jvmargs: '',
         enableAnalytics: true,
+        enableChat: true,
         enableBeta: false,
         threadLimit: 2,
         speedLimit: 0,
@@ -199,6 +205,12 @@ export default class SettingsPage extends Vue {
         });
     }
 
+    private calcMem(memory:any){
+      let total_mem_in_kb = memory/1024;
+      let total_mem_in_mb = total_mem_in_kb/1024;
+      let total_mem_in_gb = total_mem_in_mb/1024;
+      return Math.round(total_mem_in_gb);
+    }
 
     public uploadLogData(): void {
         let workingDir = process.cwd();
@@ -221,7 +233,7 @@ export default class SettingsPage extends Vue {
                     frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
                 }
             }
-            const data = `UI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
+            const data = `=====================================General Information=====================================\nUI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\nOperating System: ${os.type()} ${os.release()}\nFree/Total Memory: ${this.calcMem(os.freemem())}GB/${this.calcMem(os.totalmem())}GB\nCPU Info: ${os.cpus()[0].model}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
             // Upload logs to pste.ch and copy URL to clipboard
             createPaste(data, {
                 raw: false,
@@ -302,6 +314,13 @@ export default class SettingsPage extends Vue {
     public enablePreview(value: boolean): void {
         this.settingsCopy.enablePreview = value;
         this.saveSettings(this.settingsCopy);
+    }
+
+    public enableChat(value: boolean): void {
+      if(this.auth.token !== null){
+        this.settingsCopy.enableChat = value;
+        this.saveSettings(this.settingsCopy);
+      }
     }
 
     public enableBetaVersions(value: boolean): void {
