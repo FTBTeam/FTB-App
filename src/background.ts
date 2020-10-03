@@ -448,7 +448,6 @@ async function connectToIRC() {
                 }
                 const [code, ...rest] = args;
                 let displayName = rest.join(' ');
-                console.log("Friend request from", displayName, code);
                 friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: displayName, friendCode: code});
                 friends.requests.push({shortHash: event.nick, accepted: false, name: displayName})
                 mtIRCCLient.whois(event.nick);

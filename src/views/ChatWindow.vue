@@ -58,18 +58,14 @@ export default class ChatWindow extends Vue {
 
     @Watch('auth', {deep: true})
     public async onAuthChange(newVal: AuthState, oldVal: AuthState) {
-        console.log("Checking if Minecraft is linked", newVal.token);
         if(newVal.token?.accounts.find((s: any) => s.identityProvider === "mcauth") !== undefined && !this.hasLoaded){
             this.hasLoaded = true;
-            console.log("Checking friends")
             ipcRenderer.send('checkFriends');
             setInterval(() => {
                 ipcRenderer.send('checkFriends');
             }, 30 * 1000);
-            console.log("Getting friends")
             ipcRenderer.send('getFriends');
             ipcRenderer.on('ooohFriend', (_, data) => {
-                console.log("Received friends")
                 Vue.set(this.friends, 'friends',  data.friends);
                 let requests = this.friends.requests;
                 requests = data.requests.map((request: Friend) => {

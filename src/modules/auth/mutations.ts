@@ -23,11 +23,9 @@ export const mutations: MutationTree<AuthState> = {
         state.isFriendsWindowOpen = payload;
     },
     startLoggingIn(state){
-        console.log("Starting Login");
         state.loggingIn = true;
     },
     loggedIn(state){
         state.loggingIn = false;
-        console.log("Finished Login");
     }
 };

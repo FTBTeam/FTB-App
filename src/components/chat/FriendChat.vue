@@ -116,7 +116,6 @@ export default class FriendChat extends Vue {
             if(event.target.tagName === 'A'){
                 let url = event.target.href;
                 let domain = url.match(/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/?\n]+)/)[0];
-                console.log(domain, this.whitelistedDomains);
                 let whitelistedDomain = this.whitelistedDomains.find((d) => domain.indexOf(d) !== -1);
                 if(whitelistedDomain === undefined){
                     event.preventDefault();
@@ -171,6 +170,6 @@ export default class FriendChat extends Vue {
 
 <style>
 a {
-    cursor:pointer;
+    cursor:pointer !important;
 }
 </style>

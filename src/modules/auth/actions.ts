@@ -80,7 +80,6 @@ export const actions: ActionTree<AuthState, RootState> = {
     storeAuthDetails({rootState, commit, dispatch}, payload: any): void {
         payload.friendCode = '';
         commit('storeAuthDetails', payload);
-        console.log("STORE AUTH DETAILS", payload);
         if(payload === null){
             dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: "", mpSecret: "", s3Bucket: "", s3Host: "", s3Key: "", s3Secret: ""}}, {root: true});            
         } else {

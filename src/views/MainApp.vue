@@ -126,7 +126,6 @@ export default class MainApp extends Vue {
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (newVal.socket.isConnected && !this.loading && !this.hasLoaded) {
       this.loading = true;
-      console.log("Fetching start data");
       await this.fetchStartData();
       this.hasLoaded = true;
       this.loading = false;
@@ -142,7 +141,6 @@ export default class MainApp extends Vue {
 
   public fetchStartData() {
     return new Promise(async (resolve, reject) => {
-      console.log("Loading settings");
       await this.loadSettings();
       this.sendMessage({
         payload: { type: 'installedInstances' },
@@ -162,7 +160,6 @@ export default class MainApp extends Vue {
       return;
     }
     this.submittingError = true;
-    console.log('Uploading log data');
     let logLink = await this.uploadLogData().catch((err) => {
       if(err) {
         this.submittingError = false;
@@ -170,17 +167,13 @@ export default class MainApp extends Vue {
         return;
       }
       });
-    console.log('Log data uploaded', logLink);
     //Send request
-    console.log('Sending request to log error...');
     fetch(`https://minetogether.io/api/ftbAppError`, {method: 'PUT', body: JSON.stringify({email: this.errorEmail, logs: logLink, description: this.errorDescription})});
-    console.log('Send request to log error');
     this.submittingError = false;
     this.submitted = true;
   }
 
   public uploadLogData(): Promise<String> {
-    console.log('Getting data');
     return new Promise((resolve, reject) => {
       let workingDir = process.cwd();
       // Change directory up one level temporarily to get log files.
@@ -190,7 +183,6 @@ export default class MainApp extends Vue {
           r = true;
       }
       workingDir = process.cwd();
-      console.log('In ', workingDir);
       // Get directory to check for files, if they're there we can proceed.
       const appFolder = readdirSync(workingDir);
       if (appFolder.indexOf('launcher.log') > -1) {

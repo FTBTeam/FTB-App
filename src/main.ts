@@ -188,7 +188,6 @@ ipcRenderer.on('setSessionString', (event, data) => {
     if(settings !== undefined){
         settings.sessionString = data;
     }
-    console.log("Saving settings", settings);
     store.dispatch('settings/saveSettings', settings, {root: true});
 });
 ipcRenderer.on('getNewSession', (event, data) => {
