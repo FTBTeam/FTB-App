@@ -1,7 +1,7 @@
 import { ModPack } from './modules/modpacks/types';
 
 
-import {ipcRenderer, shell} from 'electron';
+import {clipboard, ipcRenderer, shell} from 'electron';
 // console = remote.app.console;
 // Object.assign(console, remote.app.console.functions);
 import Vue from 'vue';
@@ -99,6 +99,9 @@ Vue.mixin({
             const link = event.target.href;
             shell.openExternal(link);
         },
+        copyToClipboard(text: string){
+            clipboard.writeText(text);
+        }
     },
 });
 
