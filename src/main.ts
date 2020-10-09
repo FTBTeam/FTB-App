@@ -294,3 +294,10 @@ ipcRenderer.on('parseProtocolURL', (event, data) => {
         router.push({name: 'server', query: {serverid: serverID}});
     }
 });
+ipcRenderer.on('sendWebsocket', (event, data) => {
+    console.log("Request received to send ", data)
+    const messageID = Math.round(Math.random() * 1000);
+    data.requestId = messageID;
+    data.secret = store.state.wsSecret;
+    vm.$socket.sendObj(data);
+});

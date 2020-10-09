@@ -9,7 +9,8 @@ import * as log from 'electron-log';
 import childProcess from 'child_process';
 import axios from 'axios';
 // @ts-ignore
-import {Client} from 'irc-framework';
+//import {Client} from 'irc-framework';
+import Client from './ircshim';
 import { FriendListResponse } from './types';
 
 Object.assign(console, log.functions);
@@ -35,7 +36,7 @@ for (let i = 0; i < process.argv.length; i++) {
     }
 }
 
-let mtIRCCLient: Client;
+let mtIRCCLient: Client | undefined;
 declare const __static: string;
 
 protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true, standard: true}}]);
@@ -101,6 +102,16 @@ let sessionString: string;
 const seenModpacks: MTModpacks = {};
 let friends: FriendListResponse = {friends: [], requests: []};
 
+ipcMain.on('websocketReceived', (event, message) => {
+    if (!mtIRCCLient) {
+        return;
+    }
+    if (message.type == 'ircEvent') {
+        message.type = message.jsEvent;
+        mtIRCCLient.messageReceived(message);
+    }
+})
+
 ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret, isDevMode: isDevelopment});
 });
@@ -137,10 +148,14 @@ ipcMain.on('checkFriends', async (event) => {
     friends = ourfriends;
     if (mtIRCCLient !== undefined) {
         ourfriends.friends.forEach((friend: Friend) => {
-            mtIRCCLient.whois(friend.shortHash);
+            if (mtIRCCLient !== undefined) {
+                mtIRCCLient.whois(friend.shortHash);
+            }
         });
         ourfriends.requests.forEach((friend: Friend) => {
-            mtIRCCLient.whois(friend.shortHash);
+            if (mtIRCCLient !== undefined) {
+                mtIRCCLient.whois(friend.shortHash);
+            }
         });
     }
 });
@@ -309,10 +324,14 @@ ipcMain.on('acceptFriendRequest', async (event, data) => {
             friends = await getFriends();
             if (mtIRCCLient !== undefined) {
                 friends.friends.forEach((friend: Friend) => {
-                    mtIRCCLient.whois(friend.shortHash);
+                    if (mtIRCCLient !== undefined) {
+                        mtIRCCLient.whois(friend.shortHash);
+                    }
                 });
                 friends.requests.forEach((friend: Friend) => {
-                    mtIRCCLient.whois(friend.shortHash);
+                    if (mtIRCCLient !== undefined) {
+                        mtIRCCLient.whois(friend.shortHash);
+                    }
                 });
             }
         }
@@ -336,7 +355,8 @@ async function connectToIRC() {
         return;
     }
     log.info("Connecting to Minetogether IRC");
-    mtIRCCLient = new Client();
+    friends = await getFriends();
+    mtIRCCLient = new Client(win);
     mtIRCCLient.connect({
         host: mtDetails.host,
         port: mtDetails.port,
@@ -345,13 +365,16 @@ async function connectToIRC() {
     });
     mtIRCCLient.on('registered', (event: any) => {
         log.info("Connected to Minetogether IRC");
-    });
-    friends = await getFriends();
-    friends.friends.forEach((friend: Friend) => {
-        mtIRCCLient.whois(friend.shortHash);
-    });
-    friends.requests.forEach((friend: Friend) => {
-        mtIRCCLient.whois(friend.shortHash);
+        friends.friends.forEach((friend: Friend) => {
+            if (mtIRCCLient !== undefined) {
+                mtIRCCLient.whois(friend.shortHash);
+            }
+        });
+        friends.requests.forEach((friend: Friend) => {
+            if (mtIRCCLient !== undefined) {
+                mtIRCCLient.whois(friend.shortHash);
+            }
+        });
     });
     mtIRCCLient.on('whois', async (event: any) => {
         if (event.nick) {
@@ -450,7 +473,9 @@ async function connectToIRC() {
                 let displayName = rest.join(' ');
                 friendsWindow.webContents.send('newFriendRequest', {from: event.nick, displayName: displayName, friendCode: code});
                 friends.requests.push({shortHash: event.nick, accepted: false, name: displayName})
-                mtIRCCLient.whois(event.nick);
+                if (mtIRCCLient !== undefined) {
+                    mtIRCCLient.whois(event.nick);
+                }
             } else if (event.type === 'FRIENDACC') {
                 const args = event.message.substring('FRIENDACC'.length, event.message.length).split(' ');
                 if (args[0] === '') {
@@ -486,7 +511,9 @@ async function connectToIRC() {
 }
 
 ipcMain.on('checkServer', async (event, data) => {
-    mtIRCCLient.ctcpRequest(data, 'SERVERID');
+    if (mtIRCCLient !== undefined) {
+        mtIRCCLient.ctcpRequest(data, 'SERVERID');
+    }
 });
 
 ipcMain.on('blockFriend', async (event, data) => {
