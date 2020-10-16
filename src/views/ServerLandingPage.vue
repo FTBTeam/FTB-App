@@ -240,6 +240,15 @@ export default class ServerLandingPage extends Vue {
     return [];
   }
 
+  public getCorrectVersion(mtgID: string){
+    const result = this.modpack?.versions?.filter((obj: Versions) => {
+      return obj.mtgID === mtgID
+    })
+    if(result !== undefined){
+      return result[0]
+    }
+  }
+
   public install(version: number): void {
       if (this.modpack === null) {
           return;
@@ -392,6 +401,12 @@ export default class ServerLandingPage extends Vue {
                     });
                 }
               });
+          }
+          if(this.modpack !== null){
+            const tmpVersion = this.getCorrectVersion(this.server.project);
+            if(tmpVersion !== undefined){
+              this.version = tmpVersion;
+            }
           }
         }
       });
