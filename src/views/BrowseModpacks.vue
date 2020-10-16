@@ -30,7 +30,7 @@
                   :key="index"
                   :list-mode="settingsState.settings.listMode"
                   :packID="modpack.id"
-                  :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                  :art="modpack.art.length > 0 ? getArt(modpack) : ''"
                   :installed="false"
                   :minecraft="'1.7.10'"
                   :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
@@ -63,7 +63,7 @@
                         :key="`featured-${modpack.id}`"
                         :list-mode="settingsState.settings.listMode"
                         :packID="modpack.id"
-                        :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                        :art="modpack.art.length > 0 ? getArt(modpack) : ''"
                         :installed="false"
                         :versions="modpack.versions"
                         :minecraft="'1.7.10'"
@@ -90,7 +90,7 @@
                     :list-mode="settingsState.settings.listMode"
                       :versions="modpack.versions"
                       :packID="modpack.id"
-                      :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                      :art="modpack.art.length > 0 ? getArt(modpack) : ''"
                       :installed="false"
                       :minecraft="'1.7.10'"
                       :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
@@ -115,7 +115,7 @@
                         :list-mode="settingsState.settings.listMode"
                         :packID="modpack.id"
                         :versions="modpack.versions"
-                        :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                        :art="modpack.art.length > 0 ? getArt(modpack) : ''"
                         :installed="false"
                         :minecraft="'1.7.10'"
                         :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
@@ -187,6 +187,14 @@ public changeToList() {
     const settingsCopy = this.settingsState.settings;
     settingsCopy.listMode = true;
     this.saveSettings(settingsCopy);
+  }
+
+  public getArt(modpack: any){
+    let artP = modpack.art.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
+    if(artP === undefined){
+      return "";
+    }
+    return artP.url;
   }
 
   public changeToGrid() {
