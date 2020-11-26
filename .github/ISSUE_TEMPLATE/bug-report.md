@@ -20,7 +20,7 @@ UI:
 
 **Log Files:**
 Put links to your logs here
-how to find logs: https://faq.ftb.world/books/ftb-app
+how to find logs: https://faq.ftb.world/books/ftb-app/page/uploading-app-logs
 
 **Describe the bug**
 A clear and concise description of what the bug is.
