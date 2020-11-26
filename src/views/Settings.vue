@@ -96,13 +96,8 @@
             <h1 class="text-2xl">App Info</h1>
             <div class="bg-sidebar-item p-5 rounded my-4">
                 <div class="flex flex-col my-2">
-                    <span><a class="cursor-pointer hover:underline" href="https://github.com/FTBTeam/FTB-App"
-                             target="_blank">UI Version: {{webVersion}} <font-awesome-icon class="ml-2"
-                                                                                           :icon="['fab', 'github']"
-                                                                                           size="1x"/></a></span>
-                    <span><a class="cursor-pointer hover:underline"
-                             href="https://github.com/CreeperHost/modpacklauncher" target="_blank">App Version: {{appVersion}} <font-awesome-icon
-                            class="ml-2" :icon="['fab', 'github']" size="1x"/></a></span>
+                    <span>UI Version: {{webVersion}} <font-awesome-icon @click="copyToClipboard(webVersion)" class="ml-2 cursor-pointer" :icon="['fas', 'copy']" size="1x"/><a class="cursor-pointer hover:underline" href="https://github.com/FTBTeam/FTB-App" target="_blank"><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"/></a></span>
+                    <span>App Version: {{appVersion}} <font-awesome-icon @click="copyToClipboard(appVersion)" class="ml-2 cursor-pointer" :icon="['fas', 'copy']" size="1x"/><a class="cursor-pointer hover:underline" href="https://github.com/CreeperHost/modpacklauncher" target="_blank"><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"/></a></span>
                     <router-link @click.native="scrollToTop" to="/license" class="hover:underline cursor-pointer">License Information</router-link >
                     <ftb-button class="py-2 px-4 my-2" color="primary" css-class="text-center text-l" @click="uploadLogData()">Upload App Logs</ftb-button>
                     <ftb-button class="py-2 px-4 my-2" color="warning" css-class="text-center text-l" @click="refreshCache()">Refresh Cache</ftb-button>
@@ -158,6 +153,7 @@ export default class SettingsPage extends Vue {
     @Action('loadSettings', {namespace: 'settings'}) public loadSettings: any;
     @Action('showAlert') public showAlert: any;
     @Action('hideAlert') public hideAlert: any;
+    @Action('sendMessage') public sendMessage: any;
 
     public settingsCopy: Settings = {
         width: 1720,
@@ -213,59 +209,20 @@ export default class SettingsPage extends Vue {
     }
 
     public uploadLogData(): void {
-        let workingDir = process.cwd();
-        // Change directory up one level temporarily to get log files.
-        let r = false;
-        if (workingDir.trimEnd().endsWith('bin')) {
-            process.chdir('../');
-            r = true;
-        }
-        workingDir = process.cwd();
-        // Get directory to check for files, if they're there we can proceed.
-        const appFolder = readdirSync(workingDir);
-        if (appFolder.indexOf('launcher.log') > -1) {
-            // Launcher log should always be there, if it isn't we won't do anything.
-            const launcherLog = readFileSync(`${workingDir}/launcher.log`, {encoding: 'utf8'});
-            const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`, {encoding: 'utf8'}) : 'Not available';
-            let frontendLog = new Buffer('');
-            if (appFolder.indexOf('bin') > -1) {
-                if (existsSync(path.join(workingDir, 'bin', 'logs', 'main.log'))) {
-                    frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
-                }
-            }
-            const data = `=====================================General Information=====================================\nUI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\nOperating System: ${os.type()} ${os.release()}\nFree/Total Memory: ${this.calcMem(os.freemem())}GB/${this.calcMem(os.totalmem())}GB\nCPU Info: ${os.cpus()[0].model}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
-            // Upload logs to pste.ch and copy URL to clipboard
-            createPaste(data, {
-                raw: false,
-                server: 'https://pste.ch',
-            })
-                .then((data) => {
-                    clipboard.writeText(data);
-                    this.showAlert({
-                        title: 'Uploaded!',
-                        message: 'The URL has been copied to your clipboard',
-                        type: 'primary',
-                    });
-                    setTimeout(() => {
-                        this.hideAlert();
-                    }, 5000);
-                })
-                .catch((rejected) => {
-                    logVerbose(this.settingsState, rejected);
-                    this.showAlert({
-                        title: 'Error!',
-                        message: 'There was an error uploading your logs - ' + rejected,
-                        type: 'danger',
-                    });
-                    setTimeout(() => {
-                        this.hideAlert();
-                    }, 5000);
+        this.sendMessage({payload: {type: 'uploadLogs', uiVersion: this.webVersion}, callback: async (data: any) => {
+            if (!data.error) {
+                let url = `https://pste.ch/${data.code}`
+                clipboard.writeText(data);
+                this.showAlert({
+                    title: 'Uploaded!',
+                    message: 'The URL has been copied to your clipboard',
+                    type: 'primary',
                 });
-        }
-        // Change back to the bin folder
-        if (r) {
-            process.chdir('./bin');
-        }
+                setTimeout(() => {
+                    this.hideAlert();
+                }, 5000);
+            }
+        }});
     }
 
     public resChange(data: any) {
@@ -299,7 +256,7 @@ export default class SettingsPage extends Vue {
                 // @ts-ignore
                 this.settingsCopy[key] = false;
                 // @ts-ignore
-            } else if (key !== 'jvmargs' && !isNaN(this.settingsCopy[key])) {
+            } else if (key !== 'jvmargs' && key !== 'instanceLocation' && !isNaN(this.settingsCopy[key])) {
                 // @ts-ignore
                 this.settingsCopy[key] = parseInt(this.settingsCopy[key], 10);
             }

@@ -1,7 +1,7 @@
 import { ModPack } from './modules/modpacks/types';
 
 
-import {ipcRenderer, shell} from 'electron';
+import {clipboard, ipcRenderer, shell} from 'electron';
 // console = remote.app.console;
 // Object.assign(console, remote.app.console.functions);
 import Vue from 'vue';
@@ -99,6 +99,9 @@ Vue.mixin({
             const link = event.target.href;
             shell.openExternal(link);
         },
+        copyToClipboard(text: string){
+            clipboard.writeText(text);
+        }
     },
 });
 
@@ -290,4 +293,11 @@ ipcRenderer.on('parseProtocolURL', (event, data) => {
         const serverID = args[0];
         router.push({name: 'server', query: {serverid: serverID}});
     }
+});
+ipcRenderer.on('sendWebsocket', (event, data) => {
+    console.log("Request received to send ", data)
+    const messageID = Math.round(Math.random() * 1000);
+    data.requestId = messageID;
+    data.secret = store.state.wsSecret;
+    vm.$socket.sendObj(data);
 });
