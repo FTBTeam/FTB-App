@@ -36,6 +36,11 @@ export const mutations: MutationTree<SocketState> = {
         } else if (message.type === 'closeModal') {
             state.modal = null;
         }
+        else if (message.type === 'clientLaunchData') {
+            if (state.modProgressCallback) {
+                state.modProgressCallback(message);
+            }
+        }
         state.socket.message = message;
         ipcRenderer.send("websocketReceived", message);
     },
@@ -49,4 +54,7 @@ export const mutations: MutationTree<SocketState> = {
     ADD_CALLBACK(state: any, data: any) {
         state.messages[data.id] = data.callback;
     },
+    ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void){
+        state.modProgressCallback = callback;
+    }
 };

@@ -18,4 +18,7 @@ export const actions: ActionTree<SocketState, RootState> = {
         Vue.prototype.$socket.sendObj(payload.payload);
         commit('ADD_CALLBACK', {id: messageID, callback: payload.callback});
     },
+    registerModProgressCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void){
+        commit('ADD_MOD_PROGRESS_CALLBACK', callback);
+    },
 };

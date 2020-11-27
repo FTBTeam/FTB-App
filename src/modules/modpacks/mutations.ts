@@ -85,4 +85,7 @@ export const mutations: MutationTree<ModpackState> = {
     clearSearch(state) {
         state.searchString = '';
     },
+    setLaunchProgress(state, progress: any){
+        state.launchProgress = progress;
+    }
 };

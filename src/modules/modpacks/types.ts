@@ -111,6 +111,14 @@ export interface ModpackState {
     currentModpack: ModPack | null;
     packsCache: ModPacks;
     searchString: string;
+    launchProgress: Bar[] | null;
+}
+
+interface Bar {
+    title: string;
+    steps: number;
+    step: number;
+    message: string;
 }
 
 export interface ModPacks {

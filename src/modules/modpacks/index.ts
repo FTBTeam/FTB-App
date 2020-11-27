@@ -19,6 +19,7 @@ export const state: ModpackState = {
     installing: null,
     loading: false,
     searchString: '',
+    launchProgress: null,
 };
 
 export const modpacks: Module<ModpackState, RootState> = {

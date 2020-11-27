@@ -70,6 +70,11 @@ export default new Router({
                     component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
                 },
                 {
+                    path: '/launching',
+                    name: 'launchingpage',
+                    component: () => import(/* webpackChunkName: "modpackpage" */ './views/LaunchingPage.vue'),
+                },
+                {
                     path: '/thirdparty',
                     name: 'thirdparty',
                     // route level code-splitting

@@ -158,6 +158,33 @@ const vm = new Vue({
     render: (h: any) => h(App),
 }).$mount('#app');
 
+store.dispatch('registerModProgressCallback', (data: any) => {
+    if(data.messageType === "message"){
+        if(data.message === "init"){
+            store.commit('modpacks/setLaunchProgress', []);
+            if(data.instance){
+                router.push({name: 'launchingpage', query: {uuid: data.instance}})
+            }
+        } else {
+            if(router.currentRoute.name === "launchingpage"){
+                router.replace({name: 'instancepage', query: {uuid: data.instance}})
+            }
+            store.commit('modpacks/setLaunchProgress', undefined);
+        }
+    } else if(data.messageType === "progress") {
+        if(router.currentRoute.name !== "launchingpage"){
+            router.push({name: 'launchingpage', query: {uuid: data.instance}})
+        }
+        if(data.clientData.bars){
+            store.commit('modpacks/setLaunchProgress', data.clientData.bars);
+        }
+    } else if(data.messageType === "clientDisconnect"){
+        if(router.currentRoute.name === "launchingpage"){
+            router.replace({name: 'instancepage', query: {uuid: data.instance}})
+        }
+    }
+});
+
 ipcRenderer.send('sendMeSecret');
 ipcRenderer.on('hereIsSecret', (event, data) => {
     if (data.port === 13377 && !data.isDevMode) {
