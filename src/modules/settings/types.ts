@@ -19,6 +19,7 @@ export interface Settings {
     autoOpenChat: boolean | string;
     blockedUsers: string[] | string;
     sessionString?: string;
+    mtConnect: boolean;
 }
 
 export interface Hardware {

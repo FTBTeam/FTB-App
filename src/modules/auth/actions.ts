@@ -81,7 +81,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         payload.friendCode = '';
         commit('storeAuthDetails', payload);
         if(payload === null){
-            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: "", mpSecret: "", s3Bucket: "", s3Host: "", s3Key: "", s3Secret: ""}}, {root: true});            
+            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: "", mpSecret: "", s3Bucket: "", s3Host: "", s3Key: "", s3Secret: "", mtHash: ""}}, {root: true});
         } else {
             let s3Bucket, s3Host, s3Key, s3Secret = "";
             let mpKey = "";
@@ -95,10 +95,10 @@ export const actions: ActionTree<AuthState, RootState> = {
             if(payload.attributes['modpackschkey'] !== undefined){
                 mpKey = payload.attributes['modpackschkey'][0];
             }
-            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: mpKey, mpSecret: "", s3Bucket, s3Host, s3Key, s3Secret}}, {root: true});
+            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: mpKey, mpSecret: "", s3Bucket, s3Host, s3Key, s3Secret, mtHash: payload.mc.hash.long}}, {root: true});
             dispatch('sendMessage', {payload: {type: 'installedInstances', refresh: true}, callback: function(data: any){
                 dispatch('modpacks/storeInstalledPacks', data, {root: true})
-            }}, {root: true});            
+            }}, {root: true});
         }
     },
     getFriends({rootState, commit, dispatch, state}, payload: any): Promise<void> {

@@ -174,7 +174,8 @@ export default class SettingsPage extends Vue {
         verbose: false,
         cloudSaves: false,
         autoOpenChat: true,
-        blockedUsers: []
+        blockedUsers: [],
+        mtConnect: false,
     };
 
     private resSelectedValue: string = '0';

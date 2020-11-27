@@ -18,6 +18,9 @@
                         <ftb-toggle label="Enable cloud save uploads " :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves ==='true'"
                                 @change="toggleCloudSaves" :disabled="auth.token.activePlan === null"
                         onColor="bg-primary" inline="true"/>
+                      <ftb-toggle label="Enable Minetogether Connect" :value="settings.settings.mtConnect === true || settings.settings.mtConnect ==='true'"
+                                  @change="toggleMTConnect" :disabled="auth.token.activePlan === null"
+                                  onColor="bg-primary" inline="true"/>
                     </div>
                     <div class="mt-4 w-1/2">
                         <ftb-button color="warning" class="text-center px-2 py-1 my-2" @click="logout">Logout</ftb-button>
@@ -79,6 +82,11 @@ export default class ProfilePage extends Vue {
     public toggleAutoOpenChat(value: boolean) {
         this.settings.settings.autoOpenChat = value;
         this.saveSettings(this.settings.settings);
+    }
+
+    public toggleMTConnect(value: boolean){
+      this.settings.settings.mtConnect = value;
+      this.saveSettings(this.settings.settings);
     }
 
     public openSubscriptions(){
