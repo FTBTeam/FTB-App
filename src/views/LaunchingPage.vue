@@ -43,7 +43,7 @@
               </div>
             </div>
             <div class="flex flex-row mx-auto w-1/2 justify-between">
-              <p @click="restoreLoading" class="text-xs opacity-50 cursor-pointer hover:opacity-100">Restore client</p>
+              <p @click="restoreLoading" class="text-xs opacity-50 cursor-pointer hover:opacity-100">Show client</p>
               <p @click="cancelLoading" class="text-xs opacity-50 cursor-pointer hover:opacity-100">Cancel loading</p>
             </div>
           </div>
@@ -214,7 +214,8 @@ interface Changelogs {
           if(this.modpacks.launchProgress === null){
             return [];
           }
-          return this.modpacks.launchProgress.filter((b) => b.steps !== 1)
+          let bars = this.modpacks.launchProgress.filter((b) => b.steps !== 1);
+          return bars.length > 3 ? bars.slice(0, 3) : bars;
         }
 
         get currentModpack() {
