@@ -24,6 +24,7 @@ export const mutations: MutationTree<SettingsState> = {
             autoOpenChat: true,
             blockedUsers: [],
             mtConnect: false,
+            automateMojang: true,
         };
         state.settings = {...defaultSettings, ...payload};
     },
