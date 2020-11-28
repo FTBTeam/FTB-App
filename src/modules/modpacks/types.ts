@@ -38,6 +38,7 @@ export interface Instance {
     lastPlayed: number;
     isImport: boolean;
     jvmArgs: string;
+    jrePath: string;
     memory: number;
     minMemory: number;
     recMemory: number;

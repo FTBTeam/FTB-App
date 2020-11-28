@@ -35,6 +35,11 @@ export interface SettingsState {
     settings: Settings;
     error: boolean;
     hardware: Hardware;
+    javaInstalls: JavaVersions;
+}
+
+export interface JavaVersions {
+    [index: string]: string;
 }
 
 export interface Resolution {

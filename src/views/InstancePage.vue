@@ -235,6 +235,16 @@
                         @blur="saveSettings"
                 />
               </div>
+              <div class="flex flex-col my-2" >
+                <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
+                  Java Version
+                </label>
+                <select class="rounded-none bg-input focus:outline-none focus:shadow-outline border border-input px-4 py-2 w-full h-full appearance-none leading-normal text-gray-400" v-model="instance.jrePath"
+                        @blur="saveSettings"
+                        @change="saveSettings">
+                  <option v-for="versionName in Object.keys(javaVersions)" :value="javaVersions[versionName]" :key="versionName">{{versionName}}</option>
+                </select>
+              </div>
             </div>
             <div class="flex flex-col my-2">
               <ftb-slider
@@ -441,6 +451,16 @@ interface Changelogs {
 
 export default class InstancePage extends Vue {
 
+    get javaVersions(){
+      if(this.settingsState === undefined){
+        return {};
+      }
+      if(this.settingsState.javaInstalls === undefined){
+        return {};
+      }
+      return this.settingsState.javaInstalls;
+    }
+
     get instance() {
         if (this.modpacks == null) {
             return null;
@@ -505,6 +525,7 @@ export default class InstancePage extends Vue {
     @Action('saveInstance', {namespace: 'modpacks'}) public saveInstance: any;
     @Action('sendMessage') public sendMessage!: any;
     @Action('getChangelog', {namespace: 'modpacks'}) public getChangelog!: any;
+    @Action('loadJavaVersions', {namespace: 'settings'}) public loadJavaVersions!: any;
     @Action('showAlert') public showAlert: any;
     @Action('hideAlert') public hideAlert: any;
 
@@ -816,6 +837,9 @@ export default class InstancePage extends Vue {
           if (this.currentVersionObject.mtgID) {
             this.fetchServers(this.currentVersionObject.mtgID);
           }
+        }
+        if(Object.keys(this.settingsState.javaInstalls).length < 1){
+          this.loadJavaVersions();
         }
     }
 

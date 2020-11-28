@@ -1,6 +1,6 @@
 import { ipcRenderer } from 'electron';
 import {ActionTree} from 'vuex';
-import {SettingsState, Settings} from './types';
+import {SettingsState, Settings, JavaVersions} from './types';
 import {RootState} from '@/types';
 
 export const actions: ActionTree<SettingsState, RootState> = {
@@ -25,4 +25,10 @@ export const actions: ActionTree<SettingsState, RootState> = {
             dispatch('loadSettings');
         }}, {root: true});
     },
+    loadJavaVersions({dispatch, commit}){
+        dispatch('sendMessage', {payload: {type: 'getJavas'}, callback: (data: {javas: JavaVersions}) => {
+                console.log("Got info", data.javas);
+                commit('loadVersions', data.javas);
+            }}, {root: true});
+    }
 };

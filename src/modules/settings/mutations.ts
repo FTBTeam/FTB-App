@@ -42,4 +42,7 @@ export const mutations: MutationTree<SettingsState> = {
               }) as Resolution[] : [],
         };
     },
+    loadVersions(state, payload: any){
+        state.javaInstalls = payload;
+    }
 };

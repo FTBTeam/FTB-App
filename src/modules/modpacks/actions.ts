@@ -179,7 +179,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     saveInstance({dispatch, commit}, instance: Instance): Promise<any> {
         return new Promise((resolve, reject) => {
-            dispatch('sendMessage', {payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {name: instance.name, jvmargs: instance.jvmArgs, memory: instance.memory, width: instance.width, height: instance.height, cloudSaves: instance.cloudSaves}}, callback: (msg: any) => {
+            dispatch('sendMessage', {payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {name: instance.name, jvmargs: instance.jvmArgs, memory: instance.memory, width: instance.width, height: instance.height, cloudSaves: instance.cloudSaves, jrePath: instance.jrePath, embeddedjre: instance.jrePath === ""}}, callback: (msg: any) => {
                 dispatch('sendMessage', {
                     payload: { type: 'installedInstances', refresh: true},
                     callback: (data: any) => {
