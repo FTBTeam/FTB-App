@@ -20,6 +20,7 @@ export interface Settings {
     blockedUsers: string[] | string;
     sessionString?: string;
     mtConnect: boolean;
+    automateMojang: boolean;
 }
 
 export interface Hardware {

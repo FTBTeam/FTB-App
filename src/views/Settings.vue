@@ -48,6 +48,8 @@
                                 onColor="bg-primary"/>
                     <ftb-toggle label="Enable MineTogether Chat: " :value="settingsCopy.enableChat" @change="enableChat"
                                 onColor="bg-primary" :disabled="auth.token === null ? 'true' : ''"/>
+                    <ftb-toggle label="Automate Minecraft Launcher: " :value="settingsCopy.automateMojang" @change="enableAutomate"
+                                onColor="bg-primary" />
                     <ftb-slider label="Download Threads" v-model="settingsCopy.threadLimit"
                                 :currentValue="settingsCopy.threadLimit" minValue="1"
                                 :maxValue="settingsState.hardware.totalCores * 2" @change="doSave"
@@ -176,6 +178,7 @@ export default class SettingsPage extends Vue {
         autoOpenChat: true,
         blockedUsers: [],
         mtConnect: false,
+        automateMojang: true,
     };
 
     private resSelectedValue: string = '0';
@@ -299,6 +302,11 @@ export default class SettingsPage extends Vue {
     public enableVerbose(value: boolean): void {
         this.settingsCopy.verbose = value;
         this.saveSettings(this.settingsCopy);
+    }
+
+    public enableAutomate(value: boolean): void {
+      this.settingsCopy.automateMojang = value;
+      this.saveSettings(this.settingsCopy);
     }
 
     public doSave() {

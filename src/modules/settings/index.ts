@@ -27,6 +27,7 @@ export const state: SettingsState = {
         autoOpenChat: true,
         blockedUsers: [],
         mtConnect: false,
+        automateMojang: true,
     },
     error: false,
     hardware: {
