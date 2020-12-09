@@ -21,4 +21,7 @@ export const actions: ActionTree<SocketState, RootState> = {
     registerModProgressCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void){
         commit('ADD_MOD_PROGRESS_CALLBACK', callback);
     },
+    registerPingCallback({commit}: ActionContext<SocketState, RootState>, callback: (data:any) => void) {
+        commit('ADD_PING_MESSAGE_CALLBACK', callback);
+    },
 };

@@ -122,6 +122,18 @@ export default class MainApp extends Vue {
   private webVersion: string = config.webVersion;
   private appVersion: string = config.appVersion;
 
+  @Action('registerPingCallback')
+  private registerPingCallback: any;
+
+  public mounted(){
+    this.registerPingCallback((data: any) => {
+      if(data.type === "ping") {
+        console.log('Sending pong');
+        this.sendMessage({payload: {type: 'pong'}});
+      }
+    });
+  }
+
   @Watch('websockets', {deep: true})
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (newVal.socket.isConnected && !this.loading && !this.hasLoaded) {

@@ -6,6 +6,7 @@ export interface SocketState {
     messages: {[index: string]: (data: any) => void};
     modal: ModalBox | null;
     reconnects: number;
+    pingEventCallback: ((data: any) => void) | undefined;
     modProgressCallback: ((data: any) => void) | undefined;
 }
 

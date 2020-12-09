@@ -31,7 +31,11 @@ export const mutations: MutationTree<SocketState> = {
                 }
             }
         }
-        if (message.type === 'openModal') {
+        if (message.type === 'ping') {
+            if(state.pingEventCallback){
+                state.pingEventCallback(message);
+            }
+        } else if (message.type === 'openModal') {
             state.modal = message;
         } else if (message.type === 'closeModal') {
             state.modal = null;
@@ -56,5 +60,8 @@ export const mutations: MutationTree<SocketState> = {
     },
     ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void){
         state.modProgressCallback = callback;
-    }
+    },
+    ADD_PING_MESSAGE_CALLBACK(state: any, callback: (data: any) => void){
+        state.pingEventCallback = callback;
+    },
 };

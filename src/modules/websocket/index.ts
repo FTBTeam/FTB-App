@@ -14,6 +14,7 @@ export const state: SocketState = {
     messages: {},
     modal: null,
     reconnects: 0,
+    pingEventCallback: undefined,
     modProgressCallback: undefined,
 };
 
