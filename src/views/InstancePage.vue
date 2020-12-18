@@ -4,7 +4,7 @@
       <div>
         <div
                 class="header-image"
-                v-bind:style="{'background-image': `url(${currentModpack !== null && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+                v-bind:style="{'background-image': `url(${currentModpack !== null && currentModpack.art != null && currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
         >
           <span class="instance-name"><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded" @click="goBack"><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button></span>
 
@@ -300,7 +300,6 @@
               <server-card v-for="server in shuffledServers" :key="server.id" :server="server" :art="currentModpack.art.length > 0 ? currentModpack.art.filter((art) => art.type === 'square')[0].url : ''"></server-card>
             </div>
             <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
-              <!-- TODO: Make this pretty -->
               <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
               <h1 class="text-5xl">Oh no!</h1>
               <span>It doesn't looks like there are any public MineTogether servers</span>
@@ -311,7 +310,7 @@
     </div>
     <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction"
-                     :cancel-action="msgBox.cancelAction" :type="msgBox.type"/>
+                     :cancel-action="msgBox.cancelAction" :type="msgBox.type" :loading="deleting"/>
     </FTBModal>
   </div>
 </template>
@@ -496,7 +495,7 @@ export default class InstancePage extends Vue {
     }
 
     get isLatestVersion() {
-        if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack') {
+        if (this.currentModpack === undefined || this.currentModpack?.kind !== 'modpack' || this.currentModpack.versions === undefined) {
             return true;
         }
         return this.instance?.versionId === this.currentModpack?.versions[0].id;
@@ -530,7 +529,8 @@ export default class InstancePage extends Vue {
     @Action('hideAlert') public hideAlert: any;
 
     private currentModpack: ModPack | null = null;
-    private cheaty: string = '';
+    private cheaty = '';
+    private deleting: boolean = false;
 
     private defaultImage: any = placeholderImage;
 
@@ -639,6 +639,7 @@ export default class InstancePage extends Vue {
     }
 
     public deleteInstace(): void {
+        this.deleting = true;
         this.sendMessage({
             payload: {type: 'uninstallInstance', uuid: this.instance?.uuid},
             callback: (data: any) => {
@@ -710,11 +711,10 @@ export default class InstancePage extends Vue {
       if (this.showMsgBox) {
         this.hideMsgBox();
       }
+      let loadInApp = this.settingsState.settings.loadInApp || this.auth.token?.activePlan == null;
       this.sendMessage({
-            payload: {type: 'launchInstance', uuid: this.instance?.uuid},
-            callback: (data: any) => {
-                ipcRenderer.send('disconnect');
-            },
+            payload: {type: 'launchInstance', uuid: this.instance?.uuid, loadInApp},
+            callback: (data: any) => {},
         });
     }
 
@@ -722,64 +722,13 @@ export default class InstancePage extends Vue {
       if(this.modpacks?.installing !== null){
         return;
       }
-        const modpackID = this.instance?.id;
-        this.updateInstall({modpackID: this.instance?.id, progress: 0});
-        if (this.modpacks != null && this.currentModpack != null) {
-            if (versionID === undefined && this.currentModpack.kind === 'modpack') {
-                versionID = this.currentModpack.versions[0].id;
-            }
-            this.sendMessage({
-                payload: {
-                    type: 'updateInstance',
-                    uuid: this.instance?.uuid,
-                    id: this.instance?.id,
-                    version: versionID,
-                },
-                callback: (data: any) => {
-                    if (data.status === 'success') {
-                        this.sendMessage({
-                            payload: {type: 'installedInstances', refresh: true},
-                            callback: (data: any) => {
-                                this.storePacks(data);
-                                this.finishInstall({
-                                    modpackID,
-                                    messageID: data.requestId,
-                                });
-                            },
-                        });
-                    } else if (data.status === 'error') {
-                        this.updateInstall({
-                            modpackID,
-                            messageID: data.requestId,
-                            error: true,
-                            errorMessage: data.message,
-                            instanceID: data.uuid,
-                        });
-                    } else if (data.overallPercentage < 100) {
-                        this.updateInstall({
-                            modpackID,
-                            messageID: data.requestId,
-                            progress: data.overallPercentage,
-                            downloadSpeed: data.speed,
-                            downloadedBytes: data.currentBytes,
-                            totalBytes: data.overallBytes,
-                            stage: data.currentStage,
-                        });
-                    } else if (data.currentStage === 'FINISHED') {
-                        this.updateInstall({
-                            modpackID,
-                            messageID: data.requestId,
-                            progress: data.overallPercentage,
-                            downloadSpeed: data.speed,
-                            downloadedBytes: data.currentBytes,
-                            totalBytes: data.overallBytes,
-                            stage: data.currentStage,
-                        });
-                    }
-                    logVerbose(this.settingsState, 'Update data', JSON.stringify(data));
-                },
-            });
-        }
+      const modpackID = this.instance?.id;
+      if (this.modpacks != null && this.currentModpack != null) {
+          if (versionID === undefined && this.currentModpack.kind === 'modpack') {
+              versionID = this.currentModpack.versions[0].id;
+          }
+          this.$router.replace({name: 'installingpage', query: {modpackid: modpackID?.toString(), versionID: versionID?.toString(), uuid: this.instance?.uuid}});
+      }
     }
 
     public async saveSettings() {
@@ -824,10 +773,12 @@ export default class InstancePage extends Vue {
             this.$router.push('/modpacks');
             return;
         }
-        this.currentModpack = await this.fetchModpack(this.instance.id);
+        this.currentModpack = await this.fetchModpack(this.instance.id).catch((err: any) => undefined);
         this.$forceUpdate();
         if (this.currentModpack?.kind === 'modpack') {
+          if(this.currentModpack?.versions !== undefined){
             this.toggleChangelog(this.currentModpack?.versions[0].id);
+          }
         }
         if (this.$route.query.shouldPlay === 'true') {
           this.confirmLaunch();
@@ -845,6 +796,9 @@ export default class InstancePage extends Vue {
 
     get currentVersionObject(): Versions | null {
       if (this.currentModpack !== null) {
+        if(this.currentModpack.versions === undefined){
+          return null;
+        }
         const version = this.currentModpack.versions.find((f: Versions) => f.id === this.instance?.versionId);
         if (version !== undefined) {
           return version;
@@ -861,13 +815,15 @@ export default class InstancePage extends Vue {
     }
 
     private getModList() {
-        const modlistRaw = fs.readFileSync(this.instance?.path + '/version.json', 'utf-8');
-        const modlistJson = JSON.parse(modlistRaw);
-        modlistJson.files.forEach((mod: Modlist) => {
-            if (mod.type === 'mod') {
-                this.modlist.push({name: mod.name, version: mod.version, sha1: mod.sha1, size: mod.size});
-            }
-        });
+      this.sendMessage({
+        payload: {
+          type: "instanceMods",
+          uuid: this.instance?.uuid
+        },
+        callback: (data: any) => {
+          this.modlist = data.files;
+        }
+      })
     }
 
     private async toggleChangelog(id: number | undefined) {

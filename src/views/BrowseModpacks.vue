@@ -26,7 +26,7 @@
                 v-if="modpacks.search.length > 0"
         >
           <pack-card-wrapper
-                  v-for="(modpack, index) in modpacks.search"
+                  v-for="(modpack, index) in modpacks.search.filter((m) => m.versions.length > 0)"
                   :key="index"
                   :list-mode="settingsState.settings.listMode"
                   :packID="modpack.id"
@@ -49,6 +49,8 @@
             <h1 @click="changeTab('featured')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featured' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured</h1>
             <h1 @click="changeTab('topInstalls')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topInstalls' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Top Installs</h1>
             <h1 @click="changeTab('topPlays')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'topPlays' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Top Plays</h1>
+            <h1 v-if="modpacks.privatePacks.length > 0" @click="changeTab('privatePacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'privatePacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Private Packs</h1>
+            <h1 @click="changeTab('all')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'all' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">All</h1>
           </div>
           <transition name="fade" mode="out-in">
             <div v-if="currentTab === 'featured'" key="featured">
@@ -115,7 +117,59 @@
                         :list-mode="settingsState.settings.listMode"
                         :packID="modpack.id"
                         :versions="modpack.versions"
-                        :art="modpack.art.length > 0 ? getArt(modpack) : ''"
+                        :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                        :installed="false"
+                        :minecraft="'1.7.10'"
+                        :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
+                        :versionID="modpack.versions[0].id"
+                        :name="modpack.name"
+                        :authors="modpack.authors"
+                        :tags="modpack.tags"
+                        :description="modpack.synopsis"
+                >{{modpack.id}}
+                </pack-card-wrapper>
+              </transition-group>
+            </div>
+            <div v-else-if="currentTab === 'all'" key="all">
+              <transition-group
+                      name="list"
+                      tag="div"
+                      class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
+                      appear
+              >
+                <pack-card-wrapper
+                        v-for="modpack in modpacks.all"
+                        :key="`plays-${modpack.id}`"
+                        :list-mode="settingsState.settings.listMode"
+                        :packID="modpack.id"
+                        :versions="modpack.versions"
+                        :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
+                        :installed="false"
+                        :minecraft="'1.7.10'"
+                        :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
+                        :versionID="modpack.versions[0].id"
+                        :name="modpack.name"
+                        :authors="modpack.authors"
+                        :tags="modpack.tags"
+                        :description="modpack.synopsis"
+                >{{modpack.id}}
+                </pack-card-wrapper>
+              </transition-group>
+            </div>
+            <div v-else-if="currentTab === 'privatePacks'" key="privatePacks">
+              <transition-group
+                      name="list"
+                      tag="div"
+                      class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
+                      appear
+              >
+                <pack-card-wrapper
+                        v-for="modpack in modpacks.privatePacks"
+                        :key="`plays-${modpack.id}`"
+                        :list-mode="settingsState.settings.listMode"
+                        :packID="modpack.id"
+                        :versions="modpack.versions"
+                        :art="modpack.art.length > 0 ? modpack.art.filter((art) => art.type === 'square')[0].url : ''"
                         :installed="false"
                         :minecraft="'1.7.10'"
                         :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
@@ -148,6 +202,7 @@ import FTBSearchBar from '@/components/FTBSearchBar.vue';
 import {ModpackState} from '../modules/modpacks/types';
 import {debounce} from '@/utils';
 import { Route } from 'vue-router';
+import { AuthState } from '../modules/auth/types';
 
 const namespace: string = 'modpacks';
 
@@ -159,12 +214,15 @@ const namespace: string = 'modpacks';
     },
 })
 export default class BrowseModpacks extends Vue {
+    @State('auth') public authState!: AuthState;
     @State('settings') public settingsState!: SettingsState;
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
     @Action('loadFeaturedPacks', {namespace}) public loadFeaturedPacks: any;
+    @Action('loadAllPacks', {namespace}) public loadAllPacks: any;
     @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
     @Action('getPopularInstalls', {namespace}) public getPopularInstalls: any;
     @Action('getPopularPlays', {namespace}) public getPopularPlays: any;
+    @Action('getPrivatePacks', {namespace}) public getPrivatePacks: any;
     @Action('doSearch', {namespace}) public doSearch: any;
     @Action('clearSearch', {namespace}) public clearSearch: any;
 
@@ -235,11 +293,17 @@ public changeToList() {
             this.modpacks === undefined ||
             this.modpacks.popularInstalls === undefined ||
             this.modpacks.popularInstalls.length <= 0 ||
-            this.modpacks.popularPlays.length <= 0
+			this.modpacks.popularPlays.length <= 0 ||
+            this.modpacks.all === undefined ||
+            this.modpacks.all.length <= 0
         ) {
             await this.loadFeaturedPacks();
             await this.getPopularInstalls();
             await this.getPopularPlays();
+			await this.loadAllPacks();
+            if(this.authState.token !== null){
+              await this.getPrivatePacks();
+            }
         }
 
       const cardSize = this.settingsState.settings.packCardSize || 2;

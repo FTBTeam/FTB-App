@@ -6,6 +6,7 @@ import {clipboard, ipcRenderer, shell} from 'electron';
 // Object.assign(console, remote.app.console.functions);
 import Vue from 'vue';
 import App from './App.vue';
+import axios from 'axios';
 import router from './router';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {fas, faToriiGate} from '@fortawesome/free-solid-svg-icons';
@@ -157,33 +158,48 @@ const vm = new Vue({
     },
     render: (h: any) => h(App),
 }).$mount('#app');
-
-store.dispatch('registerModProgressCallback', (data: any) => {
-    if(data.messageType === "message"){
-        if(data.message === "init"){
-            store.commit('modpacks/setLaunchProgress', []);
-            if(data.instance){
+axios.get(`https://minetogether.io/api/adPool`).then((res) => {
+    try {
+        let id= parseInt(res.data, 10);    
+        if(id !== -1) {
+            window.adPoolID = null;
+        } else {
+            window.adPoolID = id;
+        }
+    } catch(err) {
+        window.adPoolID = null;
+    }
+}).catch(() => {
+    window.adPoolID = null;
+})
+if(router.currentRoute.name !== "chat") {
+    store.dispatch('registerModProgressCallback', (data: any) => {
+        if(data.messageType === "message"){
+            if(data.message === "init"){
+                store.commit('modpacks/setLaunchProgress', []);
+                if(data.instance){
+                    router.push({name: 'launchingpage', query: {uuid: data.instance}})
+                }
+            } else {
+                if(router.currentRoute.name === "launchingpage"){
+                    router.replace({name: 'instancepage', query: {uuid: data.instance}})
+                }
+                store.commit('modpacks/setLaunchProgress', undefined);
+            }
+        } else if(data.messageType === "progress") {
+            if(router.currentRoute.name !== "launchingpage"){
                 router.push({name: 'launchingpage', query: {uuid: data.instance}})
             }
-        } else {
+            if(data.clientData.bars){
+                store.commit('modpacks/setLaunchProgress', data.clientData.bars);
+            }
+        } else if(data.messageType === "clientDisconnect"){
             if(router.currentRoute.name === "launchingpage"){
                 router.replace({name: 'instancepage', query: {uuid: data.instance}})
             }
-            store.commit('modpacks/setLaunchProgress', undefined);
         }
-    } else if(data.messageType === "progress") {
-        if(router.currentRoute.name !== "launchingpage"){
-            router.push({name: 'launchingpage', query: {uuid: data.instance}})
-        }
-        if(data.clientData.bars){
-            store.commit('modpacks/setLaunchProgress', data.clientData.bars);
-        }
-    } else if(data.messageType === "clientDisconnect"){
-        if(router.currentRoute.name === "launchingpage"){
-            router.replace({name: 'instancepage', query: {uuid: data.instance}})
-        }
+    });
     }
-});
 
 ipcRenderer.send('sendMeSecret');
 ipcRenderer.on('hereIsSecret', (event, data) => {

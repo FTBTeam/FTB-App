@@ -1,14 +1,20 @@
 <template>
   <div id="app" class="theme-dark">
     <title-bar />
-    <div class="flex flex-row h-full" v-if="isMinecraftLinked">
-        <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages"  :friends="friends" :activeFriend="friend !== null ? friend.shortHash : undefined"></friends-list>
+    <div class="flex flex-col h-full justify-center" v-if="!websocket.socket.isConnected">
+        <font-awesome-icon icon="sync-alt" spin class="mx-auto" style="font-size: 25vw;"></font-awesome-icon>
+    </div>
+    <div class="flex flex-row h-full" v-else-if="isMinecraftLinked">
+        <friends-list :showPage="showPage" :hidePage="hidePage" :currentPage="currentPage" :messages="messages"  :friends="friends" :activeFriend="friend !== null ? friend.profile.chat.hash.medium : undefined" :getFriends="getFriends" :loading="loadingFriends"></friends-list>
         <div class="bg-navbar flex-1">
             <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
-            <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.shortHash" :friend="friend" :removeFriend="removeFriend" :blockFriend="blockFriend" :shortHash="auth.token.mc.chat.hash.short" :messages="messages[friend.shortHash]" :sendMessage="sendMessage"></FriendChat>
+            <FriendChat v-if="currentPage === 'chatFriend' && friend !== null" :key="friend.profile.chat.hash.medium" :friend="friend" :removeFriend="removeFriend" :blockFriend="blockFriend" :shortHash="friend.profile.chat.hash.medium" :messages="messages[friend.profile.chat.hash.medium]" :sendMessage="sendMessage"></FriendChat>
         </div>
     </div>
-    <div class="flex flex-col h-full justify-center"  v-else>
+    <div class="flex flex-col h-full justify-center" v-else-if="auth.loggingIn">
+        <font-awesome-icon icon="sync-alt" spin class="mx-auto" style="font-size: 25vw;"></font-awesome-icon>
+    </div>
+    <div class="flex flex-col h-full justify-center" v-else>
         <font-awesome-icon icon="user" class="mx-auto" style="font-size: 25vw;"></font-awesome-icon>
         <h2 class="text-center">In order to use this feature, you must complete your account setup</h2>
         <ftb-button color="primary" class="mx-auto py-2 px-4 my-2" @click="openProfile">Click here to continue</ftb-button>
@@ -28,6 +34,7 @@ import { Friend, AuthState } from '../modules/auth/types';
 import {State, Action} from 'vuex-class';
 import { Messages, UnreadMessages, Message, FriendListResponse } from '../types';
 import { SettingsState, Settings } from '../modules/settings/types';
+import { SocketState } from '../modules/websocket/types';
 
 @Component({
   components: {
@@ -43,9 +50,13 @@ export default class ChatWindow extends Vue {
     private auth!: AuthState;
     @State('settings')
     private settings!: SettingsState;
+    @State('websocket')
+    private websocket!: SocketState;
+    @Action('sendMessage') public sendIRCMessage: any;
 
-    private hasLoaded: boolean = false;
-    private currentPage: string = '';
+    private hasLoaded = false;
+    private loadingFriends: boolean = true;
+    private currentPage = '';
     private friend: Friend | null = null;
     private messages: Messages = {};
     private friends: FriendListResponse = {friends: [], requests: []};
@@ -56,33 +67,74 @@ export default class ChatWindow extends Vue {
     @Action('saveSettings', {namespace: 'settings'})
     private saveSettings!: (settings: Settings) => Promise<boolean | string>;
 
+    @Action('registerIRCCallback')
+    private registerIRCCallback: any;
+
     @Watch('auth', {deep: true})
     public async onAuthChange(newVal: AuthState, oldVal: AuthState) {
-        if(newVal.token?.accounts.find((s: any) => s.identityProvider === "mcauth") !== undefined && !this.hasLoaded){
+        if(newVal.token?.accounts.find((s: any) => s.identityProvider === "mcauth") !== undefined && !this.hasLoaded && this.websocket.socket.isConnected){
             this.hasLoaded = true;
-            ipcRenderer.send('checkFriends');
+            if(newVal.token){
+                this.getFriends(newVal.token.mc.hash.long);
+            }
             setInterval(() => {
-                ipcRenderer.send('checkFriends');
+                if(newVal.token){
+                    this.getFriends(newVal.token.mc.hash.long);
+                }
             }, 30 * 1000);
-            ipcRenderer.send('getFriends');
-            ipcRenderer.on('ooohFriend', (_, data) => {
-                Vue.set(this.friends, 'friends',  data.friends);
-                let requests = this.friends.requests;
-                requests = data.requests.map((request: Friend) => {
-                    const existing = this.friends.requests.find((f) => f.shortHash === request.shortHash);
-                    if (existing !== undefined) {
-                        request.friendCode = existing.friendCode;
-                        request.name = existing.name;
-                    }
-                    return request;
-                });
-                Vue.set(this.friends, 'requests', requests);
-            });
         }
     }
 
+    @Watch('websocket', {deep: true})
+    public async onSocketChange(newVal: SocketState, oldVal: SocketState) {
+        if(newVal.socket.isConnected){
+            if(this.auth.token?.accounts.find((s: any) => s.identityProvider === "mcauth") !== undefined && !this.hasLoaded) {
+                this.hasLoaded = true;
+                if(this.auth.token){
+                    this.getFriends(this.auth.token.mc.hash.long);
+                }
+                setInterval(() => {
+                    if(this.auth.token){
+                        this.getFriends(this.auth.token.mc.hash.long);
+                    }
+                }, 30 * 1000);
+            }
+        }
+    }
+
+    public getFriends(longHash?: string){
+        this.loadingFriends = true;
+        if(longHash === undefined){
+            longHash = this.auth.token?.mc.hash.long;
+        }
+        if(Array.isArray(longHash)){
+            longHash = longHash[0];
+        }
+        let requestPending = true;
+        let shouldCancel = false;
+        let timeout = setTimeout(() => {
+            this.loadingFriends = false;
+        }, 10 * 1000);
+        this.sendIRCMessage({payload: {type: 'getFriends', hash: longHash}, callback: (data: any) => {
+            data = data.friends;
+            Vue.set(this.friends, 'friends',  data.friends);
+            let requests = this.friends.requests;
+            requests = data.requests.map((request: Friend) => {
+                const existing = this.friends.requests.find((f) => f.profile.hash === request.profile.hash);
+                if (existing !== undefined) {
+                    request.profile.friendCode = existing.profile.friendCode;
+                    request.profile.display = existing.profile.display;
+                }
+                return request;
+            });
+            Vue.set(this.friends, 'requests', requests);
+            this.loadingFriends = false;
+            clearInterval(timeout)
+        }});
+    }
+
     get isMinecraftLinked(){
-        let p = this.auth.token?.accounts.find((s) => s.identityProvider === "mcauth");
+        const p = this.auth.token?.accounts.find((s) => s.identityProvider === "mcauth");
         return p !== undefined && p != null;
     }
 
@@ -108,13 +160,13 @@ export default class ChatWindow extends Vue {
         this.expand();
         if (friend) {
             this.friend = friend;
-            if (this.messages[friend.shortHash]) {
-                let messages = this.messages[friend.shortHash];
+            if (this.messages[friend.profile.chat.hash.medium]) {
+                let messages = this.messages[friend.profile.chat.hash.medium];
                 messages = messages.map((message) => {
                     message.read = true;
                     return message;
                 });
-                Vue.set(this.messages, this.friend.shortHash, messages);
+                Vue.set(this.messages, this.friend.profile.chat.hash.medium, messages);
             }
             this.$forceUpdate();
         }
@@ -138,9 +190,11 @@ export default class ChatWindow extends Vue {
 
         } else {
             if (success) {
-                ipcRenderer.send('blockFriend', this.friend.hash)
-                this.hidePage();
-                ipcRenderer.send('checkFriends');
+                this.sendIRCMessage({payload: {type: "blockFriend", hash: this.friend.hash}})
+                this.hidePage();    
+               if(this.auth.token){
+                    this.getFriends(this.auth.token.mc.hash.long);
+                }
             }
         }
     }
@@ -155,7 +209,9 @@ export default class ChatWindow extends Vue {
         } else {
             if (success) {
                 this.hidePage();
-                ipcRenderer.send('checkFriends');
+                if(this.auth.token){
+                    this.getFriends(this.auth.token.mc.hash.long);
+                }
             }
         }
     }
@@ -167,43 +223,55 @@ export default class ChatWindow extends Vue {
         if (this.friend === null || this.auth.token === null) {
             return;
         }
-        ipcRenderer.send('sendMessage', {friend: this.friend, message});
+        this.sendIRCMessage({payload: {type: 'ircSendMessage', nick: this.friend.profile.chat.hash.medium, message}});
         let messages: Message[];
-        if (this.messages[this.friend.shortHash] === undefined) {
+        if (this.messages[this.friend.profile.chat.hash.medium] === undefined) {
             messages = [];
         } else {
-            messages = this.messages[this.friend.shortHash];
+            messages = this.messages[this.friend.profile.chat.hash.medium];
         }
         messages.push({content: message, date: new Date().getTime(), author: this.auth.token.mc.chat.hash.short, read: true});
-        Vue.set(this.messages, this.friend.shortHash, messages);
+        Vue.set(this.messages, this.friend.profile.chat.hash.medium, messages);
     }
 
     public mounted() {
         this.retract();
-        ipcRenderer.on('updateSettings', (event, data) => {
-            this.settings.settings = data;
-        });
-        ipcRenderer.on('newMessage', (event, data) => {
-            if(this.settings.settings.blockedUsers.indexOf(data.from) !== -1){
-                return;
+        // ipcRenderer.on('updateSettings', (event, data) => {
+        //     this.settings.settings = data;
+        // });
+        this.registerIRCCallback((data: any) => {
+            if(data.jsEvent === "message"){
+                if(data.ircType === "privmsg"){
+                    let from = data.nick;
+                    let message = data.message;
+                    if(this.settings.settings.blockedUsers.indexOf(from) !== -1){
+                        return;
+                    }
+                    let messages: Message[];
+                    if (this.messages[from] === undefined) {
+                        messages = [];
+                    } else {
+                        messages = this.messages[from];
+                    }
+                    messages.push({content: message, author: from, date: new Date().getTime(), read: this.currentPage === 'chatFriend' && this.friend?.profile.chat.hash.medium === from});
+                    Vue.set(this.messages, from, messages);
+                }
+            } else if(data.jsEvent === "ctcp"){
+                let request = data.data;
+                if(data.type === "newFriend"){
+                    const requests = this.friends.requests;
+                    const existing = requests.find((r) => r.profile.chat.hash.medium === data.nick);
+                    if (existing !== undefined) {
+                        return;
+                    }
+                    let profile = data.profile;
+                    requests.push({profile, name: profile.display, accepted: false});
+                    Vue.set(this.friends, 'requests', requests);
+                }
+                if(this.auth.token){
+                    this.getFriends(this.auth.token.mc.hash.long);
+                }
             }
-            let messages: Message[];
-            if (this.messages[data.from] === undefined) {
-                messages = [];
-            } else {
-                messages = this.messages[data.from];
-            }
-            messages.push({content: data.message, author: data.from, date: data.date, read: this.currentPage === 'chatFriend' && this.friend?.shortHash === data.from});
-            Vue.set(this.messages, data.from, messages);
-        });
-        ipcRenderer.on('newFriendRequest', (event, data) => {
-            const requests = this.friends.requests;
-            const existing = requests.find((r) => r.shortHash === data.from);
-            if (existing !== undefined) {
-                return;
-            }
-            requests.push({shortHash: data.from, name: data.displayName, friendCode: data.friendCode, accepted: false});
-            Vue.set(this.friends, 'requests', requests);
         });
     }
 }

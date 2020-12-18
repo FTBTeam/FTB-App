@@ -28,6 +28,7 @@ export const mutations: MutationTree<SocketState> = {
                     delete state.messages[message.requestId];
                 } else if (message.status === 'success') {
                     delete state.messages[message.requestId];
+                    state.downloadedFiles = {};
                 }
             }
         }
@@ -39,11 +40,16 @@ export const mutations: MutationTree<SocketState> = {
             state.modal = message;
         } else if (message.type === 'closeModal') {
             state.modal = null;
-        }
-        else if (message.type === 'clientLaunchData') {
-            if (state.modProgressCallback) {
+        } else if (message.type === 'ircEvent'){
+            if(state.ircEventCallback){
+                state.ircEventCallback(message);
+            }
+        } else if (message.type === 'clientLaunchData'){
+            if(state.modProgressCallback){
                 state.modProgressCallback(message);
             }
+        } else if(message.type === "installedFileEventDataReply"){
+            Vue.set(state.downloadedFiles, message.fileName, message.status);
         }
         state.socket.message = message;
         ipcRenderer.send("websocketReceived", message);
@@ -58,10 +64,13 @@ export const mutations: MutationTree<SocketState> = {
     ADD_CALLBACK(state: any, data: any) {
         state.messages[data.id] = data.callback;
     },
-    ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void){
-        state.modProgressCallback = callback;
-    },
     ADD_PING_MESSAGE_CALLBACK(state: any, callback: (data: any) => void){
         state.pingEventCallback = callback;
     },
+    ADD_IRC_MESSAGE_CALLBACK(state: any, callback: (data: any) => void){
+        state.ircEventCallback = callback;
+    },
+    ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void){
+        state.modProgressCallback = callback;
+    }
 };

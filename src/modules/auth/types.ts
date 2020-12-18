@@ -4,10 +4,11 @@ export interface TokenData {
     firstName: string;
     lastName: string;
     email: string;
-    attributes: {displayName: string, modpackskey: string, modpackssecret: string};
+    attributes: {displayName: string; modpackschkey: string; modpackssecret: string};
     mc: McData;
     autoopenchat: boolean;
-    accounts: [{identityProvider: string; userId?: string; userName?: string;}];
+    accounts: [{identityProvider: string; userId?: string; userName?: string}];
+    activePlan: any | null;
 }
 
 export interface HashData {
@@ -15,7 +16,7 @@ export interface HashData {
 }
 
 export interface ChatData {
-    hash: {medium: string, short: string};
+    hash: {medium: string; short: string};
     online: boolean;
 }
 
@@ -39,6 +40,14 @@ export interface AuthState {
     loggingIn: boolean;
 }
 
+export interface Profile {
+    hash: {long: string};
+    friendCode: string;
+    chat: {hash: {medium: string, short: string}, online: boolean};
+    display: string;
+    premium: boolean;
+}
+
 export interface Friend {
     id?: number;
     hash?: string;
@@ -47,8 +56,7 @@ export interface Friend {
     online?: boolean;
     currentPack?: string;
     currentPackID?: string;
-    shortHash: string;
     notifications?: number;
-    friendCode?: string;
     currentServer?: number;
+    profile: Profile;
 }

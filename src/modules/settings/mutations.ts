@@ -25,6 +25,8 @@ export const mutations: MutationTree<SettingsState> = {
             blockedUsers: [],
             mtConnect: false,
             automateMojang: true,
+            showAdverts: true,
+            loadInApp: true
         };
         state.settings = {...defaultSettings, ...payload};
     },

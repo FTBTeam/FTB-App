@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full w-full p-2">
       <div class="flex flex-row items-center">
-        <h1 class="text-2xl max-w-xs overflow-hidden" style="text-overflow: ellipsis;">{{friend.name}}</h1>
+        <h1 class="text-2xl max-w-xs overflow-hidden" style="text-overflow: ellipsis;">{{friend.profile.display}}</h1>
         <div class="ml-auto mr-2 mt-6">
             <font-awesome-icon icon="ban" class="mx-2 cursor-pointer text-muted hover:text-white" title="Block"  @click="blockFriend"/>
             <font-awesome-icon icon="trash" class="mx-2 cursor-pointer text-muted hover:text-white" title="Remove"  @click="removeFriend" />
@@ -17,7 +17,7 @@
         </div>
       </div>
       <div class="flex flex-col items-stretch">
-          <small v-if="!friend.online" class="text-xs text-center">{{friend.name}} is currently offline</small>
+          <small v-if="!friend.online" class="text-xs text-center">{{friend.profile.display}} is currently offline</small>
         <div class="w-full flex flex-row items-center relative">
         <input :class="`bg-background focus:outline-none border block flex-1 text-2xl transition-all duration-200 ease-in-out p-2 rounded appearance-none leading-normal text-gray-300 border-background-lighten shadow`" v-model="newMessage" @keydown.enter="send" :disabled="!friend.online" />
             <div class="bg-background-lighten p-4 h-full">

@@ -27,8 +27,7 @@ export const actions: ActionTree<SettingsState, RootState> = {
     },
     loadJavaVersions({dispatch, commit}){
         dispatch('sendMessage', {payload: {type: 'getJavas'}, callback: (data: {javas: JavaVersions}) => {
-                console.log("Got info", data.javas);
-                commit('loadVersions', data.javas);
-            }}, {root: true});
+            commit('loadVersions', data.javas);
+        }}, {root: true});
     }
 };

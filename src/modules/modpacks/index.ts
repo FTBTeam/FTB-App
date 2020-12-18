@@ -13,6 +13,7 @@ export const state: ModpackState = {
     popularPlays: [],
     featuredPacks: [],
     recentPacks: [],
+    all: [],
     error: false,
     errorMsg: '',
     currentModpack: null,
@@ -20,6 +21,7 @@ export const state: ModpackState = {
     loading: false,
     searchString: '',
     launchProgress: null,
+    privatePacks: []
 };
 
 export const modpacks: Module<ModpackState, RootState> = {

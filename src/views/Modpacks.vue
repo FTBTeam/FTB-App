@@ -43,7 +43,6 @@
       </div>
     </div>
     <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
-      <!-- TODO: Make this pretty -->
       <font-awesome-icon icon="heart-broken" style="font-size: 40vh"></font-awesome-icon>
       <h1 class="text-5xl">Oh no!</h1>
       <span>Seems you don't have any modpacks installed!</span>

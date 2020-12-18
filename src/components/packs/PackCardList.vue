@@ -66,6 +66,7 @@ import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '../../utils';
 import { ipcRenderer } from 'electron';
+import { AuthState } from '@/modules/auth/types';
 
 const namespace: string = 'websocket';
 
@@ -117,6 +118,7 @@ export interface MsgBox {
         @Action('errorInstall', {namespace: 'modpacks'}) public errorInstall: any;
         @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks: any;
         @State('settings') public settingsState!: SettingsState;
+        @State('auth') public auth!: AuthState;
         @Action('doSearch', {namespace: 'modpacks'}) public doSearch: any;
 
         public name!: string;
@@ -231,8 +233,9 @@ export interface MsgBox {
             if(this.preLaunch){
                 await this.preLaunch(this.instance);
             }
+            let loadInApp = this.settingsState.settings.loadInApp || this.auth.token?.activePlan == null;
             this.sendMessage({
-                payload: {type: 'launchInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
+                payload: {type: 'launchInstance', uuid: this.$props.instanceID, loadInApp}, callback: (data: any) => {
                     ipcRenderer.send('disconnect');
                     if(this.postLaunch){
                         this.postLaunch(this.instance);
@@ -262,53 +265,9 @@ export interface MsgBox {
             if(this.modpacks.installing !== null){
                 return;
             }
-            this.updateInstall({modpackID: this.$props.packID, progress: 0});
-            this.sendMessage({
-                payload: {type: 'installInstance', id: this.$props.packID, version}, callback: (data: any) => {
-                    if (this.showInstall) {
-                        this.showInstall = false;
-                    }
-                    if (data.status === 'success') {
-                        this.sendMessage({
-                            payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
-                                this.storePacks(data);
-                                this.finishInstall({modpackID: this.$props.packID, messageID: data.requestId});
-                            },
-                        });
-                    } else if (data.status === 'error') {
-                        this.updateInstall({
-                            modpackID: this.$props.packID,
-                            messageID: data.requestId,
-                            error: true,
-                            errorMessage: data.message,
-                            instanceID: data.uuid,
-                        });
-                    } else if (data.currentStage === 'POSTINSTALL') {
-                        this.updateInstall({
-                            modpackID: this.$props.packID,
-                            messageID: data.requestId,
-                            stage: data.currentStage,
-                        });
-                    } else if (data.status === 'init') {
-                        this.updateInstall({
-                            modpackID: this.$props.packID,
-                            messageID: data.requestId,
-                            stage: 'INIT',
-                            message: data.message,
-                        });
-                    } else if (data.overallPercentage <= 100) {
-                        this.updateInstall({
-                            modpackID: this.$props.packID,
-                            messageID: data.requestId,
-                            progress: data.overallPercentage,
-                            downloadSpeed: data.speed,
-                            downloadedBytes: data.currentBytes,
-                            totalBytes: data.overallBytes,
-                            stage: data.currentStage,
-                        });
-                    }
-                },
-            });
+            // this.$router.push({name: 'launchingpage', query: {modpackid: this.$props.packID}});
+            this.$router.replace({name: 'installingpage', query: {modpackid: this.$props.packID, versionID: version.toString()}});
+            this.showInstall = false;
         }
 
         public deleteInstace(): void {

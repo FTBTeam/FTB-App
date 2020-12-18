@@ -4,7 +4,7 @@
             <h1 class="text-2xl">Profile</h1>
             <div class="bg-sidebar-item p-5 rounded my-4">
                 <div class="flex flex-col my-2 items-center">
-                    <img :src="`https://minotar.net/helm/${avatarName}`" class="rounded-full" />
+                    <img :src="`https://api.mymcuu.id/head/${avatarName}`" class="rounded-full" />
                     <p class="text-lg mt-2">{{auth.token.mc !== undefined ? auth.token.mc.display : auth.token.username}}</p>
                     <p>{{auth.token.activePlan !== undefined && auth.token.activePlan !== null ? auth.token.activePlan.name : ''}}</p>
 
@@ -18,9 +18,15 @@
                         <ftb-toggle label="Enable cloud save uploads " :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves ==='true'"
                                 @change="toggleCloudSaves" :disabled="auth.token.activePlan === null"
                         onColor="bg-primary" inline="true"/>
-                      <ftb-toggle label="Enable Minetogether Connect" :value="settings.settings.mtConnect === true || settings.settings.mtConnect ==='true'"
-                                  @change="toggleMTConnect" :disabled="auth.token.activePlan === null"
-                                  onColor="bg-primary" inline="true"/>
+                         <ftb-toggle label="Enable Minetogether Connect" :value="settings.settings.mtConnect === true || settings.settings.mtConnect ==='true'"
+                                @change="toggleMTConnect" :disabled="auth.token.activePlan === null"
+                        onColor="bg-primary" inline="true"/>
+                        <ftb-toggle label="Show adverts" :value="settings.settings.showAdverts === true || settings.settings.showAdverts ==='true'"
+                                @change="toggleAdverts" :disabled="auth.token.activePlan === null"
+                        onColor="bg-primary" inline="true"/>
+                        <ftb-toggle label="Load Minecraft in FTBApp" :value="settings.settings.loadInApp === true || settings.settings.loadInApp ==='true'"
+                                @change="toggleLoading" :disabled="auth.token.activePlan === null"
+                        onColor="bg-primary" inline="true"/>
                     </div>
                     <div class="mt-4 w-1/2">
                         <ftb-button color="warning" class="text-center px-2 py-1 my-2" @click="logout">Logout</ftb-button>
@@ -65,13 +71,14 @@ export default class ProfilePage extends Vue {
     @Action('logout', {namespace: 'auth'})
     private logoutAction!: () => void;
     @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
+    @Action('sendMessage') public sendMessage: any;
 
     public async created() {
     
     }
 
     get avatarName(){
-        let provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
+        const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
         return provider !== undefined && provider !== null ? provider.userId : "MHF_Steve";
     }
 
@@ -85,8 +92,18 @@ export default class ProfilePage extends Vue {
     }
 
     public toggleMTConnect(value: boolean){
-      this.settings.settings.mtConnect = value;
-      this.saveSettings(this.settings.settings);
+        this.settings.settings.mtConnect = value;
+        this.saveSettings(this.settings.settings);
+    }
+
+    public toggleAdverts(value: boolean){
+        this.settings.settings.showAdverts = value;
+        this.saveSettings(this.settings.settings);
+    }
+
+    public toggleLoading(value: boolean){
+        this.settings.settings.loadInApp = value;
+        this.saveSettings(this.settings.settings);
     }
 
     public openSubscriptions(){
@@ -101,6 +118,7 @@ export default class ProfilePage extends Vue {
         this.logoutAction();
         // get instances and store
         ipcRenderer.send('logout');
+
         this.$router.push('/');
     }
 }

@@ -83,6 +83,11 @@ export interface VersionSpecs {
     recommended: number;
 }
 
+export interface File {
+    name: string;
+    downloaded: boolean;
+}
+
 export interface InstallProgress {
     modpackID: number;
     messageID: number;
@@ -96,6 +101,7 @@ export interface InstallProgress {
     downloadedBytes: number;
     message: string;
     totalBytes: number;
+    files: File[];
 }
 
 export interface ModpackState {
@@ -105,6 +111,8 @@ export interface ModpackState {
     popularPlays: ModPack[];
     featuredPacks: ModPack[];
     recentPacks: ModPack[];
+    privatePacks: ModPack[];
+    all: ModPack[];
     error: boolean;
     errorMsg: string;
     loading: boolean;

@@ -28,9 +28,21 @@ export const mutations: MutationTree<ModpackState> = {
         state.error = true;
         state.popularPlays = [];
     },
+    privatePacks(state, payload: ModPack[]) {
+        state.error = false;
+        state.privatePacks = payload;
+    },
+    privatePacksError(state) {
+        state.error = true;
+        state.privatePacks = [];
+    },
     featuredPacksLoaded(state, payload: ModPack[]) {
         state.error = false;
         state.featuredPacks = payload;
+    },
+    allPacksLoaded(state, payload: ModPack[]) {
+        state.error = false;
+        state.all = payload;
     },
     featuredPacksError(state) {
         state.error = true;
@@ -47,12 +59,22 @@ export const mutations: MutationTree<ModpackState> = {
             foundPack.errorMessage = payload.errorMessage || '';
             foundPack.downloadSpeed = payload.downloadSpeed || 0;
             foundPack.stage = payload.stage || 'INIT';
-            foundPack.downloadedBytes = payload.downloadedBytes;
-            foundPack.totalBytes = payload.totalBytes;
+            foundPack.downloadedBytes = payload.downloadedBytes || 0;  
+            foundPack.totalBytes = payload.totalBytes || 0;
             foundPack.instanceID = payload.instanceID;
-            foundPack.message = payload.message;
+            if(payload.message){
+                foundPack.message = payload.message;
+            }
+            if(payload.files){
+                foundPack.files = payload.files
+            } else  if(foundPack.files === undefined){
+                foundPack.files = [];
+            }
             state.installing = foundPack;
         } else {
+            if(payload.files === undefined) {
+                payload.files = [];
+            }
             state.installing = payload;
         }
     },

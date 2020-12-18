@@ -11,10 +11,10 @@ export function getAPIRequest(rootState: RootState, url: string): Promise<Respon
         return fetch(`${config.apiURL}/public/${url}`);
     }
     const auth: AuthState = rootState.auth as AuthState;
-    if (auth.token === null || auth.token.attributes.modpackskey === undefined) {
+    if (auth.token === null || auth.token.attributes.modpackschkey === undefined) {
         return fetch(`${config.apiURL}/public/${url}`);
     }
-    return fetch(`${config.apiURL}/${auth.token.attributes.modpackskey}/${url}`, {headers: {
+    return fetch(`${config.apiURL}/${auth.token.attributes.modpackschkey}/${url}`, {headers: {
         Secret: auth.token.attributes.modpackssecret,
     }});
 }
@@ -53,7 +53,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     getPopularInstalls({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        return getAPIRequest(rootState, `modpack/popular/installs/10`)
+        return fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
         .then((response) => response.json())
         .then(async (data) => {
             const packIDs = data.packs;
@@ -79,7 +79,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     getPopularPlays({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        return getAPIRequest(rootState, `modpack/popular/plays/10`)
+        return fetch(`${config.apiURL}/public/modpack/popular/plays/10`)
         .then((response) => response.json())
         .then(async (data) => {
             const packIDs = data.packs;
@@ -103,6 +103,32 @@ export const actions: ActionTree<ModpackState, RootState> = {
             console.error(err);
         });
     },
+    getPrivatePacks({commit, rootState, dispatch}: any): any {
+        commit('setLoading', true);
+        return getAPIRequest(rootState, `modpack/private/10`)
+        .then((response) => response.json())
+        .then(async (data) => {
+            const packIDs = data.packs;
+            if (packIDs == null) {
+                return;
+            }
+            const packs: ModPack[] = [];
+            await asyncForEach(packIDs, async (packID: number) => {
+                const pack = await dispatch('fetchModpack', packID);
+                if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
+                    logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
+                    return;
+                }
+                packs.push(pack);
+            });
+            commit('privatePacks', packs);
+            commit('setLoading', false);
+        }).catch((err) => {
+            commit('privatePacksError', err);
+            commit('setLoading', false);
+            console.error(err);
+        });
+    },
     clearSearch({commit}): any {
         const packs: ModPack[] = [];
         commit('searchLoaded', packs);
@@ -111,7 +137,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     loadFeaturedPacks({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        return getAPIRequest(rootState, `modpack/featured/10`)
+        return fetch(`${config.apiURL}/public/modpack/featured/10`)
         .then((response) => response.json()).then(async (data) => {
             const packIDs = data.packs;
             if (packIDs == null) {
@@ -130,6 +156,34 @@ export const actions: ActionTree<ModpackState, RootState> = {
             commit('setLoading', false);
         }).catch((err) => {
             commit('featuredPacksError', err);
+            commit('setLoading', false);
+            console.error(err);
+        });
+    },
+    loadAllPacks({commit, rootState, dispatch}: any): any {
+        commit('setLoading', true);
+        console.log("Loading all packs...");
+        return fetch(`${config.apiURL}/public/modpack/all`)
+        .then((response) => response.json()).then(async (data) => {
+            const packIDs = data.packs;
+            console.log("Loaded packs");
+            console.log(packIDs);
+            if (packIDs == null) {
+                return;
+            }
+            const packs: ModPack[] = [];
+            await asyncForEach(packIDs, async (packID: number) => {
+                const pack = await dispatch('fetchModpack', packID);
+                if (pack.status !== undefined && pack.status === 'error' || pack.versions.length <= 0) {
+                    logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
+                    return;
+                }
+                packs.push(pack);
+            });
+            commit('allPacksLoaded', packs);
+            commit('setLoading', false);
+        }).catch((err) => {
+            commit('allPacksError', err);
             commit('setLoading', false);
             console.error(err);
         });
@@ -212,6 +266,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
                 response = response as Response;
                 const pack: ModPack = await response.json() as ModPack;
                 if (pack === undefined) {
+                    reject("Pack is unavailable");
                     return;
                 }
 
@@ -232,7 +287,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
                 resolve(pack);
             }).catch((err) => {
                 console.error('Error getting modpack', err);
-                reject(err);
+                reject("Pack is unavailable");
             });
         });
     },
@@ -243,6 +298,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             return await dispatch('fetchModpack', id);
         }));
         await dispatch('loadFeaturedPacks');
+        await dispatch('loadAllPacks');
         await dispatch('getPopularPlays');
         await dispatch('getPopularInstalls');
     },

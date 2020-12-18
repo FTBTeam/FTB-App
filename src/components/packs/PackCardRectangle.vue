@@ -104,6 +104,8 @@ import MessageModal from '@/components/modals/MessageModal.vue';
 import {Action, State} from 'vuex-class';
 import { ModpackState, Versions, Instance } from '../../modules/modpacks/types';
 import { ipcRenderer } from 'electron';
+import { SettingsState } from '@/modules/settings/types';
+import { AuthState } from '@/modules/auth/types';
 const namespace: string = 'websocket';
 
 export interface MsgBox {
@@ -140,6 +142,8 @@ export interface MsgBox {
 })
 export default class PackCard extends Vue {
     @State('modpacks') public modpacks: ModpackState | undefined = undefined;
+    @State('auth') public auth!: AuthState;
+    @State('settings') public settings!: SettingsState;
     @Action('sendMessage') public sendMessage: any;
     @Action('updateInstall', {namespace: 'modpacks'}) public updateInstall: any;
     @Action('finishInstall', {namespace: 'modpacks'}) public finishInstall: any;
@@ -176,10 +180,11 @@ export default class PackCard extends Vue {
 
     // @ts-ignore
     public launch(): void {
-        this.sendMessage({payload: {type: 'launchInstance', uuid: this.$props.instanceID}, callback: (data: any) => {
-          ipcRenderer.send('disconnect');
-                // Instance launched
-            }});
+      let loadInApp = this.settings.settings.loadInApp || this.auth.token?.activePlan == null;
+      this.sendMessage({payload: {type: 'launchInstance', uuid: this.$props.instanceID, loadInApp}, callback: (data: any) => {
+        ipcRenderer.send('disconnect');
+              // Instance launched
+          }});
     }
 
     public hideMsgBox(): void {

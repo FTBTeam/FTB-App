@@ -13,6 +13,13 @@ export interface FriendRequestResponse {
 export const actions: ActionTree<AuthState, RootState> = {
     logout({rootState, commit, dispatch}): void {
         commit('storeAuthDetails', null);
+        const settings = rootState.settings?.settings;
+        if(settings !== undefined){
+            if(settings.sessionString !== undefined && settings.sessionString.length > 0){
+                settings.sessionString = "";
+                dispatch('settings/saveSettings', settings, {root: true});
+            }
+        }
     },
     setWindow({rootState, commit}, data: boolean): void {
         commit('setFriendsWindow', data);
@@ -31,9 +38,9 @@ export const actions: ActionTree<AuthState, RootState> = {
             commit('loggedIn');
             return;
         }
-        let user = response.data;
+        const user = response.data;
         if(user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
-            let mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
+            const mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
             try {
                 const response = await axios.post(`https://api.creeper.host/minetogether/profile`, {target: mc.userName}, {headers: {'Content-Type': 'application/json'}});
                 const profileResponse = response.data;
@@ -59,9 +66,9 @@ export const actions: ActionTree<AuthState, RootState> = {
             commit('loggedIn');
             return;
         }
-        let user = response.data;
+        const user = response.data;
         if(user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
-            let mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
+            const mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
             try {
                 const response = await axios.post(`https://api.creeper.host/minetogether/profile`, {target: mc.userName}, {headers: {'Content-Type': 'application/json'}});
                 const profileResponse = response.data;
@@ -81,12 +88,12 @@ export const actions: ActionTree<AuthState, RootState> = {
         payload.friendCode = '';
         commit('storeAuthDetails', payload);
         if(payload === null){
-            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: "", mpSecret: "", s3Bucket: "", s3Host: "", s3Key: "", s3Secret: "", mtHash: ""}}, {root: true});
+            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: "", mpSecret: "", s3Bucket: "", s3Host: "", s3Key: "", s3Secret: "", mtHash: ""}}, {root: true});            
         } else {
-            let s3Bucket, s3Host, s3Key, s3Secret = "";
+            let s3Bucket = "", s3Host = "", s3Key = "", s3Secret = "";
             let mpKey = "";
-            if(payload.activePlan !== null){
-                let fields = payload.activePlan.customFields.customfield;
+            if(payload.activePlan !== null && payload.activePlan !== undefined){
+                const fields = payload.activePlan.customFields.customfield;
                 s3Bucket = fields.find((f: any) => f.name === "S3 Bucket").value;
                 s3Host = fields.find((f: any) => f.name === "S3 Server").value;
                 s3Key = fields.find((f: any) => f.name === "S3 Key").value;
@@ -95,10 +102,18 @@ export const actions: ActionTree<AuthState, RootState> = {
             if(payload.attributes['modpackschkey'] !== undefined){
                 mpKey = payload.attributes['modpackschkey'][0];
             }
-            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: mpKey, mpSecret: "", s3Bucket, s3Host, s3Key, s3Secret, mtHash: payload.mc.hash.long}}, {root: true});
+            let mtHash = "";
+            if(payload.mc !== undefined && payload.mc.hash !== undefined && payload.mc.hash.long !== undefined){
+                mtHash = payload.mc.hash.long
+            }
+            dispatch('sendMessage', {payload: {type: 'storeAuthDetails', mpKey: mpKey, mpSecret: "", s3Bucket, s3Host, s3Key, s3Secret, mtHash}}, {root: true});
             dispatch('sendMessage', {payload: {type: 'installedInstances', refresh: true}, callback: function(data: any){
                 dispatch('modpacks/storeInstalledPacks', data, {root: true})
             }}, {root: true});
+            dispatch('modpacks/getPrivatePacks', {}, {root: true})
+            if(rootState.settings?.settings.enableChat){            
+                dispatch('connectToIRC')
+            }
         }
     },
     getFriends({rootState, commit, dispatch, state}, payload: any): Promise<void> {
@@ -129,7 +144,7 @@ export const actions: ActionTree<AuthState, RootState> = {
             commit('setLoading', false);
         });
     },
-    submitFriendRequest({rootState, commit, dispatch, state}, payload: {friendCode: string, display: string}): Promise<FriendRequestResponse> {
+    submitFriendRequest({rootState, commit, dispatch, state}, payload: {friendCode: string; display: string}): Promise<FriendRequestResponse> {
         commit('setLoading', true);
         return fetch(`https://api.creeper.host/minetogether/requestfriend`, {headers: {
             'Content-Type': 'application/json',
@@ -175,4 +190,14 @@ export const actions: ActionTree<AuthState, RootState> = {
             return 'Error sending request';
         });
     },
+    async connectToIRC({state, commit, dispatch}){
+        let response;
+        try {
+            response = await axios.get(`https://api.creeper.host/minetogether/chatserver`, {headers: { Accept: "application/json"}});
+        }catch(err){
+            return;
+        }
+        const server = response.data;
+        dispatch('sendMessage', {payload: {type: "ircConnect", host: server.server.address, port: server.server.port, nick: state.token?.mc.chat.hash.medium, realname: JSON.stringify({p: ""})}}, {root: true})
+    }
 };

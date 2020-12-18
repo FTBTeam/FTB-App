@@ -27,10 +27,15 @@
       <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col frosted-glass">
         <div class="tab-content flex-1 py-4 mx-1" style="overflow-y: auto;">
           <div class="tab-pane flex flex-col h-full w-full">
-            <div class="flex-1 w-full flex flex-col" style="max-height: 270px;">
-              <video width="400" height="300" autoplay muted loop style="margin: 0 auto;">
+            <div class="flex-1 w-full flex flex-col" style="max-height: 270px;" v-if="advertsEnabled">
+              <div v-if="!showPlaceholder" id="ow-ad" ref="ad" >
+                <div id="777249406">
+                  </div>
+              </div>
+              <video width="400" height="300" autoplay muted loop style="margin: 0 auto;" v-if="showPlaceholder">
                 <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4">
               </video>
+              <span class="ml-auto mr-auto text-xs cursor-pointer" style="padding-left: 315px;" @click="reportAdvert">Report advert</span>
             </div>
             <div class="progress mt-10">
               <div class="w-3/4 mx-auto my-2" v-for="(bar,index) in bars" :key="index">
@@ -145,6 +150,7 @@
 </style>
 
 <script lang="ts">
+import axios from 'axios';
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import {ModpackState, ModPack, Instance, Versions} from '@/modules/modpacks/types';
 import {State, Action, Getter} from 'vuex-class';
@@ -162,6 +168,7 @@ import {ServersState} from '@/modules/servers/types';
 import ServerCard from '@/components/ServerCard.vue';
 import InstallModal from '@/components/modals/InstallModal.vue';
 import { SocketState } from '../modules/websocket/types';
+import { AuthState } from '@/modules/auth/types';
 
 export interface MsgBox {
         title: string;
@@ -232,6 +239,7 @@ interface Changelogs {
         @State('modpacks') public modpacks!: ModpackState;
         @State('settings') public settings!: SettingsState;
         @State('websocket') public socket!: SocketState;
+        @State('auth') public auth!: AuthState;
         @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: any;
         @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks!: any;
         @Action('updateInstall', {namespace: 'modpacks'}) public updateInstall!: any;
@@ -263,48 +271,58 @@ interface Changelogs {
         private changelogs: Changelogs = [];
         private installedUUID: string | null = null;
 
-        public screenshotToBase64(url: string){
-          return new Promise((resolve, reject) => {
-            let canvas = document.createElement("canvas");
-            canvas.classList.add('canvas-hidden');
-            document.body.appendChild(canvas);
-            var context = canvas.getContext('2d');
-            if(context == null){
-              reject("");
-              return;
-            }
-            let image = new Image();
-            image.onload = function(){
-              canvas.width = image.naturalWidth;
-              canvas.height = image.naturalHeight;
-              context?.drawImage(image, 0, 0);
-              context?.drawImage(image, 0, 0, image.width, image.height);
-              var dataURL = canvas.toDataURL();
-              resolve(dataURL);
-              document.body.removeChild(canvas);
-            }
-            image.src = url;
-          })
+
+        private reportAdvert(){
+          let iFrameEl = document.getElementById("ow-ad")?.firstElementChild;
+          let adHTML;
+          if(iFrameEl !== null) {
+            adHTML = (iFrameEl as HTMLIFrameElement).contentWindow?.document.documentElement.innerHTML
+          } else {
+            adHTML = document.getElementById("ow-ad")?.innerHTML
+          }
+          (this.$refs.ad as Element).innerHTML = ""
+          this.showPlaceholder = true;
+          this.reportAd({object: "", html: adHTML});
         }
 
-        // public reportAdvert(){
-        //   if(this.ad !== undefined && this.ad !== null){
-        //     //@ts-ignore
-        //     let adHTML = document.getElementById("ow-ad").innerHTML;
-        //     this.ad.removeAd();
-        //     this.ad = null;
-        //     //@ts-ignore
-        //     window.ad = null;
-        //     this.showPlaceholder = true;
-        //     this.reportAd({object: "", html: adHTML});
-        //     //@ts-ignore
-        //     // overwolf.media.takeScreenshot(async (data) => {
-        //     //     if(data.success){
-        //     //       let base64 = await this.screenshotToBase64(data.url);
-        //     //     }
-        //     // });
-        //   }
-        // }
+        private async addAdvert(){
+          try {
+            //@ts-ignore
+            window._mNHandle.queue.push(function (){
+            //@ts-ignore
+                window._mNDetails.loadTag("777249406", "300x250", "777249406");
+            });
+          }
+          catch (error) {
+            this.showPlaceholder = true;
+          }    
+          // let poolID = window.adPoolID;
+          // if(poolID === null || poolID === undefined) {
+          //   this.showPlaceholder = true;
+          //   return;
+          // }
+          // let newIframe = document.createElement("iframe");
+          // (this.$refs.ad as Element).appendChild(newIframe);
+          // newIframe.setAttribute("style","width:300px;height:250px;overflow:hidden;");
+          // let url = `https://server.cpmstar.com/view.aspx?poolid=${poolID}&script=2&rnd=${Math.floor(Math.random() * 99999999)}`;
+          // let scriptContent = (await axios.get(url)).data;
+          // if(newIframe.contentWindow != null) {
+          //   scriptContent += "let fullHTML = ''; cpmStarAds.forEach((a) => fullHTML += a); document.documentElement.innerHTML = fullHTML; document.close()"
+          //   newIframe.contentWindow.document.open();
+          //   let body = newIframe.contentWindow.document.createElement("body");
+          //   body.setAttribute("style", "padding: 0; margin: 0;overflow:hidden;")
+          //   body.id="me";
+          //   let script = newIframe.contentWindow.document.createElement("script");
+          //   script.type ="text/javascript";
+          //   script.innerHTML = scriptContent;
+          //   body.appendChild(script);
+          //   newIframe.contentWindow.document.appendChild(body);
+          // }
+        }
+
+        get advertsEnabled(){
+          return this.settings.settings.showAdverts || this.auth?.token?.activePlan === null
+        }
 
         private async mounted() {
           if(this.instance == null){
@@ -315,28 +333,11 @@ interface Changelogs {
             this.loading = false;
           }
 
-          // setTimeout(() => {
-          //   //@ts-ignore
-          //   if(!OwAd){
-          //     this.showPlaceholder = true;
-          //   } else {
-          //     //@ts-ignore
-          //     if(window.ad){
-          //     //@ts-ignore
-          //       this.ad = window.ad;
-          //       this.ad.refreshAd();
-          //     } else {
-          //       //@ts-ignore
-          //       this.ad = new OwAd(document.getElementById("ow-ad"));
-          //       //@ts-ignore
-          //       window.ad = this.ad;
-          //     }
-          //     this.ad.addEventListener('error', () => {
-          //       this.showPlaceholder = true;
-          //     });
-          //     //@ts-ignore
-          //   }
-          // }, 500);
+          if(this.advertsEnabled) {
+            setTimeout(() => {
+              this.addAdvert();
+            }, 500);
+          }
         }
 
         public cancelLoading(){

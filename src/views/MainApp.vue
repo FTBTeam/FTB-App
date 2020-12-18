@@ -114,18 +114,18 @@ export default class MainApp extends Vue {
   private loading: boolean = false;
   private hasLoaded: boolean = false;
 
-  private errorEmail: string = "";
-  private errorDescription: string = "";
-  private submittingError: boolean = false;
-  private submitted: boolean = false;
+  @Action('registerPingCallback')
+  private registerPingCallback: any;
+
+  private errorEmail = "";
+  private errorDescription = "";
+  private submittingError = false;
+  private submitted = false;
 
   private webVersion: string = config.webVersion;
   private appVersion: string = config.appVersion;
 
-  @Action('registerPingCallback')
-  private registerPingCallback: any;
-
-  public mounted(){
+  public mounted() {
     this.registerPingCallback((data: any) => {
       if(data.type === "ping") {
         console.log('Sending pong');
@@ -172,7 +172,7 @@ export default class MainApp extends Vue {
       return;
     }
     this.submittingError = true;
-    let logLink = await this.uploadLogData().catch((err) => {
+    const logLink = await this.uploadLogData().catch((err) => {
       if(err) {
         this.submittingError = false;
         // Show an error here...
@@ -185,48 +185,16 @@ export default class MainApp extends Vue {
     this.submitted = true;
   }
 
-  public uploadLogData(): Promise<String> {
+  public uploadLogData(): Promise<string> {
     return new Promise((resolve, reject) => {
-      let workingDir = process.cwd();
-      // Change directory up one level temporarily to get log files.
-      let r = false;
-      if (workingDir.trimEnd().endsWith('bin')) {
-          process.chdir('../');
-          r = true;
-      }
-      workingDir = process.cwd();
-      // Get directory to check for files, if they're there we can proceed.
-      const appFolder = readdirSync(workingDir);
-      if (appFolder.indexOf('launcher.log') > -1) {
-          // Launcher log should always be there, if it isn't we won't do anything.
-          const launcherLog = readFileSync(`${workingDir}/launcher.log`, {encoding: 'utf8'});
-          const errorLog = appFolder.indexOf('error.log') > -1 ? readFileSync(`${workingDir}/error.log`, {encoding: 'utf8'}) : 'Not available';
-          let frontendLog = new Buffer('');
-          if (appFolder.indexOf('bin') > -1) {
-              if (existsSync(path.join(workingDir, 'bin', 'logs', 'main.log'))) {
-                  frontendLog = readFileSync(path.join(workingDir, 'bin', 'logs', 'main.log'));
+      this.sendMessage({payload: {type: 'uploadLogs', uiVersion: this.webVersion}, callback: async (data: any) => {
+              if (!data.error) {
+                  let url = `https://pste.ch/${data.code}`
+                  resolve(url);
+              } else {
+                reject(data.error);
               }
-          }
-          const data = `UI Version: ${this.webVersion}\nApp Version: ${this.appVersion}\n\n\n=====================================launcher.log=====================================\n${launcherLog}\n\n\n=======================================error.log======================================\n${errorLog}\n\n\n=====================================main.log=====================================\n${frontendLog}`;
-          // Upload logs to pste.ch and copy URL to clipboard
-          createPaste(data, {
-              raw: false,
-              server: 'https://pste.ch',
-          })
-              .then((data) => {
-                resolve(data);
-              })
-              .catch((rejected) => {
-                  logVerbose(this.settings, rejected);
-                  reject(rejected);
-              });
-      } else {
-        reject('No logs found');
-      }
-      // Change back to the bin folder
-      if (r) {
-          process.chdir('./bin');
-      }
+      }});
     })
   }
 

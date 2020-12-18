@@ -253,62 +253,13 @@ export default class ServerLandingPage extends Vue {
       if (this.modpack === null) {
           return;
       }
-      this.updateInstall({ modpackID: this.modpack.id, progress: 0 });
-      this.sendMessage({
-      payload: {
-        type: 'installInstance',
-        id: this.modpack.id,
-        version,
-      },
-      callback: (data: any) => {
-        if (data.status === 'success') {
-          this.sendMessage({
-            payload: { type: 'installedInstances', refresh: true},
-            callback: async (installList: any) => {
-              await this.storePacks(installList);
-              await this.finishInstall({
-                modpackID: this.modpack?.id,
-                messageID: installList.requestId,
-              });
-            },
-          });
-        } else if (data.status === 'error') {
-          this.updateInstall({
-            modpackID: this.modpack?.id,
-            messageID: data.requestId,
-            error: true,
-            errorMessage: data.message,
-            instanceID: data.uuid,
-          });
-        } else if (data.currentStage === 'POSTINSTALL') {
-          // We don't care about this, keep progress bar showing.
-        } else if (data.status === 'init') {
-          this.updateInstall({
-            modpackID: this.modpack?.id,
-            messageID: data.requestId,
-            stage: 'INIT',
-            message: data.message,
-          });
-        } else if (data.overallPercentage <= 100) {
-          this.updateInstall({
-            modpackID: this.modpack?.id,
-            messageID: data.requestId,
-            progress: data.overallPercentage,
-            downloadSpeed: data.speed,
-            downloadedBytes: data.currentBytes,
-            totalBytes: data.overallBytes,
-            stage: data.currentStage,
-          });
-        }
-        logVerbose(this.settings, 'Update data', JSON.stringify(data));
-      },
-    });
+      this.$router.replace({name: 'installingpage', query: {modpackid: this.$props.packID, versionID: version.toString()}});
   }
 
   public preLaunch(instance: Instance){
     let newArgs = instance.jvmArgs;
     if(newArgs.indexOf("-Dmt.server") !== 1){
-      let args = newArgs.split(" ");
+      const args = newArgs.split(" ");
       args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
       newArgs = args.join(" ");
     }
@@ -330,7 +281,7 @@ export default class ServerLandingPage extends Vue {
     return new Promise((res, rej) => {
       let newArgs = instance.jvmArgs;
       if(newArgs.indexOf("-Dmt.server") !== 1){
-        let args = newArgs.split(" ");
+        const args = newArgs.split(" ");
         args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
         newArgs = args.join(" ");
       }

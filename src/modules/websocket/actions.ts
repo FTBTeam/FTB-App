@@ -3,6 +3,7 @@ import {SocketState} from './types';
 import {RootState} from '@/types';
 import Vue from 'vue';
 import { logVerbose } from '@/utils';
+import axios, {AxiosResponse} from 'axios';
 
 export interface MessageData {
   payload: any;
@@ -18,10 +19,23 @@ export const actions: ActionTree<SocketState, RootState> = {
         Vue.prototype.$socket.sendObj(payload.payload);
         commit('ADD_CALLBACK', {id: messageID, callback: payload.callback});
     },
-    registerModProgressCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void){
-        commit('ADD_MOD_PROGRESS_CALLBACK', callback);
-    },
     registerPingCallback({commit}: ActionContext<SocketState, RootState>, callback: (data:any) => void) {
         commit('ADD_PING_MESSAGE_CALLBACK', callback);
     },
+    registerIRCCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void){
+      commit('ADD_IRC_MESSAGE_CALLBACK', callback);
+    },
+    registerModProgressCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void){
+      commit('ADD_MOD_PROGRESS_CALLBACK', callback);
+    },
+    async reportAdvert({commit, rootState}: ActionContext<SocketState, RootState>, data: {html: string, object: string}){
+        try {
+          let response = await axios.post(`https://minetogether.io/api/reportAd`,data, {headers: {
+              Accept: "application/json"
+          }});
+      }catch(err){
+          console.log(err);
+          return;
+      }
+    }
 };

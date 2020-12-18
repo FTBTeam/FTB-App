@@ -98,8 +98,8 @@
             <h1 class="text-2xl">App Info</h1>
             <div class="bg-sidebar-item p-5 rounded my-4">
                 <div class="flex flex-col my-2">
-                    <span>UI Version: {{webVersion}} <font-awesome-icon @click="copyToClipboard(webVersion)" class="ml-2 cursor-pointer" :icon="['fas', 'copy']" size="1x"/><a class="cursor-pointer hover:underline" href="https://github.com/FTBTeam/FTB-App" target="_blank"><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"/></a></span>
-                    <span>App Version: {{appVersion}} <font-awesome-icon @click="copyToClipboard(appVersion)" class="ml-2 cursor-pointer" :icon="['fas', 'copy']" size="1x"/><a class="cursor-pointer hover:underline" href="https://github.com/CreeperHost/modpacklauncher" target="_blank"><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"/></a></span>
+                  <span>UI Version: {{webVersion}} <font-awesome-icon @click="copyToClipboard(webVersion)" class="ml-2 cursor-pointer" :icon="['fas', 'copy']" size="1x"/><a class="cursor-pointer hover:underline" href="https://github.com/FTBTeam/FTB-App" target="_blank"><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"/></a></span>
+                  <span>App Version: {{appVersion}} <font-awesome-icon @click="copyToClipboard(appVersion)" class="ml-2 cursor-pointer" :icon="['fas', 'copy']" size="1x"/><a class="cursor-pointer hover:underline" href="https://github.com/CreeperHost/modpacklauncher" target="_blank"><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"/></a></span>
                     <router-link @click.native="scrollToTop" to="/license" class="hover:underline cursor-pointer">License Information</router-link >
                     <ftb-button class="py-2 px-4 my-2" color="primary" css-class="text-center text-l" @click="uploadLogData()">Upload App Logs</ftb-button>
                     <ftb-button class="py-2 px-4 my-2" color="warning" css-class="text-center text-l" @click="refreshCache()">Refresh Cache</ftb-button>
@@ -179,6 +179,8 @@ export default class SettingsPage extends Vue {
         blockedUsers: [],
         mtConnect: false,
         automateMojang: true,
+        showAdverts: true,
+        loadInApp: true
     };
 
     private resSelectedValue: string = '0';
@@ -305,8 +307,8 @@ export default class SettingsPage extends Vue {
     }
 
     public enableAutomate(value: boolean): void {
-      this.settingsCopy.automateMojang = value;
-      this.saveSettings(this.settingsCopy);
+        this.settingsCopy.automateMojang = value;
+        this.saveSettings(this.settingsCopy);
     }
 
     public doSave() {

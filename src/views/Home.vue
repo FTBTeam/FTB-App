@@ -75,7 +75,6 @@
           <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers['featured']" :key="server.id" :server="server"></server-card>
         </div>
         <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" :key="'no-servers'" v-else>
-          <!-- TODO: Make this pretty -->
           <font-awesome-icon icon="server" style="font-size: 25vh"></font-awesome-icon>
           <h1 class="text-5xl">Oh no!</h1>
           <span>It doesn't looks like there are any featured MineTogether servers</span>
@@ -88,7 +87,6 @@
     </div>
   </div>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
-    <!-- TODO: Add some kinda of loady spinner thing in the middle of the screen -->
     <strong>Loading</strong>
   </div>
 </template>
@@ -129,6 +127,7 @@ export default class Home extends Vue {
   @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
+  @Action('loadAllPacks', { namespace }) public loadAllPacks: any;
   @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack!: (id: number) => Promise<ModPack>;
   @State('servers') public serverListState!: ServersState;
   @Action('fetchFeaturedServers', {namespace: 'servers'}) public fetchFeaturedServers!: any;
@@ -177,6 +176,7 @@ export default class Home extends Vue {
     this.fetchFeaturedServers();
     this.currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
     if (this.modpacks == null || this.modpacks.featuredPacks.length <= 0) {
+      await this.loadAllPacks();
       await this.loadFeaturedPacks();
     }
     if (this.modpacks) {

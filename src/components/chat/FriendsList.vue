@@ -33,6 +33,10 @@
             <font-awesome-icon icon="sad-tear" size="lg"/>
             <p class="p-2 text-center">No results</p>
         </div>
+        <div v-else-if="loading" class="flex flex-col items-center mt-4 text-sm">
+            <font-awesome-icon icon="sync-alt" spin size="lg"/>
+            <p class="p-2 text-center">Loading Friends...</p>
+        </div>
         <div v-else-if="currentFriends.length === 0 && search.length === 0" class="flex flex-col items-center mt-4 text-sm">
             <font-awesome-icon icon="sad-tear" size="lg"/>
             <p class="p-2 text-center">It looks like you don't have any friends added at the moment!</p>
@@ -84,6 +88,7 @@ interface UnreadMessages {
         'messages',
         'friends',
         'activeFriend',
+        'loading'
     ],
 })
 export default class MainChat extends Vue {
@@ -105,6 +110,8 @@ export default class MainChat extends Vue {
     private currentPage!: string;
     @Prop()
     private messages!: Messages;
+    @Prop()
+    private loading!: boolean;
     @Prop()
     private hidePage!: () => void;
     @Prop()

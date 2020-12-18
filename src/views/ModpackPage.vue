@@ -4,7 +4,7 @@
       <div>
         <div class="header-image"
              v-bind:style="{'background-image': `url(${currentModpack.art.filter((art) => art.type === 'splash').length > 0 ? currentModpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}">
-          <span class="instance-name"><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded"
+          <span class="instance-name"><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded" :disabled="modpacks.installing !== null"
                                                   @click="goBack"><font-awesome-icon icon="arrow-left"
                                                                                      size="1x"/></ftb-button></span>
 
@@ -30,7 +30,7 @@
           <div class="instance-buttons flex flex-row frosted-glass">
             <div class="instance-button mr-1">
               <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l"
-                          @click="install(currentModpack.versions[0].id)">
+                          @click="install(currentModpack.versions[0].id)" :disabled="modpacks.installing !== null">
                 <font-awesome-icon icon="download" size="1x"/>
                 Install
               </ftb-button>
@@ -51,7 +51,7 @@
         </div>
       </div>
       <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col">
-        <ul class="flex p-2 pb-0" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
+        <ul class="flex p-2 pb-0" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;" v-if="modpacks.installing === null">
           <li class="-mb-px mr-1">
             <a class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
                @click.prevent="setActiveTab('overview')"
@@ -141,7 +141,6 @@
               <server-card v-for="server in shuffledServers" :key="server.id" :server="server" :art="currentModpack.art.length > 0 ? currentModpack.art.filter((art) => art.type === 'square')[0].url : ''"></server-card>
             </div>
             <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
-              <!-- TODO: Make this pretty -->
               <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
               <h1 class="text-5xl">Oh no!</h1>
               <span>It doesn't looks like there are any public MineTogether servers</span>
@@ -314,7 +313,9 @@ interface Changelogs {
             okAction: Function,
             cancelAction: Function,
         };
-        private loading: boolean = true;
+        private loading = true;
+        private ad: any;
+        private checkAd: any;
 
         private activeChangelog: number | undefined = -1;
         private changelogs: Changelogs = [];
@@ -381,51 +382,7 @@ interface Changelogs {
           if (this.showInstallBox) {
             this.showInstallBox = false;
           }
-          this.updateInstall({modpackID: this.$route.query.modpackid, progress: 0});
-          this.sendMessage({
-                payload: {type: 'installInstance', id: this.$route.query.modpackid, version}, callback: (data: any) => {
-                    if (data.status === 'success') {
-                        this.sendMessage({
-                            payload: {type: 'installedInstances', refresh: true}, callback: async (installList: any) => {
-                                await this.storePacks(installList);
-                                await this.finishInstall({
-                                    modpackID: this.$route.query.modpackid,
-                                    messageID: installList.requestId,
-                                });
-                                this.$router.push({name: 'instancepage', query: {uuid: data.uuid}});
-                            },
-                        });
-                    } else if (data.status === 'error') {
-                        this.updateInstall({
-                            modpackID: this.$route.query.modpackid,
-                            messageID: data.requestId,
-                            error: true,
-                            errorMessage: data.message,
-                            instanceID: data.uuid,
-                        });
-                    } else if (data.currentStage === 'POSTINSTALL') {
-                        // We don't care about this, keep progress bar showing.
-                    } else if (data.status === 'init') {
-                        this.updateInstall({
-                            modpackID: this.$route.query.modpackid,
-                            messageID: data.requestId,
-                            stage: 'INIT',
-                            message: data.message,
-                        });
-                    } else if (data.overallPercentage <= 100) {
-                        this.updateInstall({
-                            modpackID: this.$route.query.modpackid,
-                            messageID: data.requestId,
-                            progress: data.overallPercentage,
-                            downloadSpeed: data.speed,
-                            downloadedBytes: data.currentBytes,
-                            totalBytes: data.overallBytes,
-                            stage: data.currentStage,
-                        });
-                    }
-                    logVerbose(this.settings, 'Update data', JSON.stringify(data));
-                },
-            });
+          this.$router.replace({name: 'installingpage', query: {modpackid: this.$route.query.modpackid, versionID: version.toString()}});
         }
 
         public clickTag(tagName: string) {

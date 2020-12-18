@@ -21,6 +21,8 @@ export interface Settings {
     sessionString?: string;
     mtConnect: boolean;
     automateMojang: boolean;
+    showAdverts: boolean;
+    loadInApp: boolean;
 }
 
 export interface Hardware {

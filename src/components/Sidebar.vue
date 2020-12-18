@@ -6,17 +6,17 @@
     <font-awesome-icon v-if="isDevelop" title="Give feedback!" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="right: 10px; top: 100px;" @click="openGithub()" icon="comments" size="lg"></font-awesome-icon>
     <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 100px;" @click="openFriends()" icon="user-friends" size="lg"></font-awesome-icon>
     <div class="nav-items flex-col mt-5">
-      <nav-item :isActive="isActiveTab('home')" @click="goTo('home')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
-      <nav-item :isActive="isActiveTab('news')" @click="goTo('news')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" /></div>News</nav-item>
-      <nav-item :isActive="isActiveTab('discover')" @click="goTo('discover')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="globe-europe" size="lg" class="mr-3" /></div>Discover</nav-item>
-      <nav-item :isActive="isActiveTab('browseModpacks')" @click="goTo('browseModpacks')"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="search" size="lg" class="mr-3" /></div>Browse</nav-item>
-      <nav-item :isActive="isActiveTab('modpacks')" @click="goTo('modpacks')" class="text-left"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="box-open" size="lg" class="mr-3"/></div>My Modpacks</nav-item>
+      <nav-item :isActive="isActiveTab('home')" @click="goTo('home')" :disabled="disableNav"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="home" size="lg" class="mr-3" /></div>Home</nav-item>
+      <nav-item :isActive="isActiveTab('news')" @click="goTo('news')" :disabled="disableNav"><div class="text-right"  style="width: 35px !important;"><font-awesome-icon icon="newspaper" size="lg" class="mr-3" /></div>News</nav-item>
+      <nav-item :isActive="isActiveTab('discover')" @click="goTo('discover')" :disabled="disableNav"><div class="text-right" style="width: 35px !important;"><font-awesome-icon icon="globe-europe" size="lg" class="mr-3" /></div>Discover</nav-item>
+      <nav-item :isActive="isActiveTab('browseModpacks')" @click="goTo('browseModpacks')" :disabled="disableNav"><div class="text-right"  style="width: 35px !important;"><font-awesome-icon icon="search" size="lg" class="mr-3" /></div>Browse</nav-item>
+      <nav-item :isActive="isActiveTab('modpacks')" @click="goTo('modpacks')" class="text-left" :disabled="disableNav"><div class="text-right"  style="width: 35px !important;"><font-awesome-icon icon="box-open" size="lg" class="mr-3"/></div>My Modpacks</nav-item>
     </div>
     <div class="nav-items flex-col mt-auto mb-0">
-      <nav-item :isActive="isActiveTab('settings')" @click="goTo('settings')"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>
-      <nav-item v-if="auth.token === null && !auth.loggingIn" @click="openLogin()"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
-      <nav-item v-else-if="auth.loggingIn"><font-awesome-icon icon="spinner" spin size="lg" class="mr-3" />Loading....</nav-item>
-      <nav-item v-else class="capitalize" @click="goTo('profile')"><img :src="`https://minotar.net/helm/${avatarName}`" style="margin-right: 0.75em;" width="40px" height="40px" class="rounded-full" /><div class="flex flex-col"><span>{{auth.token.mc !== undefined ? auth.token.mc.display.split("#")[0] : auth.token.username}}</span><span v-if="auth.token.mc !== undefined " class="text-sm text-gray-600">#{{auth.token.mc.display.split("#")[1]}}</span></div></nav-item>
+      <nav-item :isActive="isActiveTab('settings')" @click="goTo('settings')" :disabled="disableNav"><font-awesome-icon icon="cog" size="lg" class="mr-3" />Settings</nav-item>
+      <nav-item v-if="auth.token === null && !auth.loggingIn" @click="openLogin()" :disabled="disableNav"><font-awesome-icon icon="sign-out-alt" size="lg" class="mr-3" />Login</nav-item>
+      <nav-item v-else-if="auth.loggingIn"><font-awesome-icon icon="spinner" spin size="lg" class="mr-3" :disabled="disableNav" />Loading....</nav-item>
+      <nav-item v-else class="capitalize" @click="goTo('profile')" :disabled="disableNav"><img :src="`https://api.mymcuu.id/head/${avatarName}`" style="margin-right: 0.75em;" width="40px" height="40px" class="rounded-full" /><div class="flex flex-col"><span>{{auth.token.mc !== undefined && auth.token.mc.display !== null ? auth.token.mc.display.split("#")[0] : auth.token.username}}</span><span v-if="auth.token.mc !== undefined && auth.token.mc.display !== null " class="text-sm text-gray-600">#{{auth.token.mc.display.split("#")[1]}}</span></div></nav-item>
     </div>
     <img src="../assets/ch-logo.svg" width="90%" class="mb-2 cursor-pointer logo-hover" style="" draggable="false" @click="openPromo()"/>
   </div>
@@ -32,11 +32,15 @@ import store from '@/store';
 import config from '@/config';
 import { SettingsState } from '../modules/settings/types';
 import { logVerbose } from '../utils';
+import { ModpackState } from '@/modules/modpacks/types';
 
 @Component({components: {NavItem}})
 export default class Sidebar extends Vue {
   @State('auth') private auth!: AuthState;
+  @State('modpacks') private modpacks!: ModpackState;
   @State('settings') private settings!: SettingsState;
+  @Action('setSessionID', {namespace: 'auth'}) private setSessionID!: any;
+  @Action('saveSettings', {namespace: 'settings'}) private saveSettings!: any;
   private appVersion: string = config.appVersion;
 
 
@@ -48,8 +52,13 @@ export default class Sidebar extends Vue {
     return !splits[splits.length - 1].match(/\d/);
   }
 
+
+  get disableNav(){
+    return this.$route.path.startsWith("launching") || (this.modpacks.installing !== null && !this.modpacks.installing.error);
+  }
+
   get avatarName(){
-    let provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
+    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return provider !== undefined && provider !== null ? provider.userId : "MHF_Steve";
   }
 
@@ -59,6 +68,9 @@ export default class Sidebar extends Vue {
   }
 
   public goTo(page: string): void {
+    if(this.disableNav){
+      return;
+    }
     // We don't care about this error!
     this.$router.push({name: page}).catch((err) => { return; });
   }
