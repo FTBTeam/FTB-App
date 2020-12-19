@@ -6,7 +6,7 @@ import Vue from 'vue';
 
 export const mutations: MutationTree<SocketState> = {
     SOCKET_ONOPEN(state: any, event: any)  {
-        if(state.socket.reconnectError){
+        if (state.socket.reconnectError) {
             state.socket.reconnectError = false;
         }
         Vue.prototype.$socket = event.currentTarget;
@@ -33,26 +33,26 @@ export const mutations: MutationTree<SocketState> = {
             }
         }
         if (message.type === 'ping') {
-            if(state.pingEventCallback){
+            if (state.pingEventCallback) {
                 state.pingEventCallback(message);
             }
         } else if (message.type === 'openModal') {
             state.modal = message;
         } else if (message.type === 'closeModal') {
             state.modal = null;
-        } else if (message.type === 'ircEvent'){
-            if(state.ircEventCallback){
+        } else if (message.type === 'ircEvent') {
+            if (state.ircEventCallback) {
                 state.ircEventCallback(message);
             }
-        } else if (message.type === 'clientLaunchData'){
-            if(state.modProgressCallback){
+        } else if (message.type === 'clientLaunchData') {
+            if (state.modProgressCallback) {
                 state.modProgressCallback(message);
             }
-        } else if(message.type === "installedFileEventDataReply"){
+        } else if (message.type === 'installedFileEventDataReply') {
             Vue.set(state.downloadedFiles, message.fileName, message.status);
         }
         state.socket.message = message;
-        ipcRenderer.send("websocketReceived", message);
+        ipcRenderer.send('websocketReceived', message);
     },
     SOCKET_RECONNECT(state: any, count: number) {
         console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
@@ -64,13 +64,13 @@ export const mutations: MutationTree<SocketState> = {
     ADD_CALLBACK(state: any, data: any) {
         state.messages[data.id] = data.callback;
     },
-    ADD_PING_MESSAGE_CALLBACK(state: any, callback: (data: any) => void){
+    ADD_PING_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
         state.pingEventCallback = callback;
     },
-    ADD_IRC_MESSAGE_CALLBACK(state: any, callback: (data: any) => void){
+    ADD_IRC_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
         state.ircEventCallback = callback;
     },
-    ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void){
+    ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void) {
         state.modProgressCallback = callback;
-    }
+    },
 };

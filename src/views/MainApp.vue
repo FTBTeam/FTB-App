@@ -71,7 +71,7 @@
 </template>
 
 <script lang="ts">
-let emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 import {readdirSync, readFileSync, existsSync} from 'fs';
 import {createPaste} from 'hastebin';
 import path from 'path';
@@ -95,7 +95,7 @@ import { RootState } from '@/types';
 import { SettingsState } from '../modules/settings/types';
 import { ipcRenderer, clipboard} from 'electron';
 
-@Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal, 
+@Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal,
         'ftb-button': FTBButton, 'ftb-input': FTBInput} })
 export default class MainApp extends Vue {
   @State('websocket') public websockets!: SocketState;
@@ -117,8 +117,8 @@ export default class MainApp extends Vue {
   @Action('registerPingCallback')
   private registerPingCallback: any;
 
-  private errorEmail = "";
-  private errorDescription = "";
+  private errorEmail = '';
+  private errorDescription = '';
   private submittingError = false;
   private submitted = false;
 
@@ -127,7 +127,7 @@ export default class MainApp extends Vue {
 
   public mounted() {
     this.registerPingCallback((data: any) => {
-      if(data.type === "ping") {
+      if (data.type === 'ping') {
         console.log('Sending pong');
         this.sendMessage({payload: {type: 'pong'}});
       }
@@ -147,10 +147,6 @@ export default class MainApp extends Vue {
     }
   }
 
-  private quitApp() {
-    ipcRenderer.send('quit_app');
-  }
-
   public fetchStartData() {
     return new Promise(async (resolve, reject) => {
       await this.loadSettings();
@@ -163,23 +159,23 @@ export default class MainApp extends Vue {
     });
   }
 
-  public async submitError(){
-    if(!emailRegex.test(this.errorEmail)){
+  public async submitError() {
+    if (!emailRegex.test(this.errorEmail)) {
       console.log('Email regex not passing');
       return;
     }
-    if(this.errorDescription.length === 0){
+    if (this.errorDescription.length === 0) {
       return;
     }
     this.submittingError = true;
     const logLink = await this.uploadLogData().catch((err) => {
-      if(err) {
+      if (err) {
         this.submittingError = false;
         // Show an error here...
         return;
       }
       });
-    //Send request
+    // Send request
     fetch(`https://minetogether.io/api/ftbAppError`, {method: 'PUT', body: JSON.stringify({email: this.errorEmail, logs: logLink, description: this.errorDescription})});
     this.submittingError = false;
     this.submitted = true;
@@ -189,13 +185,13 @@ export default class MainApp extends Vue {
     return new Promise((resolve, reject) => {
       this.sendMessage({payload: {type: 'uploadLogs', uiVersion: this.webVersion}, callback: async (data: any) => {
               if (!data.error) {
-                  let url = `https://pste.ch/${data.code}`
+                  const url = `https://pste.ch/${data.code}`;
                   resolve(url);
               } else {
                 reject(data.error);
               }
       }});
-    })
+    });
   }
 
   public retry(modpack: InstallProgress) {
@@ -228,6 +224,10 @@ export default class MainApp extends Vue {
           }});
       }});
     }
+  }
+
+  private quitApp() {
+    ipcRenderer.send('quit_app');
   }
 }
 </script>

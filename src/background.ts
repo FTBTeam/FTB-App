@@ -9,7 +9,7 @@ import * as log from 'electron-log';
 import childProcess from 'child_process';
 import axios from 'axios';
 // @ts-ignore
-//import {Client} from 'irc-framework';
+// import {Client} from 'irc-framework';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 
@@ -100,17 +100,17 @@ let userData: any;
 let authData: any;
 let sessionString: string;
 const seenModpacks: MTModpacks = {};
-let friends: FriendListResponse = {friends: [], requests: []};
+const friends: FriendListResponse = {friends: [], requests: []};
 
 ipcMain.on('websocketReceived', (event, message) => {
     if (!mtIRCCLient) {
         return;
     }
-    if (message.type == 'ircEvent') {
+    if (message.type === 'ircEvent') {
         message.type = message.jsEvent;
         mtIRCCLient.messageReceived(message);
     }
-})
+});
 
 ipcMain.on('sendMeSecret', (event) => {
     event.reply('hereIsSecret', {port: wsPort, secret: wsSecret, isDevMode: isDevelopment});
@@ -121,7 +121,7 @@ ipcMain.on('openOauthWindow', (event, data) => {
 });
 
 ipcMain.on('showFriends', () => {
-    if(userData){
+    if (userData) {
         createFriendsWindow();
     }
 });
@@ -134,32 +134,32 @@ ipcMain.on('appReady', async (event) => {
 
 
 ipcMain.on('updateSettings', async (event, data) => {
-    if(friendsWindow !== null && friendsWindow !== undefined){
-        friendsWindow.webContents.send('updateSettings', data)
+    if (friendsWindow !== null && friendsWindow !== undefined) {
+        friendsWindow.webContents.send('updateSettings', data);
     }
-    if(data.sessionString){
+    if (data.sessionString) {
         sessionString = data.sessionString;
-        if(!userData && win){
+        if (!userData && win) {
             win.webContents.send('getNewSession', sessionString);
         }
     }
-})
+});
 
 ipcMain.on('session', (event, data) => {
-    if(!authData){
+    if (!authData) {
         authData = data;
     }
 });
 
 ipcMain.on('user', (event, data) => {
-    if(!userData){
+    if (!userData) {
         userData = data;
         if (friendsWindow !== undefined && friendsWindow !== null) {
             friendsWindow.webContents.send('hereAuthData', userData);
         }
-        log.info("Checking if linked Minecraft Account");
-        if(userData.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined){
-            log.info("Linked Minecraft account, connecting to IRC");
+        log.info('Checking if linked Minecraft Account');
+        if (userData.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
+            log.info('Linked Minecraft account, connecting to IRC');
         }
     }
 });
@@ -184,7 +184,7 @@ ipcMain.on('gimmeAuthData', (event) => {
 
 
 ipcMain.on('openModpack', (event, data) => {
-    if(win !== null && win !== undefined){
+    if (win !== null && win !== undefined) {
         win.webContents.send('openModpack', data);
     }
 });
@@ -242,10 +242,10 @@ ipcMain.on('windowControls', (event, data) => {
 
 ipcMain.on('quit_app', (event, data) => {
     process.exit(1);
-})
+});
 
 ipcMain.on('logout', (event, data) => {
-    if(friendsWindow){
+    if (friendsWindow) {
         friendsWindow.close();
     }
     if (mtIRCCLient) {
@@ -253,17 +253,17 @@ ipcMain.on('logout', (event, data) => {
         mtIRCCLient = undefined;
     }
     userData = undefined;
-})
+});
 
 ipcMain.on('openLink', (event, data) => {
-    shell.openExternal(data);  
-})
+    shell.openExternal(data);
+});
 
 function createFriendsWindow() {
     if (friendsWindow !== null && friendsWindow !== undefined) {
         friendsWindow.focus();
-        if(win){
-            win.webContents.send('setFriendsWindow', true)
+        if (win) {
+            win.webContents.send('setFriendsWindow', true);
         }
         return;
     }
@@ -302,13 +302,13 @@ function createFriendsWindow() {
     } else {
         friendsWindow.loadURL('app://./index.html#chat');
     }
-    if(win){
-        win.webContents.send('setFriendsWindow', true)
+    if (win) {
+        win.webContents.send('setFriendsWindow', true);
     }
     friendsWindow.on('closed', () => {
         friendsWindow = null;
-        if(win){
-            win.webContents.send('setFriendsWindow', false)
+        if (win) {
+            win.webContents.send('setFriendsWindow', false);
         }
     });
 }
@@ -352,7 +352,7 @@ function createWindow() {
 
     win.on('closed', () => {
         win = null;
-        if(friendsWindow !== undefined && friendsWindow !== null){
+        if (friendsWindow !== undefined && friendsWindow !== null) {
             friendsWindow.close();
         }
     });
@@ -487,9 +487,9 @@ function createOauthWindow() {
     // window.setMenu(null);
     window.loadURL('https://minetogether.io/api/login');
     window.webContents.session.webRequest.onHeadersReceived({urls: []}, (details, callback) => {
-        if(details.url.indexOf('https://minetogether.io/api/redirect') !== -1){
-            if(details.responseHeaders){
-                if(details.responseHeaders['app-auth'] && win){
+        if (details.url.indexOf('https://minetogether.io/api/redirect') !== -1) {
+            if (details.responseHeaders) {
+                if (details.responseHeaders['app-auth'] && win) {
                     win.webContents.send('setSessionString', details.responseHeaders['app-auth'][0]);
                 }
             }
@@ -500,8 +500,8 @@ function createOauthWindow() {
         if (url.startsWith('https://minetogether.io/profile')) {
             window.webContents.session.cookies.get({name: 'PHPSESSID'})
             .then(async (cookies) => {
-                if(cookies.length === 1){
-                    if(win){
+                if (cookies.length === 1) {
+                    if (win) {
                         win.webContents.send('setSessionID', cookies[0].value);
                     }
                     authData = cookies[0].value;

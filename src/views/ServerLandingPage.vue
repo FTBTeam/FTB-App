@@ -240,12 +240,12 @@ export default class ServerLandingPage extends Vue {
     return [];
   }
 
-  public getCorrectVersion(mtgID: string){
+  public getCorrectVersion(mtgID: string) {
     const result = this.modpack?.versions?.filter((obj: Versions) => {
-      return obj.mtgID === mtgID
-    })
-    if(result !== undefined){
-      return result[0]
+      return obj.mtgID === mtgID;
+    });
+    if (result !== undefined) {
+      return result[0];
     }
   }
 
@@ -256,17 +256,17 @@ export default class ServerLandingPage extends Vue {
       this.$router.replace({name: 'installingpage', query: {modpackid: this.$props.packID, versionID: version.toString()}});
   }
 
-  public preLaunch(instance: Instance){
+  public preLaunch(instance: Instance) {
     let newArgs = instance.jvmArgs;
-    if(newArgs.indexOf("-Dmt.server") !== 1){
-      const args = newArgs.split(" ");
-      args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
-      newArgs = args.join(" ");
+    if (newArgs.indexOf('-Dmt.server') !== 1) {
+      const args = newArgs.split(' ');
+      args.splice(args.findIndex((value) => value.indexOf('-Dmt.server') !== -1), 1);
+      newArgs = args.join(' ');
     }
-    if(newArgs[newArgs.length - 1] === " " || newArgs.length === 0){
-      newArgs += "-Dmt.server=" + this.serverID;
+    if (newArgs[newArgs.length - 1] === ' ' || newArgs.length === 0) {
+      newArgs += '-Dmt.server=' + this.serverID;
     } else {
-      newArgs += " -Dmt.server=" + this.serverID;
+      newArgs += ' -Dmt.server=' + this.serverID;
     }
     return new Promise((res, rej) => {
       this.sendMessage({
@@ -274,23 +274,23 @@ export default class ServerLandingPage extends Vue {
               res();
           },
       });
-    })
+    });
   }
 
-  public postLaunch(instance: Instance){
+  public postLaunch(instance: Instance) {
     return new Promise((res, rej) => {
       let newArgs = instance.jvmArgs;
-      if(newArgs.indexOf("-Dmt.server") !== 1){
-        const args = newArgs.split(" ");
-        args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
-        newArgs = args.join(" ");
+      if (newArgs.indexOf('-Dmt.server') !== 1) {
+        const args = newArgs.split(' ');
+        args.splice(args.findIndex((value) => value.indexOf('-Dmt.server') !== -1), 1);
+        newArgs = args.join(' ');
       }
       this.sendMessage({
           payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
               res();
           },
       });
-    })
+    });
   }
 
   public mounted() {
@@ -353,9 +353,9 @@ export default class ServerLandingPage extends Vue {
                 }
               });
           }
-          if(this.modpack !== null){
+          if (this.modpack !== null) {
             const tmpVersion = this.getCorrectVersion(this.server.project);
-            if(tmpVersion !== undefined){
+            if (tmpVersion !== undefined) {
               this.version = tmpVersion;
             }
           }

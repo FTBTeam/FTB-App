@@ -54,7 +54,7 @@ import { Action } from 'vuex-class';
         cancelAction: Function,
         buttons: Array,
         modalID: String,
-        loading: Boolean
+        loading: Boolean,
     },
 })
 export default class MessageModal extends Vue {

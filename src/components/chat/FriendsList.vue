@@ -88,7 +88,7 @@ interface UnreadMessages {
         'messages',
         'friends',
         'activeFriend',
-        'loading'
+        'loading',
     ],
 })
 export default class MainChat extends Vue {
@@ -124,9 +124,9 @@ export default class MainChat extends Vue {
         this.showRequests = !this.showRequests;
     }
 
-    get avatarName(){
-        let provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-        return provider !== undefined && provider !== null ? provider.userId : "MHF_Steve";
+    get avatarName() {
+        const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
+        return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
     }
 
     @Watch('auth', {deep: true})
@@ -150,20 +150,20 @@ export default class MainChat extends Vue {
     }
 
     public async acceptFriendRequest(hash: string, name: string, friendCode?: string) {
-        this.acceptingFriends.push(hash)
-        if(friendCode === undefined){
+        this.acceptingFriends.push(hash);
+        if (friendCode === undefined) {
             friendCode = await this.getFriendCodeFromHash(hash);
         }
         ipcRenderer.send('acceptFriendRequest', {hash, target: hash, friendCode, name, ourName: this.auth.token?.mc.display});
         ipcRenderer.on('acceptedFriendRequest', (event, data) => {
-            ipcRenderer.send('checkFriends')
+            ipcRenderer.send('checkFriends');
         });
     }
 
     public getFriendCodeFromHash(hash: string): Promise<string> {
         return fetch(`https://api.creeper.host/minetogether/friendcode`, {headers: {
             'Content-Type': 'application/json',
-        }, method: 'POST', body: JSON.stringify({hash: hash})})
+        }, method: 'POST', body: JSON.stringify({hash})})
         .then((response) => response.json())
         .then(async (data) => {
             return data.code;
@@ -172,7 +172,7 @@ export default class MainChat extends Vue {
         });
     }
 
-    public openModpack(friend: Friend){
+    public openModpack(friend: Friend) {
         ipcRenderer.send('openModpack', {name: friend.currentPack, id: friend.currentPackID});
     }
 

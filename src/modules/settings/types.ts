@@ -22,7 +22,7 @@ export interface Settings {
     mtConnect: boolean;
     automateMojang: boolean;
     showAdverts: boolean | string;
-    loadInApp: boolean;
+    loadInApp: boolean | string;
 }
 
 export interface Hardware {

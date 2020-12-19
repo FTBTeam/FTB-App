@@ -46,13 +46,18 @@ import { SocketState } from '../modules/websocket/types';
   },
 })
 export default class ChatWindow extends Vue {
+
+    get isMinecraftLinked() {
+        const p = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
+        return p !== undefined && p != null;
+    }
+    @Action('sendMessage') public sendIRCMessage: any;
     @State('auth')
     private auth!: AuthState;
     @State('settings')
     private settings!: SettingsState;
     @State('websocket')
     private websocket!: SocketState;
-    @Action('sendMessage') public sendIRCMessage: any;
 
     private hasLoaded = false;
     private loadingFriends: boolean = true;
@@ -72,13 +77,13 @@ export default class ChatWindow extends Vue {
 
     @Watch('auth', {deep: true})
     public async onAuthChange(newVal: AuthState, oldVal: AuthState) {
-        if(newVal.token?.accounts.find((s: any) => s.identityProvider === "mcauth") !== undefined && !this.hasLoaded && this.websocket.socket.isConnected){
+        if (newVal.token?.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined && !this.hasLoaded && this.websocket.socket.isConnected) {
             this.hasLoaded = true;
-            if(newVal.token){
+            if (newVal.token) {
                 this.getFriends(newVal.token.mc.hash.long);
             }
             setInterval(() => {
-                if(newVal.token){
+                if (newVal.token) {
                     this.getFriends(newVal.token.mc.hash.long);
                 }
             }, 30 * 1000);
@@ -87,14 +92,14 @@ export default class ChatWindow extends Vue {
 
     @Watch('websocket', {deep: true})
     public async onSocketChange(newVal: SocketState, oldVal: SocketState) {
-        if(newVal.socket.isConnected){
-            if(this.auth.token?.accounts.find((s: any) => s.identityProvider === "mcauth") !== undefined && !this.hasLoaded) {
+        if (newVal.socket.isConnected) {
+            if (this.auth.token?.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined && !this.hasLoaded) {
                 this.hasLoaded = true;
-                if(this.auth.token){
+                if (this.auth.token) {
                     this.getFriends(this.auth.token.mc.hash.long);
                 }
                 setInterval(() => {
-                    if(this.auth.token){
+                    if (this.auth.token) {
                         this.getFriends(this.auth.token.mc.hash.long);
                     }
                 }, 30 * 1000);
@@ -102,17 +107,17 @@ export default class ChatWindow extends Vue {
         }
     }
 
-    public getFriends(longHash?: string){
+    public getFriends(longHash?: string) {
         this.loadingFriends = true;
-        if(longHash === undefined){
+        if (longHash === undefined) {
             longHash = this.auth.token?.mc.hash.long;
         }
-        if(Array.isArray(longHash)){
+        if (Array.isArray(longHash)) {
             longHash = longHash[0];
         }
-        let requestPending = true;
-        let shouldCancel = false;
-        let timeout = setTimeout(() => {
+        const requestPending = true;
+        const shouldCancel = false;
+        const timeout = setTimeout(() => {
             this.loadingFriends = false;
         }, 10 * 1000);
         this.sendIRCMessage({payload: {type: 'getFriends', hash: longHash}, callback: (data: any) => {
@@ -129,17 +134,12 @@ export default class ChatWindow extends Vue {
             });
             Vue.set(this.friends, 'requests', requests);
             this.loadingFriends = false;
-            clearInterval(timeout)
+            clearInterval(timeout);
         }});
     }
 
-    get isMinecraftLinked(){
-        const p = this.auth.token?.accounts.find((s) => s.identityProvider === "mcauth");
-        return p !== undefined && p != null;
-    }
-
-    public openProfile(){
-        ipcRenderer.send('openLink', "https://minetogether.io/profile/connections");
+    public openProfile() {
+        ipcRenderer.send('openLink', 'https://minetogether.io/profile/connections');
     }
 
     public expand() {
@@ -181,18 +181,18 @@ export default class ChatWindow extends Vue {
         this.currentPage = '';
     }
 
-    public async blockFriend(){
+    public async blockFriend() {
          if (this.friend === null || this.friend.hash === undefined) {
             return;
         }
-        const success = await this.removeFriendAction(this.friend.hash);
-        if (typeof success === 'string') {
+         const success = await this.removeFriendAction(this.friend.hash);
+         if (typeof success === 'string') {
 
         } else {
             if (success) {
-                this.sendIRCMessage({payload: {type: "blockFriend", hash: this.friend.hash}})
-                this.hidePage();    
-               if(this.auth.token){
+                this.sendIRCMessage({payload: {type: 'blockFriend', hash: this.friend.hash}});
+                this.hidePage();
+                if (this.auth.token) {
                     this.getFriends(this.auth.token.mc.hash.long);
                 }
             }
@@ -209,7 +209,7 @@ export default class ChatWindow extends Vue {
         } else {
             if (success) {
                 this.hidePage();
-                if(this.auth.token){
+                if (this.auth.token) {
                     this.getFriends(this.auth.token.mc.hash.long);
                 }
             }
@@ -217,7 +217,7 @@ export default class ChatWindow extends Vue {
     }
 
     public sendMessage(message: string) {
-        if(message.length < 1){
+        if (message.length < 1) {
             return;
         }
         if (this.friend === null || this.auth.token === null) {
@@ -240,11 +240,11 @@ export default class ChatWindow extends Vue {
         //     this.settings.settings = data;
         // });
         this.registerIRCCallback((data: any) => {
-            if(data.jsEvent === "message"){
-                if(data.ircType === "privmsg"){
-                    let from = data.nick;
-                    let message = data.message;
-                    if(this.settings.settings.blockedUsers.indexOf(from) !== -1){
+            if (data.jsEvent === 'message') {
+                if (data.ircType === 'privmsg') {
+                    const from = data.nick;
+                    const message = data.message;
+                    if (this.settings.settings.blockedUsers.indexOf(from) !== -1) {
                         return;
                     }
                     let messages: Message[];
@@ -256,19 +256,19 @@ export default class ChatWindow extends Vue {
                     messages.push({content: message, author: from, date: new Date().getTime(), read: this.currentPage === 'chatFriend' && this.friend?.profile.chat.hash.medium === from});
                     Vue.set(this.messages, from, messages);
                 }
-            } else if(data.jsEvent === "ctcp"){
-                let request = data.data;
-                if(data.type === "newFriend"){
+            } else if (data.jsEvent === 'ctcp') {
+                const request = data.data;
+                if (data.type === 'newFriend') {
                     const requests = this.friends.requests;
                     const existing = requests.find((r) => r.profile.chat.hash.medium === data.nick);
                     if (existing !== undefined) {
                         return;
                     }
-                    let profile = data.profile;
+                    const profile = data.profile;
                     requests.push({profile, name: profile.display, accepted: false});
                     Vue.set(this.friends, 'requests', requests);
                 }
-                if(this.auth.token){
+                if (this.auth.token) {
                     this.getFriends(this.auth.token.mc.hash.long);
                 }
             }

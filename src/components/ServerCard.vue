@@ -91,8 +91,8 @@ export default class ServerCard extends Vue {
         cancelAction: Function,
     };
 
-    public goToPage(){
-      ipcRenderer.send('openLink', `ftb://server/${this.server.id}`)
+    public goToPage() {
+      ipcRenderer.send('openLink', `ftb://server/${this.server.id}`);
     }
 
     public comingSoonMsg() {

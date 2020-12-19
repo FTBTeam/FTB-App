@@ -19,23 +19,23 @@ export const actions: ActionTree<SocketState, RootState> = {
         Vue.prototype.$socket.sendObj(payload.payload);
         commit('ADD_CALLBACK', {id: messageID, callback: payload.callback});
     },
-    registerPingCallback({commit}: ActionContext<SocketState, RootState>, callback: (data:any) => void) {
+    registerPingCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
         commit('ADD_PING_MESSAGE_CALLBACK', callback);
     },
-    registerIRCCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void){
+    registerIRCCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
       commit('ADD_IRC_MESSAGE_CALLBACK', callback);
     },
-    registerModProgressCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void){
+    registerModProgressCallback({commit}: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
       commit('ADD_MOD_PROGRESS_CALLBACK', callback);
     },
-    async reportAdvert({commit, rootState}: ActionContext<SocketState, RootState>, data: {html: string, object: string}){
+    async reportAdvert({commit, rootState}: ActionContext<SocketState, RootState>, data: {html: string, object: string}) {
         try {
-          let response = await axios.post(`https://minetogether.io/api/reportAd`,data, {headers: {
-              Accept: "application/json"
+          const response = await axios.post(`https://minetogether.io/api/reportAd`, data, {headers: {
+              Accept: 'application/json',
           }});
-      }catch(err){
+      } catch (err) {
           console.log(err);
           return;
       }
-    }
+    },
 };

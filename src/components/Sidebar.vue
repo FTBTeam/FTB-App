@@ -52,13 +52,13 @@ export default class Sidebar extends Vue {
   }
 
 
-  get disableNav(){
-    return this.$route.path.startsWith("launching") || (this.modpacks.installing !== null && !this.modpacks.installing.error);
+  get disableNav() {
+    return this.$route.path.startsWith('launching') || (this.modpacks.installing !== null && !this.modpacks.installing.error);
   }
 
-  get avatarName(){
+  get avatarName() {
     const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : "MHF_Steve";
+    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
   }
 
 
@@ -67,7 +67,7 @@ export default class Sidebar extends Vue {
   }
 
   public goTo(page: string): void {
-    if(this.disableNav){
+    if (this.disableNav) {
       return;
     }
     // We don't care about this error!

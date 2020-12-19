@@ -53,26 +53,26 @@ export const mutations: MutationTree<ModpackState> = {
     },
     updateInstall(state, payload: InstallProgress) {
         if (state.installing !== null) {
-            const foundPack = state.installing
+            const foundPack = state.installing;
             foundPack.progress = payload.progress;
             foundPack.error = payload.error || false;
             foundPack.errorMessage = payload.errorMessage || '';
             foundPack.downloadSpeed = payload.downloadSpeed || 0;
             foundPack.stage = payload.stage || 'INIT';
-            foundPack.downloadedBytes = payload.downloadedBytes || 0;  
+            foundPack.downloadedBytes = payload.downloadedBytes || 0;
             foundPack.totalBytes = payload.totalBytes || 0;
             foundPack.instanceID = payload.instanceID;
-            if(payload.message){
+            if (payload.message) {
                 foundPack.message = payload.message;
             }
-            if(payload.files){
-                foundPack.files = payload.files
-            } else  if(foundPack.files === undefined){
+            if (payload.files) {
+                foundPack.files = payload.files;
+            } else  if (foundPack.files === undefined) {
                 foundPack.files = [];
             }
             state.installing = foundPack;
         } else {
-            if(payload.files === undefined) {
+            if (payload.files === undefined) {
                 payload.files = [];
             }
             state.installing = payload;
@@ -107,7 +107,7 @@ export const mutations: MutationTree<ModpackState> = {
     clearSearch(state) {
         state.searchString = '';
     },
-    setLaunchProgress(state, progress: any){
+    setLaunchProgress(state, progress: any) {
         state.launchProgress = progress;
-    }
+    },
 };

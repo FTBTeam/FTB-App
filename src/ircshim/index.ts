@@ -5,7 +5,7 @@ import { BrowserWindow } from 'electron';
 export default class Client {
 
     private static mapping = new Map<string, any>();
-    
+
     private win: BrowserWindow | null;
 
     public constructor(win: BrowserWindow | null) {
@@ -17,12 +17,12 @@ export default class Client {
     }
 
     public say(nick: string, message: string) {
-        this.sendWebsocket({type: 'ircSendMessage', nick: nick, message: message});
+        this.sendWebsocket({type: 'ircSendMessage', nick, message});
     }
 
     public whois(nick: string) {
         // lol
-        this.sendWebsocket({type: 'ircWhoisRequest', nick: nick});
+        this.sendWebsocket({type: 'ircWhoisRequest', nick});
     }
 
     public quit() {
@@ -30,15 +30,15 @@ export default class Client {
     }
 
     public ctcpRequest(nick: string, ...args: string[]) {
-        this.sendWebsocket({type: 'ircCtcpRequest', message: args.concat(" ")})
+        this.sendWebsocket({type: 'ircCtcpRequest', message: args.concat(' ')});
     }
 
     public messageReceived(message: any) {
-        let type: string = message.type;
+        const type: string = message.type;
         message.type = message.ircType;
         if (Client.mapping.has(type)) {
             Client.mapping.get(type)(message);
-        } 
+        }
     }
 
     public on(event: string, functionToCall: any) {

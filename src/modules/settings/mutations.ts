@@ -26,7 +26,7 @@ export const mutations: MutationTree<SettingsState> = {
             mtConnect: false,
             automateMojang: true,
             showAdverts: true,
-            loadInApp: true
+            loadInApp: true,
         };
         state.settings = {...defaultSettings, ...payload};
     },
@@ -44,7 +44,7 @@ export const mutations: MutationTree<SettingsState> = {
               }) as Resolution[] : [],
         };
     },
-    loadVersions(state, payload: any){
+    loadVersions(state, payload: any) {
         state.javaInstalls = payload;
-    }
+    },
 };

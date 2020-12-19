@@ -50,7 +50,7 @@ import FTBModal from '../FTBModal.vue';
         'ftb-input': FTBInput,
         'ftb-button': FTBButton,
         ConfirmationModal,
-        FTBModal
+        FTBModal,
     },
     props: [
         'friend',
@@ -58,7 +58,7 @@ import FTBModal from '../FTBModal.vue';
         'messages',
         'sendMessage',
         'removeFriend',
-        'blockFriend'
+        'blockFriend',
     ],
 })
 export default class FriendChat extends Vue {
@@ -84,14 +84,14 @@ export default class FriendChat extends Vue {
 
     private lastScroll: number = 0;
     private hasScrolled: boolean = false;
-    
-    public hideModal(){
+
+    public hideModal() {
         this.checkLink = null;
     }
 
     public linkify(text: string): string {
-        var urlRegex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-        return text.replace(urlRegex, function(url) {
+        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+        return text.replace(urlRegex, (url) => {
             return '<a href="' + url + '" target="_blank">' + url + '</a>';
         });
     }
@@ -111,13 +111,13 @@ export default class FriendChat extends Vue {
         }
     }
 
-    public onMessageClick(event: any){
-        if(event.target != null){
-            if(event.target.tagName === 'A'){
-                let url = event.target.href;
-                let domain = url.match(/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/?\n]+)/)[0];
-                let whitelistedDomain = this.whitelistedDomains.find((d) => domain.indexOf(d) !== -1);
-                if(whitelistedDomain === undefined){
+    public onMessageClick(event: any) {
+        if (event.target != null) {
+            if (event.target.tagName === 'A') {
+                const url = event.target.href;
+                const domain = url.match(/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/?\n]+)/)[0];
+                const whitelistedDomain = this.whitelistedDomains.find((d) => domain.indexOf(d) !== -1);
+                if (whitelistedDomain === undefined) {
                     event.preventDefault();
                     this.checkLink = event.target.href;
                 }
@@ -125,13 +125,13 @@ export default class FriendChat extends Vue {
         }
     }
 
-    public onScroll(){
+    public onScroll() {
         const chat: Element = this.$refs.chat as Element;
         const pos = chat.scrollTop;
         const maximum = chat.scrollHeight - chat.clientHeight;
-        if(pos - this.lastScroll < -1){
+        if (pos - this.lastScroll < -1) {
             this.hasScrolled = true;
-        } else if(pos >= maximum){
+        } else if (pos >= maximum) {
             this.hasScrolled = false;
         }
         this.lastScroll = pos;
@@ -157,13 +157,13 @@ export default class FriendChat extends Vue {
         this.newMessage = '';
     }
 
-    public navigateToLink(){
+    public navigateToLink() {
         ipcRenderer.send('openLink', this.checkLink);
         this.checkLink = null;
     }
 
-    public openServer(){
-        ipcRenderer.send('openLink', `ftb://server/${this.friend.currentServer}`)
+    public openServer() {
+        ipcRenderer.send('openLink', `ftb://server/${this.friend.currentServer}`);
     }
 }
 </script>

@@ -101,7 +101,7 @@ import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { settings } from 'cluster';
 import {ServersState} from '@/modules/servers/types';
-import FtbButton from "@/components/FTBButton.vue";
+import FtbButton from '@/components/FTBButton.vue';
 
 const namespace: string = 'modpacks';
 

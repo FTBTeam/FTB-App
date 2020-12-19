@@ -35,7 +35,7 @@ import { SettingsState } from '@/modules/settings/types';
             'tags',
             'preLaunch',
             'postLaunch',
-            'kind'
+            'kind',
         ],
     })
     export default class PackCardWrapper extends Vue {

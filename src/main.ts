@@ -100,9 +100,9 @@ Vue.mixin({
             const link = event.target.href;
             shell.openExternal(link);
         },
-        copyToClipboard(text: string){
+        copyToClipboard(text: string) {
             clipboard.writeText(text);
-        }
+        },
     },
 });
 
@@ -160,42 +160,42 @@ const vm = new Vue({
 }).$mount('#app');
 axios.get(`https://minetogether.io/api/adPool`).then((res) => {
     try {
-        let id= parseInt(res.data, 10);    
-        if(id !== -1) {
+        const id = parseInt(res.data, 10);
+        if (id !== -1) {
             window.adPoolID = null;
         } else {
             window.adPoolID = id;
         }
-    } catch(err) {
+    } catch (err) {
         window.adPoolID = null;
     }
 }).catch(() => {
     window.adPoolID = null;
-})
-if(router.currentRoute.name !== "chat") {
+});
+if (router.currentRoute.name !== 'chat') {
     store.dispatch('registerModProgressCallback', (data: any) => {
-        if(data.messageType === "message"){
-            if(data.message === "init"){
+        if (data.messageType === 'message') {
+            if (data.message === 'init') {
                 store.commit('modpacks/setLaunchProgress', []);
-                if(data.instance){
-                    router.push({name: 'launchingpage', query: {uuid: data.instance}})
+                if (data.instance) {
+                    router.push({name: 'launchingpage', query: {uuid: data.instance}});
                 }
             } else {
-                if(router.currentRoute.name === "launchingpage"){
-                    router.replace({name: 'instancepage', query: {uuid: data.instance}})
+                if (router.currentRoute.name === 'launchingpage') {
+                    router.replace({name: 'instancepage', query: {uuid: data.instance}});
                 }
                 store.commit('modpacks/setLaunchProgress', undefined);
             }
-        } else if(data.messageType === "progress") {
-            if(router.currentRoute.name !== "launchingpage"){
-                router.push({name: 'launchingpage', query: {uuid: data.instance}})
+        } else if (data.messageType === 'progress') {
+            if (router.currentRoute.name !== 'launchingpage') {
+                router.push({name: 'launchingpage', query: {uuid: data.instance}});
             }
-            if(data.clientData.bars){
+            if (data.clientData.bars) {
                 store.commit('modpacks/setLaunchProgress', data.clientData.bars);
             }
-        } else if(data.messageType === "clientDisconnect"){
-            if(router.currentRoute.name === "launchingpage"){
-                router.replace({name: 'instancepage', query: {uuid: data.instance}})
+        } else if (data.messageType === 'clientDisconnect') {
+            if (router.currentRoute.name === 'launchingpage') {
+                router.replace({name: 'instancepage', query: {uuid: data.instance}});
             }
         }
     });
@@ -227,11 +227,11 @@ ipcRenderer.on('hereAuthData', (event, data) => {
     store.commit('auth/storeAuthDetails', data, {root: true});
 });
 ipcRenderer.on('setFriendsWindow', (event, data) => {
-    store.dispatch('auth/setWindow', data, {root: true})
+    store.dispatch('auth/setWindow', data, {root: true});
 });
 ipcRenderer.on('setSessionString', (event, data) => {
-    let settings = store.state.settings?.settings;
-    if(settings !== undefined){
+    const settings = store.state.settings?.settings;
+    if (settings !== undefined) {
         settings.sessionString = data;
     }
     store.dispatch('settings/saveSettings', settings, {root: true});
@@ -243,17 +243,17 @@ ipcRenderer.on('setSessionID', (event, data) => {
     store.dispatch('auth/setSessionID', data, {root: true});
 });
 ipcRenderer.on('blockFriend', (event, data) => {
-    let settings = store.state.settings?.settings;
-    if(settings !== undefined && settings.blockedUsers === undefined){
+    const settings = store.state.settings?.settings;
+    if (settings !== undefined && settings.blockedUsers === undefined) {
         settings.blockedUsers = [];
     }
-    if(typeof settings?.blockedUsers !== 'string'){
+    if (typeof settings?.blockedUsers !== 'string') {
         settings?.blockedUsers.push(data);
     }
     store.dispatch('settings/saveSettings', settings, {root: true});
 });
 ipcRenderer.on('openModpack', (event, data) => {
-    let {name, id} = data;
+    const {name, id} = data;
     getAPIRequest(
         store.state,
         `modpack/search/8?term=${name}`,
@@ -270,13 +270,13 @@ ipcRenderer.on('openModpack', (event, data) => {
         if (packIDs.length === 0) {
             return;
         }
-        for(var i = 0; i < packIDs.length; i++){
-            let packID = packIDs[i];
-            let pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, {root: true})
-            if(pack !== undefined){
-                let foundVersion = pack.versions.find((v) => v.mtgID === id);
-                if(foundVersion !== undefined){
-                    router.push({name: 'modpackpage', query: {modpackid: packID}});           
+        for (let i = 0; i < packIDs.length; i++) {
+            const packID = packIDs[i];
+            const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, {root: true});
+            if (pack !== undefined) {
+                const foundVersion = pack.versions.find((v) => v.mtgID === id);
+                if (foundVersion !== undefined) {
+                    router.push({name: 'modpackpage', query: {modpackid: packID}});
                     return;
                 }
             }
@@ -288,7 +288,7 @@ ipcRenderer.on('openModpack', (event, data) => {
 });
 ipcRenderer.on('parseProtocolURL', (event, data) => {
     let protocolURL = data;
-    if(protocolURL === undefined){
+    if (protocolURL === undefined) {
         return;
     }
     protocolURL = protocolURL.substring(6, protocolURL.length);
@@ -338,7 +338,7 @@ ipcRenderer.on('parseProtocolURL', (event, data) => {
     }
 });
 ipcRenderer.on('sendWebsocket', (event, data) => {
-    console.log("Request received to send ", data)
+    console.log('Request received to send ', data);
     const messageID = Math.round(Math.random() * 1000);
     data.requestId = messageID;
     data.secret = store.state.wsSecret;

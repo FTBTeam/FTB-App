@@ -18,7 +18,7 @@ export const state: SocketState = {
     reconnects: 0,
     pingEventCallback: undefined,
     ircEventCallback: undefined,
-    modProgressCallback: undefined
+    modProgressCallback: undefined,
 };
 
 export const websocket: Module<SocketState, RootState> = {
@@ -26,5 +26,5 @@ export const websocket: Module<SocketState, RootState> = {
     state,
     actions,
     mutations,
-    getters
+    getters,
 };

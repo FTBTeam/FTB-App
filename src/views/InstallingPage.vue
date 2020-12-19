@@ -221,6 +221,38 @@ interface Changelogs {
           return this.modpacks.packsCache[id];
         }
 
+        get advertsEnabled(): boolean {
+          return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === 'true') || this.auth?.token?.activePlan === null);
+        }
+
+        get currentVersionObject(): Versions | null {
+            if (this.currentModpack !== null) {
+                const version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
+                if (version !== undefined) {
+                    return version;
+                }
+            }
+            return null;
+        }
+
+        get shuffledServers() {
+            if (this.currentVersionObject !== null && this.currentVersionObject.mtgID !== undefined) {
+                return shuffle(this.serverListState.servers[this.currentVersionObject.mtgID]);
+            }
+            return [];
+        }
+
+        get latestRelease() {
+            if (this.currentModpack !== undefined) {
+                const version = this.currentModpack?.versions.find((f: Versions) => f.type.toLowerCase() === 'release');
+                if (version !== undefined) {
+                    return version.id;
+                }
+                return null;
+            }
+            return null;
+        }
+
         @State('modpacks') public modpacks!: ModpackState;
         @State('settings') public settings!: SettingsState;
         @State('websocket') public socket!: SocketState;
@@ -235,6 +267,7 @@ interface Changelogs {
         @State('servers') public serverListState!: ServersState;
         @Action('fetchServers', {namespace: 'servers'}) public fetchServers!: (projectid: string) => void;
         @Getter('getFileStatus') public getFileStatus!: (name: string) => string;
+        public showAdverts: boolean = false;
 
         private activeTab = 'overview';
         private showMsgBox = false;
@@ -251,38 +284,71 @@ interface Changelogs {
         private ad: any;
         private checkAd: any;
         private files: File[] = [];
-        private downloadedFiles: {[index:string]: string} = {};
+        private downloadedFiles: {[index: string]: string} = {};
         private steps: {[index: string]: {name: string, done: boolean}} = {
-          "INIT": {name: "Initialise", done: false},
-          "VANILLA": {name: "Install Vanilla launcher", done: false},
-          "API": {name: "Gather data from API", done: false},
-          "FORGE": {name:  "Get Forge information", done: false},
-          "DOWNLOADS": {name: "Download files", done: false},
-          "POSTINSTALL": {name: "Post-install tasks", done: false},
-          "FINISHED": {name: "Finished", done: false}
+          INIT: {name: 'Initialise', done: false},
+          VANILLA: {name: 'Install Vanilla launcher', done: false},
+          API: {name: 'Gather data from API', done: false},
+          FORGE: {name:  'Get Forge information', done: false},
+          DOWNLOADS: {name: 'Download files', done: false},
+          POSTINSTALL: {name: 'Post-install tasks', done: false},
+          FINISHED: {name: 'Finished', done: false},
         };
 
         private activeChangelog: number | undefined = -1;
         private changelogs: Changelogs = [];
         private showPlaceholder: boolean = false;
         private installedUUID: string | null = null;
-        public showAdverts: boolean = false;
 
         public goBack(): void {
             this.$router.go(-1);
         }
 
         public goToInstance(): void {
-          if(this.installedUUID !== null)
+          if (this.installedUUID !== null) {
             this.$router.replace({name: 'instancepage', query: {uuid: this.installedUUID}});
+          }
         }
 
         public clickTag(tagName: string) {
             // this.$router.push({name: 'browseModpacks', params: {search: tagName}});
         }
 
-        get advertsEnabled(): boolean {
-          return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === "true") || this.auth?.token?.activePlan === null)
+        public addAdvert() {
+          try {
+            // @ts-ignore
+            window._mNHandle.queue.push(() => {
+            // @ts-ignore
+                window._mNDetails.loadTag('777249406', '300x250', '777249406');
+            });
+          } catch (error) {
+            this.showPlaceholder = true;
+          }
+          // let poolID = window.adPoolID;
+          // let newIframe = document.createElement("iframe");
+          // (this.$refs.ad as Element).appendChild(newIframe);
+          // let url = "https://server.cpmstar.com/view.aspx?poolid=12358&script=1&rnd=1335421354124124";
+          // if(newIframe.contentWindow != null) {
+          //   newIframe.contentWindow.document.open();
+          //   let script = newIframe.contentWindow.document.createElement("script");
+          //   script.src = url;
+          //   script.async = true;
+          //   newIframe.contentWindow.document.appendChild(script)
+          //   newIframe.contentWindow.document.close();
+          // }
+        }
+
+        public reportAdvert() {
+          if (this.ad !== undefined && this.ad !== null) {
+            // @ts-ignore
+            const adHTML = document.getElementById('ow-ad').innerHTML;
+            this.ad.removeAd();
+            this.ad = null;
+            // @ts-ignore
+            window.ad = null;
+            this.showPlaceholder = true;
+            this.reportAd({object: '', html: adHTML});
+          }
         }
 
         private async mounted() {
@@ -291,29 +357,29 @@ interface Changelogs {
           if (this.modpacks.packsCache[packID] !== undefined) {
             this.loading = false;
           }
-          if(this.modpacks.installing === null){
+          if (this.modpacks.installing === null) {
             this.updateInstall({modpackID: packID, progress: 0});
             let isPrivate = false;
-            if(this.modpacks.privatePacks.length > 0){
-              if(this.modpacks.privatePacks.find((m: ModPack) => m.id === packID) !== undefined){
+            if (this.modpacks.privatePacks.length > 0) {
+              if (this.modpacks.privatePacks.find((m: ModPack) => m.id === packID) !== undefined) {
                 isPrivate = true;
               }
             }
             this.sendMessage({
-                payload: {type: this.$route.query.uuid === undefined ? 'installInstance' : 'updateInstance',uuid: this.$route.query.uuid, id: packID, version: this.$route.query.versionID, _private: isPrivate}, callback: (data: any) => {
-                  if(data.status === "files"){
+                payload: {type: this.$route.query.uuid === undefined ? 'installInstance' : 'updateInstance', uuid: this.$route.query.uuid, id: packID, version: this.$route.query.versionID, _private: isPrivate}, callback: (data: any) => {
+                  if (data.status === 'files') {
                         this.files = JSON.parse(data.message);
                     } else if (data.status === 'success') {
                         this.installedUUID = data.uuid;
                         this.finishInstall({modpackID: packID, messageID: data.requestId});
-                        let currentStageStep = this.steps["FINISHED"];
+                        const currentStageStep = this.steps.FINISHED;
                         currentStageStep.done = true;
                         Vue.set(this.steps, 'FINISHED', currentStageStep);
                         setTimeout(() => {
                           let el: Element = this.$refs.viewInstanceButton as Element;
-                          if(el === null || el === undefined){
-                            el = document.getElementById("viewInstanceButton") as Element;
-                            if(el === null || el === undefined){
+                          if (el === null || el === undefined) {
+                            el = document.getElementById('viewInstanceButton') as Element;
+                            if (el === null || el === undefined) {
                               return;
                             }
                           }
@@ -356,13 +422,13 @@ interface Changelogs {
                             stage: data.currentStage,
                         });
                     }
-                    if(data.currentStage){
-                      let currentStageStep = this.steps[data.currentStage];
-                      if(currentStageStep !== undefined){
-                        let index = Object.keys(this.steps).indexOf(data.currentStage);
-                        for(var i = 0; i < index; i++){
-                          let s = this.steps[Object.keys(this.steps)[i]];
-                          if(!s.done){
+                  if (data.currentStage) {
+                      const currentStageStep = this.steps[data.currentStage];
+                      if (currentStageStep !== undefined) {
+                        const index = Object.keys(this.steps).indexOf(data.currentStage);
+                        for (let i = 0; i < index; i++) {
+                          const s = this.steps[Object.keys(this.steps)[i]];
+                          if (!s.done) {
                             Vue.set(s, 'done', true);
                           }
                         }
@@ -371,7 +437,7 @@ interface Changelogs {
                 },
             });
           }
-          if(this.showAdverts) {
+          if (this.showAdverts) {
             setTimeout(() => {
               this.addAdvert();
                 // this.ad.addEventListener('error', () => {
@@ -386,83 +452,17 @@ interface Changelogs {
             }, 500);
           }
           setInterval(() => {
-            if(this.modpacks.installing !== null && this.files.length > 0 && !this.steps['FINISHED'].done){
+            if (this.modpacks.installing !== null && this.files.length > 0 && !this.steps.FINISHED.done) {
               const list: Element = this.$refs.modList as Element;
-              if(list !== undefined){
+              if (list !== undefined) {
                 const el: Element = list.lastChild as Element;
-                const lastEl: Element = Array.from(el.children).filter((e: Element) => e.classList.contains("line-through")).reverse()[0];
+                const lastEl: Element = Array.from(el.children).filter((e: Element) => e.classList.contains('line-through')).reverse()[0];
                 if (lastEl !== null) {
                     lastEl.scrollIntoView({behavior: 'smooth'});
                 }
               }
             }
           }, 500);
-        }
-
-        public addAdvert(){
-          try {
-            //@ts-ignore
-            window._mNHandle.queue.push(function (){
-            //@ts-ignore
-                window._mNDetails.loadTag("777249406", "300x250", "777249406");
-            });
-          }
-          catch (error) {
-            this.showPlaceholder = true;
-          }
-          // let poolID = window.adPoolID;
-          // let newIframe = document.createElement("iframe");
-          // (this.$refs.ad as Element).appendChild(newIframe);
-          // let url = "https://server.cpmstar.com/view.aspx?poolid=12358&script=1&rnd=1335421354124124";
-          // if(newIframe.contentWindow != null) {
-          //   newIframe.contentWindow.document.open();
-          //   let script = newIframe.contentWindow.document.createElement("script");
-          //   script.src = url;
-          //   script.async = true;
-          //   newIframe.contentWindow.document.appendChild(script)
-          //   newIframe.contentWindow.document.close();
-          // }
-        }
-
-        public reportAdvert(){
-          if(this.ad !== undefined && this.ad !== null){
-            //@ts-ignore
-            let adHTML = document.getElementById("ow-ad").innerHTML;
-            this.ad.removeAd();
-            this.ad = null;
-            //@ts-ignore
-            window.ad = null;
-            this.showPlaceholder = true;
-            this.reportAd({object: "", html: adHTML});
-          }
-        }
-
-        get currentVersionObject(): Versions | null {
-            if (this.currentModpack !== null) {
-                const version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
-                if (version !== undefined) {
-                    return version;
-                }
-            }
-            return null;
-        }
-
-        get shuffledServers() {
-            if (this.currentVersionObject !== null && this.currentVersionObject.mtgID !== undefined) {
-                return shuffle(this.serverListState.servers[this.currentVersionObject.mtgID]);
-            }
-            return [];
-        }
-
-        get latestRelease() {
-            if (this.currentModpack !== undefined) {
-                const version = this.currentModpack?.versions.find((f: Versions) => f.type.toLowerCase() === 'release');
-                if (version !== undefined) {
-                    return version.id;
-                }
-                return null;
-            }
-            return null;
         }
     }
 </script>

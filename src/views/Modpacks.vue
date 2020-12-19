@@ -99,7 +99,7 @@ export default class Modpacks extends Vue {
       }
     }
 
-    public preLaunch(instance: Instance){
+    public preLaunch(instance: Instance) {
     //   let serverID = "283861";
     // let newArgs = instance.jvmArgs;
     // if(newArgs.indexOf("-Dmt.server") !== 1){

@@ -106,7 +106,7 @@ export interface MsgBox {
             'tags',
             'preLaunch',
             'postLaunch',
-            'kind'
+            'kind',
         ],
     })
     export default class PackCardList extends Vue {
@@ -159,17 +159,17 @@ export interface MsgBox {
             }
         }
 
-        public async sync(){
-            if(this.modpacks.installing !== null){
+        public async sync() {
+            if (this.modpacks.installing !== null) {
                 return;
             }
             this.updateInstall({modpackID: this.$props.packID, progress: 0});
-             this.sendMessage({
+            this.sendMessage({
                 payload: {type: 'syncInstance'}, callback: (data: any) => {
                      if (this.showInstall) {
                         this.showInstall = false;
                     }
-                    if (data.status === 'success') {
+                     if (data.status === 'success') {
                         this.sendMessage({
                             payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                                 this.storePacks(data);
@@ -230,14 +230,14 @@ export interface MsgBox {
 
         // @ts-ignore
         public async launch(): void {
-            if(this.preLaunch){
+            if (this.preLaunch) {
                 await this.preLaunch(this.instance);
             }
-            let loadInApp = this.settingsState.settings.loadInApp || this.auth.token?.activePlan == null;
+            const loadInApp = (this.settingsState.settings.loadInApp === true || this.settingsState.settings.loadInApp === 'true') || this.auth.token?.activePlan == null;
             this.sendMessage({
                 payload: {type: 'launchInstance', uuid: this.$props.instanceID, loadInApp}, callback: (data: any) => {
                     ipcRenderer.send('disconnect');
-                    if(this.postLaunch){
+                    if (this.postLaunch) {
                         this.postLaunch(this.instance);
                     }
                     // Instance launched
@@ -262,7 +262,7 @@ export interface MsgBox {
         }
 
         public install(version: number): void {
-            if(this.modpacks.installing !== null){
+            if (this.modpacks.installing !== null) {
                 return;
             }
             // this.$router.push({name: 'launchingpage', query: {modpackid: this.$props.packID}});

@@ -180,7 +180,7 @@ export default class PackCard extends Vue {
 
     // @ts-ignore
     public launch(): void {
-      let loadInApp = this.settings.settings.loadInApp || this.auth.token?.activePlan == null;
+      const loadInApp = this.settings.settings.loadInApp || this.auth.token?.activePlan == null;
       this.sendMessage({payload: {type: 'launchInstance', uuid: this.$props.instanceID, loadInApp}, callback: (data: any) => {
         ipcRenderer.send('disconnect');
               // Instance launched

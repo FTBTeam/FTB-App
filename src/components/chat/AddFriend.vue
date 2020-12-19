@@ -44,9 +44,9 @@ export default class AddFriend extends Vue {
       if (this.friendCode.length === 0) {
           return;
       }
-      if(this.friendCode === this.auth.token?.mc.friendCode){
+      if (this.friendCode === this.auth.token?.mc.friendCode) {
         this.messageType = 'danger';
-        this.message = "You cannot add yourself as a friend!";
+        this.message = 'You cannot add yourself as a friend!';
         return;
       }
       const response: FriendRequestResponse = await this.submitFriendRequest({friendCode: this.friendCode});

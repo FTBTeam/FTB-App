@@ -24,8 +24,8 @@ import FTBButton from '../FTBButton.vue';
         'noAction',
     ],
     components: {
-      'ftb-button': FTBButton
-    }
+      'ftb-button': FTBButton,
+    },
 })
 export default class ConfirmationModal extends Vue {
 }

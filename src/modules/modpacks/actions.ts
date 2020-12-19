@@ -162,11 +162,11 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     loadAllPacks({commit, rootState, dispatch}: any): any {
         commit('setLoading', true);
-        console.log("Loading all packs...");
+        console.log('Loading all packs...');
         return fetch(`${config.apiURL}/public/modpack/all`)
         .then((response) => response.json()).then(async (data) => {
             const packIDs = data.packs;
-            console.log("Loaded packs");
+            console.log('Loaded packs');
             console.log(packIDs);
             if (packIDs == null) {
                 return;
@@ -233,7 +233,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     },
     saveInstance({dispatch, commit}, instance: Instance): Promise<any> {
         return new Promise((resolve, reject) => {
-            dispatch('sendMessage', {payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {name: instance.name, jvmargs: instance.jvmArgs, memory: instance.memory, width: instance.width, height: instance.height, cloudSaves: instance.cloudSaves, jrePath: instance.jrePath, embeddedjre: instance.jrePath === ""}}, callback: (msg: any) => {
+            dispatch('sendMessage', {payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {name: instance.name, jvmargs: instance.jvmArgs, memory: instance.memory, width: instance.width, height: instance.height, cloudSaves: instance.cloudSaves, jrePath: instance.jrePath, embeddedjre: instance.jrePath === ''}}, callback: (msg: any) => {
                 dispatch('sendMessage', {
                     payload: { type: 'installedInstances', refresh: true},
                     callback: (data: any) => {
@@ -266,7 +266,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
                 response = response as Response;
                 const pack: ModPack = await response.json() as ModPack;
                 if (pack === undefined) {
-                    reject("Pack is unavailable");
+                    reject('Pack is unavailable');
                     return;
                 }
 
@@ -287,7 +287,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
                 resolve(pack);
             }).catch((err) => {
                 console.error('Error getting modpack', err);
-                reject("Pack is unavailable");
+                reject('Pack is unavailable');
             });
         });
     },

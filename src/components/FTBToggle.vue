@@ -29,7 +29,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
         'offColor',
         'value',
         'inline',
-        'disabled'
+        'disabled',
     ],
 })
 export default class FTBToggle extends Vue {
@@ -46,7 +46,7 @@ export default class FTBToggle extends Vue {
     @Prop({default: false})
     public disabled!: boolean;
     public toggle() {
-        if(this.disabled){
+        if (this.disabled) {
             return;
         }
         this.handleChange(!this.value);
@@ -57,7 +57,7 @@ export default class FTBToggle extends Vue {
         return [
             currentColor,
             this.value ? 'justify-end' : 'justify-start',
-            this.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+            this.disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         ];
     }
 

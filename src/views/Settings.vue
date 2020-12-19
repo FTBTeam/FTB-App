@@ -136,7 +136,7 @@ import config from '@/config';
 import {ipcRenderer, clipboard} from 'electron';
 import path from 'path';
 import { logVerbose } from '../utils';
-import {AuthState} from "@/modules/auth/types";
+import {AuthState} from '@/modules/auth/types';
 
 @Component({
     components: {
@@ -148,7 +148,14 @@ import {AuthState} from "@/modules/auth/types";
     },
 })
 export default class SettingsPage extends Vue {
-    @State('auth') private auth!: AuthState;
+
+    get resolutionList() {
+        const resList = [];
+        for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
+            resList.push({id: key, name: res.width + 'x' + res.height, value: key});
+        }
+        return resList;
+    }
     @State('settings') public settingsState!: SettingsState;
     @Action('refreshCache', {namespace: 'modpacks'}) public refreshCache!: any;
     @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
@@ -180,20 +187,13 @@ export default class SettingsPage extends Vue {
         mtConnect: false,
         automateMojang: true,
         showAdverts: true,
-        loadInApp: true
+        loadInApp: true,
     };
+    @State('auth') private auth!: AuthState;
 
     private resSelectedValue: string = '0';
     private webVersion: string = config.webVersion;
     private appVersion: string = config.appVersion;
-
-    get resolutionList() {
-        const resList = [];
-        for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
-            resList.push({id: key, name: res.width + 'x' + res.height, value: key});
-        }
-        return resList;
-    }
 
     public scrollToTop(): void {
         document.querySelectorAll('.content-container')[0].scrollTo(0, 0);
@@ -207,17 +207,10 @@ export default class SettingsPage extends Vue {
         });
     }
 
-    private calcMem(memory:any){
-      let total_mem_in_kb = memory/1024;
-      let total_mem_in_mb = total_mem_in_kb/1024;
-      let total_mem_in_gb = total_mem_in_mb/1024;
-      return Math.round(total_mem_in_gb);
-    }
-
     public uploadLogData(): void {
         this.sendMessage({payload: {type: 'uploadLogs', uiVersion: this.webVersion}, callback: async (data: any) => {
             if (!data.error) {
-                let url = `https://pste.ch/${data.code}`
+                const url = `https://pste.ch/${data.code}`;
                 clipboard.writeText(data);
                 this.showAlert({
                     title: 'Uploaded!',
@@ -280,7 +273,7 @@ export default class SettingsPage extends Vue {
     }
 
     public enableChat(value: boolean): void {
-      if(this.auth.token !== null){
+      if (this.auth.token !== null) {
         this.settingsCopy.enableChat = value;
         this.saveSettings(this.settingsCopy);
       }
@@ -316,6 +309,13 @@ export default class SettingsPage extends Vue {
             this.settingsCopy.listMode = false;
         }
         this.saveSettings(this.settingsCopy);
+    }
+
+    private calcMem(memory: any) {
+      const totalMemKB = memory / 1024;
+      const totalMemMB = totalMemKB / 1024;
+      const totalMemGB = totalMemMB / 1024;
+      return Math.round(totalMemGB);
     }
 }
 </script>

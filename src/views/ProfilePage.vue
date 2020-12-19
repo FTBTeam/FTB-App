@@ -64,22 +64,22 @@ import { SettingsState } from '../modules/settings/types';
     },
 })
 export default class ProfilePage extends Vue {
+
+    get avatarName() {
+        const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
+        return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
+    }
+    @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
+    @Action('sendMessage') public sendMessage: any;
     @State('auth')
     private auth!: AuthState;
     @State('settings')
     private settings!: SettingsState;
     @Action('logout', {namespace: 'auth'})
     private logoutAction!: () => void;
-    @Action('saveSettings', {namespace: 'settings'}) public saveSettings: any;
-    @Action('sendMessage') public sendMessage: any;
 
     public async created() {
-    
-    }
 
-    get avatarName(){
-        const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-        return provider !== undefined && provider !== null ? provider.userId : "MHF_Steve";
     }
 
     public toggleCloudSaves(value: boolean) {
@@ -91,30 +91,30 @@ export default class ProfilePage extends Vue {
         this.saveSettings(this.settings.settings);
     }
 
-    public toggleMTConnect(value: boolean){
+    public toggleMTConnect(value: boolean) {
         this.settings.settings.mtConnect = value;
         this.saveSettings(this.settings.settings);
     }
 
-    public toggleAdverts(value: boolean){
+    public toggleAdverts(value: boolean) {
         this.settings.settings.showAdverts = value;
         this.saveSettings(this.settings.settings);
     }
 
-    public toggleLoading(value: boolean){
+    public toggleLoading(value: boolean) {
         this.settings.settings.loadInApp = value;
         this.saveSettings(this.settings.settings);
     }
 
-    public openSubscriptions(){
-        ipcRenderer.send('openLink', "https://minetogether.io/profile/subscriptions");
+    public openSubscriptions() {
+        ipcRenderer.send('openLink', 'https://ftb.plus/profile/subscriptions');
     }
 
-    public openProfile(){
-        ipcRenderer.send('openLink', "https://minetogether.io/profile/edit");
+    public openProfile() {
+        ipcRenderer.send('openLink', 'https://minetogether.io/profile/edit');
     }
 
-    public logout(){
+    public logout() {
         this.logoutAction();
         // get instances and store
         ipcRenderer.send('logout');

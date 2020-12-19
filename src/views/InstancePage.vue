@@ -450,11 +450,11 @@ interface Changelogs {
 
 export default class InstancePage extends Vue {
 
-    get javaVersions(){
-      if(this.settingsState === undefined){
+    get javaVersions() {
+      if (this.settingsState === undefined) {
         return {};
       }
-      if(this.settingsState.javaInstalls === undefined){
+      if (this.settingsState.javaInstalls === undefined) {
         return {};
       }
       return this.settingsState.javaInstalls;
@@ -501,8 +501,8 @@ export default class InstancePage extends Vue {
         return this.instance?.versionId === this.currentModpack?.versions[0].id;
     }
 
-    get versionName(){
-      if(this.instance && this.modpacks?.packsCache[this.instance.id]){
+    get versionName() {
+      if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
         return this.modpacks?.packsCache[this.instance.id].versions.find((v) => v.id === this.instance?.versionId)?.name;
       }
       return this.instance?.version;
@@ -623,8 +623,8 @@ export default class InstancePage extends Vue {
         return this.instance?.versionId && this.instance?.versionId === version;
     }
 
-    public toggleCloudSaves(){
-      if(this.instance){
+    public toggleCloudSaves() {
+      if (this.instance) {
         this.instance.cloudSaves = !this.instance.cloudSaves;
       }
     }
@@ -711,7 +711,7 @@ export default class InstancePage extends Vue {
       if (this.showMsgBox) {
         this.hideMsgBox();
       }
-      let loadInApp = this.settingsState.settings.loadInApp || this.auth.token?.activePlan == null;
+      const loadInApp = (this.settingsState.settings.loadInApp === true || this.settingsState.settings.loadInApp === 'true') || this.auth.token?.activePlan == null;
       this.sendMessage({
             payload: {type: 'launchInstance', uuid: this.instance?.uuid, loadInApp},
             callback: (data: any) => {},
@@ -719,7 +719,7 @@ export default class InstancePage extends Vue {
     }
 
     public update(versionID?: number): void {
-      if(this.modpacks?.installing !== null){
+      if (this.modpacks?.installing !== null) {
         return;
       }
       const modpackID = this.instance?.id;
@@ -776,7 +776,7 @@ export default class InstancePage extends Vue {
         this.currentModpack = await this.fetchModpack(this.instance.id).catch((err: any) => undefined);
         this.$forceUpdate();
         if (this.currentModpack?.kind === 'modpack') {
-          if(this.currentModpack?.versions !== undefined){
+          if (this.currentModpack?.versions !== undefined) {
             this.toggleChangelog(this.currentModpack?.versions[0].id);
           }
         }
@@ -789,14 +789,14 @@ export default class InstancePage extends Vue {
             this.fetchServers(this.currentVersionObject.mtgID);
           }
         }
-        if(Object.keys(this.settingsState.javaInstalls).length < 1){
+        if (Object.keys(this.settingsState.javaInstalls).length < 1) {
           this.loadJavaVersions();
         }
     }
 
     get currentVersionObject(): Versions | null {
       if (this.currentModpack !== null) {
-        if(this.currentModpack.versions === undefined){
+        if (this.currentModpack.versions === undefined) {
           return null;
         }
         const version = this.currentModpack.versions.find((f: Versions) => f.id === this.instance?.versionId);
@@ -817,13 +817,13 @@ export default class InstancePage extends Vue {
     private getModList() {
       this.sendMessage({
         payload: {
-          type: "instanceMods",
-          uuid: this.instance?.uuid
+          type: 'instanceMods',
+          uuid: this.instance?.uuid,
         },
         callback: (data: any) => {
           this.modlist = data.files;
-        }
-      })
+        },
+      });
     }
 
     private async toggleChangelog(id: number | undefined) {

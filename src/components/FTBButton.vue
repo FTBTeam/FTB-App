@@ -26,11 +26,11 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 export default class FTBButton extends Vue {
   @Prop({default: false})
   private disabled!: boolean;
-  private handleClick(){
-    if(this.disabled){
+  private handleClick() {
+    if (this.disabled) {
       return;
     }
-    this.$emit('click')
+    this.$emit('click');
   }
 }
 </script>

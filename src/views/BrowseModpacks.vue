@@ -247,10 +247,10 @@ public changeToList() {
     this.saveSettings(settingsCopy);
   }
 
-  public getArt(modpack: any){
-    let artP = modpack.art.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
-    if(artP === undefined){
-      return "";
+  public getArt(modpack: any) {
+    const artP = modpack.art.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
+    if (artP === undefined) {
+      return '';
     }
     return artP.url;
   }
@@ -293,15 +293,15 @@ public changeToList() {
             this.modpacks === undefined ||
             this.modpacks.popularInstalls === undefined ||
             this.modpacks.popularInstalls.length <= 0 ||
-			this.modpacks.popularPlays.length <= 0 ||
+      this.modpacks.popularPlays.length <= 0 ||
             this.modpacks.all === undefined ||
             this.modpacks.all.length <= 0
         ) {
             await this.loadFeaturedPacks();
             await this.getPopularInstalls();
             await this.getPopularPlays();
-			await this.loadAllPacks();
-            if(this.authState.token !== null){
+            await this.loadAllPacks();
+            if (this.authState.token !== null) {
               await this.getPrivatePacks();
             }
         }

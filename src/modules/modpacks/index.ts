@@ -21,7 +21,7 @@ export const state: ModpackState = {
     loading: false,
     searchString: '',
     launchProgress: null,
-    privatePacks: []
+    privatePacks: [],
 };
 
 export const modpacks: Module<ModpackState, RootState> = {

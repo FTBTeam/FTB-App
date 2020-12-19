@@ -214,19 +214,19 @@ interface Changelogs {
             }
         }
 
-        get bars(){
-          if(this.modpacks === undefined || this.modpacks === null){
+        get bars() {
+          if (this.modpacks === undefined || this.modpacks === null) {
             return [];
           }
-          if(this.modpacks.launchProgress === null){
+          if (this.modpacks.launchProgress === null) {
             return [];
           }
-          let bars = this.modpacks.launchProgress.filter((b) => b.steps !== 1);
+          const bars = this.modpacks.launchProgress.filter((b) => b.steps !== 1);
           return bars.length > 3 ? bars.slice(0, 3) : bars;
         }
 
         get currentModpack() {
-          if(this.instance == null){
+          if (this.instance == null) {
             return null;
           }
           const id: number = this.instance.id;
@@ -234,6 +234,10 @@ interface Changelogs {
             return null;
           }
           return this.modpacks.packsCache[id];
+        }
+
+        get advertsEnabled(): boolean {
+          return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === 'true') || this.auth?.token?.activePlan === null);
         }
 
         @State('modpacks') public modpacks!: ModpackState;
@@ -272,31 +276,51 @@ interface Changelogs {
         private installedUUID: string | null = null;
         private showAdverts: boolean = true;
 
-
-        private reportAdvert(){
-          let iFrameEl = document.getElementById("ow-ad")?.firstElementChild;
-          let adHTML;
-          if(iFrameEl !== null) {
-            adHTML = (iFrameEl as HTMLIFrameElement).contentWindow?.document.documentElement.innerHTML
-          } else {
-            adHTML = document.getElementById("ow-ad")?.innerHTML
-          }
-          (this.$refs.ad as Element).innerHTML = ""
-          this.showPlaceholder = true;
-          this.reportAd({object: "", html: adHTML});
+        public cancelLoading() {
+          this.sendMessage({
+            payload: {
+              type: 'messageClient',
+              uuid: this.instance?.uuid,
+              message: 'yeet',
+            },
+          });
+          // messageClient
         }
 
-        private async addAdvert(){
-          try {
-            //@ts-ignore
-            window._mNHandle.queue.push(function (){
-            //@ts-ignore
-                window._mNDetails.loadTag("777249406", "300x250", "777249406");
-            });
+        public restoreLoading() {
+           this.sendMessage({
+            payload: {
+              type: 'messageClient',
+              uuid: this.instance?.uuid,
+              message: 'show',
+            },
+          });
+        }
+
+
+        private reportAdvert() {
+          const iFrameEl = document.getElementById('ow-ad')?.firstElementChild;
+          let adHTML;
+          if (iFrameEl !== null) {
+            adHTML = (iFrameEl as HTMLIFrameElement).contentWindow?.document.documentElement.innerHTML;
+          } else {
+            adHTML = document.getElementById('ow-ad')?.innerHTML;
           }
-          catch (error) {
+          (this.$refs.ad as Element).innerHTML = '';
+          this.showPlaceholder = true;
+          this.reportAd({object: '', html: adHTML});
+        }
+
+        private async addAdvert() {
+          try {
+            // @ts-ignore
+            window._mNHandle.queue.push(() => {
+            // @ts-ignore
+                window._mNDetails.loadTag('777249406', '300x250', '777249406');
+            });
+          } catch (error) {
             this.showPlaceholder = true;
-          }    
+          }
           // let poolID = window.adPoolID;
           // if(poolID === null || poolID === undefined) {
           //   this.showPlaceholder = true;
@@ -320,45 +344,20 @@ interface Changelogs {
           //   newIframe.contentWindow.document.appendChild(body);
           // }
         }
-        
-        get advertsEnabled(): boolean {
-          return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === "true") || this.auth?.token?.activePlan === null)
-        }
 
         private async mounted() {
-          if(this.instance == null){
+          if (this.instance == null) {
             return null;
           }
           await this.fetchModpack(this.instance?.id);
           if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
             this.loading = false;
           }
-          if(this.advertsEnabled) {
+          if (this.advertsEnabled) {
             setTimeout(() => {
               this.addAdvert();
             }, 500);
           }
-        }
-
-        public cancelLoading(){
-          this.sendMessage({
-            payload: {
-              type: "messageClient",
-              uuid: this.instance?.uuid,
-              message: "yeet"
-            }
-          })
-          //messageClient
-        }
-
-        public restoreLoading(){
-           this.sendMessage({
-            payload: {
-              type: "messageClient",
-              uuid: this.instance?.uuid,
-              message: "show"
-            }
-          })
         }
     }
 </script>
