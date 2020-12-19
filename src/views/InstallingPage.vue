@@ -55,7 +55,7 @@
               </ul>
             </div>
             <div class="flex-1 h-full flex flex-col">
-              <div class="flex flex-col w-full mt-auto mb-auto">
+              <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">
                 <div v-if="!showPlaceholder" id="ad" ref="adRef" >
                   <div id="777249406"></div>
                 </div>
@@ -266,6 +266,7 @@ interface Changelogs {
         private changelogs: Changelogs = [];
         private showPlaceholder: boolean = false;
         private installedUUID: string | null = null;
+        public showAdverts: boolean = false;
 
         public goBack(): void {
             this.$router.go(-1);
@@ -281,11 +282,7 @@ interface Changelogs {
         }
 
         get advertsEnabled(){
-          if(this.settings === null || this.auth === null) {
-            return true;
-          }
-          console.log("CHECKING ADVERTS", this.settings.settings.showAdverts || this.auth?.token?.activePlan === null);
-          return this.settings.settings.showAdverts || this.auth?.token?.activePlan === null
+          return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === "true") || this.auth?.token?.activePlan === null)
         }
 
         private async mounted() {
@@ -374,8 +371,7 @@ interface Changelogs {
                 },
             });
           }
-          console.log(this.advertsEnabled);
-          if(this.advertsEnabled) {
+          if(this.showAdverts) {
             setTimeout(() => {
               this.addAdvert();
                 // this.ad.addEventListener('error', () => {

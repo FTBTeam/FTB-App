@@ -27,7 +27,7 @@
       <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col frosted-glass">
         <div class="tab-content flex-1 py-4 mx-1" style="overflow-y: auto;">
           <div class="tab-pane flex flex-col h-full w-full">
-            <div class="flex-1 w-full flex flex-col" style="max-height: 270px;" v-if="advertsEnabled">
+            <div class="flex-1 w-full flex flex-col" style="max-height: 270px;" v-if="showAdverts">
               <div v-if="!showPlaceholder" id="ow-ad" ref="ad" >
                 <div id="777249406">
                   </div>
@@ -151,7 +151,7 @@
 
 <script lang="ts">
 import axios from 'axios';
-import {Component, Prop, Vue} from 'vue-property-decorator';
+import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import {ModpackState, ModPack, Instance, Versions} from '@/modules/modpacks/types';
 import {State, Action, Getter} from 'vuex-class';
 import FTBInput from '@/components/FTBInput.vue';
@@ -270,6 +270,7 @@ interface Changelogs {
         private activeChangelog: number | undefined = -1;
         private changelogs: Changelogs = [];
         private installedUUID: string | null = null;
+        private showAdverts: boolean = true;
 
 
         private reportAdvert(){
@@ -321,7 +322,7 @@ interface Changelogs {
         }
 
         get advertsEnabled(){
-          return this.settings.settings.showAdverts || this.auth?.token?.activePlan === null
+          return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === "true") || this.auth?.token?.activePlan === null)
         }
 
         private async mounted() {
@@ -332,7 +333,6 @@ interface Changelogs {
           if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
             this.loading = false;
           }
-
           if(this.advertsEnabled) {
             setTimeout(() => {
               this.addAdvert();

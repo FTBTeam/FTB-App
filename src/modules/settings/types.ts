@@ -21,7 +21,7 @@ export interface Settings {
     sessionString?: string;
     mtConnect: boolean;
     automateMojang: boolean;
-    showAdverts: boolean;
+    showAdverts: boolean | string;
     loadInApp: boolean;
 }
 
