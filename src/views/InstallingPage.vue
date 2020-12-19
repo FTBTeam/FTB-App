@@ -281,7 +281,7 @@ interface Changelogs {
             // this.$router.push({name: 'browseModpacks', params: {search: tagName}});
         }
 
-        get advertsEnabled(){
+        get advertsEnabled(): boolean {
           return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === "true") || this.auth?.token?.activePlan === null)
         }
 

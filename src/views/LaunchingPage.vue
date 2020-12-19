@@ -27,7 +27,7 @@
       <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col frosted-glass">
         <div class="tab-content flex-1 py-4 mx-1" style="overflow-y: auto;">
           <div class="tab-pane flex flex-col h-full w-full">
-            <div class="flex-1 w-full flex flex-col" style="max-height: 270px;" v-if="showAdverts">
+            <div class="flex-1 w-full flex flex-col" style="max-height: 270px;" v-if="advertsEnabled">
               <div v-if="!showPlaceholder" id="ow-ad" ref="ad" >
                 <div id="777249406">
                   </div>
@@ -320,8 +320,8 @@ interface Changelogs {
           //   newIframe.contentWindow.document.appendChild(body);
           // }
         }
-
-        get advertsEnabled(){
+        
+        get advertsEnabled(): boolean {
           return ((this.settings.settings.showAdverts === true || this.settings.settings.showAdverts === "true") || this.auth?.token?.activePlan === null)
         }
 
