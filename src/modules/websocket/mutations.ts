@@ -49,7 +49,6 @@ export const mutations: MutationTree<SocketState> = {
                 state.modProgressCallback(message);
             }
         } else if (message.type === 'installedFileEventDataReply') {
-            console.log(message);
             Object.keys(message.files).forEach((f: string) => {
                 let status = message.files[f]
                 Vue.set(state.downloadedFiles, f, status)
