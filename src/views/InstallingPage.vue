@@ -29,19 +29,19 @@
           <div class="tab-pane flex flex-row h-full">
             <div class="mod-list bg-navbar w-1/3 overflow-y-auto relative" ref="modList" id="modList">
               <ul class="p-4" >
-                <li v-for="stepID in Object.keys(steps).slice(0, 4)" :class="steps[stepID].done ? 'line-through text-gray-400' : 'text-white'" :key="stepID">
+                <li v-for="stepID in Object.keys(steps).slice(0, 4)" :class="steps[stepID].done ? 'downloaded text-gray-400' : 'text-white'" :key="stepID">
                   <p class="text-sm">
                     <font-awesome-icon class="text-green-600" v-if="steps[stepID].done" icon="check"></font-awesome-icon>
                     {{steps[stepID].name}}
                   </p>
                 </li>
-                <li v-for="file in files" :key="file.id" :class="getFileStatus(file.id) === 'downloaded' || steps['DOWNLOADS'].done ? 'line-through text-gray-400' : 'text-white'" class="flex flex-row">
+                <li v-for="file in files" :key="file.id" :class="getFileStatus(file.id) === 'downloaded' || steps['DOWNLOADS'].done ? 'downloaded text-gray-400' : 'text-white'" class="flex flex-row">
                   <p class="text-sm">
                     <font-awesome-icon class="text-green-600" :spin="getFileStatus(file.id) === 'preparing'" v-if="getFileStatus(file.id) !== 'waiting' || steps['DOWNLOADS'].done " :icon="getFileStatus(file.id) === 'preparing' ? 'sync-alt' : 'check'"></font-awesome-icon>
                     {{file.name}}
                   </p>
                 </li>
-                <li v-for="stepID in Object.keys(steps).slice(4, 7)" :class="steps[stepID].done ? 'line-through text-gray-400' : 'text-white'" :key="stepID">
+                <li v-for="stepID in Object.keys(steps).slice(4, 7)" :class="steps[stepID].done ? 'downloaded text-gray-400' : 'text-white'" :key="stepID">
                   <p class="text-sm">
                     <font-awesome-icon class="text-green-600" v-if="steps[stepID].done" icon="check"></font-awesome-icon>
                     {{steps[stepID].name}}
@@ -456,8 +456,8 @@ interface Changelogs {
               const list: Element = this.$refs.modList as Element;
               if (list !== undefined) {
                 const el: Element = list.lastChild as Element;
-                const lastEl: Element = Array.from(el.children).filter((e: Element) => e.classList.contains('line-through')).reverse()[0];
-                if (lastEl !== null) {
+                const lastEl: Element = Array.from(el.children).filter((e: Element) => e.classList.contains('downloaded')).reverse()[0];
+                if (lastEl !== null && lastEl !== undefined) {
                     lastEl.scrollIntoView({behavior: 'smooth'});
                 }
               }

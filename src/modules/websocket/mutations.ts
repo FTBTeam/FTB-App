@@ -49,7 +49,12 @@ export const mutations: MutationTree<SocketState> = {
                 state.modProgressCallback(message);
             }
         } else if (message.type === 'installedFileEventDataReply') {
-            Vue.set(state.downloadedFiles, message.fileName, message.status);
+            console.log(message);
+            Object.keys(message.files).forEach((f: string) => {
+                let status = message.files[f]
+                Vue.set(state.downloadedFiles, f, status)
+            })
+            // Vue.set(state.downloadedFiles, message.fileName, message.status);
         }
         state.socket.message = message;
         ipcRenderer.send('websocketReceived', message);
