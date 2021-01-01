@@ -145,7 +145,7 @@
                 class="flex flex-col w-full mt-auto mb-auto"
                 v-if="advertsEnabled"
               >
-                <div v-if="!showPlaceholder" id="ad" ref="adRef">
+                <div v-if="!showPlaceholder" id="ad" ref="adRef" style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;">
                   <div id="777249406"></div>
                 </div>
                 <video
@@ -450,47 +450,62 @@ export default class InstallingPage extends Vue {
     // this.$router.push({name: 'browseModpacks', params: {search: tagName}});
   }
 
+  public show300x250(){
+    var el = document.getElementById("ad");
+    // @ts-ignore
+    cpmstarAPI({kind:'go',module:"banner300x250",config: { target: {el:el,kind:"replace"} } });
+  }
+
   public addAdvert() {
     try {
-      //@ts-ignore
-      cpmstarAPI({
-        kind: "game.createInterstitial",
-        fail: function () {
+      // @ts-ignore
+     cpmstarAPI(function(api) {
+        api.game.setTarget(document.getElementById("ad"));
+     });
+      // @ts-ignore
+     cpmstarAPI({
+        kind:"game.createInterstitial",
+        fail: ()  => {
           console.log("API was blocked or failed to load");
           this.showPlaceholder = true;
-          throw "error!";
-        },
+        }
       });
-      //@ts-ignore
+      // @ts-ignore
       cpmstarAPI({
-        kind: "game.displayInterstitial",
-        onAdOpened: function () {
+        kind:"game.displayInterstitial",
+        onAdOpened: function(){
           console.log("Interstitial opened");
         },
-        onAdClosed: function () {
-          console.log("Interstitial closed");
+        onAdClosed: () => {
+          this.show300x250();
         },
-        fail: function () {
-          console.log("No ad available, or adblocked");
-          this.showPlaceholder = true;
-        },
-      });
+        fail: () => {
+          this.show300x250();
+        }   
+      })
     } catch (error) {
       this.showPlaceholder = true;
     }
   }
 
   public reportAdvert() {
-    if (this.ad !== undefined && this.ad !== null) {
-      // @ts-ignore
-      const adHTML = document.getElementById("ow-ad").innerHTML;
-      this.ad.removeAd();
-      this.ad = null;
-      // @ts-ignore
-      window.ad = null;
+    let el = document.getElementById("banner300x250");
+    if(!el){
       this.showPlaceholder = true;
-      this.reportAd({ object: "", html: adHTML });
+      return;
     }
+    // @ts-ignore
+    const adHTML = el.children[0].contentDocument.body.innerHTML;
+    // @ts-ignore
+    cpmstarAPI(function(api) {
+        api.game.setTarget(null);
+    });
+    el.innerHTML = "";
+    this.ad = null;
+    // @ts-ignore
+    window.ad = null;
+    this.showPlaceholder = true;
+    this.reportAd({ object: "", html: adHTML });
   }
 
   private async mounted() {
@@ -596,7 +611,7 @@ export default class InstallingPage extends Vue {
         },
       });
     }
-    if (this.showAdverts) {
+    if (this.advertsEnabled) {
       setTimeout(() => {
         this.addAdvert();
         // this.ad.addEventListener('error', () => {

@@ -58,7 +58,7 @@
               style="max-height: 270px"
               v-if="advertsEnabled"
             >
-              <div v-if="!showPlaceholder" id="ow-ad" ref="ad">
+              <div v-if="!showPlaceholder" id="ow-ad" ref="ad" style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;">
                 <div id="777249406"></div>
               </div>
               <video
@@ -382,49 +382,64 @@ export default class LaunchingPage extends Vue {
     });
   }
 
-  private reportAdvert() {
-    const iFrameEl = document.getElementById("ow-ad")?.firstElementChild;
-    let adHTML;
-    if (iFrameEl !== null) {
-      adHTML = (iFrameEl as HTMLIFrameElement).contentWindow?.document
-        .documentElement.innerHTML;
-    } else {
-      adHTML = document.getElementById("ow-ad")?.innerHTML;
-    }
-    (this.$refs.ad as Element).innerHTML = "";
-    this.showPlaceholder = true;
-    this.reportAd({ object: "", html: adHTML });
+  public show300x250(){
+    var el = document.getElementById("ad");
+    // @ts-ignore
+    cpmstarAPI({kind:'go',module:"banner300x250",config: { target: {el:el,kind:"replace"} } });
   }
 
-  private async addAdvert() {
+  public addAdvert() {
     try {
-      //@ts-ignore
-      cpmstarAPI({
-        kind: "game.createInterstitial",
-        fail: function () {
+      // @ts-ignore
+     cpmstarAPI(function(api) {
+        api.game.setTarget(document.getElementById("ad"));
+     });
+      // @ts-ignore
+     cpmstarAPI({
+        kind:"game.createInterstitial",
+        fail: ()  => {
           console.log("API was blocked or failed to load");
           this.showPlaceholder = true;
-          throw "error!";
-        },
+        }
       });
-      //@ts-ignore
+      // @ts-ignore
       cpmstarAPI({
-        kind: "game.displayInterstitial",
-        onAdOpened: function () {
+        kind:"game.displayInterstitial",
+        onAdOpened: function(){
           console.log("Interstitial opened");
         },
-        onAdClosed: function () {
-          console.log("Interstitial closed");
+        onAdClosed: () => {
+          this.show300x250();
         },
-        fail: function () {
-          console.log("No ad available, or adblocked");
-          this.showPlaceholder = true;
-        },
-      });
+        fail: () => {
+          this.show300x250();
+        }   
+      })
     } catch (error) {
       this.showPlaceholder = true;
     }
   }
+
+  public reportAdvert() {
+    let el = document.getElementById("banner300x250");
+    if(!el){
+      this.showPlaceholder = true;
+      return;
+    }
+    // @ts-ignore
+    const adHTML = el.children[0].contentDocument.body.innerHTML;
+    // @ts-ignore
+    cpmstarAPI(function(api) {
+        api.game.setTarget(null);
+    });
+    el.innerHTML = "";
+    this.ad = null;
+    // @ts-ignore
+    window.ad = null;
+    this.showPlaceholder = true;
+    this.reportAd({ object: "", html: adHTML });
+  }
+
 
   private async mounted() {
     if (this.instance == null) {
