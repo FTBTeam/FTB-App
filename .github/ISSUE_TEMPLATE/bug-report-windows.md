@@ -21,7 +21,7 @@ how to find logs: https://faq.ftb.world/books/ftb-app/page/uploading-app-logs
 
 ** Debug Code: **
 Please run the following tool and provide the code given.
-http://transfer.ch.tools/AIjmB/ftb-debug.exe
+https://dist.creeper.host/tools/ftb-debug/ftb-debug.exe
 
 **Describe the bug**
 A clear and concise description of what the bug is.
