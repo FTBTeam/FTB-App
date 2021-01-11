@@ -24,7 +24,7 @@ how to find logs: https://faq.ftb.world/books/ftb-app/page/uploading-app-logs
 
 ** Debug Code: **
 Please run the following tool and provide the code that is given
-http://transfer.ch.tools/xsH5i/ftb-debuf-macos
+https://dist.creeper.host/tools/ftb-debug/ftb-debuf-macos
 
 **Describe the bug**
 A clear and concise description of what the bug is.
