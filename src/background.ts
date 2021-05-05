@@ -403,6 +403,10 @@ if (!gotTheLock) {
     // })
     app.on('ready', async () => {
         createWindow();
+        session.defaultSession.webRequest.onBeforeSendHeaders({urls: ['https://*.cpmstar.com/*']}, (details, callback) => {
+            details.requestHeaders['Referer'] = 'https://feed-the-beast.com';
+            callback({ cancel: false, requestHeaders: details.requestHeaders});
+        });
         session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
             if (details.url.indexOf('twitch.tv') !== -1) {
                 if (details.responseHeaders) {
