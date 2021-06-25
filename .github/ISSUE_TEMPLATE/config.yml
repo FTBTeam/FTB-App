@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: FTB Discord
+    url: https://ftb.team/discord
+    about: "Please ask and answer questions here. Github issues aren't for questions"
+  - name: FTB Helpdesk
+    url: https://feed-the-beast.com/support
+    about: For modpack, mod or FTB app issues, please use the helpdesk
