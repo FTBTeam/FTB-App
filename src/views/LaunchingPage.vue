@@ -223,30 +223,30 @@
 </style>
 
 <script lang="ts">
-import axios from "axios";
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import axios from 'axios';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import {
   ModpackState,
   ModPack,
   Instance,
   Versions,
-} from "@/modules/modpacks/types";
-import { State, Action, Getter } from "vuex-class";
-import FTBInput from "@/components/FTBInput.vue";
-import FTBToggle from "@/components/FTBToggle.vue";
-import FTBButton from "@/components/FTBButton.vue";
-import FTBSlider from "@/components/FTBSlider.vue";
-import config from "@/config";
-import moment from "moment";
-import MessageModal from "@/components/modals/MessageModal.vue";
-import FTBModal from "@/components/FTBModal.vue";
-import { logVerbose, shuffle } from "../utils";
-import { SettingsState } from "../modules/settings/types";
-import { ServersState } from "@/modules/servers/types";
-import ServerCard from "@/components/ServerCard.vue";
-import InstallModal from "@/components/modals/InstallModal.vue";
-import { SocketState } from "../modules/websocket/types";
-import { AuthState } from "@/modules/auth/types";
+} from '@/modules/modpacks/types';
+import { State, Action, Getter } from 'vuex-class';
+import FTBInput from '@/components/FTBInput.vue';
+import FTBToggle from '@/components/FTBToggle.vue';
+import FTBButton from '@/components/FTBButton.vue';
+import FTBSlider from '@/components/FTBSlider.vue';
+import config from '@/config';
+import moment from 'moment';
+import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBModal from '@/components/FTBModal.vue';
+import { logVerbose, shuffle } from '../utils';
+import { SettingsState } from '../modules/settings/types';
+import { ServersState } from '@/modules/servers/types';
+import ServerCard from '@/components/ServerCard.vue';
+import InstallModal from '@/components/modals/InstallModal.vue';
+import { SocketState } from '../modules/websocket/types';
+import { AuthState } from '@/modules/auth/types';
 
 export interface MsgBox {
   title: string;
@@ -261,25 +261,26 @@ interface Changelogs {
 }
 
 @Component({
-  name: "LaunchingPage",
+  name: 'LaunchingPage',
   components: {
-    "ftb-input": FTBInput,
-    "ftb-toggle": FTBToggle,
-    "ftb-slider": FTBSlider,
-    "ftb-button": FTBButton,
+    'ftb-input': FTBInput,
+    'ftb-toggle': FTBToggle,
+    'ftb-slider': FTBSlider,
+    'ftb-button': FTBButton,
     InstallModal,
     FTBModal,
-    "message-modal": MessageModal,
+    'message-modal': MessageModal,
     ServerCard,
   },
 })
 export default class LaunchingPage extends Vue {
+
   get instance() {
     if (this.modpacks == null) {
       return null;
     }
     return this.modpacks.installedPacks.filter(
-      (pack) => pack.uuid === this.$route.query.uuid
+      (pack) => pack.uuid === this.$route.query.uuid,
     )[0];
   }
 
@@ -316,39 +317,40 @@ export default class LaunchingPage extends Vue {
   get advertsEnabled(): boolean {
     return (
       this.settings.settings.showAdverts === true ||
-      this.settings.settings.showAdverts === "true" ||
+      this.settings.settings.showAdverts === 'true' ||
       this.auth?.token?.activePlan === null
     );
   }
 
-  @State("modpacks") public modpacks!: ModpackState;
-  @State("settings") public settings!: SettingsState;
-  @State("websocket") public socket!: SocketState;
-  @State("auth") public auth!: AuthState;
-  @Action("fetchModpack", { namespace: "modpacks" }) public fetchModpack!: any;
-  @Action("storeInstalledPacks", { namespace: "modpacks" })
+  @State('modpacks') public modpacks!: ModpackState;
+  @State('settings') public settings!: SettingsState;
+  @State('websocket') public socket!: SocketState;
+  @State('auth') public auth!: AuthState;
+  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
+  @Action('storeInstalledPacks', { namespace: 'modpacks' })
   public storePacks!: any;
-  @Action("updateInstall", { namespace: "modpacks" })
+  @Action('updateInstall', { namespace: 'modpacks' })
   public updateInstall!: any;
-  @Action("finishInstall", { namespace: "modpacks" })
+  @Action('finishInstall', { namespace: 'modpacks' })
   public finishInstall!: any;
-  @Action("sendMessage") public sendMessage!: any;
-  @Action("reportAdvert") public reportAd!: any;
-  @Action("getChangelog", { namespace: "modpacks" }) public getChangelog!: any;
-  @State("servers") public serverListState!: ServersState;
-  @Action("fetchServers", { namespace: "servers" }) public fetchServers!: (
-    projectid: string
+  @Action('sendMessage') public sendMessage!: any;
+  @Action('reportAdvert') public reportAd!: any;
+  @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
+  @State('servers') public serverListState!: ServersState;
+  @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (
+    projectid: string,
   ) => void;
-  @Getter("getFileStatus") public getFileStatus!: (name: string) => string;
+  @Getter('getFileStatus') public getFileStatus!: (name: string) => string;
+  private starAPI = (window as any).cpmstarAPI;
 
-  private activeTab = "overview";
+  private activeTab = 'overview';
   private showMsgBox = false;
   private showInstallBox = false;
   private installSelectedVersion: number | null = null;
   private msgBox: MsgBox = {
-    title: "",
-    content: "",
-    type: "",
+    title: '',
+    content: '',
+    type: '',
     okAction: Function,
     cancelAction: Function,
   };
@@ -364,9 +366,9 @@ export default class LaunchingPage extends Vue {
   public cancelLoading() {
     this.sendMessage({
       payload: {
-        type: "messageClient",
+        type: 'messageClient',
         uuid: this.instance?.uuid,
-        message: "yeet",
+        message: 'yeet',
       },
     });
     // messageClient
@@ -375,73 +377,67 @@ export default class LaunchingPage extends Vue {
   public restoreLoading() {
     this.sendMessage({
       payload: {
-        type: "messageClient",
+        type: 'messageClient',
         uuid: this.instance?.uuid,
-        message: "show",
+        message: 'show',
       },
     });
   }
 
-  public show300x250(){
-    var el = document.getElementById("ad");
-    // @ts-ignore
-    cpmstarAPI({kind:'go',module:"banner300x250",config: { target: {el:el,kind:"replace"} } });
+  public show300x250() {
+    const el = document.getElementById('ad');
+    this.starAPI({kind: 'go', module: 'banner300x250', config: { target: {el, kind: 'replace'} } });
   }
 
   public addAdvert() {
     try {
-      // @ts-ignore
-     cpmstarAPI(function(api) {
-        api.game.setTarget(document.getElementById("ad"));
+     this.starAPI((api) => {
+        api.game.setTarget(document.getElementById('ad'));
      });
-      // @ts-ignore
-     cpmstarAPI({
-        kind:"game.createInterstitial",
+     this.starAPI({
+        kind: 'game.createInterstitial',
         fail: ()  => {
-          console.log("API was blocked or failed to load");
+          console.log('API was blocked or failed to load');
           this.showPlaceholder = true;
-        }
+        },
       });
-      // @ts-ignore
-      cpmstarAPI({
-        kind:"game.displayInterstitial",
-        onAdOpened: function(){
-          console.log("Interstitial opened");
+     this.starAPI({
+        kind: 'game.displayInterstitial',
+        onAdOpened() {
+          console.log('Interstitial opened');
         },
         onAdClosed: () => {
           this.show300x250();
         },
         fail: () => {
           this.show300x250();
-        }   
-      })
+        },
+      });
     } catch (error) {
       this.showPlaceholder = true;
     }
   }
 
   public reportAdvert() {
-    let el = document.getElementById("banner300x250");
-    if(!el){
+    const el = document.getElementById('banner300x250');
+    if (!el) {
       this.showPlaceholder = true;
       return;
     }
-    // @ts-ignore
-    const adHTML = el.children[0].contentDocument.body.innerHTML;
-    // @ts-ignore
-    cpmstarAPI(function(api) {
+    // TODO: Fix
+    const adHTML = (el.children[0] as any).contentDocument.body.innerHTML;
+    this.starAPI((api: {game: {setTarget: (e: unknown) => void}}) => {
         api.game.setTarget(null);
     });
-    el.innerHTML = "";
+    el.innerHTML = '';
     this.ad = null;
-    // @ts-ignore
     window.ad = null;
     this.showPlaceholder = true;
-    this.reportAd({ object: "", html: adHTML });
+    this.reportAd({ object: '', html: adHTML });
   }
 
 
-  private async mounted() {
+  public async mounted() {
     if (this.instance == null) {
       return null;
     }

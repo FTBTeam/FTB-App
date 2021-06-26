@@ -306,7 +306,7 @@ export default class ServerLandingPage extends Vue {
           this.server = data.server;
           queryServer(this.server.ip).then((protoResponse) => {
             Vue.set(this.server, 'protoResponse', protoResponse);
-          });
+          }).catch((e) => {});
           Object.values(this.modpacks.packsCache).forEach((pack: ModPack) => {
               if (pack.versions) {
                 pack.versions.forEach((v: Versions) => {

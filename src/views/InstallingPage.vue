@@ -270,29 +270,29 @@
 </style>
 
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import {
   ModpackState,
   ModPack,
   Instance,
   Versions,
-} from "@/modules/modpacks/types";
-import { State, Action, Getter } from "vuex-class";
-import FTBInput from "@/components/FTBInput.vue";
-import FTBToggle from "@/components/FTBToggle.vue";
-import FTBButton from "@/components/FTBButton.vue";
-import FTBSlider from "@/components/FTBSlider.vue";
-import config from "@/config";
-import moment from "moment";
-import MessageModal from "@/components/modals/MessageModal.vue";
-import FTBModal from "@/components/FTBModal.vue";
-import { logVerbose, shuffle } from "../utils";
-import { SettingsState } from "../modules/settings/types";
-import { ServersState } from "@/modules/servers/types";
-import ServerCard from "@/components/ServerCard.vue";
-import InstallModal from "@/components/modals/InstallModal.vue";
-import { SocketState } from "../modules/websocket/types";
-import { AuthState } from "@/modules/auth/types";
+} from '@/modules/modpacks/types';
+import { State, Action, Getter } from 'vuex-class';
+import FTBInput from '@/components/FTBInput.vue';
+import FTBToggle from '@/components/FTBToggle.vue';
+import FTBButton from '@/components/FTBButton.vue';
+import FTBSlider from '@/components/FTBSlider.vue';
+import config from '@/config';
+import moment from 'moment';
+import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBModal from '@/components/FTBModal.vue';
+import { logVerbose, shuffle } from '../utils';
+import { SettingsState } from '../modules/settings/types';
+import { ServersState } from '@/modules/servers/types';
+import ServerCard from '@/components/ServerCard.vue';
+import InstallModal from '@/components/modals/InstallModal.vue';
+import { SocketState } from '../modules/websocket/types';
+import { AuthState } from '@/modules/auth/types';
 
 export interface MsgBox {
   title: string;
@@ -307,15 +307,15 @@ interface Changelogs {
 }
 
 @Component({
-  name: "InstallingPage",
+  name: 'InstallingPage',
   components: {
-    "ftb-input": FTBInput,
-    "ftb-toggle": FTBToggle,
-    "ftb-slider": FTBSlider,
-    "ftb-button": FTBButton,
+    'ftb-input': FTBInput,
+    'ftb-toggle': FTBToggle,
+    'ftb-slider': FTBSlider,
+    'ftb-button': FTBButton,
     InstallModal,
     FTBModal,
-    "message-modal": MessageModal,
+    'message-modal': MessageModal,
     ServerCard,
   },
 })
@@ -339,7 +339,7 @@ export default class InstallingPage extends Vue {
   get advertsEnabled(): boolean {
     return (
       this.settings.settings.showAdverts === true ||
-      this.settings.settings.showAdverts === "true" ||
+      this.settings.settings.showAdverts === 'true' ||
       this.auth?.token?.activePlan === null
     );
   }
@@ -347,7 +347,7 @@ export default class InstallingPage extends Vue {
   get currentVersionObject(): Versions | null {
     if (this.currentModpack !== null) {
       const version = this.currentModpack?.versions.find(
-        (f: Versions) => f.id === this.latestRelease
+        (f: Versions) => f.id === this.latestRelease,
       );
       if (version !== undefined) {
         return version;
@@ -362,7 +362,7 @@ export default class InstallingPage extends Vue {
       this.currentVersionObject.mtgID !== undefined
     ) {
       return shuffle(
-        this.serverListState.servers[this.currentVersionObject.mtgID]
+        this.serverListState.servers[this.currentVersionObject.mtgID],
       );
     }
     return [];
@@ -371,7 +371,7 @@ export default class InstallingPage extends Vue {
   get latestRelease() {
     if (this.currentModpack !== undefined) {
       const version = this.currentModpack?.versions.find(
-        (f: Versions) => f.type.toLowerCase() === "release"
+        (f: Versions) => f.type.toLowerCase() === 'release',
       );
       if (version !== undefined) {
         return version.id;
@@ -381,35 +381,35 @@ export default class InstallingPage extends Vue {
     return null;
   }
 
-  @State("modpacks") public modpacks!: ModpackState;
-  @State("settings") public settings!: SettingsState;
-  @State("websocket") public socket!: SocketState;
-  @State("auth") public auth!: AuthState;
-  @Action("fetchModpack", { namespace: "modpacks" }) public fetchModpack!: any;
-  @Action("storeInstalledPacks", { namespace: "modpacks" })
+  @State('modpacks') public modpacks!: ModpackState;
+  @State('settings') public settings!: SettingsState;
+  @State('websocket') public socket!: SocketState;
+  @State('auth') public auth!: AuthState;
+  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
+  @Action('storeInstalledPacks', { namespace: 'modpacks' })
   public storePacks!: any;
-  @Action("updateInstall", { namespace: "modpacks" })
+  @Action('updateInstall', { namespace: 'modpacks' })
   public updateInstall!: any;
-  @Action("finishInstall", { namespace: "modpacks" })
+  @Action('finishInstall', { namespace: 'modpacks' })
   public finishInstall!: any;
-  @Action("sendMessage") public sendMessage!: any;
-  @Action("reportAdvert") public reportAd!: any;
-  @Action("getChangelog", { namespace: "modpacks" }) public getChangelog!: any;
-  @State("servers") public serverListState!: ServersState;
-  @Action("fetchServers", { namespace: "servers" }) public fetchServers!: (
-    projectid: string
+  @Action('sendMessage') public sendMessage!: any;
+  @Action('reportAdvert') public reportAd!: any;
+  @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
+  @State('servers') public serverListState!: ServersState;
+  @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (
+    projectid: string,
   ) => void;
-  @Getter("getFileStatus") public getFileStatus!: (name: string) => string;
+  @Getter('getFileStatus') public getFileStatus!: (name: string) => string;
   public showAdverts: boolean = false;
 
-  private activeTab = "overview";
+  private activeTab = 'overview';
   private showMsgBox = false;
   private showInstallBox = false;
   private installSelectedVersion: number | null = null;
   private msgBox: MsgBox = {
-    title: "",
-    content: "",
-    type: "",
+    title: '',
+    content: '',
+    type: '',
     okAction: Function,
     cancelAction: Function,
   };
@@ -419,19 +419,21 @@ export default class InstallingPage extends Vue {
   private files: File[] = [];
   private downloadedFiles: { [index: string]: string } = {};
   private steps: { [index: string]: { name: string; done: boolean } } = {
-    INIT: { name: "Initialise", done: false },
-    VANILLA: { name: "Install Vanilla launcher", done: false },
-    API: { name: "Gather data from API", done: false },
-    FORGE: { name: "Get Forge information", done: false },
-    DOWNLOADS: { name: "Download files", done: false },
-    POSTINSTALL: { name: "Post-install tasks", done: false },
-    FINISHED: { name: "Finished", done: false },
+    INIT: { name: 'Initialise', done: false },
+    VANILLA: { name: 'Install Vanilla launcher', done: false },
+    API: { name: 'Gather data from API', done: false },
+    FORGE: { name: 'Get Forge information', done: false },
+    DOWNLOADS: { name: 'Download files', done: false },
+    POSTINSTALL: { name: 'Post-install tasks', done: false },
+    FINISHED: { name: 'Finished', done: false },
   };
 
   private activeChangelog: number | undefined = -1;
   private changelogs: Changelogs = [];
   private showPlaceholder: boolean = false;
   private installedUUID: string | null = null;
+
+  private starAPI = (window as any).cpmstarAPI;
 
   public goBack(): void {
     this.$router.go(-1);
@@ -440,7 +442,7 @@ export default class InstallingPage extends Vue {
   public goToInstance(): void {
     if (this.installedUUID !== null) {
       this.$router.replace({
-        name: "instancepage",
+        name: 'instancepage',
         query: { uuid: this.installedUUID },
       });
     }
@@ -450,62 +452,60 @@ export default class InstallingPage extends Vue {
     // this.$router.push({name: 'browseModpacks', params: {search: tagName}});
   }
 
-  public show300x250(){
-    var el = document.getElementById("ad");
-    // @ts-ignore
-    cpmstarAPI({kind:'go',module:"banner300x250",config: { target: {el:el,kind:"replace"} } });
+  public show300x250() {
+    const el = document.getElementById('ad');
+    this.starAPI({kind: 'go', module: 'banner300x250', config: { target: {el, kind: 'replace'} } });
   }
 
   public addAdvert() {
     try {
-      // @ts-ignore
-     cpmstarAPI(function(api) {
-        api.game.setTarget(document.getElementById("ad"));
+     this.starAPI((api: {game: {setTarget: (e: unknown) => void}}) => {
+        api.game.setTarget(document.getElementById('ad'));
      });
       // @ts-ignore
-     cpmstarAPI({
-        kind:"game.createInterstitial",
+     this.starAPI({
+        kind: 'game.createInterstitial',
         fail: ()  => {
-          console.log("API was blocked or failed to load");
+          console.log('API was blocked or failed to load');
           this.showPlaceholder = true;
-        }
+        },
       });
       // @ts-ignore
-      cpmstarAPI({
-        kind:"game.displayInterstitial",
-        onAdOpened: function(){
-          console.log("Interstitial opened");
+     this.starAPI({
+        kind: 'game.displayInterstitial',
+        onAdOpened() {
+          console.log('Interstitial opened');
         },
         onAdClosed: () => {
           this.show300x250();
         },
         fail: () => {
           this.show300x250();
-        }   
-      })
+        },
+      });
     } catch (error) {
       this.showPlaceholder = true;
     }
   }
 
   public reportAdvert() {
-    let el = document.getElementById("banner300x250");
-    if(!el){
+    const el = document.getElementById('banner300x250');
+    if (!el) {
       this.showPlaceholder = true;
       return;
     }
     // @ts-ignore
     const adHTML = el.children[0].contentDocument.body.innerHTML;
     // @ts-ignore
-    cpmstarAPI(function(api) {
+    this.starAPI((api) => {
         api.game.setTarget(null);
     });
-    el.innerHTML = "";
+    el.innerHTML = '';
     this.ad = null;
     // @ts-ignore
     window.ad = null;
     this.showPlaceholder = true;
-    this.reportAd({ object: "", html: adHTML });
+    this.reportAd({ object: '', html: adHTML });
   }
 
   private async mounted() {
@@ -529,17 +529,17 @@ export default class InstallingPage extends Vue {
         payload: {
           type:
             this.$route.query.uuid === undefined
-              ? "installInstance"
-              : "updateInstance",
+              ? 'installInstance'
+              : 'updateInstance',
           uuid: this.$route.query.uuid,
           id: packID,
           version: this.$route.query.versionID,
           _private: isPrivate,
         },
         callback: (data: any) => {
-          if (data.status === "files") {
+          if (data.status === 'files') {
             this.files = JSON.parse(data.message);
-          } else if (data.status === "success") {
+          } else if (data.status === 'success') {
             this.installedUUID = data.uuid;
             this.finishInstall({
               modpackID: packID,
@@ -547,24 +547,24 @@ export default class InstallingPage extends Vue {
             });
             const currentStageStep = this.steps.FINISHED;
             currentStageStep.done = true;
-            Vue.set(this.steps, "FINISHED", currentStageStep);
+            Vue.set(this.steps, 'FINISHED', currentStageStep);
             setTimeout(() => {
               let el: Element = this.$refs.viewInstanceButton as Element;
               if (el === null || el === undefined) {
-                el = document.getElementById("viewInstanceButton") as Element;
+                el = document.getElementById('viewInstanceButton') as Element;
                 if (el === null || el === undefined) {
                   return;
                 }
               }
-              el.scrollIntoView({ behavior: "smooth" });
+              el.scrollIntoView({ behavior: 'smooth' });
             }, 500);
             this.sendMessage({
-              payload: { type: "installedInstances", refresh: true },
+              payload: { type: 'installedInstances', refresh: true },
               callback: (data: any) => {
                 this.storePacks(data);
               },
             });
-          } else if (data.status === "error") {
+          } else if (data.status === 'error') {
             this.updateInstall({
               modpackID: packID,
               messageID: data.requestId,
@@ -572,17 +572,17 @@ export default class InstallingPage extends Vue {
               errorMessage: data.message,
               instanceID: data.uuid,
             });
-          } else if (data.currentStage === "POSTINSTALL") {
+          } else if (data.currentStage === 'POSTINSTALL') {
             this.updateInstall({
               modpackID: packID,
               messageID: data.requestId,
               stage: data.currentStage,
             });
-          } else if (data.status === "init") {
+          } else if (data.status === 'init') {
             this.updateInstall({
               modpackID: packID,
               messageID: data.requestId,
-              stage: "INIT",
+              stage: 'INIT',
               message: data.message,
             });
           } else if (data.overallPercentage <= 100) {
@@ -603,7 +603,7 @@ export default class InstallingPage extends Vue {
               for (let i = 0; i < index; i++) {
                 const s = this.steps[Object.keys(this.steps)[i]];
                 if (!s.done) {
-                  Vue.set(s, "done", true);
+                  Vue.set(s, 'done', true);
                 }
               }
             }
@@ -635,10 +635,10 @@ export default class InstallingPage extends Vue {
         if (list !== undefined) {
           const el: Element = list.lastChild as Element;
           const lastEl: Element = Array.from(el.children)
-            .filter((e: Element) => e.classList.contains("downloaded"))
+            .filter((e: Element) => e.classList.contains('downloaded'))
             .reverse()[0];
           if (lastEl !== null && lastEl !== undefined) {
-            lastEl.scrollIntoView({ behavior: "smooth" });
+            lastEl.scrollIntoView({ behavior: 'smooth' });
           }
         }
       }

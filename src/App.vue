@@ -1,15 +1,12 @@
 <template>
-<router-view />
+  <router-view />
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-property-decorator';
 
 @Component
-export default class App extends Vue {
-}
+export default class App extends Vue {}
 </script>
 
-<style lang="scss">
-
-</style>
+<style lang="scss"></style>

@@ -72,11 +72,10 @@ showdown.extension('newLine', () => [{
     replace: '<br>',
 }]);
 
-
 library.add(fas);
 library.add(far);
 library.add(fab);
-Vue.use(vueMoment);
+// Vue.use(vueMoment);
 Vue.use(vSelectMenu, {language: 'en'});
 Vue.use(VueShowdown, {
     options: {

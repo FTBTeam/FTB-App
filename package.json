@@ -49,8 +49,8 @@
     "license-checker": "25.0.1",
     "mcping-js": "^1.5.0",
     "moment": "^2.25.3",
-    "node-sass": "^4.14.1",
     "rss-parser": "^3.8.0",
+    "sass": "^1.35.1",
     "sass-loader": "^8.0.2",
     "semver": "^7.3.2",
     "showdown": "^1.9.1",
@@ -71,8 +71,5 @@
     "vue-template-compiler": "^2.6.11",
     "vuex": "^3.4.0",
     "vuex-class": "^0.3.2"
-  },
-  "resolutions": {
-    "**/fsevents": "^1.2.9"
   }
 }

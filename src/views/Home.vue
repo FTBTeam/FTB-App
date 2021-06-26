@@ -1,5 +1,29 @@
 <template>
-  <div class="flex flex-1 flex-col lg:p-10 sm:p-5" style="margin-bottom: 60px;" v-if="isLoaded">
+  <div class="packs p-6">
+    <div class="section">
+      <h2 class="text-xl pb-4">Recently Played</h2>
+              <pack-card
+          v-for="modpack in recentlyPlayed"
+          :key="modpack.uuid"
+          :versions="modpack.versions"
+          :art="modpack.art"
+          :installed="true"
+          :version="modpack.version"
+          :name="modpack.name"
+          :authors="modpack.authors"
+          :instance="modpack"
+          :instanceID="modpack.uuid"
+          :description="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
+          :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"
+          :kind="modpack.kind"
+        ></pack-card>
+    </div>
+
+    <div class="section">
+      <h2 class="text-xl pb-4">Featured Modpacks</h2>
+    </div>
+  <div class="hidden" style="display: none">
+<div class="flex flex-1 flex-col lg:p-10 sm:p-5" style="margin-bottom: 60px;" v-if="isLoaded">
     <div class="absolute z-50 display-mode-switcher ml-auto top-0" style="right: 118px; -webkit-app-region: no-drag;">
         <div :class="`cursor-pointer px-2 py-1 ${settingsState.settings.listMode === true || settingsState.settings.listMode === 'true' ? 'bg-gray-600' : 'bg-background-lighten'}`" @click="changeToList">
           <font-awesome-icon icon="list" class="cursor-pointer"></font-awesome-icon>
@@ -8,11 +32,11 @@
           <font-awesome-icon icon="th" class="cursor-pointer"></font-awesome-icon>
         </div>
     </div>
-    <div class="flex flex-row items-center w-full mt-4">
+    <!-- <div class="flex flex-row items-center w-full mt-4">
       <h1 v-if="recentlyPlayed.length >= 1" @click="changeTab('recentlyPlayed')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'recentlyPlayed' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Recently Played</h1>
       <h1 @click="changeTab('featuredPacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredPacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Packs</h1>
       <h1 v-if="serverListState.servers !== undefined" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
-    </div>
+    </div> -->
     <div class="flex flex-col" v-if="recentlyPlayed.length >= 1 && currentTab === 'recentlyPlayed'" key="recentlyPlayed">
       <transition-group
         name="list"
@@ -64,7 +88,7 @@
         >{{modpack.id}}</pack-card-wrapper>
       </transition-group>
     </div>
-    <div class="flex flex-col" v-if="currentTab === 'featuredServers'" key="featuredServers">
+    <!-- <div class="flex flex-col" v-if="currentTab === 'featuredServers'" key="featuredServers">
       <transition-group
         name="list"
         tag="div"
@@ -84,10 +108,12 @@
           <a href="https://feed-the-beast.com/featuredServers" target="_blank"><ftb-button class="py-2 px-4 my-2" color="info" css-class="text-center text-l">Become a featured server</ftb-button></a>
         </div>
       </transition-group>
-    </div>
+    </div> -->
   </div>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
     <strong>Loading</strong>
+  </div>
+  </div>
   </div>
 </template>
 

@@ -58,7 +58,7 @@
                 <font-awesome-icon icon="stopwatch" size="1x"/>&nbsp;
                 <small
                         class="ml-2 text-gray-400 "
-                >{{instance.lastPlayed | moment("from", "now")}}</small>
+                >{{instance.lastPlayed}}</small> <!-- TODO: ADD BACK  moment("from", "now") -->
               </div>
             </div>
             <div class="instance-button mr-2 ml-auto">

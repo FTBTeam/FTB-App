@@ -50,9 +50,9 @@ export const mutations: MutationTree<SocketState> = {
             }
         } else if (message.type === 'installedFileEventDataReply') {
             Object.keys(message.files).forEach((f: string) => {
-                let status = message.files[f]
-                Vue.set(state.downloadedFiles, f, status)
-            })
+                const status = message.files[f];
+                Vue.set(state.downloadedFiles, f, status);
+            });
             // Vue.set(state.downloadedFiles, message.fileName, message.status);
         }
         state.socket.message = message;
