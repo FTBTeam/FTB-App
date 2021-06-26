@@ -391,7 +391,7 @@ export default class LaunchingPage extends Vue {
 
   public addAdvert() {
     try {
-     this.starAPI((api) => {
+     this.starAPI((api: {game: {setTarget: (e: unknown) => void}}) => {
         api.game.setTarget(document.getElementById('ad'));
      });
      this.starAPI({
@@ -431,7 +431,7 @@ export default class LaunchingPage extends Vue {
     });
     el.innerHTML = '';
     this.ad = null;
-    window.ad = null;
+    (window as any).ad = null;
     this.showPlaceholder = true;
     this.reportAd({ object: '', html: adHTML });
   }

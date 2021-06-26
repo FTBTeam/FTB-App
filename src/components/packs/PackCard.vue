@@ -1,53 +1,53 @@
 <template>
-    <div v-if="settingsState !== undefined" class="m-2 card" :class="`w-size-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}`">
+    <div v-if="settingsState !== undefined" class="m-2 card" :class="`w-size-1`">
         <div v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo" style="height: 100%">
             <article class="overflow-hidden shadow-lg relative" style="height: 100%">
                 <img class="w-full pack-image rounded-sm"
-                     :src="art !== undefined && art.length > 0 ? art : defaultImage" alt="placeholder"
+                     :src="getLogo(art)" alt="placeholder"
                      :class="[installing ? 'blur' : '', kind === 'cloudInstance' ? 'cloud-pack-image' : '']"/>
+                <div class="menu-icon"><span aria-label="More" data-balloon-blunt data-balloon-pos="left"><font-awesome-icon icon="ellipsis-v" size="1x" class="cursor-pointer button" :class="!isLatestVersion ? 'text-black': ''" @click="cardClicked"></font-awesome-icon></span></div>
                 <div class="content" :class="installing ? 'hide' : ''">
                     <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
                     <div v-if="instance && !isLatestVersion && kind === 'instance'" class="update-box">New Version</div>
                   <div class="name-box"><p>{{name}}</p></div>
                 </div>
                 <div class="hoverContent" v-if="!installing">
-                    <div :class="`row mb-2 min-h-size-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}`" >
-                        <p :class="`font-bold text-text-color lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl text-center`">{{name}}</p>
-                    </div>
+                    <!-- <div :class="`row mb-2 min-h-size-1`" >
+                        <p :class="`font-bold text-text-color lg:text-1xl text-center`">{{name}}</p>
+                    </div> -->
                     <div class="row w-full" v-if="!isDemo && kind !== 'cloudInstance'">
                         <div class="buttons action-buttons w-full" v-if="installed">
-                            <div @click="checkMemory()" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
-                                <font-awesome-icon  :icon="'play'" size="3x"
-                                               :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"/>
-                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Play</p>
+                            <div @click="checkMemory()" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2" :disabled="loading">
+                                <font-awesome-icon v-if="!loading" :icon="'play'" size="3x" :class="`cursor-pointer button lg:text-1xl sm:text-base`"/>
+                                <font-awesome-icon v-else-if="loading" :icon="'spinner'" size="3x" :class="`cursor-pointer button hover-scale lg:text-1xl sm:text-base`" spin/>
                             </div>
-                            <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2" @click="goToInstance">
+                            <!-- <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2" @click="goToInstance">
                                 <font-awesome-icon :icon="'ellipsis-h'" size="3x"
-                                               :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"
+                                               :class="`cursor-pointer button lg:text-1xl sm:text-base`"
                                                />
-                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">More</p>
-                            </div>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">More</p>
+                            </div> -->
                         </div>
                         <div class="buttons action-buttons w-full" v-if="!installed">
                             <div @click="openInstall" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
                             <font-awesome-icon :icon="'download'" size="3x"
-                                               :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base `"/>
-                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Get</p>
+                                               :class="`cursor-pointer button lg:text-1xl sm:text-base `"/>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">Get</p>
                             </div>
-                            <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2"  @click="openInfo">
+                            <!-- <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2"  @click="openInfo">
                             <font-awesome-icon :icon="'ellipsis-h'" size="3x"
-                                               :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base `"
+                                               :class="`cursor-pointer button lg:text-1xl sm:text-base `"
                                               />
-                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">More</p>
-                            </div>
+                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">More</p>
+                            </div> -->
                         </div>
                     </div>
                     <div class="row w-full" v-if="!isDemo && kind === 'cloudInstance'">
                       <div class="buttons action-buttons w-full" v-if="installed">
                         <div @click="sync" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
                           <font-awesome-icon  :icon="'cloud-download-alt'" size="3x"
-                                              :class="`cursor-pointer button lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`"/>
-                          <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`">Sync</p>
+                                              :class="`cursor-pointer button lg:text-1xl sm:text-base`"/>
+                          <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">Sync</p>
                         </div>
                       </div>
                     </div>
@@ -57,19 +57,19 @@
                 </div>
                 <div class="hoverContent show" v-else>
                     <div class="row mb-2">
-                        <p :class="`font-bold text-text-color lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl`">Installing {{name}}</p>
+                        <p :class="`font-bold text-text-color lg:text-1xl`">Installing {{name}}</p>
                     </div>
                     <div class="row">
                         <font-awesome-icon :icon="'spinner'"
-                                           :class="`cursor-pointer button hover-scale lg:text-${size ? size : settingsState.settings.packCardSize ? settingsState.settings.packCardSize : 2}xl sm:text-base`" spin/>
+                                           :class="`cursor-pointer button hover-scale lg:text-1xl sm:text-base`" spin/>
                     </div>
                 </div>
             </article>
         </div>
-        <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
+        <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
             <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions"/>
         </FTBModal>
-        <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
+        <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox" :dismissable="true">
             <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction"
                            :cancel-action="msgBox.cancelAction" :type="msgBox.type"/>
         </FTBModal>
@@ -134,10 +134,10 @@ import placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '../../utils';
-import { ipcRenderer } from 'electron';
-import { AuthState } from '@/modules/auth/types';
+import { AuthState } from '../../modules/auth/types';
+// import { ipcRenderer } from 'electron';
 
-const namespace: string = 'websocket';
+const namespace = 'websocket';
 
 export interface MsgBox {
         title: string;
@@ -174,14 +174,16 @@ export interface MsgBox {
             'preLaunch',
             'postLaunch',
             'kind',
+            'type'
         ],
     })
     export default class PackCard extends Vue {
         @State('modpacks') public modpacks!: ModpackState;
-        @State('auth') public auth!: AuthState;
+        @State('auth') public auth!: AuthState; 
         @Action('sendMessage') public sendMessage: any;
         @Action('updateInstall', {namespace: 'modpacks'}) public updateInstall: any;
         @Action('fetchModpack', {namespace: 'modpacks'}) public fetchModpack: any;
+        @Action('fetchCursepack', {namespace: 'modpacks'}) public fetchCursepack: any;
         @Action('finishInstall', {namespace: 'modpacks'}) public finishInstall: any;
         @Action('errorInstall', {namespace: 'modpacks'}) public errorInstall: any;
         @Action('storeInstalledPacks', {namespace: 'modpacks'}) public storePacks: any;
@@ -193,11 +195,13 @@ export interface MsgBox {
         @Prop()
         public packID!: number;
         @Prop()
+        public kind!: string;
+        @Prop()
         public preLaunch?: (id: Instance) => Promise<void>;
         @Prop()
         public postLaunch?: (id: Instance) => Promise<void>;
-        private showInstall: boolean = false;
-        private showMsgBox: boolean = false;
+        private showInstall = false;
+        private showMsgBox = false;
         private defaultImage: any = placeholderImage;
         private msgBox: MsgBox = {
             title: '',
@@ -206,6 +210,7 @@ export interface MsgBox {
             okAction: Function,
             cancelAction: Function,
         };
+        private loading: boolean = false;
 
         @Watch('modpacks', {deep: true})
         public onModpacksChange(newState: ModpackState, oldState: ModpackState) {
@@ -215,21 +220,21 @@ export interface MsgBox {
 
         public async mounted() {
             if (this.instance !== undefined) {
-                this.fetchModpack(this.instance.id);
+                this.instance.packType == 0 ? this.fetchModpack(this.instance.id) : this.fetchCursepack(this.instance.id);
             }
         }
 
-        public async sync() {
-            if (this.modpacks.installing !== null) {
+        public async sync(){
+            if(this.modpacks.installing !== null){
                 return;
             }
             this.updateInstall({modpackID: this.$props.packID, progress: 0});
-            this.sendMessage({
+             this.sendMessage({
                 payload: {type: 'syncInstance', uuid: this.instance.uuid}, callback: (data: any) => {
                      if (this.showInstall) {
                         this.showInstall = false;
                     }
-                     if (data.status === 'success') {
+                    if (data.status === 'success') {
                         this.sendMessage({
                             payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
                                 this.storePacks(data);
@@ -289,19 +294,21 @@ export interface MsgBox {
 
         // @ts-ignore
         public async launch(): void {
-            if (this.preLaunch) {
+          this.loading = true;
+            if(this.preLaunch){
                 await this.preLaunch(this.instance);
             }
-            const loadInApp = (this.settingsState.settings.loadInApp === true || this.settingsState.settings.loadInApp === 'true') || this.auth.token?.activePlan == null;
+            const loadInApp = (this.settingsState.settings.loadInApp === true || this.settingsState.settings.loadInApp === "true") || this.auth.token?.activePlan == null;
+            const disableChat = (this.settingsState.settings.enableChat === true);
             this.sendMessage({
-                payload: {type: 'launchInstance', uuid: this.$props.instanceID, loadInApp}, callback: (data: any) => {
-                    ipcRenderer.send('disconnect');
-                    if (this.postLaunch) {
-                        this.postLaunch(this.instance);
-                    }
-                    // Instance launched
+                payload: {type: 'launchInstance', uuid: this.$props.instanceID, loadInApp, extraArgs: disableChat ? "-Dmt.disablechat=true" : ""},
+                callback: (data: any) => {
+                        if(this.postLaunch){
+                            this.postLaunch(this.instance);
+                        }
                 },
             });
+            setTimeout(() => {this.loading = false}, 7000);
         }
 
         public hideMsgBox(): void {
@@ -309,17 +316,17 @@ export interface MsgBox {
         }
 
         get installing() {
-            if (this.instance !== undefined && this.instance !== null) {
+            if(this.instance !== undefined && this.instance !== null){
                 return this.modpacks !== undefined && this.modpacks.installing !== null && this.modpacks.installing.instanceID === this.instance.uuid;
             }
             return this.modpacks !== undefined && this.modpacks.installing !== null && this.modpacks.installing.modpackID === this.$props.packID;
         }
 
         public install(version: number): void {
-            if (this.modpacks.installing !== null) {
+            if(this.modpacks.installing !== null){
                 return;
             }
-            this.$router.replace({name: 'installingpage', query: {modpackid: this.$props.packID, versionID: version.toString()}});
+            this.$router.replace({name: 'installingpage', query: {modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type}});
             this.showInstall = false;
         }
 
@@ -340,7 +347,7 @@ export interface MsgBox {
         }
 
         public openInfo(): void {
-            this.$router.push({name: 'modpackpage', query: {modpackid: this.$props.packID}});
+            this.$router.push({name: 'modpackpage', query: {modpackid: this.$props.packID, type: this.$props.type}});
         }
 
         public openInstall(): void {
@@ -352,9 +359,14 @@ export interface MsgBox {
         }
 
         get latestVersion() {
-            return this.modpacks?.packsCache[this.instance.id].versions.sort((a, b) => {
-                return semver.rcompare(a.name, b.name);
-            });
+            try {
+                return this.modpacks?.packsCache[this.instance.id].versions.sort((a, b) => {
+                    return semver.rcompare(a.name, b.name);
+                });
+            } catch (e) {
+                console.log('Error getting latest version, semver failed', e);
+                return this.modpacks?.packsCache[this.instance.id].versions.reverse();
+            }
         }
 
         get currentModpack() {
@@ -373,6 +385,23 @@ export interface MsgBox {
                 return true;
             }
             return this.instance.versionId === this.currentModpack?.versions[0].id;
+        }
+
+        public getLogo(packArt: any){
+          if (typeof packArt === "string") return packArt;
+          let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
+          if(artP === undefined){
+            return placeholderImage;
+          }
+          return artP.url;
+        }
+
+        public cardClicked() {
+          if (this.kind === 'instance') {
+            this.goToInstance();
+          } else {
+            this.openInfo();
+          }
         }
     }
 </script>
@@ -400,17 +429,21 @@ export interface MsgBox {
         filter: blur(5px) brightness(50%);
     }
 
-    .card:hover .hoverContent {
-        opacity: 1;
+    .card {
+        &:hover {
+            .hoverContent {
+                opacity: 1;
+            }
+        }
     }
 
     .hoverContent.show {
         opacity: 1;
     }
 
-    .card:hover .content {
-        opacity: 0;
-    }
+    // .card:hover .content {
+    //     opacity: 0;
+    // }
 
   .buttons {
     display: flex;
@@ -532,5 +565,19 @@ export interface MsgBox {
         & p.ml-2  {
             display: block;
         }
+    }
+
+    .menu-icon {
+        position: absolute;
+        top: 3px;
+        right: 5px;
+        z-index: 10;
+        &:hover {
+          filter: drop-shadow(1px 1px 2px #000000);
+        }
+    }
+
+    .fa-3x {
+        font-size: 2.5em !important;
     }
 </style>

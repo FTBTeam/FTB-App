@@ -1,8 +1,8 @@
 <template>
   <div class="packs p-6">
-    <div class="section">
+    <div class="section" v-if="recentlyPlayed.length > 0">
       <h2 class="text-xl pb-4">Recently Played</h2>
-              <pack-card
+        <pack-card
           v-for="modpack in recentlyPlayed"
           :key="modpack.uuid"
           :versions="modpack.versions"
@@ -16,7 +16,7 @@
           :description="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
           :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"
           :kind="modpack.kind"
-        ></pack-card>
+        />
     </div>
 
     <div class="section">
@@ -120,6 +120,7 @@
 <script lang="ts">
 import { Component, Vue, Watch} from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
+import PackCard from '@/components/packs/PackCard.vue';
 import ServerCard from '@/components/ServerCard.vue';
 import { asyncForEach } from '@/utils';
 import { State, Action} from 'vuex-class';
@@ -136,6 +137,7 @@ const namespace: string = 'modpacks';
     FtbButton,
     PackCardWrapper,
     ServerCard,
+    PackCard,
   },
 })
 export default class Home extends Vue {
