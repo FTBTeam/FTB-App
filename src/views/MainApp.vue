@@ -1,8 +1,8 @@
 <template>
-  <div id="app" class="theme-dark">
+  <div id="app" class="theme-dark" v-if="platfrom.get.config">
     <title-bar />
     <div class="container" v-if="websockets.socket.isConnected && !loading">
-      <div id="nav" style="width: 220px;">
+      <div id="nav" style="width: 180px;">
         <sidebar />
       </div>
       <div class="flex-1 flex flex-col overflow-x-hidden">
@@ -44,7 +44,7 @@
           </div>
         </transition>
       </div>
-      <FTBModal v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null" :visible="$store.state.websocket.modal !== null" @dismiss-modal="hideModal">
+      <FTBModal v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null" :visible="$store.state.websocket.modal !== null" @dismiss-modal="hideModal" :dismissable="$store.state.websocket.modal.dismissable">
         <message-modal :title="$store.state.websocket.modal.title" :content="$store.state.websocket.modal.message" type="custom" :buttons="$store.state.websocket.modal.buttons" :modalID="$store.state.websocket.modal.id"/>
       </FTBModal>
     </div>
@@ -94,6 +94,7 @@ import {
 import { RootState } from '@/types';
 import { SettingsState } from '../modules/settings/types';
 import { ipcRenderer, clipboard} from 'electron';
+import platfrom from '@/utils/interface/electron-overwolf';
 
 @Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal,
         'ftb-button': FTBButton, 'ftb-input': FTBInput} })
@@ -124,6 +125,8 @@ export default class MainApp extends Vue {
 
   private webVersion: string = config.webVersion;
   private appVersion: string = config.appVersion;
+
+  private platfrom = platfrom;
 
   public mounted() {
     this.registerPingCallback((data: any) => {

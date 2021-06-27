@@ -44,11 +44,7 @@ export default class TitleBar extends Vue {
       this.isMac = false;
     }
 
-    // This is required sadly!
-    // TODO: See if we can inject platform much quicker
-    setTimeout(() => {
-      platform.get.frame.setupTitleBar(windowId => (this.windowId = windowId));
-    }, 500);
+    platform.get.frame.setupTitleBar(windowId => (this.windowId = windowId));
   }
 
   public startDragging(event: any) {

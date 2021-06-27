@@ -165,15 +165,15 @@ axios.get(`https://minetogether.io/api/adPool`).then((res) => {
     try {
         const id = parseInt(res.data, 10);
         if (id !== -1) {
-            window.adPoolID = null;
+            (window as any).adPoolID = null;
         } else {
-            window.adPoolID = id;
+            (window as any).adPoolID = id;
         }
     } catch (err) {
-        window.adPoolID = null;
+        (window as any).adPoolID = null;
     }
 }).catch(() => {
-    window.adPoolID = null;
+    (window as any).adPoolID = null;
 });
 if (router.currentRoute.name !== 'chat') {
     store.dispatch('registerModProgressCallback', (data: any) => {

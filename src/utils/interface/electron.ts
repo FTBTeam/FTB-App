@@ -4,17 +4,20 @@ import fs from 'fs';
 import path from 'path';
 
 declare const __static: string;
-const contents = fs.readFileSync(path.join(__static, 'version.json'), 'utf-8');
-const jsonContent = JSON.parse(contents);
+
+const contents = fs.existsSync(path.join(__static, 'version.json'))
+  ? fs.readFileSync(path.join(__static, 'version.json'), 'utf-8')
+  : null;
+const jsonContent = contents ? JSON.parse(contents) : null;
 
 const Electron: ElectronOverwolfInterface = {
   config: {
     apiURL:
       process.env.NODE_ENV === 'production' ? `https://api.modpacks.ch` : `https://modpack-api-production.ch.tools`,
-    appVersion: jsonContent.jarVersion ?? 'Missing Version File',
-    webVersion: jsonContent.webVersion ?? 'Missing Version File',
-    dateCompiled: jsonContent.timestampBuilt ?? 'Missing Version File',
-    javaLicenses: jsonContent.javaLicense ?? {},
+    appVersion: jsonContent?.jarVersion ?? 'Missing Version File',
+    webVersion: jsonContent?.webVersion ?? 'Missing Version File',
+    dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',
+    javaLicenses: jsonContent?.javaLicense ?? {},
   },
 
   // Tools

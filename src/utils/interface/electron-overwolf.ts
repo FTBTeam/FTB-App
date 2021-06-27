@@ -10,7 +10,7 @@ class Platform {
   protected inter: ElectronOverwolfInterface = {} as ElectronOverwolfInterface;
 
   constructor() {
-    this.setup().catch(e => console.log('Platform failed resolve deps'));
+    this.setup().catch(e => console.log('Platform failed resolve deps', e));
   }
 
   private async setup() {

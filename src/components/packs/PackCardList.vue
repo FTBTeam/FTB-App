@@ -27,15 +27,13 @@
           </div>
           <div class="ml-auto mr-2 text-sm text-gray-500" v-if="authors.length > 0">
             By
-            <template v-if="typeof author === 'string'">
-              <span v-for="(author, index) in authors" :key="index"
-                >{{ author }} {{ authors.length > 1 ? ', ' : '' }}</span
+            <template v-if="typeof authors === 'object'">
+              <span v-for="author in authors" :key="author.id"
+                >{{ author.name }} {{ authors.length > 1 ? ', ' : '' }}</span
               >
             </template>
             <template v-else>
-              <span v-for="(author, index) in authors" :key="index"
-                >{{ author.name }} {{ authors.length > 1 ? ', ' : '' }}</span
-              >
+              <span>{{ authors.name }}</span>
             </template>
           </div>
         </div>

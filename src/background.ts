@@ -14,7 +14,7 @@ import Client from './ircshim';
 import { FriendListResponse } from './types';
 
 Object.assign(console, log.functions);
-app.console = log;
+(app as any).console = log;
 const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.indexOf('--dev') !== -1;
 
 log.transports.file.resolvePath = (variables, message): string => {

@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Home2 from '@/v2/views/Home.vue';
+import Home from '@/views/Home.vue';
 import MainApp from './views/MainApp.vue';
 import ChatWindow from './views/ChatWindow.vue';
 
@@ -19,7 +20,7 @@ export default new Router({
         {
           path: '/',
           name: 'home',
-          component: Home2,
+          component: Home,
         },
         {
           path: '/modpacks',
