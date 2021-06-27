@@ -53,6 +53,7 @@ import path from 'path';
 import { logVerbose } from '../utils';
 import { AuthState } from '../modules/auth/types';
 import { SettingsState } from '../modules/settings/types';
+import platform from '@/utils/interface/electron-overwolf';
 
 @Component({
     components: {
@@ -107,11 +108,12 @@ export default class ProfilePage extends Vue {
     }
 
     public openSubscriptions() {
-        ipcRenderer.send('openLink', 'https://ftb.plus/profile/subscriptions');
+        platform.get.utils.openUrl('https://ftb.plus/profile/subscriptions');
     }
 
     public openProfile() {
-        ipcRenderer.send('openLink', 'https://minetogether.io/profile/edit');
+        console.log(platform)
+        platform.get.utils.openUrl('https://minetogether.io/profile/edit');
     }
 
     public logout() {

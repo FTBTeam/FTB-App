@@ -43,7 +43,7 @@ import FTBButton from '../FTBButton.vue';
 import { Message } from '../../types';
 import ConfirmationModal from '../modals/ConfirmationModal.vue';
 import FTBModal from '../FTBModal.vue';
-
+import platform from '@/utils/interface/electron-overwolf';
 
 @Component({
     components: {
@@ -158,12 +158,12 @@ export default class FriendChat extends Vue {
     }
 
     public navigateToLink() {
-        ipcRenderer.send('openLink', this.checkLink);
+        platform.get.utils.openUrl(this.checkLink as string);
         this.checkLink = null;
     }
 
     public openServer() {
-        ipcRenderer.send('openLink', `ftb://server/${this.friend.currentServer}`);
+      platform.get.utils.openUrl(`ftb://server/${this.friend.currentServer}`);
     }
 }
 </script>
