@@ -112,7 +112,6 @@ export default class ProfilePage extends Vue {
     }
 
     public openProfile() {
-        console.log(platform)
         platform.get.utils.openUrl('https://minetogether.io/profile/edit');
     }
 

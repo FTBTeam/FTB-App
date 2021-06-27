@@ -11,7 +11,4 @@ declare global {
       [elem: string]: any;
     }
   }
-  interface Window {
-    adPoolID: number | null;
-  }
 }

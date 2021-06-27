@@ -1,3 +1,6 @@
+// This must be done as early as possible
+import platform from '@/utils/interface/electron-overwolf';
+
 import { ModPack } from './modules/modpacks/types';
 
 
@@ -28,6 +31,7 @@ import '@/assets/tailwind.scss';
 import store from './store';
 import { logVerbose } from './utils';
 import { getAPIRequest } from './modules/modpacks/actions';
+
 
 
 const classMap: object = {

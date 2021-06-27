@@ -1,32 +1,29 @@
 <template>
   <Transition name="fade">
-  <div
-    v-if="visible"
-    class="left-0 top-0 fixed flex items-center justify-center bg-transparent-black h-screen w-full z-10 "
-    v-on:click.self="hide">
     <div
-      class="bg-navbar rounded shadow px-8 m-4 py-4 max-w-lg max-h-full text-white pointer-events-auto min-w-1/4">
-      <slot></slot>
+      v-if="visible"
+      class="left-0 top-0 fixed flex items-center justify-center bg-transparent-black h-screen w-full z-10 "
+      v-on:click.self="hide"
+    >
+      <div class="bg-navbar rounded shadow px-8 m-4 py-4 max-w-lg max-h-full text-white pointer-events-auto min-w-1/4">
+        <slot></slot>
+      </div>
     </div>
-  </div>
   </Transition>
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
-@Component({
-    name: 'FTBModal',
-    props: [
-        'visible',
-    ],
-})
+@Component
 export default class FTBModal extends Vue {
-    @Prop()
-    private visible!: boolean;
+  @Prop() visible!: boolean;
+  @Prop({ default: true }) private dismissable!: boolean;
 
-    public hide(): void {
+  public hide(): void {
+    if (this.dismissable) {
       this.$emit('dismiss-modal');
     }
+  }
 }
 </script>
 <style>

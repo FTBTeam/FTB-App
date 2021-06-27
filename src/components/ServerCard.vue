@@ -2,24 +2,34 @@
   <div class="card-list w-full" style="height: 128px;">
     <div style="height: 100%" class="flex flex-row my-4">
       <article :class="`relative overflow-hidden shadow-lg`" style="height: 100%; width: 128px;">
-        <img class="rounded-sm" width="128"
-             :src="server.protoResponse && server.protoResponse.favicon !== undefined && server.protoResponse.favicon.length > 0 ? server.protoResponse.favicon: art !== undefined && art.length > 0 ? art : defaultImage"
-             alt="placeholder"
+        <img
+          class="rounded-sm"
+          width="128"
+          :src="
+            server.protoResponse &&
+            server.protoResponse.favicon !== undefined &&
+            server.protoResponse.favicon.length > 0
+              ? server.protoResponse.favicon
+              : art !== undefined && art.length > 0
+              ? art
+              : defaultImage
+          "
+          alt="placeholder"
         />
-        <div class="content">
-        </div>
+        <div class="content"></div>
       </article>
       <div class="flex-1 p-2 bg-background-lighten flex flex-col">
         <div class="flex flex-row">
-          <div class="name-box font-bold">{{server.name}}</div>
+          <div class="name-box font-bold">{{ server.name }}</div>
           <div class="ml-auto mr-2 text-sm text-gray-500" v-if="server.protoResponse && server.protoResponse.players">
             Players
-            <span>{{server.protoResponse.players.online}}/{{server.protoResponse.players.max}}</span>
+            <span>{{ server.protoResponse.players.online }}/{{ server.protoResponse.players.max }}</span>
           </div>
         </div>
 
         <p class="mb-auto max-2-lines" v-if="server.protoResponse && server.protoResponse.description !== undefined">
-          {{server.protoResponse.description.text.replace(/\u00a7[0-9a-fk-or]/ig, '')}}</p>
+          {{ server.protoResponse.description.text.replace(/\u00a7[0-9a-fk-or]/gi, '') }}
+        </p>
         <!-- <div  v-if="tags" class="flex flex-row items-center">
             <div class="flex flex-row">
                 <span v-for="(tag, i) in limitedTags" :key="`tag-${i}`" @click="clickTag(tag.name)" class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light" style="font-variant: small-caps;">{{tag.name}}</span>
@@ -28,235 +38,244 @@
         </div> -->
       </div>
       <div style="width:50px;" class="flex flex-col list-action-button-holder">
-        <FTBButton @click="goToPage" :isRounded="false" color="primary"
-                   class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr">
-          <font-awesome-icon icon="play" size="sm" class="cursor-pointer"/>
-          <p>Join</p></FTBButton>
-        <FTBButton @click="goToPage" :isRounded="false" color="info"
-                   class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br">
-          <font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/>
-          <p>More</p></FTBButton>
+        <FTBButton
+          @click="goToPage"
+          :isRounded="false"
+          color="primary"
+          class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr"
+        >
+          <font-awesome-icon icon="play" size="sm" class="cursor-pointer" />
+          <p>Join</p></FTBButton
+        >
+        <FTBButton
+          @click="goToPage"
+          :isRounded="false"
+          color="info"
+          class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"
+        >
+          <font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer" />
+          <p>More</p></FTBButton
+        >
       </div>
     </div>
     <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal :title="msgBox.title" :content="msgBox.content" :ok-action="msgBox.okAction"
-                     :cancel-action="msgBox.cancelAction" :type="msgBox.type"/>
+      <message-modal
+        :title="msgBox.title"
+        :content="msgBox.content"
+        :ok-action="msgBox.okAction"
+        :cancel-action="msgBox.cancelAction"
+        :type="msgBox.type"
+      />
     </FTBModal>
   </div>
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import FTBButton from '@/components/FTBButton.vue';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
-import {logVerbose} from '@/utils';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
-import { ipcRenderer } from 'electron';
-
-const namespace: string = 'websocket';
+import platform from '@/utils/interface/electron-overwolf';
 
 export interface MsgBox {
-    title: string;
-    content: string;
-    type: string;
-    okAction: () => void;
-    cancelAction: () => void;
+  title: string;
+  content: string;
+  type: string;
+  okAction: () => void;
+  cancelAction: () => void;
 }
 
 @Component({
-    components: {
-        FTBButton,
-        FTBModal,
-        'message-modal': MessageModal,
-    },
-    props: [
-        'server',
-        'art',
-    ],
+  components: {
+    FTBButton,
+    FTBModal,
+    'message-modal': MessageModal,
+  },
+  props: ['server', 'art'],
 })
 export default class ServerCard extends Vue {
-    private defaultImage: any = placeholderImage;
-    private showMsgBox: boolean = false;
+  private defaultImage: any = placeholderImage;
+  private showMsgBox = false;
 
-    @Prop()
-    private server: any;
+  @Prop()
+  private server: any;
 
-    private msgBox: MsgBox = {
-        title: '',
-        content: '',
-        type: '',
-        okAction: Function,
-        cancelAction: Function,
-    };
+  private msgBox: MsgBox = {
+    title: '',
+    content: '',
+    type: '',
+    okAction: Function,
+    cancelAction: Function,
+  };
 
-    public goToPage() {
-      ipcRenderer.send('openLink', `ftb://server/${this.server.id}`);
-    }
+  public goToPage() {
+    platform.get.utils.openUrl(`ftb://server/${this.server.id}`);
+  }
 
-    public comingSoonMsg() {
-        this.msgBox.type = 'okOnly';
-        this.msgBox.title = 'Coming Soon';
-        this.msgBox.okAction = this.hideMsgBox;
-        this.msgBox.cancelAction = this.hideMsgBox;
-        this.msgBox.content = `This feature is currently not available, we do however aim to have this feature implemented in the near future`;
-        this.showMsgBox = true;
-    }
+  public comingSoonMsg() {
+    this.msgBox.type = 'okOnly';
+    this.msgBox.title = 'Coming Soon';
+    this.msgBox.okAction = this.hideMsgBox;
+    this.msgBox.cancelAction = this.hideMsgBox;
+    this.msgBox.content = `This feature is currently not available, we do however aim to have this feature implemented in the near future`;
+    this.showMsgBox = true;
+  }
 
-    public hideMsgBox(): void {
-        this.showMsgBox = false;
-    }
-
+  public hideMsgBox(): void {
+    this.showMsgBox = false;
+  }
 }
 </script>
 
 <style scoped lang="scss">
-  .card {
-    position: relative;
-  }
+.card {
+  position: relative;
+}
 
-  .pack-image {
-    transition: filter .5s;
-    height: 100%;
-    object-fit: cover;
-  }
+.pack-image {
+  transition: filter 0.5s;
+  height: 100%;
+  object-fit: cover;
+}
 
-  .card-list .list-action-button {
-    filter: brightness(0.7);
-  }
+.card-list .list-action-button {
+  filter: brightness(0.7);
+}
 
-  .card-list:hover .list-action-button {
-    filter: brightness(1);
-  }
+.card-list:hover .list-action-button {
+  filter: brightness(1);
+}
 
-  .pack-image.blur {
-    filter: blur(5px) brightness(50%);
-  }
+.pack-image.blur {
+  filter: blur(5px) brightness(50%);
+}
 
-  .list-action-button-holder:hover .list-action-button:not(:hover) {
+.list-action-button-holder:hover .list-action-button:not(:hover) {
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+
+  & > * {
     height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-
-    & > * {
-      height: 0;
-    }
   }
+}
 
-  .list-action-button {
-    transition: height .2s, filter .4s;
+.list-action-button {
+  transition: height 0.2s, filter 0.4s;
+  overflow: hidden;
+
+  & > * {
     overflow: hidden;
-
-    & > * {
-      overflow: hidden;
-    }
-
-    & p:not(.cursor-pointer) {
-      display: none;
-    }
   }
 
-  .list-action-button-holder .list-action-button:hover, .list-action-button-holder .list-action-button:hover ~ .list-action-button:hover {
-    height: 100%;
-
-    & p:not(.cursor-pointer) {
-      display: block;
-    }
+  & p:not(.cursor-pointer) {
+    display: none;
   }
+}
 
-  .buttons {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-  }
+.list-action-button-holder .list-action-button:hover,
+.list-action-button-holder .list-action-button:hover ~ .list-action-button:hover {
+  height: 100%;
 
-  .row {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  & p:not(.cursor-pointer) {
+    display: block;
   }
+}
 
-  .content {
-    position: absolute;
-    height: 100%;
-    bottom: 0;
-    width: 100%;
-    color: #fff;
-    opacity: 1;
-    transition: opacity .3s;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: flex-end;
-  }
+.buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
 
-  .content .name-box {
-    background: rgba(0, 0, 0, 0.6);
-    width: 100%;
-    text-align: left;
-    font-size: 15px;
-    font-weight: 700;
-    padding: 2px 2px 2px 6px;
-  }
+.row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
-  .content .update-box {
-    background: rgba(255, 193, 7, 0.9);
-    width: 100%;
-    text-align: left;
-    color: #000;
-    font-weight: 700;
-    padding: 2px 2px 2px 6px;
-    top: 0;
-    position: absolute;
-  }
+.content {
+  position: absolute;
+  height: 100%;
+  bottom: 0;
+  width: 100%;
+  color: #fff;
+  opacity: 1;
+  transition: opacity 0.3s;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
 
-  .hoverContent {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    color: #fff;
-    opacity: 0;
-    transition: opacity .5s;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    // margin: auto 0;
-  }
+.content .name-box {
+  background: rgba(0, 0, 0, 0.6);
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 2px 2px 2px 6px;
+}
 
-  .divider {
-    height: 20px;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
-    margin: 0 20px;
-  }
+.content .update-box {
+  background: rgba(255, 193, 7, 0.9);
+  width: 100%;
+  text-align: left;
+  color: #000;
+  font-weight: 700;
+  padding: 2px 2px 2px 6px;
+  top: 0;
+  position: absolute;
+}
 
-  .button {
-    transition: transform .2s ease-in;
-  }
+.hoverContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.5s;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  // margin: auto 0;
+}
 
-  .hover-scale:hover {
-    transform: scale(1.3);
-  }
+.divider {
+  height: 20px;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #fff;
+  margin: 0 20px;
+}
 
-  .button-shadow {
-    // text-shadow: 3px 6px #272634;
-    filter: drop-shadow(10px 10px 5px rgba(0, 0, 0, .8));
-  }
+.button {
+  transition: transform 0.2s ease-in;
+}
 
-  .max-2-lines {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
+.hover-scale:hover {
+  transform: scale(1.3);
+}
+
+.button-shadow {
+  // text-shadow: 3px 6px #272634;
+  filter: drop-shadow(10px 10px 5px rgba(0, 0, 0, 0.8));
+}
+
+.max-2-lines {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
 </style>

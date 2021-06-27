@@ -1,17 +1,12 @@
 <template>
-  <pack-card
-    v-if="listMode === undefined || listMode === 'false' || listMode === false"
-    v-bind="$props"
-  ></pack-card>
+  <pack-card v-if="listMode === undefined || listMode === 'false' || listMode === false" v-bind="$props"></pack-card>
   <pack-card-list v-else v-bind="$props"></pack-card-list>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-property-decorator';
 import PackCard from './PackCard.vue';
 import PackCardList from './PackCardList.vue';
-import { Action, State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
 
 @Component({
   components: {
