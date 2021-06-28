@@ -41,6 +41,7 @@ const Overwolf: ElectronOverwolfInterface = {
     openModpack(payload) {
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
     },
+
     openFriends() {
       overwolf.windows.obtainDeclaredWindow('chat', (result: any) => {
         if (result.success && !result.window.isVisible) {
@@ -48,10 +49,32 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+
     async openLogin(cb: (data: any) => void) {
       await overwolf.windows.getMainWindow().openWebserver(cb);
       overwolf.utils.openUrlInDefaultBrowser(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
     },
+
+    changeExitOverwolfSetting(value: boolean) {
+      overwolf.settings.setExtensionSettings({ exit_overwolf_on_exit: value }, (data: any) => {
+        console.log(data);
+      });
+    },
+
+    logoutFromMinetogether() {
+      overwolf.windows.obtainDeclaredWindow('chat', (result: any) => {
+        if (result.success && result.window.isVisible) {
+          overwolf.windows.close(result.window.id);
+        }
+      });
+    },
+
+    setUser(payload) {
+      overwolf.windows.getMainWindow().setAuthData(payload);
+    },
+
+    // Nothing done for reasons
+    updateSettings() {},
   },
 
   // Clipboard
@@ -117,7 +140,79 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+    expandWindow() {
+      overwolf.windows.getCurrentWindow((result: any) => {
+        if (result && result.status === 'success' && result.window && result.window.id) {
+          //@ts-ignore
+          overwolf.windows.changeSize(result.window.id, 800, result.window.height);
+        }
+      });
+    },
+    collapseWindow() {
+      overwolf.windows.getCurrentWindow((result: any) => {
+        if (result && result.status === 'success' && result.window && result.window.id) {
+          //@ts-ignore
+          overwolf.windows.changeSize(result.window.id, 300, result.window.height);
+        }
+      });
+    },
+  },
+
+  // IO
+  io: {
+    selectFolderDialog(startPath, cb) {
+      overwolf.utils.openFolderPicker(startPath, (resp: any) => {
+        if (resp && resp.status === 'success') {
+          cb(resp.path);
+        }
+      });
+    },
+  },
+
+  // Websockets
+  websocket: {
+    // Empty shim (this doesn't happen on overwolf)
+    notifyWebhookReceived(message: string) {},
   },
 };
 
 export default Overwolf;
+
+// FIXME: Code I found not being used anywhere
+
+// private readDirSync(path: string): Promise<Array<any>> {
+//   return new Promise((resolve, reject) => {
+//       //@ts-ignore
+//       overwolf.io.dir(path, (result) => {
+//           if(result.success === true && result.data){
+//               resolve(result.data);
+//           }
+//       })
+//   });
+// }
+
+// private readFileSync(path: string, options?: any): Promise<string> {
+//   return new Promise((resolve, reject) => {
+//       //@ts-ignore
+//       overwolf.io.readTextFile(path, options, (result) => {
+//           if(result.success === true){
+//               resolve(result.content);
+//           } else {
+//               reject(result.error);
+//           }
+//       });
+//   });
+// }
+
+// private existsSync(path: string): Promise<boolean> {
+//   return new Promise((resolve, reject) => {
+//       //@ts-ignore
+//       overwolf.io.exist(path,(result) => {
+//           if(result.success === true){
+//               resolve(result.exist);
+//           } else {
+//               reject(result.error);
+//           }
+//       });
+//   });
+// }

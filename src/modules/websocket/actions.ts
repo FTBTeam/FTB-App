@@ -1,9 +1,9 @@
-import {ActionTree, Store, ActionContext} from 'vuex';
+import {ActionTree, ActionContext} from 'vuex';
 import {SocketState} from './types';
 import {RootState} from '@/types';
 import Vue from 'vue';
 import { logVerbose } from '@/utils';
-import axios, {AxiosResponse} from 'axios';
+import axios from 'axios';
 
 export interface MessageData {
   payload: any;

@@ -72,28 +72,23 @@
 
 <script lang="ts">
 const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-import {readdirSync, readFileSync, existsSync} from 'fs';
-import {createPaste} from 'hastebin';
-import path from 'path';
 import Sidebar from '@/components/Sidebar.vue';
 import TitleBar from '@/components/TitleBar.vue';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/FTBModal.vue';
 import FTBButton from '@/components/FTBButton.vue';
 import FTBInput from '@/components/FTBInput.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
-import { asyncForEach, logVerbose } from '@/utils';
+import { logVerbose } from '@/utils';
 import config from '@/config';
 import {
-  Instance,
   ModpackState,
   InstallProgress,
 } from '@/modules/modpacks/types';
-import { RootState } from '@/types';
 import { SettingsState } from '../modules/settings/types';
-import { ipcRenderer, clipboard} from 'electron';
+import { ipcRenderer} from 'electron';
 import platfrom from '@/utils/interface/electron-overwolf';
 
 @Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal,

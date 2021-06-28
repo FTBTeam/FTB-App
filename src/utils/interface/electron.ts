@@ -38,6 +38,19 @@ const Electron: ElectronOverwolfInterface = {
     openLogin() {
       ipcRenderer.send('openOauthWindow');
     },
+    logoutFromMinetogether() {
+      ipcRenderer.send('logout');
+    },
+
+    // Obviously do nothing
+    changeExitOverwolfSetting() {},
+    updateSettings(msg) {
+      ipcRenderer.send('updateSettings', msg);
+    },
+
+    setUser(payload) {
+      ipcRenderer.send('user', payload.user);
+    },
   },
 
   // Clipboard
@@ -61,9 +74,33 @@ const Electron: ElectronOverwolfInterface = {
     max() {
       ipcRenderer.send('windowControls', { action: 'maximize' });
     },
+
+    expandWindow() {
+      ipcRenderer.send('expandMeScotty', { width: 800 });
+    },
+    collapseWindow() {
+      ipcRenderer.send('expandMeScotty', { width: 300 });
+    },
+
     // we don't need this on electron because it's not silly
     handleDrag() {},
     setupTitleBar() {},
+  },
+
+  // IO
+  io: {
+    selectFolderDialog(startPath, cb) {
+      ipcRenderer.send('selectFolder', startPath);
+      ipcRenderer.on('setInstanceFolder', (_, dir) => cb(dir));
+    },
+  },
+
+  // Websockets
+  websocket: {
+    // Empty shim (this doesn't happen on overwolf)
+    notifyWebhookReceived(message: string) {
+      ipcRenderer.send('websocketReceived', message);
+    },
   },
 };
 

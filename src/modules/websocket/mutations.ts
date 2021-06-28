@@ -1,8 +1,7 @@
-import { ipcRenderer } from 'electron';
 import {MutationTree} from 'vuex';
 import {SocketState} from './types';
-// @ts-ignore
 import Vue from 'vue';
+import platform from '@/utils/interface/electron-overwolf'
 
 export const mutations: MutationTree<SocketState> = {
     SOCKET_ONOPEN(state: any, event: any)  {
@@ -12,6 +11,7 @@ export const mutations: MutationTree<SocketState> = {
         Vue.prototype.$socket = event.currentTarget;
         state.socket.isConnected = true;
         state.firstStart = false;
+        console.log(Vue.prototype.$socket);
     },
     SOCKET_ONCLOSE(state: any, event: any)  {
         state.socket.isConnected = false;
@@ -20,7 +20,7 @@ export const mutations: MutationTree<SocketState> = {
         // console.error(state, event);
         state.firstStart = false;
     },
-    SOCKET_ONMESSAGE(state: any, message: any)  {
+    SOCKET_ONMESSAGE(state: SocketState, message: any)  {
         if (message.requestId) {
             if (state.messages[message.requestId]) {
                 state.messages[message.requestId](message);
@@ -56,7 +56,7 @@ export const mutations: MutationTree<SocketState> = {
             // Vue.set(state.downloadedFiles, message.fileName, message.status);
         }
         state.socket.message = message;
-        ipcRenderer.send('websocketReceived', message);
+        platform.get.websocket.notifyWebhookReceived(message);
     },
     SOCKET_RECONNECT(state: any, count: number) {
         console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
@@ -77,4 +77,7 @@ export const mutations: MutationTree<SocketState> = {
     ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void) {
         state.modProgressCallback = callback;
     },
+    ADD_EXIT_CALLBACK(state: any, callback: (data: any) => void) {
+      state.exitCallback = callback;
+    }
 };

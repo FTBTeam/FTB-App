@@ -12,16 +12,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { shell, ipcRenderer, clipboard } from 'electron';
+import { Component, Vue } from 'vue-property-decorator';
 import { State, Action } from 'vuex-class';
-import store from '@/store';
-import config from '@/config';
 import { AuthState } from '../../modules/auth/types';
 import FTBInput from '../FTBInput.vue';
 import FTBButton from '../FTBButton.vue';
 import { FriendRequestResponse } from '../../modules/auth/actions';
-import { shortenHash } from '../../utils';
 
 @Component({
     components: {
@@ -35,9 +31,9 @@ export default class AddFriend extends Vue {
   @Action('submitFriendRequest', {namespace: 'auth'})
   private submitFriendRequest!: (payload: {friendCode: string}) => Promise<FriendRequestResponse>;
 
-  private message: string = '';
+  private message = '';
   private messageType: 'danger' | 'primary' = 'primary';
-  private friendCode: string = '';
+  private friendCode = '';
 
   public async submit() {
       this.message = '';
