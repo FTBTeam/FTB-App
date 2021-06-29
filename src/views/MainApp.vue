@@ -10,32 +10,101 @@
           <router-view />
         </div>
         <transition name="slide-down-up">
-        <div v-if="modpacks.installing != null">
-          <div class="progress-bar relative"  >
-            <div class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-if="modpacks.installing.error">Error installing {{modpacks.installing.pack.name}} - {{modpacks.installing.errorMessage}} - <button class="bg-orange-500 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer" @click="retry(modpacks.installing)"><span class="cursor-pointer">Retry?</span></button></div>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'INIT'">Creating environment...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'API'">Downloading modpack metadata...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'VANILLA'">Installing Vanilla Launcher...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'FORGE'">Installing Forge...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'DOWNLOADS'">Installing {{modpacks.installing.pack.name}} - {{modpacks.installing.progress.toFixed(2)}}% ({{(modpacks.installing.downloadSpeed / 1000000).toFixed(2)}} mbps)</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'POSTINSTALL'">Finalizing Installation...</p>
-            <p class="pl-4 w-full" v-bind:style="{'position': 'absolute'}" v-else-if="modpacks.installing.stage == 'FINISHED'">Install Finished</p>
-            <div class=" w-full h-full bg-grey-light justify-center">
-              <div v-if="!modpacks.installing.error" class="h-full bg-primary text-xs leading-none py-1 text-white" v-bind:style="{'width': `${modpacks.installing.progress}%`, 'transition': 'width 0.5s ease'}"></div>
-              <div v-else class="h-full bg-error-button text-xs leading-none py-1 text-white" v-bind:style="{'width': `100%`, 'transition': 'width 0.5s ease'}"></div>
+          <div v-if="modpacks.installing != null">
+            <div class="progress-bar relative">
+              <div class="pl-4 w-full" v-bind:style="{ position: 'absolute' }" v-if="modpacks.installing.error">
+                Error installing {{ modpacks.installing.pack.name }} - {{ modpacks.installing.errorMessage }} -
+                <button
+                  class="bg-orange-500 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
+                  @click="retry(modpacks.installing)"
+                >
+                  <span class="cursor-pointer">Retry?</span>
+                </button>
+              </div>
+              <p
+                class="pl-4 w-full"
+                v-bind:style="{ position: 'absolute' }"
+                v-else-if="modpacks.installing.stage == 'INIT'"
+              >
+                Creating environment...
+              </p>
+              <p
+                class="pl-4 w-full"
+                v-bind:style="{ position: 'absolute' }"
+                v-else-if="modpacks.installing.stage == 'API'"
+              >
+                Downloading modpack metadata...
+              </p>
+              <p
+                class="pl-4 w-full"
+                v-bind:style="{ position: 'absolute' }"
+                v-else-if="modpacks.installing.stage == 'VANILLA'"
+              >
+                Installing Vanilla Launcher...
+              </p>
+              <p
+                class="pl-4 w-full"
+                v-bind:style="{ position: 'absolute' }"
+                v-else-if="modpacks.installing.stage == 'FORGE'"
+              >
+                Installing Forge...
+              </p>
+              <p
+                class="pl-4 w-full"
+                v-bind:style="{ position: 'absolute' }"
+                v-else-if="modpacks.installing.stage == 'DOWNLOADS'"
+              >
+                Installing {{ modpacks.installing.pack.name }} - {{ modpacks.installing.progress.toFixed(2) }}% ({{
+                  (modpacks.installing.downloadSpeed / 1000000).toFixed(2)
+                }}
+                mbps)
+              </p>
+              <p
+                class="pl-4 w-full"
+                v-bind:style="{ position: 'absolute' }"
+                v-else-if="modpacks.installing.stage == 'POSTINSTALL'"
+              >
+                Finalizing Installation...
+              </p>
+              <p
+                class="pl-4 w-full"
+                v-bind:style="{ position: 'absolute' }"
+                v-else-if="modpacks.installing.stage == 'FINISHED'"
+              >
+                Install Finished
+              </p>
+              <div class=" w-full h-full bg-grey-light justify-center">
+                <div
+                  v-if="!modpacks.installing.error"
+                  class="h-full bg-primary text-xs leading-none py-1 text-white"
+                  v-bind:style="{ width: `${modpacks.installing.progress}%`, transition: 'width 0.5s ease' }"
+                ></div>
+                <div
+                  v-else
+                  class="h-full bg-error-button text-xs leading-none py-1 text-white"
+                  v-bind:style="{ width: `100%`, transition: 'width 0.5s ease' }"
+                ></div>
+              </div>
             </div>
           </div>
-        </div>
         </transition>
         <transition name="slide-down-up">
           <div v-if="$store.state && $store.state.alert != null">
-            <div class="progress-bar relative" >
-              <p class="pl-4 w-full absolute"><span class="font-bold">{{$store.state.alert.title}}</span> {{$store.state.alert.message}}</p>
+            <div class="progress-bar relative">
+              <p class="pl-4 w-full absolute">
+                <span class="font-bold">{{ $store.state.alert.title }}</span> {{ $store.state.alert.message }}
+              </p>
               <div class="w-full h-full bg-grey-light justify-center ">
                 <div class="h-full text-xs leading-none py-1 text-white" :class="`bg-${$store.state.alert.type}`"></div>
               </div>
               <div class="alert-close cursor-pointer" @click="hideAlert">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" class="pointer-events-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  class="pointer-events-none"
+                >
                   <line x1="0.71" y1="11.12" x2="11.11" y2="0.72" stroke-width="2" />
                   <line x1="0.77" y1="0.71" x2="11.18" y2="11.12" stroke-width="2" />
                 </svg>
@@ -44,28 +113,48 @@
           </div>
         </transition>
       </div>
-      <FTBModal v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null" :visible="$store.state.websocket.modal !== null" @dismiss-modal="hideModal" :dismissable="$store.state.websocket.modal.dismissable">
-        <message-modal :title="$store.state.websocket.modal.title" :content="$store.state.websocket.modal.message" type="custom" :buttons="$store.state.websocket.modal.buttons" :modalID="$store.state.websocket.modal.id"/>
+      <FTBModal
+        v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
+        :visible="$store.state.websocket.modal !== null"
+        @dismiss-modal="hideModal"
+        :dismissable="$store.state.websocket.modal.dismissable"
+      >
+        <message-modal
+          :title="$store.state.websocket.modal.title"
+          :content="$store.state.websocket.modal.message"
+          type="custom"
+          :buttons="$store.state.websocket.modal.buttons"
+          :modalID="$store.state.websocket.modal.id"
+        />
       </FTBModal>
     </div>
-    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20">
+    <div
+      class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
+      style="flex-direction: column; justify-content: center; align-items: center;"
+      v-else-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
+    >
       <img src="../assets/logo_ftb.png" width="200px" />
       <h1 class="text-2xl text-center">There was an error with the FTB App.</h1>
       <div v-if="!submitted" class="flex flex-col">
-        <ftb-input label="Email" v-model="errorEmail"/>
+        <ftb-input label="Email" v-model="errorEmail" />
         <p>Please describe what happened in the box below and submit.</p>
         <textarea class="bg-navbar border-background-darken p-2" v-model="errorDescription"></textarea>
-        <ftb-button color="danger"
-                    class="my-2 py-2 px-4 text-center rounded-br" @click="submitError">{{submittingError ? 'Submitting...' : 'Submit'}}</ftb-button>
+        <ftb-button color="danger" class="my-2 py-2 px-4 text-center rounded-br" @click="submitError">{{
+          submittingError ? 'Submitting...' : 'Submit'
+        }}</ftb-button>
       </div>
       <div v-else>
         <p>Thanks for submitting the bug report!</p>
         <ftb-button color="danger" class="my-2 py-2 px-4 text-center rounded-br" @click="quitApp">Quit</ftb-button>
       </div>
     </div>
-    <div class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col" style="flex-direction: column; justify-content: center; align-items: center;" v-else>
+    <div
+      class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
+      style="flex-direction: column; justify-content: center; align-items: center;"
+      v-else
+    >
       <div class="background-animation"></div>
-      <img src="../assets/logo_ftb.png" width="500px" style="margin-top: 10px;" class="loader-logo-animation"/>
+      <img src="../assets/logo_ftb.png" width="500px" style="margin-top: 10px;" class="loader-logo-animation" />
     </div>
   </div>
 </template>
@@ -83,16 +172,20 @@ import FTBInput from '@/components/FTBInput.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { logVerbose } from '@/utils';
 import config from '@/config';
-import {
-  ModpackState,
-  InstallProgress,
-} from '@/modules/modpacks/types';
+import { ModpackState, InstallProgress } from '@/modules/modpacks/types';
 import { SettingsState } from '../modules/settings/types';
-import { ipcRenderer} from 'electron';
 import platfrom from '@/utils/interface/electron-overwolf';
 
-@Component({ components: { Sidebar, TitleBar, FTBModal, 'message-modal': MessageModal,
-        'ftb-button': FTBButton, 'ftb-input': FTBInput} })
+@Component({
+  components: {
+    Sidebar,
+    TitleBar,
+    FTBModal,
+    'message-modal': MessageModal,
+    'ftb-button': FTBButton,
+    'ftb-input': FTBInput,
+  },
+})
 export default class MainApp extends Vue {
   @State('websocket') public websockets!: SocketState;
   @State('modpacks') public modpacks!: ModpackState;
@@ -107,8 +200,13 @@ export default class MainApp extends Vue {
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('hideAlert') public hideAlert: any;
   @Action('hideModal') public hideModal: any;
+  @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
+  @Action('disconnect') public disconnect: any;
   private loading: boolean = false;
   private hasLoaded: boolean = false;
+
+  @Action('registerExitCallback')
+  private registerExitCallback: any;
 
   @Action('registerPingCallback')
   private registerPingCallback: any;
@@ -123,23 +221,36 @@ export default class MainApp extends Vue {
 
   private platfrom = platfrom;
 
+  private windowId: string | null = null;
+
   public mounted() {
     this.registerPingCallback((data: any) => {
       if (data.type === 'ping') {
-        console.log('Sending pong');
-        this.sendMessage({payload: {type: 'pong'}});
+        this.sendMessage({ payload: { type: 'pong' } });
+      }
+    });
+
+    this.platfrom.get.frame.setupTitleBar(windowId => (this.windowId = windowId));
+
+    // Only used on overwolf.
+    this.registerExitCallback((data: any) => {
+      if (data.type === 'yeetLauncher') {
+        this.platfrom.get.actions.yeetLauncher(this.windowId, () => {
+          this.saveSettings(this.settings?.settings);
+          this.disconnect();
+        });
       }
     });
   }
 
-  @Watch('websockets', {deep: true})
+  @Watch('websockets', { deep: true })
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (newVal.socket.isConnected && !this.loading && !this.hasLoaded) {
       this.loading = true;
       await this.fetchStartData();
       this.hasLoaded = true;
       this.loading = false;
-      ipcRenderer.send('appReady');
+      this.platfrom.get.actions.onAppReady();
     } else if (!newVal.socket.isConnected) {
       this.hasLoaded = false;
     }
@@ -152,12 +263,14 @@ export default class MainApp extends Vue {
         payload: { type: 'installedInstances' },
         callback: (data: any) => {
           this.storePacks(data);
-          resolve();
-      }});
+          resolve(null);
+        },
+      });
     });
   }
 
   public async submitError() {
+    this.platfrom.get.actions.uploadClientLogs();
     if (!emailRegex.test(this.errorEmail)) {
       console.log('Email regex not passing');
       return;
@@ -166,66 +279,101 @@ export default class MainApp extends Vue {
       return;
     }
     this.submittingError = true;
-    const logLink = await this.uploadLogData().catch((err) => {
+    const logLink = await this.uploadLogData().catch(err => {
       if (err) {
         this.submittingError = false;
         // Show an error here...
         return;
       }
-      });
+    });
+    // TODO: FIND OUT WHY THIS HAS BEEN COMMENTED
     // Send request
-    fetch(`https://minetogether.io/api/ftbAppError`, {method: 'PUT', body: JSON.stringify({email: this.errorEmail, logs: logLink, description: this.errorDescription})});
+    //fetch(`https://minetogether.io/api/ftbAppError`, {method: 'PUT', body: JSON.stringify({email: this.errorEmail, logs: logLink, description: this.errorDescription})});
     this.submittingError = false;
     this.submitted = true;
   }
 
   public uploadLogData(): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.sendMessage({payload: {type: 'uploadLogs', uiVersion: this.webVersion}, callback: async (data: any) => {
-              if (!data.error) {
-                  const url = `https://pste.ch/${data.code}`;
-                  resolve(url);
-              } else {
-                reject(data.error);
-              }
-      }});
+      this.sendMessage({
+        payload: { type: 'uploadLogs', uiVersion: this.webVersion },
+        callback: async (data: any) => {
+          if (!data.error) {
+            const url = `https://pste.ch/${data.code}`;
+            resolve(url);
+          } else {
+            reject(data.error);
+          }
+        },
+      });
     });
   }
 
   public retry(modpack: InstallProgress) {
-    if (this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID).length > 0) {
+    if (this.modpacks.installedPacks.filter(pack => pack.uuid === modpack.instanceID).length > 0) {
       logVerbose(this.settings, 'The instance already exists, assume an update.');
     } else {
       logVerbose(this.settings, 'Instance does not exist, we can assume delete is fine');
-      const foundPack = this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID)[0];
-      this.sendMessage({payload: {type: 'uninstallInstance', uuid: foundPack.uuid}, callback: (data: any) => {
-        this.sendMessage({payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
-            this.storePacks(data);
-            this.updateInstall({modpackID: foundPack.id, progress: 0});
-            this.sendMessage({payload: {type: 'installInstance', id: foundPack.id, version: foundPack.versionId}, callback: (data: any) => {
-              if (data.status === 'success') {
-                this.sendMessage({payload: {type: 'installedInstances', refresh: true}, callback: (data: any) => {
-                  this.storePacks(data);
-                  this.finishInstall({modpackID: foundPack.id, messageID: data.requestId});
-                }});
-              } else if (data.status === 'error') {
-                this.updateInstall({modpackID: foundPack.id, messageID: data.requestId, error: true, errorMessage: data.message, instanceID: data.uuid});
-              } else if (data.currentStage === 'POSTINSTALL') {
-                // We don't care about this, keep progress bar showing.
-              } else if (data.status === 'init') {
-                this.updateInstall({modpackID: foundPack.id, messageID: data.requestId, stage: 'INIT', message: data.message});
-              } else if (data.overallPercentage <= 100) {
-                this.updateInstall({modpackID: foundPack.id, messageID: data.requestId, progress: data.overallPercentage, downloadSpeed: data.speed, downloadedBytes: data.currentBytes, totalBytes: data.overallBytes, stage: data.currentStage});
-              }
-              logVerbose(this.settings, 'Update Data', JSON.stringify(data));
-            }});
-          }});
-      }});
+      const foundPack = this.modpacks.installedPacks.filter(pack => pack.uuid === modpack.instanceID)[0];
+      this.sendMessage({
+        payload: { type: 'uninstallInstance', uuid: foundPack.uuid },
+        callback: (data: any) => {
+          this.sendMessage({
+            payload: { type: 'installedInstances', refresh: true },
+            callback: (data: any) => {
+              this.storePacks(data);
+              this.updateInstall({ modpackID: foundPack.id, progress: 0 });
+              this.sendMessage({
+                payload: { type: 'installInstance', id: foundPack.id, version: foundPack.versionId },
+                callback: (data: any) => {
+                  if (data.status === 'success') {
+                    this.sendMessage({
+                      payload: { type: 'installedInstances', refresh: true },
+                      callback: (data: any) => {
+                        this.storePacks(data);
+                        this.finishInstall({ modpackID: foundPack.id, messageID: data.requestId });
+                      },
+                    });
+                  } else if (data.status === 'error') {
+                    this.updateInstall({
+                      modpackID: foundPack.id,
+                      messageID: data.requestId,
+                      error: true,
+                      errorMessage: data.message,
+                      instanceID: data.uuid,
+                    });
+                  } else if (data.currentStage === 'POSTINSTALL') {
+                    // We don't care about this, keep progress bar showing.
+                  } else if (data.status === 'init') {
+                    this.updateInstall({
+                      modpackID: foundPack.id,
+                      messageID: data.requestId,
+                      stage: 'INIT',
+                      message: data.message,
+                    });
+                  } else if (data.overallPercentage <= 100) {
+                    this.updateInstall({
+                      modpackID: foundPack.id,
+                      messageID: data.requestId,
+                      progress: data.overallPercentage,
+                      downloadSpeed: data.speed,
+                      downloadedBytes: data.currentBytes,
+                      totalBytes: data.overallBytes,
+                      stage: data.currentStage,
+                    });
+                  }
+                  logVerbose(this.settings, 'Update Data', JSON.stringify(data));
+                },
+              });
+            },
+          });
+        },
+      });
     }
   }
 
   private quitApp() {
-    ipcRenderer.send('quit_app');
+    this.platfrom.get.frame.quit();
   }
 }
 </script>
@@ -279,10 +427,10 @@ export default class MainApp extends Vue {
   right: 10px;
 }
 .slide-down-up-enter-active {
-  transition: all .5s ease;
+  transition: all 0.5s ease;
 }
 .slide-down-up-leave-active {
-  transition: all .5s ease;
+  transition: all 0.5s ease;
 }
 .slide-down-up-enter, .slide-leave-to
 /* .slide-fade-leave-active below version 2.1.8 */ {
@@ -296,17 +444,17 @@ export default class MainApp extends Vue {
 }
 
 .background-animation {
-    background-image: url("../assets/ftb-tiny-desat.png");
-    filter: brightness(0.5);
-    animation-name: background-animation;
-    animation-duration: 10s;
-    animation-iteration-count: 1;
-    animation-fill-mode: forwards;
-    width: 100vw;
-    position: absolute;
-    top: 0;
-    left: 0;
-    -webkit-mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,0.4)), to(rgba(0,0,0,0)));
+  background-image: url('../assets/ftb-tiny-desat.png');
+  filter: brightness(0.5);
+  animation-name: background-animation;
+  animation-duration: 10s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+  width: 100vw;
+  position: absolute;
+  top: 0;
+  left: 0;
+  -webkit-mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.4)), to(rgba(0, 0, 0, 0)));
 }
 
 @keyframes background-animation {

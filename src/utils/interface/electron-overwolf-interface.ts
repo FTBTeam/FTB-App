@@ -11,12 +11,16 @@ export interface Actions {
   openModpack: (payload: { name: string; id: string }) => void;
   openFriends: () => void;
   openLogin: (cb: (data: any) => void) => void;
+  uploadClientLogs: () => void;
 
   // Res only used on overwolf
   setUser: (payload: any) => void;
   updateSettings: (info: any) => void;
   changeExitOverwolfSetting: (value: boolean) => void;
   logoutFromMinetogether: () => void;
+  sendSession: (payload: any) => void;
+  yeetLauncher: (windowId: any, cb: () => void) => void;
+  onAppReady: () => void;
 }
 
 export interface CB {
@@ -28,6 +32,7 @@ export interface Frame {
   close: (windowId: any, onClose: () => void) => void;
   min: (windowId: any) => void;
   max: (windowId: any) => void;
+  quit: () => void;
 
   expandWindow: () => void;
   collapseWindow: () => void;
@@ -61,4 +66,5 @@ export default interface ElectronOverwolfInterface {
   config: Config;
   io: InputOutput;
   websocket: Websocket;
+  setupApp: (vm: any) => void;
 }

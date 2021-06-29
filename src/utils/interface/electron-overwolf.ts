@@ -9,11 +9,9 @@ const isElectron = true;
 class Platform {
   protected inter: ElectronOverwolfInterface = {} as ElectronOverwolfInterface;
 
-  constructor() {
-    this.setup().catch(e => console.log('Platform failed resolve deps', e));
-  }
+  constructor() {}
 
-  private async setup() {
+  public async setup() {
     this.inter = isElectron
       ? (((await import('./electron')).default as unknown) as ElectronOverwolfInterface)
       : (((await import('./overwolf')).default as unknown) as ElectronOverwolfInterface);

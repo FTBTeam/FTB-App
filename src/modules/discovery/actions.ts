@@ -1,10 +1,9 @@
-import { ModpackState, ModPack, ModPackTag } from './../modpacks/types';
+import { ModPack, ModPackTag } from './../modpacks/types';
 import { ActionTree } from 'vuex';
 import config from '@/config';
 import { logVerbose } from '@/utils';
 import { DiscoveryState } from './types';
 import { RootState } from '@/types';
-import Parser from 'rss-parser';
 
 function inCommon(a: any[], b: any[]) {
   let count = 0;
