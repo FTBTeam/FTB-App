@@ -25,7 +25,9 @@ export const actions: ActionTree<SocketState, RootState> = {
     payload.payload.requestId = messageID;
     payload.payload.secret = rootState.wsSecret;
     logVerbose(rootState, payload.payload);
-    Vue.prototype.$socket.sendObj(platform.isElectron() ? payload.payload : JSON.stringify(payload.payload)); // TODO: This conditional logic might be wrong
+    Vue.prototype.$socket[platform.isElectron() ? 'sendObj' : 'send'](
+      platform.isElectron() ? payload.payload : JSON.stringify(payload.payload),
+    ); // TODO: This conditional logic might be wrong
     commit('ADD_CALLBACK', { id: messageID, callback: payload.callback });
   },
   disconnect() {
