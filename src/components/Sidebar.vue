@@ -89,7 +89,6 @@ import { Component, Vue } from 'vue-property-decorator';
 import NavItem from './nav/NavItem.vue';
 import { AuthState } from '../modules/auth/types';
 import { State, Action } from 'vuex-class';
-import config from '@/config';
 import { SettingsState } from '../modules/settings/types';
 import { logVerbose } from '../utils';
 import { ModpackState } from '@/modules/modpacks/types';
@@ -102,7 +101,7 @@ export default class Sidebar extends Vue {
   @State('settings') private settings!: SettingsState;
   @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
-  private appVersion: string = config.appVersion;
+  private appVersion: string = platform.get.config.appVersion;
 
   get isDevelop() {
     const splits = this.appVersion.split('-');

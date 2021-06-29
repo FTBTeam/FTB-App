@@ -502,9 +502,7 @@ import FTBSlider from '@/components/FTBSlider.vue';
 import FTBModal from '@/components/FTBModal.vue';
 import ServerCard from '@/components/ServerCard.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
-import config from '@/config';
 import { SettingsState } from '@/modules/settings/types';
-import { clipboard } from 'electron';
 import { logVerbose, shuffle } from '../utils';
 import { ServersState } from '../modules/servers/types';
 // @ts-ignore
@@ -658,17 +656,17 @@ export default class InstancePage extends Vue {
     const links = [];
     links.push({
       content: 'Windows',
-      url: `${config.apiURL}/public/modpack/${this.instance?.id}/${versionID}/server/windows`,
+      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.instance?.id}/${versionID}/server/windows`,
       open: '_blank',
     });
     links.push({
       content: 'Linux',
-      url: `${config.apiURL}/public/modpack/${this.instance?.id}/${versionID}/server/linux`,
+      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.instance?.id}/${versionID}/server/linux`,
       open: '_blank',
     });
     links.push({
       content: 'MacOS',
-      url: `${config.apiURL}/public/modpack/${this.instance?.id}/${versionID}/server/mac`,
+      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.instance?.id}/${versionID}/server/mac`,
       open: '_blank',
     });
     return links;

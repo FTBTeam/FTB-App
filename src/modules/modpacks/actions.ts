@@ -1,6 +1,5 @@
 import { ActionTree } from 'vuex';
 import { ModpackState, ModPack, Instance, InstallProgress, Changelog } from './types';
-import config from '@/config';
 import { RootState } from '@/types';
 import { asyncForEach, logVerbose } from '@/utils';
 import semver from 'semver';
@@ -8,13 +7,13 @@ import { AuthState } from '../auth/types';
 
 export function getAPIRequest(rootState: RootState, url: string): Promise<Response> {
   if (rootState.auth === null) {
-    return fetch(`${config.apiURL}/public/${url}`);
+    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/${url}`);
   }
   const auth: AuthState = rootState.auth as AuthState;
   if (auth.token === null || auth.token.attributes.modpackschkey === undefined) {
-    return fetch(`${config.apiURL}/public/${url}`);
+    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/${url}`);
   }
-  return fetch(`${config.apiURL}/${auth.token.attributes.modpackschkey}/${url}`, {
+  return fetch(`${process.env.VUE_APP_MODPACK_API}/${auth.token.attributes.modpackschkey}/${url}`, {
     headers: {
       Secret: auth.token.attributes.modpackssecret,
     },
@@ -65,7 +64,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
   },
   getPopularInstalls({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
-    return fetch(`${config.apiURL}/public/modpack/popular/installs/20`)
+    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/installs/20`)
       .then(response => response.json())
       .then(async data => {
         const packIDs = data.packs;
@@ -92,7 +91,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
   },
   getPopularPlays({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
-    return fetch(`${config.apiURL}/public/modpack/popular/plays/20`)
+    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/plays/20`)
       .then(response => response.json())
       .then(async data => {
         const packIDs = data.packs;
@@ -153,7 +152,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
   },
   loadFeaturedPacks({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
-    return fetch(`${config.apiURL}/public/modpack/featured/20`)
+    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/featured/20`)
       .then(response => response.json())
       .then(async data => {
         const packIDs = data.packs;
@@ -181,7 +180,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
   loadAllPacks({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
     console.log('Loading all packs...');
-    return fetch(`${config.apiURL}/public/modpack/all`)
+    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`)
       .then(response => response.json())
       .then(async data => {
         const packIDs = data.packs;
@@ -238,9 +237,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
     if (rootState.modpacks.packsCache[install.modpackID]) {
       install.pack = rootState.modpacks.packsCache[install.modpackID];
     } else {
-      const pack = await fetch(`${config.apiURL}/public/modpack/${install.modpackID}`).then(response =>
-        response.json(),
-      );
+      const pack = await fetch(
+        `${process.env.VUE_APP_MODPACK_API}/public/modpack/${install.modpackID}`,
+      ).then(response => response.json());
       install.pack = pack;
       logVerbose(rootState, 'Adding to cache', pack);
       commit('addToCache', pack);

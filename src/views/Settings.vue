@@ -209,7 +209,6 @@ import FTBButton from '@/components/FTBButton.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
 import { State, Action } from 'vuex-class';
 import { SettingsState, Settings } from '@/modules/settings/types';
-import config from '@/config';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
 
@@ -261,8 +260,8 @@ export default class SettingsPage extends Vue {
   };
 
   private resSelectedValue: string = '0';
-  private webVersion: string = config.webVersion;
-  private appVersion: string = config.appVersion;
+  private webVersion: string = platform.get.config.webVersion;
+  private appVersion: string = platform.get.config.appVersion;
 
   public scrollToTop(): void {
     document.querySelectorAll('.content-container')[0].scrollTo(0, 0);

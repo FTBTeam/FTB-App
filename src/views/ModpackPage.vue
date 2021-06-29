@@ -333,7 +333,6 @@ import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
 import FTBButton from '@/components/FTBButton.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
-import config from '@/config';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
 import { shuffle } from '../utils';
@@ -419,17 +418,17 @@ export default class ModpackPage extends Vue {
     const links = [];
     links.push({
       content: 'Windows',
-      url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/windows`,
+      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.currentModpack?.id}/${versionID}/server/windows`,
       open: '_blank',
     });
     links.push({
       content: 'Linux',
-      url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/linux`,
+      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.currentModpack?.id}/${versionID}/server/linux`,
       open: '_blank',
     });
     links.push({
       content: 'MacOS',
-      url: `${config.apiURL}/public/modpack/${this.currentModpack?.id}/${versionID}/server/mac`,
+      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.currentModpack?.id}/${versionID}/server/mac`,
       open: '_blank',
     });
     return links;

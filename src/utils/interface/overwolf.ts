@@ -25,8 +25,6 @@ const getWindowState = (windowId: any) => {
 
 const Overwolf: ElectronOverwolfInterface = {
   config: {
-    apiURL:
-      process.env.NODE_ENV === 'production' ? `https://api.modpacks.ch` : `https://modpack-api-production.ch.tools`,
     appVersion: versionData.jarVersion ?? 'Missing Version File',
     webVersion: versionData.webVersion ?? 'Missing Version File',
     dateCompiled: versionData.timestampBuilt ?? 'Missing Version File',

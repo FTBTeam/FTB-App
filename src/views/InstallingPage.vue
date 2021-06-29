@@ -149,7 +149,6 @@ import FTBButton from '@/components/FTBButton.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
-import config from '@/config';
 import { shuffle } from '../utils';
 import { SettingsState } from '../modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
@@ -417,10 +416,10 @@ export default class InstallingPage extends Vue {
           //   this.showPlaceholder = true;
           // });
           // this.ad.addEventListener('impression', () => {
-          //   fetch(`${config.apiURL}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`);
+          //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`);
           // });
           // this.ad.addEventListener('display_ad_loaded', () => {
-          //   fetch(`${config.apiURL}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`);
+          //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`);
           // });
         }, 500);
       }
@@ -450,12 +449,12 @@ export default class InstallingPage extends Vue {
           });
           this.ad.addEventListener('impression', () => {
             fetch(
-              `${config.apiURL}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`,
+              `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`,
             );
           });
           this.ad.addEventListener('display_ad_loaded', () => {
             fetch(
-              `${config.apiURL}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`,
+              `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`,
             );
           });
           //@ts-ignore

@@ -21,8 +21,6 @@ const jsonContent = contents ? JSON.parse(contents) : null;
 
 const Electron: ElectronOverwolfInterface = {
   config: {
-    apiURL:
-      process.env.NODE_ENV === 'production' ? `https://api.modpacks.ch` : `https://modpack-api-production.ch.tools`,
     appVersion: jsonContent?.jarVersion ?? 'Missing Version File',
     webVersion: jsonContent?.webVersion ?? 'Missing Version File',
     dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',

@@ -171,7 +171,6 @@ import FTBButton from '@/components/FTBButton.vue';
 import FTBInput from '@/components/FTBInput.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { logVerbose } from '@/utils';
-import config from '@/config';
 import { ModpackState, InstallProgress } from '@/modules/modpacks/types';
 import { SettingsState } from '../modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
@@ -216,8 +215,8 @@ export default class MainApp extends Vue {
   private submittingError = false;
   private submitted = false;
 
-  private webVersion: string = config.webVersion;
-  private appVersion: string = config.appVersion;
+  private webVersion: string = platfrom.get.config.webVersion;
+  private appVersion: string = platfrom.get.config.appVersion;
 
   private platfrom = platfrom;
 

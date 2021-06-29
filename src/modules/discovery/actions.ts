@@ -1,6 +1,5 @@
 import { ModPack, ModPackTag } from './../modpacks/types';
 import { ActionTree } from 'vuex';
-import config from '@/config';
 import { logVerbose } from '@/utils';
 import { DiscoveryState } from './types';
 import { RootState } from '@/types';
@@ -44,7 +43,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
       });
       allTags = allTags.filter(tag => tag !== undefined);
       if (allTags.length === 0) {
-        fetch(`${config.apiURL}/public/modpack/popular/installs/20`)
+        fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/installs/20`)
           .then(response => response.json())
           .then(async data => {
             const packIDs = data.packs;
@@ -75,7 +74,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
       const foundPackIDs = await Promise.all(
         allTags.map(async (tag: ModPackTag) => {
           logVerbose(rootState, tag);
-          return await fetch(`${config.apiURL}/public/modpack/popular/installs/${tag.name}/50`)
+          return await fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/installs/${tag.name}/50`)
             .catch(err => console.error(err))
             .then(async (response: any) => {
               response = response as Response;
@@ -131,7 +130,7 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
 
       // Sort by most amount of installs
     } else {
-      fetch(`${config.apiURL}/public/modpack/popular/installs/10`)
+      fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/installs/10`)
         .then(response => response.json())
         .then(async data => {
           const packIDs = data.packs;

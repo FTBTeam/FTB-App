@@ -78,7 +78,6 @@ import FTBToggle from '@/components/FTBToggle.vue';
 import FTBButton from '@/components/FTBButton.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
 import { State, Action } from 'vuex-class';
-import { ipcRenderer } from 'electron';
 import { AuthState } from '../modules/auth/types';
 import { SettingsState } from '../modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';

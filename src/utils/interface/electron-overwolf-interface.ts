@@ -43,7 +43,6 @@ export interface Frame {
 }
 
 export interface Config {
-  apiURL: string;
   appVersion: string;
   webVersion: string;
   dateCompiled: string;

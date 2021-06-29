@@ -2,7 +2,6 @@ import { ActionTree } from 'vuex';
 import { AuthState } from './types';
 import axios from 'axios';
 import { RootState } from '@/types';
-import { ipcRenderer } from 'electron';
 import platfrom from '@/utils/interface/electron-overwolf';
 export interface FriendRequestResponse {
   status: string;
