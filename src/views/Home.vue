@@ -175,7 +175,7 @@ export default class Home extends Vue {
   }
 
   private async mounted() {
-    this.fetchFeaturedServers();
+    // this.fetchFeaturedServers();
     this.currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
     if (this.modpacks == null || this.modpacks.featuredPacks.length <= 0) {
       await this.loadAllPacks();
