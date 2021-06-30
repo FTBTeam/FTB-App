@@ -196,7 +196,7 @@ export default class Sidebar extends Vue {
     height: 130px;
     position: absolute;
     opacity: 0.3;
-    -webkit-mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.3)), to(rgba(0, 0, 0, 0)));
+    mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.3)), to(rgba(0, 0, 0, 0)));
   }
 }
 

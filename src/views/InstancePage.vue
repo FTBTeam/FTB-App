@@ -354,12 +354,12 @@
             </div>
           </div>
 
-          <div class="tab-pane" v-if="isTabActive('modlist')" id="modlist">
-            <div v-for="file in modlist">
-              <div class="flex flex-row bg-background p-5 my-4 items-center">
+          <div class="tab-pane px-4" v-if="isTabActive('modlist')" id="modlist">
+            <div v-for="(file, index) in modlist" :key="index">
+              <div class="flex flex-row my-4 items-center">
                 <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
                 <div class="ml-auto">
-                  <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2">{{
+                  <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2 clean-font">{{
                     parseInt(file.size) | prettyBytes
                   }}</span>
                   <v-selectmenu :title="false" :query="false" :data="modHashData(file)" align="right" type="regular">
@@ -367,7 +367,7 @@
                       <font-awesome-icon :color="row.color" :icon="row.icon"></font-awesome-icon>
                       <span v-html="row.content" :title="row.hover" class="ml-2 cursor-pointer"></span>
                     </template>
-                    <ftb-button class="py-2 px-4 ml-2" color="info" css-class="text-center text-l">
+                    <ftb-button class="py-1 px-4 ml-2 text-xs" color="info" css-class="text-center">
                       <font-awesome-icon icon="shield-alt"></font-awesome-icon>
                     </ftb-button>
                   </v-selectmenu>
@@ -488,6 +488,10 @@
     rgba(29, 29, 29, 0.3) 100%
   );
   //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+}
+
+.clean-font {
+  font-family: Arial, Helvetica, sans-serif;
 }
 </style>
 

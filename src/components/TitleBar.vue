@@ -112,7 +112,7 @@ export default class TitleBar extends Vue {
     flex-direction: row-reverse;
   }
 
-  -webkit-user-select: none;
+  user-select: none;
 }
 
 .title-action {

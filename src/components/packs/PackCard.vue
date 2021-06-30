@@ -1,7 +1,7 @@
 <template>
   <div v-if="settingsState !== undefined" class="m-2 card" :class="`w-size-1`">
     <div v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo" style="height: 100%">
-      <article class="overflow-hidden shadow-lg relative" style="height: 100%">
+      <article class="overflow-hidden rounded relative" style="height: 100%">
         <img
           class="w-full pack-image rounded-sm"
           :src="getLogo(art)"
@@ -545,13 +545,7 @@ export default class PackCard extends Vue {
 
 .content .name-box {
   backdrop-filter: blur(8px);
-  background: linear-gradient(
-    to top,
-    rgba(36, 40, 47, 0) 0%,
-    rgba(43, 57, 66, 0.2) calc(100% - 2px),
-    rgba(193, 202, 207, 0.1) calc(100% - 1px),
-    rgba(29, 29, 29, 0.3) 100%
-  );
+  background: rgba(black, 0.2);
   text-align: left;
   width: 100%;
   font-size: 15px;
