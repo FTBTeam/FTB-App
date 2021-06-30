@@ -321,7 +321,6 @@
     rgba(193, 202, 207, 0.1) calc(100% - 1px),
     rgba(29, 29, 29, 0.3) 100%
   );
-  //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
 }
 </style>
 

@@ -35,15 +35,6 @@ $danger: #D00000;
   --color-background-lighten: rgba(68, 68, 68, 0.2);
 }
 
-
-:not(input):not(textarea):not(path),
-:not(input):not(textarea):not(path)::after,
-:not(input):not(textarea):not(path)::before {
-  -webkit-user-select: none;
-  user-select: none;
-  cursor: default;
-}
-
 input, button, textarea, :focus {
   outline: none; // You should add some other style for :focus to help UX/a11y
 }

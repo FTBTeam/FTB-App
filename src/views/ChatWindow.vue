@@ -305,7 +305,7 @@ export default class ChatWindow extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 #app {
   margin: 0;
   font-family: 'Raleway', sans-serif;

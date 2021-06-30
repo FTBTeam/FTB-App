@@ -285,8 +285,8 @@ function createFriendsWindow() {
         titleBarStyle: 'hidden',
         backgroundColor: '#313131',
         webPreferences: {
-            webSecurity: false,
-            nodeIntegration: true,
+          nodeIntegration: true,
+          contextIsolation: false,
             disableBlinkFeatures: 'Auxclick',
         },
     });

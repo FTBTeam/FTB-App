@@ -1,14 +1,10 @@
 <template>
   <div id="app" class="theme-dark" v-if="platfrom.get.config">
     <title-bar />
-    <div class="container" v-if="websockets.socket.isConnected && !loading">
-      <div id="nav" style="width: 180px;">
-        <sidebar />
-      </div>
-      <div class="flex-1 flex flex-col overflow-x-hidden">
-        <div class="content-container">
-          <router-view />
-        </div>
+    <main class="main">
+      <sidebar />
+      <div class="app-content" v-if="websockets.socket.isConnected && !loading">
+        <router-view />
         <transition name="slide-down-up">
           <div v-if="modpacks.installing != null">
             <div class="progress-bar relative">
@@ -112,50 +108,50 @@
             </div>
           </div>
         </transition>
+        <FTBModal
+          v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
+          :visible="$store.state.websocket.modal !== null"
+          @dismiss-modal="hideModal"
+          :dismissable="$store.state.websocket.modal.dismissable"
+        >
+          <message-modal
+            :title="$store.state.websocket.modal.title"
+            :content="$store.state.websocket.modal.message"
+            type="custom"
+            :buttons="$store.state.websocket.modal.buttons"
+            :modalID="$store.state.websocket.modal.id"
+          />
+        </FTBModal>
       </div>
-      <FTBModal
-        v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
-        :visible="$store.state.websocket.modal !== null"
-        @dismiss-modal="hideModal"
-        :dismissable="$store.state.websocket.modal.dismissable"
+      <div
+        class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
+        style="flex-direction: column; justify-content: center; align-items: center;"
+        v-else-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
       >
-        <message-modal
-          :title="$store.state.websocket.modal.title"
-          :content="$store.state.websocket.modal.message"
-          type="custom"
-          :buttons="$store.state.websocket.modal.buttons"
-          :modalID="$store.state.websocket.modal.id"
-        />
-      </FTBModal>
-    </div>
-    <div
-      class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
-      style="flex-direction: column; justify-content: center; align-items: center;"
-      v-else-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
-    >
-      <img src="../assets/logo_ftb.png" width="200px" />
-      <h1 class="text-2xl text-center">There was an error with the FTB App.</h1>
-      <div v-if="!submitted" class="flex flex-col">
-        <ftb-input label="Email" v-model="errorEmail" />
-        <p>Please describe what happened in the box below and submit.</p>
-        <textarea class="bg-navbar border-background-darken p-2" v-model="errorDescription"></textarea>
-        <ftb-button color="danger" class="my-2 py-2 px-4 text-center rounded-br" @click="submitError">{{
-          submittingError ? 'Submitting...' : 'Submit'
-        }}</ftb-button>
+        <img src="../assets/logo_ftb.png" width="200px" />
+        <h1 class="text-2xl text-center">There was an error with the FTB App.</h1>
+        <div v-if="!submitted" class="flex flex-col">
+          <ftb-input label="Email" v-model="errorEmail" />
+          <p>Please describe what happened in the box below and submit.</p>
+          <textarea class="bg-navbar border-background-darken p-2" v-model="errorDescription"></textarea>
+          <ftb-button color="danger" class="my-2 py-2 px-4 text-center rounded-br" @click="submitError">{{
+            submittingError ? 'Submitting...' : 'Submit'
+          }}</ftb-button>
+        </div>
+        <div v-else>
+          <p>Thanks for submitting the bug report!</p>
+          <ftb-button color="danger" class="my-2 py-2 px-4 text-center rounded-br" @click="quitApp">Quit</ftb-button>
+        </div>
       </div>
-      <div v-else>
-        <p>Thanks for submitting the bug report!</p>
-        <ftb-button color="danger" class="my-2 py-2 px-4 text-center rounded-br" @click="quitApp">Quit</ftb-button>
+      <div
+        class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
+        style="flex-direction: column; justify-content: center; align-items: center;"
+        v-else
+      >
+        <div class="background-animation"></div>
+        <img src="../assets/logo_ftb.png" width="500px" style="margin-top: 10px;" class="loader-logo-animation" />
       </div>
-    </div>
-    <div
-      class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
-      style="flex-direction: column; justify-content: center; align-items: center;"
-      v-else
-    >
-      <div class="background-animation"></div>
-      <img src="../assets/logo_ftb.png" width="500px" style="margin-top: 10px;" class="loader-logo-animation" />
-    </div>
+    </main>
   </div>
 </template>
 
@@ -378,37 +374,37 @@ export default class MainApp extends Vue {
 </script>
 
 <style lang="scss">
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-background);
+  user-select: none;
+}
+
 #app {
+  background-color: var(--color-background);
   margin: 0;
   font-family: 'Raleway', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  .container {
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    background-color: var(--color-background);
-  }
-}
-#nav {
   height: 100%;
-  &.md\:w-10 {
-    min-width: 170.297px;
-  }
-  &.w-10p {
-    width: 15%;
-  }
 }
 
-.content-container {
-  flex: 1;
-  overflow-y: auto;
+main.main {
+  position: relative;
+  z-index: 1;
   display: flex;
+  height: calc(100% - 2rem);
 }
+
+.app-content {
+  flex: 1;
+  min-height: 100%;
+  overflow-y: auto;
+}
+
 .progress-bar {
   display: flex;
   align-items: center;
