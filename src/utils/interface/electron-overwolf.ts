@@ -1,7 +1,5 @@
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 
-const isElectron = true;
-
 /**
  * Creates a simple way of abstracting the logic between overwolf and electron into a
  * unified interface.
@@ -12,9 +10,7 @@ class Platform {
   constructor() {}
 
   public async setup() {
-    this.inter = isElectron
-      ? (((await import('./electron')).default as unknown) as ElectronOverwolfInterface)
-      : (((await import('./overwolf')).default as unknown) as ElectronOverwolfInterface);
+    this.inter = ((await import(`./${process.env.VUE_APP_PLATFORM}`)).default as unknown) as ElectronOverwolfInterface;
   }
 
   get get() {
@@ -22,11 +18,11 @@ class Platform {
   }
 
   public isOverwolf() {
-    return !isElectron;
+    return process.env.VUE_APP_PLATFORM !== 'electron';
   }
 
   public isElectron() {
-    return isElectron;
+    return process.env.VUE_APP_PLATFORM === 'electron';
   }
 }
 

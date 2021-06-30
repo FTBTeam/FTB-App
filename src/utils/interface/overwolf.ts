@@ -34,7 +34,7 @@ const Overwolf: ElectronOverwolfInterface = {
   // Tools
   utils: {
     openUrl(url: string) {
-      overwolf.openUrlInDefaultBrowser(url);
+      overwolf.utils.openUrlInDefaultBrowser(url);
     },
   },
 

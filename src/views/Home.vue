@@ -92,11 +92,9 @@ import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 import PackCard from '@/components/packs/PackCard.vue';
 import PackCardList from '@/components/packs/PackCardList.vue';
 import ServerCard from '@/components/ServerCard.vue';
-import { asyncForEach } from '@/utils';
 import { State, Action } from 'vuex-class';
 import { ModpackState, ModPack } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
-import { settings } from 'cluster';
 import { ServersState } from '@/modules/servers/types';
 import FtbButton from '@/components/FTBButton.vue';
 
