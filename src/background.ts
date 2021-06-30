@@ -1,6 +1,6 @@
 'use strict';
 import { Friend } from './modules/auth/types';
-import {app, protocol, BrowserWindow, remote, shell, ipcMain, dialog, session} from 'electron';
+import {app, protocol, BrowserWindow, shell, ipcMain, dialog, session} from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -8,8 +8,6 @@ import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
 import axios from 'axios';
-// @ts-ignore
-// import {Client} from 'irc-framework';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 
@@ -225,6 +223,10 @@ ipcMain.on('windowControls', (event, data) => {
         switch (data.action) {
             case 'close':
                 window.close();
+                if (process.env.NODE_ENV !== 'production') {
+                  window.webContents.closeDevTools();
+                }
+            
                 break;
             case 'minimize':
                 window.minimize();
@@ -330,7 +332,8 @@ function createWindow() {
         frame: false,
         titleBarStyle: 'hidden',
         webPreferences: {
-            nodeIntegration: true,
+          nodeIntegration: true,
+          contextIsolation: false,
             disableBlinkFeatures: 'Auxclick',
         },
     });
@@ -356,11 +359,11 @@ function createWindow() {
             friendsWindow.close();
         }
     });
-    if (process.env.NODE_ENV !== 'production') {
-        BrowserWindow.addDevToolsExtension('node_modules/vue-devtools/vender');
-    }
 }
 
+app.on('ready', async () => {
+  await session.defaultSession.loadExtension(path.join(__dirname, '/../node_modules/vue-devtools/vender'), { allowFileAccess: true });
+})
 
 app.on('window-all-closed', () => {
     // if (process.platform !== 'darwin') {
@@ -484,6 +487,7 @@ function createOauthWindow() {
         titleBarStyle: 'hidden',
         webPreferences: {
             nodeIntegration: true,
+            contextIsolation: false,
             disableBlinkFeatures: 'Auxclick',
         },
     });
