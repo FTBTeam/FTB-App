@@ -56,9 +56,7 @@
       <nav-item v-else class="capitalize" @click="goTo('profile')" :disabled="disableNav"
         ><img
           :src="`https://api.mymcuu.id/head/${avatarName}`"
-          style="margin-right: 0.75em;"
-          width="40px"
-          height="40px"
+          style="margin-right: 0.75em; width: 40px; height: 40px;"
           class="rounded-full"
         />
         <div class="flex flex-col">
@@ -156,19 +154,17 @@ export default class Sidebar extends Vue {
   private openLogin() {
     // NOTE: the callback is only used on overwolf
     // TODO: Make this less jank
-    platform.get.actions.openLogin(() => {
-      (data: any) => {
-        if (data.token) {
-          this.setSessionID(data.token);
+    platform.get.actions.openLogin((data: any) => {
+      if (data.token) {
+        this.setSessionID(data.token);
+      }
+      if (data['app-auth']) {
+        let settings = this.settings?.settings;
+        if (settings !== undefined) {
+          settings.sessionString = data['app-auth'];
         }
-        if (data['app-auth']) {
-          let settings = this.settings?.settings;
-          if (settings !== undefined) {
-            settings.sessionString = data['app-auth'];
-          }
-          this.saveSettings(settings);
-        }
-      };
+        this.saveSettings(settings);
+      }
     });
   }
 
