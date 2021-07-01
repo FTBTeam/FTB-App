@@ -119,33 +119,6 @@ Vue.filter('formatNumber', (value: number) => {
   return new Intl.NumberFormat().format(value);
 });
 
-Vue.filter('prettyBytes', (num: number) => {
-  // jacked from: https://github.com/sindresorhus/pretty-bytes
-  if (isNaN(num)) {
-    throw new TypeError('Expected a number');
-  }
-
-  let exponent;
-  let unit;
-  const neg = num < 0;
-  const units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-
-  if (neg) {
-    num = -num;
-  }
-
-  if (num < 1) {
-    return (neg ? '-' : '') + num + ' B';
-  }
-
-  exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1);
-  // @ts-ignore
-  num = (num / Math.pow(1000, exponent)).toFixed(2) * 1;
-  unit = units[exponent];
-
-  return (neg ? '-' : '') + num + ' ' + unit;
-});
-
 (async () => {
   try {
     await platform.setup();

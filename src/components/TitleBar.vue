@@ -1,6 +1,6 @@
 <template>
   <div class="titlebar" :class="{ isMac }" @mousedown="startDragging">
-    <div class="meta-title font-bold">Feed the Beast App</div>
+    <div class="meta-title font-bold">FTB App</div>
     <div class="action-buttons">
       <div class="icons" v-if="!isMac">
         <div class="title-action close" @click="close">

@@ -331,6 +331,7 @@ export default class InstallingPage extends Vue {
           id: packID,
           version: this.$route.query.versionID,
           _private: isPrivate,
+          packType: this.$route.query.type != null ? this.$route.query.type : 0,
         },
         callback: (data: any) => {
           if (data.status === 'files') {

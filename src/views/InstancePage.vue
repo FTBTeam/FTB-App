@@ -360,7 +360,7 @@
                 <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
                 <div class="ml-auto">
                   <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2 clean-font">{{
-                    parseInt(file.size) | prettyBytes
+                    prettyBytes(parseInt(file.size))
                   }}</span>
                   <v-selectmenu :title="false" :query="false" :data="modHashData(file)" align="right" type="regular">
                     <template #row="{ row }">
@@ -409,92 +409,6 @@
   </div>
 </template>
 
-<style lang="scss">
-.header-image {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 200px;
-  transition: all 0.2s ease-in-out;
-}
-
-@media screen and (max-height: 800px) {
-  .header-image {
-    transition: all 0.2s ease-in-out;
-  }
-}
-
-.tab-pane {
-  top: 0;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.changelog-seperator {
-  border: 1px solid var(--color-sidebar-item);
-}
-
-.short {
-  width: 75%;
-}
-
-.instance-name {
-  margin-top: auto;
-  height: 45px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-info {
-  bottom: 50px;
-  text-align: left;
-  font-weight: 400;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-buttons {
-  background: rgba(0, 0, 0, 0.7);
-  width: 100%;
-  height: 50px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.update-bar {
-  background: rgba(255, 193, 7, 0.9);
-  width: 100%;
-  height: 25px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-button {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
-}
-
-.frosted-glass {
-  backdrop-filter: blur(8px);
-  background: linear-gradient(
-    to top,
-    rgba(36, 40, 47, 0) 0%,
-    rgba(43, 57, 66, 0.2) calc(100% - 2px),
-    rgba(193, 202, 207, 0.1) calc(100% - 1px),
-    rgba(29, 29, 29, 0.3) 100%
-  );
-  //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
-}
-
-.clean-font {
-  font-family: Arial, Helvetica, sans-serif;
-}
-</style>
-
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { ModpackState, ModPack, Versions } from '@/modules/modpacks/types';
@@ -513,6 +427,7 @@ import { ServersState } from '../modules/servers/types';
 import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
+import { prettyByteFormat } from '@/utils/helpers';
 
 interface MsgBox {
   title: string;
@@ -548,68 +463,6 @@ interface Changelogs {
   },
 })
 export default class InstancePage extends Vue {
-  get javaVersions() {
-    if (this.settingsState === undefined) {
-      return {};
-    }
-    if (this.settingsState.javaInstalls === undefined) {
-      return {};
-    }
-    return this.settingsState.javaInstalls;
-  }
-
-  get instance() {
-    if (this.modpacks == null) {
-      return null;
-    }
-    return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
-  }
-
-  get resolutionList() {
-    const resList = [];
-    for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
-      resList.push({ id: key, name: res.width + 'x' + res.height, value: key });
-    }
-    return resList;
-  }
-
-  get tags() {
-    try {
-      if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
-        return this.modpacks?.packsCache[this.instance.id].tags;
-      } else {
-        return [];
-      }
-    } catch (e) {
-      console.log('Error getting tags');
-    }
-  }
-
-  get limitedTags() {
-    if (this.tags) {
-      return this.tags.slice(0, 5);
-    }
-    return [];
-  }
-
-  get isLatestVersion() {
-    if (
-      this.currentModpack === undefined ||
-      this.currentModpack?.kind !== 'modpack' ||
-      this.currentModpack.versions === undefined
-    ) {
-      return true;
-    }
-    return this.instance?.versionId === this.currentModpack?.versions[0].id;
-  }
-
-  get versionName() {
-    if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
-      return this.modpacks?.packsCache[this.instance.id].versions.find(v => v.id === this.instance?.versionId)?.name;
-    }
-    return this.instance?.version;
-  }
-
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
@@ -617,12 +470,9 @@ export default class InstancePage extends Vue {
   @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' })
-  public storePacks!: any;
-  @Action('updateInstall', { namespace: 'modpacks' })
-  public updateInstall!: any;
-  @Action('finishInstall', { namespace: 'modpacks' })
-  public finishInstall!: any;
+  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
+  @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall!: any;
+  @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall!: any;
   @Action('saveInstance', { namespace: 'modpacks' }) public saveInstance: any;
   @Action('sendMessage') public sendMessage!: any;
   @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
@@ -651,6 +501,7 @@ export default class InstancePage extends Vue {
   private modlist: any = [];
 
   private resSelectedValue: string = '0';
+  prettyBytes = prettyByteFormat;
 
   public clickTag(tagName: string) {
     this.$router.push({ name: 'browseModpacks', params: { search: tagName } });
@@ -732,12 +583,13 @@ export default class InstancePage extends Vue {
   }
 
   public confirmDelete() {
-    this.msgBox.type = 'okCancel';
-    this.msgBox.title = 'Are you sure?';
-    this.msgBox.okAction = this.deleteInstace;
-    this.msgBox.cancelAction = this.hideMsgBox;
-    this.msgBox.content = `Are you sure you want to delete ${this.instance?.name}?`;
-    this.showMsgBox = true;
+    this.openMessageBox({
+      type: 'okCancel',
+      title: 'Are you sure?',
+      okAction: this.deleteInstace,
+      cancelAction: this.hideMsgBox,
+      content: `Are you sure you want to delete ${this.instance?.name}?`,
+    });
   }
 
   public deleteInstace(): void {
@@ -757,20 +609,27 @@ export default class InstancePage extends Vue {
   }
 
   public comingSoonMsg() {
-    this.msgBox.type = 'okOnly';
-    this.msgBox.title = 'Coming Soon';
-    this.msgBox.okAction = this.hideMsgBox;
-    this.msgBox.cancelAction = this.hideMsgBox;
-    this.msgBox.content = `This feature is currently not available, we do however aim to have this feature implemented in the near future`;
-    this.showMsgBox = true;
+    this.openMessageBox({
+      type: 'okOnly',
+      title: 'Coming Soon',
+      okAction: this.hideMsgBox,
+      cancelAction: this.hideMsgBox,
+      content: `This feature is currently not available, we do however aim to have this feature implemented in the near future`,
+    });
   }
 
   public downloadServer() {
-    this.msgBox.type = 'okOnly';
-    this.msgBox.title = 'Server Downloads';
-    this.msgBox.okAction = this.hideMsgBox;
-    this.msgBox.cancelAction = this.hideMsgBox;
-    this.msgBox.content = `To download the server files for this modpack please go to the [Feed-the-Beast](https://feed-the-beast.com/) website`;
+    this.openMessageBox({
+      type: 'okOnly',
+      title: 'Server Downloads',
+      okAction: this.hideMsgBox,
+      cancelAction: this.hideMsgBox,
+      content: `To download the server files for this modpack please go to the [Feed-the-Beast](https://feed-the-beast.com/) website`,
+    });
+  }
+
+  private openMessageBox(payload: MsgBox) {
+    this.msgBox = { ...this.msgBox, ...payload };
     this.showMsgBox = true;
   }
 
@@ -979,5 +838,153 @@ export default class InstancePage extends Vue {
   private debugLog(title: any, data: any) {
     logVerbose(this.settingsState, title, data);
   }
+
+  get javaVersions() {
+    if (this.settingsState === undefined) {
+      return {};
+    }
+    if (this.settingsState.javaInstalls === undefined) {
+      return {};
+    }
+    return this.settingsState.javaInstalls;
+  }
+
+  get instance() {
+    if (this.modpacks == null) {
+      return null;
+    }
+    return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
+  }
+
+  get resolutionList() {
+    const resList = [];
+    for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
+      resList.push({ id: key, name: res.width + 'x' + res.height, value: key });
+    }
+    return resList;
+  }
+
+  get tags() {
+    try {
+      if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
+        return this.modpacks?.packsCache[this.instance.id].tags;
+      } else {
+        return [];
+      }
+    } catch (e) {
+      console.log('Error getting tags');
+    }
+  }
+
+  get limitedTags() {
+    if (this.tags) {
+      return this.tags.slice(0, 5);
+    }
+    return [];
+  }
+
+  get isLatestVersion() {
+    if (
+      this.currentModpack === undefined ||
+      this.currentModpack?.kind !== 'modpack' ||
+      this.currentModpack.versions === undefined
+    ) {
+      return true;
+    }
+    return this.instance?.versionId === this.currentModpack?.versions[0].id;
+  }
+
+  get versionName() {
+    if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
+      return this.modpacks?.packsCache[this.instance.id].versions.find(v => v.id === this.instance?.versionId)?.name;
+    }
+    return this.instance?.version;
+  }
 }
 </script>
+
+<style lang="scss">
+.header-image {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 200px;
+  transition: all 0.2s ease-in-out;
+}
+
+@media screen and (max-height: 800px) {
+  .header-image {
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+.tab-pane {
+  top: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.changelog-seperator {
+  border: 1px solid var(--color-sidebar-item);
+}
+
+.short {
+  width: 75%;
+}
+
+.instance-name {
+  margin-top: auto;
+  height: 45px;
+  text-align: left;
+  font-weight: 700;
+  padding: 2px 2px 2px 6px;
+}
+
+.instance-info {
+  bottom: 50px;
+  text-align: left;
+  font-weight: 400;
+  padding: 2px 2px 2px 6px;
+}
+
+.instance-buttons {
+  background: rgba(0, 0, 0, 0.7);
+  width: 100%;
+  height: 50px;
+  text-align: left;
+  font-weight: 700;
+  padding: 2px 2px 2px 6px;
+}
+
+.update-bar {
+  background: rgba(255, 193, 7, 0.9);
+  width: 100%;
+  height: 25px;
+  text-align: left;
+  font-weight: 700;
+  padding: 2px 2px 2px 6px;
+}
+
+.instance-button {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.frosted-glass {
+  backdrop-filter: blur(8px);
+  background: linear-gradient(
+    to top,
+    rgba(36, 40, 47, 0) 0%,
+    rgba(43, 57, 66, 0.2) calc(100% - 2px),
+    rgba(193, 202, 207, 0.1) calc(100% - 1px),
+    rgba(29, 29, 29, 0.3) 100%
+  );
+  //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+}
+
+.clean-font {
+  font-family: Arial, Helvetica, sans-serif;
+}
+</style>
