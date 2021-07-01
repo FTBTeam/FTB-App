@@ -1,109 +1,30 @@
 <template>
-  <div v-if="settingsState !== undefined" class="m-2 card" :class="`w-size-1`">
-    <div v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo" style="height: 100%">
-      <article class="overflow-hidden rounded relative" style="height: 100%">
+  <div v-if="settingsState !== undefined">
+    <div
+      class="pack-card"
+      @click.prevent="cardClicked"
+      v-if="currentModpack !== undefined || instance !== undefined || isDemo"
+    >
+      <div class="art">
+        <div class="has-update" v-if="instance && !isLatestVersion && kind === 'instance'">Update Available</div>
         <img
-          class="w-full pack-image rounded-sm"
+          class="w-full"
           :src="getLogo(art)"
-          alt="placeholder"
+          alt="pack art"
           :class="[installing ? 'blur' : '', kind === 'cloudInstance' ? 'cloud-pack-image' : '']"
         />
-        <div class="menu-icon">
-          <span aria-label="More" data-balloon-blunt data-balloon-pos="left"
-            ><font-awesome-icon
-              icon="ellipsis-v"
-              size="1x"
-              class="cursor-pointer button"
-              :class="!isLatestVersion ? 'text-black' : ''"
-              @click="cardClicked"
-            ></font-awesome-icon
-          ></span>
-        </div>
-        <div class="content" :class="installing ? 'hide' : ''">
-          <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
-          <div v-if="instance && !isLatestVersion && kind === 'instance'" class="update-box">New Version</div>
-          <div class="name-box">
-            <p>{{ name }}</p>
+      </div>
+      <div class="meta">
+        <div class="title">{{ name }}</div>
+        <div class="version">{{ version }}</div>
+        <div class="play-button" @click.stop="!loading && checkMemoryThenLaunch()">
+          <div class="clickable-play" :class="{ disabled: loading, loading }">
+            <span v-if="!loading && kind !== 'cloudInstance'">Play</span>
+            <span v-else-if="kind === 'cloudInstance'">Sync</span>
+            <span v-else>Loading...</span>
           </div>
         </div>
-        <div class="hoverContent" v-if="!installing">
-          <!-- <div :class="`row mb-2 min-h-size-1`" >
-                        <p :class="`font-bold text-text-color lg:text-1xl text-center`">{{name}}</p>
-                    </div> -->
-          <div class="row w-full" v-if="!isDemo && kind !== 'cloudInstance'">
-            <div class="buttons action-buttons w-full" v-if="installed">
-              <div
-                @click="checkMemory()"
-                class="cursor-pointer action-icon flex justify-center w-full items-center pl-2"
-                :disabled="loading"
-              >
-                <font-awesome-icon
-                  v-if="!loading"
-                  :icon="'play'"
-                  size="3x"
-                  :class="`cursor-pointer button lg:text-1xl sm:text-base`"
-                />
-                <font-awesome-icon
-                  v-else-if="loading"
-                  :icon="'spinner'"
-                  size="3x"
-                  :class="`cursor-pointer button hover-scale lg:text-1xl sm:text-base`"
-                  spin
-                />
-              </div>
-              <!-- <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2" @click="goToInstance">
-                                <font-awesome-icon :icon="'ellipsis-h'" size="3x"
-                                               :class="`cursor-pointer button lg:text-1xl sm:text-base`"
-                                               />
-                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">More</p>
-                            </div> -->
-            </div>
-            <div class="buttons action-buttons w-full" v-if="!installed">
-              <div @click="openInstall" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
-                <font-awesome-icon
-                  :icon="'download'"
-                  size="3x"
-                  :class="`cursor-pointer button lg:text-1xl sm:text-base `"
-                />
-                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">Get</p>
-              </div>
-              <!-- <div class="action-icon  flex justify-center w-full cursor-pointer items-center pr-2"  @click="openInfo">
-                            <font-awesome-icon :icon="'ellipsis-h'" size="3x"
-                                               :class="`cursor-pointer button lg:text-1xl sm:text-base `"
-                                              />
-                                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">More</p>
-                            </div> -->
-            </div>
-          </div>
-          <div class="row w-full" v-if="!isDemo && kind === 'cloudInstance'">
-            <div class="buttons action-buttons w-full" v-if="installed">
-              <div @click="sync" class="cursor-pointer action-icon flex justify-center w-full items-center pl-2">
-                <font-awesome-icon
-                  :icon="'cloud-download-alt'"
-                  size="3x"
-                  :class="`cursor-pointer button lg:text-1xl sm:text-base`"
-                />
-                <p style="line-height: 1em;" :class="`ml-2 cursor-pointer lg:text-1xl sm:text-base`">Sync</p>
-              </div>
-            </div>
-          </div>
-          <div class="row mt-2">
-            <p class="font-bold text-text-color sm:text-sm lg:text-lg">v{{ version }}</p>
-          </div>
-        </div>
-        <div class="hoverContent show" v-else>
-          <div class="row mb-2">
-            <p :class="`font-bold text-text-color lg:text-1xl`">Installing {{ name }}</p>
-          </div>
-          <div class="row">
-            <font-awesome-icon
-              :icon="'spinner'"
-              :class="`cursor-pointer button hover-scale lg:text-1xl sm:text-base`"
-              spin
-            />
-          </div>
-        </div>
-      </article>
+      </div>
     </div>
     <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
       <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />
@@ -118,49 +39,6 @@
       />
     </FTBModal>
   </div>
-  <!-- <div class="text-gray-700 text-center flex-1 m-2 sm:min-w-psm sm:max-w-psm sm:min-h-psm sm:max-h-psm md:min-w-pmd md:max-w-pmd md:min-h-pmd md:max-h-pmd lg:min-w-plg lg:max-w-plg lg:min-h-plg lg:max-h-plg card">
-      <div class="bg-image" v-bind:style="{'background-image': `url(${art})`}" :class="installing ? 'blur' : ''">
-      </div>
-      <div class="content" :class="installing ? 'hide' : ''">
-        <div class="name-box">{{name}} (v{{version}})</div>
-      </div>
-      <div class="hoverContent" v-if="!installing">
-        <div class="row mb-2">
-          <p class="font-bold text-text-color lg:text-2xl">{{name}}</p>
-        </div>
-        <div class="row">
-          <div class="buttons" v-if="installed">
-            <font-awesome-icon @click="launch()" :icon="'play'" size="3x"
-                               class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"/>
-            <div class="divider"></div>
-            <font-awesome-icon :icon="'ellipsis-h'" size="3x" class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"
-                               @click="goToInstance"/>
-          </div>
-          <div class="buttons" v-if="!installed">
-            <font-awesome-icon @click="openInstall" :icon="'download'" size="3x"
-                               class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"/>
-            <div class="divider"></div>
-            <font-awesome-icon :icon="'info-circle'" size="3x"
-                               class="cursor-pointer button hover-scale lg:text-5xl sm:text-base" @click="openInfo"/>
-          </div>
-        </div>
-        <div class="row mt-2">
-          <p class="font-bold text-text-color sm:text-sm lg:text-lg">v{{version}}</p>
-        </div>
-      </div>
-      <div class="hoverContent show" v-else>
-        <div class="row mb-2">
-          <p class="font-bold text-text-color lg:text-2xl">Installing {{name}}</p>
-        </div>
-        <div class="row">
-          <font-awesome-icon :icon="'spinner'" size="5x"
-                               class="cursor-pointer button hover-scale lg:text-5xl sm:text-base" spin/>
-        </div>
-      </div>
-      <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
-        <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions"/>
-      </FTBModal>
-    </div> -->
 </template>
 
 <script lang="ts">
@@ -322,7 +200,7 @@ export default class PackCard extends Vue {
     });
   }
 
-  public checkMemory() {
+  public checkMemoryThenLaunch() {
     if (this.instance.memory < this.instance.minMemory) {
       this.msgBox.type = 'okCancel';
       this.msgBox.title = 'Low Memory';
@@ -476,6 +354,87 @@ export default class PackCard extends Vue {
 </script>
 
 <style scoped lang="scss">
+.pack-card {
+  border-radius: 5px;
+  overflow: hidden;
+  border: 2px solid rgb(68, 68, 68, 0.3);
+  cursor: pointer;
+
+  &:hover {
+    .play-button {
+      transform: translateY(0) !important;
+    }
+
+    .title,
+    .version {
+      opacity: 0 !important;
+    }
+  }
+
+  .art {
+    position: relative;
+
+    .has-update {
+      position: absolute;
+      font-size: 0.875rem;
+      color: white;
+      background: rgb(41, 130, 212, 0.5);
+      backdrop-filter: blur(3px);
+      padding: 0.2rem 0.5rem;
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: center;
+      bottom: 0;
+      width: 100%;
+    }
+  }
+
+  .meta {
+    position: relative;
+    padding: 0.6rem 0.8rem;
+    background: rgba(68, 68, 68, 0.6);
+
+    .title {
+      max-width: 100%;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      transition: opacity 0.25s ease-in-out;
+    }
+
+    .version {
+      opacity: 0.5;
+      transition: opacity 0.25s ease-in-out;
+      font-size: 0.875rem;
+      line-height: 1em;
+    }
+
+    .play-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0.75rem 0.5rem;
+      transform: translateY(105%);
+      transition: transform 0.25s ease-in-out;
+
+      .clickable-play {
+        background: var(--color-primary-button);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        transition: background-color 0.25s ease-in-out;
+
+        &:hover {
+          background: var(--color-light-primary-button);
+        }
+      }
+    }
+  }
+}
+
 .card {
   position: relative;
 }

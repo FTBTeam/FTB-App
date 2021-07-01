@@ -1,115 +1,43 @@
 <template>
-  <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full">
-    <div class="w-1/2 self-center text-center">
-      <FTBSearchBar v-model="searchValue" placeholder="Search" :doSearch="onSearch" />
+  <div class="px-6 py-4">
+    <div class="search-and-switcher mb-4">
+      <div class="switcher shadow">
+        <div
+          @click="changeTab('ftbsearch')"
+          class="btn-icon bg-navbar ftb"
+          :class="{ active: currentTab === 'ftbsearch' }"
+        >
+          <img src="@/assets/ftb-white-logo.svg" alt="" />
+        </div>
+
+        <div
+          @click="changeTab('cursesearch')"
+          class="btn-icon bg-navbar eww-orange"
+          :class="{ active: currentTab === 'cursesearch' }"
+        >
+          <img src="@/assets/curse-logo.svg" alt="" />
+        </div>
+      </div>
+      <FTBSearchBar v-model="searchValue" placeholder="Search" :min="3" />
     </div>
     <div v-if="modpacks.error" class="m-4 p-3" style="background-color: #e55812">
       <span>{{ modpacks.errorMsg }}</span>
     </div>
-    <transition name="fade" appear mode="out-in">
-      <div class="flex flex-col" v-if="!modpacks.loading && !(modpacks.search.length <= 0 && modpacks.curseLoading)">
-        <div
-          class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
-          v-if="modpacks.search.length > 0 || modpacks.searchCurse.length > 0"
-        >
-          <div class="flex flex-row items-center w-full mt-4">
-            <h1
-              @click="changeTab('ftbsearch')"
-              :class="
-                `cursor-pointer text-2xl mr-4 ${
-                  currentTab === 'ftbsearch' ? '' : 'text-gray-600'
-                } hover:text-gray-500 border-red-700`
-              "
-            >
-              FTB Modpacks
-            </h1>
-            <h1
-              @click="changeTab('cursesearch')"
-              :class="
-                `cursor-pointer text-2xl mr-4 ${
-                  currentTab === 'cursesearch' ? '' : 'text-gray-600'
-                } hover:text-gray-500 border-red-700`
-              "
-            >
-              Curseforge Modpacks
-            </h1>
-          </div>
-          <transition name="fade" mode="out-in">
-            <div v-if="currentTab === 'ftbsearch'" key="ftbsearch" class="w-full">
-              <div>
-                <div v-if="modpacks.search.length < 1" class="m-4 p-3" style="background-color: #e55812">
-                  <span>No modpacks found</span>
-                </div>
-                <transition-group
-                  name="list"
-                  tag="div"
-                  class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
-                  appear
-                >
-                  <pack-card-list
-                    v-for="(modpack, index) in modpacks.search.filter(m => m.versions.length > 0)"
-                    :key="index"
-                    :packID="modpack.id"
-                    :art="modpack.art"
-                    :installed="false"
-                    :minecraft="'1.7.10'"
-                    :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-                    :versionID="modpack.versions[0].id"
-                    :name="modpack.name"
-                    :authors="modpack.authors"
-                    :versions="modpack.versions"
-                    :tags="modpack.tags"
-                    :description="modpack.synopsis"
-                    >{{ modpack.id }}
-                  </pack-card-list>
-                </transition-group>
-              </div>
+    <div class="flex flex-col" v-if="!modpacks.loading && !(modpacks.search.length <= 0 && modpacks.curseLoading)">
+      <div
+        class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
+        v-if="modpacks.search.length > 0 || modpacks.searchCurse.length > 0"
+      >
+        <div v-if="currentTab === 'ftbsearch'" key="ftbsearch" class="w-full">
+          <div>
+            <div v-if="modpacks.search.length < 1" class="m-4 p-3" style="background-color: #e55812">
+              <span>No modpacks found</span>
             </div>
-            <div v-else-if="currentTab === 'cursesearch'" key="cursesearch">
-              <div v-if="!modpacks.curseLoading">
-                <div v-if="modpacks.searchCurse.length < 1" class="m-4 p-3 w-full" style="background-color: #e55812">
-                  <span>No modpacks found</span>
-                </div>
-                <transition-group
-                  name="list"
-                  tag="div"
-                  class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
-                  appear
-                >
-                  <pack-card-list
-                    v-for="(modpack, index) in modpacks.searchCurse.filter(m => m.versions.length > 0)"
-                    :key="index"
-                    :packID="modpack.id"
-                    :art="modpack.art"
-                    :installed="false"
-                    :minecraft="'1.7.10'"
-                    :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-                    :versionID="modpack.versions[0].id"
-                    :name="modpack.name"
-                    :authors="modpack.authors"
-                    :type="1"
-                    :versions="modpack.versions"
-                    :tags="modpack.tags"
-                    :description="modpack.synopsis"
-                    >{{ modpack.id }}
-                  </pack-card-list>
-                </transition-group>
-              </div>
-              <div v-else class="flex flex-1">
-                <Loading />
-              </div>
-            </div>
-          </transition>
-        </div>
-        <div v-else>
-          <transition name="fade" mode="out-in">
-            <transition-group name="list" tag="div" class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
-              <pack-card-list
-                v-for="modpack in modpacks.all"
-                :key="`plays-${modpack.id}`"
-                :list-mode="settingsState.settings.listMode"
+            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
+              <div
+                v-for="(modpack, index) in modpacks.search.filter(m => m.versions.length > 0)"
+                :key="index"
                 :packID="modpack.id"
-                :versions="modpack.versions"
                 :art="modpack.art"
                 :installed="false"
                 :minecraft="'1.7.10'"
@@ -117,19 +45,71 @@
                 :versionID="modpack.versions[0].id"
                 :name="modpack.name"
                 :authors="modpack.authors"
+                :versions="modpack.versions"
                 :tags="modpack.tags"
                 :description="modpack.synopsis"
-                :featured="modpack.featured"
+              >
+                {{ modpack.id }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else-if="currentTab === 'cursesearch'" key="cursesearch">
+          <div v-if="!modpacks.curseLoading">
+            <div v-if="modpacks.searchCurse.length < 1" class="m-4 p-3 w-full" style="background-color: #e55812">
+              <span>No modpacks found</span>
+            </div>
+            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch">
+              <pack-card-list
+                v-for="(modpack, index) in modpacks.searchCurse.filter(m => m.versions.length > 0)"
+                :key="index"
+                :packID="modpack.id"
+                :art="modpack.art"
+                :installed="false"
+                :minecraft="'1.7.10'"
+                :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
+                :versionID="modpack.versions[0].id"
+                :name="modpack.name"
+                :authors="modpack.authors"
+                :type="1"
+                :versions="modpack.versions"
+                :tags="modpack.tags"
+                :description="modpack.synopsis"
                 >{{ modpack.id }}
               </pack-card-list>
-            </transition-group>
-          </transition>
+            </div>
+          </div>
+          <div v-else class="flex flex-1">
+            <Loading />
+          </div>
         </div>
       </div>
-      <div v-else class="flex flex-1">
-        <Loading />
+      <div v-else>
+        <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
+          <pack-card-list
+            v-for="modpack in modpacks.all"
+            :key="`plays-${modpack.id}`"
+            :list-mode="settingsState.settings.listMode"
+            :packID="modpack.id"
+            :versions="modpack.versions"
+            :art="modpack.art"
+            :installed="false"
+            :minecraft="'1.7.10'"
+            :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
+            :versionID="modpack.versions[0].id"
+            :name="modpack.name"
+            :authors="modpack.authors"
+            :tags="modpack.tags"
+            :description="modpack.synopsis"
+            :featured="modpack.featured"
+            >{{ modpack.id }}
+          </pack-card-list>
+        </div>
       </div>
-    </transition>
+    </div>
+    <div v-else class="flex flex-1">
+      <Loading />
+    </div>
   </div>
 </template>
 
@@ -176,13 +156,6 @@ export default class BrowseModpacks extends Vue {
     return tab === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${tab}`);
   }
 
-  public goTo(page: string): void {
-    // We don't care about this error!
-    this.$router.push(page).catch(err => {
-      return;
-    });
-  }
-
   @Watch('$route')
   public onPropertyChanged(value: Route, oldValue: Route) {
     if (value.params.search !== oldValue.params.search) {
@@ -220,6 +193,7 @@ export default class BrowseModpacks extends Vue {
     }
   }
 
+  @Watch('searchValue')
   private onSearch() {
     if (this.searchValue === '' || this.searchValue == null) {
       this.clearSearch();
@@ -233,6 +207,51 @@ export default class BrowseModpacks extends Vue {
 <style lang="scss">
 h1 {
   text-transform: capitalize;
+}
+
+.search-and-switcher {
+  display: flex;
+  .switcher {
+    margin-right: 1rem;
+    display: flex;
+    border-radius: 5px;
+    overflow: hidden;
+
+    .btn-icon {
+      padding: 0 1.2rem;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.25s ease-in-out;
+
+      img {
+        width: 45px;
+        opacity: 0.5;
+        transition: opacity 0.25s ease-in-out;
+      }
+
+      &.ftb img {
+        margin-top: -4px;
+      }
+
+      &.active {
+        background-color: var(--color-primary-button);
+        img {
+          opacity: 1;
+        }
+      }
+
+      &.eww-orange.active {
+        background-color: #ff784d;
+      }
+
+      &:hover {
+        img {
+          opacity: 1;
+        }
+      }
+    }
+  }
 }
 
 .fade-enter-active,

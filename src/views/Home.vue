@@ -1,18 +1,13 @@
 <template>
-  <div class="flex flex-1 flex-col lg:p-10 sm:p-5" style="margin-bottom: 60px;" v-if="isLoaded">
+  <div class="px-6 py-4" v-if="isLoaded">
     <!-- <div class="flex flex-row items-center w-full mt-4">
       <h1 v-if="recentlyPlayed.length >= 1" @click="changeTab('recentlyPlayed')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'recentlyPlayed' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Recently Played</h1>
       <h1 @click="changeTab('featuredPacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredPacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Packs</h1>
       <h1 v-if="serverListState.servers !== undefined" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
     </div> -->
     <div class="flex flex-col" v-if="recentlyPlayed.length >= 1" key="recentlyPlayed">
-      <h1 class="text-2xl mr-4">Recently Played</h1>
-      <transition-group
-        name="list"
-        tag="div"
-        class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch"
-        appear
-      >
+      <h1 class="text-2xl mb-2">Recently Played</h1>
+      <div class="mod-pack-grid mb-4">
         <pack-card
           v-for="modpack in recentlyPlayed"
           :key="modpack.uuid"
@@ -30,16 +25,11 @@
           :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"
           :kind="modpack.kind"
         ></pack-card>
-      </transition-group>
+      </div>
     </div>
     <div class="flex flex-col" key="featuredPacks">
       <h1 class="text-2xl mr-4">Featured Modpacks</h1>
-      <transition-group
-        name="list"
-        tag="div"
-        class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch"
-        appear
-      >
+      <div class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch" appear>
         <pack-card-list
           v-for="modpack in modpacks.featuredPacks.slice(0, cardsToShow)"
           :key="modpack.id"
@@ -57,7 +47,7 @@
           :kind="modpack.kind"
           >{{ modpack.id }}</pack-card-list
         >
-      </transition-group>
+      </div>
     </div>
     <!-- <div class="flex flex-col" v-if="currentTab === 'featuredServers'" key="featuredServers">
       <transition-group
@@ -109,15 +99,6 @@ const namespace: string = 'modpacks';
   },
 })
 export default class Home extends Vue {
-  get recentlyPlayed() {
-    return this.modpacks !== undefined
-      ? this.modpacks.installedPacks
-          .sort((a, b) => {
-            return b.lastPlayed - a.lastPlayed;
-          })
-          .slice(0, 5)
-      : [];
-  }
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
@@ -127,9 +108,9 @@ export default class Home extends Vue {
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: (id: number) => Promise<ModPack>;
   @State('servers') public serverListState!: ServersState;
   @Action('fetchFeaturedServers', { namespace: 'servers' }) public fetchFeaturedServers!: any;
-  public currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
 
-  private cardsToShow = 3;
+  public currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
+  private cardsToShow = 10;
   private isLoaded: boolean = false;
 
   @Watch('modpacks', { deep: true })
@@ -151,24 +132,8 @@ export default class Home extends Vue {
     }
   }
 
-  public changeToList() {
-    const settingsCopy = this.settingsState.settings;
-    settingsCopy.listMode = true;
-    this.saveSettings(settingsCopy);
-  }
-
-  public changeToGrid() {
-    const settingsCopy = this.settingsState.settings;
-    settingsCopy.listMode = false;
-    this.saveSettings(settingsCopy);
-  }
-
   public getModpack(id: number): ModPack | undefined {
     return this.modpacks?.packsCache[id];
-  }
-
-  private changeTab(tab: string) {
-    this.currentTab = tab;
   }
 
   private async mounted() {
@@ -193,35 +158,24 @@ export default class Home extends Vue {
         this.isLoaded = true;
       }
     }
-    const cardSize = this.settingsState.settings.packCardSize || 2;
-    // @ts-ignore
-    switch (parseInt(cardSize, 10)) {
-      case 5:
-        this.cardsToShow = 3;
-        break;
-      case 4:
-        this.cardsToShow = 4;
-        break;
-      case 3:
-        this.cardsToShow = 5;
-        break;
-      case 2:
-        this.cardsToShow = 7;
-        break;
-      case 1:
-        this.cardsToShow = 10;
-        break;
-      default:
-        this.cardsToShow = 10;
-        break;
-    }
+  }
+
+  get recentlyPlayed() {
+    return this.modpacks !== undefined
+      ? this.modpacks.installedPacks
+          .sort((a, b) => {
+            return b.lastPlayed - a.lastPlayed;
+          })
+          .slice(0, 5)
+      : [];
   }
 }
 </script>
+
 <style lang="scss" scoped>
-.display-mode-switcher {
-  display: flex;
-  flex-direction: row-reverse;
-  background-color: #313131;
+.mod-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 150px);
+  gap: 1rem;
 }
 </style>

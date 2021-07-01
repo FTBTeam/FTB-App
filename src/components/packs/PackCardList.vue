@@ -1,5 +1,5 @@
 <template>
-  <div v-if="settingsState !== undefined" class="m-2 card-list" :class="`w-full h-size-1`">
+  <div v-if="settingsState !== undefined" class="mb-4 card-list" :class="`w-full h-size-1`">
     <div
       v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo"
       style="height: 100%"

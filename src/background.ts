@@ -323,12 +323,10 @@ function createWindow() {
         // Other
         icon: path.join(__static, 'favicon.ico'),
         // Size Settings
-        minWidth: 1000,
-        minHeight: 626,
-        // maxWidth: 1000,
-        // maxHeight: 626,
-        height: 626,
-        width: 1000,
+        minWidth: 1220,
+        minHeight: 800,
+        height: 800,
+        width: 1220,
         frame: false,
         titleBarStyle: 'hidden',
         webPreferences: {
