@@ -16,6 +16,8 @@ import VueShowdown, { showdown } from 'vue-showdown';
 import moment from 'moment';
 // @ts-ignore
 import vSelectMenu from 'v-selectmenu';
+
+import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 
 import store from './store';

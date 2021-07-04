@@ -1,0 +1,17 @@
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-background);
+  user-select: none;
+}
+
+#app {
+  background-color: var(--color-background);
+  margin: 0;
+  font-family: 'Raleway', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-text);
+  height: 100%;
+}

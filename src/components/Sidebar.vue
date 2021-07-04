@@ -206,7 +206,6 @@ export default class Sidebar extends Vue {
 
 .nav-items {
   width: 100%;
-  cursor: pointer;
 
   .nav-item {
     display: block;

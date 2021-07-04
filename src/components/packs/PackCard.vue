@@ -357,7 +357,7 @@ export default class PackCard extends Vue {
 .pack-card {
   border-radius: 5px;
   overflow: hidden;
-  border: 2px solid rgb(68, 68, 68, 0.3);
+  border: 2px solid rgba(68, 68, 68, 0.3);
   cursor: pointer;
 
   &:hover {
@@ -378,7 +378,7 @@ export default class PackCard extends Vue {
       position: absolute;
       font-size: 0.875rem;
       color: white;
-      background: rgb(41, 130, 212, 0.5);
+      background: rgba(41, 130, 212, 0.5);
       backdrop-filter: blur(3px);
       padding: 0.2rem 0.5rem;
       font-family: Arial, Helvetica, sans-serif;
