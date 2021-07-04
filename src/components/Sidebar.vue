@@ -157,7 +157,6 @@ export default class Sidebar extends Vue {
 
   private openLogin() {
     // NOTE: the callback is only used on overwolf
-    // TODO: Make this less jank
     platform.get.actions.openLogin((data: any) => {
       if (data.token) {
         this.setSessionID(data.token);

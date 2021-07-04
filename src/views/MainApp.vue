@@ -1,10 +1,10 @@
 <template>
   <div id="app" class="theme-dark" v-if="platfrom.get.config">
     <title-bar />
-    <div class="app-container" v-if="websockets.firstStart && loading">
+    <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
         <sidebar />
-        <div class="app-content" v-if="websockets.socket.isConnected && !loading">
+        <div class="app-content">
           <router-view />
           <transition name="slide-down-up">
             <div v-if="modpacks.installing != null">
@@ -195,11 +195,8 @@ export default class MainApp extends Vue {
   private loading: boolean = false;
   private hasLoaded: boolean = false;
 
-  @Action('registerExitCallback')
-  private registerExitCallback: any;
-
-  @Action('registerPingCallback')
-  private registerPingCallback: any;
+  @Action('registerExitCallback') private registerExitCallback: any;
+  @Action('registerPingCallback') private registerPingCallback: any;
 
   private platfrom = platfrom;
 
@@ -370,6 +367,7 @@ main.main {
   position: relative;
   z-index: 1;
   display: flex;
+  height: 100%;
 }
 
 .app-content {

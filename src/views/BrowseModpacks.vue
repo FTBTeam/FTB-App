@@ -18,7 +18,11 @@
           <img src="@/assets/curse-logo.svg" alt="" />
         </div>
       </div>
-      <FTBSearchBar v-model="searchValue" placeholder="Search" :min="3" />
+      <FTBSearchBar
+        v-model="searchValue"
+        :placeholder="`Search ${currentTab === 'ftbsearch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
+        :min="3"
+      />
     </div>
     <div v-if="modpacks.error" class="m-4 p-3" style="background-color: #e55812">
       <span>{{ modpacks.errorMsg }}</span>
@@ -127,7 +131,6 @@ import { AuthState } from '../modules/auth/types';
 
 const namespace: string = 'modpacks';
 
-// TODO: THIS DOESN'T WORK RIGHT NOW, hopefully it will after the vue has been fixed
 @Component({
   components: {
     PackCardList,
@@ -225,7 +228,7 @@ h1 {
       transition: background-color 0.25s ease-in-out;
 
       img {
-        width: 45px;
+        width: 40px;
         opacity: 0.5;
         transition: opacity 0.25s ease-in-out;
       }

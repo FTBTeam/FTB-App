@@ -380,14 +380,6 @@ export default class SettingsPage extends Vue {
     platform.get.actions.changeExitOverwolfSetting(value);
   }
 
-  // TODO: Not used?
-  private calcMem(memory: any) {
-    const totalMemKB = memory / 1024;
-    const totalMemMB = totalMemKB / 1024;
-    const totalMemGB = totalMemMB / 1024;
-    return Math.round(totalMemGB);
-  }
-
   get resolutionList() {
     const resList = [];
     for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {

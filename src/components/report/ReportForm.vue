@@ -87,7 +87,7 @@ export default class ReportForm extends Vue {
         return;
       }
     });
-    // TODO: FIND OUT WHY THIS HAS BEEN COMMENTED
+    // TODO: Replace this with an actual endpoint :D
     // Send request
     // await axios.put(`${process.env.VUE_APP_FTB_API}report/create`, {
     //   email: this.errorEmail,
