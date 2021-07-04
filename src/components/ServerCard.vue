@@ -28,7 +28,11 @@
         </div>
 
         <p class="mb-auto max-2-lines" v-if="server.protoResponse && server.protoResponse.description !== undefined">
-          {{ server.protoResponse.description.text.replace(/\u00a7[0-9a-fk-or]/gi, '') }}
+          {{
+            server.protoResponse.description.text
+              ? server.protoResponse.description.text.replace(/\u00a7[0-9a-fk-or]/gi, '')
+              : ''
+          }}
         </p>
         <!-- <div  v-if="tags" class="flex flex-row items-center">
             <div class="flex flex-row">

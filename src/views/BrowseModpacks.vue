@@ -38,7 +38,7 @@
               <span>No modpacks found</span>
             </div>
             <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
-              <div
+              <pack-card-list
                 v-for="(modpack, index) in modpacks.search.filter(m => m.versions.length > 0)"
                 :key="index"
                 :packID="modpack.id"
@@ -54,7 +54,7 @@
                 :description="modpack.synopsis"
               >
                 {{ modpack.id }}
-              </div>
+              </pack-card-list>
             </div>
           </div>
         </div>

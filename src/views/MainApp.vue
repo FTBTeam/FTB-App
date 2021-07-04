@@ -4,9 +4,9 @@
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
         <sidebar />
-        <div class="app-content">
+        <div class="app-content relative">
           <router-view />
-          <transition name="slide-down-up">
+          <div class="bottom-area">
             <div v-if="modpacks.installing != null">
               <div class="progress-bar relative">
                 <div class="pl-4 w-full" v-bind:style="{ position: 'absolute' }" v-if="modpacks.installing.error">
@@ -84,8 +84,7 @@
                 </div>
               </div>
             </div>
-          </transition>
-          <transition name="slide-down-up">
+
             <div v-if="$store.state && $store.state.alert != null">
               <div class="progress-bar relative">
                 <p class="pl-4 w-full absolute">
@@ -111,7 +110,7 @@
                 </div>
               </div>
             </div>
-          </transition>
+          </div>
         </div>
       </main>
     </div>
@@ -344,6 +343,13 @@ export default class MainApp extends Vue {
       }
     }
   }
+}
+
+.bottom-area {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  bottom: 0;
 }
 </style>
 
