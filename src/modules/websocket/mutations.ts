@@ -2,6 +2,7 @@ import { MutationTree } from 'vuex';
 import { SocketState } from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
+import eventBus from '@/utils/event-bus';
 
 export const mutations: MutationTree<SocketState> = {
   SOCKET_ONOPEN(state: any, event: any) {
@@ -22,9 +23,11 @@ export const mutations: MutationTree<SocketState> = {
     state.firstStart = false;
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
+    eventBus.$emit('ws.message', message);
+
     if (message.requestId) {
       if (state.messages[message.requestId]) {
-        state.messages[message.requestId](message);
+        state.messages[message.requestId](message, message.requestId);
         if (
           message.type !== 'installInstanceDataReply' &&
           message.type !== 'installInstanceProgress' &&

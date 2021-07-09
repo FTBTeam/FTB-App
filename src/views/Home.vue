@@ -166,7 +166,7 @@ export default class Home extends Vue {
           .sort((a, b) => {
             return b.lastPlayed - a.lastPlayed;
           })
-          .slice(0, 5)
+          .slice(0, 6)
       : [];
   }
 }
@@ -176,6 +176,6 @@ export default class Home extends Vue {
 .mod-pack-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, 150px);
-  gap: 1rem;
+  gap: 0.92rem;
 }
 </style>

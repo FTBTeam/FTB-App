@@ -264,7 +264,8 @@ export default class SettingsPage extends Vue {
   private appVersion: string = platform.get.config.appVersion;
 
   public scrollToTop(): void {
-    document.querySelectorAll('.content-container')[0].scrollTo(0, 0);
+    // TODO: this likely isn't needed due to how rendering works and the changes made to the license page
+    document.querySelectorAll('.app-content')[0].scrollTo(0, 0);
   }
 
   public browseForFolder() {

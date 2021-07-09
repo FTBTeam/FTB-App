@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-1 flex-col h-full overflow-hidden">
+  <div class="flex flex-1 flex-col h-full">
     <div class="flex flex-col h-full" v-if="instance != undefined" :key="instance.uuid">
       <div>
         <div
@@ -139,7 +139,7 @@
                 'text-gray-600 hover:text-gray-500': !isTabActive('modlist'),
               }"
               href="#versions"
-              >ModList</a
+              >Mods</a
             >
           </li>
           <li class="-mb-px mr-1">
@@ -167,7 +167,7 @@
             >
           </li>
         </ul>
-        <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
+        <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;" v-if="!searchingForMods">
           <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
             <div class="flex flex-wrap" v-if="currentModpack != undefined && currentModpack.description !== undefined">
               <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']" />
@@ -355,6 +355,13 @@
           </div>
 
           <div class="tab-pane px-4" v-if="isTabActive('modlist')" id="modlist">
+            <div class="get-mods flex justify-end items-center mb-6">
+              <p class="inline-block mr-4">Need more content?</p>
+              <ftb-button color="info" class="py-2 px-8 inline-block" @click="searchingForMods = true">
+                Get more mods
+                <font-awesome-icon icon="search" class="ml-2" />
+              </ftb-button>
+            </div>
             <div v-for="(file, index) in modlist" :key="index">
               <div class="flex flex-row my-4 items-center">
                 <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
@@ -362,15 +369,12 @@
                   <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2 clean-font">{{
                     prettyBytes(parseInt(file.size))
                   }}</span>
-                  <v-selectmenu :title="false" :query="false" :data="modHashData(file)" align="right" type="regular">
-                    <template #row="{ row }">
-                      <font-awesome-icon :color="row.color" :icon="row.icon"></font-awesome-icon>
-                      <span v-html="row.content" :title="row.hover" class="ml-2 cursor-pointer"></span>
-                    </template>
-                    <ftb-button class="py-1 px-4 ml-2 text-xs" color="info" css-class="text-center">
-                      <font-awesome-icon icon="shield-alt"></font-awesome-icon>
-                    </ftb-button>
-                  </v-selectmenu>
+
+                  <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
+                  <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
+                  <span class="sha-check">
+                    <font-awesome-icon icon="check-circle" color="lightgreen" class="ml-2 mr-1" /> SHA1
+                  </span>
                 </div>
               </div>
             </div>
@@ -393,6 +397,9 @@
               <span>It doesn't looks like there are any public MineTogether servers</span>
             </div>
           </div>
+        </div>
+        <div class="tab-content bg-navbar flex-1 py-4 px-4 mx-2" style="overflow-y: auto;" v-else>
+          <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" />
         </div>
       </div>
     </div>
@@ -428,6 +435,7 @@ import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
 import { prettyByteFormat } from '@/utils/helpers';
+import FindMods from '@/components/modpack/FindMods.vue';
 
 interface MsgBox {
   title: string;
@@ -459,7 +467,8 @@ interface Changelogs {
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
     'ftb-button': FTBButton,
-    'message-modal': MessageModal,
+    MessageModal,
+    FindMods,
   },
 })
 export default class InstancePage extends Vue {
@@ -503,6 +512,8 @@ export default class InstancePage extends Vue {
   private resSelectedValue: string = '0';
   prettyBytes = prettyByteFormat;
 
+  searchingForMods = false;
+
   public clickTag(tagName: string) {
     this.$router.push({ name: 'browseModpacks', params: { search: tagName } });
   }
@@ -543,26 +554,13 @@ export default class InstancePage extends Vue {
     }, 5000);
   }
 
-  public modHashData(file: any) {
-    const links = [];
-    const isMatched = true;
-    links.push({
-      icon: 'check-circle',
-      color: isMatched ? 'green' : 'red',
-      content: `SHA1`,
-      callback: this.copy.bind(this, file.sha1),
-    });
-    links.push({ icon: 'times-circle', color: 'red', hover: 'Coming Soon', content: 'MD5' });
-    links.push({ icon: 'times-circle', color: 'red', hover: 'Coming Soon', content: 'SHA256' });
-    return links;
-  }
-
   public isTabActive(tabItem: string) {
     return this.activeTab === tabItem;
   }
 
   public setActiveTab(tabItem: string) {
     this.activeTab = tabItem;
+    this.searchingForMods = false;
   }
 
   public isOlderVersion(version: number) {

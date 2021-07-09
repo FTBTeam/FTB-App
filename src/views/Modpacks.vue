@@ -5,7 +5,7 @@
       <div class="w-1/2 self-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mb-4" />
       </div>
-      <div class="pack-card-list" :class="{ grid: this.settings.settings.listMode === 'false' }">
+      <div class="pack-card-list grid">
         <pack-card-wrapper
           v-for="modpack in packs"
           :list-mode="false"
@@ -149,6 +149,7 @@ export default class Modpacks extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
 .pack-card-list {
   &.grid {
