@@ -173,13 +173,7 @@ export default class ModCard extends Vue {
 
   mounted() {
     eventBus.$on('ws.message', (data: any) => {
-      if (
-        data.type === 'ping' ||
-        data.type === 'pong' ||
-        !this.installing ||
-        this.wsReqId === -1 ||
-        this.wsReqId !== data.requestId
-      ) {
+      if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
         return;
       }
 

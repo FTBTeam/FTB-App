@@ -18,6 +18,10 @@
     <div class="body pt-6">
       <div class="stats-bar" v-if="resultingIds.length">
         <div class="stat">
+          <div class="text">Buffered</div>
+          <div class="value">{{ resultsBuffer.length }}</div>
+        </div>
+        <div class="stat">
           <div class="text">Loaded in</div>
           <div class="value">{{ initialTimeTaken.toLocaleString() }}ms</div>
         </div>
@@ -41,7 +45,8 @@
           @click="loadMore"
           class="px-10 py-2 inline-block"
         >
-          {{ !hasResults ? 'No more results' : 'Load more results' }}
+          <font-awesome-icon spin icon="spinner" class="mr-2" v-if="hasResults && loadingExtra" />
+          {{ !hasResults ? 'No more results' : `${loadingExtra ? 'Loading' : 'Load'} more results` }}
         </ftb-button>
       </div>
     </div>
@@ -89,6 +94,7 @@ export default class FindMods extends Vue {
 
   results: Mod[] = [];
   resultingIds: number[] = [];
+  resultsBuffer: Mod[] = [];
 
   searchDebounce: any;
 
@@ -149,18 +155,51 @@ export default class FindMods extends Vue {
     this.loadingExtra = true;
     const start = new Date().getTime();
     for (let i = this.offset; i < this.offset + 5; i++) {
-      // TODO: add error checking here
       if (!this.resultingIds[i]) {
         break;
       }
 
-      const res = await axios.get<Mod>(`${process.env.VUE_APP_MODPACK_API}/public/mod/${this.resultingIds[i]}`);
-      this.results.push(res.data);
+      // Pull from the buffer unless it's the first go or something isn't in the buffer
+      if (this.resultsBuffer[i]) {
+        this.results.push(this.resultsBuffer[i]);
+      } else {
+        const res = await this.getModFromId(this.resultingIds[i]);
+        if (res) {
+          this.results.push(res);
+        }
+      }
     }
 
     this.offset += 5;
     this.loadingExtra = false;
     this.timeTaken += new Date().getTime() - start;
+
+    this.bufferNextFive();
+  }
+
+  /**
+   * After one request, we buffer the next 5 to speed up TTL on more results button
+   */
+  async bufferNextFive() {
+    if (!this.hasResults) {
+      return;
+    }
+
+    // ensure the button can't be pressed until the buffer is finished otherwise weird things will happen
+    this.loadingExtra = true;
+    const start = new Date().getTime();
+    for (let i = this.offset; i < this.offset + 5; i++) {
+      if (!this.resultingIds[i]) {
+        break;
+      }
+
+      const res = await this.getModFromId(this.resultingIds[i]);
+      if (res) {
+        this.resultsBuffer.push(res);
+      }
+    }
+    this.timeTaken += new Date().getTime() - start;
+    this.loadingExtra = false;
   }
 
   async loadMore() {
@@ -178,6 +217,7 @@ export default class FindMods extends Vue {
     this.timeTaken = 0;
     this.initialTimeTaken = 0;
     this.loadingExtra = false;
+    this.resultsBuffer = [];
   }
 
   /**
@@ -215,6 +255,14 @@ export default class FindMods extends Vue {
     }
 
     this.target = packData.data.targets.find((e: any) => e.type == 'game')?.version ?? '';
+  }
+
+  private async getModFromId(modId: number): Promise<Mod | null> {
+    try {
+      return (await axios.get<Mod>(`${process.env.VUE_APP_MODPACK_API}/public/mod/${modId}`)).data;
+    } catch {
+      return null;
+    }
   }
 
   get hasResults() {
