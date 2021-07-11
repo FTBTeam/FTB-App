@@ -357,10 +357,15 @@
           <div class="tab-pane px-4" v-if="isTabActive('modlist')" id="modlist">
             <div class="get-mods flex justify-end items-center mb-6">
               <p class="inline-block mr-4">Need more content?</p>
-              <ftb-button color="info" class="py-2 px-8 inline-block" @click="searchingForMods = true">
+              <ftb-button color="primary" class="py-2 px-8 inline-block" @click="searchingForMods = true">
                 Get more mods
                 <font-awesome-icon icon="search" class="ml-2" />
               </ftb-button>
+              <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
+                <ftb-button @click="() => getModList(true)" class="py-2 px-4" color="info" :disabled="updatingModlist">
+                  <font-awesome-icon icon="sync" />
+                </ftb-button>
+              </div>
             </div>
             <div v-for="(file, index) in modlist" :key="index">
               <div class="flex flex-row my-4 items-center">
@@ -399,7 +404,7 @@
           </div>
         </div>
         <div class="tab-content bg-navbar flex-1 py-4 px-4 mx-2" style="overflow-y: auto;" v-else>
-          <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" />
+          <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" @modInstalled="getModList" />
         </div>
       </div>
     </div>
@@ -513,6 +518,7 @@ export default class InstancePage extends Vue {
   prettyBytes = prettyByteFormat;
 
   searchingForMods = false;
+  updatingModlist = false;
 
   public clickTag(tagName: string) {
     this.$router.push({ name: 'browseModpacks', params: { search: tagName } });
@@ -758,11 +764,9 @@ export default class InstancePage extends Vue {
     if (this.$route.query.shouldPlay === 'true') {
       this.confirmLaunch();
     }
-    try {
-      this.getModList();
-    } catch (e) {
-      console.log('Error getting instance modlist');
-    }
+
+    this.getModList();
+
     try {
       if (this.currentVersionObject !== null) {
         if (this.currentVersionObject.mtgID) {
@@ -797,16 +801,35 @@ export default class InstancePage extends Vue {
     return [];
   }
 
-  private getModList() {
-    this.sendMessage({
-      payload: {
-        type: 'instanceMods',
-        uuid: this.instance?.uuid,
-      },
-      callback: (data: any) => {
-        this.modlist = data.files;
-      },
-    });
+  private getModList(showAlert = false) {
+    try {
+      this.updatingModlist = true;
+      this.sendMessage({
+        payload: {
+          type: 'instanceMods',
+          uuid: this.instance?.uuid,
+        },
+        callback: (data: any) => {
+          this.modlist = data.files;
+          this.updatingModlist = false;
+
+          if (showAlert) {
+            this.showAlert({
+              title: 'Updated!',
+              message: 'The mods list has been updated',
+              type: 'primary',
+            });
+            setTimeout(() => {
+              this.hideAlert();
+            }, 3000);
+          }
+        },
+      });
+      // I don't think we can catch this... Blame rush.
+    } catch (e) {
+      console.log(e);
+      console.log('Error getting instance modlist');
+    }
   }
 
   private async toggleChangelog(id: number | undefined) {

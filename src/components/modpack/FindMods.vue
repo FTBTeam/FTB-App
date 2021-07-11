@@ -36,7 +36,14 @@
       </div>
       <div class="results">
         <template v-if="search !== '' && results.length">
-          <mod-card v-for="(mod, index) in results" :key="index" :mod="mod" :instance="instance" :target="target" />
+          <mod-card
+            v-for="(mod, index) in results"
+            :key="index"
+            :mod="mod"
+            :instance="instance"
+            :target="target"
+            @modInstalled="$emit('modInstalled')"
+          />
         </template>
         <!-- This is so over the top -->
         <div class="no-results" v-else-if="!results.length && search !== '' && !loadingTerm && !loadingExtra">
@@ -140,6 +147,7 @@ export default class FindMods extends Vue {
   loadingTerm = false;
 
   target: string = '';
+  modLoader: string = '';
 
   timeTaken = 0;
   initialTimeTaken = 0;
@@ -181,7 +189,9 @@ export default class FindMods extends Vue {
     this.loadingTerm = true;
     const start = new Date().getTime();
     const searchResults = await axios.get<ModSearchResults>(
-      `${process.env.VUE_APP_MODPACK_API}/public/mod/search/${this.target || 'all'}/100?term=${this.search}`,
+      `${process.env.VUE_APP_MODPACK_API}/public/mod/search/${this.target || 'all'}/${this.modLoader}/100?term=${
+        this.search
+      }`,
     );
 
     this.loadingTerm = false;
@@ -315,7 +325,8 @@ export default class FindMods extends Vue {
       return;
     }
 
-    this.target = packData.data.targets.find((e: any) => e.type == 'game')?.version ?? '';
+    this.target = packData.data.targets.find((e: any) => e.type === 'game')?.version ?? '';
+    this.modLoader = packData.data.targets.find((e: any) => e.type === 'modloader')?.name ?? 'forge'; // default to forge? Not super nice
   }
 
   private async getModFromId(modId: number): Promise<Mod | null> {

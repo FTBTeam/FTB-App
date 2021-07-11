@@ -193,6 +193,7 @@ export default class ModCard extends Vue {
         this.installing = false;
         this.installProgress = ModCard.emptyProgress;
         this.finishedInstalling = true;
+        this.$emit('modInstalled');
       }
     });
   }
