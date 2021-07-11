@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <!--     <logo width="80%" class="logo" draggable="false"/>-->
-    <router-link to="/" class="z-10">
+    <router-link to="/">
       <img
         src="../assets/logo_ftb.png"
         width="130px"

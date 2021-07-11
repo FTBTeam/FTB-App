@@ -48,6 +48,7 @@ export interface Instance {
   modpack: ModPack | undefined;
   cloudSaves: boolean;
   packType: number;
+  modLoader: string;
 }
 
 export interface Art {

@@ -1,423 +1,535 @@
 <template>
-  <div class="flex flex-1 flex-col h-full">
-    <div class="flex flex-col h-full" v-if="instance != undefined" :key="instance.uuid">
-      <div>
-        <div
-          class="header-image"
-          v-bind:style="{
-            'background-image': `url(${
-              currentModpack !== null &&
-              currentModpack.art != null &&
-              currentModpack.art.filter(art => art.type === 'splash').length > 0
-                ? currentModpack.art.filter(art => art.type === 'splash')[0].url
-                : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'
-            })`,
-          }"
-        >
-          <span class="instance-name"
-            ><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded" @click="goBack"
-              ><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button
-          ></span>
+  <div class="pack-page">
+    <div
+      class="new-pack-page"
+      v-if="instance && packInstance"
+      :style="{
+        'background-image': `url(${packSplashArt})`,
+      }"
+    >
+      <header>
+        <div class="meta-heading">
+          <div class="back" @click="goBack">
+            <font-awesome-icon icon="chevron-left" class="mr-2" />
+            Back to library
+          </div>
 
-          <span class="instance-name text-4xl pb-2">{{ instance.name }}</span>
-          <span class="instance-info">
-            <small v-if="currentModpack !== null">
-              {{ currentModpack.name }}
-              <span v-for="author in currentModpack.authors" v-bind:key="author.name">By {{ author.name }}</span> -
-              {{ versionName }} -
-              <em>{{ currentModpack.synopsis }}</em>
-            </small>
-            <div v-if="currentModpack !== null && tags.length > 0" class="flex flex-row items-center">
-              <div class="flex flex-row">
-                <span
-                  v-for="(tag, i) in limitedTags"
-                  :key="`tag-${i}`"
-                  @click="clickTag(tag.name)"
-                  class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                  style="font-variant: small-caps;"
-                  >{{ tag.name }}</span
-                >
-                <span
-                  v-if="tags.length > 5"
-                  :key="`tag-more`"
-                  class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                  style="font-variant: small-caps;"
-                  >+{{ tags.length - 5 }}</span
-                >
-              </div>
-            </div>
-          </span>
-          <div class="update-bar" v-if="instance && !isLatestVersion">
-            A new update is available
-          </div>
-          <div class="update-bar" v-if="currentModpack && currentModpack.notification">
-            {{ currentModpack.notification }}
-          </div>
-          <div class="instance-buttons flex flex-row frosted-glass">
-            <div class="instance-button mr-1">
-              <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="checkMemory()">
-                <font-awesome-icon icon="play" size="1x" />
-                Play
-              </ftb-button>
-              <!--              <button-->
-              <!--                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
-              <!--                  @click="checkMemory()"-->
-              <!--              >-->
-              <!--                <span class="cursor-pointer"><font-awesome-icon icon="play" size="1x"/> Play</span>-->
-              <!--              </button>-->
-            </div>
-            <div class="instance-button mr-1" v-if="instance && !isLatestVersion">
-              <ftb-button class="py-2 px-4" color="warning" @click="update()" :disabled="modpacks.installing !== null">
-                <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x" /> Update</span>
+          <div class="options">
+            <div class="update" v-if="instance && !isLatestVersion">
+              <ftb-button color="warning" class="update-btn px-2 py-0-5 text-sm">
+                Update available
+                <font-awesome-icon icon="cloud-download-alt" class="ml-2" />
               </ftb-button>
             </div>
-            <div class="instance-button mr-1" title="Last played">
-              <div class="text-white-500 py-2 px-4 inline-flex items-center">
-                <font-awesome-icon icon="stopwatch" size="1x" />&nbsp;
-                <small class="ml-2 text-gray-400 ">{{ instance.lastPlayed | moment('from', 'now') }}</small>
-              </div>
+            <div class="option" @click="showVersions = true">
+              Versions
+              <font-awesome-icon icon="code-branch" class="ml-2" />
             </div>
-            <div class="instance-button mr-2 ml-auto">
-              <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()">
-                <font-awesome-icon icon="trash" size="1x" />
-                Delete
-              </ftb-button>
-              <!--              <button-->
-              <!--                  class="bg-red-700 hover:bg-red-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
-              <!--                  @click="confirmDelete()"-->
-              <!--              >-->
-              <!--                <span class="cursor-pointer"><font-awesome-icon icon="trash" size="1x"/> Delete</span>-->
-              <!--              </button>-->
-            </div>
-            <div class="instance-button mr-2">
-              <ftb-button class="py-2 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()">
-                <font-awesome-icon icon="folder" size="1x" />
-                Open Folder
-              </ftb-button>
-              <!--              <button-->
-              <!--                  class="bg-orange-700 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
-              <!--                  @click="browseInstance()"-->
-              <!--              >-->
-              <!--                <span class="cursor-pointer"><font-awesome-icon icon="folder" size="1x"/> Open Folder</span>-->
-              <!--              </button>-->
+            <div class="option">
+              Settings
+              <font-awesome-icon icon="cogs" class="ml-2" />
             </div>
           </div>
         </div>
-      </div>
-      <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col">
-        <ul class="flex p-2 pb-0" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
-          <li class="-mb-px mr-1">
-            <a
-              class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('overview')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('overview'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('overview'),
-              }"
-              href="#overview"
-              >Overview</a
-            >
-          </li>
-          <li class="-mb-px mr-1" v-if="currentModpack != undefined && currentModpack.versions !== undefined">
-            <a
-              class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('versions')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('versions'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('versions'),
-              }"
-              href="#versions"
-              >Versions</a
-            >
-          </li>
-          <li class="-mb-px mr-1">
-            <a
-              class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('modlist')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('modlist'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('modlist'),
-              }"
-              href="#versions"
-              >Mods</a
-            >
-          </li>
-          <li class="-mb-px mr-1">
-            <a
-              class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('settings')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('settings'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('settings'),
-              }"
-              href="#settings"
-              >Settings</a
-            >
-          </li>
-          <li class="-mb-px mr-1">
-            <a
-              class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('servers')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('servers'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('servers'),
-              }"
-              href="#servers"
-              >Multiplayer</a
-            >
-          </li>
-        </ul>
-        <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;" v-if="!searchingForMods">
-          <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
-            <div class="flex flex-wrap" v-if="currentModpack != undefined && currentModpack.description !== undefined">
-              <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']" />
+
+        <div class="pack-info">
+          <div class="info">
+            <div class="name">{{ packInstance.name }}</div>
+            <div class="desc">{{ packInstance.synopsis }}</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="body">
+        <div class="action-heading">
+          <div class="play">
+            <ftb-button color="primary" class="py-3 px-8">
+              <font-awesome-icon icon="play" class="mr-4" />
+              Play
+            </ftb-button>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="name">Last played</div>
+              <div class="value">{{ instance.lastPlayed | moment('from', 'now') }}</div>
+            </div>
+
+            <div class="stat">
+              <div class="name">Version</div>
+              <div class="value">{{ instance.version }}</div>
+            </div>
+          </div>
+
+          <div class="meta">
+            <div class="origin icon" v-if="instance.packType === 0" data-balloon-pos="left" aria-label="FTB Modpack">
+              <img src="@/assets/ftb-white-logo.svg" alt="" />
+            </div>
+            <div class="origin icon" v-else data-balloon-pos="left" aria-label="Curseforge Modpack">
+              <img src="@/assets/curse-logo.svg" alt="" />
+            </div>
+
+            <div class="modloader icon" v-if="isForgePack" data-balloon-pos="left" aria-label="Forge Modloader">
+              <img src="@/assets/images/forge.svg" alt="" />
+            </div>
+            <div class="modloader icon" v-else data-balloon-pos="left" aria-label="Fabric Modloader">
+              <img src="@/assets/images/fabric.png" alt="" />
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <div class="options">
+            <div class="tab active">Overview</div>
+            <div class="tab">Mods</div>
+            <div class="tab">Public servers</div>
+          </div>
+        </div>
+
+        <div class="body-contents">
+          <div class="pack-overview">
+            <div class="" v-if="packInstance != undefined && packInstance.description !== undefined">
+              <VueShowdown :markdown="packInstance.description" :extensions="['classMap', 'attribMap', 'newLine']" />
             </div>
             <div v-else>
               <h2>No description available</h2>
             </div>
           </div>
-          <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
-            <div v-for="(version, index) in currentModpack.versions" :key="index">
-              {{ debugLog('Version', version) }}
-              <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
-                <p>{{ version.name }}</p>
-                <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"
-                  ><font-awesome-icon
-                    :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'"
-                    class="cursor-pointer"
-                    size="1x"
-                  />
-                  Changelog</span
-                >
+        </div>
+      </div>
 
+      <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
+        <modpack-versions :versions="packInstance.versions" :current="instance.versionId" />
+      </ftb-modal>
+    </div>
+    <div class="flex flex-1 flex-col h-full">
+      <div class="flex flex-col h-full" v-if="instance != undefined" :key="instance.uuid">
+        <div>
+          <div
+            class="header-image"
+            :style="{
+              'background-image': `url(${
+                packInstance !== null &&
+                packInstance.art != null &&
+                packInstance.art.filter(art => art.type === 'splash').length > 0
+                  ? packInstance.art.filter(art => art.type === 'splash')[0].url
+                  : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'
+              })`,
+            }"
+          >
+            <span class="instance-name"
+              ><ftb-button class="" color="" css-class="text-center backbtn py-2 rounded" @click="goBack"
+                ><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button
+            ></span>
+
+            <span class="instance-name text-4xl pb-2">{{ instance.name }}</span>
+            <span class="instance-info">
+              <small v-if="packInstance !== null">
+                {{ packInstance.name }}
+                <span v-for="author in packInstance.authors" v-bind:key="author.name">By {{ author.name }}</span> -
+                {{ versionName }} -
+                <em>{{ packInstance.synopsis }}</em>
+              </small>
+              <div v-if="packInstance !== null && tags.length > 0" class="flex flex-row items-center">
+                <div class="flex flex-row">
+                  <span
+                    v-for="(tag, i) in limitedTags"
+                    :key="`tag-${i}`"
+                    @click="clickTag(tag.name)"
+                    class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
+                    style="font-variant: small-caps;"
+                    >{{ tag.name }}</span
+                  >
+                  <span
+                    v-if="tags.length > 5"
+                    :key="`tag-more`"
+                    class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
+                    style="font-variant: small-caps;"
+                    >+{{ tags.length - 5 }}</span
+                  >
+                </div>
+              </div>
+            </span>
+            <div class="update-bar" v-if="instance && !isLatestVersion">
+              A new update is available
+            </div>
+            <div class="update-bar" v-if="packInstance && packInstance.notification">
+              {{ packInstance.notification }}
+            </div>
+            <div class="instance-buttons flex flex-row frosted-glass">
+              <div class="instance-button mr-1">
+                <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="launchModPack()">
+                  <font-awesome-icon icon="play" size="1x" />
+                  Play
+                </ftb-button>
+                <!--              <button-->
+                <!--                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
+                <!--                  @click="launchModPack()"-->
+                <!--              >-->
+                <!--                <span class="cursor-pointer"><font-awesome-icon icon="play" size="1x"/> Play</span>-->
+                <!--              </button>-->
+              </div>
+              <div class="instance-button mr-1" v-if="instance && !isLatestVersion">
                 <ftb-button
-                  v-if="instance.versionId && instance.versionId !== version.id"
-                  class="py-2 px-4 ml-auto mr-1"
+                  class="py-2 px-4"
                   color="warning"
-                  css-class="text-center text-l"
-                  @click="update(version.id)"
+                  @click="update()"
                   :disabled="modpacks.installing !== null"
                 >
-                  <font-awesome-icon icon="download" size="1x" />
-                  {{ isOlderVersion(version.id) ? 'Downgrade' : 'Update' }}
+                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x" /> Update</span>
                 </ftb-button>
-                <!--                <button-->
-                <!--                    v-if="instance.versionId && instance.versionId !== version.id"-->
-                <!--                    class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"-->
-                <!--                    @click="update(version.id)"-->
-                <!--                >-->
-                <!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> {{isOlderVersion(version.name) ? 'Downgrade' : 'Update'}}</span>-->
-                <!--                </button>-->
-                <ftb-button
-                  v-if="instance.versionId && instance.versionId === version.id"
-                  class="py-2 px-4 ml-auto mr-1 cursor-not-allowed"
-                  color="primary"
-                  css-class="text-center text-l cursor-not-allowed"
-                >
-                  <font-awesome-icon icon="check" size="1x" />
-                  Current
-                </ftb-button>
-                <!--                <button-->
-                <!--                    v-if="instance.versionId && instance.versionId === version.id"-->
-                <!--                    class="bg-blue-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-not-allowed"-->
-                <!--                >-->
-                <!--                  <span class="cursor-not-allowed"><font-awesome-icon icon="check" size="1x"/> Current</span>-->
-                <!--                </button>-->
-                <v-selectmenu
-                  :title="false"
-                  :query="false"
-                  :data="serverDownloadMenu(version.id)"
-                  align="right"
-                  type="regular"
-                >
-                  <ftb-button class="py-2 px-4 ml-2" color="info" css-class="text-center text-l">
-                    <font-awesome-icon icon="download" size="1x" />
-                    Download Server
-                  </ftb-button>
-                  <!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
-                </v-selectmenu>
               </div>
-              {{ debugLog('Version ID', version.id) }}
-              {{ debugLog('activeChangelog', activeChangelog) }}
-              <div class="pl-5 p-2 bg-background" v-if="activeChangelog === version.id">
-                <VueShowdown
-                  v-if="changelogs[version.id]"
-                  :markdown="changelogs[version.id]"
-                  :extensions="['classMap', 'newLine']"
-                />
-                <p v-else>No changelog available</p>
+              <div class="instance-button mr-1" title="Last played">
+                <div class="text-white-500 py-2 px-4 inline-flex items-center">
+                  <font-awesome-icon icon="stopwatch" size="1x" />&nbsp;
+                  <small class="ml-2 text-gray-400 ">{{ instance.lastPlayed | moment('from', 'now') }}</small>
+                </div>
+              </div>
+              <div class="instance-button mr-2 ml-auto">
+                <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()">
+                  <font-awesome-icon icon="trash" size="1x" />
+                  Delete
+                </ftb-button>
+                <!--              <button-->
+                <!--                  class="bg-red-700 hover:bg-red-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
+                <!--                  @click="confirmDelete()"-->
+                <!--              >-->
+                <!--                <span class="cursor-pointer"><font-awesome-icon icon="trash" size="1x"/> Delete</span>-->
+                <!--              </button>-->
+              </div>
+              <div class="instance-button mr-2">
+                <ftb-button class="py-2 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()">
+                  <font-awesome-icon icon="folder" size="1x" />
+                  Open Folder
+                </ftb-button>
+                <!--              <button-->
+                <!--                  class="bg-orange-700 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"-->
+                <!--                  @click="browseInstance()"-->
+                <!--              >-->
+                <!--                <span class="cursor-pointer"><font-awesome-icon icon="folder" size="1x"/> Open Folder</span>-->
+                <!--              </button>-->
               </div>
             </div>
           </div>
-          <div class="tab-pane" v-if="isTabActive('settings')" id="settings">
-            <div class="bg-sidebar-item p-5 rounded my-4">
-              <ftb-input label="Name" :value="instance.name" v-model="instance.name" @blur="saveSettings" />
-              <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
-                Window Size
-              </label>
-              <div class="flex flex-row my-4 -mt-2">
-                <div class="flex-col mt-auto mb-2 pr-1">
+        </div>
+        <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col">
+          <ul class="flex p-2 pb-0" style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;">
+            <li class="-mb-px mr-1">
+              <a
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('overview')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('overview'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('overview'),
+                }"
+                href="#overview"
+                >Overview</a
+              >
+            </li>
+            <li class="-mb-px mr-1" v-if="packInstance != undefined && packInstance.versions !== undefined">
+              <a
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('versions')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('versions'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('versions'),
+                }"
+                href="#versions"
+                >Versions</a
+              >
+            </li>
+            <li class="-mb-px mr-1">
+              <a
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('modlist')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('modlist'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('modlist'),
+                }"
+                href="#versions"
+                >Mods</a
+              >
+            </li>
+            <li class="-mb-px mr-1">
+              <a
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('settings')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('settings'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('settings'),
+                }"
+                href="#settings"
+                >Settings</a
+              >
+            </li>
+            <li class="-mb-px mr-1">
+              <a
+                class="bg-sidebar-item inline-block p-2 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('servers')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('servers'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('servers'),
+                }"
+                href="#servers"
+                >Multiplayer</a
+              >
+            </li>
+          </ul>
+          <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;" v-if="!searchingForMods">
+            <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
+              <div class="flex flex-wrap" v-if="packInstance != undefined && packInstance.description !== undefined">
+                <VueShowdown :markdown="packInstance.description" :extensions="['classMap', 'attribMap', 'newLine']" />
+              </div>
+              <div v-else>
+                <h2>No description available</h2>
+              </div>
+            </div>
+            <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
+              <div v-for="(version, index) in packInstance.versions" :key="index">
+                {{ debugLog('Version', version) }}
+                <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
+                  <p>{{ version.name }}</p>
+                  <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"
+                    ><font-awesome-icon
+                      :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'"
+                      class="cursor-pointer"
+                      size="1x"
+                    />
+                    Changelog</span
+                  >
+
+                  <ftb-button
+                    v-if="instance.versionId && instance.versionId !== version.id"
+                    class="py-2 px-4 ml-auto mr-1"
+                    color="warning"
+                    css-class="text-center text-l"
+                    @click="update(version.id)"
+                    :disabled="modpacks.installing !== null"
+                  >
+                    <font-awesome-icon icon="download" size="1x" />
+                    {{ isOlderVersion(version.id) ? 'Downgrade' : 'Update' }}
+                  </ftb-button>
+                  <!--                <button-->
+                  <!--                    v-if="instance.versionId && instance.versionId !== version.id"-->
+                  <!--                    class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"-->
+                  <!--                    @click="update(version.id)"-->
+                  <!--                >-->
+                  <!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> {{isOlderVersion(version.name) ? 'Downgrade' : 'Update'}}</span>-->
+                  <!--                </button>-->
+                  <ftb-button
+                    v-if="instance.versionId && instance.versionId === version.id"
+                    class="py-2 px-4 ml-auto mr-1 cursor-not-allowed"
+                    color="primary"
+                    css-class="text-center text-l cursor-not-allowed"
+                  >
+                    <font-awesome-icon icon="check" size="1x" />
+                    Current
+                  </ftb-button>
+                  <!--                <button-->
+                  <!--                    v-if="instance.versionId && instance.versionId === version.id"-->
+                  <!--                    class="bg-blue-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-not-allowed"-->
+                  <!--                >-->
+                  <!--                  <span class="cursor-not-allowed"><font-awesome-icon icon="check" size="1x"/> Current</span>-->
+                  <!--                </button>-->
                   <v-selectmenu
                     :title="false"
                     :query="false"
-                    :data="resolutionList"
-                    align="left"
-                    :value="resSelectedValue"
-                    @values="resChange"
+                    :data="serverDownloadMenu(version.id)"
+                    align="right"
+                    type="regular"
                   >
-                    <ftb-button class="py-2 px-4 my-1 w-full" color="primary" css-class="text-center text-l">
-                      <font-awesome-icon icon="desktop" size="1x" />
+                    <ftb-button class="py-2 px-4 ml-2" color="info" css-class="text-center text-l">
+                      <font-awesome-icon icon="download" size="1x" />
+                      Download Server
                     </ftb-button>
+                    <!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
                   </v-selectmenu>
                 </div>
-
-                <ftb-input
-                  class="flex-col"
-                  label="Width"
-                  v-model="instance.width"
-                  :value="instance.width"
-                  @blur="saveSettings"
-                />
-                <font-awesome-icon class="mt-auto mb-6 mx-1 text-gray-600" icon="times" size="1x" />
-                <ftb-input
-                  class="flex-col"
-                  label="Height"
-                  v-model="instance.height"
-                  :value="instance.height"
-                  @blur="saveSettings"
-                />
-              </div>
-              <div class="flex flex-col my-2">
-                <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
-                  Java Version
-                </label>
-                <select
-                  class="rounded-none bg-input focus:outline-none focus:shadow-outline border border-input px-4 py-2 w-full h-full appearance-none leading-normal text-gray-400"
-                  v-model="instance.jrePath"
-                  @blur="saveSettings"
-                  @change="saveSettings"
-                >
-                  <option
-                    v-for="versionName in Object.keys(javaVersions)"
-                    :value="javaVersions[versionName]"
-                    :key="versionName"
-                    >{{ versionName }}</option
-                  >
-                </select>
-              </div>
-            </div>
-            <div class="flex flex-col my-2">
-              <ftb-slider
-                label="Instance Memory"
-                v-model="instance.memory"
-                :currentValue="instance.memory"
-                minValue="512"
-                :maxValue="settingsState.hardware.totalMemory"
-                @blur="saveSettings"
-                @change="saveSettings"
-                step="64"
-                unit="MB"
-                css-class="memory"
-                :raw-style="
-                  `background: linear-gradient(to right, #8e0c25 ${(this.instance.minMemory /
-                    settingsState.hardware.totalMemory) *
-                    100 -
-                    5}%, #a55805 ${(this.instance.minMemory / settingsState.hardware.totalMemory) *
-                    100}%, #a55805 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100 -
-                    5}%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`
-                "
-              />
-              <ftb-input label="Custom Arguments" v-model="instance.jvmArgs" @blur="saveSettings" />
-              <ftb-toggle
-                label="Enable cloud save uploads"
-                :disabled="
-                  auth.token !== undefined &&
-                    auth.token !== null &&
-                    auth.token.activePlan !== undefined &&
-                    auth.token.activePlan !== null &&
-                    settingsState.settings.cloudSaves !== true &&
-                    settingsState.settings.cloudSaves !== 'true'
-                "
-                onColor="bg-primary"
-                inline="true"
-                :value="instance.cloudSaves"
-                @change="toggleCloudSaves"
-              />
-              <ftb-button class="py-2 px-4 w-10 ml-auto mr-2" color="primary" css-class="text-center text-l">
-                <font-awesome-icon icon="save" size="1x" />&nbsp;Save
-              </ftb-button>
-              <!--              <button-->
-              <!--                  class="cursor-pointer bg-green-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto mr-2 mb-2"-->
-              <!--              >-->
-              <!--                <font-awesome-icon icon="save" size="1x"/>&nbsp;Save-->
-              <!--              </button>-->
-            </div>
-          </div>
-
-          <div class="tab-pane px-4" v-if="isTabActive('modlist')" id="modlist">
-            <div class="get-mods flex justify-end items-center mb-6">
-              <p class="inline-block mr-4">Need more content?</p>
-              <ftb-button color="primary" class="py-2 px-8 inline-block" @click="searchingForMods = true">
-                Get more mods
-                <font-awesome-icon icon="search" class="ml-2" />
-              </ftb-button>
-              <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
-                <ftb-button @click="() => getModList(true)" class="py-2 px-4" color="info" :disabled="updatingModlist">
-                  <font-awesome-icon icon="sync" />
-                </ftb-button>
-              </div>
-            </div>
-            <div v-for="(file, index) in modlist" :key="index">
-              <div class="flex flex-row my-4 items-center">
-                <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
-                <div class="ml-auto">
-                  <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2 clean-font">{{
-                    prettyBytes(parseInt(file.size))
-                  }}</span>
-
-                  <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
-                  <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
-                  <span class="sha-check">
-                    <font-awesome-icon icon="check-circle" color="lightgreen" class="ml-2 mr-1" /> SHA1
-                  </span>
+                {{ debugLog('Version ID', version.id) }}
+                {{ debugLog('activeChangelog', activeChangelog) }}
+                <div class="pl-5 p-2 bg-background" v-if="activeChangelog === version.id">
+                  <VueShowdown
+                    v-if="changelogs[version.id]"
+                    :markdown="changelogs[version.id]"
+                    :extensions="['classMap', 'newLine']"
+                  />
+                  <p v-else>No changelog available</p>
                 </div>
               </div>
             </div>
-          </div>
+            <div class="tab-pane" v-if="isTabActive('settings')" id="settings">
+              <div class="bg-sidebar-item p-5 rounded my-4">
+                <ftb-input label="Name" :value="instance.name" v-model="instance.name" @blur="saveSettings" />
+                <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
+                  Window Size
+                </label>
+                <div class="flex flex-row my-4 -mt-2">
+                  <div class="flex-col mt-auto mb-2 pr-1">
+                    <v-selectmenu
+                      :title="false"
+                      :query="false"
+                      :data="resolutionList"
+                      align="left"
+                      :value="resSelectedValue"
+                      @values="resChange"
+                    >
+                      <ftb-button class="py-2 px-4 my-1 w-full" color="primary" css-class="text-center text-l">
+                        <font-awesome-icon icon="desktop" size="1x" />
+                      </ftb-button>
+                    </v-selectmenu>
+                  </div>
 
-          <div class="tab-pane" v-if="isTabActive('servers')" id="servers">
-            <div v-if="currentVersionObject !== null && shuffledServers.length > 0">
-              <server-card
-                v-for="server in shuffledServers"
-                :key="server.id"
-                :server="server"
-                :art="
-                  currentModpack.art.length > 0 ? currentModpack.art.filter(art => art.type === 'square')[0].url : ''
-                "
-              ></server-card>
+                  <ftb-input
+                    class="flex-col"
+                    label="Width"
+                    v-model="instance.width"
+                    :value="instance.width"
+                    @blur="saveSettings"
+                  />
+                  <font-awesome-icon class="mt-auto mb-6 mx-1 text-gray-600" icon="times" size="1x" />
+                  <ftb-input
+                    class="flex-col"
+                    label="Height"
+                    v-model="instance.height"
+                    :value="instance.height"
+                    @blur="saveSettings"
+                  />
+                </div>
+                <div class="flex flex-col my-2">
+                  <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
+                    Java Version
+                  </label>
+                  <select
+                    class="rounded-none bg-input focus:outline-none focus:shadow-outline border border-input px-4 py-2 w-full h-full appearance-none leading-normal text-gray-400"
+                    v-model="instance.jrePath"
+                    @blur="saveSettings"
+                    @change="saveSettings"
+                  >
+                    <option
+                      v-for="versionName in Object.keys(javaVersions)"
+                      :value="javaVersions[versionName]"
+                      :key="versionName"
+                      >{{ versionName }}</option
+                    >
+                  </select>
+                </div>
+              </div>
+              <div class="flex flex-col my-2">
+                <ftb-slider
+                  label="Instance Memory"
+                  v-model="instance.memory"
+                  :currentValue="instance.memory"
+                  minValue="512"
+                  :maxValue="settingsState.hardware.totalMemory"
+                  @blur="saveSettings"
+                  @change="saveSettings"
+                  step="64"
+                  unit="MB"
+                  css-class="memory"
+                  :raw-style="
+                    `background: linear-gradient(to right, #8e0c25 ${(this.instance.minMemory /
+                      settingsState.hardware.totalMemory) *
+                      100 -
+                      5}%, #a55805 ${(this.instance.minMemory / settingsState.hardware.totalMemory) *
+                      100}%, #a55805 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100 -
+                      5}%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`
+                  "
+                />
+                <ftb-input label="Custom Arguments" v-model="instance.jvmArgs" @blur="saveSettings" />
+                <ftb-toggle
+                  label="Enable cloud save uploads"
+                  :disabled="
+                    auth.token !== undefined &&
+                      auth.token !== null &&
+                      auth.token.activePlan !== undefined &&
+                      auth.token.activePlan !== null &&
+                      settingsState.settings.cloudSaves !== true &&
+                      settingsState.settings.cloudSaves !== 'true'
+                  "
+                  onColor="bg-primary"
+                  inline="true"
+                  :value="instance.cloudSaves"
+                  @change="toggleCloudSaves"
+                />
+                <ftb-button class="py-2 px-4 w-10 ml-auto mr-2" color="primary" css-class="text-center text-l">
+                  <font-awesome-icon icon="save" size="1x" />&nbsp;Save
+                </ftb-button>
+                <!--              <button-->
+                <!--                  class="cursor-pointer bg-green-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto mr-2 mb-2"-->
+                <!--              >-->
+                <!--                <font-awesome-icon icon="save" size="1x"/>&nbsp;Save-->
+                <!--              </button>-->
+              </div>
             </div>
-            <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
-              <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
-              <h1 class="text-5xl">Oh no!</h1>
-              <span>It doesn't looks like there are any public MineTogether servers</span>
+
+            <div class="tab-pane px-4" v-if="isTabActive('modlist')" id="modlist">
+              <div class="get-mods flex justify-end items-center mb-6">
+                <p class="inline-block mr-4">Need more content?</p>
+                <ftb-button color="primary" class="py-2 px-8 inline-block" @click="searchingForMods = true">
+                  Get more mods
+                  <font-awesome-icon icon="search" class="ml-2" />
+                </ftb-button>
+                <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
+                  <ftb-button
+                    @click="() => getModList(true)"
+                    class="py-2 px-4"
+                    color="info"
+                    :disabled="updatingModlist"
+                  >
+                    <font-awesome-icon icon="sync" />
+                  </ftb-button>
+                </div>
+              </div>
+              <div v-for="(file, index) in modlist" :key="index">
+                <div class="flex flex-row my-4 items-center">
+                  <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
+                  <div class="ml-auto">
+                    <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2 clean-font">{{
+                      prettyBytes(parseInt(file.size))
+                    }}</span>
+
+                    <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
+                    <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
+                    <span class="sha-check">
+                      <font-awesome-icon icon="check-circle" color="lightgreen" class="ml-2 mr-1" /> SHA1
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane" v-if="isTabActive('servers')" id="servers">
+              <div v-if="currentVersionObject !== null && shuffledServers.length > 0">
+                <server-card
+                  v-for="server in shuffledServers"
+                  :key="server.id"
+                  :server="server"
+                  :art="packInstance.art.length > 0 ? packInstance.art.filter(art => art.type === 'square')[0].url : ''"
+                ></server-card>
+              </div>
+              <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
+                <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
+                <h1 class="text-5xl">Oh no!</h1>
+                <span>It doesn't looks like there are any public MineTogether servers</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="tab-content bg-navbar flex-1 py-4 px-4 mx-2" style="overflow-y: auto;" v-else>
-          <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" @modInstalled="getModList" />
+          <div class="tab-content bg-navbar flex-1 py-4 px-4 mx-2" style="overflow-y: auto;" v-else>
+            <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" @modInstalled="getModList" />
+          </div>
         </div>
       </div>
+      <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
+        <message-modal
+          :title="msgBox.title"
+          :content="msgBox.content"
+          :ok-action="msgBox.okAction"
+          :cancel-action="msgBox.cancelAction"
+          :type="msgBox.type"
+          :loading="deleting"
+        />
+      </ftb-modal>
     </div>
-    <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-        :loading="deleting"
-      />
-    </FTBModal>
   </div>
 </template>
 
@@ -441,6 +553,8 @@ import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
 import { prettyByteFormat } from '@/utils/helpers';
 import FindMods from '@/components/modpack/FindMods.vue';
+import { PackConst } from '@/utils/contants';
+import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
 
 interface MsgBox {
   title: string;
@@ -467,11 +581,12 @@ interface Changelogs {
   name: 'InstancePage',
   components: {
     ServerCard,
-    FTBModal,
+    'ftb-modal': FTBModal,
     'ftb-input': FTBInput,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
     'ftb-button': FTBButton,
+    ModpackVersions,
     MessageModal,
     FindMods,
   },
@@ -494,7 +609,7 @@ export default class InstancePage extends Vue {
   @Action('showAlert') public showAlert: any;
   @Action('hideAlert') public hideAlert: any;
 
-  private currentModpack: ModPack | null = null;
+  private packInstance: ModPack | null = null;
   private cheaty = '';
   private deleting: boolean = false;
 
@@ -519,6 +634,7 @@ export default class InstancePage extends Vue {
 
   searchingForMods = false;
   updatingModlist = false;
+  showVersions = false;
 
   public clickTag(tagName: string) {
     this.$router.push({ name: 'browseModpacks', params: { search: tagName } });
@@ -644,7 +760,7 @@ export default class InstancePage extends Vue {
     });
   }
 
-  public checkMemory() {
+  public launchModPack() {
     if (this.instance == null) {
       return;
     }
@@ -698,9 +814,9 @@ export default class InstancePage extends Vue {
       return;
     }
     const modpackID = this.instance?.id;
-    if (this.modpacks != null && this.currentModpack != null) {
-      if (versionID === undefined && this.currentModpack.kind === 'modpack') {
-        versionID = this.currentModpack.versions[0].id;
+    if (this.modpacks != null && this.packInstance != null) {
+      if (versionID === undefined && this.packInstance.kind === 'modpack') {
+        versionID = this.packInstance.versions[0].id;
       }
       this.$router.replace({
         name: 'installingpage',
@@ -748,7 +864,7 @@ export default class InstancePage extends Vue {
       return;
     }
     try {
-      this.currentModpack =
+      this.packInstance =
         this.instance.packType == 0
           ? await this.fetchModpack(this.instance.id).catch((err: any) => undefined)
           : await this.fetchCursepack(this.instance.id).catch((err: any) => undefined);
@@ -756,9 +872,9 @@ export default class InstancePage extends Vue {
       console.log('Error getting instance modpack');
     }
     this.$forceUpdate();
-    if (this.currentModpack?.kind === 'modpack') {
-      if (this.currentModpack?.versions !== undefined) {
-        this.toggleChangelog(this.currentModpack?.versions[0].id);
+    if (this.packInstance?.kind === 'modpack') {
+      if (this.packInstance?.versions !== undefined) {
+        this.toggleChangelog(this.packInstance?.versions[0].id);
       }
     }
     if (this.$route.query.shouldPlay === 'true') {
@@ -779,14 +895,16 @@ export default class InstancePage extends Vue {
     if (Object.keys(this.settingsState.javaInstalls).length < 1) {
       this.loadJavaVersions();
     }
+
+    console.log(this.packInstance, this.instance);
   }
 
   get currentVersionObject(): Versions | null {
-    if (this.currentModpack !== null) {
-      if (this.currentModpack.versions === undefined) {
+    if (this.packInstance !== null) {
+      if (this.packInstance.versions === undefined) {
         return null;
       }
-      const version = this.currentModpack.versions.find((f: Versions) => f.id === this.instance?.versionId);
+      const version = this.packInstance.versions.find((f: Versions) => f.id === this.instance?.versionId);
       if (version !== undefined) {
         return version;
       }
@@ -906,13 +1024,13 @@ export default class InstancePage extends Vue {
 
   get isLatestVersion() {
     if (
-      this.currentModpack === undefined ||
-      this.currentModpack?.kind !== 'modpack' ||
-      this.currentModpack.versions === undefined
+      this.packInstance === undefined ||
+      this.packInstance?.kind !== 'modpack' ||
+      this.packInstance.versions === undefined
     ) {
       return true;
     }
-    return this.instance?.versionId === this.currentModpack?.versions[0].id;
+    return this.instance?.versionId === this.packInstance?.versions[0].id;
   }
 
   get versionName() {
@@ -921,10 +1039,199 @@ export default class InstancePage extends Vue {
     }
     return this.instance?.version;
   }
+
+  get packSplashArt() {
+    if (this.packInstance === null) {
+      return PackConst.defaultPackSplashArt;
+    }
+
+    const splashArt = this.packInstance.art?.filter(art => art.type === 'splash');
+    return splashArt?.length > 0 ? splashArt[0].url : PackConst.defaultPackSplashArt;
+  }
+
+  get isForgePack() {
+    return this.instance?.modLoader.includes('forge') ?? 'fabric';
+  }
 }
 </script>
 
 <style lang="scss">
+.pack-page {
+  position: relative;
+  z-index: 1;
+}
+
+.new-pack-page {
+  position: relative;
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  > header {
+    position: relative;
+    backdrop-filter: blur(5px);
+
+    .meta-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(#2a2a2a, 0.85);
+      backdrop-filter: blur(5px);
+      padding: 0.8rem 1rem;
+      position: relative;
+      z-index: 1;
+
+      .back {
+        opacity: 0.7;
+        cursor: pointer;
+        transition: opacity 0.25s ease-in-out;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+
+      .options {
+        display: flex;
+        align-items: center;
+
+        .option {
+          margin-left: 2rem;
+          opacity: 0.7;
+          cursor: pointer;
+          transition: opacity 0.25s ease-in-out;
+
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+
+      .update-btn {
+        position: relative;
+
+        box-shadow: 0 0 0 0 rgba(#ff801e, 1);
+        animation: pulse 1.8s ease-in-out infinite;
+
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(#ff801e, 0.7);
+          }
+
+          70% {
+            box-shadow: 0 0 0 10px rgba(#ff801e, 0);
+          }
+
+          100% {
+            box-shadow: 0 0 0 0 rgba(#ff801e, 0);
+          }
+        }
+      }
+    }
+
+    .pack-info {
+      padding: 3rem 1rem;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 0 5px rgba(black, 0.5);
+
+      .info {
+        max-width: 80%;
+        padding: 2rem 4rem;
+      }
+
+      .name {
+        font-size: 2.8rem;
+        font-weight: bold;
+      }
+    }
+  }
+
+  .body {
+    flex: 1;
+    background: rgba(#2a2a2a, 0.7);
+    backdrop-filter: blur(8px);
+
+    .action-heading {
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      background-color: rgba(black, 0.1);
+
+      .play {
+        margin-right: 2rem;
+      }
+
+      .stats {
+        display: flex;
+
+        .stat {
+          margin-right: 2rem;
+
+          .name {
+            opacity: 0.7;
+            font-size: 0.875rem;
+          }
+        }
+      }
+
+      .meta {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+
+        .icon {
+          cursor: default;
+          margin-left: 1.5rem;
+          img {
+            width: 40px;
+          }
+        }
+      }
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      // justify-content: center;
+      margin-bottom: 1rem;
+      margin-left: 1rem;
+
+      .options {
+        background-color: rgba(black, 0.3);
+        border-radius: 40px;
+        display: flex;
+        padding: 0.3rem;
+      }
+
+      .tab {
+        padding: 0.3rem 1.5rem;
+        color: rgba(white, 0.5);
+        cursor: pointer;
+        transition: color 0.25s ease-in-out, background-color 0.25s ease-in-out;
+
+        &.active {
+          border-radius: 40px;
+          background-color: var(--color-info-button);
+          color: white;
+        }
+
+        &:hover {
+          color: white;
+        }
+      }
+    }
+
+    .body-contents {
+      padding: 0.8rem 1.5rem 1rem 1.5rem;
+    }
+  }
+}
+
 .header-image {
   display: flex;
   flex-direction: column;

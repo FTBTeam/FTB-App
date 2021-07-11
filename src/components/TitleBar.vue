@@ -1,6 +1,9 @@
 <template>
   <div class="titlebar" :class="{ isMac }" @mousedown="startDragging">
-    <div class="meta-title font-bold">FTB App</div>
+    <div class="meta-title">
+      <img src="@/assets/ftb-white-logo.svg" alt="" />
+      FTB App
+    </div>
     <div class="action-buttons">
       <div class="icons" v-if="!isMac">
         <div class="title-action close" @click="close">
@@ -105,6 +108,14 @@ export default class TitleBar extends Vue {
     padding: 0 0.5rem;
     font-size: 0.875rem;
     opacity: 0.5;
+    display: flex;
+    text-transform: uppercase;
+    font-weight: 700;
+
+    img {
+      height: 18px;
+      margin-right: 0.8rem;
+    }
   }
 
   .icons {
