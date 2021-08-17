@@ -3,7 +3,7 @@
     <title-bar />
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
-        <sidebar />
+        <sidebar v-if="$route.name !== 'settings'" />
         <div class="app-content relative">
           <router-view />
           <div class="bottom-area">
