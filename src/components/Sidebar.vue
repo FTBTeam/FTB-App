@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar">
+  <div class="sidebar" :class="{ 'is-transparent': isTransparent }">
     <!--     <logo width="80%" class="logo" draggable="false"/>-->
     <router-link to="/">
       <img
@@ -78,7 +78,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import { AuthState } from '../modules/auth/types';
 import { State, Action } from 'vuex-class';
 import { SettingsState } from '../modules/settings/types';
@@ -93,6 +93,9 @@ export default class Sidebar extends Vue {
   @State('settings') private settings!: SettingsState;
   @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
+
+  @Prop({ default: false }) isTransparent!: boolean;
+
   private appVersion: string = platform.get.config.appVersion;
 
   navigation = [

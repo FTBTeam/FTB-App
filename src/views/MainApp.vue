@@ -3,7 +3,7 @@
     <title-bar />
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
-        <sidebar />
+        <sidebar :isTransparent="$route.name === 'instancepage' || $route.name === 'modpackpage'" />
         <div class="app-content relative">
           <router-view />
           <div class="bottom-area">
@@ -21,35 +21,35 @@
                 <p
                   class="pl-4 w-full"
                   v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage == 'INIT'"
+                  v-else-if="modpacks.installing.stage === 'INIT'"
                 >
                   Creating environment...
                 </p>
                 <p
                   class="pl-4 w-full"
                   v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage == 'API'"
+                  v-else-if="modpacks.installing.stage === 'API'"
                 >
                   Downloading modpack metadata...
                 </p>
                 <p
                   class="pl-4 w-full"
                   v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage == 'VANILLA'"
+                  v-else-if="modpacks.installing.stage === 'VANILLA'"
                 >
                   Installing Vanilla Launcher...
                 </p>
                 <p
                   class="pl-4 w-full"
                   v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage == 'FORGE'"
+                  v-else-if="modpacks.installing.stage === 'FORGE'"
                 >
                   Installing Forge...
                 </p>
                 <p
                   class="pl-4 w-full"
                   v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage == 'DOWNLOADS'"
+                  v-else-if="modpacks.installing.stage === 'DOWNLOADS'"
                 >
                   Installing {{ modpacks.installing.pack.name }} - {{ modpacks.installing.progress.toFixed(2) }}% ({{
                     (modpacks.installing.downloadSpeed / 1000000).toFixed(2)
@@ -163,7 +163,7 @@ import FTBInput from '@/components/FTBInput.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { logVerbose } from '@/utils';
 import { ModpackState, InstallProgress } from '@/modules/modpacks/types';
-import { SettingsState } from '../modules/settings/types';
+import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/report/ReportForm.vue';
 
