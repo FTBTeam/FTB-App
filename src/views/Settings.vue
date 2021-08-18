@@ -2,6 +2,7 @@
   <div class="settings">
     <settings-sidebar />
     <main>
+      <router-view />
       <div class="flex flex-col md:w-full lg:w-9/12 xl:w-8/12 mx-auto">
         <h1 class="text-2xl">Game Settings</h1>
         <div class="bg-sidebar-item p-5 rounded my-4">

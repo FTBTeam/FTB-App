@@ -59,7 +59,7 @@ export default class SettingsSidebar extends Vue {
 <style scoped lang="scss">
 .settings-sidebar {
   background-color: var(--color-navbar);
-  width: 300px;
+  width: 280px;
   padding: 2rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -75,18 +75,24 @@ export default class SettingsSidebar extends Vue {
       font-weight: bold;
       opacity: 0.5;
       margin-bottom: 1rem;
+      font-size: 0.875rem;
     }
 
     .item {
-      padding: 0.7rem 1rem;
+      padding: 0.6rem 0.8rem;
       margin-bottom: 0.5rem;
       border-radius: 5px;
       display: flex;
       align-items: center;
       cursor: pointer;
+      transition: background-color 0.25s ease-in-out;
+
+      &:hover {
+        background: var(--color-background);
+      }
 
       &.active {
-        background: green;
+        background: var(--color-primary-button);
       }
 
       svg {
