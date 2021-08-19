@@ -24,7 +24,7 @@
       </router-link>
     </div>
     <div class="nav-items">
-      <router-link :to="{ name: 'settings' }" class="nav-item" :class="{ 'item-disabled': disableNav }">
+      <router-link :to="{ name: 'instance-settings' }" class="nav-item" :class="{ 'item-disabled': disableNav }">
         <div class="icon"><font-awesome-icon icon="cog" class="mr-3" /></div>
         <span>Settings</span>
       </router-link>
@@ -80,7 +80,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { AuthState } from '../modules/auth/types';
-import { State, Action } from 'vuex-class';
+import { Action, State } from 'vuex-class';
 import { SettingsState } from '../modules/settings/types';
 import { logVerbose } from '../utils';
 import { ModpackState } from '@/modules/modpacks/types';

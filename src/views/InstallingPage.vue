@@ -141,12 +141,11 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModpackState, ModPack, Versions } from '@/modules/modpacks/types';
-import { State, Action, Getter } from 'vuex-class';
+import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
+import { Action, Getter, State } from 'vuex-class';
 import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
 import FTBButton from '@/components/FTBButton.vue';
-import FTBSlider from '@/components/FTBSlider.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
 import { shuffle } from '../utils';
@@ -175,7 +174,6 @@ interface Changelogs {
   components: {
     'ftb-input': FTBInput,
     'ftb-toggle': FTBToggle,
-    'ftb-slider': FTBSlider,
     'ftb-button': FTBButton,
     InstallModal,
     FTBModal,

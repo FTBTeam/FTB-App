@@ -1,118 +1,167 @@
 <template>
-  <!-- <div class="flex flex-col my-2">
-    <div class="flex flex-row justify-center my-4">
-      <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2" for="grid-last-name">
-        {{label}}
+  <div class="flex flex-col ftb-slider">
+    <div class="w-full">
+      <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-4">
+        {{ label }}
+        <span
+          class="normal-case"
+          v-if="description"
+          data-balloon-length="medium"
+          :aria-label="description"
+          data-balloon-pos="up"
+          ><font-awesome-icon icon="info-circle"
+        /></span>
       </label>
-      <p class="text-white mx-2">{{minValue}}{{unit}}</p>
-      <div class="slide-container w-full">
-          <input type="range" :value="value" :min="minValue" :max="maxValue" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" class="slider" :step="step === undefined ? 1 : step">
-      </div>
-      <p class="text-white mx-2">{{maxValueLabel === undefined ? maxValue : maxValueLabel}}{{unit}}</p>
-      </div>
-    </div> -->
-    <div class="flex flex-col my-2">
-    <div class="w-full px-1">
-      <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
-        {{label}}
-        <span class="normal-case" v-if="description" data-balloon-length="medium" :aria-label="description" data-balloon-pos="up"><font-awesome-icon icon="info-circle"/></span>
-      </label>
-      <div class="flex flex-row justify-center">
-        <p class="text-white mx-2" style="min-width: 6rem; width: auto">{{(unit == 's' ? ((currentValue > 3600) ? ((currentValue > 86400) ? (currentValue / 86400).toFixed(2) + 'd' : (currentValue / 3600).toFixed(2) + 'h' ) : currentValue + unit) : (currentValue == 0 ? 'Unlimited' : (currentValue > 1024 ? (currentValue / 1024).toFixed(2) : currentValue) + (unit === 'threads' ? ' threads' : (currentValue > 1024 ? 'GB' : unit))))}}</p>
-        <!-- <input class="slider" id="grid-last-name" type="range" :value="value" :min="minValue" :max="maxValue" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" :step="step === undefined ? 1 : step"> -->
-        <input type="range" :value="value" :min="minValue" :max="maxValue" @change="$emit('input', $event.target.value)" @input="$emit('input', $event.target.value)" v-on:blur="$emit('blur')" @mouseup="$emit('blur')" class="slider" :class="cssClass" :step="step === undefined ? 1 : step" :style="rawStyle">
-        <!-- <p class="text-white mx-2">{{maxValueLabel === undefined ? maxValue : maxValueLabel}}{{unit}}</p> -->
+      <div class="slider-area">
+        <div class="values">
+          <span>{{ formatValue(minValue, true) }}</span>
+          <span class="middle">{{ formatValue(currentValue) }}</span>
+          <span>{{ formatValue(visualMax ? visualMax : maxValue, true) }}</span>
+        </div>
+        <input
+          type="range"
+          :value="value"
+          :min="minValue"
+          :max="maxValue"
+          @change="$emit('input', $event.target.value)"
+          @input="$emit('input', $event.target.value)"
+          @blur="$emit('blur')"
+          @mouseup="$emit('blur')"
+          class="slider"
+          :class="cssClass"
+          :step="step === undefined ? 1 : step"
+          :style="rawStyle"
+        />
       </div>
     </div>
-    </div>
+    <small class="text-muted mt-4" v-if="small">{{ small }}</small>
+  </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-@Component({
-    props: [
-        'label',
-        'maxValue',
-        'minValue',
-        'currentValue',
-        'value',
-        'unit',
-        'maxValueLabel',
-        'step',
-        'description',
-        'cssClass',
-        'rawStyle',
-    ],
-})
+
+@Component
 export default class FTBSlider extends Vue {
-    @Prop({default: ''})
-    public label!: string;
-    @Prop({default: 100})
-    public maxValue!: number;
-    @Prop({default: 0})
-    public minValue!: number;
-    @Prop({default: 0})
-    public currentValue!: number;
-    @Prop({default: ''})
-    public unit!: string;
-    @Prop({default: ''})
-    public description!: string;
-    @Prop({default: ''})
-    public cssClass!: string;
-    @Prop({default: ''})
-    public rawStyle!: string;
+  @Prop({ default: '' }) label!: string;
+  @Prop({ default: 100 }) maxValue!: number;
+  @Prop({ default: 0 }) minValue!: number;
+  @Prop({ default: 0 }) currentValue!: number;
+  @Prop({ default: '' }) unit!: string;
+  @Prop({ default: '' }) description!: string;
+  @Prop({ default: '' }) cssClass!: string;
+  @Prop({ default: '' }) rawStyle!: string;
+  @Prop({ default: '' }) small!: string;
+
+  @Prop() visualMax!: number;
+  @Prop() maxValueLabel!: string;
+  @Prop() step!: number;
+  @Prop({ default: 0 }) value!: number;
+
+  formatValue(value: number, dontShowThreads = false) {
+    if (this.unit === 's') {
+      if (value > 3600) {
+        return value > 86400 ? (value / 86400).toFixed(2) + ' Days' : (value / 3600).toFixed(2) + ' Hours';
+      }
+
+      return value + ' Seconds';
+    }
+
+    if (value == 0) {
+      return 'Unlimited';
+    }
+
+    if (value > 1024) {
+      return (value / 1024).toFixed(2) + (this.unit === ' threads' && !dontShowThreads ? ' threads' : this.unit);
+    }
+
+    return value + (this.unit === 'threads' && dontShowThreads ? '' : ' ' + this.unit);
+  }
 }
 </script>
 
-<style lang="scss">
-.bg-input {
-}
-.slider {
-  background-color: #252525;
-  -webkit-appearance: none;  /* Override default CSS styles */
-  appearance: none;
-  width: 100%; /* Full-width */
+<style lang="scss" scoped>
+.ftb-slider {
+  .slider-area {
+    background-color: var(--color-background);
+    padding: 0.8rem 1.3rem 1rem 1.3rem;
+    border-radius: 5px;
+    font-family: Helvetica Neue, Helvetica, Arial, serif;
+    position: relative;
+    z-index: 1;
 
-  // border-radius: 5px;
-  height: 15px; /* Specified height */
-  outline: none; /* Remove outline */
-  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
-  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
-  transition: opacity .2s;
+    .values {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.9rem;
+      text-align: center;
 
-}
+      .middle {
+        padding: 0.2rem 0.6rem;
+        background-color: rgba(black, 0.4);
+        border-radius: 4px;
+      }
 
-/* Mouse-over effects */
-.slider:hover {
-  opacity: 1; /* Fully shown on mouse-over */
-}
+      span {
+        display: block;
+        position: relative;
 
-/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none; /* Override default look */
-border-radius: 50%;
-  appearance: none;
-  width: 25px; /* Set a specific slider handle width */
-  height: 25px; /* Slider handle height */
-  background: var(--color-primary-button);
-  cursor: pointer; /* Cursor on hover */
-}
+        &:not(.middle)::before {
+          position: absolute;
+          content: '';
+          top: 150%;
+          left: 0;
+          width: 2px;
+          height: 20px;
+          background-color: rgb(56, 56, 56);
+          z-index: -1;
+        }
 
-.slider::-moz-range-thumb {
-  width: 25px; /* Set a specific slider handle width */
-  height: 25px; /* Slider handle height */
-  @apply bg-primary;
-  cursor: pointer; /* Cursor on hover */
-    border-radius: 50%;
-
-}
-
-input[type='range'] {
+        &:last-child::before {
+          left: auto;
+          right: 0;
+        }
+      }
     }
+  }
 
-.memory{
-  /*background: linear-gradient(to right, #8e0c25 25%, #a55805 30%, #a55805 50%, #005540 55%);*/
-  height: 10px;
-  opacity: 1;
+  .slider {
+    background-color: rgb(74, 74, 74);
+    -webkit-appearance: none; /* Override default CSS styles */
+    appearance: none;
+    width: 100%; /* Full-width */
+
+    border-radius: 15px;
+    height: 8px; /* Specified height */
+    outline: none; /* Remove outline */
+    -webkit-transition: 0.2s; /* 0.2 seconds transition on hover */
+    transition: opacity 0.2s;
+  }
+
+  /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    border-radius: 50%;
+    appearance: none;
+    width: 20px; /* Set a specific slider handle width */
+    height: 20px; /* Slider handle height */
+    background: var(--color-primary-button);
+    cursor: pointer; /* Cursor on hover */
+  }
+
+  .slider::-moz-range-thumb {
+    width: 20px; /* Set a specific slider handle width */
+    height: 20px; /* Slider handle height */
+    @apply bg-primary;
+    cursor: pointer; /* Cursor on hover */
+    border-radius: 50%;
+  }
+
+  .memory {
+    /*background: linear-gradient(to right, #8e0c25 25%, #a55805 30%, #a55805 50%, #005540 55%);*/
+    height: 10px;
+    opacity: 1;
+  }
 }
 </style>

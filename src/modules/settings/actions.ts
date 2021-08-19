@@ -14,7 +14,22 @@ export const actions: ActionTree<SettingsState, RootState> = {
             if (msg.settingsInfo.blockedUesrs !== undefined && !Array.isArray(msg.settingsInfo.blockedUesrs)) {
               msg.settingsInfo.blockedUsers = JSON.parse(msg.settingsInfo.blockedUsers);
             }
-            commit('loadSettings', msg.settingsInfo);
+
+            const settings = msg.settingsInfo;
+            Object.keys(settings).forEach((key: string) => {
+              if (key === 'listMode' && settings[key] === undefined) {
+                settings[key] = false;
+              }
+              if ((settings as any)[key] === 'true') {
+                (settings as any)[key] = true;
+              } else if ((settings as any)[key] === 'false') {
+                (settings as any)[key] = false;
+              } else if (key !== 'jvmargs' && key !== 'instanceLocation' && !isNaN((settings as any)[key])) {
+                (settings as any)[key] = parseInt((settings as any)[key], 10);
+              }
+            });
+
+            commit('loadSettings', settings);
             platform.get.actions.updateSettings(msg.settingsInfo);
             commit('loadHardware', msg);
             resolve(null);

@@ -24,6 +24,9 @@ export const mutations: MutationTree<SocketState> = {
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
     if (message.type !== 'ping' && message.type !== 'pong') {
+      if (process.env.NODE_ENV === 'development') {
+        console.info(`[ws//${message.type}]${message.requestId ? `[${message.requestId}]` : ''}:"`, message);
+      }
       eventBus.$emit('ws.message', message);
     }
 

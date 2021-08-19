@@ -1,6 +1,6 @@
 // @ts-ignore no typescript package available
 import VueNativeSock from 'vue-native-websocket';
-import { ipcRenderer, clipboard } from 'electron';
+import { clipboard, ipcRenderer } from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';

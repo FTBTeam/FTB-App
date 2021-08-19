@@ -1,34 +1,35 @@
 import { MutationTree } from 'vuex';
 import { SettingsState, Settings, Resolution } from './types';
 
+const defaultSettings: Settings = {
+  width: 1720,
+  height: 840,
+  memory: 3072,
+  keepLauncherOpen: true,
+  enablePreview: false,
+  jvmargs: '',
+  exitOverwolf: false,
+  enableAnalytics: true,
+  enableChat: true,
+  enableBeta: false,
+  threadLimit: 2,
+  speedLimit: 0,
+  cacheLife: 5184000,
+  packCardSize: 1,
+  instanceLocation: '',
+  listMode: false,
+  verbose: false,
+  cloudSaves: false,
+  autoOpenChat: true,
+  blockedUsers: [],
+  mtConnect: false,
+  automateMojang: true,
+  showAdverts: true,
+  loadInApp: true,
+};
+
 export const mutations: MutationTree<SettingsState> = {
   loadSettings(state, payload: Settings) {
-    const defaultSettings: Settings = {
-      width: 1720,
-      height: 840,
-      memory: 3072,
-      keepLauncherOpen: true,
-      enablePreview: false,
-      jvmargs: '',
-      exitOverwolf: false,
-      enableAnalytics: true,
-      enableChat: true,
-      enableBeta: false,
-      threadLimit: 2,
-      speedLimit: 0,
-      cacheLife: 5184000,
-      packCardSize: 1,
-      instanceLocation: '',
-      listMode: false,
-      verbose: false,
-      cloudSaves: false,
-      autoOpenChat: true,
-      blockedUsers: [],
-      mtConnect: false,
-      automateMojang: true,
-      showAdverts: true,
-      loadInApp: true,
-    };
     state.settings = { ...defaultSettings, ...payload };
   },
   saveSettings(state, payload: Settings) {
@@ -51,4 +52,5 @@ export const mutations: MutationTree<SettingsState> = {
   loadVersions(state, payload: any) {
     state.javaInstalls = payload;
   },
+  updateSetting() {},
 };

@@ -3,7 +3,7 @@
     <title-bar />
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
-        <sidebar v-if="$route.name !== 'settings'" />
+        <sidebar v-if="showSidebar" />
         <div class="app-content relative">
           <router-view />
           <div class="bottom-area">
@@ -308,6 +308,10 @@ export default class MainApp extends Vue {
         },
       });
     }
+  }
+
+  get showSidebar() {
+    return !this.$route.path.startsWith('/settings');
   }
 }
 </script>

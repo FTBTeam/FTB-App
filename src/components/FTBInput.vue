@@ -4,7 +4,7 @@
         <input class="bg-background focus:bg-background-lighten focus:outline-none border border-gray-700 block w-full p-2 appep class="text-white w-64 pr-4 mx-auto">{{label}}</p>
         <arance-none leading-normal text-gray-300" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
            </div> -->
-    <div class="w-full px-1">
+    <div class="w-full">
       <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
         {{ label }}
       </label>
@@ -28,6 +28,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import FTBButton from './FTBButton.vue';
+
 @Component({
   components: {
     'ftb-button': FTBButton,

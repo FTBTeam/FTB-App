@@ -30,7 +30,7 @@ release/
 
 package-lock.json
 
-version.json
+public/version.json
 
 licenses.json
 
