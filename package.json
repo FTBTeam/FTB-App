@@ -4,15 +4,16 @@
   "private": true,
   "scripts": {
     "serve": "cross-env NODE_ENV=development vue-cli-service electron:serve",
-    "build": "vue-cli-service electron:build",
-    "test:unit": "vue-cli-service test:unit",
+    "serve:overwolf": "cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service electron:serve",
     "lint": "vue-cli-service lint",
-    "buildall": "vue-cli-service electron:build -mwl",
-    "license": "license-checker --json > licenses.json",
-    "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps",
     "vue:build": "vue-cli-service build",
-    "vue:serve": "vue-cli-service serve"
+    "vue:build:overwolf": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=production vue-cli-service build --mode overwolf",
+    "vue:serve": "vue-cli-service serve",
+    "build": "vue-cli-service electron:build",
+    "buildall": "vue-cli-service electron:build -mwl",
+    "gen:license": "license-checker --json > licenses.json",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
   },
   "main": "background.js",
   "dependencies": {},

@@ -28,10 +28,13 @@ electron.log
 /dist_electron
 release/
 
-package-lock.json
-
 public/version.json
-
 licenses.json
 
-
+# Overwolf
+overwolf/windows/desktop/node_modules
+overwolf/launcher.log*
+overwolf/*.opk
+overwolf/node_modules
+*/.DS_Store
+overwolf/dist/desktop

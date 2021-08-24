@@ -1,0 +1,36 @@
+image: node:14
+
+cache:
+  paths:
+    - node_modules/
+    - windows/desktop/node_modules/
+
+build:
+  only:
+    variables:
+        - $CI_COMMIT_TAG =~ /release/
+  script:
+    - apt update && apt install zip -y
+    - npm install
+    - node buildUpdate.js patch
+    - node makeOpk.js
+    - chmod +x notification.sh
+    - ./notification.sh
+  artifacts:
+    paths:
+        - ./*.opk
+
+preview:
+  only:
+    variables:
+        - $CI_COMMIT_TAG !~ /release/
+  script:
+    - apt update && apt install zip -y
+    - npm install
+    - node buildUpdate.js patch preview
+    - node makeOpkPreview.js
+    - chmod +x notification.sh
+    - ./notification.sh
+  artifacts:
+    paths:
+        - ./*.opk
