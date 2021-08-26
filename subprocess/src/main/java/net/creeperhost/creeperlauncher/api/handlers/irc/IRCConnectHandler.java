@@ -10,6 +10,7 @@ import net.creeperhost.minetogether.lib.chat.ChatHandler;
 import net.creeperhost.creeperlauncher.api.data.friends.AcceptedFriendData;
 import net.creeperhost.creeperlauncher.api.data.irc.IRCEventMessageData;
 import net.creeperhost.minetogether.lib.chat.IChatListener;
+import net.creeperhost.minetogether.lib.chat.MineTogetherChat;
 import net.creeperhost.minetogether.lib.chat.data.Message;
 import net.creeperhost.minetogether.lib.chat.data.Profile;
 
@@ -18,7 +19,7 @@ public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
     @Override
     public void handle(IRCConnectData data) {
         if(!ChatHandler.isOnline()) {
-            ChatHandler.init(data.nick, data.realname, new IChatListener() {
+            new MineTogetherChat(data.nick, null, true, data.realname, "", "", new IChatListener() {
                 @Override
                 public void onPartyInvite(Profile profile) {
                     Settings.webSocketAPI.sendMessage(new IRCPartyInviteData(profile));
@@ -50,7 +51,7 @@ public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
                 public void setHasNewMessage(boolean value) {
                     // nothing done with this yet, mainly used for banned users in the main chat which won't be in the app
                 }
-            }, true);
+            }).startChat();
         }
     }
 }
