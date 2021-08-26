@@ -1,0 +1,26 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - build
+  - publish
+
+build:
+  only:
+    - branches
+  except:
+    - tags
+    - /^no-ci/.*$/
+  stage: build
+  script:
+    - cd /Users/aaronmills
+    - ./runBuild.sh
+
+publish:
+  only:
+    - branches
+  except:
+    - tags
+  stage: publish
+  script:
+    - ./gradlew publish --debug

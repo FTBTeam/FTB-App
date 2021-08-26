@@ -1,6 +1,5 @@
 const path = require('path');
 
-console.log(process.env);
 module.exports = {
   publicPath: './',
   outputDir:
