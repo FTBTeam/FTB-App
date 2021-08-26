@@ -494,10 +494,11 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
                     Path libBase = instance.getDir().resolve("lib");
                     switch(version) {
                         case "1.4.7":
+                            downloadableFileList.add(new DownloadableFile("1.47", libBase.resolve("bcprov-jdk15on-147.jar"), "https://maven.creeperhost.net/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar", Collections.singletonList(HashCode.fromString("b6f5d9926b0afbde9f4dbe3db88c5247be7794bb")), 1997327, -1, "bcprov-jdk15on-147.jar", "library", "0"));
+                        case "1.4.2":
                             downloadableFileList.add(new DownloadableFile("2.25", libBase.resolve("argo-2.25.jar"), "https://maven.creeperhost.net/net/sourceforge/argo/argo/2.25/argo-2.25.jar", Collections.singletonList(HashCode.fromString("bb672829fde76cb163004752b86b0484bd0a7f4b")), 123642, -1, "argo-2.25.jar", "library", "0"));
                             downloadableFileList.add(new DownloadableFile("12.0.1", libBase.resolve("guava-12.0.1.jar"), "https://maven.creeperhost.net/com/google/guava/guava/12.0.1/guava-12.0.1.jar", Collections.singletonList(HashCode.fromString("b8e78b9af7bf45900e14c6f958486b6ca682195f")), 1795932, -1, "guava-12.0.1.jar", "library", "0"));
                             downloadableFileList.add(new DownloadableFile("4.0", libBase.resolve("asm-all-4.0.jar"), "https://maven.creeperhost.net/org/ow2/asm/asm-all/4.0/asm-all-4.0-fml.jar", Collections.singletonList(HashCode.fromString("98308890597acb64047f7e896638e0d98753ae82")), 212767, -1, "asm-all-4.0.jar", "library", "0"));
-                            downloadableFileList.add(new DownloadableFile("1.47", libBase.resolve("bcprov-jdk15on-147.jar"), "https://maven.creeperhost.net/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar", Collections.singletonList(HashCode.fromString("b6f5d9926b0afbde9f4dbe3db88c5247be7794bb")), 1997327, -1, "bcprov-jdk15on-147.jar", "library", "0"));
                             break;
                         case "1.5.2":
                             downloadableFileList.add(new DownloadableFile("3.2", libBase.resolve("argo-small-3.2.jar"), "https://maven.creeperhost.net/net/sourceforge/argo/argo/3.2/argo-3.2-small.jar", Collections.singletonList(HashCode.fromString("58912ea2858d168c50781f956fa5b59f0f7c6b51")), 91333, -1, "argo-small-3.2.jar", "library", "0"));
