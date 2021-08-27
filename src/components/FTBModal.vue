@@ -30,6 +30,7 @@ export default class FTBModal extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
 .ftb-modal {
   position: fixed;

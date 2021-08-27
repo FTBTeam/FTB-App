@@ -1,18 +1,7 @@
 <template>
   <div class="find-mods">
-    <div class="header flex items-center">
-      <ftb-button class="back" color="info px-4 py-2 mr-4" @click="() => goBack()">
-        <font-awesome-icon icon="chevron-left" />
-      </ftb-button>
-      <ftb-search
-        v-if="!loading"
-        :darkMode="true"
-        class="flex-1"
-        placeholder="Search for a mod"
-        min="3"
-        v-model="search"
-      />
-      <span v-else>Loading...</span>
+    <div class="header flex items-center mt-2">
+      <ftb-search class="flex-1" placeholder="Search for a mod" min="3" v-model="search" />
     </div>
 
     <div class="body pt-6">
@@ -126,11 +115,9 @@ import ModCard from './ModCard.vue';
 export default class FindMods extends Vue {
   // vuex
   @Action('showAlert') public showAlert: any;
-  @Action('hideAlert') public hideAlert: any;
   @State('auth') public auth!: AuthState;
 
   // Normal
-  @Prop() goBack!: () => void;
   @Prop() instance!: Instance;
 
   private offset = 0;
@@ -167,7 +154,6 @@ export default class FindMods extends Vue {
    */
   async mounted() {
     if (!this.instance) {
-      this.goBack();
       return;
     }
 
@@ -296,14 +282,13 @@ export default class FindMods extends Vue {
    */
   private async loadInstanceVersion() {
     this.loading = true;
-
     // TODO: prevent this by fixing the instance construction to contain the mc version and more version data.
     let packData;
     try {
       packData = await axios.get(
-        `${process.env.VUE_APP_MODPACK_API}/${this.auth.token?.attributes.modpackschkey ?? 'public'}/modpack/${
-          this.instance.id
-        }/${this.instance.versionId}`,
+        `${process.env.VUE_APP_MODPACK_API}/${this.auth.token?.attributes.modpackschkey ?? 'public'}/${
+          this.instance.packType == 0 ? 'modpack' : 'curseforge'
+        }/${this.instance.id}/${this.instance.versionId}`,
       );
     } catch {
       console.log('Failed to find pack version data...');
@@ -317,11 +302,7 @@ export default class FindMods extends Vue {
         message: 'Could not find instance version data',
         type: 'warning',
       });
-      setTimeout(() => {
-        this.hideAlert();
-      }, 5000);
 
-      this.goBack();
       return;
     }
 

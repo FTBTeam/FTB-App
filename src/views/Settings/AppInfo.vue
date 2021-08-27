@@ -109,7 +109,6 @@ export default class AppInfo extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('showAlert') public showAlert: any;
-  @Action('hideAlert') public hideAlert: any;
   @Action('sendMessage') public sendMessage: any;
   @Action('refreshCache', { namespace: 'modpacks' }) public refreshCache!: any;
 
@@ -138,9 +137,6 @@ export default class AppInfo extends Vue {
             message: 'The URL has been copied to your clipboard',
             type: 'primary',
           });
-          setTimeout(() => {
-            this.hideAlert();
-          }, 5000);
         }
       },
     });
@@ -153,9 +149,6 @@ export default class AppInfo extends Vue {
       message: 'Your cache has been flushed and reset',
       type: 'info',
     });
-    setTimeout(() => {
-      this.hideAlert();
-    }, 5000);
   }
 
   public enableVerbose(value: boolean): void {

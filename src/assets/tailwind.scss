@@ -42,7 +42,7 @@ input, button, textarea, :focus {
 
 /* width */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
   height: 8px;
   border-radius: 40%;
   z-index: 10;
@@ -56,7 +56,7 @@ input, button, textarea, :focus {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #414141;
+  background: #494949;
   border-radius: 25px;
   z-index: 10;
 }

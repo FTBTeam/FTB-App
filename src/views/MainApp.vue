@@ -84,30 +84,16 @@
                 </div>
               </div>
             </div>
-
-            <div v-if="$store.state && $store.state.alert != null">
-              <div class="progress-bar relative">
+            <div v-if="true || ($store.state && $store.state.alert != null)">
+              <div class="relative">
                 <p class="pl-4 w-full absolute">
-                  <span class="font-bold">{{ $store.state.alert.title }}</span> {{ $store.state.alert.message }}
+                  <!--                  <span class="font-bold">{{ $store.state.alert.title }}</span> {{ $store.state.alert.message }}-->
                 </p>
                 <div class="w-full h-full bg-grey-light justify-center ">
-                  <div
-                    class="h-full text-xs leading-none py-1 text-white"
-                    :class="`bg-${$store.state.alert.type}`"
-                  ></div>
+                  <!--                    :class="`bg-${$store.state.alert.type}`"-->
+                  <div class="h-full text-xs leading-none py-1 text-white"></div>
                 </div>
-                <div class="alert-close cursor-pointer" @click="hideAlert">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    class="pointer-events-none"
-                  >
-                    <line x1="0.71" y1="11.12" x2="11.11" y2="0.72" stroke-width="2" />
-                    <line x1="0.77" y1="0.71" x2="11.18" y2="11.12" stroke-width="2" />
-                  </svg>
-                </div>
+                <div class="alert-close cursor-pointer" @click="hideAlert"></div>
               </div>
             </div>
           </div>
@@ -134,6 +120,18 @@
         </div>
       </div>
     </div>
+
+    <div class="alerts" v-if="$store.state.alerts">
+      <div class="alert" v-for="(alert, index) of $store.state.alerts" :key="index" :class="`bg-${alert.type}`">
+        <div class="message">
+          <span class="font-bold">{{ alert.title }}</span>
+          <div class="message">{{ alert.message }}</div>
+        </div>
+
+        <div class="close" @click="() => hideAlert(alert)"><font-awesome-icon icon="times" /></div>
+      </div>
+    </div>
+
     <FTBModal
       v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
       :visible="$store.state.websocket.modal !== null"
@@ -162,7 +160,7 @@ import FTBButton from '@/components/FTBButton.vue';
 import FTBInput from '@/components/FTBInput.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { logVerbose } from '@/utils';
-import { ModpackState, InstallProgress } from '@/modules/modpacks/types';
+import { InstallProgress, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/report/ReportForm.vue';
@@ -345,6 +343,34 @@ export default class MainApp extends Vue {
       100% {
         left: 100%;
       }
+    }
+  }
+}
+
+.alerts {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+
+  .alert {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    border-radius: 5px;
+
+    span {
+      margin-right: 0.5rem;
+    }
+
+    .message {
+      margin-right: 0.5rem;
+    }
+
+    .close {
+      cursor: pointer;
+      padding: 0 0.5rem;
     }
   }
 }

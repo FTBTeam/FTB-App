@@ -1,5 +1,5 @@
 <template>
-  <div class="mod-card">
+  <div class="mod-card" :class="{ 'modal-open': showInstall }">
     <div class="art">
       <img :src="art" alt="Mod artwork" />
     </div>
@@ -11,14 +11,10 @@
           <div class="desc pr-10 mb-3">{{ mod.synopsis }}</div>
         </div>
         <div class="get">
-          <div class="btns">
-            <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
-              <img src="@/assets/curse-logo.svg" alt="" />
-            </div>
-            <ftb-button color="primary" class="px-6 py-2" @click="showInstall = true">Install</ftb-button>
-          </div>
+          <ftb-button color="primary" class="px-6 py-2" @click="showInstall = true">Install</ftb-button>
         </div>
       </div>
+
       <div class="numbers">
         <div class="stat">
           <div class="text">Downloads</div>
@@ -35,6 +31,9 @@
           <div class="value authors">
             {{ mod.authors.map(e => e.name).join(', ') }}
           </div>
+        </div>
+        <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
+          <img src="@/assets/curse-logo.svg" alt="" />
         </div>
       </div>
     </div>
@@ -249,15 +248,17 @@ export default class ModCard extends Vue {
   align-items: center;
   padding: 1rem;
   border-radius: 5px;
-  background: var(--color-background);
+  background: rgba(white, 0.04);
   margin-bottom: 1rem;
 
   .art {
     margin-right: 1.5rem;
+    min-width: 120px;
 
     img {
       max-width: 120px;
       border-radius: 5px;
+      margin: 0 auto;
     }
   }
 
@@ -276,26 +277,6 @@ export default class ModCard extends Vue {
 
       .about {
         user-select: text;
-      }
-
-      .get {
-        .btns {
-          display: flex;
-          align-items: center;
-
-          .curse-btn {
-            width: 25px;
-            margin-right: 1rem;
-
-            opacity: 0.5;
-            transition: opacity 0.25s ease-in-out;
-            cursor: pointer;
-
-            &:hover {
-              opacity: 1;
-            }
-          }
-        }
       }
     }
 
@@ -316,6 +297,21 @@ export default class ModCard extends Vue {
           &.is-value {
             font-family: Arial, Helvetica, sans-serif;
           }
+        }
+      }
+
+      .curse-btn {
+        width: 25px;
+        margin-right: 0.5rem;
+        margin-left: auto;
+        align-self: flex-end;
+
+        opacity: 0.5;
+        transition: opacity 0.25s ease-in-out;
+        cursor: pointer;
+
+        &:hover {
+          opacity: 1;
         }
       }
     }
