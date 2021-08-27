@@ -1,5 +1,5 @@
 import { ActionTree } from 'vuex';
-import { ServersState, Server } from './types';
+import { Server, ServersState } from './types';
 import { RootState } from '@/types';
 import axios, { AxiosResponse } from 'axios';
 import { queryServer } from '@/utils';
@@ -10,25 +10,69 @@ export interface ServerListResponse {
 }
 
 export const actions: ActionTree<ServersState, RootState> = {
-  fetchServers({ rootState, commit, dispatch, state }, projectid?): Promise<void> {
+  async getServers(
+    { rootState, commit },
+    payload: {
+      id: number;
+      onSingleDone: (server: Server) => void;
+    },
+  ): Promise<void> {
+    let req;
+    try {
+      req = await axios.post<ServerListResponse>(
+        'https://api.creeper.host/minetogether/list',
+        { projectid: payload.id },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+    } catch (e) {}
+
+    if (!req || !req.data.servers) {
+      return;
+    }
+
+    await Promise.all(
+      req.data.servers.map(async (e: Server) => {
+        try {
+          const queryRes = await queryServer(e.ip);
+          if (queryRes) {
+            const server = { ...e, protoResponse: queryRes };
+            commit('addServer', { id: payload.id, server });
+            payload.onSingleDone(server);
+          }
+        } catch {}
+      }),
+    );
+  },
+  /**
+   * @deprecated DON'T use, it's bad
+   */
+  fetchServers({ rootState, commit, dispatch, state }, id): Promise<void> {
     commit('setLoading', true);
     return axios
       .post<ServerListResponse>(
         'https://api.creeper.host/minetogether/list',
-        { projectid },
+        { projectid: id },
         {
           headers: {
             'Content-Type': 'application/json',
           },
         },
       )
-      .then((response: AxiosResponse<ServerListResponse>) => {
+      .then(async (response: AxiosResponse<ServerListResponse>) => {
         const servers = response.data.servers;
-        servers.forEach(async server => {
-          server.protoResponse = await queryServer(server.ip);
-          commit('updateServer', { id: projectid, server });
-        });
-        commit('loadServers', { id: projectid, servers });
+        await Promise.all(
+          servers.map(async server => {
+            try {
+              server.protoResponse = await queryServer(server.ip);
+              commit('updateServer', { id: id, server });
+            } catch {}
+          }),
+        );
+        commit('loadServers', { id: id, servers });
         commit('setLoading', false);
       })
       .catch(err => {

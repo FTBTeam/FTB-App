@@ -58,34 +58,31 @@ export function shuffle(array: any[]) {
 }
 
 export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
-  // return new Promise((resolve, reject) => {
-  //     if (serverInfo.includes(':')) {
-  //         const address = serverInfo.split(':');
-  //         const serverIP = address[0];
-  //         const serverPort = address[1];
-  //
-  //         const query = new mcQuery.MinecraftServer(serverIP, serverPort);
-  //
-  //         query.ping(10000, async (err: any, res: any) => {
-  //             if (err) {
-  //                 console.error(err);
-  //                 reject(err);
-  //                 return undefined;
-  //             }
-  //             resolve(res);
-  //         });
-  //     } else {
-  //         const query = new mcQuery.MinecraftServer(serverInfo);
-  //         query.ping(10000, 5, async (err: any, res: any) => {
-  //             if (err) {
-  //                 console.error(err);
-  //                 reject(err);
-  //                 return undefined;
-  //             }
-  //             resolve(res);
-  //         });
-  //     }
-  // });
+  return new Promise((resolve, reject) => {
+    if (serverInfo.includes(':')) {
+      const address = serverInfo.split(':');
+      const serverIP = address[0];
+      const serverPort = address[1];
 
-  return new Promise(r => r(undefined));
+      const query = new mcQuery.MinecraftServer(serverIP, serverPort);
+
+      query.ping(5000, (err: any, res: any) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        resolve(res);
+      });
+    } else {
+      const query = new mcQuery.MinecraftServer(serverInfo);
+      query.ping(5000, 5, (err: any, res: any) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(res);
+      });
+    }
+  });
 }

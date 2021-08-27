@@ -84,18 +84,6 @@
                 </div>
               </div>
             </div>
-            <div v-if="true || ($store.state && $store.state.alert != null)">
-              <div class="relative">
-                <p class="pl-4 w-full absolute">
-                  <!--                  <span class="font-bold">{{ $store.state.alert.title }}</span> {{ $store.state.alert.message }}-->
-                </p>
-                <div class="w-full h-full bg-grey-light justify-center ">
-                  <!--                    :class="`bg-${$store.state.alert.type}`"-->
-                  <div class="h-full text-xs leading-none py-1 text-white"></div>
-                </div>
-                <div class="alert-close cursor-pointer" @click="hideAlert"></div>
-              </div>
-            </div>
           </div>
         </div>
       </main>
@@ -352,6 +340,10 @@ export default class MainApp extends Vue {
   bottom: 2rem;
   right: 2rem;
   z-index: 100;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 
   .alert {
     display: flex;

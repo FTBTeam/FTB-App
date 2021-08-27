@@ -150,7 +150,14 @@
             :instance="instance"
             @showFind="searchingForMods = true"
           />
-          <modpack-public-servers v-if="activeTab === tabs.PUBLIC_SERVERS" :instance="instance" />
+
+          <!-- v-show to allow servers to load in the background -->
+          <modpack-public-servers
+            v-show="activeTab === tabs.PUBLIC_SERVERS && currentVersionObject.mtgID"
+            :instance="instance"
+            :current-version="currentVersionObject.mtgID"
+            :pack-instance="packInstance"
+          />
 
           <find-mods
             :instance="instance"
@@ -397,51 +404,6 @@
               <!--              </button>-->
             </div>
           </div>
-          <div class="tab-pane px-4" v-if="isTabActive('modlist')" id="modlist">
-            <div class="get-mods flex justify-end items-center mb-6">
-              <p class="inline-block mr-4">Need more content?</p>
-              <ftb-button color="primary" class="py-2 px-8 inline-block" @click="searchingForMods = true">
-                Get more mods
-                <font-awesome-icon icon="search" class="ml-2" />
-              </ftb-button>
-              <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
-                <ftb-button @click="() => getModList(true)" class="py-2 px-4" color="info" :disabled="updatingModlist">
-                  <font-awesome-icon icon="sync" />
-                </ftb-button>
-              </div>
-            </div>
-            <div v-for="(file, index) in modlist" :key="index">
-              <div class="flex flex-row my-4 items-center">
-                <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
-                <div class="ml-auto">
-                  <span class="rounded mx-2 text-sm bg-gray-600 py-1 px-2 clean-font">{{
-                    prettyBytes(parseInt(file.size))
-                  }}</span>
-
-                  <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
-                  <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
-                  <span class="sha-check">
-                    <font-awesome-icon icon="check-circle" color="lightgreen" class="ml-2 mr-1" /> SHA1
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="tab-pane" v-if="isTabActive('servers')" id="servers">
-            <div v-if="currentVersionObject !== null && shuffledServers.length > 0">
-              <server-card
-                v-for="server in shuffledServers"
-                :key="server.id"
-                :server="server"
-                :art="packInstance.art.length > 0 ? packInstance.art.filter(art => art.type === 'square')[0].url : ''"
-              ></server-card>
-            </div>
-            <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
-              <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
-              <h1 class="text-5xl">Oh no!</h1>
-              <span>It doesn't looks like there are any public MineTogether servers</span>
-            </div>
-          </div>
         </div>
         <div class="tab-content bg-navbar flex-1 py-4 px-4 mx-2" style="overflow-y: auto;">
           <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" @modInstalled="getModList" />
@@ -473,7 +435,7 @@ import FTBModal from '@/components/FTBModal.vue';
 import ServerCard from '@/components/ServerCard.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
-import { logVerbose, shuffle } from '../utils';
+import { logVerbose } from '../utils';
 import { ServersState } from '../modules/servers/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
@@ -602,7 +564,7 @@ export default class InstancePage extends Vue {
 
   public goBack(): void {
     if (!this.searchingForMods) {
-      this.$router.go(-1);
+      this.$router.back();
     } else {
       this.searchingForMods = false;
     }
@@ -818,20 +780,9 @@ export default class InstancePage extends Vue {
 
     this.getModList();
 
-    try {
-      if (this.currentVersionObject !== null) {
-        if (this.currentVersionObject.mtgID) {
-          this.fetchServers(this.currentVersionObject.mtgID);
-        }
-      }
-    } catch (e) {
-      console.log('Error fetching servers for instance');
-    }
     if (Object.keys(this.settingsState.javaInstalls).length < 1) {
       this.loadJavaVersions();
     }
-
-    console.log(this.packInstance, this.instance);
   }
 
   get currentVersionObject(): Versions | null {
@@ -845,13 +796,6 @@ export default class InstancePage extends Vue {
       }
     }
     return null;
-  }
-
-  get shuffledServers() {
-    if (this.currentVersionObject !== null && this.currentVersionObject.mtgID !== undefined) {
-      return shuffle(this.serverListState.servers[this.currentVersionObject.mtgID]);
-    }
-    return [];
   }
 
   private getModList(showAlert = false) {
