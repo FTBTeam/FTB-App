@@ -12,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class InstalledInstancesHandler implements IMessageHandler<InstalledInstancesData>
 {
-
     @Override
     public void handle(InstalledInstancesData data)
     {
