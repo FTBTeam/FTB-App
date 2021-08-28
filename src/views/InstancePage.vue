@@ -36,7 +36,11 @@
             <div class="name">{{ instance.name }}</div>
             <div class="desc">
               {{ packInstance.name }}
-              by <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span> -
+              <template v-if="packInstance.authors.length"
+                >by
+                <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span></template
+              >
+              -
               {{ packInstance.synopsis }}
             </div>
           </div>
@@ -67,7 +71,7 @@
 
             <div class="options">
               <div class="update" v-if="instance && !isLatestVersion">
-                <ftb-button color="warning" class="update-btn px-2 py-0-5 text-sm">
+                <ftb-button color="warning" class="update-btn px-4 py-1">
                   Update available
                   <font-awesome-icon icon="cloud-download-alt" class="ml-2" />
                 </ftb-button>
@@ -134,6 +138,16 @@
           </div>
 
           <div class="pack-overview" v-if="activeTab === tabs.OVERVIEW">
+            <div class="tags mb-6" v-if="tags.length">
+              <span
+                v-for="(tag, i) in tags"
+                :key="`tag-${i}`"
+                @click="clickTag(tag.name)"
+                class="cursor-pointer rounded mr-2 text-sm bg-black px-4 py-2 lowercase"
+                style="font-variant: small-caps;"
+                >{{ tag.name }}</span
+              >
+            </div>
             <div class="" v-if="packInstance.description !== undefined">
               <VueShowdown :markdown="packInstance.description" :extensions="['classMap', 'attribMap', 'newLine']" />
             </div>
@@ -177,27 +191,7 @@
       <div class="flex flex-col h-full" v-if="instance != undefined" :key="instance.uuid">
         <div>
           <div class="header-image">
-            <span class="instance-info">
-              <div v-if="packInstance !== null && tags.length > 0" class="flex flex-row items-center">
-                <div class="flex flex-row">
-                  <span
-                    v-for="(tag, i) in limitedTags"
-                    :key="`tag-${i}`"
-                    @click="clickTag(tag.name)"
-                    class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                    style="font-variant: small-caps;"
-                    >{{ tag.name }}</span
-                  >
-                  <span
-                    v-if="tags.length > 5"
-                    :key="`tag-more`"
-                    class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                    style="font-variant: small-caps;"
-                    >+{{ tags.length - 5 }}</span
-                  >
-                </div>
-              </div>
-            </span>
+            <span class="instance-info" />
             <div class="instance-buttons flex flex-row frosted-glass">
               <div class="instance-button mr-1" v-if="instance && !isLatestVersion">
                 <ftb-button
@@ -456,15 +450,6 @@ interface MsgBox {
   cancelAction: () => void;
 }
 
-interface Modlist {
-  name: string;
-  version: string;
-  type: string;
-  size: string;
-  updated: string;
-  sha1: string;
-}
-
 interface Changelogs {
   [id: number]: string;
 }
@@ -513,10 +498,7 @@ export default class InstancePage extends Vue {
   activeTab: Tabs = Tabs.OVERVIEW;
 
   private packInstance: ModPack | null = null;
-  private cheaty = '';
-  private deleting: boolean = false;
-
-  private defaultImage: any = placeholderImage;
+  deleting: boolean = false;
 
   private showMsgBox: boolean = false;
   private msgBox: MsgBox = {
@@ -625,26 +607,6 @@ export default class InstancePage extends Vue {
           },
         });
       },
-    });
-  }
-
-  public comingSoonMsg() {
-    this.openMessageBox({
-      type: 'okOnly',
-      title: 'Coming Soon',
-      okAction: this.hideMsgBox,
-      cancelAction: this.hideMsgBox,
-      content: `This feature is currently not available, we do however aim to have this feature implemented in the near future`,
-    });
-  }
-
-  public downloadServer() {
-    this.openMessageBox({
-      type: 'okOnly',
-      title: 'Server Downloads',
-      okAction: this.hideMsgBox,
-      cancelAction: this.hideMsgBox,
-      content: `To download the server files for this modpack please go to the [Feed-the-Beast](https://feed-the-beast.com/) website`,
     });
   }
 
@@ -891,13 +853,6 @@ export default class InstancePage extends Vue {
     }
   }
 
-  get limitedTags() {
-    if (this.tags) {
-      return this.tags.slice(0, 5);
-    }
-    return [];
-  }
-
   get isLatestVersion() {
     if (
       this.packInstance === undefined ||
@@ -1075,7 +1030,7 @@ export default class InstancePage extends Vue {
       display: flex;
       justify-content: space-between;
 
-      margin: 0 1rem 1rem;
+      margin: 0 1.5rem 1rem 1.5rem;
 
       .actions {
         .buttons {
@@ -1115,89 +1070,5 @@ export default class InstancePage extends Vue {
       padding: 0.8rem 1.5rem 1rem 1.5rem;
     }
   }
-}
-
-.header-image {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 200px;
-  transition: all 0.2s ease-in-out;
-}
-
-@media screen and (max-height: 800px) {
-  .header-image {
-    transition: all 0.2s ease-in-out;
-  }
-}
-
-.tab-pane {
-  top: 0;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.changelog-seperator {
-  border: 1px solid var(--color-sidebar-item);
-}
-
-.short {
-  width: 75%;
-}
-
-.instance-name {
-  margin-top: auto;
-  height: 45px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-info {
-  bottom: 50px;
-  text-align: left;
-  font-weight: 400;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-buttons {
-  background: rgba(0, 0, 0, 0.7);
-  width: 100%;
-  height: 50px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.update-bar {
-  background: rgba(255, 193, 7, 0.9);
-  width: 100%;
-  height: 25px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-button {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
-}
-
-.frosted-glass {
-  backdrop-filter: blur(8px);
-  background: linear-gradient(
-    to top,
-    rgba(36, 40, 47, 0) 0%,
-    rgba(43, 57, 66, 0.2) calc(100% - 2px),
-    rgba(193, 202, 207, 0.1) calc(100% - 1px),
-    rgba(29, 29, 29, 0.3) 100%
-  );
-  //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
-}
-
-.clean-font {
-  font-family: Arial, Helvetica, sans-serif;
 }
 </style>

@@ -28,8 +28,6 @@ export const mutations: MutationTree<ServersState> = {
         servers[i] = server;
       }
       state.servers[payload.id] = servers;
-
-      console.log(servers);
     }
   },
 };
