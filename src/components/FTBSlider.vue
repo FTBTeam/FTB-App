@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col ftb-slider">
+  <div class="flex flex-col ftb-slider" :class="{ dark }">
     <div class="w-full">
       <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-4">
         {{ label }}
@@ -53,6 +53,7 @@ export default class FTBSlider extends Vue {
   @Prop({ default: '' }) rawStyle!: string;
   @Prop({ default: '' }) small!: string;
 
+  @Prop({ default: '' }) dark!: boolean;
   @Prop() visualMax!: number;
   @Prop() maxValueLabel!: string;
   @Prop() step!: number;
@@ -72,7 +73,10 @@ export default class FTBSlider extends Vue {
     }
 
     if (value > 1024) {
-      return (value / 1024).toFixed(2) + (this.unit === ' threads' && !dontShowThreads ? ' threads' : this.unit);
+      return (
+        (value / 1024).toFixed(2) +
+        (this.unit === ' threads' && !dontShowThreads ? ' threads' : this.unit === 'MB' ? 'GB' : this.unit)
+      );
     }
 
     return value + (this.unit === 'threads' && dontShowThreads ? '' : ' ' + this.unit);
@@ -82,6 +86,10 @@ export default class FTBSlider extends Vue {
 
 <style lang="scss" scoped>
 .ftb-slider {
+  &.dark .slider-area {
+    background-color: #252525;
+  }
+
   .slider-area {
     background-color: var(--color-background);
     padding: 0.8rem 1.3rem 1rem 1.3rem;

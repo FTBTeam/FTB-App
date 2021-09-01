@@ -10,7 +10,7 @@
       </label>
       <div class="flex flex-row items-center">
         <input
-          class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded"
+          class="appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded"
           type="text"
           :placeholder="placeholder"
           :value="value"
@@ -51,5 +51,13 @@ export default class FTBInput extends Vue {
 }
 .border-input {
   border-color: #1b1b1b;
+}
+</style>
+
+<style lang="scss" scoped>
+.ftb-btn {
+  &::placeholder {
+    color: rgba(white, 0.2);
+  }
 }
 </style>

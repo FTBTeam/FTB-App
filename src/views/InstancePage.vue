@@ -8,10 +8,10 @@
       }"
     >
       <header>
-        <div class="meta-heading">
+        <div class="meta-heading" :class="{ bolder: hidePackDetails }">
           <div class="back" @click="goBack">
             <font-awesome-icon icon="chevron-left" class="mr-2" />
-            Back to {{ searchingForMods ? 'instance mods' : 'library' }}
+            Back to {{ hidePackDetails ? 'instance mods' : 'library' }}
           </div>
 
           <div class="meta">
@@ -31,7 +31,7 @@
           </div>
         </div>
 
-        <div class="pack-info" v-if="!searchingForMods">
+        <div class="pack-info" v-if="!hidePackDetails">
           <div class="info">
             <div class="name">{{ instance.name }}</div>
             <div class="desc">
@@ -47,8 +47,8 @@
         </div>
       </header>
 
-      <div class="body">
-        <div class="body-heading" v-if="!searchingForMods">
+      <div class="body" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
+        <div class="body-heading" v-if="!hidePackDetails">
           <div class="action-heading">
             <div class="play">
               <ftb-button color="primary" class="py-3 px-8" @click="launchModPack()">
@@ -80,7 +80,7 @@
                 Versions
                 <font-awesome-icon icon="code-branch" class="ml-2" />
               </div>
-              <div class="option">
+              <div class="option" @click="activeTab = tabs.SETTINGS">
                 Settings
                 <font-awesome-icon icon="cogs" class="ml-2" />
               </div>
@@ -143,8 +143,11 @@
                 v-for="(tag, i) in tags"
                 :key="`tag-${i}`"
                 @click="clickTag(tag.name)"
-                class="cursor-pointer rounded mr-2 text-sm bg-black px-4 py-2 lowercase"
-                style="font-variant: small-caps;"
+                class="cursor-pointer rounded mr-2 text-sm ftb-tag px-4 py-1 lowercase"
+                :style="{
+                  fontVariant: 'small-caps',
+                  backgroundColor: `hsla(${getColorForChar(tag.name)}, .5)`,
+                }"
                 >{{ tag.name }}</span
               >
             </div>
@@ -164,6 +167,9 @@
             :instance="instance"
             @showFind="searchingForMods = true"
           />
+
+          <!-- If the pack page grows more, we will have to use the router to clean this up. -->
+          <modpack-settings :pack-instance="packInstance" :instance="instance" v-if="activeTab === tabs.SETTINGS" />
 
           <!-- v-show to allow servers to load in the background -->
           <modpack-public-servers
@@ -429,8 +435,8 @@ import FTBModal from '@/components/FTBModal.vue';
 import ServerCard from '@/components/ServerCard.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
-import { logVerbose } from '../utils';
-import { ServersState } from '../modules/servers/types';
+import { logVerbose } from '@/utils';
+import { ServersState } from '@/modules/servers/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
@@ -441,6 +447,8 @@ import { PackConst } from '@/utils/contants';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
 import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
 import ModpackMods from '@/components/modpack/ModpackMods.vue';
+import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
+import { getColorForChar } from '@/utils/colors';
 
 interface MsgBox {
   title: string;
@@ -458,11 +466,13 @@ enum Tabs {
   OVERVIEW,
   MODS,
   PUBLIC_SERVERS,
+  SETTINGS,
 }
 
 @Component({
   name: 'InstancePage',
   components: {
+    ModpackSettings,
     ServerCard,
     'ftb-modal': FTBModal,
     'ftb-input': FTBInput,
@@ -496,6 +506,7 @@ export default class InstancePage extends Vue {
   // New stuff
   tabs = Tabs;
   activeTab: Tabs = Tabs.OVERVIEW;
+  getColorForChar = getColorForChar;
 
   private packInstance: ModPack | null = null;
   deleting: boolean = false;
@@ -545,10 +556,11 @@ export default class InstancePage extends Vue {
   }
 
   public goBack(): void {
-    if (!this.searchingForMods) {
+    if (!this.hidePackDetails) {
       this.$router.back();
     } else {
       this.searchingForMods = false;
+      this.activeTab = Tabs.OVERVIEW;
     }
   }
 
@@ -844,7 +856,9 @@ export default class InstancePage extends Vue {
   get tags() {
     try {
       if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
-        return this.modpacks?.packsCache[this.instance.id].tags;
+        return this.modpacks?.packsCache[this.instance.id].tags?.sort((a, b) =>
+          a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
+        );
       } else {
         return [];
       }
@@ -883,6 +897,13 @@ export default class InstancePage extends Vue {
   get isForgePack() {
     return this.instance?.modLoader.includes('forge') ?? 'fabric';
   }
+
+  /**
+   * Determines if we need to hide the bulk of the page
+   */
+  get hidePackDetails() {
+    return this.activeTab === Tabs.SETTINGS || this.searchingForMods;
+  }
 }
 </script>
 
@@ -907,11 +928,19 @@ export default class InstancePage extends Vue {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(#2a2a2a, 1);
-      backdrop-filter: blur(5px);
+      background: #2a2a2a;
       padding: 0.8rem 1rem;
       position: relative;
       z-index: 1;
+      transition: background-color 0.25s ease-in-out;
+
+      &.bolder {
+        background-color: var(--color-navbar);
+
+        .meta {
+          opacity: 0;
+        }
+      }
 
       .back {
         opacity: 0.7;
@@ -926,6 +955,7 @@ export default class InstancePage extends Vue {
       .meta {
         display: flex;
         align-items: center;
+        transition: opacity 0.25s ease-in-out;
 
         .icon {
           cursor: default;
@@ -962,12 +992,20 @@ export default class InstancePage extends Vue {
     flex: 1;
     background: rgba(#2a2a2a, 0.9);
     backdrop-filter: blur(8px);
+    transition: background-color 0.25s ease-in-out;
+
+    .ftb-tag {
+      background-color: rgba(white, 0.2);
+    }
+
+    &.settings-open {
+      background-color: var(--color-background);
+    }
 
     .action-heading {
-      padding: 1rem;
+      padding: 1rem 1.5rem;
       display: flex;
       align-items: center;
-      margin-bottom: 1.5rem;
       background-color: rgba(black, 0.1);
 
       .play {
@@ -1029,8 +1067,10 @@ export default class InstancePage extends Vue {
     .tab-and-actions {
       display: flex;
       justify-content: space-between;
-
-      margin: 0 1.5rem 1rem 1.5rem;
+      align-items: center;
+      background: rgba(black, 0.3);
+      padding-right: 1.5rem;
+      margin-bottom: 0.8rem;
 
       .actions {
         .buttons {
@@ -1041,21 +1081,22 @@ export default class InstancePage extends Vue {
       .tabs {
         display: flex;
         align-items: center;
+        padding: 0.5rem 1.5rem 0 1.5rem;
 
         .options {
           display: flex;
         }
 
         .tab {
-          padding: 0.5rem 1.5rem;
+          padding: 0.5rem 1.5rem 1rem 1.5rem;
           color: rgba(white, 0.5);
           cursor: pointer;
           transition: color 0.25s ease-in-out, background-color 0.25s ease-in-out;
-          border-radius: 5px;
           margin-right: 1rem;
+          border-bottom: 2px solid transparent;
 
           &.active {
-            background-color: var(--color-info-button);
+            border-bottom-color: var(--color-info-button);
             color: white;
           }
 

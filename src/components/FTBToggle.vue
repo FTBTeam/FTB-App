@@ -3,10 +3,7 @@
     <template v-if="!inline">
       <div class="w-full flex ftb-toggle">
         <div class="main flex-1">
-          <label
-            class="block uppercase tracking-wide text-xs font-bold mb-2"
-            :class="`${disabled ? 'opacity-50' : ''}`"
-          >
+          <label class="block uppercase tracking-wide font-bold mb-2" :class="`${disabled ? 'opacity-50' : ''}`">
             {{ label }}
           </label>
           <small v-if="small" class="text-muted max-w-xl block" :class="{ 'opacity-25': disabled }">{{ small }}</small>
@@ -36,7 +33,7 @@
           :class="`${disabled ? 'cursor-not-allowed' : ' cursor-pointer '}`"
         ></span>
       </span>
-      <label class="block uppercase tracking-wide text-xs font-bold mx-2" :class="`${disabled ? 'text-gray-600' : ''}`">
+      <label class="block uppercase tracking-wide text-xs font-bold ml-4" :class="`${disabled ? 'opacity-25' : ''}`">
         {{ label }}
       </label>
     </template>

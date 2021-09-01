@@ -82,11 +82,12 @@ import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 import PackCard from '@/components/packs/PackCard.vue';
 import PackCardList from '@/components/packs/PackCardList.vue';
 import ServerCard from '@/components/ServerCard.vue';
-import { State, Action } from 'vuex-class';
-import { ModpackState, ModPack } from '@/modules/modpacks/types';
+import { Action, State } from 'vuex-class';
+import { ModPack, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import FtbButton from '@/components/FTBButton.vue';
+
 const namespace: string = 'modpacks';
 
 @Component({
@@ -175,7 +176,7 @@ export default class Home extends Vue {
 <style lang="scss" scoped>
 .mod-pack-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 150px);
-  gap: 0.92rem;
+  grid-template-columns: repeat(auto-fit, 148px);
+  gap: 1rem;
 }
 </style>
