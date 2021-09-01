@@ -27,12 +27,8 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import FTBButton from './FTBButton.vue';
 
 @Component({
-  components: {
-    'ftb-button': FTBButton,
-  },
   props: ['label', 'placeholder', 'button', 'buttonText', 'buttonColor', 'buttonClick', 'value'],
 })
 export default class FTBInput extends Vue {

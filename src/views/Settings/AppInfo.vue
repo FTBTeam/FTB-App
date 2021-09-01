@@ -95,12 +95,10 @@ import { Component, Vue } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { Settings, SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import FTBButton from '@/components/FTBButton.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
 
 @Component({
   components: {
-    'ftb-button': FTBButton,
     'ftb-toggle': FTBToggle,
   },
 })

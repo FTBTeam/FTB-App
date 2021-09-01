@@ -100,9 +100,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
-import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
-import FTBButton from '@/components/FTBButton.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
 import { SettingsState } from '../modules/settings/types';
@@ -128,9 +126,7 @@ interface Changelogs {
 @Component({
   name: 'LaunchingPage',
   components: {
-    'ftb-input': FTBInput,
     'ftb-toggle': FTBToggle,
-    'ftb-button': FTBButton,
     InstallModal,
     FTBModal,
     'message-modal': MessageModal,

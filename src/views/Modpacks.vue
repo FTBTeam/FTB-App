@@ -43,17 +43,14 @@
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 import FTBSearchBar from '@/components/FTBSearchBar.vue';
-import FTBButton from '@/components/FTBButton.vue';
 import { ModpackState, ModPack, Instance } from '@/modules/modpacks/types';
-import { State, namespace, Action, Getter } from 'vuex-class';
-import { asyncForEach } from '../utils';
+import { State, Action, Getter } from 'vuex-class';
 import { SettingsState } from '../modules/settings/types';
 
 @Component({
   components: {
     PackCardWrapper,
     FTBSearchBar,
-    'ftb-button': FTBButton,
   },
 })
 export default class Modpacks extends Vue {

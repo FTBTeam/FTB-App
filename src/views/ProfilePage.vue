@@ -73,9 +73,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
-import FTBButton from '@/components/FTBButton.vue';
 import { Action, State } from 'vuex-class';
 import { AuthState } from '../modules/auth/types';
 import { SettingsState } from '../modules/settings/types';
@@ -83,9 +81,7 @@ import platform from '@/utils/interface/electron-overwolf';
 
 @Component({
   components: {
-    'ftb-input': FTBInput,
     'ftb-toggle': FTBToggle,
-    'ftb-button': FTBButton,
     PackCardWrapper,
   },
 })

@@ -22,7 +22,6 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import FTBButton from '@/components/FTBButton.vue';
 import { prettyByteFormat } from '@/utils/helpers';
 import { Action } from 'vuex-class';
 import { Prop } from 'vue-property-decorator';
@@ -31,7 +30,6 @@ import FindMods from '@/components/modpack/FindMods.vue';
 
 @Component({
   components: {
-    'ftb-button': FTBButton,
     FindMods,
   },
 })
@@ -47,4 +45,8 @@ export default class ModpackMods extends Vue {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.clean-font {
+  font-family: Arial, Helvetica, sans-serif;
+}
+</style>

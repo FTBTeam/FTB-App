@@ -67,8 +67,6 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Friend } from '../../modules/auth/types';
-import FTBInput from '../FTBInput.vue';
-import FTBButton from '../FTBButton.vue';
 import { Message } from '../../types';
 import ConfirmationModal from '../modals/ConfirmationModal.vue';
 import FTBModal from '../FTBModal.vue';
@@ -76,8 +74,6 @@ import platform from '@/utils/interface/electron-overwolf';
 
 @Component({
   components: {
-    'ftb-input': FTBInput,
-    'ftb-button': FTBButton,
     ConfirmationModal,
     FTBModal,
   },

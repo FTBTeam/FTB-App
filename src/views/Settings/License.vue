@@ -42,15 +42,10 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 
-import FTBButton from '@/components/FTBButton.vue';
 import Licenses from '../../../licenses.json';
 import platform from '@/utils/interface/electron-overwolf';
 
-@Component({
-  components: {
-    'ftb-button': FTBButton,
-  },
-})
+@Component
 export default class LicensePage extends Vue {
   private licenses = Licenses;
   private config = {

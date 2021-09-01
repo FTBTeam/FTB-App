@@ -122,18 +122,14 @@ import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { SettingsState } from '@/modules/settings/types';
 import FTBModal from '@/components/FTBModal.vue';
-import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
-import FTBButton from '@/components/FTBButton.vue';
 
 @Component({
   components: {
     'ftb-modal': FTBModal,
-    'ftb-input': FTBInput,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
-    'ftb-button': FTBButton,
   },
 })
 export default class ModpackSettings extends Vue {

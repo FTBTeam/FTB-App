@@ -134,7 +134,6 @@ type InstallProgress = {
 
 @Component({
   components: {
-    'ftb-button': FTBButton,
     'ftb-modal': FTBModal,
     MessageModal,
     Selection,

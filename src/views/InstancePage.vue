@@ -146,7 +146,7 @@
                 class="cursor-pointer rounded mr-2 text-sm ftb-tag px-4 py-1 lowercase"
                 :style="{
                   fontVariant: 'small-caps',
-                  backgroundColor: `hsla(${getColorForChar(tag.name)}, .5)`,
+                  backgroundColor: `hsla(${getColorForChar(tag.name, 90, 70)}, .5)`,
                 }"
                 >{{ tag.name }}</span
               >
@@ -189,7 +189,12 @@
       </div>
 
       <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
-        <modpack-versions :versions="packInstance.versions" :current="instance.versionId" />
+        <modpack-versions
+          :versions="packInstance.versions"
+          :pack-instance="packInstance"
+          :instance="instance"
+          :current="instance.versionId"
+        />
       </ftb-modal>
     </div>
 
@@ -300,110 +305,6 @@
               </div>
             </div>
           </div>
-          <div class="tab-pane" v-if="isTabActive('settings')" id="settings">
-            <div class="bg-sidebar-item p-5 rounded my-4">
-              <ftb-input label="Name" :value="instance.name" v-model="instance.name" @blur="saveSettings" />
-              <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
-                Window Size
-              </label>
-              <div class="flex flex-row my-4 -mt-2">
-                <div class="flex-col mt-auto mb-2 pr-1">
-                  <v-selectmenu
-                    :title="false"
-                    :query="false"
-                    :data="resolutionList"
-                    align="left"
-                    :value="resSelectedValue"
-                    @values="resChange"
-                  >
-                    <ftb-button class="py-2 px-4 my-1 w-full" color="primary" css-class="text-center text-l">
-                      <font-awesome-icon icon="desktop" size="1x" />
-                    </ftb-button>
-                  </v-selectmenu>
-                </div>
-
-                <ftb-input
-                  class="flex-col"
-                  label="Width"
-                  v-model="instance.width"
-                  :value="instance.width"
-                  @blur="saveSettings"
-                />
-                <font-awesome-icon class="mt-auto mb-6 mx-1 text-gray-600" icon="times" size="1x" />
-                <ftb-input
-                  class="flex-col"
-                  label="Height"
-                  v-model="instance.height"
-                  :value="instance.height"
-                  @blur="saveSettings"
-                />
-              </div>
-              <div class="flex flex-col my-2">
-                <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
-                  Java Version
-                </label>
-                <select
-                  class="rounded-none bg-input focus:outline-none focus:shadow-outline border border-input px-4 py-2 w-full h-full appearance-none leading-normal text-gray-400"
-                  v-model="instance.jrePath"
-                  @blur="saveSettings"
-                  @change="saveSettings"
-                >
-                  <option
-                    v-for="versionName in Object.keys(javaVersions)"
-                    :value="javaVersions[versionName]"
-                    :key="versionName"
-                    >{{ versionName }}</option
-                  >
-                </select>
-              </div>
-            </div>
-            <div class="flex flex-col my-2">
-              <ftb-slider
-                label="Instance Memory"
-                v-model="instance.memory"
-                :currentValue="instance.memory"
-                minValue="512"
-                :maxValue="settingsState.hardware.totalMemory"
-                @blur="saveSettings"
-                @change="saveSettings"
-                step="64"
-                unit="MB"
-                css-class="memory"
-                :raw-style="
-                  `background: linear-gradient(to right, #8e0c25 ${(this.instance.minMemory /
-                    settingsState.hardware.totalMemory) *
-                    100 -
-                    5}%, #a55805 ${(this.instance.minMemory / settingsState.hardware.totalMemory) *
-                    100}%, #a55805 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100 -
-                    5}%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`
-                "
-              />
-              <ftb-input label="Custom Arguments" v-model="instance.jvmArgs" @blur="saveSettings" />
-              <ftb-toggle
-                label="Enable cloud save uploads"
-                :disabled="
-                  auth.token !== undefined &&
-                    auth.token !== null &&
-                    auth.token.activePlan !== undefined &&
-                    auth.token.activePlan !== null &&
-                    settingsState.settings.cloudSaves !== true &&
-                    settingsState.settings.cloudSaves !== 'true'
-                "
-                onColor="bg-primary"
-                inline="true"
-                :value="instance.cloudSaves"
-                @change="toggleCloudSaves"
-              />
-              <ftb-button class="py-2 px-4 w-10 ml-auto mr-2" color="primary" css-class="text-center text-l">
-                <font-awesome-icon icon="save" size="1x" />&nbsp;Save
-              </ftb-button>
-              <!--              <button-->
-              <!--                  class="cursor-pointer bg-green-500 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto mr-2 mb-2"-->
-              <!--              >-->
-              <!--                <font-awesome-icon icon="save" size="1x"/>&nbsp;Save-->
-              <!--              </button>-->
-            </div>
-          </div>
         </div>
         <div class="tab-content bg-navbar flex-1 py-4 px-4 mx-2" style="overflow-y: auto;">
           <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" @modInstalled="getModList" />
@@ -427,9 +328,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
-import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
-import FTBButton from '@/components/FTBButton.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
 import FTBModal from '@/components/FTBModal.vue';
 import ServerCard from '@/components/ServerCard.vue';
@@ -475,10 +374,8 @@ enum Tabs {
     ModpackSettings,
     ServerCard,
     'ftb-modal': FTBModal,
-    'ftb-input': FTBInput,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
-    'ftb-button': FTBButton,
     ModpackVersions,
     MessageModal,
     FindMods,
@@ -578,13 +475,6 @@ export default class InstancePage extends Vue {
   }
 
   public setActiveTab(tabItem: string) {}
-
-  public isOlderVersion(version: number) {
-    if (this.instance == null) {
-      return false;
-    }
-    return this.instance?.versionId > version;
-  }
 
   public isCurrentVersion(version: number) {
     return this.instance?.versionId && this.instance?.versionId === version;

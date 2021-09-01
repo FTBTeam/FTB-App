@@ -44,7 +44,6 @@
 
 <script lang="ts">
 import TitleBar from '@/components/TitleBar.vue';
-import FTBButton from '@/components/FTBButton.vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import FriendsList from '@/components/chat/FriendsList.vue';
 import AddFriend from '@/components/chat/AddFriend.vue';
@@ -62,7 +61,6 @@ import platform from '@/utils/interface/electron-overwolf';
     'friends-list': FriendsList,
     AddFriend,
     FriendChat,
-    'ftb-button': FTBButton,
   },
 })
 export default class ChatWindow extends Vue {

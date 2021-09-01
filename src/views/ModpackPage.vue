@@ -328,9 +328,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModpackState, Versions } from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
-import FTBInput from '@/components/FTBInput.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
-import FTBButton from '@/components/FTBButton.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
 import { shuffle } from '../utils';
@@ -354,9 +352,7 @@ interface Changelogs {
 @Component({
   name: 'ModpackPage',
   components: {
-    'ftb-input': FTBInput,
     'ftb-toggle': FTBToggle,
-    'ftb-button': FTBButton,
     InstallModal,
     FTBModal,
     'message-modal': MessageModal,

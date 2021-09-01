@@ -4,14 +4,20 @@
       <div>
         <div
           class="header-image"
-          v-bind:style="{'background-image': `url(${modpack.art.filter((art) => art.type === 'splash').length > 0 ? modpack.art.filter((art) => art.type === 'splash')[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'})`}"
+          v-bind:style="{
+            'background-image': `url(${
+              modpack.art.filter(art => art.type === 'splash').length > 0
+                ? modpack.art.filter(art => art.type === 'splash')[0].url
+                : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'
+            })`,
+          }"
         >
-          <span class="instance-name text-4xl">{{server.name}}</span>
+          <span class="instance-name text-4xl">{{ server.name }}</span>
           <span class="instance-info">
             <small v-if="server.protoResponse && server.protoResponse.description !== undefined">
-              <em
-                class="mb-auto max-2-lines"
-              >{{server.protoResponse.description.text.replace(/\u00a7[0-9a-fk-or]/ig, '')}}</em>
+              <em class="mb-auto max-2-lines">{{
+                server.protoResponse.description.text.replace(/\u00a7[0-9a-fk-or]/gi, '')
+              }}</em>
             </small>
             <small v-else>
               <em>Loading....</em>
@@ -24,33 +30,27 @@
                   @click="clickTag(tag.name)"
                   class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
                   style="font-variant: small-caps;"
-                >{{tag.name}}</span>
+                  >{{ tag.name }}</span
+                >
                 <span
                   v-if="modpack.tags.length > 5"
                   :key="`tag-more`"
                   class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
                   style="font-variant: small-caps;"
-                >+{{modpack.tags.length - 5}}</span>
+                  >+{{ modpack.tags.length - 5 }}</span
+                >
               </div>
             </div>
           </span>
           <div class="instance-buttons flex flex-row frosted-glass">
             <div class="instance-button mr-1" v-if="installedPacks.length === 0">
-              <ftb-button
-                class="py-2 px-4"
-                color="primary"
-                css-class="text-center text-l"
-                @click="install(version.id)"
-              >
+              <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="install(version.id)">
                 <font-awesome-icon icon="download" size="1x" />Install
               </ftb-button>
             </div>
             <div class="instance-button mr-1">
-              <div
-                class="text-white-500 py-2 px-4 inline-flex items-center"
-                v-if="version !== null"
-              >
-                <small class="ml-2 text-gray-400">Version: {{version.name}}</small>
+              <div class="text-white-500 py-2 px-4 inline-flex items-center" v-if="version !== null">
+                <small class="ml-2 text-gray-400">Version: {{ version.name }}</small>
               </div>
             </div>
           </div>
@@ -61,12 +61,7 @@
           <div class="tab-pane" id="overview">
             <div class="flex flex-wrap" v-if="modpack !== null && installedPacks.length > 0">
               <div class="flex-1 justify-center">
-                <transition-group
-                  name="list"
-                  tag="div"
-                  class="flex pt-1 flex-wrap overflow-x-auto px-auto"
-                  appear
-                >
+                <transition-group name="list" tag="div" class="flex pt-1 flex-wrap overflow-x-auto px-auto" appear>
                   <pack-card-wrapper
                     v-for="modpack in installedPacks"
                     :list-mode="settings.settings.listMode"
@@ -75,7 +70,9 @@
                     :installed="true"
                     :minecraft="modpack.minecraft"
                     :version="modpack.version"
-                    :description="getModpack(modpack.id) !== null ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
+                    :description="
+                      getModpack(modpack.id) !== null ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'
+                    "
                     :tags="getModpack(modpack.id) !== null ? getModpack(modpack.id).tags : []"
                     :versions="modpack.versions"
                     :name="modpack.name"
@@ -187,18 +184,15 @@
 </style>
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { State, Action, Getter } from 'vuex-class';
-import { NewsState, NewsItem } from '@/modules/news/types';
-import { ModpackState, ModPack, Versions, Instance } from '../modules/modpacks/types';
+import { Action, Getter, State } from 'vuex-class';
+import { Instance, ModPack, ModpackState, Versions } from '../modules/modpacks/types';
 import { getAPIRequest } from '../modules/modpacks/actions';
-import FTBButton from '@/components/FTBButton.vue';
-import { queryServer, logVerbose } from '../utils';
+import { queryServer } from '../utils';
 import { SettingsState } from '../modules/settings/types';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 
 @Component({
   components: {
-    'ftb-button': FTBButton,
     PackCardWrapper,
   },
 })
@@ -207,9 +201,7 @@ export default class ServerLandingPage extends Vue {
   @State('settings') public settings!: SettingsState;
   @Getter('packsCache', { namespace: 'modpacks' })
   public packsCache!: ModPack[];
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (
-    packID: number,
-  ) => Promise<ModPack>;
+  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (packID: number) => Promise<ModPack>;
   @Action('updateInstall', { namespace: 'modpacks' })
   public updateInstall!: any;
   @Action('finishInstall', { namespace: 'modpacks' })
@@ -225,7 +217,7 @@ export default class ServerLandingPage extends Vue {
 
   get installedPacks() {
     return this.modpacks.installedPacks
-      .filter((f) => btoa(`${f.id}${f.versionId}`) === this.server.project)
+      .filter(f => btoa(`${f.id}${f.versionId}`) === this.server.project)
       .sort((a, b) => b.lastPlayed - a.lastPlayed);
   }
 
@@ -250,17 +242,23 @@ export default class ServerLandingPage extends Vue {
   }
 
   public install(version: number): void {
-      if (this.modpack === null) {
-          return;
-      }
-      this.$router.replace({name: 'installingpage', query: {modpackid: this.$props.packID, versionID: version.toString()}});
+    if (this.modpack === null) {
+      return;
+    }
+    this.$router.replace({
+      name: 'installingpage',
+      query: { modpackid: this.$props.packID, versionID: version.toString() },
+    });
   }
 
   public preLaunch(instance: Instance) {
     let newArgs = instance.jvmArgs;
     if (newArgs.indexOf('-Dmt.server') !== 1) {
       const args = newArgs.split(' ');
-      args.splice(args.findIndex((value) => value.indexOf('-Dmt.server') !== -1), 1);
+      args.splice(
+        args.findIndex(value => value.indexOf('-Dmt.server') !== -1),
+        1,
+      );
       newArgs = args.join(' ');
     }
     if (newArgs[newArgs.length - 1] === ' ' || newArgs.length === 0) {
@@ -270,9 +268,10 @@ export default class ServerLandingPage extends Vue {
     }
     return new Promise((res, rej) => {
       this.sendMessage({
-          payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
-              res(null);
-          },
+        payload: { type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: { jvmargs: newArgs } },
+        callback: (data: any) => {
+          res(null);
+        },
       });
     });
   }
@@ -282,13 +281,17 @@ export default class ServerLandingPage extends Vue {
       let newArgs = instance.jvmArgs;
       if (newArgs.indexOf('-Dmt.server') !== 1) {
         const args = newArgs.split(' ');
-        args.splice(args.findIndex((value) => value.indexOf('-Dmt.server') !== -1), 1);
+        args.splice(
+          args.findIndex(value => value.indexOf('-Dmt.server') !== -1),
+          1,
+        );
         newArgs = args.join(' ');
       }
       this.sendMessage({
-          payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
-              res(null);
-          },
+        payload: { type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: { jvmargs: newArgs } },
+        callback: (data: any) => {
+          res(null);
+        },
       });
     });
   }
@@ -300,35 +303,32 @@ export default class ServerLandingPage extends Vue {
       body: JSON.stringify({ serverid: this.serverID }),
       headers: { 'Content-Type': 'application/json' },
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         if (data.status === 'success') {
           this.server = data.server;
-          queryServer(this.server.ip).then((protoResponse) => {
-            Vue.set(this.server, 'protoResponse', protoResponse);
-          }).catch((e) => {});
+          queryServer(this.server.ip)
+            .then(protoResponse => {
+              Vue.set(this.server, 'protoResponse', protoResponse);
+            })
+            .catch(e => {});
           Object.values(this.modpacks.packsCache).forEach((pack: ModPack) => {
-              if (pack.versions) {
-                pack.versions.forEach((v: Versions) => {
-                    if (v.mtgID === this.server.project) {
-                        this.modpack = pack;
-                    }
-                });
-              }
+            if (pack.versions) {
+              pack.versions.forEach((v: Versions) => {
+                if (v.mtgID === this.server.project) {
+                  this.modpack = pack;
+                }
+              });
+            }
           });
           if (this.modpack === null) {
-            fetch(
-              `https://www.creeperhost.net/json/modpacks/modpacksch/${this.server.project}`,
-            )
-              .then((resp) => resp.json())
-              .then((data) => {
+            fetch(`https://www.creeperhost.net/json/modpacks/modpacksch/${this.server.project}`)
+              .then(resp => resp.json())
+              .then(data => {
                 if (data.status === 'success') {
-                  getAPIRequest(
-                    this.$store.state,
-                    `modpack/search/8?term=${data.name}`,
-                  )
-                    .then((response) => response.json())
-                    .then(async (data) => {
+                  getAPIRequest(this.$store.state, `modpack/search/8?term=${data.name}`)
+                    .then(response => response.json())
+                    .then(async data => {
                       if (data.status === 'error') {
                         return;
                       }
@@ -347,7 +347,7 @@ export default class ServerLandingPage extends Vue {
                         }
                       });
                     })
-                    .catch((err) => {
+                    .catch(err => {
                       console.error(err);
                     });
                 }
@@ -364,4 +364,3 @@ export default class ServerLandingPage extends Vue {
   }
 }
 </script>
-

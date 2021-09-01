@@ -101,14 +101,12 @@ import { debounce } from '@/utils';
 import axios from 'axios';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
-import FTBButton from '../FTBButton.vue';
 import FTBSearchBar from '../FTBSearchBar.vue';
 import ModCard from './ModCard.vue';
 
 @Component({
   components: {
     'ftb-search': FTBSearchBar,
-    'ftb-button': FTBButton,
     ModCard,
   },
 })

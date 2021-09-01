@@ -2,7 +2,6 @@ import platform from '@/utils/interface/electron-overwolf';
 
 import Vue from 'vue';
 import App from './App.vue';
-import axios from 'axios';
 import router from './router';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -21,6 +20,8 @@ import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 
 import store from './store';
+import FTBButton from '@/components/FTBButton.vue';
+import FTBInput from '@/components/FTBInput.vue';
 
 const classMap: object = {
   h1: 'text-4xl',
@@ -30,8 +31,9 @@ const classMap: object = {
   h5: 'text-lg',
   h6: 'title is-6',
   em: 'italic',
-  ul: 'list-inside',
+  ul: 'list-inside list-disc mt-2 mb-4',
   a: 'text-gray-400 hover:text-white leading-none cursor-pointer hover:underline',
+  p: 'my-2',
 };
 
 const attributeMap = {
@@ -69,6 +71,7 @@ showdown.extension('newLine', () => [
 library.add(fas);
 library.add(far);
 library.add(fab);
+
 Vue.use(vueMoment as any);
 Vue.use(vSelectMenu, { language: 'en' });
 Vue.use(VueShowdown, {
@@ -81,7 +84,11 @@ Vue.use(VueShowdown, {
     // simpleLineBreaks: true,
   },
 });
+
+// global components
 Vue.component('font-awesome-icon', FontAwesomeIcon);
+Vue.component('ftb-button', FTBButton);
+Vue.component('ftb-input', FTBInput);
 
 Vue.config.productionTip = false;
 Vue.config.devtools = true;

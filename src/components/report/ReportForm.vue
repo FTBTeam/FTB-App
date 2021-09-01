@@ -41,18 +41,10 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import FTBButton from '../FTBButton.vue';
-import FTBInput from '../FTBInput.vue';
 import platfrom from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
-import axios from 'axios';
 
-@Component({
-  components: {
-    'ftb-input': FTBInput,
-    'ftb-button': FTBButton,
-  },
-})
+@Component
 export default class ReportForm extends Vue {
   @Action('sendMessage') public sendMessage: any;
 

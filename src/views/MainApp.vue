@@ -144,8 +144,6 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/FTBModal.vue';
-import FTBButton from '@/components/FTBButton.vue';
-import FTBInput from '@/components/FTBInput.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { logVerbose } from '@/utils';
 import { InstallProgress, ModpackState } from '@/modules/modpacks/types';
@@ -160,8 +158,6 @@ import ReportForm from '@/components/report/ReportForm.vue';
     FTBModal,
     ReportForm,
     'message-modal': MessageModal,
-    'ftb-button': FTBButton,
-    'ftb-input': FTBInput,
   },
 })
 export default class MainApp extends Vue {
