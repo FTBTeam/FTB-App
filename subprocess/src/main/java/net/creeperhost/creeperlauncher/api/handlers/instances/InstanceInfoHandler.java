@@ -27,12 +27,12 @@ public class InstanceInfoHandler implements IMessageHandler<InstanceInfoData>
             instanceInfo.put("height", String.valueOf(instance.height));
             instanceInfo.put("embeddedjre", String.valueOf(instance.embeddedJre));
             packInfo = instance.getManifest(() -> {
-                Settings.webSocketAPI.sendMessage(new InstanceInfoData.Reply(data, instanceInfo, instance.manifest));
+                //Settings.webSocketAPI.sendMessage(new InstanceInfoData.Reply(data, instanceInfo, instance.manifest));
             });
 
         } catch (Exception ignored)
         {
         }
-        Settings.webSocketAPI.sendMessage(new InstanceInfoData.Reply(data, instanceInfo, packInfo));
+        Settings.webSocketAPI.sendMessage(new InstanceInfoData.Reply(data, instanceInfo, null));//packInfo));
     }
 }
