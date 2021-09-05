@@ -1,10 +1,10 @@
 <template>
-  <div class="sidebar" :class="{ 'is-transparent': isTransparent }">
+  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
     <!--     <logo width="80%" class="logo" draggable="false"/>-->
     <router-link to="/">
       <img
         src="../assets/logo_ftb.png"
-        width="130px"
+        width="60"
         class="cursor-pointer logo-hover "
         style="margin-top: 16px;padding-left: .2rem;"
         draggable="false"
@@ -22,12 +22,12 @@
         <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
         <span>{{ item.name }}</span>
       </router-link>
-    </div>
-    <div class="nav-items">
       <router-link :to="{ name: 'instance-settings' }" class="nav-item" :class="{ 'item-disabled': disableNav }">
         <div class="icon"><font-awesome-icon icon="cog" class="mr-3" /></div>
         <span>Settings</span>
       </router-link>
+    </div>
+    <div class="nav-items">
       <div
         v-if="auth.token === null && !auth.loggingIn"
         @click="openLogin()"
@@ -50,7 +50,7 @@
         <div class="flex items-center account">
           <img
             :src="`https://api.mymcuu.id/head/${avatarName}`"
-            style="margin-right: 0.75em; width: 30px; height: 30px;"
+            style="width: 30px; height: 30px;"
             class="rounded-full"
           />
           <div class="flex flex-col">
@@ -68,9 +68,8 @@
     </div>
     <img
       src="../assets/ch-logo.svg"
-      width="60%"
-      class="mb-2 cursor-pointer logo-hover"
-      style=""
+      class="mb-4 mt-4 cursor-pointer logo-hover"
+      style="height: 30px"
       draggable="false"
       @click="openPromo()"
     />
@@ -190,6 +189,31 @@ export default class Sidebar extends Vue {
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
+
+  &.small {
+    width: 80px;
+    .nav-items .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      //margin-bottom: 1rem;
+      padding: 1rem 0;
+
+      .icon {
+        width: auto !important;
+        font-size: 18px;
+
+        svg {
+          max-width: unset !important;
+          margin: 0;
+        }
+      }
+
+      span {
+        display: none;
+      }
+    }
+  }
 
   &::after {
     content: '';
