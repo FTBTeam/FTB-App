@@ -95,6 +95,8 @@ export default class TitleBar extends Vue {
   align-items: center;
   justify-content: space-between;
   -webkit-app-region: drag;
+  z-index: 1000000000;
+  position: relative;
 
   &.isMac {
     flex-direction: row-reverse;

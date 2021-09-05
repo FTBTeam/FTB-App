@@ -32,22 +32,43 @@
         </div>
       </div>
     </div>
-    <div class="main" :key="activeLog">
-      <p class="text-lg font-bold">Changelog</p>
-      <div class="buttons">
-        <ftb-button
-          v-if="currentVersion && instance.versionId !== activeLog"
-          class="py-2 px-4 ml-auto mr-1"
-          color="warning"
-          css-class="text-center text-l"
-          @click="update(currentVersion.id)"
-        >
-          <font-awesome-icon icon="download" size="1x" />
-          {{ isOlderVersion(currentVersion.id) ? 'Downgrade' : 'Update' }}
-        </ftb-button>
+    <div class="main flex flex-col" :key="activeLog">
+      <div class="heading flex items-center mb-4" v-if="currentVersion">
+        <div class="content flex-1 mr-4">
+          <p class="opacity-50">Changelog for</p>
+          <div class="font-bold name text-xl">{{ currentVersion.name }}</div>
+        </div>
+        <div class="buttons flex text-sm">
+          <ftb-button
+            @click="
+              () =>
+                platform.get.utils.openUrl(
+                  `https://feed-the-beast.com/modpacks/${packInstance.id}/server/${currentVersion.id}${
+                    packInstance.packType !== 0 ? '/curseforge' : ''
+                  }`,
+                )
+            "
+            class="py-2 px-4 ml-auto mr-1"
+            color="info"
+            css-class="text-center text-l"
+          >
+            <font-awesome-icon icon="server" class="mr-2" />
+            Server files
+          </ftb-button>
+          <ftb-button
+            v-if="currentVersion && instance.versionId !== activeLog"
+            class="py-2 px-4 ml-1"
+            color="warning"
+            css-class="text-center text-l"
+            @click="update(currentVersion.id)"
+          >
+            <font-awesome-icon icon="download" class="mr-2" />
+            {{ isOlderVersion(currentVersion.id) ? 'Downgrade' : 'Update' }}
+          </ftb-button>
+        </div>
       </div>
       <!--      <div class="updated">{{ version.updated | momentFromNow }}</div>-->
-      <div class="body-contents">
+      <div class="body-contents flex-1 overflow-y-auto">
         <div class="loading" v-if="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
         <VueShowdown
           v-else-if="changelogs[activeLog] && changelogs[activeLog] !== ''"
@@ -64,6 +85,7 @@
 import { Instance, Versions } from '@/modules/modpacks/types';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
+import platform from '@/utils/interface/electron-overwolf';
 
 @Component
 export default class ModpackVersions extends Vue {
@@ -73,6 +95,8 @@ export default class ModpackVersions extends Vue {
   @Prop() packInstance!: Instance;
   @Prop() instance!: Instance;
   @Prop() current!: number;
+
+  platform = platform;
 
   changelogs: Record<string, string> = {};
   currentVersion: Versions | null = null;
@@ -117,7 +141,6 @@ export default class ModpackVersions extends Vue {
   }
 
   public isOlderVersion(version: number) {
-    console.log(version, this.currentVersion!.id);
     return this.instance.versionId > version ?? false;
   }
 
