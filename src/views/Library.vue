@@ -1,7 +1,7 @@
 <template>
-  <div class="mod-packs px-6 py-4" v-if="isLoaded">
+  <div class="mod-packs h-full" v-if="isLoaded">
     <!-- My Modpacks Stuff -->
-    <div class="" v-if="!modpacks.installedPacks.length > 0">
+    <div class="packs px-6 py-4" v-if="modpacks.installedPacks.length > 0">
       <div class="w-1/2 self-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mb-4" />
       </div>
@@ -27,13 +27,23 @@
         </pack-card-wrapper>
       </div>
     </div>
-    <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
-      <font-awesome-icon icon="heart-broken" style="font-size: 40vh"></font-awesome-icon>
-      <h1 class="text-5xl">Oh no!</h1>
-      <span>Seems you don't have any modpacks installed!</span>
-      <div class="flex flex-row justify-between my-2">
-        <ftb-button color="primary" class="py-2 px-4 mx-2" @click="goTo('/browseModpacks')">Browse</ftb-button>
-        <ftb-button color="primary" class="py-2 px-4 mx-2" @click="goTo('/discover')">Discover</ftb-button>
+    <div class="flex flex-1 flex-wrap justify-center flex-col items-center no-packs" v-else>
+      <div class="message flex flex-1 flex-wrap items-center flex-col mt-32">
+        <font-awesome-icon icon="heart-broken" size="6x" />
+        <h1 class="text-5xl">Oh no!</h1>
+        <span class="mb-4 w-3/4 text-center">
+          Would you look at that! Looks like you've got no modpacks installed yet... If you know what you want, click
+          Browse and search through our collection and all of CurseForge modpacks, otherwise, use Discover we've got
+          some great recommended packs.</span
+        >
+        <div class="flex flex-row justify-between my-2">
+          <router-link to="/browseModpacks">
+            <ftb-button color="primary" class="py-2 px-10 mx-2">Browse</ftb-button>
+          </router-link>
+          <router-link to="/discover">
+            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>
+          </router-link>
+        </div>
       </div>
     </div>
   </div>
@@ -137,13 +147,6 @@ export default class Library extends Vue {
         });
   }
 
-  public goTo(page: string): void {
-    // We don't care about this error!
-    this.$router.push(page).catch(err => {
-      return;
-    });
-  }
-
   public getModpack(id: number): ModPack | null {
     return this.packsCache[id] ? this.packsCache[id] : null;
   }
@@ -156,6 +159,25 @@ export default class Library extends Vue {
     display: grid;
     grid-template-columns: repeat(auto-fit, 148px);
     gap: 1rem;
+  }
+}
+
+.no-packs {
+  position: relative;
+  height: 100%;
+
+  &::before {
+    content: '';
+    top: 0;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+
+    background: url('../assets/images/no-pack-bg.webp') center center no-repeat;
+    background-size: auto 100%;
+    z-index: -1;
+    opacity: 0.3;
   }
 }
 </style>

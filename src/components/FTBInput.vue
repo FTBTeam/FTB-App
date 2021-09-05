@@ -41,7 +41,7 @@ export default class FTBInput extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .bg-input {
   background-color: #252525;
 }
