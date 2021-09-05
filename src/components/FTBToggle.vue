@@ -3,7 +3,7 @@
     <template v-if="!inline">
       <div class="w-full flex ftb-toggle">
         <div class="main flex-1">
-          <label class="block uppercase tracking-wide font-bold mb-2" :class="`${disabled ? 'opacity-50' : ''}`">
+          <label class="block tracking-wide font-bold mb-2" :class="`${disabled ? 'opacity-50' : ''}`">
             {{ label }}
           </label>
           <small v-if="small" class="text-muted max-w-xl block" :class="{ 'opacity-25': disabled }">{{ small }}</small>

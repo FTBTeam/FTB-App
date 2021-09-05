@@ -53,6 +53,11 @@ export default new Router({
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppSettings.vue'),
             },
             {
+              path: 'integrations',
+              name: 'integrations',
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Integrations.vue'),
+            },
+            {
               path: 'app-info',
               name: 'app-info',
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppInfo.vue'),
@@ -61,6 +66,11 @@ export default new Router({
               path: 'app-info/license',
               name: 'license',
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/License.vue'),
+            },
+            {
+              path: 'profile',
+              name: 'MTIntegration',
+              component: () => import(/* webpackChunkName: "profile" */ './views/Settings/MTIntegration.vue'),
             },
           ],
         },
@@ -98,11 +108,6 @@ export default new Router({
           path: '/server',
           name: 'server',
           component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
-        },
-        {
-          path: '/profile',
-          name: 'profile',
-          component: () => import(/* webpackChunkName: "profile" */ './views/ProfilePage.vue'),
         },
       ],
     },

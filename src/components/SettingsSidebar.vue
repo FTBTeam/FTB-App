@@ -20,6 +20,17 @@
           <font-awesome-icon icon="rocket" />
           <span>App</span>
         </router-link>
+        <router-link :to="{ name: 'integrations' }" class="item">
+          <font-awesome-icon icon="link" />
+          <span>Integrations</span>
+        </router-link>
+      </nav>
+      <nav v-if="auth.token !== null">
+        <div class="heading">Integrations</div>
+        <router-link :to="{ name: 'MTIntegration' }" class="item app-info-item">
+          <img src="@/assets/images/mt-logo.png" alt="" />
+          <span>Minetogether</span>
+        </router-link>
       </nav>
       <nav>
         <div class="heading">Info</div>
@@ -46,9 +57,13 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
+import { State } from 'vuex-class';
+import { AuthState } from '@/modules/auth/types';
 
 @Component
 export default class SettingsSidebar extends Vue {
+  @State('auth') private auth!: AuthState;
+
   platform = platform;
 
   uiVersion: string = platform.get.config.webVersion;
@@ -78,7 +93,7 @@ export default class SettingsSidebar extends Vue {
   }
 
   nav {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
 
     .heading {
       font-weight: bold;
@@ -88,7 +103,7 @@ export default class SettingsSidebar extends Vue {
     }
 
     .item {
-      padding: 0.6rem 0.8rem;
+      padding: 0.5rem;
       margin-bottom: 0.5rem;
       border-radius: 5px;
       display: flex;
@@ -105,8 +120,9 @@ export default class SettingsSidebar extends Vue {
         background: var(--color-primary-button);
       }
 
-      svg {
-        margin-right: 0.5rem;
+      svg,
+      img {
+        margin-right: 0.8rem;
         width: 30px;
         font-size: 18px;
       }

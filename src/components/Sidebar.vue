@@ -42,7 +42,7 @@
         <span>Loading....</span>
       </div>
       <router-link
-        :to="{ name: 'profile' }"
+        :to="{ name: 'MTIntegration' }"
         v-else
         class="nav-item capitalize"
         :class="{ 'item-disabled': disableNav }"
