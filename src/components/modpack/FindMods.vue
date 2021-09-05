@@ -59,7 +59,7 @@
             <p class="title">No results found 😢</p>
             <div>
               Looks like nothing was found for <code>{{ search }}</code
-              >, try a different sarch.
+              >, try a different search term.
             </div>
           </div>
         </div>

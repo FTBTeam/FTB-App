@@ -1,7 +1,7 @@
 <template>
   <div class="mod-packs px-6 py-4" v-if="isLoaded">
     <!-- My Modpacks Stuff -->
-    <div class="" v-if="modpacks.installedPacks.length > 0">
+    <div class="" v-if="!modpacks.installedPacks.length > 0">
       <div class="w-1/2 self-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mb-4" />
       </div>
@@ -43,9 +43,9 @@
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
 import FTBSearchBar from '@/components/FTBSearchBar.vue';
-import { ModpackState, ModPack, Instance } from '@/modules/modpacks/types';
-import { State, Action, Getter } from 'vuex-class';
-import { SettingsState } from '../modules/settings/types';
+import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
+import { Action, Getter, State } from 'vuex-class';
+import { SettingsState } from '@/modules/settings/types';
 
 @Component({
   components: {
@@ -53,7 +53,7 @@ import { SettingsState } from '../modules/settings/types';
     FTBSearchBar,
   },
 })
-export default class Modpacks extends Vue {
+export default class Library extends Vue {
   @State('settings') public settings!: SettingsState;
   @State('modpacks') public modpacks!: ModpackState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
@@ -83,6 +83,9 @@ export default class Modpacks extends Vue {
     }
   }
 
+  /**
+   * @MichaelHillcox I didn't comment this out, just saying, no clue what this does :+1:
+   */
   public preLaunch(instance: Instance) {
     //   let serverID = "283861";
     // let newArgs = instance.jvmArgs;
@@ -151,7 +154,7 @@ export default class Modpacks extends Vue {
 .pack-card-list {
   &.grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, 150px);
+    grid-template-columns: repeat(auto-fit, 148px);
     gap: 1rem;
   }
 }

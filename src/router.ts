@@ -20,7 +20,7 @@ export default new Router({
         {
           path: '/modpacks',
           name: 'modpacks',
-          component: () => import(/* webpackChunkName: "modpacks" */ './views/Modpacks.vue'),
+          component: () => import(/* webpackChunkName: "modpacks" */ './views/Library.vue'),
         },
         {
           path: '/browseModpacks/:search?',
