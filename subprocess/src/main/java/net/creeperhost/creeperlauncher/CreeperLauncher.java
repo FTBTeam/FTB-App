@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.install4j.api.launcher.ApplicationLauncher;
 import com.install4j.api.update.UpdateChecker;
@@ -22,9 +23,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -81,35 +80,9 @@ public class CreeperLauncher
         Settings.loadSettings();
         Instances.refreshInstances();
 
+        ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
 
-        /*
-        Borrowed from ModpackServerDownloader project - parse args
-         */
-        HashMap<String, String> Args = new HashMap<>();
-        String argName = null;
-        for(String arg : args)
-        {
-            if(arg.length() > 2) {
-                if (arg.startsWith("--")) {
-                    argName = arg.substring(2);
-                    Args.put(argName, "");
-                }
-                if (argName != null) {
-                    if (argName.length() > 2) {
-                        if (!argName.equals(arg.substring(2))) {
-                            if (Args.containsKey(argName)) {
-                                Args.remove(argName);
-                            }
-                            Args.put(argName, arg);
-                            argName = null;
-                        }
-                    }
-                }
-            }
-        }
-        /*
-        End
-         */
+        isDevMode = Args.containsKey("dev");
 
         boolean isOverwolf = Args.containsKey("overwolf");
         boolean startProcess = !isDevMode;
@@ -119,12 +92,8 @@ public class CreeperLauncher
             defaultWebsocketPort = true;
         }
 
-        isDevMode = Args.containsKey("dev");
+        LOGGER.info((isOverwolf ? "Overwolf" : "Electron") + " integration mode");
 
-        if(isOverwolf)
-        {
-            LOGGER.info("Overwolf integration mode");
-        }
         if(Args.containsKey("pid") && !isDevMode)
         {
             try {
@@ -150,12 +119,7 @@ public class CreeperLauncher
                 LOGGER.error("Error connecting to process", exception);
             }
         } else {
-            if(isDevMode)
-            {
-                LOGGER.info("Development mode");
-            } else {
-                LOGGER.info("No PID args");
-            }
+            LOGGER.info(isDevMode ? "Development mode" : "No PID args specified");
         }
 
 
@@ -183,7 +147,6 @@ public class CreeperLauncher
         Instances.refreshInstances();
 
         doUpdate(args);
-
 
         FileUtils.listDir(Constants.WORKING_DIR).stream()
                 .filter(e -> e.getFileName().toString().endsWith(".jar") && !e.getFileName().toString().contains(Constants.APPVERSION))
@@ -352,34 +315,32 @@ public class CreeperLauncher
     {
         return System.currentTimeMillis() / 1000L;
     }
+
     private static void pingPong()
     {
-        CompletableFuture.runAsync(() -> {
-            while(true)
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        executor.scheduleAtFixedRate(() -> {
+            try {
+                PingLauncherData ping = new PingLauncherData();
+                CreeperLauncher.missedPings++;
+                Settings.webSocketAPI.sendMessage(ping);
+                System.out.println("Sending ping");
+            } catch(Exception ignored) {}
+
+            // Don't do this in dev mode, when the frontend restarts, it can miss this amount of pings
+            //15 minutes without ping/pong or an explicit disconnect event happened...
+            if(!isDevMode && (missedPings > 300 || websocketDisconnect && missedPings > 3))
             {
-                try {
-                    PingLauncherData ping = new PingLauncherData();
-                    CreeperLauncher.missedPings++;
-                    Settings.webSocketAPI.sendMessage(ping);
-                } catch(Exception ignored) {}
-                try {
-                    Thread.sleep(3000);
-                } catch(Exception ignored) {}
-                //15 minutes without ping/pong or an explicit disconnect event happened...
-                if(missedPings > 300 || websocketDisconnect && missedPings > 3)
-                {
-                    break;
+                if (!websocketDisconnect) {
+                    LOGGER.error("Closed backend due to no response from frontend for {} seconds...", (missedPings * 3));
+                } else {
+                    LOGGER.error("Closed backend due to websocket error! Also no messages from frontend for {} seconds.", (missedPings * 3));
                 }
+                CreeperLauncher.exit();
             }
-        }).thenRun(() -> {
-            if (!websocketDisconnect) {
-                LOGGER.error("Closed backend due to no response from frontend for {} seconds...", (missedPings * 3));
-            } else {
-                LOGGER.error("Closed backend due to websocket error! Also no messages from frontend for {} seconds.", (missedPings * 3));
-            }
-            CreeperLauncher.exit();
-        });
+        }, 0, 3, TimeUnit.SECONDS);
     }
+
     public static void listenForClient(int port) throws IOException {
         LOGGER.info("Starting mod socket on port {}", port);
         serverSocket = new ServerSocket(port);
