@@ -16,9 +16,10 @@ jobs:
           java-version: '11'
           cache: 'gradle'
       - name: Test build
+        working-directory: ./subprocess/
         run: |
-          chmod +x ./subprocess/gradlew
-          ./subprocess/gradlew build --stacktrace --no-daemon
+          chmod +x ./gradlew
+          ./gradlew build --stacktrace --no-daemon
   validate-vue:
     needs: validate-subprocess
     runs-on: ubuntu-latest
