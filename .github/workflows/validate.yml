@@ -17,8 +17,8 @@ jobs:
           cache: 'gradle'
       - name: Test build
         run: |
-          chmod +x ./gradlew
-          ./gradlew build --stacktrace --no-daemon
+          chmod +x ./subprocess/gradlew
+          ./subprocess/gradlew build --stacktrace --no-daemon
   validate-vue:
     runs-on: ubuntu-latest
     if: |
