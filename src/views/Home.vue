@@ -28,7 +28,7 @@
       </div>
     </div>
     <div class="flex flex-col" key="featuredPacks">
-      <h1 class="text-2xl mr-4">Featured Modpacks</h1>
+      <h1 class="text-2xl mb-4 mt-2">Featured Modpacks</h1>
       <div class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch" appear>
         <pack-card-list
           v-for="modpack in modpacks.featuredPacks.slice(0, cardsToShow)"

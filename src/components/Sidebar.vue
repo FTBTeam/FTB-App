@@ -13,8 +13,6 @@
         :to="{ name: item.to }"
         class="nav-item"
         :class="{ 'item-disabled': disableNav }"
-        :aria-label="item.name"
-        data-balloon-pos="right"
       >
         <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
         <span>{{ item.name }}</span>
@@ -187,6 +185,7 @@ export default class Sidebar extends Vue {
 
     .logo {
       padding: 0 0.5rem;
+      margin-bottom: 0.5rem;
     }
 
     .nav-items .nav-item {
@@ -208,6 +207,45 @@ export default class Sidebar extends Vue {
 
       span {
         display: none;
+      }
+    }
+
+    a.nav-item {
+      &:hover {
+        span {
+          left: 120%;
+          opacity: 1 !important;
+          visibility: visible;
+        }
+      }
+
+      // This is needed because the normal way of doing this keeps it open when you navigate, super annoying
+      span {
+        display: block !important;
+        position: absolute;
+        left: 110%;
+        z-index: 30;
+        font-size: var(--balloon-font-size);
+        background: black;
+        padding: 0.5em 1em;
+        border-radius: 2px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+          'Helvetica Neue', sans-serif;
+        transition: 0.15s ease-in-out left, 0.15s ease-in-out visibility, 0.15s ease-in-out opacity;
+        visibility: hidden;
+        opacity: 0 !important;
+
+        &::before {
+          position: absolute;
+          content: '';
+          background-color: black;
+          top: 50%;
+          transform: translateY(-50%) rotateZ(45deg);
+          left: -4px;
+          border-radius: 2px;
+          width: 8px;
+          height: 8px;
+        }
       }
     }
   }

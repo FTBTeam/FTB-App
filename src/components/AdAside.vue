@@ -54,22 +54,30 @@
     </div>
 
     <div class="ad-space">
-      <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">
-        <div
-          v-if="!showPlaceholder"
-          :id="`${platform.isElectron() ? 'ad' : 'ow-ad'}`"
-          ref="adRef"
-          style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
-        >
-          <div v-if="platform.isElectron()" id="777249406"></div>
-        </div>
-        <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">
-          <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
-        </video>
-        <span class="ml-auto mr-auto text-xs cursor-pointer" style="padding-left: 315px" @click="reportAdvert"
-          >Report advert</span
-        >
+      <div class="heart text-center  mb-4">
+        <font-awesome-icon icon="heart" size="2x" class="mb-2" />
+        <p class="font-bold">Supports FTB & Mod authors</p>
       </div>
+      <div class="ad-box">
+        <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">
+          <div
+            v-if="!showPlaceholder"
+            :id="`${platform.isElectron() ? 'ad' : 'ow-ad'}`"
+            ref="adRef"
+            style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
+          >
+            <div v-if="platform.isElectron()" id="777249406"></div>
+          </div>
+          <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">
+            <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
+          </video>
+        </div>
+      </div>
+      <small
+        class="text-xs text-center block cursor-pointer mt-2 text-muted hover:text-white hover:shadow"
+        @click="reportAdvert"
+        >Report advert</small
+      >
     </div>
   </div>
 </template>
@@ -82,6 +90,9 @@ import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 
+/**
+ * TODO: clean all of this up, it's a mess and a copy of a different component
+ */
 @Component
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
@@ -249,11 +260,20 @@ export default class AdAside extends Vue {
   }
 
   .ad-space {
-    background: black;
-    width: 300px;
-    height: 250px;
+    .heart {
+      svg {
+        color: #ff4040;
+      }
+    }
 
-    border-radius: 5px;
+    .ad-box {
+      background: black;
+      width: 300px;
+      height: 250px;
+      overflow: hidden;
+
+      border-radius: 5px;
+    }
   }
 }
 </style>
