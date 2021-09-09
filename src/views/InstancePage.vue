@@ -14,6 +14,8 @@
             Back to {{ hidePackDetails ? 'instance mods' : 'library' }}
           </div>
 
+          <div class="beta-tag" v-if="versionType !== 'release'">Running {{ versionType }} version</div>
+
           <div class="meta">
             <div class="origin icon" v-if="instance.packType === 0" data-balloon-pos="left" aria-label="FTB Modpack">
               <img src="@/assets/ftb-white-logo.svg" alt="" />
@@ -681,6 +683,10 @@ export default class InstancePage extends Vue {
   get hidePackDetails() {
     return this.activeTab === Tabs.SETTINGS || this.searchingForMods;
   }
+
+  get versionType() {
+    return this.packInstance?.versions?.find(e => e.id === this.instance.versionId)?.type.toLowerCase() ?? 'release';
+  }
 }
 </script>
 
@@ -700,6 +706,14 @@ export default class InstancePage extends Vue {
   > header {
     position: relative;
     backdrop-filter: blur(5px);
+
+    .beta-tag {
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background-color: rgba(234, 32, 32, 0.89);
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
 
     .meta-heading {
       display: flex;

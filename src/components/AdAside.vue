@@ -56,7 +56,7 @@
     <div class="ad-space">
       <div class="heart text-center  mb-4">
         <font-awesome-icon icon="heart" size="2x" class="mb-2" />
-        <p class="font-bold">Supports FTB & Mod authors</p>
+        <p class="font-bold">Supports FTB & Curseforge Authors</p>
       </div>
       <div class="ad-box">
         <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">

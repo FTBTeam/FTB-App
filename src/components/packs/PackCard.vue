@@ -6,6 +6,7 @@
       v-if="currentModpack !== undefined || instance !== undefined || isDemo"
     >
       <div class="art">
+        <span v-if="versionType !== 'release'" class="beta-tag" :class="versionType">{{ versionType }}</span>
         <div class="has-update" v-if="instance && !isLatestVersion && kind === 'instance'">Update Available</div>
         <img
           class="w-full"
@@ -50,7 +51,7 @@ import InformationModal from '@/components/modals/InformationModal.vue';
 import InstallModal from '@/components/modals/InstallModal.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
-import { ModpackState, Versions, Instance } from '../../modules/modpacks/types';
+import { Instance, ModpackState } from '../../modules/modpacks/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
@@ -350,6 +351,10 @@ export default class PackCard extends Vue {
       this.openInfo();
     }
   }
+
+  get versionType() {
+    return this.currentModpack?.versions?.find(e => e.id === this.instance.versionId)?.type.toLowerCase() ?? 'release';
+  }
 }
 </script>
 
@@ -373,6 +378,19 @@ export default class PackCard extends Vue {
 
   .art {
     position: relative;
+
+    .beta-tag {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background-color: rgba(234, 32, 32, 0.89);
+      font-size: 0.75rem;
+      font-weight: bold;
+
+      text-transform: capitalize;
+    }
 
     .has-update {
       position: absolute;
