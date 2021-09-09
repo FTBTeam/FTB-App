@@ -71,7 +71,7 @@
 
             <div class="options">
               <div class="update" v-if="instance && !isLatestVersion">
-                <ftb-button color="warning" class="update-btn px-4 py-1">
+                <ftb-button color="warning" class="update-btn px-4 py-1" @click="update()">
                   Update available
                   <font-awesome-icon icon="cloud-download-alt" class="ml-2" />
                 </ftb-button>
@@ -198,44 +198,6 @@
       </ftb-modal>
     </div>
 
-    <div class="flex flex-1 flex-col h-full" v-if="false">
-      <div class="flex flex-col h-full" v-if="instance != undefined" :key="instance.uuid">
-        <div>
-          <div class="header-image">
-            <span class="instance-info" />
-            <div class="instance-buttons flex flex-row frosted-glass">
-              <div class="instance-button mr-1" v-if="instance && !isLatestVersion">
-                <ftb-button
-                  class="py-2 px-4"
-                  color="warning"
-                  @click="update()"
-                  :disabled="modpacks.installing !== null"
-                >
-                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x" /> Update</span>
-                </ftb-button>
-              </div>
-
-              <div class="instance-button mr-2 ml-auto">
-                <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()">
-                  <font-awesome-icon icon="trash" size="1x" />
-                  Delete
-                </ftb-button>
-              </div>
-              <div class="instance-button mr-2">
-                <ftb-button class="py-2 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()">
-                  <font-awesome-icon icon="folder" size="1x" />
-                  Open Folder
-                </ftb-button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="tab-content bg-navbar flex-1 py-4 px-4 mx-2" style="overflow-y: auto;">
-          <find-mods :instance="instance" :goBack="() => (searchingForMods = false)" @modInstalled="getModList" />
-        </div>
-      </div>
-    </div>
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal
         :title="msgBox.title"
