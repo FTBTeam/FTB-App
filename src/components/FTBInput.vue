@@ -42,15 +42,6 @@ export default class FTBInput extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.bg-input {
-  background-color: #252525;
-}
-.border-input {
-  border-color: #1b1b1b;
-}
-</style>
-
-<style lang="scss" scoped>
 .ftb-btn {
   &::placeholder {
     color: rgba(white, 0.2);

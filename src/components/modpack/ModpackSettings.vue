@@ -8,13 +8,10 @@
       class="mb-8"
     />
 
-    <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
-      Window Size
-    </label>
     <div class="flex flex-row mb-8">
       <ftb-input
         class="flex-col"
-        label="Width"
+        label="Window Width"
         v-model="localInstance.width"
         :value="localInstance.width"
         @blur="saveSettings"
@@ -24,7 +21,7 @@
 
       <ftb-input
         class="flex-col"
-        label="Height"
+        label="Window Height"
         v-model="localInstance.height"
         :value="localInstance.height"
         @blur="saveSettings"
@@ -104,14 +101,35 @@
       label="Enable cloud save uploads"
       :disabled="canUseCloudSaves"
       onColor="bg-primary"
-      :inline="true"
       :value="localInstance.cloudSaves"
       @change="toggleCloudSaves"
+      small="You can only use Cloud Saves if you have an active paid plan on MineTogether."
+      class="mb-4"
     />
 
-    <small class="text-muted mt-4 block" v-if="canUseCloudSaves"
-      >You can only use Cloud Saves if you have an active paid plan on MineTogether.</small
-    >
+    <p class="text-lg font-bold mb-4">Actions</p>
+
+    <div class="buttons flex flex-1">
+      <ftb-button class="py-2 mr-4 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()">
+        <font-awesome-icon icon="folder" size="1x" />
+        Open Folder
+      </ftb-button>
+      <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()">
+        <font-awesome-icon icon="trash" size="1x" />
+        Delete
+      </ftb-button>
+    </div>
+
+    <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
+      <message-modal
+        :title="msgBox.title"
+        :content="msgBox.content"
+        :ok-action="msgBox.okAction"
+        :cancel-action="msgBox.cancelAction"
+        :type="msgBox.type"
+        :loading="deleting"
+      />
+    </ftb-modal>
   </div>
 </template>
 
@@ -124,12 +142,22 @@ import { SettingsState } from '@/modules/settings/types';
 import FTBModal from '@/components/FTBModal.vue';
 import FTBToggle from '@/components/FTBToggle.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
+import MessageModal from '@/components/modals/MessageModal.vue';
+
+interface MsgBox {
+  title: string;
+  content: string;
+  type: string;
+  okAction: () => void;
+  cancelAction: () => void;
+}
 
 @Component({
   components: {
     'ftb-modal': FTBModal,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
+    MessageModal,
   },
 })
 export default class ModpackSettings extends Vue {
@@ -137,6 +165,8 @@ export default class ModpackSettings extends Vue {
   @State('auth') public auth!: AuthState;
   @State('settings') public settingsState!: SettingsState;
 
+  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
+  @Action('sendMessage') public sendMessage!: any;
   @Action('loadJavaVersions', { namespace: 'settings' }) public loadJavaVersions!: any;
   @Action('saveInstance', { namespace: 'modpacks' }) public saveInstance: any;
   @Action('showAlert') public showAlert: any;
@@ -145,7 +175,17 @@ export default class ModpackSettings extends Vue {
   @Prop() instance!: Instance;
 
   localInstance: Instance = {} as Instance;
-  resSelectedValue: string = '0';
+  resSelectedValue = '0';
+
+  deleting = false;
+  showMsgBox = false;
+  msgBox: MsgBox = {
+    title: '',
+    content: '',
+    type: '',
+    okAction: Function,
+    cancelAction: Function,
+  };
 
   mounted() {
     this.localInstance = { ...this.instance }; // copy, don't reference
@@ -196,6 +236,48 @@ export default class ModpackSettings extends Vue {
       title: 'Saved!',
       message: 'The settings for this instance have been saved',
       type: 'primary',
+    });
+  }
+
+  public browseInstance(): void {
+    this.sendMessage({
+      payload: { type: 'instanceBrowse', uuid: this.instance?.uuid },
+      callback: (data: any) => {},
+    });
+  }
+
+  public confirmDelete() {
+    this.openMessageBox({
+      type: 'okCancel',
+      title: 'Are you sure?',
+      okAction: this.deleteInstace,
+      cancelAction: this.hideMsgBox,
+      content: `Are you sure you want to delete ${this.instance?.name}?`,
+    });
+  }
+
+  public hideMsgBox(): void {
+    this.showMsgBox = false;
+  }
+
+  private openMessageBox(payload: MsgBox) {
+    this.msgBox = { ...this.msgBox, ...payload };
+    this.showMsgBox = true;
+  }
+
+  public deleteInstace(): void {
+    this.deleting = true;
+    this.sendMessage({
+      payload: { type: 'uninstallInstance', uuid: this.instance?.uuid },
+      callback: (data: any) => {
+        this.sendMessage({
+          payload: { type: 'installedInstances', refresh: true },
+          callback: (data: any) => {
+            this.storePacks(data);
+            this.$router.push({ name: 'modpacks' });
+          },
+        });
+      },
     });
   }
 

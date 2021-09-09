@@ -3,12 +3,10 @@
     <h1 class="text-2xl mb-2">{{ title }}</h1>
     <div>
       <VueShowdown :markdown="content" :extensions="['classMap', 'attribMap', 'newLine']"></VueShowdown>
-      <!--      <p>{{content}}</p>-->
     </div>
-    <hr class="mt-4 mb-2" />
-    <div v-if="type === 'okCancel'">
+    <div class="mt-4" v-if="type === 'okCancel'">
       <ftb-button
-        class="py-2 px-4 mx-2 text-center float-right"
+        class="py-2 px-16 text-center float-right"
         color="primary"
         css-class="text-center text-l"
         :disabled="loading"
@@ -23,19 +21,8 @@
         @click="cancelAction"
         ><font-awesome-icon icon="sync-alt" spin v-if="loading" size="1x" /> <span v-else>Cancel</span></ftb-button
       >
-      <!--      <button-->
-      <!--          class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right"-->
-      <!--          @click="okAction"> Ok-->
-      <!--      </button>-->
-      <!--      <button-->
-      <!--          class="bg-red-500 hover:bg-red-400 text-white-600 font-bold py-2 px-4 mx-4 inline-flex items-center cursor-pointer float-right"-->
-      <!--          @click="cancelAction"> Cancel-->
-      <!--      </button>-->
     </div>
     <div v-if="type === 'custom'" class="buttons">
-      <!--      <button v-for="(button, index) in buttons" :key="index" class="text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right" @click="sendMessage(button.message)" :class="`bg-${button.colour}-500 hover:bg-${button.colour}-400`">-->
-      <!--        {{button.name}}-->
-      <!--      </button>-->
       <ftb-button
         v-for="(button, index) in buttons"
         :key="index"
@@ -56,10 +43,6 @@
         @click="okAction"
         >Ok</ftb-button
       >
-      <!--      <button-->
-      <!--          class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer float-right"-->
-      <!--          @click="okAction"> Ok-->
-      <!--      </button>-->
     </div>
   </div>
 </template>

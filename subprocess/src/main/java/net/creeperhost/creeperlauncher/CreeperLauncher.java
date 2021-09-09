@@ -87,7 +87,7 @@ public class CreeperLauncher
         boolean isOverwolf = Args.containsKey("overwolf");
         boolean startProcess = !isDevMode;
 
-        if(isDevMode || isOverwolf){
+        if(isDevMode || isOverwolf) {
             startProcess = false;
             defaultWebsocketPort = true;
         }
@@ -324,7 +324,6 @@ public class CreeperLauncher
                 PingLauncherData ping = new PingLauncherData();
                 CreeperLauncher.missedPings++;
                 Settings.webSocketAPI.sendMessage(ping);
-                System.out.println("Sending ping");
             } catch(Exception ignored) {}
 
             // Don't do this in dev mode, when the frontend restarts, it can miss this amount of pings

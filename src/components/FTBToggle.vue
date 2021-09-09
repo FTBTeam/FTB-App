@@ -15,7 +15,7 @@
           @click="toggle"
         >
           <span
-            class="w-6 h-6 shadow-inner bg-input cursor-pointer rounded-sm bg-white"
+            class="w-6 h-6 shadow-inner cursor-pointer rounded-sm bg-white"
             :class="`${disabled ? 'cursor-not-allowed' : ' cursor-pointer '}`"
           ></span>
         </span>

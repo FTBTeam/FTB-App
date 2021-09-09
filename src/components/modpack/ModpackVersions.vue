@@ -44,7 +44,7 @@
               () =>
                 platform.get.utils.openUrl(
                   `https://feed-the-beast.com/modpacks/${packInstance.id}/server/${currentVersion.id}${
-                    packInstance.packType !== 0 ? '/curseforge' : ''
+                    instance.packType !== 0 ? '/curseforge' : ''
                   }`,
                 )
             "
