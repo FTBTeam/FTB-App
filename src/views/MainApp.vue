@@ -86,6 +86,7 @@
             </div>
           </div>
         </div>
+        <ad-aside />
       </main>
     </div>
     <div class="app-container centered" v-else>
@@ -150,6 +151,7 @@ import { InstallProgress, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/report/ReportForm.vue';
+import AdAside from '@/components/AdAside.vue';
 
 @Component({
   components: {
@@ -158,6 +160,7 @@ import ReportForm from '@/components/report/ReportForm.vue';
     FTBModal,
     ReportForm,
     'message-modal': MessageModal,
+    AdAside,
   },
 })
 export default class MainApp extends Vue {
