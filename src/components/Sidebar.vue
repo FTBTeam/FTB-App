@@ -2,48 +2,28 @@
   <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
     <!--     <logo width="80%" class="logo" draggable="false"/>-->
     <router-link to="/">
-      <img
-        src="../assets/logo_ftb.png"
-        width="60"
-        class="cursor-pointer logo-hover "
-        style="margin-top: 16px;padding-left: .2rem;"
-        draggable="false"
-      />
+      <img src="../assets/images/ftb-logo.svg" width="60" class="cursor-pointer logo-hover logo" draggable="false" />
     </router-link>
     <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
     <div class="nav-items nav-main mt-5">
       <router-link
+        :is="disableNav ? 'span' : 'router-link'"
         v-for="(item, index) in navigation"
         :key="index"
         :to="{ name: item.to }"
         class="nav-item"
         :class="{ 'item-disabled': disableNav }"
+        :aria-label="item.name"
+        data-balloon-pos="right"
       >
         <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
         <span>{{ item.name }}</span>
       </router-link>
-      <router-link :to="{ name: 'instance-settings' }" class="nav-item" :class="{ 'item-disabled': disableNav }">
-        <div class="icon"><font-awesome-icon icon="cog" class="mr-3" /></div>
-        <span>Settings</span>
-      </router-link>
     </div>
     <div class="nav-items">
-      <div
-        v-if="auth.token === null && !auth.loggingIn"
-        @click="openLogin()"
-        class="nav-item"
-        :class="{ 'item-disabled': disableNav }"
-      >
-        <div class="icon"><font-awesome-icon icon="sign-in-alt" class="mr-3" /></div>
-        <span>Login</span>
-      </div>
-      <div v-else-if="auth.loggingIn" @click="openLogin()" class="nav-item">
-        <div class="icon"><font-awesome-icon icon="spinner" spin class="mr-3" /></div>
-        <span>Loading....</span>
-      </div>
       <router-link
         :to="{ name: 'MTIntegration' }"
-        v-else
+        v-if="auth.token !== null"
         class="nav-item capitalize"
         :class="{ 'item-disabled': disableNav }"
       >
@@ -66,13 +46,15 @@
         </div>
       </router-link>
     </div>
-    <img
-      src="../assets/ch-logo.svg"
-      class="mb-4 mt-4 cursor-pointer logo-hover"
-      style="height: 30px"
-      draggable="false"
-      @click="openPromo()"
-    />
+    <div aria-label="Setup a server with Creeperhost" data-balloon-pos="right" class="w-full">
+      <img
+        src="../assets/ch-logo.svg"
+        class="my-4 mx-auto w-full cursor-pointer logo-hover"
+        style="height: 30px"
+        draggable="false"
+        @click="openPromo()"
+      />
+    </div>
   </div>
 </template>
 
@@ -122,6 +104,11 @@ export default class Sidebar extends Vue {
       name: 'News',
       to: 'news',
       icon: 'newspaper',
+    },
+    {
+      name: 'Settings',
+      to: 'instance-settings',
+      icon: 'cog',
     },
   ];
 
@@ -190,8 +177,18 @@ export default class Sidebar extends Vue {
   justify-content: space-between;
   flex-direction: column;
 
+  .logo {
+    margin-top: 16px;
+    padding-left: 0.2rem;
+  }
+
   &.small {
-    width: 80px;
+    width: 70px;
+
+    .logo {
+      padding: 0 0.5rem;
+    }
+
     .nav-items .nav-item {
       display: flex;
       align-items: center;
@@ -215,15 +212,15 @@ export default class Sidebar extends Vue {
     }
   }
 
-  &::after {
-    content: '';
-    background: url('../assets/ftb-tiny-desat.png') center top;
-    width: 100%;
-    height: 130px;
-    position: absolute;
-    opacity: 0.3;
-    mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.3)), to(rgba(0, 0, 0, 0)));
-  }
+  //&::after {
+  //  content: '';
+  //  background: url('../assets/ftb-tiny-desat.png') center top;
+  //  width: 100%;
+  //  height: 130px;
+  //  position: absolute;
+  //  opacity: 0.3;
+  //  mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.3)), to(rgba(0, 0, 0, 0)));
+  //}
 }
 
 .nav-main {
