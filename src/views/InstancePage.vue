@@ -685,7 +685,7 @@ export default class InstancePage extends Vue {
   }
 
   get versionType() {
-    return this.packInstance?.versions?.find(e => e.id === this.instance.versionId)?.type.toLowerCase() ?? 'release';
+    return this.packInstance?.versions?.find(e => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
   }
 }
 </script>

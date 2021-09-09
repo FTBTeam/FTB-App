@@ -353,7 +353,7 @@ export default class PackCard extends Vue {
   }
 
   get versionType() {
-    return this.currentModpack?.versions?.find(e => e.id === this.instance.versionId)?.type.toLowerCase() ?? 'release';
+    return this.currentModpack?.versions?.find(e => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
   }
 }
 </script>

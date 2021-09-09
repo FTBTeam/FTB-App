@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
     <!--     <logo width="80%" class="logo" draggable="false"/>-->
-    <router-link to="/">
+    <router-link to="/" :is="disableNav ? 'span' : 'router-link'" :class="{ 'item-disabled': disableNav }">
       <img src="../assets/images/ftb-logo.svg" width="60" class="cursor-pointer logo-hover logo" draggable="false" />
     </router-link>
     <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
@@ -174,6 +174,11 @@ export default class Sidebar extends Vue {
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
+
+  .item-disabled .logo {
+    filter: grayscale(1);
+    opacity: 0.5;
+  }
 
   .logo {
     margin-top: 16px;
