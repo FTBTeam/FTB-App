@@ -63,7 +63,7 @@ ext.branch = ext.tempBranch == "master" ? "develop" : ext.tempBranch
 ext.branch = branch.replaceAll( '/', '-' )
 ext.calcVersion = getDate() + "-" + details.gitHash + (ext.details.branchName == "release" ? "" : "-" + ext.branch)
 ext.calcVersion = calcVersion.replaceAll( '/', '-')
-version = System.getenv(VERSION_OVERRIDE) ?: calcVersion
+version = System.getenv("VERSION_OVERRIDE") ?: calcVersion
 ext.webVersion = details.gitHash
 
 install4j {
@@ -254,6 +254,7 @@ test {
 }
 
 project(":web") {
+    projectDir = new File("..")
     buildscript {
         repositories {
             maven {
