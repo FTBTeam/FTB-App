@@ -1,8 +1,9 @@
 stages:
+  - build_jar
   - build
 
 build_jar:
-  stage: build
+  stage: build_jar
   trigger:
     include: subprocess/.gitlab-ci-jar.yml
     strategy: depend
