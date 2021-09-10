@@ -4,38 +4,38 @@ async function blah() {
   let versionObj = await raw.json();
   versionData = versionObj;
   const version = versionObj.jarVersion;
-  //   var plugin = new OverwolfPlugin("FTBOverwolfShim", true);
-  //   let status = await p(plugin.initialize);
-  //   if (status == false) {
-  //     console.error("Plugin couldn't be loaded??");
-  //     return;
-  //   }
+  var plugin = new OverwolfPlugin("FTBOverwolfShim", true);
+  let status = await p(plugin.initialize);
+  if (status == false) {
+    console.error("Plugin couldn't be loaded??");
+    return;
+  }
 
-  //   plugin.get().onData.addListener(({ error, output }) => {
-  //     if (error) {
-  //       if(error.indexOf('New Port:') !== -1) {
-  //         let port = error.substring(error.indexOf('New Port:') + 'New Port:'.length).trim();
-  //         websocketPort = Number(port);
-  //         console.log("Set new port", port, websocketPort);
-  //         if(newWebsocketCallback) {
-  //           newWebsocketCallback(websocketPort, secret === undefined, secret, dev);
-  //         }
-  //       }
-  //       console.log(error);
-  //     }
+  plugin.get().onData.addListener(({ error, output }) => {
+    if (error) {
+      if(error.indexOf('New Port:') !== -1) {
+        let port = error.substring(error.indexOf('New Port:') + 'New Port:'.length).trim();
+        websocketPort = Number(port);
+        console.log("Set new port", port, websocketPort);
+        if(newWebsocketCallback) {
+          newWebsocketCallback(websocketPort, secret === undefined, secret, dev);
+        }
+      }
+      console.log(error);
+    }
 
-  //     if (output) {
-  //       console.log(output);
-  //     }
-  //   });
+    if (output) {
+      console.log(output);
+    }
+  });
 
-  //   let javaResp = await p(plugin.get().LaunchJava, version, dev);
+  let javaResp = await p(plugin.get().LaunchJava, version, dev);
 
-  //   console.log(JSON.stringify(javaResp));
+  console.log(JSON.stringify(javaResp));
 
-  //   let pid = javaResp.pid;
+  let pid = javaResp.pid;
 
-  //   console.log(`Java process launched - pid=${pid}`);
+  console.log(`Java process launched - pid=${pid}`);
   let windowRet = await p(overwolf.windows.obtainDeclaredWindow, 'index');
   await p(overwolf.windows.restore, windowRet.window.id);
   console.log('Showing window');
