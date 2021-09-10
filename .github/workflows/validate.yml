@@ -16,6 +16,8 @@ jobs:
           java-version: '11'
           cache: 'gradle'
       - name: Test build
+        env:
+          CI_API_V4_URL: www.feed-the-beast.com
         working-directory: ./subprocess/
         run: |
           chmod +x ./gradlew
