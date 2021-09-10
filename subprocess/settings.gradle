@@ -1,2 +1,3 @@
 rootProject.name = 'creeperlauncher'
-include 'web'
+include ':web'
+project(':web').projectDir = file('..')
