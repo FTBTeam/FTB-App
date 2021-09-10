@@ -254,7 +254,6 @@ test {
 }
 
 project(":web") {
-    projectDir = new File("..")
     buildscript {
         repositories {
             maven {
@@ -284,7 +283,7 @@ project(":web") {
         inputs.file "package.json"
         outputs.dir "dist"
     }
-}
+}.projectDir = new File("..")
 
 task buildWithElectron(dependsOn: "build") {}
 
