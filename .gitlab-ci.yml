@@ -1,15 +1,22 @@
 stages:
-  - buildjar
-  - buildweb
+  - build
 
 build_jar:
-  stage: buildjar
+  stage: build
   trigger:
     include: subprocess/.gitlab-ci-jar.yml
     strategy: depend
 
-build_web:
-  stage: buildweb
+build_overwolf:
+  stage: build
+  needs: ["build_jar"]
   trigger:
     include: .gitlab-ci-front.yml
+    strategy: depend
+
+build_electron:
+  stage: build
+  needs: ["build_jar"]
+  trigger:
+    include: subprocess/.gitlab-ci.yml
     strategy: depend
