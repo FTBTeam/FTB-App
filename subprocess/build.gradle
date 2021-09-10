@@ -60,8 +60,10 @@ archivesBaseName = "launcher"
 ext.details = versionDetails()
 ext.tempBranch = (ext.details.branchName == null ? System.env.CI_COMMIT_BRANCH : ext.details.branchName)
 ext.branch = ext.tempBranch == "master" ? "develop" : ext.tempBranch
-version = getDate() + "-" + details.gitHash + (ext.details.branchName == "release" ? "" : "-" + ext.branch)
-version = version.replaceAll( '/', '-')
+ext.branch = branch.replaceAll( '/', '-' )
+ext.calcVersion = getDate() + "-" + details.gitHash + (ext.details.branchName == "release" ? "" : "-" + ext.branch)
+ext.calcVersion = calcVersion.replaceAll( '/', '-')
+version = System.getenv(VERSION_OVERRIDE) ?: calcVersion
 ext.webVersion = details.gitHash
 
 install4j {
@@ -287,7 +289,7 @@ task buildWithElectron(dependsOn: "build") {}
 
 buildWithElectron.dependsOn(":web:npm_run_build")
 
-task buildAll(dependsOn: "build") {}
+task buildAll() {}
 buildAll.dependsOn(":web:npm_run_buildall")
 
 media.dependsOn buildAll
