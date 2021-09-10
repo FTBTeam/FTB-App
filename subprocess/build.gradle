@@ -37,7 +37,7 @@ repositories {
     maven { url 'https://jitpack.io' }
     maven { url 'https://maven.covers1624.net/' }
     maven {
-        url "https://git.creeper.host/api/v4/projects/54/packages/maven"
+        url "${System.env.CI_API_V4_URL}/projects/${System.env.CI_PROJECT_ID}/packages/maven"
         name "GitLab"
         credentials(HttpHeaderCredentials) {
             name = 'Job-Token'
@@ -61,6 +61,8 @@ ext.details = versionDetails()
 ext.tempBranch = (ext.details.branchName == null ? System.env.CI_COMMIT_BRANCH : ext.details.branchName)
 ext.branch = ext.tempBranch == "master" ? "develop" : ext.tempBranch
 version = getDate() + "-" + details.gitHash + (ext.details.branchName == "release" ? "" : "-" + ext.branch)
+version = version.replaceAll( '/', '-')
+ext.webVersion = details.gitHash
 
 install4j {
     license = "$System.env.IJLICENSE"
@@ -176,23 +178,6 @@ task ftpReleaseXMLManual(type: Exec) {
 
 ftpReleaseXMLManual.dependsOn ftpReleaseManual
 
-ext.getCheckedOutGitCommitHash = { subBranch ->
-    def gitFolder = "$projectDir/../.git/"
-    if (subBranch != null) {
-        gitFolder = "$projectDir/../.git/"
-    }
-
-    def takeFromHash = 8
-
-    def head = new File(gitFolder + "HEAD").text.split(":")
-    def isCommit = head.length == 1
-
-    if(isCommit) return head[0].trim().take(takeFromHash)
-
-    def refHead = new File(gitFolder + head[1].trim())
-    refHead.text.trim().take takeFromHash
-}
-
 sourceSets {
     main {
         resources {
@@ -235,30 +220,30 @@ ext {
 dependencies {
     compileOnly files("lib/i4jruntime.jar")
 
-    implementation 'net.creeperhost.minetogether:minetogether-api:1.0.1'
+    compile 'net.creeperhost.minetogether:minetogether-api:1.0.1'
 
-    implementation 'org.apache.tika:tika-core:1.22'
-    implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'org.java-websocket:Java-WebSocket:1.4.0'
-    implementation 'com.github.oshi:oshi-core:5.7.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.2.2'
-    implementation 'org.apache.commons:commons-compress:1.2'
-    implementation 'net.java.dev.jna:jna:5.5.0'
-    implementation 'net.java.dev.jna:jna-platform:5.5.0'
-    implementation 'com.amazonaws:aws-java-sdk-s3:1.11.839'
-    implementation 'org.apache.logging.log4j:log4j-core:2.11.1'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
-    implementation 'org.apache.logging.log4j:log4j-jul:2.11.1'
-    implementation 'com.github.pircbotx:pircbotx:2.2'
-    implementation 'net.covers1624:Quack:0.1.4.+'
-    implementation 'com.google.guava:guava:30.1-jre'
+    compile 'org.apache.tika:tika-core:1.22'
+    compile 'com.google.code.gson:gson:2.8.5'
+    compile 'org.java-websocket:Java-WebSocket:1.4.0'
+    compile 'com.github.oshi:oshi-core:5.7.0'
+    compile 'com.squareup.okhttp3:okhttp:4.2.2'
+    compile 'org.apache.commons:commons-compress:1.2'
+    compile 'net.java.dev.jna:jna:5.5.0'
+    compile 'net.java.dev.jna:jna-platform:5.5.0'
+    compile 'com.amazonaws:aws-java-sdk-s3:1.11.839'
+    compile 'org.apache.logging.log4j:log4j-core:2.11.1'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
+    compile 'org.apache.logging.log4j:log4j-jul:2.11.1'
+    compile 'com.github.pircbotx:pircbotx:2.2'
+    compile 'net.covers1624:Quack:0.1.4.+'
+    compile 'com.google.guava:guava:30.1-jre'
 
-    implementation 'org.apache.ant:ant-commons-net:1.10.7'
-    implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.13'
+    compile 'org.apache.ant:ant-commons-net:1.10.7'
+    compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.13'
 
     annotationProcessor 'org.apache.logging.log4j:log4j-core:2.11.1'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
 }
 
@@ -297,15 +282,6 @@ project(":web") {
         outputs.dir "dist"
     }
 }
-
-//task submodulesUpdate() {
-//    doLast {
-//        println "git submodule deinit . -f".execute().text.trim()
-//        println "git submodule update --init --remote".execute().text.trim()
-//        println "Web submodule at:"
-//        println "git -C web log -1".execute().text.trim()
-//    }
-//}
 
 task buildWithElectron(dependsOn: "build") {}
 
@@ -351,11 +327,11 @@ task writeVersion() {
                     repository: dependencySources.get(value.name.take(value.name.lastIndexOf(":")) as String)
             ])
         }
-        file("../public/version.json").newWriter().withWriter { w ->
+        file("$projectDir/build/version.json").newWriter().withWriter { w ->
             w << JsonOutput.toJson(
                     [
                             jarVersion    : version,
-                            webVersion    : getCheckedOutGitCommitHash("web"),
+                            webVersion    : webVersion,
                             branch        : branch,
                             timestampBuilt: Instant.now().getEpochSecond(),
                             javaLicense   : licenses
@@ -365,17 +341,24 @@ task writeVersion() {
     }
 }
 
-writeVersion.dependsOn project(":web").tasks.getByName("npm_run-script_license")
-project(":web").tasks.getByName("npm_run-script_license").dependsOn project(":web").npmInstall
-project(":web").npm_run_buildall.dependsOn writeVersion
-project(":web").npm_run_build.dependsOn writeVersion
+def versionFile = layout.buildDirectory.file('version.json')
+def versionArtifact = artifacts.add('archives', versionFile.get().asFile) {
+    type 'json'
+    builtBy 'writeVersion'
+}
+
+//writeVersion.dependsOn project(":web").tasks.getByName("npm_run-script_license")
+//project(":web").tasks.getByName("npm_run-script_license").dependsOn project(":web").npmInstall
+//project(":web").npm_run_buildall.dependsOn writeVersion
+//project(":web").npm_run_build.dependsOn writeVersion
+build.dependsOn writeVersion
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
 task processSource(type: Sync) {
     from sourceSets.main.java
     inputs.property 'version', version
-    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: getCheckedOutGitCommitHash("web"), BRANCH: branch])
+    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, BRANCH: branch])
     into "$buildDir/src"
 }
 
@@ -437,11 +420,12 @@ publishing {
     publications {
         shadow(MavenPublication) { publication ->
             project.shadow.component(publication)
+            artifact versionArtifact
         }
     }
     repositories {
         maven {
-            url "https://git.creeper.host/api/v4/projects/28/packages/maven"
+            url "${System.env.CI_API_V4_URL}/projects/${System.env.CI_PROJECT_ID}/packages/maven"
             credentials(HttpHeaderCredentials) {
                 name = 'Job-Token'
                 value = System.getenv("CI_JOB_TOKEN")

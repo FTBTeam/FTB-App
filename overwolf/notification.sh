@@ -15,6 +15,11 @@ urlencode() {
   filename="${encoded}"   #+or echo the result (EASIER)... or both... :p
 }
 
+if [ -z "$SLACK_HOOK" ]; then
+  echo "Slack hook is undefined, notification not being sent"
+  exit 0
+fi
+
 filename=$(ls | grep *.opk | tr -d '\n')
 urlencode "$filename"
 curl -i -X POST -H 'Content-Type: application/json' -d '{"text": "A new Overwolf OPK is available <'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/'"$filename"'|here>"}' $SLACK_HOOK
