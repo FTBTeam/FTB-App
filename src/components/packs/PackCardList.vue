@@ -1,106 +1,112 @@
 <template>
-  <div v-if="settingsState !== undefined" class="mb-4 card-list" :class="`w-full h-size-1`">
-    <div
-      v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo"
-      style="height: 100%"
-      class="flex flex-row"
-    >
-      <article :class="`relative overflow-hidden shadow-lg w-size-1`" style="height: 100%" @click="cardClicked">
-        <img
-          class="pack-image rounded-sm"
-          :src="getLogo(art)"
-          alt="placeholder"
-          :class="kind === 'cloudInstance' ? 'cloud-pack-image' : ''"
-        />
-        <div class="content cursor-pointer">
-          <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
-          <div v-if="instance && !isLatestVersion && kind === 'instance'" class="update-box">New Version</div>
-          <div v-if="installing" class="update-box">Installing...</div>
-        </div>
-      </article>
-      <div class="flex-1 p-2 bg-background-lighten flex flex-col background" @click="cardClicked">
-        <div class="flex-1 p-2 flex flex-col background-art" :style="`background: url(${getBackground(art)});`"></div>
-        <div class="flex flex-row">
-          <div class="name-box font-bold">
-            <span v-if="featured" class="rounded mr-2 text-sm bg-yellow-300 px-2 uppercase text-black">Featured</span
-            >{{ name }}
-          </div>
-          <div class="ml-auto mr-2 text-sm text-gray-500" v-if="authors.length > 0">
-            By
-            <template v-if="typeof authors === 'object'">
-              <span v-for="author in authors" :key="author.id"
-                >{{ author.name }} {{ authors.length > 1 ? ', ' : '' }}</span
-              >
-            </template>
-            <template v-else>
-              <span>{{ authors.name }}</span>
-            </template>
-          </div>
-        </div>
-
-        <p class="mb-auto max-2-lines">{{ description }}</p>
-        <div v-if="tags" class="flex flex-row items-center">
-          <div class="flex flex-row" @click.stop>
-            <span
-              v-for="(tag, i) in limitedTags"
-              :key="`tag-${i}`"
-              @click="clickTag(tag.name)"
-              class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-              style="font-variant: small-caps;"
-              >{{ tag.name }}</span
-            >
-            <span
-              v-if="tags.length > 5"
-              :key="`tag-more`"
-              class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-              style="font-variant: small-caps;"
-              >+{{ tags.length - 5 }}</span
-            >
-          </div>
-        </div>
-      </div>
-      <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="installed && kind === 'instance'">
-        <FTBButton
-          @click="checkMemory()"
-          :isRounded="false"
-          color="primary"
-          class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr rounded-br"
-          :disabled="loading"
-        >
-          <span v-if="!loading"
-            ><font-awesome-icon icon="play" size="sm" class="cursor-pointer" />
-            <p>Play</p></span
-          >
-          <font-awesome-icon
-            v-else-if="loading"
-            :icon="'spinner'"
-            size="sm"
-            :class="`cursor-pointer button hover-scale lg:text-1xl sm:text-base`"
-            spin
+  <div class="card-overview-container w-full">
+    <div v-if="settingsState !== undefined" class="mb-6 card-list w-full h-size-1 shadow-lg">
+      <div
+        v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo"
+        style="height: 100%"
+        class="flex flex-row card-contents"
+      >
+        <div class="pack-bg" :style="`background: url(${getBackground(art)});`"></div>
+        <article :class="`relative overflow-hidden mr-4`" style="height: 100%" @click="cardClicked">
+          <img
+            class="pack-image rounded"
+            :src="getLogo(art)"
+            alt="placeholder"
+            :class="kind === 'cloudInstance' ? 'cloud-pack-image' : ''"
           />
-        </FTBButton>
-        <!-- <FTBButton @click="goToInstance" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
-      </div>
-      <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="!installed">
-        <FTBButton
-          @click="openInstall"
-          :isRounded="false"
-          color="primary"
-          class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr rounded-br"
-          ><font-awesome-icon icon="download" size="sm" class="cursor-pointer" />
-          <p>Get</p></FTBButton
+          <div class="content cursor-pointer">
+            <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
+            <div v-if="instance && !isLatestVersion && kind === 'instance'" class="update-box">New Version</div>
+            <div v-if="installing" class="update-box">Installing...</div>
+          </div>
+        </article>
+        <div class="flex-1 p-2 flex flex-col" @click="cardClicked">
+          <div class="flex flex-row">
+            <div class="name-box font-bold">
+              <span v-if="featured" class="rounded mr-2 text-sm bg-yellow-300 px-2 uppercase text-black">Featured</span
+              >{{ name }}
+              <div class="inline-block ml-2 text-sm text-muted font-medium" v-if="authors.length > 0">
+                By
+                <template v-if="typeof authors === 'object'">
+                  <span v-for="author in authors" :key="author.id"
+                    >{{ author.name }} {{ authors.length > 1 ? ', ' : '' }}</span
+                  >
+                </template>
+                <template v-else>
+                  <span>{{ authors.name }}</span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <p class="mb-auto max-2-lines mr-4">{{ description }}</p>
+          <div v-if="tags" class="flex flex-row items-center">
+            <div class="flex flex-row" @click.stop>
+              <span
+                v-for="(tag, i) in limitedTags"
+                :key="`tag-${i}`"
+                @click="clickTag(tag.name)"
+                class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
+                style="font-variant: small-caps;"
+                >{{ tag.name }}</span
+              >
+              <span
+                v-if="tags.length > 5"
+                :key="`tag-more`"
+                class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
+                style="font-variant: small-caps;"
+                >+{{ tags.length - 5 }}</span
+              >
+            </div>
+          </div>
+        </div>
+        <div
+          style="width:50px;"
+          class="flex flex-col list-action-button-holder"
+          v-if="installed && kind === 'instance'"
         >
-        <!-- <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
-      </div>
-      <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="kind === 'cloudInstance'">
-        <FTBButton
-          @click="sync"
-          :isRounded="false"
-          color="primary"
-          class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr rounded-br"
-          ><font-awesome-icon icon="cloud-download-alt" size="sm" class="cursor-pointer" />
-          <p>Sync</p></FTBButton
-        >
+          <FTBButton
+            @click="checkMemory()"
+            :isRounded="false"
+            color="primary"
+            class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr rounded-br"
+            :disabled="loading"
+          >
+            <span v-if="!loading"
+              ><font-awesome-icon icon="play" size="sm" class="cursor-pointer" />
+              <p>Play</p></span
+            >
+            <font-awesome-icon
+              v-else-if="loading"
+              :icon="'spinner'"
+              size="sm"
+              :class="`cursor-pointer button hover-scale lg:text-1xl sm:text-base`"
+              spin
+            />
+          </FTBButton>
+          <!-- <FTBButton @click="goToInstance" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
+        </div>
+        <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="!installed">
+          <FTBButton
+            @click="openInstall"
+            :isRounded="false"
+            color="primary"
+            class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded"
+            ><font-awesome-icon icon="download" size="sm" class="cursor-pointer" />
+            <p>Get</p></FTBButton
+          >
+          <!-- <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
+        </div>
+        <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="kind === 'cloudInstance'">
+          <FTBButton
+            @click="sync"
+            :isRounded="false"
+            color="primary"
+            class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr rounded-br"
+            ><font-awesome-icon icon="cloud-download-alt" size="sm" class="cursor-pointer" />
+            <p>Sync</p></FTBButton
+          >
+        </div>
       </div>
     </div>
     <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
@@ -127,7 +133,7 @@ import InformationModal from '@/components/modals/InformationModal.vue';
 import InstallModal from '@/components/modals/InstallModal.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
-import { ModpackState, Instance } from '../../modules/modpacks/types';
+import { Instance, ModpackState } from '../../modules/modpacks/types';
 // @ts-ignore
 import * as placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
@@ -449,6 +455,38 @@ export default class PackCardList extends Vue {
   position: relative;
 }
 
+.card-list {
+  background: var(--color-sidebar-item);
+  border-radius: 5px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition: 0.25s ease-in-out transform;
+
+  &:hover {
+    transform: translateY(-5px);
+    .pack-bg {
+      transform: scale(1.2);
+    }
+  }
+
+  .card-contents {
+    position: relative;
+    padding: 1rem;
+
+    .pack-bg {
+      position: absolute;
+      z-index: -1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.2;
+      transition: 0.25s ease-in-out transform;
+    }
+  }
+}
+
 .pack-image {
   transition: filter 0.5s;
   height: 100%;
@@ -592,7 +630,7 @@ export default class PackCardList extends Vue {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
 }
 .background {

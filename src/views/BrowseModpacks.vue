@@ -1,5 +1,5 @@
 <template>
-  <div class="px-6 py-4">
+  <div class="px-6 py-4 h-full">
     <div class="search-and-switcher mb-4">
       <div class="switcher shadow">
         <div
@@ -27,7 +27,10 @@
     <div v-if="modpacks.error" class="m-4 p-3" style="background-color: #e55812">
       <span>{{ modpacks.errorMsg }}</span>
     </div>
-    <div class="flex flex-col" v-if="!modpacks.loading && !(modpacks.search.length <= 0 && modpacks.curseLoading)">
+    <div
+      class="flex flex-col flex-1"
+      v-if="!modpacks.loading && !(modpacks.search.length <= 0 && modpacks.curseLoading)"
+    >
       <div
         class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
         v-if="modpacks.search.length > 0 || modpacks.searchCurse.length > 0"
@@ -83,8 +86,8 @@
               </pack-card-list>
             </div>
           </div>
-          <div v-else class="flex flex-1">
-            <Loading />
+          <div v-else class="flex flex-1 justify-center items-center">
+            <Loading class="mt-8" />
           </div>
         </div>
       </div>
