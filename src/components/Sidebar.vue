@@ -31,16 +31,19 @@
             style="width: 30px; height: 30px;"
             class="rounded-full"
           />
-          <div class="flex flex-col">
-            <span>{{
+          <!--          <div class="flex flex-col">-->
+          <span
+            >{{
               auth.token.mc !== undefined && auth.token.mc.display !== null
                 ? auth.token.mc.display.split('#')[0]
                 : auth.token.username
-            }}</span
-            ><span v-if="auth.token.mc !== undefined && auth.token.mc.display !== null" class="text-xs opacity-50 hash"
-              >#{{ auth.token.mc.display.split('#')[1] }}</span
-            >
-          </div>
+            }}
+            #{{ auth.token.mc.display.split('#')[1] }}
+          </span>
+          <!--            <span v-if="auth.token.mc !== undefined && auth.token.mc.display !== null" class="text-xs opacity-50 hash"-->
+          <!--              >#{{ auth.token.mc.display.split('#')[1] }}</span-->
+          <!--            >-->
+          <!--          </div>-->
         </div>
       </router-link>
     </div>

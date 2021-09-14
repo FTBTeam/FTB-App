@@ -2,7 +2,7 @@
   <div class="mod-packs h-full" v-if="isLoaded">
     <!-- My Modpacks Stuff -->
     <div class="packs px-6 py-4" v-if="modpacks.installedPacks.length > 0">
-      <div class="w-1/2 self-center">
+      <div class="w-3/4 self-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mb-4" />
       </div>
       <div class="pack-card-list grid">
