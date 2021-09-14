@@ -63,8 +63,8 @@
         <font-awesome-icon icon="heart" size="2x" class="mb-2" />
         <h3 class="text-lg font-bold mb-2">Thanks for your support!</h3>
         <p class="mb-2">
-          We know the ads are a little annoying but for every ad you see, you’re directly supporting the Feed the Beast
-          Team, over 12 of us, now, and supporting CurseForge creators as we with Overwolf!
+          We know the ads are a little annoying but for every ad you’re directly supporting the Feed the Beast Team and
+          supporting CurseForge creators!
         </p>
         <p class="text-muted italic">
           Loading the Modpack inside this window, not only supports us, it also speeds up your packs load times! In most
