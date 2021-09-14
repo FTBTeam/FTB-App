@@ -55,7 +55,11 @@
 
     <div class="ad-space">
       <div class="heart text-center  mb-4">
-        <font-awesome-icon icon="heart" size="2x" class="mb-2" />
+        <div class="heart-hearts">
+          <font-awesome-icon icon="heart" size="2x" class="mb-2" />
+          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-2 mb-2" />
+          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-3 mb-2" />
+        </div>
         <p class="font-bold">Supports FTB & Curseforge Authors</p>
       </div>
       <div class="ad-box">
@@ -261,8 +265,47 @@ export default class AdAside extends Vue {
 
   .ad-space {
     .heart {
+      position: relative;
       svg {
         color: #ff4040;
+      }
+
+      .less-than-three {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%) scale(1.5);
+        opacity: 0;
+
+        animation: scale 2s ease-in-out infinite;
+
+        &.heart-3 {
+          animation: scale2 2s ease-in-out infinite;
+          animation-delay: 0.4s;
+        }
+
+        @keyframes scale {
+          0%,
+          100% {
+            transform: translateX(-50%) scale(1);
+            opacity: 0;
+          }
+          50% {
+            transform: translateX(-50%) scale(1.5);
+            opacity: 0.6;
+          }
+        }
+
+        @keyframes scale2 {
+          0%,
+          100% {
+            transform: translateX(-50%) scale(1);
+            opacity: 0;
+          }
+          50% {
+            transform: translateX(-50%) scale(1.8);
+            opacity: 0.2;
+          }
+        }
       }
     }
 
