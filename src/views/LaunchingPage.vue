@@ -1,96 +1,75 @@
 <template>
-  <div class="flex flex-1 flex-col h-full overflow-hidden">
+  <div class="pack-loading flex flex-col h-full">
     <div
-      class="flex flex-col h-full"
+      class="loading-area flex-1"
       v-if="!loading && currentModpack !== null"
-      key="main-window"
-      v-bind:style="{
-        'background-image': `url(${
-          currentModpack.art.filter(art => art.type === 'splash').length > 0
-            ? currentModpack.art.filter(art => art.type === 'splash')[0].url
-            : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'
-        })`,
-      }"
+      :style="{ backgroundImage: `url(${art})` }"
     >
-      <div>
-        <div class="header-image" style="height: 120px">
-          <span class="instance-name text-4xl">{{ instance.name }}</span>
-          <span class="instance-info">
-            <small>
-              <em>{{ currentModpack.synopsis }}</em>
-            </small>
-            <div v-if="currentModpack.tags" class="flex flex-row items-center">
-              <div class="flex flex-row">
-                <span
-                  v-for="(tag, i) in limitedTags"
-                  :key="`tag-${i}`"
-                  @click="clickTag(tag.name)"
-                  class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                  style="font-variant: small-caps"
-                  >{{ tag.name }}</span
-                >
-                <span
-                  v-if="currentModpack.tags.length > 5"
-                  :key="`tag-more`"
-                  class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                  style="font-variant: small-caps"
-                  >+{{ currentModpack.tags.length - 5 }}</span
-                >
-              </div>
-            </div>
-          </span>
+      <div class="loading-container flex justify-center items-center h-full">
+        <div class="loading-info text-center">
+          <h2 class="text-3xl font-bold mb-2">{{ instance.name }}</h2>
+          <em class="mb-8 block">{{ currentModpack.synopsis }}</em>
+
           <div class="update-bar" v-if="currentModpack && currentModpack.notification">
             {{ currentModpack.notification }}
           </div>
-        </div>
-      </div>
-      <div style="height: auto; flex: 1; overflow-y: auto" class="flex flex-col frosted-glass">
-        <div class="tab-content flex-1 py-4 mx-1" style="overflow-y: auto">
-          <div class="tab-pane flex flex-col h-full w-full">
-            <div class="flex-1 w-full flex flex-col" style="max-height: 270px" v-if="advertsEnabled">
+
+          <div class="bars mb-8">
+            <div class="bar mb-4" v-for="(bar, index) in bars" :key="index">
+              <div class="text-center w-full text">
+                {{ bar.message }}
+              </div>
               <div
-                v-if="!showPlaceholder"
-                id="ow-ad"
-                ref="ad"
-                style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
-              >
-                <div v-if="platform.isElectron()" id="777249406"></div>
-              </div>
-              <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">
-                <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
-              </video>
-              <span class="ml-auto mr-auto text-xs cursor-pointer" style="padding-left: 315px" @click="reportAdvert"
-                >Report advert</span
-              >
-            </div>
-            <div class="progress mt-10">
-              <div class="w-3/4 mx-auto my-2" v-for="(bar, index) in bars" :key="index">
-                <div class="pl-4 text-center w-full progress-text">
-                  {{ bar.message }}
-                </div>
-                <div class="progress-bar h-4">
-                  <div class="w-full h-full bg-grey-light justify-center">
-                    <div
-                      class="h-full bg-primary text-xs leading-none py-1 text-white"
-                      v-bind:style="{
-                        width: `${(bar.step / bar.steps) * 100}%`,
-                        transition: 'width 0.5s ease',
-                      }"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-row mx-auto w-1/2 justify-between">
-              <p @click="restoreLoading" class="text-xs opacity-50 cursor-pointer hover:opacity-100">
-                Show client
-              </p>
-              <p @click="cancelLoading" class="text-xs opacity-50 cursor-pointer hover:opacity-100">
-                Cancel loading
-              </p>
+                class="h-full bg-primary progress-bar"
+                v-bind:style="{
+                  width: `${(bar.step / bar.steps) * 100}%`,
+                  transition: 'width 0.5s ease',
+                }"
+              ></div>
             </div>
           </div>
+
+          <div class="buttons flex items-center justify-center w-full">
+            <ftb-button color="warning" @click="restoreLoading" class="py-1 px-4 mr-2 text-sm">
+              Load in-game
+            </ftb-button>
+            <ftb-button color="warning" @click="cancelLoading" class="py-1 px-4 text-sm">
+              Stop loading modpack
+            </ftb-button>
+          </div>
         </div>
+      </div>
+    </div>
+    <div class="ad-area flex items-center" v-if="advertsEnabled">
+      <div class="ad-box">
+        <div class="ad-container">
+          <div
+            v-if="!showPlaceholder"
+            id="ow-ad"
+            ref="ad"
+            style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
+          >
+            <div v-if="platform.isElectron()" id="777249406"></div>
+          </div>
+          <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">
+            <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
+          </video>
+          <span class="text-xs cursor-pointer report-btn opacity-50 hover:opacity-100" @click="reportAdvert"
+            >Report advert</span
+          >
+        </div>
+      </div>
+      <div class="ad-message flex-1">
+        <font-awesome-icon icon="heart" size="2x" class="mb-2" />
+        <h3 class="text-lg font-bold mb-2">Thanks for your support!</h3>
+        <p class="mb-2">
+          We know the ads are a little annoying but for every ad you see, you’re directly supporting the Feed the Beast
+          Team, over 12 of us, now, and supporting CurseForge creators as we with Overwolf!
+        </p>
+        <p class="text-muted italic">
+          Loading the Modpack inside this window, not only supports us, it also speeds up your packs load times! In most
+          of our testing, we’ve seen visible loading time improvements!
+        </p>
       </div>
     </div>
   </div>
@@ -284,7 +263,7 @@ export default class LaunchingPage extends Vue {
       return [];
     }
     const bars = this.modpacks.launchProgress.filter(b => b.steps !== 1);
-    return bars.length > 3 ? bars.slice(0, 3) : bars;
+    return bars;
   }
 
   get currentModpack() {
@@ -304,6 +283,16 @@ export default class LaunchingPage extends Vue {
       this.settings.settings.showAdverts === 'true' ||
       this.auth?.token?.activePlan === null
     );
+  }
+
+  get art() {
+    if (!this.currentModpack?.art) {
+      return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+    }
+
+    return this.currentModpack.art.filter(art => art.type === 'splash').length > 0
+      ? this.currentModpack.art.filter(art => art.type === 'splash')[0].url
+      : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
 
   public screenshotToBase64(url: string) {
@@ -333,98 +322,89 @@ export default class LaunchingPage extends Vue {
 </script>
 
 <style lang="scss">
-.header-image {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 200px;
-  transition: all 0.2s ease-in-out;
-}
+.pack-loading {
+  .loading-area {
+    background-repeat: no-repeat;
+    background-size: 100%;
 
-.tab-pane {
-  top: 0;
-  height: 100%;
-  overflow-y: auto;
-}
+    .loading-container {
+      background: rgba(black, 0.7);
+      backdrop-filter: blur(3px);
 
-.changelog-seperator {
-  border: 1px solid var(--color-sidebar-item);
-}
+      .loading-info {
+        .bars {
+          width: 580px;
 
-.short {
-  width: 75%;
-}
+          .bar {
+            overflow: hidden;
+            position: relative;
+            height: 30px;
+            background: rgba(black, 0.8);
+            border-radius: 5px;
 
-.instance-name {
-  margin-top: auto;
-  height: 45px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
+            .progress-bar {
+            }
 
-.instance-info {
-  bottom: 50px;
-  text-align: left;
-  font-weight: 400;
-  padding: 2px 2px 2px 6px;
-}
+            .text {
+              position: absolute;
+              width: 100%;
+              text-align: center;
+              top: 50%;
+              transform: translateY(-50%);
+            }
+          }
+        }
+      }
+    }
+  }
 
-.instance-buttons {
-  background: rgba(0, 0, 0, 0.7);
-  width: 100%;
-  height: 50px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
+  .ad-area {
+    padding: 2rem;
 
-.instance-button {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
+    .ad-box {
+      margin-right: 2rem;
+
+      .ad-container {
+        position: relative;
+        width: 300px;
+        height: 250px;
+        background-color: black;
+        border-radius: 5px;
+      }
+
+      .report-btn {
+        position: absolute;
+        bottom: -23px;
+        left: 0;
+        white-space: nowrap;
+      }
+    }
+
+    .ad-message {
+      svg {
+        color: #ff4040;
+      }
+    }
+  }
 }
 
 .update-bar {
-  background: rgba(255, 193, 7, 0.9);
-  width: 100%;
-  height: 25px;
-  text-align: left;
   font-weight: 700;
-  padding: 2px 2px 2px 6px;
-  color: black;
+  margin-bottom: 1rem;
 }
 
-.frosted-glass {
-  backdrop-filter: blur(8px);
-  background: linear-gradient(
-    to top,
-    rgba(36, 40, 47, 0) 0%,
-    rgba(43, 57, 66, 0.2) calc(100% - 2px),
-    rgba(193, 202, 207, 0.1) calc(100% - 1px),
-    rgba(29, 29, 29, 0.3) 100%
-  );
-  //   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
-}
 #ow-ad iframe {
   margin: 0 auto;
   vertical-align: middle;
 }
+
 #ow-ad > div {
   height: 100%;
 }
+
 #ow-ad > div > div {
   display: flex;
   height: 100%;
   align-items: center;
-}
-.progress-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.canvas-hidden {
-  visibility: hidden;
 }
 </style>
