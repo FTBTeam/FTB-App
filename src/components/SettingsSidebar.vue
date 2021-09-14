@@ -29,7 +29,7 @@
         <div class="heading">Integrations</div>
         <router-link :to="{ name: 'MTIntegration' }" class="item app-info-item">
           <img src="@/assets/images/mt-logo.png" alt="" />
-          <span>Minetogether</span>
+          <span>MineTogether</span>
         </router-link>
       </nav>
       <nav>
