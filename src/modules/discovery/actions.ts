@@ -112,10 +112,10 @@ export const actions: ActionTree<DiscoveryState, RootState> = {
       });
 
       packs = packs.filter(pack => {
-        if (pack.links.length < 1) {
+        if (!pack.links || pack.links?.length < 1) {
           return false;
         }
-        if (pack.links.filter(l => l.type === 'video').length < 1) {
+        if (pack.links?.filter(l => l.type === 'video').length < 1) {
           return false;
         }
         return true;

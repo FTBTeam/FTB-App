@@ -57,7 +57,7 @@
           </div>
         </div>
         <pack-card-list
-          class="mx-auto"
+          class=""
           size="1"
           :packID="pack.id"
           :art="pack.art"
@@ -84,9 +84,9 @@
         </div>
       </div>
     </div>
-    <div class="flex flex-row justify-between my-2" v-if="discovery.discoveryQueue.length > 0">
-      <FTBButton color="primary" class="py-2 px-4 mx-2 text-center w-32" @click="previous">Previous</FTBButton>
-      <FTBButton color="primary" class="py-2 px-4 mx-2 text-center w-32" @click="next">Next</FTBButton>
+    <div class="flex flex-row justify-center my-2 px-5 mb-5" v-if="discovery.discoveryQueue.length > 0">
+      <FTBButton color="primary" class="py-2 mr-4 px-4 text-center w-32" @click="previous">Previous</FTBButton>
+      <FTBButton color="primary" class="py-2 px-4 text-center w-32" @click="next">Next</FTBButton>
     </div>
   </div>
 </template>
@@ -96,8 +96,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import PackCardList from '@/components/packs/PackCardList.vue';
 import FTBButton from '@/components/FTBButton.vue';
 import Loading from '@/components/Loading.vue';
-import { State, Action, Getter } from 'vuex-class';
-import { NewsState, NewsItem } from '@/modules/news/types';
+import { Action, State } from 'vuex-class';
 import { SettingsState } from '../modules/settings/types';
 import { DiscoveryState } from '../modules/discovery/types';
 import { ModPack, ModPackLink } from '../modules/modpacks/types';
