@@ -49,7 +49,7 @@
         </div>
       </header>
 
-      <div class="body" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
+      <div class="body" v-if="!searchingForMods" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
         <div class="body-heading" v-if="!hidePackDetails">
           <div class="action-heading">
             <div class="play">
@@ -180,25 +180,25 @@
             :current-version="currentVersionObject.mtgID"
             :pack-instance="packInstance"
           />
-
-          <find-mods
-            :instance="instance"
-            :goBack="() => (searchingForMods = false)"
-            @modInstalled="getModList"
-            v-if="searchingForMods"
-          />
         </div>
       </div>
 
-      <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
-        <modpack-versions
-          :versions="packInstance.versions"
-          :pack-instance="packInstance"
-          :instance="instance"
-          :current="instance.versionId"
-        />
-      </ftb-modal>
+      <find-mods
+        :instance="instance"
+        :goBack="() => (searchingForMods = false)"
+        @modInstalled="getModList"
+        v-if="searchingForMods"
+      />
     </div>
+
+    <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
+      <modpack-versions
+        :versions="packInstance.versions"
+        :pack-instance="packInstance"
+        :instance="instance"
+        :current="instance.versionId"
+      />
+    </ftb-modal>
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal

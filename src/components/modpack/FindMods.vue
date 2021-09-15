@@ -323,6 +323,12 @@ export default class FindMods extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.find-mods {
+  background: rgba(#2a2a2a, 0.95);
+  padding: 1rem;
+  flex: 1;
+}
+
 .stats-bar {
   display: flex;
   justify-content: flex-end;
