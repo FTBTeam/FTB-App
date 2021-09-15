@@ -34,11 +34,11 @@
                 "resizable": true,
                 "desktop_only": true,
                 "size": {
-                    "width": 1460,
+                    "width": 1545,
                     "height": 900
                 },
                 "min_size": {
-                    "width": 1460,
+                    "width": 1545,
                     "height": 900
                 },
                 "block_top_window_navigation": true,

@@ -3,32 +3,44 @@
     <div class="heading">
       <nav>
         <p class="font-bold text-lg mb-4">Helpful links</p>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://discord.gg/RgaAFHs')">
-          <font-awesome-icon :icon="['fab', 'discord']" />
-          Discord
-        </div>
+        <div class="flex">
+          <div
+            class="item up"
+            aria-label="FTB Discord"
+            data-balloon-pos="down-left"
+            @click="() => platform.get.utils.openUrl('https://discord.gg/RgaAFHs')"
+          >
+            <font-awesome-icon :icon="['fab', 'discord']" />
+          </div>
 
-        <div class="item" @click="() => platform.get.utils.openUrl('https://twitter.com/FTB_Team')">
-          <font-awesome-icon :icon="['fab', 'twitter']" />
-          Twitter
-        </div>
+          <div
+            class="item up"
+            aria-label="FTB Twitter"
+            data-balloon-pos="down-left"
+            @click="() => platform.get.utils.openUrl('https://twitter.com/FTB_Team')"
+          >
+            <font-awesome-icon :icon="['fab', 'twitter']" />
+          </div>
 
-        <div class="item" @click="() => platform.get.utils.openUrl('https://twitch.tv/ftb')">
-          <font-awesome-icon :icon="['fab', 'twitch']" />
-          Twitch
-        </div>
-
-        <div class="item" @click="() => platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME')">
-          <font-awesome-icon icon="server" />
-          Order a server
+          <div
+            class="item up"
+            aria-label="FTB Twitch"
+            data-balloon-pos="down-left"
+            @click="() => platform.get.utils.openUrl('https://twitch.tv/ftb')"
+          >
+            <font-awesome-icon :icon="['fab', 'twitch']" />
+          </div>
         </div>
 
         <p class="font-bold text-lg mt-6 mb-2">Support</p>
+        <div class="item" @click="() => platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME')">
+          Order a server from Creeperhost
+        </div>
         <div class="item" @click="() => platform.get.utils.openUrl('https://feed-the-beast.com/support')">
           Need help using the app?
         </div>
         <div class="item" @click="() => platform.get.utils.openUrl('https://github.com/FTBTeam/FTB-App-Feedback')">
-          Report a app bug
+          Report an app bug
         </div>
         <div
           class="item"
@@ -54,7 +66,7 @@
     </div>
 
     <div class="ad-space">
-      <div class="heart text-center  mb-4">
+      <div class="heart text-center mb-4" v-if="!isElectron">
         <div class="heart-hearts">
           <font-awesome-icon icon="heart" size="2x" class="mb-2" />
           <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-2 mb-2" />
@@ -62,17 +74,27 @@
         </div>
         <p class="font-bold">Supports FTB & Curseforge Authors</p>
       </div>
-      <div class="ad-box">
+      <div class="ad-box" :class="{ overwolf: !isElectron }">
         <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">
           <div
-            v-if="!showPlaceholder"
-            :id="`${platform.isElectron() ? 'ad' : 'ow-ad'}`"
+            v-if="!showPlaceholder && !isElectron"
+            id="ow-ad"
             ref="adRef"
             style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
           >
-            <div v-if="platform.isElectron()" id="777249406"></div>
+            <!--            <div v-if="platform.isElectron()" id="777249406"></div>-->
           </div>
-          <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">
+          <video
+            @click="platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME')"
+            class="cursor-pointer"
+            width="400"
+            height="300"
+            autoplay
+            muted
+            loop
+            style="margin: 0 auto"
+            v-if="isElectron"
+          >
             <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
           </video>
         </div>
@@ -80,6 +102,7 @@
       <small
         class="text-xs text-center block cursor-pointer mt-2 text-muted hover:text-white hover:shadow"
         @click="reportAdvert"
+        v-if="!isElectron"
         >Report advert</small
       >
     </div>
@@ -108,6 +131,10 @@ export default class AdAside extends Vue {
   showPlaceholder = false;
 
   private starAPI = (window as any).cpmstarAPI;
+
+  get isElectron() {
+    return platform.isElectron();
+  }
 
   async mounted() {
     // Kinda dirty hack for this file
@@ -251,6 +278,10 @@ export default class AdAside extends Vue {
         cursor: pointer;
         transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
 
+        &.up:hover {
+          transform: translateY(-3px);
+        }
+
         &:hover {
           opacity: 1;
           transform: translateX(5px);
@@ -314,8 +345,15 @@ export default class AdAside extends Vue {
       width: 300px;
       height: 250px;
       overflow: hidden;
+      display: flex;
+      align-items: center;
 
       border-radius: 5px;
+
+      &.overwolf {
+        width: 400px;
+        height: 300px;
+      }
     }
   }
 }
