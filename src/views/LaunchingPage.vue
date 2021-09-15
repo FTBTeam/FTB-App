@@ -42,33 +42,17 @@
     </div>
     <div class="ad-area flex items-center" v-if="advertsEnabled">
       <div class="ad-box">
-        <div class="ad-container">
-          <div
-            v-if="!showPlaceholder"
-            id="ow-ad"
-            ref="ad"
-            style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
-          >
-            <div v-if="platform.isElectron()" id="777249406"></div>
-          </div>
-          <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">
-            <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
-          </video>
-          <span class="text-xs cursor-pointer report-btn opacity-50 hover:opacity-100" @click="reportAdvert"
-            >Report advert</span
-          >
-        </div>
+        <img :src="artSquare" alt="" />
       </div>
       <div class="ad-message flex-1">
-        <font-awesome-icon icon="heart" size="2x" class="mb-2" />
-        <h3 class="text-lg font-bold mb-2">Thanks for your support!</h3>
+        <!--        <font-awesome-icon icon="heart" size="2x" class="mb-2" />-->
+        <h3 class="text-lg font-bold mb-2">{{ instance.name }}</h3>
         <p class="mb-2">
-          We know the ads are a little annoying but for every ad you’re directly supporting the Feed the Beast Team and
-          supporting CurseForge creators!
-        </p>
-        <p class="text-muted italic">
-          Loading the Modpack inside this window, not only supports us, it also speeds up your packs load times! In most
-          of our testing, we’ve seen visible loading time improvements!
+          {{
+            currentModpack.description.length > 260
+              ? currentModpack.description.slice(0, 260) + '...'
+              : currentModpack.description
+          }}
         </p>
       </div>
     </div>
@@ -82,11 +66,11 @@ import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/FTBToggle.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
-import { SettingsState } from '../modules/settings/types';
+import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import ServerCard from '@/components/ServerCard.vue';
 import InstallModal from '@/components/modals/InstallModal.vue';
-import { SocketState } from '../modules/websocket/types';
+import { SocketState } from '@/modules/websocket/types';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
 
@@ -173,58 +157,6 @@ export default class LaunchingPage extends Vue {
     });
   }
 
-  public show300x250() {
-    const el = document.getElementById('ad');
-    this.starAPI({ kind: 'go', module: 'banner300x250', config: { target: { el, kind: 'replace' } } });
-  }
-
-  public addAdvert() {
-    try {
-      this.starAPI((api: { game: { setTarget: (e: unknown) => void } }) => {
-        api.game.setTarget(document.getElementById('ad'));
-      });
-      this.starAPI({
-        kind: 'game.createInterstitial',
-        fail: () => {
-          console.log('API was blocked or failed to load');
-          this.showPlaceholder = true;
-        },
-      });
-      this.starAPI({
-        kind: 'game.displayInterstitial',
-        onAdOpened() {
-          console.log('Interstitial opened');
-        },
-        onAdClosed: () => {
-          this.show300x250();
-        },
-        fail: () => {
-          this.show300x250();
-        },
-      });
-    } catch (error) {
-      this.showPlaceholder = true;
-    }
-  }
-
-  public reportAdvert() {
-    const el = document.getElementById('banner300x250');
-    if (!el) {
-      this.showPlaceholder = true;
-      return;
-    }
-    // TODO: Fix
-    const adHTML = (el.children[0] as any).contentDocument.body.innerHTML;
-    this.starAPI((api: { game: { setTarget: (e: unknown) => void } }) => {
-      api.game.setTarget(null);
-    });
-    el.innerHTML = '';
-    this.ad = null;
-    (window as any).ad = null;
-    this.showPlaceholder = true;
-    this.reportAd({ object: '', html: adHTML });
-  }
-
   public async mounted() {
     if (this.instance == null) {
       return null;
@@ -232,11 +164,6 @@ export default class LaunchingPage extends Vue {
     await this.fetchModpack(this.instance?.id);
     if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
       this.loading = false;
-    }
-    if (this.advertsEnabled) {
-      setTimeout(() => {
-        this.addAdvert();
-      }, 500);
     }
   }
 
@@ -295,6 +222,16 @@ export default class LaunchingPage extends Vue {
       : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
 
+  get artSquare() {
+    if (!this.currentModpack?.art) {
+      return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+    }
+
+    return this.currentModpack.art.filter(art => art.type === 'square').length > 0
+      ? this.currentModpack.art.filter(art => art.type === 'square')[0].url
+      : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+  }
+
   public screenshotToBase64(url: string) {
     return new Promise((resolve, reject) => {
       let canvas = document.createElement('canvas');
@@ -325,7 +262,7 @@ export default class LaunchingPage extends Vue {
 .pack-loading {
   .loading-area {
     background-repeat: no-repeat;
-    background-size: 100%;
+    background-size: auto 100%;
 
     .loading-container {
       background: rgba(black, 0.7);
@@ -363,6 +300,12 @@ export default class LaunchingPage extends Vue {
 
     .ad-box {
       margin-right: 2rem;
+
+      img {
+        width: 200px;
+        height: 200px;
+        border-radius: 5px;
+      }
 
       .ad-container {
         position: relative;
