@@ -44,11 +44,11 @@
     <div class="meta">
       <div class="field">
         <div class="head">UI Version</div>
-        <div class="value">{{ uiVersion }}</div>
+        <div class="value copyable">{{ uiVersion }}</div>
       </div>
       <div class="field">
         <div class="head">Subprocess Version</div>
-        <div class="value">{{ appVersion }}</div>
+        <div class="value copyable">{{ appVersion }}</div>
       </div>
     </div>
   </div>
@@ -147,5 +147,9 @@ export default class SettingsSidebar extends Vue {
       }
     }
   }
+}
+
+.copyable {
+  user-select: text;
 }
 </style>
