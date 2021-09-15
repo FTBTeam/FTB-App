@@ -139,20 +139,20 @@ export default class AdAside extends Vue {
   async mounted() {
     // Kinda dirty hack for this file
     if (this.platform.isElectron()) {
-      if (this.advertsEnabled) {
-        setTimeout(() => {
-          this.addAdvert();
-          // this.ad.addEventListener('error', () => {
-          //   this.showPlaceholder = true;
-          // });
-          // this.ad.addEventListener('impression', () => {
-          //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`);
-          // });
-          // this.ad.addEventListener('display_ad_loaded', () => {
-          //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`);
-          // });
-        }, 500);
-      }
+      // if (this.advertsEnabled) {
+      //   setTimeout(() => {
+      //     this.addAdvert();
+      //     // this.ad.addEventListener('error', () => {
+      //     //   this.showPlaceholder = true;
+      //     // });
+      //     // this.ad.addEventListener('impression', () => {
+      //     //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`);
+      //     // });
+      //     // this.ad.addEventListener('display_ad_loaded', () => {
+      //     //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`);
+      //     // });
+      //   }, 500);
+      // }
     } else {
       setTimeout(() => {
         console.log('Loading advert');
