@@ -114,24 +114,25 @@
                 </div>
               </ul>
             </div>
-            <div class="flex-1 h-full flex flex-col">
-              <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">
-                <div
-                  v-if="!showPlaceholder"
-                  :id="`${platform.isElectron() ? 'ad' : 'ow-ad'}`"
-                  ref="adRef"
-                  style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
-                >
-                  <div v-if="platform.isElectron()" id="777249406"></div>
-                </div>
-                <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">
-                  <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
-                </video>
-                <span class="ml-auto mr-auto text-xs cursor-pointer" style="padding-left: 315px" @click="reportAdvert"
-                  >Report advert</span
-                >
-              </div>
-            </div>
+            <!-- No ad needed atm // @michaelhillcox -->
+            <!--            <div class="flex-1 h-full flex flex-col">-->
+            <!--              <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">-->
+            <!--                <div-->
+            <!--                  v-if="!showPlaceholder"-->
+            <!--                  :id="`${platform.isElectron() ? 'ad' : 'ow-ad'}`"-->
+            <!--                  ref="adRef"-->
+            <!--                  style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"-->
+            <!--                >-->
+            <!--                  <div v-if="platform.isElectron()" id="777249406"></div>-->
+            <!--                </div>-->
+            <!--                <video width="400" height="300" autoplay muted loop style="margin: 0 auto" v-if="showPlaceholder">-->
+            <!--                  <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />-->
+            <!--                </video>-->
+            <!--                <span class="ml-auto mr-auto text-xs cursor-pointer" style="padding-left: 315px" @click="reportAdvert"-->
+            <!--                  >Report advert</span-->
+            <!--                >-->
+            <!--              </div>-->
+            <!--            </div>-->
           </div>
         </div>
       </div>
@@ -146,12 +147,12 @@ import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/FTBToggle.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import FTBModal from '@/components/FTBModal.vue';
-import { shuffle } from '../utils';
-import { SettingsState } from '../modules/settings/types';
+import { shuffle } from '@/utils';
+import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import ServerCard from '@/components/ServerCard.vue';
 import InstallModal from '@/components/modals/InstallModal.vue';
-import { SocketState } from '../modules/websocket/types';
+import { SocketState } from '@/modules/websocket/types';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
 
@@ -247,63 +248,63 @@ export default class InstallingPage extends Vue {
     // this.$router.push({name: 'browseModpacks', params: {search: tagName}});
   }
 
-  public show300x250() {
-    const el = document.getElementById('ad');
-    this.starAPI({ kind: 'go', module: 'banner300x250', config: { target: { el, kind: 'replace' } } });
-  }
+  // public show300x250() {
+  //   const el = document.getElementById('ad');
+  //   this.starAPI({ kind: 'go', module: 'banner300x250', config: { target: { el, kind: 'replace' } } });
+  // }
 
-  public addAdvert() {
-    try {
-      this.starAPI((api: { game: { setTarget: (e: unknown) => void } }) => {
-        api.game.setTarget(document.getElementById('ad'));
-      });
-      // @ts-ignore
-      this.starAPI({
-        kind: 'game.createInterstitial',
-        fail: () => {
-          console.log('API was blocked or failed to load');
-          this.showPlaceholder = true;
-        },
-      });
-      // @ts-ignore
-      this.starAPI({
-        kind: 'game.displayInterstitial',
-        onAdOpened() {
-          console.log('Interstitial opened');
-        },
-        onAdClosed: () => {
-          this.show300x250();
-        },
-        fail: () => {
-          this.show300x250();
-        },
-      });
-    } catch (error) {
-      this.showPlaceholder = true;
-    }
-  }
+  // public addAdvert() {
+  //   try {
+  //     this.starAPI((api: { game: { setTarget: (e: unknown) => void } }) => {
+  //       api.game.setTarget(document.getElementById('ad'));
+  //     });
+  //     // @ts-ignore
+  //     this.starAPI({
+  //       kind: 'game.createInterstitial',
+  //       fail: () => {
+  //         console.log('API was blocked or failed to load');
+  //         this.showPlaceholder = true;
+  //       },
+  //     });
+  //     // @ts-ignore
+  //     this.starAPI({
+  //       kind: 'game.displayInterstitial',
+  //       onAdOpened() {
+  //         console.log('Interstitial opened');
+  //       },
+  //       onAdClosed: () => {
+  //         this.show300x250();
+  //       },
+  //       fail: () => {
+  //         this.show300x250();
+  //       },
+  //     });
+  //   } catch (error) {
+  //     this.showPlaceholder = true;
+  //   }
+  // }
+  //
+  // public reportAdvert() {
+  //   const el = document.getElementById('banner300x250');
+  //   if (!el) {
+  //     this.showPlaceholder = true;
+  //     return;
+  //   }
+  //   // @ts-ignore
+  //   const adHTML = el.children[0].contentDocument.body.innerHTML;
+  //   // @ts-ignore
+  //   this.starAPI(api => {
+  //     api.game.setTarget(null);
+  //   });
+  //   el.innerHTML = '';
+  //   this.ad = null;
+  //   // @ts-ignore
+  //   window.ad = null;
+  //   this.showPlaceholder = true;
+  //   this.reportAd({ object: '', html: adHTML });
+  // }
 
-  public reportAdvert() {
-    const el = document.getElementById('banner300x250');
-    if (!el) {
-      this.showPlaceholder = true;
-      return;
-    }
-    // @ts-ignore
-    const adHTML = el.children[0].contentDocument.body.innerHTML;
-    // @ts-ignore
-    this.starAPI(api => {
-      api.game.setTarget(null);
-    });
-    el.innerHTML = '';
-    this.ad = null;
-    // @ts-ignore
-    window.ad = null;
-    this.showPlaceholder = true;
-    this.reportAd({ object: '', html: adHTML });
-  }
-
-  private async mounted() {
+  async mounted() {
     const packID: number = parseInt(this.$route.query.modpackid as string, 10);
     const packType: number = parseInt(this.$route.query.type as string, 10);
     packType == 0 ? await this.fetchModpack(packID) : await this.fetchCursepack(packID);
@@ -403,59 +404,59 @@ export default class InstallingPage extends Vue {
       });
     }
     // Kinda dirty hack for this file
-    if (this.platform.isElectron()) {
-      if (this.advertsEnabled) {
-        setTimeout(() => {
-          this.addAdvert();
-          // this.ad.addEventListener('error', () => {
-          //   this.showPlaceholder = true;
-          // });
-          // this.ad.addEventListener('impression', () => {
-          //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`);
-          // });
-          // this.ad.addEventListener('display_ad_loaded', () => {
-          //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`);
-          // });
-        }, 500);
-      }
-    } else {
-      setTimeout(() => {
-        console.log('Loading advert');
-        //@ts-ignore
-        if (!OwAd) {
-          this.showPlaceholder = true;
-          console.log('No advert loaded');
-        } else {
-          //@ts-ignore
-          if (window.ad) {
-            console.log('Is window advert');
-            //@ts-ignore
-            this.ad = window.ad;
-            this.ad.refreshAd();
-          } else {
-            console.log('Created advert');
-            //@ts-ignore
-            this.ad = new OwAd(document.getElementById('ow-ad'));
-            //@ts-ignore
-            window.ad = this.ad;
-          }
-          this.ad.addEventListener('error', () => {
-            this.showPlaceholder = true;
-          });
-          this.ad.addEventListener('impression', () => {
-            fetch(
-              `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`,
-            );
-          });
-          this.ad.addEventListener('display_ad_loaded', () => {
-            fetch(
-              `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`,
-            );
-          });
-          //@ts-ignore
-        }
-      }, 500);
-    }
+    // if (this.platform.isElectron()) {
+    //   if (this.advertsEnabled) {
+    //     setTimeout(() => {
+    //       this.addAdvert();
+    //       // this.ad.addEventListener('error', () => {
+    //       //   this.showPlaceholder = true;
+    //       // });
+    //       // this.ad.addEventListener('impression', () => {
+    //       //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`);
+    //       // });
+    //       // this.ad.addEventListener('display_ad_loaded', () => {
+    //       //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`);
+    //       // });
+    //     }, 500);
+    //   }
+    // } else {
+    //   setTimeout(() => {
+    //     console.log('Loading advert');
+    //     //@ts-ignore
+    //     if (!OwAd) {
+    //       this.showPlaceholder = true;
+    //       console.log('No advert loaded');
+    //     } else {
+    //       //@ts-ignore
+    //       if (window.ad) {
+    //         console.log('Is window advert');
+    //         //@ts-ignore
+    //         this.ad = window.ad;
+    //         this.ad.refreshAd();
+    //       } else {
+    //         console.log('Created advert');
+    //         //@ts-ignore
+    //         this.ad = new OwAd(document.getElementById('ow-ad'));
+    //         //@ts-ignore
+    //         window.ad = this.ad;
+    //       }
+    //       this.ad.addEventListener('error', () => {
+    //         this.showPlaceholder = true;
+    //       });
+    //       this.ad.addEventListener('impression', () => {
+    //         fetch(
+    //           `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`,
+    //         );
+    //       });
+    //       this.ad.addEventListener('display_ad_loaded', () => {
+    //         fetch(
+    //           `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`,
+    //         );
+    //       });
+    //       //@ts-ignore
+    //     }
+    //   }, 500);
+    // }
     setInterval(() => {
       if (this.modpacks.installing !== null && this.files.length > 0 && !this.steps.FINISHED.done) {
         const list: Element = this.$refs.modList as Element;
