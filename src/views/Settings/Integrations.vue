@@ -41,8 +41,8 @@
       </div>
     </div>
 
-    <h3 class="text-xl font-bold mb-4">Available integrations</h3>
-    <div class="integrations">
+    <h3 class="text-xl font-bold mb-4" v-if="auth.token === null">Available integrations</h3>
+    <div class="integrations" v-if="auth.token === null">
       <div class="card" :class="{ disabled: auth.token !== null || auth.loggingIn }">
         <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
         <div class="main">
