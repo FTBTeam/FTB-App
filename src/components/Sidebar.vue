@@ -34,11 +34,14 @@
           <!--          <div class="flex flex-col">-->
           <span
             >{{
-              auth.token.mc !== undefined && auth.token.mc.display !== null
+              typeof auth.token.mc !== 'undefined' && auth.token.mc.display !== null
                 ? auth.token.mc.display.split('#')[0]
                 : auth.token.username
             }}
-            #{{ auth.token.mc.display.split('#')[1] }}
+            #
+            <p class="inline-block" v-if="typeof auth.token.mc !== 'undefined'">
+              {{ auth.token.mc.display.split('#')[1] }}
+            </p>
           </span>
           <!--            <span v-if="auth.token.mc !== undefined && auth.token.mc.display !== null" class="text-xs opacity-50 hash"-->
           <!--              >#{{ auth.token.mc.display.split('#')[1] }}</span-->
