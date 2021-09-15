@@ -47,13 +47,12 @@
         </div>
       </router-link>
     </div>
-    <div aria-label="Setup a server with Creeperhost" data-balloon-pos="right" class="w-full">
+    <div aria-label="Setup a server with Creeperhost" data-balloon-pos="right" class="w-full" @click="openPromo()">
       <img
         src="../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
         draggable="false"
-        @click="openPromo()"
       />
     </div>
   </div>
