@@ -141,4 +141,9 @@ public class DownloadTask implements IInstallTask<Void>
         double returnVal = Math.round((initPercent * 100d) * 100d) / 100d;
         return Math.min(returnVal, 100.00d);
     }
+
+  public IProgressUpdater getWatcher()
+  {
+    return watcher;
+  }
 }
