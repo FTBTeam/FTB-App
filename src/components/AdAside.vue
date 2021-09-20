@@ -8,7 +8,7 @@
             class="item up"
             aria-label="FTB Discord"
             data-balloon-pos="down-left"
-            @click="() => platform.get.utils.openUrl('https://discord.gg/RgaAFHs')"
+            @click="() => platform.get.utils.openUrl('https://ftb.team/discord')"
           >
             <font-awesome-icon :icon="['fab', 'discord']" />
           </div>
