@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
@@ -14,6 +15,8 @@ import net.creeperhost.creeperlauncher.mod.Mod;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.LoaderTarget;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -21,8 +24,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-public class InstanceInstallModHandler implements IMessageHandler<InstanceInstallModData> {
-    @Override
+public class InstanceInstallModHandler implements IMessageHandler<InstanceInstallModData> 
+{
+  private static final Logger LOGGER = LogManager.getLogger();
+
+  @Override
     public void handle(InstanceInstallModData data) {
         String _uuid = data.uuid;
         UUID uuid = UUID.fromString(_uuid);
@@ -82,8 +88,8 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
 
         for(Mod.Version ver: filesToDownload) {
             DownloadableFile downloadableFile = ver.getDownloadableFile(instance);
-            fileTracker.put(downloadableFile, new ProgressTracker(downloadableFile));
-            DownloadTask downloadTask = new DownloadTask(downloadableFile, downloadableFile.getPath());
+            DownloadTask downloadTask = new DownloadTask(downloadableFile, downloadableFile.getPath(), new ProgressTracker(downloadableFile));
+            fileTracker.put(downloadableFile, (ProgressTracker) downloadTask.getWatcher());
             downloadTasks.add(downloadTask);
         }
 
@@ -117,9 +123,9 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
             {
                 speed = lastSpeed;
             }
-
+            
             Settings.webSocketAPI.sendMessage(
-                    new InstanceInstallModData.Progress(
+              new InstanceInstallModData.Progress(
                             data,
                             (double) ((curBytes / totalBytes) * 100),
                             speed,
@@ -130,23 +136,23 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         }, 0, 500, TimeUnit.MILLISECONDS);
 
         CompletableFuture.allOf(downloadTasks.stream().map(DownloadTask::execute).collect(Collectors.toList()).toArray(new CompletableFuture[downloadTasks.size()])).thenRunAsync(() ->
-                {
-                    progressTask.cancel(false);
-                    executor.shutdown();
-                    try {
-                        instance.setModified(true);
-                        instance.saveJson();
-                    } catch(Exception ignored) {} //TODO: We REALLY need to stop ignoring these...
-                    Settings.webSocketAPI.sendMessage(
-                            new InstanceInstallModData.Reply(
-                                    data,
-                                    "success",
-                                    "Downloaded successfully",
-                                    finalDependencies
-                            )
-                    );
-                }
-            );
+          {
+              progressTask.cancel(false);
+              executor.shutdown();
+              try {
+                  instance.setModified(true);
+                  instance.saveJson();
+              } catch(Exception ignored) {} //TODO: We REALLY need to stop ignoring these...
+              Settings.webSocketAPI.sendMessage(
+                      new InstanceInstallModData.Reply(
+                              data,
+                              "success",
+                              "Downloaded successfully",
+                              finalDependencies
+                      )
+              );
+          }
+      );
     }
 
     class ProgressTracker implements IProgressUpdater {
