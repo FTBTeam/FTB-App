@@ -55,7 +55,7 @@
         </p>
       </div>
       <ftb-button
-        class="py-2 px-4 my-2 w-1/5 inline-block"
+        class="py-2 px-4 my-2 w-2/7 inline-block whitespace-no-wrap"
         color="info"
         css-class="text-center text-l"
         @click="uploadLogData"
@@ -72,7 +72,7 @@
         </p>
       </div>
       <ftb-button
-        class="py-2 px-4 my-2 w-1/5 inline-block"
+        class="py-2 px-4 my-2 w-2/7 inline-block"
         color="info"
         css-class="text-center text-l"
         @click="refreshCachePlz"

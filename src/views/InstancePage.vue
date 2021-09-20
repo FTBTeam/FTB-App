@@ -183,6 +183,15 @@
         </div>
       </div>
 
+      <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
+        <modpack-versions
+          :versions="packInstance.versions"
+          :pack-instance="packInstance"
+          :instance="instance"
+          :current="instance.versionId"
+        />
+      </ftb-modal>
+
       <find-mods
         :instance="instance"
         :goBack="() => (searchingForMods = false)"
@@ -190,15 +199,6 @@
         v-if="searchingForMods"
       />
     </div>
-
-    <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
-      <modpack-versions
-        :versions="packInstance.versions"
-        :pack-instance="packInstance"
-        :instance="instance"
-        :current="instance.versionId"
-      />
-    </ftb-modal>
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal
@@ -743,9 +743,15 @@ export default class InstancePage extends Vue {
         }
       }
 
+      .back,
+      .meta {
+        flex: 1;
+      }
+
       .meta {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         transition: opacity 0.25s ease-in-out;
 
         .icon {

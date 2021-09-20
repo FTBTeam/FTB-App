@@ -35,6 +35,7 @@ export default class FTBModal extends Vue {
 .ftb-modal {
   position: fixed;
   z-index: 500;
+  background: rgba(black, 0.85);
 }
 
 .fade-enter-active,
