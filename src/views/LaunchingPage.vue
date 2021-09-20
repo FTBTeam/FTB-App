@@ -271,6 +271,7 @@ export default class LaunchingPage extends Vue {
       .loading-info {
         .bars {
           width: 580px;
+          margin: 0 auto 3rem auto;
 
           .bar {
             overflow: hidden;

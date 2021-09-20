@@ -230,7 +230,6 @@ export default class AdAside extends Vue {
   }
 
   get advertsEnabled(): boolean {
-    console.log(this.settings);
     return (
       this.settings?.settings?.showAdverts === true ||
       this.settings?.settings?.showAdverts === 'true' ||
