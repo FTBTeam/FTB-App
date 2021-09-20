@@ -178,16 +178,11 @@ export default class AdAside extends Vue {
             this.showPlaceholder = true;
           });
           this.ad.addEventListener('impression', () => {
-            fetch(
-              `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`,
-            );
+            fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
           });
           this.ad.addEventListener('display_ad_loaded', () => {
-            fetch(
-              `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`,
-            );
+            fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
           });
-          //@ts-ignore
         }
       }, 500);
     }
