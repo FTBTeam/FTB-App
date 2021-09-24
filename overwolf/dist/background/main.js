@@ -4,8 +4,8 @@ async function blah() {
   let versionObj = await raw.json();
   versionData = versionObj;
   const version = versionObj.jarVersion;
-  var plugin = new OverwolfPlugin("FTBOverwolfShim", true);
-  let status = await p(plugin.initialize);
+  var plugin = new OverwolfPlugin('FTBOverwolfShim', true);
+  let status = await p(plugin.initialize).catch(e => console.log(e));
   if (status == false) {
     console.error("Plugin couldn't be loaded??");
     return;
@@ -13,11 +13,11 @@ async function blah() {
 
   plugin.get().onData.addListener(({ error, output }) => {
     if (error) {
-      if(error.indexOf('New Port:') !== -1) {
+      if (error.indexOf('New Port:') !== -1) {
         let port = error.substring(error.indexOf('New Port:') + 'New Port:'.length).trim();
         websocketPort = Number(port);
-        console.log("Set new port", port, websocketPort);
-        if(newWebsocketCallback) {
+        console.log('Set new port', port, websocketPort);
+        if (newWebsocketCallback) {
           newWebsocketCallback(websocketPort, secret === undefined, secret, dev);
         }
       }
@@ -137,7 +137,7 @@ async function openWebserver(authDataCallback) {
 }
 
 const dev = false; // todo: get from overwolf, but only used for launch java currently anyway
-blah();
+blah().catch(e => console.log(e));
 
 async function p(func, ...args) {
   return new Promise((acc, rej) => {

@@ -97,9 +97,9 @@ import PackCardList from '@/components/packs/PackCardList.vue';
 import FTBButton from '@/components/FTBButton.vue';
 import Loading from '@/components/Loading.vue';
 import { Action, State } from 'vuex-class';
-import { SettingsState } from '../modules/settings/types';
-import { DiscoveryState } from '../modules/discovery/types';
-import { ModPack, ModPackLink } from '../modules/modpacks/types';
+import { SettingsState } from '@/modules/settings/types';
+import { DiscoveryState } from '@/modules/discovery/types';
+import { ModPack, ModPackLink } from '@/modules/modpacks/types';
 
 interface ModPackVideo {
   [index: number]: ModPackLink;

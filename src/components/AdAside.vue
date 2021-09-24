@@ -75,7 +75,7 @@
         <p class="font-bold">Supports FTB & Curseforge Authors</p>
       </div>
       <div class="ad-box" :class="{ overwolf: !isElectron }">
-        <div class="flex flex-col w-full mt-auto mb-auto" v-if="advertsEnabled">
+        <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
             v-if="!showPlaceholder && !isElectron"
             id="ow-ad"
@@ -171,11 +171,27 @@ export default class AdAside extends Vue {
             console.log('Created advert');
             //@ts-ignore
             this.ad = new OwAd(document.getElementById('ow-ad'));
+            console.log(this.ad, document.getElementById('ow-ad'));
+
             //@ts-ignore
             window.ad = this.ad;
           }
-          this.ad.addEventListener('error', () => {
+          this.ad.addEventListener('error', (error: any) => {
             this.showPlaceholder = true;
+            console.log('Failed to load ad');
+            console.log(error);
+          });
+          this.ad.addEventListener('player_loaded', () => {
+            console.log('player loaded for overwolf');
+          });
+          this.ad.addEventListener('display_ad_loaded', () => {
+            console.log('display_ad_loaded overwolf');
+          });
+          this.ad.addEventListener('play', () => {
+            console.log('play overwolf');
+          });
+          this.ad.addEventListener('complete', () => {
+            console.log('complete ads for overwolf');
           });
           this.ad.addEventListener('impression', () => {
             fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
@@ -184,7 +200,7 @@ export default class AdAside extends Vue {
             fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
           });
         }
-      }, 500);
+      }, 1500); // Wait 1.5 seconds
     }
   }
 
@@ -225,12 +241,14 @@ export default class AdAside extends Vue {
   }
 
   get advertsEnabled(): boolean {
-    return (
-      this.settings?.settings?.showAdverts === true ||
-      this.settings?.settings?.showAdverts === 'true' ||
-      this.auth?.token?.activePlan === null
-    );
+    if (this.auth?.token?.activePlan === null) {
+      return true;
+    }
+
+    // If this fails, show the ads
+    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
   }
+
   public reportAdvert() {
     const el = document.getElementById('banner300x250');
     if (!el) {
