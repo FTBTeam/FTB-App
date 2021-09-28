@@ -134,7 +134,7 @@
 </template>
 
 <script lang="ts">
-import { Instance, ModPack } from '@/modules/modpacks/types';
+import { Instance } from '@/modules/modpacks/types';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
@@ -171,7 +171,6 @@ export default class ModpackSettings extends Vue {
   @Action('saveInstance', { namespace: 'modpacks' }) public saveInstance: any;
   @Action('showAlert') public showAlert: any;
 
-  @Prop() packInstance!: ModPack;
   @Prop() instance!: Instance;
 
   localInstance: Instance = {} as Instance;

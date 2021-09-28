@@ -15,3 +15,40 @@ body {
   color: var(--color-text);
   height: 100%;
 }
+
+.pack-page {
+  position: relative;
+  z-index: 1;
+
+  .pack-page-contents {
+    position: relative;
+    background-attachment: fixed;
+    min-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+
+    > header {
+      position: relative;
+      backdrop-filter: blur(5px);
+
+      .beta-tag {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        background-color: rgba(234, 32, 32, 0.89);
+        font-size: 0.75rem;
+        font-weight: bold;
+      }
+    }
+
+    .body {
+      flex: 1;
+      background: rgba(#2a2a2a, 0.9);
+      backdrop-filter: blur(8px);
+      transition: background-color 0.25s ease-in-out;
+
+      &.settings-open {
+        background-color: var(--color-background);
+      }
+    }
+  }
+}

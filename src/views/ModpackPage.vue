@@ -1,250 +1,267 @@
 <template>
-  <div class="flex flex-1 flex-col h-full overflow-hidden">
-    <div class="flex flex-col h-full" v-if="!loading && currentModpack !== null" key="main-window">
-      <div>
-        <div
-          class="header-image"
-          v-bind:style="{
-            'background-image': `url(${
-              currentModpack.art.filter(art => art.type === 'splash').length > 0
-                ? currentModpack.art.filter(art => art.type === 'splash')[0].url
-                : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'
-            })`,
-          }"
-        >
-          <span class="instance-name"
-            ><ftb-button
-              class=""
-              color=""
-              css-class="text-center backbtn py-2 rounded"
-              :disabled="modpacks.installing !== null"
-              @click="goBack"
-              ><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button
-          ></span>
+  <div class="pack-container">
+    <div class="pack-page">
+      <div
+        class="pack-page-contents"
+        v-if="!loading && currentModpack"
+        :style="{
+          'background-image': `url(${packSplashArt})`,
+        }"
+      >
+        <header>
+          <!--          TODO: fix isForgePack-->
+          <pack-meta-heading
+            @back="$router.back()"
+            :hidePackDetails="false"
+            versionType="release"
+            :instance="currentModpack"
+            :isForgePack="true"
+          />
 
-          <span class="instance-name text-4xl">{{ currentModpack.name }}</span>
-          <span class="instance-info">
-            <small>
-              <em>{{ currentModpack.synopsis }}</em>
-            </small>
-            <div v-if="currentModpack.tags" class="flex flex-row items-center">
-              <div class="flex flex-row">
-                <span
-                  v-for="(tag, i) in limitedTags"
-                  :key="`tag-${i}`"
-                  @click="clickTag(tag.name)"
-                  class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                  style="font-variant: small-caps;"
-                  >{{ tag.name }}</span
-                >
-                <span
-                  v-if="currentModpack.tags.length > 5"
-                  :key="`tag-more`"
-                  class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                  style="font-variant: small-caps;"
-                  >+{{ currentModpack.tags.length - 5 }}</span
-                >
-              </div>
-            </div>
-          </span>
-          <div class="update-bar" v-if="currentModpack && currentModpack.notification">
-            {{ currentModpack.notification }}
-          </div>
-          <div class="instance-buttons flex flex-row frosted-glass">
-            <div class="instance-button mr-1">
-              <ftb-button
-                class="py-2 px-4"
-                color="primary"
-                css-class="text-center text-l"
-                @click="install(currentModpack.versions[0].id)"
-                :disabled="modpacks.installing !== null"
-              >
-                <font-awesome-icon icon="download" size="1x" />
-                Install
-              </ftb-button>
-              <!--              <button-->
-              <!--                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center"-->
-              <!--                  @click="install(currentModpack.versions[0].id)"-->
-              <!--              >-->
-              <!--                <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>-->
-              <!--              </button>-->
-            </div>
-            <div class="instance-button mr-1">
-              <div class="text-white-500 py-2 px-4 inline-flex items-center" title="Install count">
-                <font-awesome-icon icon="arrow-down" size="1x" />&nbsp;
-                <small class="ml-2 text-gray-400">{{ currentModpack.installs | formatNumber }}</small>
-              </div>
-            </div>
-            <div class="instance-button mr-1">
-              <div class="text-white-500 py-2 px-4 inline-flex items-center" title="Play count">
-                <font-awesome-icon icon="gamepad" size="1x" />&nbsp;
-                <small class="ml-2 text-gray-400">{{ currentModpack.plays | formatNumber }}</small>
-              </div>
-            </div>
-          </div>
+          <pack-title-header :pack-instance="currentModpack" :pack-name="currentModpack.name" />
+        </header>
+
+        <div class="body">
+          <!--          TODO: fix mod list-->
+          <pack-tabs-body
+            @mainAction="showInstallBox = true"
+            @update="() => {}"
+            @getModList="() => {}"
+            @searchForMods="() => {}"
+            @tabChange="e => (activeTab = e)"
+            @showVersion="showVersions = true"
+            :searchingForMods="false"
+            :active-tab="activeTab"
+            :isInstalled="false"
+            :instance="null"
+            :mods="modlist ? modlist : []"
+            :pack-instance="currentModpack"
+            :isLatestVersion="true"
+            :updating-mod-list="false"
+          />
         </div>
       </div>
-      <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col">
-        <ul
-          class="flex p-2 pb-0"
-          style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;"
-          v-if="modpacks.installing === null"
-        >
-          <li class="-mb-px mr-1">
-            <a
-              class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('overview')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('overview'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('overview'),
-              }"
-              href="#overview"
-            >
-              Overview
-            </a>
-          </li>
-          <li class="-mb-px mr-1">
-            <a
-              class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('versions')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('versions'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('versions'),
-              }"
-              href="#versions"
-            >
-              Versions
-            </a>
-          </li>
-          <li class="-mb-px mr-1">
-            <a
-              class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
-              @click.prevent="setActiveTab('multiplayer')"
-              :class="{
-                'border-l border-t border-r border-navbar': isTabActive('multiplayer'),
-                'text-gray-600 hover:text-gray-500': !isTabActive('multiplayer'),
-              }"
-              href="#multiplayer"
-            >
-              Multiplayer
-            </a>
-          </li>
-        </ul>
+    </div>
+    <div class="flex flex-1 flex-col h-full overflow-hidden">
+      <div class="flex flex-col h-full" v-if="!loading && currentModpack !== null" key="main-window">
+        <div>
+          <div
+            class="header-image"
+            v-bind:style="{
+              'background-image': `url(${
+                currentModpack.art.filter(art => art.type === 'splash').length > 0
+                  ? currentModpack.art.filter(art => art.type === 'splash')[0].url
+                  : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'
+              })`,
+            }"
+          >
+            <span class="instance-name"
+              ><ftb-button
+                class=""
+                color=""
+                css-class="text-center backbtn py-2 rounded"
+                :disabled="modpacks.installing !== null"
+                @click="$router.back()"
+                ><font-awesome-icon icon="arrow-left" size="1x"/></ftb-button
+            ></span>
 
-        <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
-          <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
-            <div class="flex flex-wrap" v-if="currentModpack != null">
-              <VueShowdown :markdown="currentModpack.description" :extensions="['classMap', 'attribMap', 'newLine']" />
+            <span class="instance-name text-4xl">{{ currentModpack.name }}</span>
+            <span class="instance-info">
+              <small>
+                <em>{{ currentModpack.synopsis }}</em>
+              </small>
+              <div v-if="currentModpack.tags" class="flex flex-row items-center">
+                <div class="flex flex-row">
+                  <span
+                    v-if="currentModpack.tags.length > 5"
+                    :key="`tag-more`"
+                    class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
+                    style="font-variant: small-caps;"
+                    >+{{ currentModpack.tags.length - 5 }}</span
+                  >
+                </div>
+              </div>
+            </span>
+            <div class="update-bar" v-if="currentModpack && currentModpack.notification">
+              {{ currentModpack.notification }}
             </div>
-
-            <!-- <div class="versions" v-if="currentModpack != null && currentModpack.versions != null">
-          <div v-for="(version, index) in currentModpack.versions" v-bind:key="index">
-            {{version.name}}
-
-            <span class="inline-flex bg-blue-600 text-white rounded-full h-6 px-3 justify-center items-center" v-if="version.type == 'Beta'">{{version.type}}</span>
-            <span class="inline-flex bg-green-600 text-white rounded-full h-6 px-3 justify-center items-center" v-if="version.type == 'Release'">{{version.type}}</span>
-
-            </div>-->
-            <!-- </div> -->
-          </div>
-          <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
-            <div v-for="(version, index) in currentModpack.versions" :key="index">
-              <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
-                <p>{{ currentModpack.name }} - {{ version.name }}</p>
-                <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"
-                  ><font-awesome-icon
-                    :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'"
-                    class="cursor-pointer"
-                    size="1x"
-                  />
-                  Changelog</span
-                >
+            <div class="instance-buttons flex flex-row frosted-glass">
+              <div class="instance-button mr-1">
                 <ftb-button
-                  class="py-2 px-4 ml-auto"
+                  class="py-2 px-4"
                   color="primary"
                   css-class="text-center text-l"
-                  @click="install(version.id)"
+                  @click="install(currentModpack.versions[0].id)"
                   :disabled="modpacks.installing !== null"
                 >
                   <font-awesome-icon icon="download" size="1x" />
                   Install
                 </ftb-button>
-                <!--                <button-->
-                <!--                    class="bg-blue-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"-->
-                <!--                    @click="install(version.id)"-->
-                <!--                >-->
-                <!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>-->
-                <!--                </button>-->
-                <v-selectmenu
-                  :title="false"
-                  :query="false"
-                  :data="serverDownloadMenu(version.id)"
-                  align="right"
-                  type="regular"
-                >
-                  <ftb-button class="py-2 px-4 ml-5" color="info" css-class="text-center text-l">
-                    <font-awesome-icon icon="download" size="1x" />
-                    Download Server
-                  </ftb-button>
-                  <!--                  <button type="button" class="bg-orange-500 hover:bg-orange-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer"><span><font-awesome-icon icon="download" size="1x"/> Download Server</span></button>-->
-                </v-selectmenu>
-                <!--                <button @click="downloadServer"-->
-                <!--                        class="bg-orange-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer">-->
-                <!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> Download Server</span>-->
-                <!--                </button>-->
+                <!--              <button-->
+                <!--                  class="bg-green-500 hover:bg-green-400 text-white-600 font-bold py-2 px-4 inline-flex items-center"-->
+                <!--                  @click="install(currentModpack.versions[0].id)"-->
+                <!--              >-->
+                <!--                <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>-->
+                <!--              </button>-->
               </div>
-              <div class="pl-5 bg-background" v-if="activeChangelog === version.id">
-                <!--                <code class="p-0">-->
-                <!--                  {{changelogs[version.id]}}-->
-                <!--                </code>-->
-                <VueShowdown
-                  v-if="changelogs[version.id]"
-                  :markdown="changelogs[version.id]"
-                  :extensions="['classMap', 'newLine']"
-                />
-                <p v-else>No changelog available</p>
+              <div class="instance-button mr-1">
+                <div class="text-white-500 py-2 px-4 inline-flex items-center" title="Install count">
+                  <font-awesome-icon icon="arrow-down" size="1x" />&nbsp;
+                  <small class="ml-2 text-gray-400">{{ currentModpack.installs | formatNumber }}</small>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div class="tab-pane" v-if="isTabActive('multiplayer')" id="multiplayer">
-            <div v-if="currentVersionObject !== null && shuffledServers.length > 0">
-              <server-card
-                v-for="server in shuffledServers"
-                :key="server.id"
-                :server="server"
-                :art="
-                  currentModpack.art.length > 0 ? currentModpack.art.filter(art => art.type === 'square')[0].url : ''
-                "
-              ></server-card>
-            </div>
-            <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
-              <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
-              <h1 class="text-5xl">Oh no!</h1>
-              <span>It doesn't looks like there are any public MineTogether servers</span>
+              <div class="instance-button mr-1">
+                <div class="text-white-500 py-2 px-4 inline-flex items-center" title="Play count">
+                  <font-awesome-icon icon="gamepad" size="1x" />&nbsp;
+                  <small class="ml-2 text-gray-400">{{ currentModpack.plays | formatNumber }}</small>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+        <div style="height: auto; flex:1; overflow-y: auto;" class="flex flex-col">
+          <ul
+            class="flex p-2 pb-0"
+            style="position: sticky; top: 0; background: #2A2A2A; padding-bottom: 0;"
+            v-if="modpacks.installing === null"
+          >
+            <li class="-mb-px mr-1">
+              <a
+                class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('overview')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('overview'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('overview'),
+                }"
+                href="#overview"
+              >
+                Overview
+              </a>
+            </li>
+            <li class="-mb-px mr-1">
+              <a
+                class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('versions')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('versions'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('versions'),
+                }"
+                href="#versions"
+              >
+                Versions
+              </a>
+            </li>
+            <li class="-mb-px mr-1">
+              <a
+                class="bg-sidebar-item inline-block py-2 px-4 font-semibold cursor-pointer"
+                @click.prevent="setActiveTab('multiplayer')"
+                :class="{
+                  'border-l border-t border-r border-navbar': isTabActive('multiplayer'),
+                  'text-gray-600 hover:text-gray-500': !isTabActive('multiplayer'),
+                }"
+                href="#multiplayer"
+              >
+                Multiplayer
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content bg-navbar flex-1 p-2 py-4 mx-2" style="overflow-y: auto;">
+            <div class="tab-pane" v-if="isTabActive('overview')" id="overview">
+              <div class="flex flex-wrap" v-if="currentModpack != null">
+                <VueShowdown
+                  :markdown="currentModpack.description"
+                  :extensions="['classMap', 'attribMap', 'newLine']"
+                />
+              </div>
+
+              <!-- <div class="versions" v-if="currentModpack != null && currentModpack.versions != null">
+            <div v-for="(version, index) in currentModpack.versions" v-bind:key="index">
+              {{version.name}}
+  
+              <span class="inline-flex bg-blue-600 text-white rounded-full h-6 px-3 justify-center items-center" v-if="version.type == 'Beta'">{{version.type}}</span>
+              <span class="inline-flex bg-green-600 text-white rounded-full h-6 px-3 justify-center items-center" v-if="version.type == 'Release'">{{version.type}}</span>
+  
+              </div>-->
+              <!-- </div> -->
+            </div>
+            <div class="tab-pane" v-if="isTabActive('versions')" id="versions">
+              <div v-for="(version, index) in currentModpack.versions" :key="index">
+                <div class="flex flex-row bg-sidebar-item p-5 my-4 items-center">
+                  <p>{{ currentModpack.name }} - {{ version.name }}</p>
+                  <span @click="toggleChangelog(version.id)" class="pl-5 cursor-pointer"
+                    ><font-awesome-icon
+                      :icon="activeChangelog === version.id ? 'chevron-down' : 'chevron-right'"
+                      class="cursor-pointer"
+                      size="1x"
+                    />
+                    Changelog</span
+                  >
+                  <ftb-button
+                    class="py-2 px-4 ml-auto"
+                    color="primary"
+                    css-class="text-center text-l"
+                    @click="install(version.id)"
+                    :disabled="modpacks.installing !== null"
+                  >
+                    <font-awesome-icon icon="download" size="1x" />
+                    Install
+                  </ftb-button>
+                  <!--                <button-->
+                  <!--                    class="bg-blue-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-auto cursor-pointer"-->
+                  <!--                    @click="install(version.id)"-->
+                  <!--                >-->
+                  <!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/>&nbsp;Install</span>-->
+                  <!--                </button>-->
+                  <!--                <button @click="downloadServer"-->
+                  <!--                        class="bg-orange-500 hover:bg-blue-400 text-white-600 font-bold py-2 px-4 inline-flex items-center ml-5 cursor-pointer">-->
+                  <!--                  <span class="cursor-pointer"><font-awesome-icon icon="download" size="1x"/> Download Server</span>-->
+                  <!--                </button>-->
+                </div>
+                <div class="pl-5 bg-background" v-if="activeChangelog === version.id">
+                  <!--                <code class="p-0">-->
+                  <!--                  {{changelogs[version.id]}}-->
+                  <!--                </code>-->
+                  <VueShowdown
+                    v-if="changelogs[version.id]"
+                    :markdown="changelogs[version.id]"
+                    :extensions="['classMap', 'newLine']"
+                  />
+                  <p v-else>No changelog available</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane" v-if="isTabActive('multiplayer')" id="multiplayer">
+              <div v-if="currentVersionObject !== null && shuffledServers.length > 0">
+                <server-card
+                  v-for="server in shuffledServers"
+                  :key="server.id"
+                  :server="server"
+                  :art="
+                    currentModpack.art.length > 0 ? currentModpack.art.filter(art => art.type === 'square')[0].url : ''
+                  "
+                ></server-card>
+              </div>
+              <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" v-else>
+                <font-awesome-icon icon="heart-broken" style="font-size: 25vh"></font-awesome-icon>
+                <h1 class="text-5xl">Oh no!</h1>
+                <span>It doesn't looks like there are any public MineTogether servers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <FTBModal :visible="showInstallBox" @dismiss-modal="hideInstall">
+          <InstallModal
+            :pack-name="currentModpack.name"
+            :doInstall="install"
+            :pack-description="currentModpack.synopsis"
+            :versions="currentModpack.versions"
+            :selectedVersion="installSelectedVersion"
+          />
+        </FTBModal>
       </div>
-      <FTBModal :visible="showInstallBox" @dismiss-modal="hideInstall">
-        <InstallModal
-          :pack-name="currentModpack.name"
-          :doInstall="install"
-          :pack-description="currentModpack.synopsis"
-          :versions="currentModpack.versions"
-          :selectedVersion="installSelectedVersion"
-        />
-      </FTBModal>
     </div>
-    <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-      />
-    </FTBModal>
   </div>
 </template>
 
@@ -336,14 +353,11 @@ import { SettingsState } from '../modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import ServerCard from '@/components/ServerCard.vue';
 import InstallModal from '@/components/modals/InstallModal.vue';
-
-export interface MsgBox {
-  title: string;
-  content: string;
-  type: string;
-  okAction: () => void;
-  cancelAction: () => void;
-}
+import { PackConst } from '@/utils/contants';
+import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
+import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
+import { ModpackPageTabs } from '@/views/InstancePage.vue';
 
 interface Changelogs {
   [id: number]: string;
@@ -352,6 +366,9 @@ interface Changelogs {
 @Component({
   name: 'ModpackPage',
   components: {
+    PackTabsBody,
+    PackTitleHeader,
+    PackMetaHeading,
     'ftb-toggle': FTBToggle,
     InstallModal,
     FTBModal,
@@ -360,13 +377,8 @@ interface Changelogs {
   },
 })
 export default class ModpackPage extends Vue {
-  get limitedTags() {
-    if (this.currentModpack && this.currentModpack.tags) {
-      return this.currentModpack.tags.slice(0, 5);
-    } else {
-      return [];
-    }
-  }
+  activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
+  showVersions = false;
 
   get currentModpack() {
     const id: number = parseInt(this.$route.query.modpackid as string, 10);
@@ -388,55 +400,16 @@ export default class ModpackPage extends Vue {
   @State('servers') public serverListState!: ServersState;
   @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
 
-  private activeTab: string = 'overview';
-  private showMsgBox: boolean = false;
   private showInstallBox: boolean = false;
   private installSelectedVersion: number | null = null;
-  private msgBox: MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
   private loading = true;
-  private ad: any;
-  private checkAd: any;
   private packType: number = 0;
 
   private activeChangelog: number | undefined = -1;
   private changelogs: Changelogs = [];
 
-  public serverDownloadMenu(versionID: number) {
-    const links = [];
-    links.push({
-      content: 'Windows',
-      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.currentModpack?.id}/${versionID}/server/windows`,
-      open: '_blank',
-    });
-    links.push({
-      content: 'Linux',
-      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.currentModpack?.id}/${versionID}/server/linux`,
-      open: '_blank',
-    });
-    links.push({
-      content: 'MacOS',
-      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.currentModpack?.id}/${versionID}/server/mac`,
-      open: '_blank',
-    });
-    return links;
-  }
-
-  public hideMsgBox(): void {
-    this.showMsgBox = false;
-  }
-
   public hideInstall(): void {
     this.showInstallBox = false;
-  }
-
-  public goBack(): void {
-    this.$router.go(-1);
   }
 
   public isTabActive(tabItem: string) {
@@ -445,24 +418,6 @@ export default class ModpackPage extends Vue {
 
   public setActiveTab(tabItem: string) {
     this.activeTab = tabItem;
-  }
-
-  public comingSoonMsg() {
-    this.msgBox.type = 'okOnly';
-    this.msgBox.title = 'Coming Soon';
-    this.msgBox.okAction = this.hideMsgBox;
-    this.msgBox.cancelAction = this.hideMsgBox;
-    this.msgBox.content = `This feature is currently not available, we do however aim to have this feature implemented in the near future`;
-    this.showMsgBox = true;
-  }
-
-  public downloadServer() {
-    this.msgBox.type = 'okOnly';
-    this.msgBox.title = 'Server Downloads';
-    this.msgBox.okAction = this.hideMsgBox;
-    this.msgBox.cancelAction = this.hideMsgBox;
-    this.msgBox.content = `To download the server files for this modpack please go to the [Feed-the-Beast](https://feed-the-beast.com/) website`;
-    this.showMsgBox = true;
   }
 
   public install(version: number): void {
@@ -477,10 +432,6 @@ export default class ModpackPage extends Vue {
         packType: this.$route.query.type,
       },
     });
-  }
-
-  public clickTag(tagName: string) {
-    this.$router.push({ name: 'browseModpacks', params: { search: tagName } });
   }
 
   private async mounted() {
@@ -549,6 +500,15 @@ export default class ModpackPage extends Vue {
       this.changelogs[id] = changelog.content;
     }
     this.activeChangelog = id;
+  }
+
+  get packSplashArt() {
+    if (this.currentModpack === null) {
+      return PackConst.defaultPackSplashArt;
+    }
+
+    const splashArt = this.currentModpack.art?.filter(art => art.type === 'splash');
+    return splashArt?.length > 0 ? splashArt[0].url : PackConst.defaultPackSplashArt;
   }
 }
 </script>

@@ -1,186 +1,42 @@
 <template>
   <div class="pack-page">
     <div
-      class="new-pack-page"
+      class="pack-page-contents"
       v-if="instance && packInstance"
       :style="{
         'background-image': `url(${packSplashArt})`,
       }"
     >
       <header>
-        <div class="meta-heading" :class="{ bolder: hidePackDetails }">
-          <div class="back" @click="goBack">
-            <font-awesome-icon icon="chevron-left" class="mr-2" />
-            Back to {{ hidePackDetails ? 'instance mods' : 'library' }}
-          </div>
+        <pack-meta-heading
+          @back="goBack"
+          :hidePackDetails="hidePackDetails"
+          :versionType="versionType"
+          :instance="instance"
+          :isForgePack="isForgePack"
+        />
 
-          <div class="beta-tag" v-if="versionType !== 'release'">Running {{ versionType }} version</div>
-
-          <div class="meta">
-            <div class="origin icon" v-if="instance.packType === 0" data-balloon-pos="left" aria-label="FTB Modpack">
-              <img src="@/assets/ftb-white-logo.svg" alt="" />
-            </div>
-            <div class="origin icon" v-else data-balloon-pos="left" aria-label="Curseforge Modpack">
-              <img src="@/assets/curse-logo.svg" alt="" />
-            </div>
-
-            <div class="modloader icon" v-if="isForgePack" data-balloon-pos="left" aria-label="Forge Modloader">
-              <img src="@/assets/images/forge.svg" alt="" />
-            </div>
-            <div class="modloader icon" v-else data-balloon-pos="left" aria-label="Fabric Modloader">
-              <img src="@/assets/images/fabric.png" alt="" />
-            </div>
-          </div>
-        </div>
-
-        <div class="pack-info" v-if="!hidePackDetails">
-          <div class="info">
-            <div class="name">{{ instance.name }}</div>
-            <div class="desc">
-              {{ packInstance.name }}
-              <template v-if="packInstance.authors.length"
-                >by
-                <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span></template
-              >
-              -
-              {{ packInstance.synopsis }}
-            </div>
-          </div>
-        </div>
+        <pack-title-header v-if="!hidePackDetails" :pack-instance="packInstance" :pack-name="instance.name" />
       </header>
 
       <div class="body" v-if="!searchingForMods" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
-        <div class="body-heading" v-if="!hidePackDetails">
-          <div class="action-heading">
-            <div class="play">
-              <ftb-button color="primary" class="py-3 px-8" @click="launchModPack()">
-                <font-awesome-icon icon="play" class="mr-4" />
-                Play
-              </ftb-button>
-            </div>
-
-            <div class="stats">
-              <div class="stat">
-                <div class="name">Last played</div>
-                <div class="value">{{ instance.lastPlayed | moment('from', 'now') }}</div>
-              </div>
-
-              <div class="stat">
-                <div class="name">Version</div>
-                <div class="value">{{ instance.version }}</div>
-              </div>
-            </div>
-
-            <div class="options">
-              <div class="update" v-if="instance && !isLatestVersion">
-                <ftb-button color="warning" class="update-btn px-4 py-1" @click="update()">
-                  Update available
-                  <font-awesome-icon icon="cloud-download-alt" class="ml-2" />
-                </ftb-button>
-              </div>
-              <div class="option" @click="showVersions = true">
-                Versions
-                <font-awesome-icon icon="code-branch" class="ml-2" />
-              </div>
-              <div class="option" @click="activeTab = tabs.SETTINGS">
-                Settings
-                <font-awesome-icon icon="cogs" class="ml-2" />
-              </div>
-            </div>
-          </div>
-
-          <div class="tab-and-actions">
-            <div class="tabs">
-              <div class="options">
-                <div
-                  class="tab"
-                  :class="{ active: activeTab === tabs.OVERVIEW }"
-                  @click="() => (activeTab = tabs.OVERVIEW)"
-                >
-                  Overview
-                </div>
-                <div class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => (activeTab = tabs.MODS)">
-                  Mods
-                </div>
-                <div
-                  class="tab"
-                  :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
-                  @click="() => (activeTab = tabs.PUBLIC_SERVERS)"
-                >
-                  Public servers
-                </div>
-              </div>
-            </div>
-
-            <div class="actions">
-              <div class="buttons" v-if="activeTab === tabs.MODS">
-                <ftb-button color="primary" class="py-2 px-4 inline-block" @click="searchingForMods = true">
-                  Get more mods
-                  <font-awesome-icon icon="search" class="ml-2" />
-                </ftb-button>
-                <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
-                  <ftb-button
-                    @click="() => getModList(true)"
-                    class="py-2 px-4"
-                    color="info"
-                    :disabled="updatingModlist"
-                  >
-                    <font-awesome-icon icon="sync" />
-                  </ftb-button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="body-contents">
-          <div class="alert py-2 px-4 mb-4 bg-warning rounded" v-if="packInstance.notification">
-            <font-awesome-icon icon="info" class="mr-2" />
-            {{ packInstance.notification }}
-          </div>
-
-          <div class="pack-overview" v-if="activeTab === tabs.OVERVIEW">
-            <div class="tags mb-6" v-if="tags.length">
-              <span
-                v-for="(tag, i) in tags"
-                :key="`tag-${i}`"
-                @click="clickTag(tag.name)"
-                class="cursor-pointer rounded mr-2 text-sm ftb-tag px-4 py-1 lowercase"
-                :style="{
-                  fontVariant: 'small-caps',
-                  backgroundColor: `hsla(${getColorForChar(tag.name, 90, 70)}, .5)`,
-                }"
-                >{{ tag.name }}</span
-              >
-            </div>
-            <div class="" v-if="packInstance.description !== undefined">
-              <VueShowdown :markdown="packInstance.description" :extensions="['classMap', 'attribMap', 'newLine']" />
-            </div>
-            <div v-else>
-              <h2>No description available</h2>
-            </div>
-          </div>
-
-          <!-- Tab views, we're not using the router because it's a pain -->
-          <modpack-mods
-            v-if="activeTab === tabs.MODS"
-            v-show="!searchingForMods"
-            :modlist="modlist"
-            :instance="instance"
-            @showFind="searchingForMods = true"
-          />
-
-          <!-- If the pack page grows more, we will have to use the router to clean this up. -->
-          <modpack-settings :pack-instance="packInstance" :instance="instance" v-if="activeTab === tabs.SETTINGS" />
-
-          <!-- v-show to allow servers to load in the background -->
-          <modpack-public-servers
-            v-show="activeTab === tabs.PUBLIC_SERVERS && currentVersionObject.mtgID"
-            :instance="instance"
-            :current-version="currentVersionObject.mtgID"
-            :pack-instance="packInstance"
-          />
-        </div>
+        <pack-tabs-body
+          v-if="!this.searchingForMods"
+          @mainAction="launchModPack()"
+          @update="update()"
+          @tabChange="e => (activeTab = e)"
+          @showVersion="showVersions = true"
+          @searchForMods="searchingForMods = true"
+          @getModList="e => getModList(e)"
+          :searchingForMods="searchingForMods"
+          :active-tab="activeTab"
+          :isInstalled="true"
+          :instance="instance"
+          :mods="modlist"
+          :pack-instance="packInstance"
+          :isLatestVersion="isLatestVersion"
+          :updating-mod-list="updatingModlist"
+        />
       </div>
 
       <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
@@ -215,7 +71,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
+import { ModPack, ModpackState } from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
 import FTBToggle from '@/components/FTBToggle.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
@@ -223,13 +79,10 @@ import FTBModal from '@/components/FTBModal.vue';
 import ServerCard from '@/components/ServerCard.vue';
 import MessageModal from '@/components/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
-import { logVerbose } from '@/utils';
 import { ServersState } from '@/modules/servers/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
-import platform from '@/utils/interface/electron-overwolf';
-import { prettyByteFormat } from '@/utils/helpers';
 import FindMods from '@/components/modpack/FindMods.vue';
 import { PackConst } from '@/utils/contants';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
@@ -237,6 +90,9 @@ import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue'
 import ModpackMods from '@/components/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
 import { getColorForChar } from '@/utils/colors';
+import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
+import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
 
 interface MsgBox {
   title: string;
@@ -250,7 +106,7 @@ interface Changelogs {
   [id: number]: string;
 }
 
-enum Tabs {
+export enum ModpackPageTabs {
   OVERVIEW,
   MODS,
   PUBLIC_SERVERS,
@@ -260,6 +116,9 @@ enum Tabs {
 @Component({
   name: 'InstancePage',
   components: {
+    PackTabsBody,
+    PackTitleHeader,
+    PackMetaHeading,
     ModpackSettings,
     ServerCard,
     'ftb-modal': FTBModal,
@@ -277,21 +136,14 @@ export default class InstancePage extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
   @State('auth') public auth!: AuthState;
-  @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
-  @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall!: any;
-  @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall!: any;
-  @Action('saveInstance', { namespace: 'modpacks' }) public saveInstance: any;
   @Action('sendMessage') public sendMessage!: any;
-  @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
-  @Action('loadJavaVersions', { namespace: 'settings' }) public loadJavaVersions!: any;
   @Action('showAlert') public showAlert: any;
 
   // New stuff
-  tabs = Tabs;
-  activeTab: Tabs = Tabs.OVERVIEW;
+  tabs = ModpackPageTabs;
+  activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
   getColorForChar = getColorForChar;
 
   private packInstance: ModPack | null = null;
@@ -306,111 +158,19 @@ export default class InstancePage extends Vue {
     cancelAction: Function,
   };
 
-  private activeChangelog: number | undefined = -1;
-  private changelogs: Changelogs = [];
   private modlist: any = [];
-
-  private resSelectedValue: string = '0';
-  prettyBytes = prettyByteFormat;
 
   searchingForMods = false;
   updatingModlist = false;
   showVersions = false;
-
-  public clickTag(tagName: string) {
-    this.$router.push({ name: 'browseModpacks', params: { search: tagName } });
-  }
-
-  public serverDownloadMenu(versionID: number) {
-    const links = [];
-    links.push({
-      content: 'Windows',
-      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.instance?.id}/${versionID}/server/windows`,
-      open: '_blank',
-    });
-    links.push({
-      content: 'Linux',
-      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.instance?.id}/${versionID}/server/linux`,
-      open: '_blank',
-    });
-    links.push({
-      content: 'MacOS',
-      url: `${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.instance?.id}/${versionID}/server/mac`,
-      open: '_blank',
-    });
-    return links;
-  }
 
   public goBack(): void {
     if (!this.hidePackDetails) {
       this.$router.back();
     } else {
       this.searchingForMods = false;
-      this.activeTab = Tabs.OVERVIEW;
+      this.activeTab = ModpackPageTabs.OVERVIEW;
     }
-  }
-
-  public copy(text: string) {
-    platform.get.cb.copy(text);
-    this.showAlert({
-      title: 'Copied!',
-      message: 'The value has been copied to your clipboard',
-      type: 'primary',
-    });
-  }
-
-  public isTabActive(tabItem: string) {
-    return true;
-  }
-
-  public setActiveTab(tabItem: string) {}
-
-  public isCurrentVersion(version: number) {
-    return this.instance?.versionId && this.instance?.versionId === version;
-  }
-
-  public toggleCloudSaves() {
-    if (this.instance) {
-      this.instance.cloudSaves = !this.instance.cloudSaves;
-    }
-  }
-
-  public confirmDelete() {
-    this.openMessageBox({
-      type: 'okCancel',
-      title: 'Are you sure?',
-      okAction: this.deleteInstace,
-      cancelAction: this.hideMsgBox,
-      content: `Are you sure you want to delete ${this.instance?.name}?`,
-    });
-  }
-
-  public deleteInstace(): void {
-    this.deleting = true;
-    this.sendMessage({
-      payload: { type: 'uninstallInstance', uuid: this.instance?.uuid },
-      callback: (data: any) => {
-        this.sendMessage({
-          payload: { type: 'installedInstances', refresh: true },
-          callback: (data: any) => {
-            this.storePacks(data);
-            this.$router.push({ name: 'modpacks' });
-          },
-        });
-      },
-    });
-  }
-
-  private openMessageBox(payload: MsgBox) {
-    this.msgBox = { ...this.msgBox, ...payload };
-    this.showMsgBox = true;
-  }
-
-  public browseInstance(): void {
-    this.sendMessage({
-      payload: { type: 'instanceBrowse', uuid: this.instance?.uuid },
-      callback: (data: any) => {},
-    });
   }
 
   public launchModPack() {
@@ -478,39 +238,13 @@ export default class InstancePage extends Vue {
     }
   }
 
-  public async saveSettings() {
-    await this.saveInstance(this.instance);
-    this.showAlert({
-      title: 'Saved!',
-      message: 'The settings for this instance have been saved',
-      type: 'primary',
-    });
-  }
-
-  public resChange(data: any) {
-    if (data && data.length) {
-      if (this.resSelectedValue === data[0].value) {
-        return;
-      }
-      this.resSelectedValue = data[0].value;
-      if (this.instance == null) {
-        return;
-      }
-      this.instance.width = this.settingsState.hardware.supportedResolutions[data[0].id].width;
-      this.instance.height = this.settingsState.hardware.supportedResolutions[data[0].id].height;
-
-      this.saveSettings();
-      return;
-    }
-  }
-
   public hideMsgBox(): void {
     this.showMsgBox = false;
   }
 
   async mounted() {
     if (this.instance == null) {
-      this.$router.push('/modpacks');
+      await this.$router.push('/modpacks');
       return;
     }
     try {
@@ -522,33 +256,12 @@ export default class InstancePage extends Vue {
       console.log('Error getting instance modpack');
     }
     this.$forceUpdate();
-    if (this.packInstance?.kind === 'modpack') {
-      if (this.packInstance?.versions !== undefined) {
-        this.toggleChangelog(this.packInstance?.versions[0].id);
-      }
-    }
+
     if (this.$route.query.shouldPlay === 'true') {
       this.confirmLaunch();
     }
 
     this.getModList();
-
-    if (Object.keys(this.settingsState.javaInstalls).length < 1) {
-      this.loadJavaVersions();
-    }
-  }
-
-  get currentVersionObject(): Versions | null {
-    if (this.packInstance !== null) {
-      if (this.packInstance.versions === undefined) {
-        return null;
-      }
-      const version = this.packInstance.versions.find((f: Versions) => f.id === this.instance?.versionId);
-      if (version !== undefined) {
-        return version;
-      }
-    }
-    return null;
   }
 
   private getModList(showAlert = false) {
@@ -579,71 +292,11 @@ export default class InstancePage extends Vue {
     }
   }
 
-  private async toggleChangelog(id: number | undefined) {
-    if (typeof id === 'undefined') {
-      return;
-    }
-    if (this.activeChangelog === id) {
-      this.activeChangelog = -1;
-      return;
-    }
-    if (!this.changelogs[id]) {
-      console.log('Getting changelog');
-      try {
-        const changelog = await this.getChangelog({
-          packID: this.instance?.id,
-          versionID: id,
-          type: this.instance?.packType,
-        });
-        this.changelogs[id] = changelog.content;
-      } catch (e) {
-        console.log("Changelog doesn't exist");
-      }
-    }
-    this.activeChangelog = id;
-  }
-
-  private debugLog(title: any, data: any) {
-    logVerbose(this.settingsState, title, data);
-  }
-
-  get javaVersions() {
-    if (this.settingsState === undefined) {
-      return {};
-    }
-    if (this.settingsState.javaInstalls === undefined) {
-      return {};
-    }
-    return this.settingsState.javaInstalls;
-  }
-
   get instance() {
     if (this.modpacks == null) {
       return null;
     }
     return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
-  }
-
-  get resolutionList() {
-    const resList = [];
-    for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
-      resList.push({ id: key, name: res.width + 'x' + res.height, value: key });
-    }
-    return resList;
-  }
-
-  get tags() {
-    try {
-      if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
-        return this.modpacks?.packsCache[this.instance.id].tags?.sort((a, b) =>
-          a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
-        );
-      } else {
-        return [];
-      }
-    } catch (e) {
-      console.log('Error getting tags');
-    }
   }
 
   get isLatestVersion() {
@@ -655,13 +308,6 @@ export default class InstancePage extends Vue {
       return true;
     }
     return this.instance?.versionId === this.packInstance?.versions[0].id;
-  }
-
-  get versionName() {
-    if (this.instance && this.modpacks?.packsCache[this.instance.id]) {
-      return this.modpacks?.packsCache[this.instance.id].versions.find(v => v.id === this.instance?.versionId)?.name;
-    }
-    return this.instance?.version;
   }
 
   get packSplashArt() {
@@ -681,7 +327,7 @@ export default class InstancePage extends Vue {
    * Determines if we need to hide the bulk of the page
    */
   get hidePackDetails() {
-    return this.activeTab === Tabs.SETTINGS || this.searchingForMods;
+    return this.activeTab === ModpackPageTabs.SETTINGS || this.searchingForMods;
   }
 
   get versionType() {
@@ -689,224 +335,3 @@ export default class InstancePage extends Vue {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.pack-page {
-  position: relative;
-  z-index: 1;
-}
-
-.new-pack-page {
-  position: relative;
-  background-attachment: fixed;
-  min-height: calc(100vh - 32px);
-  display: flex;
-  flex-direction: column;
-
-  > header {
-    position: relative;
-    backdrop-filter: blur(5px);
-
-    .beta-tag {
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      background-color: rgba(234, 32, 32, 0.89);
-      font-size: 0.75rem;
-      font-weight: bold;
-    }
-
-    .meta-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #2a2a2a;
-      padding: 0.8rem 1rem;
-      position: relative;
-      z-index: 1;
-      transition: background-color 0.25s ease-in-out;
-
-      &.bolder {
-        background-color: var(--color-navbar);
-
-        .meta {
-          opacity: 0;
-        }
-      }
-
-      .back {
-        opacity: 0.7;
-        cursor: pointer;
-        transition: opacity 0.25s ease-in-out;
-
-        &:hover {
-          opacity: 1;
-        }
-      }
-
-      .back,
-      .meta {
-        flex: 1;
-      }
-
-      .meta {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        transition: opacity 0.25s ease-in-out;
-
-        .icon {
-          cursor: default;
-          margin-left: 1.5rem;
-          img {
-            width: 30px;
-          }
-        }
-      }
-    }
-
-    .pack-info {
-      padding: 2rem 1rem;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-shadow: 0 0 5px rgba(black, 0.5);
-      background-color: rgba(black, 0.2);
-
-      .info {
-        max-width: 80%;
-        padding: 1rem 4rem;
-      }
-
-      .name {
-        font-size: 2.8rem;
-        font-weight: bold;
-      }
-    }
-  }
-
-  .body {
-    flex: 1;
-    background: rgba(#2a2a2a, 0.9);
-    backdrop-filter: blur(8px);
-    transition: background-color 0.25s ease-in-out;
-
-    .ftb-tag {
-      background-color: rgba(white, 0.2);
-    }
-
-    &.settings-open {
-      background-color: var(--color-background);
-    }
-
-    .action-heading {
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      background-color: rgba(black, 0.1);
-
-      .play {
-        margin-right: 2rem;
-      }
-
-      .stats {
-        display: flex;
-
-        .stat {
-          margin-right: 2rem;
-
-          .name {
-            opacity: 0.7;
-            font-size: 0.875rem;
-          }
-        }
-      }
-
-      .options {
-        display: flex;
-        align-items: center;
-        margin-left: auto;
-
-        .option {
-          margin-left: 2rem;
-          opacity: 0.7;
-          cursor: pointer;
-          transition: opacity 0.25s ease-in-out;
-
-          &:hover {
-            opacity: 1;
-          }
-        }
-      }
-
-      .update-btn {
-        position: relative;
-
-        box-shadow: 0 0 0 0 rgba(#ff801e, 1);
-        animation: pulse 1.8s ease-in-out infinite;
-
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(#ff801e, 0.7);
-          }
-
-          70% {
-            box-shadow: 0 0 0 10px rgba(#ff801e, 0);
-          }
-
-          100% {
-            box-shadow: 0 0 0 0 rgba(#ff801e, 0);
-          }
-        }
-      }
-    }
-
-    .tab-and-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(black, 0.3);
-      padding-right: 1.5rem;
-      margin-bottom: 0.8rem;
-
-      .actions {
-        .buttons {
-          display: flex;
-        }
-      }
-
-      .tabs {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem 1.5rem 0 1.5rem;
-
-        .options {
-          display: flex;
-        }
-
-        .tab {
-          padding: 0.5rem 1.5rem 1rem 1.5rem;
-          color: rgba(white, 0.5);
-          cursor: pointer;
-          transition: color 0.25s ease-in-out, background-color 0.25s ease-in-out;
-          margin-right: 1rem;
-          border-bottom: 2px solid transparent;
-
-          &.active {
-            border-bottom-color: var(--color-info-button);
-            color: white;
-          }
-
-          &:hover {
-            color: white;
-          }
-        }
-      }
-    }
-
-    .body-contents {
-      padding: 0.8rem 1.5rem 1rem 1.5rem;
-    }
-  }
-}
-</style>

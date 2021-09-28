@@ -228,7 +228,7 @@ export default class FindMods extends Vue {
     this.loadingExtra = false;
     this.timeTaken += new Date().getTime() - start;
 
-    this.bufferNextFive();
+    await this.bufferNextFive();
   }
 
   /**
@@ -261,7 +261,7 @@ export default class FindMods extends Vue {
       return;
     }
 
-    this.loadResultsProgressively();
+    await this.loadResultsProgressively();
   }
 
   private resetSearch() {

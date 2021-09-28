@@ -9,6 +9,7 @@ import childProcess from 'child_process';
 import axios from 'axios';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
+import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -353,9 +354,10 @@ function createWindow() {
 }
 
 app.on('ready', async () => {
-  await session.defaultSession.loadExtension(path.join(__dirname, '/../node_modules/vue-devtools/vender'), {
-    allowFileAccess: true,
-  });
+  await install(VUEJS_DEVTOOLS);
+  // await session.defaultSession.loadExtension(path.join(__dirname, '/../node_modules/@vue/devtools'), {
+  //   allowFileAccess: true,
+  // });
 });
 
 app.on('window-all-closed', () => {
