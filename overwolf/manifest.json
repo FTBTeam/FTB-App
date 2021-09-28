@@ -7,8 +7,8 @@
         "minimum-overwolf-version": "0.157.0.17",
         "author": "Feed The Beast",
         "icon": "assets/icon_256.png",
-        "icon_gray": "assets/icon_256.png",
-        "launcher_icon": "assets/launchericon.ico",
+        "icon_gray": "assets/icon_256_preview.png",
+        "launcher_icon": "launchericon.ico",
         "description": "As the home of FTB modpacks the FTBApp allows you to quickly download and install FTB modpacks with ease, allowing you to spend more time enjoying the game."
     },
     "permissions": [
@@ -28,6 +28,7 @@
                 "is_background_page": true
             },
             "index": {
+                "mute": true,
                 "file": "dist/desktop/index.html",
                 "native_window": true,
                 "transparent": true,
@@ -45,6 +46,7 @@
                 "popup_blocker": true
             },
             "chat": {
+                "mute": true,
                 "file": "dist/desktop/chatPage.html",
                 "native_window": true,
                 "transparent": true,
