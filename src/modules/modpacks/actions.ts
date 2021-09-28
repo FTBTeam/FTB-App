@@ -1,5 +1,5 @@
 import { ActionTree } from 'vuex';
-import { ModpackState, ModPack, Instance, InstallProgress, Changelog } from './types';
+import { Changelog, InstallProgress, Instance, ModPack, ModpackState } from './types';
 import { RootState } from '@/types';
 import { asyncForEach, logVerbose } from '@/utils';
 import semver from 'semver';
@@ -179,13 +179,10 @@ export const actions: ActionTree<ModpackState, RootState> = {
   },
   loadAllPacks({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
-    console.log('Loading all packs...');
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`)
       .then(response => response.json())
       .then(async data => {
         const packIDs = data.packs;
-        console.log('Loaded packs');
-        console.log(packIDs);
         if (packIDs == null) {
           return;
         }

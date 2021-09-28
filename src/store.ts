@@ -52,10 +52,7 @@ const store: StoreOptions<RootState> = {
     alerts: [],
     wsPort: 0,
     wsSecret: '',
-    modpacks: null,
-    settings: null,
-    auth: null,
-  },
+  } as any,
   plugins: [wsLoggerPlugin],
   actions: {
     showAlert: ({ commit, rootState }: any, alert: Alert) => {
