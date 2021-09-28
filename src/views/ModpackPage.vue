@@ -34,13 +34,21 @@
             :active-tab="activeTab"
             :isInstalled="false"
             :instance="null"
-            :mods="modlist ? modlist : []"
+            :mods="mods"
             :pack-instance="currentModpack"
             :isLatestVersion="true"
             :updating-mod-list="false"
           />
         </div>
       </div>
+      <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
+        <modpack-versions
+          :versions="currentModpack.versions"
+          :pack-instance="currentModpack"
+          :instance="null"
+          :current="null"
+        />
+      </ftb-modal>
     </div>
     <div class="flex flex-1 flex-col h-full overflow-hidden">
       <div class="flex flex-col h-full" v-if="!loading && currentModpack !== null" key="main-window">
@@ -251,7 +259,7 @@
             </div>
           </div>
         </div>
-        <FTBModal :visible="showInstallBox" @dismiss-modal="hideInstall">
+        <ftb-modal :visible="showInstallBox" @dismiss-modal="hideInstall">
           <InstallModal
             :pack-name="currentModpack.name"
             :doInstall="install"
@@ -259,7 +267,7 @@
             :versions="currentModpack.versions"
             :selectedVersion="installSelectedVersion"
           />
-        </FTBModal>
+        </ftb-modal>
       </div>
     </div>
   </div>
@@ -358,6 +366,8 @@ import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeadi
 import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
 import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
+import { AuthState } from '@/modules/auth/types';
+import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
 
 interface Changelogs {
   [id: number]: string;
@@ -366,12 +376,13 @@ interface Changelogs {
 @Component({
   name: 'ModpackPage',
   components: {
+    ModpackVersions,
     PackTabsBody,
     PackTitleHeader,
     PackMetaHeading,
     'ftb-toggle': FTBToggle,
     InstallModal,
-    FTBModal,
+    'ftb-modal': FTBModal,
     'message-modal': MessageModal,
     ServerCard,
   },
@@ -388,6 +399,7 @@ export default class ModpackPage extends Vue {
     return this.modpacks.packsCache[id];
   }
 
+  @State('auth') public auth!: AuthState;
   @State('modpacks') public modpacks!: ModpackState;
   @State('settings') public settings!: SettingsState;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
@@ -408,16 +420,18 @@ export default class ModpackPage extends Vue {
   private activeChangelog: number | undefined = -1;
   private changelogs: Changelogs = [];
 
+  mods: { version: string; size: string; name: string }[] = [];
+
   public hideInstall(): void {
     this.showInstallBox = false;
   }
 
   public isTabActive(tabItem: string) {
-    return this.activeTab === tabItem;
+    return this.activeTab === ((tabItem as unknown) as ModpackPageTabs);
   }
 
   public setActiveTab(tabItem: string) {
-    this.activeTab = tabItem;
+    this.activeTab = (tabItem as unknown) as ModpackPageTabs;
   }
 
   public install(version: number): void {
@@ -447,6 +461,18 @@ export default class ModpackPage extends Vue {
       }
       this.showInstallBox = true;
     }
+
+    const res = await fetch(
+      `${process.env.VUE_APP_MODPACK_API}/${this.auth.token?.attributes.modpackschkey ?? 'public'}/${
+        this.currentModpack?.type?.toLowerCase() === 'curseforge' ? 'curseforge' : 'modpack'
+      }/${this.currentModpack?.id}/${this.currentModpack?.versions[0]?.id}`,
+    );
+
+    const modsRaw = await res.json();
+    this.mods = modsRaw.files
+      ?.filter((e: any) => e.type === 'mod')
+      .map((e: any) => ({ name: e.name, size: e.size, version: e.version }));
+
     this.toggleChangelog(this.currentModpack?.versions[0].id);
     if (this.currentVersionObject !== null) {
       if (this.currentVersionObject.mtgID) {

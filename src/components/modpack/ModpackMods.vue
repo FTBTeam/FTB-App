@@ -1,5 +1,9 @@
 <template>
   <div class="modpack-mods">
+    <div class="px-4 py-3 bg-blue-600 rounded mb-6" v-if="!packInstalled">
+      This mod list is representative of the latest version of this Modpack. Different versions of this Modpack may have
+      different mods.
+    </div>
     <div v-for="(file, index) in modlist" :key="index">
       <div class="flex flex-row my-4 items-center">
         <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
@@ -36,6 +40,7 @@ export default class ModpackMods extends Vue {
 
   @Prop() modlist!: any[];
   @Prop() updatingModlist!: boolean;
+  @Prop() packInstalled!: boolean;
 
   prettyBytes = prettyByteFormat;
 }

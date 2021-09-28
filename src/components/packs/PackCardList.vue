@@ -178,7 +178,6 @@ export interface MsgBox {
     'preLaunch',
     'postLaunch',
     'kind',
-    'type',
     'featured',
   ],
 })
@@ -199,6 +198,7 @@ export default class PackCardList extends Vue {
   @Prop() public instance!: Instance;
   @Prop() public packID!: number;
   @Prop() public tags!: [];
+  @Prop() type!: string;
   @Prop() public preLaunch!: (id: Instance) => Promise<void>;
   @Prop() public postLaunch!: (id: Instance) => Promise<void>;
   @Prop() public kind!: string;
@@ -382,7 +382,7 @@ export default class PackCardList extends Vue {
   }
 
   public openInfo(): void {
-    this.$router.push({ name: 'modpackpage', query: { modpackid: this.$props.packID } });
+    this.$router.push({ name: 'modpackpage', query: { modpackid: this.$props.packID, type: this.type ?? 0 } });
   }
 
   public openInstall(): void {

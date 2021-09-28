@@ -128,6 +128,7 @@
         v-if="activeTab === tabs.MODS"
         v-show="!searchingForMods"
         :modlist="mods"
+        :pack-installed="isInstalled"
         @showFind="() => $emit('searchForMods')"
       />
 

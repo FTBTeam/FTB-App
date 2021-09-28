@@ -44,7 +44,7 @@
               () =>
                 platform.get.utils.openUrl(
                   `https://feed-the-beast.com/modpacks/${packInstance.id}/server/${currentVersion.id}${
-                    instance.packType !== 0 ? '/curseforge' : ''
+                    packInstance.type.toLowerCase() === 'curseforge' ? '/curseforge' : ''
                   }`,
                 )
             "
@@ -56,7 +56,7 @@
             Server files
           </ftb-button>
           <ftb-button
-            v-if="currentVersion && instance.versionId !== activeLog"
+            v-if="instance && currentVersion && instance.versionId !== activeLog"
             class="py-2 px-4 ml-1"
             color="warning"
             css-class="text-center text-l"
@@ -82,7 +82,7 @@
 </template>
 
 <script lang="ts">
-import { Instance, Versions } from '@/modules/modpacks/types';
+import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
@@ -92,7 +92,7 @@ export default class ModpackVersions extends Vue {
   @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
 
   @Prop() versions!: Versions[];
-  @Prop() packInstance!: Instance;
+  @Prop() packInstance!: ModPack;
   @Prop() instance!: Instance;
   @Prop() current!: number;
 
@@ -104,11 +104,13 @@ export default class ModpackVersions extends Vue {
   loading = true;
 
   mounted() {
+    const lcurrent = this.current ?? this.versions[0].id;
+
     // get the first log
-    this.fetchLog(this.current)
+    this.fetchLog(lcurrent)
       .then(data => {
-        this.changelogs['' + this.current] = data;
-        this.setActive(this.current);
+        this.changelogs['' + lcurrent] = data;
+        this.setActive(lcurrent);
       })
       .catch(console.error);
   }
@@ -131,9 +133,9 @@ export default class ModpackVersions extends Vue {
   async fetchLog(versionId: number) {
     this.loading = true;
     const changelog = await this.getChangelog({
-      packID: this.instance?.id,
+      packID: this.packInstance.id,
       versionID: versionId,
-      type: this.instance?.packType,
+      type: this.packInstance?.type?.toLowerCase() === 'curseforge' ? 1 : 0,
     });
 
     this.loading = false;
@@ -141,7 +143,7 @@ export default class ModpackVersions extends Vue {
   }
 
   public isOlderVersion(version: number) {
-    return this.instance.versionId > version ?? false;
+    return this.instance?.versionId > version ?? false;
   }
 
   public update(versionId?: number): void {

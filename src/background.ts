@@ -265,7 +265,7 @@ function createFriendsWindow() {
     return;
   }
   friendsWindow = new BrowserWindow({
-    title: 'FTB Desktop App',
+    title: 'FTB App',
 
     // Other
     icon: path.join(__static, 'favicon.ico'),
@@ -355,9 +355,6 @@ function createWindow() {
 
 app.on('ready', async () => {
   await install(VUEJS_DEVTOOLS);
-  // await session.defaultSession.loadExtension(path.join(__dirname, '/../node_modules/@vue/devtools'), {
-  //   allowFileAccess: true,
-  // });
 });
 
 app.on('window-all-closed', () => {
