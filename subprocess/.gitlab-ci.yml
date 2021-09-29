@@ -14,9 +14,9 @@ build:
     - /^no-ci/.*$/
   stage: build
   script:
-    - cd /Users/aaronmills
+    - mkdir -p subprocess/build/lib
     - 'export VERSION_OVERRIDE=`curl -s --header "PRIVATE-TOKEN: $WHY_GITLAB_WHY " "$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages?order_by=version&sort=desc" | jq -r "first(.[] | select(.pipeline.ref == \"$CI_COMMIT_BRANCH\")).version"`'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o public/version.json $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION/creeperlauncher-$VERSION.json'
-    - mkdir -p subprocess/build/lib
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o subprocess/build/lib/launcher-$VERSION-all.jar $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION/creeperlauncher-$VERSION-all.jar'
+    - cd /Users/aaronmills
     - ./runBuild.sh
