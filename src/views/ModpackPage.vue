@@ -471,7 +471,10 @@ export default class ModpackPage extends Vue {
     const modsRaw = await res.json();
     this.mods = modsRaw.files
       ?.filter((e: any) => e.type === 'mod')
-      .map((e: any) => ({ name: e.name, size: e.size, version: e.version }));
+      .map((e: any) => ({ name: e.name, size: e.size, version: e.version }))
+      .sort((a: any, b: any) =>
+        a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0,
+      );
 
     this.toggleChangelog(this.currentModpack?.versions[0].id);
     if (this.currentVersionObject !== null) {
