@@ -5,6 +5,8 @@ stages:
   - build
 
 build:
+  tags:
+    - shell
   only:
     - branches
   except:
