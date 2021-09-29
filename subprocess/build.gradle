@@ -278,7 +278,7 @@ project(":web") {
 
     node {
         version = "16.10.0"
-        npmVersion = "7.2.4"
+        npmVersion = "7.24.0"
         download = true
         npmWorkDir = file("${project.buildDir}/npm")
     }
