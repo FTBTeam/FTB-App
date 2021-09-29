@@ -10,7 +10,7 @@ public class GetFriendsData extends BaseData {
     public static class Reply extends BaseData {
         List<Profile> online;
         List<Profile> offline;
-        Reply(List<Profile> online, List<Profile> offline) {
+        public Reply(List<Profile> online, List<Profile> offline) {
             this.type = "ircFriendsReply";
             this.online = online;
             this.offline = offline;
