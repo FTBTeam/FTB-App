@@ -277,8 +277,8 @@ project(":web") {
     apply plugin: "com.github.node-gradle.node"
 
     node {
-        version = "12.16.1"
-        npmVersion = "6.12.0"
+        version = "16.10.0"
+        npmVersion = "7.2.4"
         download = true
         npmWorkDir = file("${project.buildDir}/npm")
     }
