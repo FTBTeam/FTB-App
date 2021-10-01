@@ -59,8 +59,8 @@ public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
 
                 // message received
                 @Override
-                public void sendMessage(Message message) {
-                    Settings.webSocketAPI.sendMessage(new IRCEventMessageData(message.messageStr, message.sender));
+                public void sendMessage(String target, Message message) {
+                    Settings.webSocketAPI.sendMessage(new IRCEventMessageData(target, message.messageStr, message.sender));
                 }
 
                 @Override
