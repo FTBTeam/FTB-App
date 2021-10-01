@@ -10,10 +10,13 @@ public class GetFriendsData extends BaseData {
     public static class Reply extends BaseData {
         List<Profile> online;
         List<Profile> offline;
-        public Reply(List<Profile> online, List<Profile> offline) {
+        List<Profile> pending;
+        public Reply(int requestId, List<Profile> online, List<Profile> offline, List<Profile> pending) {
             this.type = "ircFriendsReply";
             this.online = online;
             this.offline = offline;
+            this.pending = pending;
+            this.requestId = requestId;
         }
     }
 }

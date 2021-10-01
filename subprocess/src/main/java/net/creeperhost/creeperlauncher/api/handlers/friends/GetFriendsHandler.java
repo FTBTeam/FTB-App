@@ -14,6 +14,7 @@ public class GetFriendsHandler implements IMessageHandler<GetFriendsData> {
     public void handle(GetFriendsData data) {
         List<Profile> online = KnownUsers.getFriends().stream().filter(Profile::isOnline).collect(Collectors.toList());
         List<Profile> offline = KnownUsers.getFriends().stream().filter((p) -> !p.isOnline()).collect(Collectors.toList());
-        Settings.webSocketAPI.sendMessage(new GetFriendsData.Reply(online, offline));
+        List<Profile> pending = KnownUsers.getPending();
+        Settings.webSocketAPI.sendMessage(new GetFriendsData.Reply(data.requestId, online, offline, pending));
     }
 }
