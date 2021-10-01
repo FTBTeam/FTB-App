@@ -1,7 +1,9 @@
 package net.creeperhost.creeperlauncher.api.handlers.irc;
 
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.friends.OnlineFriendData;
+import net.creeperhost.creeperlauncher.api.data.friends.RequestFriendData;
 import net.creeperhost.creeperlauncher.api.data.irc.IRCConnectData;
 import net.creeperhost.creeperlauncher.api.data.irc.IRCPartyInviteData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
@@ -16,10 +18,14 @@ import net.creeperhost.minetogether.lib.chat.data.Profile;
 
 public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
 {
+    MineTogetherChat mineTogetherChat = null;
     @Override
     public void handle(IRCConnectData data) {
-        if(!ChatHandler.isOnline()) {
-            new MineTogetherChat(data.nick, null, true, data.realname, "", "", new IChatListener() {
+        if(!ChatHandler.isOnline()) { // for now
+            if (mineTogetherChat != null) {
+                return;
+            }
+            mineTogetherChat = new MineTogetherChat(data.nick, Constants.MT_HASH, true, data.realname, ""/*TODO: signature*/, "", new IChatListener() {
                 @Override
                 public void onPartyInvite(Profile profile) {
                     Settings.webSocketAPI.sendMessage(new IRCPartyInviteData(profile));
@@ -31,8 +37,18 @@ public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
                 }
 
                 @Override
-                public void onFriendAccept(String name) {
-                    Settings.webSocketAPI.sendMessage(new AcceptedFriendData(name));
+                public void onFriendAccept(String name, String data) {
+                    Settings.webSocketAPI.sendMessage(new AcceptedFriendData(name, data));
+                }
+
+                @Override
+                public void onFriendRequest(String name, String data) {
+                    Settings.webSocketAPI.sendMessage(new RequestFriendData(name, data));
+                }
+
+                @Override
+                public String getVerifyOutput() {
+                    return ""; // TODO: figure out a verification method, maybe same as in connect on server side?
                 }
 
                 // We're being asked what server we're on - we shouldn't reply
@@ -51,7 +67,8 @@ public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
                 public void setHasNewMessage(boolean value) {
                     // nothing done with this yet, mainly used for banned users in the main chat which won't be in the app
                 }
-            }).startChat();
+            });
+            mineTogetherChat.startChat();
         }
     }
 }

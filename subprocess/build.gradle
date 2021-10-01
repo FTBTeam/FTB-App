@@ -44,7 +44,6 @@ repositories {
     maven { url 'https://maven.covers1624.net/' }
     if(mavenUrl != null) {
         maven {
-            println "it is " + mavenUrl
             url mavenUrl
             name "GitLab"
             credentials(HttpHeaderCredentials) {
@@ -231,7 +230,7 @@ ext {
 dependencies {
     compileOnly files("lib/i4jruntime.jar")
 
-    compile 'net.creeperhost.minetogether:minetogether-api:1.0.1'
+    compile 'net.creeperhost.minetogether:minetogether-api:1.0.3'
 
     compile 'org.apache.tika:tika-core:1.22'
     compile 'com.google.code.gson:gson:2.8.5'
@@ -436,9 +435,10 @@ publishing {
         }
     }
     repositories {
-        if(mavenUrl != null) {
+        if (mavenUrl != null) {
             maven {
                 url mavenUrl
+                name "GitLab"
                 credentials(HttpHeaderCredentials) {
                     name = 'Job-Token'
                     value = System.getenv("CI_JOB_TOKEN")
