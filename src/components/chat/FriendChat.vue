@@ -2,7 +2,7 @@
   <div class="flex flex-col h-full w-full p-2">
     <div class="flex flex-row items-center">
       <h1 class="text-2xl max-w-xs overflow-hidden" style="text-overflow: ellipsis;">
-        {{ friend.profile.display }}
+        {{ friend.friendName }}
       </h1>
       <div class="ml-auto mr-2 mt-6">
         <font-awesome-icon
@@ -36,7 +36,7 @@
       </div>
     </div>
     <div class="flex flex-col items-stretch">
-      <small v-if="!friend.online" class="text-xs text-center">{{ friend.profile.display }} is currently offline</small>
+      <small v-if="!friend.isOnline" class="text-xs text-center">{{ friend.friendName }} is currently offline</small>
       <div class="w-full flex flex-row items-center relative">
         <input
           :class="
@@ -44,7 +44,7 @@
           "
           v-model="newMessage"
           @keydown.enter="send"
-          :disabled="!friend.online"
+          :disabled="!friend.isOnline"
         />
         <div class="bg-background-lighten p-4 h-full">
           <font-awesome-icon icon="paper-plane" />

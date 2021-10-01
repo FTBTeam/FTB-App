@@ -11,7 +11,7 @@
         :currentPage="currentPage"
         :messages="messages"
         :friends="friends"
-        :activeFriend="friend !== null ? friend.profile.chat.hash.medium : undefined"
+        :activeFriend="friend !== null ? friend.mediumHash : undefined"
         :getFriends="getFriends"
         :loading="loadingFriends"
       ></friends-list>
@@ -19,12 +19,12 @@
         <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
         <FriendChat
           v-if="currentPage === 'chatFriend' && friend !== null"
-          :key="friend.profile.chat.hash.medium"
+          :key="friend.mediumHash"
           :friend="friend"
           :removeFriend="removeFriend"
           :blockFriend="blockFriend"
-          :shortHash="friend.profile.chat.hash.medium"
-          :messages="messages[friend.profile.chat.hash.medium]"
+          :shortHash="friend.mediumHash"
+          :messages="messages[friend.mediumHash]"
           :sendMessage="sendMessage"
         ></FriendChat>
       </div>
@@ -81,7 +81,7 @@ export default class ChatWindow extends Vue {
   private currentPage = '';
   private friend: Friend | null = null;
   private messages: Messages = {};
-  private friends: FriendListResponse = { friends: [], requests: [] };
+  private friends: FriendListResponse = { online: [], offline: [], pending: [] };
 
   @Watch('auth', { deep: true })
   public async onAuthChange(newVal: AuthState, oldVal: AuthState) {
@@ -139,14 +139,15 @@ export default class ChatWindow extends Vue {
       payload: { type: 'getFriends', hash: longHash },
       callback: (data: any) => {
         console.log('Got friends');
-        data = data.friends;
-        Vue.set(this.friends, 'friends', data.friends);
-        let requests = this.friends.requests;
-        requests = data.requests.map((request: Friend) => {
-          const existing = this.friends.requests.find(f => f.profile.hash === request.profile.hash);
+        Vue.set(this.friends, 'online', data.online);
+        Vue.set(this.friends, 'offline', data.offline);
+        Vue.set(this.friends, 'pending', data.pending);
+        let requests = this.friends.pending;
+        requests = data.pending.map((request: Friend) => {
+          const existing = this.friends.pending.find(f => f.longHash === request.longHash);
           if (existing !== undefined) {
-            request.profile.friendCode = existing.profile.friendCode;
-            request.profile.display = existing.profile.display;
+            request.friendCode = existing.friendCode;
+            request.userDisplay = existing.userDisplay;
           }
           return request;
         });
@@ -170,7 +171,7 @@ export default class ChatWindow extends Vue {
 
   public showPage(page: string, friend?: Friend) {
     if (this.currentPage === page) {
-      if (this.friend && friend && this.friend.hash === friend.hash) {
+      if (this.friend && friend && this.friend.longHash === friend.longHash) {
         this.hidePage();
         return;
       }
@@ -178,13 +179,13 @@ export default class ChatWindow extends Vue {
     this.expand();
     if (friend) {
       this.friend = friend;
-      if (this.messages[friend.profile.chat.hash.medium]) {
-        let messages = this.messages[friend.profile.chat.hash.medium];
+      if (this.messages[friend.mediumHash]) {
+        let messages = this.messages[friend.mediumHash];
         messages = messages.map(message => {
           message.read = true;
           return message;
         });
-        Vue.set(this.messages, this.friend.profile.chat.hash.medium, messages);
+        Vue.set(this.messages, this.friend.mediumHash, messages);
       }
       this.$forceUpdate();
     }
@@ -200,14 +201,14 @@ export default class ChatWindow extends Vue {
   }
 
   public async blockFriend() {
-    if (this.friend === null || this.friend.hash === undefined) {
+    if (this.friend === null || this.friend.longHash === undefined) {
       return;
     }
-    const success = await this.removeFriendAction(this.friend.hash);
+    const success = await this.removeFriendAction(this.friend.longHash);
     if (typeof success === 'string') {
     } else {
       if (success) {
-        this.sendIRCMessage({ payload: { type: 'blockFriend', hash: this.friend.hash } });
+        this.sendIRCMessage({ payload: { type: 'blockFriend', hash: this.friend.longHash } });
         this.hidePage();
         if (this.auth.token) {
           this.getFriends(this.auth.token.mc.hash.long);
@@ -217,10 +218,10 @@ export default class ChatWindow extends Vue {
   }
 
   public async removeFriend() {
-    if (this.friend === null || this.friend.hash === undefined) {
+    if (this.friend === null || this.friend.longHash === undefined) {
       return;
     }
-    const success = await this.removeFriendAction(this.friend.hash);
+    const success = await this.removeFriendAction(this.friend.longHash);
     if (typeof success === 'string') {
     } else {
       if (success) {
@@ -239,12 +240,12 @@ export default class ChatWindow extends Vue {
     if (this.friend === null || this.auth.token === null) {
       return;
     }
-    this.sendIRCMessage({ payload: { type: 'ircSendMessage', nick: this.friend.profile.chat.hash.medium, message } });
+    this.sendIRCMessage({ payload: { type: 'ircSendMessage', nick: this.friend.mediumHash, message } });
     let messages: Message[];
-    if (this.messages[this.friend.profile.chat.hash.medium] === undefined) {
+    if (this.messages[this.friend.mediumHash] === undefined) {
       messages = [];
     } else {
-      messages = this.messages[this.friend.profile.chat.hash.medium];
+      messages = this.messages[this.friend.mediumHash];
     }
     messages.push({
       content: message,
@@ -252,7 +253,7 @@ export default class ChatWindow extends Vue {
       author: this.auth.token.mc.chat.hash.short,
       read: true,
     });
-    Vue.set(this.messages, this.friend.profile.chat.hash.medium, messages);
+    Vue.set(this.messages, this.friend.mediumHash, messages);
   }
 
   public mounted() {
@@ -261,8 +262,8 @@ export default class ChatWindow extends Vue {
     //     this.settings.settings = data;
     // });
     this.registerIRCCallback((data: any) => {
-      if (data.jsEvent === 'message') {
-        if (data.ircType === 'privmsg') {
+      // if (data.jsEvent === 'message') {
+      //   if (data.ircType === 'privmsg') {
           const from = data.nick;
           const message = data.message;
           if (this.settings.settings.blockedUsers.indexOf(from) !== -1) {
@@ -278,26 +279,27 @@ export default class ChatWindow extends Vue {
             content: message,
             author: from,
             date: new Date().getTime(),
-            read: this.currentPage === 'chatFriend' && this.friend?.profile.chat.hash.medium === from,
+            read: this.currentPage === 'chatFriend' && this.friend?.mediumHash === from,
           });
           Vue.set(this.messages, from, messages);
-        }
-      } else if (data.jsEvent === 'ctcp') {
-        const request = data.data;
-        if (data.type === 'newFriend') {
-          const requests = this.friends.requests;
-          const existing = requests.find(r => r.profile.chat.hash.medium === data.nick);
-          if (existing !== undefined) {
-            return;
-          }
-          const profile = data.profile;
-          requests.push({ profile, name: profile.display, accepted: false });
-          Vue.set(this.friends, 'requests', requests);
-        }
-        if (this.auth.token) {
-          this.getFriends(this.auth.token.mc.hash.long);
-        }
-      }
+        // }
+      // } else if (data.jsEvent === 'ctcp') {
+      //   const request = data.data;
+      //   if (data.type === 'newFriend') {
+      //     const requests = this.friends.pending;
+      //     const existing = requests.find(r => r.mediumHash === data.nick);
+      //     if (existing !== undefined) {
+      //       return;
+      //     }
+      //     const profile = data.profile;
+      //     // TODO: Figure out what this needs
+      //     // requests.push({ profile, name: profile.display, accepted: false });
+      //     Vue.set(this.friends, 'requests', requests);
+      //   }
+      //   if (this.auth.token) {
+      //     this.getFriends(this.auth.token.mc.hash.long);
+      //   }
+      // }
     });
   }
 }

@@ -61,7 +61,7 @@ export const mutations: MutationTree<SocketState> = {
       state.modal = message;
     } else if (message.type === 'closeModal') {
       state.modal = null;
-    } else if (message.type === 'ircEvent') {
+    } else if (message.type === 'ircMessage') {
       if (state.ircEventCallback) {
         state.ircEventCallback(message);
       }

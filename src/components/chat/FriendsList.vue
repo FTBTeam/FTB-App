@@ -51,17 +51,17 @@
         >
           <p
             :class="
-              `ml-2 cursor-pointer overflow-hidden ${friend.online ? 'text-white font-bold' : 'text-muted font-normal'}`
+              `ml-2 cursor-pointer overflow-hidden ${friend.isOnline ? 'text-white font-bold' : 'text-muted font-normal'}`
             "
             style="text-overflow: ellipsis;"
           >
-            {{ friend.profile.display }}
+            {{ friend.friendName }}
           </p>
           <p
-            v-if="unreadMessages[friend.profile.chat.hash.medium] > 0"
+            v-if="unreadMessages[friend.mediumHash] > 0"
             class="bg-red-600 rounded-full px-2 ml-2 text-xs"
           >
-            {{ unreadMessages[friend.profile.chat.hash.medium] }}
+            {{ unreadMessages[friend.mediumHash] }}
           </p>
           <div class="icons ml-auto">
             <font-awesome-icon
@@ -71,7 +71,7 @@
               :title="friend.currentPack"
               @click="openModpack(friend)"
             />
-            <font-awesome-icon v-if="friend.online" icon="comments" class="mx-2 cursor-pointer" />
+            <font-awesome-icon v-if="friend.isOnline" icon="comments" class="mx-2 cursor-pointer" />
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@
           v-for="friend in friendRequests"
           :key="friend.id"
         >
-          <p class="ml-2">{{ friend.profile.display }}</p>
+          <p class="ml-2">{{ friend.friendName }}</p>
           <div class="icons ml-auto" v-if="acceptingFriends.indexOf(friend.hash) === -1">
             <font-awesome-icon icon="times" class="mx-2 cursor-pointer text-white hover:text-red-500" />
             <font-awesome-icon
@@ -254,15 +254,17 @@ export default class MainChat extends Vue {
   }
 
   get currentFriends() {
-    let friends = this.friends.friends.filter(a => a.accepted).sort((a, b) => Number(b.online) - Number(a.online));
+    console.log(this.friends);
+    let friends = [...this.friends.online.filter(a => !a.pending), ...this.friends.offline.filter(a=> !a.pending)].sort((a, b) =>a.isOnline ? b.isOnline ? 0 : -1 : 1);
     if (this.search.length > 0) {
-      friends = friends.filter(a => a.profile.display.indexOf(this.search) !== -1);
+      friends = friends.filter(a => a.userDisplay?.indexOf(this.search) !== -1);
     }
     return friends;
   }
 
   get friendRequests() {
-    return this.friends.requests.filter(friend => this.currentFriends.find(f => f.id === friend.id) === undefined);
+    console.log(this.friends.pending);
+    return this.friends.pending.filter(friend => this.currentFriends.find(f => f.longHash === friend.longHash) === undefined);
   }
 
   public mounted() {

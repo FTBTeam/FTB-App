@@ -31,8 +31,9 @@ export interface ModalBox {
 }
 
 export interface FriendListResponse {
-  friends: Friend[];
-  requests: Friend[];
+  online: Friend[];
+  offline: Friend[];
+  pending: Friend[];
 }
 
 export interface Button {

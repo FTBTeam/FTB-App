@@ -34,7 +34,7 @@
 
         <p class="font-bold text-lg mt-6 mb-2">Support</p>
         <div class="item" @click="() => platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME')">
-          Order a server from Creeperhost
+          Order a server from CreeperHost
         </div>
         <div class="item" @click="() => platform.get.utils.openUrl('https://feed-the-beast.com/support')">
           Need help using the app?

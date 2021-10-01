@@ -4,7 +4,6 @@
     <router-link to="/" :is="disableNav ? 'span' : 'router-link'" :class="{ 'item-disabled': disableNav }">
       <img src="../assets/images/ftb-logo.svg" width="60" class="cursor-pointer logo-hover logo" draggable="false" />
     </router-link>
-    <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
     <div class="nav-items nav-main mt-5">
       <router-link
         :is="disableNav ? 'span' : 'router-link'"
@@ -19,6 +18,17 @@
       </router-link>
     </div>
     <div class="nav-items">
+    <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
+      <a
+
+        v-if="auth.token !== null"
+        class="nav-item capitalize"
+        :class="{ 'item-disabled': disableNav }"
+        @click="openFriends"
+      >
+        <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>
+        <span>Friends List</span>
+      </a>
       <router-link
         :to="{ name: 'MTIntegration' }"
         v-if="auth.token !== null"
@@ -50,7 +60,7 @@
         </div>
       </router-link>
     </div>
-    <div aria-label="Setup a server with Creeperhost" data-balloon-pos="right" class="w-full" @click="openPromo()">
+    <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">
       <img
         src="../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"

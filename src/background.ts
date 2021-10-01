@@ -97,7 +97,7 @@ let userData: any;
 let authData: any;
 let sessionString: string;
 const seenModpacks: MTModpacks = {};
-const friends: FriendListResponse = { friends: [], requests: [] };
+const friends: FriendListResponse = { online: [], offline: [], pending: [] };
 
 ipcMain.on('websocketReceived', (event, message) => {
   if (!mtIRCCLient) {

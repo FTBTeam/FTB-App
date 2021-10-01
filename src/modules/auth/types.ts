@@ -49,11 +49,13 @@ export interface Profile {
 }
 
 export interface Friend {
-  id?: number;
-  hash?: string;
-  accepted: boolean;
-  name: string;
-  online?: boolean;
+  friendCode?: string;
+  pending?: boolean;
+  longHash: string;
+  mediumHash: string;
+  friendName: string;
+  userDisplay?: string;
+  isOnline?: boolean;
   currentPack?: string;
   currentPackID?: string;
   notifications?: number;
