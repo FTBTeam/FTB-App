@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher;
 
 import net.creeperhost.creeperlauncher.os.OS;
-import net.creeperhost.creeperlauncher.os.OSUtils;
+import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -69,6 +69,7 @@ public class Constants
     public static String S3_BUCKET = "";
     public static String S3_HOST = "";
 
+    public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
     public static String getCreeperhostModpackSearch2(boolean _private, byte packType)
     {

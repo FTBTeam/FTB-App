@@ -75,6 +75,7 @@ public class CreeperLauncher
 
     public static void main(String[] args)
     {
+        System.out.println(Constants.LIB_SIGNATURE);
         // Do this as soon as possible. Settings and instance location SHOULD be right by this point
         // (with a slim chance of legacy migration), but better to have some settings than none
         Settings.loadSettings();

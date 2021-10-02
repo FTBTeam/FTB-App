@@ -25,7 +25,7 @@ public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
             if (mineTogetherChat != null) {
                 return;
             }
-            mineTogetherChat = new MineTogetherChat(data.nick, Constants.MT_HASH, true, data.realname, ""/*TODO: signature*/, "", new IChatListener() {
+            mineTogetherChat = new MineTogetherChat(data.nick, Constants.MT_HASH, true, data.realname, Constants.LIB_SIGNATURE, "", new IChatListener() {
                 @Override
                 public void onPartyInvite(Profile profile) {
                     Settings.webSocketAPI.sendMessage(new IRCPartyInviteData(profile));
@@ -48,7 +48,7 @@ public class IRCConnectHandler implements IMessageHandler<IRCConnectData>
 
                 @Override
                 public String getVerifyOutput() {
-                    return ""; // TODO: figure out a verification method, maybe same as in connect on server side?
+                    return Constants.LIB_SIGNATURE + ":" + Settings.settings.get("sessionString");
                 }
 
                 // We're being asked what server we're on - we shouldn't reply
