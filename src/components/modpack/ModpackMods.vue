@@ -6,7 +6,7 @@
     </div>
     <div class="flex mb-8 items-center">
       <f-t-b-search-bar :alpha="true" placeholder="Search..." :value="search" @input="onSearch" />
-      <div class="actions flex ml-6">
+      <div class="actions flex ml-6" v-if="packInstalled">
         <ftb-button color="primary" class="py-3 px-4 whitespace-no-wrap" @click="() => $emit('searchForMods')">
           <font-awesome-icon icon="book" class="mr-2" />
           Add more mods
