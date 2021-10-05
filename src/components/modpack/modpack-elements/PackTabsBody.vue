@@ -18,7 +18,6 @@
             <div class="name">Last played</div>
             <div class="value">{{ instance.lastPlayed | momentFromNow }}</div>
           </div>
-
           <div class="stat">
             <div class="name">Version</div>
             <div class="value">{{ instance.version }}</div>

@@ -24,7 +24,7 @@
         </div>
       </div>
       <div class="results">
-        <template v-if="search !== '' && results.length">
+        <template v-if="results.length">
           <mod-card
             v-for="(mod, index) in results"
             :key="index"
@@ -35,7 +35,11 @@
           />
         </template>
         <!-- This is so over the top -->
-        <div class="no-results" v-else-if="!results.length && search !== '' && !loadingTerm && !loadingExtra">
+        <div class="loading" v-else-if="search !== '' && (loadingTerm || visualLoadingFull)">
+          <font-awesome-icon spin icon="spinner" />
+          <p>Loading results</p>
+        </div>
+        <div class="no-results" v-else-if="search !== '' && !loadingTerm && !visualLoadingFull && !results.length">
           <div
             class="fancy"
             data-balloon-length="large"
@@ -63,7 +67,7 @@
             </div>
           </div>
         </div>
-        <div class="make-a-search" v-else-if="search === ''">
+        <div class="make-a-search" v-else>
           <div class="search-prompt">
             <div class="icon-container">
               <font-awesome-icon icon="search" class="primary" />
@@ -71,10 +75,6 @@
             </div>
             <p>Use the search box above to find new mods</p>
           </div>
-        </div>
-        <div class="loading" v-else>
-          <font-awesome-icon spin icon="spinner" />
-          <p>Loading results</p>
         </div>
       </div>
       <div class="more-btn flex justify-center">
@@ -130,6 +130,7 @@ export default class FindMods extends Vue {
 
   // Handles loading the inital search term
   loadingTerm = false;
+  visualLoadingFull = false;
 
   target: string = '';
   modLoader: string = '';
@@ -172,6 +173,7 @@ export default class FindMods extends Vue {
     this.fetchRequests.forEach(e => e.abort());
 
     this.loadingTerm = true;
+    this.visualLoadingFull = true;
     const start = new Date().getTime();
 
     const results = this.abortableFetch(
@@ -185,9 +187,8 @@ export default class FindMods extends Vue {
     const searchResults = await (await results.ready).json();
 
     this.loadingTerm = false;
-
-    this.resetSearch();
     if (!searchResults || searchResults?.total === 0) {
+      this.visualLoadingFull = false;
       return;
     }
 
@@ -228,6 +229,10 @@ export default class FindMods extends Vue {
           this.results.push(res);
         }
       }
+    }
+
+    if (this.offset === 0) {
+      this.visualLoadingFull = false;
     }
 
     this.offset += 5;
