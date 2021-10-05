@@ -57,7 +57,7 @@ export default class InstallModal extends Vue {
   }
 
   get versionsBasedOnBeta() {
-    if (!this.showBetaAndAlpha) {
+    if (this.showBetaAndAlpha) {
       return this.versions;
     }
 

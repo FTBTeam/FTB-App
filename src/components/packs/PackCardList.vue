@@ -109,7 +109,7 @@
         </div>
       </div>
     </div>
-    <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
+    <FTBModal :visible="showInstall" size="medium" @dismiss-modal="hideInstall" :dismissable="true">
       <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />
     </FTBModal>
     <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox" :dismissable="true">

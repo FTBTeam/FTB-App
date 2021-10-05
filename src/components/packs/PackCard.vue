@@ -6,7 +6,13 @@
       v-if="currentModpack !== undefined || instance !== undefined || isDemo"
     >
       <div class="art">
-        <span v-if="versionType !== 'release'" class="beta-tag" :class="versionType">{{ versionType }}</span>
+        <span
+          v-if="versionType !== 'release'"
+          class="beta-tag"
+          :style="{ backgroundColor: getColorForReleaseType(versionType) }"
+          :class="versionType"
+          >{{ versionType }}</span
+        >
         <div class="has-update" v-if="instance && !isLatestVersion && kind === 'instance'">Update Available</div>
         <img
           class="w-full"
@@ -58,6 +64,7 @@ import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '../../utils';
 import { AuthState } from '../../modules/auth/types';
+import { getColorForReleaseType } from '@/utils/colors';
 
 const namespace = 'websocket';
 
@@ -133,6 +140,8 @@ export default class PackCard extends Vue {
     cancelAction: Function,
   };
   private loading: boolean = false;
+
+  getColorForReleaseType = getColorForReleaseType;
 
   @Watch('modpacks', { deep: true })
   public onModpacksChange(newState: ModpackState, oldState: ModpackState) {
@@ -388,6 +397,8 @@ export default class PackCard extends Vue {
       background-color: rgba(234, 32, 32, 0.89);
       font-size: 0.75rem;
       font-weight: bold;
+
+      box-shadow: 0 3px 15px rgba(black, 0.2);
 
       text-transform: capitalize;
     }
