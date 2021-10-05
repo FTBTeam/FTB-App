@@ -48,10 +48,10 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import FriendsList from '@/components/chat/FriendsList.vue';
 import AddFriend from '@/components/chat/AddFriend.vue';
 import FriendChat from '@/components/chat/FriendChat.vue';
-import { Friend, AuthState } from '../modules/auth/types';
-import { State, Action } from 'vuex-class';
-import { Messages, Message, FriendListResponse } from '../types';
-import { SettingsState, Settings } from '../modules/settings/types';
+import { AuthState, Friend } from '../modules/auth/types';
+import { Action, State } from 'vuex-class';
+import { FriendListResponse, Message, Messages } from '../types';
+import { Settings, SettingsState } from '../modules/settings/types';
 import { SocketState } from '../modules/websocket/types';
 import platform from '@/utils/interface/electron-overwolf';
 
@@ -85,12 +85,6 @@ export default class ChatWindow extends Vue {
 
   @Watch('auth', { deep: true })
   public async onAuthChange(newVal: AuthState, oldVal: AuthState) {
-    console.log(
-      'Auth changes',
-      newVal.token?.accounts,
-      this.hasLoaded,
-      newVal.token?.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined && !this.hasLoaded,
-    );
     if (newVal.token?.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined && !this.hasLoaded) {
       this.hasLoaded = true;
       if (newVal.token) {
@@ -127,7 +121,6 @@ export default class ChatWindow extends Vue {
   }
 
   public getFriends(longHash?: string) {
-    console.log('Loading friends');
     this.loadingFriends = true;
     if (longHash === undefined) {
       longHash = this.auth.token?.mc.hash.long;
@@ -138,7 +131,6 @@ export default class ChatWindow extends Vue {
     this.sendIRCMessage({
       payload: { type: 'getFriends', hash: longHash },
       callback: (data: any) => {
-        console.log('Got friends');
         Vue.set(this.friends, 'online', data.online);
         Vue.set(this.friends, 'offline', data.offline);
         Vue.set(this.friends, 'pending', data.pending);
@@ -264,25 +256,25 @@ export default class ChatWindow extends Vue {
     this.registerIRCCallback((data: any) => {
       // if (data.jsEvent === 'message') {
       //   if (data.ircType === 'privmsg') {
-          const from = data.nick;
-          const message = data.message;
-          if (this.settings.settings.blockedUsers.indexOf(from) !== -1) {
-            return;
-          }
-          let messages: Message[];
-          if (this.messages[from] === undefined) {
-            messages = [];
-          } else {
-            messages = this.messages[from];
-          }
-          messages.push({
-            content: message,
-            author: from,
-            date: new Date().getTime(),
-            read: this.currentPage === 'chatFriend' && this.friend?.mediumHash === from,
-          });
-          Vue.set(this.messages, from, messages);
-        // }
+      const from = data.nick;
+      const message = data.message;
+      if (this.settings.settings.blockedUsers.indexOf(from) !== -1) {
+        return;
+      }
+      let messages: Message[];
+      if (this.messages[from] === undefined) {
+        messages = [];
+      } else {
+        messages = this.messages[from];
+      }
+      messages.push({
+        content: message,
+        author: from,
+        date: new Date().getTime(),
+        read: this.currentPage === 'chatFriend' && this.friend?.mediumHash === from,
+      });
+      Vue.set(this.messages, from, messages);
+      // }
       // } else if (data.jsEvent === 'ctcp') {
       //   const request = data.data;
       //   if (data.type === 'newFriend') {

@@ -18,16 +18,15 @@
       </router-link>
     </div>
     <div class="nav-items">
-    <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
+      <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
       <a
-
         v-if="auth.token !== null"
         class="nav-item capitalize"
         :class="{ 'item-disabled': disableNav }"
         @click="openFriends"
       >
         <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>
-        <span>Friends List</span>
+        <span class="whitespace-no-wrap">Friends List</span>
       </a>
       <router-link
         :to="{ name: 'MTIntegration' }"

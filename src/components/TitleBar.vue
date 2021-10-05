@@ -111,8 +111,7 @@ export default class TitleBar extends Vue {
     font-size: 0.875rem;
     opacity: 0.5;
     display: flex;
-    text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 500;
 
     img {
       height: 18px;
