@@ -4,7 +4,26 @@
       This mod list is representative of the latest version of this Modpack. Different versions of this Modpack may have
       different mods.
     </div>
-    <div v-for="(file, index) in modlist" :key="index">
+    <div class="flex mb-8 items-center">
+      <f-t-b-search-bar :alpha="true" placeholder="Search..." :value="search" @input="onSearch" />
+      <div class="actions flex ml-6">
+        <ftb-button color="primary" class="py-3 px-4 whitespace-no-wrap" @click="() => $emit('searchForMods')">
+          <font-awesome-icon icon="book" class="mr-2" />
+          Add more mods
+        </ftb-button>
+        <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
+          <ftb-button
+            @click="() => $emit('getModList', true)"
+            class="py-3 px-4"
+            color="info"
+            :disabled="updatingModlist"
+          >
+            <font-awesome-icon icon="sync" />
+          </ftb-button>
+        </div>
+      </div>
+    </div>
+    <div v-for="(file, index) in filteredModList" :key="index">
       <div class="flex flex-row my-4 items-center">
         <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
         <div class="ml-auto">
@@ -26,11 +45,13 @@ import Vue from 'vue';
 import Component from 'vue-class-component';
 import { prettyByteFormat } from '@/utils/helpers';
 import { Action } from 'vuex-class';
-import { Prop } from 'vue-property-decorator';
+import { Prop, Watch } from 'vue-property-decorator';
 import FindMods from '@/components/modpack/FindMods.vue';
+import FTBSearchBar from '@/components/FTBSearchBar.vue';
 
 @Component({
   components: {
+    FTBSearchBar,
     FindMods,
   },
 })
@@ -42,7 +63,28 @@ export default class ModpackMods extends Vue {
   @Prop() updatingModlist!: boolean;
   @Prop() packInstalled!: boolean;
 
+  filteredModList: any[] = [];
+  search = '';
+
   prettyBytes = prettyByteFormat;
+
+  mounted() {
+    this.filteredModList = this.modlist;
+  }
+
+  @Watch('modlist')
+  onModListChange() {
+    this.filteredModList = this.modlist;
+  }
+
+  onSearch(value: string) {
+    if (value === '') {
+      this.filteredModList = this.modlist;
+      return;
+    }
+
+    this.filteredModList = this.modlist.filter(e => e.name.toLowerCase().includes(value.toLowerCase()));
+  }
 }
 </script>
 

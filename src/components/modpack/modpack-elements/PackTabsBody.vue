@@ -3,16 +3,20 @@
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
         <div class="play">
-          <ftb-button color="primary" class="py-3 px-8" @click="() => $emit('mainAction')">
+          <ftb-button
+            color="primary"
+            class="py-3 px-8"
+            @click="() => $emit('mainAction')"
+            :disabled="!isInstalled && modpacks.installing !== null"
+          >
             <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
             {{ isInstalled ? 'Play' : 'Install' }}
           </ftb-button>
         </div>
-
         <div class="stats" v-if="isInstalled">
           <div class="stat">
             <div class="name">Last played</div>
-            <div class="value">{{ instance.lastPlayed | moment('from', 'now') }}</div>
+            <div class="value">{{ instance.lastPlayed | momentFromNow }}</div>
           </div>
 
           <div class="stat">
@@ -30,6 +34,11 @@
             <div class="name">Plays</div>
             <div class="value font-sans">{{ packInstance.plays | formatNumber }}</div>
           </div>
+
+          <!--          <div class="stat">-->
+          <!--            <div class="name">Released on</div>-->
+          <!--            <div class="value font-sans">{{ packInstance.updated | moment }}</div>-->
+          <!--          </div>-->
         </div>
 
         <div class="options">
@@ -73,25 +82,6 @@
             </div>
           </div>
         </div>
-
-        <div class="actions">
-          <div class="buttons" v-if="isInstalled && activeTab === tabs.MODS">
-            <ftb-button color="primary" class="py-2 px-4 inline-block" @click="() => $emit('searchForMods')">
-              Get more mods
-              <font-awesome-icon icon="search" class="ml-2" />
-            </ftb-button>
-            <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
-              <ftb-button
-                @click="() => $emit('getModList', true)"
-                class="py-2 px-4"
-                color="info"
-                :disabled="updatingModlist"
-              >
-                <font-awesome-icon icon="sync" />
-              </ftb-button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -123,13 +113,16 @@
         </div>
       </div>
 
-      <!--      Tab views, we're not using the router because it's a pain-->
+      <!-- Tab views, we're not using the router because it's a pain-->
       <modpack-mods
         v-if="activeTab === tabs.MODS"
         v-show="!searchingForMods"
         :modlist="mods"
         :pack-installed="isInstalled"
+        :updatingModlist="updatingModlist"
         @showFind="() => $emit('searchForMods')"
+        @getModList="() => $emit('getModList', true)"
+        @searchForMods="() => $emit('searchForMods')"
       />
 
       <!-- If the pack page grows more, we will have to use the router to clean this up. -->
@@ -151,17 +144,21 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
+import { Instance, ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
 import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
 import { getColorForChar } from '@/utils/colors';
+import { State } from 'vuex-class';
+import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
 
 @Component({
-  components: { ModpackPublicServers, ModpackSettings, ModpackMods },
+  components: { ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
 })
 export default class PackTabsBody extends Vue {
+  @State('modpacks') public modpacks!: ModpackState;
+
   // The stored instance for an installed pack
   @Prop({ default: null }) instance!: Instance;
   // Pack Instance is the modpack api response
@@ -269,12 +266,6 @@ export default class PackTabsBody extends Vue {
   background: rgba(black, 0.3);
   padding-right: 1.5rem;
   margin-bottom: 0.8rem;
-
-  .actions {
-    .buttons {
-      display: flex;
-    }
-  }
 
   .tabs {
     display: flex;

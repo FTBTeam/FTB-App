@@ -48,12 +48,7 @@
         />
       </ftb-modal>
 
-      <find-mods
-        :instance="instance"
-        :goBack="() => (searchingForMods = false)"
-        @modInstalled="getModList"
-        v-if="searchingForMods"
-      />
+      <find-mods :instance="instance" @modInstalled="getModList" v-if="searchingForMods" />
     </div>
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
@@ -169,7 +164,7 @@ export default class InstancePage extends Vue {
       this.$router.back();
     } else {
       this.searchingForMods = false;
-      this.activeTab = ModpackPageTabs.OVERVIEW;
+      this.activeTab = ModpackPageTabs.MODS;
     }
   }
 

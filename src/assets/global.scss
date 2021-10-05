@@ -40,7 +40,7 @@ body {
       }
     }
 
-    .body {
+    > .body {
       flex: 1;
       background: rgba(#2a2a2a, 0.9);
       backdrop-filter: blur(8px);

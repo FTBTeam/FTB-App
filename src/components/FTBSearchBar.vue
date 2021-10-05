@@ -1,7 +1,7 @@
 <template>
   <div
     class="w-full flex flex-row items-center relative shadow rounded ftb-search"
-    :class="{ darker: darkMode, nope: min > 0 && value.length > 0 && value.length < min }"
+    :class="{ darker: darkMode, alpha, nope: min > 0 && value.length > 0 && value.length < min }"
   >
     <input
       class="block w-full p-3 rounded-tl rounded-bl appearance-none leading-normal text-gray-300"
@@ -27,6 +27,7 @@ export default class FTBSearchBar extends Vue {
   @Prop({ default: -1 }) min!: number;
 
   @Prop({ default: false }) darkMode!: boolean;
+  @Prop({ default: false }) alpha!: boolean;
 
   emit(event: any) {
     this.$emit('input', event.target.value);
@@ -49,6 +50,13 @@ export default class FTBSearchBar extends Vue {
     input,
     .search-button {
       background-color: var(--color-background);
+    }
+  }
+
+  &.alpha {
+    input,
+    .search-button {
+      background-color: rgba(black, 0.4);
     }
   }
 

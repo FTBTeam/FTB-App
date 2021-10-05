@@ -1,7 +1,7 @@
 <template>
   <div class="find-mods">
     <div class="header flex items-center mt-2">
-      <ftb-search class="flex-1" placeholder="Search for a mod" min="3" v-model="search" />
+      <ftb-search :alpha="true" class="flex-1" placeholder="Search for a mod" min="3" v-model="search" />
     </div>
 
     <div class="body pt-6">
@@ -96,7 +96,7 @@
 <script lang="ts">
 import { AuthState } from '@/modules/auth/types';
 import { Instance } from '@/modules/modpacks/types';
-import { Mod, ModSearchResults } from '@/types';
+import { Mod } from '@/types';
 import { debounce } from '@/utils';
 import axios from 'axios';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
@@ -143,6 +143,8 @@ export default class FindMods extends Vue {
 
   searchDebounce: any;
 
+  fetchRequests: { abort: () => void; ready: Promise<Response> }[] = [];
+
   /**
    * If no instance is set, everything is wrong. The instance in this case is being
    * pulled from the instance page vue.
@@ -165,27 +167,31 @@ export default class FindMods extends Vue {
   }
 
   private async searchForMod() {
-    if (this.search === '') {
-      this.resetSearch();
-      return;
-    }
+    // Clean up all data, we have a new request
+    this.resetSearch();
+    this.fetchRequests.forEach(e => e.abort());
 
     this.loadingTerm = true;
     const start = new Date().getTime();
-    const searchResults = await axios.get<ModSearchResults>(
+
+    const results = this.abortableFetch(
       `${process.env.VUE_APP_MODPACK_API}/public/mod/search/${this.target || 'all'}/${this.modLoader}/100?term=${
         this.search
       }`,
+      null,
     );
+
+    this.fetchRequests.push(results);
+    const searchResults = await (await results.ready).json();
 
     this.loadingTerm = false;
 
     this.resetSearch();
-    if (!searchResults || searchResults.data?.total === 0) {
+    if (!searchResults || searchResults?.total === 0) {
       return;
     }
 
-    this.resultingIds = searchResults.data?.mods || [];
+    this.resultingIds = searchResults?.mods || [];
     await this.loadResultsProgressively();
 
     // TODO: remove later on, kinda helpful right now
@@ -310,10 +316,23 @@ export default class FindMods extends Vue {
 
   private async getModFromId(modId: number): Promise<Mod | null> {
     try {
-      return (await axios.get<Mod>(`${process.env.VUE_APP_MODPACK_API}/public/mod/${modId}`)).data;
+      const req = this.abortableFetch(`${process.env.VUE_APP_MODPACK_API}/public/mod/${modId}`, null);
+      this.fetchRequests.push(req);
+      return await (await req.ready).json();
     } catch {
       return null;
     }
+  }
+
+  // Yonk: https://developers.google.com/web/updates/2017/09/abortable-fetch
+  abortableFetch(request: RequestInfo, opts: RequestInit | null) {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    return {
+      abort: () => controller.abort(),
+      ready: fetch(request, { ...opts, signal }),
+    };
   }
 
   get hasResults() {
