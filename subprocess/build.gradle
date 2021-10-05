@@ -1,0 +1,452 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "net.sf.proguard:proguard-gradle:6.0.3"
+        classpath "commons-net:commons-net:3.5"
+    }
+}
+
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'eclipse'
+    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "org.beryx.runtime" version "1.7.0"
+    id "de.undercouch.download" version "4.0.0"
+    id "com.github.node-gradle.node" version "2.2.3"
+    id "com.palantir.graal" version "0.6.0-30-gade71a8"
+    id "com.install4j.gradle" version "8.0.4"
+    id "com.palantir.git-version" version "0.12.2"
+    id "com.github.hierynomus.license" version "0.15.0" apply false
+    id "de.sebastianboegl.shadow.transformer.log4j" version "2.1.1"
+}
+
+apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(11)
+
+ext.mavenUrl = null
+
+if (System.getenv("CI_API_V4_URL") != null) {
+    ext.mavenUrl = "${System.env.CI_API_V4_URL}/projects/${System.env.CI_PROJECT_ID}/packages/maven"
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+    maven { url 'https://maven.creeperhost.net' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://maven.covers1624.net/' }
+    if(mavenUrl != null) {
+        maven {
+            url mavenUrl
+            name "GitLab"
+            credentials(HttpHeaderCredentials) {
+                name = 'Job-Token'
+                value = System.getenv("CI_JOB_TOKEN")
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
+        }
+    }
+}
+
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
+def getDate() {
+    return new Date().format('yyyyMMddHHmm')
+}
+
+group = "net.creeperhost"
+archivesBaseName = "launcher"
+ext.details = versionDetails()
+ext.tempBranch = (ext.details.branchName == null ? System.env.CI_COMMIT_BRANCH : ext.details.branchName)
+ext.branch = ext.tempBranch == "master" ? "develop" : ext.tempBranch
+ext.branch = branch.replaceAll( '/', '-' )
+ext.calcVersion = getDate() + "-" + details.gitHash + (ext.details.branchName == "release" ? "" : "-" + ext.branch)
+ext.calcVersion = calcVersion.replaceAll( '/', '-')
+version = System.getenv("VERSION_OVERRIDE") ?: calcVersion
+ext.webVersion = details.gitHash
+
+install4j {
+    license = "$System.env.IJLICENSE"
+    installDir = file("/Applications/install4j.app")
+    appleIdPassword = "$System.env.APPLEPASSWORD"
+    macKeystorePassword = "$System.env.KEYSTOREPASSWORD"
+    disableSigning = true
+}
+
+task cleanMedia(type: Delete) {
+    delete "releaseBuild"
+    delete "releaseUpload"
+}
+
+task media(type: com.install4j.gradle.Install4jTask) {
+    projectFile = "installerstuff.install4j"
+    release = version
+    variables = [branch: branch]
+}
+
+media.dependsOn cleanMedia
+
+task prepareUploadJREs(type: Copy) {
+    from("$projectDir/releaseBuild/jres")
+    into new File("$projectDir/releaseUpload/jres/")
+}
+
+prepareUploadJREs.dependsOn media
+
+task cleanJREs(type: Delete) {
+    delete "releaseBuild/jres"
+}
+
+cleanJREs.dependsOn prepareUploadJREs
+
+task prepareUpload {
+    doLast {
+        copy {
+            from("$projectDir/releaseBuild/")
+            into new File("$projectDir/releaseUpload/" + branch + "/" + version + "/")
+            includeEmptyDirs = false
+            eachFile { details ->
+                details.setRelativePath new RelativePath(true, details.name)
+            }
+        }
+    }
+}
+
+prepareUpload.dependsOn cleanJREs
+
+task ftpRelease(type: Exec) {
+    //commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+}
+
+ftpRelease.dependsOn prepareUpload
+
+task ftpReleaseXML(type: Exec) {
+    //commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+
+}
+
+ftpReleaseXML.dependsOn ftpRelease
+
+// copy of above, but disconected at media
+task cleanMediaManual(type: Delete) {
+    delete "releaseBuild"
+    delete "releaseUpload"
+}
+
+task mediaManual(type: com.install4j.gradle.Install4jTask) {
+    projectFile = "installerstuff.install4j"
+    release = version
+    variables = [branch: branch]
+}
+
+mediaManual.dependsOn cleanMedia
+
+task prepareUploadJREsManual(type: Copy) {
+    from("$projectDir/releaseBuild/jres")
+    into new File("$projectDir/releaseUpload/jres/")
+}
+
+prepareUploadJREsManual.dependsOn mediaManual
+
+task cleanJREsManual(type: Delete) {
+    delete "releaseBuild/jres"
+}
+
+cleanJREsManual.dependsOn prepareUploadJREsManual
+
+task prepareUploadManual {
+    doLast {
+        copy {
+            from("$projectDir/releaseBuild/")
+            into new File("$projectDir/releaseUpload/" + branch + "/" + version + "/")
+            includeEmptyDirs = false
+            eachFile { details ->
+                details.setRelativePath new RelativePath(true, details.name)
+            }
+        }
+    }
+}
+
+prepareUploadManual.dependsOn cleanJREsManual
+
+task ftpReleaseManual(type: Exec) {
+    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+}
+
+task ftpReleaseXMLManual(type: Exec) {
+    commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+}
+
+ftpReleaseXMLManual.dependsOn ftpReleaseManual
+
+sourceSets {
+    main {
+        resources {
+            sourceSets.main.resources
+            //output.dir("./web/dist/",  builtBy: ":web:npm_run_build") // Comment out as this is what is causing the electron stuff to build regardless
+        }
+    }
+}
+
+def mainClassNameGlobal = "net.creeperhost.creeperlauncher.CreeperLauncher"
+
+mainClassName = mainClassNameGlobal
+
+
+graal {
+    outputName "binary"
+    graalVersion "19.2.1"
+    option "-J-Xmx2g"
+    option "-J-Xms2g"
+    option "--allow-incomplete-classpath"
+    option "-H:ReflectionConfigurationFiles=graal.json"
+    mainClass mainClassNameGlobal
+}
+
+ext {
+    MANIFEST = manifest{
+        attributes([
+                "Main-Class":               mainClassName,
+                "Specification-Title":      "Launcher",
+                "Specification-Vendor":     "Creeperhost LTD",
+                "Specification-Version":    version,
+                "Implementation-Title":     "CreeperLauncher",
+                "Implementation-Version":   version,
+                "Implementation-Vendor":    "Creeperhost LTD"
+        ] as LinkedHashMap, "net/creeperhost/creeperlauncher/")
+        attributes 'Multi-Release': 'true'
+    }
+}
+
+dependencies {
+    compileOnly files("lib/i4jruntime.jar")
+
+    compile 'net.creeperhost.minetogether:minetogether-api:1.0.7'
+
+    compile 'org.apache.tika:tika-core:1.22'
+    compile 'com.google.code.gson:gson:2.8.5'
+    compile 'org.java-websocket:Java-WebSocket:1.4.0'
+    compile 'com.github.oshi:oshi-core:5.7.0'
+    compile 'com.squareup.okhttp3:okhttp:4.2.2'
+    compile 'org.apache.commons:commons-compress:1.2'
+    compile 'net.java.dev.jna:jna:5.5.0'
+    compile 'net.java.dev.jna:jna-platform:5.5.0'
+    compile 'com.amazonaws:aws-java-sdk-s3:1.11.839'
+    compile 'org.apache.logging.log4j:log4j-core:2.11.1'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
+    compile 'org.apache.logging.log4j:log4j-jul:2.11.1'
+    compile 'com.github.pircbotx:pircbotx:2.2'
+    compile 'net.covers1624:Quack:0.1.4.+'
+    compile 'com.google.guava:guava:30.1-jre'
+
+    compile 'org.apache.ant:ant-commons-net:1.10.7'
+    compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.13'
+
+    annotationProcessor 'org.apache.logging.log4j:log4j-core:2.11.1'
+
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.6.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+project(":web") {
+    buildscript {
+        repositories {
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
+        }
+        dependencies {
+            classpath "com.github.node-gradle:gradle-node-plugin:2.2.3"
+        }
+    }
+
+    apply plugin: "com.github.node-gradle.node"
+
+    node {
+        version = "16.10.0"
+        npmVersion = "7.24.0"
+        download = true
+        npmWorkDir = file("${project.buildDir}/npm")
+    }
+
+    npm_run_build {
+        inputs.files(fileTree("public").matching {
+            exclude "version.json"
+        })
+        inputs.files(fileTree("src"))
+        inputs.file "package-lock.json"
+        inputs.file "package.json"
+        outputs.dir "dist"
+    }
+}
+
+task buildWithElectron(dependsOn: "build") {}
+
+buildWithElectron.dependsOn(":web:npm_run_build")
+
+task buildAll() {}
+buildAll.dependsOn(":web:npm_run_buildall")
+
+media.dependsOn buildAll
+
+import groovy.json.JsonOutput
+import java.time.Instant
+import groovy.json.JsonSlurper
+
+def dependencySources = [
+        "org.jetbrains:annotations": "https://github.com/JetBrains/java-annotations",
+        "com.squareup.okio:okio": "https://github.com/square/okio",
+        "com.github.oshi:oshi-core": "https://github.com/oshi/oshi",
+        "net.java.dev.jna:jna-platform": "https://github.com/java-native-access/jna",
+        "org.apache.commons:commons-compress": "https://github.com/apache/commons-compress",
+        "org.jetbrains.kotlin:kotlin-stdlib-common": "https://github.com/JetBrains/kotlin/tree/master/libraries",
+        "org.java-websocket:Java-WebSocket": "https://github.com/TooTallNate/Java-WebSocket",
+        "com.squareup.okhttp3:okhttp": "https://github.com/square/okhttp",
+        "net.java.dev.jna:jna": "https://github.com/java-native-access/jna",
+        "org.slf4j:slf4j-api": "https://github.com/qos-ch/slf4j",
+        "com.google.code.gson:gson": "https://github.com/google/gson",
+        "org.jetbrains.kotlin:kotlin-stdlib": "https://github.com/JetBrains/kotlin/tree/master/libraries/stdlib",
+        "org.apache.tika:tika-core": "https://github.com/apache/tika",
+        "net.covers1624:Quack": "https://github.com/covers1624/Quack"
+]
+
+task writeVersion() {
+    dependsOn tasks.getByName("downloadLicenses")
+    doLast {
+        def jsonSlurper = new JsonSlurper()
+        def data = jsonSlurper.parse(new File("$projectDir/build/reports/license/dependency-license.json"))
+        def dependencies = data.get("dependencies")
+        def licenses = [:]
+        for (obj in dependencies) {
+            def value = obj
+            licenses.put(value.name as String, [
+                    license   : value.licenses.last().name as String,
+                    repository: dependencySources.get(value.name.take(value.name.lastIndexOf(":")) as String)
+            ])
+        }
+        file("$projectDir/build/version.json").newWriter().withWriter { w ->
+            w << JsonOutput.toJson(
+                    [
+                            jarVersion    : version,
+                            webVersion    : webVersion,
+                            branch        : branch,
+                            timestampBuilt: Instant.now().getEpochSecond(),
+                            javaLicense   : licenses
+                    ]
+            )
+        }
+    }
+}
+
+def versionFile = layout.buildDirectory.file('version.json')
+def versionArtifact = artifacts.add('archives', versionFile.get().asFile) {
+    type 'json'
+    builtBy 'writeVersion'
+}
+
+//writeVersion.dependsOn project(":web").tasks.getByName("npm_run-script_license")
+//project(":web").tasks.getByName("npm_run-script_license").dependsOn project(":web").npmInstall
+//project(":web").npm_run_buildall.dependsOn writeVersion
+//project(":web").npm_run_build.dependsOn writeVersion
+build.dependsOn writeVersion
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+task processSource(type: Sync) {
+    from sourceSets.main.java
+    inputs.property 'version', version
+    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, BRANCH: branch])
+    into "$buildDir/src"
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+    dependsOn processSource
+    source = processSource.outputs
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = "sources"
+    from sourceSets.main.allSource
+    manifest.from(MANIFEST)
+}
+
+shadowJar {
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
+}
+
+artifacts {
+    archives sourcesJar
+    archives shadowJar
+}
+
+jar {
+    manifest.from(MANIFEST)
+}
+
+def currentOS = DefaultNativePlatform.getCurrentOperatingSystem()
+
+task copyElectron(dependsOn: ":web:npm_run_build", type: Copy) {
+    try {
+        if (currentOS.isWindows()) {
+            copy {
+                from fileTree("${projectDir}/../release/win-unpacked/")
+                into new File(projectDir, "/bin")
+            }
+        } else if (currentOS.isLinux()) {
+            copy {
+                from fileTree("${projectDir}/../release/linux-unpacked/")
+                into new File(projectDir, "/bin")
+            }
+        } else if (currentOS.isMacOsX()) {
+            copy {
+                from fileTree("${projectDir}/../release/mac/ftbapp.app")
+                into new File(projectDir, "/bin/ftbapp.app")
+            }
+        }
+    } catch (Throwable t) {
+        print "Error while copying files, continuing anyway";
+    }
+}
+
+wrapper {
+    gradleVersion = "6.8.3"
+}
+
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+            artifact versionArtifact
+        }
+    }
+    repositories {
+        if (mavenUrl != null) {
+            maven {
+                url mavenUrl
+                name "GitLab"
+                credentials(HttpHeaderCredentials) {
+                    name = 'Job-Token'
+                    value = System.getenv("CI_JOB_TOKEN")
+                }
+                authentication {
+                    header(HttpHeaderAuthentication)
+                }
+            }
+        }
+    }
+}

@@ -1,35 +1,50 @@
 <template>
   <Transition name="fade">
-  <div
-    v-if="visible"
-    class="left-0 top-0 fixed flex items-center justify-center bg-transparent-black h-screen w-full z-10 "
-    v-on:click.self="hide">
     <div
-      class="bg-navbar rounded shadow px-8 m-4 py-4 max-w-lg max-h-full text-white pointer-events-auto min-w-1/4">
-      <slot></slot>
+      v-if="visible"
+      class="left-0 top-0 flex items-center justify-center bg-transparent-black h-screen w-full ftb-modal"
+      @mousedown.self="hide"
+    >
+      <div
+        class="bg-navbar rounded shadow px-8 m-4 py-4 max-h-full text-white pointer-events-auto ftb-modal-contents"
+        :class="`${size}`"
+      >
+        <slot></slot>
+      </div>
     </div>
-  </div>
   </Transition>
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
-@Component({
-    name: 'FTBModal',
-    props: [
-        'visible',
-    ],
-})
-export default class FTBModal extends Vue {
-    @Prop()
-    private visible!: boolean;
+export enum ModalSizes {
+  SMALL = 'small',
+  MEDIUM = 'medium',
+  LARGE = 'large',
+}
 
-    public hide(): void {
+@Component
+export default class FTBModal extends Vue {
+  @Prop() visible!: boolean;
+  @Prop({ default: ModalSizes.SMALL }) size!: ModalSizes;
+  @Prop({ default: true }) private dismissable!: boolean;
+  @Prop({ default: false }) isLarge!: boolean;
+
+  public hide(): void {
+    if (this.dismissable) {
       this.$emit('dismiss-modal');
     }
+  }
 }
 </script>
-<style>
+
+<style lang="scss" scoped>
+.ftb-modal {
+  position: fixed;
+  z-index: 500;
+  background: rgba(black, 0.85);
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.4s;
@@ -37,5 +52,22 @@ export default class FTBModal extends Vue {
 .fade-enter,
 .fade-leave-to {
   opacity: 0;
+}
+
+.ftb-modal-contents {
+  max-height: 80%;
+
+  &.small {
+    width: 450px;
+  }
+
+  &.medium {
+    width: 550px;
+  }
+
+  &.large {
+    width: 80%;
+    height: 80%;
+  }
 }
 </style>

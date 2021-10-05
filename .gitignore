@@ -12,6 +12,7 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+electron.log
 
 # Editor directories and files
 .idea
@@ -27,8 +28,49 @@ yarn-error.log*
 /dist_electron
 release/
 
-package-lock.json
-
-version.json
-
+public/version.json
 licenses.json
+
+# Overwolf
+overwolf/windows/desktop/node_modules
+overwolf/launcher.log*
+overwolf/*.opk
+overwolf/node_modules
+*/.DS_Store
+overwolf/dist/desktop
+
+# Subprocess
+subprocess/.idea
+subprocess/.gradle
+subprocess/build
+subprocess/out
+subprocess/creepernatives
+subprocess/node_modules
+subprocess/wix
+subprocess/jdk
+subprocess/instances
+subprocess/bin
+subprocess/jre
+subprocess/releaseBuild
+subprocess/releaseUpload
+subprocess/natives
+subprocess/*.class
+subprocess/wix.zip
+subprocess/jpackager.archive
+subprocess/package-lock.json
+subprocess/creeperlauncher.log*
+subprocess/hs_err*
+subprocess/debug.log*
+subprocess/jre.archive
+subprocess/rss.xml
+subprocess/screenlog*
+subprocess/GPUCache
+subprocess/.localCache
+subprocess/launcher.log.lck
+subprocess/launcher.log
+subprocess/test
+subprocess/src/main/java/net/creeperhost/creeperlauncher/VersionTest.java
+subprocess/launcher.log.1
+subprocess/launcher.log.1.lck
+subprocess/tempDMGExtract/
+subprocess/electron.log

@@ -1,81 +1,119 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import Home from './views/Home.vue';
+import Home from '@/views/Home.vue';
+import MainApp from './views/MainApp.vue';
+import ChatWindow from './views/ChatWindow.vue';
 
 Vue.use(Router);
-
 export default new Router({
-    // mode: 'history',
-    base: process.env.BASE_URL,
-    routes: [
+  mode: 'hash',
+  routes: [
+    {
+      path: '/',
+      component: MainApp,
+      children: [
         {
-            path: '/',
-            name: 'home',
-            component: Home,
+          path: '/',
+          name: 'home',
+          component: Home,
         },
         {
-            path: '/modpacks',
-            name: 'modpacks',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "about" */ './views/Modpacks.vue'),
+          path: '/modpacks',
+          name: 'modpacks',
+          component: () => import(/* webpackChunkName: "modpacks" */ './views/Library.vue'),
         },
         {
-            path: '/browseModpacks',
-            name: 'browseModpacks',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "about" */ './views/BrowseModpacks.vue'),
+          path: '/browseModpacks/:search?',
+          name: 'browseModpacks',
+          component: () => import(/* webpackChunkName: "modpacks" */ './views/BrowseModpacks.vue'),
         },
         {
-            path: '/news',
-            name: 'news',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "news" */ './views/News.vue'),
+          path: '/news',
+          name: 'news',
+          component: () => import(/* webpackChunkName: "news" */ './views/News.vue'),
         },
         {
-            path: '/settings',
-            name: 'settings',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "settings" */ './views/Settings.vue'),
+          path: '/settings',
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings.vue'),
+          children: [
+            {
+              path: '',
+              name: 'instance-settings',
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/InstanceSettings.vue'),
+            },
+            {
+              path: 'download-settings',
+              name: 'download-settings',
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/DownloadSettings.vue'),
+            },
+            {
+              path: 'app-settings',
+              name: 'app-settings',
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppSettings.vue'),
+            },
+            {
+              path: 'integrations',
+              name: 'integrations',
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Integrations.vue'),
+            },
+            {
+              path: 'app-info',
+              name: 'app-info',
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppInfo.vue'),
+            },
+            {
+              path: 'app-info/license',
+              name: 'license',
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/License.vue'),
+            },
+            {
+              path: 'profile',
+              name: 'MTIntegration',
+              component: () => import(/* webpackChunkName: "profile" */ './views/Settings/MTIntegration.vue'),
+            },
+          ],
         },
         {
-            path: '/instancepage',
-            name: 'instancepage',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "instancepage" */ './views/InstancePage.vue'),
+          path: '/instancepage',
+          name: 'instancepage',
+          component: () => import(/* webpackChunkName: "instancepage" */ './views/InstancePage.vue'),
         },
         {
-            path: '/modpackpage',
-            name: 'modpackpage',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
+          path: '/modpackpage',
+          name: 'modpackpage',
+          component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
         },
         {
-            path: '/thirdparty',
-            name: 'thirdparty',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "modpackpage" */ './views/ComingSoon.vue'),
+          path: '/installing',
+          name: 'installingpage',
+          component: () => import(/* webpackChunkName: "installingpage" */ './views/InstallingPage.vue'),
         },
         {
-            path: '/license',
-            name: 'license',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
-            component: () => import(/* webpackChunkName: "modpackpage" */ './views/License.vue'),
+          path: '/launching',
+          name: 'launchingpage',
+          component: () => import(/* webpackChunkName: "launchingpage" */ './views/LaunchingPage.vue'),
         },
-    ],
+        {
+          path: '/thirdparty',
+          name: 'thirdparty',
+          component: () => import(/* webpackChunkName: "thirdparty" */ './views/ComingSoon.vue'),
+        },
+        {
+          path: '/discover',
+          name: 'discover',
+          component: () => import(/* webpackChunkName: "discovery" */ './views/DiscoverPage.vue'),
+        },
+        {
+          path: '/server',
+          name: 'server',
+          component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
+        },
+      ],
+    },
+    {
+      path: '/chat',
+      name: 'chat',
+      component: ChatWindow,
+    },
+  ],
 });

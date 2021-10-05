@@ -12,3 +12,7 @@ declare global {
     }
   }
 }
+
+declare global {
+  var window: Window & typeof globalThis;
+}

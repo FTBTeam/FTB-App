@@ -1,49 +1,77 @@
 <template>
-    <div class="flex flex-col min-w-1/2">
-        <h1 class="text-4xl ">{{packName}}</h1>
-        <div>
-            <p>{{packDescription}}</p>
-        </div>
-        <div class="flex mt-4 justify-center relative">
-            <select class="rounded-none bg-input focus:outline-none focus:shadow-outline border border-input px-4 block w-1/2 appearance-none leading-normal text-gray-400" v-model="version">
-                <option v-for="version in versions" :value="version.id" :key="`${packName}_${version.id}`">{{version.name}}</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 flex items-center px-2 text-gray-400">
-                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-            </div>
-            <FTBButton color="secondary" class="rounded-l-none" @click="install">Install</FTBButton>
-        </div>
-    </div>
+  <div class="flex flex-col">
+    <h1 class="text-3xl font-bold">{{ packName }}</h1>
+    <p class="mb-6">{{ packDescription }}</p>
+
+    <selection
+      @selected="e => (version = e.id)"
+      placeholder="Selection version"
+      :inheritedSelection="versionOptions[0]"
+      :options="versionOptions"
+    />
+
+    <label class="inline-flex items-center mt-4">
+      <input
+        type="checkbox"
+        :disabled="!hasReleaseVersion"
+        class="h-5 w-5"
+        v-model="showBetaAndAlpha"
+        :checked="showBetaAndAlpha"
+      /><span class="ml-4" :class="{ 'opacity-25': !hasReleaseVersion }">Show Beta and Alpha versions</span>
+    </label>
+
+    <FTBButton color="secondary" class="mt-8 mb-4 py-2 px-4 rounded text-center" @click="install">Install</FTBButton>
+  </div>
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import FTBButton from '@/components/FTBButton.vue';
-import { Versions } from '../../modules/modpacks/types';
+import Selection from '@/components/elements/Selection.vue';
+import { Versions } from '@/modules/modpacks/types';
+import { getColorForReleaseType } from '@/utils/colors';
 
 @Component({
-    components: {
-        FTBButton,
-    },
-    name: 'InformationModal',
-    props: [
-        'packName',
-        'packDescription',
-        'versions',
-        'doInstall',
-    ],
+  components: {
+    Selection,
+    FTBButton,
+  },
+  name: 'InstallModal',
+  props: ['packName', 'packDescription', 'versions', 'doInstall', 'selectedVersion'],
 })
 export default class InstallModal extends Vue {
-    @Prop()
-    private versions!: Versions[];
-    @Prop()
-    private doInstall!: (version: number) => {};
+  @Prop() private versions!: Versions[];
+  @Prop() private doInstall!: (version: number) => {};
+  @Prop() private selectedVersion!: number | null;
 
-    private version: number = this.versions[0].id;
+  showBetaAndAlpha = false;
 
-    public install(): void {
-        this.doInstall(this.version);
+  private version: number =
+    this.selectedVersion === null || this.selectedVersion === undefined ? this.versions[0].id : this.selectedVersion;
+
+  public install(): void {
+    this.doInstall(this.version);
+  }
+
+  get hasReleaseVersion() {
+    return this.versions.findIndex(e => e.type.toLowerCase() === 'release') !== -1;
+  }
+
+  get versionsBasedOnBeta() {
+    if (this.showBetaAndAlpha) {
+      return this.versions;
     }
 
+    const onlyReleaseVersions = this.versions.filter(e => e.type.toLowerCase() === 'release');
+    return !onlyReleaseVersions.length ? this.versions : onlyReleaseVersions;
+  }
+
+  get versionOptions() {
+    return this.versionsBasedOnBeta.map(e => ({
+      value: e,
+      text: this.$props.packName + ' ' + e.name,
+      badge: { text: e.type[0].toUpperCase() + e.type.slice(1), color: getColorForReleaseType(e.type) },
+    }));
+  }
 }
 </script>
 <style></style>

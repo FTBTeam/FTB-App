@@ -1,0 +1,86 @@
+[
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.browseInstanceData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.CancelInstallInstanceData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.InstalledInstancesData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.InstallInstanceData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.InstanceConfigureData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.InstanceInfoData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.LaunchInstanceData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.settingsConfigureData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.settingsInfoData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.UninstallInstanceData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.UpdateInstanceData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "net.creeperhost.creeperlauncher.api.data.WindowControlData",
+    "allPublicFields": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ]
+  }
+]

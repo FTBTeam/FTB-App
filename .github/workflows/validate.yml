@@ -1,0 +1,45 @@
+name: Validate code
+
+on: push
+
+jobs:
+  validate-subprocess:
+    runs-on: ubuntu-latest
+    if: |
+      !contains(github.event.head_commit.message, '[ciskip]')
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11 & Cache
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'gradle'
+      - name: Test build
+        env:
+          CI_API_V4_URL: "https://www.feed-the-beast.com"
+        working-directory: ./subprocess/
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build --stacktrace --no-daemon
+  validate-vue:
+    needs: validate-subprocess
+    runs-on: ubuntu-latest
+    if: |
+      !contains(github.event.head_commit.message, '[skip]')
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'yarn'
+      - name: Install Dependencies
+        run: rm -rf node_modules && yarn install --frozen-lockfile
+      - name: Setup licenes file
+        run: yarn gen:license
+      - name: Validate code quality
+        run: yarn lint 
+      - name: Run Overwolf Build
+        run: yarn vue:build:overwolf
+      - name: Run Standard Build
+        run: yarn vue:build

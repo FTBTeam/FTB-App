@@ -1,31 +1,67 @@
 <template>
-    <div class="w-full flex flex-col">
-        <input class="bg-background focus:bg-background-lighten focus:outline-none border border-gray-700 block w-full p-2 appearance-none leading-normal text-gray-300" v-bind:value="value" :placeholder="placeholder" @keydown="doSearch" @focusout="doSearch" @input="$emit('input', $event.target.value)"/>
+  <div
+    class="w-full flex flex-row items-center relative shadow rounded ftb-search"
+    :class="{ darker: darkMode, alpha, nope: min > 0 && value.length > 0 && value.length < min }"
+  >
+    <input
+      class="block w-full p-3 rounded-tl rounded-bl appearance-none leading-normal text-gray-300"
+      :value="value"
+      :placeholder="placeholder"
+      @focusout="emit"
+      @keydown.enter="emit"
+      @input="emit"
+    />
+    <div class="search-button p-3 cursor-pointer rounded-tr rounded-br">
+      <font-awesome-icon icon="search" />
     </div>
+  </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-@Component({
-    props: [
-        'placeholder',
-        'doSearch',
-        'value',
-    ],
-})
+
+@Component
 export default class FTBSearchBar extends Vue {
-    @Prop()
-    public buttonClick!: () => void;
+  @Prop() value!: string;
+  @Prop() placeholder!: string;
+  @Prop({ default: -1 }) min!: number;
 
-    @Prop()
-    public doSearch!: () => void;
+  @Prop({ default: false }) darkMode!: boolean;
+  @Prop({ default: false }) alpha!: boolean;
 
-    public handleClick() {
-        this.buttonClick();
-    }
+  emit(event: any) {
+    this.$emit('input', event.target.value);
+  }
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
+.shadow-error {
+  box-shadow: 0 1px 3px 0 rgba(199, 13, 13, 0.74), 0 1px 2px 0 rgba(199, 13, 13, 0.74);
+}
 
+.ftb-search {
+  input,
+  .search-button {
+    background: var(--color-navbar);
+  }
+
+  &.darker {
+    input,
+    .search-button {
+      background-color: var(--color-background);
+    }
+  }
+
+  &.alpha {
+    input,
+    .search-button {
+      background-color: rgba(black, 0.4);
+    }
+  }
+
+  &.nope {
+    box-shadow: 0 0 15px rgba(253, 55, 29, 0.329);
+  }
+}
 </style>
