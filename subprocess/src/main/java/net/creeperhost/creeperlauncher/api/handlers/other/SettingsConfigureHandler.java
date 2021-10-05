@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.api.handlers.other;
 
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.SettingsConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.SettingsChangeUtil;
@@ -27,6 +28,8 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
                     }
                 }
             } catch (Exception e) {
+                WebSocketAPI.LOGGER.error("Failed to handle settings change event");
+                e.printStackTrace();
             }
         }
         if (anyChanged)

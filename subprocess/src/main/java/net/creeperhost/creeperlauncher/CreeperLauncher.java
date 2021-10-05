@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class CreeperLauncher
 {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger("FTB Subprocess");
 
     private static final Object DIE_LOCK = new Object();
 
@@ -155,6 +155,7 @@ public class CreeperLauncher
                     try {
                         Files.deleteIfExists(e);
                     } catch (IOException ignored) {
+                        LOGGER.error("Failed to remove {} from {}", e.toString(), Constants.WORKING_DIR);
                     }
                 });
 
@@ -308,8 +309,9 @@ public class CreeperLauncher
             {
                 UpdateChecker.executeScheduledUpdate(Arrays.asList("-q", "-splash", "\"Updating...\""), true, Arrays.asList(args), null);
             }
-        } catch (Throwable ignored)
+        } catch (Throwable e)
         {
+
         }
     }
     public static long unixtimestamp()
@@ -325,7 +327,9 @@ public class CreeperLauncher
                 PingLauncherData ping = new PingLauncherData();
                 CreeperLauncher.missedPings++;
                 Settings.webSocketAPI.sendMessage(ping);
-            } catch(Exception ignored) {}
+            } catch(Exception ignored) {
+                LOGGER.error("Failed to send ping");
+            }
 
             // Don't do this in dev mode, when the frontend restarts, it can miss this amount of pings
             //15 minutes without ping/pong or an explicit disconnect event happened...
@@ -407,16 +411,19 @@ public class CreeperLauncher
         try {
             if (socket != null) socket.close();
         } catch (IOException ignored) {
+            LOGGER.error("Failed to close socket");
         }
 
         try {
             if (serverSocket != null) serverSocket.close();
         } catch (IOException ignored) {
+            LOGGER.error("Failed to close server socket");
         }
 
         try {
             if (socketWrite != null) socketWrite.close();
         } catch (IOException ignored) {
+            LOGGER.error("Failed to close socket writer");
         }
 
         socket = null;
@@ -432,6 +439,7 @@ public class CreeperLauncher
                 socket.getOutputStream().write((jsonObject.toString() + "\n").getBytes());
                 closeSockets();
             } catch (IOException ignored) {
+                LOGGER.error("Failed to close old client");
             }
         }
     }

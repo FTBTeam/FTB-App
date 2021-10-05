@@ -12,6 +12,7 @@ import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.SimpleDownloadableFile;
+import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.minecraft.GameLauncher;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoader;
@@ -41,7 +42,7 @@ import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
 
 public class FTBModPackInstallerTask implements IInstallTask<Void>
 {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger("Modpack Installer Task");
 
     private static final Gson gson = new Gson();
     public static AtomicLong currentSpeed = new AtomicLong(0);
@@ -75,8 +76,9 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
         try
         {
             this.currentUUID = instance.getUuid().toString();
-        } catch (Exception ignored)
+        } catch (Exception e)
         {
+            LOGGER.error("Unable to retrieve UUID from a local instance");
         }
     }
 

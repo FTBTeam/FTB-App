@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.*;
+import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
@@ -43,7 +44,9 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
             //Download the instance.json from the s3Bucket
             try {
                 CloudSaveManager.downloadFile(data.uuid + "/instance.json", instanceJson, true, null);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                WebSocketAPI.LOGGER.error("Failed to download instance data from cloud saves");
+            }
 
             LocalInstance instance;
             try {

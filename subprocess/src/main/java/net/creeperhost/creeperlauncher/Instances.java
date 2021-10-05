@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class Instances
 {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger("Instances");
 
     private static Map<UUID, LocalInstance> instances = new HashMap<>();
     private static Map<UUID, JsonObject> cloudInstances = new HashMap<>();

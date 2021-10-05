@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class WebSocketAPI extends WebSocketServer
 {
-    private static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger("Websockets API");
 
     private boolean fullyConnected = false;
 

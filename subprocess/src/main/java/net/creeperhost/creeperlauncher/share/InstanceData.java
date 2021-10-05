@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class InstanceData
 {
-    private transient static final Logger LOGGER = LogManager.getLogger();
+    private transient static final Logger LOGGER = LogManager.getLogger("Instance Data Handler");
 
     private String packName;
     private String minecraftVersion;
@@ -130,7 +130,10 @@ public class InstanceData
         try
         {
             response = httpClient.execute(httppost);
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            LOGGER.error("Failed to share pack", e);
+            e.printStackTrace();
+        }
         HttpEntity resEntity = response.getEntity();
 
         System.out.println(response.getStatusLine() + " Files Uploaded");

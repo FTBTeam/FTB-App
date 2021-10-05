@@ -142,7 +142,9 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
               try {
                   instance.setModified(true);
                   instance.saveJson();
-              } catch(Exception ignored) {} //TODO: We REALLY need to stop ignoring these...
+              } catch(Exception ignored) {
+                  LOGGER.error("Failed to update instance json for {}", instance.getName());
+              }
               Settings.webSocketAPI.sendMessage(
                       new InstanceInstallModData.Reply(
                               data,

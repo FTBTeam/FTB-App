@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -16,6 +18,8 @@ import java.util.HashMap;
 
 public class Settings
 {
+    private static final Logger LOGGER = LogManager.getLogger("Settings");
+
     private static final Type settingsToken = new TypeToken<HashMap<String, String>>(){}.getType();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     public static HashMap<String, String> settings = new HashMap<>();
@@ -28,13 +32,17 @@ public class Settings
         {
             try {
                 Files.createDirectories(Constants.BIN_LOCATION);
-            } catch(Exception ignored) {}
+            } catch(Exception ignored) {
+                LOGGER.error("Failed create directory [{}] for the settings.json", Constants.BIN_LOCATION);
+            }
         }
         try (BufferedWriter writer = Files.newBufferedWriter(json, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))
         {
             gson.toJson(settings, settingsToken, writer);
         }
-        catch (IOException ignored) {}
+        catch (IOException ignored) {
+            LOGGER.error("Failed to write json data to settings.json");
+        }
     }
 
     public static void loadSettings()
