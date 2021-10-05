@@ -55,6 +55,7 @@
                 :versions="modpack.versions"
                 :tags="modpack.tags"
                 :description="modpack.synopsis"
+                type="0"
               >
                 {{ modpack.id }}
               </pack-card-list>
@@ -78,7 +79,7 @@
                 :versionID="modpack.versions[0].id"
                 :name="modpack.name"
                 :authors="modpack.authors"
-                :type="1"
+                type="1"
                 :versions="modpack.versions"
                 :tags="modpack.tags"
                 :description="modpack.synopsis"
@@ -114,8 +115,8 @@
         </div>
       </div>
     </div>
-    <div v-else class="flex flex-1">
-      <Loading />
+    <div v-else class="flex flex-1 justify-center items-center">
+      <Loading class="mt-8" />
     </div>
   </div>
 </template>

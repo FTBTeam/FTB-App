@@ -232,7 +232,7 @@ export default class ModpackPage extends Vue {
       query: {
         modpackid: this.$route.query.modpackid,
         versionID: version.toString(),
-        packType: this.$route.query.type,
+        type: this.$route.query.type,
       },
     });
   }

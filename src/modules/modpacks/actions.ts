@@ -340,7 +340,6 @@ export const actions: ActionTree<ModpackState, RootState> = {
               });
             } catch (e) {
               pack.versions = pack.versions.reverse();
-              console.log('Error sorting versions, semver checking failed.', e.message);
             }
           }
           pack.kind = 'modpack';
@@ -383,7 +382,6 @@ export const actions: ActionTree<ModpackState, RootState> = {
               });
             } catch (e) {
               // pack.versions = pack.versions.reverse();
-              console.log('Error sorting versions, semver checking failed.', e.message);
             }
           }
           pack.kind = 'modpack';

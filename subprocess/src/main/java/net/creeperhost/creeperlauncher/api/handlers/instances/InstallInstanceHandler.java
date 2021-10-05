@@ -32,6 +32,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     {
         LOGGER.debug("Received install pack message for " + "ID:" + data.id + " VERSION:" + data.version + " PACKTYPE:" + data.packType);
         hasError.set(false);
+        FTBModPackInstallerTask.currentStage = FTBModPackInstallerTask.Stage.INIT;
         if (CreeperLauncher.isInstalling.get())
         {
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.get().currentUUID));
