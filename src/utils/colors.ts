@@ -5,3 +5,12 @@ export const getColorForChar = (input: string, saturation: number = 63, lightnes
   const index = colorFromChar.indexOf(input.toLowerCase().charAt(0));
   return `${index === -1 ? 0 : index * 10}, ${saturation}%, ${lightness}%`;
 };
+
+export const getColorForReleaseType = (type: string) => {
+  const lowerType = type.toLowerCase();
+  if (lowerType === 'release') {
+    return '#27AE60';
+  }
+
+  return lowerType === 'beta' ? '#00a8ff' : '#ff0059';
+};

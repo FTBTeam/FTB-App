@@ -61,12 +61,7 @@
               text: e.name,
               badge: {
                 text: e.type,
-                color:
-                  e.type.toLowerCase() === 'release'
-                    ? '#27AE60'
-                    : e.type.toLowerCase() === 'beta'
-                    ? '#00a8ff'
-                    : 'black',
+                color: getColorForReleaseType(e.type),
               },
               meta: prettyBytes(e.size),
             }))
@@ -115,7 +110,6 @@
 <script lang="ts">
 import { Mod } from '@/types';
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import FTBButton from '../FTBButton.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Instance } from '@/modules/modpacks/types';
 import { Action } from 'vuex-class';
@@ -124,6 +118,7 @@ import FTBModal from '../FTBModal.vue';
 import MessageModal from '../modals/MessageModal.vue';
 import eventBus from '@/utils/event-bus';
 import { prettyByteFormat } from '@/utils/helpers';
+import { getColorForReleaseType } from '@/utils/colors';
 
 type InstallProgress = {
   persent: number;
@@ -162,6 +157,7 @@ export default class ModCard extends Vue {
   installProgress: InstallProgress = ModCard.emptyProgress;
   wsReqId = -1;
 
+  getColorForReleaseType = getColorForReleaseType;
   prettyBytes = prettyByteFormat;
 
   versions =

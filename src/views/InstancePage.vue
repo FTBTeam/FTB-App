@@ -39,7 +39,7 @@
         />
       </div>
 
-      <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
+      <ftb-modal size="large" :visible="showVersions" @dismiss-modal="showVersions = false">
         <modpack-versions
           :versions="packInstance.versions"
           :pack-instance="packInstance"
@@ -111,7 +111,7 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
-    PackTabsBody,
+    'pack-tabs-body': PackTabsBody,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
@@ -139,6 +139,7 @@ export default class InstancePage extends Vue {
   // New stuff
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
+
   getColorForChar = getColorForChar;
 
   private packInstance: ModPack | null = null;

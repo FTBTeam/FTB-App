@@ -41,7 +41,7 @@
           />
         </div>
       </div>
-      <ftb-modal :isLarge="true" :visible="showVersions" @dismiss-modal="showVersions = false">
+      <ftb-modal size="large" :visible="showVersions" @dismiss-modal="showVersions = false">
         <modpack-versions
           :versions="currentModpack.versions"
           :pack-instance="currentModpack"
@@ -50,7 +50,7 @@
         />
       </ftb-modal>
     </div>
-    <ftb-modal :visible="showInstallBox" @dismiss-modal="hideInstall">
+    <ftb-modal :visible="showInstallBox" size="medium" @dismiss-modal="hideInstall">
       <InstallModal
         :pack-name="currentModpack.name"
         :doInstall="install"

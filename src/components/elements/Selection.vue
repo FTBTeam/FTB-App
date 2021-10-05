@@ -50,6 +50,8 @@ export default class Selection extends Vue {
   @Prop({ default: 'Select option' }) placeholder!: string;
   @Prop({ default: [] }) options!: Option[];
 
+  @Prop({ default: null }) inheritedSelection!: Option | null;
+
   open = false;
   selected: Option | null = null;
 
@@ -57,6 +59,11 @@ export default class Selection extends Vue {
     // Auto select the first option if there is only one (paul)
     if (this.options.length === 1) {
       this.select(this.options[0]);
+    } else if (this.inheritedSelection != null) {
+      const option = this.options.find(e => e === this.inheritedSelection);
+      if (option) {
+        this.select(option);
+      }
     }
   }
 

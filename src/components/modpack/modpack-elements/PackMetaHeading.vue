@@ -5,7 +5,13 @@
       Back to {{ hidePackDetails ? 'instance mods' : 'library' }}
     </div>
 
-    <div class="beta-tag" v-if="versionType !== 'release'">Running {{ versionType }} version</div>
+    <div
+      class="beta-tag"
+      :style="{ backgroundColor: getColorForReleaseType(versionType) }"
+      v-if="versionType !== 'release'"
+    >
+      Running {{ versionType }} version
+    </div>
 
     <div class="meta">
       <div class="origin icon" v-if="instance.packType === 0" data-balloon-pos="left" aria-label="FTB Modpack">
@@ -29,6 +35,7 @@ import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
 import { Instance } from '@/modules/modpacks/types';
+import { getColorForReleaseType } from '@/utils/colors';
 
 @Component
 export default class PackMetaHeading extends Vue {
@@ -36,6 +43,8 @@ export default class PackMetaHeading extends Vue {
   @Prop() isForgePack!: boolean;
   @Prop() versionType!: string;
   @Prop() instance!: Instance;
+
+  getColorForReleaseType = getColorForReleaseType;
 }
 </script>
 

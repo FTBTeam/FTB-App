@@ -121,12 +121,15 @@ Vue.filter('momentFromNow', (value: any) => {
   value = value.toString();
   return moment.duration(moment.unix(value).diff(moment())).humanize(true);
 });
+
 Vue.filter('formatNumber', (value: number) => {
   if (!value) {
     return '';
   }
   return new Intl.NumberFormat().format(value);
 });
+
+Vue.filter('title', (value: string) => (!value ? '' : value[0].toUpperCase() + value.slice(1)));
 
 (async () => {
   try {

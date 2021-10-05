@@ -6,8 +6,8 @@
       @mousedown.self="hide"
     >
       <div
-        class="bg-navbar rounded shadow px-8 m-4 py-4 max-h-full text-white pointer-events-auto"
-        :class="{ 'max-w-lg min-w-1/4': !isLarge, 'is-large': isLarge }"
+        class="bg-navbar rounded shadow px-8 m-4 py-4 max-h-full text-white pointer-events-auto ftb-modal-contents"
+        :class="`${size}`"
       >
         <slot></slot>
       </div>
@@ -17,9 +17,16 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
+export enum ModalSizes {
+  SMALL = 'small',
+  MEDIUM = 'medium',
+  LARGE = 'large',
+}
+
 @Component
 export default class FTBModal extends Vue {
   @Prop() visible!: boolean;
+  @Prop({ default: ModalSizes.SMALL }) size!: ModalSizes;
   @Prop({ default: true }) private dismissable!: boolean;
   @Prop({ default: false }) isLarge!: boolean;
 
@@ -47,8 +54,20 @@ export default class FTBModal extends Vue {
   opacity: 0;
 }
 
-.is-large {
-  width: 80%;
-  height: 80%;
+.ftb-modal-contents {
+  max-height: 80%;
+
+  &.small {
+    width: 450px;
+  }
+
+  &.medium {
+    width: 550px;
+  }
+
+  &.large {
+    width: 80%;
+    height: 80%;
+  }
 }
 </style>
