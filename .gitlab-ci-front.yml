@@ -6,9 +6,8 @@ cache:
     - windows/desktop/node_modules/
 
 build:
-  only:
-    variables:
-      - '$CI_COMMIT_BRANCH == "release"'
+  rules:
+    if: '$CI_COMMIT_BRANCH == "release"'
   script:
     - apt update && apt install zip -y
     - apt install jq -y
@@ -31,9 +30,8 @@ build:
         - ./overwolf/*.opk
 
 preview:
-  only:
-    variables:
-      - '$CI_COMMIT_BRANCH != "develop"'
+  rules:
+    if: '$CI_COMMIT_BRANCH == "develop"'
   script:
     - apt update && apt install zip -y
     - apt install jq -y
