@@ -22,7 +22,7 @@ let manifestFile = fs.readFileSync('manifest.json', 'utf-8');
 let manifestData = JSON.parse(manifestFile);
 let version = manifestData.meta.version;
 let versionTime = versionData.jarVersion.split("-")[0].substring(2);
-version = version.split('.')[0] + "." + versionTime.substring(0, 2) + "." + versionTime.substring(2, 4) + "." + versionTime.substring(4);
+version = version.split('.')[0] + "." + versionTime.substring(0, 2) + "." + versionTime.substring(2, 6) + "." + versionTime.substring(6);
 manifestData.meta.version = version;
 if(isPreview) {
     manifestData.meta.name = "FTB App Preview";
