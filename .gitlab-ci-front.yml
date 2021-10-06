@@ -18,7 +18,7 @@ build:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o overwolf/launcher-$VERSION-all.jar $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION/creeperlauncher-$VERSION-all.jar'
     - rm overwolf/version.json
     - cp public/version.json overwolf/version.json
-    - npm install --global yarn
+    - npm install --global yarn || true
     - yarn install
     - yarn gen:license
     - cd overwolf
@@ -43,7 +43,7 @@ preview:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o overwolf/launcher-$VERSION-all.jar $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION/creeperlauncher-$VERSION-all.jar'
     - rm overwolf/version.json
     - cp public/version.json overwolf/version.json
-    - npm install --global yarn
+    - npm install --global yarn || true
     - yarn install
     - yarn gen:license
     - cd overwolf
