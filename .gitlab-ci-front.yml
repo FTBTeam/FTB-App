@@ -8,7 +8,7 @@ cache:
 build:
   only:
     variables:
-        - $CI_COMMIT_TAG == release
+        - $CI_COMMIT_TAG == "release"
   script:
     - apt update && apt install zip -y
     - apt install jq -y
@@ -33,7 +33,7 @@ build:
 preview:
   only:
     variables:
-        - $CI_COMMIT_TAG == develop
+        - $CI_COMMIT_TAG == "develop"
   script:
     - apt update && apt install zip -y
     - apt install jq -y
