@@ -7,7 +7,8 @@ cache:
 
 build:
   rules:
-    if: '$CI_COMMIT_BRANCH == "release"'
+    - if: '$CI_COMMIT_BRANCH == "release"'
+      when: always
   script:
     - apt update && apt install zip -y
     - apt install jq -y
@@ -31,7 +32,8 @@ build:
 
 preview:
   rules:
-    if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: always
   script:
     - apt update && apt install zip -y
     - apt install jq -y
