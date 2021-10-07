@@ -294,6 +294,7 @@ project(":web") {
     }
 
     task genLicense(type: YarnTask) {
+        dependsOn yarn
         args = ['gen:license']
     }
 }
