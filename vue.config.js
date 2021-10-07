@@ -38,7 +38,7 @@ module.exports = {
     electronBuilder: {
       nodeIntegration: true,
       builderOptions: {
-        electronBuilder: true,
+//        electronBuilder: true,
         generateUpdatesFilesForAllChannels: true,
         productName: 'ftbapp',
         appId: 'com.feedthebeast.Launcher',
