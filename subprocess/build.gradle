@@ -23,6 +23,7 @@ plugins {
     id "com.palantir.git-version" version "0.12.2"
     id "com.github.hierynomus.license" version "0.15.0" apply false
     id "de.sebastianboegl.shadow.transformer.log4j" version "2.1.1"
+    id "com.dorongold.task-tree" version "2.1.0"
 }
 
 apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
@@ -124,13 +125,13 @@ task prepareUpload {
 prepareUpload.dependsOn cleanJREs
 
 task ftpRelease(type: Exec) {
-    //commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
 }
 
 ftpRelease.dependsOn prepareUpload
 
 task ftpReleaseXML(type: Exec) {
-    //commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+    commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
 
 }
 
@@ -192,7 +193,7 @@ sourceSets {
     main {
         resources {
             sourceSets.main.resources
-            //output.dir("./web/dist/",  builtBy: ":web:npm_run_build") // Comment out as this is what is causing the electron stuff to build regardless
+            //output.dir("./web/dist/",  builtBy: ":web:yarn_build") // Comment out as this is what is causing the electron stuff to build regardless
         }
     }
 }
@@ -291,14 +292,18 @@ project(":web") {
         inputs.file "package.json"
         outputs.dir "dist"
     }
+
+    task genLicense(type: YarnTask) {
+        args = ['gen:license']
+    }
 }
 
 task buildWithElectron(dependsOn: "build") {}
 
-buildWithElectron.dependsOn(":web:npm_run_build")
+buildWithElectron.dependsOn(":web:yarn_build")
 
 task buildAll() {}
-buildAll.dependsOn(":web:npm_run_buildall")
+buildAll.dependsOn(":web:yarn_buildall")
 
 media.dependsOn buildAll
 
@@ -357,10 +362,12 @@ def versionArtifact = artifacts.add('archives', versionFile.get().asFile) {
     builtBy 'writeVersion'
 }
 
-//writeVersion.dependsOn project(":web").tasks.getByName("npm_run-script_license")
-//project(":web").tasks.getByName("npm_run-script_license").dependsOn project(":web").npmInstall
+//writeVersion.dependsOn project(":web").tasks.getByName("genLicense")
+//project(":web").tasks.getByName("yarn_gen:license").dependsOn project(":web").npmInstall
 //project(":web").npm_run_buildall.dependsOn writeVersion
 //project(":web").npm_run_build.dependsOn writeVersion
+project(":web").yarn_buildall.dependsOn project(":web").tasks.getByName("genLicense")
+project(":web").yarn_buildall.dependsOn project(":web").tasks.getByName("yarn")
 build.dependsOn writeVersion
 
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -399,7 +406,7 @@ jar {
 
 def currentOS = DefaultNativePlatform.getCurrentOperatingSystem()
 
-task copyElectron(dependsOn: ":web:npm_run_build", type: Copy) {
+task copyElectron(dependsOn: ":web:yarn_build", type: Copy) {
     try {
         if (currentOS.isWindows()) {
             copy {

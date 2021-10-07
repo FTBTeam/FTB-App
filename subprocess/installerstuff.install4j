@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="8.0.8" transformSequenceNumber="8">
-  <directoryPresets config="./web/release" />
+  <directoryPresets config="../release" />
   <application name="FTBApp" applicationId="1726-2696-9539-5278" mediaDir="releaseBuild/" commonExternalFiles="true" shortName="FTBA" publisher="CreeperHost LTD" publisherWeb="https://www.creeperhost.net" version="test" allPathsRelative="true" backupOnSave="true" autoSave="true" macVolumeId="7b7ff548e0791aeb" javaMinVersion="11.0.5" javaMaxVersion="11.0.999" allowBetaVM="true">
     <codeSigning macEnabled="true" macPkcs12File="../signcert.p12" macNotarize="true" appleId="aaron_m@creeperhost.net">
       <macAdditionalBinaries>
@@ -47,25 +47,25 @@
       <mountPoint id="672" root="61" location="bin/ftbapp.app/Contents/Frameworks/Electron Framework.framework" />
       <mountPoint id="673" root="61" location="bin/ftbapp.app/Contents/Frameworks/Squirrel.framework" />
       <mountPoint id="674" root="61" location="bin/ftbapp.app/Contents/Frameworks/Mantle.framework" />
-      <mountPoint id="675" root="61" location="bin/ftbapp.app/Contents/Frameworks/ReactiveCocoa.framework" />
+      <mountPoint id="675" root="61" location="bin/ftbapp.app/Contents/Frameworks/ReactiveObjC.framework" />
       <mountPoint id="225" root="64" />
     </mountPoints>
     <entries>
       <fileEntry mountPoint="73" file="./build/libs/launcher-${compiler:sys.version}-all.jar" />
-      <dirEntry mountPoint="74" file="./web/release/win-unpacked" entryMode="subdir" subDirectory="bin" />
-      <dirEntry mountPoint="224" file="./web/release/mac" entryMode="subdir" subDirectory="bin">
+      <dirEntry mountPoint="74" file="../release/win-unpacked" entryMode="subdir" subDirectory="bin" />
+      <dirEntry mountPoint="224" file="../release/mac" entryMode="subdir" subDirectory="bin">
         <exclude>
           <entry location="ftbapp.app/Contents/Frameworks/Electron Framework.framework/Versions" />
           <entry location="ftbapp.app/Contents/Frameworks/Squirrel.framework/Versions" />
           <entry location="ftbapp.app/Contents/Frameworks/Mantle.framework/Versions" />
-          <entry location="ftbapp.app/Contents/Frameworks/ReactiveCocoa.framework/Versions" />
+          <entry location="ftbapp.app/Contents/Frameworks/ReactiveObjC.framework/Versions" />
         </exclude>
       </dirEntry>
-      <dirEntry mountPoint="672" file="./web/release/mac/ftbapp.app/Contents/Frameworks/Electron Framework.framework/Versions/A" subDirectory="mac" />
-      <dirEntry mountPoint="673" file="./web/release/mac/ftbapp.app/Contents/Frameworks/Squirrel.framework/Versions/A" subDirectory="mac" />
-      <dirEntry mountPoint="674" file="./web/release/mac/ftbapp.app/Contents/Frameworks/Mantle.framework/Versions/A" subDirectory="mac" />
-      <dirEntry mountPoint="675" file="./web/release/mac/ftbapp.app/Contents/Frameworks/ReactiveCocoa.framework/Versions/A" subDirectory="mac" />
-      <dirEntry mountPoint="225" file="./web/release/linux-unpacked" entryMode="subdir" subDirectory="bin" />
+      <dirEntry mountPoint="672" file="../release/mac/ftbapp.app/Contents/Frameworks/Electron Framework.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="673" file="../release/mac/ftbapp.app/Contents/Frameworks/Squirrel.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="674" file="../release/mac/ftbapp.app/Contents/Frameworks/Mantle.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="675" file="../release/mac/ftbapp.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="225" file="../release/linux-unpacked" entryMode="subdir" subDirectory="bin" />
     </entries>
     <components>
       <component name="Default" id="80" downloadable="true">
