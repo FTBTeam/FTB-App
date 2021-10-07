@@ -29,7 +29,7 @@ module.exports = {
       entry: 'src/main.ts',
       template: process.env.TARGET_PLATFORM === 'overwolf' ? 'public/index-overwolf.html' : 'public/index.html',
       filename: 'index.html',
-      title: 'FTBApp',
+      title: 'FTB App',
       chunks: ['chunk-vendors', 'chunk-common', 'index'],
     },
     chatPage: 'src/main.ts',
@@ -38,7 +38,6 @@ module.exports = {
     electronBuilder: {
       nodeIntegration: true,
       builderOptions: {
-//        electronBuilder: true,
         generateUpdatesFilesForAllChannels: true,
         productName: 'ftbapp',
         appId: 'com.feedthebeast.Launcher',

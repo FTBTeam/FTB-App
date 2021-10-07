@@ -2,6 +2,8 @@
   "name": "ftb-app",
   "version": "0.1.0",
   "private": true,
+  "author": "Feed The Beast",
+  "description": "FTB Desktop App for downloading and managing Modpacks",
   "scripts": {
     "serve": "cross-env TARGET_PLATFORM=electron NODE_ENV=development vue-cli-service electron:serve",
     "serve:overwolf": "cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service electron:serve",
