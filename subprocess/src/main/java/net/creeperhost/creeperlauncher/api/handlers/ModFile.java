@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.api.handlers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.StringJoiner;
 
 public class ModFile {
     private final transient String realName;
@@ -62,8 +63,16 @@ public class ModFile {
         return true;
     }
 
-    public String getName() {
+    public String getRealName() {
         return realName;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Override
@@ -91,5 +100,21 @@ public class ModFile {
     public static boolean isPotentialMod(String name) {
         String replace = name.replace(".disabled", "");
         return replace.endsWith(".jar") || replace.endsWith(".zip");
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", ModFile.class.getSimpleName() + "[", "]")
+                .add("realName='" + realName + "'")
+                .add("name='" + name + "'")
+                .add("version='" + version + "'")
+                .add("size=" + size)
+                .add("sha1='" + sha1 + "'")
+                .add("expected=" + expected)
+                .add("exists=" + exists)
+                .add("enabled=" + enabled)
+                .add("realPath=" + realPath)
+                .add("hashCode=" + hashCode)
+                .toString();
     }
 }

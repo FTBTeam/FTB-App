@@ -1154,7 +1154,7 @@ public class LocalInstance implements IPack
         try {
             return Files.walk(path.resolve("mods")).filter(Files::isRegularFile).filter(file -> ModFile.isPotentialMod(file.toString())).map(path -> {
                 File file = path.toFile();
-                return new ModFile(file.getName(), "", file.length(), "");
+                return new ModFile(file.getName(), "", file.length(), "").setPath(path);
             }).collect(Collectors.toList());
         } catch (IOException error) {
             LOGGER.log(Level.DEBUG, "Error occurred whilst listing mods on disk", error);

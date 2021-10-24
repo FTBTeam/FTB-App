@@ -2,12 +2,8 @@ package net.creeperhost.creeperlauncher.pack;
 
 import net.creeperhost.creeperlauncher.api.SimpleDownloadableFile;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -118,7 +114,7 @@ public class ModPack implements IPack
         return files.stream()
                 .filter(file -> file.getPath().toString().substring(0, 6).contains("mods") && (ModFile.isPotentialMod(file.getName())))
                 .map(file -> new ModFile(file.getName(), file.getVersion(), file.getSize(), file.getSha1()).setExists(true))
-                .sorted((e1, e2) -> e1.getName().compareToIgnoreCase(e2.getName()))
+                .sorted((e1, e2) -> e1.getRealName().compareToIgnoreCase(e2.getRealName()))
                 .collect(Collectors.toList());
     }
 }

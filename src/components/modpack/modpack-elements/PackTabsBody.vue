@@ -119,6 +119,7 @@
         :modlist="mods"
         :pack-installed="isInstalled"
         :updatingModlist="updatingModlist"
+        :instance="instance"
         @showFind="() => $emit('searchForMods')"
         @getModList="() => $emit('getModList', true)"
         @searchForMods="() => $emit('searchForMods')"
