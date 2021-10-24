@@ -23,12 +23,12 @@
         </div>
       </div>
     </div>
-    <div v-for="(file, index) in filteredModList" :key="index">
+    <div v-for="(file, index) in filteredModList" :key="index" v-if='file.enabled'>
       <div class="flex flex-row my-4 items-center">
         <p :class="{'opacity-50': !file.enabled}" class='duration-150 transition-opacity'  :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
         <div class="ml-auto flex items-center">
           <span :class="{'opacity-50': !file.enabled}" class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 mr-4 clean-font">{{ prettyBytes(parseInt(file.size)) }}</span>
-          <ftb-toggle v-if='instance' :value="file.enabled" @change="() => toggleMod(file)" />
+          <ftb-toggle v-if='!file.a' :value="file.enabled" @change="() => toggleMod(file)" />
 
           <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
           <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
