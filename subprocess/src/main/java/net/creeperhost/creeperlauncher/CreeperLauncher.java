@@ -76,6 +76,8 @@ public class CreeperLauncher
     public static void main(String[] args)
     {
         System.out.println(Constants.LIB_SIGNATURE);
+        // Construct immediately to properly detect the version.
+        MigrationManager migrationManager = new MigrationManager();
         // Do this as soon as possible. Settings and instance location SHOULD be right by this point
         // (with a slim chance of legacy migration), but better to have some settings than none
         Settings.loadSettings();
@@ -139,7 +141,6 @@ public class CreeperLauncher
             startElectron();
         }
 
-        MigrationManager migrationManager = new MigrationManager();
         migrationManager.doMigrations();
 
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready

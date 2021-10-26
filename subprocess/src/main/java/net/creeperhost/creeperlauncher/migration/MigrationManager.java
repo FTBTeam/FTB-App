@@ -2,12 +2,9 @@ package net.creeperhost.creeperlauncher.migration;
 
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Settings;
-import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.YeetLauncherData;
 import net.creeperhost.creeperlauncher.migration.migrators.DialogUtil;
-import net.creeperhost.creeperlauncher.migration.migrators.LegacyMigrator;
 import net.creeperhost.creeperlauncher.migration.migrators.V1To2;
-import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.LogsUploader;
@@ -38,7 +35,6 @@ public class MigrationManager {
     private static final Set<Class<? extends Migrator>> migrators = new HashSet<>();
 
     static {
-        migrators.add(LegacyMigrator.class);
         migrators.add(V1To2.class);
     }
 
@@ -47,12 +43,17 @@ public class MigrationManager {
 
     public MigrationManager() {
         formatJsonPath = Constants.getDataDir().resolve("._format.json");
-        if (Files.exists(formatJsonPath)) {
+        if (Files.exists(formatJsonPath)) { // Format exists, load that.
             try {
                 formatJson = GsonUtils.loadJson(formatJsonPath, FormatJson.class);
             } catch (IOException e) {
                 LOGGER.fatal("Failed to read FormatJson. Assuming FormatJson does not exist.", e);
             }
+        } else if (Files.exists(Constants.BIN_LOCATION.resolve("settings.json"))) {
+          // If the settings file exists, then we are v1. 
+          formatJson = new FormatJson();
+          formatJson.format = 1;
+          saveJson();
         }
     }
 
@@ -61,18 +62,7 @@ public class MigrationManager {
             return formatJson.format;
         }
 
-        Path settings = Constants.BIN_LOCATION.resolve("settings.json");
-        if (Files.exists(settings)) return 1; // if no format json at this point, then we're at a 1
-
-        OS os = OS.CURRENT;
-        if (os != OS.LINUX) {
-            Path oldDataDir = Constants.getDataDirOld();
-
-            Path oldSettings = oldDataDir.resolve("bin/settings.json");
-            if (Files.exists(oldSettings)) return -1; // legacy migration needs doing, hopefully eventually kill it
-        }
-
-        return CURRENT_DATA_FORMAT; // If we get here, then there's no existing data, so we don't need a migration
+        return CURRENT_DATA_FORMAT;
     }
 
     public void doMigrations() {
