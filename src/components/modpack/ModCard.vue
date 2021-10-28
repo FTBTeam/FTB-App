@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <ftb-modal :visible="showInstall" @dismiss-modal="closeModal" :dismissable="!installing">
+    <ftb-modal :visible="showInstall" size='medium' @dismiss-modal="closeModal" :dismissable="!installing">
       <h2 class="text-3xl mb-2">{{ mod.name }}</h2>
       <p
         :style="{
@@ -48,7 +48,7 @@
       >
         Select the version of '{{ mod.name }}' that you'd like to install to your pack.
       </p>
-
+      
       <template v-if="!installing && !finishedInstalling">
         <selection
           class="my-6"
@@ -82,7 +82,7 @@
         <div class="stats">
           <div class="stat">
             <div class="text">Progress</div>
-            <div class="value">{{ installProgress.persent }}%</div>
+            <div class="value">{{ installProgress.percentage }}%</div>
           </div>
           <div class="stat">
             <div class="text">Speed</div>
@@ -108,7 +108,7 @@
 </template>
 
 <script lang="ts">
-import { Mod } from '@/types';
+import { Mod, ModVersion } from '@/types';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import { Instance } from '@/modules/modpacks/types';
@@ -121,7 +121,7 @@ import { prettyByteFormat } from '@/utils/helpers';
 import { getColorForReleaseType } from '@/utils/colors';
 
 type InstallProgress = {
-  persent: number;
+  percentage: number;
   speed: number;
   current: number;
   total: number;
@@ -136,7 +136,7 @@ type InstallProgress = {
 })
 export default class ModCard extends Vue {
   static emptyProgress = {
-    persent: 0,
+    percentage: 0,
     speed: 0,
     current: 0,
     total: 0,
@@ -160,12 +160,15 @@ export default class ModCard extends Vue {
   getColorForReleaseType = getColorForReleaseType;
   prettyBytes = prettyByteFormat;
 
-  versions =
-    this.mod.versions.filter(
-      e => e.targets.findIndex(a => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
-    ) ?? [];
+  versions: ModVersion[] = [];
 
   mounted() {
+    this.versions =
+      this.mod.versions.filter(
+        e => e.targets.findIndex(a => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
+      ).sort((a, b) => b.id - a.id) ?? [];
+
+
     eventBus.$on('ws.message', (data: any) => {
       if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
         return;
@@ -174,7 +177,7 @@ export default class ModCard extends Vue {
       // Handle progress
       if (data.type === 'instanceInstallModProgress') {
         this.installProgress = {
-          persent: data.overallPrecentage,
+          percentage: data.overallPrecentage,
           speed: data.speed,
           current: data.currentBytes,
           total: data.overallBytes,
@@ -208,7 +211,7 @@ export default class ModCard extends Vue {
         type: 'instanceInstallMod',
         uuid: this.instance?.uuid,
         modId: this.mod.id,
-        versionId: this.versions[this.versions.length - 1].id,
+        versionId: this.selectedVersion,
       },
       callback: (_: any, wsMessageId: number) => {
         this.wsReqId = wsMessageId;
