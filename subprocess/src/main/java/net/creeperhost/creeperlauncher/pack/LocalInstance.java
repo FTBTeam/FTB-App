@@ -68,7 +68,7 @@ public class LocalInstance implements IPack
     private String description;
     public String mcVersion;
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
-    public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedjre", "true"));
+    public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
     public Path jrePath = Settings.getPathOpt("jrepath", null);
     private String url;
     private String artUrl;
@@ -572,8 +572,12 @@ public class LocalInstance implements IPack
 
         Profile profile = (extraArgs.length() > 0) ? this.toProfile(extraArgs) : this.toProfile();
         if(jrePath != null) {
-            if (jrePath.endsWith("javaw.exe") || jrePath.endsWith("java")) {
-                if (Files.notExists(jrePath)) jrePath = null;
+            if (jrePath.endsWith("javaw.exe") || jrePath.endsWith("java.exe") || jrePath.endsWith("java")) {
+                if (Files.notExists(jrePath)) {
+                    jrePath = null;
+                } else {
+                    embeddedJre = false;
+                }
             } else {
                 jrePath = null;
             }
