@@ -276,6 +276,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
             instanceInfo: {
               name: instance.name,
               jvmargs: instance.jvmArgs,
+              jrePath: instance.jrePath,
+              embeddedJre: instance.jrePath === "",
               memory: instance.memory,
               width: instance.width,
               height: instance.height,
