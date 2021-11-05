@@ -23,11 +23,12 @@
         </div>
       </div>
     </div>
-    <div v-for="(file, index) in filteredModList" :key="index">
+    <div v-for="(file, index) in filteredModList" :key="index" v-if='file.enabled'>
       <div class="flex flex-row my-4 items-center">
-        <p :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
-        <div class="ml-auto">
-          <span class="rounded text-sm bg-gray-600 py-1 px-2 clean-font">{{ prettyBytes(parseInt(file.size)) }}</span>
+        <p :class="{'opacity-50': !file.enabled}" class='duration-150 transition-opacity'  :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
+        <div class="ml-auto flex items-center">
+          <span :class="{'opacity-50': !file.enabled}" class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 mr-4 clean-font">{{ prettyBytes(parseInt(file.size)) }}</span>
+          <ftb-toggle v-if='!file.a' :value="file.enabled" @change="() => toggleMod(file)" />
 
           <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
           <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
@@ -48,11 +49,14 @@ import { Action } from 'vuex-class';
 import { Prop, Watch } from 'vue-property-decorator';
 import FindMods from '@/components/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/FTBSearchBar.vue';
+import FTBToggle from '@/components/FTBToggle.vue';
+import { Instance } from '@/modules/modpacks/types';
 
 @Component({
   components: {
     FTBSearchBar,
     FindMods,
+    'ftb-toggle': FTBToggle
   },
 })
 export default class ModpackMods extends Vue {
@@ -62,6 +66,7 @@ export default class ModpackMods extends Vue {
   @Prop() modlist!: any[];
   @Prop() updatingModlist!: boolean;
   @Prop() packInstalled!: boolean;
+  @Prop() instance!: Instance;
 
   filteredModList: any[] = [];
   search = '';
@@ -75,6 +80,28 @@ export default class ModpackMods extends Vue {
   @Watch('modlist')
   onModListChange() {
     this.filteredModList = this.modlist;
+  }
+  
+  toggleMod(file: any) {
+    this.sendMessage({
+      payload: {
+        type: "instanceModToggle",
+        uuid: this.instance.uuid, 
+        state: !file.enabled,
+        fileName: file.name
+      },
+      callback: (data: any) => {
+        if (data.successful) {
+          file.enabled = !file.enabled;
+        } else {
+          this.showAlert({
+            title: 'Error',
+            message: `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.name}`,
+            type: 'warning',
+          })
+        }
+      },
+    });
   }
 
   onSearch(value: string) {

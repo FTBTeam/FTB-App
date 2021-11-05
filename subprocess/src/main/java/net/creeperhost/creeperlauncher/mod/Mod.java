@@ -91,7 +91,7 @@ public class Mod {
 
     private Version findVersionMatching(List<ModFile> existingFiles, LoaderTarget gameTarget, LoaderTarget loaderTarget) {
         for (Version tempVer: versions) {
-            Optional<ModFile> first = existingFiles.stream().filter(mod -> mod.getName().equals(tempVer.name)).findFirst();
+            Optional<ModFile> first = existingFiles.stream().filter(mod -> mod.getRealName().equals(tempVer.name)).findFirst();
             if (first.isPresent()) {
                 tempVer.existsOnDisk = true;
                 tempVer.parentMod = this;

@@ -65,9 +65,9 @@ public class MiscUtils
         return dateTimeFormatter.format(now);
     }
 
-    private static String[] javaRegLocationsAdoptOpenJDK = new String[] {"SOFTWARE\\AdoptOpenJDK\\JDK", "SOFTWARE\\AdoptOpenJDK\\JRE"};
-    private static String[] javaRegLocationsOracle = new String[] {"SOFTWARE\\JavaSoft\\Java Development Kit", "SOFTWARE\\JavaSoft\\Java Runtime Environment"};
-    private static String[] linuxJavaPathLocations = new String[] {"/usr/lib/jvm", "/usr/java"};
+    private static final String[] javaRegLocationsAdoptOpenJDK = new String[] {"SOFTWARE\\AdoptOpenJDK\\JDK", "SOFTWARE\\AdoptOpenJDK\\JRE", "SOFTWARE\\Eclipse Foundation\\JRE", "SOFTWARE\\Eclipse Foundation\\JDK"};
+    private static final String[] javaRegLocationsOracle = new String[] {"SOFTWARE\\JavaSoft\\Java Development Kit", "SOFTWARE\\JavaSoft\\Java Runtime Environment"};
+    private static final String[] linuxJavaPathLocations = new String[] {"/usr/lib/jvm", "/usr/java"};
 
     public static void updateJavaVersions()
     {
@@ -109,7 +109,8 @@ public class MiscUtils
                                 } catch (Win32Exception ignored) {
                                 }
                                 if (javaHome != null) {
-                                    versions.put("AdoptOpenJDK " + child + "_" + childType + " " + location.substring(location.lastIndexOf("\\") + 1) + " (64bit)", Path.of(javaHome, "bin", "java.exe").toString());
+                                    String name = location.contains("AdoptOpenJDK") ? "AdoptOpenJDK" : "Eclipse Foundation";
+                                    versions.put(name + " " + child + "_" + childType + " " + location.substring(location.lastIndexOf("\\") + 1) + " (64bit)", Path.of(javaHome, "bin", "java.exe").toString());
                                 }
                             }
                         }

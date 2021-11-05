@@ -122,8 +122,7 @@ export enum ModpackPageTabs {
     ModpackVersions,
     MessageModal,
     FindMods,
-    ModpackMods,
-    ModpackPublicServers,
+    ModpackPublicServers
   },
 })
 export default class InstancePage extends Vue {

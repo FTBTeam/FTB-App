@@ -45,6 +45,7 @@ public class WebSocketMessengerHandler
         register("updateInstance", UpdateInstanceData.class, new UpdateInstanceHandler());
         register("uninstallInstance", UninstallInstanceData.class, new UninstallInstanceHandler());
         register("instanceConfigure", InstanceConfigureData.class, new InstanceConfigureHandler());
+        register("instanceModToggle", InstanceModToggleData.class, new InstanceModToggleHandler());
         register("instanceBrowse", BrowseInstanceData.class, new BrowseInstanceHandler());
         register("getSettings", SettingsInfoData.class, new SettingsInfoHandler());
         register("saveSettings", SettingsConfigureData.class, new SettingsConfigureHandler());

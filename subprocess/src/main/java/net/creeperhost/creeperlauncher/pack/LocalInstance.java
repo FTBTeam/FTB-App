@@ -68,7 +68,7 @@ public class LocalInstance implements IPack
     private String description;
     public String mcVersion;
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
-    public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedjre", "true"));
+    public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
     public Path jrePath = Settings.getPathOpt("jrepath", null);
     private String url;
     private String artUrl;
@@ -572,8 +572,12 @@ public class LocalInstance implements IPack
 
         Profile profile = (extraArgs.length() > 0) ? this.toProfile(extraArgs) : this.toProfile();
         if(jrePath != null) {
-            if (jrePath.endsWith("javaw.exe") || jrePath.endsWith("java")) {
-                if (Files.notExists(jrePath)) jrePath = null;
+            if (jrePath.endsWith("javaw.exe") || jrePath.endsWith("java.exe") || jrePath.endsWith("java")) {
+                if (Files.notExists(jrePath)) {
+                    jrePath = null;
+                } else {
+                    embeddedJre = false;
+                }
             } else {
                 jrePath = null;
             }
@@ -1154,7 +1158,7 @@ public class LocalInstance implements IPack
         try {
             return Files.walk(path.resolve("mods")).filter(Files::isRegularFile).filter(file -> ModFile.isPotentialMod(file.toString())).map(path -> {
                 File file = path.toFile();
-                return new ModFile(file.getName(), "", file.length(), "");
+                return new ModFile(file.getName(), "", file.length(), "").setPath(path);
             }).collect(Collectors.toList());
         } catch (IOException error) {
             LOGGER.log(Level.DEBUG, "Error occurred whilst listing mods on disk", error);

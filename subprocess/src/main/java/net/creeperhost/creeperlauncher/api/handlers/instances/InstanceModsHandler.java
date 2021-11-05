@@ -15,31 +15,24 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
+
     @Override
     public void handle(InstanceModsData data) {
         LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
         ModPack pack = FTBModPackInstallerTask.getPackFromAPI(instance.getId(), instance.getVersionId(), data._private, instance.packType);
         if (pack != null) {
-            List<ModFile> instanceMods = instance.getMods();
-            List<ModFile> packMods = pack.getMods();
-            List<ModFile> finalMergedMods = new ArrayList<>();
-            packMods.forEach(mod -> {
-                int indexOf = instanceMods.indexOf(mod);
-                if (indexOf != -1) {
-                    ModFile instanceMod = instanceMods.get(indexOf);
-                    finalMergedMods.add(new ModFile(mod.getName(), mod.getVersion(), instanceMod.getSize(), mod.getSha1()).setExists(true).setExpected(true));
-                } else {
-                    finalMergedMods.add(mod);
-                }
-            });
+            List<ModFile> cleanMods = instance.getMods().stream()
+                    .map((currentMod) ->
+                            pack.getMods().stream()
+                                .filter(e -> e.getName().equals(currentMod.getName()))
+                                .findFirst()
+                                .map(e -> new ModFile(currentMod.getRealName(), currentMod.getVersion(), e.getSize(), currentMod.getSha1()).setExists(true).setExpected(true))
+                                .orElse(currentMod)
+                    )
+                    .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+                    .collect(Collectors.toList());
 
-            instanceMods.forEach(mod -> {
-                if (!finalMergedMods.contains(mod)) {
-                    finalMergedMods.add(mod);
-                }
-            });
-            List<ModFile> collect = finalMergedMods.stream().sorted((e1, e2) -> e1.getName().compareToIgnoreCase(e2.getName())).collect(Collectors.toList());
-            Settings.webSocketAPI.sendMessage(new InstanceModsData.Reply(data, collect));
+            Settings.webSocketAPI.sendMessage(new InstanceModsData.Reply(data, cleanMods));
         }
     }
 }
