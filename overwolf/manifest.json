@@ -1,79 +1,79 @@
 {
-    "manifest_version": 1,
-    "type": "WebApp",
-    "meta": {
-        "name": "FTB App Preview",
-        "version": "1.0.22",
-        "minimum-overwolf-version": "0.157.0.17",
-        "author": "Feed The Beast",
-        "icon": "assets/icon_256.png",
-        "icon_gray": "assets/icon_256_preview.png",
-        "launcher_icon": "launchericon.ico",
-        "description": "As the home of FTB modpacks the FTBApp allows you to quickly download and install FTB modpacks with ease, allowing you to spend more time enjoying the game."
-    },
-    "permissions": [
-        "Extensions",
-        "FileSystem",
-        "Clipboard",
-        "Streaming",
-        "Profile",
-        "GameInfo",
-        "Shutdown"
-    ],
-    "data": {
-        "start_window": "background",
-        "windows": {
-            "background": {
-                "file": "dist/background/background.html",
-                "is_background_page": true
-            },
-            "index": {
-                "mute": true,
-                "file": "dist/desktop/index.html",
-                "native_window": true,
-                "transparent": true,
-                "resizable": true,
-                "desktop_only": true,
-                "size": {
-                    "width": 1545,
-                    "height": 900
-                },
-                "min_size": {
-                    "width": 1545,
-                    "height": 900
-                },
-                "block_top_window_navigation": true,
-                "popup_blocker": true
-            },
-            "chat": {
-                "mute": true,
-                "file": "dist/desktop/chatPage.html",
-                "native_window": true,
-                "transparent": true,
-                "resizable": true,
-                "desktop_only": true,
-                "size": {
-                    "width": 300,
-                    "height": 626
-                },
-                "min_size": {
-                    "width": 300,
-                    "height": 626
-                }
-            }
+  "manifest_version": 1,
+  "type": "WebApp",
+  "meta": {
+    "name": "FTB App Preview",
+    "version": "1.0.22",
+    "minimum-overwolf-version": "0.157.0.17",
+    "author": "Feed The Beast",
+    "icon": "icon_256.png",
+    "icon_gray": "icon_256_preview.png",
+    "launcher_icon": "launchericon.ico",
+    "description": "As the home of FTB modpacks the FTBApp allows you to quickly download and install FTB modpacks with ease, allowing you to spend more time enjoying the game."
+  },
+  "permissions": [
+    "Extensions",
+    "FileSystem",
+    "Clipboard",
+    "Streaming",
+    "Profile",
+    "GameInfo",
+    "Shutdown"
+  ],
+  "data": {
+    "start_window": "background",
+    "windows": {
+      "background": {
+        "file": "dist/background/background.html",
+        "is_background_page": true
+      },
+      "index": {
+        "mute": true,
+        "file": "dist/desktop/index.html",
+        "native_window": true,
+        "transparent": true,
+        "resizable": true,
+        "desktop_only": true,
+        "size": {
+          "width": 1545,
+          "height": 900
         },
-        "extra-objects": {
-            "FTBOverwolfShim": {
-                "file": "FTBOverwolfShim.dll",
-                "class": "net.creeperhost.ftbapp.overwolfshim.OverwolfShim"
-            }
+        "min_size": {
+          "width": 1545,
+          "height": 900
         },
-        "force_browser": "user",
-        "protocol_override_domains": {
-            "googlesyndication": "http"
+        "block_top_window_navigation": true,
+        "popup_blocker": true
+      },
+      "chat": {
+        "mute": true,
+        "file": "dist/desktop/chatPage.html",
+        "native_window": true,
+        "transparent": true,
+        "resizable": true,
+        "desktop_only": true,
+        "size": {
+          "width": 300,
+          "height": 626
         },
-        "url_protocol": {
-            "scheme": "ftb"
+        "min_size": {
+          "width": 300,
+          "height": 626
         }
+      }
+    },
+    "extra-objects": {
+      "FTBOverwolfShim": {
+        "file": "FTBOverwolfShim.dll",
+        "class": "net.creeperhost.ftbapp.overwolfshim.OverwolfShim"
+      }
+    },
+    "force_browser": "user",
+    "protocol_override_domains": {
+      "googlesyndication": "http"
+    },
+    "url_protocol": {
+      "scheme": "ftb"
     }
+  }
 }
