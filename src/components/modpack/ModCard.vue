@@ -167,8 +167,7 @@ export default class ModCard extends Vue {
       this.mod.versions.filter(
         e => e.targets.findIndex(a => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
       ).sort((a, b) => b.id - a.id) ?? [];
-
-
+    
     eventBus.$on('ws.message', (data: any) => {
       if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
         return;
