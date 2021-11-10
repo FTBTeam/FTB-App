@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.migration;
 
+import com.google.gson.JsonSyntaxException;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.other.YeetLauncherData;
@@ -46,7 +47,7 @@ public class MigrationManager {
         if (Files.exists(formatJsonPath)) { // Format exists, load that.
             try {
                 formatJson = GsonUtils.loadJson(formatJsonPath, FormatJson.class);
-            } catch (IOException e) {
+            } catch (IOException | JsonSyntaxException e) {
                 LOGGER.fatal("Failed to read FormatJson. Assuming FormatJson does not exist.", e);
             }
         } else if (Files.exists(Constants.BIN_LOCATION.resolve("settings.json"))) {
