@@ -95,6 +95,8 @@
           v-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
           :loadingFailed="loading"
           :websocketsFailed="!websockets || websockets.reconnects > 20"
+          :websockets='websockets'
+          :max-tries='20'
         />
         <div
           class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
