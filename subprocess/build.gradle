@@ -21,7 +21,7 @@ plugins {
     id "com.palantir.graal" version "0.6.0-30-gade71a8"
     id "com.install4j.gradle" version "8.0.4"
     id "com.palantir.git-version" version "0.12.2"
-    id "com.github.hierynomus.license" version "0.15.0" apply false
+    id "com.github.hierynomus.license" version "0.16.1" apply false
     id "com.dorongold.task-tree" version "2.1.0"
 }
 
