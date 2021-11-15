@@ -1,6 +1,8 @@
 package net.creeperhost.creeperlauncher.minecraft;
 
 import com.google.gson.JsonObject;
+import com.google.gson.annotations.JsonAdapter;
+import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +25,7 @@ public class Profile
     private String lastVersionId;
     private String lastUsed;
     private String type;
+    @JsonAdapter(PathTypeAdapter.class)
     private Path gameDir;
     private String ID;
     private String javaArgs;

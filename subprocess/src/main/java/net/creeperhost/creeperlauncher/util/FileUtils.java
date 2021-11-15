@@ -50,7 +50,7 @@ public class FileUtils
 
     public static void fileFromZip(Path zip, Path dest, String fileName) throws IOException
     {
-        try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip, null))
+        try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip))
         {
             Path fileToExtract = fileSystem.getPath(fileName);
             Files.copy(fileToExtract, dest, REPLACE_EXISTING);
@@ -59,7 +59,7 @@ public class FileUtils
 
     public static void extractFromZip(Path zip, Path dest, String fileName, boolean relative) throws IOException
     {
-        try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip, null))
+        try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip))
         {
             Path src = fileSystem.getPath(fileName);
             try (Stream<Path> stream = Files.walk(src)) {
@@ -213,7 +213,7 @@ public class FileUtils
     public static boolean removeMeta(Path file)
     {
         if(!Files.exists(file)) return false;
-        try (FileSystem fileSystem = FileSystems.newFileSystem(file, null))
+        try (FileSystem fileSystem = FileSystems.newFileSystem(file))
         {
             Path root = fileSystem.getPath("/");
             Files.walkFileTree(root, new SimpleFileVisitor<>() {
@@ -242,9 +242,9 @@ public class FileUtils
         if(input == null || output == null) return false;
         AtomicBoolean flag = new AtomicBoolean(true);
 
-        try (FileSystem fs = FileSystems.newFileSystem(output, null)) {
+        try (FileSystem fs = FileSystems.newFileSystem(output)) {
             Path dstRoot = fs.getPath("/");
-            try (FileSystem srcFs = FileSystems.newFileSystem(input, null)) {
+            try (FileSystem srcFs = FileSystems.newFileSystem(input)) {
                 Path srcRoot = srcFs.getPath("/");
                 Files.walkFileTree(srcRoot, new SimpleFileVisitor<Path>() {
                     @Override

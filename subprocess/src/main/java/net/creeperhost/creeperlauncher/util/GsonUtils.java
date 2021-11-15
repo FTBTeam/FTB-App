@@ -18,7 +18,6 @@ public class GsonUtils {
 
     public static Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
             .registerTypeAdapter(Artifact.class, new Artifact.Adapter())
-            .registerTypeAdapter(Path.class, new PathTypeAdapter())
             .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
             .create();
 
