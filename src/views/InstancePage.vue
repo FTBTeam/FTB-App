@@ -82,7 +82,6 @@ import FindMods from '@/components/modpack/FindMods.vue';
 import { PackConst } from '@/utils/contants';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
 import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
-import ModpackMods from '@/components/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
 import { getColorForChar } from '@/utils/colors';
 import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
@@ -111,7 +110,6 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
-    'pack-tabs-body': PackTabsBody,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
@@ -122,7 +120,8 @@ export enum ModpackPageTabs {
     ModpackVersions,
     MessageModal,
     FindMods,
-    ModpackPublicServers
+    ModpackPublicServers,
+    PackTabsBody
   },
 })
 export default class InstancePage extends Vue {
