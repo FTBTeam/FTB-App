@@ -27,7 +27,7 @@ plugins {
 
 apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(16)
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 ext.mavenUrl = null
 
@@ -233,7 +233,7 @@ dependencies {
     implementation 'net.creeperhost.minetogether:minetogether-api:1.0.7'
 
     implementation 'org.apache.tika:tika-core:1.22'
-    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'org.java-websocket:Java-WebSocket:1.4.0'
     implementation 'com.github.oshi:oshi-core:5.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.2.2'
