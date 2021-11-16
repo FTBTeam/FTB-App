@@ -14,21 +14,20 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'eclipse'
-    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "com.github.johnrengelman.shadow" version "7.0.0"
     id "org.beryx.runtime" version "1.7.0"
     id "de.undercouch.download" version "4.0.0"
     id "com.github.node-gradle.node" version "2.2.3"
     id "com.palantir.graal" version "0.6.0-30-gade71a8"
     id "com.install4j.gradle" version "8.0.4"
     id "com.palantir.git-version" version "0.12.2"
-    id "com.github.hierynomus.license" version "0.15.0" apply false
-    id "de.sebastianboegl.shadow.transformer.log4j" version "2.1.1"
+    id "com.github.hierynomus.license" version "0.16.1" apply false
     id "com.dorongold.task-tree" version "2.1.0"
 }
 
 apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(11)
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 ext.mavenUrl = null
 
@@ -231,30 +230,31 @@ ext {
 dependencies {
     compileOnly files("lib/i4jruntime.jar")
 
-    compile 'net.creeperhost.minetogether:minetogether-api:1.0.7'
+    implementation 'net.creeperhost.minetogether:minetogether-api:1.0.7'
 
-    compile 'org.apache.tika:tika-core:1.22'
-    compile 'com.google.code.gson:gson:2.8.5'
-    compile 'org.java-websocket:Java-WebSocket:1.4.0'
-    compile 'com.github.oshi:oshi-core:5.7.0'
-    compile 'com.squareup.okhttp3:okhttp:4.2.2'
-    compile 'org.apache.commons:commons-compress:1.2'
-    compile 'net.java.dev.jna:jna:5.5.0'
-    compile 'net.java.dev.jna:jna-platform:5.5.0'
-    compile 'com.amazonaws:aws-java-sdk-s3:1.11.839'
-    compile 'org.apache.logging.log4j:log4j-core:2.11.1'
-    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
-    compile 'org.apache.logging.log4j:log4j-jul:2.11.1'
-    compile 'com.github.pircbotx:pircbotx:2.2'
-    compile 'net.covers1624:Quack:0.1.4.+'
-    compile 'com.google.guava:guava:30.1-jre'
+    implementation 'org.apache.tika:tika-core:1.22'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'org.java-websocket:Java-WebSocket:1.4.0'
+    implementation 'com.github.oshi:oshi-core:5.7.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.2.2'
+    implementation 'org.apache.commons:commons-compress:1.2'
+    implementation 'net.java.dev.jna:jna:5.5.0'
+    implementation 'net.java.dev.jna:jna-platform:5.5.0'
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.11.839'
+    implementation 'org.apache.logging.log4j:log4j-core:2.11.1'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
+    implementation 'org.apache.logging.log4j:log4j-jul:2.11.1'
+    implementation 'com.github.pircbotx:pircbotx:2.2'
+    implementation 'net.covers1624:Quack:0.1.4.+'
+    implementation 'com.google.guava:guava:30.1-jre'
+    implementation 'org.openjdk.nashorn:nashorn-core:15.3'
 
-    compile 'org.apache.ant:ant-commons-net:1.10.7'
-    compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.13'
+    implementation 'org.apache.ant:ant-commons-net:1.10.7'
+    implementation 'org.apache.httpcomponents:httpmime:4.5.13'
 
     annotationProcessor 'org.apache.logging.log4j:log4j-core:2.11.1'
 
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.6.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
 }
 
@@ -431,9 +431,8 @@ task copyElectron(dependsOn: ":web:yarn_build", type: Copy) {
 }
 
 wrapper {
-    gradleVersion = "6.8.3"
+    gradleVersion = "7.3"
 }
-
 
 publishing {
     publications {

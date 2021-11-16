@@ -1,10 +1,14 @@
 package net.creeperhost.creeperlauncher.api;
 
+import com.google.gson.annotations.JsonAdapter;
+import net.covers1624.quack.gson.PathTypeAdapter;
+
 import java.nio.file.Path;
 
 public class SimpleDownloadableFile
 {
     String version;
+    @JsonAdapter(PathTypeAdapter.class)
     Path path;
     long size;
     boolean clientSide;

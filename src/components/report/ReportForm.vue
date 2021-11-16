@@ -36,12 +36,29 @@
         </div>
       </div>
     </div>
+    
+    <div class='debug-info text-left'>
+      <div class='flex items-start opacity-25'>
+        <div class='item mr-4'>
+          <p class='font-bold mb-2'>UI Version</p>
+          <div class='rounded bg-black px-2 py-1'>{{ uiVersion }}</div>
+        </div>
+        <div class='item mr-4'>
+          <p class='font-bold mb-2'>App Version</p>
+          <div class='rounded bg-black px-2 py-1'>{{ appVersion }}</div>
+        </div>
+        <div class='item'>
+          <p class='font-bold mb-2'>Tries</p>
+          <div class='rounded bg-black px-2 py-1'>Reconnect tries: {{ websockets.reconnects }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import platfrom from '@/utils/interface/electron-overwolf';
+import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
 
 @Component
@@ -50,20 +67,25 @@ export default class ReportForm extends Vue {
 
   @Prop() loadingFailed!: boolean;
   @Prop() websocketsFailed!: boolean;
-
+  
+  @Prop() websockets!: any;
+  @Prop() maxTries!: number;
+  
   // TODO: enable once the report form is working again
   disabled = true;
 
   static emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  private webVersion: string = platfrom.get.config.webVersion;
-
+  
+  uiVersion: string = platform.get.config.webVersion;
+  appVersion: string = platform.get.config.appVersion;
+  
   errorEmail = '';
   errorDescription = '';
   submittingError = false;
   submitted = false;
 
   public async submitError() {
-    platfrom.get.actions.uploadClientLogs();
+    platform.get.actions.uploadClientLogs();
     if (!ReportForm.emailRegex.test(this.errorEmail)) {
       console.log('Email regex not passing');
       return;
@@ -94,7 +116,7 @@ export default class ReportForm extends Vue {
   public uploadLogData(): Promise<string> {
     return new Promise((resolve, reject) => {
       this.sendMessage({
-        payload: { type: 'uploadLogs', uiVersion: this.webVersion },
+        payload: { type: 'uploadLogs', uiVersion: this.uiVersion },
         callback: async (data: any) => {
           if (!data.error) {
             const url = `https://pste.ch/${data.code}`;
@@ -108,12 +130,20 @@ export default class ReportForm extends Vue {
   }
 
   quitApp() {
-    platfrom.get.frame.quit();
+    platform.get.frame.quit();
   }
 }
 </script>
 
 <style lang="scss" scoped>
+.debug-info {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  padding: 1rem;
+  z-index: 9999;
+}
+
 .buttons {
   > div,
   > a {

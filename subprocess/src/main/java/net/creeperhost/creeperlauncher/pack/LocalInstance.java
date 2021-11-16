@@ -2,6 +2,8 @@ package net.creeperhost.creeperlauncher.pack;
 
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
@@ -56,6 +58,7 @@ public class LocalInstance implements IPack
     private UUID uuid;
     private long id;
     private String art;
+    @JsonAdapter(PathTypeAdapter.class)
     private Path path;
     private long versionId;
     public String name;
@@ -63,12 +66,14 @@ public class LocalInstance implements IPack
     private int recMemory = 4096;
     public int memory = Integer.parseInt(Settings.settings.getOrDefault("memory", "2048"));
     private String version;
+    @JsonAdapter(PathTypeAdapter.class)
     private Path dir;
     private List<String> authors;
     private String description;
     public String mcVersion;
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
     public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
+    @JsonAdapter(PathTypeAdapter.class)
     public Path jrePath = Settings.getPathOpt("jrepath", null);
     private String url;
     private String artUrl;
