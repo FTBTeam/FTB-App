@@ -118,38 +118,6 @@ public class FileUtils
         return !error.get();
     }
 
-    public static HashMap<String, Exception> extractZip2ElectricBoogaloo(Path launcherFile, Path destination)
-    {
-        return extractZip2ElectricBoogaloo(launcherFile, destination, true);
-    }
-
-    public static HashMap<String, Exception> extractZip2ElectricBoogaloo(Path launcherFile, Path destination, boolean continueOnError)
-    {
-        HashMap<String, Exception> errors = new HashMap<>();
-        try (ZipFile zipFile = new ZipFile(launcherFile.toFile())) {
-            for (ZipEntry entry : ColUtils.toIterable(zipFile.entries())) {
-                LOGGER.debug("Extracting '{}'...", entry.getName());
-                try {
-                    Path dest = destination.resolve(entry.getName());
-                    if (entry.isDirectory()) continue;
-
-                    createDirectories(dest.getParent());
-                    LOGGER.debug("Writing to {}", dest);
-                    Files.copy(zipFile.getInputStream(entry), dest, REPLACE_EXISTING);
-                } catch (IOException e) {
-                    LOGGER.debug("Failed extracting file {}", entry.getName(), e);
-                    errors.put(entry.getName(), e);
-                    if (!continueOnError) {
-                        return errors;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error extracting zip file {}", launcherFile.toAbsolutePath(), e);
-        }
-        return errors;
-    }
-
     public static void deleteDirectory(Path file)
     {
         if (Files.notExists(file)) return;

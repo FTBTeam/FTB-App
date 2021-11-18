@@ -90,12 +90,8 @@ public class LocalInstance implements IPack
 
     private transient CompletableFuture launcherWait;
     private transient HashMap<String, instanceEvent> postInstall = new HashMap<>();
-    private transient Runnable prePlay;
     private transient int loadingModPort;
-    private transient boolean prePlayAsync;
     public transient boolean hasLoadingMod;
-    private transient Runnable preUninstall;
-    private transient boolean preUninstallAsync;
     private transient AtomicBoolean inUse = new AtomicBoolean(false);
     private transient HashMap<String, instanceEvent> gameCloseEvents = new HashMap<>();
     public transient ModPack manifest;
@@ -489,17 +485,6 @@ public class LocalInstance implements IPack
             ForgeJarModLoader.prePlay(this);
         }
 
-        if (this.prePlay != null)
-        {
-            if (this.prePlayAsync)
-            {
-                LOGGER.debug("Doing pre-play tasks async");
-                CompletableFuture.runAsync(this.prePlay);
-            } else {
-                LOGGER.debug("Doing pre-play tasks non async");
-                this.prePlay.run();
-            }
-        }
         if(!Constants.S3_SECRET.isEmpty() && !Constants.S3_KEY.isEmpty() && !Constants.S3_HOST.isEmpty() && !Constants.S3_BUCKET.isEmpty()) {
             LOGGER.debug("Doing cloud sync");
             CompletableFuture.runAsync(() -> this.cloudSync(false)).join();
@@ -651,35 +636,8 @@ public class LocalInstance implements IPack
         return launcher;
     }
 
-    public void setPostInstall(Runnable lambda, boolean async)
-    {
-        this.postInstall.put("postInstall", new instanceEvent(lambda, !async));
-    }
-
-    public void setPrePlay(Runnable hook, boolean async)
-    {
-        this.prePlay = hook;
-        this.prePlayAsync = async;
-    }
-
-    public void setPreUninstall(Runnable hook, boolean async)
-    {
-        this.preUninstall = hook;
-        this.preUninstallAsync = async;
-    }
-
     public boolean uninstall() throws IOException
     {
-        if (this.preUninstall != null)
-        {
-            if (this.preUninstallAsync)
-            {
-                CompletableFuture.runAsync(this.preUninstall);
-            } else
-            {
-                this.preUninstall.run();
-            }
-        }
         FileUtils.deleteDirectory(path);
         Instances.refreshInstances();
         return true;
@@ -708,7 +666,6 @@ public class LocalInstance implements IPack
     {
         try (BufferedWriter writer = Files.newBufferedWriter(path.resolve("instance.json"))) {
             GsonUtils.GSON.toJson(this, writer);
-            writer.close();
         }
         if(updateManifest)
         {

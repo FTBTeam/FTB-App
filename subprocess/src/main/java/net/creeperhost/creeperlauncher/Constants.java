@@ -103,8 +103,4 @@ public class Constants
         }
         return ret.toAbsolutePath().normalize();
     }
-
-    public static Path getDataDirOld() {
-        return DATA_DIR.toAbsolutePath();
-    }
 }

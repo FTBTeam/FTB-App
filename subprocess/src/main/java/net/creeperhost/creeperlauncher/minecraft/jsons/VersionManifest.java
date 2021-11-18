@@ -1,50 +1,106 @@
 package net.creeperhost.creeperlauncher.minecraft.jsons;
 
+import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import net.covers1624.quack.gson.HashCodeAdapter;
+import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
+import net.covers1624.quack.gson.MavenNotationAdapter;
+import net.covers1624.quack.maven.MavenNotation;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.util.GsonUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Version manifest for a given game version.
  * <p>
  * Created by covers1624 on 8/11/21.
  */
+@SuppressWarnings ("NotNullFieldNotInitialized")
 public class VersionManifest {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("VersionManifest.debug");
 
+    public String id;
+    @Nullable
     public Arguments arguments;
     public AssetIndex assetIndex;
     public String assets;
     public int complianceLevel;
-    public Map<String, Download> downloads;
-    public String id;
+    public Map<String, Download> downloads = new HashMap<>();
+    @Nullable
     public JavaVersion javaVersion;
-    public List<Library> libraries;
+    public List<Library> libraries = new ArrayList<>();
+    @Nullable
     public Logging logging;
+    @Nullable
     public String mainClass;
     public int minimumLauncherVersion;
+    @Nullable
     public Date time;
+    @Nullable
+    public Date releaseTime;
+    @Nullable
     public String type;
+    @Nullable
     public String inheritsFrom;
 
-    public List<Library> getLibraries(Set<String> features) {
-        assert libraries != null;
+    /**
+     * Updates (if required) the specified version manifest.
+     *
+     * @param versionsDir The versions directory.
+     * @param version     The {@link VersionListManifest.Version} to update.
+     * @return The {@link VersionManifest} parsed from disk.
+     * @throws IOException        Thrown when an error occurs whilst loading the manifest.
+     * @throws JsonParseException Thrown when the Json cannot be parsed.
+     */
+    public static VersionManifest update(Path versionsDir, VersionListManifest.Version version) throws IOException {
+        Path versionFile = versionsDir.resolve(version.id).resolve(version.id + ".json");
+        LOGGER.info("Updating version manifest for '{}' from '{}'.", version.id, version.url);
+        NewDownloadTask downloadTask = new NewDownloadTask(
+                version.url,
+                versionFile,
+                NewDownloadTask.TaskValidation.none(),
+                null
+        );
+
+        if (!downloadTask.isRedundant()) {
+            try {
+                downloadTask.execute();
+            } catch (Throwable e) {
+                if (Files.exists(versionFile)) {
+                    LOGGER.warn("Failed to update VersionManifest. Continuing with disk cache..", e);
+                } else {
+                    throw new IOException("Failed to update VersionManifest. Disk cache does not exist.", e);
+                }
+            }
+        }
+        return GsonUtils.loadJson(versionFile, VersionManifest.class);
+    }
+
+    public Stream<Library> getLibraries(Set<String> features) {
         return libraries.stream()
-                .filter(e -> e.apply(features))
-                .collect(Collectors.toList());
+                .filter(e -> e.apply(features));
     }
 
     public static class Arguments {
 
+        @Nullable
         @JsonAdapter (ArgListDeserializer.class)
         public List<EvalValue> game;
+        @Nullable
         @JsonAdapter (ArgListDeserializer.class)
         public List<EvalValue> jvm;
     }
@@ -52,7 +108,8 @@ public class VersionManifest {
     public static class AssetIndex {
 
         public String id;
-        public String sha1;
+        @JsonAdapter (HashCodeAdapter.class)
+        public HashCode sha1;
         public int size;
         public int totalSize;
         public String url;
@@ -60,7 +117,8 @@ public class VersionManifest {
 
     public static class Download {
 
-        public String sha1;
+        @JsonAdapter (HashCodeAdapter.class)
+        public HashCode sha1;
         public int size;
         public String url;
     }
@@ -73,11 +131,15 @@ public class VersionManifest {
 
     public static class Library {
 
-        public String name;
+        @JsonAdapter (MavenNotationAdapter.class)
+        public MavenNotation name;
+        @Nullable
         public Extract extract;
+        @Nullable
         public Downloads downloads;
         @Nullable
         public List<Rule> rules;
+        @Nullable
         public Map<OS, String> natives;
 
         public boolean apply(Set<String> features) {
@@ -92,8 +154,11 @@ public class VersionManifest {
 
     public static class LoggingEntry {
 
+        @Nullable
         public String argument;
+        @Nullable
         public String type;
+        @Nullable
         public Download file;
     }
 
@@ -104,22 +169,36 @@ public class VersionManifest {
 
     public static class Extract {
 
+        @Nullable
         public List<String> exclude;
+
+        public boolean shouldExtract(String name) {
+            if (exclude == null) return true;
+            for (String s : exclude) {
+                if (name.startsWith(s)) return false;
+            }
+            return true;
+        }
     }
 
     public static class LibraryDownload extends Download {
 
+        @Nullable
         public String path;
     }
 
     public static class Downloads {
 
+        @Nullable
         public LibraryDownload artifact;
+        @Nullable
         public Map<String, LibraryDownload> classifiers;
     }
 
     public static class Rule {
 
+        @Nullable
+        @JsonAdapter (LowerCaseEnumAdapterFactory.class)
         public Action action;
         @Nullable
         public OSRule os;
@@ -153,6 +232,7 @@ public class VersionManifest {
                 }
             }
 
+            assert action != null;
             // Default action.
             return action;
         }
@@ -230,13 +310,14 @@ public class VersionManifest {
             name = name.toLowerCase(Locale.ROOT);
             if (name.contains("win")) {
                 return WINDOWS;
-            } else if (name.contains("mac") || name.contains("osx")) {
-                return OSX;
-            } else if (name.contains("linux")) {
-                return LINUX;
-            } else {
-                return UNKNOWN;
             }
+            if (name.contains("mac") || name.contains("osx")) {
+                return OSX;
+            }
+            if (name.contains("linux")) {
+                return LINUX;
+            }
+            return UNKNOWN;
         }
     }
 
@@ -315,6 +396,19 @@ public class VersionManifest {
                 values.add(elm.getAsString());
             }
             return List.copyOf(values);
+        }
+    }
+
+    public static class OsDeserializer implements JsonDeserializer<OS> {
+
+        @Override
+        public OS deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (!json.isJsonPrimitive()) throw new JsonParseException("Expected json primitive. Got: " + json);
+            JsonPrimitive primitive = json.getAsJsonPrimitive();
+            if (!primitive.isString()) throw new JsonParseException("Expected json string. Got:" + primitive);
+            OS os = OS.parse(primitive.getAsString());
+            if (os == OS.UNKNOWN) throw new JsonParseException("Could not parse OS from String: " + primitive.getAsString());
+            return os;
         }
     }
 }

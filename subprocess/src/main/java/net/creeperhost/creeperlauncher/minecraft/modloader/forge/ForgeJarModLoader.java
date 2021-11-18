@@ -19,7 +19,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,7 +71,7 @@ public class ForgeJarModLoader extends ForgeModLoader
 			{
 				LOGGER.info(forgeFile.toAbsolutePath() + " Does not exist, Downloading from " + url.toString());
 
-				DownloadableFile forge = new DownloadableFile(newname, forgeFile, url.toString(), Collections.emptyList(), 0, 0, newname, "modloader", String.valueOf(System.currentTimeMillis() / 1000L));
+				DownloadableFile forge = new DownloadableFile(forgeFile, url.toString(), Collections.emptyList(), 0, 0, newname, "modloader");
 				DownloadTask task = new DownloadTask(forge, forgeFile);
 				task.execute();
 			}
@@ -96,7 +95,7 @@ public class ForgeJarModLoader extends ForgeModLoader
 
 				if(WebUtils.checkExist(new URL(jsonurl)))
 				{
-					DownloadableFile fjson = new DownloadableFile(forgeJson.getFileName().toString(), forgeJson, jsonurl, Collections.emptyList(), 0, 0, downloadName, "modloader", String.valueOf(System.currentTimeMillis() / 1000L));
+					DownloadableFile fjson = new DownloadableFile(forgeJson, jsonurl, Collections.emptyList(), 0, 0, downloadName, "modloader");
 					DownloadTask ftask = new DownloadTask(fjson, forgeJson);
 					ftask.execute().join();
 				}

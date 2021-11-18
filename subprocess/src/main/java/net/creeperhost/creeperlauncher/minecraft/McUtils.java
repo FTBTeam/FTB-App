@@ -6,7 +6,6 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.os.OS;
-import net.creeperhost.creeperlauncher.os.Platform;
 import net.creeperhost.creeperlauncher.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +62,7 @@ public class McUtils {
             List<HashCode> sha1List = new ArrayList<>();
             sha1List.add(sha1);
 
-            return new DownloadableFile(version, downloadLoc, URL, sha1List, size, 0, version, "", String.valueOf(System.currentTimeMillis() / 1000L));
+            return new DownloadableFile(downloadLoc, URL, sha1List, size, 0, version, "");
         }
         return null;
     }
