@@ -19,7 +19,7 @@ import vSelectMenu from 'v-selectmenu';
 import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 
-import store from './store';
+import store from './modules/store';
 import FTBButton from '@/components/FTBButton.vue';
 import FTBInput from '@/components/FTBInput.vue';
 

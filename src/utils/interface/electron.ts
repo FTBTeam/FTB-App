@@ -4,7 +4,7 @@ import { clipboard, ipcRenderer } from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
-import store from '@/store';
+import store from '@/modules/store';
 import { getAPIRequest } from '@/modules/modpacks/actions';
 import { ModPack } from '@/modules/modpacks/types';
 import router from '@/router';

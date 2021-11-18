@@ -1,5 +1,5 @@
 import router from '@/router';
-import store from '@/store';
+import store from '@/modules/store';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';

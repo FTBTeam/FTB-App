@@ -1,5 +1,5 @@
 <template>
-  <div class="tab-actions-body">
+  <div class="tab-actions-body" v-if='instance'>
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
         <div class="play">
@@ -138,6 +138,10 @@
       />
     </div>
   </div>
+  <div class='loading pt-12' v-else>
+    <!-- This should literally never happen -->
+    <loading />
+  </div>
 </template>
 
 <script lang="ts">
@@ -152,11 +156,12 @@ import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue'
 import { getColorForChar } from '@/utils/colors';
 import { State } from 'vuex-class';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
+import Loading from '@/components/Loading.vue';
 
 @Component({
-  components: { ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
+  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
 })
-export default class PackTabsBody extends Vue {
+export default class PackBody extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
 
   // The stored instance for an installed pack

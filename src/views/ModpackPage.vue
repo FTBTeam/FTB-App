@@ -23,7 +23,7 @@
 
         <div class="body">
           <!--          TODO: fix mod list-->
-          <pack-tabs-body
+          <pack-body
             @mainAction="showInstallBox = true"
             @update="() => {}"
             @getModList="() => {}"
@@ -153,10 +153,10 @@ import InstallModal from '@/components/modals/InstallModal.vue';
 import { PackConst } from '@/utils/contants';
 import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
-import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import { AuthState } from '@/modules/auth/types';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
+import PackBody from '@/components/modpack/modpack-elements/PackBody.vue';
 
 interface Changelogs {
   [id: number]: string;
@@ -166,7 +166,6 @@ interface Changelogs {
   name: 'ModpackPage',
   components: {
     ModpackVersions,
-    PackTabsBody,
     PackTitleHeader,
     PackMetaHeading,
     'ftb-toggle': FTBToggle,
@@ -174,6 +173,7 @@ interface Changelogs {
     'ftb-modal': FTBModal,
     'message-modal': MessageModal,
     ServerCard,
+    PackBody
   },
 })
 export default class ModpackPage extends Vue {

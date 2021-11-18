@@ -1,14 +1,14 @@
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import Vuex, { MutationTree, Store, StoreOptions } from 'vuex';
-import { Alert, AlertWithId, ModalBox, RootState } from './types';
-import { news } from './modules/news';
-import { modpacks } from './modules/modpacks';
-import { websocket } from './modules/websocket';
-import { settings } from './modules/settings';
-import { auth } from './modules/auth';
-import { discovery } from './modules/discovery';
-import { servers } from './modules/servers';
+import { Alert, AlertWithId, ModalBox, RootState } from '../types';
+import { news } from './news';
+import { modpacks } from './modpacks';
+import { websocket } from './websocket';
+import { settings } from './settings';
+import { auth } from './auth';
+import { discovery } from './discovery';
+import { servers } from './servers';
 
 Vue.use(Vuex);
 

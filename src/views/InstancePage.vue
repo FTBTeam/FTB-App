@@ -20,7 +20,7 @@
       </header>
 
       <div class="body" v-if="!searchingForMods" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
-        <pack-tabs-body
+        <pack-body
           v-if="!this.searchingForMods"
           @mainAction="launchModPack()"
           @update="update()"
@@ -83,22 +83,10 @@ import { PackConst } from '@/utils/contants';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
 import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
 import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
-import { getColorForChar } from '@/utils/colors';
 import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
-import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
-
-interface MsgBox {
-  title: string;
-  content: string;
-  type: string;
-  okAction: () => void;
-  cancelAction: () => void;
-}
-
-interface Changelogs {
-  [id: number]: string;
-}
+import PackBody from '@/components/modpack/modpack-elements/PackBody.vue';
+import { App } from '@/types';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -121,7 +109,7 @@ export enum ModpackPageTabs {
     MessageModal,
     FindMods,
     ModpackPublicServers,
-    PackTabsBody
+    PackBody
   },
 })
 export default class InstancePage extends Vue {
@@ -138,13 +126,11 @@ export default class InstancePage extends Vue {
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
 
-  getColorForChar = getColorForChar;
-
   private packInstance: ModPack | null = null;
   deleting: boolean = false;
 
   private showMsgBox: boolean = false;
-  private msgBox: MsgBox = {
+  private msgBox: App.MsgBox = {
     title: '',
     content: '',
     type: '',
