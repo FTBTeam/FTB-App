@@ -133,6 +133,17 @@ public class InstanceLauncher {
             setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
             process = null;
             processFuture = null;
+        }).exceptionally(t -> {
+            LOGGER.error("Minecraft Future exited with an unrecoverable error.", t);
+            if (process != null) {
+                // Something is very broken, force kill minecraft and at least return to a recoverable state.
+                LOGGER.error("Force quitting Minecraft. Unrecoverable error occurred!");
+                process.destroyForcibly();
+                process = null;
+            }
+            processFuture = null;
+            setPhase(Phase.ERRORED);
+            return null;
         });
     }
 
