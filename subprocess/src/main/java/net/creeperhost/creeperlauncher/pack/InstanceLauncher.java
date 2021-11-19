@@ -33,6 +33,7 @@ import java.util.zip.ZipFile;
 
 import static java.util.Objects.requireNonNull;
 import static net.covers1624.quack.collection.ColUtils.iterable;
+import static net.covers1624.quack.util.SneakyUtils.sneak;
 
 /**
  * Responsible for launching a specific instance.
@@ -46,11 +47,12 @@ public class InstanceLauncher {
     private final LocalInstance instance;
     private Phase phase = Phase.NOT_STARTED;
 
+    private final List<VersionManifest> manifests = new ArrayList<>();
+    private final List<Path> tempDirs = new LinkedList<>();
     @Nullable
     private CompletableFuture<Void> processFuture;
     @Nullable
     private Process process;
-    private List<VersionManifest> manifests = new ArrayList<>();
 
     public static void main(String[] args) throws Throwable {
         Instances.refreshInstances();
@@ -156,8 +158,20 @@ public class InstanceLauncher {
     }
 
     private void onStopped() {
-        // TODO, cleanup natives, (cloudsync?)
-
+        for (Path tempDir : tempDirs) {
+            if (Files.notExists(tempDir)) continue;
+            LOGGER.info("Cleaning up temporary directory: {}", tempDir);
+            try {
+                Files.walk(tempDir)
+                        .filter(Files::exists)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(sneak(Files::delete));
+            } catch (IOException e) {
+                LOGGER.warn("Failed to delete temp directory. Scheduling for app exit.");
+                tempDir.toFile().deleteOnExit();
+            }
+        }
+        tempDirs.clear();
     }
 
     private ProcessBuilder prepareProcess(Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws LaunchException {
@@ -173,7 +187,6 @@ public class InstanceLauncher {
             String mainClass = getMainClass();
             List<VersionManifest.Library> libraries = collectLibraries(features);
 
-            // TODO, Delete this folder on phase change to ERRORED or STOPPED.
             Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
 
@@ -246,6 +259,7 @@ public class InstanceLauncher {
 
     private void extractNatives(Path nativesDir, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
         LOGGER.info("Extracting natives...");
+        tempDirs.add(nativesDir);
         VersionManifest.OS current = VersionManifest.OS.current();
         for (VersionManifest.Library library : libraries) {
             if (library.natives == null) continue;
