@@ -229,6 +229,7 @@ public class InstanceLauncher {
     }
 
     private void prepareManifests(Path versionsDir) throws IOException {
+        manifests.clear();
         VersionListManifest versions = VersionListManifest.update(versionsDir);
         Set<String> seen = new HashSet<>();
         String id = instance.modLoader;
