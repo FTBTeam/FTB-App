@@ -8,8 +8,8 @@ import org.apache.logging.log4j.Logger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class Constants
-{
+public class Constants {
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     //CWD
@@ -47,13 +47,14 @@ public class Constants
     public static final String LAUNCHER_PROFILES_JSON_NAME = "launcher_profiles.json";
     public static final Path LAUNCHER_PROFILES_JSON = BIN_LOCATION.resolve(LAUNCHER_PROFILES_JSON_NAME);
     public static final Path LIBRARY_LOCATION = BIN_LOCATION.resolve("libraries");
-    public static final Path OLD_CACHE_LOCATION = getDataDir().resolve(".localCache");
 
     //Other
     public static final int WEBSOCKET_PORT = 13377;
     public static final String APPVERSION = "@APPVERSION@";
     public static final String BRANCH = "@BRANCH@";
     public static final String PLATFORM = WORKING_DIR.toAbsolutePath().toString().contains("Overwolf") ? "Overwolf" : "Electron";
+    // TODO, can this be FTBApp instead of 'modpacklauncher'? Does the API rely on this user agent string?
+    public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
 
     //Auth
     public static String KEY = "";
@@ -88,17 +89,13 @@ public class Constants
         }
         return Constants.CREEPERHOST_MODPACK + "/" + key + "/" + typeSlug + "/";
     }
-    public static Path getDataDir()
-    {
-        Path ret = DATA_DIR;
-        switch (OS.CURRENT) {
-            case WIN:
-                ret = Paths.get(System.getenv("LOCALAPPDATA"), INNER_DATA_DIR);
-                break;
-            case MAC:
-                ret = Paths.get(System.getProperty("user.home"), "Library", "Application Support", INNER_DATA_DIR);
-                break;
-        }
+
+    public static Path getDataDir() {
+        Path ret = switch (OS.CURRENT) {
+            case WIN -> Paths.get(System.getenv("LOCALAPPDATA"), INNER_DATA_DIR);
+            case MAC -> Paths.get(System.getProperty("user.home"), "Library", "Application Support", INNER_DATA_DIR);
+            default -> DATA_DIR;
+        };
         return ret.toAbsolutePath().normalize();
     }
 }
