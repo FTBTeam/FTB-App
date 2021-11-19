@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.pack;
 import com.google.common.collect.Lists;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
-import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
@@ -97,66 +96,12 @@ public class InstanceLauncher {
 
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
-        Path javaExecutable = Paths.get("/usr/lib/jvm/java-8-openjdk/bin/java"); // TODO
-        Path gameDir = instance.getDir().toAbsolutePath();
-        List<String> jvmArgs;
-        List<String> progArgs;
-        String mainClass;
-        List<VersionManifest.Library> libraries;
-        try {
-            // TODO JDK download stuffs. (should also be done on install, but as a fallback done here too if they don't exist (maybe a migrator?))
-
-            prepareManifests(versionsDir);
-            // TODO, may need UI feedback. We will run this once during instance install, but we need to refresh them here too.
-            checkAssets();
-
-            mainClass = getMainClass();
-            libraries = collectLibraries(features);
-
-            // TODO, Delete this folder on phase change to ERRORED or STOPPED.
-            Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
-            extractNatives(nativesDir, librariesDir, libraries);
-
-            Map<String, String> subMap = new HashMap<>();
-            // Temp properties TODO
-            subMap.put("auth_player_name", "Player");
-            subMap.put("auth_uuid", new UUID(0, 0).toString());
-            subMap.put("user_type", "legacy");
-            subMap.put("auth_access_token", "null"); // TODO
-
-            subMap.put("version_name", instance.modLoader);
-            subMap.put("game_directory", gameDir.toString());
-            subMap.put("assets_root", assetsDir.toAbsolutePath().toString());
-            subMap.put("assets_index_name", manifests.get(0).assets);
-            subMap.put("version_type", manifests.get(0).type);// TODO
-
-            subMap.put("launcher_name", "FTBApp");
-            subMap.put("launcher_version", "6.9.4.20");// TODO
-
-            subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
-            List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
-            subMap.put("classpath", classpath.stream().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
-
-            StrSubstitutor sub = new StrSubstitutor(subMap);
-
-            jvmArgs = collectArgs(features, sub, e -> requireNonNull(e.jvm).stream());
-            progArgs = collectArgs(features, sub, e -> requireNonNull(e.game).stream());
-        } catch (Throwable ex) {
-            throw new LaunchException("Failed to prepare instance '" + instance.getName() + "'(" + instance.getUuid() + ").", ex);
-        }
+        ProcessBuilder builder = prepareProcess(assetsDir, versionsDir, librariesDir, features);
 
         // Spawn future to immediately start minecraft
         processFuture = CompletableFuture.runAsync(() -> {
-            List<String> command = new LinkedList<>();
-            command.add(javaExecutable.toAbsolutePath().toString());
-            command.addAll(jvmArgs);
-            command.add(mainClass);
-            command.addAll(progArgs);
-            ProcessBuilder builder = new ProcessBuilder()
-                    .directory(gameDir.toFile())
-                    .command(command);
             try {
-                LOGGER.info("Starting Minecraft with command '{}'", String.join(" ", command));
+                LOGGER.info("Starting Minecraft with command '{}'", String.join(" ", builder.command()));
                 process = builder.start();
             } catch (IOException e) {
                 LOGGER.error("Failed to start minecraft process!", e);
@@ -202,6 +147,61 @@ public class InstanceLauncher {
     private void onStopped() {
         // TODO, cleanup natives, (cloudsync?)
 
+    }
+
+    private ProcessBuilder prepareProcess(Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws LaunchException {
+        Path javaExecutable = Paths.get("/usr/lib/jvm/java-8-openjdk/bin/java"); // TODO
+        Path gameDir = instance.getDir().toAbsolutePath();
+        try {
+            // TODO JDK download stuffs. (should also be done on install, but as a fallback done here too if they don't exist (maybe a migrator?))
+
+            prepareManifests(versionsDir);
+            // TODO, may need UI feedback. We will run this once during instance install, but we need to refresh them here too.
+            checkAssets();
+
+            String mainClass = getMainClass();
+            List<VersionManifest.Library> libraries = collectLibraries(features);
+
+            // TODO, Delete this folder on phase change to ERRORED or STOPPED.
+            Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
+            extractNatives(nativesDir, librariesDir, libraries);
+
+            Map<String, String> subMap = new HashMap<>();
+            // Temp properties TODO
+            subMap.put("auth_player_name", "Player");
+            subMap.put("auth_uuid", new UUID(0, 0).toString());
+            subMap.put("user_type", "legacy");
+            subMap.put("auth_access_token", "null"); // TODO
+
+            subMap.put("version_name", instance.modLoader);
+            subMap.put("game_directory", gameDir.toString());
+            subMap.put("assets_root", assetsDir.toAbsolutePath().toString());
+            subMap.put("assets_index_name", manifests.get(0).assets);
+            subMap.put("version_type", manifests.get(0).type);// TODO
+
+            subMap.put("launcher_name", "FTBApp");
+            subMap.put("launcher_version", "6.9.4.20");// TODO
+
+            subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
+            List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
+            subMap.put("classpath", classpath.stream().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
+
+            StrSubstitutor sub = new StrSubstitutor(subMap);
+
+            List<String> jvmArgs = collectArgs(features, sub, e -> requireNonNull(e.jvm).stream());
+            List<String> progArgs = collectArgs(features, sub, e -> requireNonNull(e.game).stream());
+
+            List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
+            command.add(javaExecutable.toAbsolutePath().toString());
+            command.addAll(jvmArgs);
+            command.add(mainClass);
+            command.addAll(progArgs);
+            return new ProcessBuilder()
+                    .directory(gameDir.toFile())
+                    .command(command);
+        } catch (Throwable ex) {
+            throw new LaunchException("Failed to prepare instance '" + instance.getName() + "'(" + instance.getUuid() + ").", ex);
+        }
     }
 
     private void prepareManifests(Path versionsDir) throws IOException {
