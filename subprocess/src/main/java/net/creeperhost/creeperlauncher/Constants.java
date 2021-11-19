@@ -71,24 +71,22 @@ public class Constants
 
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
-    public static String getCreeperhostModpackSearch2(boolean _private, byte packType)
-    {
-        String typeSlug = "modpack";
+    public static String getCreeperhostModpackPrefix(boolean isPrivate, byte packType) {
+        String key = "public";
+        String typeSlug = switch (packType) {
+            case 1 -> "curseforge";
+            default -> "modpack";
+        };
 
-        switch (packType)
-        {
-            case 1:
-                return Constants.CREEPERHOST_MODPACK + "/public/" + "curseforge" + "/"; // no such thing as private curse modpacks, rest of logic not needed
+        if (packType == 1) {
+            // CurseForge has no private packs.
+            isPrivate = false;
         }
-        if(Constants.KEY.isEmpty() || !_private)
-        {
-            return Constants.CREEPERHOST_MODPACK + "/public/" + typeSlug + "/";
+
+        if (!Constants.KEY.isEmpty() && isPrivate) {
+            key = Constants.KEY;
         }
-        if(Constants.KEY.isEmpty() && _private)
-        {
-            LOGGER.error("Tried to access a private pack without having configured the secret and key.");
-        }
-        return Constants.CREEPERHOST_MODPACK + "/" + Constants.KEY + "/" + typeSlug + "/";
+        return Constants.CREEPERHOST_MODPACK + "/" + key + "/" + typeSlug + "/";
     }
     public static Path getDataDir()
     {
