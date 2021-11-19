@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Http client based on {@link OkHttpClient}.
  */
@@ -23,12 +25,15 @@ public class OkHttpClientImpl implements IHttpClient
 
     static {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.cookieJar(new SimpleCookieJar());
         builder.addInterceptor((chain) ->
         {
             Request request = chain.request();
             Response originalResponse = chain.proceed(request);
+            ResponseBody body = originalResponse.body();
+            if (body == null) return originalResponse;
             return originalResponse.newBuilder()
-                    .body(new ProgressResponseBody(originalResponse.body(), request.tag(ResponseHandlers.class), request.tag(Long.class)))
+                    .body(new ProgressResponseBody(body, requireNonNull(request.tag(ResponseHandlers.class)), requireNonNull(request.tag(Long.class))))
                     .build();
         });
         client = builder.build();
@@ -71,10 +76,10 @@ public class OkHttpClientImpl implements IHttpClient
         @Nullable
         private BufferedSource bufferedSource;
 
-        public ProgressResponseBody(ResponseBody responseBody, ResponseHandlers progressListener, long maxSpeed)
+        public ProgressResponseBody(ResponseBody responseBody, ResponseHandlers responseHandlers, long maxSpeed)
         {
             this.responseBody = responseBody;
-            this.responseHandlers = progressListener;
+            this.responseHandlers = responseHandlers;
             this.maxSpeed = maxSpeed;
         }
 
