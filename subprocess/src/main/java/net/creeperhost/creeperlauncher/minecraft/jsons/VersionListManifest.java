@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.minecraft.jsons;
 
 import com.google.gson.JsonParseException;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,7 +43,9 @@ public class VersionListManifest {
         NewDownloadTask downloadTask = new NewDownloadTask(
                 URL,
                 versionsFile,
-                NewDownloadTask.TaskValidation.none(),
+                DownloadValidation.of()
+                        .withUseETag(true)
+                        .withUseOnlyIfModified(true),
                 null
         );
 

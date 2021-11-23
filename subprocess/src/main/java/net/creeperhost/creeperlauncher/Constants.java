@@ -1,7 +1,9 @@
 package net.creeperhost.creeperlauncher;
 
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.util.SettingsChangeUtil;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
+import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,6 +57,7 @@ public class Constants {
     public static final String PLATFORM = WORKING_DIR.toAbsolutePath().toString().contains("Overwolf") ? "Overwolf" : "Electron";
     // TODO, can this be FTBApp instead of 'modpacklauncher'? Does the API rely on this user agent string?
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
+    private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
     //Auth
     public static String KEY = "";
@@ -97,5 +100,16 @@ public class Constants {
             default -> DATA_DIR;
         };
         return ret.toAbsolutePath().normalize();
+    }
+
+    public static Throttler getGlobalThrottler() {
+        // TODO, double-check this logic.
+        long maxSpeed = Settings.getSpeedLimit() * 1000L;
+        if (maxSpeed > 0) {
+            GLOBAL_THROTTLER.bytesPerSecond((maxSpeed / 8) * 2); //Some reason it always limits to 50% for me, so we multiply!
+        } else {
+            GLOBAL_THROTTLER.bytesPerSecond(Long.MAX_VALUE);
+        }
+        return GLOBAL_THROTTLER;
     }
 }

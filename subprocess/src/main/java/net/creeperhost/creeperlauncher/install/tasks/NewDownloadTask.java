@@ -2,22 +2,28 @@ package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-import net.covers1624.quack.util.HashUtils;
-import net.creeperhost.creeperlauncher.Settings;
-import net.creeperhost.creeperlauncher.install.tasks.http.DownloadedFile;
-import net.creeperhost.creeperlauncher.install.tasks.http.IHttpClient;
+import net.covers1624.quack.net.download.DownloadListener;
+import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
+import net.covers1624.quack.util.MultiHasher;
+import net.covers1624.quack.util.MultiHasher.HashFunc;
+import net.covers1624.quack.util.MultiHasher.HashResult;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
-import net.creeperhost.creeperlauncher.install.tasks.http.OkHttpClientImpl;
+import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
+import okhttp3.OkHttpClient;
+import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A task to download a file.
@@ -28,12 +34,15 @@ import java.nio.file.Path;
 public class NewDownloadTask implements Task<Path> {
 
     private static final Logger LOGGER = LogManager.getLogger();
-
-    private static final IHttpClient httpClient = new OkHttpClientImpl();
+    private static final OkHttpClient client = new OkHttpClient.Builder()
+            .cookieJar(new SimpleCookieJar())
+            .addInterceptor(new ThrottlerInterceptor())
+            .addInterceptor(new MultiHasherInterceptor())
+            .build();
 
     private final String url;
     private final Path dest;
-    private final TaskValidation validation;
+    private final DownloadValidation validation;
     @Nullable
     private final IProgressUpdater progressUpdater;
 
@@ -41,15 +50,15 @@ public class NewDownloadTask implements Task<Path> {
     private final String name;
     private final String type;
 
-    public NewDownloadTask(String url, Path dest, TaskValidation validation, @Nullable IProgressUpdater progressUpdater) {
+    public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable IProgressUpdater progressUpdater) {
         this(url, dest, validation, progressUpdater, dest.getFileName().toString(), -1, "");
     }
 
     /**
-     * Overload of {@link #NewDownloadTask(String, Path, TaskValidation, IProgressUpdater, String, long, String)},
+     * Overload of {@link #NewDownloadTask(String, Path, DownloadValidation, IProgressUpdater, String, long, String)},
      * which passes <code>-1</code> to <code>id</code> and <code>""</code> to <code>type</code>.
      */
-    public NewDownloadTask(String url, Path dest, TaskValidation validation, String name, @Nullable IProgressUpdater progressUpdater) {
+    public NewDownloadTask(String url, Path dest, DownloadValidation validation, String name, @Nullable IProgressUpdater progressUpdater) {
         this(url, dest, validation, progressUpdater, name, -1, "");
     }
 
@@ -64,7 +73,7 @@ public class NewDownloadTask implements Task<Path> {
      * @param id              An additional ID for tracking the file.
      * @param type            The type of this download.
      */
-    public NewDownloadTask(String url, Path dest, TaskValidation validation, @Nullable IProgressUpdater progressUpdater, String name, long id, String type) {
+    public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable IProgressUpdater progressUpdater, String name, long id, String type) {
         this.url = url;
         this.dest = dest;
         this.validation = validation;
@@ -77,26 +86,52 @@ public class NewDownloadTask implements Task<Path> {
 
     @Override
     public void execute() throws Throwable {
-        if (Files.exists(dest) && validate()) {
+        if (Files.exists(dest) && validation.validate(dest)) {
             // Validated, do nothing.
             return;
         }
 
-        DownloadedFile downloadedFile = httpClient.doDownload(
-                url,
-                dest,
-                progressUpdater,
-                validation.hashFunc,
-                Settings.getSpeedLimit()
-        );
+        MultiHasher hashRequest = null;
+        OkHttpDownloadAction action = new OkHttpDownloadAction()
+                .setClient(client)
+                .setUrl(url)
+                .setDest(dest)
+                .setUseETag(validation.useETag)
+                .setOnlyIfModified(validation.useOnlyIfModified)
+                .addTag(Throttler.class, Constants.getGlobalThrottler());
+        if (!validation.expectedHashes.isEmpty()) {
+            hashRequest = new MultiHasher(validation.expectedHashes.keySet());
+            action.addTag(MultiHasher.class, hashRequest);
+        }
 
-        if (!validate()) {
+        if (progressUpdater != null) {
+            action.setDownloadListener(new ProgressAdapter(progressUpdater));
+        }
+
+        action.execute();
+
+        if (action.isUpToDate()) {
+            // We validated ETag/OnlyIfModified
+            return;
+        }
+
+        HashResult result = hashRequest != null ? hashRequest.finish() : null;
+
+        if (!validation.validate(dest, result)) {
             // Validate will return false when both expectedSize and expectedHash are missing.
-            if (validation.expectedSize != -1 && validation.expectedSize != downloadedFile.size()) {
-                throw new IOException("Downloaded size of file '" + url + "' does not match expected. Expected: " + validation.expectedSize + " Got: " + downloadedFile.size());
+            if (validation.expectedSize != -1) {
+                long size = Files.size(dest);
+                if (validation.expectedSize != size) {
+                    throw new IOException("Downloaded size of file '" + url + "' does not match expected. Expected: " + validation.expectedSize + " Got: " + size);
+                }
             }
-            if (validation.expectedHash != null && !validation.expectedHash.equals(downloadedFile.checksum())) {
-                throw new IOException("Downloaded hash of file '" + url + "' does not match expected. Expected: " + validation.expectedHash + " Got: " + downloadedFile.checksum());
+            if (!validation.expectedHashes.isEmpty() && result != null) {
+                for (Map.Entry<HashFunc, HashCode> entry : validation.expectedHashes.entrySet()) {
+                    HashCode got = result.get(entry.getKey());
+                    if (!entry.getValue().equals(got)) {
+                        throw new IOException("Downloaded hash of file '" + url + "' does not match expected. Expected: " + entry.getValue() + " Got: " + got);
+                    }
+                }
             }
         }
     }
@@ -105,7 +140,7 @@ public class NewDownloadTask implements Task<Path> {
     public boolean isRedundant() {
         try {
             // Task is redundant if the file exists, and we can validate it.
-            return Files.exists(dest) && validate();
+            return Files.exists(dest) && validation.validate(dest);
         } catch (Throwable ignored) {
             return false;
         }
@@ -114,30 +149,6 @@ public class NewDownloadTask implements Task<Path> {
     @Override
     public Path getResult() {
         return dest;
-    }
-
-    private boolean validate() throws IOException {
-        // Both expectedHash and hashFunc must both be missing/present.
-        assert (validation.expectedHash == null) == (validation.hashFunc == null);
-        // This should only be called when the destination exists.
-        assert Files.exists(dest);
-
-        // If the expectedSize and hash are missing, we can't validate.
-        if (validation.expectedSize == -1 && validation.expectedHash == null) {
-            return false;
-        }
-
-        // If expectedSize exists, and doesn't match.
-        if (validation.expectedSize != -1 && Files.size(dest) != validation.expectedSize) {
-            return false;
-        }
-        // If we have a hash, and the hash doesn't match.
-        if (validation.expectedHash != null && !validation.expectedHash.equals(HashUtils.hash(validation.hashFunc, dest))) {
-            return false;
-        }
-
-        // Validated! \o/
-        return true;
     }
 
     //@formatter:off
@@ -151,90 +162,116 @@ public class NewDownloadTask implements Task<Path> {
     /**
      * Validation properties for a {@link NewDownloadTask}.
      */
-    @SuppressWarnings ("UnstableApiUsage")
-    public static record TaskValidation(long expectedSize, @Nullable HashCode expectedHash, @Nullable HashFunction hashFunc) {
+    public static record DownloadValidation(long expectedSize, Map<HashFunc, HashCode> expectedHashes, boolean useETag, boolean useOnlyIfModified) {
 
         /**
-         * Please use {@link #of(long, HashCode, HashFunction)}.
+         * Create a new blank {@link DownloadValidation}.
+         *
+         * @return The new {@link DownloadValidation}.
          */
-        @Contract ("_,null,!null->fail;_,!null,null->fail")
-        public TaskValidation(@Range (from = -1, to = Long.MAX_VALUE) long expectedSize, @Nullable HashCode expectedHash, @Nullable HashFunction hashFunc) {
-            this.expectedSize = expectedSize;
-            this.expectedHash = expectedHash;
-            this.hashFunc = hashFunc;
-
-            assert (expectedHash == null) == (hashFunc == null);
+        public static DownloadValidation of() {
+            return new DownloadValidation(-1, Map.of(), false, false);
         }
 
         /**
-         * Create a {@link TaskValidation}.
-         * <p>
-         * It is expected that this method will be used opposed to directly invoking the record constructor.
+         * Creates a copy of this {@link DownloadValidation} with the provided expected size.
          *
          * @param expectedSize The expected size. <code>-1</code> to disable.
-         * @param expectedHash The expected {@link HashCode}.<code>null</code> to disable.
-         * @param hashFunc     The expected {@link HashFunction}.
-         *                     It is expected that if the supplied {@link HashCode} in the <code>expectedHash</code> parameter
-         *                     is not null, then this parameter must not be null.
-         * @return The {@link TaskValidation}.
+         * @return The new {@link DownloadValidation}.
          */
-        @Contract ("_,null,!null->fail;_,!null,null->fail;_,_,_->new")
-        public static TaskValidation of(@Range (from = -1, to = Long.MAX_VALUE) long expectedSize, @Nullable HashCode expectedHash, @Nullable HashFunction hashFunc) {
-            return new TaskValidation(expectedSize, expectedHash, hashFunc);
+        public DownloadValidation withExpectedSize(@Range (from = -1, to = Long.MAX_VALUE) long expectedSize) {
+            return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
         }
 
         /**
-         * Returns a {@link TaskValidation} which does not validate size or hash.
+         * Creates a copy of this {@link DownloadValidation} with the provided hash validation.
          *
-         * @return The {@link TaskValidation}.
+         * @param hashFunc The {@link HashFunction}.
+         * @param hashCode The {@link HashCode} for this function.
+         * @return The new {@link DownloadValidation}.
          */
-        public static TaskValidation none() {
-            return of(-1, null, null);
+        public DownloadValidation withHash(HashFunction hashFunc, HashCode hashCode) {
+            Map<HashFunc, HashCode> expectedHashes = new HashMap<>(this.expectedHashes);
+            HashCode existing = expectedHashes.put(HashFunc.find(hashFunc), hashCode);
+            if (existing != null) throw new IllegalStateException("HashCode for given HashFunction already set.");
+
+            return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
         }
 
         /**
-         * Returns a {@link TaskValidation} which only validates file sizes.
+         * Creates a copy of this {@link DownloadValidation} which will use <code>ETag</code> and
+         * <code>If-None-Match</code> Http headers.
          *
-         * @param expectedSize The expected size. <code>-1</code> to disable.
-         * @return The {@link TaskValidation}.
+         * @param useETag If ETag validation should be used.
+         * @return The new {@link DownloadValidation}.
          */
-        public static TaskValidation of(@Range (from = -1, to = Long.MAX_VALUE) long expectedSize) {
-            return of(expectedSize, null, null);
+        public DownloadValidation withUseETag(boolean useETag) {
+            return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
         }
 
         /**
-         * Returns a {@link TaskValidation} which only validates file hashes.
+         * Creates a copy of this {@link DownloadValidation} which will use <code>If-Modified-Since</code>
+         * Http headers.
          *
-         * @param expectedHash The expected {@link HashCode}.<code>null</code> to disable.
-         * @param hashFunc     The expected {@link HashFunction}.
-         *                     It is expected that if the supplied {@link HashCode} in the <code>expectedHash</code> parameter
-         *                     is not null, then this parameter must not be null.
-         * @return The {@link TaskValidation}.
+         * @param useOnlyIfModified If <code>If-Modified-Since</code> validation should be used.
+         * @return The new {@link DownloadValidation}.
          */
-        @Contract ("null,!null->fail;!null,null->fail;_,_->new")
-        public static TaskValidation of(@Nullable HashCode expectedHash, @Nullable HashFunction hashFunc) {
-            return of(-1, expectedHash, hashFunc);
+        public DownloadValidation withUseOnlyIfModified(boolean useOnlyIfModified) {
+            return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
         }
 
-        /**
-         * Returns a {@link TaskValidation} which will validate only a sha1 hash.
-         *
-         * @param expectedHash The expected sha1 {@link HashCode}. <code>null</code> to disable.
-         * @return The {@link TaskValidation}.
-         */
-        public static TaskValidation sha1(@Nullable HashCode expectedHash) {
-            return of(-1, expectedHash, expectedHash != null ? Hashing.sha1() : null);
+        private boolean validate(Path path) throws IOException {
+            if (expectedHashes.isEmpty()) return validate(path, null);
+            MultiHasher hasher = new MultiHasher(expectedHashes.keySet());
+            hasher.load(path);
+            return validate(path, hasher.finish());
         }
 
-        /**
-         * Returns a {@link TaskValidation} which will validate file size and a sha1 hash.
-         *
-         * @param expectedSize The expected size. <code>-1</code> to disable.
-         * @param expectedHash The expected sha1 {@link HashCode}. <code>null</code> to disable.
-         * @return The {@link TaskValidation}.
-         */
-        public static TaskValidation sha1(@Range (from = -1, to = Long.MAX_VALUE) long expectedSize, @Nullable HashCode expectedHash) {
-            return of(expectedSize, expectedHash, expectedHash != null ? Hashing.sha1() : null);
+        private boolean validate(Path path, @Nullable HashResult hashResult) throws IOException {
+            if (expectedSize != -1) {
+                long size = Files.size(path);
+                if (expectedSize != size) {
+                    return false;
+                }
+            }
+            if (hashResult != null) {
+                for (Map.Entry<HashFunc, HashCode> entry : expectedHashes.entrySet()) {
+                    if (!entry.getValue().equals(hashResult.get(entry.getKey()))) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
+    private static class ProgressAdapter implements DownloadListener {
+
+        private final IProgressUpdater progressUpdater;
+        private long expectedLen;
+        private long totalProcessed;
+
+        private ProgressAdapter(IProgressUpdater progressUpdater) {
+            this.progressUpdater = progressUpdater;
+        }
+
+        @Override
+        public void connecting() { }
+
+        @Override
+        public void start(long expectedLen) {
+            this.expectedLen = expectedLen;
+        }
+
+        @Override
+        public void update(long processedBytes) {
+            progressUpdater.update(totalProcessed, processedBytes, expectedLen, false);
+            totalProcessed += processedBytes;
+        }
+
+        @Override
+        public void finish(long totalProcessed) {
+            progressUpdater.update(totalProcessed, 0, expectedLen, true);
         }
     }
 }

@@ -1,6 +1,8 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
+import com.google.common.hash.Hashing;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 
@@ -46,7 +48,9 @@ public class InstallAssetsTask {
             NewDownloadTask task = new NewDownloadTask(
                     RESOURCES_URL + loc,
                     dest,
-                    NewDownloadTask.TaskValidation.sha1(object.size, object.hash),
+                    DownloadValidation.of()
+                            .withExpectedSize(object.size)
+                            .withHash(Hashing.sha1(), object.hash),
                     null
             );
             if (!task.isRedundant()) {

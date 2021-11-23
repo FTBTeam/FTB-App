@@ -9,6 +9,7 @@ import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,7 +73,9 @@ public class VersionManifest {
         NewDownloadTask downloadTask = new NewDownloadTask(
                 version.url,
                 versionFile,
-                NewDownloadTask.TaskValidation.none(),
+                DownloadValidation.of()
+                        .withUseETag(true)
+                        .withUseOnlyIfModified(true),
                 null
         );
 

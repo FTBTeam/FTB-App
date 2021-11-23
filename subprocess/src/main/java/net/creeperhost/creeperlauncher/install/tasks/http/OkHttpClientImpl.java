@@ -18,6 +18,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Http client based on {@link OkHttpClient}.
  */
+@Deprecated
 @SuppressWarnings ("UnstableApiUsage")
 public class OkHttpClientImpl implements IHttpClient
 {

@@ -1,10 +1,12 @@
 package net.creeperhost.creeperlauncher.minecraft.jsons;
 
 import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +45,11 @@ public class AssetIndexManifest {
         NewDownloadTask downloadTask = new NewDownloadTask(
                 assetIndex.url,
                 assetIndexFile,
-                NewDownloadTask.TaskValidation.sha1(assetIndex.size, assetIndex.sha1),
+                DownloadValidation.of()
+                        .withExpectedSize(assetIndex.size)
+                        .withHash(Hashing.sha1(), assetIndex.sha1)
+                        .withUseETag(true)
+                        .withUseOnlyIfModified(true),
                 null
         );
 
