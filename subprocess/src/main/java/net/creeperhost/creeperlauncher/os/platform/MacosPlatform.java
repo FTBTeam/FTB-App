@@ -3,13 +3,11 @@ package net.creeperhost.creeperlauncher.os.platform;
 import net.covers1624.quack.io.CopyingFileVisitor;
 import net.covers1624.quack.io.IOUtils;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.os.platform.window.IWindowHelper;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 /**
  * Represents the MacOS platform.
@@ -24,10 +22,6 @@ public class MacosPlatform extends UnixPlatform {
             LAUNCHER_EXECUTABLE,
             "Minecraft.app/Contents/Minecraft Updater.app/Contents/MacOS/nativeUpdater"
     };
-
-    public MacosPlatform() {
-        super(IWindowHelper.NullWindowHelper.INSTANCE);
-    }
 
     @Override
     public String getLauncherURL() {
@@ -53,14 +47,5 @@ public class MacosPlatform extends UnixPlatform {
             //TODO, UnixPlatform.chmod755? Should be supported by MacOS?
             Constants.BIN_LOCATION.resolve(executable).toFile().setExecutable(true);
         }
-    }
-
-    @Override //Macos is speshal, this is validated with unit test.
-    protected List<String> prepareLauncherProcessArgs() {
-        List<String> args = super.prepareLauncherProcessArgs();
-        args.add(0, "/usr/bin/open");
-        args.set(1, getLauncherOpenPath().toAbsolutePath().toString());
-        args.add(2, "--args");
-        return args;
     }
 }

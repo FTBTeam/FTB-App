@@ -1,8 +1,6 @@
 package net.creeperhost.creeperlauncher.os.platform;
 
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.os.platform.window.IWindowHelper;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
@@ -23,10 +21,6 @@ public class LinuxPlatform extends UnixPlatform {
     private static final String LAUNCHER_URL = "https://launcher.mojang.com/download/Minecraft.tar.gz";
     private static final String LAUNCHER_EXECUTABLE = "minecraft-launcher/minecraft-launcher";
 
-    public LinuxPlatform() {
-        super(IWindowHelper.NullWindowHelper.INSTANCE);
-    }
-
     @Override
     public String getLauncherURL() {
         return LAUNCHER_URL;
@@ -45,8 +39,7 @@ public class LinuxPlatform extends UnixPlatform {
         //Due to a bug with the vanilla launcher it needs to be started without --workdir on the first start
         CompletableFuture.runAsync(() ->
         {
-            try
-            {
+            try {
                 List<String> args = new ArrayList<>();
                 args.add(getLauncherExecutable().toAbsolutePath().toString());
 
@@ -54,8 +47,7 @@ public class LinuxPlatform extends UnixPlatform {
                 Process process = builder.start();
                 Thread.sleep(1000);
                 process.destroyForcibly();
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }).join();

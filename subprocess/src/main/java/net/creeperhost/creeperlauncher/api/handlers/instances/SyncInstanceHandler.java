@@ -7,7 +7,6 @@ import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
-import net.creeperhost.creeperlauncher.minecraft.GameLauncher;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoader;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoaderManager;
@@ -67,7 +66,7 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
                             OpenModalData.openModal("Preparing environment", "Installing Minecraft Launcher <br>", List.of());
 
                             platform.installLauncher();
-                            if (!Files.exists(Constants.LAUNCHER_PROFILES_JSON)) GameLauncher.downloadLauncherProfiles();
+//                            if (!Files.exists(Constants.LAUNCHER_PROFILES_JSON)) GameLauncher.downloadLauncherProfiles();
                         }
                     }).thenRun(() ->
                     {

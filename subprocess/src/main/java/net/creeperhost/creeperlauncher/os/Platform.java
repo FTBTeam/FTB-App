@@ -2,22 +2,17 @@ package net.creeperhost.creeperlauncher.os;
 
 import net.covers1624.quack.net.download.DownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
-import net.creeperhost.creeperlauncher.os.platform.window.IWindowHelper;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
-import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Represents a specific Platform implementation for a specific Operating System(or variant).
@@ -31,17 +26,6 @@ public interface Platform {
 
     //INTERNAL
     Logger _LOGGER = LogManager.getLogger();
-    AtomicInteger _COUNTER = new AtomicInteger();
-
-    //region Window stuff
-
-    /**
-     * Gets the platform specific Window Helper for interacting with Windows.
-     *
-     * @return The window helper.
-     */
-    IWindowHelper getWindowHelper();
-    //endregion
 
     //region Launcher properties
 
@@ -76,6 +60,7 @@ public interface Platform {
      *
      * @return If the operation succeeds.
      */
+    @SuppressWarnings ("UnstableApiUsage")
     default boolean installLauncher() {
         _LOGGER.info("Installing Minecraft Launcher.");
         Path launcherCache = Constants.BIN_LOCATION.resolve("launcherCache");
@@ -115,52 +100,6 @@ public interface Platform {
             return false;
         }
         return true;
-    }
-    //endregion
-
-    //region Starting launcher
-
-    /**
-     * Starts the Minecraft Launcher.
-     *
-     * @return The process handle to the Launcher.
-     */
-    ProcessBuilder buildLauncherProcess();
-
-    /**
-     * Tries to start the Mojang launcher either returning the process handle
-     * of the Launcher process, or null if the launcher could not be started.
-     *
-     * @return The Process handle or null.
-     */
-    default Process tryStartLauncher() {
-        try {
-            ProcessBuilder builder = buildLauncherProcess();
-            Process process = builder.start();
-            Logger logger = LogManager.getLogger("Minecraft Launcher " + _COUNTER.getAndIncrement());
-            CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), logger::info);
-            CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), logger::error);
-            process.onExit().thenRunAsync(() -> {
-                if (!stdoutFuture.isDone()) {
-                    stdoutFuture.cancel(true);
-                }
-                if (!stderrFuture.isDone()) {
-                    stderrFuture.cancel(true);
-                }
-            });
-            process.onExit().thenRunAsync(() -> CreeperLauncher.mojangProcesses.getAndUpdate(_processes -> {
-                if (_processes == null) return null;
-
-                //Don't modify list because atomic contract.
-                return _processes.stream()
-                        .filter(e -> e.pid() != process.pid())
-                        .collect(Collectors.toList());
-            }));
-            return process;
-        } catch (IOException e) {
-            _LOGGER.error("Failed to start Mojang launcher.");
-            return null;
-        }
     }
     //endregion
 }

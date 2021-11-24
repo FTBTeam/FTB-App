@@ -52,7 +52,7 @@ public class ForgeInstallerModLoader extends ForgeModLoader
 
 
 		ForgeUtils.runForgeInstaller(installerFile.toAbsolutePath());
-		McUtils.removeProfile(Constants.LAUNCHER_PROFILES_JSON, "forge");
+//		McUtils.removeProfile(Constants.LAUNCHER_PROFILES_JSON, "forge");
 		try {
 			Files.delete(installerFile);
 		} catch (IOException ignored) {}

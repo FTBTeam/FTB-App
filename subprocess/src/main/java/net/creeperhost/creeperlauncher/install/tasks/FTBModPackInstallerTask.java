@@ -11,7 +11,6 @@ import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.SimpleDownloadableFile;
-import net.creeperhost.creeperlauncher.minecraft.GameLauncher;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoader;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoaderManager;
@@ -67,7 +66,6 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
 
     public FTBModPackInstallerTask(LocalInstance instance)
     {
-        McUtils.killOldMinecraft().join();
         this.instance = instance;
         try
         {
@@ -98,9 +96,9 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
             currentStage = Stage.VANILLA;
             LOGGER.debug("About to download launcher");
             OS.CURRENT.getPlatform().installLauncher();
-            Path profileJson = Constants.LAUNCHER_PROFILES_JSON;
+//            Path profileJson = Constants.LAUNCHER_PROFILES_JSON;
             LOGGER.debug("Launching game and close");
-            if (Files.notExists(profileJson)) GameLauncher.downloadLauncherProfiles();
+//            if (Files.notExists(profileJson)) GameLauncher.downloadLauncherProfiles();
             Path instanceDir = instance.getDir();
             FileUtils.createDirectories(instanceDir);
             LOGGER.debug("Setting stage to API");

@@ -3,6 +3,9 @@ package net.creeperhost.creeperlauncher.pack;
 import com.google.common.collect.Lists;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
+import net.covers1624.quack.util.SneakyUtils;
+import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
+import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
@@ -54,6 +57,9 @@ public class InstanceLauncher {
     @Nullable
     private Process process;
 
+    private final List<ThrowingConsumer<LaunchContext, IOException>> startTasks = new LinkedList<>();
+    private final List<ThrowingRunnable<IOException>> exitTasks = new LinkedList<>();
+
     public static void main(String[] args) throws Throwable {
         Instances.refreshInstances();
         LocalInstance instance = Instances.getInstance(UUID.fromString("5cf33a16-9f4d-4fbc-bc3b-f27c6a96e185"));
@@ -70,6 +76,24 @@ public class InstanceLauncher {
     }
 
     /**
+     * Adds a task to execute when this Instance starts.
+     *
+     * @param task The task.
+     */
+    public void withStartTask(ThrowingConsumer<LaunchContext, IOException> task) {
+        startTasks.add(task);
+    }
+
+    /**
+     * Adds a task to execute when this Instance exits.
+     *
+     * @param task The task.
+     */
+    public void withExitTask(ThrowingRunnable<IOException> task) {
+        exitTasks.add(task);
+    }
+
+    /**
      * If the instance has already been started and is currently running.
      *
      * @return If the instance is already running.
@@ -83,9 +107,9 @@ public class InstanceLauncher {
      * <p>
      * It is illegal to call this method if {@link #isRunning()} returns true.
      *
-     * @throws LaunchException If there was a direct error preparing the instance to be launched.
+     * @throws InstanceLaunchException If there was a direct error preparing the instance to be launched.
      */
-    public synchronized void launch() throws LaunchException {
+    public synchronized void launch() throws InstanceLaunchException {
         assert !isRunning();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
         setPhase(Phase.INITIALIZING);
@@ -158,6 +182,14 @@ public class InstanceLauncher {
     }
 
     private void onStopped() {
+        for (ThrowingRunnable<IOException> exitTask : exitTasks) {
+            try {
+                exitTask.run();
+            } catch (IOException e) {
+                LOGGER.error("Failed to execute exit task for instance {}({})", instance.getName(), instance.getUuid(), e);
+            }
+        }
+
         for (Path tempDir : tempDirs) {
             if (Files.notExists(tempDir)) continue;
             LOGGER.info("Cleaning up temporary directory: {}", tempDir);
@@ -174,10 +206,14 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws LaunchException {
+    private ProcessBuilder prepareProcess(Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {
         Path javaExecutable = Paths.get("/usr/lib/jvm/java-8-openjdk/bin/java"); // TODO
         Path gameDir = instance.getDir().toAbsolutePath();
         try {
+            LaunchContext context = new LaunchContext();
+            for (ThrowingConsumer<LaunchContext, IOException> startTask : startTasks) {
+                startTask.accept(context);
+            }
             // TODO JDK download stuffs. (should also be done on install, but as a fallback done here too if they don't exist (maybe a migrator?))
 
             prepareManifests(versionsDir);
@@ -204,7 +240,7 @@ public class InstanceLauncher {
             subMap.put("version_type", manifests.get(0).type);// TODO
 
             subMap.put("launcher_name", "FTBApp");
-            subMap.put("launcher_version", "6.9.4.20");// TODO
+            subMap.put("launcher_version", Constants.APPVERSION);
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
@@ -218,13 +254,15 @@ public class InstanceLauncher {
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
             command.add(javaExecutable.toAbsolutePath().toString());
             command.addAll(jvmArgs);
+            command.addAll(context.extraJVMArgs);
             command.add(mainClass);
             command.addAll(progArgs);
+            command.addAll(context.extraProgramArgs);
             return new ProcessBuilder()
                     .directory(gameDir.toFile())
                     .command(command);
         } catch (Throwable ex) {
-            throw new LaunchException("Failed to prepare instance '" + instance.getName() + "'(" + instance.getUuid() + ").", ex);
+            throw new InstanceLaunchException("Failed to prepare instance '" + instance.getName() + "'(" + instance.getUuid() + ").", ex);
         }
     }
 
@@ -332,18 +370,9 @@ public class InstanceLauncher {
         return VersionManifest.update(versionsFolder, version);
     }
 
-    /**
-     * Thrown when the instance is unable to be launched for a specific reason.
-     */
-    public static class LaunchException extends Exception {
-
-        public LaunchException(String message) {
-            super(message);
-        }
-
-        public LaunchException(String message, Throwable t) {
-            super(message, t);
-        }
+    public static class LaunchContext {
+        public final List<String> extraJVMArgs = new ArrayList<>();
+        public final List<String> extraProgramArgs = new ArrayList<>();
     }
 
     public enum Phase {

@@ -46,8 +46,6 @@ public class Constants {
 
     public static final Path VERSIONS_FOLDER_LOC = getDataDir().resolve(Paths.get("bin", "versions"));
     public static final Path INSTANCES_FOLDER_LOC = getDataDir().resolve("instances");
-    public static final String LAUNCHER_PROFILES_JSON_NAME = "launcher_profiles.json";
-    public static final Path LAUNCHER_PROFILES_JSON = BIN_LOCATION.resolve(LAUNCHER_PROFILES_JSON_NAME);
     public static final Path LIBRARY_LOCATION = BIN_LOCATION.resolve("libraries");
 
     //Other
