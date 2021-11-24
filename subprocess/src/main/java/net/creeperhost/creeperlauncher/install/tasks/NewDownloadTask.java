@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
+import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.net.download.DownloadListener;
 import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
@@ -10,6 +11,7 @@ import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
 import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
 import okhttp3.OkHttpClient;
@@ -46,20 +48,21 @@ public class NewDownloadTask implements Task<Path> {
     @Nullable
     private final IProgressUpdater progressUpdater;
 
+    private final boolean useCache;
     private final long id;
     private final String name;
     private final String type;
 
     public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable IProgressUpdater progressUpdater) {
-        this(url, dest, validation, progressUpdater, dest.getFileName().toString(), -1, "");
+        this(url, dest, validation, progressUpdater, false, dest.getFileName().toString(), -1, "");
     }
 
     /**
-     * Overload of {@link #NewDownloadTask(String, Path, DownloadValidation, IProgressUpdater, String, long, String)},
+     * Overload of {@link #NewDownloadTask(String, Path, DownloadValidation, IProgressUpdater, boolean, String, long, String)},
      * which passes <code>-1</code> to <code>id</code> and <code>""</code> to <code>type</code>.
      */
     public NewDownloadTask(String url, Path dest, DownloadValidation validation, String name, @Nullable IProgressUpdater progressUpdater) {
-        this(url, dest, validation, progressUpdater, name, -1, "");
+        this(url, dest, validation, progressUpdater, false, name, -1, "");
     }
 
     /**
@@ -69,16 +72,18 @@ public class NewDownloadTask implements Task<Path> {
      * @param dest            The Destination for the file.
      * @param validation      The task validation parameters.
      * @param progressUpdater The {@link IProgressUpdater}.
+     * @param useCache        If this task should use the {@link LocalCache}.
      * @param name            The descriptive name for the file. Usually just the file name.
      * @param id              An additional ID for tracking the file.
      * @param type            The type of this download.
      */
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable IProgressUpdater progressUpdater, String name, long id, String type) {
+    public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable IProgressUpdater progressUpdater, boolean useCache, String name, long id, String type) {
         this.url = url;
         this.dest = dest;
         this.validation = validation;
         this.progressUpdater = progressUpdater;
 
+        this.useCache = useCache;
         this.name = name;
         this.id = id;
         this.type = type;
@@ -89,6 +94,18 @@ public class NewDownloadTask implements Task<Path> {
         if (Files.exists(dest) && validation.validate(dest)) {
             // Validated, do nothing.
             return;
+        }
+
+        // TODO, SHA1 hardcode..
+        if (useCache && validation.expectedHashes.containsKey(HashFunc.SHA1)) {
+            Path cachePath = CreeperLauncher.localCache.get(validation.expectedHashes.get(HashFunc.SHA1));
+            if (cachePath != null) {
+                Files.copy(cachePath, IOUtils.makeParents(dest));
+                if (progressUpdater != null) {
+                    progressUpdater.update(0, Files.size(dest), 0, true);
+                }
+                return;
+            }
         }
 
         MultiHasher hashRequest = null;
@@ -133,6 +150,11 @@ public class NewDownloadTask implements Task<Path> {
                     }
                 }
             }
+        }
+
+        // TODO, SHA1 hardcode..
+        if (useCache && validation.expectedHashes.containsKey(HashFunc.SHA1)) {
+            CreeperLauncher.localCache.put(dest, validation.expectedHashes.get(HashFunc.SHA1));
         }
     }
 
