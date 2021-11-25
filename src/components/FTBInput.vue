@@ -11,7 +11,7 @@
       <div class="flex flex-row items-center">
         <input
           class="appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded"
-          type="text"
+          :type="type"
           :placeholder="placeholder"
           :value="value"
           @input="$emit('input', $event.target.value)"
@@ -28,12 +28,16 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
-@Component({
-  props: ['label', 'placeholder', 'button', 'buttonText', 'buttonColor', 'buttonClick', 'value'],
-})
+@Component
 export default class FTBInput extends Vue {
-  @Prop()
-  public buttonClick!: () => void;
+  @Prop() public buttonClick!: () => void;
+  @Prop({default: 'text'}) type!: string;
+  @Prop() value!: string;
+  @Prop({default: ''}) placeholder!: string;
+  @Prop() button!: boolean;
+  @Prop({default: 'Submit'}) buttonText!: string;
+  @Prop() buttonColor!: string;
+  @Prop() label!: string;
 
   public handleClick() {
     this.buttonClick();

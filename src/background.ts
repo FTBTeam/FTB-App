@@ -116,10 +116,6 @@ ipcMain.on('sendMeSecret', event => {
   event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
 });
 
-ipcMain.on('openOauthWindow', (event, data) => {
-  createOauthWindow();
-});
-
 ipcMain.on('showFriends', () => {
   if (userData) {
     createFriendsWindow();
@@ -400,24 +396,11 @@ if (!gotTheLock) {
 
   app.on('ready', async () => {
     createWindow();
-    session.defaultSession.webRequest.onBeforeSendHeaders(
-      { urls: ['https://*.cpmstar.com/*'] },
-      (details, callback) => {
-        details.requestHeaders.Referer = 'https://feed-the-beast.com';
-        callback({ cancel: false, requestHeaders: details.requestHeaders });
-      },
-    );
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {
         if (details.responseHeaders) {
           if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
             details.responseHeaders['Content-Security-Policy'] = [];
-          }
-        }
-      } else if (details.url.indexOf('https://www.creeperhost.net/json/modpacks/modpacksch/') !== -1) {
-        if (details.responseHeaders) {
-          if (details.responseHeaders['access-control-allow-origin'] !== undefined) {
-            details.responseHeaders['access-control-allow-origin'] = ['*'];
           }
         }
       }
