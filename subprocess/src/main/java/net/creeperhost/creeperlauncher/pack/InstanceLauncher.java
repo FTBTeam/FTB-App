@@ -1,12 +1,15 @@
 package net.creeperhost.creeperlauncher.pack;
 
 import com.google.common.collect.Lists;
+import net.covers1624.jdkutils.JavaInstall;
+import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.SneakyUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
@@ -207,14 +210,21 @@ public class InstanceLauncher {
     }
 
     private ProcessBuilder prepareProcess(Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {
-        Path javaExecutable = Paths.get("/usr/lib/jvm/java-8-openjdk/bin/java"); // TODO
-        Path gameDir = instance.getDir().toAbsolutePath();
         try {
+            Path gameDir = instance.getDir().toAbsolutePath();
             LaunchContext context = new LaunchContext();
             for (ThrowingConsumer<LaunchContext, IOException> startTask : startTasks) {
                 startTask.accept(context);
             }
-            // TODO JDK download stuffs. (should also be done on install, but as a fallback done here too if they don't exist (maybe a migrator?))
+
+            Path javaExecutable;
+            if (instance.embeddedJre) {
+                // TODO, UI feedback when a JDK is being downloaded.
+                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion());
+                javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
+            } else {
+                javaExecutable = instance.jrePath;
+            }
 
             prepareManifests(versionsDir);
             // TODO, may need UI feedback. We will run this once during instance install, but we need to refresh them here too.
@@ -332,6 +342,23 @@ public class InstanceLauncher {
                 .map(e -> e.mainClass)
                 .reduce((a, b) -> b != null ? b : a) // Last on the list, gets priority.
                 .orElseThrow(() -> new IllegalStateException("Version manifest chain does not have mainClass attribute??? uwot?"));
+    }
+
+    private JavaVersion getJavaVersion() {
+        JavaVersion ret = JavaVersion.JAVA_1_8;
+        for (VersionManifest e : manifests) {
+            VersionManifest.JavaVersion javaVersion = e.javaVersion;
+            if (javaVersion == null) continue;
+            JavaVersion parse = JavaVersion.parse(String.valueOf(javaVersion.majorVersion));
+            if (parse == null || parse == JavaVersion.UNKNOWN) {
+                LOGGER.error("Unable to parse '{}' into a JavaVersion.", javaVersion.majorVersion);
+                continue;
+            }
+            if (parse.ordinal() > ret.ordinal()) {
+                ret = parse;
+            }
+        }
+        return ret;
     }
 
     private List<String> collectArgs(Set<String> features, StrSubstitutor sub, Function<VersionManifest.Arguments, Stream<VersionManifest.EvalValue>> func) {

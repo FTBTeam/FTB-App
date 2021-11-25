@@ -32,11 +32,10 @@ import java.util.Map;
  * <p>
  * Created by covers1624 on 17/11/21.
  */
-// TODO, ETag/OnlyIfModified support.
 public class NewDownloadTask implements Task<Path> {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final OkHttpClient client = new OkHttpClient.Builder()
+    public static final OkHttpClient client = new OkHttpClient.Builder()
             .cookieJar(new SimpleCookieJar())
             .addInterceptor(new ThrottlerInterceptor())
             .addInterceptor(new MultiHasherInterceptor())
