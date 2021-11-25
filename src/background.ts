@@ -426,20 +426,6 @@ if (!gotTheLock) {
   });
 }
 
-// app.on('ready', async () => {
-//     createWindow();
-//     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-//         if (details.url.indexOf('twitch.tv') !== -1) {
-//             if (details.responseHeaders) {
-//                 if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
-//                     details.responseHeaders['Content-Security-Policy'] = [];
-//                 }
-//             }
-//         }
-//         callback({ responseHeaders: details.responseHeaders });
-//     });
-// });
-
 if (isDevelopment) {
   if (process.platform === 'win32') {
     process.on('message', data => {
@@ -452,73 +438,4 @@ if (isDevelopment) {
       app.quit();
     });
   }
-}
-
-async function getMTSelf(cookie: string) {
-  // try {
-  //     const response = await httpClient.get(`https://minetogether.io/api/me`, {headers: {Cookie: 'PHPSESSID=' + cookie, 'App-Auth': }});
-  //     const user = response.data;
-  //     return user;
-  // } catch (err) {
-  //     log.error(`Error getting MineTogether chat servers`, err);
-  //     return undefined;
-  // }
-}
-// Oauth Window
-
-function createOauthWindow() {
-  const window = new BrowserWindow({
-    title: 'FTB App',
-
-    // Other
-    icon: path.join(__static, 'favicon.ico'),
-    // Size Settings
-    minWidth: 0,
-    minHeight: 0,
-    // maxWidth: 1000,
-    // maxHeight: 626,
-    height: 800,
-    width: 550,
-    // frame: false,
-    titleBarStyle: 'hidden',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      disableBlinkFeatures: 'Auxclick',
-    },
-  });
-
-  // window.setMenu(null);
-  window.loadURL('https://minetogether.io/api/login');
-  window.webContents.session.webRequest.onHeadersReceived({ urls: [] }, (details, callback) => {
-    if (details.url.indexOf('https://minetogether.io/api/redirect') !== -1) {
-      if (details.responseHeaders) {
-        if (details.responseHeaders['app-auth'] && win) {
-          win.webContents.send('setSessionString', details.responseHeaders['app-auth'][0]);
-        }
-      }
-    }
-    callback({});
-  });
-  window.webContents.on(
-    'did-redirect-navigation',
-    async (event, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) => {
-      if (url.startsWith('https://minetogether.io/profile')) {
-        window.webContents.session.cookies
-          .get({ name: 'PHPSESSID' })
-          .then(async cookies => {
-            if (cookies.length === 1) {
-              if (win) {
-                win.webContents.send('setSessionID', cookies[0].value);
-              }
-              authData = cookies[0].value;
-            }
-          })
-          .catch(error => {
-            console.log(error);
-          });
-        window.close();
-      }
-    },
-  );
 }
