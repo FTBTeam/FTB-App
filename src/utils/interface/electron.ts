@@ -11,6 +11,8 @@ import router from '@/router';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import axios from 'axios';
+import EventEmitter from 'events';
+import http from 'http';
 
 declare const __static: string;
 
@@ -18,6 +20,70 @@ const contents = fs.existsSync(path.join(__static, 'version.json'))
   ? fs.readFileSync(path.join(__static, 'version.json'), 'utf-8')
   : null;
 const jsonContent = contents ? JSON.parse(contents) : null;
+
+class MiniWebServer extends EventEmitter {
+  server: http.Server | null = null;
+  timeoutRef: NodeJS.Timeout | null = null;
+
+  open() {
+    if (this.server == null) {
+      this.server = http.createServer((req: any, res: any) => {
+        let body = '';
+        req.on('data', (chunk: any) => {
+          body += chunk;
+        });
+
+        req.on('end', () => {
+          const jsonResponse = JSON.parse(body);
+          if (jsonResponse == null) {
+            console.log('Failed to parse json response');
+          }
+
+          const { token, 'app-auth': appAuth } = jsonResponse;
+          if (token == null || appAuth == null) {
+            console.log('Failed to parse token or appAuth');
+            return;
+          }
+
+          this.emit('response', jsonResponse);
+          res.write('success');
+          res.end();
+          this.close();
+        });
+      });
+      this.server.listen(7755, () => {
+        console.log('MiniWebServer listening on 7755');
+        this.emit('open');
+      });
+    } else {
+      this.emit('open', false);
+    }
+  }
+
+  closeAfterFive() {
+    if (this.timeoutRef != null) {
+      clearTimeout(this.timeoutRef);
+    }
+
+    this.timeoutRef = setTimeout(() => {
+      this.emit('timeout');
+      this.close();
+    }, 1000 * 60 * 5);
+  }
+
+  close() {
+    this.server?.close(() => {
+      this.server = null;
+      if (this.timeoutRef != null) {
+        clearTimeout(this.timeoutRef);
+      }
+    });
+
+    this.emit('close');
+  }
+}
+
+const miniWebServer: MiniWebServer = new MiniWebServer();
 
 const Electron: ElectronOverwolfInterface = {
   config: {
@@ -42,9 +108,24 @@ const Electron: ElectronOverwolfInterface = {
     openFriends() {
       ipcRenderer.send('showFriends');
     },
-    openLogin() {
-      ipcRenderer.send('openOauthWindow');
+    openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
+      // TODO: see if we can re-implement this with the ftb:// protocol
+      Electron.utils.openUrl(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
+
+      miniWebServer.open();
+      miniWebServer.on('response', (data: { token: string; 'app-auth': string }) => {
+        cb(data);
+      });
+
+      miniWebServer.on('open', () => {
+        miniWebServer.closeAfterFive();
+      });
+
+      miniWebServer.on('close', () => {
+        console.log('Web server closed');
+      });
     },
+
     logoutFromMinetogether() {
       ipcRenderer.send('logout');
     },

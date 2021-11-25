@@ -1,5 +1,5 @@
 'use strict';
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, session, shell } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -19,6 +19,12 @@ log.transports.file.resolvePath = (variables, message): string => {
   return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
 };
 
+if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
+  app.setAsDefaultProtocolClient('ftb', process.execPath, [path.resolve(process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient('ftb');
+}
+
 const httpClient = axios.create();
 httpClient.defaults.timeout = 5000;
 
@@ -36,9 +42,6 @@ for (let i = 0; i < process.argv.length; i++) {
 
 let mtIRCCLient: Client | undefined;
 declare const __static: string;
-
-protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
-app.setAsDefaultProtocolClient('ftb');
 
 let wsPort: number;
 let wsSecret: string;
@@ -368,6 +371,7 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
@@ -394,9 +398,6 @@ if (!gotTheLock) {
     }
   });
 
-  // Create myWindow, load the rest of the app, etc...
-  // app.whenReady().then(() => {
-  // })
   app.on('ready', async () => {
     createWindow();
     session.defaultSession.webRequest.onBeforeSendHeaders(

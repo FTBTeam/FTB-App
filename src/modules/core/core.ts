@@ -14,12 +14,8 @@ export const core: Module<CoreState, RootState> = {
     /**
      * Get the profile from the active profile
      */
-    getProfile: (state: CoreState): AuthProfile | null => {
-      if (!state.activeProfile) {
-        return null;
-      }
-
-      return state.profiles.filter(e => e.id === state.activeProfile)[0] ?? null;
+    getProfiles: (state: CoreState): AuthProfile[] | null => {
+      return state.profiles;
     },
 
     /**

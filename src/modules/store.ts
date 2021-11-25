@@ -9,6 +9,7 @@ import { settings } from './settings';
 import { auth } from './auth';
 import { discovery } from './discovery';
 import { servers } from './servers';
+import { core } from '@/modules/core/core';
 
 Vue.use(Vuex);
 
@@ -79,6 +80,7 @@ const store: StoreOptions<RootState> = {
     auth,
     discovery,
     servers,
+    core,
   },
 };
 

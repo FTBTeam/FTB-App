@@ -75,7 +75,6 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 import { AuthState } from '../modules/auth/types';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '../modules/settings/types';
-import { logVerbose } from '../utils';
 import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 
@@ -154,26 +153,6 @@ export default class Sidebar extends Vue {
 
   public openFriends() {
     platform.get.actions.openFriends();
-  }
-
-  private openLogin() {
-    // NOTE: the callback is only used on overwolf
-    platform.get.actions.openLogin((data: any) => {
-      if (data.token) {
-        this.setSessionID(data.token);
-      }
-      if (data['app-auth']) {
-        let settings = this.settings?.settings;
-        if (settings !== undefined) {
-          settings.sessionString = data['app-auth'];
-        }
-        this.saveSettings(settings);
-      }
-    });
-  }
-
-  private debugLog(data: any) {
-    logVerbose(this.settings, data);
   }
 }
 </script>
