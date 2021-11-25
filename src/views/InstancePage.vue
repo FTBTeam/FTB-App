@@ -50,6 +50,8 @@
 
       <find-mods :instance="instance" @modInstalled="getModList" v-if="searchingForMods" />
     </div>
+    
+    <authentication v-if='authenticationOpen' @close='authenticationOpen = false' />
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal
@@ -67,7 +69,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, ModpackState } from '@/modules/modpacks/types';
-import { Action, State } from 'vuex-class';
+import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/FTBToggle.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
 import FTBModal from '@/components/FTBModal.vue';
@@ -87,6 +89,8 @@ import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeadi
 import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
 import PackBody from '@/components/modpack/modpack-elements/PackBody.vue';
 import { App } from '@/types';
+import { AuthProfile } from '@/modules/core/core.types';
+import Authentication from '@/components/authentication/Authentication.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -98,6 +102,7 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
+    Authentication,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
@@ -117,11 +122,14 @@ export default class InstancePage extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
   @State('auth') public auth!: AuthState;
+  
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
 
+  @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
+  
   // New stuff
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
@@ -143,6 +151,8 @@ export default class InstancePage extends Vue {
   searchingForMods = false;
   updatingModlist = false;
   showVersions = false;
+  
+  authenticationOpen = false;
 
   public goBack(): void {
     if (!this.hidePackDetails) {
@@ -182,6 +192,12 @@ export default class InstancePage extends Vue {
   }
 
   public launch(): void {
+    if (this.authProfiles.length === 0) {
+      this.authenticationOpen = true;
+      
+      return;
+    }
+    
     if (this.showMsgBox) {
       this.hideMsgBox();
     }

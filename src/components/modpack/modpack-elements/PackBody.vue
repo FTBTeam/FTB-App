@@ -1,5 +1,5 @@
 <template>
-  <div class="tab-actions-body" v-if='instance'>
+  <div class="tab-actions-body" v-if='instance || packInstance'>
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
         <div class="play">
