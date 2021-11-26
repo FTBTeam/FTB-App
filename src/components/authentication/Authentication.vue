@@ -1,11 +1,11 @@
 <template>
   <div class="authentication" @mousedown.self="$emit('close')">
     <div class="body-contents text-center">
-      <div class="back" v-if="showLegacyLogin" @click="showLegacyLogin = false">
+      <div class="back" v-if="showLegacyLogin && !loggedIn" @click="showLegacyLogin = false">
         <font-awesome-icon icon="chevron-left" />
         <span>Back to options</span>
       </div>
-      <div class="main" v-if="!showLegacyLogin">
+      <div class="main" v-if="!showLegacyLogin && !loggedIn">
         <h3 class="text-2xl mb-4"><b>Minecraft Login</b></h3>
         <p class="mb-8">
           Now that Minecraft uses Microsoft to login, we now require to login to your Microsoft account or your Mojang
@@ -27,7 +27,19 @@
         </button>
       </div>
 
-      <yggdrasil-auth-form v-else />
+      <div class="logged-in" v-else-if="loggedIn">
+        You're in!
+      </div>
+
+      <yggdrasil-auth-form
+        v-else
+        @authenticated="
+          () => {
+            showLegacyLogin = false;
+            loggedIn = true;
+          }
+        "
+      />
     </div>
   </div>
 </template>
@@ -42,6 +54,7 @@ import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue
 })
 export default class Authentication extends Vue {
   showLegacyLogin = false;
+  loggedIn = false;
 }
 </script>
 

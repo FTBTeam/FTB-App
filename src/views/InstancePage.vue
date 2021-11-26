@@ -50,8 +50,8 @@
 
       <find-mods :instance="instance" @modInstalled="getModList" v-if="searchingForMods" />
     </div>
-    
-    <authentication v-if='authenticationOpen' @close='authenticationOpen = false' />
+
+    <authentication v-if="authenticationOpen" @close="authenticationOpen = false" />
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal
@@ -114,7 +114,7 @@ export enum ModpackPageTabs {
     MessageModal,
     FindMods,
     ModpackPublicServers,
-    PackBody
+    PackBody,
   },
 })
 export default class InstancePage extends Vue {
@@ -122,14 +122,14 @@ export default class InstancePage extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
   @State('auth') public auth!: AuthState;
-  
+
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
-  
+
   // New stuff
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
@@ -151,7 +151,7 @@ export default class InstancePage extends Vue {
   searchingForMods = false;
   updatingModlist = false;
   showVersions = false;
-  
+
   authenticationOpen = false;
 
   public goBack(): void {
@@ -194,10 +194,9 @@ export default class InstancePage extends Vue {
   public launch(): void {
     if (this.authProfiles.length === 0) {
       this.authenticationOpen = true;
-      
       return;
     }
-    
+
     if (this.showMsgBox) {
       this.hideMsgBox();
     }

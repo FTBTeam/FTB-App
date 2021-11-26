@@ -320,6 +320,7 @@ const Electron: ElectronOverwolfInterface = {
       const parts = protocolURL.split('/');
       const command = parts[0];
       const args = parts.slice(1, parts.length);
+      console.log(command, args);
       if (command === 'modpack') {
         if (args.length === 0) {
           return;

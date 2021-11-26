@@ -6,6 +6,9 @@
       password.
     </p>
 
+    <!-- TODO: make me look nice -->
+    <code v-if="error">{{ error }}</code>
+
     <ftb-input
       label="Username / Email address"
       class="text-left mb-6"
@@ -32,14 +35,64 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
+import { Action } from 'vuex-class';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component
 export default class YggdrasilAuthForm extends Vue {
+  @Action('sendMessage') public sendMessage: any;
+
+  error = '';
+
   username: string = '';
   password: string = '';
 
-  submit() {
-    console.log(this.username, this.password);
+  async submit() {
+    const uuid = uuidv4();
+
+    this.sendMessage({
+      payload: {
+        type: 'profiles.mc.authenticate',
+        username: this.username,
+        password: this.password,
+        clientToken: uuid,
+      },
+      callback: (data: any) => {
+        if (!data.success) {
+          return; // TODO: handle error
+        }
+
+        const json = JSON.parse(data.response);
+        const id: string = json.selectedProfile.id;
+        const newUuid =
+          id.slice(0, 8) +
+          '-' +
+          id.slice(8, 12) +
+          '-' +
+          id.slice(12, 16) +
+          '-' +
+          id.slice(16, 20) +
+          '-' +
+          id.slice(20, 32);
+
+        this.sendMessage({
+          payload: {
+            type: 'profiles.addMc',
+            username: json.selectedProfile.name,
+            accessToken: json.accessToken,
+            clientId: uuid,
+            userUuid: id.includes('-') ? id : newUuid,
+          },
+          callback: (e: any) => {
+            if (e.success) {
+              this.$emit('authenticated');
+            } else {
+              this.error = 'Something went wrong';
+            }
+          },
+        });
+      },
+    });
   }
 }
 </script>

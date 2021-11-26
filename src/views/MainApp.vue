@@ -95,8 +95,8 @@
           v-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
           :loadingFailed="loading"
           :websocketsFailed="!websockets || websockets.reconnects > 20"
-          :websockets='websockets'
-          :max-tries='20'
+          :websockets="websockets"
+          :max-tries="20"
         />
         <div
           class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
@@ -154,6 +154,7 @@ import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/report/ReportForm.vue';
 import AdAside from '@/components/AdAside.vue';
+import { AuthProfile } from '@/modules/core/core.types';
 
 @Component({
   components: {
@@ -184,6 +185,8 @@ export default class MainApp extends Vue {
   @Action('registerExitCallback') private registerExitCallback: any;
   @Action('registerPingCallback') private registerPingCallback: any;
 
+  @Action('addProfile', { namespace: 'core' }) private addProfile!: (data: AuthProfile) => void;
+
   private platfrom = platfrom;
 
   private windowId: string | null = null;
@@ -206,6 +209,27 @@ export default class MainApp extends Vue {
         });
       }
     });
+
+    // Populate the profiles.
+    // TODO: Do this completely differently.
+    setTimeout(() => {
+      this.sendMessage({
+        payload: {
+          type: 'profiles.get',
+        },
+        callback: (e: any) => {
+          e.profiles.forEach((a: any) => {
+            this.addProfile({
+              type: a.isMicrosoft ? 'microsoft' : 'mojang',
+              token: a.mcAuth.accessToken,
+              username: a.username,
+              name: `I'm a profile (${a.uuid})`,
+              id: a.uuid,
+            });
+          });
+        },
+      });
+    }, 1000);
   }
 
   @Watch('websockets', { deep: true })

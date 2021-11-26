@@ -3,7 +3,6 @@ export enum CoreMutations {
 }
 
 export interface AuthProfile {
-  isAuthenticated: boolean;
   type: 'mojang' | 'microsoft';
   token: string;
   username: string;

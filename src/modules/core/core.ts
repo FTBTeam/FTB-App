@@ -14,7 +14,7 @@ export const core: Module<CoreState, RootState> = {
     /**
      * Get the profile from the active profile
      */
-    getProfiles: (state: CoreState): AuthProfile[] | null => {
+    getProfiles: (state: CoreState): AuthProfile[] => {
       return state.profiles;
     },
 
@@ -36,6 +36,10 @@ export const core: Module<CoreState, RootState> = {
      * Push a profile onto the state for persistence
      */
     addProfile: (state: CoreState, profile: AuthProfile) => {
+      if (!state.profiles) {
+        state.profiles = [];
+      }
+
       state.profiles.push(profile);
     },
   },
