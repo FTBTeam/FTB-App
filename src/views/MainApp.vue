@@ -154,7 +154,6 @@ import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/report/ReportForm.vue';
 import AdAside from '@/components/AdAside.vue';
-import { AuthProfile } from '@/modules/core/core.types';
 
 @Component({
   components: {
@@ -185,7 +184,7 @@ export default class MainApp extends Vue {
   @Action('registerExitCallback') private registerExitCallback: any;
   @Action('registerPingCallback') private registerPingCallback: any;
 
-  @Action('addProfile', { namespace: 'core' }) private addProfile!: (data: AuthProfile) => void;
+  @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: any;
 
   private platfrom = platfrom;
 
@@ -210,25 +209,8 @@ export default class MainApp extends Vue {
       }
     });
 
-    // Populate the profiles.
-    // TODO: Do this completely differently.
     setTimeout(() => {
-      this.sendMessage({
-        payload: {
-          type: 'profiles.get',
-        },
-        callback: (e: any) => {
-          e.profiles.forEach((a: any) => {
-            this.addProfile({
-              type: a.isMicrosoft ? 'microsoft' : 'mojang',
-              token: a.mcAuth.accessToken,
-              username: a.username,
-              name: `I'm a profile (${a.uuid})`,
-              id: a.uuid,
-            });
-          });
-        },
-      });
+      this.loadProfiles();
     }, 1000);
   }
 

@@ -1,10 +1,10 @@
-package net.creeperhost.creeperlauncher.api.data.profiles;
+package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.minecraft.AccountManager;
-import net.creeperhost.creeperlauncher.minecraft.AccountProfile;
+import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
+import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.time.Instant;
@@ -16,8 +16,12 @@ public class AddMcProfileHandler implements IMessageHandler<AddMcProfileHandler.
         AccountProfile.YggdrasilAuthStore mcAuth = new AccountProfile.YggdrasilAuthStore(data.clientId, data.accessToken);
         AccountProfile profile = new AccountProfile(data.userUuid, Instant.now().toEpochMilli(), data.username, mcAuth);
 
-        // TODO: don't allow duplication
-        Triple<Boolean, AccountProfile, UUID> addResponse = AccountManager.get().addProfile(profile);
+        Triple<Boolean, AccountProfile, UUID> addResponse;
+        if (!AccountManager.get().getProfiles().contains(profile)) {
+            addResponse = AccountManager.get().addProfile(profile);
+        } else {
+            addResponse = Triple.of(false, null, null);
+        }
 
         Settings.webSocketAPI.sendMessage(new Reply(data, addResponse.getMiddle(), addResponse.getRight(), addResponse.getLeft()));
     }

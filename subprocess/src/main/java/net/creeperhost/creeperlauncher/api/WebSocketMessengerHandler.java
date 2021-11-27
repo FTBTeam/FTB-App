@@ -13,7 +13,7 @@ import net.creeperhost.creeperlauncher.api.data.friends.GetFriendsData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
 import net.creeperhost.creeperlauncher.api.data.irc.*;
 import net.creeperhost.creeperlauncher.api.data.other.*;
-import net.creeperhost.creeperlauncher.api.data.profiles.*;
+import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
 import net.creeperhost.creeperlauncher.api.handlers.*;
 import net.creeperhost.creeperlauncher.api.handlers.friends.AddFriendHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.BlockFriendHandler;

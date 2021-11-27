@@ -1,4 +1,6 @@
-package net.creeperhost.creeperlauncher.minecraft;
+package net.creeperhost.creeperlauncher.minecraft.account;
+
+import com.google.common.base.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -40,6 +42,22 @@ public class AccountProfile {
         this.lastLogin = lastLogin;
         this.username = username;
         this.mcAuth = msAuth;
+    }
+
+    /**
+     * Only equals if the uuids are equal. The rest of the info here is meaningless if the UUIDs are the same.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AccountProfile that = (AccountProfile) o;
+        return Objects.equal(uuid, that.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(uuid);
     }
 
     public static class MSAuthStore {

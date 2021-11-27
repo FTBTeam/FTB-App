@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.minecraft;
+package net.creeperhost.creeperlauncher.minecraft.account;
 
 import com.google.gson.Gson;
 import net.creeperhost.creeperlauncher.Constants;
@@ -16,13 +16,13 @@ public class AccountManager {
     private static final String STORE_FILE = "profiles.json";
 
     private Set<AccountProfile> profiles = new HashSet<>();
-    private UUID activeProfile;
 
-    static {
-        ACCOUNT_MANAGER.loadProfiles();
+    @Nullable
+    private AccountProfile activeProfile = null;
+
+    private AccountManager() {
+        loadProfiles();
     }
-
-    public AccountManager() {}
 
     public static AccountManager get() {
         return ACCOUNT_MANAGER;
@@ -42,7 +42,7 @@ public class AccountManager {
 
     public Triple<Boolean, AccountProfile, UUID> addProfile(AccountProfile profile) {
         this.profiles.add(profile);
-        this.activeProfile = profile.uuid;
+        this.activeProfile = profile;
         this.saveProfiles();
 
         return Triple.of(this.profiles.stream().anyMatch(e -> e.uuid == profile.uuid), profile, profile.uuid);
@@ -55,9 +55,14 @@ public class AccountManager {
         }
 
         try {
-            AccountManager data = new Gson().fromJson(Files.readString(Constants.getDataDir().resolve(STORE_FILE)), AccountManager.class);
-            this.profiles = data.profiles;
-            this.activeProfile = data.activeProfile;
+            // Get the profile data from the json file.
+            AccountStore store = new Gson().fromJson(Files.readString(Constants.getDataDir().resolve(STORE_FILE)), AccountStore.class);
+
+            this.profiles = store.profiles;
+            this.activeProfile = store.profiles.stream()
+                    .filter(e -> e.uuid.equals(store.activeProfile))
+                    .findFirst()
+                    .orElse(null);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -66,7 +71,8 @@ public class AccountManager {
     // Save profiles to json structure
     public void saveProfiles() {
         try {
-            Files.writeString(Constants.getDataDir().resolve(STORE_FILE), new Gson().toJson(this, AccountManager.class));
+            AccountStore store = new AccountStore(this.profiles, this.activeProfile != null ? this.activeProfile.uuid : null);
+            Files.writeString(Constants.getDataDir().resolve(STORE_FILE), new Gson().toJson(store, AccountStore.class));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -76,14 +82,7 @@ public class AccountManager {
         return profiles;
     }
 
-    public UUID getActiveProfileRaw() {
-        return activeProfile;
-    }
-
-    @Nullable
     public AccountProfile getActiveProfile() {
-        return this.profiles.stream().filter(p -> p.uuid.equals(this.activeProfile))
-                .findFirst()
-                .orElse(null);
+        return this.activeProfile;
     }
 }

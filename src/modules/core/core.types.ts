@@ -1,5 +1,6 @@
 export enum CoreMutations {
   ADD_PROFILE = 'addProfile',
+  LOAD_PROFILES = 'loadProfiles',
 }
 
 export interface AuthProfile {

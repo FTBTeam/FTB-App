@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.api.data.profiles;
+package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import com.google.gson.Gson;
 import net.creeperhost.creeperlauncher.Settings;

@@ -59,6 +59,10 @@
         </div>
       </router-link>
     </div>
+    <div class="profile" v-if="getProfiles.length">
+      Hello
+      {{ getActiveProfile ? 'hi' : 'nope' }}
+    </div>
     <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">
       <img
         src="../assets/ch-logo.svg"
@@ -73,7 +77,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { AuthState } from '../modules/auth/types';
-import { Action, State } from 'vuex-class';
+import { Action, Getter, State } from 'vuex-class';
 import { SettingsState } from '../modules/settings/types';
 import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
@@ -87,6 +91,9 @@ export default class Sidebar extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
 
   @Prop({ default: false }) isTransparent!: boolean;
+
+  @Getter('getProfiles', { namespace: 'core' }) private getProfiles!: any;
+  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
 
   private appVersion: string = platform.get.config.appVersion;
 
