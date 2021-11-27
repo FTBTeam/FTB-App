@@ -1,21 +1,16 @@
 package net.creeperhost.creeperlauncher.minecraft;
 
-
-import com.google.gson.annotations.JsonAdapter;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.StringJoiner;
 import java.util.UUID;
 
 public class AccountProfile {
-    // TODO: this is kinda ugly
-    public boolean isMicrosoft = false;
+    public boolean isMicrosoft;
     public UUID uuid;
     public long lastLogin;
 
     public String username;
-    public UUID userUuid;
 
     @Nullable
     public MSAuthStore msAuth = null;
@@ -23,29 +18,27 @@ public class AccountProfile {
     @Nullable
     public YggdrasilAuthStore mcAuth = null;
 
-    public AccountProfile(long lastLogin, String username, UUID userUuid, @Nonnull MSAuthStore msAuth) {
-        this(true, UUID.randomUUID(), lastLogin, username, userUuid, msAuth);
+    public AccountProfile(UUID playerUuid, long lastLogin, String username, @Nonnull MSAuthStore msAuth) {
+        this(true, playerUuid, lastLogin, username, msAuth);
     }
 
-    public AccountProfile(long lastLogin, String username, UUID userUuid, @Nonnull YggdrasilAuthStore mcAuth) {
-        this(false, UUID.randomUUID(), lastLogin, username, userUuid, mcAuth);
+    public AccountProfile(UUID playerUuid, long lastLogin, String username, @Nonnull YggdrasilAuthStore mcAuth) {
+        this(false, playerUuid, lastLogin, username, mcAuth);
     }
 
-    public AccountProfile(boolean isMicrosoft, UUID uuid, long lastLogin, String username, UUID userUuid, @Nonnull MSAuthStore msAuth) {
+    public AccountProfile(boolean isMicrosoft, UUID uuid, long lastLogin, String username, @Nonnull MSAuthStore msAuth) {
         this.isMicrosoft = isMicrosoft;
         this.uuid = uuid;
         this.lastLogin = lastLogin;
         this.username = username;
-        this.userUuid = userUuid;
         this.msAuth = msAuth;
     }
 
-    public AccountProfile(boolean isMicrosoft, UUID uuid, long lastLogin, String username, UUID userUuid, @Nonnull YggdrasilAuthStore msAuth) {
+    public AccountProfile(boolean isMicrosoft, UUID uuid, long lastLogin, String username, @Nonnull YggdrasilAuthStore msAuth) {
         this.isMicrosoft = isMicrosoft;
         this.uuid = uuid;
         this.lastLogin = lastLogin;
         this.username = username;
-        this.userUuid = userUuid;
         this.mcAuth = msAuth;
     }
 
@@ -95,7 +88,6 @@ public class AccountProfile {
                 .add("uuid=" + uuid)
                 .add("lastLogin=" + lastLogin)
                 .add("username='" + username + "'")
-                .add("userUuid=" + userUuid)
                 .add("msAuth=" + msAuth)
                 .add("mcAuth=" + mcAuth)
                 .toString();

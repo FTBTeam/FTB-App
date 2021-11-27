@@ -14,7 +14,7 @@ public class AddMcProfileHandler implements IMessageHandler<AddMcProfileHandler.
     @Override
     public void handle(Data data) {
         AccountProfile.YggdrasilAuthStore mcAuth = new AccountProfile.YggdrasilAuthStore(data.clientId, data.accessToken);
-        AccountProfile profile = new AccountProfile(Instant.now().toEpochMilli(), data.username, data.userUuid, mcAuth);
+        AccountProfile profile = new AccountProfile(data.userUuid, Instant.now().toEpochMilli(), data.username, mcAuth);
 
         // TODO: don't allow duplication
         Triple<Boolean, AccountProfile, UUID> addResponse = AccountManager.get().addProfile(profile);
