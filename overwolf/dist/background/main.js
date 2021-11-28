@@ -1,4 +1,5 @@
 let versionData = {};
+
 async function blah() {
   let raw = await fetch('../../version.json');
   let versionObj = await raw.json();
@@ -41,6 +42,7 @@ async function blah() {
   console.log('Showing window');
   overwolf.windows.onStateChanged.addListener(async state => {
     console.log('State changed');
+    console.log(state);
     if (state.window_state_ex == 'closed' && state.window_name == 'index') {
       console.log('Closing');
       if (server !== undefined) {
@@ -92,6 +94,7 @@ function setAuthData(authdata) {
 }
 
 function onRequest(info) {
+  console.log(info)
   let data = JSON.parse(info.content);
   if (data.token && data.token.length > 0) {
     server.close();

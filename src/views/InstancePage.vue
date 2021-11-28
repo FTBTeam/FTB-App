@@ -192,7 +192,8 @@ export default class InstancePage extends Vue {
   }
 
   public launch(): void {
-    if (this.authProfiles.length === 0) {
+    // TODO: correct me back to ===
+    if (this.authProfiles.length !== 0) {
       this.authenticationOpen = true;
       return;
     }

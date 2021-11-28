@@ -8,6 +8,7 @@ export interface Util {
 }
 
 export interface Actions {
+  openMsAuth: () => Promise<any>;
   openModpack: (payload: { name: string; id: string }) => void;
   openFriends: () => void;
   openLogin: (cb: (data: { token: string; 'app-auth': string }) => void) => void;

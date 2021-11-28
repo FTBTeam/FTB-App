@@ -14,7 +14,7 @@
 
         <h4 class="text-center font-bold mb-8">Sign in with</h4>
 
-        <button class="button">
+        <button class="button" @click="openMsAuth">
           <img src="@/assets/images/branding/microsoft.svg" alt="Microsoft Login" />
         </button>
 
@@ -48,6 +48,8 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue';
+import platform from '@/utils/interface/electron-overwolf';
+import { authenticateMc } from '@/utils/msauthentication';
 
 @Component({
   components: { YggdrasilAuthForm },
@@ -55,6 +57,16 @@ import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue
 export default class Authentication extends Vue {
   showLegacyLogin = false;
   loggedIn = false;
+
+  async openMsAuth() {
+    try {
+      const res = await platform.get.actions.openMsAuth();
+      const response = await authenticateMc(res.code, res.random);
+      console.log(response);
+    } catch (e) {
+      console.log(e);
+    }
+  }
 }
 </script>
 
@@ -72,6 +84,7 @@ export default class Authentication extends Vue {
   left: 0;
   background-color: rgba(#1c1c1c, 0.82);
   backdrop-filter: blur(2px);
+  z-index: 1000;
 
   .body-contents {
     background-color: #313131;

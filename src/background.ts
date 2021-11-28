@@ -10,6 +10,8 @@ import axios from 'axios';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import { msAuthSettings } from '@/utils/msauthentication';
+import crypto from 'crypto';
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -30,6 +32,7 @@ httpClient.defaults.timeout = 5000;
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
+let msAuthWindow: BrowserWindow | null = null;
 
 let protocolURL: string | null;
 
@@ -255,6 +258,86 @@ ipcMain.on('openLink', (event, data) => {
   shell.openExternal(data);
 });
 
+ipcMain.handle(
+  'open-auth-window',
+  () =>
+    new Promise((resolve, reject) => {
+      const random = crypto.randomBytes(43).toString('hex');
+      const verifier = crypto
+        .createHash('sha256')
+        .update(random)
+        .digest('base64');
+
+      const verifierCodeSave = verifier
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+
+      const window = new BrowserWindow({
+        title: 'Sign in with Microsoft',
+        icon: path.join(__static, 'favicon.ico'),
+        // Size Settings
+        show: false,
+        autoHideMenuBar: true,
+        minWidth: 500,
+        minHeight: 650,
+        maxWidth: 500,
+        maxHeight: 650,
+        width: 500,
+        height: 650,
+        frame: true,
+      });
+
+      const s = msAuthSettings;
+      const processUrl = (url: string) => {
+        if (url.startsWith(s.LIVE_REDIRECT) && url.includes('code=')) {
+          const code = new URL(url).searchParams.get('code');
+          if (code) {
+            window.destroy();
+            resolve({
+              ok: true,
+              code,
+              random,
+            });
+          } else {
+            return reject({
+              ok: false,
+              error: 'No code found in URL',
+            });
+          }
+        }
+      };
+
+      window.webContents.session.clearStorageData();
+      window.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+        const { requestHeaders } = details;
+        const { Origin, ...res } = requestHeaders;
+        callback({ cancel: false, requestHeaders: res });
+      });
+
+      window.webContents.on('will-redirect', (event, url) => processUrl(url));
+      window.webContents.on('will-navigate', (event, url) => processUrl(url));
+
+      window.on('close', () => {
+        reject({
+          ok: false,
+          message: 'User cancelled login',
+        });
+      });
+
+      const url = `${s.LIVE_URL}?client_id=${
+        s.CLIENT_ID
+      }&code_challenge_method=S256&code_challenge=${verifierCodeSave}&response_type=code&scope=offline_access%20xboxlive.signin%20xboxlive.offline_access&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d&redirect_uri=${encodeURI(
+        s.LIVE_REDIRECT,
+      )}`;
+
+      window.show();
+      window.loadURL(url).catch(err => {
+        reject(err);
+      });
+    }),
+);
+
 function createFriendsWindow() {
   if (friendsWindow !== null && friendsWindow !== undefined) {
     friendsWindow.focus();
@@ -326,12 +409,26 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
       disableBlinkFeatures: 'Auxclick',
+      webSecurity: false,
     },
   });
 
   win.webContents.on('new-window', (event, url) => {
     event.preventDefault();
     shell.openExternal(url);
+  });
+
+  win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({ requestHeaders: { Origin: '*', ...details.requestHeaders } });
+  });
+
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        'Access-Control-Allow-Origin': ['*'],
+        ...details.responseHeaders,
+      },
+    });
   });
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -367,6 +464,8 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 
 const gotTheLock = app.requestSingleInstanceLock();
 

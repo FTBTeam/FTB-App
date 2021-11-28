@@ -4,6 +4,9 @@ import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 
+import { msAuthSettings } from '@/utils/msauthentication';
+import crypto from 'crypto';
+
 declare global {
   var overwolf: any;
 }
@@ -40,6 +43,34 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
+    async openMsAuth() {
+      const s = msAuthSettings;
+      const random = crypto.randomBytes(43).toString('hex');
+      const verifier = crypto
+        .createHash('sha256')
+        .update(random)
+        .digest('base64');
+
+      const verifierCodeSave = verifier
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+
+      // TODO: remove localhost once the website change is live
+      const url = `${s.LIVE_URL}?client_id=${
+        s.CLIENT_ID
+      }&code_challenge_method=S256&code_challenge=${verifierCodeSave}&response_type=code&scope=offline_access%20xboxlive.signin%20xboxlive.offline_access&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d&redirect_uri=${encodeURI(
+        'http://localhost:8080/msauth', //'https://feed-the-beast.com/msauth',
+      )}`;
+
+      await overwolf.windows.getMainWindow().openWebserver((data: any) => {
+        console.log(data);
+      });
+
+      overwolf.utils.openUrlInDefaultBrowser(url);
+
+      // ipcRenderer.invoke('open-auth-window', payload.clientId);
+    },
     openModpack(payload) {
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
     },

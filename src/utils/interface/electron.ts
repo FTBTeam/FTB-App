@@ -102,6 +102,9 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
+    async openMsAuth() {
+      return ipcRenderer.invoke('open-auth-window');
+    },
     openModpack(payload: { name: string; id: string }) {
       ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
     },
@@ -207,6 +210,18 @@ const Electron: ElectronOverwolfInterface = {
   },
 
   setupApp(vm) {
+    const showError = (title: string, message: string) => {
+      store.dispatch(
+        'showAlert',
+        {
+          type: 'danger',
+          title: title,
+          message: message,
+        },
+        { root: true },
+      );
+    };
+
     axios
       .get(`https://minetogether.io/api/adPool`)
       .then(res => {
@@ -311,6 +326,8 @@ const Electron: ElectronOverwolfInterface = {
           console.error(err);
         });
     });
+
+    // TODO: this entire thing needs a registry + handler wrapper
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       let protocolURL = data;
       if (protocolURL === undefined) {
@@ -320,7 +337,6 @@ const Electron: ElectronOverwolfInterface = {
       const parts = protocolURL.split('/');
       const command = parts[0];
       const args = parts.slice(1, parts.length);
-      console.log(command, args);
       if (command === 'modpack') {
         if (args.length === 0) {
           return;
