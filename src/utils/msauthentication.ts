@@ -8,6 +8,7 @@ export const msAuthSettings = {
   LIVE_REDIRECT: 'https://login.microsoftonline.com/common/oauth2/nativeclient',
 };
 
+// TOOD: REMOVE AND FIX
 const issueCodes = {
   I1: '000001',
   I2: '000002',
@@ -128,6 +129,7 @@ export const authenticateMc = async (code: string, verifier: string) => {
   return payload;
 };
 
+// TODO: REPLACE THIS WITH FETCH INSTEAD OF AXIOS
 const request = async <T>(requester: () => Promise<AxiosResponse<T>>): Promise<any> => {
   try {
     const res = await requester();

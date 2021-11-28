@@ -62,6 +62,8 @@ export default class Authentication extends Vue {
     try {
       const res = await platform.get.actions.openMsAuth();
       const response = await authenticateMc(res.code, res.random);
+
+      // TODO: call to the backend and store the entire payload
       console.log(response);
     } catch (e) {
       console.log(e);
