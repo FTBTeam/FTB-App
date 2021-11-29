@@ -230,6 +230,7 @@ public class InstanceLauncher {
             subMap.put("auth_uuid", new UUID(0, 0).toString());
             subMap.put("user_type", "legacy");
             subMap.put("auth_access_token", "null"); // TODO
+            subMap.put("user_properties", "{}");
 
             subMap.put("version_name", instance.modLoader);
             subMap.put("game_directory", gameDir.toString());
