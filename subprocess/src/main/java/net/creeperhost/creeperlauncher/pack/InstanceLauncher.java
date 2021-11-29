@@ -250,6 +250,7 @@ public class InstanceLauncher {
 
             subMap.put("launcher_name", "FTBApp");
             subMap.put("launcher_version", Constants.APPVERSION);
+            subMap.put("primary_jar", getGameJar(versionsDir).toAbsolutePath().toString());
             subMap.put("memory", String.valueOf(instance.memory));
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
@@ -438,8 +439,13 @@ public class InstanceLauncher {
                 .filter(e -> e.natives == null)
                 .map(e -> e.name.toPath(librariesDir))
                 .collect(Collectors.toList());
-        classpath.add(versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + ".jar"));
+        classpath.add(getGameJar(versionsDir));
         return classpath;
+    }
+
+    private Path getGameJar(Path versionsDir) {
+        String rootId = manifests.get(0).id;
+        return versionsDir.resolve(rootId).resolve(rootId + ".jar");
     }
 
     private static VersionManifest getVersionManifest(Path versionsFolder, VersionListManifest versions, String id) throws IOException {

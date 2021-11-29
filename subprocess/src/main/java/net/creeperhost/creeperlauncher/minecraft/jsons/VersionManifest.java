@@ -139,6 +139,7 @@ public class VersionManifest {
         ret.add("-Djava.library.path=${natives_directory}");
         ret.add("-Dminecraft.launcher.brand=${launcher_name}");
         ret.add("-Dminecraft.launcher.version=${launcher_version}");
+        ret.add("-Dminecraft.client.jar=${primary_jar}");
         ret.add("-cp");
         ret.add("${classpath}");
         return ret;
