@@ -7,19 +7,20 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
  */
-public class AuthenticateMcProfileHandler implements IMessageHandler<AuthenticateMcProfileHandler.Data> {
+public class RefreshAuthenticationMcProfileHandler implements IMessageHandler<RefreshAuthenticationMcProfileHandler.Data> {
     @Override
     public void handle(Data data) {
         OkHttpClient client = new OkHttpClient.Builder().build();
         try {
             Response request = client.newCall(
                     new Request.Builder()
-                            .url("https://authserver.mojang.com/authenticate")
-                            .post(RequestBody.create(new Gson().toJson(new RequestData(data.username, data.password, data.clientToken)), MediaType.parse("application/json")))
+                            .url("https://authserver.mojang.com/refresh")
+                            .post(RequestBody.create(new Gson().toJson(new RequestData(data.accessToken, data.clientToken, new RequestData.SelectedAccount(data.userUuid.toString().replaceAll("'", ""), data.userName))), MediaType.parse("application/json")))
                             .addHeader("Content-Type", "application/json")
                             .addHeader("User-Agent", "FTB App Subprocess/1.0")
                             .addHeader("Accept", "application/json")
@@ -53,33 +54,32 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
     }
 
     public static class Data extends BaseData {
-        public String username;
-        public String password;
+        public String accessToken;
         public String clientToken;
+        public UUID userUuid;
+        public String userName;
     }
 
     public static class RequestData {
-        Agent agent = new Agent("Minecraft", 1);
-        public String username;
-        public String password;
+        public String accessToken;
         public String clientToken;
         public boolean requestUser = true;
-
-        public RequestData(String username, String password, String clientToken) {
-            this.username = username;
-            this.password = password;
+        public SelectedAccount selectedProfile;
+        
+        public RequestData(String accessToken, String clientToken, SelectedAccount selectedProfile) {
+            this.accessToken = accessToken;
             this.clientToken = clientToken;
+            this.selectedProfile = selectedProfile;
         }
+        
+        private static class SelectedAccount {
+            public String id;
+            public String name;
 
-        private static class Agent {
-            String name;
-            int version;
-
-            public Agent(String name, int version) {
-                this.name = name;
-                this.version = version;
+            public SelectedAccount(String id, String name) {
+              this.id = id;
+              this.name = name;
             }
         }
     }
-
 }

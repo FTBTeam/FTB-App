@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.minecraft.account;
 
 import com.google.common.base.Objects;
+import net.creeperhost.creeperlauncher.api.handlers.profiles.AddMsProfileHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -61,39 +62,57 @@ public class AccountProfile {
     }
 
     public static class MSAuthStore {
-        public String refreshToken;
-        public String clientId;
-        public String xuid;
+      public UUID minecraftUuid;
+      public String minecraftToken;
+      public String xstsUserHash;
+      public String xstsToken;
+      public String xblUserHash;
+      public String xblToken;
+      public String liveAccessToken;
+      public String liveRefreshToken; // This is needed for the account refresh
+      public String liveExpires;
+      
+      public MSAuthStore(AddMsProfileHandler.Data data) {
+        this.minecraftUuid = data.minecraftUuid; 
+        this.minecraftToken = data.minecraftToken; 
+        this.xstsUserHash = data.xstsUserHash; 
+        this.xstsToken = data.xstsToken; 
+        this.xblUserHash = data.xblUserHash; 
+        this.xblToken = data.xblToken; 
+        this.liveAccessToken = data.liveAccessToken; 
+        this.liveRefreshToken = data.liveRefreshToken; // This is needed for the account refresh 
+        this.liveExpires = data.liveExpires; 
+      }
 
-        public MSAuthStore(String refreshToken, String clientId, String xuid) {
-            this.refreshToken = refreshToken;
-            this.clientId = clientId;
-            this.xuid = xuid;
-        }
-
-        @Override
-        public String toString() {
-            return new StringJoiner(", ", MSAuthStore.class.getSimpleName() + "[", "]")
-                    .add("refreshToken='" + refreshToken + "'")
-                    .add("clientId='" + clientId + "'")
-                    .add("xuid='" + xuid + "'")
-                    .toString();
-        }
+      @Override
+      public String toString() {
+        return new StringJoiner(", ", MSAuthStore.class.getSimpleName() + "[", "]")
+          .add("minecraftUuid=" + minecraftUuid)
+          .add("minecraftToken='" + minecraftToken + "'")
+          .add("xstsUserHash='" + xstsUserHash + "'")
+          .add("xstsToken='" + xstsToken + "'")
+          .add("xblUserHash='" + xblUserHash + "'")
+          .add("xblToken='" + xblToken + "'")
+          .add("liveAccessToken='" + liveAccessToken + "'")
+          .add("liveRefreshToken='" + liveRefreshToken + "'")
+          .add("liveExpires='" + liveExpires + "'")
+          .toString();
+      }
     }
 
     public static class YggdrasilAuthStore {
-        public UUID clientId;
+        public String clientToken;
         public String accessToken;
 
-        public YggdrasilAuthStore(UUID clientId, String accessToken) {
-            this.clientId = clientId;
+        public YggdrasilAuthStore(String accessToken, String clientToken) {
+            this.clientToken = clientToken;
             this.accessToken = accessToken;
         }
 
         @Override
         public String toString() {
             return new StringJoiner(", ", YggdrasilAuthStore.class.getSimpleName() + "[", "]")
-                    .add("clientId=" + clientId)
+                    .add("clientToken=" + clientToken)
                     .add("accessToken='" + accessToken + "'")
                     .toString();
         }

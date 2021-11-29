@@ -13,7 +13,7 @@ import java.util.UUID;
 public class AddMcProfileHandler implements IMessageHandler<AddMcProfileHandler.Data> {
     @Override
     public void handle(Data data) {
-        AccountProfile.YggdrasilAuthStore mcAuth = new AccountProfile.YggdrasilAuthStore(data.clientId, data.accessToken);
+        AccountProfile.YggdrasilAuthStore mcAuth = new AccountProfile.YggdrasilAuthStore(data.accessToken, data.clientToken);
         AccountProfile profile = new AccountProfile(data.userUuid, Instant.now().toEpochMilli(), data.username, mcAuth);
 
         Triple<Boolean, AccountProfile, UUID> addResponse;
@@ -29,7 +29,7 @@ public class AddMcProfileHandler implements IMessageHandler<AddMcProfileHandler.
     public static class Data extends BaseData {
         public String username;
         public UUID userUuid;
-        public UUID clientId;
+        public String clientToken;
         public String accessToken;
     }
 

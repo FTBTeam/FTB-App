@@ -29,6 +29,8 @@
 
       <div class="logged-in" v-else-if="loggedIn">
         You're in!
+        
+        <ftb-button color='is-primary' class='px-6 py-4' @click="$emit('close')">Finish</ftb-button>
       </div>
 
       <yggdrasil-auth-form
@@ -50,6 +52,7 @@ import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { authenticateMc } from '@/utils/msauthentication';
+import { addHyphensToUuid } from '@/utils/helpers';
 
 @Component({
   components: { YggdrasilAuthForm },
@@ -58,6 +61,7 @@ export default class Authentication extends Vue {
   showLegacyLogin = false;
   loggedIn = false;
 
+  // TODO: Move
   async openMsAuth() {
     try {
       const res = await platform.get.actions.openMsAuth();
@@ -65,6 +69,28 @@ export default class Authentication extends Vue {
 
       // TODO: call to the backend and store the entire payload
       console.log(response);
+
+      if (!response.minecraftUuid) {
+        return; // TODO: handle error
+      }
+      
+      const id: string = response.minecraftUuid;
+      const newUuid = addHyphensToUuid(id);
+
+      this.sendMessage({
+        payload: {
+          type: 'profiles.addMs',
+          ...response,
+          minecraftUuid: id.includes('-') ? id : newUuid,
+        },
+        callback: (e: any) => {
+          if (e.success) {
+            this.loggedIn = true;
+          } else {
+            this.error = 'Something went wrong';
+          }
+        },
+      });
     } catch (e) {
       console.log(e);
     }

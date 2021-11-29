@@ -36,6 +36,7 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import { Action } from 'vuex-class';
+import { addHyphensToUuid } from '@/utils/helpers';
 
 @Component
 export default class YggdrasilAuthForm extends Vue {
@@ -47,40 +48,39 @@ export default class YggdrasilAuthForm extends Vue {
   password: string = '';
 
   async submit() {
-    // this.sendMessage({
-    //   payload: {
-    //     type: 'profiles.mc.authenticate',
-    //     username: this.username,
-    //     password: this.password,
-    //     clientToken: uuid,
-    //   },
-    //   callback: (data: any) => {
-    //     if (!data.success) {
-    //       return; // TODO: handle error
-    //     }
-    //
-    //     const json = JSON.parse(data.response);
-    //     const id: string = json.selectedProfile.id;
-    //     const newUuid = addHyphensToUuid(id);
-    //
-    //     this.sendMessage({
-    //       payload: {
-    //         type: 'profiles.addMc',
-    //         username: json.selectedProfile.name,
-    //         accessToken: json.accessToken,
-    //         clientId: uuid,
-    //         userUuid: id.includes('-') ? id : newUuid,
-    //       },
-    //       callback: (e: any) => {
-    //         if (e.success) {
-    //           this.$emit('authenticated');
-    //         } else {
-    //           this.error = 'Something went wrong';
-    //         }
-    //       },
-    //     });
-    //   },
-    // });
+    this.sendMessage({
+      payload: {
+        type: 'profiles.mc.authenticate',
+        username: this.username,
+        password: this.password,
+      },
+      callback: (data: any) => {
+        if (!data.success) {
+          return; // TODO: handle error
+        }
+
+        const json = JSON.parse(data.response);
+        const id: string = json.selectedProfile.id;
+        const newUuid = addHyphensToUuid(id);
+
+        this.sendMessage({
+          payload: {
+            type: 'profiles.addMc',
+            username: json.selectedProfile.name,
+            accessToken: json.accessToken,
+            clientToken: json.clientToken,
+            userUuid: id.includes('-') ? id : newUuid,
+          },
+          callback: (e: any) => {
+            if (e.success) {
+              this.$emit('authenticated');
+            } else {
+              this.error = 'Something went wrong';
+            }
+          },
+        });
+      },
+    });
   }
 }
 </script>
