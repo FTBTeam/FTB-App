@@ -53,19 +53,23 @@ import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue
 import platform from '@/utils/interface/electron-overwolf';
 import { authenticateMc } from '@/utils/msauthentication';
 import { addHyphensToUuid } from '@/utils/helpers';
+import { Action } from 'vuex-class';
 
 @Component({
   components: { YggdrasilAuthForm },
 })
 export default class Authentication extends Vue {
+  @Action('sendMessage') public sendMessage: any;
+
   showLegacyLogin = false;
   loggedIn = false;
+  error = ""
 
   // TODO: Move
   async openMsAuth() {
     try {
       const res = await platform.get.actions.openMsAuth();
-      const response = await authenticateMc(res.code, res.random);
+      const response: any = await authenticateMc(res.code, res.random);
 
       // TODO: call to the backend and store the entire payload
       console.log(response);
