@@ -71,7 +71,7 @@ public class Constants {
 
     // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
     public static final String[] MOJANG_DEFAULT_ARGS = {
-            "-Xmx2G",
+            "-Xmx${memory}M",
             "-XX:+UnlockExperimentalVMOptions",
             "-XX:+UseG1GC",
             "-XX:G1NewSizePercent=20",

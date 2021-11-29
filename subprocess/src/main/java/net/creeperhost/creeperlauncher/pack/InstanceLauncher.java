@@ -250,6 +250,7 @@ public class InstanceLauncher {
 
             subMap.put("launcher_name", "FTBApp");
             subMap.put("launcher_version", Constants.APPVERSION);
+            subMap.put("memory", String.valueOf(instance.memory));
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
@@ -269,7 +270,9 @@ public class InstanceLauncher {
             command.addAll(jvmArgs);
             command.addAll(context.extraJVMArgs);
             // TODO, these should be the defaults inside the app, not added here.
-            Collections.addAll(command, Constants.MOJANG_DEFAULT_ARGS);
+            for (String arg : Constants.MOJANG_DEFAULT_ARGS) {
+                command.add(sub.replace(arg));
+            }
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
