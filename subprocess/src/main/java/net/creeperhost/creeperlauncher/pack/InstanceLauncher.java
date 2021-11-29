@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.pack;
 
 import com.google.common.collect.Lists;
+import com.google.common.hash.Hashing;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.io.IOUtils;
@@ -10,6 +11,7 @@ import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
@@ -28,16 +30,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static java.util.Objects.requireNonNull;
 import static net.covers1624.quack.collection.ColUtils.iterable;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
+import static net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 
 /**
  * Responsible for launching a specific instance.
@@ -228,8 +228,9 @@ public class InstanceLauncher {
             // TODO, may need UI feedback. We will run this once during instance install, but we need to refresh them here too.
             checkAssets();
 
-            String mainClass = getMainClass();
             List<VersionManifest.Library> libraries = collectLibraries(features);
+            // Mojang may change libraries mid version.
+            validateLibraries(librariesDir, libraries);
 
             Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
@@ -252,7 +253,7 @@ public class InstanceLauncher {
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
-            subMap.put("classpath", classpath.stream().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
+            subMap.put("classpath", classpath.stream().distinct().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
 
             StrSubstitutor sub = new StrSubstitutor(subMap);
 
@@ -269,7 +270,7 @@ public class InstanceLauncher {
             command.addAll(context.extraJVMArgs);
             // TODO, these should be the defaults inside the app, not added here.
             Collections.addAll(command, Constants.MOJANG_DEFAULT_ARGS);
-            command.add(mainClass);
+            command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
             return new ProcessBuilder()
@@ -308,6 +309,62 @@ public class InstanceLauncher {
                 throw new IOException("Failed to execute asset update task.", ex);
             }
         }
+    }
+
+    private void validateLibraries(Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
+        LOGGER.info("Validating minecraft libraries...");
+        List<NewDownloadTask> tasks = new LinkedList<>();
+        VersionManifest.OS current = VersionManifest.OS.current();
+        for (VersionManifest.Library library : libraries) {
+            if (library.downloads == null) continue;
+
+            NewDownloadTask task;
+            if (library.natives == null) {
+                if (library.downloads.artifact == null) continue;
+                task = downloadTaskFor(librariesDir, library.downloads.artifact, library.name);
+            } else {
+                if (library.downloads.classifiers == null) continue; // What? but okay, just ignore.
+                String classifier = library.natives.get(current);
+                if (classifier == null) continue; // No natives for this platform.
+                VersionManifest.LibraryDownload artifact = library.downloads.classifiers.get(classifier);
+                if (artifact == null) continue; // Shouldn't happen, but okay.
+                task = downloadTaskFor(librariesDir, artifact, library.name.withClassifier(classifier));
+            }
+            if (task != null) {
+                tasks.add(task);
+            }
+        }
+        tasks.removeIf(NewDownloadTask::isRedundant);
+        if (!tasks.isEmpty()) {
+            LOGGER.info("{} dependencies failed to validate or were missing.", tasks.size());
+            for (NewDownloadTask task : tasks) {
+                LOGGER.info("Downloading {}", task.getUrl());
+                task.execute();
+            }
+        }
+        LOGGER.info("Libraries validated!");
+    }
+
+    @Nullable
+    private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name) {
+        if (artifact.url == null) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
+
+        if (artifact.path == null) {
+            LOGGER.warn("Artifact has null path? Nani?? Skipping.. {}", name);
+            return null;
+        }
+
+        DownloadValidation validation = DownloadValidation.of()
+                .withExpectedSize(artifact.size);
+        if (artifact.sha1 != null) {
+            validation = validation.withHash(Hashing.sha1(), artifact.sha1);
+        }
+        return new NewDownloadTask(
+                artifact.url,
+                librariesDir.resolve(artifact.path),
+                validation,
+                null // TODO
+        );
     }
 
     private void extractNatives(Path nativesDir, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {

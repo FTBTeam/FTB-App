@@ -194,9 +194,11 @@ public class VersionManifest {
 
     public static class Download {
 
+        @Nullable
         @JsonAdapter (HashCodeAdapter.class)
         public HashCode sha1;
         public int size;
+        @Nullable
         public String url;
     }
 

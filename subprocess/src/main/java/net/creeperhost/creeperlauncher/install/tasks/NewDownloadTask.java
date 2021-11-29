@@ -89,7 +89,7 @@ public class NewDownloadTask implements Task<Path> {
     }
 
     @Override
-    public void execute() throws Throwable {
+    public void execute() throws IOException {
         if (Files.exists(dest) && validation.validate(dest)) {
             // Validated, do nothing.
             return;
