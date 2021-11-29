@@ -5,11 +5,9 @@ import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
-import net.covers1624.quack.util.SneakyUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
@@ -28,9 +26,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -258,8 +256,12 @@ public class InstanceLauncher {
 
             StrSubstitutor sub = new StrSubstitutor(subMap);
 
-            List<String> jvmArgs = collectArgs(features, sub, e -> requireNonNull(e.jvm).stream());
-            List<String> progArgs = collectArgs(features, sub, e -> requireNonNull(e.game).stream());
+            List<String> jvmArgs = VersionManifest.collectJVMArgs(manifests, features).stream()
+                    .map(sub::replace)
+                    .collect(Collectors.toList());
+            List<String> progArgs = VersionManifest.collectProgArgs(manifests, features).stream()
+                    .map(sub::replace)
+                    .collect(Collectors.toList());
 
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
             command.add(javaExecutable.toAbsolutePath().toString());
@@ -363,14 +365,6 @@ public class InstanceLauncher {
         return ret;
     }
 
-    private List<String> collectArgs(Set<String> features, StrSubstitutor sub, Function<VersionManifest.Arguments, Stream<VersionManifest.EvalValue>> func) {
-        return manifests.stream()
-                .flatMap(e -> func.apply(e.arguments))
-                .flatMap(e -> e.eval(features).stream())
-                .map(sub::replace)
-                .collect(Collectors.toList());
-    }
-
     private List<VersionManifest.Library> collectLibraries(Set<String> features) {
         // Reverse list, as last on manifest list gets put on the classpath first.
         return Lists.reverse(manifests)
@@ -400,6 +394,7 @@ public class InstanceLauncher {
     }
 
     public static class LaunchContext {
+
         public final List<String> extraJVMArgs = new ArrayList<>();
         public final List<String> extraProgramArgs = new ArrayList<>();
     }

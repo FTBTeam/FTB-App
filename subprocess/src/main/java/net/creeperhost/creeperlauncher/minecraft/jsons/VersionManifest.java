@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.minecraft.jsons;
 
+import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
@@ -8,6 +9,7 @@ import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
+import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
@@ -21,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -33,6 +36,16 @@ public class VersionManifest {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("VersionManifest.debug");
+
+    private static final Rule WIN_10_RULE = new Rule(
+            Action.ALLOW,
+            new OSRule(
+                    OS.WINDOWS,
+                    "^10\\\\.",
+                    null
+            ),
+            null
+    );
 
     public String id;
     @Nullable
@@ -48,6 +61,8 @@ public class VersionManifest {
     public Logging logging;
     @Nullable
     public String mainClass;
+    @Nullable
+    public String minecraftArguments;
     public int minimumLauncherVersion;
     @Nullable
     public Date time;
@@ -96,6 +111,65 @@ public class VersionManifest {
     public Stream<Library> getLibraries(Set<String> features) {
         return libraries.stream()
                 .filter(e -> e.apply(features));
+    }
+
+    public static List<String> collectJVMArgs(List<VersionManifest> manifests, Set<String> features) {
+        // If any manifests have the 'arguments' field, then we exclusively use that
+        //  this maintains the semantics of the vanilla launcher.
+        if (manifests.stream().anyMatch(e -> e.arguments != null)) {
+            return manifests.stream()
+                    .map(e -> e.arguments)
+                    .filter(e -> e != null && e.jvm != null)
+                    .flatMap(e -> e.jvm.stream().flatMap(eVal -> eVal.eval(features).stream()))// Evaluate all arguments.
+                    .collect(Collectors.toList());
+        }
+
+        List<String> ret = new LinkedList<>();
+        if (OperatingSystem.current().isWindows()) {
+            ret.add("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
+            if (WIN_10_RULE.apply(features) == Action.ALLOW) {
+                ret.add("-Dos.name=Windows 10");
+                ret.add("-Dos.version=10.0");
+            }
+        }
+        if (OperatingSystem.current().isMacos()) {
+            ret.add("-XstartOnFirstThread");
+        }
+
+        ret.add("-Djava.library.path=${natives_directory}");
+        ret.add("-Dminecraft.launcher.brand=${launcher_name}");
+        ret.add("-Dminecraft.launcher.version=${launcher_version}");
+        ret.add("-cp");
+        ret.add("${classpath}");
+        return ret;
+    }
+
+    public static List<String> collectProgArgs(List<VersionManifest> manifests, Set<String> features) {
+        // If any manifests have the 'arguments' field, then we exclusively use that
+        //  this maintains the semantics of the vanilla launcher.
+        if (manifests.stream().anyMatch(e -> e.arguments != null)) {
+            return manifests.stream()
+                    .map(e -> e.arguments)
+                    .filter(e -> e != null && e.game != null)
+                    .flatMap(e -> e.game.stream().flatMap(eVal -> eVal.eval(features).stream()))// Evaluate all arguments.
+                    .collect(Collectors.toList());
+        }
+        for (VersionManifest manifest : Lists.reverse(manifests)) {
+            if (manifest.minecraftArguments != null) {
+                List<String> args = Lists.newArrayList(manifest.minecraftArguments.split(" "));
+                if (features.contains("is_demo_user")) {
+                    args.add("--demo");
+                }
+                if (features.contains("has_custom_resolution")) {
+                    args.add("--width");
+                    args.add("${resolution_width}");
+                    args.add("--height");
+                    args.add("${resolution_height}");
+                }
+                return args;
+            }
+        }
+        return Collections.emptyList();
     }
 
     public static class Arguments {
