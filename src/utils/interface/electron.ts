@@ -37,6 +37,18 @@ class MiniWebServer extends EventEmitter {
           const jsonResponse = JSON.parse(body);
           if (jsonResponse == null) {
             console.log('Failed to parse json response');
+            res.end();
+            this.close();
+            return;
+          }
+
+          // HACKS
+          if (jsonResponse.key) {
+            this.emit('response', jsonResponse);
+            res.write('success');
+            res.end();
+            this.close();
+            return;
           }
 
           const { token, 'app-auth': appAuth } = jsonResponse;
@@ -103,7 +115,23 @@ const Electron: ElectronOverwolfInterface = {
   // Actions
   actions: {
     async openMsAuth() {
-      return ipcRenderer.invoke('open-auth-window');
+      // return ipcRenderer.invoke('open-auth-window');
+      Electron.utils.openUrl(`https://msauth.feed-the-beast.com`);
+
+      return new Promise((resolve, reject) => {
+        miniWebServer.open();
+        miniWebServer.on('response', (data: { token: string; 'app-auth': string }) => {
+          resolve(data);
+        });
+
+        miniWebServer.on('open', () => {
+          miniWebServer.closeAfterFive();
+        });
+
+        miniWebServer.on('close', () => {
+          console.log('Web server closed');
+        });
+      });
     },
     openModpack(payload: { name: string; id: string }) {
       ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
@@ -112,7 +140,6 @@ const Electron: ElectronOverwolfInterface = {
       ipcRenderer.send('showFriends');
     },
     openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      // TODO: see if we can re-implement this with the ftb:// protocol
       Electron.utils.openUrl(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
 
       miniWebServer.open();

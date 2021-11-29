@@ -95,7 +95,7 @@ function setAuthData(authdata) {
 
 function onRequest(info) {
   let data = JSON.parse(info.content);
-  if (data.token && data.token.length > 0 || data.code) {
+  if ((data.token && data.token.length > 0) || (data.key && data.iv && data.password)) {
     server.close();
     server = undefined;
     authDataCallbacks.forEach(cb => cb(data));

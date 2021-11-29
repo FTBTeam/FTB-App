@@ -51,9 +51,8 @@ import Component from 'vue-class-component';
 import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue';
 import platform from '@/utils/interface/electron-overwolf';
-import { authenticateMc } from '@/utils/msauthentication';
-import { addHyphensToUuid } from '@/utils/helpers';
 import { Action } from 'vuex-class';
+import { addHyphensToUuid } from '@/utils/helpers';
 
 @Component({
   components: { YggdrasilAuthForm },
@@ -70,15 +69,24 @@ export default class Authentication extends Vue {
   async openMsAuth() {
     try {
       const res = await platform.get.actions.openMsAuth();
-      const response: any = await authenticateMc(res.code, res.random);
 
-      // TODO: call to the backend and store the entire payload
-      console.log(response);
-
-      if (!response.minecraftUuid) {
+      if (!res.key || !res.iv || !res.password) {
         return; // TODO: handle error
       }
 
+      const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: res.key,
+          iv: res.iv,
+          password: res.password,
+        }),
+      });
+
+      const response: any = (await responseRaw.json()).data;
       const id: string = response.minecraftUuid;
       const newUuid = addHyphensToUuid(id);
 

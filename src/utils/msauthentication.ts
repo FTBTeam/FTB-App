@@ -130,7 +130,6 @@ export const authenticateMc = async (code: string, verifier: string) => {
   return payload;
 };
 
-// TODO: REPLACE THIS WITH FETCH INSTEAD OF AXIOS
 const request = async <T>(requester: () => Promise<AxiosResponse<T>>): Promise<any> => {
   try {
     const res = await requester();
