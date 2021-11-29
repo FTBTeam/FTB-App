@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.minecraft.jsons;
 
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
@@ -10,8 +11,10 @@ import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.platform.OperatingSystem;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -221,9 +224,68 @@ public class VersionManifest {
         public List<Rule> rules;
         @Nullable
         public Map<OS, String> natives;
+        @Nullable
+        public String url;
 
         public boolean apply(Set<String> features) {
             return Rule.apply(rules, features);
+        }
+
+        @Nullable
+        public NewDownloadTask createDownloadTask(Path librariesDir, @Nullable IProgressUpdater progressUpdater) {
+            // It appears that the Vanilla launcher will explicitly use the 'url' property if it exists
+            if (url != null) {
+                return new NewDownloadTask(
+                        url + name.toPath(),
+                        name.toPath(librariesDir),
+                        DownloadValidation.of(),
+                        progressUpdater
+                );
+            }
+            // If the 'downloads' property is null, it tries from Mojang's maven directly.
+            if (downloads == null) {
+                return new NewDownloadTask(
+                        Constants.MC_LIBS + name.toPath(),
+                        name.toPath(librariesDir),
+                        DownloadValidation.of(),
+                        progressUpdater
+                );
+            }
+
+            // We have a 'downlaods' property, but no 'natives'.
+            if (natives == null) {
+                if (downloads.artifact == null) return null;
+                return downloadTaskFor(librariesDir, downloads.artifact, name, progressUpdater);
+            }
+            // We have natives.
+            if (downloads.classifiers == null) return null; // What? but okay, just ignore.
+            String classifier = natives.get(OS.current());
+            if (classifier == null) return null; // No natives for this platform.
+            VersionManifest.LibraryDownload artifact = downloads.classifiers.get(classifier);
+            if (artifact == null) return null; // Shouldn't happen, but okay.
+            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier), progressUpdater);
+        }
+
+        @Nullable
+        private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name, @Nullable IProgressUpdater progressUpdater) {
+            if (artifact.url == null) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
+
+            if (artifact.path == null) {
+                LOGGER.warn("Artifact has null path? Nani?? Skipping.. {}", name);
+                return null;
+            }
+
+            DownloadValidation validation = DownloadValidation.of()
+                    .withExpectedSize(artifact.size);
+            if (artifact.sha1 != null) {
+                validation = validation.withHash(Hashing.sha1(), artifact.sha1);
+            }
+            return new NewDownloadTask(
+                    artifact.url,
+                    librariesDir.resolve(artifact.path),
+                    validation,
+                    progressUpdater // TODO
+            );
         }
     }
 

@@ -318,22 +318,8 @@ public class InstanceLauncher {
     private void validateLibraries(Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
         LOGGER.info("Validating minecraft libraries...");
         List<NewDownloadTask> tasks = new LinkedList<>();
-        VersionManifest.OS current = VersionManifest.OS.current();
         for (VersionManifest.Library library : libraries) {
-            if (library.downloads == null) continue;
-
-            NewDownloadTask task;
-            if (library.natives == null) {
-                if (library.downloads.artifact == null) continue;
-                task = downloadTaskFor(librariesDir, library.downloads.artifact, library.name);
-            } else {
-                if (library.downloads.classifiers == null) continue; // What? but okay, just ignore.
-                String classifier = library.natives.get(current);
-                if (classifier == null) continue; // No natives for this platform.
-                VersionManifest.LibraryDownload artifact = library.downloads.classifiers.get(classifier);
-                if (artifact == null) continue; // Shouldn't happen, but okay.
-                task = downloadTaskFor(librariesDir, artifact, library.name.withClassifier(classifier));
-            }
+            NewDownloadTask task = library.createDownloadTask(librariesDir, null);
             if (task != null) {
                 tasks.add(task);
             }
@@ -347,28 +333,6 @@ public class InstanceLauncher {
             }
         }
         LOGGER.info("Libraries validated!");
-    }
-
-    @Nullable
-    private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name) {
-        if (artifact.url == null) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
-
-        if (artifact.path == null) {
-            LOGGER.warn("Artifact has null path? Nani?? Skipping.. {}", name);
-            return null;
-        }
-
-        DownloadValidation validation = DownloadValidation.of()
-                .withExpectedSize(artifact.size);
-        if (artifact.sha1 != null) {
-            validation = validation.withHash(Hashing.sha1(), artifact.sha1);
-        }
-        return new NewDownloadTask(
-                artifact.url,
-                librariesDir.resolve(artifact.path),
-                validation,
-                null // TODO
-        );
     }
 
     private void extractNatives(Path nativesDir, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
