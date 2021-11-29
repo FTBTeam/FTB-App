@@ -129,6 +129,7 @@ export default class InstancePage extends Vue {
   @Action('showAlert') public showAlert: any;
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
+  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
 
   // New stuff
   tabs = ModpackPageTabs;
@@ -191,11 +192,67 @@ export default class InstancePage extends Vue {
     this.showMsgBox = true;
   }
 
-  public launch(): void {
+  public async validateToken(profile?: AuthProfile) {
+    console.log(profile);
+    if (profile != null) {
+      if (profile.type === 'microsoft') {
+        // TODO: validate microsoft token
+        // We need to store when the token expires using expires_in
+      } else if (profile.type === 'mojang') {
+          let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: profile.tokens.clientToken }),
+          });
+          if (rawResponse.status === 204) {
+            return false;
+          } else {
+            return true;
+          }
+      }
+    } else {
+      // TODO: There's no active profile
+    }
+  }
+
+  public async refreshToken(profile?: AuthProfile) {
+    if (profile != null) {
+      if (profile.type === 'microsoft') {
+        // TODO: refresh microsoft token
+      } else if (profile.type === 'mojang') {
+          let rawResponse = await fetch(`https://authserver.mojang.com/refresh`, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: profile.tokens.clientToken }),
+          });
+          let response = await rawResponse.json();
+          console.log(response.accessToken);
+          // TODO: Handle when this doesn't work and ask for password again
+          // TODO: update the tokens stored on the profile
+      }
+    } else {
+      // TODO: There's no active profile
+    }
+  }
+
+  public async launch(): Promise<void> {
     // TODO: REMOVE TRUE
-    if (true || this.authProfiles.length === 0) {
+    if (this.authProfiles.length === 0) {
       this.authenticationOpen = true;
       return;
+    }
+
+    // getActiveProfile data isn't the same as the mapped profiles
+    let activeProfile = this.authProfiles.find((profile) => profile.uuid == this.getActiveProfile.uuid);
+
+    const shouldRefresh = await this.validateToken(activeProfile);
+    if (shouldRefresh) {
+      console.log('We need to refresh');
+      await this.refreshToken(activeProfile);
     }
 
     if (this.showMsgBox) {

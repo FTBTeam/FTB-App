@@ -8,15 +8,16 @@ export interface AuthProfile {
   type: 'mojang' | 'microsoft';
   token: string;
   refreshToken: string;
-  tokens:
-    | {
-        accessToken: string;
-        refreshToken: string;
-      }
-    | {
-        clientToken: string;
-        accessToken: string;
-      };
+  tokens: any;
+    // TODO: Fix this
+    // | {
+    //     accessToken: string;
+    //     refreshToken: string;
+    //   }
+    // | {
+    //     accessToken: string;
+    //     clientToken: string;
+    //   };
   username: string;
   uuid: string;
 }
