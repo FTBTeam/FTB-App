@@ -3,7 +3,7 @@ import qs from 'qs';
 // const Settings = require('./settings');
 
 export const msAuthSettings = {
-  CLIENT_ID: '67049f45-aa10-4477-ae9b-3abb46212936',
+  CLIENT_ID: 'f23e8ba8-f46b-41ed-b5c0-7994f2ebbbf8',
   LIVE_URL: 'https://login.live.com/oauth20_authorize.srf',
   LIVE_REDIRECT: 'https://login.microsoftonline.com/common/oauth2/nativeclient',
 };

@@ -40,7 +40,7 @@ export const core: Module<CoreState, RootState> = {
         callback: (e: any) => {
           const profiles = e.profiles.map((a: any) => ({
             type: a.isMicrosoft ? 'microsoft' : 'mojang',
-            token: a.mcAuth.accessToken,
+            token:  a.isMicrosoft ? a.msAuth.liveAccessToken : a.mcAuth.accessToken,
             username: a.username,
             name: `I'm a profile (${a.uuid})`,
             id: a.uuid,

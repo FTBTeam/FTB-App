@@ -60,6 +60,7 @@ import { Action } from 'vuex-class';
 })
 export default class Authentication extends Vue {
   @Action('sendMessage') public sendMessage: any;
+  @Action('loadProfiles') public loadProfiles: any;
 
   showLegacyLogin = false;
   loggedIn = false;
@@ -90,6 +91,7 @@ export default class Authentication extends Vue {
         callback: (e: any) => {
           if (e.success) {
             this.loggedIn = true;
+            this.loadProfiles();
           } else {
             this.error = 'Something went wrong';
           }

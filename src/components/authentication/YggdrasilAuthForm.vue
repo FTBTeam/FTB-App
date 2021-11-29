@@ -41,6 +41,7 @@ import { addHyphensToUuid } from '@/utils/helpers';
 @Component
 export default class YggdrasilAuthForm extends Vue {
   @Action('sendMessage') public sendMessage: any;
+  @Action('loadProfiles') public loadProfiles: any;
 
   error = '';
 
@@ -74,6 +75,7 @@ export default class YggdrasilAuthForm extends Vue {
           callback: (e: any) => {
             if (e.success) {
               this.$emit('authenticated');
+              this.loadProfiles();
             } else {
               this.error = 'Something went wrong';
             }
