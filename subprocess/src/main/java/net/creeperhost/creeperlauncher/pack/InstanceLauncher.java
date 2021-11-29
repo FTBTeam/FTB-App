@@ -9,7 +9,6 @@ import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
@@ -60,17 +59,6 @@ public class InstanceLauncher {
 
     private final List<ThrowingConsumer<LaunchContext, IOException>> startTasks = new LinkedList<>();
     private final List<ThrowingRunnable<IOException>> exitTasks = new LinkedList<>();
-
-    public static void main(String[] args) throws Throwable {
-        Instances.refreshInstances();
-        LocalInstance instance = Instances.getInstance(UUID.fromString("5cf33a16-9f4d-4fbc-bc3b-f27c6a96e185"));
-        InstanceLauncher launcher = new InstanceLauncher(instance);
-
-        launcher.launch();
-        synchronized (launcher) {
-            launcher.wait();
-        }
-    }
 
     public InstanceLauncher(LocalInstance instance) {
         this.instance = instance;
@@ -231,6 +219,7 @@ public class InstanceLauncher {
             List<VersionManifest.Library> libraries = collectLibraries(features);
             // Mojang may change libraries mid version.
             validateLibraries(librariesDir, libraries);
+            validateClient(versionsDir);
 
             Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
@@ -312,6 +301,26 @@ public class InstanceLauncher {
             } catch (Throwable ex) {
                 throw new IOException("Failed to execute asset update task.", ex);
             }
+        }
+    }
+
+    private void validateClient(Path versionsDir) throws IOException {
+        VersionManifest manifest = manifests.get(0);
+        VersionManifest.Download download = manifest.downloads.get("client");
+        if (download != null && download.url != null) {
+            LOGGER.info("Validating client download for {}", manifest.id);
+            DownloadValidation validation = DownloadValidation.of()
+                    .withExpectedSize(download.size);
+            if (download.sha1 != null) {
+                validation = validation.withHash(Hashing.sha1(), download.sha1);
+            }
+            NewDownloadTask task = new NewDownloadTask(
+                    download.url,
+                    versionsDir.resolve(manifest.id).resolve(manifest.id + ".jar"),
+                    validation,
+                    null // TODO
+            );
+            task.execute();
         }
     }
 

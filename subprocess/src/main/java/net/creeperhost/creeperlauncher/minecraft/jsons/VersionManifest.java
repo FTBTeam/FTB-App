@@ -291,6 +291,7 @@ public class VersionManifest {
 
     public static class Logging {
 
+        @Nullable
         public LoggingEntry client;
     }
 
@@ -301,11 +302,12 @@ public class VersionManifest {
         @Nullable
         public String type;
         @Nullable
-        public Download file;
+        public LoggingDownload file;
     }
 
     public static class LoggingDownload extends Download {
 
+        @Nullable
         public String id;
     }
 
