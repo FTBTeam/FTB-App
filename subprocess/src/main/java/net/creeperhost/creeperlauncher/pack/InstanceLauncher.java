@@ -265,6 +265,8 @@ public class InstanceLauncher {
             command.add(javaExecutable.toAbsolutePath().toString());
             command.addAll(jvmArgs);
             command.addAll(context.extraJVMArgs);
+            // TODO, these should be the defaults inside the app, not added here.
+            Collections.addAll(command, Constants.MOJANG_DEFAULT_ARGS);
             command.add(mainClass);
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);

@@ -5,7 +5,6 @@ import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.os.OS;
-import net.creeperhost.creeperlauncher.util.SettingsChangeUtil;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
@@ -69,6 +68,17 @@ public class Constants {
             ),
             true
     );
+
+    // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
+    public static final String[] MOJANG_DEFAULT_ARGS = {
+            "-Xmx2G",
+            "-XX:+UnlockExperimentalVMOptions",
+            "-XX:+UseG1GC",
+            "-XX:G1NewSizePercent=20",
+            "-XX:G1ReservePercent=20",
+            "-XX:MaxGCPauseMillis=50",
+            "-XX:G1HeapRegionSize=32M"
+    };
 
     //Auth
     public static String KEY = "";
