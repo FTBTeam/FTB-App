@@ -94,11 +94,8 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
             FileUtils.createDirectories(instanceRoot);
             LOGGER.debug("Setting stage to VANILLA");
             currentStage = Stage.VANILLA;
+            // TODO Assets/Jdk?
             LOGGER.debug("About to download launcher");
-            OS.CURRENT.getPlatform().installLauncher();
-//            Path profileJson = Constants.LAUNCHER_PROFILES_JSON;
-            LOGGER.debug("Launching game and close");
-//            if (Files.notExists(profileJson)) GameLauncher.downloadLauncherProfiles();
             Path instanceDir = instance.getDir();
             FileUtils.createDirectories(instanceDir);
             LOGGER.debug("Setting stage to API");

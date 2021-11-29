@@ -10,13 +10,10 @@ import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoader;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoaderManager;
-import net.creeperhost.creeperlauncher.os.OS;
-import net.creeperhost.creeperlauncher.os.Platform;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 
 import java.io.FileNotFoundException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -61,13 +58,6 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
                         OpenModalData.openModal("Preparing environment", "Installing Mod Loaders <br>", List.of());
                         ModLoader modLoader = modLoaders.get(0);
                         modLoader.install(instance);
-                        Platform platform = OS.CURRENT.getPlatform();
-                        if (Files.notExists(platform.getLauncherExecutable())) {
-                            OpenModalData.openModal("Preparing environment", "Installing Minecraft Launcher <br>", List.of());
-
-                            platform.installLauncher();
-//                            if (!Files.exists(Constants.LAUNCHER_PROFILES_JSON)) GameLauncher.downloadLauncherProfiles();
-                        }
                     }).thenRun(() ->
                     {
                         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", data.uuid));
