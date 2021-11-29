@@ -1,11 +1,18 @@
 <template>
   <div class="authentication" @mousedown.self="$emit('close')">
     <div class="body-contents text-center">
-      <div class="back" v-if="showLegacyLogin && !loggedIn" @click="showLegacyLogin = false">
+      <div class="back" v-if="showLegacyLogin && !loggedIn && !loading" @click="showLegacyLogin = false">
         <font-awesome-icon icon="chevron-left" />
         <span>Back to options</span>
       </div>
-      <div class="main" v-if="!showLegacyLogin && !loggedIn">
+      <div class="main" v-if="loading">
+        <Loading />
+      </div>
+      <div class="main" v-else-if="error.length > 0">
+        {{error}}
+        <ftb-button color="is-primary" class="px-6 py-4" @click="$emit('close')">Close</ftb-button>
+      </div>
+      <div class="main" v-else-if="!showLegacyLogin && !loggedIn">
         <h3 class="text-2xl mb-4"><b>Minecraft Login</b></h3>
         <p class="mb-8">
           Now that Minecraft uses Microsoft to login, we now require to login to your Microsoft account or your Mojang
@@ -29,8 +36,7 @@
 
       <div class="logged-in" v-else-if="loggedIn">
         You're in!
-
-        <ftb-button color="is-primary" class="px-6 py-4" @click="$emit('close')">Finish</ftb-button>
+        <ftb-button color="primary" class="px-6 py-4" @click="$emit('close')">Finish</ftb-button>
       </div>
 
       <yggdrasil-auth-form
@@ -50,12 +56,13 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue';
+import Loading from '@/components/Loading.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
 import { addHyphensToUuid } from '@/utils/helpers';
 
 @Component({
-  components: { YggdrasilAuthForm },
+  components: { YggdrasilAuthForm, Loading },
 })
 export default class Authentication extends Vue {
   @Action('sendMessage') public sendMessage: any;
@@ -64,10 +71,12 @@ export default class Authentication extends Vue {
   showLegacyLogin = false;
   loggedIn = false;
   error = '';
+  loading = false;
 
   // TODO: Move
   async openMsAuth() {
     try {
+      this.loading = true;
       const res = await platform.get.actions.openMsAuth();
 
       if (!res.key || !res.iv || !res.password) {
@@ -87,6 +96,7 @@ export default class Authentication extends Vue {
       });
 
       const response: any = (await responseRaw.json()).data;
+      console.log(response);
       const id: string = response.minecraftUuid;
       const newUuid = addHyphensToUuid(id);
 
@@ -101,12 +111,14 @@ export default class Authentication extends Vue {
             this.loggedIn = true;
             this.loadProfiles();
           } else {
-            this.error = 'Something went wrong';
+            this.error = 'It looks like that profile already exists!';
           }
         },
       });
     } catch (e) {
       console.log(e);
+    } finally {
+      this.loading = false;
     }
   }
 }
