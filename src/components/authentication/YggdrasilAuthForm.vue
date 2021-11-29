@@ -41,7 +41,7 @@ import { addHyphensToUuid } from '@/utils/helpers';
 @Component
 export default class YggdrasilAuthForm extends Vue {
   @Action('sendMessage') public sendMessage: any;
-  @Action('loadProfiles') public loadProfiles: any;
+  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
 
   error = '';
 

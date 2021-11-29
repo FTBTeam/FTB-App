@@ -61,7 +61,7 @@ const Overwolf: ElectronOverwolfInterface = {
         const url = `${s.LIVE_URL}?client_id=${
           s.CLIENT_ID
         }&code_challenge_method=S256&code_challenge=${verifierCodeSave}&response_type=code&scope=offline_access%20xboxlive.signin%20xboxlive.offline_access&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d&redirect_uri=${encodeURI(
-          'http://localhost:8080/msauth', //'https://feed-the-beast.com/msauth', // TODO: Change me (jake merge in the latest dev to web if you're testing)
+          'https://feed-the-beast.com/msauth',
         )}`;
 
         await overwolf.windows.getMainWindow().openWebserver((data: any) => {

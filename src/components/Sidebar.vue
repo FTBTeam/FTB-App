@@ -60,6 +60,9 @@
       </router-link>
     </div>
     <div class="profile" v-if="getProfiles.length">
+      <div class="avatar">
+        <img :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`" alt="Avatar" />
+      </div>
       Hello
       {{ getActiveProfile ? 'hi' : 'nope' }}
     </div>
@@ -76,9 +79,9 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { AuthState } from '../modules/auth/types';
+import { AuthState } from '@/modules/auth/types';
 import { Action, Getter, State } from 'vuex-class';
-import { SettingsState } from '../modules/settings/types';
+import { SettingsState } from '@/modules/settings/types';
 import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 

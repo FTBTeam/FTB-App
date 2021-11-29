@@ -29,8 +29,8 @@
 
       <div class="logged-in" v-else-if="loggedIn">
         You're in!
-        
-        <ftb-button color='is-primary' class='px-6 py-4' @click="$emit('close')">Finish</ftb-button>
+
+        <ftb-button color="is-primary" class="px-6 py-4" @click="$emit('close')">Finish</ftb-button>
       </div>
 
       <yggdrasil-auth-form
@@ -60,11 +60,11 @@ import { Action } from 'vuex-class';
 })
 export default class Authentication extends Vue {
   @Action('sendMessage') public sendMessage: any;
-  @Action('loadProfiles') public loadProfiles: any;
+  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
 
   showLegacyLogin = false;
   loggedIn = false;
-  error = ""
+  error = '';
 
   // TODO: Move
   async openMsAuth() {
@@ -78,7 +78,7 @@ export default class Authentication extends Vue {
       if (!response.minecraftUuid) {
         return; // TODO: handle error
       }
-      
+
       const id: string = response.minecraftUuid;
       const newUuid = addHyphensToUuid(id);
 

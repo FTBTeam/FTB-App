@@ -22,12 +22,11 @@ export const core: Module<CoreState, RootState> = {
     /**
      * Get the active profile
      */
-    getActiveProfile: (state: CoreState): string | undefined => {
+    getActiveProfile: (state: CoreState): AuthProfile | undefined => {
       return state.activeProfile;
     },
   },
   actions: {
-    // TODO: add validation on profile
     addProfile: ({ commit, state }, profile: AuthProfile) => {
       commit(CoreMutations.ADD_PROFILE, profile);
     },
@@ -38,14 +37,25 @@ export const core: Module<CoreState, RootState> = {
           type: 'profiles.get',
         },
         callback: (e: any) => {
-          const profiles = e.profiles.map((a: any) => ({
-            type: a.isMicrosoft ? 'microsoft' : 'mojang',
-            token:  a.isMicrosoft ? a.msAuth.liveAccessToken : a.mcAuth.accessToken,
-            username: a.username,
-            name: `I'm a profile (${a.uuid})`,
-            id: a.uuid,
-          }));
+          const profiles = e.profiles.map(
+            (a: any) =>
+              ({
+                type: a.isMicrosoft ? 'microsoft' : 'mojang',
+                tokens: a.isMicrosoft
+                  ? {
+                      accessToken: a.msAuth.minecraftToken,
+                      refreshToken: a.msAuth.liveRefreshToken,
+                    }
+                  : {
+                      clientToken: a.mcAuth.clientToken,
+                      accessToken: a.mcAuth.accessToken,
+                    },
+                username: a.username,
+                uuid: a.uuid,
+              } as AuthProfile),
+          );
 
+          commit(CoreMutations.SET_ACTIVE_PROFILE, e.activeProfile);
           commit(CoreMutations.LOAD_PROFILES, profiles);
         },
       });
@@ -67,6 +77,8 @@ export const core: Module<CoreState, RootState> = {
       state.profiles.push(profile);
     },
 
-    setActiveProfile: () => {},
+    setActiveProfile: (state: CoreState, profile: AuthProfile) => {
+      state.activeProfile = profile;
+    },
   },
 };

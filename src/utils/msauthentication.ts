@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 import qs from 'qs';
+import platform from '@/utils/interface/electron-overwolf';
 // const Settings = require('./settings');
 
 export const msAuthSettings = {
@@ -161,7 +162,7 @@ export const authWithLive = async (code: string, verifier: string, isRefresh = f
         grant_type: 'authorization_code',
         client_id: msAuthSettings.CLIENT_ID,
         scope: 'offline_access xboxlive.signin xboxlive.offline_access',
-        redirect_uri: msAuthSettings.LIVE_REDIRECT,
+        redirect_uri: platform.isOverwolf() ? 'https://feed-the-beast.com/msauth' : msAuthSettings.LIVE_REDIRECT,
         code,
         code_verifier: verifier,
       }),
