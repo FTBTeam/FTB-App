@@ -30,41 +30,16 @@
       </a>
       <router-link
         :to="{ name: 'MTIntegration' }"
-        v-if="auth.token !== null"
         class="nav-item capitalize"
-        :class="{ 'item-disabled': disableNav }"
       >
         <div class="flex items-center account">
           <img
-            :src="`https://api.mymcuu.id/head/${avatarName}`"
-            style="width: 30px; height: 30px;"
-            class="rounded-full"
+            :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`"
+            style="width: 40px; height: 40px;"
+            class="rounded"
           />
-          <!--          <div class="flex flex-col">-->
-          <span
-            >{{
-              typeof auth.token.mc !== 'undefined' && auth.token.mc.display !== null
-                ? auth.token.mc.display.split('#')[0]
-                : auth.token.username
-            }}
-            #
-            <p class="inline-block" v-if="typeof auth.token.mc !== 'undefined'">
-              {{ auth.token.mc.display.split('#')[1] }}
-            </p>
-          </span>
-          <!--            <span v-if="auth.token.mc !== undefined && auth.token.mc.display !== null" class="text-xs opacity-50 hash"-->
-          <!--              >#{{ auth.token.mc.display.split('#')[1] }}</span-->
-          <!--            >-->
-          <!--          </div>-->
         </div>
       </router-link>
-    </div>
-    <div class="profile" v-if="getProfiles.length">
-      <div class="avatar">
-        <img :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`" alt="Avatar" />
-      </div>
-      Hello
-      {{ getActiveProfile ? 'hi' : 'nope' }}
     </div>
     <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">
       <img
