@@ -12,6 +12,8 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
+import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
@@ -225,18 +227,34 @@ public class InstanceLauncher {
             extractNatives(nativesDir, librariesDir, libraries);
 
             Map<String, String> subMap = new HashMap<>();
-            // Temp properties TODO
-            subMap.put("auth_player_name", "Player");
-            subMap.put("auth_uuid", new UUID(0, 0).toString());
-            subMap.put("user_type", "legacy");
-            subMap.put("auth_access_token", "null"); // TODO
-            subMap.put("user_properties", "{}");
+            AccountProfile profile = AccountManager.get().getActiveProfile();
+            if (profile == null) {
+                // Offline
+                subMap.put("auth_player_name", "Player"); // TODO, give user ability to set name?
+                subMap.put("auth_uuid", new UUID(0, 0).toString());
+                subMap.put("user_type", "legacy");
+                subMap.put("auth_access_token", "null");
+                subMap.put("user_properties", "{}");
+            } else {
+                subMap.put("auth_player_name", profile.username);
+                subMap.put("auth_uuid", profile.uuid.toString());
+                subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
+                if (profile.msAuth != null) {
+                    subMap.put("user_type", "microsoft"); // TODO, validate this? It might just be 'mojang' too
+                    subMap.put("auth_access_token", profile.msAuth.minecraftToken);
+                    subMap.put("xuid", ""); // TODO Not sure which field in msAuth this maps to.
+                } else {
+                    assert profile.mcAuth != null;
+                    subMap.put("user_type", "mojang");
+                    subMap.put("auth_access_token", profile.mcAuth.accessToken);
+                }
+            }
 
             subMap.put("version_name", instance.modLoader);
             subMap.put("game_directory", gameDir.toString());
             subMap.put("assets_root", assetsDir.toAbsolutePath().toString());
             subMap.put("assets_index_name", manifests.get(0).assets);
-            subMap.put("version_type", manifests.get(0).type);// TODO
+            subMap.put("version_type", manifests.get(0).type);
 
             subMap.put("launcher_name", "FTBApp");
             subMap.put("launcher_version", Constants.APPVERSION);

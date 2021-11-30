@@ -82,6 +82,7 @@ public class AccountManager {
         return profiles;
     }
 
+    @Nullable
     public AccountProfile getActiveProfile() {
         return this.activeProfile;
     }
