@@ -95,8 +95,8 @@
           v-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
           :loadingFailed="loading"
           :websocketsFailed="!websockets || websockets.reconnects > 20"
-          :websockets='websockets'
-          :max-tries='20'
+          :websockets="websockets"
+          :max-tries="20"
         />
         <div
           class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
@@ -184,6 +184,8 @@ export default class MainApp extends Vue {
   @Action('registerExitCallback') private registerExitCallback: any;
   @Action('registerPingCallback') private registerPingCallback: any;
 
+  @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: any;
+
   private platfrom = platfrom;
 
   private windowId: string | null = null;
@@ -206,6 +208,10 @@ export default class MainApp extends Vue {
         });
       }
     });
+
+    setTimeout(() => {
+      this.loadProfiles();
+    }, 1000);
   }
 
   @Watch('websockets', { deep: true })

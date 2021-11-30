@@ -26,6 +26,7 @@ body {
     min-height: calc(100vh - 32px);
     display: flex;
     flex-direction: column;
+    z-index: 1;
 
     > header {
       position: relative;

@@ -53,7 +53,7 @@ export default class PackMetaHeading extends Vue {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #2a2a2a;
+  background: rgba(black, 0.6);
   padding: 0.8rem 1rem;
   position: relative;
   z-index: 1;

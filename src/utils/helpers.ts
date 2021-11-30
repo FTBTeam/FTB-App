@@ -25,3 +25,7 @@ export const prettyByteFormat = (bytes: number) => {
 
   return (neg ? '-' : '') + bytes + ' ' + unit;
 };
+
+export const addHyphensToUuid = (uuid: string) => {
+  return uuid.replace(/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/, '$1-$2-$3-$4-$5');
+};

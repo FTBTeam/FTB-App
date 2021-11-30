@@ -1,5 +1,5 @@
 import router from '@/router';
-import store from '@/store';
+import store from '@/modules/store';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
@@ -40,6 +40,14 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
+    async openMsAuth() {
+      return new Promise(async (res, reject) => {
+        await overwolf.windows.getMainWindow().openWebserver((data: any) => {
+          res(data);
+        });
+        overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com`);
+      });
+    },
     openModpack(payload) {
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
     },

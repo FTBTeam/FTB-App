@@ -59,6 +59,13 @@
         </div>
       </router-link>
     </div>
+    <div class="profile" v-if="getProfiles.length">
+      <div class="avatar">
+        <img :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`" alt="Avatar" />
+      </div>
+      Hello
+      {{ getActiveProfile ? 'hi' : 'nope' }}
+    </div>
     <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">
       <img
         src="../assets/ch-logo.svg"
@@ -72,10 +79,9 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { AuthState } from '../modules/auth/types';
-import { Action, State } from 'vuex-class';
-import { SettingsState } from '../modules/settings/types';
-import { logVerbose } from '../utils';
+import { AuthState } from '@/modules/auth/types';
+import { Action, Getter, State } from 'vuex-class';
+import { SettingsState } from '@/modules/settings/types';
 import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 
@@ -88,6 +94,9 @@ export default class Sidebar extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
 
   @Prop({ default: false }) isTransparent!: boolean;
+
+  @Getter('getProfiles', { namespace: 'core' }) private getProfiles!: any;
+  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
 
   private appVersion: string = platform.get.config.appVersion;
 
@@ -154,26 +163,6 @@ export default class Sidebar extends Vue {
 
   public openFriends() {
     platform.get.actions.openFriends();
-  }
-
-  private openLogin() {
-    // NOTE: the callback is only used on overwolf
-    platform.get.actions.openLogin((data: any) => {
-      if (data.token) {
-        this.setSessionID(data.token);
-      }
-      if (data['app-auth']) {
-        let settings = this.settings?.settings;
-        if (settings !== undefined) {
-          settings.sessionString = data['app-auth'];
-        }
-        this.saveSettings(settings);
-      }
-    });
-  }
-
-  private debugLog(data: any) {
-    logVerbose(this.settings, data);
   }
 }
 </script>

@@ -1,5 +1,5 @@
 'use strict';
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, session, shell } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -19,11 +19,18 @@ log.transports.file.resolvePath = (variables, message): string => {
   return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
 };
 
+if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
+  app.setAsDefaultProtocolClient('ftb', process.execPath, [path.resolve(process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient('ftb');
+}
+
 const httpClient = axios.create();
 httpClient.defaults.timeout = 5000;
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
+let msAuthWindow: BrowserWindow | null = null;
 
 let protocolURL: string | null;
 
@@ -36,9 +43,6 @@ for (let i = 0; i < process.argv.length; i++) {
 
 let mtIRCCLient: Client | undefined;
 declare const __static: string;
-
-protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
-app.setAsDefaultProtocolClient('ftb');
 
 let wsPort: number;
 let wsSecret: string;
@@ -111,10 +115,6 @@ ipcMain.on('websocketReceived', (event, message) => {
 
 ipcMain.on('sendMeSecret', event => {
   event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
-});
-
-ipcMain.on('openOauthWindow', (event, data) => {
-  createOauthWindow();
 });
 
 ipcMain.on('showFriends', () => {
@@ -327,12 +327,26 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
       disableBlinkFeatures: 'Auxclick',
+      webSecurity: false,
     },
   });
 
   win.webContents.on('new-window', (event, url) => {
     event.preventDefault();
     shell.openExternal(url);
+  });
+
+  win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({ requestHeaders: { Origin: '*', ...details.requestHeaders } });
+  });
+
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        'Access-Control-Allow-Origin': ['*'],
+        ...details.responseHeaders,
+      },
+    });
   });
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -368,6 +382,9 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
+
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
@@ -394,18 +411,8 @@ if (!gotTheLock) {
     }
   });
 
-  // Create myWindow, load the rest of the app, etc...
-  // app.whenReady().then(() => {
-  // })
   app.on('ready', async () => {
     createWindow();
-    session.defaultSession.webRequest.onBeforeSendHeaders(
-      { urls: ['https://*.cpmstar.com/*'] },
-      (details, callback) => {
-        details.requestHeaders.Referer = 'https://feed-the-beast.com';
-        callback({ cancel: false, requestHeaders: details.requestHeaders });
-      },
-    );
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {
         if (details.responseHeaders) {
@@ -413,31 +420,11 @@ if (!gotTheLock) {
             details.responseHeaders['Content-Security-Policy'] = [];
           }
         }
-      } else if (details.url.indexOf('https://www.creeperhost.net/json/modpacks/modpacksch/') !== -1) {
-        if (details.responseHeaders) {
-          if (details.responseHeaders['access-control-allow-origin'] !== undefined) {
-            details.responseHeaders['access-control-allow-origin'] = ['*'];
-          }
-        }
       }
       callback({ responseHeaders: details.responseHeaders });
     });
   });
 }
-
-// app.on('ready', async () => {
-//     createWindow();
-//     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-//         if (details.url.indexOf('twitch.tv') !== -1) {
-//             if (details.responseHeaders) {
-//                 if (details.responseHeaders['Content-Security-Policy'] !== undefined) {
-//                     details.responseHeaders['Content-Security-Policy'] = [];
-//                 }
-//             }
-//         }
-//         callback({ responseHeaders: details.responseHeaders });
-//     });
-// });
 
 if (isDevelopment) {
   if (process.platform === 'win32') {
@@ -451,73 +438,4 @@ if (isDevelopment) {
       app.quit();
     });
   }
-}
-
-async function getMTSelf(cookie: string) {
-  // try {
-  //     const response = await httpClient.get(`https://minetogether.io/api/me`, {headers: {Cookie: 'PHPSESSID=' + cookie, 'App-Auth': }});
-  //     const user = response.data;
-  //     return user;
-  // } catch (err) {
-  //     log.error(`Error getting MineTogether chat servers`, err);
-  //     return undefined;
-  // }
-}
-// Oauth Window
-
-function createOauthWindow() {
-  const window = new BrowserWindow({
-    title: 'FTB App',
-
-    // Other
-    icon: path.join(__static, 'favicon.ico'),
-    // Size Settings
-    minWidth: 0,
-    minHeight: 0,
-    // maxWidth: 1000,
-    // maxHeight: 626,
-    height: 800,
-    width: 550,
-    // frame: false,
-    titleBarStyle: 'hidden',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      disableBlinkFeatures: 'Auxclick',
-    },
-  });
-
-  // window.setMenu(null);
-  window.loadURL('https://minetogether.io/api/login');
-  window.webContents.session.webRequest.onHeadersReceived({ urls: [] }, (details, callback) => {
-    if (details.url.indexOf('https://minetogether.io/api/redirect') !== -1) {
-      if (details.responseHeaders) {
-        if (details.responseHeaders['app-auth'] && win) {
-          win.webContents.send('setSessionString', details.responseHeaders['app-auth'][0]);
-        }
-      }
-    }
-    callback({});
-  });
-  window.webContents.on(
-    'did-redirect-navigation',
-    async (event, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) => {
-      if (url.startsWith('https://minetogether.io/profile')) {
-        window.webContents.session.cookies
-          .get({ name: 'PHPSESSID' })
-          .then(async cookies => {
-            if (cookies.length === 1) {
-              if (win) {
-                win.webContents.send('setSessionID', cookies[0].value);
-              }
-              authData = cookies[0].value;
-            }
-          })
-          .catch(error => {
-            console.log(error);
-          });
-        window.close();
-      }
-    },
-  );
 }

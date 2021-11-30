@@ -2,6 +2,16 @@ import { SettingsState } from './modules/settings/types';
 import { ModpackState } from './modules/modpacks/types';
 import { AuthState, Friend } from './modules/auth/types';
 
+export namespace App {
+  export interface MsgBox {
+    title: string;
+    content: string;
+    type: string;
+    okAction: () => void;
+    cancelAction: () => void;
+  }
+}
+
 export interface RootState {
   version: string;
   alerts: Alert[];

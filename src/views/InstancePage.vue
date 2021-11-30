@@ -20,7 +20,7 @@
       </header>
 
       <div class="body" v-if="!searchingForMods" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
-        <pack-tabs-body
+        <pack-body
           v-if="!this.searchingForMods"
           @mainAction="launchModPack()"
           @update="update()"
@@ -51,6 +51,8 @@
       <find-mods :instance="instance" @modInstalled="getModList" v-if="searchingForMods" />
     </div>
 
+    <authentication v-if="authenticationOpen" @close="authenticationOpen = false" />
+
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal
         :title="msgBox.title"
@@ -67,7 +69,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, ModpackState } from '@/modules/modpacks/types';
-import { Action, State } from 'vuex-class';
+import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/FTBToggle.vue';
 import FTBSlider from '@/components/FTBSlider.vue';
 import FTBModal from '@/components/FTBModal.vue';
@@ -82,24 +84,13 @@ import FindMods from '@/components/modpack/FindMods.vue';
 import { PackConst } from '@/utils/contants';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
 import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
-import ModpackMods from '@/components/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
-import { getColorForChar } from '@/utils/colors';
 import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
-import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
-
-interface MsgBox {
-  title: string;
-  content: string;
-  type: string;
-  okAction: () => void;
-  cancelAction: () => void;
-}
-
-interface Changelogs {
-  [id: number]: string;
-}
+import PackBody from '@/components/modpack/modpack-elements/PackBody.vue';
+import { App } from '@/types';
+import { AuthProfile } from '@/modules/core/core.types';
+import Authentication from '@/components/authentication/Authentication.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -111,7 +102,7 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
-    'pack-tabs-body': PackTabsBody,
+    Authentication,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
@@ -122,7 +113,8 @@ export enum ModpackPageTabs {
     ModpackVersions,
     MessageModal,
     FindMods,
-    ModpackPublicServers
+    ModpackPublicServers,
+    PackBody,
   },
 })
 export default class InstancePage extends Vue {
@@ -130,22 +122,24 @@ export default class InstancePage extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
   @State('auth') public auth!: AuthState;
+
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
 
+  @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
+  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
+
   // New stuff
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
-
-  getColorForChar = getColorForChar;
 
   private packInstance: ModPack | null = null;
   deleting: boolean = false;
 
   private showMsgBox: boolean = false;
-  private msgBox: MsgBox = {
+  private msgBox: App.MsgBox = {
     title: '',
     content: '',
     type: '',
@@ -158,6 +152,8 @@ export default class InstancePage extends Vue {
   searchingForMods = false;
   updatingModlist = false;
   showVersions = false;
+
+  authenticationOpen = false;
 
   public goBack(): void {
     if (!this.hidePackDetails) {
@@ -196,7 +192,69 @@ export default class InstancePage extends Vue {
     this.showMsgBox = true;
   }
 
-  public launch(): void {
+  public async validateToken(profile?: AuthProfile) {
+    console.log(profile);
+    if (profile != null) {
+      if (profile.type === 'microsoft') {
+        // TODO: validate microsoft token
+        // We need to store when the token expires using expires_in
+      } else if (profile.type === 'mojang') {
+          let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: profile.tokens.clientToken }),
+          });
+          if (rawResponse.status === 204) {
+            return false;
+          } else {
+            return true;
+          }
+      }
+    } else {
+      // TODO: There's no active profile
+    }
+  }
+
+  public async refreshToken(profile?: AuthProfile) {
+    if (profile != null) {
+      if (profile.type === 'microsoft') {
+        // TODO: refresh microsoft token
+      } else if (profile.type === 'mojang') {
+          let rawResponse = await fetch(`https://authserver.mojang.com/refresh`, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: profile.tokens.clientToken }),
+          });
+          let response = await rawResponse.json();
+          console.log(response.accessToken);
+          // TODO: Handle when this doesn't work and ask for password again
+          // TODO: update the tokens stored on the profile
+      }
+    } else {
+      // TODO: There's no active profile
+    }
+  }
+
+  public async launch(): Promise<void> {
+    // TODO: REMOVE TRUE
+    if (this.authProfiles.length === 0) {
+      this.authenticationOpen = true;
+      return;
+    }
+
+    // getActiveProfile data isn't the same as the mapped profiles
+    let activeProfile = this.authProfiles.find((profile) => profile.uuid == this.getActiveProfile.uuid);
+
+    const shouldRefresh = await this.validateToken(activeProfile);
+    if (shouldRefresh) {
+      console.log('We need to refresh');
+      await this.refreshToken(activeProfile);
+    }
+
     if (this.showMsgBox) {
       this.hideMsgBox();
     }

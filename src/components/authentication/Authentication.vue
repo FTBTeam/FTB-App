@@ -1,0 +1,237 @@
+<template>
+  <div class="authentication" @mousedown.self="$emit('close')">
+    <div class="body-contents text-center">
+      <div class="back" v-if="showLegacyLogin && !loggedIn && !loading" @click="showLegacyLogin = false">
+        <font-awesome-icon icon="chevron-left" />
+        <span>Back to options</span>
+      </div>
+      <div class="main" v-if="loading">
+        <Loading />
+      </div>
+      <div class="main" v-else-if="error.length > 0">
+        {{error}}
+        <ftb-button color="is-primary" class="px-6 py-4" @click="$emit('close')">Close</ftb-button>
+      </div>
+      <div class="main" v-else-if="!showLegacyLogin && !loggedIn">
+        <h3 class="text-2xl mb-4"><b>Minecraft Login</b></h3>
+        <p class="mb-8">
+          Now that Minecraft uses Microsoft to login, we now require to login to your Microsoft account or your Mojang
+          account.
+        </p>
+
+        <h4 class="text-center font-bold mb-8">Sign in with</h4>
+
+        <button class="button" @click="openMsAuth">
+          <img src="@/assets/images/branding/microsoft.svg" alt="Microsoft Login" />
+        </button>
+
+        <div class="or">
+          <span>or</span>
+        </div>
+
+        <button class="button" @click="showLegacyLogin = true">
+          <img src="@/assets/images/branding/mojang.svg" alt="Mojang Login" />
+        </button>
+      </div>
+
+      <div class="logged-in" v-else-if="loggedIn">
+        You're in!
+        <ftb-button color="primary" class="px-6 py-4" @click="$emit('close')">Finish</ftb-button>
+      </div>
+
+      <yggdrasil-auth-form
+        v-else
+        @authenticated="
+          () => {
+            showLegacyLogin = false;
+            loggedIn = true;
+          }
+        "
+      />
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import Component from 'vue-class-component';
+import Vue from 'vue';
+import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue';
+import Loading from '@/components/Loading.vue';
+import platform from '@/utils/interface/electron-overwolf';
+import { Action } from 'vuex-class';
+import { addHyphensToUuid } from '@/utils/helpers';
+
+@Component({
+  components: { YggdrasilAuthForm, Loading },
+})
+export default class Authentication extends Vue {
+  @Action('sendMessage') public sendMessage: any;
+  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
+
+  showLegacyLogin = false;
+  loggedIn = false;
+  error = '';
+  loading = false;
+
+  // TODO: Move
+  async openMsAuth() {
+    try {
+      this.loading = true;
+      const res = await platform.get.actions.openMsAuth();
+
+      if (!res.key || !res.iv || !res.password) {
+        return; // TODO: handle error
+      }
+
+      const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: res.key,
+          iv: res.iv,
+          password: res.password,
+        }),
+      });
+
+      const response: any = (await responseRaw.json()).data;
+      console.log(response);
+      const id: string = response.minecraftUuid;
+      const newUuid = addHyphensToUuid(id);
+
+      this.sendMessage({
+        payload: {
+          type: 'profiles.addMs',
+          ...response,
+          minecraftUuid: id.includes('-') ? id : newUuid,
+        },
+        callback: (e: any) => {
+          if (e.success) {
+            this.loggedIn = true;
+            this.loadProfiles();
+          } else {
+            this.error = 'It looks like that profile already exists!';
+          }
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    } finally {
+      this.loading = false;
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.authentication {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: rgba(#1c1c1c, 0.82);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+
+  .body-contents {
+    background-color: #313131;
+    border-radius: 10px;
+    box-shadow: 0 6.6px 22.66px 0 #00000040;
+    padding: 3rem;
+    width: 590px;
+    position: relative;
+    z-index: 1;
+
+    .back {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      top: 1rem;
+      left: 1rem;
+      padding: 1rem;
+      cursor: pointer;
+      transition: background-color 0.25s ease-in-out, opacity 0.25s ease-in-out, max-width 0.25s ease-in-out;
+      border-radius: 5px;
+      opacity: 0.5;
+      max-width: 45px;
+      overflow: hidden;
+
+      &:hover {
+        opacity: 1;
+        background-color: black;
+        max-width: 180px;
+
+        span {
+          opacity: 1;
+        }
+      }
+
+      span {
+        white-space: nowrap;
+        display: inline-block;
+        margin-left: 1.5rem;
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+      }
+    }
+
+    .button {
+      height: 100px;
+      background-color: #454545;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 5px;
+      box-shadow: 0 0 0 0 #00000040;
+      transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+      &:focus {
+        outline: none;
+      }
+
+      &:hover {
+        background-color: #575757;
+        transform: translateX(0.3rem) translateY(-0.3rem);
+        box-shadow: -0.3rem 0.3rem 5px 0 #00000040;
+      }
+    }
+
+    .or {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 1.5rem 0;
+      position: relative;
+
+      &::after {
+        background-color: rgba(white, 0.2);
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translatey(-50%);
+        height: 2px;
+        border-radius: 4px;
+        width: 100%;
+        z-index: -1;
+      }
+
+      span {
+        background-color: #313131;
+        padding: 0 3rem;
+        text-transform: uppercase;
+        font-weight: bold;
+        color: rgba(white, 0.25);
+      }
+    }
+  }
+}
+</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="tab-actions-body">
+  <div class="tab-actions-body" v-if="instance || packInstance">
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
         <div class="play">
@@ -58,28 +58,24 @@
         </div>
       </div>
 
-      <div class="tab-and-actions">
-        <div class="tabs">
-          <div class="options">
-            <div
-              class="tab"
-              :class="{ active: activeTab === tabs.OVERVIEW }"
-              @click="() => $emit('tabChange', tabs.OVERVIEW)"
-            >
-              Overview
-            </div>
-            <div class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
-              Mods
-            </div>
-            <div
-              v-if="isInstalled"
-              class="tab"
-              :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
-              @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"
-            >
-              Public servers
-            </div>
-          </div>
+      <div class="tabs">
+        <div
+          class="tab"
+          :class="{ active: activeTab === tabs.OVERVIEW }"
+          @click="() => $emit('tabChange', tabs.OVERVIEW)"
+        >
+          Overview
+        </div>
+        <div class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
+          Mods
+        </div>
+        <div
+          v-if="isInstalled"
+          class="tab"
+          :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
+          @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"
+        >
+          Public servers
         </div>
       </div>
     </div>
@@ -138,6 +134,10 @@
       />
     </div>
   </div>
+  <div class="loading pt-12" v-else>
+    <!-- This should literally never happen -->
+    <loading />
+  </div>
 </template>
 
 <script lang="ts">
@@ -152,11 +152,12 @@ import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue'
 import { getColorForChar } from '@/utils/colors';
 import { State } from 'vuex-class';
 import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
+import Loading from '@/components/Loading.vue';
 
 @Component({
-  components: { ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
+  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
 })
-export default class PackTabsBody extends Vue {
+export default class PackBody extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
 
   // The stored instance for an installed pack
@@ -198,10 +199,10 @@ export default class PackTabsBody extends Vue {
 
 <style lang="scss" scoped>
 .action-heading {
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.5rem 1.5rem;
   display: flex;
   align-items: center;
-  background-color: rgba(black, 0.1);
+  background-color: rgba(black, 0.2);
 
   .play {
     margin-right: 2rem;
@@ -259,39 +260,30 @@ export default class PackTabsBody extends Vue {
   }
 }
 
-.tab-and-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(black, 0.3);
-  padding-right: 1.5rem;
+.tabs {
+  background-color: rgba(black, 0.1);
+  padding: 0.5rem 1.5rem 0 1.5rem;
   margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
 
-  .tabs {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1.5rem 0 1.5rem;
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem 1.5rem 1rem 1.5rem;
+    color: rgba(white, 0.5);
+    cursor: pointer;
+    transition: color 0.25s ease-in-out, background-color 0.25s ease-in-out;
+    margin-right: 1rem;
+    border-bottom: 2px solid transparent;
 
-    .options {
-      display: flex;
+    &.active {
+      border-bottom-color: var(--color-info-button);
+      color: white;
     }
 
-    .tab {
-      padding: 0.5rem 1.5rem 1rem 1.5rem;
-      color: rgba(white, 0.5);
-      cursor: pointer;
-      transition: color 0.25s ease-in-out, background-color 0.25s ease-in-out;
-      margin-right: 1rem;
-      border-bottom: 2px solid transparent;
-
-      &.active {
-        border-bottom-color: var(--color-info-button);
-        color: white;
-      }
-
-      &:hover {
-        color: white;
-      }
+    &:hover {
+      color: white;
     }
   }
 }
