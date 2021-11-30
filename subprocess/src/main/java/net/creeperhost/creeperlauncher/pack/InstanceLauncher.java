@@ -242,7 +242,7 @@ public class InstanceLauncher {
                 if (profile.msAuth != null) {
                     subMap.put("user_type", "microsoft"); // TODO, validate this? It might just be 'mojang' too
                     subMap.put("auth_access_token", profile.msAuth.minecraftToken);
-                    subMap.put("xuid", ""); // TODO Not sure which field in msAuth this maps to.
+                    subMap.put("xuid", profile.msAuth.xblUserHash);
                 } else {
                     assert profile.mcAuth != null;
                     subMap.put("user_type", "mojang");
