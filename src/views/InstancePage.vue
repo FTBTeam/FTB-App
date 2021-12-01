@@ -204,7 +204,7 @@ export default class InstancePage extends Vue {
               'Content-Type': 'application/json',
             },
             method: 'POST',
-            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: profile.tokens.clientToken }),
+            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: (profile.tokens as any).clientToken }),
           });
           if (rawResponse.status === 204) {
             return false;
@@ -227,7 +227,7 @@ export default class InstancePage extends Vue {
               'Content-Type': 'application/json',
             },
             method: 'POST',
-            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: profile.tokens.clientToken }),
+            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: (profile.tokens as any).clientToken }),
           });
           let response = await rawResponse.json();
           console.log(response.accessToken);

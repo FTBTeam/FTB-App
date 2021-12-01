@@ -10,6 +10,7 @@ export const core: Module<CoreState, RootState> = {
   namespaced: true,
   state: {
     profiles: [],
+    activeProfile: {} as AuthProfile
   },
   getters: {
     /**

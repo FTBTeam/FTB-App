@@ -30,6 +30,7 @@
       </a>
       <router-link
         :to="{ name: 'MTIntegration' }"
+        v-if="getActiveProfile"
         class="nav-item capitalize"
       >
         <div class="flex items-center account">
