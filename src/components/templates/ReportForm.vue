@@ -36,20 +36,20 @@
         </div>
       </div>
     </div>
-    
-    <div class='debug-info text-left'>
-      <div class='flex items-start opacity-25'>
-        <div class='item mr-4'>
-          <p class='font-bold mb-2'>UI Version</p>
-          <div class='rounded bg-black px-2 py-1'>{{ uiVersion }}</div>
+
+    <div class="debug-info text-left">
+      <div class="flex items-start opacity-25">
+        <div class="item mr-4">
+          <p class="font-bold mb-2">UI Version</p>
+          <div class="rounded bg-black px-2 py-1">{{ uiVersion }}</div>
         </div>
-        <div class='item mr-4'>
-          <p class='font-bold mb-2'>App Version</p>
-          <div class='rounded bg-black px-2 py-1'>{{ appVersion }}</div>
+        <div class="item mr-4">
+          <p class="font-bold mb-2">App Version</p>
+          <div class="rounded bg-black px-2 py-1">{{ appVersion }}</div>
         </div>
-        <div class='item'>
-          <p class='font-bold mb-2'>Tries</p>
-          <div class='rounded bg-black px-2 py-1'>Reconnect tries: {{ websockets.reconnects }}</div>
+        <div class="item">
+          <p class="font-bold mb-2">Tries</p>
+          <div class="rounded bg-black px-2 py-1">Reconnect tries: {{ websockets.reconnects }}</div>
         </div>
       </div>
     </div>
@@ -67,18 +67,18 @@ export default class ReportForm extends Vue {
 
   @Prop() loadingFailed!: boolean;
   @Prop() websocketsFailed!: boolean;
-  
+
   @Prop() websockets!: any;
   @Prop() maxTries!: number;
-  
+
   // TODO: enable once the report form is working again
   disabled = true;
 
   static emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  
+
   uiVersion: string = platform.get.config.webVersion;
   appVersion: string = platform.get.config.appVersion;
-  
+
   errorEmail = '';
   errorDescription = '';
   submittingError = false;

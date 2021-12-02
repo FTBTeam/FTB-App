@@ -93,9 +93,9 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import PackCardList from '@/components/packs/PackCardList.vue';
-import FTBButton from '@/components/FTBButton.vue';
-import Loading from '@/components/Loading.vue';
+import PackCardList from '@/components/organisms/packs/PackCardList.vue';
+import FTBButton from '@/components/atoms/input/FTBButton.vue';
+import Loading from '@/components/atoms/Loading.vue';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import { DiscoveryState } from '@/modules/discovery/types';

@@ -2,7 +2,12 @@
   <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
     <!--     <logo width="80%" class="logo" draggable="false"/>-->
     <router-link to="/" :is="disableNav ? 'span' : 'router-link'" :class="{ 'item-disabled': disableNav }">
-      <img src="../assets/images/ftb-logo.svg" width="60" class="cursor-pointer logo-hover logo" draggable="false" />
+      <img
+        src="../../../assets/images/ftb-logo.svg"
+        width="60"
+        class="cursor-pointer logo-hover logo"
+        draggable="false"
+      />
     </router-link>
     <div class="nav-items nav-main mt-5">
       <router-link
@@ -28,11 +33,7 @@
         <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>
         <span class="whitespace-no-wrap">Friends List</span>
       </a>
-      <router-link
-        :to="{ name: 'MTIntegration' }"
-        v-if="getActiveProfile"
-        class="nav-item capitalize"
-      >
+      <router-link :to="{ name: 'MTIntegration' }" v-if="getActiveProfile" class="nav-item capitalize">
         <div class="flex items-center account">
           <img
             :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`"
@@ -42,9 +43,21 @@
         </div>
       </router-link>
     </div>
+    <div class="profile-area">
+      <div class="profile" v-if="getActiveProfile">
+        <img
+          :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`"
+          alt="Profile"
+          class="rounded"
+          width="40"
+          height="40"
+        />
+      </div>
+      <div class="profile-placeholder" v-else></div>
+    </div>
     <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">
       <img
-        src="../assets/ch-logo.svg"
+        src="../../../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
         draggable="false"

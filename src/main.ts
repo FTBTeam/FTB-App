@@ -20,8 +20,8 @@ import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 
 import store from './modules/store';
-import FTBButton from '@/components/FTBButton.vue';
-import FTBInput from '@/components/FTBInput.vue';
+import FTBButton from '@/components/atoms/input/FTBButton.vue';
+import FTBInput from '@/components/atoms/input/FTBInput.vue';
 
 const classMap: object = {
   h1: 'text-4xl',

@@ -25,10 +25,10 @@
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import FTBSlider from '@/components/FTBSlider.vue';
-import { State, Action } from 'vuex-class';
-import { Instance } from '../../modules/modpacks/types';
-import { SettingsState } from '../../modules/settings/types';
+import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
+import { Action, State } from 'vuex-class';
+import { Instance } from '../../../modules/modpacks/types';
+import { SettingsState } from '../../../modules/settings/types';
 
 @Component({
   components: {

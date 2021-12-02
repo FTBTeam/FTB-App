@@ -78,15 +78,15 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-import PackCard from '@/components/packs/PackCard.vue';
-import PackCardList from '@/components/packs/PackCardList.vue';
-import ServerCard from '@/components/ServerCard.vue';
+import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
+import PackCard from '@/components/organisms/packs/PackCard.vue';
+import PackCardList from '@/components/organisms/packs/PackCardList.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
 import { Action, State } from 'vuex-class';
 import { ModPack, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
-import FtbButton from '@/components/FTBButton.vue';
+import FtbButton from '@/components/atoms/input/FTBButton.vue';
 
 const namespace: string = 'modpacks';
 

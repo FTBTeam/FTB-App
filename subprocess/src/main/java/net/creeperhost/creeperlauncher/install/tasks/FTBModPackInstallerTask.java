@@ -159,7 +159,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
 
     public static ModPack getPackFromAPI(long packId, long versionId, boolean _private, byte packType)
     {
-        LOGGER.info("Getting pack from api.");
+        LOGGER.info(String.format("Getting pack([%s%s] %d / %d) from api.", _private ? "private:" : "", packType == 0 ? "native" : "curseforge", packId, versionId));
         String modpackURL = Constants.getCreeperhostModpackPrefix(_private, packType) + packId;
         String versionURL = modpackURL + "/" + versionId;
         String name = "";
@@ -276,7 +276,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
 
     public static ModPack getPackFromFile(Path _path)
     {
-        LOGGER.info("Getting pack from api.");
+        LOGGER.info(String.format("Getting pack from local store (%s).", _path.getFileName().toString()));
         String name = "";
         String version = "";
         List<String> authorList = new ArrayList<>();

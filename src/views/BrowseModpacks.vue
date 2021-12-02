@@ -124,10 +124,10 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
-import PackCardList from '@/components/packs/PackCardList.vue';
-import Loading from '@/components/Loading.vue';
+import PackCardList from '@/components/organisms/packs/PackCardList.vue';
+import Loading from '@/components/atoms/Loading.vue';
 import { SettingsState } from '@/modules/settings/types';
-import FTBSearchBar from '@/components/FTBSearchBar.vue';
+import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { ModpackState } from '../modules/modpacks/types';
 import { debounce } from '@/utils';
 import { Route } from 'vue-router';

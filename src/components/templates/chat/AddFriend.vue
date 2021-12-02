@@ -16,9 +16,9 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { State, Action } from 'vuex-class';
-import { AuthState } from '../../modules/auth/types';
+import { AuthState } from '../../../modules/auth/types';
 
-import { FriendRequestResponse } from '../../modules/auth/actions';
+import { FriendRequestResponse } from '../../../modules/auth/actions';
 
 @Component
 export default class AddFriend extends Vue {

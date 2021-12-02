@@ -23,12 +23,22 @@
         </div>
       </div>
     </div>
-    <div v-for="(file, index) in filteredModList" :key="index" v-if='file.enabled'>
+    <div v-for="(file, index) in filteredModList" :key="index" v-if="file.enabled">
       <div class="flex flex-row my-4 items-center">
-        <p :class="{'opacity-50': !file.enabled}" class='duration-150 transition-opacity'  :title="`Version ${file.version}`">{{ file.name.replace('.jar', '') }}</p>
+        <p
+          :class="{ 'opacity-50': !file.enabled }"
+          class="duration-150 transition-opacity"
+          :title="`Version ${file.version}`"
+        >
+          {{ file.name.replace('.jar', '') }}
+        </p>
         <div class="ml-auto flex items-center">
-          <span :class="{'opacity-50': !file.enabled}" class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 clean-font">{{ prettyBytes(parseInt(file.size)) }}</span>
-          <ftb-toggle v-if='false' :value="file.enabled" @change="() => toggleMod(file)" />
+          <span
+            :class="{ 'opacity-50': !file.enabled }"
+            class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 clean-font"
+            >{{ prettyBytes(parseInt(file.size)) }}</span
+          >
+          <ftb-toggle v-if="false" :value="file.enabled" @change="() => toggleMod(file)" />
 
           <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
           <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
@@ -47,16 +57,16 @@ import Component from 'vue-class-component';
 import { prettyByteFormat } from '@/utils/helpers';
 import { Action } from 'vuex-class';
 import { Prop, Watch } from 'vue-property-decorator';
-import FindMods from '@/components/modpack/FindMods.vue';
-import FTBSearchBar from '@/components/FTBSearchBar.vue';
-import FTBToggle from '@/components/FTBToggle.vue';
+import FindMods from '@/components/templates/modpack/FindMods.vue';
+import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Instance } from '@/modules/modpacks/types';
 
 @Component({
   components: {
     FTBSearchBar,
     FindMods,
-    'ftb-toggle': FTBToggle
+    'ftb-toggle': FTBToggle,
   },
 })
 export default class ModpackMods extends Vue {
@@ -81,14 +91,14 @@ export default class ModpackMods extends Vue {
   onModListChange() {
     this.filteredModList = this.modlist;
   }
-  
+
   toggleMod(file: any) {
     this.sendMessage({
       payload: {
-        type: "instanceModToggle",
-        uuid: this.instance.uuid, 
+        type: 'instanceModToggle',
+        uuid: this.instance.uuid,
         state: !file.enabled,
-        fileName: file.name
+        fileName: file.name,
       },
       callback: (data: any) => {
         if (data.successful) {
@@ -98,7 +108,7 @@ export default class ModpackMods extends Vue {
             title: 'Error',
             message: `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.name}`,
             type: 'warning',
-          })
+          });
         }
       },
     });

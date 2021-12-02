@@ -32,7 +32,7 @@ import { ModPack } from '@/modules/modpacks/types';
 import { Prop } from 'vue-property-decorator';
 import { Action, Getter, State } from 'vuex-class';
 import { Server, ServersState } from '@/modules/servers/types';
-import ServerCard from '@/components/ServerCard.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
 
 @Component({
   components: {

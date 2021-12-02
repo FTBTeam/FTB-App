@@ -63,13 +63,13 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
-import FTBToggle from '@/components/FTBToggle.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
-import FTBModal from '@/components/FTBModal.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
-import ServerCard from '@/components/ServerCard.vue';
-import InstallModal from '@/components/modals/InstallModal.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
+import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import { SocketState } from '@/modules/websocket/types';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';

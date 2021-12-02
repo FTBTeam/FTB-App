@@ -146,13 +146,13 @@ import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
 import { Instance, ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
-import ModpackMods from '@/components/modpack/ModpackMods.vue';
-import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
-import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
+import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
+import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
+import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import { getColorForChar } from '@/utils/colors';
 import { State } from 'vuex-class';
-import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
-import Loading from '@/components/Loading.vue';
+import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
+import Loading from '@/components/atoms/Loading.vue';
 
 @Component({
   components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },

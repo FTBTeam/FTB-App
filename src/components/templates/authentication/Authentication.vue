@@ -9,7 +9,7 @@
         <Loading />
       </div>
       <div class="main" v-else-if="error.length > 0">
-        {{error}}
+        {{ error }}
         <ftb-button color="is-primary" class="px-6 py-4" @click="$emit('close')">Close</ftb-button>
       </div>
       <div class="main" v-else-if="!showLegacyLogin && !loggedIn">
@@ -55,8 +55,8 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import YggdrasilAuthForm from '@/components/authentication/YggdrasilAuthForm.vue';
-import Loading from '@/components/Loading.vue';
+import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
+import Loading from '@/components/atoms/Loading.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
 import { addHyphensToUuid } from '@/utils/helpers';

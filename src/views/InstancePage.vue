@@ -70,27 +70,27 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
-import FTBToggle from '@/components/FTBToggle.vue';
-import FTBSlider from '@/components/FTBSlider.vue';
-import FTBModal from '@/components/FTBModal.vue';
-import ServerCard from '@/components/ServerCard.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
-import FindMods from '@/components/modpack/FindMods.vue';
+import FindMods from '@/components/templates/modpack/FindMods.vue';
 import { PackConst } from '@/utils/contants';
-import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
-import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
-import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
-import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
-import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
-import PackBody from '@/components/modpack/modpack-elements/PackBody.vue';
+import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
+import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
+import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
+import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
+import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
-import Authentication from '@/components/authentication/Authentication.vue';
+import Authentication from '@/components/templates/authentication/Authentication.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -199,18 +199,21 @@ export default class InstancePage extends Vue {
         // TODO: validate microsoft token
         // We need to store when the token expires using expires_in
       } else if (profile.type === 'mojang') {
-          let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            method: 'POST',
-            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: (profile.tokens as any).clientToken }),
-          });
-          if (rawResponse.status === 204) {
-            return false;
-          } else {
-            return true;
-          }
+        let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+          body: JSON.stringify({
+            accessToken: profile.tokens.accessToken,
+            clientToken: (profile.tokens as any).clientToken,
+          }),
+        });
+        if (rawResponse.status === 204) {
+          return false;
+        } else {
+          return true;
+        }
       }
     } else {
       // TODO: There's no active profile
@@ -222,17 +225,20 @@ export default class InstancePage extends Vue {
       if (profile.type === 'microsoft') {
         // TODO: refresh microsoft token
       } else if (profile.type === 'mojang') {
-          let rawResponse = await fetch(`https://authserver.mojang.com/refresh`, {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            method: 'POST',
-            body: JSON.stringify({ accessToken: profile.tokens.accessToken, clientToken: (profile.tokens as any).clientToken }),
-          });
-          let response = await rawResponse.json();
-          console.log(response.accessToken);
-          // TODO: Handle when this doesn't work and ask for password again
-          // TODO: update the tokens stored on the profile
+        let rawResponse = await fetch(`https://authserver.mojang.com/refresh`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+          body: JSON.stringify({
+            accessToken: profile.tokens.accessToken,
+            clientToken: (profile.tokens as any).clientToken,
+          }),
+        });
+        let response = await rawResponse.json();
+        console.log(response.accessToken);
+        // TODO: Handle when this doesn't work and ask for password again
+        // TODO: update the tokens stored on the profile
       }
     } else {
       // TODO: There's no active profile
@@ -247,7 +253,7 @@ export default class InstancePage extends Vue {
     }
 
     // getActiveProfile data isn't the same as the mapped profiles
-    let activeProfile = this.authProfiles.find((profile) => profile.uuid == this.getActiveProfile.uuid);
+    let activeProfile = this.authProfiles.find(profile => profile.uuid == this.getActiveProfile.uuid);
 
     const shouldRefresh = await this.validateToken(activeProfile);
     if (shouldRefresh) {

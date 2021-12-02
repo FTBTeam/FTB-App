@@ -51,8 +51,8 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-import FTBSearchBar from '@/components/FTBSearchBar.vue';
+import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
+import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';

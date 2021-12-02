@@ -139,10 +139,10 @@ import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { SettingsState } from '@/modules/settings/types';
-import FTBModal from '@/components/FTBModal.vue';
-import FTBToggle from '@/components/FTBToggle.vue';
-import FTBSlider from '@/components/FTBSlider.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 
 interface MsgBox {
   title: string;

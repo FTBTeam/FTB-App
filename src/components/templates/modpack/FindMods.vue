@@ -101,8 +101,8 @@ import { debounce } from '@/utils';
 import axios from 'axios';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
-import FTBSearchBar from '../FTBSearchBar.vue';
-import ModCard from './ModCard.vue';
+import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
+import ModCard from '../../molecules/modpack/ModCard.vue';
 
 @Component({
   components: {

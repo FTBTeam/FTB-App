@@ -141,19 +141,19 @@
 </template>
 
 <script lang="ts">
-import Sidebar from '@/components/Sidebar.vue';
-import TitleBar from '@/components/TitleBar.vue';
+import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
+import TitleBar from '@/components/layout/TitleBar.vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
-import FTBModal from '@/components/FTBModal.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { logVerbose } from '@/utils';
 import { InstallProgress, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
-import ReportForm from '@/components/report/ReportForm.vue';
-import AdAside from '@/components/AdAside.vue';
+import ReportForm from '@/components/templates/ReportForm.vue';
+import AdAside from '@/components/layout/AdAside.vue';
 
 @Component({
   components: {

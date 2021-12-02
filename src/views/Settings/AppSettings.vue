@@ -43,7 +43,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import FTBToggle from '@/components/FTBToggle.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Settings, SettingsState } from '@/modules/settings/types';
 import { Action, State } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';

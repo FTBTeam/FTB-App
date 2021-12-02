@@ -25,8 +25,8 @@
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import FTBButton from '@/components/FTBButton.vue';
-import Selection from '@/components/elements/Selection.vue';
+import FTBButton from '@/components/atoms/input/FTBButton.vue';
+import Selection from '@/components/atoms/input/Selection.vue';
 import { Versions } from '@/modules/modpacks/types';
 import { getColorForReleaseType } from '@/utils/colors';
 

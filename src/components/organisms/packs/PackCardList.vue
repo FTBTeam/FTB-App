@@ -1,39 +1,115 @@
 <template>
-  <div v-if="settingsState !== undefined">
-    <div
-      class="pack-card"
-      @click.prevent="cardClicked"
-      v-if="currentModpack !== undefined || instance !== undefined || isDemo"
-    >
-      <div class="art">
-        <span
-          v-if="versionType !== 'release'"
-          class="beta-tag"
-          :style="{ backgroundColor: getColorForReleaseType(versionType) }"
-          :class="versionType"
-          >{{ versionType }}</span
-        >
-        <div class="has-update" v-if="instance && !isLatestVersion && kind === 'instance'">Update Available</div>
-        <img
-          class="w-full"
-          :src="getLogo(art)"
-          alt="pack art"
-          :class="[installing ? 'blur' : '', kind === 'cloudInstance' ? 'cloud-pack-image' : '']"
-        />
-      </div>
-      <div class="meta">
-        <div class="title">{{ name }}</div>
-        <div class="version">{{ version }}</div>
-        <div class="play-button" @click.stop="!loading && checkMemoryThenLaunch()">
-          <div class="clickable-play" :class="{ disabled: loading, loading }">
-            <span v-if="!loading && kind !== 'cloudInstance'">Play</span>
-            <span v-else-if="kind === 'cloudInstance'">Sync</span>
-            <span v-else>Loading...</span>
+  <div class="card-overview-container w-full">
+    <div v-if="settingsState !== undefined" class="mb-6 card-list w-full h-size-1 shadow-lg">
+      <div
+        v-if="(!fake && (currentModpack !== undefined || instance !== undefined)) || isDemo"
+        style="height: 100%"
+        class="flex flex-row card-contents"
+      >
+        <div class="pack-bg" :style="`background: url(${getBackground(art)});`"></div>
+        <article :class="`relative overflow-hidden mr-4`" style="height: 100%" @click="cardClicked">
+          <img
+            class="pack-image rounded"
+            :src="getLogo(art)"
+            alt="placeholder"
+            :class="kind === 'cloudInstance' ? 'cloud-pack-image' : ''"
+          />
+          <div class="content cursor-pointer">
+            <!--        <div class="name-box">{{name}} (v{{version}})</div>-->
+            <div v-if="instance && !isLatestVersion && kind === 'instance'" class="update-box">New Version</div>
+            <div v-if="installing" class="update-box">Installing...</div>
           </div>
+        </article>
+        <div class="flex-1 p-2 flex flex-col" @click="cardClicked">
+          <div class="flex flex-row">
+            <div class="name-box font-bold">
+              <span v-if="featured" class="rounded mr-2 text-sm bg-yellow-300 px-2 uppercase text-black">Featured</span
+              >{{ name }}
+              <div class="inline-block ml-2 text-sm text-muted font-medium" v-if="authors.length > 0">
+                By
+                <template v-if="typeof authors === 'object'">
+                  <span v-for="author in authors" :key="author.id"
+                    >{{ author.name }} {{ authors.length > 1 ? ', ' : '' }}</span
+                  >
+                </template>
+                <template v-else>
+                  <span>{{ authors.name }}</span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <p class="mb-auto max-2-lines mr-4">{{ description }}</p>
+          <div v-if="tags" class="flex flex-row items-center">
+            <div class="flex flex-row" @click.stop>
+              <span
+                v-for="(tag, i) in limitedTags"
+                :key="`tag-${i}`"
+                @click="clickTag(tag.name)"
+                class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
+                style="font-variant: small-caps;"
+                >{{ tag.name }}</span
+              >
+              <span
+                v-if="tags.length > 5"
+                :key="`tag-more`"
+                class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
+                style="font-variant: small-caps;"
+                >+{{ tags.length - 5 }}</span
+              >
+            </div>
+          </div>
+        </div>
+        <div
+          style="width:50px;"
+          class="flex flex-col list-action-button-holder"
+          v-if="installed && kind === 'instance'"
+        >
+          <FTBButton
+            @click="checkMemory()"
+            :isRounded="false"
+            color="primary"
+            class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr rounded-br"
+            :disabled="loading"
+          >
+            <span v-if="!loading"
+              ><font-awesome-icon icon="play" size="sm" class="cursor-pointer" />
+              <p>Play</p></span
+            >
+            <font-awesome-icon
+              v-else-if="loading"
+              :icon="'spinner'"
+              size="sm"
+              :class="`cursor-pointer button hover-scale lg:text-1xl sm:text-base`"
+              spin
+            />
+          </FTBButton>
+          <!-- <FTBButton @click="goToInstance" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
+        </div>
+        <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="!installed">
+          <FTBButton
+            @click="openInstall"
+            :isRounded="false"
+            color="primary"
+            class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded"
+            ><font-awesome-icon icon="download" size="sm" class="cursor-pointer" />
+            <p>Get</p></FTBButton
+          >
+          <!-- <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
+        </div>
+        <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="kind === 'cloudInstance'">
+          <FTBButton
+            @click="sync"
+            :isRounded="false"
+            color="primary"
+            class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-tr rounded-br"
+            ><font-awesome-icon icon="cloud-download-alt" size="sm" class="cursor-pointer" />
+            <p>Sync</p></FTBButton
+          >
         </div>
       </div>
     </div>
-    <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
+    <FTBModal :visible="showInstall" size="medium" @dismiss-modal="hideInstall" :dismissable="true">
       <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />
     </FTBModal>
     <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox" :dismissable="true">
@@ -50,23 +126,20 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import FTBButton from '@/components/FTBButton.vue';
-import FTBModal from '@/components/FTBModal.vue';
-import SettingsModal from '@/components/modals/SettingsModal.vue';
-import InformationModal from '@/components/modals/InformationModal.vue';
-import InstallModal from '@/components/modals/InstallModal.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBButton from '@/components/atoms/input/FTBButton.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import SettingsModal from '@/components/organisms/modals/SettingsModal.vue';
+import InformationModal from '@/components/organisms/modals/InformationModal.vue';
+import InstallModal from '@/components/organisms/modals/InstallModal.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
-import { Instance, ModpackState } from '../../modules/modpacks/types';
+import { Instance, ModpackState } from '../../../modules/modpacks/types';
 // @ts-ignore
-import placeholderImage from '@/assets/placeholder_art.png';
+import * as placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
-import { logVerbose } from '../../utils';
-import { AuthState } from '../../modules/auth/types';
-import { getColorForReleaseType } from '@/utils/colors';
-
-const namespace = 'websocket';
+import { AuthState } from '@/modules/auth/types';
+import { logVerbose } from '@/utils';
 
 export interface MsgBox {
   title: string;
@@ -89,6 +162,7 @@ export interface MsgBox {
     'packID',
     'art',
     'name',
+    'authors',
     'installed',
     'version',
     'versionID',
@@ -100,37 +174,37 @@ export interface MsgBox {
     'fake',
     'isDemo',
     'size',
+    'tags',
     'preLaunch',
+    'type',
     'postLaunch',
     'kind',
-    'type',
+    'featured',
   ],
 })
-export default class PackCard extends Vue {
+export default class PackCardList extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
   @State('auth') public auth!: AuthState;
   @Action('sendMessage') public sendMessage: any;
+  @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack: any;
   @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall: any;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack: any;
-  @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack: any;
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
   @Action('errorInstall', { namespace: 'modpacks' }) public errorInstall: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
   @State('settings') public settingsState!: SettingsState;
+  @Action('doSearch', { namespace: 'modpacks' }) public doSearch: any;
 
   public name!: string;
-  @Prop()
-  public instance!: Instance;
-  @Prop()
-  public packID!: number;
-  @Prop()
-  public kind!: string;
-  @Prop()
-  public preLaunch?: (id: Instance) => Promise<void>;
-  @Prop()
-  public postLaunch?: (id: Instance) => Promise<void>;
-  private showInstall = false;
-  private showMsgBox = false;
+  @Prop() public instance!: Instance;
+  @Prop() public packID!: number;
+  @Prop() public tags!: [];
+  @Prop() public type!: string;
+  @Prop() public preLaunch!: (id: Instance) => Promise<void>;
+  @Prop() public postLaunch!: (id: Instance) => Promise<void>;
+  @Prop() public kind!: string;
+  private showInstall: boolean = false;
+  private showMsgBox: boolean = false;
   private defaultImage: any = placeholderImage;
   private msgBox: MsgBox = {
     title: '',
@@ -141,12 +215,14 @@ export default class PackCard extends Vue {
   };
   private loading: boolean = false;
 
-  getColorForReleaseType = getColorForReleaseType;
-
   @Watch('modpacks', { deep: true })
   public onModpacksChange(newState: ModpackState, oldState: ModpackState) {
     logVerbose(this.settingsState, 'State updated');
     this.$forceUpdate();
+  }
+
+  public clickTag(tagName: string) {
+    this.$router.push({ name: 'browseModpacks', params: { search: tagName } });
   }
 
   public async mounted() {
@@ -161,7 +237,7 @@ export default class PackCard extends Vue {
     }
     this.updateInstall({ modpackID: this.$props.packID, progress: 0 });
     this.sendMessage({
-      payload: { type: 'syncInstance', uuid: this.instance.uuid },
+      payload: { type: 'syncInstance' },
       callback: (data: any) => {
         if (this.showInstall) {
           this.showInstall = false;
@@ -210,7 +286,7 @@ export default class PackCard extends Vue {
     });
   }
 
-  public checkMemoryThenLaunch() {
+  public checkMemory() {
     if (this.instance.memory < this.instance.minMemory) {
       this.msgBox.type = 'okCancel';
       this.msgBox.title = 'Low Memory';
@@ -218,7 +294,7 @@ export default class PackCard extends Vue {
       this.msgBox.cancelAction = this.hideMsgBox;
       this.msgBox.content =
         `You are trying to launch the modpack with memory settings that are below the` +
-        `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
+        `minimum required. This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
         `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
       this.showMsgBox = true;
     } else {
@@ -236,7 +312,7 @@ export default class PackCard extends Vue {
       this.settingsState.settings.loadInApp === true ||
       this.settingsState.settings.loadInApp === 'true' ||
       this.auth.token?.activePlan == null;
-    const disableChat = this.settingsState.settings.enableChat === true;
+    const disableChat = !(this.settingsState.settings.enableChat === true);
     this.sendMessage({
       payload: {
         type: 'launchInstance',
@@ -248,6 +324,7 @@ export default class PackCard extends Vue {
         if (this.postLaunch) {
           this.postLaunch(this.instance);
         }
+        // Instance launched
       },
     });
     setTimeout(() => {
@@ -255,18 +332,19 @@ export default class PackCard extends Vue {
     }, 7000);
   }
 
+  get limitedTags() {
+    if (this.tags) {
+      return this.tags.slice(0, 5);
+    } else {
+      return [];
+    }
+  }
+
   public hideMsgBox(): void {
     this.showMsgBox = false;
   }
 
   get installing() {
-    if (this.instance !== undefined && this.instance !== null) {
-      return (
-        this.modpacks !== undefined &&
-        this.modpacks.installing !== null &&
-        this.modpacks.installing.instanceID === this.instance.uuid
-      );
-    }
     return (
       this.modpacks !== undefined &&
       this.modpacks.installing !== null &&
@@ -278,6 +356,8 @@ export default class PackCard extends Vue {
     if (this.modpacks.installing !== null) {
       return;
     }
+
+    // this.$router.push({name: 'launchingpage', query: {modpackid: this.$props.packID}});
     this.$router.replace({
       name: 'installingpage',
       query: { modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type },
@@ -304,7 +384,7 @@ export default class PackCard extends Vue {
   }
 
   public openInfo(): void {
-    this.$router.push({ name: 'modpackpage', query: { modpackid: this.$props.packID, type: this.$props.type } });
+    this.$router.push({ name: 'modpackpage', query: { modpackid: this.$props.packID, type: this.$props.type ?? 0 } });
   }
 
   public openInstall(): void {
@@ -321,7 +401,7 @@ export default class PackCard extends Vue {
         return semver.rcompare(a.name, b.name);
       });
     } catch (e) {
-      console.log('Error getting latest version, semver failed', e);
+      console.log('Error getting latest version, semver failed. Falling back to reverse', e);
       return this.modpacks?.packsCache[this.instance.id].versions.reverse();
     }
   }
@@ -353,6 +433,15 @@ export default class PackCard extends Vue {
     return artP.url;
   }
 
+  public getBackground(packArt: any) {
+    if (typeof packArt === 'string') return '';
+    let artP = packArt.filter((art: any) => art.type === 'splash')[0];
+    if (artP === undefined) {
+      return '';
+    }
+    return artP.url;
+  }
+
   public cardClicked() {
     if (this.kind === 'instance') {
       this.goToInstance();
@@ -360,112 +449,44 @@ export default class PackCard extends Vue {
       this.openInfo();
     }
   }
-
-  get versionType() {
-    return this.currentModpack?.versions?.find(e => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
-  }
 }
 </script>
 
 <style scoped lang="scss">
-.pack-card {
-  border-radius: 5px;
-  overflow: hidden;
-  border: 2px solid rgba(68, 68, 68, 0.3);
-  cursor: pointer;
-
-  &:hover {
-    .play-button {
-      transform: translateY(0) !important;
-    }
-
-    .title,
-    .version {
-      opacity: 0 !important;
-    }
-  }
-
-  .art {
-    position: relative;
-
-    .beta-tag {
-      position: absolute;
-      top: 0.5rem;
-      left: 0.5rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      background-color: rgba(234, 32, 32, 0.89);
-      font-size: 0.75rem;
-      font-weight: bold;
-
-      box-shadow: 0 3px 15px rgba(black, 0.2);
-
-      text-transform: capitalize;
-    }
-
-    .has-update {
-      position: absolute;
-      font-size: 0.875rem;
-      color: white;
-      background: rgba(41, 130, 212, 0.5);
-      backdrop-filter: blur(3px);
-      padding: 0.2rem 0.5rem;
-      font-family: Arial, Helvetica, sans-serif;
-      text-align: center;
-      bottom: 0;
-      width: 100%;
-    }
-  }
-
-  .meta {
-    position: relative;
-    padding: 0.6rem 0.8rem;
-    background: rgba(68, 68, 68, 0.6);
-
-    .title {
-      max-width: 100%;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      transition: opacity 0.25s ease-in-out;
-    }
-
-    .version {
-      opacity: 0.5;
-      transition: opacity 0.25s ease-in-out;
-      font-size: 0.875rem;
-      line-height: 1em;
-    }
-
-    .play-button {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      padding: 0.75rem 0.5rem;
-      transform: translateY(105%);
-      transition: transform 0.25s ease-in-out;
-
-      .clickable-play {
-        background: var(--color-primary-button);
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 5px;
-        transition: background-color 0.25s ease-in-out;
-
-        &:hover {
-          background: var(--color-light-primary-button);
-        }
-      }
-    }
-  }
-}
-
 .card {
   position: relative;
+}
+
+.card-list {
+  background: var(--color-sidebar-item);
+  border-radius: 5px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition: 0.25s ease-in-out transform;
+
+  &:hover {
+    transform: translateY(-5px);
+    .pack-bg {
+      transform: scale(1.2);
+    }
+  }
+
+  .card-contents {
+    position: relative;
+    padding: 1rem;
+
+    .pack-bg {
+      position: absolute;
+      z-index: -1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.2;
+      transition: 0.25s ease-in-out transform;
+    }
+  }
 }
 
 .pack-image {
@@ -473,34 +494,52 @@ export default class PackCard extends Vue {
   height: 100%;
   object-fit: cover;
 }
-
 .cloud-pack-image {
   filter: grayscale(0.7);
 }
-
-.card:hover .pack-image {
-  filter: blur(5px) brightness(50%);
+.card-list .list-action-button {
+  filter: brightness(0.7);
 }
-
+.card-list:hover .list-action-button {
+  filter: brightness(1);
+}
+.card-list:hover .flex {
+  cursor: pointer;
+  .background .background-art {
+    filter: saturate(1);
+  }
+  .bg-background-lighten {
+    background-color: rgba(68, 68, 68, 0.6);
+  }
+}
 .pack-image.blur {
   filter: blur(5px) brightness(50%);
 }
-
-.card {
-  &:hover {
-    .hoverContent {
-      opacity: 1;
-    }
+.list-action-button-holder:hover .list-action-button:not(:hover) {
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  & > * {
+    height: 0;
   }
 }
-
-.hoverContent.show {
-  opacity: 1;
+.list-action-button {
+  transition: height 0.2s, filter 0.4s;
+  overflow: hidden;
+  & > * {
+    overflow: hidden;
+  }
+  & p:not(.cursor-pointer) {
+    display: none;
+  }
 }
-
-// .card:hover .content {
-//     opacity: 0;
-// }
+.list-action-button-holder .list-action-button:hover,
+.list-action-button-holder .list-action-button:hover ~ .list-action-button:hover {
+  height: 100%;
+  & p:not(.cursor-pointer) {
+    display: block;
+  }
+}
 
 .buttons {
   display: flex;
@@ -519,9 +558,9 @@ export default class PackCard extends Vue {
 .content {
   position: absolute;
   height: 100%;
+  bottom: 0;
   width: 100%;
   color: #fff;
-  bottom: 0;
   opacity: 1;
   transition: opacity 0.3s;
   z-index: 2;
@@ -532,28 +571,18 @@ export default class PackCard extends Vue {
 }
 
 .content .name-box {
-  backdrop-filter: blur(8px);
-  background: rgba(black, 0.2);
-  text-align: left;
+  background: rgba(0, 0, 0, 0.6);
   width: 100%;
+  text-align: left;
   font-size: 15px;
   font-weight: 700;
   padding: 2px 2px 2px 6px;
-  & p {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    max-height: 100%;
-  }
 }
 
 .content .update-box {
-  /*text-align: center;*/
   background: rgba(255, 193, 7, 0.9);
   width: 100%;
+  text-align: left;
   color: #000;
   font-weight: 700;
   padding: 2px 2px 2px 6px;
@@ -571,7 +600,7 @@ export default class PackCard extends Vue {
   color: #fff;
   opacity: 0;
   transition: opacity 0.5s;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -590,52 +619,59 @@ export default class PackCard extends Vue {
   transition: transform 0.2s ease-in;
 }
 
-// .hover-scale:hover {
-//     transform: scale(1.3);
-// }
+.hover-scale:hover {
+  transform: scale(1.3);
+}
 
 .button-shadow {
   // text-shadow: 3px 6px #272634;
   filter: drop-shadow(10px 10px 5px rgba(0, 0, 0, 0.8));
 }
 
-.action-buttons:hover .action-icon:not(:hover) {
-  width: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  & > * {
-    width: 0;
-  }
-}
-.action-icon {
-  transition: width 0.2s, filter 0.4s;
+.max-2-lines {
   overflow: hidden;
-  & > * {
-    overflow: hidden;
-  }
-  & p.ml-2 {
-    display: none;
-  }
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
-.action-buttons .action-icon:hover:not(.divider),
-.action-buttons .action-icon:hover:not(.divider) ~ .action-icon:hover:not(.divider) {
+.background {
   width: 100%;
-  & p.ml-2 {
-    display: block;
+  position: relative;
+  z-index: 0;
+  .background-art {
+    position: absolute;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    background-position: 50% !important;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    opacity: 0.4;
+    filter: saturate(0);
   }
-}
-
-.menu-icon {
-  position: absolute;
-  top: 3px;
-  right: 5px;
-  z-index: 10;
-  &:hover {
-    filter: drop-shadow(1px 1px 2px #000000);
+  &:before {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    top: 0px;
+    left: 0px;
   }
-}
-
-.fa-3x {
-  font-size: 2.5em !important;
+  &:after {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    bottom: 0px;
+    left: 0px;
+  }
 }
 </style>

@@ -51,16 +51,15 @@
         >
           <p
             :class="
-              `ml-2 cursor-pointer overflow-hidden ${friend.isOnline ? 'text-white font-bold' : 'text-muted font-normal'}`
+              `ml-2 cursor-pointer overflow-hidden ${
+                friend.isOnline ? 'text-white font-bold' : 'text-muted font-normal'
+              }`
             "
             style="text-overflow: ellipsis;"
           >
             {{ friend.friendName }}
           </p>
-          <p
-            v-if="unreadMessages[friend.mediumHash] > 0"
-            class="bg-red-600 rounded-full px-2 ml-2 text-xs"
-          >
+          <p v-if="unreadMessages[friend.mediumHash] > 0" class="bg-red-600 rounded-full px-2 ml-2 text-xs">
             {{ unreadMessages[friend.mediumHash] }}
           </p>
           <div class="icons ml-auto">
@@ -130,8 +129,8 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { State, Action } from 'vuex-class';
-import { AuthState, Friend } from '../../modules/auth/types';
-import { Messages, FriendListResponse } from '../../types';
+import { AuthState, Friend } from '../../../modules/auth/types';
+import { Messages, FriendListResponse } from '../../../types';
 import platform from '@/utils/interface/electron-overwolf';
 
 interface UnreadMessages {
@@ -255,7 +254,10 @@ export default class MainChat extends Vue {
 
   get currentFriends() {
     console.log(this.friends);
-    let friends = [...this.friends.online.filter(a => !a.pending), ...this.friends.offline.filter(a=> !a.pending)].sort((a, b) =>a.isOnline ? b.isOnline ? 0 : -1 : 1);
+    let friends = [
+      ...this.friends.online.filter(a => !a.pending),
+      ...this.friends.offline.filter(a => !a.pending),
+    ].sort((a, b) => (a.isOnline ? (b.isOnline ? 0 : -1) : 1));
     if (this.search.length > 0) {
       friends = friends.filter(a => a.userDisplay?.indexOf(this.search) !== -1);
     }
@@ -264,7 +266,9 @@ export default class MainChat extends Vue {
 
   get friendRequests() {
     console.log(this.friends.pending);
-    return this.friends.pending.filter(friend => this.currentFriends.find(f => f.longHash === friend.longHash) === undefined);
+    return this.friends.pending.filter(
+      friend => this.currentFriends.find(f => f.longHash === friend.longHash) === undefined,
+    );
   }
 
   public mounted() {
@@ -283,7 +287,7 @@ export default class MainChat extends Vue {
 
 <style>
 .minimtg {
-  background-image: url('../../assets/mtg-tiny-desat.png');
+  background-image: url('../../../assets/mtg-tiny-desat.png');
   width: 300px;
   height: 100%;
   position: absolute;

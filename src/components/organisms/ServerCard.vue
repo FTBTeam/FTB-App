@@ -62,11 +62,11 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import FTBButton from '@/components/FTBButton.vue';
+import FTBButton from '@/components/atoms/input/FTBButton.vue';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
-import MessageModal from '@/components/modals/MessageModal.vue';
-import FTBModal from '@/components/FTBModal.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 
 export interface MsgBox {

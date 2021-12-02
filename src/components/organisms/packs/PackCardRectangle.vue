@@ -124,17 +124,15 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import FTBButton from '@/components/FTBButton.vue';
-import FTBModal from '@/components/FTBModal.vue';
-import SettingsModal from '@/components/modals/SettingsModal.vue';
-import InformationModal from '@/components/modals/InformationModal.vue';
-import InstallModal from '@/components/modals/InstallModal.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
+import { Component, Prop, Vue } from 'vue-property-decorator';
+import FTBButton from '@/components/atoms/input/FTBButton.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import SettingsModal from '@/components/organisms/modals/SettingsModal.vue';
+import InformationModal from '@/components/organisms/modals/InformationModal.vue';
+import InstallModal from '@/components/organisms/modals/InstallModal.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
-import { ModpackState, Instance } from '../../modules/modpacks/types';
-import { SettingsState } from '@/modules/settings/types';
-import { AuthState } from '@/modules/auth/types';
+import { Instance, ModpackState } from '../../../modules/modpacks/types';
 
 export interface MsgBox {
   title: string;

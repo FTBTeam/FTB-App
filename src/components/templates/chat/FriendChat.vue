@@ -66,10 +66,10 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Friend } from '../../modules/auth/types';
-import { Message } from '../../types';
-import ConfirmationModal from '../modals/ConfirmationModal.vue';
-import FTBModal from '../FTBModal.vue';
+import { Friend } from '../../../modules/auth/types';
+import { Message } from '../../../types';
+import ConfirmationModal from '../../organisms/modals/ConfirmationModal.vue';
+import FTBModal from '../../atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 
 @Component({

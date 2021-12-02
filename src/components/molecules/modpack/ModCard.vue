@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <ftb-modal :visible="showInstall" size='medium' @dismiss-modal="closeModal" :dismissable="!installing">
+    <ftb-modal :visible="showInstall" size="medium" @dismiss-modal="closeModal" :dismissable="!installing">
       <h2 class="text-3xl mb-2">{{ mod.name }}</h2>
       <p
         :style="{
@@ -48,7 +48,7 @@
       >
         Select the version of '{{ mod.name }}' that you'd like to install to your pack.
       </p>
-      
+
       <template v-if="!installing && !finishedInstalling">
         <selection
           class="my-6"
@@ -113,9 +113,9 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import { Instance } from '@/modules/modpacks/types';
 import { Action } from 'vuex-class';
-import Selection from '@/components/elements/Selection.vue';
-import FTBModal from '../FTBModal.vue';
-import MessageModal from '../modals/MessageModal.vue';
+import Selection from '@/components/atoms/input/Selection.vue';
+import FTBModal from '../../atoms/FTBModal.vue';
+import MessageModal from '../../organisms/modals/MessageModal.vue';
 import eventBus from '@/utils/event-bus';
 import { prettyByteFormat } from '@/utils/helpers';
 import { getColorForReleaseType } from '@/utils/colors';
@@ -164,10 +164,13 @@ export default class ModCard extends Vue {
 
   mounted() {
     this.versions =
-      this.mod.versions.filter(
-        e => e.targets.findIndex(a => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
-      ).sort((a, b) => b.id - a.id) ?? [];
-    
+      this.mod.versions
+        .filter(
+          e =>
+            e.targets.findIndex(a => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
+        )
+        .sort((a, b) => b.id - a.id) ?? [];
+
     eventBus.$on('ws.message', (data: any) => {
       if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
         return;
