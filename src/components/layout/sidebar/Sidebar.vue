@@ -33,61 +33,37 @@
         <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>
         <span class="whitespace-no-wrap">Friends List</span>
       </a>
-      <router-link :to="{ name: 'MTIntegration' }" v-if="getActiveProfile" class="nav-item capitalize">
-        <div class="flex items-center account">
-          <img
-            :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`"
-            style="width: 40px; height: 40px;"
-            class="rounded"
-          />
-        </div>
-      </router-link>
+
+      <sidebar-profile class="block" />
     </div>
-    <div class="profile-area">
-      <div class="profile" v-if="getActiveProfile">
-        <img
-          :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`"
-          alt="Profile"
-          class="rounded"
-          width="40"
-          height="40"
-        />
-      </div>
-      <div class="profile-placeholder" v-else></div>
-    </div>
-    <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">
-      <img
-        src="../../../assets/ch-logo.svg"
-        class="my-4 mx-auto w-full cursor-pointer logo-hover"
-        style="height: 30px"
-        draggable="false"
-      />
-    </div>
+    <!--    <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">-->
+    <!--      <img-->
+    <!--        src="../../../assets/ch-logo.svg"-->
+    <!--        class="my-4 mx-auto w-full cursor-pointer logo-hover"-->
+    <!--        style="height: 30px"-->
+    <!--        draggable="false"-->
+    <!--      />-->
+    <!--    </div>-->
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { AuthState } from '@/modules/auth/types';
-import { Action, Getter, State } from 'vuex-class';
+import { State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
+import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 
-@Component
+@Component({
+  components: { SidebarProfile },
+})
 export default class Sidebar extends Vue {
   @State('auth') private auth!: AuthState;
   @State('modpacks') private modpacks!: ModpackState;
   @State('settings') private settings!: SettingsState;
-  @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
-  @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
-
   @Prop({ default: false }) isTransparent!: boolean;
-
-  @Getter('getProfiles', { namespace: 'core' }) private getProfiles!: any;
-  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
-
-  private appVersion: string = platform.get.config.appVersion;
 
   navigation = [
     {
@@ -122,14 +98,6 @@ export default class Sidebar extends Vue {
     },
   ];
 
-  get isDevelop() {
-    const splits = this.appVersion.split('-');
-    if (splits.length === 0) {
-      return true;
-    }
-    return !splits[splits.length - 1].match(/\d/);
-  }
-
   get disableNav() {
     return (
       this.$router.currentRoute.path.startsWith('/launching') ||
@@ -137,17 +105,8 @@ export default class Sidebar extends Vue {
     );
   }
 
-  get avatarName() {
-    const provider = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
-  }
-
   public openPromo(): void {
     platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME');
-  }
-
-  public openGithub(): void {
-    platform.get.utils.openUrl('https://github.com/FTBTeam/FTB-App-Overwolf/issues');
   }
 
   public openFriends() {
