@@ -160,14 +160,14 @@ export const actions: ActionTree<ModpackState, RootState> = {
           return;
         }
         const packs: ModPack[] = [];
-        await asyncForEach(packIDs, async (packID: number) => {
+        for await (const packID of packIDs) {
           const pack = await dispatch('fetchModpack', packID);
           if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
             logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
             return;
           }
           packs.push(pack);
-        });
+        }
         commit('featuredPacksLoaded', packs);
         commit('setLoading', false);
       })
@@ -277,7 +277,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
               name: instance.name,
               jvmargs: instance.jvmArgs,
               jrePath: instance.jrePath,
-              embeddedJre: instance.jrePath === "",
+              embeddedJre: instance.jrePath === '',
               memory: instance.memory,
               width: instance.width,
               height: instance.height,

@@ -30,7 +30,6 @@ httpClient.defaults.timeout = 5000;
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
-let msAuthWindow: BrowserWindow | null = null;
 
 let protocolURL: string | null;
 
