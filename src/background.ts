@@ -317,10 +317,10 @@ function createWindow() {
     // Other
     icon: path.join(__static, 'favicon.ico'),
     // Size Settings
-    minWidth: 1460,
-    minHeight: 900,
-    width: 1460,
-    height: 900,
+    minWidth: 1120,
+    minHeight: 690,
+    width: 1320,
+    height: 800,
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
