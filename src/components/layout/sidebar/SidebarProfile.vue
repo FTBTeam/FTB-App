@@ -13,7 +13,13 @@
 
       <div class="profile-switch">
         <section>
-          <div class="headings"><img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />Accounts</div>
+          <div class="headings">
+            <div class="main">
+              <img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />
+              Accounts
+            </div>
+            <font-awesome-icon icon="edit" />
+          </div>
           <div class="accounts" v-if="getProfiles.length">
             <div class="account" v-for="(item, key) in getProfiles" :key="key">
               <div class="avatar">
@@ -22,7 +28,7 @@
                   <img src="@/assets/images/branding/microsoft-squares.png" alt="Microsoft account" />
                 </div>
               </div>
-              <div class="name">
+              <div class="name selectable">
                 {{ item.username }}
               </div>
             </div>
@@ -35,16 +41,24 @@
 
         <section>
           <div class="mt-area">
-            <div class="headings"><img src="@/assets/mtg-tiny-desat.png" alt="MineTogether Logo" />MineTogether</div>
+            <div class="headings">
+              <div class="main">
+                <img src="@/assets/mtg-tiny-desat.png" alt="MineTogether Logo" />
+                MineTogether
+              </div>
+              <router-link :to="{ name: 'integrations' }">
+                <font-awesome-icon icon="edit" />
+              </router-link>
+            </div>
             <div class="account" v-if="auth.token">
               <div class="avatar">
                 <img :src="`https://api.mymcuu.id/head/${avatarName}`" alt="Profile" class="rounded" />
               </div>
               <div class="meta">
-                <div class="name">
+                <div class="name selectable">
                   {{ auth.token.mc.display !== null ? auth.token.mc.display : auth.token.username }}
                 </div>
-                <div class="hash">{{ auth.token.mc.friendCode }}</div>
+                <div class="hash selectable">{{ auth.token.mc.friendCode }}</div>
               </div>
             </div>
             <div class="add inline-block" v-else>
@@ -88,9 +102,13 @@ export default class SidebarProfile extends Vue {
 </script>
 
 <style scoped lang="scss">
+.selectable {
+  user-select: text;
+}
+
 .profile-area {
   position: relative;
-  margin-bottom: 0.5rem;
+
   margin-top: 0.5rem;
 
   .profile {
@@ -115,6 +133,7 @@ export default class SidebarProfile extends Vue {
 
     .profile-switch section:not(:last-child) {
       transform: translateY(0);
+      transition-delay: 0.15s;
       box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.3);
       opacity: 1;
     }
@@ -146,8 +165,7 @@ export default class SidebarProfile extends Vue {
         box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0);
         opacity: 0;
 
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, opacity 0.3s ease-in-out;
-        transition-delay: 0.16s;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, opacity 0.2s ease-in-out;
       }
     }
 
@@ -169,6 +187,17 @@ export default class SidebarProfile extends Vue {
       align-items: center;
       color: rgba(white, 0.9);
       margin-bottom: 1.2rem;
+
+      .main {
+        display: flex;
+        align-items: center;
+        flex: 1;
+      }
+
+      .fa-edit {
+        opacity: 0.5;
+        cursor: pointer;
+      }
 
       img {
         margin-right: 0.5rem;
