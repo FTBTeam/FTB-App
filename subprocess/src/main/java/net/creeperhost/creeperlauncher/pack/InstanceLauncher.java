@@ -111,7 +111,8 @@ public class InstanceLauncher {
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
-        Set<String> features = Set.of();
+        // TODO, the UI should probably have a toggle for this.
+        Set<String> features = Set.of("has_custom_resolution");
 
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
@@ -266,6 +267,9 @@ public class InstanceLauncher {
             subMap.put("launcher_version", Constants.APPVERSION);
             subMap.put("primary_jar", getGameJar(versionsDir).toAbsolutePath().toString());
             subMap.put("memory", String.valueOf(instance.memory));
+
+            subMap.put("resolution_width", String.valueOf(instance.width));
+            subMap.put("resolution_height", String.valueOf(instance.height));
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
