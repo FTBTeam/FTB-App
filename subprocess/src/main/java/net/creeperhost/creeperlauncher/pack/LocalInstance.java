@@ -83,12 +83,19 @@ public class LocalInstance implements IPack
     public boolean installComplete = true;
     public byte packType;
 
+    /**
+     * The current play time in millis.
+     */
+    public long totalPlayTime;
+
     @Nullable
     private transient InstanceLauncher launcher;
     private transient int loadingModPort;
     public transient boolean hasLoadingMod;
     public transient ModPack manifest;
     private transient boolean updateManifest = false;
+
+    private transient long startTime;
 
     public LocalInstance(ModPack pack, long versionId)
     {
@@ -509,7 +516,12 @@ public class LocalInstance implements IPack
                 CreeperLauncher.mtConnect.disconnect();
             });
         }
+        launcher.withStartTask(ctx -> {
+            startTime = System.currentTimeMillis();
+        });
         launcher.withExitTask(() -> {
+            long endTime = System.currentTimeMillis();
+            totalPlayTime += endTime - startTime;
             launcher = null;
         });
         launcher.launch();
