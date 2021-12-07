@@ -240,7 +240,7 @@ public class InstanceLauncher {
                 subMap.put("auth_uuid", profile.uuid.toString());
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
                 if (profile.msAuth != null) {
-                    subMap.put("user_type", "microsoft"); // TODO, validate this? It might just be 'mojang' too
+                    subMap.put("user_type", "msa");
                     subMap.put("auth_access_token", profile.msAuth.minecraftToken);
                     subMap.put("xuid", profile.msAuth.xblUserHash);
                 } else {
