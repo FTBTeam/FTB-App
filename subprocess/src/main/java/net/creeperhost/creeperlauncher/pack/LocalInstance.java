@@ -88,8 +88,7 @@ public class LocalInstance implements IPack
      */
     public long totalPlayTime;
 
-    @Nullable
-    private transient InstanceLauncher launcher;
+    private transient InstanceLauncher launcher = new InstanceLauncher(this);
     private transient int loadingModPort;
     public transient boolean hasLoadingMod;
     public transient ModPack manifest;
@@ -431,11 +430,28 @@ public class LocalInstance implements IPack
         return update;
     }
 
+    /**
+     * Force stops the instance.
+     * <p>
+     * Does not block until the instance has stopped.
+     */
+    public void forceStop() {
+        if (launcher == null) return;
+        launcher.forceStop();
+    }
+
+    /**
+     * Starts the instance.
+     *
+     * @param extraArgs Extra JVM arguments.
+     * @param loadInApp If 'launch mod' should be used.
+     * @throws InstanceLaunchException If there was an error preparing or starting the instance.
+     */
     public void play(String extraArgs, boolean loadInApp) throws InstanceLaunchException {
-        if (launcher != null) {
+        if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
-        launcher = new InstanceLauncher(this);
+        launcher.reset();
 
         launcher.withStartTask(ctx -> {
             // TODO, split on space. Needs to support escaping. `extraArgs` should be an array
@@ -522,7 +538,7 @@ public class LocalInstance implements IPack
         launcher.withExitTask(() -> {
             long endTime = System.currentTimeMillis();
             totalPlayTime += endTime - startTime;
-            launcher = null;
+            saveJson();
         });
         launcher.launch();
     }

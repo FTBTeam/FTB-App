@@ -96,6 +96,15 @@ public class InstanceLauncher {
     }
 
     /**
+     * Get the current phase.
+     *
+     * @return The phase.
+     */
+    public Phase getPhase() {
+        return phase;
+    }
+
+    /**
      * Attempt to start launching the configured instance.
      * <p>
      * It is illegal to call this method if {@link #isRunning()} returns true.
@@ -169,6 +178,35 @@ public class InstanceLauncher {
         processThread.setName("Instance Thread [" + THREAD_COUNTER.getAndIncrement() + "]");
         processThread.setDaemon(true);
         processThread.start();
+    }
+
+    /**
+     * Triggers a force stop of the running instance.
+     * <p>
+     * Does nothing if the instance is not running.`
+     */
+    public void forceStop() {
+        if (!isRunning()) return;
+
+        Process process = this.process;
+        if (process == null) return;
+        process.destroyForcibly();
+    }
+
+    /**
+     * Resets the instance to a runnable state.
+     */
+    public void reset() throws InstanceLaunchException {
+        if (isRunning()) throw new InstanceLaunchException("Instance is currently running. Stop it first.");
+        if (phase == Phase.NOT_STARTED) return;
+
+        assert process == null;
+        assert processThread == null;
+
+        manifests.clear();
+        startTasks.clear();
+        exitTasks.clear();
+        setPhase(Phase.NOT_STARTED);
     }
 
     private void setPhase(Phase newPhase) {
