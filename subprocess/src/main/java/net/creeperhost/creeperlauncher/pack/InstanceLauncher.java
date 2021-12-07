@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -48,6 +49,7 @@ import static net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.Down
 public class InstanceLauncher {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
     private final LocalInstance instance;
     private Phase phase = Phase.NOT_STARTED;
@@ -55,7 +57,7 @@ public class InstanceLauncher {
     private final List<VersionManifest> manifests = new ArrayList<>();
     private final List<Path> tempDirs = new LinkedList<>();
     @Nullable
-    private CompletableFuture<Void> processFuture;
+    private Thread processThread;
     @Nullable
     private Process process;
 
@@ -90,7 +92,7 @@ public class InstanceLauncher {
      * @return If the instance is already running.
      */
     public boolean isRunning() {
-        return processFuture != null;
+        return processThread != null;
     }
 
     /**
@@ -115,53 +117,57 @@ public class InstanceLauncher {
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
         ProcessBuilder builder = prepareProcess(assetsDir, versionsDir, librariesDir, features);
 
-        // Spawn future to immediately start minecraft
-        processFuture = CompletableFuture.runAsync(() -> {
+        // Start thread.
+        processThread = new Thread(() -> {
             try {
-                LOGGER.info("Starting Minecraft with command '{}'", String.join(" ", builder.command()));
-                process = builder.start();
-            } catch (IOException e) {
-                LOGGER.error("Failed to start minecraft process!", e);
-                setPhase(Phase.ERRORED);
-                process = null;
-                processFuture = null;
-                return;
-            }
-            setPhase(Phase.STARTED);
-            Logger logger = LogManager.getLogger("Minecraft Temp");
-            CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), logger::info);
-            CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), logger::error);
-            process.onExit().thenRunAsync(() -> {
-                if (!stdoutFuture.isDone()) {
-                    stdoutFuture.cancel(true);
-                }
-                if (!stderrFuture.isDone()) {
-                    stderrFuture.cancel(true);
-                }
-            });
-
-            while (process.isAlive()) {
                 try {
-                    process.waitFor();
-                } catch (InterruptedException ignored) {
+                    LOGGER.info("Starting Minecraft with command '{}'", String.join(" ", builder.command()));
+                    process = builder.start();
+                } catch (IOException e) {
+                    LOGGER.error("Failed to start minecraft process!", e);
+                    setPhase(Phase.ERRORED);
+                    process = null;
+                    processThread = null;
+                    return;
                 }
-            }
-            int exit = process.exitValue();
-            setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
-            process = null;
-            processFuture = null;
-        }).exceptionally(t -> {
-            LOGGER.error("Minecraft Future exited with an unrecoverable error.", t);
-            if (process != null) {
-                // Something is very broken, force kill minecraft and at least return to a recoverable state.
-                LOGGER.error("Force quitting Minecraft. Unrecoverable error occurred!");
-                process.destroyForcibly();
+                setPhase(Phase.STARTED);
+                Logger logger = LogManager.getLogger("Minecraft Temp");
+                CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), logger::info);
+                CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), logger::error);
+                process.onExit().thenRunAsync(() -> {
+                    if (!stdoutFuture.isDone()) {
+                        stdoutFuture.cancel(true);
+                    }
+                    if (!stderrFuture.isDone()) {
+                        stderrFuture.cancel(true);
+                    }
+                });
+
+                while (process.isAlive()) {
+                    try {
+                        process.waitFor();
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+                int exit = process.exitValue();
+                setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
                 process = null;
+                processThread = null;
+            } catch (Throwable t) {
+                LOGGER.error("Minecraft thread exited with an unrecoverable error.", t);
+                if (process != null) {
+                    // Something is very broken, force kill minecraft and at least return to a recoverable state.
+                    LOGGER.error("Force quitting Minecraft. Unrecoverable error occurred!");
+                    process.destroyForcibly();
+                    process = null;
+                }
+                processThread = null;
+                setPhase(Phase.ERRORED);
             }
-            processFuture = null;
-            setPhase(Phase.ERRORED);
-            return null;
         });
+        processThread.setName("Instance Thread [" + THREAD_COUNTER.getAndIncrement() + "]");
+        processThread.setDaemon(true);
+        processThread.start();
     }
 
     private void setPhase(Phase newPhase) {
