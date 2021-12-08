@@ -35,7 +35,10 @@
                 </div>
               </div>
               <div class="name selectable">
-                <div class="username" :title="item.username">{{ item.username }}</div>
+                <div class="username-container">
+                  <div class="username" :title="item.username">{{ item.username }}</div>
+                  <span class="opacity-50 text-sm" v-if="getActiveProfile.uuid === item.uuid">(active)</span>
+                </div>
                 <div
                   class="trash bg-red-500 hover:bg-red-600 transition-colors"
                   :class="{ active: editMode }"
@@ -380,8 +383,15 @@ export default class SidebarProfile extends Vue {
         display: flex;
         align-items: center;
 
-        .username {
+        .username-container {
           flex: 1;
+          span {
+            display: block;
+            margin-top: -0.25rem;
+          }
+        }
+
+        .username {
           max-width: 250px;
           overflow: hidden;
           text-overflow: ellipsis;
