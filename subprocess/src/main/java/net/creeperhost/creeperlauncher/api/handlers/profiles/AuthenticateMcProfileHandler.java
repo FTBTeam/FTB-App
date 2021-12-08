@@ -28,7 +28,12 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
 
             ResponseBody body = request.body();
             if (body != null) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, true, body.string()));
+                String response = body.string();
+                if (response.contains("error")) {
+                    Settings.webSocketAPI.sendMessage(new Reply(data, false, response));
+                    return;
+                }
+                Settings.webSocketAPI.sendMessage(new Reply(data, true, response));
                 return;
             }
         } catch (IOException e) {

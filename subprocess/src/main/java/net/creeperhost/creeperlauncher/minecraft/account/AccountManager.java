@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,11 +34,20 @@ public class AccountManager {
                 .map(e -> this.profiles.remove(e))
                 .orElse(false);
 
+        if (this.activeProfile != null && this.activeProfile.uuid.equals(uuid)) {
+            this.activeProfile = this.profiles.stream().findFirst().orElse(null);
+        }
+
         if (removed) {
             this.saveProfiles();
         }
 
         return removed;
+    }
+
+    public void setActiveProfile(UUID uuid) {
+        this.activeProfile = this.profiles.stream().filter(p -> p.uuid.equals(uuid)).findFirst().orElse(null);
+        this.saveProfiles();
     }
 
     public Triple<Boolean, AccountProfile, UUID> addProfile(AccountProfile profile) {

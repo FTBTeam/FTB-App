@@ -1,18 +1,22 @@
 <template>
   <div class="authentication" @mousedown.self="$emit('close')">
     <div class="body-contents text-center">
-      <div class="back" v-if="showLegacyLogin && !loggedIn && !loading" @click="showLegacyLogin = false">
+      <div class="back" v-if="!onMainView && !loggedIn && !loading" @click="back()">
         <font-awesome-icon icon="chevron-left" />
         <span>Back to options</span>
       </div>
       <div class="main" v-if="loading">
         <Loading />
       </div>
-      <div class="main" v-else-if="error.length > 0">
-        {{ error }}
-        <ftb-button color="is-primary" class="px-6 py-4" @click="$emit('close')">Close</ftb-button>
+
+      <div class="main text-center" v-else-if="error.length > 0">
+        <h2 class="text-3xl font-bold">Something went wrong.</h2>
+        <p class="text-red-400 font-bold mt-6 mb-8">{{ error }}</p>
+
+        <ftb-button color="primary" class="px-6 py-4" @click="$emit('close')">Close</ftb-button>
       </div>
-      <div class="main" v-else-if="!showLegacyLogin && !loggedIn">
+
+      <div class="main" v-else-if="onMainView && !loggedIn">
         <h3 class="text-2xl mb-4"><b>Minecraft Login</b></h3>
         <p class="mb-8">
           Now that Minecraft uses Microsoft to login, we now require to login to your Microsoft account or your Mojang
@@ -21,7 +25,16 @@
 
         <h4 class="text-center font-bold mb-8">Sign in with</h4>
 
-        <button class="button" @click="openMsAuth">
+        <button
+          class="button"
+          @click="
+            () => {
+              onMsAuth = true;
+              onMcAuth = false;
+              onMainView = false;
+            }
+          "
+        >
           <img src="@/assets/images/branding/microsoft.svg" alt="Microsoft Login" />
         </button>
 
@@ -29,25 +42,36 @@
           <span>or</span>
         </div>
 
-        <button class="button" @click="showLegacyLogin = true">
+        <button
+          class="button"
+          @click="
+            () => {
+              onMcAuth = true;
+              onMsAuth = false;
+              onMainView = false;
+            }
+          "
+        >
           <img src="@/assets/images/branding/mojang.svg" alt="Mojang Login" />
         </button>
       </div>
 
-      <div class="logged-in" v-else-if="loggedIn">
-        You're in!
+      <div class="logged-in text-center" v-else-if="loggedIn">
+        <h2 class="mb-4 text-3xl font-bold">You're set!</h2>
+        <p>You can add & remove profiles by using the profile switcher in the bottom left of the App.</p>
+        <div class="checks">
+          <font-awesome-icon icon="check" class="my-20 one" size="5x" />
+          <font-awesome-icon icon="check" class="my-20 two" size="5x" />
+          <font-awesome-icon icon="check" class="my-20 three" size="5x" />
+          <font-awesome-icon icon="check" class="my-20 four" size="5x" />
+        </div>
         <ftb-button color="primary" class="px-6 py-4" @click="$emit('close')">Finish</ftb-button>
       </div>
 
-      <yggdrasil-auth-form
-        v-else
-        @authenticated="
-          () => {
-            showLegacyLogin = false;
-            loggedIn = true;
-          }
-        "
-      />
+      <div class="auth-views" v-else>
+        <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="e => (error = e)" />
+        <yggdrasil-auth-form v-if="onMcAuth" @authenticated="authenticated()" />
+      </div>
     </div>
   </div>
 </template>
@@ -57,69 +81,33 @@ import Component from 'vue-class-component';
 import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
 import Loading from '@/components/atoms/Loading.vue';
-import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
-import { addHyphensToUuid } from '@/utils/helpers';
+import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 
 @Component({
-  components: { YggdrasilAuthForm, Loading },
+  components: { MicrosoftAuth, YggdrasilAuthForm, Loading },
 })
 export default class Authentication extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
 
-  showLegacyLogin = false;
+  onMainView = true;
   loggedIn = false;
   error = '';
   loading = false;
 
-  // TODO: Move
-  async openMsAuth() {
-    try {
-      this.loading = true;
-      const res = await platform.get.actions.openMsAuth();
+  onMcAuth = false;
+  onMsAuth = false;
 
-      if (!res.key || !res.iv || !res.password) {
-        return; // TODO: handle error
-      }
+  back() {
+    this.onMainView = true;
+    this.onMsAuth = false;
+    this.onMcAuth = false;
+  }
 
-      const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          key: res.key,
-          iv: res.iv,
-          password: res.password,
-        }),
-      });
-
-      const response: any = (await responseRaw.json()).data;
-      console.log(response);
-      const id: string = response.minecraftUuid;
-      const newUuid = addHyphensToUuid(id);
-
-      this.sendMessage({
-        payload: {
-          type: 'profiles.addMs',
-          ...response,
-          minecraftUuid: id.includes('-') ? id : newUuid,
-        },
-        callback: (e: any) => {
-          if (e.success) {
-            this.loggedIn = true;
-            this.loadProfiles();
-          } else {
-            this.error = 'It looks like that profile already exists!';
-          }
-        },
-      });
-    } catch (e) {
-      console.log(e);
-    } finally {
-      this.loading = false;
-    }
+  authenticated() {
+    this.back();
+    this.loggedIn = true;
   }
 }
 </script>
@@ -230,6 +218,41 @@ export default class Authentication extends Vue {
         text-transform: uppercase;
         font-weight: bold;
         color: rgba(white, 0.25);
+      }
+    }
+
+    .checks {
+      svg {
+        color: var(--color-primary-button);
+        transform: translateY(-5px) scale(0.9);
+      }
+
+      .fa-check {
+        animation: fadeInFadeOut 3.5s ease-in-out infinite;
+      }
+
+      .two {
+        animation-delay: 0.5s;
+      }
+
+      .three {
+        animation-delay: 1s;
+      }
+
+      .four {
+        animation-delay: 1.5s;
+      }
+
+      @keyframes fadeInFadeOut {
+        0%,
+        100% {
+          color: var(--color-primary-button);
+          transform: translateY(-5px) scale(0.9);
+        }
+        50% {
+          color: white;
+          transform: translateY(20px) scale(1);
+        }
       }
     }
   }

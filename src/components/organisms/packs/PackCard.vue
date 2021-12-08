@@ -65,6 +65,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '../../../utils';
 import { AuthState } from '../../../modules/auth/types';
 import { getColorForReleaseType } from '@/utils/colors';
+import { preLaunchChecks } from '@/utils/auth/authentication';
 
 const namespace = 'websocket';
 
@@ -226,8 +227,11 @@ export default class PackCard extends Vue {
     }
   }
 
-  // @ts-ignore
-  public async launch(): void {
+  public async launch(): Promise<void> {
+    if (!(await preLaunchChecks())) {
+      return;
+    }
+
     this.loading = true;
     if (this.preLaunch) {
       await this.preLaunch(this.instance);
@@ -236,7 +240,7 @@ export default class PackCard extends Vue {
       this.settingsState.settings.loadInApp === true ||
       this.settingsState.settings.loadInApp === 'true' ||
       this.auth.token?.activePlan == null;
-    const disableChat = this.settingsState.settings.enableChat === true;
+    const disableChat = this.settingsState.settings.enableChat;
     this.sendMessage({
       payload: {
         type: 'launchInstance',

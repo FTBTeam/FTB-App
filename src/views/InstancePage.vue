@@ -51,8 +51,6 @@
       <find-mods :instance="instance" @modInstalled="getModList" v-if="searchingForMods" />
     </div>
 
-    <authentication v-if="authenticationOpen" @close="authenticationOpen = false" />
-
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal
         :title="msgBox.title"
@@ -90,7 +88,7 @@ import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue'
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
-import Authentication from '@/components/templates/authentication/Authentication.vue';
+import { preLaunchChecks } from '@/utils/auth/authentication';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -102,7 +100,6 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
-    Authentication,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
@@ -131,6 +128,8 @@ export default class InstancePage extends Vue {
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
 
+  @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
+
   // New stuff
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
@@ -152,8 +151,6 @@ export default class InstancePage extends Vue {
   searchingForMods = false;
   updatingModlist = false;
   showVersions = false;
-
-  authenticationOpen = false;
 
   public goBack(): void {
     if (!this.hidePackDetails) {
@@ -192,73 +189,9 @@ export default class InstancePage extends Vue {
     this.showMsgBox = true;
   }
 
-  public async validateToken(profile?: AuthProfile) {
-    console.log(profile);
-    if (profile != null) {
-      if (profile.type === 'microsoft') {
-        // TODO: validate microsoft token
-        // We need to store when the token expires using expires_in
-      } else if (profile.type === 'mojang') {
-        let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify({
-            accessToken: profile.tokens.accessToken,
-            clientToken: (profile.tokens as any).clientToken,
-          }),
-        });
-        if (rawResponse.status === 204) {
-          return false;
-        } else {
-          return true;
-        }
-      }
-    } else {
-      // TODO: There's no active profile
-    }
-  }
-
-  public async refreshToken(profile?: AuthProfile) {
-    if (profile != null) {
-      if (profile.type === 'microsoft') {
-        // TODO: refresh microsoft token
-      } else if (profile.type === 'mojang') {
-        let rawResponse = await fetch(`https://authserver.mojang.com/refresh`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify({
-            accessToken: profile.tokens.accessToken,
-            clientToken: (profile.tokens as any).clientToken,
-          }),
-        });
-        let response = await rawResponse.json();
-        console.log(response.accessToken);
-        // TODO: Handle when this doesn't work and ask for password again
-        // TODO: update the tokens stored on the profile
-      }
-    } else {
-      // TODO: There's no active profile
-    }
-  }
-
-  public async launch(): Promise<void> {
-    // TODO: REMOVE TRUE
-    if (this.authProfiles.length === 0) {
-      this.authenticationOpen = true;
+  public async launch() {
+    if (!(await preLaunchChecks())) {
       return;
-    }
-
-    // getActiveProfile data isn't the same as the mapped profiles
-    let activeProfile = this.authProfiles.find(profile => profile.uuid == this.getActiveProfile.uuid);
-
-    const shouldRefresh = await this.validateToken(activeProfile);
-    if (shouldRefresh) {
-      console.log('We need to refresh');
-      await this.refreshToken(activeProfile);
     }
 
     if (this.showMsgBox) {

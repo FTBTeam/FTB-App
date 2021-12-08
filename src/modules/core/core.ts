@@ -10,7 +10,8 @@ export const core: Module<CoreState, RootState> = {
   namespaced: true,
   state: {
     profiles: [],
-    activeProfile: {} as AuthProfile
+    activeProfile: {} as AuthProfile,
+    signInOpened: false,
   },
   getters: {
     /**
@@ -26,10 +27,29 @@ export const core: Module<CoreState, RootState> = {
     getActiveProfile: (state: CoreState): AuthProfile | undefined => {
       return state.activeProfile;
     },
+
+    /**
+     * Sign in opened?
+     */
+    getSignInOpened: (state: CoreState): boolean => {
+      return state.signInOpened;
+    },
   },
   actions: {
+    openSignIn: ({ commit }: { commit: any }) => {
+      commit(CoreMutations.OPEN_SIGNIN, true);
+    },
+
+    closeSignIn: ({ commit }: { commit: any }) => {
+      commit(CoreMutations.OPEN_SIGNIN, false);
+    },
+
     addProfile: ({ commit, state }, profile: AuthProfile) => {
       commit(CoreMutations.ADD_PROFILE, profile);
+    },
+
+    removeProfile: ({ commit, state }, profile: AuthProfile) => {
+      commit(CoreMutations.REMOVE_PROFILE, profile);
     },
 
     loadProfiles: ({ commit }) => {
@@ -63,6 +83,10 @@ export const core: Module<CoreState, RootState> = {
     },
   },
   mutations: {
+    openSignIn(state: CoreState, payload: boolean) {
+      state.signInOpened = payload;
+    },
+
     loadProfiles: (state: CoreState, profiles: AuthProfile[]) => {
       state.profiles = profiles;
     },
@@ -76,6 +100,10 @@ export const core: Module<CoreState, RootState> = {
       }
 
       state.profiles.push(profile);
+    },
+
+    removeProfile: (state: CoreState, profile: AuthProfile) => {
+      state.profiles = state.profiles.filter((p: AuthProfile) => p.uuid !== profile.uuid);
     },
 
     setActiveProfile: (state: CoreState, profile: AuthProfile) => {

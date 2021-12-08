@@ -10,17 +10,16 @@
       />
     </router-link>
     <div class="nav-items nav-main mt-5">
-      <router-link
-        :is="disableNav ? 'span' : 'router-link'"
-        v-for="(item, index) in navigation"
-        :key="index"
-        :to="{ name: item.to }"
-        class="nav-item"
-        :class="{ 'item-disabled': disableNav }"
-      >
-        <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
-        <span>{{ item.name }}</span>
-      </router-link>
+      <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
+        <router-link
+          :is="disableNav ? 'span' : 'router-link'"
+          :to="{ name: item.to }"
+          class="nav-item"
+          :class="{ 'item-disabled': disableNav }"
+        >
+          <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
+        </router-link>
+      </popover>
     </div>
     <div class="nav-items">
       <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
@@ -34,23 +33,23 @@
         <span class="whitespace-no-wrap">Friends List</span>
       </a>
 
-      <sidebar-profile class="block" />
+      <sidebar-profile class="block" @signin="openSignIn()" />
     </div>
-    <div aria-label="Setup a server with CreeperHost" data-balloon-pos="right" class="w-full" @click="openPromo()">
+    <popover text="Setup a server with CreeperHost" class="w-full" @click="openPromo()">
       <img
         src="../../../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
         draggable="false"
       />
-    </div>
+    </popover>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { AuthState } from '@/modules/auth/types';
-import { State } from 'vuex-class';
+import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
@@ -64,6 +63,8 @@ export default class Sidebar extends Vue {
   @State('modpacks') private modpacks!: ModpackState;
   @State('settings') private settings!: SettingsState;
   @Prop({ default: false }) isTransparent!: boolean;
+
+  @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
 
   navigation = [
     {
@@ -163,45 +164,6 @@ export default class Sidebar extends Vue {
 
       span {
         display: none;
-      }
-    }
-
-    a.nav-item {
-      &:hover {
-        span {
-          left: 120%;
-          opacity: 1 !important;
-          visibility: visible;
-        }
-      }
-
-      // This is needed because the normal way of doing this keeps it open when you navigate, super annoying
-      span {
-        display: block !important;
-        position: absolute;
-        left: 110%;
-        z-index: 30;
-        font-size: var(--balloon-font-size);
-        background: black;
-        padding: 0.5em 1em;
-        border-radius: 2px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-          'Helvetica Neue', sans-serif;
-        transition: 0.15s ease-in-out left, 0.15s ease-in-out visibility, 0.15s ease-in-out opacity;
-        visibility: hidden;
-        opacity: 0 !important;
-
-        &::before {
-          position: absolute;
-          content: '';
-          background-color: black;
-          top: 50%;
-          transform: translateY(-50%) rotateZ(45deg);
-          left: -4px;
-          border-radius: 2px;
-          width: 8px;
-          height: 8px;
-        }
       }
     }
   }

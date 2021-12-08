@@ -18,10 +18,16 @@
               <img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />
               Accounts
             </div>
-            <font-awesome-icon icon="edit" />
+            <font-awesome-icon icon="edit" @click="editMode = !editMode" />
           </div>
           <div class="accounts" v-if="getProfiles.length">
-            <div class="account" v-for="(item, key) in getProfiles" :key="key">
+            <div
+              class="account hoverable"
+              :class="{ loading }"
+              v-for="(item, key) in getProfiles"
+              :key="key"
+              @click="() => setActiveProfile(item)"
+            >
               <div class="avatar">
                 <img :src="`https://api.mymcuu.id/head/${item.uuid}`" alt="Profile" class="rounded" />
                 <div class="ms-identifier" v-if="item.type === 'microsoft'">
@@ -29,12 +35,19 @@
                 </div>
               </div>
               <div class="name selectable">
-                {{ item.username }}
+                <div class="username" :title="item.username">{{ item.username }}</div>
+                <div
+                  class="trash bg-red-500 hover:bg-red-600 transition-colors"
+                  :class="{ active: editMode }"
+                  @click.stop="() => removeProfile(item)"
+                >
+                  <font-awesome-icon icon="trash" />
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="add-new">
+          <div class="add-new" @click="openSignIn">
             <div class="add-button px-4 py-2"><font-awesome-icon icon="plus" /> Add account</div>
           </div>
         </section>
@@ -70,18 +83,23 @@
         </section>
       </div>
     </div>
-    <div class="profile-placeholder" v-else>
-      <div class="fake-avatar"></div>
-    </div>
+    <popover text="Sign in to your Minecraft account" v-else>
+      <div class="profile-placeholder" @click="$emit('signin')">
+        <div class="fake-avatar">
+          <font-awesome-icon icon="question" />
+        </div>
+      </div>
+    </popover>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Getter, State } from 'vuex-class';
+import { Action, Getter, State } from 'vuex-class';
 import { AuthProfile } from '@/modules/core/core.types';
 import { AuthState } from '@/modules/auth/types';
+import { wsTimeoutWrapper } from '@/utils/helpers';
 
 @Component
 export default class SidebarProfile extends Vue {
@@ -89,9 +107,49 @@ export default class SidebarProfile extends Vue {
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: AuthProfile;
 
   @State('auth') private auth!: AuthState;
+  @Action('openSignIn', { namespace: 'core' }) private openSignIn!: () => void;
+  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
 
-  mounted() {
-    console.log(this.auth);
+  @Action('sendMessage') private sendMessage!: any;
+
+  editMode = false;
+  loading = false;
+
+  async removeProfile(profile: AuthProfile) {
+    this.loading = true;
+
+    try {
+      const data = await wsTimeoutWrapper({
+        type: 'profiles.remove',
+        uuid: profile.uuid,
+      });
+
+      if (data.success) {
+        this.loadProfiles();
+      }
+    } catch {
+      console.log('Failed to remove profile');
+    }
+
+    this.loading = false;
+  }
+
+  async setActiveProfile(profile: AuthProfile) {
+    this.loading = true;
+    try {
+      const data = await wsTimeoutWrapper({
+        type: 'profiles.setActiveProfile',
+        uuid: profile.uuid,
+      });
+
+      if (data.success) {
+        this.loadProfiles();
+      }
+    } catch {
+      console.log('Failed to set active profile');
+    }
+
+    this.loading = false;
   }
 
   get avatarName() {
@@ -104,6 +162,33 @@ export default class SidebarProfile extends Vue {
 <style scoped lang="scss">
 .selectable {
   user-select: text;
+}
+
+.profile-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 0;
+  cursor: pointer;
+
+  &:hover .fake-avatar svg {
+    transform: rotateZ(180deg);
+  }
+
+  .fake-avatar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: #161313;
+    border: 2px solid rgba(white, 0.3);
+
+    svg {
+      transition: transform 0.25s ease-in-out;
+    }
+  }
 }
 
 .profile-area {
@@ -228,19 +313,48 @@ export default class SidebarProfile extends Vue {
 
     .accounts {
       margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
     }
 
     .account {
       display: flex;
       align-items: center;
+      position: relative;
 
-      &:not(:last-child) {
-        margin-bottom: 1rem;
+      &.loading {
+        cursor: not-allowed;
+        *,
+        & {
+          pointer-events: none;
+        }
+      }
+
+      &.hoverable {
+        margin-bottom: 1.5rem;
+        cursor: pointer;
+
+        &::before {
+          border-radius: 5px;
+          content: '';
+          z-index: -1;
+          position: absolute;
+          top: -10px;
+          left: -10px;
+          width: calc(100% + 20px);
+          height: calc(100% + 20px);
+        }
+
+        &:hover::before {
+          background-color: black;
+        }
       }
 
       .avatar {
         position: relative;
-        margin-right: 1.5rem;
+        margin-right: 1.2rem;
+        width: 30px;
+        height: 30px;
         img {
           width: 30px;
           height: 30px;
@@ -251,22 +365,46 @@ export default class SidebarProfile extends Vue {
           padding: 0.3rem;
           background-color: #161313;
           border-radius: 5px;
-          right: -40%;
-          bottom: -40%;
+          left: -35%;
+          bottom: -35%;
 
           img {
-            width: 15px;
-            height: 15px;
+            width: 12px;
+            height: 12px;
           }
         }
       }
 
       .name {
+        flex: 1;
         display: flex;
         align-items: center;
 
+        .username {
+          flex: 1;
+          max-width: 250px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          padding-right: 1rem;
+        }
+
+        .trash {
+          padding: 0.15rem 0.5rem;
+          border-radius: 5px;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+
+          &.active {
+            opacity: 1;
+            visibility: visible;
+          }
+        }
+
         img {
           height: 1em;
+          width: 1em;
           margin-right: 0.5rem;
         }
       }

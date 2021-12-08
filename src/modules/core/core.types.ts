@@ -2,13 +2,15 @@ export enum CoreMutations {
   ADD_PROFILE = 'addProfile',
   LOAD_PROFILES = 'loadProfiles',
   SET_ACTIVE_PROFILE = 'setActiveProfile',
+  OPEN_SIGNIN = 'openSignIn',
+  REMOVE_PROFILE = 'removeProfile',
 }
 
 export interface AuthProfile {
   type: 'mojang' | 'microsoft';
   token: string;
   refreshToken: string;
-  tokens: 
+  tokens:
     | {
         accessToken: string;
         refreshToken: string;
@@ -24,4 +26,5 @@ export interface AuthProfile {
 export type CoreState = {
   profiles: AuthProfile[];
   activeProfile?: AuthProfile;
+  signInOpened: boolean;
 };

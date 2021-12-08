@@ -112,31 +112,7 @@
       </div>
     </div>
 
-    <div class="alerts" v-if="$store.state.alerts">
-      <div class="alert" v-for="(alert, index) of $store.state.alerts" :key="index" :class="`bg-${alert.type}`">
-        <div class="message">
-          <span class="font-bold">{{ alert.title }}</span>
-          <div class="message">{{ alert.message }}</div>
-        </div>
-
-        <div class="close" @click="() => hideAlert(alert)"><font-awesome-icon icon="times" /></div>
-      </div>
-    </div>
-
-    <FTBModal
-      v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
-      :visible="$store.state.websocket.modal !== null"
-      @dismiss-modal="hideModal"
-      :dismissable="$store.state.websocket.modal.dismissable"
-    >
-      <message-modal
-        :title="$store.state.websocket.modal.title"
-        :content="$store.state.websocket.modal.message"
-        type="custom"
-        :buttons="$store.state.websocket.modal.buttons"
-        :modalID="$store.state.websocket.modal.id"
-      />
-    </FTBModal>
+    <global-components />
   </div>
 </template>
 
@@ -154,9 +130,11 @@ import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
+import GlobalComponents from '@/components/templates/GlobalComponents.vue';
 
 @Component({
   components: {
+    GlobalComponents,
     Sidebar,
     TitleBar,
     FTBModal,
@@ -174,8 +152,6 @@ export default class MainApp extends Vue {
   @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall: any;
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('hideAlert') public hideAlert: any;
-  @Action('hideModal') public hideModal: any;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
   @Action('disconnect') public disconnect: any;
   private loading: boolean = false;
@@ -208,10 +184,6 @@ export default class MainApp extends Vue {
         });
       }
     });
-
-    setTimeout(() => {
-      this.loadProfiles();
-    }, 1000);
   }
 
   @Watch('websockets', { deep: true })
@@ -230,6 +202,7 @@ export default class MainApp extends Vue {
   public fetchStartData() {
     return new Promise(async (resolve, reject) => {
       await this.loadSettings();
+      this.loadProfiles();
       this.sendMessage({
         payload: { type: 'installedInstances' },
         callback: (data: any) => {
