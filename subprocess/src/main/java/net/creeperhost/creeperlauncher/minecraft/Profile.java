@@ -40,7 +40,7 @@ public class Profile
         this.gameDir = gameDir;
         this.ID = ID;
         if(ram == 0) ram = 1024;
-        this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB " + args.trim()).trim();
+        this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true " + args.trim()).trim();
 
         if(icon != null && !icon.isEmpty()) {
             String[] img = icon.split(",");
