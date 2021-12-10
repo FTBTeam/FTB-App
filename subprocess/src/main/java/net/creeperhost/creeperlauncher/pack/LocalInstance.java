@@ -518,7 +518,7 @@ public class LocalInstance implements IPack
 
         this.hasLoadingMod = checkForLaunchMod();
         //TODO this is to patch log4j
-        Path log4jPatcher = dir.resolve("Log4jPatcher-1.0.0.jar");//Constants.WORKING_DIR.resolve("Log4jPatcher-1.0.0.jar");//Constants.LIBRARY_LOCATION.resolve("net/creeperhost/log4jpatcher/Log4jPatcher-1.0.0.jar");
+        Path log4jPatcher = dir.resolve("Log4jPatcher-1.0.0.jar");
         this.hasL4jPatcher = Files.exists(log4jPatcher);
         if(!hasL4jPatcher)
         {

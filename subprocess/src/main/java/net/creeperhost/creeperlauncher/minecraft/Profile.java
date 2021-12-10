@@ -44,16 +44,8 @@ public class Profile
         this.gameDir = gameDir;
         this.ID = ID;
         if(ram == 0) ram = 1024;
-        String log4jPatcher = "Log4jPatcher-1.0.0.jar";//Constants.LIBRARY_LOCATION.resolve("net/creeperhost/log4jpatcher/Log4jPatcher-1.0.0.jar");
-//        if(log4jPatcher.toFile().exists())
-//        {
-            this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true -javaagent:" + log4jPatcher + "=debug" + " " + args.trim()).trim();
-//        }
-//        else
-//        {
-//            LOGGER.error("Failed to locate Log4jPatcher at " + log4jPatcher);
-//            this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true " + args.trim()).trim();
-//        }
+        String log4jPatcher = "Log4jPatcher-1.0.0.jar";
+        this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true -javaagent:" + log4jPatcher + " " + args.trim()).trim();
 
         if(icon != null && !icon.isEmpty()) {
             String[] img = icon.split(",");
