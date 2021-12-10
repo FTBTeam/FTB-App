@@ -1,6 +1,8 @@
 package net.creeperhost.creeperlauncher.minecraft;
 
 import com.google.gson.JsonObject;
+import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +11,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Base64;
 
@@ -40,7 +43,16 @@ public class Profile
         this.gameDir = gameDir;
         this.ID = ID;
         if(ram == 0) ram = 1024;
-        this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true " + args.trim()).trim();
+        Path log4jPatcher = Path.of(Constants.MC_LIBS + "net/creeperhost/log4jpatcher/Log4jPatcher-1.0.0.jar");
+        if(log4jPatcher.toFile().exists())
+        {
+            this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true -javaagent:" + log4jPatcher + " " + args.trim()).trim();
+        }
+        else
+        {
+            LOGGER.error("Failed to locate Log4jPatcher at " + log4jPatcher);
+            this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true " + args.trim()).trim();
+        }
 
         if(icon != null && !icon.isEmpty()) {
             String[] img = icon.split(",");

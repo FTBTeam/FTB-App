@@ -89,6 +89,7 @@ public class LocalInstance implements IPack
     private transient int loadingModPort;
     private transient boolean prePlayAsync;
     public transient boolean hasLoadingMod;
+    public transient boolean hasL4jPatcher;
     private transient Runnable preUninstall;
     private transient boolean preUninstallAsync;
     private transient AtomicBoolean inUse = new AtomicBoolean(false);
@@ -516,6 +517,26 @@ public class LocalInstance implements IPack
 
 
         this.hasLoadingMod = checkForLaunchMod();
+        //TODO this is to patch log4j
+        Path log4jPatcher = Path.of(Constants.MC_LIBS + "net/creeperhost/log4jpatcher/Log4jPatcher-1.0.0.jar");
+        this.hasL4jPatcher = Files.exists(log4jPatcher);
+        if(!hasL4jPatcher)
+        {
+            LOGGER.warn("Log4jPatcher not found, Attempting to download");
+            try
+            {
+              Files.createDirectories(log4jPatcher.getParent());
+            } 
+            catch (IOException e) {e.printStackTrace();}
+
+            boolean downloaded = DownloadUtils.downloadFile(log4jPatcher, "https://github.com/CreeperHost/Log4jPatcher/releases/download/v1.0.0/Log4jPatcher-1.0.0.jar");
+            if(downloaded)
+            {
+              LOGGER.info("Log4jPatcher successfully downloaded to " + log4jPatcher);
+              hasL4jPatcher = true;
+            }
+        }
+      
         //TODO: THIS IS FOR TESTING ONLY, PLEASE REMOVE ME IN FUTURE
         if(OS.CURRENT == OS.WIN && loadInApp)
         {
