@@ -43,7 +43,7 @@ public class Profile
         this.gameDir = gameDir;
         this.ID = ID;
         if(ram == 0) ram = 1024;
-        Path log4jPatcher = Path.of(Constants.MC_LIBS + "net/creeperhost/log4jpatcher/Log4jPatcher-1.0.0.jar");
+        Path log4jPatcher = Path.of(Constants.LIBRARY_LOCATION + "net/creeperhost/log4jpatcher/Log4jPatcher-1.0.0.jar");
         if(log4jPatcher.toFile().exists())
         {
             this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true -javaagent:" + log4jPatcher + " " + args.trim()).trim();
