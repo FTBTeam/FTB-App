@@ -46,7 +46,7 @@ public class Profile
         Path log4jPatcher = Constants.LIBRARY_LOCATION.resolve("net/creeperhost/log4jpatcher/Log4jPatcher-1.0.0.jar");
         if(log4jPatcher.toFile().exists())
         {
-            this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true -javaagent:" + log4jPatcher.toAbsolutePath() + " " + args.trim()).trim();
+            this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true -javaagent:" + log4jPatcher.toAbsolutePath() + "=debug" + " " + args.trim()).trim();
         }
         else
         {
