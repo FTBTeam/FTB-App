@@ -529,7 +529,7 @@ public class LocalInstance implements IPack
             } 
             catch (IOException e) {e.printStackTrace();}
 
-            boolean downloaded = DownloadUtils.downloadFile(log4jPatcher, "https://github.com/CreeperHost/Log4jPatcher/releases/download/v1.0.0/Log4jPatcher-1.0.0.jar");
+            boolean downloaded = DownloadUtils.downloadFile(log4jPatcher, "https://media.forgecdn.net/files/3557/251/Log4jPatcher-1.0.0.jar");
             if(downloaded)
             {
               LOGGER.info("Log4jPatcher successfully downloaded to " + log4jPatcher);
