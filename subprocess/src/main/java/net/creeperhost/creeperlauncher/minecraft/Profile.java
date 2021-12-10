@@ -1,6 +1,8 @@
 package net.creeperhost.creeperlauncher.minecraft;
 
 import com.google.gson.JsonObject;
+import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +11,9 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Base64;
 
 import static net.creeperhost.creeperlauncher.util.ImageUtils.resizeImage;
@@ -40,7 +44,8 @@ public class Profile
         this.gameDir = gameDir;
         this.ID = ID;
         if(ram == 0) ram = 1024;
-        this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true " + args.trim()).trim();
+        String log4jPatcher = "Log4jPatcher-1.0.0.jar";
+        this.javaArgs = ("-Xmx" + ram + "M -Duser.language=en-GB -Dlog4j2.formatMsgNoLookups=true -javaagent:" + log4jPatcher + " " + args.trim()).trim();
 
         if(icon != null && !icon.isEmpty()) {
             String[] img = icon.split(",");
