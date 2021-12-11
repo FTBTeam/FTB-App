@@ -118,10 +118,6 @@ export default class SidebarProfile extends Vue {
   editMode = false;
   loading = false;
 
-  mounted() {
-    console.log(this.auth);
-  }
-
   async removeProfile(profile: AuthProfile) {
     this.loading = true;
 

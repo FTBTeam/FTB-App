@@ -7,6 +7,7 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
@@ -19,7 +20,7 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
             Response request = client.newCall(
                     new Request.Builder()
                             .url("https://authserver.mojang.com/authenticate")
-                            .post(RequestBody.create(new Gson().toJson(new RequestData(data.username, data.password, data.clientToken)), MediaType.parse("application/json")))
+                            .post(RequestBody.create(new Gson().toJson(new RequestData(data.username, data.password, UUID.randomUUID().toString())), MediaType.parse("application/json")))
                             .addHeader("Content-Type", "application/json")
                             .addHeader("User-Agent", "FTB App Subprocess/1.0")
                             .addHeader("Accept", "application/json")
@@ -60,7 +61,6 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
     public static class Data extends BaseData {
         public String username;
         public String password;
-        public String clientToken;
     }
 
     public static class RequestData {

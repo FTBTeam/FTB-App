@@ -128,9 +128,9 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { State, Action } from 'vuex-class';
+import { Action, State } from 'vuex-class';
 import { AuthState, Friend } from '../../../modules/auth/types';
-import { Messages, FriendListResponse } from '../../../types';
+import { FriendListResponse, Messages } from '../../../types';
 import platform from '@/utils/interface/electron-overwolf';
 
 interface UnreadMessages {
@@ -253,7 +253,6 @@ export default class MainChat extends Vue {
   }
 
   get currentFriends() {
-    console.log(this.friends);
     let friends = [
       ...this.friends.online.filter(a => !a.pending),
       ...this.friends.offline.filter(a => !a.pending),
