@@ -71,6 +71,7 @@ public class AccountProfile {
       public String liveAccessToken;
       public String liveRefreshToken; // This is needed for the account refresh
       public String liveExpires;
+      public String liveExpiresAt;
       
       public MSAuthStore(AddMsProfileHandler.Data data) {
         this.minecraftUuid = data.minecraftUuid; 
@@ -81,7 +82,8 @@ public class AccountProfile {
         this.xblToken = data.xblToken; 
         this.liveAccessToken = data.liveAccessToken; 
         this.liveRefreshToken = data.liveRefreshToken; // This is needed for the account refresh 
-        this.liveExpires = data.liveExpires; 
+        this.liveExpires = data.liveExpires;
+        this.liveExpiresAt = data.liveExpiresAt;
       }
 
       @Override

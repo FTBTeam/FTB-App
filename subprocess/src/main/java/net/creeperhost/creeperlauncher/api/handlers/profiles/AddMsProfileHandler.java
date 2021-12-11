@@ -37,6 +37,7 @@ public class AddMsProfileHandler implements IMessageHandler<AddMsProfileHandler.
       public String liveAccessToken;
       public String liveRefreshToken; // This is needed for the account refresh
       public String liveExpires;
+      public String liveExpiresAt;
     }
 
   private static class Reply extends Data {

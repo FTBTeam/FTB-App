@@ -1,32 +1,33 @@
 import { AuthProfile } from '@/modules/core/core.types';
 import store from '@/modules/store';
 
-const validateToken = async (profile?: AuthProfile) => {
+/**
+ * Attempt to valid the user's token
+ * @param profile Auth Profile
+ */
+const isRefreshRequired = async (profile?: AuthProfile) => {
+  if (!profile) {
+    return false;
+  }
+
   console.log(profile);
-  if (profile != null) {
-    if (profile.type === 'microsoft') {
-      // TODO: validate microsoft token
-      // We need to store when the token expires using expires_in
-      return false;
-    } else if (profile.type === 'mojang') {
-      let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-        body: JSON.stringify({
-          accessToken: profile.tokens.accessToken,
-          clientToken: (profile.tokens as any).clientToken,
-        }),
-      });
-      if (rawResponse.status === 204) {
-        return false;
-      } else {
-        return true;
-      }
-    }
-  } else {
-    // TODO: There's no active profile
+  if (profile.type === 'microsoft') {
+    // TODO: validate microsoft token
+    // We need to store when the token expires using expires_in
+    return false;
+  } else if (profile.type === 'mojang') {
+    let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        accessToken: profile.tokens.accessToken,
+        clientToken: (profile.tokens as any).clientToken,
+      }),
+    });
+
+    return rawResponse.status !== 204;
   }
 };
 
@@ -66,7 +67,7 @@ export const preLaunchChecks = async () => {
 
   let profile = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
 
-  const shouldRefresh = await validateToken(profile);
+  const shouldRefresh = await isRefreshRequired(profile);
   if (shouldRefresh) {
     console.log('We need to refresh');
     await refreshToken(profile);

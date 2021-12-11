@@ -28,6 +28,7 @@
       </div>
     </div>
 
+    <!-- Authentication -->
     <authentication v-if="getSignInOpened" @close="closeSignIn()" />
   </div>
 </template>

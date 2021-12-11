@@ -72,9 +72,9 @@
               </div>
               <div class="meta">
                 <div class="name selectable">
-                  {{ auth.token.mc.display !== null ? auth.token.mc.display : auth.token.username }}
+                  {{ auth.token.mc && auth.token.mc.display ? auth.token.mc.display : auth.token.username }}
                 </div>
-                <div class="hash selectable">{{ auth.token.mc.friendCode }}</div>
+                <div class="hash selectable" v-if="auth.token.mc">{{ auth.token.mc.friendCode }}</div>
               </div>
             </div>
             <div class="add inline-block" v-else>
@@ -117,6 +117,10 @@ export default class SidebarProfile extends Vue {
 
   editMode = false;
   loading = false;
+
+  mounted() {
+    console.log(this.auth);
+  }
 
   async removeProfile(profile: AuthProfile) {
     this.loading = true;
