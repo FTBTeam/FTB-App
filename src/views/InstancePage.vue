@@ -190,7 +190,7 @@ export default class InstancePage extends Vue {
   }
 
   public async launch() {
-    if (!(await preLaunchChecks())) {
+    if (await preLaunchChecks()) {
       return;
     }
 

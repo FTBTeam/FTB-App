@@ -228,7 +228,7 @@ export default class PackCard extends Vue {
   }
 
   public async launch(): Promise<void> {
-    if (!(await preLaunchChecks())) {
+    if (await preLaunchChecks()) {
       return;
     }
 
