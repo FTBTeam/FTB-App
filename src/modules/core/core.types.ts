@@ -21,6 +21,7 @@ export interface AuthProfile {
       };
   username: string;
   uuid: string;
+  expiresAt?: number;
 }
 
 export type CoreState = {

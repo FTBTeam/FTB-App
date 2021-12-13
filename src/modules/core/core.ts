@@ -73,6 +73,7 @@ export const core: Module<CoreState, RootState> = {
                     },
                 username: a.username,
                 uuid: a.uuid,
+                expiresAt: a.isMicrosoft ? a.msAuth.liveExpiresAt : undefined
               } as AuthProfile),
           );
 
