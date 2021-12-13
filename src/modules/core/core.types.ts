@@ -28,4 +28,5 @@ export type CoreState = {
   profiles: AuthProfile[];
   activeProfile?: AuthProfile;
   signInOpened: boolean;
+  instanceLoading: boolean;
 };

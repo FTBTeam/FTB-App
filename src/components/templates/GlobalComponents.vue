@@ -30,6 +30,9 @@
 
     <!-- Authentication -->
     <authentication v-if="getSignInOpened" @close="closeSignIn()" />
+
+    <!-- Instance Loading -->
+    <instance-loading v-if="!instanceLoading" />
   </div>
 </template>
 
@@ -40,10 +43,12 @@ import FTBModal from '@/components/atoms/FTBModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, Getter } from 'vuex-class';
 import Authentication from '@/components/templates/authentication/Authentication.vue';
+import InstanceLoading from '@/components/templates/loading/InstanceLoading.vue';
 
 @Component({
   components: {
     Authentication,
+    InstanceLoading,
     FTBModal,
     MessageModal,
   },
@@ -53,6 +58,7 @@ export default class GlobalComponents extends Vue {
   @Action('hideAlert') public hideAlert: any;
 
   @Getter('getSignInOpened', { namespace: 'core' }) public getSignInOpened: any;
+  @Getter('getInstanceLoading', { namespace: 'core' }) public instanceLoading: any;
   @Action('closeSignIn', { namespace: 'core' }) public closeSignIn: any;
 }
 </script>

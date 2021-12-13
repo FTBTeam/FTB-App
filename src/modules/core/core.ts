@@ -12,6 +12,7 @@ export const core: Module<CoreState, RootState> = {
     profiles: [],
     activeProfile: {} as AuthProfile,
     signInOpened: false,
+    instanceLoading: false
   },
   getters: {
     /**
@@ -33,6 +34,13 @@ export const core: Module<CoreState, RootState> = {
      */
     getSignInOpened: (state: CoreState): boolean => {
       return state.signInOpened;
+    },
+
+    /**
+     * Instance loading?
+     */
+     getInstanceLoading: (state: CoreState): boolean => {
+      return state.instanceLoading;
     },
   },
   actions: {
