@@ -72,7 +72,9 @@ public class WebSocketMessengerHandler
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.addMs", AddMsProfileHandler.Data.class, new AddMsProfileHandler());
+        register("profiles.updateMs", UpdateMsProfileHandler.Data.class, new UpdateMsProfileHandler());
         register("profiles.addMc", AddMcProfileHandler.Data.class, new AddMcProfileHandler());
+        register("profiles.updateMc", UpdateMcProfileHandler.Data.class, new UpdateMcProfileHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
         register("profiles.mc.authenticate", AuthenticateMcProfileHandler.Data.class, new AuthenticateMcProfileHandler());
