@@ -29,10 +29,10 @@
     </div>
 
     <!-- Authentication -->
-    <authentication v-if="getSignInOpened" @close="closeSignIn()" />
+    <authentication v-if="getSignInOpened.open" @close="closeSignIn()" />
 
     <!-- Instance Loading -->
-    <instance-loading v-if="!instanceLoading" />
+    <instance-loading v-if="instanceLoading" />
   </div>
 </template>
 
