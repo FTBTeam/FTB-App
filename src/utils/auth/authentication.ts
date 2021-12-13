@@ -1,5 +1,6 @@
 import { AuthProfile } from '@/modules/core/core.types';
 import store from '@/modules/store';
+import { addHyphensToUuid } from '../helpers';
 
 /**
  * Attempt to valid the user's token
@@ -11,8 +12,9 @@ const isRefreshRequired = async (profile?: AuthProfile) => {
   }
 
   if (profile.type === 'microsoft') {
-    // TODO: validate microsoft token
-    // We need to store when the token expires using expires_in
+    if (profile.expiresAt) {
+      return profile.expiresAt > new Date().valueOf();
+    }
     return true;
   } else if (profile.type === 'mojang') {
     try {
@@ -60,7 +62,25 @@ const refreshToken = async (profile?: AuthProfile) => {
           body: JSON.stringify(response),
         });
 
-        console.log(await res.json());
+        const data = await res.json();
+        const id: string = data.data.minecraftUuid;
+        const newUuid = addHyphensToUuid(id);
+
+        store.dispatch('sendMessage',{
+          payload: {
+            type: 'profiles.updateMs',
+            uuid: profile.uuid,
+            ...data.data,
+            minecraftUuid: id.includes('-') ? id : newUuid,
+          },
+          callback: (e: any) => {
+            if (e.success) {
+              store.dispatch('core/loadProfiles');
+            } else {
+              // TODO: Failed to update the profile
+            }
+          },
+        });
       }
     } else if (profile.type === 'mojang') {
       try {
@@ -75,6 +95,10 @@ const refreshToken = async (profile?: AuthProfile) => {
             requestUser: true,
           }),
         });
+        if (rawResponse.status === 403) {
+          // TODO: Show pop up box to get password
+          await store.dispatch('core/openSignIn', null, { root: true });
+        }
         let response = await rawResponse.json();
         console.log(response.accessToken);
         // TODO: Handle when this doesn't work and ask for password again
