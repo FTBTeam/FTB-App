@@ -11,14 +11,18 @@ public class LaunchInstanceData extends BaseData {
 
     public static class Status extends BaseData {
 
+        // The current step number (1-totalSteps)
         public int step;
+        // The total number of steps that need to be executed.
         public int totalSteps;
 
-        // Value between 0-1.
+        // Current step progress, between 0-1
         public float stepProgress;
 
+        // Name for the step.
         public String stepDesc;
 
+        // Human-readable step progress (xMB / yMB)
         @Nullable
         public String stepProgressHuman;
 
