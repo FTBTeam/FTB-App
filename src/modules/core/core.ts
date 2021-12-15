@@ -11,7 +11,7 @@ export const core: Module<CoreState, RootState> = {
   state: {
     profiles: [],
     activeProfile: {} as AuthProfile,
-    signInOpened: {open: false, jumpToAuth: null},
+    signInOpened: {open: false, jumpToAuth: null, uuid: null},
     instanceLoading: false
   },
   getters: {
@@ -32,7 +32,7 @@ export const core: Module<CoreState, RootState> = {
     /**
      * Sign in opened?
      */
-    getSignInOpened: (state: CoreState): {open: boolean, jumpToAuth?: 'ms' | 'mc' | null} => {
+    getSignInOpened: (state: CoreState): {open: boolean, jumpToAuth?: 'ms' | 'mc' | null, uuid?: string | null} => {
       return state.signInOpened;
     },
 
@@ -44,12 +44,12 @@ export const core: Module<CoreState, RootState> = {
     },
   },
   actions: {
-    openSignIn: ({ commit }: { commit: any }) => {
-      commit(CoreMutations.OPEN_SIGNIN, {open: true});
+    openSignIn: ({ commit, state }, payload: {open: boolean, jumpToAuth: 'ms' | 'mc' | null, uuid: string | null}) => {
+      commit(CoreMutations.OPEN_SIGNIN, payload);
     },
 
     closeSignIn: ({ commit }: { commit: any }) => {
-      commit(CoreMutations.OPEN_SIGNIN, {open: false, jumpToAuth: null});
+      commit(CoreMutations.OPEN_SIGNIN, {open: false, jumpToAuth: null, uuid: null});
     },
 
     startInstanceLoading: ({ commit }: { commit: any }) => {
@@ -100,7 +100,7 @@ export const core: Module<CoreState, RootState> = {
     },
   },
   mutations: {
-    openSignIn(state: CoreState, payload: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null}) {
+    openSignIn(state: CoreState, payload: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null, uuid: string | null}) {
       state.signInOpened = payload;
     },
 

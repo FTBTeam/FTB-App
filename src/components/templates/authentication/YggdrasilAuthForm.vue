@@ -1,7 +1,10 @@
 <template>
   <div class="legacy-auth">
     <img src="@/assets/images/branding/mojang.svg" alt="Mogang logo" class="mb-8 mt-4 mx-auto" />
-    <p class="mb-10">
+    <p class="mb-10" v-if="uuid.length > 0">
+      Your session has expired, please login to your Mojang account again to continue playing!
+    </p>
+    <p class="mb-10" v-else>
       If you have not yet migrated your account a Microsoft account, you can still log in with your username and
       password.
     </p>
@@ -46,11 +49,15 @@ import Component from 'vue-class-component';
 import Vue from 'vue';
 import { Action } from 'vuex-class';
 import { addHyphensToUuid } from '@/utils/helpers';
+import { Prop } from 'vue-property-decorator';
 
-@Component
+@Component({props: {uuid: String}})
 export default class YggdrasilAuthForm extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
+
+  @Prop()
+  public uuid!: string | null;
 
   error = '';
 
@@ -90,7 +97,8 @@ export default class YggdrasilAuthForm extends Vue {
 
         this.sendMessage({
           payload: {
-            type: 'profiles.addMc',
+            type: this.uuid ? 'profiles.updateMc' : 'profiles.addMc',
+            uuid: this.uuid ? this.uuid : undefined,
             username: json.selectedProfile.name,
             accessToken: json.accessToken,
             clientToken: json.clientToken,

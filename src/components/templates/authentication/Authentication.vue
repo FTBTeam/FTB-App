@@ -70,7 +70,7 @@
 
       <div class="auth-views" v-else>
         <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="e => (error = e)" />
-        <yggdrasil-auth-form v-if="onMcAuth" @authenticated="authenticated()" />
+        <yggdrasil-auth-form v-if="onMcAuth" :uuid="uuid" @authenticated="authenticated()" />
       </div>
     </div>
   </div>
@@ -83,13 +83,17 @@ import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAu
 import Loading from '@/components/atoms/Loading.vue';
 import { Action } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
+import { Prop } from 'vue-property-decorator';
 
 @Component({
+  props: { jump: String, uuid: String},
   components: { MicrosoftAuth, YggdrasilAuthForm, Loading },
 })
 export default class Authentication extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
+  @Prop()
+  public jump!: string;
 
   onMainView = true;
   loggedIn = false;
@@ -98,6 +102,14 @@ export default class Authentication extends Vue {
 
   onMcAuth = false;
   onMsAuth = false;
+
+  public mounted() {
+    if (this.jump === 'mc') {
+      this.onMainView = false;
+      this.onMcAuth = true;
+      this.onMsAuth = false;
+    }
+  }
 
   back() {
     this.onMainView = true;

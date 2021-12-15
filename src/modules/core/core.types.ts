@@ -28,6 +28,6 @@ export interface AuthProfile {
 export type CoreState = {
   profiles: AuthProfile[];
   activeProfile?: AuthProfile;
-  signInOpened: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null};
+  signInOpened: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null, uuid: string | null};
   instanceLoading: boolean;
 };

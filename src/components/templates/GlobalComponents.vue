@@ -29,7 +29,7 @@
     </div>
 
     <!-- Authentication -->
-    <authentication v-if="getSignInOpened.open" @close="closeSignIn()" />
+    <authentication v-if="getSignInOpened.open" :jump="getSignInOpened.jumpToAuth" :uuid="getSignInOpened.uuid" @close="closeSignIn()" />
 
     <!-- Instance Loading -->
     <instance-loading/>

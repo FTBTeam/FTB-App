@@ -97,7 +97,8 @@ const refreshToken = async (profile?: AuthProfile) => {
         });
         if (rawResponse.status === 403) {
           // TODO: Show pop up box to get password
-          await store.dispatch('core/openSignIn', null, { root: true });
+          await store.dispatch('core/openSignIn', {open: true, jumpToAuth: 'mc', uuid: profile.uuid}, { root: true });
+          return false;
         }
         let response = await rawResponse.json();
         console.log(response.accessToken);
@@ -126,8 +127,11 @@ export const preLaunchChecks = async () => {
   const shouldRefresh = await isRefreshRequired(profile);
   if (shouldRefresh) {
     console.log('We need to refresh');
-    await refreshToken(profile);
-    return false;
+    if (await refreshToken(profile)) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   return false;
