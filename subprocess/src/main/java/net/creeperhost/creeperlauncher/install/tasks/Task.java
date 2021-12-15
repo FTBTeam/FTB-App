@@ -7,15 +7,15 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Created by covers1624 on 17/11/21.
  */
-// TODO, I'd like tasks to be able to 'prepare' and provide an additional list of tasks to execute. Somehow.
 public interface Task<T> {
 
     /**
      * Execute this task.
      *
+     * @param listener The listener to receive updates about this task.
      * @throws Throwable If any exception is thrown whilst executing the task.
      */
-    void execute() throws Throwable;
+    void execute(@Nullable TaskProgressListener listener) throws Throwable;
 
     /**
      * Checks if executing this task would do nothing.

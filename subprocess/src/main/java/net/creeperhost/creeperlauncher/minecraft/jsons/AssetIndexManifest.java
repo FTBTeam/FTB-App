@@ -49,13 +49,12 @@ public class AssetIndexManifest {
                         .withExpectedSize(assetIndex.size)
                         .withHash(Hashing.sha1(), assetIndex.sha1)
                         .withUseETag(true)
-                        .withUseOnlyIfModified(true),
-                null
+                        .withUseOnlyIfModified(true)
         );
 
         if (!downloadTask.isRedundant()) {
             try {
-                downloadTask.execute();
+                downloadTask.execute(null);
             } catch (Throwable e) {
                 if (Files.exists(assetIndexFile)) {
                     LOGGER.warn("Failed to update AssetIndexManifest. Continuing with disk cache..", e);

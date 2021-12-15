@@ -45,13 +45,12 @@ public class VersionListManifest {
                 versionsFile,
                 DownloadValidation.of()
                         .withUseETag(true)
-                        .withUseOnlyIfModified(true),
-                null
+                        .withUseOnlyIfModified(true)
         );
 
         if (!downloadTask.isRedundant()) {
             try {
-                downloadTask.execute();
+                downloadTask.execute(null);
             } catch (Throwable e) {
                 if (Files.exists(versionsFile)) {
                     LOGGER.warn("Failed to update VersionListManifest. Continuing with disk cache..", e);

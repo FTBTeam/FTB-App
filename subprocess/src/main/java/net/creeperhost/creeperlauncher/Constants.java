@@ -27,7 +27,7 @@ public class Constants {
 
     //Mojang
     public static final String MC_VERSION_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
-    public static final String MC_RESOURCES = "http://resources.download.minecraft.net/";
+    public static final String MC_RESOURCES = "https://resources.download.minecraft.net/";
     public static final String MC_LIBS = "https://libraries.minecraft.net/";
     public static final String MC_LAUNCHER = "https://launcher.mojang.com/download/Minecraft.";
 

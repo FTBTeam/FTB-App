@@ -12,7 +12,6 @@ import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
 import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
 import okhttp3.OkHttpClient;
 import okio.Throttler;
@@ -44,43 +43,39 @@ public class NewDownloadTask implements Task<Path> {
     private final String url;
     private final Path dest;
     private final DownloadValidation validation;
-    @Nullable
-    private final IProgressUpdater progressUpdater;
 
     private final boolean useCache;
     private final long id;
     private final String name;
     private final String type;
 
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable IProgressUpdater progressUpdater) {
-        this(url, dest, validation, progressUpdater, false, dest.getFileName().toString(), -1, "");
+    public NewDownloadTask(String url, Path dest, DownloadValidation validation) {
+        this(url, dest, validation, false, dest.getFileName().toString(), -1, "");
     }
 
     /**
-     * Overload of {@link #NewDownloadTask(String, Path, DownloadValidation, IProgressUpdater, boolean, String, long, String)},
+     * Overload of {@link #NewDownloadTask(String, Path, DownloadValidation, boolean, String, long, String)},
      * which passes <code>-1</code> to <code>id</code> and <code>""</code> to <code>type</code>.
      */
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation, String name, @Nullable IProgressUpdater progressUpdater) {
-        this(url, dest, validation, progressUpdater, false, name, -1, "");
+    public NewDownloadTask(String url, Path dest, DownloadValidation validation, String name) {
+        this(url, dest, validation, false, name, -1, "");
     }
 
     /**
      * A Task that downloads a file.
      *
-     * @param url             The URL.
-     * @param dest            The Destination for the file.
-     * @param validation      The task validation parameters.
-     * @param progressUpdater The {@link IProgressUpdater}.
-     * @param useCache        If this task should use the {@link LocalCache}.
-     * @param name            The descriptive name for the file. Usually just the file name.
-     * @param id              An additional ID for tracking the file.
-     * @param type            The type of this download.
+     * @param url        The URL.
+     * @param dest       The Destination for the file.
+     * @param validation The task validation parameters.
+     * @param useCache   If this task should use the {@link LocalCache}.
+     * @param name       The descriptive name for the file. Usually just the file name.
+     * @param id         An additional ID for tracking the file.
+     * @param type       The type of this download.
      */
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable IProgressUpdater progressUpdater, boolean useCache, String name, long id, String type) {
+    public NewDownloadTask(String url, Path dest, DownloadValidation validation, boolean useCache, String name, long id, String type) {
         this.url = url;
         this.dest = dest;
         this.validation = validation;
-        this.progressUpdater = progressUpdater;
 
         this.useCache = useCache;
         this.name = name;
@@ -89,7 +84,7 @@ public class NewDownloadTask implements Task<Path> {
     }
 
     @Override
-    public void execute() throws IOException {
+    public void execute(@Nullable TaskProgressListener progressListener) throws IOException {
         if (Files.exists(dest) && validation.validate(dest)) {
             // Validated, do nothing.
             return;
@@ -100,8 +95,10 @@ public class NewDownloadTask implements Task<Path> {
             Path cachePath = CreeperLauncher.localCache.get(validation.expectedHashes.get(HashFunc.SHA1));
             if (cachePath != null) {
                 Files.copy(cachePath, IOUtils.makeParents(dest));
-                if (progressUpdater != null) {
-                    progressUpdater.update(0, Files.size(dest), 0, true);
+                if (progressListener != null) {
+                    long len = Files.size(dest);
+                    progressListener.start(len);
+                    progressListener.finish(len);
                 }
                 return;
             }
@@ -120,8 +117,8 @@ public class NewDownloadTask implements Task<Path> {
             action.addTag(MultiHasher.class, hashRequest);
         }
 
-        if (progressUpdater != null) {
-            action.setDownloadListener(new ProgressAdapter(progressUpdater));
+        if (progressListener != null) {
+            action.setDownloadListener(new ProgressAdapter(progressListener));
         }
 
         action.execute();
@@ -175,6 +172,7 @@ public class NewDownloadTask implements Task<Path> {
     //@formatter:off
     public String getUrl() { return url; }
     public Path getDest() { return dest; }
+    public DownloadValidation getValidation() { return validation; }
     public long getId() { return id; }
     public String getName() { return name; }
     public String getType() { return type; }
@@ -266,33 +264,13 @@ public class NewDownloadTask implements Task<Path> {
         }
     }
 
-    private static class ProgressAdapter implements DownloadListener {
+    private record ProgressAdapter(TaskProgressListener progressListener) implements DownloadListener {
 
-        private final IProgressUpdater progressUpdater;
-        private long expectedLen;
-        private long totalProcessed;
-
-        private ProgressAdapter(IProgressUpdater progressUpdater) {
-            this.progressUpdater = progressUpdater;
-        }
-
-        @Override
-        public void connecting() { }
-
-        @Override
-        public void start(long expectedLen) {
-            this.expectedLen = expectedLen;
-        }
-
-        @Override
-        public void update(long processedBytes) {
-            progressUpdater.update(totalProcessed, processedBytes, expectedLen, false);
-            totalProcessed += processedBytes;
-        }
-
-        @Override
-        public void finish(long totalProcessed) {
-            progressUpdater.update(totalProcessed, 0, expectedLen, true);
-        }
+        //@formatter:off
+        @Override public void connecting() { }
+        @Override public void start(long expectedLen) { progressListener.start(expectedLen); }
+        @Override public void update(long processedBytes) { progressListener.update(processedBytes); }
+        @Override public void finish(long totalProcessed) { progressListener.finish(totalProcessed); }
+        //@formatter:on
     }
 }

@@ -253,7 +253,7 @@ public class InstanceLauncher {
             Path javaExecutable;
             if (instance.embeddedJre) {
                 // TODO, UI feedback when a JDK is being downloaded.
-                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion());
+                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion(), null);
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
                 javaExecutable = instance.jrePath;
@@ -361,13 +361,12 @@ public class InstanceLauncher {
 
         LOGGER.info("Updating assets..");
         VersionManifest manifest = manifests.get(0);
-        List<Task<?>> tasks = InstallAssetsTask.build(requireNonNull(manifest.assetIndex, "First Version Manifest missing AssetIndex. This should not happen."));
-        for (Task<?> task : tasks) {
-            try {
-                task.execute();
-            } catch (Throwable ex) {
-                throw new IOException("Failed to execute asset update task.", ex);
-            }
+        InstallAssetsTask assetsTask = new InstallAssetsTask(requireNonNull(manifest.assetIndex, "First Version Manifest missing AssetIndex. This should not happen."));
+        if (assetsTask.isRedundant()) return;
+        try {
+            assetsTask.execute(null); // TODO
+        } catch (Throwable ex) {
+            throw new IOException("Failed to execute asset update task.", ex);
         }
     }
 
@@ -384,10 +383,10 @@ public class InstanceLauncher {
             NewDownloadTask task = new NewDownloadTask(
                     download.url,
                     versionsDir.resolve(manifest.id).resolve(manifest.id + ".jar"),
-                    validation,
-                    null // TODO
+                    validation
+                    // TODO progress
             );
-            task.execute();
+            task.execute(null);
         }
     }
 
@@ -395,7 +394,7 @@ public class InstanceLauncher {
         LOGGER.info("Validating minecraft libraries...");
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            NewDownloadTask task = library.createDownloadTask(librariesDir, null);
+            NewDownloadTask task = library.createDownloadTask(librariesDir);
             if (task != null) {
                 tasks.add(task);
             }
@@ -405,7 +404,7 @@ public class InstanceLauncher {
             LOGGER.info("{} dependencies failed to validate or were missing.", tasks.size());
             for (NewDownloadTask task : tasks) {
                 LOGGER.info("Downloading {}", task.getUrl());
-                task.execute();
+                task.execute(null); // TODO progress
             }
         }
         LOGGER.info("Libraries validated!");

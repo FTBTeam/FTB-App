@@ -14,6 +14,7 @@ import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
@@ -99,7 +100,7 @@ public class VersionManifest {
 
         if (!downloadTask.isRedundant()) {
             try {
-                downloadTask.execute();
+                downloadTask.execute(null);
             } catch (Throwable e) {
                 if (Files.exists(versionFile)) {
                     LOGGER.warn("Failed to update VersionManifest. Continuing with disk cache..", e);
@@ -232,14 +233,13 @@ public class VersionManifest {
         }
 
         @Nullable
-        public NewDownloadTask createDownloadTask(Path librariesDir, @Nullable IProgressUpdater progressUpdater) {
+        public NewDownloadTask createDownloadTask(Path librariesDir) {
             // It appears that the Vanilla launcher will explicitly use the 'url' property if it exists
             if (url != null) {
                 return new NewDownloadTask(
                         url + name.toPath(),
                         name.toPath(librariesDir),
-                        DownloadValidation.of(),
-                        progressUpdater
+                        DownloadValidation.of()
                 );
             }
             // If the 'downloads' property is null, it tries from Mojang's maven directly.
@@ -247,15 +247,14 @@ public class VersionManifest {
                 return new NewDownloadTask(
                         Constants.MC_LIBS + name.toPath(),
                         name.toPath(librariesDir),
-                        DownloadValidation.of(),
-                        progressUpdater
+                        DownloadValidation.of()
                 );
             }
 
             // We have a 'downlaods' property, but no 'natives'.
             if (natives == null) {
                 if (downloads.artifact == null) return null;
-                return downloadTaskFor(librariesDir, downloads.artifact, name, progressUpdater);
+                return downloadTaskFor(librariesDir, downloads.artifact, name);
             }
             // We have natives.
             if (downloads.classifiers == null) return null; // What? but okay, just ignore.
@@ -263,11 +262,11 @@ public class VersionManifest {
             if (classifier == null) return null; // No natives for this platform.
             VersionManifest.LibraryDownload artifact = downloads.classifiers.get(classifier);
             if (artifact == null) return null; // Shouldn't happen, but okay.
-            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier), progressUpdater);
+            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier));
         }
 
         @Nullable
-        private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name, @Nullable IProgressUpdater progressUpdater) {
+        private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name) {
             if (artifact.url == null) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
 
             if (artifact.path == null) {
@@ -283,8 +282,7 @@ public class VersionManifest {
             return new NewDownloadTask(
                     artifact.url,
                     librariesDir.resolve(artifact.path),
-                    validation,
-                    progressUpdater // TODO
+                    validation
             );
         }
     }
