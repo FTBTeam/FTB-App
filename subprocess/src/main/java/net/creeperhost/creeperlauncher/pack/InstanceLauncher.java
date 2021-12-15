@@ -269,7 +269,6 @@ public class InstanceLauncher {
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
             if (instance.embeddedJre) {
-                // TODO, UI feedback when a JDK is being downloaded.
                 Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion(), new QuackProgressAdapter(progressTracker.listenerForStep(true)));
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
@@ -600,6 +599,7 @@ public class InstanceLauncher {
 
         private float stepProgress;
         private String humanDesc = null;
+        private long lastNonImportant = -1;
 
         public void reset(int requestId, int totalSteps) {
             this.requestId = requestId;
@@ -613,12 +613,12 @@ public class InstanceLauncher {
             currStep++;
             this.stepDesc = stepDesc;
             humanDesc = null;
-            sendUpdate();
+            sendUpdate(true);
         }
 
         public void updateDesc(String desc) {
             this.stepDesc = desc;
-            sendUpdate();
+            sendUpdate(true);
         }
 
         public TaskProgressListener listenerForStep(boolean isDownload) {
@@ -636,7 +636,7 @@ public class InstanceLauncher {
                     if (isDownload) {
                         humanDesc = DataUtils.humanSize(processed) + " / " + DataUtils.humanSize(total);
                     }
-                    sendUpdate();
+                    sendUpdate(false);
                 }
 
                 @Override
@@ -647,10 +647,19 @@ public class InstanceLauncher {
 
         public void finishStep() {
             stepProgress = 1.0F;
-            sendUpdate();
+            sendUpdate(true);
         }
 
-        private void sendUpdate() {
+        private void sendUpdate(boolean important) {
+            if (!important) {
+                // Rate limit non-important messages to every 100 millis
+                if (lastNonImportant != -1 && System.currentTimeMillis() - 100 < lastNonImportant) {
+                    return;
+                }
+                lastNonImportant = System.currentTimeMillis();
+            } else {
+                lastNonImportant = -1;
+            }
             if (DEBUG) {
                 LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
             }
