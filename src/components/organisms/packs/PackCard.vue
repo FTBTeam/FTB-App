@@ -118,6 +118,9 @@ export default class PackCard extends Vue {
   @Action('errorInstall', { namespace: 'modpacks' }) public errorInstall: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
   @State('settings') public settingsState!: SettingsState;
+  @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
+  @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
+
 
   public name!: string;
   @Prop()
@@ -241,6 +244,7 @@ export default class PackCard extends Vue {
       this.settingsState.settings.loadInApp === 'true' ||
       this.auth.token?.activePlan == null;
     const disableChat = this.settingsState.settings.enableChat;
+    this.startInstanceLoading();
     this.sendMessage({
       payload: {
         type: 'launchInstance',
@@ -251,6 +255,18 @@ export default class PackCard extends Vue {
       callback: (data: any) => {
         if (this.postLaunch) {
           this.postLaunch(this.instance);
+        }
+        if (data.status === 'error') {
+          this.stopInstanceLoading();
+          // An instance is already running
+          this.msgBox.type = 'okOnly';
+          this.msgBox.title = 'An instance is already running';
+          this.msgBox.okAction = this.hideMsgBox;
+          this.msgBox.content =
+            `You are trying to launch an instance whilst one is already running, please close that instance first.`;
+          this.showMsgBox = true;
+        } else if (data.status === 'success') {
+          this.stopInstanceLoading();
         }
       },
     });

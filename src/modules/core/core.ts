@@ -52,6 +52,14 @@ export const core: Module<CoreState, RootState> = {
       commit(CoreMutations.OPEN_SIGNIN, {open: false, jumpToAuth: null});
     },
 
+    startInstanceLoading: ({ commit }: { commit: any }) => {
+      commit(CoreMutations.INSTANCE_LOADING, true);
+    },
+
+    stopInstanceLoading: ({ commit }: { commit: any }) => {
+      commit(CoreMutations.INSTANCE_LOADING, false);
+    },
+
     addProfile: ({ commit, state }, profile: AuthProfile) => {
       commit(CoreMutations.ADD_PROFILE, profile);
     },
@@ -94,6 +102,10 @@ export const core: Module<CoreState, RootState> = {
   mutations: {
     openSignIn(state: CoreState, payload: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null}) {
       state.signInOpened = payload;
+    },
+
+    instanceLoading(state: CoreState, payload: boolean) {
+      state.instanceLoading = payload;
     },
 
     loadProfiles: (state: CoreState, profiles: AuthProfile[]) => {

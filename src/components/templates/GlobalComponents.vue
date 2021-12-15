@@ -32,7 +32,7 @@
     <authentication v-if="getSignInOpened.open" @close="closeSignIn()" />
 
     <!-- Instance Loading -->
-    <instance-loading v-if="instanceLoading" />
+    <instance-loading/>
   </div>
 </template>
 
@@ -58,7 +58,6 @@ export default class GlobalComponents extends Vue {
   @Action('hideAlert') public hideAlert: any;
 
   @Getter('getSignInOpened', { namespace: 'core' }) public getSignInOpened: any;
-  @Getter('getInstanceLoading', { namespace: 'core' }) public instanceLoading: any;
   @Action('closeSignIn', { namespace: 'core' }) public closeSignIn: any;
 }
 </script>

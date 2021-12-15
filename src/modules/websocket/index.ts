@@ -19,6 +19,7 @@ export const state: SocketState = {
   pingEventCallback: undefined,
   ircEventCallback: undefined,
   modProgressCallback: undefined,
+  launchProgressCallback: undefined,
   exitCallback: undefined,
 };
 

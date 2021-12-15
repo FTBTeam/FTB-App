@@ -1,12 +1,13 @@
 <template>
-  <div class="authentication" @mousedown.self="$emit('close')">
+  <div class="authentication" v-if="isInstanceLoading">
     <div class="body-contents text-center">
 
       <div class="main">
         <h3 class="text-2xl mb-4"><b>Your instance is loading</b></h3>
         <p class="mb-2">
-          We are currently starting your instance, this may take a few seconds.
+          {{currentStep.stepDesc}}
         </p>
+        {{currentStep.step}}/{{currentStep.totalSteps}}
         <ProgressBar class="my-10" />
       <ftb-button class="px-6 py-4 border-solid border-2 border-red-500 hover:border-danger hover:bg-danger" @click="$emit('close')">Cancel</ftb-button>
       </div>
@@ -20,7 +21,7 @@ import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import { Action } from 'vuex-class';
+import { Action, Getter } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 
 @Component({
@@ -28,6 +29,22 @@ import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.v
 })
 export default class InstanceLoading extends Vue {
   @Action('sendMessage') public sendMessage: any;
+  @Action('registerLaunchProgressCallback') public registerLaunchProgressCallback: any;
+  @Getter('getInstanceLoading', { namespace: 'core' }) public isInstanceLoading: any;
+
+  currentStep = {
+    stepDesc:"",
+    step: 0,
+    totalSteps: 0
+  };
+
+  public mounted() {
+    this.registerLaunchProgressCallback((data: any) => {
+      this.currentStep.stepDesc = data.stepDesc;
+      this.currentStep.step = data.step;
+      this.currentStep.totalSteps = data.totalSteps;
+    });
+  }
 
 }
 </script>

@@ -28,7 +28,8 @@ public class LaunchInstanceData extends BaseData {
 
         public Status(int requestId, int step, int totalSteps, float stepProgress, String stepDesc, @Nullable String stepProgressHuman) {
             this.type = "launchInstance.status";
-            this.requestId = requestId;
+            // The request ID means we can only receive one call back to it on the frontend. Removing it allows us to listen for it.
+            //this.requestId = requestId;
             this.step = step;
             this.totalSteps = totalSteps;
             this.stepProgress = stepProgress;

@@ -4,6 +4,7 @@ export enum CoreMutations {
   SET_ACTIVE_PROFILE = 'setActiveProfile',
   OPEN_SIGNIN = 'openSignIn',
   REMOVE_PROFILE = 'removeProfile',
+  INSTANCE_LOADING = "instanceLoading"
 }
 
 export interface AuthProfile {

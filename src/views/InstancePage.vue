@@ -129,6 +129,8 @@ export default class InstancePage extends Vue {
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
+  @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
+  @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
 
   // New stuff
   tabs = ModpackPageTabs;
@@ -203,6 +205,7 @@ export default class InstancePage extends Vue {
       this.settingsState.settings.loadInApp === 'true' ||
       this.auth.token?.activePlan == null;
     const disableChat = this.settingsState.settings.enableChat === true;
+    this.startInstanceLoading();
     this.sendMessage({
       payload: {
         type: 'launchInstance',
@@ -210,7 +213,20 @@ export default class InstancePage extends Vue {
         uuid: this.instance?.uuid,
         extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
       },
-      callback: (data: any) => {},
+      callback: (data: any) => {
+        if (data.status === 'error') {
+          this.stopInstanceLoading();
+          // An instance is already running
+          this.msgBox.type = 'okOnly';
+          this.msgBox.title = 'An instance is already running';
+          this.msgBox.okAction = this.hideMsgBox;
+          this.msgBox.content =
+            `You are trying to launch an instance whilst one is already running, please close that instance first.`;
+          this.showMsgBox = true;
+        } else if (data.status === 'success') {
+          this.stopInstanceLoading();
+        }
+      },
     });
   }
 
