@@ -6,18 +6,27 @@ import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
+import net.covers1624.quack.util.DataUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
 import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
+import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +41,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -61,8 +71,11 @@ public class InstanceLauncher {
     @Nullable
     private Process process;
 
+    private final ProgressTracker progressTracker = new ProgressTracker();
     private final List<ThrowingConsumer<LaunchContext, IOException>> startTasks = new LinkedList<>();
     private final List<ThrowingRunnable<IOException>> exitTasks = new LinkedList<>();
+
+    private static final int NUM_STEPS = 5;
 
     public InstanceLauncher(LocalInstance instance) {
         this.instance = instance;
@@ -111,10 +124,11 @@ public class InstanceLauncher {
      *
      * @throws InstanceLaunchException If there was a direct error preparing the instance to be launched.
      */
-    public synchronized void launch() throws InstanceLaunchException {
+    public synchronized void launch(int requestId) throws InstanceLaunchException {
         assert !isRunning();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
         setPhase(Phase.INITIALIZING);
+        progressTracker.reset(requestId, NUM_STEPS);
 
         Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
@@ -244,29 +258,41 @@ public class InstanceLauncher {
 
     private ProcessBuilder prepareProcess(Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {
         try {
+            progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
             LaunchContext context = new LaunchContext();
             for (ThrowingConsumer<LaunchContext, IOException> startTask : startTasks) {
                 startTask.accept(context);
             }
+            progressTracker.finishStep();
 
+            progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
             if (instance.embeddedJre) {
                 // TODO, UI feedback when a JDK is being downloaded.
-                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion(), null);
+                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion(), new QuackProgressAdapter(progressTracker.listenerForStep(true)));
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
                 javaExecutable = instance.jrePath;
             }
+            progressTracker.finishStep();
 
             prepareManifests(versionsDir);
-            // TODO, may need UI feedback. We will run this once during instance install, but we need to refresh them here too.
+
+            progressTracker.startStep("Validate assets");
             checkAssets();
+            progressTracker.finishStep();
 
             List<VersionManifest.Library> libraries = collectLibraries(features);
             // Mojang may change libraries mid version.
+
+            progressTracker.startStep("Validate libraries");
             validateLibraries(librariesDir, libraries);
+            progressTracker.finishStep();
+
+            progressTracker.startStep("Validate client");
             validateClient(versionsDir);
+            progressTracker.finishStep();
 
             Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
@@ -364,7 +390,7 @@ public class InstanceLauncher {
         InstallAssetsTask assetsTask = new InstallAssetsTask(requireNonNull(manifest.assetIndex, "First Version Manifest missing AssetIndex. This should not happen."));
         if (assetsTask.isRedundant()) return;
         try {
-            assetsTask.execute(null); // TODO
+            assetsTask.execute(progressTracker.listenerForStep(true));
         } catch (Throwable ex) {
             throw new IOException("Failed to execute asset update task.", ex);
         }
@@ -384,9 +410,8 @@ public class InstanceLauncher {
                     download.url,
                     versionsDir.resolve(manifest.id).resolve(manifest.id + ".jar"),
                     validation
-                    // TODO progress
             );
-            task.execute(null);
+            task.execute(progressTracker.listenerForStep(true));
         }
     }
 
@@ -395,18 +420,32 @@ public class InstanceLauncher {
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
             NewDownloadTask task = library.createDownloadTask(librariesDir);
-            if (task != null) {
+            if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }
         }
-        tasks.removeIf(NewDownloadTask::isRedundant);
+
+        long totalLen = tasks.stream()
+                .mapToLong(e -> {
+                    if (e.getValidation().expectedSize() == -1) {
+                        // Try and HEAD request the content length.
+                        return getContentLength(e.getUrl());
+                    }
+                    return e.getValidation().expectedSize();
+                })
+                .sum();
+
+        TaskProgressListener rootListener = progressTracker.listenerForStep(true);
+        rootListener.start(totalLen);
+        TaskProgressAggregator progressAggregator = new TaskProgressAggregator(rootListener);
         if (!tasks.isEmpty()) {
             LOGGER.info("{} dependencies failed to validate or were missing.", tasks.size());
             for (NewDownloadTask task : tasks) {
                 LOGGER.info("Downloading {}", task.getUrl());
-                task.execute(null); // TODO progress
+                task.execute(progressAggregator);
             }
         }
+        rootListener.finish(progressAggregator.getProcessed());
         LOGGER.info("Libraries validated!");
     }
 
@@ -498,6 +537,22 @@ public class InstanceLauncher {
         return VersionManifest.update(versionsFolder, version);
     }
 
+    private static long getContentLength(String url) {
+        Request request = new Request.Builder()
+                .head()
+                .url(url)
+                .build();
+        try (Response response = NewDownloadTask.client.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            if (body != null) return body.contentLength();
+
+            return NumberUtils.toInt(response.header("Content-Length"));
+        } catch (IOException e) {
+            LOGGER.error("Could not perform a HEAD request to {}", url);
+        }
+        return 0;
+    }
+
     public static class LaunchContext {
 
         public final List<String> extraJVMArgs = new ArrayList<>();
@@ -530,5 +585,78 @@ public class InstanceLauncher {
          * Or the process failed to start.
          */
         ERRORED,
+    }
+
+    private static class ProgressTracker {
+
+        private static final boolean DEBUG = Boolean.getBoolean("InstanceLauncher.ProgressTracker.debug");
+
+        private int requestId;
+
+        private int totalSteps = 0;
+        private int currStep = 0;
+
+        private String stepDesc = "";
+
+        private float stepProgress;
+        private String humanDesc = null;
+
+        public void reset(int requestId, int totalSteps) {
+            this.requestId = requestId;
+            this.totalSteps = totalSteps;
+            currStep = 0;
+            stepDesc = "";
+            stepProgress = 0.0F;
+        }
+
+        public void startStep(String stepDesc) {
+            currStep++;
+            this.stepDesc = stepDesc;
+            humanDesc = null;
+            sendUpdate();
+        }
+
+        public void updateDesc(String desc) {
+            this.stepDesc = desc;
+            sendUpdate();
+        }
+
+        public TaskProgressListener listenerForStep(boolean isDownload) {
+            return new TaskProgressListener() {
+                private long total;
+
+                @Override
+                public void start(long total) {
+                    this.total = total;
+                }
+
+                @Override
+                public void update(long processed) {
+                    stepProgress = (float) ((double) processed / (double) total);
+                    if (isDownload) {
+                        humanDesc = DataUtils.humanSize(processed) + " / " + DataUtils.humanSize(total);
+                    }
+                    sendUpdate();
+                }
+
+                @Override
+                public void finish(long total) {
+                }
+            };
+        }
+
+        public void finishStep() {
+            stepProgress = 1.0F;
+            sendUpdate();
+        }
+
+        private void sendUpdate() {
+            if (DEBUG) {
+                LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
+            }
+
+            if (Settings.webSocketAPI == null) return;
+            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Status(requestId, currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+        }
     }
 }

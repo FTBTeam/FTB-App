@@ -19,7 +19,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         String _uuid = data.uuid;
         UUID uuid = UUID.fromString(_uuid);
         try {
-            Instances.getInstance(uuid).play(data.extraArgs, data.loadInApp);
+            Instances.getInstance(uuid).play(data.requestId, data.extraArgs, data.loadInApp);
             Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success"));
         } catch (InstanceLaunchException ex) {
             LOGGER.error("Failed to launch instance.", ex);

@@ -30,14 +30,14 @@ public class InstallAssetsTask implements Task<Void> {
 
     @Override
     public void execute(@Nullable TaskProgressListener listener) throws Throwable {
-        ProgressAggregator progressAggregator = null;
+        TaskProgressAggregator progressAggregator = null;
         if (listener != null) {
             long totalSize = subTasks.stream()
                     .map(NewDownloadTask::getValidation)
                     .mapToLong(DownloadValidation::expectedSize)
                     .sum();
             listener.start(totalSize);
-            progressAggregator = new ProgressAggregator(listener);
+            progressAggregator = new TaskProgressAggregator(listener);
         }
 
         for (NewDownloadTask subTask : subTasks) {
@@ -45,7 +45,7 @@ public class InstallAssetsTask implements Task<Void> {
         }
 
         if (listener != null) {
-            listener.finish(progressAggregator.processed);
+            listener.finish(progressAggregator.getProcessed());
         }
     }
 
@@ -98,25 +98,4 @@ public class InstallAssetsTask implements Task<Void> {
         return tasks;
     }
 
-    private static class ProgressAggregator implements TaskProgressListener {
-
-        private final TaskProgressListener parent;
-
-        private long processed = 0;
-
-        private ProgressAggregator(TaskProgressListener parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public void update(long processed) {
-            this.processed += processed;
-            parent.update(this.processed);
-        }
-
-        //@formatter:off
-        @Override public void start(long total) { } // We don't care about.
-        @Override public void finish(long total) { } // Or this
-        //@formatter:on
-    }
 }

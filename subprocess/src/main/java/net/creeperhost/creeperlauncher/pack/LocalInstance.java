@@ -443,11 +443,12 @@ public class LocalInstance implements IPack
     /**
      * Starts the instance.
      *
+     * @param requestId Websocket request id, used for progress callbacks.
      * @param extraArgs Extra JVM arguments.
      * @param loadInApp If 'launch mod' should be used.
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
-    public void play(String extraArgs, boolean loadInApp) throws InstanceLaunchException {
+    public void play(int requestId, String extraArgs, boolean loadInApp) throws InstanceLaunchException {
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -540,7 +541,7 @@ public class LocalInstance implements IPack
             totalPlayTime += endTime - startTime;
             saveJson();
         });
-        launcher.launch();
+        launcher.launch(requestId);
     }
 
     public boolean uninstall() throws IOException

@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.install.tasks;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.net.download.DownloadListener;
 import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
@@ -13,6 +12,7 @@ import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
+import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import okhttp3.OkHttpClient;
 import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
@@ -118,7 +118,7 @@ public class NewDownloadTask implements Task<Path> {
         }
 
         if (progressListener != null) {
-            action.setDownloadListener(new ProgressAdapter(progressListener));
+            action.setDownloadListener(new QuackProgressAdapter(progressListener));
         }
 
         action.execute();
@@ -264,13 +264,4 @@ public class NewDownloadTask implements Task<Path> {
         }
     }
 
-    private record ProgressAdapter(TaskProgressListener progressListener) implements DownloadListener {
-
-        //@formatter:off
-        @Override public void connecting() { }
-        @Override public void start(long expectedLen) { progressListener.start(expectedLen); }
-        @Override public void update(long processedBytes) { progressListener.update(processedBytes); }
-        @Override public void finish(long totalProcessed) { progressListener.finish(totalProcessed); }
-        //@formatter:on
-    }
 }
