@@ -134,8 +134,10 @@ public class InstanceLauncher {
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
-        // TODO, the UI should probably have a toggle for this.
-        Set<String> features = Set.of("has_custom_resolution");
+        Set<String> features = new HashSet<>();
+        if (instance.width != 0 && instance.height != 0) {
+            features.add("has_custom_resolution");
+        }
 
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
