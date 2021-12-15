@@ -218,10 +218,9 @@ export default class InstancePage extends Vue {
           this.stopInstanceLoading();
           // An instance is already running
           this.msgBox.type = 'okOnly';
-          this.msgBox.title = 'An instance is already running';
+          this.msgBox.title = 'An error occured whilst launching';
           this.msgBox.okAction = this.hideMsgBox;
-          this.msgBox.content =
-            `You are trying to launch an instance whilst one is already running, please close that instance first.`;
+          this.msgBox.content = data.message;
           this.showMsgBox = true;
         } else if (data.status === 'success') {
           this.stopInstanceLoading();

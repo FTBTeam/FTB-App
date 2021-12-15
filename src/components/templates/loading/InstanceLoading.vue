@@ -5,7 +5,8 @@
       <div class="main">
         <h3 class="text-2xl mb-4"><b>Your instance is loading</b></h3>
         <p class="mb-2">
-          {{currentStep.stepDesc}} {{currentStep.step}}/{{currentStep.totalSteps}}
+          {{currentStep.stepDesc}}
+          <!-- {{currentStep.step}}/{{currentStep.totalSteps}} -->
         </p>
         <p class="mb-2" v-if="currentStep.stepProgressHuman != undefined">
           {{currentStep.stepProgressHuman}}
