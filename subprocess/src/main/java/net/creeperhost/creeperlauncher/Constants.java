@@ -80,6 +80,8 @@ public class Constants {
             "-XX:G1HeapRegionSize=32M"
     };
 
+    public static final String LOG4JPATCHER_URL = "https://github.com/CreeperHost/Log4jPatcher/releases/download/v1.0.1/Log4jPatcher-1.0.1.jar";
+
     //Auth
     public static String KEY = "";
     public static String SECRET = "";

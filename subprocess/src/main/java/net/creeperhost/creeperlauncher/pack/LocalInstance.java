@@ -459,6 +459,11 @@ public class LocalInstance implements IPack
             Collections.addAll(ctx.extraJVMArgs, extraArgs.split(" "));
         });
 
+        launcher.withStartTask(ctx -> {
+            DownloadUtils.downloadFile(dir.resolve("Log4jPatcher-1.0.1.jar"), Constants.LOG4JPATCHER_URL);
+            ctx.extraJVMArgs.add("-javaagent:Log4jPatcher-1.0.1.jar");
+        });
+
         if (!Constants.S3_SECRET.isEmpty() && !Constants.S3_KEY.isEmpty() && !Constants.S3_HOST.isEmpty() && !Constants.S3_BUCKET.isEmpty()) {
             launcher.withStartTask(ctx -> {
                 LOGGER.info("Attempting start cloud sync..");
