@@ -42,11 +42,13 @@ public class LaunchInstanceData extends BaseData {
 
         public String status;
 
-        public Reply(LaunchInstanceData data, String status) {
-            // TODO this name needs to be changed.
-            type = "launchInstanceReply";
+        public String message;
+
+        public Reply(LaunchInstanceData data, String status, String message) {
+            type = "launchInstance.reply";
             requestId = data.requestId;
             this.status = status;
+            this.message = message;
         }
     }
 }

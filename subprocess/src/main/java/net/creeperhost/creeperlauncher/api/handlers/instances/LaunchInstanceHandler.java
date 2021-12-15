@@ -20,11 +20,16 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         UUID uuid = UUID.fromString(_uuid);
         try {
             Instances.getInstance(uuid).play(data.requestId, data.extraArgs, data.loadInApp);
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success"));
+            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
         } catch (InstanceLaunchException ex) {
             LOGGER.error("Failed to launch instance.", ex);
-            // TODO, send proper error?
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error"));
+
+            String message = ex.getMessage();
+            if (ex.getCause() != null) {
+                message += " because.. " + ex.getCause().getMessage();
+            }
+
+            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
         }
     }
 }
