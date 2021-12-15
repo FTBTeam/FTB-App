@@ -118,7 +118,7 @@ export const preLaunchChecks = async () => {
 
   if (profiles.length === 0) {
     await store.dispatch('core/openSignIn', null, { root: true });
-    return;
+    return true;
   }
 
   let profile = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);

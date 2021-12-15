@@ -67,7 +67,6 @@ export const mutations: MutationTree<SocketState> = {
         state.ircEventCallback(message);
       }
     } else if (message.type === 'launchInstance.status') {
-      console.log('in here');
       if (state.launchProgressCallback) {
         state.launchProgressCallback(message);
       }

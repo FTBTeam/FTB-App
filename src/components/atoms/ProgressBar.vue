@@ -1,13 +1,17 @@
 <template>
   <div class="progress">
-    <div class="bar"></div>
+    <div class="bar" v-bind:style="{ width: `${progress*100}%`, transition: 'width 0.5s ease' }"></div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
-@Component
+@Component({
+  props: {
+    progress: Number
+  },
+})
 export default class ProgressBar extends Vue {
 }
 </script>
@@ -22,25 +26,24 @@ export default class ProgressBar extends Vue {
   position: relative;
 
   .bar {
-    width: 100%;
     height: 100%;
     background: var(--color-primary-button);
-    position: absolute;
-    left: -100%;
+    // position: absolute;
+    // left: -100%;
 
-    animation: leftToRight 1.5s ease-in-out infinite;
+    // animation: leftToRight 1.5s ease-in-out infinite;
 
-    @keyframes leftToRight {
-      0% {
-        left: -100%;
-      }
-      50% {
-        left: 0;
-      }
-      100% {
-        left: 100%;
-      }
-    }
+    // @keyframes leftToRight {
+    //   0% {
+    //     left: -100%;
+    //   }
+    //   50% {
+    //     left: 0;
+    //   }
+    //   100% {
+    //     left: 100%;
+    //   }
+    // }
   }
 }
 </style>

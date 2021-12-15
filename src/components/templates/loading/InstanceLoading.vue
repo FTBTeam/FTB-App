@@ -5,10 +5,12 @@
       <div class="main">
         <h3 class="text-2xl mb-4"><b>Your instance is loading</b></h3>
         <p class="mb-2">
-          {{currentStep.stepDesc}}
+          {{currentStep.stepDesc}} {{currentStep.step}}/{{currentStep.totalSteps}}
         </p>
-        {{currentStep.step}}/{{currentStep.totalSteps}}
-        <ProgressBar class="my-10" />
+        <p class="mb-2" v-if="currentStep.stepProgressHuman != undefined">
+          {{currentStep.stepProgressHuman}}
+        </p>
+        <ProgressBar class="my-10" :progress="currentStep.stepProgress"/>
       <ftb-button class="px-6 py-4 border-solid border-2 border-red-500 hover:border-danger hover:bg-danger" @click="$emit('close')">Cancel</ftb-button>
       </div>
     </div>
@@ -35,7 +37,9 @@ export default class InstanceLoading extends Vue {
   currentStep = {
     stepDesc:"",
     step: 0,
-    totalSteps: 0
+    totalSteps: 0,
+    stepProgress: 0,
+    stepProgressHuman: ""
   };
 
   public mounted() {
@@ -43,6 +47,8 @@ export default class InstanceLoading extends Vue {
       this.currentStep.stepDesc = data.stepDesc;
       this.currentStep.step = data.step;
       this.currentStep.totalSteps = data.totalSteps;
+      this.currentStep.stepProgress = data.stepProgress;
+      this.currentStep.stepProgressHuman = data.stepProgressHuman;
     });
   }
 
