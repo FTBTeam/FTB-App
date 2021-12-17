@@ -19,7 +19,9 @@ public class ModFile {
     private boolean enabled;
     @JsonAdapter(PathTypeAdapter.class)
     private Path realPath;
+
     private final transient int hashCode;
+
     public ModFile(String name, String version, long size, String sha1) {
         this.realName = name;
         this.name = name.replace(".disabled", "");

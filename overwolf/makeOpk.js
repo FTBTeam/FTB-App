@@ -9,7 +9,7 @@ function makeOPK() {
     childProcess.execSync(
       'zip -9 -r "FTB App - ' +
         version +
-        '.opk" dist/ jdk-11.0.8+10-jre/ FTBOverwolfShim.dll icon_256.png *.jar launchericon.ico manifest.json version.json -x windows/*',
+        '.opk" dist/ jdk-17.0.1+12-minimal/ FTBOverwolfShim.dll icon_256.png *.jar launchericon.ico manifest.json version.json -x windows/*',
     );
   } catch (e) {
     console.log(e);
