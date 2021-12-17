@@ -95,8 +95,8 @@
           v-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
           :loadingFailed="loading"
           :websocketsFailed="!websockets || websockets.reconnects > 20"
-          :websockets='websockets'
-          :max-tries='20'
+          :websockets="websockets"
+          :max-tries="20"
         />
         <div
           class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
@@ -112,51 +112,29 @@
       </div>
     </div>
 
-    <div class="alerts" v-if="$store.state.alerts">
-      <div class="alert" v-for="(alert, index) of $store.state.alerts" :key="index" :class="`bg-${alert.type}`">
-        <div class="message">
-          <span class="font-bold">{{ alert.title }}</span>
-          <div class="message">{{ alert.message }}</div>
-        </div>
-
-        <div class="close" @click="() => hideAlert(alert)"><font-awesome-icon icon="times" /></div>
-      </div>
-    </div>
-
-    <FTBModal
-      v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
-      :visible="$store.state.websocket.modal !== null"
-      @dismiss-modal="hideModal"
-      :dismissable="$store.state.websocket.modal.dismissable"
-    >
-      <message-modal
-        :title="$store.state.websocket.modal.title"
-        :content="$store.state.websocket.modal.message"
-        type="custom"
-        :buttons="$store.state.websocket.modal.buttons"
-        :modalID="$store.state.websocket.modal.id"
-      />
-    </FTBModal>
+    <global-components />
   </div>
 </template>
 
 <script lang="ts">
-import Sidebar from '@/components/Sidebar.vue';
-import TitleBar from '@/components/TitleBar.vue';
+import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
+import TitleBar from '@/components/layout/TitleBar.vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
-import FTBModal from '@/components/FTBModal.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { logVerbose } from '@/utils';
 import { InstallProgress, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
-import ReportForm from '@/components/report/ReportForm.vue';
-import AdAside from '@/components/AdAside.vue';
+import ReportForm from '@/components/templates/ReportForm.vue';
+import AdAside from '@/components/layout/AdAside.vue';
+import GlobalComponents from '@/components/templates/GlobalComponents.vue';
 
 @Component({
   components: {
+    GlobalComponents,
     Sidebar,
     TitleBar,
     FTBModal,
@@ -174,8 +152,6 @@ export default class MainApp extends Vue {
   @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall: any;
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('hideAlert') public hideAlert: any;
-  @Action('hideModal') public hideModal: any;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
   @Action('disconnect') public disconnect: any;
   private loading: boolean = false;
@@ -183,6 +159,8 @@ export default class MainApp extends Vue {
 
   @Action('registerExitCallback') private registerExitCallback: any;
   @Action('registerPingCallback') private registerPingCallback: any;
+
+  @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: any;
 
   private platfrom = platfrom;
 
@@ -224,6 +202,7 @@ export default class MainApp extends Vue {
   public fetchStartData() {
     return new Promise(async (resolve, reject) => {
       await this.loadSettings();
+      this.loadProfiles();
       this.sendMessage({
         payload: { type: 'installedInstances' },
         callback: (data: any) => {

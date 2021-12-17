@@ -23,7 +23,7 @@
 
         <div class="body">
           <!--          TODO: fix mod list-->
-          <pack-tabs-body
+          <pack-body
             @mainAction="showInstallBox = true"
             @update="() => {}"
             @getModList="() => {}"
@@ -142,21 +142,21 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModpackState, Versions } from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
-import FTBToggle from '@/components/FTBToggle.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
-import FTBModal from '@/components/FTBModal.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
 import { shuffle } from '../utils';
 import { SettingsState } from '../modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
-import ServerCard from '@/components/ServerCard.vue';
-import InstallModal from '@/components/modals/InstallModal.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
+import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import { PackConst } from '@/utils/contants';
-import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
-import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
-import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
+import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import { AuthState } from '@/modules/auth/types';
-import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
+import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
+import PackBody from '@/components/molecules/modpack/PackBody.vue';
 
 interface Changelogs {
   [id: number]: string;
@@ -166,7 +166,6 @@ interface Changelogs {
   name: 'ModpackPage',
   components: {
     ModpackVersions,
-    PackTabsBody,
     PackTitleHeader,
     PackMetaHeading,
     'ftb-toggle': FTBToggle,
@@ -174,6 +173,7 @@ interface Changelogs {
     'ftb-modal': FTBModal,
     'message-modal': MessageModal,
     ServerCard,
+    PackBody,
   },
 })
 export default class ModpackPage extends Vue {

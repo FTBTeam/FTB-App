@@ -8,9 +8,10 @@ export interface Util {
 }
 
 export interface Actions {
+  openMsAuth: () => Promise<any>;
   openModpack: (payload: { name: string; id: string }) => void;
   openFriends: () => void;
-  openLogin: (cb: (data: any) => void) => void;
+  openLogin: (cb: (data: { token: string; 'app-auth': string }) => void) => void;
   uploadClientLogs: () => void;
 
   // Res only used on overwolf

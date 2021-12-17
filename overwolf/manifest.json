@@ -21,6 +21,13 @@
     "Shutdown"
   ],
   "data": {
+    "externally_connectable": {
+      "matches": [
+        "https://login.live.com",
+        "https://*.xboxlive.com",
+        "https://api.minecraftservices.com"
+      ]
+    },
     "start_window": "background",
     "windows": {
       "background": {

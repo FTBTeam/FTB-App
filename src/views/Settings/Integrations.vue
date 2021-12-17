@@ -81,8 +81,7 @@ export default class AppInfo extends Vue {
   }
 
   private openLogin() {
-    // NOTE: the callback is only used on overwolf
-    platform.get.actions.openLogin((data: any) => {
+    platform.get.actions.openLogin((data: { token: string, 'app-auth': string }) => {
       if (data.token) {
         this.setSessionID(data.token);
       }

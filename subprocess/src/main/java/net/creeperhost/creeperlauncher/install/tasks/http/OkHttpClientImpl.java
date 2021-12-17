@@ -6,39 +6,49 @@ import net.covers1624.quack.util.SneakyUtils;
 import okhttp3.*;
 import okio.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static java.util.Objects.requireNonNull;
+
+/**
+ * Http client based on {@link OkHttpClient}.
+ */
+@Deprecated
+@SuppressWarnings ("UnstableApiUsage")
 public class OkHttpClientImpl implements IHttpClient
 {
     private static final OkHttpClient client;
 
     static {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.cookieJar(new SimpleCookieJar());
         builder.addInterceptor((chain) ->
         {
             Request request = chain.request();
             Response originalResponse = chain.proceed(request);
+            ResponseBody body = originalResponse.body();
+            if (body == null) return originalResponse;
             return originalResponse.newBuilder()
-                    .body(new ProgressResponseBody(originalResponse.body(), request.tag(ResponseHandlers.class), request.tag(Long.class)))
+                    .body(new ProgressResponseBody(body, requireNonNull(request.tag(ResponseHandlers.class)), requireNonNull(request.tag(Long.class))))
                     .build();
         });
         client = builder.build();
     }
 
     @Override
-    public String makeRequest(String url)
+    public DownloadedFile doDownload(String url, Path destination, @Nullable IProgressUpdater progressWatcher, @Nullable HashFunction hashFunc, long maxSpeed) throws IOException
     {
-        return null;
-    }
-
-    /* returns when done */
-    @Override
-    public DownloadedFile doDownload(String url, Path destination, IProgressUpdater progressWatcher, HashFunction hashFunc, long maxSpeed) throws IOException
-    {
-        Hasher hasher = hashFunc.newHasher();
-        ResponseHandlers responseHandlers = new ResponseHandlers(progressWatcher, e -> hasher.putBytes(e.readByteArray()));
+        Hasher hasher = hashFunc != null ? hashFunc.newHasher() : null;
+        ResponseHandlers responseHandlers = new ResponseHandlers(progressWatcher, e -> {
+            if (hasher != null) {
+                hasher.putBytes(e.readByteArray());
+            }
+        });
 
         Request request = new Request.Builder()
                 .url(url)
@@ -46,15 +56,15 @@ public class OkHttpClientImpl implements IHttpClient
                 .tag(ResponseHandlers.class, responseHandlers)
                 .build();
 
-        Response response = client.newCall(request).execute();
+        try (Response response = client.newCall(request).execute()) {
+            try (BufferedSink sink = Okio.buffer(Okio.sink(destination))) {
+                ResponseBody body = response.body();
+                if (body == null) throw new FileNotFoundException("Response had no body.");
+                sink.writeAll(body.source());
+            }
+        }
 
-        BufferedSink sink = Okio.buffer(Okio.sink(destination));
-        sink.writeAll(response.body().source());
-        sink.close();
-
-        response.close();
-
-        return new DownloadedFile(destination, 0, hasher.hash());
+        return new DownloadedFile(destination, Files.size(destination), hasher != null ? hasher.hash() : null);
     }
 
     private static class ProgressResponseBody extends ResponseBody
@@ -64,12 +74,13 @@ public class OkHttpClientImpl implements IHttpClient
         private final ResponseBody responseBody;
         private final ResponseHandlers responseHandlers;
         private final long maxSpeed;
+        @Nullable
         private BufferedSource bufferedSource;
 
-        public ProgressResponseBody(ResponseBody responseBody, ResponseHandlers progressListener, long maxSpeed)
+        public ProgressResponseBody(ResponseBody responseBody, ResponseHandlers responseHandlers, long maxSpeed)
         {
             this.responseBody = responseBody;
-            this.responseHandlers = progressListener;
+            this.responseHandlers = responseHandlers;
             this.maxSpeed = maxSpeed;
         }
 
@@ -127,15 +138,6 @@ public class OkHttpClientImpl implements IHttpClient
         }
     }
 
-    private static class ResponseHandlers
-    {
-        private final IProgressUpdater updater;
-        private final SneakyUtils.ThrowingConsumer<BufferedSource, IOException> handler;
-
-        public ResponseHandlers(IProgressUpdater updater, SneakyUtils.ThrowingConsumer<BufferedSource, IOException> handler)
-        {
-            this.updater = updater;
-            this.handler = handler;
-        }
+    private record ResponseHandlers(@Nullable IProgressUpdater updater, SneakyUtils.ThrowingConsumer<BufferedSource, IOException> handler) {
     }
 }

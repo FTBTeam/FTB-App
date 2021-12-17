@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import FTBNews from '@/components/FTBNews.vue';
+import FTBNews from '@/components/templates/FTBNews.vue';
 import { State, Action } from 'vuex-class';
 import { NewsState } from '@/modules/news/types';
 

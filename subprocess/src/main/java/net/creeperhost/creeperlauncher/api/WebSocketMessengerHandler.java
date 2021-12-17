@@ -13,6 +13,7 @@ import net.creeperhost.creeperlauncher.api.data.friends.GetFriendsData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
 import net.creeperhost.creeperlauncher.api.data.irc.*;
 import net.creeperhost.creeperlauncher.api.data.other.*;
+import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
 import net.creeperhost.creeperlauncher.api.handlers.*;
 import net.creeperhost.creeperlauncher.api.handlers.friends.AddFriendHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.BlockFriendHandler;
@@ -68,6 +69,16 @@ public class WebSocketMessengerHandler
         register("messageClient", MessageClientData.class, new MessageClientHandler());
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
+
+        register("profiles.get", BaseData.class, new GetProfilesHandler());
+        register("profiles.addMs", AddMsProfileHandler.Data.class, new AddMsProfileHandler());
+        register("profiles.updateMs", UpdateMsProfileHandler.Data.class, new UpdateMsProfileHandler());
+        register("profiles.addMc", AddMcProfileHandler.Data.class, new AddMcProfileHandler());
+        register("profiles.updateMc", UpdateMcProfileHandler.Data.class, new UpdateMcProfileHandler());
+        register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
+        register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
+        register("profiles.mc.authenticate", AuthenticateMcProfileHandler.Data.class, new AuthenticateMcProfileHandler());
+        register("profiles.mc.refresh", RefreshAuthenticationMcProfileHandler.Data.class, new RefreshAuthenticationMcProfileHandler());
     }
 
     public static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {

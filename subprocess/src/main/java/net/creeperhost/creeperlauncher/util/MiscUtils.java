@@ -12,6 +12,8 @@ import org.apache.tika.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,21 +50,27 @@ public class MiscUtils
         });
         return combinedFuture;
     }
-    public static int getRandomNumber(int min, int max) {
-        return (int) ((Math.random() * (max - min)) + min);
+
+    /**
+     * Gets a random free Ephemeral port.
+     *
+     * @return The port. <code>-1</code> if no port could be found.
+     */
+    public static int getRandomEphemeralPort() {
+        int tries = 0;
+        while (tries < 5) {
+            try (ServerSocket socket = new ServerSocket(0)) {
+                return socket.getLocalPort();
+            } catch (IOException ignored) {
+                tries++;
+            }
+        }
+        return -1;
     }
 
     public static long unixtime()
     {
         return System.currentTimeMillis() / 1000L;
-    }
-
-    public static String getDateAndTime()
-    {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH);
-        LocalDateTime now = LocalDateTime.now();
-
-        return dateTimeFormatter.format(now);
     }
 
     private static final String[] javaRegLocationsAdoptOpenJDK = new String[] {"SOFTWARE\\AdoptOpenJDK\\JDK", "SOFTWARE\\AdoptOpenJDK\\JRE", "SOFTWARE\\Eclipse Foundation\\JRE", "SOFTWARE\\Eclipse Foundation\\JDK"};
@@ -230,14 +238,5 @@ public class MiscUtils
             return m.group(1);
         }
         return "Unknown";
-    }
-
-    public static boolean isInt(String in){
-        try {
-            Integer.parseInt(in);
-        }catch(Exception ignored) {
-            return false;
-        }
-        return true;
     }
 }

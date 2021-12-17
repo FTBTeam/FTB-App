@@ -4,7 +4,6 @@ import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import net.creeperhost.creeperlauncher.Constants;
@@ -12,8 +11,6 @@ import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.SimpleDownloadableFile;
-import net.creeperhost.creeperlauncher.api.WebSocketAPI;
-import net.creeperhost.creeperlauncher.minecraft.GameLauncher;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoader;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoaderManager;
@@ -44,7 +41,6 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
 {
     private static final Logger LOGGER = LogManager.getLogger("Modpack Installer Task");
 
-    private static final Gson gson = new Gson();
     public static AtomicLong currentSpeed = new AtomicLong(0);
     public static AtomicLong averageSpeed = new AtomicLong(0);
     public static AtomicLong overallBytes = new AtomicLong(0);
@@ -53,7 +49,6 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
     public static AtomicReference<String> lastError = new AtomicReference<String>();
     public static ConcurrentHashMap<Long, String> batchedFiles = new ConcurrentHashMap<>();
     public String currentUUID = "";
-    public boolean _private = false;
     public CompletableFuture<Void> currentTask = null;
     public static Stage currentStage = Stage.INIT;
     LocalInstance instance;
@@ -71,7 +66,6 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
 
     public FTBModPackInstallerTask(LocalInstance instance)
     {
-        McUtils.killOldMinecraft().join();
         this.instance = instance;
         try
         {
@@ -100,11 +94,8 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
             FileUtils.createDirectories(instanceRoot);
             LOGGER.debug("Setting stage to VANILLA");
             currentStage = Stage.VANILLA;
+            // TODO Assets/Jdk?
             LOGGER.debug("About to download launcher");
-            OS.CURRENT.getPlatform().installLauncher();
-            Path profileJson = Constants.LAUNCHER_PROFILES_JSON;
-            LOGGER.debug("Launching game and close");
-            if (Files.notExists(profileJson)) GameLauncher.downloadLauncherProfiles();
             Path instanceDir = instance.getDir();
             FileUtils.createDirectories(instanceDir);
             LOGGER.debug("Setting stage to API");
@@ -148,7 +139,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
         {
             LOGGER.error("Unable to delete " + modpackJson.toAbsolutePath());
         }
-        DownloadUtils.downloadFile(modpackJson, Constants.getCreeperhostModpackSearch2(_private, packType) + instance.getId(), true);
+        DownloadUtils.downloadFile(modpackJson, Constants.getCreeperhostModpackPrefix(_private, packType) + instance.getId(), true);
 
         Path versionJson = instanceDir.resolve("version.json");
         if (Files.exists(versionJson))
@@ -161,15 +152,15 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
                 return false;
             }
         }
-        DownloadUtils.downloadFile(versionJson, Constants.getCreeperhostModpackSearch2(_private, packType) + instance.getId() + "/" + instance.getVersionId(), true);
+        DownloadUtils.downloadFile(versionJson, Constants.getCreeperhostModpackPrefix(_private, packType) + instance.getId() + "/" + instance.getVersionId(), true);
 
         return (Files.exists(modpackJson) && Files.exists(versionJson));
     }
 
     public static ModPack getPackFromAPI(long packId, long versionId, boolean _private, byte packType)
     {
-        LOGGER.info("Getting pack from api.");
-        String modpackURL = Constants.getCreeperhostModpackSearch2(_private, packType) + packId;
+        LOGGER.info(String.format("Getting pack([%s%s] %d / %d) from api.", _private ? "private:" : "", packType == 0 ? "native" : "curseforge", packId, versionId));
+        String modpackURL = Constants.getCreeperhostModpackPrefix(_private, packType) + packId;
         String versionURL = modpackURL + "/" + versionId;
         String name = "";
         String version = "";
@@ -285,7 +276,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
 
     public static ModPack getPackFromFile(Path _path)
     {
-        LOGGER.info("Getting pack from api.");
+        LOGGER.info(String.format("Getting pack from local store (%s).", _path.getFileName().toString()));
         String name = "";
         String version = "";
         List<String> authorList = new ArrayList<>();
@@ -434,7 +425,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
                     long fileId = server.get("id").getAsLong();
                     String fileType = server.get("type").getAsString();
                     String updated = server.get("updated").getAsString();
-                    downloadableFileList.add(new DownloadableFile(version, instance.getDir().resolve(path).resolve(fileName), downloadUrl, sha1, size, fileId, fileName, fileType, updated));
+                    downloadableFileList.add(new DownloadableFile(instance.getDir().resolve(path).resolve(fileName), downloadUrl, sha1, size, fileId, fileName, fileType));
                 }
             }
         }
@@ -451,7 +442,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
         JsonObject jElement = null;
         try (BufferedReader reader = Files.newBufferedReader(target))
         {
-            jElement = gson.fromJson(reader, JsonObject.class);
+            jElement = GsonUtils.GSON.fromJson(reader, JsonObject.class);
         } catch (IOException exception)
         {
             exception.printStackTrace();
@@ -481,7 +472,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
                     long fileId = server.get("id").getAsLong();
                     String fileType = server.get("type").getAsString();
                     String updated = server.get("updated").getAsString();
-                    downloadableFileList.add(new DownloadableFile(version, instance.getDir().resolve(path).resolve(fileName), downloadUrl, sha1, size, fileId, fileName, fileType, updated));
+                    downloadableFileList.add(new DownloadableFile(instance.getDir().resolve(path).resolve(fileName), downloadUrl, sha1, size, fileId, fileName, fileType));
                 }
             }
         }
@@ -489,25 +480,25 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
         LOGGER.debug("Attempting to get Required Downloads from Modloader Target");
         if(forgeTarget != null) {
             try (BufferedReader reader = Files.newBufferedReader(forgeTarget)) {
-                JsonObject jsonObject = gson.fromJson(reader, JsonObject.class);
+                JsonObject jsonObject = GsonUtils.GSON.fromJson(reader, JsonObject.class);
                 if(jsonObject.has("id")) {
                     String[] versionSplit = jsonObject.get("id").getAsString().split("-");
                     String version = versionSplit[0];
                     Path libBase = instance.getDir().resolve("lib");
                     switch(version) {
                         case "1.4.7":
-                            downloadableFileList.add(new DownloadableFile("1.47", libBase.resolve("bcprov-jdk15on-147.jar"), "https://maven.creeperhost.net/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar", Collections.singletonList(HashCode.fromString("b6f5d9926b0afbde9f4dbe3db88c5247be7794bb")), 1997327, -1, "bcprov-jdk15on-147.jar", "library", "0"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("bcprov-jdk15on-147.jar"), "https://maven.creeperhost.net/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar", Collections.singletonList(HashCode.fromString("b6f5d9926b0afbde9f4dbe3db88c5247be7794bb")), 1997327, -1, "bcprov-jdk15on-147.jar", "library"));
                         case "1.4.2":
-                            downloadableFileList.add(new DownloadableFile("2.25", libBase.resolve("argo-2.25.jar"), "https://maven.creeperhost.net/net/sourceforge/argo/argo/2.25/argo-2.25.jar", Collections.singletonList(HashCode.fromString("bb672829fde76cb163004752b86b0484bd0a7f4b")), 123642, -1, "argo-2.25.jar", "library", "0"));
-                            downloadableFileList.add(new DownloadableFile("12.0.1", libBase.resolve("guava-12.0.1.jar"), "https://maven.creeperhost.net/com/google/guava/guava/12.0.1/guava-12.0.1.jar", Collections.singletonList(HashCode.fromString("b8e78b9af7bf45900e14c6f958486b6ca682195f")), 1795932, -1, "guava-12.0.1.jar", "library", "0"));
-                            downloadableFileList.add(new DownloadableFile("4.0", libBase.resolve("asm-all-4.0.jar"), "https://maven.creeperhost.net/org/ow2/asm/asm-all/4.0/asm-all-4.0-fml.jar", Collections.singletonList(HashCode.fromString("98308890597acb64047f7e896638e0d98753ae82")), 212767, -1, "asm-all-4.0.jar", "library", "0"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("argo-2.25.jar"), "https://maven.creeperhost.net/net/sourceforge/argo/argo/2.25/argo-2.25.jar", Collections.singletonList(HashCode.fromString("bb672829fde76cb163004752b86b0484bd0a7f4b")), 123642, -1, "argo-2.25.jar", "library"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("guava-12.0.1.jar"), "https://maven.creeperhost.net/com/google/guava/guava/12.0.1/guava-12.0.1.jar", Collections.singletonList(HashCode.fromString("b8e78b9af7bf45900e14c6f958486b6ca682195f")), 1795932, -1, "guava-12.0.1.jar", "library"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("asm-all-4.0.jar"), "https://maven.creeperhost.net/org/ow2/asm/asm-all/4.0/asm-all-4.0-fml.jar", Collections.singletonList(HashCode.fromString("98308890597acb64047f7e896638e0d98753ae82")), 212767, -1, "asm-all-4.0.jar", "library"));
                             break;
                         case "1.5.2":
-                            downloadableFileList.add(new DownloadableFile("3.2", libBase.resolve("argo-small-3.2.jar"), "https://maven.creeperhost.net/net/sourceforge/argo/argo/3.2/argo-3.2-small.jar", Collections.singletonList(HashCode.fromString("58912ea2858d168c50781f956fa5b59f0f7c6b51")), 91333, -1, "argo-small-3.2.jar", "library", "0"));
-                            downloadableFileList.add(new DownloadableFile("14.0-rc3", libBase.resolve("guava-14.0-rc3.jar"), "https://maven.creeperhost.net/com/google/guava/guava/14.0-rc3/guava-14.0-rc3.jar", Collections.singletonList(HashCode.fromString("931ae21fa8014c3ce686aaa621eae565fefb1a6a")), 2189140, -1, "guava-14.0-rc3.jar", "library", "0"));
-                            downloadableFileList.add(new DownloadableFile("4.1", libBase.resolve("asm-all-4.1.jar"), "https://maven.creeperhost.net/org/ow2/asm/asm-all/4.1/asm-all-4.1.jar", Collections.singletonList(HashCode.fromString("054986e962b88d8660ae4566475658469595ef58")), 214592, -1, "asm-all-4.1.jar", "library", "0"));
-                            downloadableFileList.add(new DownloadableFile("1.5.2", libBase.resolve("deobfuscation_data_1.5.2.zip"), "https://maven.creeperhost.net/cpw/mods/fml/deobfuscation_data/1.5.2/deobfuscation_data-1.5.2.zip", Collections.singletonList(HashCode.fromString("446e55cd986582c70fcf12cb27bc00114c5adfd9")), 201404, -1, "deobfuscation_data_1.5.2.zip", "library", "0"));
-                            downloadableFileList.add(new DownloadableFile("2.10.0", libBase.resolve("scala-library-2.10.0.jar"), "https://maven.creeperhost.net/org/scala-lang/scala-library/2.10.0/scala-library-2.10.0.jar", Collections.singletonList(HashCode.fromString("458d046151ad179c85429ed7420ffb1eaf6ddf85")), 7114640, -1, "scala-library-2.10.0.jar", "library", "0"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("argo-small-3.2.jar"), "https://maven.creeperhost.net/net/sourceforge/argo/argo/3.2/argo-3.2-small.jar", Collections.singletonList(HashCode.fromString("58912ea2858d168c50781f956fa5b59f0f7c6b51")), 91333, -1, "argo-small-3.2.jar", "library"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("guava-14.0-rc3.jar"), "https://maven.creeperhost.net/com/google/guava/guava/14.0-rc3/guava-14.0-rc3.jar", Collections.singletonList(HashCode.fromString("931ae21fa8014c3ce686aaa621eae565fefb1a6a")), 2189140, -1, "guava-14.0-rc3.jar", "library"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("asm-all-4.1.jar"), "https://maven.creeperhost.net/org/ow2/asm/asm-all/4.1/asm-all-4.1.jar", Collections.singletonList(HashCode.fromString("054986e962b88d8660ae4566475658469595ef58")), 214592, -1, "asm-all-4.1.jar", "library"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("deobfuscation_data_1.5.2.zip"), "https://maven.creeperhost.net/cpw/mods/fml/deobfuscation_data/1.5.2/deobfuscation_data-1.5.2.zip", Collections.singletonList(HashCode.fromString("446e55cd986582c70fcf12cb27bc00114c5adfd9")), 201404, -1, "deobfuscation_data_1.5.2.zip", "library"));
+                            downloadableFileList.add(new DownloadableFile(libBase.resolve("scala-library-2.10.0.jar"), "https://maven.creeperhost.net/org/scala-lang/scala-library/2.10.0/scala-library-2.10.0.jar", Collections.singletonList(HashCode.fromString("458d046151ad179c85429ed7420ffb1eaf6ddf85")), 7114640, -1, "scala-library-2.10.0.jar", "library"));
                             break;
                     }
                 }
@@ -626,7 +617,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
                         String fileName = localPath.getFileName().toString();
                         String fileType = "library";
                         String updated = String.valueOf(System.currentTimeMillis() / 1000L);
-                        downloadableFileList.add(new DownloadableFile(version, localPath, downloadUrl, sha1, size, fileId, fileName, fileType, updated));
+                        downloadableFileList.add(new DownloadableFile(localPath, downloadUrl, sha1, size, fileId, fileName, fileType));
                     }
                 }
             }

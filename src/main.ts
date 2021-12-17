@@ -19,9 +19,10 @@ import vSelectMenu from 'v-selectmenu';
 import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 
-import store from './store';
-import FTBButton from '@/components/FTBButton.vue';
-import FTBInput from '@/components/FTBInput.vue';
+import store from './modules/store';
+import FTBButton from '@/components/atoms/input/FTBButton.vue';
+import FTBInput from '@/components/atoms/input/FTBInput.vue';
+import Popover from '@/components/atoms/Popover.vue';
 
 const classMap: object = {
   h1: 'text-4xl',
@@ -89,6 +90,7 @@ Vue.use(VueShowdown, {
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 Vue.component('ftb-button', FTBButton);
 Vue.component('ftb-input', FTBInput);
+Vue.component('popover', Popover);
 
 Vue.config.productionTip = false;
 Vue.config.devtools = true;
@@ -116,7 +118,7 @@ Vue.filter('moment', (value: any) => {
 
 Vue.filter('momentFromNow', (value: any) => {
   if (!value) {
-    return '';
+    return 'Never';
   }
   value = value.toString();
   return moment.duration(moment.unix(value).diff(moment())).humanize(true);

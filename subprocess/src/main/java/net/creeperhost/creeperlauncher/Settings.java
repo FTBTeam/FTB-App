@@ -101,4 +101,16 @@ public class Settings
         if(defaultThreads < 2) defaultThreads = 2;
         return String.valueOf(defaultThreads);
     }
+
+    public static long getSpeedLimit() {
+        String val = settings.putIfAbsent("speedLimit", "0");
+        if (val == null) {
+            return 0;
+        }
+        try {
+            return Long.parseLong(val);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
 }

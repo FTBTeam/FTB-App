@@ -7,6 +7,7 @@ import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -86,6 +87,7 @@ public class LocalCache implements AutoCloseable {
      * @param hash The hash.
      * @return The path or null.
      */
+    @Nullable
     public Path get(HashCode hash) {
         if (!files.contains(hash)) return null;
         String path = makePath(hash);

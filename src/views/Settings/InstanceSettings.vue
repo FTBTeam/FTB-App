@@ -91,7 +91,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { Settings, SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import FTBToggle from '@/components/FTBToggle.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 
 @Component({
   components: {

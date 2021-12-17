@@ -1,5 +1,8 @@
 package net.creeperhost.creeperlauncher.api.handlers;
 
+import com.google.gson.annotations.JsonAdapter;
+import net.covers1624.quack.gson.PathTypeAdapter;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,8 +17,11 @@ public class ModFile {
     private boolean expected;
     private boolean exists;
     private boolean enabled;
+    @JsonAdapter(PathTypeAdapter.class)
     private Path realPath;
+
     private final transient int hashCode;
+
     public ModFile(String name, String version, long size, String sha1) {
         this.realName = name;
         this.name = name.replace(".disabled", "");

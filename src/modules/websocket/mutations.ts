@@ -37,7 +37,8 @@ export const mutations: MutationTree<SocketState> = {
           message.type !== 'installInstanceDataReply' &&
           message.type !== 'installInstanceProgress' &&
           message.type !== 'updateInstanceProgress' &&
-          message.type !== 'updateInstanceDataReply'
+          message.type !== 'updateInstanceDataReply' &&
+          message.type !== 'launchInstance.status'
         ) {
           delete state.messages[message.requestId];
         } else if (message.status === 'success') {
@@ -64,6 +65,10 @@ export const mutations: MutationTree<SocketState> = {
     } else if (message.type === 'ircMessage') {
       if (state.ircEventCallback) {
         state.ircEventCallback(message);
+      }
+    } else if (message.type === 'launchInstance.status') {
+      if (state.launchProgressCallback) {
+        state.launchProgressCallback(message);
       }
     } else if (message.type === 'clientLaunchData') {
       if (state.modProgressCallback) {
@@ -97,6 +102,9 @@ export const mutations: MutationTree<SocketState> = {
   },
   ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void) {
     state.modProgressCallback = callback;
+  },
+  ADD_LAUNCH_PROGRESS_CALLBACK(state: any, callback: (data: any) => void) {
+    state.launchProgressCallback = callback;
   },
   ADD_EXIT_CALLBACK(state: any, callback: (data: any) => void) {
     state.exitCallback = callback;

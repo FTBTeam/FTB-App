@@ -1,15 +1,11 @@
 <template>
   <div class="px-6 py-4" v-if="isLoaded">
-    <!-- <div class="flex flex-row items-center w-full mt-4">
-      <h1 v-if="recentlyPlayed.length >= 1" @click="changeTab('recentlyPlayed')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'recentlyPlayed' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Recently Played</h1>
-      <h1 @click="changeTab('featuredPacks')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredPacks' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Packs</h1>
-      <h1 v-if="serverListState.servers !== undefined" @click="changeTab('featuredServers')" :class="`cursor-pointer text-2xl mr-4 ${currentTab === 'featuredServers' ? '' : 'text-gray-600'} hover:text-gray-500 border-red-700`">Featured Servers</h1>
-    </div> -->
     <div class="flex flex-col" v-if="recentlyPlayed.length >= 1" key="recentlyPlayed">
       <h1 class="text-2xl mb-2">Recently Played</h1>
       <div class="mod-pack-grid mb-4">
         <pack-card
           v-for="modpack in recentlyPlayed"
+          class="pack-card-item"
           :key="modpack.uuid"
           :versions="modpack.versions"
           :art="modpack.art"
@@ -24,12 +20,12 @@
           "
           :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"
           :kind="modpack.kind"
-        ></pack-card>
+        />
       </div>
     </div>
     <div class="flex flex-col" key="featuredPacks">
       <h1 class="text-2xl mb-4 mt-2">Featured Modpacks</h1>
-      <div class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch" appear>
+      <div class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch">
         <pack-card-list
           v-for="modpack in modpacks.featuredPacks.slice(0, cardsToShow)"
           :key="modpack.id"
@@ -49,27 +45,6 @@
         >
       </div>
     </div>
-    <!-- <div class="flex flex-col" v-if="currentTab === 'featuredServers'" key="featuredServers">
-      <transition-group
-        name="list"
-        tag="div"
-        class="flex pt-1 flex-wrap flex-grow items-stretch"
-        appear
-      >
-        <div v-if="serverListState.servers['featured'].length > 0" :key="'servers'">
-          <server-card v-if="serverListState.servers !== null" v-for="server in serverListState.servers['featured']" :key="server.id" :server="server"></server-card>
-        </div>
-        <div class="flex flex-1 pt-1 flex-wrap overflow-x-auto justify-center flex-col items-center" :key="'no-servers'" v-else>
-          <font-awesome-icon icon="server" style="font-size: 25vh"></font-awesome-icon>
-          <h1 class="text-5xl">Oh no!</h1>
-          <span>It doesn't looks like there are any featured MineTogether servers</span>
-          <br/>
-          <span>If you are a server owner and would like to have your server featured,</span>
-          <span>you can find more information by clicking the button below</span>
-          <a href="https://feed-the-beast.com/featuredServers" target="_blank"><ftb-button class="py-2 px-4 my-2" color="info" css-class="text-center text-l">Become a featured server</ftb-button></a>
-        </div>
-      </transition-group>
-    </div> -->
   </div>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
     <strong>Loading</strong>
@@ -78,15 +53,15 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-import PackCard from '@/components/packs/PackCard.vue';
-import PackCardList from '@/components/packs/PackCardList.vue';
-import ServerCard from '@/components/ServerCard.vue';
+import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
+import PackCard from '@/components/organisms/packs/PackCard.vue';
+import PackCardList from '@/components/organisms/packs/PackCardList.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
 import { Action, State } from 'vuex-class';
 import { ModPack, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
-import FtbButton from '@/components/FTBButton.vue';
+import FtbButton from '@/components/atoms/input/FTBButton.vue';
 
 const namespace: string = 'modpacks';
 
@@ -175,8 +150,20 @@ export default class Home extends Vue {
 
 <style lang="scss" scoped>
 .mod-pack-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 148px);
-  gap: 1rem;
+  overflow-x: auto;
+  display: flex;
+  justify-content: flex-start;
+  padding-bottom: 1rem;
+
+  .pack-card-item {
+    // Packcard needs rewriting, it's being restricted by something :/
+    min-width: 150px;
+    max-width: 150px;
+    width: 150px;
+
+    &:not(:last-child) {
+      margin-right: 1rem;
+    }
+  }
 }
 </style>

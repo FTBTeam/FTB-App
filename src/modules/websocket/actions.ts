@@ -42,6 +42,9 @@ export const actions: ActionTree<SocketState, RootState> = {
   registerModProgressCallback({ commit }: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
     commit('ADD_MOD_PROGRESS_CALLBACK', callback);
   },
+  registerLaunchProgressCallback({ commit }: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
+    commit('ADD_LAUNCH_PROGRESS_CALLBACK', callback);
+  },
   registerExitCallback({ commit }: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
     commit('ADD_EXIT_CALLBACK', callback);
   },

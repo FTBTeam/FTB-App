@@ -189,7 +189,7 @@ import { Instance, ModPack, ModpackState, Versions } from '../modules/modpacks/t
 import { getAPIRequest } from '../modules/modpacks/actions';
 import { queryServer } from '../utils';
 import { SettingsState } from '../modules/settings/types';
-import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
+import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
 
 @Component({
   components: {

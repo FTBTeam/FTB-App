@@ -72,8 +72,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-import FTBToggle from '@/components/FTBToggle.vue';
+import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { SettingsState } from '@/modules/settings/types';

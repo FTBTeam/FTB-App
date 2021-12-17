@@ -47,7 +47,7 @@ public class Mod {
                 hashes.add(code);
             }
 
-            return new DownloadableFile(version, instance.getDir().resolve(path).resolve(name), url, hashes, size, id, name, type, updated);
+            return new DownloadableFile(instance.getDir().resolve(path).resolve(name), url, hashes, size, id, name, type);
         }
 
         public List<Version> getDependencies(List<ModFile> existingFiles, List<Version> fileCandidates, LoaderTarget gameTarget, LoaderTarget loaderTarget) {
