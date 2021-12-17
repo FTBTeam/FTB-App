@@ -1,9 +1,9 @@
 <template>
   <div class="profile-area" :class="{ disable }">
-    <div class="profile" v-if="getActiveProfile">
+    <div class="profile" v-if="getActiveProfile || auth.token">
       <div class="avatar">
         <img
-          :src="`https://api.mymcuu.id/head/${getActiveProfile.uuid}`"
+          :src="`https://api.mymcuu.id/head/${getActiveProfile ? getActiveProfile.uuid : mtAvatar}`"
           alt="Profile"
           class="rounded"
           width="35"
@@ -18,9 +18,9 @@
               <img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />
               Accounts
             </div>
-            <font-awesome-icon icon="edit" @click="editMode = !editMode" />
+            <font-awesome-icon v-if="getProfiles.length" icon="edit" @click="editMode = !editMode" />
           </div>
-          <div class="accounts" v-if="getProfiles.length">
+          <div class="accounts" v-if="getProfiles && getProfiles.length">
             <div
               class="account hoverable"
               :class="{ loading, active: getActiveProfile.uuid === item.uuid }"
@@ -122,6 +122,11 @@ export default class SidebarProfile extends Vue {
 
   editMode = false;
   loading = false;
+
+  get mtAvatar() {
+    const provider = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
+    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
+  }
 
   async removeProfile(profile: AuthProfile) {
     this.loading = true;
