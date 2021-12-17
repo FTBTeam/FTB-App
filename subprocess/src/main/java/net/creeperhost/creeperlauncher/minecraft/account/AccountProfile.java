@@ -5,6 +5,7 @@ import net.creeperhost.creeperlauncher.api.handlers.profiles.AddMsProfileHandler
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -71,7 +72,7 @@ public class AccountProfile {
       public String liveAccessToken;
       public String liveRefreshToken; // This is needed for the account refresh
       public String liveExpires;
-      public String liveExpiresAt;
+      public long liveExpiresAt;
       
       public MSAuthStore(AddMsProfileHandler.Data data) {
         this.minecraftUuid = data.minecraftUuid; 
@@ -83,7 +84,7 @@ public class AccountProfile {
         this.liveAccessToken = data.liveAccessToken; 
         this.liveRefreshToken = data.liveRefreshToken; // This is needed for the account refresh 
         this.liveExpires = data.liveExpires;
-        this.liveExpiresAt = data.liveExpiresAt;
+        this.liveExpiresAt = Instant.now().getEpochSecond() + Integer.parseInt(data.liveExpires);
       }
 
       @Override
