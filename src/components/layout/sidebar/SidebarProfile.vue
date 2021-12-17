@@ -23,7 +23,7 @@
           <div class="accounts" v-if="getProfiles.length">
             <div
               class="account hoverable"
-              :class="{ loading }"
+              :class="{ loading, active: getActiveProfile.uuid === item.uuid }"
               v-for="(item, key) in getProfiles"
               :key="key"
               @click="() => setActiveProfile(item)"
@@ -35,9 +35,9 @@
                 </div>
               </div>
               <div class="name selectable">
-                <div class="username-container">
-                  <div class="username" :title="item.username">{{ item.username }}</div>
-                  <span class="opacity-50 text-sm" v-if="getActiveProfile.uuid === item.uuid">(active)</span>
+                <div class="username-container" :title="`${item.username} - Click to set as active profile`">
+                  <div class="username">{{ item.username }}</div>
+                  <span class="opacity-50" v-if="getActiveProfile.uuid === item.uuid">(active)</span>
                 </div>
                 <div
                   class="trash bg-red-500 hover:bg-red-600 transition-colors"
@@ -50,7 +50,7 @@
             </div>
           </div>
 
-          <div class="add-new" @click="openSignIn({open: true})">
+          <div class="add-new" @click="openSignIn({ open: true })">
             <div class="add-button px-4 py-2"><font-awesome-icon icon="plus" /> Add account</div>
           </div>
         </section>
@@ -249,7 +249,8 @@ export default class SidebarProfile extends Vue {
 
       &:not(:last-child) {
         margin-bottom: 0.3rem;
-        transform: translateY(90%);
+        transform: translateY(50%);
+        transform-origin: left bottom;
         box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0);
         opacity: 0;
 
@@ -315,15 +316,18 @@ export default class SidebarProfile extends Vue {
     }
 
     .accounts {
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       position: relative;
       z-index: 1;
+      max-height: 280px;
     }
 
     .account {
       display: flex;
       align-items: center;
       position: relative;
+      padding: 0.8rem 1rem;
+      transition: background-color 0.2s ease-in-out;
 
       &.loading {
         cursor: not-allowed;
@@ -333,23 +337,27 @@ export default class SidebarProfile extends Vue {
         }
       }
 
+      &.active {
+        background-color: black;
+
+        .ms-identifier {
+          background-color: black;
+        }
+      }
+
       &.hoverable {
-        margin-bottom: 1.5rem;
+        border-radius: 5px;
+        &:not(:last-child) {
+          margin-bottom: 0.5rem;
+        }
         cursor: pointer;
 
-        &::before {
-          border-radius: 5px;
-          content: '';
-          z-index: -1;
-          position: absolute;
-          top: -10px;
-          left: -10px;
-          width: calc(100% + 20px);
-          height: calc(100% + 20px);
-        }
+        &:hover {
+          background-color: var(--color-primary-button);
 
-        &:hover::before {
-          background-color: black;
+          .ms-identifier {
+            background-color: black;
+          }
         }
       }
 
@@ -364,6 +372,7 @@ export default class SidebarProfile extends Vue {
         }
 
         .ms-identifier {
+          transition: background-color 0.2s ease-in-out;
           position: absolute;
           padding: 0.3rem;
           background-color: #161313;
@@ -388,6 +397,7 @@ export default class SidebarProfile extends Vue {
           span {
             display: block;
             margin-top: -0.25rem;
+            font-size: 0.75rem;
           }
         }
 
