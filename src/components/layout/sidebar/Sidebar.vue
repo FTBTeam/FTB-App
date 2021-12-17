@@ -33,7 +33,7 @@
         <span class="whitespace-no-wrap">Friends List</span>
       </a>
 
-      <sidebar-profile class="block" @signin="openSignIn()" />
+      <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn()" />
     </div>
     <popover text="Setup a server with CreeperHost" class="w-full" @click="openPromo()">
       <img

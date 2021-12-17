@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-area">
+  <div class="profile-area" :class="{ disable }">
     <div class="profile" v-if="getActiveProfile">
       <div class="avatar">
         <img
@@ -11,7 +11,7 @@
         />
       </div>
 
-      <div class="profile-switch">
+      <div class="profile-switch" v-show="!disable">
         <section>
           <div class="headings">
             <div class="main">
@@ -105,9 +105,12 @@ import { Action, Getter, State } from 'vuex-class';
 import { AuthProfile } from '@/modules/core/core.types';
 import { AuthState } from '@/modules/auth/types';
 import { wsTimeoutWrapper } from '@/utils/helpers';
+import { Prop } from 'vue-property-decorator';
 
 @Component
 export default class SidebarProfile extends Vue {
+  @Prop({ default: false }) disable!: boolean;
+
   @Getter('getProfiles', { namespace: 'core' }) private getProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: AuthProfile;
 
@@ -198,8 +201,11 @@ export default class SidebarProfile extends Vue {
 
 .profile-area {
   position: relative;
-
   margin-top: 0.5rem;
+
+  &.disable {
+    opacity: 0.5;
+  }
 
   .profile {
     display: flex;

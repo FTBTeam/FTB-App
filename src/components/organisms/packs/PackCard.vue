@@ -121,7 +121,6 @@ export default class PackCard extends Vue {
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
 
-
   public name!: string;
   @Prop()
   public instance!: Instance;

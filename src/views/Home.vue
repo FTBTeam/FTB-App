@@ -5,6 +5,7 @@
       <div class="mod-pack-grid mb-4">
         <pack-card
           v-for="modpack in recentlyPlayed"
+          class="pack-card-item"
           :key="modpack.uuid"
           :versions="modpack.versions"
           :art="modpack.art"
@@ -19,7 +20,7 @@
           "
           :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"
           :kind="modpack.kind"
-        ></pack-card>
+        />
       </div>
     </div>
     <div class="flex flex-col" key="featuredPacks">
@@ -149,8 +150,20 @@ export default class Home extends Vue {
 
 <style lang="scss" scoped>
 .mod-pack-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 148px);
-  gap: 1rem;
+  overflow-x: auto;
+  display: flex;
+  justify-content: flex-start;
+  padding-bottom: 1rem;
+
+  .pack-card-item {
+    // Packcard needs rewriting, it's being restricted by something :/
+    min-width: 150px;
+    max-width: 150px;
+    width: 150px;
+
+    &:not(:last-child) {
+      margin-right: 1rem;
+    }
+  }
 }
 </style>
