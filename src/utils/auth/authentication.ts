@@ -120,14 +120,14 @@ export const preLaunchChecksValid = async () => {
   const { 'core/getProfiles': profiles, 'core/getActiveProfile': activeProfile } = store.getters;
 
   if (profiles.length === 0) {
-    await store.dispatch('core/openSignIn', null, { root: true });
-    return true;
+    await store.dispatch('core/openSignIn', { open: true }, { root: true });
+    return false;
   }
 
   const profile: AuthProfile | null = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
   if (!profile) {
-    await store.dispatch('core/openSignIn', null, { root: true });
-    return true;
+    await store.dispatch('core/openSignIn', { open: true }, { root: true });
+    return false;
   }
 
   const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
