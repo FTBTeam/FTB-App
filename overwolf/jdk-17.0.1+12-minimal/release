@@ -1,2 +1,2 @@
 JAVA_VERSION="17.0.1"
-MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.logging java.management java.security.sasl java.naming java.rmi java.scripting java.transaction.xa java.sql jdk.crypto.ec jdk.crypto.cryptoki"
+MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.logging java.management java.security.sasl java.naming java.rmi java.scripting java.transaction.xa java.sql jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.unsupported"
