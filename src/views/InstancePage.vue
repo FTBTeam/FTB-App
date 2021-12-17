@@ -167,6 +167,11 @@ export default class InstancePage extends Vue {
   }
 
   public async launchModPack() {
+    // We're trying already, chill bro
+    if (this.packLoading) {
+      return;
+    }
+
     this.packLoading = true;
     if (this.instance == null) {
       return;
