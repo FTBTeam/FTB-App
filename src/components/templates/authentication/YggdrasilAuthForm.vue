@@ -13,7 +13,7 @@
       <strong>{{ error }}</strong>
     </div>
 
-    <form @submit="submit">
+    <form @submit.prevent="submit">
       <ftb-input
         label="Username / Email address"
         class="text-left mb-6"
