@@ -38,7 +38,6 @@ const isRefreshRequired = async (profile?: AuthProfile) => {
 
 const refreshToken = async (profile?: AuthProfile) => {
   if (profile != null) {
-    console.log(profile);
     if (profile.type === 'microsoft') {
       // TODO: refresh microsoft token
       let rawResponse = await fetch(`https://msauth.feed-the-beast.com/v1/authenticate`, {
@@ -66,7 +65,7 @@ const refreshToken = async (profile?: AuthProfile) => {
         const id: string = data.data.minecraftUuid;
         const newUuid = addHyphensToUuid(id);
 
-        store.dispatch('sendMessage',{
+        store.dispatch('sendMessage', {
           payload: {
             type: 'profiles.updateMs',
             uuid: profile.uuid,
@@ -97,15 +96,14 @@ const refreshToken = async (profile?: AuthProfile) => {
         });
         if (rawResponse.status === 403) {
           // TODO: Show pop up box to get password
-          await store.dispatch('core/openSignIn', {open: true, jumpToAuth: 'mc', uuid: profile.uuid}, { root: true });
+          await store.dispatch('core/openSignIn', { open: true, jumpToAuth: 'mc', uuid: profile.uuid }, { root: true });
           return false;
         }
         let response = await rawResponse.json();
-        console.log(response.accessToken);
         // TODO: Handle when this doesn't work and ask for password again
         // TODO: update the tokens stored on the profile
       } catch (e) {
-        console.log('hello');
+        console.error(e);
       }
     }
   } else {
@@ -126,12 +124,7 @@ export const preLaunchChecks = async () => {
 
   const shouldRefresh = await isRefreshRequired(profile);
   if (shouldRefresh) {
-    console.log('We need to refresh');
-    if (await refreshToken(profile)) {
-      return false;
-    } else {
-      return true;
-    }
+    return !(await refreshToken(profile));
   }
 
   return false;

@@ -264,7 +264,6 @@ export default class MainChat extends Vue {
   }
 
   get friendRequests() {
-    console.log(this.friends.pending);
     return this.friends.pending.filter(
       friend => this.currentFriends.find(f => f.longHash === friend.longHash) === undefined,
     );

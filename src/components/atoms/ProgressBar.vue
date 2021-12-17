@@ -1,19 +1,18 @@
 <template>
   <div class="progress">
-    <div class="bar" v-bind:style="{ width: `${progress*100}%`, transition: 'width 0.5s ease' }"></div>
+    <div class="bar" v-bind:style="{ width: `${progress * 100}%`, transition: 'width 0.5s ease' }"></div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-property-decorator';
 
 @Component({
   props: {
-    progress: Number
+    progress: Number,
   },
 })
-export default class ProgressBar extends Vue {
-}
+export default class ProgressBar extends Vue {}
 </script>
 
 <style lang="scss" scoped>
@@ -28,22 +27,6 @@ export default class ProgressBar extends Vue {
   .bar {
     height: 100%;
     background: var(--color-primary-button);
-    // position: absolute;
-    // left: -100%;
-
-    // animation: leftToRight 1.5s ease-in-out infinite;
-
-    // @keyframes leftToRight {
-    //   0% {
-    //     left: -100%;
-    //   }
-    //   50% {
-    //     left: 0;
-    //   }
-    //   100% {
-    //     left: 100%;
-    //   }
-    // }
   }
 }
 </style>

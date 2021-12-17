@@ -1,7 +1,7 @@
 <template>
   <div class="legacy-auth">
     <img src="@/assets/images/branding/mojang.svg" alt="Mogang logo" class="mb-8 mt-4 mx-auto" />
-    <p class="mb-10" v-if="uuid.length > 0">
+    <p class="mb-10" v-if="uuid && uuid.length > 0">
       Your session has expired, please login to your Mojang account again to continue playing!
     </p>
     <p class="mb-10" v-else>
@@ -20,13 +20,7 @@
         v-model="username"
         placeholder="myminecraftusername"
       />
-      <ftb-input
-        label="Password"
-        type="password"
-        class="text-left mb-8"
-        v-model="password"
-        placeholder="mypass********"
-      />
+      <ftb-input label="Password" type="password" class="text-left mb-8" v-model="password" placeholder="pass****" />
 
       <button
         type="submit"
@@ -51,7 +45,7 @@ import { Action } from 'vuex-class';
 import { addHyphensToUuid } from '@/utils/helpers';
 import { Prop } from 'vue-property-decorator';
 
-@Component({props: {uuid: String}})
+@Component({ props: { uuid: String } })
 export default class YggdrasilAuthForm extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
