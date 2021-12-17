@@ -91,11 +91,7 @@ public class LocalInstance implements IPack
     private transient InstanceLauncher launcher = new InstanceLauncher(this);
     private transient int loadingModPort;
     public transient boolean hasLoadingMod;
-    public transient boolean hasL4jPatcher;
-    private transient Runnable preUninstall;
-    private transient boolean preUninstallAsync;
     private transient AtomicBoolean inUse = new AtomicBoolean(false);
-    private transient HashMap<String, instanceEvent> gameCloseEvents = new HashMap<>();
     public transient ModPack manifest;
     private transient boolean updateManifest = false;
 
