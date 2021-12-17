@@ -7,15 +7,15 @@
           {{ currentStep.stepDesc }}
           <!-- {{currentStep.step}}/{{currentStep.totalSteps}} -->
         </p>
-        <p class="mb-2" v-if="currentStep.stepProgressHuman != undefined">
+        <p class="mb-2" v-if="currentStep.stepProgressHuman !== undefined">
           {{ currentStep.stepProgressHuman }}
         </p>
         <ProgressBar class="my-10" :progress="currentStep.stepProgress" />
-        <ftb-button
-          class="px-6 py-4 border-solid border-2 border-red-500 hover:border-danger hover:bg-danger"
-          @click="$emit('close')"
-          >Cancel</ftb-button
-        >
+        <!--        <ftb-button-->
+        <!--          class="px-6 py-4 border-solid border-2 border-red-500 hover:border-danger hover:bg-danger"-->
+        <!--          @click="$emit('close')"-->
+        <!--          >Cancel</ftb-button-->
+        <!--        >-->
       </div>
     </div>
   </div>

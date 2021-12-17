@@ -28,6 +28,7 @@
           @showVersion="showVersions = true"
           @searchForMods="searchingForMods = true"
           @getModList="e => getModList(e)"
+          :pack-loading="packLoading"
           :searchingForMods="searchingForMods"
           :active-tab="activeTab"
           :isInstalled="true"
@@ -88,7 +89,7 @@ import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue'
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
-import { preLaunchChecks } from '@/utils/auth/authentication';
+import { preLaunchChecksValid } from '@/utils/auth/authentication';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -132,6 +133,8 @@ export default class InstancePage extends Vue {
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
 
+  packLoading = false;
+
   // New stuff
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
@@ -163,7 +166,8 @@ export default class InstancePage extends Vue {
     }
   }
 
-  public launchModPack() {
+  public async launchModPack() {
+    this.packLoading = true;
     if (this.instance == null) {
       return;
     }
@@ -178,8 +182,9 @@ export default class InstancePage extends Vue {
         `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
       this.showMsgBox = true;
     } else {
-      this.launch();
+      await this.launch();
     }
+    this.packLoading = false;
   }
 
   public confirmLaunch() {
@@ -192,7 +197,13 @@ export default class InstancePage extends Vue {
   }
 
   public async launch() {
-    if (await preLaunchChecks()) {
+    if (!(await preLaunchChecksValid())) {
+      this.showAlert({
+        title: 'Error!',
+        message: 'Unable to update, validate or find your profile, please sign in again.',
+        type: 'danger',
+      });
+
       return;
     }
 

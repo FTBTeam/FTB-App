@@ -9,8 +9,14 @@
             @click="() => $emit('mainAction')"
             :disabled="!isInstalled && modpacks.installing !== null"
           >
-            <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
-            {{ isInstalled ? 'Play' : 'Install' }}
+            <template v-if="!packLoading">
+              <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
+              {{ isInstalled ? 'Play' : 'Install' }}
+            </template>
+            <template v-else>
+              <font-awesome-icon :icon="'spinner'" spin class="mr-4" />
+              Starting...
+            </template>
           </ftb-button>
         </div>
         <div class="stats" v-if="isInstalled">
@@ -92,7 +98,7 @@
             v-for="(tag, i) in tags"
             :key="`tag-${i}`"
             :to="{ name: 'browseModpacks', params: { search: tag.name } }"
-            class="cursor-pointer rounded mr-2 text-sm px-4 py-1 lowercase"
+            class="cursor-pointer tag rounded mr-2 text-sm px-4 py-1 lowercase"
             :style="{
               fontVariant: 'small-caps',
               backgroundColor: `hsla(${getColorForChar(tag.name, 90, 70)}, .5)`,
@@ -155,6 +161,7 @@ import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue'
 import Loading from '@/components/atoms/Loading.vue';
 
 @Component({
+  name: 'pack-body',
   components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
 })
 export default class PackBody extends Vue {
@@ -162,6 +169,7 @@ export default class PackBody extends Vue {
 
   // The stored instance for an installed pack
   @Prop({ default: null }) instance!: Instance;
+  @Prop({ default: false }) packLoading!: boolean;
   // Pack Instance is the modpack api response
   @Prop() packInstance!: ModPack;
   @Prop() isLatestVersion!: boolean;
@@ -284,6 +292,16 @@ export default class PackBody extends Vue {
 
     &:hover {
       color: white;
+    }
+  }
+}
+
+.pack-overview {
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    .tag {
+      margin-bottom: 0.5rem;
     }
   }
 }

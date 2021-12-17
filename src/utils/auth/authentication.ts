@@ -1,45 +1,19 @@
 import { AuthProfile } from '@/modules/core/core.types';
 import store from '@/modules/store';
-import { addHyphensToUuid } from '../helpers';
+import { addHyphensToUuid, wsTimeoutWrapper } from '../helpers';
 
-/**
- * Attempt to valid the user's token
- * @param profile Auth Profile
- */
-const isRefreshRequired = async (profile?: AuthProfile) => {
-  if (!profile) {
-    return false;
-  }
+interface Authenticator {
+  refresh: (profile: AuthProfile) => Promise<boolean>;
+  valid: (profile: AuthProfile) => Promise<boolean>;
+}
 
-  if (profile.type === 'microsoft') {
-    if (profile.expiresAt) {
-      return profile.expiresAt > new Date().valueOf();
-    }
-    return true;
-  } else if (profile.type === 'mojang') {
+const msAuthenticator: Authenticator = {
+  async valid(profile: AuthProfile): Promise<boolean> {
+    return profile.expiresAt ? Math.round(Date.now() / 1000) < profile.expiresAt : false;
+  },
+
+  async refresh(profile: AuthProfile): Promise<boolean> {
     try {
-      let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-        body: JSON.stringify({
-          accessToken: profile.tokens.accessToken,
-          clientToken: (profile.tokens as any).clientToken,
-        }),
-      });
-
-      return rawResponse.status !== 204;
-    } catch {
-      return true;
-    }
-  }
-};
-
-const refreshToken = async (profile?: AuthProfile) => {
-  if (profile != null) {
-    if (profile.type === 'microsoft') {
-      // TODO: refresh microsoft token
       let rawResponse = await fetch(`https://msauth.feed-the-beast.com/v1/authenticate`, {
         method: 'POST',
         headers: {
@@ -65,54 +39,84 @@ const refreshToken = async (profile?: AuthProfile) => {
         const id: string = data.data.minecraftUuid;
         const newUuid = addHyphensToUuid(id);
 
-        store.dispatch('sendMessage', {
-          payload: {
-            type: 'profiles.updateMs',
-            uuid: profile.uuid,
-            ...data.data,
-            minecraftUuid: id.includes('-') ? id : newUuid,
-          },
-          callback: (e: any) => {
-            if (e.success) {
-              store.dispatch('core/loadProfiles');
-            } else {
-              // TODO: Failed to update the profile
-            }
-          },
+        const wsRes = await wsTimeoutWrapper({
+          type: 'profiles.updateMs',
+          uuid: profile.uuid,
+          ...data.data,
+          minecraftUuid: id.includes('-') ? id : newUuid,
         });
-      }
-    } else if (profile.type === 'mojang') {
-      try {
-        let rawResponse = await fetch(`https://authserver.mojang.com/refresh`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify({
-            accessToken: profile.tokens.accessToken,
-            clientToken: (profile.tokens as any).clientToken,
-            requestUser: true,
-          }),
-        });
-        if (rawResponse.status === 403) {
-          // TODO: Show pop up box to get password
-          await store.dispatch('core/openSignIn', { open: true, jumpToAuth: 'mc', uuid: profile.uuid }, { root: true });
+
+        if (wsRes.success) {
+          await store.dispatch('core/loadProfiles');
+          return true;
+        } else {
+          console.log('Something went fatally wrong with updating on the Websockets for profiles.updateMs');
           return false;
         }
-        let response = await rawResponse.json();
-        // TODO: Handle when this doesn't work and ask for password again
-        // TODO: update the tokens stored on the profile
-      } catch (e) {
-        console.error(e);
+      } else {
+        console.log('Unable to refresh token due to missing encryption details');
+        return false;
       }
+    } catch (e) {
+      console.log(e);
+      return false;
     }
-  } else {
-    // TODO: There's no active profile
-  }
+  },
+};
+
+const mcAuthenticator: Authenticator = {
+  async valid(profile: AuthProfile): Promise<boolean> {
+    try {
+      let rawResponse = await fetch(`https://authserver.mojang.com/validate`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          accessToken: profile.tokens.accessToken,
+          clientToken: (profile.tokens as any).clientToken,
+        }),
+      });
+
+      return rawResponse.status === 204;
+    } catch {
+      return false;
+    }
+  },
+
+  async refresh(profile: AuthProfile): Promise<boolean> {
+    try {
+      let rawResponse = await fetch(`https://authserver.mojang.com/refresh`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          accessToken: profile.tokens.accessToken,
+          clientToken: (profile.tokens as any).clientToken,
+          requestUser: true,
+        }),
+      });
+      if (rawResponse.status === 403) {
+        await store.dispatch('core/openSignIn', { open: true, jumpToAuth: 'mc', uuid: profile.uuid }, { root: true });
+        return false;
+      }
+      let response = await rawResponse.json();
+      if (!response.accessToken) {
+        await store.dispatch('core/openSignIn', { open: true, jumpToAuth: 'mc', uuid: profile.uuid }, { root: true });
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  },
 };
 
 // 🚀
-export const preLaunchChecks = async () => {
+export const preLaunchChecksValid = async () => {
   const { 'core/getProfiles': profiles, 'core/getActiveProfile': activeProfile } = store.getters;
 
   if (profiles.length === 0) {
@@ -120,12 +124,18 @@ export const preLaunchChecks = async () => {
     return true;
   }
 
-  let profile = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
-
-  const shouldRefresh = await isRefreshRequired(profile);
-  if (shouldRefresh) {
-    return !(await refreshToken(profile));
+  const profile: AuthProfile | null = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
+  if (!profile) {
+    await store.dispatch('core/openSignIn', null, { root: true });
+    return true;
   }
 
-  return false;
+  const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
+
+  const isValid = await validator.valid(profile);
+  if (!isValid) {
+    return await validator.refresh(profile);
+  }
+
+  return true;
 };

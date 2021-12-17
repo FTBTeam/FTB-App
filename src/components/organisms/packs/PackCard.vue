@@ -24,10 +24,17 @@
       <div class="meta">
         <div class="title">{{ name }}</div>
         <div class="version">{{ version }}</div>
-        <div class="play-button" @click.stop="!loading && checkMemoryThenLaunch()">
+        <div
+          class="play-button"
+          :class="{ 'opacity-50': starting }"
+          @click.stop="!loading && !starting && checkMemoryThenLaunch()"
+        >
           <div class="clickable-play" :class="{ disabled: loading, loading }">
-            <span v-if="!loading && kind !== 'cloudInstance'">Play</span>
+            <span v-if="!starting && !loading && kind !== 'cloudInstance'">Play</span>
             <span v-else-if="kind === 'cloudInstance'">Sync</span>
+            <span v-else-if="starting">
+              <font-awesome-icon spin icon="spinner" />
+            </span>
             <span v-else>Loading...</span>
           </div>
         </div>
@@ -65,7 +72,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '../../../utils';
 import { AuthState } from '../../../modules/auth/types';
 import { getColorForReleaseType } from '@/utils/colors';
-import { preLaunchChecks } from '@/utils/auth/authentication';
+import { preLaunchChecksValid } from '@/utils/auth/authentication';
 
 const namespace = 'websocket';
 
@@ -120,6 +127,7 @@ export default class PackCard extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
+  @Action('showAlert') public showAlert: any;
 
   public name!: string;
   @Prop()
@@ -143,6 +151,7 @@ export default class PackCard extends Vue {
     cancelAction: Function,
   };
   private loading: boolean = false;
+  private starting: boolean = false;
 
   getColorForReleaseType = getColorForReleaseType;
 
@@ -213,7 +222,8 @@ export default class PackCard extends Vue {
     });
   }
 
-  public checkMemoryThenLaunch() {
+  public async checkMemoryThenLaunch() {
+    this.starting = true;
     if (this.instance.memory < this.instance.minMemory) {
       this.msgBox.type = 'okCancel';
       this.msgBox.title = 'Low Memory';
@@ -225,12 +235,19 @@ export default class PackCard extends Vue {
         `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
       this.showMsgBox = true;
     } else {
-      this.launch();
+      await this.launch();
     }
+    this.starting = false;
   }
 
   public async launch(): Promise<void> {
-    if (await preLaunchChecks()) {
+    if (!(await preLaunchChecksValid())) {
+      this.showAlert({
+        title: 'Error!',
+        message: 'Unable to update, validate or find your profile, please sign in again.',
+        type: 'danger',
+      });
+
       return;
     }
 
