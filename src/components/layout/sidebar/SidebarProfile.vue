@@ -74,7 +74,9 @@
                 <div class="name selectable">
                   {{ auth.token.mc && auth.token.mc.display ? auth.token.mc.display : auth.token.username }}
                 </div>
-                <div class="hash selectable" v-if="auth.token.mc">{{ auth.token.mc.friendCode }}</div>
+                <div class="hash selectable" v-if="auth.token.mc" title="I'm your friends code 👍">
+                  {{ auth.token.mc.friendCode }}
+                </div>
               </div>
             </div>
             <div class="add inline-block" v-else>
@@ -326,7 +328,6 @@ export default class SidebarProfile extends Vue {
       display: flex;
       align-items: center;
       position: relative;
-      padding: 0.8rem 1rem;
       transition: background-color 0.2s ease-in-out;
 
       &.loading {
@@ -346,6 +347,7 @@ export default class SidebarProfile extends Vue {
       }
 
       &.hoverable {
+        padding: 0.8rem 1rem;
         border-radius: 5px;
         &:not(:last-child) {
           margin-bottom: 0.5rem;
