@@ -1,0 +1,2 @@
+JAVA_VERSION="17.0.1"
+MODULES="java.base jdk.crypto.ec jdk.crypto.cryptoki"
