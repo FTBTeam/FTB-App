@@ -40,12 +40,11 @@
         </div>
       </div>
     </div>
-    <div class="ad-area flex items-center" v-if="advertsEnabled">
+    <div class="ad-area flex items-center">
       <div class="ad-box">
         <img :src="artSquare" alt="" />
       </div>
       <div class="ad-message flex-1">
-        <!--        <font-awesome-icon icon="heart" size="2x" class="mb-2" />-->
         <h3 class="text-lg font-bold mb-2">{{ instance.name }}</h3>
         <p class="mb-2">
           {{
@@ -62,29 +61,13 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { ModpackState } from '@/modules/modpacks/types';
-import { Action, Getter, State } from 'vuex-class';
+import { Action, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import { SettingsState } from '@/modules/settings/types';
-import { ServersState } from '@/modules/servers/types';
 import ServerCard from '@/components/organisms/ServerCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
-import { SocketState } from '@/modules/websocket/types';
-import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
-
-export interface MsgBox {
-  title: string;
-  content: string;
-  type: string;
-  okAction: () => void;
-  cancelAction: () => void;
-}
-
-interface Changelogs {
-  [id: number]: string;
-}
 
 @Component({
   name: 'LaunchingPage',
@@ -98,42 +81,10 @@ interface Changelogs {
 })
 export default class LaunchingPage extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
-  @State('settings') public settings!: SettingsState;
-  @State('websocket') public socket!: SocketState;
-  @State('auth') public auth!: AuthState;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
-  @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
-  @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall!: any;
-  @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall!: any;
   @Action('sendMessage') public sendMessage!: any;
-  @Action('reportAdvert') public reportAd!: any;
-  @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
-  @State('servers') public serverListState!: ServersState;
-  @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
-  @Getter('getFileStatus') public getFileStatus!: (name: string) => string;
 
-  private starAPI = (window as any).cpmstarAPI;
-  private activeTab = 'overview';
-  private showMsgBox = false;
-  private showInstallBox = false;
-  private installSelectedVersion: number | null = null;
-  private msgBox: MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
-  private showPlaceholder: boolean = false;
-  private loading = true;
-  private ad: any;
-  private checkAd: any;
-  private activeChangelog: number | undefined = -1;
-  private changelogs: Changelogs = [];
-  private installedUUID: string | null = null;
-  private showAdverts: boolean = true;
-
+  loading = true;
   platform = platform;
 
   public cancelLoading() {
@@ -144,7 +95,6 @@ export default class LaunchingPage extends Vue {
         message: 'yeet',
       },
     });
-    // messageClient
   }
 
   public restoreLoading() {
@@ -161,6 +111,7 @@ export default class LaunchingPage extends Vue {
     if (this.instance == null) {
       return null;
     }
+
     await this.fetchModpack(this.instance?.id);
     if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
       this.loading = false;
@@ -168,7 +119,7 @@ export default class LaunchingPage extends Vue {
   }
 
   get instance() {
-    if (this.modpacks == null) {
+    if (this.modpacks === null) {
       return null;
     }
     return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
@@ -189,8 +140,8 @@ export default class LaunchingPage extends Vue {
     if (this.modpacks.launchProgress === null) {
       return [];
     }
-    const bars = this.modpacks.launchProgress.filter(b => b.steps !== 1);
-    return bars;
+
+    return this.modpacks.launchProgress.filter(b => b.steps !== 1);
   }
 
   get currentModpack() {
@@ -202,14 +153,6 @@ export default class LaunchingPage extends Vue {
       return null;
     }
     return this.modpacks.packsCache[id];
-  }
-
-  get advertsEnabled(): boolean {
-    return (
-      this.settings.settings.showAdverts === true ||
-      this.settings.settings.showAdverts === 'true' ||
-      this.auth?.token?.activePlan === null
-    );
   }
 
   get art() {
@@ -230,30 +173,6 @@ export default class LaunchingPage extends Vue {
     return this.currentModpack.art.filter(art => art.type === 'square').length > 0
       ? this.currentModpack.art.filter(art => art.type === 'square')[0].url
       : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
-  }
-
-  public screenshotToBase64(url: string) {
-    return new Promise((resolve, reject) => {
-      let canvas = document.createElement('canvas');
-      canvas.classList.add('canvas-hidden');
-      document.body.appendChild(canvas);
-      var context = canvas.getContext('2d');
-      if (context == null) {
-        reject('');
-        return;
-      }
-      let image = new Image();
-      image.onload = function() {
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        context?.drawImage(image, 0, 0);
-        context?.drawImage(image, 0, 0, image.width, image.height);
-        var dataURL = canvas.toDataURL();
-        resolve(dataURL);
-        document.body.removeChild(canvas);
-      };
-      image.src = url;
-    });
   }
 }
 </script>
@@ -335,20 +254,5 @@ export default class LaunchingPage extends Vue {
 .update-bar {
   font-weight: 700;
   margin-bottom: 1rem;
-}
-
-#ow-ad iframe {
-  margin: 0 auto;
-  vertical-align: middle;
-}
-
-#ow-ad > div {
-  height: 100%;
-}
-
-#ow-ad > div > div {
-  display: flex;
-  height: 100%;
-  align-items: center;
 }
 </style>
