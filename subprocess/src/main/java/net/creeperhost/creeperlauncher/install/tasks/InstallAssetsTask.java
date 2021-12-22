@@ -10,9 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -81,6 +79,7 @@ public class InstallAssetsTask implements Task<Void> {
         Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
         AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
 
+        Set<Path> seen = new HashSet<>();
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
             String name = entry.getKey();
@@ -94,6 +93,11 @@ public class InstallAssetsTask implements Task<Void> {
             } else {
                 dest = assetsDir.resolve("objects").resolve(loc);
             }
+
+            // Some vanilla assets (.ico files) have the same hash
+            // this causes duplicate tasks to be added.
+            if (!seen.add(dest)) continue;
+
             NewDownloadTask task = new NewDownloadTask(
                     MC_RESOURCES + loc,
                     dest,
