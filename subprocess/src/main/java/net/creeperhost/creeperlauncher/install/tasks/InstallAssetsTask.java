@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.Hashing;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
@@ -12,6 +13,10 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static net.creeperhost.creeperlauncher.Constants.MC_RESOURCES;
 
@@ -21,6 +26,14 @@ import static net.creeperhost.creeperlauncher.Constants.MC_RESOURCES;
  * Created by covers1624 on 17/11/21.
  */
 public class InstallAssetsTask implements Task<Void> {
+
+    // TODO, this should be moved to Settings, and swapped out when the thread limit changes.
+    public static final ExecutorService POOL = new ThreadPoolExecutor(
+            Settings.getThreadLimit(),
+            Settings.getThreadLimit(),
+            60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>()
+    );
 
     private final List<NewDownloadTask> subTasks;
 
@@ -37,12 +50,10 @@ public class InstallAssetsTask implements Task<Void> {
                     .mapToLong(DownloadValidation::expectedSize)
                     .sum();
             listener.start(totalSize);
-            progressAggregator = new TaskProgressAggregator(listener);
+            progressAggregator = new ParallelTaskProgressAggregator(listener);
         }
 
-        for (NewDownloadTask subTask : subTasks) {
-            subTask.execute(progressAggregator);
-        }
+        ParallelTaskHelper.executeInParallel(POOL, subTasks, progressAggregator);
 
         if (listener != null) {
             listener.finish(progressAggregator.getProcessed());

@@ -19,7 +19,7 @@ public class ParallelTaskHelper {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void executeInParallel(ExecutorService executor, List<Task<?>> tasks, TaskProgressAggregator listener) throws Throwable {
+    public static <T extends Task<?>> void executeInParallel(ExecutorService executor, List<T> tasks, TaskProgressAggregator listener) throws Throwable {
         List<Throwable> failures = new LinkedList<>();
         List<CompletableFuture<?>> futures = new LinkedList<>();
         for (Task<?> task : tasks) {

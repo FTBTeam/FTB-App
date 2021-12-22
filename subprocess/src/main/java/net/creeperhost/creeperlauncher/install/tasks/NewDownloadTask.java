@@ -33,6 +33,7 @@ import java.util.Map;
  */
 public class NewDownloadTask implements Task<Path> {
 
+    private static final boolean DEBUG = Boolean.getBoolean("DownloadTask.debug");
     private static final Logger LOGGER = LogManager.getLogger();
     public static final OkHttpClient client = new OkHttpClient.Builder()
             .cookieJar(new SimpleCookieJar())
@@ -119,6 +120,9 @@ public class NewDownloadTask implements Task<Path> {
 
         if (progressListener != null) {
             action.setDownloadListener(new QuackProgressAdapter(progressListener));
+        }
+        if (DEBUG) {
+            action.setQuiet(false);
         }
 
         action.execute();

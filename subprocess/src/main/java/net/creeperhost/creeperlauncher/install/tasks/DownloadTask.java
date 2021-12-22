@@ -22,8 +22,7 @@ public class DownloadTask implements IInstallTask<Void>
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final Path destination;
-    static int nThreads = Integer.parseInt(Settings.settings.computeIfAbsent("threadLimit", Settings::getDefaultThreadLimit));
-    public static final Executor threadPool = new ThreadPoolExecutor(nThreads, nThreads, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+    public static final Executor threadPool = new ThreadPoolExecutor(Settings.getThreadLimit(), Settings.getThreadLimit(), 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     private int tries = 0;
     private final DownloadableFile file;
     private final IProgressUpdater watcher;

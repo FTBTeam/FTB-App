@@ -113,4 +113,8 @@ public class Settings
             return 0;
         }
     }
+
+    public static int getThreadLimit() {
+        return Integer.parseInt(Settings.settings.computeIfAbsent("threadLimit", Settings::getDefaultThreadLimit));
+    }
 }
