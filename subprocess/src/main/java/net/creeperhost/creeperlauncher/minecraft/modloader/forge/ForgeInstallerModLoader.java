@@ -1,10 +1,12 @@
 package net.creeperhost.creeperlauncher.minecraft.modloader.forge;
 
+import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.DownloadUtils;
 import net.creeperhost.creeperlauncher.util.ForgeUtils;
+import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.LoaderTarget;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,15 +51,23 @@ public class ForgeInstallerModLoader extends ForgeModLoader
 			//If we do not have the file lets extract it from the installer jar
 			ForgeUtils.extractJson(installerFile, "installer.json");
 		}
+        try {
+            // TODO Dumb hack for Forge, it refuses to install if the profiles.json does not exist.
+            //      This entire system is pending a rewrite so.. /shrug
+            Path profilesJson = Constants.BIN_LOCATION.resolve("launcher_profiles.json");
+            if (Files.notExists(profilesJson)) {
+                JsonObject dummy = new JsonObject();
+                dummy.add("profiles", new JsonObject());
+                GsonUtils.saveJson(profilesJson, dummy);
+            }
 
+		    ForgeUtils.runForgeInstaller(installerFile.toAbsolutePath());
 
-		ForgeUtils.runForgeInstaller(installerFile.toAbsolutePath());
-//		McUtils.removeProfile(Constants.LAUNCHER_PROFILES_JSON, "forge");
-		try {
 			Files.delete(installerFile);
-		} catch (IOException ignored) {}
-
-
+            Files.delete(profilesJson);
+		} catch (IOException e) {
+            LOGGER.error("Failed to run forge installer.", e);
+        }
 		return installerJson;
 	}
 
