@@ -1,59 +1,55 @@
 <template>
-  <div class="pack-loading flex flex-col h-full">
-    <div
-      class="loading-area flex-1"
-      v-if="!loading && currentModpack !== null"
-      :style="{ backgroundImage: `url(${art})` }"
-    >
-      <div class="loading-container flex justify-center items-center h-full">
-        <div class="loading-info text-center">
-          <h2 class="text-3xl font-bold mb-2">{{ instance.name }}</h2>
-          <em class="mb-8 block">{{ currentModpack.synopsis }}</em>
+  <div class="pack-loading">
+    <!--    <div class="background" :style="{ backgroundImage: `url(${art})` }"></div>-->
+    <header class="flex">
+      <div class="art rounded shadow mr-8">
+        <img :src="artSquare" width="135" alt="" />
+      </div>
 
-          <div class="update-bar" v-if="currentModpack && currentModpack.notification">
-            {{ currentModpack.notification }}
+      <div class="body flex-1">
+        <h3 class="text-xl font-bold mb-2">{{ preLaunch ? 'Initializing' : 'Starting' }} {{ instance.name }}</h3>
+
+        <div class="loading-area" v-if="!loading && currentModpack !== null">
+          <div class="bar mb-4" v-for="(bar, index) in bars" :key="index">
+            <span class="mb-2 block text-sm">{{ bar.message }}</span>
+            <progress-bar :progress="bar.step / bar.steps" />
           </div>
-
-          <div class="bars mb-8">
-            <div class="bar mb-4" v-for="(bar, index) in bars" :key="index">
-              <div class="text-center w-full text">
-                {{ bar.message }}
-              </div>
-              <div
-                class="h-full bg-primary progress-bar"
-                v-bind:style="{
-                  width: `${(bar.step / bar.steps) * 100}%`,
-                  transition: 'width 0.5s ease',
-                }"
-              ></div>
-            </div>
-          </div>
-
-          <div class="buttons flex items-center justify-center w-full">
-            <ftb-button color="warning" @click="restoreLoading" class="py-1 px-4 mr-2 text-sm">
-              Load in-game
-            </ftb-button>
-            <ftb-button color="warning" @click="cancelLoading" class="py-1 px-4 text-sm">
-              Stop loading modpack
-            </ftb-button>
+          <div class="bar">
+            <span class="mb-2 mt-2 text-sm block">
+              <font-awesome-icon icon="circle-notch" class="mr-2" spin />
+              Total progress
+            </span>
+            <progress-bar :progress="2 / 10" />
           </div>
         </div>
       </div>
+    </header>
+
+    <div class="logs flex justify-between items-center" :class="{ 'dark-mode': darkMode }">
+      <h3 class="font-bold text-lg">Log</h3>
+      <div class="buttons flex items-center ">
+        <ftb-button
+          @click="cancelLoading"
+          class="transition ease-in-out duration-200 py-1 px-4 text-xs mr-4 border-red-600 border border-solid hover:bg-red-600 hover:text-white"
+        >
+          <font-awesome-icon icon="skull-crossbones" class="mr-2" />
+          Kill instance
+        </ftb-button>
+        <ftb-button
+          class="transition ease-in-out duration-200 text-xs border border-solid px-2 py-1 mr-4 hover:bg-green-600 hover:text-white hover:border-green-600"
+          :class="{ 'border-black': !darkMode, 'border-white': darkMode }"
+        >
+          <font-awesome-icon icon="upload" class="mr-2" />
+          Upload logs
+        </ftb-button>
+        <div class="color cursor-pointer" @click="darkMode = !darkMode">
+          <font-awesome-icon :icon="['fas', darkMode ? 'sun' : 'moon']" />
+        </div>
+      </div>
     </div>
-    <div class="ad-area flex items-center">
-      <div class="ad-box">
-        <img :src="artSquare" alt="" />
-      </div>
-      <div class="ad-message flex-1">
-        <h3 class="text-lg font-bold mb-2">{{ instance.name }}</h3>
-        <p class="mb-2">
-          {{
-            currentModpack.description.length > 260
-              ? currentModpack.description.slice(0, 260) + '...'
-              : currentModpack.description
-          }}
-        </p>
-      </div>
+
+    <div class="log-contents text-sm" :class="{ 'dark-mode': darkMode }">
+      <div class="log-item" v-for="n in 100">[debug][{{ n }}]: AHHHH</div>
     </div>
   </div>
 </template>
@@ -68,6 +64,7 @@ import FTBModal from '@/components/atoms/FTBModal.vue';
 import ServerCard from '@/components/organisms/ServerCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
+import ProgressBar from '@/components/atoms/ProgressBar.vue';
 
 @Component({
   name: 'LaunchingPage',
@@ -77,6 +74,7 @@ import platform from '@/utils/interface/electron-overwolf';
     FTBModal,
     'message-modal': MessageModal,
     ServerCard,
+    ProgressBar,
   },
 })
 export default class LaunchingPage extends Vue {
@@ -84,8 +82,11 @@ export default class LaunchingPage extends Vue {
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
 
-  loading = true;
+  loading = false;
+  preLaunch = true;
   platform = platform;
+
+  darkMode = true;
 
   public cancelLoading() {
     this.sendMessage({
@@ -122,6 +123,7 @@ export default class LaunchingPage extends Vue {
     if (this.modpacks === null) {
       return null;
     }
+
     return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
   }
 
@@ -141,7 +143,16 @@ export default class LaunchingPage extends Vue {
       return [];
     }
 
-    return this.modpacks.launchProgress.filter(b => b.steps !== 1);
+    return (
+      this.modpacks.launchProgress?.filter(b => b.steps !== 1) || [
+        {
+          title: 'Loading...',
+          message: 'Completed deep scan of ftb-ranks-1605.1.4-build.12-forge.jar',
+          steps: 100,
+          step: 50,
+        },
+      ]
+    );
   }
 
   get currentModpack() {
@@ -160,9 +171,8 @@ export default class LaunchingPage extends Vue {
       return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
     }
 
-    return this.currentModpack.art.filter(art => art.type === 'splash').length > 0
-      ? this.currentModpack.art.filter(art => art.type === 'splash')[0].url
-      : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+    const arts = this.currentModpack.art.filter(art => art.type === 'splash');
+    return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
 
   get artSquare() {
@@ -170,83 +180,99 @@ export default class LaunchingPage extends Vue {
       return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
     }
 
-    return this.currentModpack.art.filter(art => art.type === 'square').length > 0
-      ? this.currentModpack.art.filter(art => art.type === 'square')[0].url
-      : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+    const arts = this.currentModpack.art.filter(art => art.type === 'square');
+    return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
 }
 </script>
 
 <style lang="scss">
 .pack-loading {
-  .loading-area {
-    background-repeat: no-repeat;
-    background-size: auto 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  max-height: 100%;
+  z-index: 1;
 
-    .loading-container {
-      background: rgba(black, 0.7);
-      backdrop-filter: blur(3px);
+  > header {
+    padding: 2rem;
+  }
 
-      .loading-info {
-        .bars {
-          width: 580px;
-          margin: 0 auto 3rem auto;
+  .background {
+    position: absolute;
+    height: 200px;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
 
-          .bar {
-            overflow: hidden;
-            position: relative;
-            height: 30px;
-            background: rgba(black, 0.8);
-            border-radius: 5px;
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
 
-            .progress-bar {
-            }
+    &::before {
+      opacity: 0.5;
+      background: black;
+    }
 
-            .text {
-              position: absolute;
-              width: 100%;
-              text-align: center;
-              top: 50%;
-              transform: translateY(-50%);
-            }
-          }
-        }
-      }
+    &::after {
+      background: linear-gradient(0deg, rgba(black, 1) 25%, rgba(black, 0) 100%);
     }
   }
 
-  .ad-area {
-    padding: 2rem;
+  .logs {
+    padding: 1rem;
+    background-color: black;
 
-    .ad-box {
-      margin-right: 2rem;
+    header {
+      padding: 1rem 1rem 0 1rem;
+    }
+  }
 
-      img {
-        width: 200px;
-        height: 200px;
-        border-radius: 5px;
-      }
+  > .buttons {
+    background-color: black;
+    justify-content: flex-end;
+    padding: 1rem 1rem 0 1rem;
+  }
 
-      .ad-container {
-        position: relative;
-        width: 300px;
-        height: 250px;
-        background-color: black;
-        border-radius: 5px;
-      }
+  .log-contents {
+    flex: 1;
+    display: flex;
+    background-color: black;
+    flex-direction: column-reverse;
+    padding: 1rem;
+    overflow: auto;
+    font-family: 'Consolas', 'Courier New', Courier, monospace;
 
-      .report-btn {
-        position: absolute;
-        bottom: -23px;
-        left: 0;
-        white-space: nowrap;
-      }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+      z-index: 10;
     }
 
-    .ad-message {
-      svg {
-        color: #ff4040;
-      }
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+      border-radius: 150px;
+      z-index: 10;
+    }
+  }
+
+  .logs,
+  .log-contents {
+    transition: 0.25s ease-in-out background-color, color 0.25s ease-in-out;
+    background-color: white;
+    color: #24292e;
+    &.dark-mode {
+      background-color: black;
+      color: white;
     }
   }
 }

@@ -54,7 +54,7 @@ const msAuthenticator: Authenticator = {
           return false;
         }
       } else {
-        console.log('Unable to refresh token due to missing encryption details');
+        console.log('Unable to refresh token due to missing encryption details', response);
         return false;
       }
     } catch (e) {

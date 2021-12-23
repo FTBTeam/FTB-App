@@ -219,6 +219,10 @@ export default class MainApp extends Vue {
     } else {
       logVerbose(this.settings, 'Instance does not exist, we can assume delete is fine');
       const foundPack = this.modpacks.installedPacks.filter(pack => pack.uuid === modpack.instanceID)[0];
+      if (!foundPack) {
+        // TODO: Fix me, handle this issue
+        return;
+      }
       this.sendMessage({
         payload: { type: 'uninstallInstance', uuid: foundPack.uuid },
         callback: (data: any) => {

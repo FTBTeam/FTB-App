@@ -25,7 +25,8 @@
       "matches": [
         "https://login.live.com",
         "https://*.xboxlive.com",
-        "https://api.minecraftservices.com"
+        "https://api.minecraftservices.com",
+        "https://*.mojang.com"
       ]
     },
     "start_window": "background",
