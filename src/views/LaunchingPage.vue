@@ -8,20 +8,23 @@
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">{{ preLaunch ? 'Initializing' : 'Starting' }} {{ instance.name }}</h3>
-
-        <div class="loading-area" v-if="!loading && currentModpack !== null">
-          <div class="bar mb-4" v-for="(bar, index) in bars" :key="index">
-            <span class="mb-2 block text-sm">{{ bar.message }}</span>
-            <progress-bar :progress="bar.step / bar.steps" />
+        <template v-if="preLaunch">
+          <p class="mb-2">
+            {{ currentStep.stepDesc }}
+          </p>
+          <p class="mb-2" v-if="currentStep.stepProgressHuman !== undefined">
+            {{ currentStep.stepProgressHuman }}
+          </p>
+          <ProgressBar class="my-10" :progress="currentStep.stepProgress" />
+        </template>
+        <template v-else>
+          <div class="loading-area" v-if="currentModpack !== null">
+            <div class="bar mb-4" v-for="(bar, index) in bars" :key="index">
+              <span class="mb-2 block text-sm">{{ bar.message }}</span>
+              <progress-bar :progress="bar.step / bar.steps" />
+            </div>
           </div>
-          <div class="bar">
-            <span class="mb-2 mt-2 text-sm block">
-              <font-awesome-icon icon="circle-notch" class="mr-2" spin />
-              Total progress
-            </span>
-            <progress-bar :progress="2 / 10" />
-          </div>
-        </div>
+        </template>
       </div>
     </header>
 
@@ -51,6 +54,16 @@
     <div class="log-contents text-sm" :class="{ 'dark-mode': darkMode }">
       <div class="log-item" v-for="n in 100">[debug][{{ n }}]: AHHHH</div>
     </div>
+
+    <FTBModal :visible="showMsgBox" @dismiss-modal="showMsgBox = false" :dismissable="true">
+      <message-modal
+        :title="msgBox.title"
+        :content="msgBox.content"
+        :ok-action="msgBox.okAction"
+        :cancel-action="msgBox.cancelAction"
+        :type="msgBox.type"
+      />
+    </FTBModal>
   </div>
 </template>
 
@@ -65,6 +78,10 @@ import ServerCard from '@/components/organisms/ServerCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import { preLaunchChecksValid } from '@/utils/auth/authentication';
+import { SettingsState } from '@/modules/settings/types';
+import { AuthState } from '@/modules/auth/types';
+import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
 
 @Component({
   name: 'LaunchingPage',
@@ -81,12 +98,33 @@ export default class LaunchingPage extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
+  @Action('showAlert') public showAlert: any;
+  @State('settings') public settingsState!: SettingsState;
+  @State('auth') public auth!: AuthState;
+  @Action('registerLaunchProgressCallback') public registerLaunchProgressCallback: any;
 
   loading = false;
   preLaunch = true;
   platform = platform;
 
   darkMode = true;
+
+  currentStep = {
+    stepDesc: '',
+    step: 0,
+    totalSteps: 0,
+    stepProgress: 0,
+    stepProgressHuman: '',
+  };
+
+  private showMsgBox = false;
+  private msgBox: MsgBox = {
+    title: '',
+    content: '',
+    type: '',
+    okAction: Function,
+    cancelAction: Function,
+  };
 
   public cancelLoading() {
     this.sendMessage({
@@ -113,10 +151,62 @@ export default class LaunchingPage extends Vue {
       return null;
     }
 
+    this.registerLaunchProgressCallback((data: any) => {
+      this.currentStep.stepDesc = data.stepDesc;
+      this.currentStep.step = data.step;
+      this.currentStep.totalSteps = data.totalSteps;
+      this.currentStep.stepProgress = data.stepProgress;
+      this.currentStep.stepProgressHuman = data.stepProgressHuman;
+    });
+
     await this.fetchModpack(this.instance?.id);
     if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
       this.loading = false;
     }
+
+    await this.launch();
+  }
+
+  public async launch(): Promise<void> {
+    if (!(await preLaunchChecksValid())) {
+      this.showAlert({
+        title: 'Error!',
+        message: 'Unable to update, validate or find your profile, please sign in again.',
+        type: 'danger',
+      });
+
+      return;
+    }
+
+    const loadInApp =
+      this.settingsState.settings.loadInApp === true ||
+      this.settingsState.settings.loadInApp === 'true' ||
+      this.auth.token?.activePlan == null;
+
+    const disableChat = this.settingsState.settings.enableChat;
+    this.preLaunch = true;
+
+    this.sendMessage({
+      payload: {
+        type: 'launchInstance',
+        uuid: this.instance?.uuid,
+        loadInApp,
+        extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
+      },
+      callback: (data: any) => {
+        if (data.status === 'error') {
+          this.preLaunch = false;
+          // An instance is already running
+          this.msgBox.type = 'okOnly';
+          this.msgBox.title = 'An error occured whilst launching';
+          this.msgBox.okAction = () => (this.showMsgBox = false);
+          this.msgBox.content = data.message;
+          this.showMsgBox = true;
+        } else if (data.status === 'success') {
+          this.preLaunch = false;
+        }
+      },
+    });
   }
 
   get instance() {
@@ -136,6 +226,7 @@ export default class LaunchingPage extends Vue {
   }
 
   get bars() {
+    console.log(this.modpacks);
     if (this.modpacks === undefined || this.modpacks === null) {
       return [];
     }
@@ -143,16 +234,7 @@ export default class LaunchingPage extends Vue {
       return [];
     }
 
-    return (
-      this.modpacks.launchProgress?.filter(b => b.steps !== 1) || [
-        {
-          title: 'Loading...',
-          message: 'Completed deep scan of ftb-ranks-1605.1.4-build.12-forge.jar',
-          steps: 100,
-          step: 50,
-        },
-      ]
-    );
+    return this.modpacks.launchProgress?.filter(b => b.steps !== 1).slice(0, 5);
   }
 
   get currentModpack() {
