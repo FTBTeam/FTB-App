@@ -272,7 +272,7 @@ public class InstanceLauncher {
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
             if (instance.embeddedJre) {
-                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion(), new QuackProgressAdapter(progressTracker.listenerForStep(true)));
+                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion(), true, new QuackProgressAdapter(progressTracker.listenerForStep(true)));
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
                 javaExecutable = instance.jrePath;
