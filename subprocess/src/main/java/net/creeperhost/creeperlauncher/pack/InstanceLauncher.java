@@ -41,7 +41,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -124,11 +123,11 @@ public class InstanceLauncher {
      *
      * @throws InstanceLaunchException If there was a direct error preparing the instance to be launched.
      */
-    public synchronized void launch(int requestId) throws InstanceLaunchException {
+    public synchronized void launch(CancellationToken token) throws InstanceLaunchException {
         assert !isRunning();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
         setPhase(Phase.INITIALIZING);
-        progressTracker.reset(requestId, NUM_STEPS);
+        progressTracker.reset(NUM_STEPS);
 
         Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
@@ -141,7 +140,7 @@ public class InstanceLauncher {
 
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
-        ProcessBuilder builder = prepareProcess(assetsDir, versionsDir, librariesDir, features);
+        ProcessBuilder builder = prepareProcess(token, assetsDir, versionsDir, librariesDir, features);
 
         // Start thread.
         processThread = new Thread(() -> {
@@ -258,7 +257,7 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {
+    private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {
         try {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
@@ -267,6 +266,8 @@ public class InstanceLauncher {
                 startTask.accept(context);
             }
             progressTracker.finishStep();
+
+            token.throwIfCancelled();
 
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
@@ -278,22 +279,30 @@ public class InstanceLauncher {
             }
             progressTracker.finishStep();
 
-            prepareManifests(versionsDir);
+            prepareManifests(token, versionsDir);
+
+            token.throwIfCancelled();
 
             progressTracker.startStep("Validate assets");
-            checkAssets();
+            checkAssets(token);
             progressTracker.finishStep();
+
+            token.throwIfCancelled();
 
             List<VersionManifest.Library> libraries = collectLibraries(features);
             // Mojang may change libraries mid version.
 
             progressTracker.startStep("Validate libraries");
-            validateLibraries(librariesDir, libraries);
+            validateLibraries(token, librariesDir, libraries);
             progressTracker.finishStep();
 
+            token.throwIfCancelled();
+
             progressTracker.startStep("Validate client");
-            validateClient(versionsDir);
+            validateClient(token,versionsDir);
             progressTracker.finishStep();
+
+            token.throwIfCancelled();
 
             Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
@@ -364,16 +373,20 @@ public class InstanceLauncher {
                     .directory(gameDir.toFile())
                     .command(command);
         } catch (Throwable ex) {
+            if (ex instanceof CancellationToken.Cancellation cancellation) {
+                throw cancellation;
+            }
             throw new InstanceLaunchException("Failed to prepare instance '" + instance.getName() + "'(" + instance.getUuid() + ").", ex);
         }
     }
 
-    private void prepareManifests(Path versionsDir) throws IOException {
+    private void prepareManifests(CancellationToken token, Path versionsDir) throws IOException {
         manifests.clear();
         VersionListManifest versions = VersionListManifest.update(versionsDir);
         Set<String> seen = new HashSet<>();
         String id = instance.modLoader;
         while (id != null) {
+            token.throwIfCancelled();
             if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.modLoader);
             LOGGER.info("Preparing manifest {}", id);
             VersionManifest manifest = getVersionManifest(versionsDir, versions, id);
@@ -383,7 +396,7 @@ public class InstanceLauncher {
         }
     }
 
-    private void checkAssets() throws IOException {
+    private void checkAssets(CancellationToken token) throws IOException {
         assert !manifests.isEmpty();
 
         LOGGER.info("Updating assets..");
@@ -391,13 +404,13 @@ public class InstanceLauncher {
         InstallAssetsTask assetsTask = new InstallAssetsTask(requireNonNull(manifest.assetIndex, "First Version Manifest missing AssetIndex. This should not happen."));
         if (assetsTask.isRedundant()) return;
         try {
-            assetsTask.execute(progressTracker.listenerForStep(true));
+            assetsTask.execute(token, progressTracker.listenerForStep(true));
         } catch (Throwable ex) {
             throw new IOException("Failed to execute asset update task.", ex);
         }
     }
 
-    private void validateClient(Path versionsDir) throws IOException {
+    private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest manifest = manifests.get(0);
         VersionManifest.Download download = manifest.downloads.get("client");
         if (download != null && download.url != null) {
@@ -412,11 +425,11 @@ public class InstanceLauncher {
                     versionsDir.resolve(manifest.id).resolve(manifest.id + ".jar"),
                     validation
             );
-            task.execute(progressTracker.listenerForStep(true));
+            task.execute(token, progressTracker.listenerForStep(true));
         }
     }
 
-    private void validateLibraries(Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
+    private void validateLibraries(CancellationToken token, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
         LOGGER.info("Validating minecraft libraries...");
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
@@ -442,8 +455,9 @@ public class InstanceLauncher {
         if (!tasks.isEmpty()) {
             LOGGER.info("{} dependencies failed to validate or were missing.", tasks.size());
             for (NewDownloadTask task : tasks) {
+                token.throwIfCancelled();
                 LOGGER.info("Downloading {}", task.getUrl());
-                task.execute(progressAggregator);
+                task.execute(token, progressAggregator);
             }
         }
         rootListener.finish(progressAggregator.getProcessed());
@@ -592,8 +606,6 @@ public class InstanceLauncher {
 
         private static final boolean DEBUG = Boolean.getBoolean("InstanceLauncher.ProgressTracker.debug");
 
-        private int requestId;
-
         private int totalSteps = 0;
         private int currStep = 0;
 
@@ -603,8 +615,7 @@ public class InstanceLauncher {
         private String humanDesc = null;
         private long lastNonImportant = -1;
 
-        public void reset(int requestId, int totalSteps) {
-            this.requestId = requestId;
+        public void reset(int totalSteps) {
             this.totalSteps = totalSteps;
             currStep = 0;
             stepDesc = "";
@@ -667,7 +678,7 @@ public class InstanceLauncher {
             }
 
             if (Settings.webSocketAPI == null) return;
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Status(requestId, currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }
 }

@@ -54,7 +54,7 @@ public class AssetIndexManifest {
 
         if (!downloadTask.isRedundant()) {
             try {
-                downloadTask.execute(null);
+                downloadTask.execute(null, null);
             } catch (Throwable e) {
                 if (Files.exists(assetIndexFile)) {
                     LOGGER.warn("Failed to update AssetIndexManifest. Continuing with disk cache..", e);

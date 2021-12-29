@@ -14,8 +14,6 @@ import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
-import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
-import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -100,7 +98,7 @@ public class VersionManifest {
 
         if (!downloadTask.isRedundant()) {
             try {
-                downloadTask.execute(null);
+                downloadTask.execute(null, null);
             } catch (Throwable e) {
                 if (Files.exists(versionFile)) {
                     LOGGER.warn("Failed to update VersionManifest. Continuing with disk cache..", e);

@@ -8,6 +8,7 @@ public class LaunchInstanceData extends BaseData {
     public String uuid;
     public String extraArgs = "";
     public boolean loadInApp = true;
+    public boolean cancelLaunch = false;
 
     public static class Status extends BaseData {
 
@@ -26,10 +27,8 @@ public class LaunchInstanceData extends BaseData {
         @Nullable
         public String stepProgressHuman;
 
-        public Status(int requestId, int step, int totalSteps, float stepProgress, String stepDesc, @Nullable String stepProgressHuman) {
+        public Status(int step, int totalSteps, float stepProgress, String stepDesc, @Nullable String stepProgressHuman) {
             this.type = "launchInstance.status";
-            // The request ID means we can only receive one call back to it on the frontend. Removing it allows us to listen for it.
-            //this.requestId = requestId;
             this.step = step;
             this.totalSteps = totalSteps;
             this.stepProgress = stepProgress;

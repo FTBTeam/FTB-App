@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
+import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,7 +16,7 @@ public interface Task<T> {
      * @param listener The listener to receive updates about this task.
      * @throws Throwable If any exception is thrown whilst executing the task.
      */
-    void execute(@Nullable TaskProgressListener listener) throws Throwable;
+    void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable;
 
     /**
      * Checks if executing this task would do nothing.

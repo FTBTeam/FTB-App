@@ -50,7 +50,7 @@ public class VersionListManifest {
 
         if (!downloadTask.isRedundant()) {
             try {
-                downloadTask.execute(null);
+                downloadTask.execute(null, null);
             } catch (Throwable e) {
                 if (Files.exists(versionsFile)) {
                     LOGGER.warn("Failed to update VersionListManifest. Continuing with disk cache..", e);

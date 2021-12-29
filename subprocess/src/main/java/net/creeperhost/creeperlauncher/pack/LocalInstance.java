@@ -88,7 +88,11 @@ public class LocalInstance implements IPack
      */
     public long totalPlayTime;
 
-    private transient InstanceLauncher launcher = new InstanceLauncher(this);
+    private final transient InstanceLauncher launcher = new InstanceLauncher(this);
+    @Nullable
+    public transient CompletableFuture<?> prepareFuture;
+    @Nullable
+    public transient CancellationToken prepareToken;
     private transient int loadingModPort;
     public transient boolean hasLoadingMod;
     private transient AtomicBoolean inUse = new AtomicBoolean(false);
@@ -444,12 +448,12 @@ public class LocalInstance implements IPack
     /**
      * Starts the instance.
      *
-     * @param requestId Websocket request id, used for progress callbacks.
-     * @param extraArgs Extra JVM arguments.
-     * @param loadInApp If 'launch mod' should be used.
+     * @param token       The CancellationToken for cancelling the launch.
+     * @param extraArgs   Extra JVM arguments.
+     * @param loadInApp   If 'launch mod' should be used.
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
-    public void play(int requestId, String extraArgs, boolean loadInApp) throws InstanceLaunchException {
+    public void play(CancellationToken token, String extraArgs, boolean loadInApp) throws InstanceLaunchException {
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -488,7 +492,7 @@ public class LocalInstance implements IPack
         });
 
         this.hasLoadingMod = checkForLaunchMod();
-      
+
         //TODO: THIS IS FOR TESTING ONLY, PLEASE REMOVE ME IN FUTURE
         if(OS.CURRENT == OS.WIN && loadInApp)
         {
@@ -546,7 +550,11 @@ public class LocalInstance implements IPack
             totalPlayTime += endTime - startTime;
             saveJson();
         });
-        launcher.launch(requestId);
+        launcher.launch(token);
+    }
+
+    public InstanceLauncher getLauncher() {
+        return launcher;
     }
 
     public boolean uninstall() throws IOException

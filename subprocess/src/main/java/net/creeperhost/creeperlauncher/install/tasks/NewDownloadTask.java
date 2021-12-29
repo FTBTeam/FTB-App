@@ -12,6 +12,7 @@ import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
+import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import okhttp3.OkHttpClient;
 import okio.Throttler;
@@ -85,7 +86,7 @@ public class NewDownloadTask implements Task<Path> {
     }
 
     @Override
-    public void execute(@Nullable TaskProgressListener progressListener) throws IOException {
+    public void execute(@Nullable CancellationToken token, @Nullable TaskProgressListener progressListener) throws IOException {
         if (Files.exists(dest) && validation.validate(dest)) {
             // Validated, do nothing.
             return;
