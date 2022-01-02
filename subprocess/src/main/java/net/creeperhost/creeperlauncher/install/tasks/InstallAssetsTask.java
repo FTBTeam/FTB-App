@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
+import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class InstallAssetsTask implements Task<Void> {
     }
 
     @Override
-    public void execute(@Nullable TaskProgressListener listener) throws Throwable {
+    public void execute(@Nullable CancellationToken token, @Nullable TaskProgressListener listener) throws Throwable {
         TaskProgressAggregator progressAggregator = null;
         if (listener != null) {
             long totalSize = subTasks.stream()
@@ -51,7 +52,7 @@ public class InstallAssetsTask implements Task<Void> {
             progressAggregator = new ParallelTaskProgressAggregator(listener);
         }
 
-        ParallelTaskHelper.executeInParallel(POOL, subTasks, progressAggregator);
+        ParallelTaskHelper.executeInParallel(token, POOL, subTasks, progressAggregator);
 
         if (listener != null) {
             listener.finish(progressAggregator.getProcessed());

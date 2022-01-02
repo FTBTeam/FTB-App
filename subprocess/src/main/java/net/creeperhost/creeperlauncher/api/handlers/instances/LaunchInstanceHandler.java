@@ -4,11 +4,15 @@ import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.InstanceLaunchException;
+import net.creeperhost.creeperlauncher.pack.InstanceLauncher;
+import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData> {
 
@@ -18,18 +22,40 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
     public void handle(LaunchInstanceData data) {
         String _uuid = data.uuid;
         UUID uuid = UUID.fromString(_uuid);
-        try {
-            Instances.getInstance(uuid).play(data.requestId, data.extraArgs, data.loadInApp);
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
-        } catch (InstanceLaunchException ex) {
-            LOGGER.error("Failed to launch instance.", ex);
+        LocalInstance instance = Instances.getInstance(uuid);
+        InstanceLauncher launcher = instance.getLauncher();
 
-            String message = ex.getMessage();
-            if (ex.getCause() != null) {
-                message += " because.. " + ex.getCause().getMessage();
-            }
-
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
+        if (data.cancelLaunch && instance.prepareFuture != null && instance.prepareToken != null) {
+            instance.prepareToken.cancel(instance.prepareFuture);
+            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "canceled", "Instance launch canceled."));
+            return;
         }
+
+        if (launcher.isRunning()) {
+            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", "Instance is already running."));
+            return;
+        }
+
+        assert instance.prepareFuture == null;
+        assert instance.prepareToken == null;
+
+        instance.prepareToken = new CancellationToken();
+        instance.prepareFuture = CompletableFuture.runAsync(() -> {
+            try {
+                instance.play(instance.prepareToken, data.extraArgs, data.loadInApp);
+                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
+            } catch (InstanceLaunchException ex) {
+                LOGGER.error("Failed to launch instance.", ex);
+
+                String message = ex.getMessage();
+                if (ex.getCause() != null) {
+                    message += " because.. " + ex.getCause().getMessage();
+                }
+
+                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
+            }
+            instance.prepareToken = null;
+            instance.prepareFuture = null;
+        });
     }
 }
