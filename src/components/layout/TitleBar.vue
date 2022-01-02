@@ -1,5 +1,11 @@
 <template>
   <div class="titlebar" :class="{ isMac }" @mousedown="startDragging">
+    <div class="debug-items" v-if="inDevMode">
+      <span>Dev tools</span>
+      <router-link class="item" :to="{ name: 'home' }">
+        <font-awesome-icon icon="home" />
+      </router-link>
+    </div>
     <div class="meta-title">
       <img src="@/assets/ftb-white-logo.svg" alt="" />
       FTB App
@@ -55,6 +61,8 @@ export default class TitleBar extends Vue {
   public isMac: boolean = false;
   private windowId: string | null = null;
 
+  inDevMode = process.env.NODE_ENV === 'development';
+
   public mounted() {
     if (os.type() === 'Darwin') {
       this.isMac = true;
@@ -103,6 +111,35 @@ export default class TitleBar extends Vue {
 
     .meta-title {
       text-align: right;
+    }
+  }
+
+  .debug-items {
+    position: fixed;
+    padding: 0.5rem 1rem;
+    bottom: 1rem;
+    background-color: black;
+    z-index: 1000;
+    border-radius: 5px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+
+    span {
+      margin-right: 1rem;
+      font-size: 0.8rem;
+      opacity: 0.5;
+    }
+
+    .item {
+      display: block;
+      transition: 0.2s ease-in-out transform;
+
+      &:hover {
+        transform: scale(1.1);
+      }
     }
   }
 

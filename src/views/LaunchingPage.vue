@@ -1,27 +1,50 @@
 <template>
   <div class="pack-loading">
-    <!--    <div class="background" :style="{ backgroundImage: `url(${art})` }"></div>-->
     <header class="flex">
-      <div class="art rounded shadow mr-8">
-        <img :src="artSquare" width="135" alt="" />
-      </div>
+      <img :src="artSquare" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">{{ preLaunch ? 'Initializing' : 'Starting' }} {{ instance.name }}</h3>
         <template v-if="preLaunch">
-          <p class="mb-2">
-            {{ currentStep.stepDesc }}
-          </p>
-          <p class="mb-2" v-if="currentStep.stepProgressHuman !== undefined">
+          <div
+            class="progress-container"
+            :aria-label="`Getting everything ready for ${instance.name}`"
+            data-balloon-pos="up"
+          >
+            <ProgressBar class="mt-6 mb-4" :progress="currentStep.stepProgress" />
+          </div>
+          <div class="mb-2 text-sm flex items-center">
+            <div
+              class="progress-spinner"
+              aria-label="If this takes more than 5 minutes, kill the instance and try again."
+              data-balloon-pos="down-left"
+            >
+              <font-awesome-icon spin icon="circle-notch" class="mr-4" />
+            </div>
+            {{ currentStep.stepDesc ? currentStep.stepDesc : 'Initializing...' }}
+          </div>
+          <p class="mb-2 text-sm" v-if="currentStep.stepProgressHuman !== undefined">
             {{ currentStep.stepProgressHuman }}
           </p>
-          <ProgressBar class="my-10" :progress="currentStep.stepProgress" />
         </template>
         <template v-else>
           <div class="loading-area" v-if="currentModpack !== null">
-            <div class="bar mb-4" v-for="(bar, index) in bars" :key="index">
-              <span class="mb-2 block text-sm">{{ bar.message }}</span>
-              <progress-bar :progress="bar.step / bar.steps" />
+            <div
+              class="progress-container"
+              :aria-label="`Starting ${instance.name}... this might take a few minutes`"
+              data-balloon-pos="up"
+            >
+              <progress-bar class="mt-6 mb-4" :progress="bars[0] ? bars[0].step / bars[0].steps : 0" />
+            </div>
+            <div class="mb-2 flex items-center text-sm">
+              <div
+                class="progress-spinner"
+                aria-label="If this takes more than 5 minutes, kill the instance and try again."
+                data-balloon-pos="down-left"
+              >
+                <font-awesome-icon spin icon="circle-notch" class="mr-4" />
+              </div>
+              {{ progressMessage }}
             </div>
           </div>
         </template>
@@ -164,7 +187,7 @@ export default class LaunchingPage extends Vue {
       this.loading = false;
     }
 
-    await this.launch();
+    // await this.launch();
   }
 
   public async launch(): Promise<void> {
@@ -235,6 +258,10 @@ export default class LaunchingPage extends Vue {
     }
 
     return this.modpacks.launchProgress?.filter(b => b.steps !== 1).slice(0, 5);
+  }
+
+  get progressMessage() {
+    return this.modpacks.launchProgress?.map(e => e.message).join(' // ') ?? 'Loading...';
   }
 
   get currentModpack() {

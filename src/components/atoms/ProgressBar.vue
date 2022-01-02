@@ -26,5 +26,32 @@ export default class ProgressBar extends Vue {
     height: 100%;
     background: var(--color-primary-button);
   }
+
+  &::after {
+    content: '';
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    position: absolute;
+    left: -100%;
+
+    animation: leftToRight 3s ease-in-out infinite;
+
+    @keyframes leftToRight {
+      0% {
+        opacity: 0.1;
+        left: -100%;
+      }
+      50% {
+        opacity: 0.2;
+        left: 0;
+      }
+      100% {
+        opacity: 0.1;
+        left: 100%;
+      }
+    }
+  }
 }
 </style>
