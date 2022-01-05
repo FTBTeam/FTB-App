@@ -18,6 +18,7 @@ import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
 import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
+import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -286,6 +288,7 @@ public class InstanceLauncher {
 
             progressTracker.startStep("Validate assets");
             checkAssets(token);
+            Path virtualAssets = buildVirtualAssets(assetsDir);
             progressTracker.finishStep();
 
             token.throwIfCancelled();
@@ -336,6 +339,7 @@ public class InstanceLauncher {
             subMap.put("version_name", instance.modLoader);
             subMap.put("game_directory", gameDir.toString());
             subMap.put("assets_root", assetsDir.toAbsolutePath().toString());
+            subMap.put("game_assets", virtualAssets.toAbsolutePath().toString());
             subMap.put("assets_index_name", manifests.get(0).assets);
             subMap.put("version_type", manifests.get(0).type);
 
@@ -420,6 +424,30 @@ public class InstanceLauncher {
         } catch (Throwable ex) {
             throw new IOException("Failed to execute asset update task.", ex);
         }
+    }
+
+    private Path buildVirtualAssets(Path assetsDir) throws IOException {
+        LOGGER.info("Building virtual assets..");
+        VersionManifest.AssetIndex assetIndex = requireNonNull(manifests.get(0).assetIndex, "First Version Manifest missing AssetIndex. This should not happen.");
+        AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
+
+        Path objects = assetsDir.resolve("objects");
+        Path virtual = assetsDir.resolve("virtual").resolve(assetIndex.id);
+
+        if (manifest.virtual) {
+            for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
+                String name = entry.getKey();
+                AssetIndexManifest.AssetObject object = entry.getValue();
+                assert object.hash != null;
+
+                Path virtualPath = virtual.resolve(name);
+                Path objectPath = objects.resolve(object.hash.toString().substring(0, 2) + "/" + object.hash);
+                if (Files.exists(objectPath)) {
+                    Files.copy(objectPath, virtualPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+        return virtual;
     }
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {

@@ -80,20 +80,16 @@ public class InstallAssetsTask implements Task<Void> {
         Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
         AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
 
+        Path objectsDir = assetsDir.resolve("objects");
+
         Set<Path> seen = new HashSet<>();
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
-            String name = entry.getKey();
             AssetIndexManifest.AssetObject object = entry.getValue();
             assert object.hash != null;
 
             String loc = object.hash.toString().substring(0, 2) + "/" + object.hash;
-            Path dest;
-            if (manifest.virtual) {
-                dest = assetsDir.resolve("virtual").resolve(assetIndex.id).resolve(name);
-            } else {
-                dest = assetsDir.resolve("objects").resolve(loc);
-            }
+            Path dest = objectsDir.resolve(loc);
 
             // Some vanilla assets (.ico files) have the same hash
             // this causes duplicate tasks to be added.
