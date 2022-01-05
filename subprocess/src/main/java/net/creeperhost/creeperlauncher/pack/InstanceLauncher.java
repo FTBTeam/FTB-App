@@ -27,6 +27,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -349,7 +350,17 @@ public class InstanceLauncher {
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
             subMap.put("classpath", classpath.stream().distinct().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
 
-            StrSubstitutor sub = new StrSubstitutor(subMap);
+            StrSubstitutor sub = new StrSubstitutor(new StrLookup<>() {
+                @Override
+                public String lookup(String key) {
+                    String value = subMap.get(key);
+                    if (value == null) {
+                        LOGGER.fatal("Unmapped token key '{}' in Minecraft arguments!! ", key);
+                        return null;
+                    }
+                    return value;
+                }
+            });
 
             List<String> jvmArgs = VersionManifest.collectJVMArgs(manifests, features).stream()
                     .map(sub::replace)
