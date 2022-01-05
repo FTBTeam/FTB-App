@@ -460,8 +460,9 @@ public class LocalInstance implements IPack
         launcher.reset();
 
         launcher.withStartTask(ctx -> {
-            // TODO, split on space. Needs to support escaping. `extraArgs` should be an array
-            Collections.addAll(ctx.extraJVMArgs, extraArgs.split(" "));
+            // TODO, `extraArgs` and `jvmArgs` should be an array
+            ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
+            ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(jvmArgs));
         });
 
         launcher.withStartTask(ctx -> {

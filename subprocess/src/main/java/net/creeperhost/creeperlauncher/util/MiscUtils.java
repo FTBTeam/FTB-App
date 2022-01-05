@@ -13,14 +13,11 @@ import org.apache.tika.io.IOUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
@@ -66,6 +63,35 @@ public class MiscUtils
             }
         }
         return -1;
+    }
+
+    /**
+     * Split the provided string on space, respecting paired quotes.
+     *
+     * @param s The string to split.
+     * @return The split list of arguments.
+     */
+    public static List<String> splitCommand(String s) {
+        List<String> args = new LinkedList<>();
+        boolean qt = false;
+        StringBuilder builder = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            if (c == '"') {
+                qt = !qt;
+                continue;
+            }
+            if (c == ' ' && !qt) {
+                if (builder.isEmpty()) continue;
+                args.add(builder.toString());
+                builder.delete(0, builder.length());
+                continue;
+            }
+            builder.append(c);
+        }
+        if (!builder.isEmpty()) {
+            args.add(builder.toString());
+        }
+        return args;
     }
 
     public static long unixtime()
