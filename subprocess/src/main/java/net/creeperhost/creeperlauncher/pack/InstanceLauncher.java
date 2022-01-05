@@ -329,6 +329,7 @@ public class InstanceLauncher {
                     assert profile.mcAuth != null;
                     subMap.put("user_type", "mojang");
                     subMap.put("auth_access_token", profile.mcAuth.accessToken);
+                    subMap.put("auth_session", "token:" + profile.mcAuth.accessToken + ":" + profile.uuid.toString().replace("-", ""));
                 }
             }
 
