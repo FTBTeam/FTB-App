@@ -15,6 +15,7 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static net.creeperhost.creeperlauncher.Constants.CH_MAVEN;
 
 /**
  * Version manifest for a given game version.
@@ -235,7 +238,8 @@ public class VersionManifest {
             // It appears that the Vanilla launcher will explicitly use the 'url' property if it exists
             if (url != null) {
                 return new NewDownloadTask(
-                        url + name.toPath(),
+                        // Overriden `url` to 'CH_MAVEN'
+                        CH_MAVEN + name.toPath(),
                         name.toPath(librariesDir),
                         DownloadValidation.of()
                 );
@@ -243,7 +247,8 @@ public class VersionManifest {
             // If the 'downloads' property is null, it tries from Mojang's maven directly.
             if (downloads == null) {
                 return new NewDownloadTask(
-                        Constants.MC_LIBS + name.toPath(),
+                        // Overriden Mojang's maven with 'CH_MAVEN'
+                        CH_MAVEN + name.toPath(),
                         name.toPath(librariesDir),
                         DownloadValidation.of()
                 );
@@ -265,7 +270,7 @@ public class VersionManifest {
 
         @Nullable
         private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name) {
-            if (artifact.url == null) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
+            if (StringUtils.isEmpty(artifact.url)) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
 
             if (artifact.path == null) {
                 LOGGER.warn("Artifact has null path? Nani?? Skipping.. {}", name);
@@ -278,7 +283,8 @@ public class VersionManifest {
                 validation = validation.withHash(Hashing.sha1(), artifact.sha1);
             }
             return new NewDownloadTask(
-                    artifact.url,
+                    // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
+                    CH_MAVEN + StringUtils.removeStart(artifact.path, "/"),
                     librariesDir.resolve(artifact.path),
                     validation
             );

@@ -37,6 +37,8 @@ public class Constants {
     public static final String SHARE_API = CREEPERHOST_MODPACK + Constants.KEY + "/modpack/share/";
     public static final String MOD_API = CREEPERHOST_MODPACK + "/public/mod/";
 
+    public static final String CH_MAVEN = "https://maven.creeperhost.net/";
+
     //Forge
     public static final String FORGE_XML = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/maven-metadata.xml";
     public static final String FORGE_MAVEN = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/";
