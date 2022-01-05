@@ -245,8 +245,8 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.16.0'
     implementation 'org.apache.logging.log4j:log4j-jul:2.16.0'
     implementation 'com.github.pircbotx:pircbotx:2.2'
-    implementation 'net.covers1624:Quack:0.4.0.42'
-    implementation 'net.covers1624:JdkUtils:0.3.0.6'
+    implementation 'net.covers1624:Quack:0.4.0.44'
+    implementation 'net.covers1624:JdkUtils:0.3.0.7'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
 
