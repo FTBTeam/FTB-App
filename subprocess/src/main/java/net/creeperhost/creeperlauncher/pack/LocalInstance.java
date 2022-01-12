@@ -462,7 +462,17 @@ public class LocalInstance implements IPack
         launcher.withStartTask(ctx -> {
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
-            ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(jvmArgs));
+
+            // TODO, do this on LocalInstance load, potentially combine with changes to make jvmArgs an array.
+            List<String> jvmArgs = MiscUtils.splitCommand(LocalInstance.this.jvmArgs);
+            for (Iterator<String> iterator = jvmArgs.iterator(); iterator.hasNext(); ) {
+                String jvmArg = iterator.next();
+                if (jvmArg.contains("-Xmx")) {
+                    iterator.remove();
+                    break;
+                }
+            }
+            ctx.extraJVMArgs.addAll(jvmArgs);
         });
 
         launcher.withStartTask(ctx -> {
