@@ -4,6 +4,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
@@ -28,6 +29,8 @@ public class AssetIndexManifest {
     private static final Logger LOGGER = LogManager.getLogger();
     public Map<String, AssetObject> objects = new HashMap<>();
     public boolean virtual;
+    @SerializedName("map_to_resources")
+    public boolean mapToResources;
 
     /**
      * Updates (if required) the asset index for the specified version.

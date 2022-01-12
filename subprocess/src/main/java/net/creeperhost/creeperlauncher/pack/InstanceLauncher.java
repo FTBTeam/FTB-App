@@ -305,7 +305,7 @@ public class InstanceLauncher {
 
             progressTracker.startStep("Validate assets");
             checkAssets(token);
-            Path virtualAssets = buildVirtualAssets(assetsDir);
+            Path virtualAssets = buildVirtualAssets(gameDir, assetsDir);
             progressTracker.finishStep();
 
             token.throwIfCancelled();
@@ -443,26 +443,29 @@ public class InstanceLauncher {
         }
     }
 
-    private Path buildVirtualAssets(Path assetsDir) throws IOException {
-        LOGGER.info("Building virtual assets..");
+    private Path buildVirtualAssets(Path gameDir, Path assetsDir) throws IOException {
         VersionManifest.AssetIndex assetIndex = requireNonNull(manifests.get(0).assetIndex, "First Version Manifest missing AssetIndex. This should not happen.");
         AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
 
         Path objects = assetsDir.resolve("objects");
         Path virtual = assetsDir.resolve("virtual").resolve(assetIndex.id);
+        Path resourcesDir = gameDir.resolve("resources");
 
-        if (manifest.virtual) {
+        if (manifest.virtual || manifest.mapToResources) {
+            Path vAssets = manifest.virtual ? virtual : resourcesDir;
+            LOGGER.info("Building virtual assets into {}..", vAssets);
             for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
                 String name = entry.getKey();
                 AssetIndexManifest.AssetObject object = entry.getValue();
                 assert object.hash != null;
 
-                Path virtualPath = virtual.resolve(name);
+                Path virtualPath = vAssets.resolve(name);
                 Path objectPath = objects.resolve(object.hash.toString().substring(0, 2) + "/" + object.hash);
                 if (Files.exists(objectPath)) {
-                    Files.copy(objectPath, virtualPath, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(objectPath, IOUtils.makeParents(virtualPath), StandardCopyOption.REPLACE_EXISTING);
                 }
             }
+            return vAssets;
         }
         return virtual;
     }
