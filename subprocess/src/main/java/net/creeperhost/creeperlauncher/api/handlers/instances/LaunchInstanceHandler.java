@@ -48,8 +48,9 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
                 LOGGER.error("Failed to launch instance.", ex);
 
                 String message = ex.getMessage();
-                if (ex.getCause() != null) {
-                    message += " because.. " + ex.getCause().getMessage();
+                Throwable cause = ex.getCause();
+                if (cause != null) {
+                    message += " because.. " + cause.getClass().getName() + ": " + cause.getMessage();
                 }
 
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
