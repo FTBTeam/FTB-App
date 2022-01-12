@@ -3,6 +3,9 @@ package net.creeperhost.creeperlauncher.api.data.instances;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.UUID;
+
 public class LaunchInstanceData extends BaseData {
 
     public String uuid;
@@ -48,6 +51,20 @@ public class LaunchInstanceData extends BaseData {
             requestId = data.requestId;
             this.status = status;
             this.message = message;
+        }
+    }
+
+    public static class Logs extends BaseData {
+
+        // The UUID of the instance.
+        public final String uuid;
+        // The log messages to append.
+        public final List<String> messages;
+
+        public Logs(UUID instanceId, List<String> messages) {
+            type = "launchInstance.logs";
+            this.uuid = instanceId.toString();
+            this.messages = messages;
         }
     }
 }

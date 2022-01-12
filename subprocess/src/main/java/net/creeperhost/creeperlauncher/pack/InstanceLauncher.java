@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.pack;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 import net.covers1624.jdkutils.JavaInstall;
@@ -72,6 +73,8 @@ public class InstanceLauncher {
     private Thread processThread;
     @Nullable
     private Process process;
+    @Nullable
+    private LogThread logThread;
 
     private final ProgressTracker progressTracker = new ProgressTracker();
     private final List<ThrowingConsumer<LaunchContext, IOException>> startTasks = new LinkedList<>();
@@ -159,9 +162,20 @@ public class InstanceLauncher {
                     return;
                 }
                 setPhase(Phase.STARTED);
-                Logger logger = LogManager.getLogger("Minecraft Temp");
-                CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), logger::info);
-                CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), logger::error);
+                logThread = new LogThread();
+                Logger logger = LogManager.getLogger("Minecraft");
+                // TODO these should not use CompletableFutures, these should be separate logging threads setup manually.
+                //  These take up slots on the builtin ForkJoin pool, and may not even execute on systems with low processor thread counts.
+                CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), message -> {
+                    logThread.bufferMessage(message);
+                    logger.info(message);
+                });
+                CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), message -> {
+                    logThread.bufferMessage(message);
+                    logger.error(message);
+                });
+                logThread.start();
+
                 process.onExit().thenRunAsync(() -> {
                     if (!stdoutFuture.isDone()) {
                         stdoutFuture.cancel(true);
@@ -169,6 +183,9 @@ public class InstanceLauncher {
                     if (!stderrFuture.isDone()) {
                         stderrFuture.cancel(true);
                     }
+                    // Not strictly necessary, but exits the log thread faster.
+                    logThread.stop = true;
+                    logThread.interrupt();
                 });
 
                 while (process.isAlive()) {
@@ -303,7 +320,7 @@ public class InstanceLauncher {
             token.throwIfCancelled();
 
             progressTracker.startStep("Validate client");
-            validateClient(token,versionsDir);
+            validateClient(token, versionsDir);
             progressTracker.finishStep();
 
             token.throwIfCancelled();
@@ -719,6 +736,56 @@ public class InstanceLauncher {
 
             if (Settings.webSocketAPI == null) return;
             Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+        }
+    }
+
+    private class LogThread extends Thread {
+
+        private static final boolean DEBUG = Boolean.getBoolean("InstanceLauncher.LogThread.debug");
+        /**
+         * The time in milliseconds between bursts of logging output.
+         */
+        private static final long INTERVAL = 100;
+
+        private boolean stop = false;
+        private final List<String> pendingMessages = new ArrayList<>(100);
+
+        public LogThread() {
+            super("Instance Logging Thread");
+            setDaemon(true);
+        }
+
+        @Override
+        @SuppressWarnings ("BusyWait")
+        public void run() {
+            while (!stop && phase == Phase.STARTED) {
+                if (!pendingMessages.isEmpty()) {
+                    synchronized (pendingMessages) {
+                        List<String> toSend = ImmutableList.copyOf(pendingMessages);
+                        pendingMessages.clear();
+                        if (DEBUG) {
+                            LOGGER.info("Flushing {} messages.", toSend.size());
+                        }
+
+                        Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
+                    }
+                }
+                try {
+                    Thread.sleep(INTERVAL);
+                } catch (InterruptedException ignored) {
+                    if (Thread.interrupted()) {
+                        if (stop) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void bufferMessage(String message) {
+            synchronized (pendingMessages) {
+                pendingMessages.add(message);
+            }
         }
     }
 }
