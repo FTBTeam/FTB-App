@@ -167,29 +167,33 @@ export default class InstancePage extends Vue {
   }
 
   public async launchModPack() {
-    // We're trying already, chill bro
-    if (this.packLoading) {
-      return;
-    }
-
-    this.packLoading = true;
-    if (this.instance == null) {
-      return;
-    }
-    if (this.instance.memory < this.instance.minMemory) {
-      this.msgBox.type = 'okCancel';
-      this.msgBox.title = 'Low Memory';
-      this.msgBox.okAction = this.launch;
-      this.msgBox.cancelAction = this.hideMsgBox;
-      this.msgBox.content =
-        `You are trying to launch the modpack with memory settings that are below the` +
-        `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
-        `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
-      this.showMsgBox = true;
-    } else {
-      await this.launch();
-    }
-    this.packLoading = false;
+    await this.$router.push({
+      name: 'launchingpage',
+      query: { uuid: this.instance?.uuid },
+    });
+    // // We're trying already, chill bro
+    // if (this.packLoading) {
+    //   return;
+    // }
+    //
+    // this.packLoading = true;
+    // if (this.instance == null) {
+    //   return;
+    // }
+    // if (this.instance.memory < this.instance.minMemory) {
+    //   this.msgBox.type = 'okCancel';
+    //   this.msgBox.title = 'Low Memory';
+    //   this.msgBox.okAction = this.launch;
+    //   this.msgBox.cancelAction = this.hideMsgBox;
+    //   this.msgBox.content =
+    //     `You are trying to launch the modpack with memory settings that are below the` +
+    //     `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
+    //     `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
+    //   this.showMsgBox = true;
+    // } else {
+    //   await this.launch();
+    // }
+    // this.packLoading = false;
   }
 
   public confirmLaunch() {

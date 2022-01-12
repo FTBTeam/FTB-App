@@ -75,7 +75,7 @@
     </div>
 
     <div class="log-contents text-sm" :class="{ 'dark-mode': darkMode }">
-      <div class="log-item" v-for="n in 100">[debug][{{ n }}]: AHHHH</div>
+      <div class="log-item" v-for="i in messages.length" :key="i">{{ messages[messages.length - i] }}</div>
     </div>
 
     <FTBModal :visible="showMsgBox" @dismiss-modal="showMsgBox = false" :dismissable="true">
@@ -105,6 +105,7 @@ import { preLaunchChecksValid } from '@/utils/auth/authentication';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
+import eventBus from '@/utils/event-bus';
 
 @Component({
   name: 'LaunchingPage',
@@ -140,6 +141,8 @@ export default class LaunchingPage extends Vue {
     stepProgressHuman: '',
   };
 
+  messages: string[] = [];
+
   private showMsgBox = false;
   private msgBox: MsgBox = {
     title: '',
@@ -170,6 +173,16 @@ export default class LaunchingPage extends Vue {
   }
 
   public async mounted() {
+    eventBus.$on('ws.message', (data: any) => {
+      if (data.type !== 'launchInstance.logs') {
+        return;
+      }
+
+      for (const e of data.messages) {
+        this.messages.push(e);
+      }
+    });
+
     if (this.instance == null) {
       return null;
     }
@@ -187,7 +200,12 @@ export default class LaunchingPage extends Vue {
       this.loading = false;
     }
 
-    // await this.launch();
+    await this.launch();
+  }
+
+  destroyed() {
+    // Stop listening to events!
+    eventBus.$off('ws.message');
   }
 
   public async launch(): Promise<void> {
@@ -371,6 +389,10 @@ export default class LaunchingPage extends Vue {
       height: 8px;
       border-radius: 150px;
       z-index: 10;
+    }
+
+    .log-item {
+      white-space: nowrap;
     }
   }
 

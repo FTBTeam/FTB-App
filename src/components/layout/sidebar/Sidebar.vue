@@ -22,9 +22,6 @@
       </popover>
     </div>
 
-    <router-link :to="{ name: 'launchingpage', query: { uuid: '500c37fc-dd83-464a-bed0-8e9f213b919d' } }"
-      >Hi</router-link
-    >
     <div class="nav-items">
       <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
       <a

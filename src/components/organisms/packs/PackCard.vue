@@ -24,20 +24,18 @@
       <div class="meta">
         <div class="title">{{ name }}</div>
         <div class="version">{{ version }}</div>
-        <div
-          class="play-button"
-          :class="{ 'opacity-50': starting }"
-          @click.stop="!loading && !starting && checkMemoryThenLaunch()"
-        >
-          <div class="clickable-play" :class="{ disabled: loading, loading }">
-            <span v-if="!starting && !loading && kind !== 'cloudInstance'">Play</span>
-            <span v-else-if="kind === 'cloudInstance'">Sync</span>
-            <span v-else-if="starting">
-              <font-awesome-icon spin icon="spinner" />
-            </span>
-            <span v-else>Loading...</span>
+        <router-link :to="{ name: 'launchingpage', query: { uuid: instance.uuid } }">
+          <div class="play-button" :class="{ 'opacity-50': starting }">
+            <div class="clickable-play" :class="{ disabled: loading, loading }">
+              <span v-if="!starting && !loading && kind !== 'cloudInstance'">Play</span>
+              <span v-else-if="kind === 'cloudInstance'">Sync</span>
+              <span v-else-if="starting">
+                <font-awesome-icon spin icon="spinner" />
+              </span>
+              <span v-else>Loading...</span>
+            </div>
           </div>
-        </div>
+        </router-link>
       </div>
     </div>
     <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
