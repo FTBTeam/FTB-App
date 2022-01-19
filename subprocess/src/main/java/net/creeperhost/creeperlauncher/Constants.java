@@ -119,6 +119,10 @@ public class Constants {
     }
 
     public static Path getDataDir() {
+        if (System.getProperty("ftba.dataDirOverride") != null) {
+            return Path.of(System.getProperty("ftba.dataDirOverride")).toAbsolutePath().normalize();
+        }
+
         Path ret = switch (OS.CURRENT) {
             case WIN -> Paths.get(System.getenv("LOCALAPPDATA"), INNER_DATA_DIR);
             case MAC -> Paths.get(System.getProperty("user.home"), "Library", "Application Support", INNER_DATA_DIR);
