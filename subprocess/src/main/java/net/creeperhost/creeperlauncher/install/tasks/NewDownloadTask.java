@@ -88,7 +88,9 @@ public class NewDownloadTask implements Task<Path> {
 
     @Override
     public void execute(@Nullable CancellationToken token, @Nullable TaskProgressListener progressListener) throws IOException {
+        LOGGER.info("Downloading file {}..", dest);
         if (Files.exists(dest) && validation.validate(dest)) {
+            LOGGER.info(" File validated.");
             // Validated, do nothing.
             return;
         }
@@ -97,6 +99,7 @@ public class NewDownloadTask implements Task<Path> {
         if (useCache && validation.expectedHashes.containsKey(HashFunc.SHA1)) {
             Path cachePath = CreeperLauncher.localCache.get(validation.expectedHashes.get(HashFunc.SHA1));
             if (cachePath != null) {
+                LOGGER.info(" File existed in local cache.");
                 Files.copy(cachePath, IOUtils.makeParents(dest));
                 if (progressListener != null) {
                     long len = Files.size(dest);
@@ -127,9 +130,11 @@ public class NewDownloadTask implements Task<Path> {
             action.setQuiet(false);
         }
 
+        LOGGER.info(" Trying to download from {}..", url);
         action.execute();
 
         if (action.isUpToDate()) {
+            LOGGER.info("  File passed ETag/OnlyIfModified checks.");
             // We validated ETag/OnlyIfModified
             return;
         }
@@ -153,6 +158,8 @@ public class NewDownloadTask implements Task<Path> {
                 }
             }
         }
+
+        LOGGER.info("  File downloaded.");
 
         // TODO, SHA1 hardcode..
         if (useCache && validation.expectedHashes.containsKey(HashFunc.SHA1)) {
