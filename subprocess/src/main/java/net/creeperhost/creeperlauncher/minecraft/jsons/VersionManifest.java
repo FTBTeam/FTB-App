@@ -136,6 +136,23 @@ public class VersionManifest {
         return parse;
     }
 
+    @Nullable
+    public NewDownloadTask getClientDownload(Path versionsDir) {
+        Download download = downloads.get("client");
+        if (download == null || download.url == null) return null;
+
+        DownloadValidation validation = DownloadValidation.of()
+                .withExpectedSize(download.size);
+        if (download.sha1 != null) {
+            validation = validation.withHash(Hashing.sha1(), download.sha1);
+        }
+        return new NewDownloadTask(
+                download.url,
+                versionsDir.resolve(id).resolve(id + ".jar"),
+                validation
+        );
+    }
+
     public static List<String> collectJVMArgs(List<VersionManifest> manifests, Set<String> features) {
         // If any manifests have the 'arguments' field, then we exclusively use that
         //  this maintains the semantics of the vanilla launcher.

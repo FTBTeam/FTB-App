@@ -470,19 +470,9 @@ public class InstanceLauncher {
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest manifest = manifests.get(0);
-        VersionManifest.Download download = manifest.downloads.get("client");
-        if (download != null && download.url != null) {
+        NewDownloadTask task = manifest.getClientDownload(versionsDir);
+        if (task != null) {
             LOGGER.info("Validating client download for {}", manifest.id);
-            DownloadValidation validation = DownloadValidation.of()
-                    .withExpectedSize(download.size);
-            if (download.sha1 != null) {
-                validation = validation.withHash(Hashing.sha1(), download.sha1);
-            }
-            NewDownloadTask task = new NewDownloadTask(
-                    download.url,
-                    versionsDir.resolve(manifest.id).resolve(manifest.id + ".jar"),
-                    validation
-            );
             task.execute(token, progressTracker.listenerForStep(true));
         }
     }
