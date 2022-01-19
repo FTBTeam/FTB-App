@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
@@ -17,6 +18,7 @@ import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadVal
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -64,7 +66,7 @@ public class VersionManifest {
     public int complianceLevel;
     public Map<String, Download> downloads = new HashMap<>();
     @Nullable
-    public JavaVersion javaVersion;
+    public JavaVersionJson javaVersion;
     public List<Library> libraries = new ArrayList<>();
     @Nullable
     public Logging logging;
@@ -120,6 +122,18 @@ public class VersionManifest {
     public Stream<Library> getLibraries(Set<String> features) {
         return libraries.stream()
                 .filter(e -> e.apply(features));
+    }
+
+    @Nullable
+    @Contract ("!null->!null")
+    public JavaVersion getJavaVersionOrDefault(@Nullable JavaVersion _default) {
+        if (javaVersion == null) return _default;
+        JavaVersion parse = JavaVersion.parse(String.valueOf(javaVersion.majorVersion));
+        if (parse == null || parse == JavaVersion.UNKNOWN) {
+            LOGGER.error("Unable to parse '{}' into a JavaVersion.", javaVersion.majorVersion);
+            return _default;
+        }
+        return parse;
     }
 
     public static List<String> collectJVMArgs(List<VersionManifest> manifests, Set<String> features) {
@@ -212,7 +226,7 @@ public class VersionManifest {
         public String url;
     }
 
-    public static class JavaVersion {
+    public static class JavaVersionJson {
 
         public String component;
         public int majorVersion;

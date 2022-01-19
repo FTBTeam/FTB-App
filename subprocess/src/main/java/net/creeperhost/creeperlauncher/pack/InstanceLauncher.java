@@ -563,13 +563,9 @@ public class InstanceLauncher {
     private JavaVersion getJavaVersion() {
         JavaVersion ret = JavaVersion.JAVA_1_8;
         for (VersionManifest e : manifests) {
-            VersionManifest.JavaVersion javaVersion = e.javaVersion;
-            if (javaVersion == null) continue;
-            JavaVersion parse = JavaVersion.parse(String.valueOf(javaVersion.majorVersion));
-            if (parse == null || parse == JavaVersion.UNKNOWN) {
-                LOGGER.error("Unable to parse '{}' into a JavaVersion.", javaVersion.majorVersion);
-                continue;
-            }
+            JavaVersion parse = e.getJavaVersionOrDefault(null);
+            if (parse == null) continue;
+
             if (parse.ordinal() > ret.ordinal()) {
                 ret = parse;
             }
