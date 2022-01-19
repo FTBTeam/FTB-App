@@ -11,6 +11,7 @@ import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
@@ -185,8 +186,18 @@ public class NewDownloadTask implements Task<Path> {
 
     /**
      * Validation properties for a {@link NewDownloadTask}.
+     * Extension of {@link FileValidation}.
      */
-    public static record DownloadValidation(long expectedSize, Map<HashFunc, HashCode> expectedHashes, boolean useETag, boolean useOnlyIfModified) {
+    public static class DownloadValidation extends FileValidation {
+
+        public final boolean useETag;
+        public final boolean useOnlyIfModified;
+
+        private DownloadValidation(long expectedSize, Map<HashFunc, HashCode> expectedHashes, boolean useETag, boolean useOnlyIfModified) {
+            super(expectedSize, expectedHashes);
+            this.useETag = useETag;
+            this.useOnlyIfModified = useOnlyIfModified;
+        }
 
         /**
          * Create a new blank {@link DownloadValidation}.
@@ -195,6 +206,16 @@ public class NewDownloadTask implements Task<Path> {
          */
         public static DownloadValidation of() {
             return new DownloadValidation(-1, Map.of(), false, false);
+        }
+
+        /**
+         * Creates a new {@link DownloadValidation} from the provided {@link FileValidation}.
+         *
+         * @param other The {@link FileValidation}.
+         * @return The new {@link DownloadValidation}.
+         */
+        public static DownloadValidation of(FileValidation other) {
+            return new DownloadValidation(other.expectedSize, other.expectedHashes, false, false);
         }
 
         /**
@@ -242,30 +263,6 @@ public class NewDownloadTask implements Task<Path> {
          */
         public DownloadValidation withUseOnlyIfModified(boolean useOnlyIfModified) {
             return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
-        }
-
-        private boolean validate(Path path) throws IOException {
-            if (expectedHashes.isEmpty()) return validate(path, null);
-            MultiHasher hasher = new MultiHasher(expectedHashes.keySet());
-            hasher.load(path);
-            return validate(path, hasher.finish());
-        }
-
-        private boolean validate(Path path, @Nullable HashResult hashResult) throws IOException {
-            if (expectedSize != -1) {
-                long size = Files.size(path);
-                if (expectedSize != size) {
-                    return false;
-                }
-            }
-            if (hashResult != null) {
-                for (Map.Entry<HashFunc, HashCode> entry : expectedHashes.entrySet()) {
-                    if (!entry.getValue().equals(hashResult.get(entry.getKey()))) {
-                        return false;
-                    }
-                }
-            }
-            return true;
         }
     }
 

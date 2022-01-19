@@ -501,11 +501,11 @@ public class InstanceLauncher {
 
         long totalLen = tasks.stream()
                 .mapToLong(e -> {
-                    if (e.getValidation().expectedSize() == -1) {
+                    if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
                         return getContentLength(e.getUrl());
                     }
-                    return e.getValidation().expectedSize();
+                    return e.getValidation().expectedSize;
                 })
                 .sum();
 

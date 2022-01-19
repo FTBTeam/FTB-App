@@ -46,7 +46,7 @@ public class InstallAssetsTask implements Task<Void> {
         if (listener != null) {
             long totalSize = subTasks.stream()
                     .map(NewDownloadTask::getValidation)
-                    .mapToLong(DownloadValidation::expectedSize)
+                    .mapToLong(e -> e.expectedSize)
                     .sum();
             listener.start(totalSize);
             progressAggregator = new ParallelTaskProgressAggregator(listener);
