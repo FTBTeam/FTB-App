@@ -7,14 +7,13 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import net.covers1624.quack.gson.HashCodeAdapter;
+import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.platform.OperatingSystem;
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
-import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,6 +40,11 @@ public class VersionManifest {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("VersionManifest.debug");
+
+    public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(OS.class, new OsDeserializer())
+            .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
+            .create();
 
     private static final Rule WIN_10_RULE = new Rule(
             Action.ALLOW,
@@ -110,7 +114,7 @@ public class VersionManifest {
                 }
             }
         }
-        return GsonUtils.loadJson(versionFile, VersionManifest.class);
+        return JsonUtils.parse(GSON, versionFile, VersionManifest.class);
     }
 
     public Stream<Library> getLibraries(Set<String> features) {
@@ -263,13 +267,13 @@ public class VersionManifest {
             if (downloads.classifiers == null) return null; // What? but okay, just ignore.
             String classifier = natives.get(OS.current());
             if (classifier == null) return null; // No natives for this platform.
-            VersionManifest.LibraryDownload artifact = downloads.classifiers.get(classifier);
+            LibraryDownload artifact = downloads.classifiers.get(classifier);
             if (artifact == null) return null; // Shouldn't happen, but okay.
             return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier));
         }
 
         @Nullable
-        private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name) {
+        private NewDownloadTask downloadTaskFor(Path librariesDir, LibraryDownload artifact, MavenNotation name) {
             if (StringUtils.isEmpty(artifact.url)) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
 
             if (artifact.path == null) {

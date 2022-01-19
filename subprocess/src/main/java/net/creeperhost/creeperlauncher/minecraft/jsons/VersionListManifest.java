@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.minecraft.jsons;
 
 import com.google.gson.JsonParseException;
+import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
@@ -8,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,6 +74,24 @@ public class VersionListManifest {
     @Nullable
     public Version locate(String id) {
         return onlyOrDefault(versions.stream().filter(e -> e.id.equalsIgnoreCase(id)), null);
+    }
+
+    @Nullable
+    public VersionManifest resolve(Path versionsFolder, String id) throws IOException {
+        VersionListManifest.Version version = locate(id);
+        if (version == null) return null;
+
+        return VersionManifest.update(versionsFolder, version);
+    }
+
+    public VersionManifest resolveOrLocal(Path versionsFolder, String id) throws IOException {
+        VersionManifest ret = resolve(versionsFolder, id);
+        if (ret != null) return ret;
+
+        LOGGER.info("Version {} not found on remote list, trying locally.", id);
+        Path versionJson = versionsFolder.resolve(id).resolve(id + ".json");
+        if (Files.notExists(versionJson)) throw new FileNotFoundException("Unable to find version json for: '" + id + "'. Searched: '" + versionJson + "'.");
+        return JsonUtils.parse(VersionManifest.GSON, versionJson, VersionManifest.class);
     }
 
     public static class Latest {

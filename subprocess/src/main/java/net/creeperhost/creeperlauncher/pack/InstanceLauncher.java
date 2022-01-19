@@ -22,7 +22,6 @@ import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
-import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import okhttp3.Request;
@@ -36,7 +35,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -422,7 +420,7 @@ public class InstanceLauncher {
             token.throwIfCancelled();
             if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.modLoader);
             LOGGER.info("Preparing manifest {}", id);
-            VersionManifest manifest = getVersionManifest(versionsDir, versions, id);
+            VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
             // Build in reverse order. First in list should be Minecraft's.
             manifests.add(0, manifest);
             id = manifest.inheritsFrom;
@@ -599,17 +597,6 @@ public class InstanceLauncher {
     private Path getGameJar(Path versionsDir) {
         String rootId = manifests.get(0).id;
         return versionsDir.resolve(rootId).resolve(rootId + ".jar");
-    }
-
-    private static VersionManifest getVersionManifest(Path versionsFolder, VersionListManifest versions, String id) throws IOException {
-        VersionListManifest.Version version = versions.locate(id);
-        if (version == null) {
-            LOGGER.info("Version {} not found on remote list, trying locally.", id);
-            Path versionJson = versionsFolder.resolve(id).resolve(id + ".json");
-            if (Files.notExists(versionJson)) throw new FileNotFoundException("Unable to find version json for: '" + id + "'. Searched: '" + versionJson + "'.");
-            return GsonUtils.loadJson(versionJson, VersionManifest.class);
-        }
-        return VersionManifest.update(versionsFolder, version);
     }
 
     private static long getContentLength(String url) {
