@@ -2,7 +2,6 @@ import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import Vuex, { MutationTree, Store, StoreOptions } from 'vuex';
 import { Alert, AlertWithId, ModalBox, RootState } from '../types';
-import { news } from './news';
 import { modpacks } from './modpacks';
 import { websocket } from './websocket';
 import { settings } from './settings';
@@ -10,6 +9,7 @@ import { auth } from './auth';
 import { discovery } from './discovery';
 import { servers } from './servers';
 import { core } from '@/modules/core/core';
+import { news } from '@/modules/news/news';
 
 Vue.use(Vuex);
 
