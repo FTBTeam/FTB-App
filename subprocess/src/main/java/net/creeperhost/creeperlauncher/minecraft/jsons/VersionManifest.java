@@ -101,8 +101,7 @@ public class VersionManifest {
                 versionFile,
                 DownloadValidation.of()
                         .withUseETag(true)
-                        .withUseOnlyIfModified(true),
-                null
+                        .withUseOnlyIfModified(true)
         );
 
         if (!downloadTask.isRedundant()) {
@@ -269,7 +268,7 @@ public class VersionManifest {
         }
 
         @Nullable
-        public NewDownloadTask createDownloadTask(Path librariesDir) {
+        public NewDownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
             // It appears that the Vanilla launcher will explicitly use the 'url' property if it exists
             if (url != null) {
                 return new NewDownloadTask(
@@ -292,7 +291,7 @@ public class VersionManifest {
             // We have a 'downlaods' property, but no 'natives'.
             if (natives == null) {
                 if (downloads.artifact == null) return null;
-                return downloadTaskFor(librariesDir, downloads.artifact, name);
+                return downloadTaskFor(librariesDir, downloads.artifact, name, ignoreLocalLibraries);
             }
             // We have natives.
             if (downloads.classifiers == null) return null; // What? but okay, just ignore.
@@ -300,12 +299,12 @@ public class VersionManifest {
             if (classifier == null) return null; // No natives for this platform.
             LibraryDownload artifact = downloads.classifiers.get(classifier);
             if (artifact == null) return null; // Shouldn't happen, but okay.
-            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier));
+            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier), ignoreLocalLibraries);
         }
 
         @Nullable
-        private NewDownloadTask downloadTaskFor(Path librariesDir, LibraryDownload artifact, MavenNotation name) {
-            if (StringUtils.isEmpty(artifact.url)) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
+        private NewDownloadTask downloadTaskFor(Path librariesDir, LibraryDownload artifact, MavenNotation name, boolean ignoreLocalLibraries) {
+            if (StringUtils.isEmpty(artifact.url) && ignoreLocalLibraries) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
 
             if (artifact.path == null) {
                 LOGGER.warn("Artifact has null path? Nani?? Skipping.. {}", name);

@@ -87,29 +87,21 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask implements Task
         return null;
     }
 
-    private static void processLibrary(CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
-        NewDownloadTask downloadTask = library.createDownloadTask(librariesDir);
+    private static void processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
+        NewDownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
 
         Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
-        Path dest = downloadTask != null ? downloadTask.getDest() : library.name.toPath(librariesDir);
 
         if (downloadTask != null && downloadTask.isRedundant()) {
             return;
         }
 
-        if (Files.exists(installerMavenFile)) {
-            LOGGER.info("File exists inside installer: {}", library.name);
-            Files.copy(installerMavenFile, IOUtils.makeParents(dest), StandardCopyOption.REPLACE_EXISTING);
-            if (downloadTask != null && !downloadTask.isRedundant()) {
-                LOGGER.error("Failed to validate file. TODO, better message.");
-                // TODO better logging for why this failed.
-                //  Perhaps a better way to do this would be to weave these local 'Search paths' through to the DownloadTask and let it handle it
-                //  as we already have code in there for the LocalCache.
-            }
-            return;
+        if (downloadTask != null) {
+            downloadTask.setLocalFileLocator(new PackedJarLocator(installerMavenFile));
         }
 
         if (downloadTask == null) {
+            // TODO, should these be treated as installation errors?
             LOGGER.info("Skipping download of '{}' file does not exist in installer, and is not downloadable.", library.name);
             return;
         }

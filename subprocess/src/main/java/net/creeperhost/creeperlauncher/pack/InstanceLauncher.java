@@ -481,7 +481,7 @@ public class InstanceLauncher {
         LOGGER.info("Validating minecraft libraries...");
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            NewDownloadTask task = library.createDownloadTask(librariesDir);
+            NewDownloadTask task = library.createDownloadTask(librariesDir, true);
             if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }

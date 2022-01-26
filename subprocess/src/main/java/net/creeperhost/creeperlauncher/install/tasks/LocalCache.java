@@ -2,7 +2,9 @@ package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.HashCode;
 import com.google.gson.reflect.TypeToken;
+import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
@@ -23,11 +25,10 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SuppressWarnings ("UnstableApiUsage")
-public class LocalCache implements AutoCloseable {
+public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocator {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Type setType = new TypeToken<Set<HashCode>>() {}.getType();
+    private static final Type setType = new TypeToken<Set<HashCode>>() { }.getType();
 
     private final Path cacheLocation;
     private final Path cacheIndexFile;
@@ -37,8 +38,7 @@ public class LocalCache implements AutoCloseable {
 
     public LocalCache(Path cacheLocation) {
         this.cacheLocation = cacheLocation;
-        if(FileUtils.createDirectories(cacheLocation) == null || !Files.exists(cacheLocation))
-        {
+        if (FileUtils.createDirectories(cacheLocation) == null || !Files.exists(cacheLocation)) {
             LOGGER.error("Unable to create instance directory");
         }
 
@@ -250,5 +250,21 @@ public class LocalCache implements AutoCloseable {
     public void close() {
         autoSaveEnabled = true;
         save();
+    }
+
+    @Nullable
+    @Override
+    public Path getLocalFile(String url, FileValidation validation, Path dest) {
+        HashCode expectedSha1 = validation.expectedHashes.get(HashFunc.SHA1);
+        return expectedSha1 == null ? null : get(expectedSha1);
+
+    }
+
+    @Override
+    public void onFileDownloaded(String url, FileValidation validation, Path dest) {
+        HashCode expectedSha1 = validation.expectedHashes.get(HashFunc.SHA1);
+        if (expectedSha1 != null) {
+            put(dest, expectedSha1);
+        }
     }
 }
