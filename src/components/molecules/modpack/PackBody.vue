@@ -107,7 +107,7 @@
           >
         </div>
         <div class="" v-if="packInstance.description !== undefined">
-          <VueShowdown :markdown="packInstance.description" :extensions="['classMap', 'attribMap', 'newLine']" />
+          <VueShowdown :markdown="packInstance.description" :extensions="['classMap', 'newLine']" />
         </div>
         <div v-else>
           <h2>No description available</h2>

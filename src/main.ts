@@ -107,7 +107,7 @@ Vue.mixin({
   },
 });
 
-Vue.filter('dayjs', (value: any) => (value ? dayjs(value).format('Do MMMM YYYY') : ''));
+Vue.filter('dayjs', (value: any) => (value ? dayjs.unix(value).format('DD MMMM YYYY') : ''));
 Vue.filter('dayjsFromNow', (value: any) => (value ? dayjs().from(dayjs(value), true) : 'Never'));
 Vue.filter('formatNumber', (value: number) => (value ? value.toLocaleString() : '0'));
 Vue.filter('title', (value: string) => (!value ? '' : value[0].toUpperCase() + value.slice(1)));
