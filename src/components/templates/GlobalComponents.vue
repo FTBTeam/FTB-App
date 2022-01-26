@@ -29,10 +29,12 @@
     </div>
 
     <!-- Authentication -->
-    <authentication v-if="getSignInOpened.open" :jump="getSignInOpened.jumpToAuth" :uuid="getSignInOpened.uuid" @close="closeSignIn()" />
-
-    <!-- Instance Loading -->
-    <instance-loading/>
+    <authentication
+      v-if="getSignInOpened.open"
+      :jump="getSignInOpened.jumpToAuth"
+      :uuid="getSignInOpened.uuid"
+      @close="closeSignIn()"
+    />
   </div>
 </template>
 
@@ -43,12 +45,10 @@ import FTBModal from '@/components/atoms/FTBModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, Getter } from 'vuex-class';
 import Authentication from '@/components/templates/authentication/Authentication.vue';
-import InstanceLoading from '@/components/templates/loading/InstanceLoading.vue';
 
 @Component({
   components: {
     Authentication,
-    InstanceLoading,
     FTBModal,
     MessageModal,
   },
