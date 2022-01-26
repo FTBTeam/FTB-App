@@ -9,11 +9,10 @@ import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.data.installerv2.InstallManifest;
+import net.creeperhost.creeperlauncher.data.forge.installerv2.InstallManifest;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
-import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
@@ -30,15 +29,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 /**
  * Created by covers1624 on 14/1/22.
  */
 @SuppressWarnings ("UnstableApiUsage")
-public class ForgeV2InstallTask implements Task<Void> {
+public class ForgeV2InstallTask extends AbstractForgeInstallTask implements Task<Void> {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -55,13 +52,6 @@ public class ForgeV2InstallTask implements Task<Void> {
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        // Things this task needs to do:
-        // - Grab the Minecraft VersionManifest for the version of forge we are installing.
-        // - Grab JRE for the targeted minecraft version. (for executing tasks with)
-        // - Download Forge Installer from maven
-        // - Extract (zipfs open) and parse manifest.
-        // - ....
-
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
@@ -91,29 +81,10 @@ public class ForgeV2InstallTask implements Task<Void> {
         }
     }
 
+    @Nullable
     @Override
-    public @Nullable Void getResult() {
+    public Void getResult() {
         return null;
-    }
-
-    private static VersionManifest downloadVanilla(Path versionsDir, String version) throws IOException {
-        VersionListManifest listManifest = VersionListManifest.update(versionsDir);
-        VersionManifest manifest = listManifest.resolve(versionsDir, version);
-        if (manifest == null) {
-            LOGGER.error("No vanilla version manifest found for {}", version);
-            throw new IOException("No vanilla version manifest found for " + version);
-        }
-
-        NewDownloadTask clientDownload = manifest.getClientDownload(versionsDir);
-        if (clientDownload == null) {
-            LOGGER.warn("Failed to find 'client' download for {}. Skipping..", version);
-            return manifest;
-        }
-
-        if (!clientDownload.isRedundant()) {
-            clientDownload.execute(null, null);
-        }
-        return manifest;
     }
 
     private static void processLibrary(CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
@@ -306,69 +277,5 @@ public class ForgeV2InstallTask implements Task<Void> {
             LOGGER.error("Processor output validation errors occurred.");
             throw new IOException("Processor output validation errors occurred.");
         }
-    }
-
-    private static String topAndTail(String s) {
-        return s.substring(1, s.length() - 1);
-    }
-
-    private static boolean surroundedBy(String s, char start, char end) {
-        return s.charAt(0) == start && s.charAt(s.length() - 1) == end;
-    }
-
-    private static String getMainClass(Path jar) throws IOException {
-        try (JarFile jarFile = new JarFile(jar.toFile())) {
-            return jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-        }
-    }
-
-    // This function is borrowed from the MinecraftForge Installer and has been
-    // entirely unmodified, except for non-functional formatting.
-    private static String replaceTokens(Map<String, String> tokens, String value) {
-        StringBuilder buf = new StringBuilder();
-
-        for (int x = 0; x < value.length(); x++) {
-            char c = value.charAt(x);
-            if (c == '\\') {
-                if (x == value.length() - 1) {
-                    throw new IllegalArgumentException("Illegal pattern (Bad escape): " + value);
-                }
-                buf.append(value.charAt(++x));
-            } else if (c == '{' || c == '\'') {
-                StringBuilder key = new StringBuilder();
-                for (int y = x + 1; y <= value.length(); y++) {
-                    if (y == value.length()) {
-                        throw new IllegalArgumentException("Illegal pattern (Unclosed " + c + "): " + value);
-                    }
-                    char d = value.charAt(y);
-                    if (d == '\\') {
-                        if (y == value.length() - 1) {
-                            throw new IllegalArgumentException("Illegal pattern (Bad escape): " + value);
-                        }
-                        key.append(value.charAt(++y));
-                    } else if (c == '{' && d == '}') {
-                        x = y;
-                        break;
-                    } else if (c == '\'' && d == '\'') {
-                        x = y;
-                        break;
-                    } else {
-                        key.append(d);
-                    }
-                }
-                if (c == '\'') {
-                    buf.append(key);
-                } else {
-                    if (!tokens.containsKey(key.toString())) {
-                        throw new IllegalArgumentException("Illegal pattern: " + value + " Missing Key: " + key);
-                    }
-                    buf.append(tokens.get(key.toString()));
-                }
-            } else {
-                buf.append(c);
-            }
-        }
-
-        return buf.toString();
     }
 }

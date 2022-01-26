@@ -1,8 +1,7 @@
-package net.creeperhost.creeperlauncher.data.installerv2;
+package net.creeperhost.creeperlauncher.data.forge.installerv2;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
