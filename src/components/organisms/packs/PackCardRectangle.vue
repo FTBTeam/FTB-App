@@ -18,13 +18,6 @@
           <div class="row">
             <div class="buttons" v-if="installed">
               <font-awesome-icon
-                @click="checkMemory()"
-                :icon="'play'"
-                size="3x"
-                class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"
-              />
-              <div class="divider"></div>
-              <font-awesome-icon
                 :icon="'ellipsis-h'"
                 size="3x"
                 class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"
@@ -69,58 +62,7 @@
     <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
       <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />
     </FTBModal>
-    <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-      />
-    </FTBModal>
   </div>
-  <!-- <div class="text-gray-700 text-center flex-1 m-2 sm:min-w-psm sm:max-w-psm sm:min-h-psm sm:max-h-psm md:min-w-pmd md:max-w-pmd md:min-h-pmd md:max-h-pmd lg:min-w-plg lg:max-w-plg lg:min-h-plg lg:max-h-plg card">
-    <div class="bg-image" v-bind:style="{'background-image': `url(${art})`}" :class="installing ? 'blur' : ''">
-    </div>
-    <div class="content" :class="installing ? 'hide' : ''">
-      <div class="name-box">{{name}} (v{{version}})</div>
-    </div>
-    <div class="hoverContent" v-if="!installing">
-      <div class="row mb-2">
-        <p class="font-bold text-text-color lg:text-2xl">{{name}}</p>
-      </div>
-      <div class="row">
-        <div class="buttons" v-if="installed">
-          <font-awesome-icon @click="launch()" :icon="'play'" size="3x"
-                             class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"/>
-          <div class="divider"></div>
-          <font-awesome-icon :icon="'ellipsis-h'" size="3x" class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"
-                             @click="goToInstance"/>
-        </div>
-        <div class="buttons" v-if="!installed">
-          <font-awesome-icon @click="openInstall" :icon="'download'" size="3x"
-                             class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"/>
-          <div class="divider"></div>
-          <font-awesome-icon :icon="'info-circle'" size="3x"
-                             class="cursor-pointer button hover-scale lg:text-5xl sm:text-base" @click="openInfo"/>
-        </div>
-      </div>
-      <div class="row mt-2">
-        <p class="font-bold text-text-color sm:text-sm lg:text-lg">v{{version}}</p>
-      </div>
-    </div>
-    <div class="hoverContent show" v-else>
-      <div class="row mb-2">
-        <p class="font-bold text-text-color lg:text-2xl">Installing {{name}}</p>
-      </div>
-      <div class="row">
-        <font-awesome-icon :icon="'spinner'" size="5x"
-                             class="cursor-pointer button hover-scale lg:text-5xl sm:text-base" spin/>
-      </div>
-    </div>
-    <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
-      <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions"/>
-    </FTBModal>
-  </div> -->
 </template>
 
 <script lang="ts">
@@ -133,14 +75,6 @@ import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
 import { Instance, ModpackState } from '../../../modules/modpacks/types';
-
-export interface MsgBox {
-  title: string;
-  content: string;
-  type: string;
-  okAction: () => void;
-  cancelAction: () => void;
-}
 
 @Component({
   components: {
@@ -176,50 +110,8 @@ export default class PackCard extends Vue {
 
   @Prop() public instance!: Instance;
 
-  showMsgBox = false;
   public name!: string;
   private showInstall = false;
-  private msgBox: MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
-
-  public checkMemory() {
-    if (this.instance.memory < this.instance.minMemory) {
-      this.showMsgBox = true;
-      this.msgBox.type = 'okCancel';
-      this.msgBox.title = 'Low Memory';
-      this.msgBox.okAction = this.launch;
-      this.msgBox.cancelAction = this.hideMsgBox;
-      this.msgBox.content = `You are trying to launch the modpack with memory settings that are below the
-            minimum required.This may cause the modpack to not start or crash frequently. We recommend that you
-            increase the assigned memory to at least ${this.instance.recMemory}MB`;
-    } else {
-      this.launch();
-    }
-  }
-
-  // @ts-ignore
-  public launch(): void {
-    this.sendMessage({
-      payload: { type: 'launchInstance', uuid: this.$props.instanceID },
-      callback: () => {
-        // Instance launched
-      },
-    });
-    // const loadInApp = this.settings.settings.loadInApp || this.auth.token?.activePlan == null;
-    // this.sendMessage({payload: {type: 'launchInstance', uuid: this.$props.instanceID, loadInApp}, callback: (data: any) => {
-    //   ipcRenderer.send('disconnect');
-    //         // Instance launched
-    //     }});
-  }
-
-  public hideMsgBox(): void {
-    this.showMsgBox = false;
-  }
 
   get installing() {
     return (

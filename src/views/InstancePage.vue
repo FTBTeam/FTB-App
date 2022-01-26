@@ -89,7 +89,7 @@ import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue'
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
-import { preLaunchChecksValid } from '@/utils/auth/authentication';
+import { RouterNames } from '@/router';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -167,33 +167,23 @@ export default class InstancePage extends Vue {
   }
 
   public async launchModPack() {
-    await this.$router.push({
-      name: 'launchingpage',
-      query: { uuid: this.instance?.uuid },
-    });
-    // // We're trying already, chill bro
-    // if (this.packLoading) {
-    //   return;
-    // }
-    //
-    // this.packLoading = true;
-    // if (this.instance == null) {
-    //   return;
-    // }
-    // if (this.instance.memory < this.instance.minMemory) {
-    //   this.msgBox.type = 'okCancel';
-    //   this.msgBox.title = 'Low Memory';
-    //   this.msgBox.okAction = this.launch;
-    //   this.msgBox.cancelAction = this.hideMsgBox;
-    //   this.msgBox.content =
-    //     `You are trying to launch the modpack with memory settings that are below the` +
-    //     `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
-    //     `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
-    //   this.showMsgBox = true;
-    // } else {
-    //   await this.launch();
-    // }
-    // this.packLoading = false;
+    if (this.instance == null) {
+      return;
+    }
+
+    if (this.instance.memory < this.instance.minMemory) {
+      this.msgBox.type = 'okCancel';
+      this.msgBox.title = 'Low Memory';
+      this.msgBox.okAction = this.launch;
+      this.msgBox.cancelAction = this.hideMsgBox;
+      this.msgBox.content =
+        `You are trying to launch the modpack with memory settings that are below the` +
+        `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
+        `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
+      this.showMsgBox = true;
+    } else {
+      await this.launch();
+    }
   }
 
   public confirmLaunch() {
@@ -206,46 +196,9 @@ export default class InstancePage extends Vue {
   }
 
   public async launch() {
-    if (!(await preLaunchChecksValid())) {
-      this.showAlert({
-        title: 'Error!',
-        message: 'Unable to update, validate or find your profile, please sign in again.',
-        type: 'danger',
-      });
-
-      return;
-    }
-
-    if (this.showMsgBox) {
-      this.hideMsgBox();
-    }
-
-    const loadInApp =
-      this.settingsState.settings.loadInApp === true ||
-      this.settingsState.settings.loadInApp === 'true' ||
-      this.auth.token?.activePlan == null;
-    const disableChat = this.settingsState.settings.enableChat === true;
-    this.startInstanceLoading();
-    this.sendMessage({
-      payload: {
-        type: 'launchInstance',
-        loadInApp,
-        uuid: this.instance?.uuid,
-        extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
-      },
-      callback: (data: any) => {
-        if (data.status === 'error') {
-          this.stopInstanceLoading();
-          // An instance is already running
-          this.msgBox.type = 'okOnly';
-          this.msgBox.title = 'An error occured whilst launching';
-          this.msgBox.okAction = this.hideMsgBox;
-          this.msgBox.content = data.message;
-          this.showMsgBox = true;
-        } else if (data.status === 'success') {
-          this.stopInstanceLoading();
-        }
-      },
+    await this.$router.push({
+      name: RouterNames.ROOT_LAUNCH_PACK,
+      query: { uuid: this.instance?.uuid },
     });
   }
 
@@ -259,7 +212,7 @@ export default class InstancePage extends Vue {
         versionID = this.packInstance.versions[0].id;
       }
       this.$router.replace({
-        name: 'installingpage',
+        name: RouterNames.ROOT_INSTALL_PACK,
         query: { modpackid: modpackID?.toString(), versionID: versionID?.toString(), uuid: this.instance?.uuid },
       });
     }
@@ -271,14 +224,14 @@ export default class InstancePage extends Vue {
 
   async mounted() {
     if (this.instance == null) {
-      await this.$router.push('/modpacks');
+      await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
     }
     try {
       this.packInstance =
         this.instance.packType == 0
-          ? await this.fetchModpack(this.instance.id).catch((err: any) => undefined)
-          : await this.fetchCursepack(this.instance.id).catch((err: any) => undefined);
+          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
+          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
     } catch (e) {
       console.log('Error getting instance modpack');
     }

@@ -140,6 +140,7 @@ import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { logVerbose } from '@/utils';
+import { RouterNames } from '@/router';
 
 export interface MsgBox {
   title: string;
@@ -302,34 +303,11 @@ export default class PackCardList extends Vue {
     }
   }
 
-  // @ts-ignore
-  public async launch(): void {
-    this.loading = true;
-    if (this.preLaunch) {
-      await this.preLaunch(this.instance);
-    }
-    const loadInApp =
-      this.settingsState.settings.loadInApp === true ||
-      this.settingsState.settings.loadInApp === 'true' ||
-      this.auth.token?.activePlan == null;
-    const disableChat = !(this.settingsState.settings.enableChat === true);
-    this.sendMessage({
-      payload: {
-        type: 'launchInstance',
-        uuid: this.$props.instanceID,
-        loadInApp,
-        extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
-      },
-      callback: (data: any) => {
-        if (this.postLaunch) {
-          this.postLaunch(this.instance);
-        }
-        // Instance launched
-      },
+  public async launch(): Promise<void> {
+    await this.$router.push({
+      name: RouterNames.ROOT_LAUNCH_PACK,
+      query: { uuid: this.instance?.uuid },
     });
-    setTimeout(() => {
-      this.loading = false;
-    }, 7000);
   }
 
   get limitedTags() {
@@ -357,26 +335,12 @@ export default class PackCardList extends Vue {
       return;
     }
 
-    // this.$router.push({name: 'launchingpage', query: {modpackid: this.$props.packID}});
     this.$router.replace({
       name: 'installingpage',
       query: { modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type },
     });
-    this.showInstall = false;
-  }
 
-  public deleteInstace(): void {
-    this.sendMessage({
-      payload: { type: 'uninstallInstance', uuid: this.$props.instanceID },
-      callback: (data: any) => {
-        this.sendMessage({
-          payload: { type: 'installedInstances', refresh: true },
-          callback: (data: any) => {
-            this.storePacks(data);
-          },
-        });
-      },
-    });
+    this.showInstall = false;
   }
 
   public goToInstance(): void {

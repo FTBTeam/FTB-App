@@ -24,18 +24,16 @@
       <div class="meta">
         <div class="title">{{ name }}</div>
         <div class="version">{{ version }}</div>
-        <router-link :to="{ name: 'launchingpage', query: { uuid: instance.uuid } }">
-          <div class="play-button" :class="{ 'opacity-50': starting }">
-            <div class="clickable-play" :class="{ disabled: loading, loading }">
-              <span v-if="!starting && !loading && kind !== 'cloudInstance'">Play</span>
-              <span v-else-if="kind === 'cloudInstance'">Sync</span>
-              <span v-else-if="starting">
-                <font-awesome-icon spin icon="spinner" />
-              </span>
-              <span v-else>Loading...</span>
-            </div>
+        <div class="play-button" :class="{ 'opacity-50': starting }">
+          <div class="clickable-play" :class="{ disabled: loading, loading }">
+            <span v-if="!starting && !loading && kind !== 'cloudInstance'" @click="checkMemoryThenLaunch">Play</span>
+            <span v-else-if="kind === 'cloudInstance'" @click="sync">Sync</span>
+            <span v-else-if="starting">
+              <font-awesome-icon spin icon="spinner" />
+            </span>
+            <span v-else>Loading...</span>
           </div>
-        </router-link>
+        </div>
       </div>
     </div>
     <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
@@ -70,7 +68,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '../../../utils';
 import { AuthState } from '../../../modules/auth/types';
 import { getColorForReleaseType } from '@/utils/colors';
-import { preLaunchChecksValid } from '@/utils/auth/authentication';
+import { RouterNames } from '@/router';
 
 const namespace = 'websocket';
 
@@ -239,53 +237,10 @@ export default class PackCard extends Vue {
   }
 
   public async launch(): Promise<void> {
-    if (!(await preLaunchChecksValid())) {
-      this.showAlert({
-        title: 'Error!',
-        message: 'Unable to update, validate or find your profile, please sign in again.',
-        type: 'danger',
-      });
-
-      return;
-    }
-
-    this.loading = true;
-    if (this.preLaunch) {
-      await this.preLaunch(this.instance);
-    }
-    const loadInApp =
-      this.settingsState.settings.loadInApp === true ||
-      this.settingsState.settings.loadInApp === 'true' ||
-      this.auth.token?.activePlan == null;
-    const disableChat = this.settingsState.settings.enableChat;
-    this.startInstanceLoading();
-    this.sendMessage({
-      payload: {
-        type: 'launchInstance',
-        uuid: this.$props.instanceID,
-        loadInApp,
-        extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
-      },
-      callback: (data: any) => {
-        if (this.postLaunch) {
-          this.postLaunch(this.instance);
-        }
-        if (data.status === 'error') {
-          this.stopInstanceLoading();
-          // An instance is already running
-          this.msgBox.type = 'okOnly';
-          this.msgBox.title = 'An error occured whilst launching';
-          this.msgBox.okAction = this.hideMsgBox;
-          this.msgBox.content = data.message;
-          this.showMsgBox = true;
-        } else if (data.status === 'success') {
-          this.stopInstanceLoading();
-        }
-      },
+    await this.$router.push({
+      name: RouterNames.ROOT_LAUNCH_PACK,
+      query: { uuid: this.instance?.uuid },
     });
-    setTimeout(() => {
-      this.loading = false;
-    }, 7000);
   }
 
   public hideMsgBox(): void {
