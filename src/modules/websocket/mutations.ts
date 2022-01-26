@@ -24,9 +24,9 @@ export const mutations: MutationTree<SocketState> = {
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
     if (message.type !== 'ping' && message.type !== 'pong') {
-      if (process.env.NODE_ENV === 'development') {
-        console.info(`[ws//${message.type}]${message.requestId ? `[${message.requestId}]` : ''}:"`, message);
-      }
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.info(`[ws//${message.type}]${message.requestId ? `[${message.requestId}]` : ''}:"`, message);
+      // }
       eventBus.$emit('ws.message', message);
     }
 
@@ -67,13 +67,13 @@ export const mutations: MutationTree<SocketState> = {
         state.ircEventCallback(message);
       }
     } else if (message.type === 'launchInstance.status') {
-      if (state.launchProgressCallback) {
-        state.launchProgressCallback(message);
-      }
+      // if (state.launchProgressCallback) {
+      //   state.launchProgressCallback(message);
+      // }
     } else if (message.type === 'clientLaunchData') {
-      if (state.modProgressCallback) {
-        state.modProgressCallback(message);
-      }
+      // if (state.modProgressCallback) {
+      //   state.modProgressCallback(message);
+      // }
     } else if (message.type === 'installedFileEventDataReply') {
       Object.keys(message.files).forEach((f: string) => {
         const status = message.files[f];
@@ -99,12 +99,6 @@ export const mutations: MutationTree<SocketState> = {
   },
   ADD_IRC_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
     state.ircEventCallback = callback;
-  },
-  ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void) {
-    state.modProgressCallback = callback;
-  },
-  ADD_LAUNCH_PROGRESS_CALLBACK(state: any, callback: (data: any) => void) {
-    state.launchProgressCallback = callback;
   },
   ADD_EXIT_CALLBACK(state: any, callback: (data: any) => void) {
     state.exitCallback = callback;

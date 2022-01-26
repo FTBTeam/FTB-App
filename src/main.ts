@@ -146,34 +146,5 @@ Vue.filter('title', (value: string) => (!value ? '' : value[0].toUpperCase() + v
     render: (h: any) => h(App),
   }).$mount('#app');
 
-  if (router.currentRoute.name !== 'chat') {
-    store.dispatch('registerModProgressCallback', (data: any) => {
-      if (data.messageType === 'message') {
-        if (data.message === 'init') {
-          store.commit('modpacks/setLaunchProgress', []);
-          if (data.instance) {
-            router.push({ name: 'launchingpage', query: { uuid: data.instance } });
-          }
-        } else {
-          if (router.currentRoute.name === 'launchingpage') {
-            router.replace({ name: 'instancepage', query: { uuid: data.instance } });
-          }
-          store.commit('modpacks/setLaunchProgress', undefined);
-        }
-      } else if (data.messageType === 'progress') {
-        if (router.currentRoute.name !== 'launchingpage') {
-          router.push({ name: 'launchingpage', query: { uuid: data.instance } });
-        }
-        if (data.clientData.bars) {
-          store.commit('modpacks/setLaunchProgress', data.clientData.bars);
-        }
-      } else if (data.messageType === 'clientDisconnect') {
-        if (router.currentRoute.name === 'launchingpage') {
-          router.replace({ name: 'instancepage', query: { uuid: data.instance } });
-        }
-      }
-    });
-  }
-
   platform.get.setupApp(vm);
 })();
