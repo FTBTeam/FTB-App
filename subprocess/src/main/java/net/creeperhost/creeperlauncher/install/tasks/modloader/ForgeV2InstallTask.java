@@ -87,21 +87,6 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask implements Task
         return null;
     }
 
-    private static void processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
-        NewDownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
-        if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
-
-        Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
-
-        downloadTask = downloadTask.toBuilder()
-                .wFileLocator(new PackedJarLocator(installerMavenFile))
-                .build();
-
-        if (downloadTask.isRedundant()) return;
-
-        downloadTask.execute(token, null); // TODO progress
-    }
-
     private void runProcessors(InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir) throws IOException {
         Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(vanillaManifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8), true, null);
         Path javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
