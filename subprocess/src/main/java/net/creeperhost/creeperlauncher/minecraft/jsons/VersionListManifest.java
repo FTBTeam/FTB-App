@@ -42,13 +42,14 @@ public class VersionListManifest {
      */
     public static VersionListManifest update(Path versionsDir) throws IOException {
         Path versionsFile = versionsDir.resolve("version_manifest.json");
-        NewDownloadTask downloadTask = new NewDownloadTask(
-                URL,
-                versionsFile,
-                DownloadValidation.of()
+        NewDownloadTask downloadTask = NewDownloadTask.builder()
+                .url(URL)
+                .dest(versionsFile)
+                .withValidation(DownloadValidation.of()
                         .withUseETag(true)
                         .withUseOnlyIfModified(true)
-        );
+                )
+                .build();
 
         if (!downloadTask.isRedundant()) {
             try {

@@ -89,22 +89,16 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask implements Task
 
     private static void processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
         NewDownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
+        if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
 
         Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
 
-        if (downloadTask != null && downloadTask.isRedundant()) {
-            return;
-        }
+        downloadTask = downloadTask.toBuilder()
+                .wFileLocator(new PackedJarLocator(installerMavenFile))
+                .build();
 
-        if (downloadTask != null) {
-            downloadTask.setLocalFileLocator(new PackedJarLocator(installerMavenFile));
-        }
+        if (downloadTask.isRedundant()) return;
 
-        if (downloadTask == null) {
-            // TODO, should these be treated as installation errors?
-            LOGGER.info("Skipping download of '{}' file does not exist in installer, and is not downloadable.", library.name);
-            return;
-        }
         downloadTask.execute(token, null); // TODO progress
     }
 

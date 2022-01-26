@@ -96,13 +96,14 @@ public class VersionManifest {
     public static VersionManifest update(Path versionsDir, VersionListManifest.Version version) throws IOException {
         Path versionFile = versionsDir.resolve(version.id).resolve(version.id + ".json");
         LOGGER.info("Updating version manifest for '{}' from '{}'.", version.id, version.url);
-        NewDownloadTask downloadTask = new NewDownloadTask(
-                version.url,
-                versionFile,
-                DownloadValidation.of()
+        NewDownloadTask downloadTask = NewDownloadTask.builder()
+                .url(version.url)
+                .dest(versionFile)
+                .withValidation(DownloadValidation.of()
                         .withUseETag(true)
                         .withUseOnlyIfModified(true)
-        );
+                )
+                .build();
 
         if (!downloadTask.isRedundant()) {
             try {
@@ -145,11 +146,11 @@ public class VersionManifest {
         if (download.sha1 != null) {
             validation = validation.withHash(Hashing.sha1(), download.sha1);
         }
-        return new NewDownloadTask(
-                download.url,
-                versionsDir.resolve(id).resolve(id + ".jar"),
-                validation
-        );
+        return NewDownloadTask.builder()
+                .url(download.url)
+                .dest(versionsDir.resolve(id).resolve(id + ".jar"))
+                .withValidation(validation)
+                .build();
     }
 
     public static List<String> collectJVMArgs(List<VersionManifest> manifests, Set<String> features) {
@@ -269,23 +270,13 @@ public class VersionManifest {
 
         @Nullable
         public NewDownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
-            // It appears that the Vanilla launcher will explicitly use the 'url' property if it exists
-            if (url != null) {
-                return new NewDownloadTask(
-                        // Overriden `url` to 'CH_MAVEN'
-                        CH_MAVEN + name.toPath(),
-                        name.toPath(librariesDir),
-                        DownloadValidation.of()
-                );
-            }
-            // If the 'downloads' property is null, it tries from Mojang's maven directly.
-            if (downloads == null) {
-                return new NewDownloadTask(
-                        // Overriden Mojang's maven with 'CH_MAVEN'
-                        CH_MAVEN + name.toPath(),
-                        name.toPath(librariesDir),
-                        DownloadValidation.of()
-                );
+            if (url != null || downloads == null) {
+                // The Vanilla launcher will explicitly use the 'url' property if it exists, however we override this to the CH maven.
+                // If the 'downloads' property is null, it tries from Mojang's maven directly, however we override this to the CH maven.
+                return NewDownloadTask.builder()
+                        .url(CH_MAVEN + name.toPath())
+                        .dest(name.toPath(librariesDir))
+                        .build();
             }
 
             // We have a 'downlaods' property, but no 'natives'.
@@ -316,12 +307,13 @@ public class VersionManifest {
             if (artifact.sha1 != null) {
                 validation = validation.withHash(Hashing.sha1(), artifact.sha1);
             }
-            return new NewDownloadTask(
-                    // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
-                    CH_MAVEN + StringUtils.removeStart(artifact.path, "/"),
-                    librariesDir.resolve(artifact.path),
-                    validation
-            );
+
+            // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
+            return NewDownloadTask.builder()
+                    .url(CH_MAVEN + StringUtils.removeStart(artifact.path, "/"))
+                    .dest(librariesDir.resolve(artifact.path))
+                    .withValidation(validation)
+                    .build();
         }
     }
 

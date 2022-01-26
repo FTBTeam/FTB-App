@@ -10,7 +10,6 @@ import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -48,26 +47,23 @@ public class NewDownloadTask implements Task<Path> {
     private final DownloadValidation validation;
 
     @Nullable
-    private LocalFileLocator localFileLocator;
+    private final LocalFileLocator fileLocator;
 
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation) {
-        this(url, dest, validation, null);
-    }
-
-    /**
-     * A Task that downloads a file.
-     *
-     * @param url              The URL.
-     * @param dest             The Destination for the file.
-     * @param validation       The task validation parameters.
-     * @param localFileLocator Used to provide additional local search paths.
-     */
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator localFileLocator) {
+    private NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator) {
         this.url = url;
         this.dest = dest;
         this.validation = validation;
 
-        this.localFileLocator = localFileLocator;
+        this.fileLocator = fileLocator;
+    }
+
+    /**
+     * Creates a new {@link Builder} for building a {@link NewDownloadTask}.
+     *
+     * @return The {@link Builder}.
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -79,8 +75,8 @@ public class NewDownloadTask implements Task<Path> {
             return;
         }
 
-        if (localFileLocator != null) {
-            Path localPath = localFileLocator.getLocalFile(url, validation, dest);
+        if (fileLocator != null) {
+            Path localPath = fileLocator.getLocalFile(url, validation, dest);
             if (localPath != null && Files.exists(localPath)) {
                 LOGGER.info(" File existed locally.");
                 Files.copy(localPath, IOUtils.makeParents(dest));
@@ -144,8 +140,8 @@ public class NewDownloadTask implements Task<Path> {
 
         LOGGER.info("  File downloaded.");
 
-        if (localFileLocator != null) {
-            localFileLocator.onFileDownloaded(url, validation, dest);
+        if (fileLocator != null) {
+            fileLocator.onFileDownloaded(url, validation, dest);
         }
     }
 
@@ -168,13 +164,63 @@ public class NewDownloadTask implements Task<Path> {
     public String getUrl() { return url; }
     public Path getDest() { return dest; }
     public DownloadValidation getValidation() { return validation; }
+    @Nullable public LocalFileLocator getFileLocator() { return fileLocator; }
     //@formatter:on
 
-    // TODO, Convert NewDownloadTask to use Builder syntax for construction
-    //  with the ability to 'clone' a task into a Builder, with that the ForgeV2Installer
-    //  wont have to set this field, and it can be immutable again.
-    public void setLocalFileLocator(LocalFileLocator localFileLocator) {
-        this.localFileLocator = localFileLocator;
+    /**
+     * Converts this {@link NewDownloadTask} back to {@link Builder}.
+     *
+     * @return The {@link Builder}.
+     */
+    public Builder toBuilder() {
+        Builder builder = new Builder();
+        builder.url = url;
+        builder.dest = dest;
+        builder.validation = validation;
+        builder.fileLocator = fileLocator;
+        return builder;
+    }
+
+    // TODO Future improvements here would be to mirror DownloadValidation methods for fluency.
+    public static class Builder {
+
+        @Nullable
+        private String url;
+        @Nullable
+        private Path dest;
+
+        private DownloadValidation validation = DownloadValidation.of();
+        @Nullable
+        private LocalFileLocator fileLocator;
+
+        private Builder() { }
+
+        public Builder url(String url) {
+            this.url = url;
+            return this;
+        }
+
+        public Builder dest(Path dest) {
+            this.dest = dest;
+            return this;
+        }
+
+        public Builder withValidation(DownloadValidation validation) {
+            this.validation = validation;
+            return this;
+        }
+
+        public Builder wFileLocator(LocalFileLocator fileLocator) {
+            this.fileLocator = fileLocator;
+            return this;
+        }
+
+        public NewDownloadTask build() {
+            if (url == null) throw new IllegalStateException("URL not set.");
+            if (dest == null) throw new IllegalStateException("Dest not set.");
+
+            return new NewDownloadTask(url, dest, validation, fileLocator);
+        }
     }
 
     public interface LocalFileLocator {

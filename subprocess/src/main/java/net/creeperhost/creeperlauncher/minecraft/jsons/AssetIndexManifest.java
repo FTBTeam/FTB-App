@@ -29,7 +29,7 @@ public class AssetIndexManifest {
     private static final Logger LOGGER = LogManager.getLogger();
     public Map<String, AssetObject> objects = new HashMap<>();
     public boolean virtual;
-    @SerializedName("map_to_resources")
+    @SerializedName ("map_to_resources")
     public boolean mapToResources;
 
     /**
@@ -45,15 +45,16 @@ public class AssetIndexManifest {
         Path assetIndexFile = assetsDir.resolve("indexes/" + assetIndex.id + ".json");
         LOGGER.info("Updating AssetIndex Manifest for '{}' from '{}'.", assetIndex.id, assetIndex.url);
 
-        NewDownloadTask downloadTask = new NewDownloadTask(
-                assetIndex.url,
-                assetIndexFile,
-                DownloadValidation.of()
+        NewDownloadTask downloadTask = NewDownloadTask.builder()
+                .url(assetIndex.url)
+                .dest(assetIndexFile)
+                .withValidation(DownloadValidation.of()
                         .withExpectedSize(assetIndex.size)
                         .withHash(Hashing.sha1(), assetIndex.sha1)
                         .withUseETag(true)
                         .withUseOnlyIfModified(true)
-        );
+                )
+                .build();
 
         if (!downloadTask.isRedundant()) {
             try {
