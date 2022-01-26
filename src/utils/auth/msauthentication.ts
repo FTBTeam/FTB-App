@@ -138,12 +138,13 @@ const request = async <T>(requester: () => Promise<AxiosResponse<T>>): Promise<a
       data: res.data,
     };
   } catch (e) {
-    console.error(e.response);
+    const error: any = e;
+    console.error(error.response);
     return {
       ok: false,
       issue: {
-        error: JSON.stringify(e.response.statusMessage),
-        code: JSON.stringify(e.response.code),
+        error: JSON.stringify(error.response.statusMessage),
+        code: JSON.stringify(error.response.code),
       },
     };
   }

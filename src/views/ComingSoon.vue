@@ -10,9 +10,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import FTBNews from '@/components/templates/FTBNews.vue';
-import { State, Action, Getter } from 'vuex-class';
-import { NewsState, NewsItem } from '@/modules/news/types';
 
 @Component({})
 export default class ComingSoon extends Vue {

@@ -4,11 +4,11 @@
       <img :src="artSquare" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
-        <h3 class="text-xl font-bold mb-2">{{ preLaunch ? 'Initializing' : 'Starting' }} {{ instance.name }}</h3>
+        <h3 class="text-xl font-bold mb-2">{{ preLaunch ? 'Initializing' : 'Starting' }} {{ instanceName }}</h3>
         <template v-if="preLaunch">
           <div
             class="progress-container"
-            :aria-label="`Getting everything ready for ${instance.name}`"
+            :aria-label="`Getting everything ready for ${instanceName}`"
             data-balloon-pos="up"
           >
             <ProgressBar class="mt-6 mb-4" :progress="currentStep.stepProgress" />
@@ -21,6 +21,7 @@
             >
               <font-awesome-icon spin icon="circle-notch" class="mr-4" />
             </div>
+
             {{ currentStep.stepDesc ? currentStep.stepDesc : 'Initializing...' }}
           </div>
           <p class="mb-2 text-sm" v-if="currentStep.stepProgressHuman !== undefined">
@@ -31,7 +32,7 @@
           <div class="loading-area" v-if="currentModpack !== null">
             <div
               class="progress-container"
-              :aria-label="`Starting ${instance.name}... this might take a few minutes`"
+              :aria-label="`Starting ${instanceName}... this might take a few minutes`"
               data-balloon-pos="up"
             >
               <progress-bar class="mt-6 mb-4" :progress="bars && bars[0] ? bars[0].step / bars[0].steps : 0" />
@@ -106,6 +107,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
 import eventBus from '@/utils/event-bus';
+import { RouterNames } from '@/router';
 
 export interface Bar {
   title: string;
@@ -187,7 +189,7 @@ export default class LaunchingPage extends Vue {
         type: 'error',
       });
 
-      this.$router.push('/');
+      await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
     }
 
@@ -304,6 +306,10 @@ export default class LaunchingPage extends Vue {
 
   get progressMessage() {
     return this.launchProgress?.map(e => e.message).join(' // ') ?? 'Loading...';
+  }
+
+  get instanceName() {
+    return this.instance?.name ?? 'Unknown';
   }
 
   get currentModpack() {
