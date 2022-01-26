@@ -17,7 +17,7 @@ export const news: Module<NewsState, RootState> = {
   },
   getters: {
     /**
-     * Get the profile from the active profile
+     * Gets the news from the store
      */
     getNews: (state: NewsState): NewsItem[] => {
       return state.news;
