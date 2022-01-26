@@ -30,7 +30,7 @@
         <div :class="`${m.author === shortHash ? 'ml-auto mr-2 text-right' : 'ml-2 text-left'} my-2 flex flex-col`">
           <p class=" p-3 bg-input rounded text-left" @click="onMessageClick" v-html="linkify(m.content)"></p>
           <small :class="`${m.author === shortHash ? 'ml-auto text-right ' : ''} text-muted text-xs`">{{
-            (m.date / 1000) | momentFromNow
+            (m.date / 1000) | dayjsFromNow
           }}</small>
         </div>
       </div>
