@@ -34,7 +34,7 @@
               :aria-label="`Starting ${instance.name}... this might take a few minutes`"
               data-balloon-pos="up"
             >
-              <progress-bar class="mt-6 mb-4" :progress="bars[0] ? bars[0].step / bars[0].steps : 0" />
+              <progress-bar class="mt-6 mb-4" :progress="bars && bars[0] ? bars[0].step / bars[0].steps : 0" />
             </div>
             <div class="mb-2 flex items-center text-sm">
               <div
@@ -107,6 +107,13 @@ import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
 import eventBus from '@/utils/event-bus';
 
+export interface Bar {
+  title: string;
+  steps: number;
+  step: number;
+  message: string;
+}
+
 @Component({
   name: 'LaunchingPage',
   components: {
@@ -125,7 +132,6 @@ export default class LaunchingPage extends Vue {
   @Action('showAlert') public showAlert: any;
   @State('settings') public settingsState!: SettingsState;
   @State('auth') public auth!: AuthState;
-  @Action('registerLaunchProgressCallback') public registerLaunchProgressCallback: any;
 
   loading = false;
   preLaunch = true;
@@ -142,6 +148,7 @@ export default class LaunchingPage extends Vue {
   };
 
   messages: string[] = [];
+  launchProgress: Bar[] | null | undefined = null;
 
   private showMsgBox = false;
   private msgBox: MsgBox = {
@@ -173,26 +180,22 @@ export default class LaunchingPage extends Vue {
   }
 
   public async mounted() {
-    eventBus.$on('ws.message', (data: any) => {
-      if (data.type !== 'launchInstance.logs') {
-        return;
-      }
-
-      for (const e of data.messages) {
-        this.messages.push(e);
-      }
-    });
-
     if (this.instance == null) {
       return null;
     }
 
-    this.registerLaunchProgressCallback((data: any) => {
-      this.currentStep.stepDesc = data.stepDesc;
-      this.currentStep.step = data.step;
-      this.currentStep.totalSteps = data.totalSteps;
-      this.currentStep.stepProgress = data.stepProgress;
-      this.currentStep.stepProgressHuman = data.stepProgressHuman;
+    eventBus.$on('ws.message', (data: any) => {
+      if (data.type === 'launchInstance.logs') {
+        this.handleLogMessages(data);
+      }
+
+      if (data.type === 'launchInstance.status') {
+        this.handleInstanceLaunch(data);
+      }
+
+      if (data.type === 'clientLaunchData') {
+        this.handleClientLaunch(data);
+      }
     });
 
     await this.fetchModpack(this.instance?.id);
@@ -206,6 +209,32 @@ export default class LaunchingPage extends Vue {
   destroyed() {
     // Stop listening to events!
     eventBus.$off('ws.message');
+  }
+
+  handleLogMessages(data: any) {
+    for (const e of data.messages) {
+      this.messages.push(e);
+    }
+  }
+
+  handleInstanceLaunch(data: any) {
+    this.currentStep.stepDesc = data.stepDesc;
+    this.currentStep.step = data.step;
+    this.currentStep.totalSteps = data.totalSteps;
+    this.currentStep.stepProgress = data.stepProgress;
+    this.currentStep.stepProgressHuman = data.stepProgressHuman;
+  }
+
+  handleClientLaunch(data: any) {
+    if (data.messageType === 'message') {
+      this.launchProgress = data.message === 'init' ? [] : undefined;
+    } else if (data.messageType === 'progress') {
+      if (data.clientData.bars) {
+        this.launchProgress = data.clientData.bars;
+      }
+    } else if (data.messageType === 'clientDisconnect') {
+      console.log('Client disconnected');
+    }
   }
 
   public async launch(): Promise<void> {
@@ -258,28 +287,16 @@ export default class LaunchingPage extends Vue {
     return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
   }
 
-  get limitedTags() {
-    if (this.currentModpack && this.currentModpack.tags) {
-      return this.currentModpack.tags.slice(0, 5);
-    } else {
-      return [];
-    }
-  }
-
   get bars() {
-    console.log(this.modpacks);
-    if (this.modpacks === undefined || this.modpacks === null) {
-      return [];
-    }
-    if (this.modpacks.launchProgress === null) {
+    if (this.launchProgress === null) {
       return [];
     }
 
-    return this.modpacks.launchProgress?.filter(b => b.steps !== 1).slice(0, 5);
+    return this.launchProgress?.filter(b => b.steps !== 1).slice(0, 5);
   }
 
   get progressMessage() {
-    return this.modpacks.launchProgress?.map(e => e.message).join(' // ') ?? 'Loading...';
+    return this.launchProgress?.map(e => e.message).join(' // ') ?? 'Loading...';
   }
 
   get currentModpack() {
