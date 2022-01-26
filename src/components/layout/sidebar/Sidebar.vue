@@ -1,10 +1,10 @@
 <template>
   <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
-    <!--     <logo width="80%" class="logo" draggable="false"/>-->
     <router-link to="/" :is="disableNav ? 'span' : 'router-link'" :class="{ 'item-disabled': disableNav }">
       <img
         src="../../../assets/images/ftb-logo.svg"
         width="60"
+        alt="FTB Logo"
         class="cursor-pointer logo-hover logo"
         draggable="false"
       />
@@ -23,7 +23,6 @@
     </div>
 
     <div class="nav-items">
-      <!-- <font-awesome-icon v-if="auth.token !== null && (settings.settings.enableChat === true || settings.settings.enableChat === 'true')" title="Open Friends List" class="cursor-pointer absolute text-gray-400 opacity-50 hover:opacity-100" style="left: 10px; top: 120px;" @click="openFriends()" icon="user-friends" size="md"></font-awesome-icon> -->
       <a
         v-if="auth.token !== null"
         class="nav-item capitalize"
@@ -152,7 +151,6 @@ export default class Sidebar extends Vue {
       display: flex;
       align-items: center;
       justify-content: center;
-      //margin-bottom: 1rem;
       padding: 1rem 0;
 
       .icon {
@@ -170,16 +168,6 @@ export default class Sidebar extends Vue {
       }
     }
   }
-
-  //&::after {
-  //  content: '';
-  //  background: url('../assets/ftb-tiny-desat.png') center top;
-  //  width: 100%;
-  //  height: 130px;
-  //  position: absolute;
-  //  opacity: 0.3;
-  //  mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.3)), to(rgba(0, 0, 0, 0)));
-  //}
 }
 
 .nav-main {

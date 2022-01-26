@@ -38,13 +38,21 @@ export default class PackTitleHeader extends Vue {
   background-color: rgba(black, 0.2);
 
   .info {
-    max-width: 80%;
     padding: 1rem 4rem;
+    @media (min-width: 1300px) {
+      max-width: 90%;
+    }
   }
 
   .name {
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-weight: bold;
+    line-height: 1.2em;
+    margin-bottom: 0.5rem;
+
+    @media (min-width: 1300px) {
+      font-size: 2.8rem;
+    }
   }
 }
 </style>
