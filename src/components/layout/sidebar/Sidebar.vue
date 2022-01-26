@@ -42,6 +42,7 @@
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
         draggable="false"
+        alt="CreeperHost Logo"
       />
     </popover>
   </div>
@@ -55,6 +56,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
+import { RouterNames } from '@/router';
 
 @Component({
   components: { SidebarProfile },
@@ -70,39 +72,39 @@ export default class Sidebar extends Vue {
   navigation = [
     {
       name: 'Home',
-      to: 'home',
+      to: RouterNames.HOME,
       icon: 'home',
     },
     {
       name: 'Library',
-      to: 'modpacks',
+      to: RouterNames.ROOT_LIBRARY,
       icon: 'book-open',
     },
     {
       name: 'Browse',
-      to: 'browseModpacks',
+      to: RouterNames.ROOT_BROWSE_PACKS,
       icon: 'search',
     },
     {
       name: 'Discover',
-      to: 'discover',
+      to: RouterNames.ROOT_DISCOVER,
       icon: 'globe-europe',
     },
     {
       name: 'News',
-      to: 'news',
+      to: RouterNames.ROOT_NEWS,
       icon: 'newspaper',
     },
     {
       name: 'Settings',
-      to: 'instance-settings',
+      to: RouterNames.SETTINGS_INSTANCE,
       icon: 'cog',
     },
   ];
 
   get disableNav() {
     return (
-      this.$router.currentRoute.path.startsWith('/launching') ||
+      this.$router.currentRoute.name === RouterNames.ROOT_LAUNCH_PACK ||
       (this.modpacks.installing !== null && !this.modpacks.installing.error)
     );
   }

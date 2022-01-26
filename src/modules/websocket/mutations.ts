@@ -24,9 +24,9 @@ export const mutations: MutationTree<SocketState> = {
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
     if (message.type !== 'ping' && message.type !== 'pong') {
-      // if (process.env.NODE_ENV === 'development') {
-      //   console.info(`[ws//${message.type}]${message.requestId ? `[${message.requestId}]` : ''}:"`, message);
-      // }
+      if (process.env.NODE_ENV === 'development') {
+        console.info(`[ws//${message.type}]${message.requestId ? `[${message.requestId}]` : ''}:"`, message);
+      }
       eventBus.$emit('ws.message', message);
     }
 
@@ -66,14 +66,6 @@ export const mutations: MutationTree<SocketState> = {
       if (state.ircEventCallback) {
         state.ircEventCallback(message);
       }
-    } else if (message.type === 'launchInstance.status') {
-      // if (state.launchProgressCallback) {
-      //   state.launchProgressCallback(message);
-      // }
-    } else if (message.type === 'clientLaunchData') {
-      // if (state.modProgressCallback) {
-      //   state.modProgressCallback(message);
-      // }
     } else if (message.type === 'installedFileEventDataReply') {
       Object.keys(message.files).forEach((f: string) => {
         const status = message.files[f];

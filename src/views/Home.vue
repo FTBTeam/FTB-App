@@ -112,7 +112,7 @@ export default class Home extends Vue {
     return this.modpacks?.packsCache[id];
   }
 
-  private async mounted() {
+  async mounted() {
     // this.fetchFeaturedServers();
     this.currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
     if (this.modpacks == null || this.modpacks.featuredPacks.length <= 0) {

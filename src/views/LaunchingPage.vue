@@ -181,7 +181,14 @@ export default class LaunchingPage extends Vue {
 
   public async mounted() {
     if (this.instance == null) {
-      return null;
+      this.showAlert({
+        title: 'Error',
+        content: 'Instance not found',
+        type: 'error',
+      });
+
+      this.$router.push('/');
+      return;
     }
 
     eventBus.$on('ws.message', (data: any) => {
