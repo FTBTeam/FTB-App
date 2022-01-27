@@ -31,7 +31,7 @@
         </div>
         <div class="stats" v-else>
           <div class="stat">
-            <div class="name">Modpack Installs</div>
+            <div class="name">Installs</div>
             <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
           </div>
 
