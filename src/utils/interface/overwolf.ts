@@ -135,21 +135,11 @@ const Overwolf: ElectronOverwolfInterface = {
     },
     min(windowId: any) {
       overwolf.windows.minimize(windowId);
-      //@ts-ignore
-      if (window.ad) {
-        //@ts-ignore
-        window.ad.removeAd();
-      }
     },
     async max(windowId: any) {
       let maximised = await getWindowState(windowId);
       if (maximised === 'maximized') {
         overwolf.windows.restore(windowId);
-        //@ts-ignore
-        if (window.ad) {
-          //@ts-ignore
-          window.ad.refreshAd();
-        }
       } else {
         overwolf.windows.maximize(windowId);
       }

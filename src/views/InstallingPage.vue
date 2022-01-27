@@ -248,62 +248,6 @@ export default class InstallingPage extends Vue {
     // this.$router.push({name: 'browseModpacks', params: {search: tagName}});
   }
 
-  // public show300x250() {
-  //   const el = document.getElementById('ad');
-  //   this.starAPI({ kind: 'go', module: 'banner300x250', config: { target: { el, kind: 'replace' } } });
-  // }
-
-  // public addAdvert() {
-  //   try {
-  //     this.starAPI((api: { game: { setTarget: (e: unknown) => void } }) => {
-  //       api.game.setTarget(document.getElementById('ad'));
-  //     });
-  //     // @ts-ignore
-  //     this.starAPI({
-  //       kind: 'game.createInterstitial',
-  //       fail: () => {
-  //         console.log('API was blocked or failed to load');
-  //         this.showPlaceholder = true;
-  //       },
-  //     });
-  //     // @ts-ignore
-  //     this.starAPI({
-  //       kind: 'game.displayInterstitial',
-  //       onAdOpened() {
-  //         console.log('Interstitial opened');
-  //       },
-  //       onAdClosed: () => {
-  //         this.show300x250();
-  //       },
-  //       fail: () => {
-  //         this.show300x250();
-  //       },
-  //     });
-  //   } catch (error) {
-  //     this.showPlaceholder = true;
-  //   }
-  // }
-  //
-  // public reportAdvert() {
-  //   const el = document.getElementById('banner300x250');
-  //   if (!el) {
-  //     this.showPlaceholder = true;
-  //     return;
-  //   }
-  //   // @ts-ignore
-  //   const adHTML = el.children[0].contentDocument.body.innerHTML;
-  //   // @ts-ignore
-  //   this.starAPI(api => {
-  //     api.game.setTarget(null);
-  //   });
-  //   el.innerHTML = '';
-  //   this.ad = null;
-  //   // @ts-ignore
-  //   window.ad = null;
-  //   this.showPlaceholder = true;
-  //   this.reportAd({ object: '', html: adHTML });
-  // }
-
   async mounted() {
     const packID: number = parseInt(this.$route.query.modpackid as string, 10);
     const packType: number = parseInt(this.$route.query.type as string, 10);
