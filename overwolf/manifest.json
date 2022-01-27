@@ -47,8 +47,8 @@
           "height": 900
         },
         "min_size": {
-          "width": 1545,
-          "height": 900
+          "width": 1220,
+          "height": 780
         },
         "block_top_window_navigation": true,
         "popup_blocker": true
@@ -68,7 +68,7 @@
           "width": 300,
           "height": 626
         }
-      }
+      },
     },
     "extra-objects": {
       "FTBOverwolfShim": {
@@ -82,6 +82,9 @@
     },
     "url_protocol": {
       "scheme": "ftb"
+    },
+    "developer": {
+      "enable_auto_refresh": true
     }
   }
 }

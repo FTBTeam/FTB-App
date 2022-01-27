@@ -137,23 +137,9 @@ export default class AdAside extends Vue {
   }
 
   async mounted() {
+    console.log('Loading ad sidebar widget');
     // Kinda dirty hack for this file
-    if (this.platform.isElectron()) {
-      // if (this.advertsEnabled) {
-      //   setTimeout(() => {
-      //     this.addAdvert();
-      //     // this.ad.addEventListener('error', () => {
-      //     //   this.showPlaceholder = true;
-      //     // });
-      //     // this.ad.addEventListener('impression', () => {
-      //     //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/video`);
-      //     // });
-      //     // this.ad.addEventListener('display_ad_loaded', () => {
-      //     //   fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${this.$route.query.modpackid}/${this.$route.query.versionID}/ad/install/static`);
-      //     // });
-      //   }, 500);
-      // }
-    } else {
+    if (this.platform.isOverwolf()) {
       setTimeout(() => {
         console.log('Loading advert');
         //@ts-ignore
@@ -176,6 +162,7 @@ export default class AdAside extends Vue {
             //@ts-ignore
             window.ad = this.ad;
           }
+          this.ad.add;
           this.ad.addEventListener('error', (error: any) => {
             this.showPlaceholder = true;
             console.log('Failed to load ad');
@@ -204,42 +191,6 @@ export default class AdAside extends Vue {
     }
   }
 
-  public addAdvert() {
-    try {
-      this.starAPI((api: { game: { setTarget: (e: unknown) => void } }) => {
-        api.game.setTarget(document.getElementById('ad'));
-      });
-      // @ts-ignore
-      this.starAPI({
-        kind: 'game.createInterstitial',
-        fail: () => {
-          console.log('API was blocked or failed to load');
-          this.showPlaceholder = true;
-        },
-      });
-      // @ts-ignore
-      this.starAPI({
-        kind: 'game.displayInterstitial',
-        onAdOpened() {
-          console.log('Interstitial opened');
-        },
-        onAdClosed: () => {
-          this.show300x250();
-        },
-        fail: () => {
-          this.show300x250();
-        },
-      });
-    } catch (error) {
-      this.showPlaceholder = true;
-    }
-  }
-
-  public show300x250() {
-    const el = document.getElementById('ad');
-    this.starAPI({ kind: 'go', module: 'banner300x250', config: { target: { el, kind: 'replace' } } });
-  }
-
   get advertsEnabled(): boolean {
     if (this.auth?.token?.activePlan === null) {
       return true;
@@ -250,23 +201,23 @@ export default class AdAside extends Vue {
   }
 
   public reportAdvert() {
-    const el = document.getElementById('banner300x250');
-    if (!el) {
-      this.showPlaceholder = true;
-      return;
-    }
-    // @ts-ignore
-    const adHTML = el.children[0].contentDocument.body.innerHTML;
-    // @ts-ignore
-    this.starAPI(api => {
-      api.game.setTarget(null);
-    });
-    el.innerHTML = '';
-    this.ad = null;
-    // @ts-ignore
-    window.ad = null;
-    this.showPlaceholder = true;
-    this.reportAd({ object: '', html: adHTML });
+    // const el = document.getElementById('banner300x250');
+    // if (!el) {
+    //   this.showPlaceholder = true;
+    //   return;
+    // }
+    // // @ts-ignore
+    // const adHTML = el.children[0].contentDocument.body.innerHTML;
+    // // @ts-ignore
+    // this.starAPI(api => {
+    //   api.game.setTarget(null);
+    // });
+    // el.innerHTML = '';
+    // this.ad = null;
+    // // @ts-ignore
+    // window.ad = null;
+    // this.showPlaceholder = true;
+    // this.reportAd({ object: '', html: adHTML });
   }
 }
 </script>

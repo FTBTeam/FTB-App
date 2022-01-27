@@ -11,7 +11,7 @@
     "vue:build": "cross-env TARGET_PLATFORM=electron vue-cli-service build",
     "vue:build:overwolf": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=production vue-cli-service build --mode overwolf",
     "vue:serve": "cross-env TARGET_PLATFORM=electron vue-cli-service serve",
-    "vue:serve:overwolf": "cross-env TARGET_PLATFORM=overwolf vue-cli-service serve",
+    "vue:serve:overwolf": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
     "build": "vue-cli-service electron:build",
     "buildall": "vue-cli-service electron:build -mwl",
     "gen:license": "license-checker --json > licenses.json",
