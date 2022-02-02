@@ -2,11 +2,8 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader;
 
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -18,9 +15,7 @@ import java.util.jar.JarFile;
 /**
  * Created by covers1624 on 25/1/22.
  */
-public class AbstractForgeInstallTask {
-
-    private static final Logger LOGGER = LogManager.getLogger();
+public abstract class AbstractForgeInstallTask extends AbstractModLoaderInstallTask {
 
     protected Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
         NewDownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
@@ -37,26 +32,6 @@ public class AbstractForgeInstallTask {
         }
         return downloadTask.getDest();
 
-    }
-
-    protected static VersionManifest downloadVanilla(Path versionsDir, String version) throws IOException {
-        VersionListManifest listManifest = VersionListManifest.update(versionsDir);
-        VersionManifest manifest = listManifest.resolve(versionsDir, version);
-        if (manifest == null) {
-            LOGGER.error("No vanilla version manifest found for {}", version);
-            throw new IOException("No vanilla version manifest found for " + version);
-        }
-
-        NewDownloadTask clientDownload = manifest.getClientDownload(versionsDir);
-        if (clientDownload == null) {
-            LOGGER.warn("Failed to find 'client' download for {}. Skipping..", version);
-            return manifest;
-        }
-
-        if (!clientDownload.isRedundant()) {
-            clientDownload.execute(null, null);
-        }
-        return manifest;
     }
 
     protected static String topAndTail(String s) {

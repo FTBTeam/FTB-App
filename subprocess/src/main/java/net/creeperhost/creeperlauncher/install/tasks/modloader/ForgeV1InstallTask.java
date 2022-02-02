@@ -8,7 +8,6 @@ import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
-import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import org.apache.logging.log4j.LogManager;
@@ -32,11 +31,14 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * Created by covers1624 on 24/1/22.
  */
-public class ForgeV1InstallTask extends AbstractForgeInstallTask implements Task<Void> {
+public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final Path installerJar;
+
+    @Nullable
+    private String versionName;
 
     public ForgeV1InstallTask(Path installerJar) {
         this.installerJar = installerJar;
@@ -57,7 +59,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask implements Task
             InstallProfile profile = JsonUtils.parse(InstallProfile.GSON, installerRoot.resolve("install_profile.json"), InstallProfile.class);
             if (profile.install.transform != null) throw new IOException("Unable to process Forge v1 Installer with transforms.");
 
-            String versionName = computeVersionName(profile.install.path);
+            versionName = computeVersionName(profile.install.path);
 
             downloadVanilla(versionsDir, profile.install.minecraft);
 
@@ -93,8 +95,8 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask implements Task
 
     @Nullable
     @Override
-    public Void getResult() {
-        return null;
+    public String getResult() {
+        return versionName;
     }
 
     @VisibleForTesting

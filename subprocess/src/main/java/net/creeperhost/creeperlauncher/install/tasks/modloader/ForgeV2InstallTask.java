@@ -10,8 +10,6 @@ import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.installerv2.InstallManifest;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -35,11 +33,14 @@ import java.util.stream.Collectors;
  * Created by covers1624 on 14/1/22.
  */
 @SuppressWarnings ("UnstableApiUsage")
-public class ForgeV2InstallTask extends AbstractForgeInstallTask implements Task<Void> {
+public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final Path installerJar;
+
+    @Nullable
+    private String versionName;
 
     public ForgeV2InstallTask(Path installerJar) {
         this.installerJar = installerJar;
@@ -62,6 +63,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask implements Task
             VersionManifest forgeManifest = JsonUtils.parse(VersionManifest.GSON, installerRoot.resolve(instManifest.json), VersionManifest.class);
 
             // Install the Version Manifest.
+            versionName = instManifest.version;
             Files.copy(
                     installerRoot.resolve(instManifest.json),
                     IOUtils.makeParents(versionsDir.resolve(instManifest.version).resolve(instManifest.version + ".json")),
@@ -83,8 +85,8 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask implements Task
 
     @Nullable
     @Override
-    public Void getResult() {
-        return null;
+    public String getResult() {
+        return versionName;
     }
 
     private void runProcessors(InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir) throws IOException {
