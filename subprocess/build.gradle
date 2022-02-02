@@ -220,6 +220,9 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.16.0'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.16.0'
     implementation 'org.apache.logging.log4j:log4j-jul:2.16.0'
+    implementation('org.apache.maven:maven-artifact:3.8.4') {
+        exclude group: 'org.codehaus.plexus' // Not needed for this application.
+    }
     implementation 'com.github.pircbotx:pircbotx:2.2'
     implementation 'net.covers1624:Quack:0.4.0.44'
     implementation 'net.covers1624:JdkUtils:0.3.0.7'

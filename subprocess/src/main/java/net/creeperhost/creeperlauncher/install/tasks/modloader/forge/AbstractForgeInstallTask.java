@@ -1,9 +1,13 @@
-package net.creeperhost.creeperlauncher.install.tasks.modloader;
+package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
+import net.covers1624.quack.maven.MavenNotation;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -15,9 +19,52 @@ import java.util.jar.JarFile;
 /**
  * Created by covers1624 on 25/1/22.
  */
-public abstract class AbstractForgeInstallTask extends AbstractModLoaderInstallTask {
+public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
-    protected Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
+    private static final MavenNotation FORGE_NOTATION = MavenNotation.parse("net.minecraftforge:forge");
+
+    @Nullable
+    protected String versionName;
+
+    @Nullable
+    @Override
+    public final String getResult() {
+        return versionName;
+    }
+
+    protected static MavenNotation getForgeNotation(String mcVersion, String forgeVersion) {
+        ArtifactVersion forgeVers = new DefaultArtifactVersion(forgeVersion);
+
+        MavenNotation notation = getVersionNotation(mcVersion, forgeVersion);
+        if (FORGE_CLIENT_ZIP.containsVersion(forgeVers)) {
+            return notation.withClassifier("client")
+                    .withExtension("zip");
+        }
+
+        if (FORGE_UNIVERSAL_ZIP.containsVersion(forgeVers)) {
+            return notation.withClassifier("universal")
+                    .withExtension("zip");
+        }
+        if (FORGE_INSTALLER_JAR.containsVersion(forgeVers)) {
+            return notation.withClassifier("universal")
+                    .withExtension("jar");
+        }
+
+        throw new UnsupportedOperationException("Unable to create notation for Forge version. Minecraft Version: " + mcVersion + ", Forge Version: " + forgeVersion);
+    }
+
+    protected static MavenNotation getForgeInstallerNotation(String mcVersion, String forgeVersion) {
+        if (!FORGE_INSTALLER_JAR.containsVersion(new DefaultArtifactVersion(forgeVersion))) {
+            throw new UnsupportedOperationException("Forge version '" + forgeVersion + "' is not known to have an installer.");
+        }
+        return getVersionNotation(mcVersion, forgeVersion).withClassifier("installer").withClassifier("jar");
+    }
+
+    private static MavenNotation getVersionNotation(String mcVersion, String forgeVersion) {
+        return FORGE_NOTATION.withVersion(mcVersion + "-" + forgeVersion);
+    }
+
+    protected static Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
         NewDownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
         if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
 

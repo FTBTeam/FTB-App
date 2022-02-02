@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.install.tasks.modloader;
+package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
@@ -37,16 +37,8 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     private final Path installerJar;
 
-    @Nullable
-    private String versionName;
-
     public ForgeV1InstallTask(Path installerJar) {
         this.installerJar = installerJar;
-    }
-
-    public static void main(String[] args) throws Throwable {
-        System.setProperty("ftba.dataDirOverride", "./");
-        new ForgeV1InstallTask(Path.of("forge-1.12.2-14.23.5.2838-installer.jar")).execute(null, null);
     }
 
     @Override
@@ -91,12 +83,6 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
             JsonUtils.write(InstallProfile.GSON, IOUtils.makeParents(versionJson), profileJson.get("versionInfo"));
         }
-    }
-
-    @Nullable
-    @Override
-    public String getResult() {
-        return versionName;
     }
 
     @VisibleForTesting

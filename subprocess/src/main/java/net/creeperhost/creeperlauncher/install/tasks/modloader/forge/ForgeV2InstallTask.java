@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.install.tasks.modloader;
+package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
@@ -39,9 +39,6 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
     private final Path installerJar;
 
-    @Nullable
-    private String versionName;
-
     public ForgeV2InstallTask(Path installerJar) {
         this.installerJar = installerJar;
     }
@@ -81,12 +78,6 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
             runProcessors(instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir);
         }
-    }
-
-    @Nullable
-    @Override
-    public String getResult() {
-        return versionName;
     }
 
     private void runProcessors(InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir) throws IOException {

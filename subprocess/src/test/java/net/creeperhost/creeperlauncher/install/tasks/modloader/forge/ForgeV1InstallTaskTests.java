@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.install.tasks.modloader;
+package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import net.covers1624.quack.maven.MavenNotation;
 import org.junit.jupiter.api.Test;

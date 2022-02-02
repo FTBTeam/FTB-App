@@ -14,7 +14,7 @@ import java.nio.file.Path;
 /**
  * Created by covers1624 on 28/1/22.
  */
-public class FabricInstallTask extends AbstractModLoaderInstallTask {
+public class FabricInstallTask extends ModLoaderInstallTask {
 
     private static final String META_URL = "https://meta.fabricmc.net/";
     private static final String LOADER_NAME = "fabric-loader";
@@ -29,11 +29,6 @@ public class FabricInstallTask extends AbstractModLoaderInstallTask {
         this.loaderVersion = loaderVersion;
 
         versionName = LOADER_NAME + "-" + mcVersion + "-" + loaderVersion;
-    }
-
-    public static void main(String[] args) throws Throwable {
-        System.setProperty("ftba.dataDirOverride", "./");
-        new FabricInstallTask("1.16.5", "0.11.3").execute(null, null);
     }
 
     @Override
