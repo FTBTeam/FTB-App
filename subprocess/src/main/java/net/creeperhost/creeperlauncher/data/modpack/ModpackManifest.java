@@ -1,8 +1,8 @@
-package net.creeperhost.creeperlauncher.pack.json;
+package net.creeperhost.creeperlauncher.data.modpack;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -23,8 +23,8 @@ public class ModpackManifest {
     public String name;
     @Nullable
     public String description;
-    public List<Author> authors = new ArrayList<>();
-    public List<Art> art = new ArrayList<>();
+    public List<Author> authors = new LinkedList<>();
+    public List<Art> art = new LinkedList<>();
 
     public static class Author {
 

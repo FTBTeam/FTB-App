@@ -1,9 +1,9 @@
-package net.creeperhost.creeperlauncher.pack.json;
+package net.creeperhost.creeperlauncher.data.modpack;
 
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -26,8 +26,8 @@ public class VersionManifest {
     public String name;
     @Nullable
     public Specs specs;
-    public List<Target> targets = new ArrayList<>();
-    public List<File> files = new ArrayList<>();
+    public List<Target> targets = new LinkedList<>();
+    public List<File> files = new LinkedList<>();
 
     public int getMinimumSpec() {
         return specs != null ? specs.minimum : MINIMUM_SPEC;
