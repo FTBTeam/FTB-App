@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.share;
 
+import net.covers1624.quack.collection.ColUtils;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class InstanceData
 {
@@ -48,15 +50,15 @@ public class InstanceData
         this.loaderVersion = instance.getModLoader();
         this.memory = instance.memory;
         this.minMemory = instance.getMinMemory();
-        List<Path> files =  Files.walk(instance.getDir(), Integer.MAX_VALUE).collect(Collectors.toList());
-        for(Path file : files)
-        {
-            FileData tmp = new FileData();
-            tmp.name = file.getFileName().toString();
-            tmp.path = file.toString();
-            tmp.size = Files.size(file);
-            tmp.checksum = FileUtils.getHash(file, "SHA-1");
-            this.files.add(tmp);
+        try (Stream<Path> files = Files.walk(instance.getDir(), Integer.MAX_VALUE)) {
+            for (Path file : ColUtils.iterable(files)) {
+                FileData tmp = new FileData();
+                tmp.name = file.getFileName().toString();
+                tmp.path = file.toString();
+                tmp.size = Files.size(file);
+                tmp.checksum = FileUtils.getHash(file, "SHA-1");
+                this.files.add(tmp);
+            }
         }
     }
 

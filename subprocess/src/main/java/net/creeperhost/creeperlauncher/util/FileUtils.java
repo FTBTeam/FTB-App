@@ -1,14 +1,7 @@
 package net.creeperhost.creeperlauncher.util;
 
-import net.covers1624.quack.collection.ColUtils;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tika.detect.Detector;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AutoDetectParser;
 
 import java.io.*;
 import java.nio.file.FileSystem;
@@ -20,33 +13,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static net.covers1624.quack.util.SneakyUtils.*;
 
 public class FileUtils
 {
     private static final Logger LOGGER = LogManager.getLogger();
-
-    public static List<Path> unTar(InputStream is, final Path outputDir) throws IOException
-    {
-        final List<Path> untaredFiles = new LinkedList<>();
-        try (TarArchiveInputStream tarStream = new TarArchiveInputStream(is)) {
-            ArchiveEntry entry;
-            while ((entry = tarStream.getNextEntry()) != null)
-            {
-                final Path outputFile = outputDir.resolve(entry.getName());
-                if (entry.isDirectory()) continue;
-
-                FileUtils.createDirectories(outputFile.getParent());
-                Files.copy(tarStream, outputFile, REPLACE_EXISTING);
-                untaredFiles.add(outputFile);
-            }
-        }
-        return untaredFiles;
-    }
 
     public static void fileFromZip(Path zip, Path dest, String fileName) throws IOException
     {
@@ -103,26 +75,11 @@ public class FileUtils
         }
     }
 
-    public static boolean copyDirectory(Path sourceDir, Path destinationDir) throws IOException
-    {
-        AtomicBoolean error = new AtomicBoolean(false);
-        Files.walk(sourceDir).forEach(sourcePath -> {
-            try {
-                Path targetPath = destinationDir.resolve(sourceDir.relativize(sourcePath));
-                Files.copy(sourcePath, targetPath, REPLACE_EXISTING);
-            } catch (IOException ex) {
-                LOGGER.error("File copy I/O error: ", ex);
-                error.set(true);
-            }
-        });
-        return !error.get();
-    }
-
     public static void deleteDirectory(Path file)
     {
         if (Files.notExists(file)) return;
-        try {
-            Files.walk(file)
+        try (Stream<Path> files = Files.walk(file)) {
+                    files
                     .filter(Files::exists)
                     .sorted(Comparator.reverseOrder())
                     .forEach(sneak(Files::delete));
@@ -130,27 +87,6 @@ public class FileUtils
         } catch (IOException e) {
             LOGGER.error("Failed to delete directory. {}", file, e);
         }
-    }
-
-    public static String getMimeType(String jarResource)
-    {
-        InputStream input = MiscUtils.class.getResourceAsStream(jarResource);
-        if (input != null)
-        {
-            try (InputStream is = input; BufferedInputStream bis = new BufferedInputStream(is))
-            {
-                AutoDetectParser parser = new AutoDetectParser();
-                Detector detector = parser.getDetector();
-                Metadata md = new Metadata();
-                md.add(Metadata.RESOURCE_NAME_KEY, jarResource);
-                MediaType mediaType = detector.detect(bis, md);
-                return mediaType.toString();
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-        }
-        return "application/octet-stream";
     }
 
     @Deprecated//Use UnixPlatform#chmod755
@@ -163,18 +99,6 @@ public class FileUtils
         {
             e.printStackTrace();
         }
-    }
-
-    public static long getLastModified(Path file)
-    {
-        if (file != null) {
-            try {
-                return Files.getLastModifiedTime(file).toMillis();
-            } catch (IOException ignored) {
-            }
-        }
-
-        return 0L;
     }
 
     //I hate this but its the only way I can get it to work right now
@@ -430,26 +354,4 @@ public class FileUtils
         }
         return result.toString();
     }
-
-    private boolean move(File sourceFile, File destFile)
-    {
-        if (sourceFile.isDirectory())
-        {
-            for (File file : sourceFile.listFiles())
-            {
-                move(file, new File(file.getPath().substring("temp".length()+1)));
-            }
-        }
-        else
-        {
-            try {
-                Files.move(Paths.get(sourceFile.getPath()), Paths.get(destFile.getPath()), REPLACE_EXISTING);
-                return true;
-            } catch (IOException e) {
-                return false;
-            }
-        }
-        return false;
-    }
-
 }
