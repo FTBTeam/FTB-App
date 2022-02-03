@@ -38,6 +38,7 @@ public class Constants {
     public static final String MOD_API = CREEPERHOST_MODPACK + "/public/mod/";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
+    public static final String MC_JSONS = "https://apps.modpacks.ch/versions/minecraftjsons/";
 
     //Forge
     public static final String FORGE_XML = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/maven-metadata.xml";
