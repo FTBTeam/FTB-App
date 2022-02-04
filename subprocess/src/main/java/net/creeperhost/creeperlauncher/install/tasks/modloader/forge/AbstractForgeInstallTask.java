@@ -1,6 +1,11 @@
 package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
+import com.google.gson.JsonObject;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
+import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
@@ -11,10 +16,15 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+
+import static net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.*;
+import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 
 /**
  * Created by covers1624 on 25/1/22.
@@ -30,6 +40,44 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     @Override
     public final String getResult() {
         return versionName;
+    }
+
+    public static AbstractForgeInstallTask createInstallTask(Path instanceDir, String mcVersion, String forgeVersion) throws IOException {
+        if (FORGE_LEGACY_INSTALL.containsVersion(new DefaultArtifactVersion(mcVersion))) {
+            return new LegacyForgeInstallTask(instanceDir, mcVersion, forgeVersion);
+        }
+        MavenNotation notation = getForgeNotation(mcVersion, forgeVersion);
+        if (!"universal".equals(notation.classifier) && !"jar".equals(notation.extension)) {
+            throw new IllegalStateException("Expected Forge 'universal.jar'. Got: " + notation);
+        }
+        notation = notation.withClassifier("installer");
+
+        // TODO, can we maybe merge both install tasks and do this detection in there?
+        //       I dislike that we have to download this file in a call path that just evaluates
+        //       what needs to be done for an installation.
+        NewDownloadTask task = builder()
+                .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
+                .dest(notation.toPath(Constants.LIBRARY_LOCATION))
+                .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
+                .build();
+
+        task.execute(null, null);
+        return detectInstallerVersion(task.getDest());
+    }
+
+    private static AbstractForgeInstallTask detectInstallerVersion(Path installer) throws IOException {
+        try (FileSystem fs = IOUtils.getJarFileSystem(installer, true)) {
+            Path installProfile = fs.getPath("/install_profile.json");
+
+            // Forge may have changed their format?
+            if (Files.notExists(installProfile)) throw new IOException("Failed to find 'install_profile.json' in Forge installer.");
+
+            JsonObject json = JsonUtils.parse(InstallProfile.GSON, installProfile, JsonObject.class);
+            if (json.has("spec")) {
+                return new ForgeV2InstallTask(installer);
+            }
+            return new ForgeV2InstallTask(installer);
+        }
     }
 
     protected static MavenNotation getForgeNotation(String mcVersion, String forgeVersion) {
@@ -145,7 +193,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return buf.toString();
     }
 
-    protected record PackedJarLocator(Path localPath) implements NewDownloadTask.LocalFileLocator {
+    protected record PackedJarLocator(Path localPath) implements LocalFileLocator {
 
         @Override
         public Path getLocalFile(String url, FileValidation validation, Path dest) {

@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader;
 
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.install.tasks.modloader.forge.AbstractForgeInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +39,14 @@ public abstract class ModLoaderInstallTask implements Task<String> {
 
     // The minecraft version range which denotes a 'jar mod' environment.
     public static final VersionRange FORGE_LEGACY_INSTALL = createRange("[1.2,1.5.2]");
+
+    public static ModLoaderInstallTask createInstallTask(Path instanceDir, String mcVersion, String mlName, String mlVersion) throws IOException {
+        return switch (mlName) {
+            case "forge" -> AbstractForgeInstallTask.createInstallTask(instanceDir, mcVersion, mlVersion);
+            case "fabric" -> new FabricInstallTask(mcVersion, mlVersion);
+            default -> throw new IllegalArgumentException("Unknown ModLoader name: " + mlName);
+        };
+    }
 
     protected static VersionManifest downloadVanilla(Path versionsDir, String version) throws IOException {
         VersionListManifest listManifest = VersionListManifest.update(versionsDir);
