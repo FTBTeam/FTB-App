@@ -191,6 +191,8 @@ public class InstanceInstaller {
     public void prepare() {
         if (operationType == OperationType.VALIDATE) {
             validateFiles();
+        } else if (operationType == OperationType.UPGRADE) {
+            processUpgrade();
         }
         locateUntrackedFiles();
         prepareModLoader();
@@ -226,6 +228,18 @@ public class InstanceInstaller {
         }
     }
 
+    private void processUpgrade() {
+        assert oldManifest != null;
+
+        Map<String, ModpackFile> newFiles = getKnownFiles();
+        Map<String, ModpackFile> oldFiles = computeKnownFiles(oldManifest);
+        for (String oldFilePath : oldFiles.keySet()) {
+            if (!newFiles.containsKey(oldFilePath)) {
+                filesToRemove.add(instanceDir.resolve(oldFilePath));
+            }
+        }
+    }
+
     private void locateUntrackedFiles() {
         // TODO, open this up to more folders? Should we ignore configs?
         Set<String> untrackedFolders = Set.of("mods");
@@ -236,7 +250,10 @@ public class InstanceInstaller {
             Map<String, ModpackFile> knownFiles = getKnownFiles();
             try (Stream<Path> files = Files.walk(folder)) {
                 for (Path path : ColUtils.iterable(files)) {
-                    if (Files.isDirectory(path) || knownFiles.containsKey(instanceDir.relativize(path).toString())) continue;
+                    if (Files.isDirectory(path)) continue; // Skip directories
+                    if (filesToRemove.contains(path)) continue; // File will be deleted, ignore.
+                    if (knownFiles.containsKey(instanceDir.relativize(path).toString())) continue; // File is known.
+
                     if (path.getFileName().toString().startsWith("__tmp_")) {
                         // Download temp files. Always delete these.
                         // They will only exist if the download process crashes spectacularly.
@@ -335,13 +352,18 @@ public class InstanceInstaller {
 
     private Map<String, ModpackFile> getKnownFiles() {
         if (knownFiles == null) {
-            knownFiles = new HashMap<>();
-            for (ModpackFile file : manifest.getFiles()) {
-                Path path = file.toPath(instanceDir).toAbsolutePath().normalize();
-                knownFiles.put(instanceDir.relativize(path).toString(), file);
-            }
+            knownFiles = computeKnownFiles(manifest);
         }
 
+        return knownFiles;
+    }
+
+    private Map<String, ModpackFile> computeKnownFiles(ModpackVersionManifest manifest) {
+        Map<String, ModpackFile> knownFiles = new HashMap<>();
+        for (ModpackFile file : manifest.getFiles()) {
+            Path path = file.toPath(instanceDir).toAbsolutePath().normalize();
+            knownFiles.put(instanceDir.relativize(path).toString(), file);
+        }
         return knownFiles;
     }
 
