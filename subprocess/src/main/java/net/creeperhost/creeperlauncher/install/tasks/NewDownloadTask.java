@@ -89,7 +89,6 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
 
-        MultiHasher hashRequest = null;
         OkHttpDownloadAction action = new OkHttpDownloadAction()
                 .setClient(client)
                 .setUrl(url)
@@ -97,10 +96,6 @@ public class NewDownloadTask implements Task<Path> {
                 .setUseETag(validation.useETag)
                 .setOnlyIfModified(validation.useOnlyIfModified)
                 .addTag(Throttler.class, Constants.getGlobalThrottler());
-        if (!validation.expectedHashes.isEmpty()) {
-            hashRequest = new MultiHasher(validation.expectedHashes.keySet());
-            action.addTag(MultiHasher.class, hashRequest);
-        }
 
         if (progressListener != null) {
             action.setDownloadListener(new QuackProgressAdapter(progressListener));
@@ -116,6 +111,12 @@ public class NewDownloadTask implements Task<Path> {
             LOGGER.info("  File passed ETag/OnlyIfModified checks.");
             // We validated ETag/OnlyIfModified
             return;
+        }
+
+        MultiHasher hashRequest = null;
+        if (!validation.expectedHashes.isEmpty()) {
+            hashRequest = new MultiHasher(validation.expectedHashes.keySet());
+            hashRequest.load(dest);
         }
 
         HashResult result = hashRequest != null ? hashRequest.finish() : null;
