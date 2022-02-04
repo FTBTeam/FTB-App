@@ -36,12 +36,15 @@ public class NewDownloadTask implements Task<Path> {
 
     private static final boolean DEBUG = Boolean.getBoolean("DownloadTask.debug");
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private static final int DEFAULT_NUM_TRIES = 3;
     public static final OkHttpClient client = new OkHttpClient.Builder()
             .cookieJar(new SimpleCookieJar())
             .addInterceptor(new ThrottlerInterceptor())
             .addInterceptor(new MultiHasherInterceptor())
             .build();
 
+    private final int tries;
     private final String url;
     private final Path dest;
     private final DownloadValidation validation;
@@ -49,7 +52,8 @@ public class NewDownloadTask implements Task<Path> {
     @Nullable
     private final LocalFileLocator fileLocator;
 
-    private NewDownloadTask(String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator) {
+    private NewDownloadTask(int tries, String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator) {
+        this.tries = tries;
         this.url = url;
         this.dest = dest;
         this.validation = validation;
@@ -89,6 +93,32 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
 
+        Throwable fail = null;
+        for (int i = 0; i < tries; i++) {
+            try {
+                doRequest(progressListener);
+                fail = null;
+                break;
+            } catch (Throwable ex) {
+                if (fail != null) {
+                    fail.addSuppressed(ex);
+                } else {
+                    fail = ex;
+                }
+            }
+        }
+        if (fail != null) {
+            throw new IOException("Download task failed.", fail);
+        }
+
+        LOGGER.info("  File downloaded.");
+
+        if (fileLocator != null) {
+            fileLocator.onFileDownloaded(url, validation, dest);
+        }
+    }
+
+    private void doRequest(@Nullable TaskProgressListener progressListener) throws IOException {
         OkHttpDownloadAction action = new OkHttpDownloadAction()
                 .setClient(client)
                 .setUrl(url)
@@ -138,12 +168,6 @@ public class NewDownloadTask implements Task<Path> {
                 }
             }
         }
-
-        LOGGER.info("  File downloaded.");
-
-        if (fileLocator != null) {
-            fileLocator.onFileDownloaded(url, validation, dest);
-        }
     }
 
     @Override
@@ -185,6 +209,7 @@ public class NewDownloadTask implements Task<Path> {
     // TODO Future improvements here would be to mirror DownloadValidation methods for fluency.
     public static class Builder {
 
+        private int tries = DEFAULT_NUM_TRIES;
         @Nullable
         private String url;
         @Nullable
@@ -195,6 +220,11 @@ public class NewDownloadTask implements Task<Path> {
         private LocalFileLocator fileLocator;
 
         private Builder() { }
+
+        public Builder tries(int tries) {
+            this.tries = tries;
+            return this;
+        }
 
         public Builder url(String url) {
             this.url = url;
@@ -220,7 +250,7 @@ public class NewDownloadTask implements Task<Path> {
             if (url == null) throw new IllegalStateException("URL not set.");
             if (dest == null) throw new IllegalStateException("Dest not set.");
 
-            return new NewDownloadTask(url, dest, validation, fileLocator);
+            return new NewDownloadTask(tries, url, dest, validation, fileLocator);
         }
     }
 

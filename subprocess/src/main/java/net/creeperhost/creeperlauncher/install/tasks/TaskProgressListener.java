@@ -9,6 +9,8 @@ public interface TaskProgressListener {
 
     /**
      * Called to indicate the task has started its operation.
+     * <p>
+     * This may be called at any point again to indicate a restart.
      *
      * @param total The total amount of unit this tasks does.
      */
