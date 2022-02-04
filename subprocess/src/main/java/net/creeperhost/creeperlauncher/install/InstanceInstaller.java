@@ -1,26 +1,30 @@
 package net.creeperhost.creeperlauncher.install;
 
 import com.google.common.hash.HashCode;
+import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import net.covers1624.quack.util.MultiHasher;
+import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.GSON;
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.Target;
@@ -29,6 +33,8 @@ import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifes
  * Created by covers1624 on 3/2/22.
  */
 public class InstanceInstaller {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     // These folders are 'known' to be important in the installation process.
     private static final Set<String> KNOWN_IMPORTANT_FOLDERS = Set.of(
@@ -69,7 +75,7 @@ public class InstanceInstaller {
     private final List<InvalidFile> invalidFiles = new LinkedList<>();
 
     /**
-     * Any files which are in a known 'tracked' directory (configs, mods, etc),
+     * Any files which are in a known 'tracked' directory (mods, etc),
      * but are not a part of any manifest.
      */
     private final List<Path> untrackedFiles = new LinkedList<>();
@@ -82,13 +88,16 @@ public class InstanceInstaller {
     /**
      * Any files that will be downloaded.
      */
-    private final List<Path> toDownload = new LinkedList<>();
+    private final List<Path> filesToDownload = new LinkedList<>();
     //endregion
 
     private final List<Task<?>> tasks = new LinkedList<>();
 
     @Nullable
     private ModLoaderInstallTask modLoaderInstallTask;
+
+    @Nullable
+    private Map<String, ModpackFile> knownFiles;
 
     public static void main(String[] args) throws Throwable {
         System.setProperty("ftba.dataDirOverride", "./");
@@ -104,11 +113,31 @@ public class InstanceInstaller {
         InstanceInstaller installer = new InstanceInstaller(Path.of("TestInstall"), versionManifest);
         installer.prepare();
 
+        LOGGER.info("Found the following invalid files:");
+        for (InvalidFile invalidFile : installer.getInvalidFiles()) {
+            LOGGER.info("  " + invalidFile);
+        }
+
+        LOGGER.info("Found the following untracked files:");
+        for (Path untrackedFile : installer.getUntrackedFiles()) {
+            LOGGER.info("  " + untrackedFile);
+        }
+
+        LOGGER.info("The following files will be deleted:");
+        for (Path path : installer.getFilesToRemove()) {
+            LOGGER.info("  " + path);
+        }
+
+        LOGGER.info("The following files will be downloaded:");
+        for (Path path : installer.getFilesToDownload()) {
+            LOGGER.info("  " + path);
+        }
+
         installer.execute();
     }
 
     public InstanceInstaller(Path instanceDir, ModpackVersionManifest manifest) throws IOException {
-        this.instanceDir = instanceDir;
+        this.instanceDir = instanceDir.toAbsolutePath();
         this.manifest = manifest;
 
         Path instanceVersionFile = instanceDir.resolve("version.json");
@@ -136,6 +165,22 @@ public class InstanceInstaller {
         return operationType;
     }
 
+    public List<InvalidFile> getInvalidFiles() {
+        return invalidFiles;
+    }
+
+    public List<Path> getUntrackedFiles() {
+        return untrackedFiles;
+    }
+
+    public List<Path> getFilesToRemove() {
+        return filesToRemove;
+    }
+
+    public List<Path> getFilesToDownload() {
+        return filesToDownload;
+    }
+
     /**
      * Prepare the Installer.
      * <p>
@@ -144,12 +189,66 @@ public class InstanceInstaller {
      * Sets up internal state ready for the installation process.
      */
     public void prepare() {
-        if (operationType == OperationType.UPGRADE || operationType == OperationType.VALIDATE) {
-            // Locate invalid/missing files.
-            assert false : "TODO";
+        if (operationType == OperationType.VALIDATE) {
+            validateFiles();
         }
+        locateUntrackedFiles();
         prepareModLoader();
         prepareFileDownloads();
+    }
+
+    private void validateFiles() {
+        Map<String, ModpackFile> knownFiles = getKnownFiles();
+        for (Map.Entry<String, ModpackFile> entry : knownFiles.entrySet()) {
+            Path file = instanceDir.resolve(entry.getKey());
+            ModpackFile modpackFile = entry.getValue();
+            if (Files.notExists(file)) {
+                invalidFiles.add(new InvalidFile(file, modpackFile.getSha1(), null, modpackFile.getSize(), -1));
+            } else {
+                try {
+                    FileValidation validation = modpackFile.createValidation();
+                    MultiHasher hasher = new MultiHasher(HashFunc.SHA1);
+                    hasher.load(file);
+                    MultiHasher.HashResult result = hasher.finish();
+                    if (!validation.validate(file, result)) {
+                        invalidFiles.add(new InvalidFile(
+                                file,
+                                modpackFile.getSha1(),
+                                result.get(HashFunc.SHA1),
+                                modpackFile.getSize(),
+                                Files.size(file)
+                        ));
+                    }
+                } catch (IOException ex) {
+                    throw new IllegalStateException("Failed to validate file '" + file + "'.", ex);
+                }
+            }
+        }
+    }
+
+    private void locateUntrackedFiles() {
+        // TODO, open this up to more folders? Should we ignore configs?
+        Set<String> untrackedFolders = Set.of("mods");
+        for (String toSearch : untrackedFolders) {
+            Path folder = instanceDir.resolve(toSearch);
+            if (Files.notExists(folder)) return;
+
+            Map<String, ModpackFile> knownFiles = getKnownFiles();
+            try (Stream<Path> files = Files.walk(folder)) {
+                for (Path path : ColUtils.iterable(files)) {
+                    if (Files.isDirectory(path) || knownFiles.containsKey(instanceDir.relativize(path).toString())) continue;
+                    if (path.getFileName().toString().startsWith("__tmp_")) {
+                        // Download temp files. Always delete these.
+                        // They will only exist if the download process crashes spectacularly.
+                        filesToRemove.add(path);
+                    } else {
+                        untrackedFiles.add(path);
+                    }
+                }
+            } catch (IOException ex) {
+                throw new IllegalStateException("An IO Error occurred whilst locating untracked files.", ex);
+            }
+        }
     }
 
     private void prepareModLoader() {
@@ -177,10 +276,10 @@ public class InstanceInstaller {
             NewDownloadTask task = NewDownloadTask.builder()
                     .url(file.getUrl())
                     .dest(file.toPath(instanceDir))
-                    .withValidation(file.getValidation().asDownloadValidation())
+                    .withValidation(file.createValidation().asDownloadValidation())
                     .build();
             if (!task.isRedundant()) {
-                toDownload.add(task.getDest());
+                filesToDownload.add(task.getDest());
                 tasks.add(task);
             }
         }
@@ -203,6 +302,8 @@ public class InstanceInstaller {
             for (Task<?> task : tasks) {
                 task.execute(null, null);
             }
+
+            JsonUtils.write(GSON, instanceDir.resolve("version.json"), manifest);
         } catch (InstallationFailureException ex) {
             throw ex;
         } catch (Throwable ex) {
@@ -230,6 +331,18 @@ public class InstanceInstaller {
         }
 
         return !targetsMatching.isEmpty() ? targetsMatching.get(0) : null;
+    }
+
+    private Map<String, ModpackFile> getKnownFiles() {
+        if (knownFiles == null) {
+            knownFiles = new HashMap<>();
+            for (ModpackFile file : manifest.getFiles()) {
+                Path path = file.toPath(instanceDir).toAbsolutePath().normalize();
+                knownFiles.put(instanceDir.relativize(path).toString(), file);
+            }
+        }
+
+        return knownFiles;
     }
 
     /**

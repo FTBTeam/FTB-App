@@ -137,7 +137,7 @@ public class ModpackVersionManifest {
             return root.resolve(getPath()).resolve(getName());
         }
 
-        public FileValidation getValidation() {
+        public FileValidation createValidation() {
             return FileValidation.of()
                     .withHash(Hashing.sha1(), getSha1())
                     .withExpectedSize(getSize());
