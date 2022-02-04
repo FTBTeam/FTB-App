@@ -2,14 +2,14 @@ package net.creeperhost.creeperlauncher.data.modpack;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
+import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +39,7 @@ public class ModpackVersionManifest {
     @Nullable
     private String name;
     @Nullable
+    @JsonAdapter (SpecsSerializer.class)
     private Specs specs;
     @Nullable
     private String type;
@@ -137,10 +138,21 @@ public class ModpackVersionManifest {
             return root.resolve(getPath()).resolve(getName());
         }
 
+        public Path getCfExtractPath(Path root, String modpackVersion) {
+            return root.resolve(getPath()).resolve(modpackVersion + "-" + getName());
+        }
+
         public FileValidation createValidation() {
-            return FileValidation.of()
-                    .withHash(Hashing.sha1(), getSha1())
-                    .withExpectedSize(getSize());
+            FileValidation validation = FileValidation.of();
+            // Not sure if size can ever be -1, but sure.
+            if (size != -1) {
+                validation = validation.withExpectedSize(size);
+            }
+            // sha1 might be null
+            if (sha1 != null) {
+                validation = validation.withHash(Hashing.sha1(), sha1);
+            }
+            return validation;
         }
 
         // @formatter:off
@@ -150,6 +162,7 @@ public class ModpackVersionManifest {
         public String getName() { return requireNonNull(name); }
         public String getUrl() { return requireNonNull(url); }
         public HashCode getSha1() { return requireNonNull(sha1); }
+        @Nullable public HashCode getSha1OrNull() { return sha1; }
         public long getSize() { return size; }
         public boolean isClientOnly() { return clientOnly; }
         public boolean isServerOnly() { return serverOnly; }
@@ -157,6 +170,21 @@ public class ModpackVersionManifest {
         public String getType() { return requireNonNull(type); }
         public long getUpdated() { return updated; }
         // @formatter:on
+    }
+
+    private static final class SpecsSerializer implements JsonDeserializer<Specs>, JsonSerializer<Specs> {
+
+        @Nullable
+        @Override
+        public Specs deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (!json.isJsonObject()) return null;
+            return context.deserialize(json, typeOfT);
+        }
+
+        @Override
+        public JsonElement serialize(Specs src, Type typeOfSrc, JsonSerializationContext context) {
+            return context.serialize(src, typeOfSrc);
+        }
     }
 
 }

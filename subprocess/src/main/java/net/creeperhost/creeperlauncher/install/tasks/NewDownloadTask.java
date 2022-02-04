@@ -241,7 +241,7 @@ public class NewDownloadTask implements Task<Path> {
             return this;
         }
 
-        public Builder wFileLocator(LocalFileLocator fileLocator) {
+        public Builder withFileLocator(LocalFileLocator fileLocator) {
             this.fileLocator = fileLocator;
             return this;
         }

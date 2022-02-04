@@ -1,16 +1,22 @@
 package net.creeperhost.creeperlauncher.install;
 
 import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.io.CopyingFileVisitor;
+import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
+import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
@@ -20,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -97,14 +104,15 @@ public class InstanceInstaller {
     private ModLoaderInstallTask modLoaderInstallTask;
 
     @Nullable
-    private Map<String, ModpackFile> knownFiles;
+    private Map<String, IndexedFile> knownFiles;
 
     public static void main(String[] args) throws Throwable {
         System.setProperty("ftba.dataDirOverride", "./");
+        CreeperLauncher.localCache = new LocalCache(Path.of("cache"));
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
                 .setUserAgent(Constants.USER_AGENT)
-                .setUrl(Constants.getCreeperhostModpackPrefix(false, (byte) 0) + "91" + "/" + "2105")
+                .setUrl(Constants.getCreeperhostModpackPrefix(false, (byte) 1) + "381671" + "/" + "3615346")
                 .setDest(sw);
         action.execute();
 
@@ -200,12 +208,12 @@ public class InstanceInstaller {
     }
 
     private void validateFiles() {
-        Map<String, ModpackFile> knownFiles = getKnownFiles();
-        for (Map.Entry<String, ModpackFile> entry : knownFiles.entrySet()) {
+        Map<String, IndexedFile> knownFiles = getKnownFiles();
+        for (Map.Entry<String, IndexedFile> entry : knownFiles.entrySet()) {
             Path file = instanceDir.resolve(entry.getKey());
-            ModpackFile modpackFile = entry.getValue();
+            IndexedFile modpackFile = entry.getValue();
             if (Files.notExists(file)) {
-                invalidFiles.add(new InvalidFile(file, modpackFile.getSha1(), null, modpackFile.getSize(), -1));
+                invalidFiles.add(new InvalidFile(file, modpackFile.sha1(), null, modpackFile.length(), -1));
             } else {
                 try {
                     FileValidation validation = modpackFile.createValidation();
@@ -215,9 +223,9 @@ public class InstanceInstaller {
                     if (!validation.validate(file, result)) {
                         invalidFiles.add(new InvalidFile(
                                 file,
-                                modpackFile.getSha1(),
+                                modpackFile.sha1(),
                                 result.get(HashFunc.SHA1),
-                                modpackFile.getSize(),
+                                modpackFile.length(),
                                 Files.size(file)
                         ));
                     }
@@ -231,8 +239,8 @@ public class InstanceInstaller {
     private void processUpgrade() {
         assert oldManifest != null;
 
-        Map<String, ModpackFile> newFiles = getKnownFiles();
-        Map<String, ModpackFile> oldFiles = computeKnownFiles(oldManifest);
+        Map<String, IndexedFile> newFiles = getKnownFiles();
+        Map<String, IndexedFile> oldFiles = computeKnownFiles(oldManifest);
         for (String oldFilePath : oldFiles.keySet()) {
             if (!newFiles.containsKey(oldFilePath)) {
                 filesToRemove.add(instanceDir.resolve(oldFilePath));
@@ -247,7 +255,7 @@ public class InstanceInstaller {
             Path folder = instanceDir.resolve(toSearch);
             if (Files.notExists(folder)) return;
 
-            Map<String, ModpackFile> knownFiles = getKnownFiles();
+            Map<String, IndexedFile> knownFiles = getKnownFiles();
             try (Stream<Path> files = Files.walk(folder)) {
                 for (Path path : ColUtils.iterable(files)) {
                     if (Files.isDirectory(path)) continue; // Skip directories
@@ -290,10 +298,12 @@ public class InstanceInstaller {
 
     private void prepareFileDownloads() {
         for (ModpackFile file : manifest.getFiles()) {
+            if (file.getType().equals("cf-extract")) continue;
             NewDownloadTask task = NewDownloadTask.builder()
                     .url(file.getUrl())
                     .dest(file.toPath(instanceDir))
                     .withValidation(file.createValidation().asDownloadValidation())
+                    .withFileLocator(CreeperLauncher.localCache)
                     .build();
             if (!task.isRedundant()) {
                 filesToDownload.add(task.getDest());
@@ -318,6 +328,14 @@ public class InstanceInstaller {
 
             for (Task<?> task : tasks) {
                 task.execute(null, null);
+            }
+
+            Path cfOverrides = getCFOverridesZip(manifest);
+            if (cfOverrides != null) {
+                try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
+                    Path root = fs.getPath("/overrides/");
+                    Files.walkFileTree(root, new CopyingFileVisitor(root, instanceDir));
+                }
             }
 
             JsonUtils.write(GSON, instanceDir.resolve("version.json"), manifest);
@@ -350,7 +368,7 @@ public class InstanceInstaller {
         return !targetsMatching.isEmpty() ? targetsMatching.get(0) : null;
     }
 
-    private Map<String, ModpackFile> getKnownFiles() {
+    private Map<String, IndexedFile> getKnownFiles() {
         if (knownFiles == null) {
             knownFiles = computeKnownFiles(manifest);
         }
@@ -358,13 +376,54 @@ public class InstanceInstaller {
         return knownFiles;
     }
 
-    private Map<String, ModpackFile> computeKnownFiles(ModpackVersionManifest manifest) {
-        Map<String, ModpackFile> knownFiles = new HashMap<>();
+    private Map<String, IndexedFile> computeKnownFiles(ModpackVersionManifest manifest) {
+        Map<String, IndexedFile> knownFiles = new HashMap<>();
         for (ModpackFile file : manifest.getFiles()) {
+            if (file.getType().equals("cf-extract")) continue;
             Path path = file.toPath(instanceDir).toAbsolutePath().normalize();
-            knownFiles.put(instanceDir.relativize(path).toString(), file);
+            String relPath = instanceDir.relativize(path).toString();
+            knownFiles.put(relPath, new IndexedFile(relPath, file.getSha1OrNull(), file.getSize()));
+        }
+        Path cfOverrides = getCFOverridesZip(manifest);
+        if (cfOverrides != null) {
+            try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
+                Path root = fs.getPath("/overrides/");
+                try (Stream<Path> paths = Files.walk(root)) {
+                    for (Path path : ColUtils.iterable(paths)) {
+                        if (Files.isDirectory(path)) continue;
+                        String relPath = root.relativize(path).toString();
+                        knownFiles.put(relPath, new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
+                    }
+                }
+            } catch (IOException ex) {
+                throw new IllegalStateException("Failed to read CurseForge Overrides zip.", ex);
+            }
         }
         return knownFiles;
+    }
+
+    @Nullable
+    private Path getCFOverridesZip(ModpackVersionManifest manifest) {
+        LinkedList<ModpackFile> cfExtractEntries = StreamableIterable.of(manifest.getFiles())
+                .filter(e -> e.getType().equals("cf-extract"))
+                .toLinkedList();
+
+        if (cfExtractEntries.isEmpty()) return null;
+        if (cfExtractEntries.size() > 1) throw new IllegalStateException("More than one cf-extract entry found.");
+
+        ModpackFile cfExtractEntry = cfExtractEntries.getFirst();
+        NewDownloadTask task = NewDownloadTask.builder()
+                .url(cfExtractEntry.getUrl())
+                .dest(cfExtractEntry.getCfExtractPath(instanceDir, manifest.getName()))
+                .withValidation(cfExtractEntry.createValidation().asDownloadValidation())
+                .build();
+        try {
+            task.execute(null, null);
+        } catch (Throwable ex) {
+            throw new IllegalStateException("Failed to retrieve CurseForge overrides.");
+        }
+
+        return task.getDest();
     }
 
     /**
@@ -387,9 +446,8 @@ public class InstanceInstaller {
 
     public static record InvalidFile(
             Path path,
-            HashCode expectedHash,
-            @Nullable
-            HashCode actualHash,
+            @Nullable HashCode expectedHash,
+            @Nullable HashCode actualHash,
             long expectedLen,
             long actualLen
     ) { }
@@ -402,6 +460,22 @@ public class InstanceInstaller {
 
         public InstallationFailureException(String message, Throwable cause) {
             super(message, cause);
+        }
+    }
+
+    private static record IndexedFile(String path, @Nullable HashCode sha1, long length) {
+
+        public FileValidation createValidation() {
+            FileValidation validation = FileValidation.of();
+            // Not sure if size can ever be -1, but sure.
+            if (length != -1) {
+                validation = validation.withExpectedSize(length);
+            }
+            // sha1 might be null
+            if (sha1 != null) {
+                validation = validation.withHash(Hashing.sha1(), sha1);
+            }
+            return validation;
         }
     }
 }

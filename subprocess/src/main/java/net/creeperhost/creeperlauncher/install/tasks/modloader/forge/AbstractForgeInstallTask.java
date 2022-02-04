@@ -119,7 +119,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
 
         downloadTask = downloadTask.toBuilder()
-                .wFileLocator(new PackedJarLocator(installerMavenFile))
+                .withFileLocator(new PackedJarLocator(installerMavenFile))
                 .build();
 
         if (!downloadTask.isRedundant()) {
