@@ -62,4 +62,36 @@ export default class GlobalComponents extends Vue {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.alerts {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 5000;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  .alert {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    border-radius: 5px;
+
+    span {
+      margin-right: 0.5rem;
+    }
+
+    .message {
+      margin-right: 0.5rem;
+    }
+
+    .close {
+      cursor: pointer;
+      padding: 0 0.5rem;
+    }
+  }
+}
+</style>

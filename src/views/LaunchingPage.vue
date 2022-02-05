@@ -54,7 +54,7 @@
 
     <div class="logs flex justify-between items-center" :class="{ 'dark-mode': darkMode }">
       <h3 class="font-bold text-lg">Log</h3>
-      <div class="buttons flex items-center ">
+      <div class="buttons flex items-center">
         <ftb-button
           @click="cancelLoading"
           class="transition ease-in-out duration-200 py-1 px-4 text-xs mr-4 border-red-600 border border-solid hover:bg-red-600 hover:text-white"
@@ -254,6 +254,8 @@ export default class LaunchingPage extends Vue {
         type: 'danger',
       });
 
+      await this.$router.push(RouterNames.ROOT_LIBRARY);
+
       return;
     }
 
@@ -293,7 +295,7 @@ export default class LaunchingPage extends Vue {
       return null;
     }
 
-    return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
+    return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
   }
 
   get bars() {
@@ -301,11 +303,11 @@ export default class LaunchingPage extends Vue {
       return [];
     }
 
-    return this.launchProgress?.filter(b => b.steps !== 1).slice(0, 5);
+    return this.launchProgress?.filter((b) => b.steps !== 1).slice(0, 5);
   }
 
   get progressMessage() {
-    return this.launchProgress?.map(e => e.message).join(' // ') ?? 'Loading...';
+    return this.launchProgress?.map((e) => e.message).join(' // ') ?? 'Loading...';
   }
 
   get instanceName() {
@@ -328,7 +330,7 @@ export default class LaunchingPage extends Vue {
       return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
     }
 
-    const arts = this.currentModpack.art.filter(art => art.type === 'splash');
+    const arts = this.currentModpack.art.filter((art) => art.type === 'splash');
     return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
 
@@ -337,7 +339,7 @@ export default class LaunchingPage extends Vue {
       return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
     }
 
-    const arts = this.currentModpack.art.filter(art => art.type === 'square');
+    const arts = this.currentModpack.art.filter((art) => art.type === 'square');
     return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
 }

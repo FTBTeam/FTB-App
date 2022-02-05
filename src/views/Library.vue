@@ -81,7 +81,7 @@ export default class Library extends Vue {
       this.isLoaded = false;
       try {
         await Promise.all(
-          this.modpacks.installedPacks.map(async instance => {
+          this.modpacks.installedPacks.map(async (instance) => {
             const pack = await this.fetchModpack(instance.id);
             return pack;
           }),
@@ -122,12 +122,7 @@ export default class Library extends Vue {
     if (this.modpacks) {
       this.isLoaded = false;
       try {
-        await Promise.all(
-          this.modpacks.installedPacks.map(async instance => {
-            const pack = await this.fetchModpack(instance.id);
-            return pack;
-          }),
-        );
+        await Promise.all(this.modpacks.installedPacks.map(async (instance) => await this.fetchModpack(instance.id)));
         this.isLoaded = true;
       } catch (err) {
         this.isLoaded = true;
@@ -139,7 +134,7 @@ export default class Library extends Vue {
     return this.modpacks == null
       ? []
       : this.searchTerm.length > 0
-      ? this.modpacks.installedPacks.filter(pack => {
+      ? this.modpacks.installedPacks.filter((pack) => {
           return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
         })
       : this.modpacks.installedPacks.sort((a, b) => {
