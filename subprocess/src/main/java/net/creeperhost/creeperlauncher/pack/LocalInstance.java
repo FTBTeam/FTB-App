@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -955,10 +956,15 @@ public class LocalInstance implements IPack
 
     public List<ModFile> getMods() {
         try {
-            return Files.walk(path.resolve("mods")).filter(Files::isRegularFile).filter(file -> ModFile.isPotentialMod(file.toString())).map(path -> {
-                File file = path.toFile();
-                return new ModFile(file.getName(), "", file.length(), "").setPath(path);
-            }).collect(Collectors.toList());
+            try (Stream<Path> files = Files.walk(path.resolve("mods"))) {
+                return files.filter(Files::isRegularFile)
+                        .filter(file -> ModFile.isPotentialMod(file.toString()))
+                        .map(path -> {
+                            File file = path.toFile();
+                            return new ModFile(file.getName(), "", file.length(), "").setPath(path);
+                        })
+                        .collect(Collectors.toList());
+            }
         } catch (IOException error) {
             LOGGER.log(Level.DEBUG, "Error occurred whilst listing mods on disk", error);
         }

@@ -2,7 +2,6 @@ package net.creeperhost.creeperlauncher.pack;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.hash.Hashing;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.io.IOUtils;
@@ -46,13 +45,13 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static java.util.Objects.requireNonNull;
 import static net.covers1624.quack.collection.ColUtils.iterable;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
-import static net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 
 /**
  * Responsible for launching a specific instance.
@@ -264,8 +263,8 @@ public class InstanceLauncher {
         for (Path tempDir : tempDirs) {
             if (Files.notExists(tempDir)) continue;
             LOGGER.info("Cleaning up temporary directory: {}", tempDir);
-            try {
-                Files.walk(tempDir)
+            try (Stream<Path> files = Files.walk(tempDir)) {
+                files
                         .filter(Files::exists)
                         .sorted(Comparator.reverseOrder())
                         .forEach(sneak(Files::delete));
