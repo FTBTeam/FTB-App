@@ -70,7 +70,7 @@
                 >
                   Install Finished
                 </p>
-                <div class=" w-full h-full bg-grey-light justify-center">
+                <div class="w-full h-full bg-grey-light justify-center">
                   <div
                     v-if="!modpacks.installing.error"
                     class="h-full bg-primary text-xs leading-none py-1 text-white"
@@ -99,8 +99,8 @@
           :max-tries="20"
         />
         <div
-          class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
-          style="flex-direction: column; justify-content: center; align-items: center;"
+          class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
+          style="flex-direction: column; justify-content: center; align-items: center"
           v-else
         >
           <div class="background-animation"></div>
@@ -173,7 +173,7 @@ export default class MainApp extends Vue {
       }
     });
 
-    this.platfrom.get.frame.setupTitleBar(windowId => (this.windowId = windowId));
+    this.platfrom.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
 
     // Only used on overwolf.
     this.registerExitCallback((data: any) => {
@@ -214,11 +214,11 @@ export default class MainApp extends Vue {
   }
 
   public retry(modpack: InstallProgress) {
-    if (this.modpacks.installedPacks.filter(pack => pack.uuid === modpack.instanceID).length > 0) {
+    if (this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID).length > 0) {
       logVerbose(this.settings, 'The instance already exists, assume an update.');
     } else {
       logVerbose(this.settings, 'Instance does not exist, we can assume delete is fine');
-      const foundPack = this.modpacks.installedPacks.filter(pack => pack.uuid === modpack.instanceID)[0];
+      const foundPack = this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID)[0];
       if (!foundPack) {
         // TODO: Fix me, handle this issue
         return;
@@ -315,38 +315,6 @@ export default class MainApp extends Vue {
       100% {
         left: 100%;
       }
-    }
-  }
-}
-
-.alerts {
-  position: absolute;
-  bottom: 2rem;
-  right: 2rem;
-  z-index: 100;
-
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-
-  .alert {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    margin-top: 0.5rem;
-    border-radius: 5px;
-
-    span {
-      margin-right: 0.5rem;
-    }
-
-    .message {
-      margin-right: 0.5rem;
-    }
-
-    .close {
-      cursor: pointer;
-      padding: 0 0.5rem;
     }
   }
 }
