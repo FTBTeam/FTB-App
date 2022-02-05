@@ -54,6 +54,17 @@
         >
           <img src="@/assets/images/branding/mojang.svg" alt="Mojang Login" />
         </button>
+
+        <small class="text-red-400 mt-4 block text-center"
+          >Mojang accounts must be migrated before March 10th, see this
+          <a
+            class="text-gray-400 hover:text-white"
+            href="https://www.minecraft.net/en-us/article/last-call-voluntarily-migrate-java-accounts"
+            @click.prevent="openExternal"
+            >official blog</a
+          >
+          post for more information</small
+        >
       </div>
 
       <div class="logged-in text-center" v-else-if="loggedIn">
@@ -69,7 +80,7 @@
       </div>
 
       <div class="auth-views" v-else>
-        <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="e => (error = e)" />
+        <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="(e) => (error = e)" />
         <yggdrasil-auth-form v-if="onMcAuth" :uuid="uuid" @authenticated="authenticated()" />
       </div>
     </div>
