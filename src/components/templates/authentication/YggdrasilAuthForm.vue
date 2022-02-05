@@ -99,10 +99,10 @@ export default class YggdrasilAuthForm extends Vue {
             clientToken: json.clientToken,
             userUuid: id.includes('-') ? id : newUuid,
           },
-          callback: (e: any) => {
+          callback: async (e: any) => {
             if (e.success) {
+              await this.loadProfiles();
               this.$emit('authenticated');
-              this.loadProfiles();
             } else {
               this.error = 'Something went wrong';
             }

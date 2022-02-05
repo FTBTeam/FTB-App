@@ -25,7 +25,7 @@ import { addHyphensToUuid } from '@/utils/helpers';
 })
 export default class MicrosoftAuth extends Vue {
   @Action('sendMessage') public sendMessage: any;
-  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
+  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
 
   loggedIn = false;
   error = '';
@@ -67,10 +67,10 @@ export default class MicrosoftAuth extends Vue {
           ...response,
           minecraftUuid: id.includes('-') ? id : newUuid,
         },
-        callback: (e: any) => {
+        callback: async (e: any) => {
           if (e.success) {
+            await this.loadProfiles();
             this.$emit('authenticated');
-            this.loadProfiles();
           } else {
             this.$emit('error', "Failed to add new profile, it's likely that you already have this one added");
           }

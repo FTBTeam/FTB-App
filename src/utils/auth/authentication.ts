@@ -136,17 +136,21 @@ const purgeMinecraftProfiles = async (profiles: AuthProfile[]) => {
 };
 
 // 🚀
-export const preLaunchChecksValid = async () => {
+export const preLaunchChecksValid = async (tryAgainAction: () => void) => {
   const { 'core/getProfiles': profiles, 'core/getActiveProfile': activeProfile } = store.getters;
 
+  const signInAgain = async () => {
+    await store.dispatch('core/openSignIn', { open: true, afterAction: tryAgainAction }, { root: true });
+  };
+
   if (profiles.length === 0) {
-    await store.dispatch('core/openSignIn', { open: true }, { root: true });
+    await signInAgain();
     return false;
   }
 
   let profile: AuthProfile | null = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
   if (!profile) {
-    await store.dispatch('core/openSignIn', { open: true }, { root: true });
+    await signInAgain();
     return false;
   }
 
@@ -192,7 +196,7 @@ export const preLaunchChecksValid = async () => {
           console.log('Failed to set active profile');
         }
       } else {
-        await store.dispatch('core/openSignIn', { open: true }, { root: true });
+        await signInAgain();
         return false;
       }
     }
@@ -202,7 +206,7 @@ export const preLaunchChecksValid = async () => {
 
   // Something went really wrong here...
   if (profile == null) {
-    await store.dispatch('core/openSignIn', { open: true }, { root: true });
+    await signInAgain();
     return false;
   }
 

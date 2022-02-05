@@ -247,7 +247,14 @@ export default class LaunchingPage extends Vue {
   }
 
   public async launch(): Promise<void> {
-    if (!(await preLaunchChecksValid())) {
+    const tryAgainLogic = async () => {
+      console.log('Trying again');
+      // Push the router back here.
+      // This happens after the preLaunchCheck has been run, failed, then the user signs in again.
+      await this.$router.push({ name: RouterNames.ROOT_LAUNCH_PACK, query: { uuid: this.instance?.uuid } });
+    };
+
+    if (!(await preLaunchChecksValid(tryAgainLogic))) {
       this.showAlert({
         title: 'Error!',
         message: 'Unable to update, validate or find your profile, please sign in again.',

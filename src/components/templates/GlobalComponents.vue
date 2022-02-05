@@ -33,6 +33,7 @@
       v-if="getSignInOpened.open"
       :jump="getSignInOpened.jumpToAuth"
       :uuid="getSignInOpened.uuid"
+      :backAction="getSignInOpened.afterAction"
       @close="closeSignIn()"
     />
   </div>

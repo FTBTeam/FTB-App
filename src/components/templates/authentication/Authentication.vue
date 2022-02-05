@@ -1,5 +1,5 @@
 <template>
-  <div class="global__fullscreen-modal authentication" @mousedown.self="$emit('close')">
+  <div class="global__fullscreen-modal authentication" @mousedown.self="() => close()">
     <div class="body-contents text-center">
       <div class="back" v-if="!onMainView && !loggedIn && !loading" @click="back()">
         <font-awesome-icon icon="chevron-left" />
@@ -13,7 +13,7 @@
         <h2 class="text-3xl font-bold">Something went wrong.</h2>
         <p class="text-red-400 font-bold mt-6 mb-8">{{ error }}</p>
 
-        <ftb-button color="primary" class="px-6 py-4" @click="$emit('close')">Close</ftb-button>
+        <ftb-button color="primary" class="px-6 py-4" @click="() => close()">Close</ftb-button>
       </div>
 
       <div class="main" v-else-if="onMainView && !loggedIn">
@@ -78,7 +78,7 @@
           <font-awesome-icon icon="check" class="my-20 three" size="5x" />
           <font-awesome-icon icon="check" class="my-20 four" size="5x" />
         </div>
-        <ftb-button color="primary" class="px-6 py-4" @click="$emit('close')">Finish</ftb-button>
+        <ftb-button color="primary" class="px-6 py-4" @click="() => close()">Finish</ftb-button>
       </div>
 
       <div class="auth-views" v-else>
@@ -100,14 +100,15 @@ import { Prop } from 'vue-property-decorator';
 import dayjs from 'dayjs';
 
 @Component({
-  props: { jump: String, uuid: String },
   components: { MicrosoftAuth, YggdrasilAuthForm, Loading },
 })
 export default class Authentication extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
-  @Prop()
-  public jump!: string;
+
+  @Prop() public jump!: string;
+  @Prop() public uuid!: string;
+  @Prop() public backAction!: () => void;
 
   onMainView = true;
   loggedIn = false;
@@ -133,7 +134,16 @@ export default class Authentication extends Vue {
 
   authenticated() {
     this.back();
-    this.loggedIn = true;
+  }
+
+  close() {
+    // console.log('close', this.loggedIn);
+    // if (this.loggedIn) {
+    //   console.log('back action run');
+    //   this.backAction();
+    // }
+
+    this.$emit('close');
   }
 
   get mojangAuthAllowed() {
