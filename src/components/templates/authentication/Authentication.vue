@@ -38,33 +38,35 @@
           <img src="@/assets/images/branding/microsoft.svg" alt="Microsoft Login" />
         </button>
 
-        <div class="or">
-          <span>or</span>
-        </div>
+        <template v-if="mojangAuthAllowed">
+          <div class="or">
+            <span>or</span>
+          </div>
 
-        <button
-          class="actionable-button"
-          @click="
-            () => {
-              onMcAuth = true;
-              onMsAuth = false;
-              onMainView = false;
-            }
-          "
-        >
-          <img src="@/assets/images/branding/mojang.svg" alt="Mojang Login" />
-        </button>
-
-        <small class="text-red-400 mt-4 block text-center"
-          >Mojang accounts must be migrated before March 10th, see this
-          <a
-            class="text-gray-400 hover:text-white"
-            href="https://www.minecraft.net/en-us/article/last-call-voluntarily-migrate-java-accounts"
-            @click.prevent="openExternal"
-            >official blog</a
+          <button
+            class="actionable-button"
+            @click="
+              () => {
+                onMcAuth = true;
+                onMsAuth = false;
+                onMainView = false;
+              }
+            "
           >
-          post for more information</small
-        >
+            <img src="@/assets/images/branding/mojang.svg" alt="Mojang Login" />
+          </button>
+
+          <small class="text-red-400 mt-4 block text-center"
+            >Mojang accounts must be migrated before March 10th, see this
+            <a
+              class="text-gray-400 hover:text-white"
+              href="https://www.minecraft.net/en-us/article/last-call-voluntarily-migrate-java-accounts"
+              @click.prevent="openExternal"
+              >official blog</a
+            >
+            post for more information</small
+          >
+        </template>
       </div>
 
       <div class="logged-in text-center" v-else-if="loggedIn">
@@ -95,6 +97,7 @@ import Loading from '@/components/atoms/Loading.vue';
 import { Action } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 import { Prop } from 'vue-property-decorator';
+import dayjs from 'dayjs';
 
 @Component({
   props: { jump: String, uuid: String },
@@ -131,6 +134,10 @@ export default class Authentication extends Vue {
   authenticated() {
     this.back();
     this.loggedIn = true;
+  }
+
+  get mojangAuthAllowed() {
+    return !dayjs().isAfter('2022-03-10');
   }
 }
 </script>

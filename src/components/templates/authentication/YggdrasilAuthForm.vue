@@ -45,6 +45,7 @@ import { Action } from 'vuex-class';
 import { addHyphensToUuid } from '@/utils/helpers';
 import { Prop } from 'vue-property-decorator';
 
+// TODO: remove this after April 2022
 @Component({ props: { uuid: String } })
 export default class YggdrasilAuthForm extends Vue {
   @Action('sendMessage') public sendMessage: any;

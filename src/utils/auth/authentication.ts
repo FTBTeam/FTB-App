@@ -144,20 +144,20 @@ export const preLaunchChecksValid = async () => {
     return false;
   }
 
-  const profile: AuthProfile | null = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
+  let profile: AuthProfile | null = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
   if (!profile) {
     await store.dispatch('core/openSignIn', { open: true }, { root: true });
     return false;
   }
 
-  const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
-  if (dayjs().isAfter('2022-01-10')) {
+  // TODO: remove in April 2022
+
+  if (dayjs().isAfter('2022-03-10')) {
     // Use this chance to purge all old profiles
     const removedProfiles = await purgeMinecraftProfiles(profiles);
-    const removedOurProfile = removedProfiles.find((p: AuthProfile) => p.uuid === profile.uuid);
+    const removedOurProfile = removedProfiles.find((p: AuthProfile) => p.uuid === profile?.uuid);
 
     for (let removedProfile of removedProfiles) {
-      console.log('Notifying');
       await store.dispatch('showAlert', {
         type: 'warning',
         title: 'Profile removed',
@@ -166,11 +166,47 @@ export const preLaunchChecksValid = async () => {
     }
 
     if (removedOurProfile) {
-      await store.dispatch('core/openSignIn', { open: true }, { root: true });
-    }
+      // Show remaining profiles
+      const remainingProfile = profiles.length > 0 ? profiles[0] : null;
+      if (remainingProfile) {
+        profile = remainingProfile;
 
+        // Alert the user
+        await store.dispatch('showAlert', {
+          type: 'primary',
+          title: 'Using Microsoft account instead',
+          message: `We've automatically switched your active account to ${profile?.username}`,
+        });
+
+        // Set the active profile to the remaining profile
+        try {
+          const data = await wsTimeoutWrapper({
+            type: 'profiles.setActiveProfile',
+            uuid: remainingProfile.uuid,
+          });
+
+          if (data.success) {
+            await store.dispatch('core/loadProfiles');
+          }
+        } catch {
+          console.log('Failed to set active profile');
+        }
+      } else {
+        await store.dispatch('core/openSignIn', { open: true }, { root: true });
+        return false;
+      }
+    }
+  }
+
+  // TODO: end of remove in April 2022
+
+  // Something went really wrong here...
+  if (profile == null) {
+    await store.dispatch('core/openSignIn', { open: true }, { root: true });
     return false;
   }
+
+  const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
 
   const isValid = await validator.valid(profile);
   if (!isValid) {
