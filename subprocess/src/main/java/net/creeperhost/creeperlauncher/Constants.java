@@ -2,10 +2,13 @@ package net.creeperhost.creeperlauncher;
 
 import net.covers1624.jdkutils.AdoptiumProvisioner;
 import net.covers1624.jdkutils.JdkInstallationManager;
+import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
+import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
+import okhttp3.OkHttpClient;
 import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,10 +66,16 @@ public class Constants {
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
+    public static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
+            .cookieJar(new SimpleCookieJar())
+            .addInterceptor(new ThrottlerInterceptor())
+            .addInterceptor(new MultiHasherInterceptor())
+            .build();
+
     public static JdkInstallationManager JDK_INSTALL_MANAGER = new JdkInstallationManager(
             Constants.BIN_LOCATION.resolve("runtime"),
             new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
-                    .setClient(NewDownloadTask.client)
+                    .setClient(OK_HTTP_CLIENT)
                     .addTag(Throttler.class, Constants.getGlobalThrottler())
             ),
             true

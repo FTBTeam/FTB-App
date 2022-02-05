@@ -590,7 +590,7 @@ public class InstanceLauncher {
                 .head()
                 .url(url)
                 .build();
-        try (Response response = NewDownloadTask.client.newCall(request).execute()) {
+        try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
             ResponseBody body = response.body();
             if (body != null) return body.contentLength();
 

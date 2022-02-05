@@ -3,18 +3,14 @@ package net.creeperhost.creeperlauncher.install.tasks;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
-import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
-import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
-import okhttp3.OkHttpClient;
 import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,11 +34,6 @@ public class NewDownloadTask implements Task<Path> {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final int DEFAULT_NUM_TRIES = 3;
-    public static final OkHttpClient client = new OkHttpClient.Builder()
-            .cookieJar(new SimpleCookieJar())
-            .addInterceptor(new ThrottlerInterceptor())
-            .addInterceptor(new MultiHasherInterceptor())
-            .build();
 
     private final int tries;
     private final String url;
@@ -120,7 +111,7 @@ public class NewDownloadTask implements Task<Path> {
 
     private void doRequest(@Nullable TaskProgressListener progressListener) throws IOException {
         OkHttpDownloadAction action = new OkHttpDownloadAction()
-                .setClient(client)
+                .setClient(Constants.OK_HTTP_CLIENT)
                 .setUrl(url)
                 .setDest(dest)
                 .setUseETag(validation.useETag)
