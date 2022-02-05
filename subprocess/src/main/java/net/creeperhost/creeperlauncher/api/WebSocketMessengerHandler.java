@@ -40,7 +40,6 @@ public class WebSocketMessengerHandler
     static {
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
         register("launchInstance", LaunchInstanceData.class, new LaunchInstanceHandler());
-        register("instanceInfo", InstanceInfoData.class, new InstanceInfoHandler());
         register("installInstance", InstallInstanceData.class, new InstallInstanceHandler());
         register("cancelInstallInstance", CancelInstallInstanceData.class, new CancelInstallInstanceHandler());
         register("updateInstance", UpdateInstanceData.class, new UpdateInstanceHandler());
@@ -112,6 +111,8 @@ public class WebSocketMessengerHandler
                     } catch(Exception e) {
                         e.printStackTrace();
                     }
+                } else {
+                    LOGGER.error("No handler for message type '{}'", type);
                 }
             }
         }
