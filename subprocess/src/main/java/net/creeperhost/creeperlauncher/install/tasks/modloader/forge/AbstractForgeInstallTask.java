@@ -11,6 +11,7 @@ import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +43,9 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return versionName;
     }
 
-    public static AbstractForgeInstallTask createInstallTask(Path instanceDir, String mcVersion, String forgeVersion) throws IOException {
+    public static AbstractForgeInstallTask createInstallTask(LocalInstance instance, String mcVersion, String forgeVersion) throws IOException {
         if (FORGE_LEGACY_INSTALL.containsVersion(new DefaultArtifactVersion(mcVersion))) {
-            return new LegacyForgeInstallTask(instanceDir, mcVersion, forgeVersion);
+            return new LegacyForgeInstallTask(instance, mcVersion, forgeVersion);
         }
         MavenNotation notation = getForgeNotation(mcVersion, forgeVersion);
         if (!"universal".equals(notation.classifier) && !"jar".equals(notation.extension)) {
@@ -76,7 +77,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
             if (json.has("spec")) {
                 return new ForgeV2InstallTask(installer);
             }
-            return new ForgeV2InstallTask(installer);
+            return new ForgeV1InstallTask(installer);
         }
     }
 

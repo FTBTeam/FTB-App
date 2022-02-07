@@ -5,14 +5,25 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.HashCodeAdapter;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.net.DownloadAction;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -24,6 +35,8 @@ import static java.util.Objects.requireNonNull;
  */
 @SuppressWarnings ("FieldMayBeFinal") // Non-Final for Gson.
 public class ModpackVersionManifest {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static final Gson GSON = new Gson();
 
@@ -52,12 +65,88 @@ public class ModpackVersionManifest {
     private long updated;
     private long refreshed;
 
+    @Nullable
+    public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
+        ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, versionId, isPrivate, packType);
+        if (modpackManifest != null) {
+            return Pair.of(
+                    modpackManifest,
+                    queryManifest(packId, versionId, isPrivate, packType)
+            );
+        }
+        modpackManifest = ModpackManifest.queryManifest(packId, versionId, !isPrivate, packType);
+
+        if (modpackManifest == null) return null; // We tried, really doesn't exist..
+
+        return Pair.of(
+                modpackManifest,
+                queryManifest(packId, versionId, !isPrivate, packType)
+        );
+    }
+
+    @Nullable
+    public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
+        String url = Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId;
+        LOGGER.info("Querying Modpack version manifest: {}", url);
+        StringWriter sw = new StringWriter();
+        DownloadAction action = new OkHttpDownloadAction()
+                .setClient(Constants.OK_HTTP_CLIENT)
+                .setUserAgent(Constants.USER_AGENT)
+                .setUrl(url)
+                .setDest(sw);
+        action.execute();
+
+        ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
+        if (manifest.getStatus().equals("error")) {
+            // TODO Log error.
+            return null;
+        }
+
+        return manifest;
+    }
+
     public int getMinimumSpec() {
         return specs != null ? specs.minimum : MINIMUM_SPEC;
     }
 
     public int getRecommendedSpec() {
         return specs != null ? specs.recommended : RECOMMENDED_SPEC;
+    }
+
+    /**
+     * Finds a {@link Target} of a given type in the manifest.
+     *
+     * @param type The 'type' to find.
+     * @return The {@link Target}.
+     * @throws IllegalStateException If more than one target of the given type is found.
+     */
+    @Nullable
+    public Target findTarget(String type) throws IllegalStateException {
+        LinkedList<Target> targetsMatching = StreamableIterable.of(getTargets())
+                .filter(e -> type.equals(e.getType()))
+                .toLinkedList();
+
+        if (targetsMatching.size() > 1) {
+            // Should be impossible??
+            String desc = targetsMatching.stream().map(e -> e.getName() + "@" + e.getVersion()).collect(Collectors.joining(", ", "[", "]"));
+            throw new IllegalStateException("Found more than one target for type '" + type + "'. " + desc);
+        }
+
+        return !targetsMatching.isEmpty() ? targetsMatching.getFirst() : null;
+    }
+
+    /**
+     * Finds the version of a {@link Target} of a given type in the manifest.
+     *
+     * @param type The 'type' to find.
+     * @return The {@link Target}'s version if found, otherwise {@code null}.
+     * @throws IllegalStateException If more than one target of the given type is found.
+     */
+    @Nullable
+    public String getTargetVersion(String type) throws IllegalStateException {
+        Target target = findTarget(type);
+
+        return target != null ? target.getVersion() : null;
     }
 
     // @formatter:off

@@ -1,18 +1,25 @@
 package net.creeperhost.creeperlauncher.pack;
 
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.gson.*;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.PathTypeAdapter;
+import net.covers1624.quack.net.DownloadAction;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import net.creeperhost.creeperlauncher.*;
+import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
-import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
-import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
-import net.creeperhost.minetogether.lib.cloudsaves.CloudSyncType;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
+import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
+import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
+import net.creeperhost.minetogether.lib.cloudsaves.CloudSyncType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -21,31 +28,27 @@ import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-import net.creeperhost.creeperlauncher.*;
-import net.creeperhost.creeperlauncher.api.DownloadableFile;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.BindException;
 import java.net.MalformedURLException;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
 
-//TODO: Turn LocalInstance into a package somehow and split out the individual parts for easier navigation.
-//TODO: Switch prePlay events, postInstall(Semi-Completed), events etc into the same setup as gameClose to allow multiple code blocks.
+// TODO move all properties from this class to a specific 'InstanceJson' data object.
+//      Rename LocalInstance to 'Instance' and use as a state holder for the instance.
 public class LocalInstance implements IPack
 {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -97,6 +100,71 @@ public class LocalInstance implements IPack
     public transient boolean hasLoadingMod;
 
     private transient long startTime;
+
+    public LocalInstance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+        uuid = UUID.randomUUID();
+        versionId = versionManifest.getId();
+        path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(uuid.toString());
+        FileUtils.createDirectories(path);
+        cloudSaves = Settings.getBooleanOr("cloudSaves", false);
+        name = modpack.getName();
+        version = versionManifest.getName();
+        dir = path;
+        authors = modpack.getAuthors().stream().map(ModpackManifest.Author::getName).toList();
+        description = modpack.getDescription();
+        mcVersion = versionManifest.getTargetVersion("game");
+        url = "";// TODO this is always empty (old install system), can we remove this? what is it used for?
+        ModpackManifest.Art art = modpack.getFirstArt("square"); // TODO support more than one art.
+        artUrl = art != null ? art.getUrl() : "";
+        id = modpack.getId();
+        this.packType = packType;
+        _private = isPrivate;
+        if (Settings.settings.containsKey("jvmargs")) {
+            jvmArgs = Settings.settings.get("jvmargs");
+        }
+        recMemory = versionManifest.getRecommendedSpec();
+        minMemory = versionManifest.getMinimumSpec();
+        memory = recMemory;
+        SystemInfo si = new SystemInfo();
+        HardwareAbstractionLayer hal = si.getHardware();
+        long totalMemory = hal.getMemory().getTotal() / 1024 / 1024;
+        if (recMemory > (totalMemory - 2048)) {
+            memory = minMemory;
+        }
+
+        if (art != null) {
+            try {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                DownloadAction action = new OkHttpDownloadAction()
+                        .setUserAgent(Constants.USER_AGENT)
+                        .setClient(Constants.OK_HTTP_CLIENT)
+                        .setUrl(art.getUrl())
+                        .setDest(bos);
+                action.execute();
+
+                BufferedImage resizedArt = ImageUtils.resizeImage(bos.toByteArray(), 256, 256);
+                bos.reset();
+                ImageIO.write(resizedArt, "png", bos);
+                this.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
+                // folder.jpg is not strictly used, it exists for easy folder navigation.
+                try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
+                    ImageIO.write(resizedArt, "jpg", os);
+                }
+            } catch (IOException ex) {
+                LOGGER.error("Failed to download and resize Modpack art.", ex);
+                // TODO set art to missing image?
+            }
+        }
+
+        // Set to false, we are creating a new fresh instance.
+        installComplete = false;
+
+        try {
+            saveJson();
+        } catch (IOException ex) {
+            LOGGER.error("Failed to save instance.", ex);
+        }
+    }
 
     public LocalInstance(ModPack pack, long versionId, boolean _private, byte packType)
     {

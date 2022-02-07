@@ -1,19 +1,27 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import net.creeperhost.creeperlauncher.*;
+import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.Instances;
+import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.SimpleDownloadableFile;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.data.other.InstalledFileEventData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import net.creeperhost.creeperlauncher.install.InstanceInstaller;
 import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
-import net.creeperhost.creeperlauncher.pack.ModPack;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.ModPack;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -62,17 +70,35 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 return;
             }
         } else {
-            ModPack pack = FTBModPackInstallerTask.getPackFromAPI(data.id, data.version, data._private, data.packType);
-            if (pack == null) {
-                pack = FTBModPackInstallerTask.getPackFromAPI(data.id, data.version, !data._private, data.packType);
+            try {
+                Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
+                        data.id,
+                        data.version,
+                        data._private,
+                        data.packType
+                );
+                if (manifests == null) {
+                    Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
+                    return;
+                }
+                instance = new LocalInstance(manifests.getLeft(), manifests.getRight(), data._private, data.packType);
+                InstanceInstaller installer = new InstanceInstaller(instance, manifests.getRight());
+                installer.prepare();
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        installer.execute();
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.getUuid().toString()));
+                        Instances.addInstance(instance.getUuid(), instance);
+                    } catch (InstanceInstaller.InstallationFailureException ex) {
+                        LOGGER.error("Fatal exception whilst installing modpack.", ex);
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
+                    }
+                });
+            } catch (Throwable ex) {
+                LOGGER.error("Fatal exception preparing modpack installation.", ex);
+                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal error preparing modpack installation.", ""));
             }
-            List<SimpleDownloadableFile> files = pack.getFiles();
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "files", GsonUtils.GSON.toJson(files), ""));
-            instance = new LocalInstance(pack, data.version, data._private, data.packType);
-            data.uuid = instance.getUuid().toString();
-            LOGGER.debug("Running install task");
-            install = instance.install();
-            Instances.addInstance(instance.getUuid(), instance);
+            return;
         }
         install.currentTask.exceptionally((t) ->
         {

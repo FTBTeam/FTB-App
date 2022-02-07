@@ -7,30 +7,25 @@ import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.CopyingFileVisitor;
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.net.DownloadAction;
-import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
-import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
+import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.GSON;
@@ -53,7 +48,7 @@ public class InstanceInstaller {
             "scripts"
     );
 
-    private final Path instanceDir;
+    private final LocalInstance instance;
     private final ModpackVersionManifest manifest;
 
     @Nullable
@@ -106,49 +101,11 @@ public class InstanceInstaller {
     @Nullable
     private Map<String, IndexedFile> knownFiles;
 
-    public static void main(String[] args) throws Throwable {
-        System.setProperty("ftba.dataDirOverride", "./");
-        CreeperLauncher.localCache = new LocalCache(Path.of("cache"));
-        StringWriter sw = new StringWriter();
-        DownloadAction action = new OkHttpDownloadAction()
-                .setUserAgent(Constants.USER_AGENT)
-                .setUrl(Constants.getCreeperhostModpackPrefix(false, (byte) 1) + "381671" + "/" + "3615346")
-                .setDest(sw);
-        action.execute();
-
-        ModpackVersionManifest versionManifest = GSON.fromJson(sw.toString(), ModpackVersionManifest.class);
-
-        InstanceInstaller installer = new InstanceInstaller(Path.of("TestInstall"), versionManifest);
-        installer.prepare();
-
-        LOGGER.info("Found the following invalid files:");
-        for (InvalidFile invalidFile : installer.getInvalidFiles()) {
-            LOGGER.info("  " + invalidFile);
-        }
-
-        LOGGER.info("Found the following untracked files:");
-        for (Path untrackedFile : installer.getUntrackedFiles()) {
-            LOGGER.info("  " + untrackedFile);
-        }
-
-        LOGGER.info("The following files will be deleted:");
-        for (Path path : installer.getFilesToRemove()) {
-            LOGGER.info("  " + path);
-        }
-
-        LOGGER.info("The following files will be downloaded:");
-        for (Path path : installer.getFilesToDownload()) {
-            LOGGER.info("  " + path);
-        }
-
-        installer.execute();
-    }
-
-    public InstanceInstaller(Path instanceDir, ModpackVersionManifest manifest) throws IOException {
-        this.instanceDir = instanceDir.toAbsolutePath();
+    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest) throws IOException {
+        this.instance = instance;
         this.manifest = manifest;
 
-        Path instanceVersionFile = instanceDir.resolve("version.json");
+        Path instanceVersionFile = instance.getDir().resolve("version.json");
         if (!Files.exists(instanceVersionFile)) {
             oldManifest = null;
             operationType = OperationType.FRESH_INSTALL;
@@ -210,7 +167,7 @@ public class InstanceInstaller {
     private void validateFiles() {
         Map<String, IndexedFile> knownFiles = getKnownFiles();
         for (Map.Entry<String, IndexedFile> entry : knownFiles.entrySet()) {
-            Path file = instanceDir.resolve(entry.getKey());
+            Path file = instance.getDir().resolve(entry.getKey());
             IndexedFile modpackFile = entry.getValue();
             if (Files.notExists(file)) {
                 invalidFiles.add(new InvalidFile(file, modpackFile.sha1(), null, modpackFile.length(), -1));
@@ -243,7 +200,7 @@ public class InstanceInstaller {
         Map<String, IndexedFile> oldFiles = computeKnownFiles(oldManifest);
         for (String oldFilePath : oldFiles.keySet()) {
             if (!newFiles.containsKey(oldFilePath)) {
-                filesToRemove.add(instanceDir.resolve(oldFilePath));
+                filesToRemove.add(instance.getDir().resolve(oldFilePath));
             }
         }
     }
@@ -252,7 +209,7 @@ public class InstanceInstaller {
         // TODO, open this up to more folders? Should we ignore configs?
         Set<String> untrackedFolders = Set.of("mods");
         for (String toSearch : untrackedFolders) {
-            Path folder = instanceDir.resolve(toSearch);
+            Path folder = instance.getDir().resolve(toSearch);
             if (Files.notExists(folder)) return;
 
             Map<String, IndexedFile> knownFiles = getKnownFiles();
@@ -260,7 +217,7 @@ public class InstanceInstaller {
                 for (Path path : ColUtils.iterable(files)) {
                     if (Files.isDirectory(path)) continue; // Skip directories
                     if (filesToRemove.contains(path)) continue; // File will be deleted, ignore.
-                    if (knownFiles.containsKey(instanceDir.relativize(path).toString())) continue; // File is known.
+                    if (knownFiles.containsKey(instance.getDir().relativize(path).toString())) continue; // File is known.
 
                     if (path.getFileName().toString().startsWith("__tmp_")) {
                         // Download temp files. Always delete these.
@@ -277,15 +234,15 @@ public class InstanceInstaller {
     }
 
     private void prepareModLoader() {
-        Target gameTarget = findTarget("game");
+        Target gameTarget = manifest.findTarget("game");
         assert gameTarget != null;
         assert gameTarget.getName().equals("minecraft");
 
-        Target modLoaderTarget = findTarget("modloader");
+        Target modLoaderTarget = manifest.findTarget("modloader");
         if (modLoaderTarget != null) {
             try {
                 modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
-                        instanceDir,
+                        instance,
                         gameTarget.getVersion(),
                         modLoaderTarget.getName(),
                         modLoaderTarget.getVersion()
@@ -301,7 +258,7 @@ public class InstanceInstaller {
             if (file.getType().equals("cf-extract")) continue;
             NewDownloadTask task = NewDownloadTask.builder()
                     .url(file.getUrl())
-                    .dest(file.toPath(instanceDir))
+                    .dest(file.toPath(instance.getDir()))
                     .withValidation(file.createValidation().asDownloadValidation())
                     .withFileLocator(CreeperLauncher.localCache)
                     .build();
@@ -324,6 +281,10 @@ public class InstanceInstaller {
 
             if (modLoaderInstallTask != null) {
                 modLoaderInstallTask.execute(null, null);
+                instance.modLoader = modLoaderInstallTask.getResult();
+            } else {
+                // Mod loader doesn't exist. This must be vanilla
+                instance.modLoader = manifest.getTargetVersion("game");
             }
 
             for (Task<?> task : tasks) {
@@ -334,38 +295,23 @@ public class InstanceInstaller {
             if (cfOverrides != null) {
                 try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
                     Path root = fs.getPath("/overrides/");
-                    Files.walkFileTree(root, new CopyingFileVisitor(root, instanceDir));
+                    Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
                 }
             }
 
-            JsonUtils.write(GSON, instanceDir.resolve("version.json"), manifest);
+            JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
+
+            instance.installComplete = true;
+            try {
+                instance.saveJson();
+            } catch (IOException ex) {
+                throw new InstallationFailureException("Failed to save instance json.", ex);
+            }
         } catch (InstallationFailureException ex) {
             throw ex;
         } catch (Throwable ex) {
             throw new InstallationFailureException("Failed to install.", ex);
         }
-    }
-
-    /**
-     * Finds a {@link Target} of a given type in the installation manifest.
-     *
-     * @param type The 'type' to find.
-     * @return The {@link Target}.
-     * @throws IllegalStateException If more than one target of the given type is found.
-     */
-    @Nullable
-    private Target findTarget(String type) throws IllegalStateException {
-        List<Target> targetsMatching = StreamableIterable.of(manifest.getTargets())
-                .filter(e -> type.equals(e.getType()))
-                .toList();
-
-        if (targetsMatching.size() > 1) {
-            // Should be impossible??
-            String desc = targetsMatching.stream().map(e -> e.getName() + "@" + e.getVersion()).collect(Collectors.joining(", ", "[", "]"));
-            throw new IllegalStateException("Found more than one target for type '" + type + "'. " + desc);
-        }
-
-        return !targetsMatching.isEmpty() ? targetsMatching.get(0) : null;
     }
 
     private Map<String, IndexedFile> getKnownFiles() {
@@ -380,8 +326,8 @@ public class InstanceInstaller {
         Map<String, IndexedFile> knownFiles = new HashMap<>();
         for (ModpackFile file : manifest.getFiles()) {
             if (file.getType().equals("cf-extract")) continue;
-            Path path = file.toPath(instanceDir).toAbsolutePath().normalize();
-            String relPath = instanceDir.relativize(path).toString();
+            Path path = file.toPath(instance.getDir()).toAbsolutePath().normalize();
+            String relPath = instance.getDir().relativize(path).toString();
             knownFiles.put(relPath, new IndexedFile(relPath, file.getSha1OrNull(), file.getSize()));
         }
         Path cfOverrides = getCFOverridesZip(manifest);
@@ -414,7 +360,7 @@ public class InstanceInstaller {
         ModpackFile cfExtractEntry = cfExtractEntries.getFirst();
         NewDownloadTask task = NewDownloadTask.builder()
                 .url(cfExtractEntry.getUrl())
-                .dest(cfExtractEntry.getCfExtractPath(instanceDir, manifest.getName()))
+                .dest(cfExtractEntry.getCfExtractPath(instance.getDir(), manifest.getName()))
                 .withValidation(cfExtractEntry.createValidation().asDownloadValidation())
                 .build();
         try {
