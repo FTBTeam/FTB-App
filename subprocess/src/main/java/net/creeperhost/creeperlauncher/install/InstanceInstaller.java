@@ -37,6 +37,7 @@ import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifes
 public class InstanceInstaller {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final boolean DEBUG = Boolean.getBoolean("InstanceInstaller.debug");
 
     // These folders are 'known' to be important in the installation process.
     private static final Set<String> KNOWN_IMPORTANT_FOLDERS = Set.of(
@@ -162,6 +163,28 @@ public class InstanceInstaller {
         locateUntrackedFiles();
         prepareModLoader();
         prepareFileDownloads();
+
+        if (DEBUG) {
+            LOGGER.info("Found the following invalid files:");
+            for (InvalidFile invalidFile : getInvalidFiles()) {
+                LOGGER.info("  " + invalidFile);
+            }
+
+            LOGGER.info("Found the following untracked files:");
+            for (Path untrackedFile : getUntrackedFiles()) {
+                LOGGER.info("  " + untrackedFile);
+            }
+
+            LOGGER.info("The following files will be deleted:");
+            for (Path path : getFilesToRemove()) {
+                LOGGER.info("  " + path);
+            }
+
+            LOGGER.info("The following files will be downloaded:");
+            for (Path path : getFilesToDownload()) {
+                LOGGER.info("  " + path);
+            }
+        }
     }
 
     private void validateFiles() {
@@ -273,7 +296,7 @@ public class InstanceInstaller {
         try {
             for (Path path : filesToRemove) {
                 try {
-                    Files.delete(path);
+                    Files.deleteIfExists(path);
                 } catch (IOException ex) {
                     throw new InstallationFailureException("Failed to delete file: '" + path + "'.", ex);
                 }
@@ -302,6 +325,7 @@ public class InstanceInstaller {
             JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
 
             instance.installComplete = true;
+            instance.versionId = manifest.getId();
             try {
                 instance.saveJson();
             } catch (IOException ex) {

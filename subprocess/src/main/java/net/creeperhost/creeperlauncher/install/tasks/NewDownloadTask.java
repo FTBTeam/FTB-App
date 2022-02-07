@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Range;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,7 +75,7 @@ public class NewDownloadTask implements Task<Path> {
             Path localPath = fileLocator.getLocalFile(url, validation, dest);
             if (localPath != null && Files.exists(localPath)) {
                 LOGGER.info(" File existed locally.");
-                Files.copy(localPath, IOUtils.makeParents(dest));
+                Files.copy(localPath, IOUtils.makeParents(dest), StandardCopyOption.REPLACE_EXISTING);
                 if (progressListener != null) {
                     long len = Files.size(dest);
                     progressListener.start(len);

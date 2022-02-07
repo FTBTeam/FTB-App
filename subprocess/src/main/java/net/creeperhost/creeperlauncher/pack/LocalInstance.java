@@ -59,7 +59,7 @@ public class LocalInstance implements IPack
     private String art;
     @JsonAdapter(PathTypeAdapter.class)
     private Path path;
-    private long versionId;
+    public long versionId;
     public String name;
     private int minMemory = 2048;
     private int recMemory = 4096;
