@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.install.tasks.http;
+package net.creeperhost.creeperlauncher.util;
 
 import okhttp3.Cookie;
 import okhttp3.CookieJar;

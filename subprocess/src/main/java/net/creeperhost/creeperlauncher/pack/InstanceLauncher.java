@@ -23,7 +23,6 @@ import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
-import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import okhttp3.Request;
@@ -37,7 +36,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -423,7 +421,7 @@ public class InstanceLauncher {
             token.throwIfCancelled();
             if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.modLoader);
             LOGGER.info("Preparing manifest {}", id);
-            VersionManifest manifest = getVersionManifest(versionsDir, versions, id);
+            VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
             // Build in reverse order. First in list should be Minecraft's.
             manifests.add(0, manifest);
             id = manifest.inheritsFrom;
@@ -473,19 +471,9 @@ public class InstanceLauncher {
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest manifest = manifests.get(0);
-        VersionManifest.Download download = manifest.downloads.get("client");
-        if (download != null && download.url != null) {
+        NewDownloadTask task = manifest.getClientDownload(versionsDir);
+        if (task != null) {
             LOGGER.info("Validating client download for {}", manifest.id);
-            DownloadValidation validation = DownloadValidation.of()
-                    .withExpectedSize(download.size);
-            if (download.sha1 != null) {
-                validation = validation.withHash(Hashing.sha1(), download.sha1);
-            }
-            NewDownloadTask task = new NewDownloadTask(
-                    download.url,
-                    versionsDir.resolve(manifest.id).resolve(manifest.id + ".jar"),
-                    validation
-            );
             task.execute(token, progressTracker.listenerForStep(true));
         }
     }
@@ -494,7 +482,7 @@ public class InstanceLauncher {
         LOGGER.info("Validating minecraft libraries...");
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            NewDownloadTask task = library.createDownloadTask(librariesDir);
+            NewDownloadTask task = library.createDownloadTask(librariesDir, true);
             if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }
@@ -502,11 +490,11 @@ public class InstanceLauncher {
 
         long totalLen = tasks.stream()
                 .mapToLong(e -> {
-                    if (e.getValidation().expectedSize() == -1) {
+                    if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
                         return getContentLength(e.getUrl());
                     }
-                    return e.getValidation().expectedSize();
+                    return e.getValidation().expectedSize;
                 })
                 .sum();
 
@@ -566,13 +554,9 @@ public class InstanceLauncher {
     private JavaVersion getJavaVersion() {
         JavaVersion ret = JavaVersion.JAVA_1_8;
         for (VersionManifest e : manifests) {
-            VersionManifest.JavaVersion javaVersion = e.javaVersion;
-            if (javaVersion == null) continue;
-            JavaVersion parse = JavaVersion.parse(String.valueOf(javaVersion.majorVersion));
-            if (parse == null || parse == JavaVersion.UNKNOWN) {
-                LOGGER.error("Unable to parse '{}' into a JavaVersion.", javaVersion.majorVersion);
-                continue;
-            }
+            JavaVersion parse = e.getJavaVersionOrDefault(null);
+            if (parse == null) continue;
+
             if (parse.ordinal() > ret.ordinal()) {
                 ret = parse;
             }
@@ -602,23 +586,12 @@ public class InstanceLauncher {
         return versionsDir.resolve(rootId).resolve(rootId + ".jar");
     }
 
-    private static VersionManifest getVersionManifest(Path versionsFolder, VersionListManifest versions, String id) throws IOException {
-        VersionListManifest.Version version = versions.locate(id);
-        if (version == null) {
-            LOGGER.info("Version {} not found on remote list, trying locally.", id);
-            Path versionJson = versionsFolder.resolve(id).resolve(id + ".json");
-            if (Files.notExists(versionJson)) throw new FileNotFoundException("Unable to find version json for: '" + id + "'. Searched: '" + versionJson + "'.");
-            return GsonUtils.loadJson(versionJson, VersionManifest.class);
-        }
-        return VersionManifest.update(versionsFolder, version);
-    }
-
     private static long getContentLength(String url) {
         Request request = new Request.Builder()
                 .head()
                 .url(url)
                 .build();
-        try (Response response = NewDownloadTask.client.newCall(request).execute()) {
+        try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
             ResponseBody body = response.body();
             if (body != null) return body.contentLength();
 

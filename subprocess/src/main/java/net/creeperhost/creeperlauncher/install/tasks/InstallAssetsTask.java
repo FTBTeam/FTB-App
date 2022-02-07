@@ -46,7 +46,7 @@ public class InstallAssetsTask implements Task<Void> {
         if (listener != null) {
             long totalSize = subTasks.stream()
                     .map(NewDownloadTask::getValidation)
-                    .mapToLong(DownloadValidation::expectedSize)
+                    .mapToLong(e -> e.expectedSize)
                     .sum();
             listener.start(totalSize);
             progressAggregator = new ParallelTaskProgressAggregator(listener);
@@ -95,13 +95,14 @@ public class InstallAssetsTask implements Task<Void> {
             // this causes duplicate tasks to be added.
             if (!seen.add(dest)) continue;
 
-            NewDownloadTask task = new NewDownloadTask(
-                    MC_RESOURCES + loc,
-                    dest,
-                    DownloadValidation.of()
+            NewDownloadTask task = NewDownloadTask.builder()
+                    .url(MC_RESOURCES + loc)
+                    .dest(dest)
+                    .withValidation(DownloadValidation.of()
                             .withExpectedSize(object.size)
                             .withHash(Hashing.sha1(), object.hash)
-            );
+                    )
+                    .build();
             if (!task.isRedundant()) {
                 tasks.add(task);
             }

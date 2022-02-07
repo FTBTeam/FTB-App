@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ParallelTaskProgressAggregator extends TaskProgressAggregator {
 
     private final ThreadLocal<AtomicLong> lastProcessed = ThreadLocal.withInitial(AtomicLong::new);
+    private final ThreadLocal<AtomicLong> thisCycleProcessed = ThreadLocal.withInitial(AtomicLong::new);
     private final AtomicLong processed = new AtomicLong();
 
     public ParallelTaskProgressAggregator(TaskProgressListener parent) {
@@ -20,6 +21,7 @@ public class ParallelTaskProgressAggregator extends TaskProgressAggregator {
 
     @Override
     public void update(long processed) {
+        thisCycleProcessed.get().addAndGet(processed);
         AtomicLong lastProcessed = this.lastProcessed.get();
         parent.update(this.processed.addAndGet(processed - lastProcessed.get()));
         lastProcessed.set(processed);
@@ -28,6 +30,8 @@ public class ParallelTaskProgressAggregator extends TaskProgressAggregator {
     @Override
     public void start(long total) {
         lastProcessed.get().set(0);
+        processed.getAndAdd(-thisCycleProcessed.get().get());
+        thisCycleProcessed.get().set(0);
     }
 
     @Override

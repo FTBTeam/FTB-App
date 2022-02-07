@@ -3,18 +3,14 @@ package net.creeperhost.creeperlauncher.install.tasks;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
-import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.install.tasks.http.SimpleCookieJar;
+import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
-import okhttp3.OkHttpClient;
 import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +20,7 @@ import org.jetbrains.annotations.Range;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,67 +33,49 @@ public class NewDownloadTask implements Task<Path> {
 
     private static final boolean DEBUG = Boolean.getBoolean("DownloadTask.debug");
     private static final Logger LOGGER = LogManager.getLogger();
-    public static final OkHttpClient client = new OkHttpClient.Builder()
-            .cookieJar(new SimpleCookieJar())
-            .addInterceptor(new ThrottlerInterceptor())
-            .addInterceptor(new MultiHasherInterceptor())
-            .build();
 
+    private static final int DEFAULT_NUM_TRIES = 3;
+
+    private final int tries;
     private final String url;
     private final Path dest;
     private final DownloadValidation validation;
 
-    private final boolean useCache;
-    private final long id;
-    private final String name;
-    private final String type;
+    @Nullable
+    private final LocalFileLocator fileLocator;
 
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation) {
-        this(url, dest, validation, false, dest.getFileName().toString(), -1, "");
-    }
-
-    /**
-     * Overload of {@link #NewDownloadTask(String, Path, DownloadValidation, boolean, String, long, String)},
-     * which passes <code>-1</code> to <code>id</code> and <code>""</code> to <code>type</code>.
-     */
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation, String name) {
-        this(url, dest, validation, false, name, -1, "");
-    }
-
-    /**
-     * A Task that downloads a file.
-     *
-     * @param url        The URL.
-     * @param dest       The Destination for the file.
-     * @param validation The task validation parameters.
-     * @param useCache   If this task should use the {@link LocalCache}.
-     * @param name       The descriptive name for the file. Usually just the file name.
-     * @param id         An additional ID for tracking the file.
-     * @param type       The type of this download.
-     */
-    public NewDownloadTask(String url, Path dest, DownloadValidation validation, boolean useCache, String name, long id, String type) {
+    private NewDownloadTask(int tries, String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator) {
+        this.tries = tries;
         this.url = url;
         this.dest = dest;
         this.validation = validation;
 
-        this.useCache = useCache;
-        this.name = name;
-        this.id = id;
-        this.type = type;
+        this.fileLocator = fileLocator;
+    }
+
+    /**
+     * Creates a new {@link Builder} for building a {@link NewDownloadTask}.
+     *
+     * @return The {@link Builder}.
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
     public void execute(@Nullable CancellationToken token, @Nullable TaskProgressListener progressListener) throws IOException {
+        LOGGER.info("Downloading file {}..", dest);
         if (Files.exists(dest) && validation.validate(dest)) {
+            LOGGER.info(" File validated.");
             // Validated, do nothing.
             return;
         }
 
-        // TODO, SHA1 hardcode..
-        if (useCache && validation.expectedHashes.containsKey(HashFunc.SHA1)) {
-            Path cachePath = CreeperLauncher.localCache.get(validation.expectedHashes.get(HashFunc.SHA1));
-            if (cachePath != null) {
-                Files.copy(cachePath, IOUtils.makeParents(dest));
+        if (fileLocator != null) {
+            Path localPath = fileLocator.getLocalFile(url, validation, dest);
+            if (localPath != null && Files.exists(localPath)) {
+                LOGGER.info(" File existed locally.");
+                Files.copy(localPath, IOUtils.makeParents(dest), StandardCopyOption.REPLACE_EXISTING);
                 if (progressListener != null) {
                     long len = Files.size(dest);
                     progressListener.start(len);
@@ -106,18 +85,39 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
 
-        MultiHasher hashRequest = null;
+        Throwable fail = null;
+        for (int i = 0; i < tries; i++) {
+            try {
+                doRequest(progressListener);
+                fail = null;
+                break;
+            } catch (Throwable ex) {
+                if (fail != null) {
+                    fail.addSuppressed(ex);
+                } else {
+                    fail = ex;
+                }
+            }
+        }
+        if (fail != null) {
+            throw new IOException("Download task failed.", fail);
+        }
+
+        LOGGER.info("  File downloaded.");
+
+        if (fileLocator != null) {
+            fileLocator.onFileDownloaded(url, validation, dest);
+        }
+    }
+
+    private void doRequest(@Nullable TaskProgressListener progressListener) throws IOException {
         OkHttpDownloadAction action = new OkHttpDownloadAction()
-                .setClient(client)
+                .setClient(Constants.OK_HTTP_CLIENT)
                 .setUrl(url)
                 .setDest(dest)
                 .setUseETag(validation.useETag)
                 .setOnlyIfModified(validation.useOnlyIfModified)
                 .addTag(Throttler.class, Constants.getGlobalThrottler());
-        if (!validation.expectedHashes.isEmpty()) {
-            hashRequest = new MultiHasher(validation.expectedHashes.keySet());
-            action.addTag(MultiHasher.class, hashRequest);
-        }
 
         if (progressListener != null) {
             action.setDownloadListener(new QuackProgressAdapter(progressListener));
@@ -126,11 +126,19 @@ public class NewDownloadTask implements Task<Path> {
             action.setQuiet(false);
         }
 
+        LOGGER.info(" Trying to download from {}..", url);
         action.execute();
 
         if (action.isUpToDate()) {
+            LOGGER.info("  File passed ETag/OnlyIfModified checks.");
             // We validated ETag/OnlyIfModified
             return;
+        }
+
+        MultiHasher hashRequest = null;
+        if (!validation.expectedHashes.isEmpty()) {
+            hashRequest = new MultiHasher(validation.expectedHashes.keySet());
+            hashRequest.load(dest);
         }
 
         HashResult result = hashRequest != null ? hashRequest.finish() : null;
@@ -151,11 +159,6 @@ public class NewDownloadTask implements Task<Path> {
                     }
                 }
             }
-        }
-
-        // TODO, SHA1 hardcode..
-        if (useCache && validation.expectedHashes.containsKey(HashFunc.SHA1)) {
-            CreeperLauncher.localCache.put(dest, validation.expectedHashes.get(HashFunc.SHA1));
         }
     }
 
@@ -178,15 +181,93 @@ public class NewDownloadTask implements Task<Path> {
     public String getUrl() { return url; }
     public Path getDest() { return dest; }
     public DownloadValidation getValidation() { return validation; }
-    public long getId() { return id; }
-    public String getName() { return name; }
-    public String getType() { return type; }
+    @Nullable public LocalFileLocator getFileLocator() { return fileLocator; }
     //@formatter:on
 
     /**
-     * Validation properties for a {@link NewDownloadTask}.
+     * Converts this {@link NewDownloadTask} back to {@link Builder}.
+     *
+     * @return The {@link Builder}.
      */
-    public static record DownloadValidation(long expectedSize, Map<HashFunc, HashCode> expectedHashes, boolean useETag, boolean useOnlyIfModified) {
+    public Builder toBuilder() {
+        Builder builder = new Builder();
+        builder.url = url;
+        builder.dest = dest;
+        builder.validation = validation;
+        builder.fileLocator = fileLocator;
+        return builder;
+    }
+
+    // TODO Future improvements here would be to mirror DownloadValidation methods for fluency.
+    public static class Builder {
+
+        private int tries = DEFAULT_NUM_TRIES;
+        @Nullable
+        private String url;
+        @Nullable
+        private Path dest;
+
+        private DownloadValidation validation = DownloadValidation.of();
+        @Nullable
+        private LocalFileLocator fileLocator;
+
+        private Builder() { }
+
+        public Builder tries(int tries) {
+            this.tries = tries;
+            return this;
+        }
+
+        public Builder url(String url) {
+            this.url = url;
+            return this;
+        }
+
+        public Builder dest(Path dest) {
+            this.dest = dest;
+            return this;
+        }
+
+        public Builder withValidation(DownloadValidation validation) {
+            this.validation = validation;
+            return this;
+        }
+
+        public Builder withFileLocator(LocalFileLocator fileLocator) {
+            this.fileLocator = fileLocator;
+            return this;
+        }
+
+        public NewDownloadTask build() {
+            if (url == null) throw new IllegalStateException("URL not set.");
+            if (dest == null) throw new IllegalStateException("Dest not set.");
+
+            return new NewDownloadTask(tries, url, dest, validation, fileLocator);
+        }
+    }
+
+    public interface LocalFileLocator {
+
+        @Nullable
+        Path getLocalFile(String url, FileValidation validation, Path dest);
+
+        void onFileDownloaded(String url, FileValidation validation, Path dest);
+    }
+
+    /**
+     * Validation properties for a {@link NewDownloadTask}.
+     * Extension of {@link FileValidation}.
+     */
+    public static class DownloadValidation extends FileValidation {
+
+        public final boolean useETag;
+        public final boolean useOnlyIfModified;
+
+        private DownloadValidation(long expectedSize, Map<HashFunc, HashCode> expectedHashes, boolean useETag, boolean useOnlyIfModified) {
+            super(expectedSize, expectedHashes);
+            this.useETag = useETag;
+            this.useOnlyIfModified = useOnlyIfModified;
+        }
 
         /**
          * Create a new blank {@link DownloadValidation}.
@@ -195,6 +276,16 @@ public class NewDownloadTask implements Task<Path> {
          */
         public static DownloadValidation of() {
             return new DownloadValidation(-1, Map.of(), false, false);
+        }
+
+        /**
+         * Creates a new {@link DownloadValidation} from the provided {@link FileValidation}.
+         *
+         * @param other The {@link FileValidation}.
+         * @return The new {@link DownloadValidation}.
+         */
+        public static DownloadValidation of(FileValidation other) {
+            return new DownloadValidation(other.expectedSize, other.expectedHashes, false, false);
         }
 
         /**
@@ -242,30 +333,6 @@ public class NewDownloadTask implements Task<Path> {
          */
         public DownloadValidation withUseOnlyIfModified(boolean useOnlyIfModified) {
             return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
-        }
-
-        private boolean validate(Path path) throws IOException {
-            if (expectedHashes.isEmpty()) return validate(path, null);
-            MultiHasher hasher = new MultiHasher(expectedHashes.keySet());
-            hasher.load(path);
-            return validate(path, hasher.finish());
-        }
-
-        private boolean validate(Path path, @Nullable HashResult hashResult) throws IOException {
-            if (expectedSize != -1) {
-                long size = Files.size(path);
-                if (expectedSize != size) {
-                    return false;
-                }
-            }
-            if (hashResult != null) {
-                for (Map.Entry<HashFunc, HashCode> entry : expectedHashes.entrySet()) {
-                    if (!entry.getValue().equals(hashResult.get(entry.getKey()))) {
-                        return false;
-                    }
-                }
-            }
-            return true;
         }
     }
 

@@ -6,18 +6,19 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.gson.HashCodeAdapter;
+import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.platform.OperatingSystem;
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
-import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -42,6 +43,11 @@ public class VersionManifest {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("VersionManifest.debug");
 
+    public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(OS.class, new OsDeserializer())
+            .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
+            .create();
+
     private static final Rule WIN_10_RULE = new Rule(
             Action.ALLOW,
             new OSRule(
@@ -60,7 +66,7 @@ public class VersionManifest {
     public int complianceLevel;
     public Map<String, Download> downloads = new HashMap<>();
     @Nullable
-    public JavaVersion javaVersion;
+    public JavaVersionJson javaVersion;
     public List<Library> libraries = new ArrayList<>();
     @Nullable
     public Logging logging;
@@ -90,14 +96,14 @@ public class VersionManifest {
     public static VersionManifest update(Path versionsDir, VersionListManifest.Version version) throws IOException {
         Path versionFile = versionsDir.resolve(version.id).resolve(version.id + ".json");
         LOGGER.info("Updating version manifest for '{}' from '{}'.", version.id, version.url);
-        NewDownloadTask downloadTask = new NewDownloadTask(
-                version.url,
-                versionFile,
-                DownloadValidation.of()
+        NewDownloadTask downloadTask = NewDownloadTask.builder()
+                .url(version.url)
+                .dest(versionFile)
+                .withValidation(DownloadValidation.of()
                         .withUseETag(true)
-                        .withUseOnlyIfModified(true),
-                null
-        );
+                        .withUseOnlyIfModified(true)
+                )
+                .build();
 
         if (!downloadTask.isRedundant()) {
             try {
@@ -110,12 +116,41 @@ public class VersionManifest {
                 }
             }
         }
-        return GsonUtils.loadJson(versionFile, VersionManifest.class);
+        return JsonUtils.parse(GSON, versionFile, VersionManifest.class);
     }
 
     public Stream<Library> getLibraries(Set<String> features) {
         return libraries.stream()
                 .filter(e -> e.apply(features));
+    }
+
+    @Nullable
+    @Contract ("!null->!null")
+    public JavaVersion getJavaVersionOrDefault(@Nullable JavaVersion _default) {
+        if (javaVersion == null) return _default;
+        JavaVersion parse = JavaVersion.parse(String.valueOf(javaVersion.majorVersion));
+        if (parse == null || parse == JavaVersion.UNKNOWN) {
+            LOGGER.error("Unable to parse '{}' into a JavaVersion.", javaVersion.majorVersion);
+            return _default;
+        }
+        return parse;
+    }
+
+    @Nullable
+    public NewDownloadTask getClientDownload(Path versionsDir) {
+        Download download = downloads.get("client");
+        if (download == null || download.url == null) return null;
+
+        DownloadValidation validation = DownloadValidation.of()
+                .withExpectedSize(download.size);
+        if (download.sha1 != null) {
+            validation = validation.withHash(Hashing.sha1(), download.sha1);
+        }
+        return NewDownloadTask.builder()
+                .url(download.url)
+                .dest(versionsDir.resolve(id).resolve(id + ".jar"))
+                .withValidation(validation)
+                .build();
     }
 
     public static List<String> collectJVMArgs(List<VersionManifest> manifests, Set<String> features) {
@@ -208,7 +243,7 @@ public class VersionManifest {
         public String url;
     }
 
-    public static class JavaVersion {
+    public static class JavaVersionJson {
 
         public String component;
         public int majorVersion;
@@ -234,43 +269,33 @@ public class VersionManifest {
         }
 
         @Nullable
-        public NewDownloadTask createDownloadTask(Path librariesDir) {
-            // It appears that the Vanilla launcher will explicitly use the 'url' property if it exists
-            if (url != null) {
-                return new NewDownloadTask(
-                        // Overriden `url` to 'CH_MAVEN'
-                        CH_MAVEN + name.toPath(),
-                        name.toPath(librariesDir),
-                        DownloadValidation.of()
-                );
-            }
-            // If the 'downloads' property is null, it tries from Mojang's maven directly.
-            if (downloads == null) {
-                return new NewDownloadTask(
-                        // Overriden Mojang's maven with 'CH_MAVEN'
-                        CH_MAVEN + name.toPath(),
-                        name.toPath(librariesDir),
-                        DownloadValidation.of()
-                );
+        public NewDownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
+            if (url != null || downloads == null) {
+                // The Vanilla launcher will explicitly use the 'url' property if it exists, however we override this to the CH maven.
+                // If the 'downloads' property is null, it tries from Mojang's maven directly, however we override this to the CH maven.
+                return NewDownloadTask.builder()
+                        .url(CH_MAVEN + name.toPath())
+                        .dest(name.toPath(librariesDir))
+                        .build();
             }
 
             // We have a 'downlaods' property, but no 'natives'.
             if (natives == null) {
                 if (downloads.artifact == null) return null;
-                return downloadTaskFor(librariesDir, downloads.artifact, name);
+                return downloadTaskFor(librariesDir, downloads.artifact, name, ignoreLocalLibraries);
             }
             // We have natives.
             if (downloads.classifiers == null) return null; // What? but okay, just ignore.
             String classifier = natives.get(OS.current());
             if (classifier == null) return null; // No natives for this platform.
-            VersionManifest.LibraryDownload artifact = downloads.classifiers.get(classifier);
+            LibraryDownload artifact = downloads.classifiers.get(classifier);
             if (artifact == null) return null; // Shouldn't happen, but okay.
-            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier));
+            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier), ignoreLocalLibraries);
         }
 
         @Nullable
-        private NewDownloadTask downloadTaskFor(Path librariesDir, VersionManifest.LibraryDownload artifact, MavenNotation name) {
-            if (StringUtils.isEmpty(artifact.url)) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
+        private NewDownloadTask downloadTaskFor(Path librariesDir, LibraryDownload artifact, MavenNotation name, boolean ignoreLocalLibraries) {
+            if (StringUtils.isEmpty(artifact.url) && ignoreLocalLibraries) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
 
             if (artifact.path == null) {
                 LOGGER.warn("Artifact has null path? Nani?? Skipping.. {}", name);
@@ -282,12 +307,13 @@ public class VersionManifest {
             if (artifact.sha1 != null) {
                 validation = validation.withHash(Hashing.sha1(), artifact.sha1);
             }
-            return new NewDownloadTask(
-                    // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
-                    CH_MAVEN + StringUtils.removeStart(artifact.path, "/"),
-                    librariesDir.resolve(artifact.path),
-                    validation
-            );
+
+            // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
+            return NewDownloadTask.builder()
+                    .url(CH_MAVEN + StringUtils.removeStart(artifact.path, "/"))
+                    .dest(librariesDir.resolve(artifact.path))
+                    .withValidation(validation)
+                    .build();
         }
     }
 

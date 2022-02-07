@@ -1,18 +1,25 @@
 package net.creeperhost.creeperlauncher.pack;
 
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.gson.*;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.PathTypeAdapter;
+import net.covers1624.quack.net.DownloadAction;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import net.creeperhost.creeperlauncher.*;
+import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
-import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
-import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
-import net.creeperhost.minetogether.lib.cloudsaves.CloudSyncType;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
+import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
+import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
+import net.creeperhost.minetogether.lib.cloudsaves.CloudSyncType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -21,23 +28,19 @@ import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-import net.creeperhost.creeperlauncher.*;
-import net.creeperhost.creeperlauncher.api.DownloadableFile;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.BindException;
 import java.net.MalformedURLException;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -45,8 +48,8 @@ import java.util.zip.ZipInputStream;
 
 import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
 
-//TODO: Turn LocalInstance into a package somehow and split out the individual parts for easier navigation.
-//TODO: Switch prePlay events, postInstall(Semi-Completed), events etc into the same setup as gameClose to allow multiple code blocks.
+// TODO move all properties from this class to a specific 'InstanceJson' data object.
+//      Rename LocalInstance to 'Instance' and use as a state holder for the instance.
 public class LocalInstance implements IPack
 {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -57,7 +60,7 @@ public class LocalInstance implements IPack
     private String art;
     @JsonAdapter(PathTypeAdapter.class)
     private Path path;
-    private long versionId;
+    public long versionId;
     public String name;
     private int minMemory = 2048;
     private int recMemory = 4096;
@@ -96,78 +99,71 @@ public class LocalInstance implements IPack
     public transient CancellationToken prepareToken;
     private transient int loadingModPort;
     public transient boolean hasLoadingMod;
-    private transient AtomicBoolean inUse = new AtomicBoolean(false);
-    public transient ModPack manifest;
-    private transient boolean updateManifest = false;
 
     private transient long startTime;
 
-    public LocalInstance(ModPack pack, long versionId)
-    {
-        //We're making an instance!
-        String tmpArt = "";
-        UUID uuid = UUID.randomUUID();
-        this.uuid = uuid;
-        this.manifest = pack;
-        this.versionId = versionId;
-        this.path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(this.uuid.toString());
-        this.cloudSaves = Boolean.getBoolean(Settings.settings.getOrDefault("cloudSaves", "false"));
-        this.name = pack.getName();
-        this.version = pack.getVersion();
-        this.dir = this.path;
-        this.authors = pack.getAuthors();
-        this.description = pack.getDescription();
-        this.mcVersion = pack.getMcVersion();
-        this.url = pack.getUrl();
-        this.artUrl = pack.getArtURL();
-        this.id = pack.getId();
-        if (Settings.settings.containsKey("jvmargs"))
-        {
-            this.jvmArgs = Settings.settings.get("jvmargs");
+    public LocalInstance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+        uuid = UUID.randomUUID();
+        versionId = versionManifest.getId();
+        path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(uuid.toString());
+        FileUtils.createDirectories(path);
+        cloudSaves = Settings.getBooleanOr("cloudSaves", false);
+        name = modpack.getName();
+        version = versionManifest.getName();
+        dir = path;
+        authors = modpack.getAuthors().stream().map(ModpackManifest.Author::getName).toList();
+        description = modpack.getDescription();
+        mcVersion = versionManifest.getTargetVersion("game");
+        url = "";// TODO this is always empty (old install system), can we remove this? what is it used for?
+        ModpackManifest.Art art = modpack.getFirstArt("square"); // TODO support more than one art.
+        artUrl = art != null ? art.getUrl() : "";
+        id = modpack.getId();
+        this.packType = packType;
+        _private = isPrivate;
+        if (Settings.settings.containsKey("jvmargs")) {
+            jvmArgs = Settings.settings.get("jvmargs");
         }
-        this.recMemory = pack.getRecMemory();
-        this.minMemory = pack.getMinMemory();
-        this.memory = this.recMemory;
+        recMemory = versionManifest.getRecommendedSpec();
+        minMemory = versionManifest.getMinimumSpec();
+        memory = recMemory;
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         long totalMemory = hal.getMemory().getTotal() / 1024 / 1024;
-        if(this.recMemory > (totalMemory-2048))
-        {
-            this.memory = this.minMemory;
+        if (recMemory > (totalMemory - 2048)) {
+            memory = minMemory;
         }
-        FileUtils.createDirectories(path);
-        Path artFile = path.resolve("art.png");
-        if (Files.notExists(artFile))
-        {
-            try
-            {
-                if (ForgeUtils.isUrlValid(this.getArtURL()))
-                {
-                    DownloadUtils.downloadFile(artFile, this.getArtURL());
-                } else
-                {
-                    LOGGER.error("The url '{}' is not valid.", getArtURL());
+
+        if (art != null) {
+            try {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                DownloadAction action = new OkHttpDownloadAction()
+                        .setUserAgent(Constants.USER_AGENT)
+                        .setClient(Constants.OK_HTTP_CLIENT)
+                        .setUrl(art.getUrl())
+                        .setDest(bos);
+                action.execute();
+
+                BufferedImage resizedArt = ImageUtils.resizeImage(bos.toByteArray(), 256, 256);
+                bos.reset();
+                ImageIO.write(resizedArt, "png", bos);
+                this.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
+                // folder.jpg is not strictly used, it exists for easy folder navigation.
+                try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
+                    ImageIO.write(resizedArt, "jpg", os);
                 }
-            } catch (Exception err)
-            {
-                LOGGER.error("Unable to download and save artwork.", err);
+            } catch (IOException ex) {
+                LOGGER.error("Failed to download and resize Modpack art.", ex);
+                // TODO set art to missing image?
             }
         }
-        try
-        {
-            Base64.Encoder en = Base64.getEncoder();
-            tmpArt = "data:image/png;base64," + en.encodeToString(Files.readAllBytes(artFile));
-        } catch (Exception err)
-        {
-            LOGGER.error("Unable to encode artwork for embedding.", err);
-        }
-        this.art = tmpArt;
-        try
-        {
-            this.saveJson();
-        } catch (Exception err)
-        {
-            LOGGER.error("Unable to write instance configuration.", err);
+
+        // Set to false, we are creating a new fresh instance.
+        installComplete = false;
+
+        try {
+            saveJson();
+        } catch (IOException ex) {
+            LOGGER.error("Failed to save instance.", ex);
         }
     }
 
@@ -177,7 +173,6 @@ public class LocalInstance implements IPack
         String tmpArt = "";
         UUID uuid = UUID.randomUUID();
         this.uuid = uuid;
-        this.manifest = pack;
         this.versionId = versionId;
         this.path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(this.uuid.toString());
         this.cloudSaves = Boolean.getBoolean(Settings.settings.getOrDefault("cloudSaves", "false"));
@@ -284,15 +279,6 @@ public class LocalInstance implements IPack
             this.cloudSaves = jsonOutput.cloudSaves;
             this.hasInstMods = jsonOutput.hasInstMods;
             this.packType = jsonOutput.packType;
-            if(Files.exists(path.resolve("modpack.json")))
-            {
-                this.manifest = FTBModPackInstallerTask.getPackFromFile(path);
-
-//                try (BufferedReader manifestreader = Files.newBufferedReader(path.resolve("modpack.json"))) {
-//                    ModPack pack = GsonUtils.GSON.fromJson(manifestreader, ModPack.class);
-//                    this.manifest = pack;
-//                }
-            }
             this._private = jsonOutput._private;
             this.installComplete = jsonOutput.installComplete;
             reader.close();
@@ -301,16 +287,6 @@ public class LocalInstance implements IPack
             LOGGER.error(e);
             throw new RuntimeException("Instance is corrupted!", e);
         }
-    }
-
-    public LocalInstance(String LauncherImportPath, Boolean isTwitch)
-    {
-        //Import a pack from the FTB or Twitch local packs
-        UUID uuid = UUID.randomUUID();
-        this.uuid = uuid;
-        this.isImport = true;
-        this.path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(uuid.toString());
-        //this.hasLoadingMod = checkForLaunchMod();
     }
 
     private static final String[] candidates = new String[] {
@@ -576,12 +552,6 @@ public class LocalInstance implements IPack
         return true;
     }
 
-    public LocalInstance clone()
-    {
-        //Clone the instance on the file system and return the new instance
-        return this;
-    }
-
     public boolean browse() throws IOException
     {
         if (Desktop.isDesktopSupported())
@@ -599,14 +569,6 @@ public class LocalInstance implements IPack
     {
         try (BufferedWriter writer = Files.newBufferedWriter(path.resolve("instance.json"))) {
             GsonUtils.GSON.toJson(this, writer);
-        }
-        if(updateManifest)
-        {
-            try (BufferedWriter writer = Files.newBufferedWriter(path.resolve("modpack.json"))) {
-                GsonUtils.GSON.toJson(this.manifest, writer);
-                writer.close();
-                updateManifest = false;
-            }
         }
         return true;
     }
@@ -698,68 +660,6 @@ public class LocalInstance implements IPack
     public String getModLoader()
     {
         return modLoader;
-    }
-
-    public ModPack getManifest(Runnable updateCallback)
-    {
-        AtomicReference<ModPack> newManifest = new AtomicReference<>();
-        CompletableFuture ftr = CompletableFuture.runAsync(() -> {
-            ModPack oldManifest = this.manifest;//Copy of existing manifest
-            ModPack pack = FTBModPackInstallerTask.getPackFromAPI(this.id, this.versionId, this._private, this.packType);
-            if (pack == null) {
-                pack = FTBModPackInstallerTask.getPackFromAPI(this.id, this.versionId, !this._private, this.packType);
-            }
-            if(pack != null) {
-                newManifest.set(pack);
-                if (oldManifest != null && (!newManifest.get().equals(oldManifest))) {
-                    //Manifest has changed server side from cache
-                    this.manifest = newManifest.get();
-                    this.updateManifest = true;
-                    if (updateCallback != null) updateCallback.run();
-                }
-            }
-        });
-        if(this.manifest == null)
-        {
-            ftr.join();
-            this.manifest = newManifest.get();
-            try {
-                saveJson();
-            } catch (IOException ignored) { }//TODO: We should really stop ignoring saving errors
-        }
-        return this.manifest;
-    }
-
-    public boolean setJre(boolean autoDetect, Path path)
-    {
-        Path javaExec = null;
-        String javaBinary = "javaw.exe";
-        switch (OS.CURRENT)
-        {
-            case LINUX:
-            case MAC:
-                javaBinary = "java";
-                break;
-        }
-        if (autoDetect)
-        {
-            if (!this.embeddedJre)
-            {
-                javaExec = Paths.get(System.getProperty("java.home")).resolve("bin").resolve(javaBinary);
-            }
-        } else
-        {
-            javaExec = path.resolve(javaBinary);
-        }
-        if (javaExec != null && Files.exists(javaExec))
-        {
-            jrePath = javaExec.toAbsolutePath();
-        } else
-        {
-            embeddedJre = true;
-            return false;
-        }
-        return true;
     }
 
     public void cloudSync(boolean forceCloud)

@@ -95,6 +95,12 @@ public class Settings
         return getPathOpt("instanceLocation", default_);
     }
 
+    public static boolean getBooleanOr(String name, boolean default_) {
+        String value = settings.get(name);
+
+        return name != null ? Boolean.parseBoolean(value) : default_;
+    }
+
     public static String getDefaultThreadLimit(String arg)
     {
         int defaultThreads = (Runtime.getRuntime().availableProcessors() / 2) - 1;

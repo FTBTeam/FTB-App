@@ -212,7 +212,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'org.java-websocket:Java-WebSocket:1.4.0'
     implementation 'com.github.oshi:oshi-core:5.7.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.2.2'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'org.apache.commons:commons-compress:1.2'
     implementation 'net.java.dev.jna:jna:5.5.0'
     implementation 'net.java.dev.jna:jna-platform:5.5.0'
@@ -220,8 +220,11 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.16.0'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.16.0'
     implementation 'org.apache.logging.log4j:log4j-jul:2.16.0'
+    implementation('org.apache.maven:maven-artifact:3.8.4') {
+        exclude group: 'org.codehaus.plexus' // Not needed for this application.
+    }
     implementation 'com.github.pircbotx:pircbotx:2.2'
-    implementation 'net.covers1624:Quack:0.4.0.44'
+    implementation 'net.covers1624:Quack:0.4.1.46'
     implementation 'net.covers1624:JdkUtils:0.3.0.7'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
