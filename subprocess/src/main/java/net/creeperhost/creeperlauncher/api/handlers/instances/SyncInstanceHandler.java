@@ -27,10 +27,12 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
     public void handle(InstallInstanceData data)
     {
         if(data.uuid != null && data.uuid.length() > 0) {
-            if (CreeperLauncher.isInstalling.get()) {
-                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.get().currentUUID));
+            if (CreeperLauncher.isInstalling) {
+                assert CreeperLauncher.currentInstall != null;
+                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.getInstance().getUuid().toString()));
                 return;
             }
+            CreeperLauncher.isInstalling = true;
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Install started.", data.uuid));
             //Create the folder
             Path instanceDir = Constants.INSTANCES_FOLDER_LOC.resolve(data.uuid);

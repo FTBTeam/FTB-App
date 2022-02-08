@@ -29,10 +29,12 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     public void handle(InstallInstanceData data) {
         LOGGER.debug("Received install pack message for " + "ID:" + data.id + " VERSION:" + data.version + " PACKTYPE:" + data.packType);
         FTBModPackInstallerTask.currentStage = FTBModPackInstallerTask.Stage.INIT;
-        if (CreeperLauncher.isInstalling.get()) {
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.get().currentUUID));
+        if (CreeperLauncher.isInstalling) {
+            assert CreeperLauncher.currentInstall != null;
+            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.getInstance().getUuid().toString()));
             return;
         }
+        CreeperLauncher.isInstalling = true;
         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Install started.", ""));
 
         try {
@@ -75,8 +77,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         try {
             InstallProgressTracker tracker = new InstallProgressTracker(data);
             InstanceInstaller installer = new InstanceInstaller(instance, manifests.getRight(), tracker);
+            CreeperLauncher.currentInstall = installer;
             installer.prepare();
-            CompletableFuture.runAsync(() -> {
+            CreeperLauncher.currentInstallFuture = CompletableFuture.runAsync(() -> {
                 try {
                     installer.execute();
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.getUuid().toString()));
@@ -85,6 +88,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                     LOGGER.error("Fatal exception whilst installing modpack.", ex);
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
                 }
+                CreeperLauncher.isInstalling = false;
+                CreeperLauncher.currentInstall = null;
+                CreeperLauncher.currentInstallFuture = null;
             });
         } catch (IOException ex) {
             LOGGER.error("Fatal exception preparing modpack installation.", ex);

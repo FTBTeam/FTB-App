@@ -85,13 +85,6 @@ public class Constants {
             true
     );
 
-    public static final ExecutorService TASK_POOL = new ThreadPoolExecutor(
-            Settings.getThreadLimit(),
-            Settings.getThreadLimit(),
-            60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>()
-    );
-
     // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
     public static final String[] MOJANG_DEFAULT_ARGS = {
             "-Xmx${memory}M",

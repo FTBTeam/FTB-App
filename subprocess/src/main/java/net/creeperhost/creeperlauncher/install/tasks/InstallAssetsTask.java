@@ -39,7 +39,7 @@ public class InstallAssetsTask implements Task<Void> {
             progressAggregator = new ParallelTaskProgressAggregator(listener);
         }
 
-        ParallelTaskHelper.executeInParallel(token, Constants.TASK_POOL, subTasks, progressAggregator);
+        ParallelTaskHelper.executeInParallel(token, Task.TASK_POOL, subTasks, progressAggregator);
 
         if (listener != null) {
             listener.finish(progressAggregator.getProcessed());

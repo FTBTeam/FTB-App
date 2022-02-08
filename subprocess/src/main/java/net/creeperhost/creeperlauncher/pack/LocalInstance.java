@@ -355,14 +355,14 @@ public class LocalInstance implements IPack
                 saveJson(); // save to ensure saved to disk as false
             } catch (IOException e) {
             }
-            CreeperLauncher.isInstalling.set(true);
+//            CreeperLauncher.isInstalling.set(true);
             Analytics.sendInstallRequest(this.getId(), this.getVersionId(), this.packType);
             LOGGER.debug("Running installer async task");
             installer.execute().thenRunAsync(() ->
             {
                 LOGGER.debug("Running after installer task");
                 FTBModPackInstallerTask.currentStage = FTBModPackInstallerTask.Stage.FINISHED;
-                CreeperLauncher.isInstalling.set(false);
+//                CreeperLauncher.isInstalling.set(false);
                 try
                 {
                     installComplete = true;
@@ -414,7 +414,7 @@ public class LocalInstance implements IPack
                 this.saveJson();
             } catch (IOException ignored){}
             FTBModPackInstallerTask.currentStage = FTBModPackInstallerTask.Stage.FINISHED;
-            CreeperLauncher.isInstalling.set(false);
+//            CreeperLauncher.isInstalling.set(false);
             try
             {
                 this.saveJson();

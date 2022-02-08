@@ -29,6 +29,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.GSON;
@@ -60,6 +61,8 @@ public class InstanceInstaller {
     private final ModpackVersionManifest oldManifest;
 
     private final OperationType operationType;
+
+    private final CancellationToken cancelToken = new CancellationToken();
 
     //region Tracking
     /**
@@ -152,6 +155,14 @@ public class InstanceInstaller {
         return filesToDownload;
     }
 
+    public LocalInstance getInstance() {
+        return instance;
+    }
+
+    public CancellationToken getCancelToken() {
+        return cancelToken;
+    }
+
     /**
      * Prepare the Installer.
      * <p>
@@ -191,6 +202,67 @@ public class InstanceInstaller {
                 LOGGER.info("  " + path);
             }
         }
+    }
+
+    public void execute() throws InstallationFailureException {
+        try {
+            for (Path path : filesToRemove) {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException ex) {
+                    throw new InstallationFailureException("Failed to delete file: '" + path + "'.", ex);
+                }
+            }
+
+            tracker.nextStage(InstallStage.MODLOADER);
+            if (modLoaderInstallTask != null) {
+                modLoaderInstallTask.execute(cancelToken, null);
+                instance.modLoader = modLoaderInstallTask.getResult();
+            } else {
+                // Mod loader doesn't exist. This must be vanilla
+                instance.modLoader = manifest.getTargetVersion("game");
+            }
+
+            tracker.nextStage(InstallStage.DOWNLOADS);
+            long totalSize = tasks.stream()
+                    .mapToLong(e -> e.size)
+                    .sum();
+            TaskProgressListener rootListener = tracker.listenerForStage();
+            rootListener.start(totalSize);
+            TaskProgressAggregator progressAggregator = new ParallelTaskProgressAggregator(rootListener);
+
+            ParallelTaskHelper.executeInParallel(cancelToken, Task.TASK_POOL, tasks, progressAggregator);
+
+            rootListener.finish(progressAggregator.getProcessed());
+
+            Path cfOverrides = getCFOverridesZip(manifest);
+            if (cfOverrides != null) {
+                try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
+                    Path root = fs.getPath("/overrides/");
+                    Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
+                }
+            }
+
+            JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
+
+            instance.installComplete = true;
+            instance.versionId = manifest.getId();
+            instance.versionManifest = manifest;
+            try {
+                instance.saveJson();
+            } catch (IOException ex) {
+                throw new InstallationFailureException("Failed to save instance json.", ex);
+            }
+            tracker.nextStage(InstallStage.FINISHED);
+        } catch (InstallationFailureException ex) {
+            throw ex;
+        } catch (Throwable ex) {
+            throw new InstallationFailureException("Failed to install.", ex);
+        }
+    }
+
+    public void cancel(CompletableFuture<?> future) {
+        cancelToken.cancel(future);
     }
 
     private void validateFiles() {
@@ -303,63 +375,6 @@ public class InstanceInstaller {
             }
         }
         tracker.submitFiles(dlFiles);
-    }
-
-    public void execute() throws InstallationFailureException {
-        try {
-            for (Path path : filesToRemove) {
-                try {
-                    Files.deleteIfExists(path);
-                } catch (IOException ex) {
-                    throw new InstallationFailureException("Failed to delete file: '" + path + "'.", ex);
-                }
-            }
-
-            tracker.nextStage(InstallStage.MODLOADER);
-            if (modLoaderInstallTask != null) {
-                modLoaderInstallTask.execute(null, null);
-                instance.modLoader = modLoaderInstallTask.getResult();
-            } else {
-                // Mod loader doesn't exist. This must be vanilla
-                instance.modLoader = manifest.getTargetVersion("game");
-            }
-
-            tracker.nextStage(InstallStage.DOWNLOADS);
-            long totalSize = tasks.stream()
-                    .mapToLong(e -> e.size)
-                    .sum();
-            TaskProgressListener rootListener = tracker.listenerForStage();
-            rootListener.start(totalSize);
-            TaskProgressAggregator progressAggregator = new ParallelTaskProgressAggregator(rootListener);
-
-            ParallelTaskHelper.executeInParallel(null, Constants.TASK_POOL, tasks, progressAggregator);
-
-            rootListener.finish(progressAggregator.getProcessed());
-
-            Path cfOverrides = getCFOverridesZip(manifest);
-            if (cfOverrides != null) {
-                try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
-                    Path root = fs.getPath("/overrides/");
-                    Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
-                }
-            }
-
-            JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
-
-            instance.installComplete = true;
-            instance.versionId = manifest.getId();
-            instance.versionManifest = manifest;
-            try {
-                instance.saveJson();
-            } catch (IOException ex) {
-                throw new InstallationFailureException("Failed to save instance json.", ex);
-            }
-            tracker.nextStage(InstallStage.FINISHED);
-        } catch (InstallationFailureException ex) {
-            throw ex;
-        } catch (Throwable ex) {
-            throw new InstallationFailureException("Failed to install.", ex);
-        }
     }
 
     private Map<String, IndexedFile> getKnownFiles() {

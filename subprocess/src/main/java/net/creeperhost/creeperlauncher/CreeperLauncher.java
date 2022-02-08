@@ -7,14 +7,17 @@ import com.install4j.api.update.UpdateChecker;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.*;
+import net.creeperhost.creeperlauncher.install.InstanceInstaller;
 import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.migration.MigrationManager;
+import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -49,8 +52,14 @@ public class CreeperLauncher
 
     public static Process elect = null;
     public static boolean isDevMode = false;
-    public static AtomicBoolean isInstalling = new AtomicBoolean(false);
-    public static AtomicReference<FTBModPackInstallerTask> currentInstall = new AtomicReference<>();
+
+    public static boolean isInstalling = false;
+
+    @Nullable
+    public static InstanceInstaller currentInstall;
+    @Nullable
+    public static CompletableFuture<Void> currentInstallFuture;
+//    public static AtomicReference<FTBModPackInstallerTask> currentInstall = new AtomicReference<>();
 
     public static LocalCache localCache;
 
