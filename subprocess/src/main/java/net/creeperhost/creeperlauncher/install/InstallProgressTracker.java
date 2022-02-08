@@ -94,11 +94,12 @@ public class InstallProgressTracker {
             }
         }
 
-        if (currentBytes > 0 && (time / 1000L) - (lastSpeedTime / 1000L) > 0) {
+        long speedTime = time / 1000L;
+        if (currentBytes > 0 && (speedTime) - (lastSpeedTime) > 0) {
 
-            speed = (currentBytes - lastSpeedBytes) / ((time / 1000L) - (lastSpeedTime / 1000L)) * 8;
+            speed = ((currentBytes - lastSpeedBytes) / (speedTime - lastSpeedTime)) * 8;
 
-            lastSpeedTime = time;
+            lastSpeedTime = speedTime;
             lastSpeedBytes = currentBytes;
         }
 
