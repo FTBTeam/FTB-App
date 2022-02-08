@@ -10,16 +10,15 @@ import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.DlFile;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.Task;
-import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
-import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
+import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
+import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -299,7 +298,7 @@ public class InstanceInstaller {
                     size = NewDownloadTask.getContentLength(file.getUrl());
                 }
                 filesToDownload.add(task.getDest());
-                tasks.add(new DlTask(file.getId(), file.getName(), size, task));
+                tasks.add(new DlTask(file.getId(), size, task));
                 dlFiles.add(new DlFile(file.getId(), file.getName()));
             }
         }
@@ -327,15 +326,14 @@ public class InstanceInstaller {
 
             tracker.nextStage(InstallStage.DOWNLOADS);
             long totalSize = tasks.stream()
-                    .mapToLong(DlTask::size)
+                    .mapToLong(e -> e.size)
                     .sum();
             TaskProgressListener rootListener = tracker.listenerForStage();
             rootListener.start(totalSize);
-            TaskProgressAggregator progressAggregator = new TaskProgressAggregator(rootListener);
-            for (DlTask task : tasks) {
-                task.task.execute(null, progressAggregator);
-                tracker.fileFinished(task.id);
-            }
+            TaskProgressAggregator progressAggregator = new ParallelTaskProgressAggregator(rootListener);
+
+            ParallelTaskHelper.executeInParallel(null, Constants.TASK_POOL, tasks, progressAggregator);
+
             rootListener.finish(progressAggregator.getProcessed());
 
             Path cfOverrides = getCFOverridesZip(manifest);
@@ -475,5 +473,28 @@ public class InstanceInstaller {
         }
     }
 
-    private static record DlTask(long id, String name, long size, Task<?> task) { }
+    private class DlTask implements Task<Object> {
+
+        private final long id;
+        private final long size;
+        private final Task<?> task;
+
+        private DlTask(long id, long size, Task<?> task) {
+            this.id = id;
+            this.size = size;
+            this.task = task;
+        }
+
+        @Override
+        public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+            task.execute(cancelToken, listener);
+            tracker.fileFinished(id);
+        }
+
+        @Override
+        @Nullable
+        public Object getResult() {
+            return task.getResult();
+        }
+    }
 }

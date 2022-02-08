@@ -15,6 +15,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Constants {
 
@@ -79,6 +83,13 @@ public class Constants {
                     .addTag(Throttler.class, Constants.getGlobalThrottler())
             ),
             true
+    );
+
+    public static final ExecutorService TASK_POOL = new ThreadPoolExecutor(
+            Settings.getThreadLimit(),
+            Settings.getThreadLimit(),
+            60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>()
     );
 
     // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
