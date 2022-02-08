@@ -60,6 +60,7 @@ public class LaunchInstanceData extends BaseData {
         public String status;
 
         public Stopped(UUID instanceId, String status) {
+            type = "launchInstance.sopped";
             this.instanceId = instanceId;
             this.status = status;
         }
