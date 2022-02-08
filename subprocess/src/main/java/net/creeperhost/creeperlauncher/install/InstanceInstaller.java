@@ -13,8 +13,12 @@ import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
+import net.creeperhost.creeperlauncher.install.InstallProgressTracker.DlFile;
+import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.logging.log4j.LogManager;
@@ -51,6 +55,7 @@ public class InstanceInstaller {
 
     private final LocalInstance instance;
     private final ModpackVersionManifest manifest;
+    private final InstallProgressTracker tracker;
 
     @Nullable
     private final ModpackVersionManifest oldManifest;
@@ -94,7 +99,7 @@ public class InstanceInstaller {
     private final List<Path> filesToDownload = new LinkedList<>();
     //endregion
 
-    private final List<Task<?>> tasks = new LinkedList<>();
+    private final List<DlTask> tasks = new LinkedList<>();
 
     @Nullable
     private ModLoaderInstallTask modLoaderInstallTask;
@@ -102,9 +107,10 @@ public class InstanceInstaller {
     @Nullable
     private Map<String, IndexedFile> knownFiles;
 
-    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest) throws IOException {
+    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest, InstallProgressTracker tracker) throws IOException {
         this.instance = instance;
         this.manifest = manifest;
+        this.tracker = tracker;
 
         Path instanceVersionFile = instance.getDir().resolve("version.json");
         if (!Files.exists(instanceVersionFile)) {
@@ -155,6 +161,7 @@ public class InstanceInstaller {
      * Sets up internal state ready for the installation process.
      */
     public void prepare() {
+        tracker.nextStage(InstallStage.PREPARE);
         if (operationType == OperationType.VALIDATE) {
             validateFiles();
         } else if (operationType == OperationType.UPGRADE) {
@@ -277,6 +284,7 @@ public class InstanceInstaller {
     }
 
     private void prepareFileDownloads() {
+        List<DlFile> dlFiles = new LinkedList<>();
         for (ModpackFile file : manifest.getFiles()) {
             if (file.getType().equals("cf-extract")) continue;
             NewDownloadTask task = NewDownloadTask.builder()
@@ -286,10 +294,16 @@ public class InstanceInstaller {
                     .withFileLocator(CreeperLauncher.localCache)
                     .build();
             if (!task.isRedundant()) {
+                long size = file.getSize();
+                if (size <= 0) {
+                    size = NewDownloadTask.getContentLength(file.getUrl());
+                }
                 filesToDownload.add(task.getDest());
-                tasks.add(task);
+                tasks.add(new DlTask(file.getId(), file.getName(), size, task));
+                dlFiles.add(new DlFile(file.getId(), file.getName()));
             }
         }
+        tracker.submitFiles(dlFiles);
     }
 
     public void execute() throws InstallationFailureException {
@@ -302,6 +316,7 @@ public class InstanceInstaller {
                 }
             }
 
+            tracker.nextStage(InstallStage.MODLOADER);
             if (modLoaderInstallTask != null) {
                 modLoaderInstallTask.execute(null, null);
                 instance.modLoader = modLoaderInstallTask.getResult();
@@ -310,9 +325,18 @@ public class InstanceInstaller {
                 instance.modLoader = manifest.getTargetVersion("game");
             }
 
-            for (Task<?> task : tasks) {
-                task.execute(null, null);
+            tracker.nextStage(InstallStage.DOWNLOADS);
+            long totalSize = tasks.stream()
+                    .mapToLong(DlTask::size)
+                    .sum();
+            TaskProgressListener rootListener = tracker.listenerForStage();
+            rootListener.start(totalSize);
+            TaskProgressAggregator progressAggregator = new TaskProgressAggregator(rootListener);
+            for (DlTask task : tasks) {
+                task.task.execute(null, progressAggregator);
+                tracker.fileFinished(task.id);
             }
+            rootListener.finish(progressAggregator.getProcessed());
 
             Path cfOverrides = getCFOverridesZip(manifest);
             if (cfOverrides != null) {
@@ -332,6 +356,7 @@ public class InstanceInstaller {
             } catch (IOException ex) {
                 throw new InstallationFailureException("Failed to save instance json.", ex);
             }
+            tracker.nextStage(InstallStage.FINISHED);
         } catch (InstallationFailureException ex) {
             throw ex;
         } catch (Throwable ex) {
@@ -449,4 +474,6 @@ public class InstanceInstaller {
             return validation;
         }
     }
+
+    private static record DlTask(long id, String name, long size, Task<?> task) { }
 }

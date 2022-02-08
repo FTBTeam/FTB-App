@@ -288,7 +288,9 @@ public class LocalInstance implements IPack
             this.packType = jsonOutput.packType;
             this._private = jsonOutput._private;
             this.installComplete = jsonOutput.installComplete;
-            this.versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, path.resolve("version.json"), ModpackVersionManifest.class);
+            if (installComplete) {
+                this.versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, path.resolve("version.json"), ModpackVersionManifest.class);
+            }
         } catch(Exception e)
         {
             LOGGER.error("", e);

@@ -8,7 +8,6 @@ public class TaskProgressAggregator implements TaskProgressListener {
     protected final TaskProgressListener parent;
 
     private long lastProcessed = 0;
-    private long thisCycleProcessed = 0;
 
     private long processed = 0;
 
@@ -18,7 +17,6 @@ public class TaskProgressAggregator implements TaskProgressListener {
 
     @Override
     public void update(long processed) {
-        thisCycleProcessed += processed;
         this.processed += (processed - lastProcessed);
         parent.update(this.processed);
         lastProcessed = processed;
@@ -27,8 +25,6 @@ public class TaskProgressAggregator implements TaskProgressListener {
     @Override
     public void start(long total) {
         lastProcessed = 0;
-        processed -= thisCycleProcessed;
-        thisCycleProcessed = 0;
     }
 
     @Override

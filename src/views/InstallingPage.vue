@@ -50,7 +50,7 @@
             <div class="mod-list bg-navbar w-1/3 overflow-y-auto relative" ref="modList" id="modList">
               <ul class="p-4">
                 <li
-                  v-for="stepID in Object.keys(steps).slice(0, 4)"
+                  v-for="stepID in Object.keys(steps).slice(0, 3)"
                   :class="steps[stepID].done ? 'downloaded text-gray-400' : 'text-white'"
                   :key="stepID"
                 >
@@ -84,7 +84,7 @@
                   </p>
                 </li>
                 <li
-                  v-for="stepID in Object.keys(steps).slice(4, 7)"
+                  v-for="stepID in Object.keys(steps).slice(3, 4)"
                   :class="steps[stepID].done ? 'downloaded text-gray-400' : 'text-white'"
                   :key="stepID"
                 >
@@ -217,11 +217,9 @@ export default class InstallingPage extends Vue {
   private downloadedFiles: { [index: string]: string } = {};
   private steps: { [index: string]: { name: string; done: boolean } } = {
     INIT: { name: 'Initialise', done: false },
-    VANILLA: { name: 'Install Vanilla launcher', done: false },
-    API: { name: 'Gather data from API', done: false },
-    FORGE: { name: 'Get Forge information', done: false },
+    PREPARE: { name: 'Prepare installation', done: false },
+    MODLOADER: { name: 'Install Mod Loader', done: false },
     DOWNLOADS: { name: 'Download files', done: false },
-    POSTINSTALL: { name: 'Post-install tasks', done: false },
     FINISHED: { name: 'Finished', done: false },
   };
 
@@ -307,12 +305,6 @@ export default class InstallingPage extends Vue {
               error: true,
               errorMessage: data.message,
               instanceID: data.uuid,
-            });
-          } else if (data.currentStage === 'POSTINSTALL') {
-            this.updateInstall({
-              modpackID: packID,
-              messageID: data.requestId,
-              stage: data.currentStage,
             });
           } else if (data.status === 'init') {
             this.updateInstall({

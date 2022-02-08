@@ -23,28 +23,21 @@
                   v-bind:style="{ position: 'absolute' }"
                   v-else-if="modpacks.installing.stage === 'INIT'"
                 >
-                  Creating environment...
+                  Initialising install...
                 </p>
                 <p
                   class="pl-4 w-full"
                   v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage === 'API'"
+                  v-else-if="modpacks.installing.stage === 'PREPARE'"
                 >
                   Downloading modpack metadata...
                 </p>
                 <p
                   class="pl-4 w-full"
                   v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage === 'VANILLA'"
+                  v-else-if="modpacks.installing.stage === 'MODLOADER'"
                 >
-                  Installing Vanilla Launcher...
-                </p>
-                <p
-                  class="pl-4 w-full"
-                  v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage === 'FORGE'"
-                >
-                  Installing Forge...
+                  Installing Mod Loader...
                 </p>
                 <p
                   class="pl-4 w-full"
@@ -55,13 +48,6 @@
                     (modpacks.installing.downloadSpeed / 1000000).toFixed(2)
                   }}
                   mbps)
-                </p>
-                <p
-                  class="pl-4 w-full"
-                  v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage == 'POSTINSTALL'"
-                >
-                  Finalizing Installation...
                 </p>
                 <p
                   class="pl-4 w-full"
@@ -250,8 +236,6 @@ export default class MainApp extends Vue {
                       errorMessage: data.message,
                       instanceID: data.uuid,
                     });
-                  } else if (data.currentStage === 'POSTINSTALL') {
-                    // We don't care about this, keep progress bar showing.
                   } else if (data.status === 'init') {
                     this.updateInstall({
                       modpackID: foundPack.id,

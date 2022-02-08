@@ -66,7 +66,7 @@ export const mutations: MutationTree<SocketState> = {
       if (state.ircEventCallback) {
         state.ircEventCallback(message);
       }
-    } else if (message.type === 'installedFileEventDataReply') {
+    } else if (message.type === 'install.filesEvent') {
       Object.keys(message.files).forEach((f: string) => {
         const status = message.files[f];
         Vue.set(state.downloadedFiles, f, status);

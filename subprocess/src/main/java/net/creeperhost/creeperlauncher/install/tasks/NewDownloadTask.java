@@ -11,7 +11,11 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.Throttler;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -183,6 +187,22 @@ public class NewDownloadTask implements Task<Path> {
     public DownloadValidation getValidation() { return validation; }
     @Nullable public LocalFileLocator getFileLocator() { return fileLocator; }
     //@formatter:on
+
+    public static long getContentLength(String url) {
+        Request request = new Request.Builder()
+                .head()
+                .url(url)
+                .build();
+        try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            if (body != null) return body.contentLength();
+
+            return NumberUtils.toInt(response.header("Content-Length"));
+        } catch (IOException e) {
+            LOGGER.error("Could not perform a HEAD request to {}", url);
+        }
+        return 0;
+    }
 
     /**
      * Converts this {@link NewDownloadTask} back to {@link Builder}.

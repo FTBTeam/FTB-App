@@ -23,10 +23,6 @@ import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
@@ -507,7 +503,7 @@ public class InstanceLauncher {
                 .mapToLong(e -> {
                     if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
-                        return getContentLength(e.getUrl());
+                        return NewDownloadTask.getContentLength(e.getUrl());
                     }
                     return e.getValidation().expectedSize;
                 })
@@ -599,22 +595,6 @@ public class InstanceLauncher {
     private Path getGameJar(Path versionsDir) {
         String rootId = manifests.get(0).id;
         return versionsDir.resolve(rootId).resolve(rootId + ".jar");
-    }
-
-    private static long getContentLength(String url) {
-        Request request = new Request.Builder()
-                .head()
-                .url(url)
-                .build();
-        try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
-            ResponseBody body = response.body();
-            if (body != null) return body.contentLength();
-
-            return NumberUtils.toInt(response.header("Content-Length"));
-        } catch (IOException e) {
-            LOGGER.error("Could not perform a HEAD request to {}", url);
-        }
-        return 0;
     }
 
     public static class LaunchContext {
