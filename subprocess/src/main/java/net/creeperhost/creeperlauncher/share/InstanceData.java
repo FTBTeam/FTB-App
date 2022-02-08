@@ -1,10 +1,6 @@
 package net.creeperhost.creeperlauncher.share;
 
 import net.covers1624.quack.collection.ColUtils;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
-import net.creeperhost.creeperlauncher.pack.ModPack;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.http.HttpEntity;
@@ -26,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class InstanceData
@@ -70,14 +65,14 @@ public class InstanceData
 
     public static void main(String[] args)
     {
-        CreeperLauncher.initSettingsAndCache();
-        Instances.refreshInstances();
-        ModPack pack = FTBModPackInstallerTask.getPackFromAPI(285109, 2935316, false, (byte) 1);
-        LocalInstance localInstance = new LocalInstance(pack, 2935316, false, (byte) 1);
-        FTBModPackInstallerTask install = localInstance.install();
-        install.execute().join();
-//        install.currentTask.join();
-        System.out.println(localInstance.getDir());
+//        CreeperLauncher.initSettingsAndCache();
+//        Instances.refreshInstances();
+//        ModPack pack = FTBModPackInstallerTask.getPackFromAPI(285109, 2935316, false, (byte) 1);
+//        LocalInstance localInstance = new LocalInstance(pack, 2935316, false, (byte) 1);
+//        FTBModPackInstallerTask install = localInstance.install();
+//        install.execute().join();
+////        install.currentTask.join();
+//        System.out.println(localInstance.getDir());
 
 
 //        LocalInstance localInstance = Instances.getInstance(UUID.fromString("8841ce90-66d4-4939-a576-25f75153c702"));

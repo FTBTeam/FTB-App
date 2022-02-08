@@ -10,7 +10,6 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -28,7 +27,6 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     @Override
     public void handle(InstallInstanceData data) {
         LOGGER.debug("Received install pack message for " + "ID:" + data.id + " VERSION:" + data.version + " PACKTYPE:" + data.packType);
-        FTBModPackInstallerTask.currentStage = FTBModPackInstallerTask.Stage.INIT;
         if (CreeperLauncher.isInstalling) {
             assert CreeperLauncher.currentInstall != null;
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.getInstance().getUuid().toString()));

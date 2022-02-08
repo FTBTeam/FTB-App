@@ -6,7 +6,6 @@ import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceInstallModData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
 import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.mod.Mod;
@@ -93,6 +92,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         List<Mod.Version> finalDependencies = dependencies;
 
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        long startTime = System.currentTimeMillis();
         long lastTime = System.currentTimeMillis() / 1000L;
         long lastSpeed = 0;
         long lastBytes = 0;
@@ -111,7 +111,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
             if ((curBytes > 0) && ((time - lastTime) > 0))
             {
                 speed = ((curBytes - lastBytes) / (time - lastTime)) * 8;
-                long runtime = MiscUtils.unixtime() - FTBModPackInstallerTask.startTime.get();
+                long runtime = MiscUtils.unixtime() - startTime;
                 averageSpeed = (curBytes / runtime) * 8;
                 if (averageSpeed == 0) averageSpeed = lastAverage[0];
                 if (speed == 0) speed = lastSpeed;

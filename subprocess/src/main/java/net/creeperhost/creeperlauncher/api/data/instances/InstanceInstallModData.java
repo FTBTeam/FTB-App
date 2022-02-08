@@ -4,11 +4,9 @@ import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.instances.InstanceInstallModHandler;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
 import net.creeperhost.creeperlauncher.mod.Mod;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class InstanceInstallModData extends BaseData {

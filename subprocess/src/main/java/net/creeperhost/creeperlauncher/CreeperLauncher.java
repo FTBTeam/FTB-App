@@ -8,10 +8,8 @@ import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.*;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.migration.MigrationManager;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
@@ -28,7 +26,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class CreeperLauncher
 {
@@ -54,12 +51,10 @@ public class CreeperLauncher
     public static boolean isDevMode = false;
 
     public static boolean isInstalling = false;
-
     @Nullable
     public static InstanceInstaller currentInstall;
     @Nullable
     public static CompletableFuture<Void> currentInstallFuture;
-//    public static AtomicReference<FTBModPackInstallerTask> currentInstall = new AtomicReference<>();
 
     public static LocalCache localCache;
 

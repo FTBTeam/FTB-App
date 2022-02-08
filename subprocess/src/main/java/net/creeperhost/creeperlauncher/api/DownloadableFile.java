@@ -4,7 +4,6 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.IntegrityCheckException;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
 import net.creeperhost.creeperlauncher.install.tasks.http.DownloadedFile;
 import net.creeperhost.creeperlauncher.install.tasks.http.IHttpClient;
 import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
@@ -107,11 +106,11 @@ public class DownloadableFile
         {
             if (this.getSize() > 0)
             {
-                FTBModPackInstallerTask.overallBytes.set(FTBModPackInstallerTask.overallBytes.get() - this.getSize());
+//                FTBModPackInstallerTask.overallBytes.set(FTBModPackInstallerTask.overallBytes.get() - this.getSize());
                 LOGGER.warn("{} size expected does not match remote file size. File size updated.", getName());
             }
             this.size = remoteSize;
-            FTBModPackInstallerTask.overallBytes.addAndGet(this.getSize());
+//            FTBModPackInstallerTask.overallBytes.addAndGet(this.getSize());
         }
         if (!remoteExists)
         {

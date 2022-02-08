@@ -342,87 +342,6 @@ public class LocalInstance implements IPack
     {
     }
 
-    @Deprecated
-    public FTBModPackInstallerTask install()
-    {
-        // Can't reinstall an import...
-        //Download everything! wget --mirror http://thewholeinternet.kthxbai
-        FTBModPackInstallerTask installer = new FTBModPackInstallerTask(this);
-        if (!this.isImport)
-        {
-            installComplete = false;
-            try {
-                saveJson(); // save to ensure saved to disk as false
-            } catch (IOException e) {
-            }
-//            CreeperLauncher.isInstalling.set(true);
-            Analytics.sendInstallRequest(this.getId(), this.getVersionId(), this.packType);
-            LOGGER.debug("Running installer async task");
-            installer.execute().thenRunAsync(() ->
-            {
-                LOGGER.debug("Running after installer task");
-                FTBModPackInstallerTask.currentStage = FTBModPackInstallerTask.Stage.FINISHED;
-//                CreeperLauncher.isInstalling.set(false);
-                try
-                {
-                    installComplete = true;
-                    this.saveJson();
-                } catch (IOException e) { e.printStackTrace(); }
-                this.hasLoadingMod = checkForLaunchMod();
-            });
-        }
-        return installer;
-    }
-
-    @Deprecated
-    public FTBModPackInstallerTask update(long versionId)
-    {
-        this.versionId = versionId;
-
-        FTBModPackInstallerTask update = new FTBModPackInstallerTask(this);
-
-        try {
-            List<DownloadableFile> requiredDownloads = update.getRequiredDownloads(path.resolve("version.json"), null);
-            requiredDownloads.forEach(e -> {
-                try {
-                    Files.delete(e.getPath());
-                } catch (IOException ignored) {
-                }
-            });
-        } catch (MalformedURLException e) {
-            // fall back to old delete
-            Path mods = path.resolve("mods");
-            Path coremods = path.resolve("coremods");
-            Path instmods = path.resolve("instmods");
-
-            Path config = path.resolve("config");
-            Path resources = path.resolve("resources");
-            Path scripts = path.resolve("scripts");
-
-            FileUtils.deleteDirectory(mods);
-            FileUtils.deleteDirectory(coremods);
-            FileUtils.deleteDirectory(instmods);
-            FileUtils.deleteDirectory(config);
-            FileUtils.deleteDirectory(resources);
-            FileUtils.deleteDirectory(scripts);
-        }
-        this.hasLoadingMod = checkForLaunchMod();
-        update.execute().thenRunAsync(() ->
-        {
-            this.updateVersionFromFile();
-            try {
-                this.saveJson();
-            } catch (IOException ignored){}
-            FTBModPackInstallerTask.currentStage = FTBModPackInstallerTask.Stage.FINISHED;
-//            CreeperLauncher.isInstalling.set(false);
-            try
-            {
-                this.saveJson();
-            } catch (IOException e) { e.printStackTrace(); }
-        });
-        return update;
-    }
-
     public synchronized void pollVersionManifest() {
         try {
             Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(id, versionId, _private, packType);
@@ -617,15 +536,6 @@ public class LocalInstance implements IPack
         return version;
     }
 
-    @Deprecated
-    private void updateVersionFromFile() {
-        try(BufferedReader reader = Files.newBufferedReader(getDir().resolve("version.json"))) {
-            JsonObject version = GsonUtils.GSON.fromJson(reader, JsonObject.class);
-            this.version = version.get("name").getAsString();
-        } catch (IOException e) {
-            LOGGER.error("Failed to read version json.", e);
-        }
-    }
     @Override
     public Path getDir()
     {
