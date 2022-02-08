@@ -2,7 +2,6 @@ package net.creeperhost.creeperlauncher.pack;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.hash.Hashing;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.io.IOUtils;
@@ -15,7 +14,6 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
@@ -291,7 +289,24 @@ public class InstanceLauncher {
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
             if (instance.embeddedJre) {
-                Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(getJavaVersion(), true, new QuackProgressAdapter(progressTracker.listenerForStep(true)));
+                String javaTarget = instance.versionManifest.getTargetVersion("runtime");
+                Path javaHome;
+                if (javaTarget == null) {
+                    LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
+                    JavaVersion version = getJavaVersion();
+                    javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(
+                            version,
+                            null,
+                            true,
+                            new QuackProgressAdapter(progressTracker.listenerForStep(true))
+                    );
+                } else {
+                    javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(
+                            javaTarget,
+                            true,
+                            new QuackProgressAdapter(progressTracker.listenerForStep(true))
+                    );
+                }
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
                 javaExecutable = instance.jrePath;

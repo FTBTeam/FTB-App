@@ -13,6 +13,7 @@ import net.creeperhost.creeperlauncher.data.forge.installerv2.InstallManifest;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -37,15 +38,12 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
+    private final LocalInstance instance;
     private final Path installerJar;
 
-    public ForgeV2InstallTask(Path installerJar) {
+    public ForgeV2InstallTask(LocalInstance instance, Path installerJar) {
+        this.instance = instance;
         this.installerJar = installerJar;
-    }
-
-    public static void main(String[] args) throws Throwable {
-        System.setProperty("ftba.dataDirOverride", "./");
-        new ForgeV2InstallTask(Path.of("forge-1.16.5-36.2.23-installer.jar")).execute(null, null);
     }
 
     @Override
@@ -81,7 +79,13 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
     }
 
     private void runProcessors(InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir) throws IOException {
-        Path javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(vanillaManifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8), true, null);
+        String javaTarget = instance.versionManifest.getTargetVersion("runtime");
+        Path javaHome;
+        if (javaTarget == null) {
+            javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(vanillaManifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8), null, true, null);
+        } else {
+            javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(javaTarget, true, null);
+        }
         Path javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
 
         Path tempDir = Files.createTempDirectory("forge_installer_");

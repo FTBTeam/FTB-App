@@ -63,10 +63,10 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
                 .build();
 
         task.execute(null, null);
-        return detectInstallerVersion(task.getDest());
+        return detectInstallerVersion(instance, task.getDest());
     }
 
-    private static AbstractForgeInstallTask detectInstallerVersion(Path installer) throws IOException {
+    private static AbstractForgeInstallTask detectInstallerVersion(LocalInstance instance, Path installer) throws IOException {
         try (FileSystem fs = IOUtils.getJarFileSystem(installer, true)) {
             Path installProfile = fs.getPath("/install_profile.json");
 
@@ -75,7 +75,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
             JsonObject json = JsonUtils.parse(InstallProfile.GSON, installProfile, JsonObject.class);
             if (json.has("spec")) {
-                return new ForgeV2InstallTask(installer);
+                return new ForgeV2InstallTask(instance, installer);
             }
             return new ForgeV1InstallTask(installer);
         }

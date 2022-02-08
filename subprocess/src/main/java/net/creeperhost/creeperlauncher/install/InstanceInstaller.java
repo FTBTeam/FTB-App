@@ -326,6 +326,7 @@ public class InstanceInstaller {
 
             instance.installComplete = true;
             instance.versionId = manifest.getId();
+            instance.versionManifest = manifest;
             try {
                 instance.saveJson();
             } catch (IOException ex) {

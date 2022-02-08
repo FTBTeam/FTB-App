@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.pack;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
+import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
@@ -15,12 +16,15 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSyncType;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,10 +103,12 @@ public class LocalInstance implements IPack
     public transient CancellationToken prepareToken;
     private transient int loadingModPort;
     public transient boolean hasLoadingMod;
+    public transient ModpackVersionManifest versionManifest;
 
     private transient long startTime;
 
     public LocalInstance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+        this.versionManifest = versionManifest;
         uuid = UUID.randomUUID();
         versionId = versionManifest.getId();
         path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(uuid.toString());
@@ -167,6 +173,7 @@ public class LocalInstance implements IPack
         }
     }
 
+    @Deprecated
     public LocalInstance(ModPack pack, long versionId, boolean _private, byte packType)
     {
         //We're making an instance!
@@ -281,10 +288,10 @@ public class LocalInstance implements IPack
             this.packType = jsonOutput.packType;
             this._private = jsonOutput._private;
             this.installComplete = jsonOutput.installComplete;
-            reader.close();
+            this.versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, path.resolve("version.json"), ModpackVersionManifest.class);
         } catch(Exception e)
         {
-            LOGGER.error(e);
+            LOGGER.error("", e);
             throw new RuntimeException("Instance is corrupted!", e);
         }
     }
@@ -333,6 +340,7 @@ public class LocalInstance implements IPack
     {
     }
 
+    @Deprecated
     public FTBModPackInstallerTask install()
     {
         // Can't reinstall an import...
@@ -364,6 +372,7 @@ public class LocalInstance implements IPack
         return installer;
     }
 
+    @Deprecated
     public FTBModPackInstallerTask update(long versionId)
     {
         this.versionId = versionId;
@@ -412,6 +421,20 @@ public class LocalInstance implements IPack
         return update;
     }
 
+    public synchronized void pollVersionManifest() {
+        try {
+            Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(id, versionId, _private, packType);
+            if (newManifest == null) {
+                LOGGER.warn("Failed to update modpack version manifest for instance. This may be a private pack.");
+                return;
+            }
+            versionManifest = newManifest.getRight();
+            JsonUtils.write(ModpackVersionManifest.GSON, path.resolve("version.json"), versionManifest, ModpackVersionManifest.class);
+        } catch(IOException ex) {
+            LOGGER.warn("Failed to update manifest for modpack. This may be a private pack.", ex);
+        }
+    }
+
     /**
      * Force stops the instance.
      * <p>
@@ -435,6 +458,7 @@ public class LocalInstance implements IPack
             throw new InstanceLaunchException("Instance already running.");
         }
         launcher.reset();
+        pollVersionManifest();
 
         launcher.withStartTask(ctx -> {
             // TODO, `extraArgs` and `jvmArgs` should be an array
@@ -591,6 +615,7 @@ public class LocalInstance implements IPack
         return version;
     }
 
+    @Deprecated
     private void updateVersionFromFile() {
         try(BufferedReader reader = Files.newBufferedReader(getDir().resolve("version.json"))) {
             JsonObject version = GsonUtils.GSON.fromJson(reader, JsonObject.class);
