@@ -239,13 +239,13 @@ public class InstanceLauncher {
 
     private void setPhase(Phase newPhase) {
         if (newPhase == Phase.STOPPED || newPhase == Phase.ERRORED) {
-            onStopped();
+            onStopped(newPhase);
         }
         LOGGER.info("Setting phase: {}", newPhase);
         phase = newPhase;
     }
 
-    private void onStopped() {
+    private void onStopped(Phase reason) {
         for (ThrowingRunnable<IOException> exitTask : exitTasks) {
             try {
                 exitTask.run();
@@ -268,6 +268,8 @@ public class InstanceLauncher {
             }
         }
         tempDirs.clear();
+
+        Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), reason == Phase.STOPPED ? "stopped" : "errored"));
     }
 
     private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {

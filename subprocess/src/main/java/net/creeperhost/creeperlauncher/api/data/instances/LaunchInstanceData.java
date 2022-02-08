@@ -54,6 +54,17 @@ public class LaunchInstanceData extends BaseData {
         }
     }
 
+    public static class Stopped extends BaseData {
+
+        public UUID instanceId;
+        public String status;
+
+        public Stopped(UUID instanceId, String status) {
+            this.instanceId = instanceId;
+            this.status = status;
+        }
+    }
+
     public static class Logs extends BaseData {
 
         // The UUID of the instance.
