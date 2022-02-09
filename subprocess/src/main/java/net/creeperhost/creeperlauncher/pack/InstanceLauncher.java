@@ -719,7 +719,7 @@ public class InstanceLauncher {
         /**
          * The time in milliseconds between bursts of logging output.
          */
-        private static final long INTERVAL = 100;
+        private static final long INTERVAL = 250;
 
         private boolean stop = false;
         private final List<String> pendingMessages = new ArrayList<>(100);
