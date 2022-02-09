@@ -1,8 +1,8 @@
 <template>
   <div class="px-6 py-4" v-if="!getNews.loading">
-    <div class="new" v-if="getNews">
+    <div class="new" v-if="getNews != null && getNews.length > 0">
       <ftb-news
-        v-for="(item, index) in getNews.news"
+        v-for="(item, index) in getNews"
         :key="index"
         :title="item.title"
         :date="item.date"
@@ -34,7 +34,7 @@ export default class Home extends Vue {
   @Getter('getNews', { namespace }) public getNews: any;
 
   public mounted() {
-    if (this.getNews == null || this.getNews.news.length < 1) {
+    if (this.getNews == null || this.getNews.length < 1) {
       this.fetchNews();
     }
   }
