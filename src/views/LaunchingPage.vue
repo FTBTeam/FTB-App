@@ -1,5 +1,5 @@
 <template>
-  <div class="pack-loading">
+  <div class="pack-loading" :class="{ 'dark-mode': darkMode }">
     <header class="flex">
       <img :src="artSquare" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
@@ -56,7 +56,7 @@
         </template>
         <div v-else class="flex mt-4">
           <ftb-button
-            @click="cancelLoading"
+            @click="openFolder"
             class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
             color="primary"
           >
@@ -78,13 +78,6 @@
     <div class="logs flex justify-between items-center" :class="{ 'dark-mode': darkMode }">
       <h3 class="font-bold text-lg">Log</h3>
       <div class="buttons flex items-center">
-        <ftb-button
-          @click="cancelLoading"
-          class="transition ease-in-out duration-200 py-1 px-4 text-xs mr-4 border-red-600 border border-solid hover:bg-red-600 hover:text-white"
-        >
-          <font-awesome-icon icon="skull-crossbones" class="mr-2" />
-          Kill instance
-        </ftb-button>
         <!--        <ftb-button-->
         <!--          class="transition ease-in-out duration-200 text-xs border border-solid px-2 py-1 mr-4 hover:bg-green-600 hover:text-white hover:border-green-600"-->
         <!--          :class="{ 'border-black': !darkMode, 'border-white': darkMode }"-->
@@ -92,14 +85,35 @@
         <!--          <font-awesome-icon icon="upload" class="mr-2" />-->
         <!--          Upload logs-->
         <!--        </ftb-button>-->
-        <div class="color cursor-pointer" @click="darkMode = !darkMode">
+        <div
+          class="color cursor-pointer ml-4"
+          :aria-label="wrapText ? 'Unwrap text' : 'Wrap text'"
+          data-balloon-pos="down"
+        >
+          <font-awesome-icon @click="wrapText = !wrapText" :icon="!wrapText ? 'left-right' : 'right-long'" />
+        </div>
+        <div
+          class="color cursor-pointer ml-4"
+          :aria-label="darkMode ? 'Light mode' : 'Dark mode'"
+          data-balloon-pos="down"
+          @click="darkMode = !darkMode"
+        >
           <font-awesome-icon :icon="['fas', darkMode ? 'sun' : 'moon']" />
         </div>
+        <ftb-button
+          @click="cancelLoading"
+          class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-red-600 border border-solid hover:bg-red-600 hover:text-white"
+        >
+          <font-awesome-icon icon="skull-crossbones" class="mr-2" />
+          Kill instance
+        </ftb-button>
       </div>
     </div>
 
-    <div class="log-contents text-sm" :class="{ 'dark-mode': darkMode }">
-      <div class="log-item" v-for="i in messages.length" :key="i">{{ messages[messages.length - i] }}</div>
+    <div class="log-contents text-sm" :class="{ 'dark-mode': darkMode, wrap: wrapText }">
+      <div class="log-item" v-for="i in messages.length" :key="i">
+        {{ messages[messages.length - i] }}
+      </div>
     </div>
 
     <FTBModal :visible="showMsgBox" @dismiss-modal="showMsgBox = false" :dismissable="true">
@@ -163,6 +177,7 @@ export default class LaunchingPage extends Vue {
   platform = platform;
 
   darkMode = true;
+  wrapText = true;
 
   currentStep = {
     stepDesc: '',
@@ -337,6 +352,13 @@ export default class LaunchingPage extends Vue {
     });
   }
 
+  openFolder() {
+    this.sendMessage({
+      payload: { type: 'instanceBrowse', uuid: this.instance?.uuid },
+      callback: (data: any) => {},
+    });
+  }
+
   get instance() {
     if (this.modpacks === null) {
       return null;
@@ -400,9 +422,25 @@ export default class LaunchingPage extends Vue {
   height: 100%;
   max-height: 100%;
   z-index: 1;
+  transition: 0.25s ease-in-out background-color;
+  background-color: white;
+
+  *::-webkit-scrollbar-corner {
+    background-color: white;
+    transition: 0.25s ease-in-out background-color;
+  }
+
+  &.dark-mode {
+    background-color: black;
+
+    *::-webkit-scrollbar-corner {
+      background-color: black;
+    }
+  }
 
   > header {
     padding: 2rem;
+    background-color: #2a2a2a;
   }
 
   .background {
@@ -452,11 +490,11 @@ export default class LaunchingPage extends Vue {
   .log-contents {
     flex: 1;
     display: flex;
-    background-color: black;
     flex-direction: column-reverse;
-    padding: 1rem;
+    padding: 1rem 1rem 1rem 0;
     overflow: auto;
     font-family: 'Consolas', 'Courier New', Courier, monospace;
+    margin: 0 0.1rem 0.5rem 1rem;
 
     &::-webkit-scrollbar-track {
       background: transparent;
@@ -468,6 +506,14 @@ export default class LaunchingPage extends Vue {
       height: 8px;
       border-radius: 150px;
       z-index: 10;
+    }
+
+    &.wrap {
+      .log-item {
+        text-indent: -25px;
+        padding-left: 25px;
+        white-space: normal;
+      }
     }
 
     .log-item {

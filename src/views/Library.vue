@@ -5,6 +5,7 @@
       <div class="w-3/4 self-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mb-4" />
       </div>
+
       <div class="pack-card-list grid">
         <pack-card-wrapper
           v-for="modpack in packs"
