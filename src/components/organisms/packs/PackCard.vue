@@ -2,10 +2,9 @@
   <div v-if="settingsState !== undefined">
     <div
       class="pack-card"
-      @click.prevent="cardClicked"
       v-if="currentModpack !== undefined || instance !== undefined || isDemo"
     >
-      <div class="art">
+      <div class="art" @click.prevent="cardClicked">
         <span
           v-if="versionType !== 'release'"
           class="beta-tag"
