@@ -136,11 +136,11 @@ const purgeMinecraftProfiles = async (profiles: AuthProfile[]) => {
 };
 
 // 🚀
-export const preLaunchChecksValid = async (tryAgainAction: () => void) => {
+export const preLaunchChecksValid = async (tryAgainInstanceUuid: any) => {
   const { 'core/getProfiles': profiles, 'core/getActiveProfile': activeProfile } = store.getters;
 
   const signInAgain = async () => {
-    await store.dispatch('core/openSignIn', { open: true, afterAction: tryAgainAction }, { root: true });
+    await store.dispatch('core/openSignIn', { open: true, tryAgainInstanceUuid }, { root: true });
   };
 
   if (profiles.length === 0) {

@@ -98,6 +98,7 @@ import { Action } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 import { Prop } from 'vue-property-decorator';
 import dayjs from 'dayjs';
+import { RouterNames } from '@/router';
 
 @Component({
   components: { MicrosoftAuth, YggdrasilAuthForm, Loading },
@@ -108,7 +109,7 @@ export default class Authentication extends Vue {
 
   @Prop() public jump!: string;
   @Prop() public uuid!: string;
-  @Prop() public backAction!: () => void;
+  @Prop() public tryAgainInstanceUuid!: any;
 
   onMainView = true;
   loggedIn = false;
@@ -138,11 +139,9 @@ export default class Authentication extends Vue {
   }
 
   close() {
-    // console.log('close', this.loggedIn);
-    // if (this.loggedIn) {
-    //   console.log('back action run');
-    //   this.backAction();
-    // }
+    if (this.tryAgainInstanceUuid && this.loggedIn) {
+      this.$router.push({ name: RouterNames.ROOT_LAUNCH_PACK, query: { uuid: this.tryAgainInstanceUuid } });
+    }
 
     this.$emit('close');
   }

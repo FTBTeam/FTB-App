@@ -11,8 +11,8 @@ export const core: Module<CoreState, RootState> = {
   state: {
     profiles: [],
     activeProfile: {} as AuthProfile,
-    signInOpened: {open: false, jumpToAuth: null, uuid: null},
-    instanceLoading: false
+    signInOpened: { open: false, jumpToAuth: null, uuid: null },
+    instanceLoading: false,
   },
   getters: {
     /**
@@ -32,24 +32,27 @@ export const core: Module<CoreState, RootState> = {
     /**
      * Sign in opened?
      */
-    getSignInOpened: (state: CoreState): {open: boolean, jumpToAuth?: 'ms' | 'mc' | null, uuid?: string | null} => {
+    getSignInOpened: (state: CoreState): { open: boolean; jumpToAuth?: 'ms' | 'mc' | null; uuid?: string | null } => {
       return state.signInOpened;
     },
 
     /**
      * Instance loading?
      */
-     getInstanceLoading: (state: CoreState): boolean => {
+    getInstanceLoading: (state: CoreState): boolean => {
       return state.instanceLoading;
     },
   },
   actions: {
-    openSignIn: ({ commit, state }, payload: {open: boolean, jumpToAuth: 'ms' | 'mc' | null, uuid: string | null}) => {
+    openSignIn: (
+      { commit, state },
+      payload: { open: boolean; jumpToAuth: 'ms' | 'mc' | null; uuid: string | null; tryAgainInstanceUuid: any },
+    ) => {
       commit(CoreMutations.OPEN_SIGNIN, payload);
     },
 
     closeSignIn: ({ commit }: { commit: any }) => {
-      commit(CoreMutations.OPEN_SIGNIN, {open: false, jumpToAuth: null, uuid: null});
+      commit(CoreMutations.OPEN_SIGNIN, { open: false, jumpToAuth: null, uuid: null });
     },
 
     startInstanceLoading: ({ commit }: { commit: any }) => {
@@ -89,7 +92,7 @@ export const core: Module<CoreState, RootState> = {
                     },
                 username: a.username,
                 uuid: a.uuid,
-                expiresAt: a.isMicrosoft ? a.msAuth.liveExpiresAt : undefined
+                expiresAt: a.isMicrosoft ? a.msAuth.liveExpiresAt : undefined,
               } as AuthProfile),
           );
 
@@ -100,7 +103,10 @@ export const core: Module<CoreState, RootState> = {
     },
   },
   mutations: {
-    openSignIn(state: CoreState, payload: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null, uuid: string | null}) {
+    openSignIn(
+      state: CoreState,
+      payload: { open: boolean; jumpToAuth?: 'ms' | 'mc' | null; uuid: string | null; tryAgainInstanceUuid: any },
+    ) {
       state.signInOpened = payload;
     },
 

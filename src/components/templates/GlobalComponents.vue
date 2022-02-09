@@ -33,7 +33,7 @@
       v-if="getSignInOpened.open"
       :jump="getSignInOpened.jumpToAuth"
       :uuid="getSignInOpened.uuid"
-      :backAction="getSignInOpened.afterAction"
+      :tryAgainInstanceUuid="getSignInOpened.tryAgainInstanceUuid"
       @close="closeSignIn()"
     />
   </div>
