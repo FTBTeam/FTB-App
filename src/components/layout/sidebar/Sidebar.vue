@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
-    <router-link to="/" :is="disableNav ? 'span' : 'router-link'" :class="{ 'item-disabled': disableNav }">
+    <router-link to="/" :class="{ 'item-disabled': disableNav }">
       <img
         src="../../../assets/images/ftb-logo.svg"
         width="60"
@@ -11,12 +11,7 @@
     </router-link>
     <div class="nav-items nav-main mt-5">
       <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
-        <router-link
-          :is="disableNav ? 'span' : 'router-link'"
-          :to="{ name: item.to }"
-          class="nav-item"
-          :class="{ 'item-disabled': disableNav }"
-        >
+        <router-link :to="{ name: item.to }" class="nav-item" :class="{ 'item-disabled': disableNav }">
           <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
         </router-link>
       </popover>
@@ -48,7 +43,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { AuthState } from '@/modules/auth/types';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
@@ -67,6 +62,12 @@ export default class Sidebar extends Vue {
   @Prop({ default: false }) isTransparent!: boolean;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
+
+  currentRoute: string | null | undefined = '';
+
+  mounted() {
+    this.currentRoute = this.$route.name;
+  }
 
   navigation = [
     {
@@ -101,9 +102,14 @@ export default class Sidebar extends Vue {
     },
   ];
 
+  @Watch('$route.name')
+  onRouteChange(value: string) {
+    this.currentRoute = value;
+  }
+
   get disableNav() {
     return (
-      this.$router.currentRoute.name === RouterNames.ROOT_LAUNCH_PACK ||
+      this.currentRoute === RouterNames.ROOT_LAUNCH_PACK ||
       (this.modpacks.installing !== null && !this.modpacks.installing.error)
     );
   }
@@ -113,6 +119,9 @@ export default class Sidebar extends Vue {
   }
 
   public openFriends() {
+    if (this.disableNav) {
+      return;
+    }
     platform.get.actions.openFriends();
   }
 }
@@ -129,9 +138,18 @@ export default class Sidebar extends Vue {
   justify-content: space-between;
   flex-direction: column;
 
+  .item-disabled {
+    opacity: 0.1;
+    cursor: not-allowed;
+    pointer-events: none;
+
+    &:hover {
+      background: inherit !important;
+    }
+  }
+
   .item-disabled .logo {
     filter: grayscale(1);
-    opacity: 0.5;
   }
 
   .logo {
@@ -198,15 +216,6 @@ export default class Sidebar extends Vue {
 
     &:hover {
       background: #202020;
-    }
-
-    &.item-disabled {
-      opacity: 0.1;
-      cursor: not-allowed;
-
-      &:hover {
-        background: inherit !important;
-      }
     }
   }
 }
