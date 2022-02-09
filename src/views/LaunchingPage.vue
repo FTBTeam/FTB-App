@@ -204,6 +204,10 @@ export default class LaunchingPage extends Vue {
       if (data.type === 'clientLaunchData') {
         this.handleClientLaunch(data);
       }
+
+      if (data.type === 'launchInstance.stopped') {
+        this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+      }
     });
 
     await this.fetchModpack(this.instance?.id);
