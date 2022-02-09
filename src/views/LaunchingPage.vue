@@ -62,13 +62,13 @@
           <font-awesome-icon icon="skull-crossbones" class="mr-2" />
           Kill instance
         </ftb-button>
-        <ftb-button
-          class="transition ease-in-out duration-200 text-xs border border-solid px-2 py-1 mr-4 hover:bg-green-600 hover:text-white hover:border-green-600"
-          :class="{ 'border-black': !darkMode, 'border-white': darkMode }"
-        >
-          <font-awesome-icon icon="upload" class="mr-2" />
-          Upload logs
-        </ftb-button>
+        <!--        <ftb-button-->
+        <!--          class="transition ease-in-out duration-200 text-xs border border-solid px-2 py-1 mr-4 hover:bg-green-600 hover:text-white hover:border-green-600"-->
+        <!--          :class="{ 'border-black': !darkMode, 'border-white': darkMode }"-->
+        <!--        >-->
+        <!--          <font-awesome-icon icon="upload" class="mr-2" />-->
+        <!--          Upload logs-->
+        <!--        </ftb-button>-->
         <div class="color cursor-pointer" @click="darkMode = !darkMode">
           <font-awesome-icon :icon="['fas', darkMode ? 'sun' : 'moon']" />
         </div>
