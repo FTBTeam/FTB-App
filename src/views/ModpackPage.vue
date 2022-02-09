@@ -22,13 +22,12 @@
         </header>
 
         <div class="body">
-          <!--          TODO: fix mod list-->
           <pack-body
             @mainAction="showInstallBox = true"
             @update="() => {}"
             @getModList="() => {}"
             @searchForMods="() => {}"
-            @tabChange="e => (activeTab = e)"
+            @tabChange="(e) => (activeTab = e)"
             @showVersion="showVersions = true"
             :searchingForMods="false"
             :active-tab="activeTab"
@@ -216,11 +215,11 @@ export default class ModpackPage extends Vue {
   }
 
   public isTabActive(tabItem: string) {
-    return this.activeTab === ((tabItem as unknown) as ModpackPageTabs);
+    return this.activeTab === (tabItem as unknown as ModpackPageTabs);
   }
 
   public setActiveTab(tabItem: string) {
-    this.activeTab = (tabItem as unknown) as ModpackPageTabs;
+    this.activeTab = tabItem as unknown as ModpackPageTabs;
   }
 
   public install(version: number): void {
@@ -325,7 +324,7 @@ export default class ModpackPage extends Vue {
       return PackConst.defaultPackSplashArt;
     }
 
-    const splashArt = this.currentModpack.art?.filter(art => art.type === 'splash');
+    const splashArt = this.currentModpack.art?.filter((art) => art.type === 'splash');
     return splashArt?.length > 0 ? splashArt[0].url : PackConst.defaultPackSplashArt;
   }
 }

@@ -23,10 +23,10 @@
         </div>
       </div>
     </div>
-    <div v-for="(file, index) in filteredModList" :key="index" v-if="file.enabled">
+    <div v-for="(file, index) in filteredModList" :key="index" v-if="packInstalled ? file.enabled : true">
       <div class="flex flex-row my-4 items-center">
         <p
-          :class="{ 'opacity-50': !file.enabled }"
+          :class="{ 'opacity-50': packInstalled ? !file.enabled : false }"
           class="duration-150 transition-opacity"
           :title="`Version ${file.version}`"
         >
@@ -34,7 +34,7 @@
         </p>
         <div class="ml-auto flex items-center">
           <span
-            :class="{ 'opacity-50': !file.enabled }"
+            :class="{ 'opacity-50': packInstalled ? !file.enabled : false }"
             class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 clean-font"
             >{{ prettyBytes(parseInt(file.size)) }}</span
           >
@@ -120,7 +120,7 @@ export default class ModpackMods extends Vue {
       return;
     }
 
-    this.filteredModList = this.modlist.filter(e => e.name.toLowerCase().includes(value.toLowerCase()));
+    this.filteredModList = this.modlist.filter((e) => e.name.toLowerCase().includes(value.toLowerCase()));
   }
 }
 </script>
