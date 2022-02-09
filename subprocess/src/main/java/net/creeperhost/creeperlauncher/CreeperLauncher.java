@@ -4,25 +4,36 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.install4j.api.launcher.ApplicationLauncher;
 import com.install4j.api.update.UpdateChecker;
+import net.covers1624.jdkutils.JavaInstall;
+import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
-import net.creeperhost.creeperlauncher.api.data.other.*;
+import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
+import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
+import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
+import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.migration.MigrationManager;
-import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
+import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,7 +44,7 @@ public class CreeperLauncher
 
     private static final Object DIE_LOCK = new Object();
 
-    public static HashMap<String, String> javaVersions;
+    public static List<Pair<String, String>> javaVersions = List.of();
     public static int missedPings = 0;
     public static ServerSocket serverSocket = null;
     public static Socket socket = null;
@@ -177,7 +188,7 @@ public class CreeperLauncher
             );
         }
 
-        MiscUtils.updateJavaVersions();
+        updateJavaVersions();
 
         //Hang indefinitely until this lock is interrupted.
         try {
@@ -185,6 +196,37 @@ public class CreeperLauncher
                 DIE_LOCK.wait();
             }
         } catch (InterruptedException ignored) {
+        }
+    }
+
+    public static void updateJavaVersions() {
+        try {
+            JavaLocator locator = JavaLocator.builder()
+                    .findIntellijJdks()
+                    .findGradleJdks()
+                    .useJavaw()
+                    .ignoreOpenJ9()
+                    .build();
+
+            List<Pair<String, String>> entries = new LinkedList<>();
+            entries.add(Pair.of("Recommended", ""));
+
+            List<JavaInstall> installs = locator.findJavaVersions();
+            installs.sort(Comparator.<JavaInstall, ComparableVersion>comparing(e -> new ComparableVersion(e.implVersion)).reversed());
+            for (JavaInstall version : installs) {
+                Path javaPath = JavaInstall.getJavaExecutable(version.javaHome, true).toAbsolutePath();
+                String description = String.format("%s - %s %s (%s) - %s",
+                        version.vendor,
+                        version.implVersion,
+                        version.hasCompiler ? "JDK" : "JRE",
+                        version.architecture,
+                        javaPath
+                );
+                entries.add(Pair.of(description, javaPath.toString()));
+            }
+            javaVersions = List.copyOf(entries);
+        } catch (IOException ex) {
+            LOGGER.error("Failed to poll available Java versions.", ex);
         }
     }
 

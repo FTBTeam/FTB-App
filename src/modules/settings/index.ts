@@ -43,7 +43,7 @@ export const state: SettingsState = {
     },
     supportedResolutions: [],
   },
-  javaInstalls: {},
+  javaInstalls: [],
 };
 
 export const settings: Module<SettingsState, RootState> = {

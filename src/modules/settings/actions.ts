@@ -1,5 +1,5 @@
 import { ActionTree } from 'vuex';
-import { SettingsState, Settings, JavaVersions } from './types';
+import { SettingsState, Settings, JavaVersion } from './types';
 import { RootState } from '@/types';
 import platform from '@/utils/interface/electron-overwolf';
 
@@ -59,7 +59,7 @@ export const actions: ActionTree<SettingsState, RootState> = {
       'sendMessage',
       {
         payload: { type: 'getJavas' },
-        callback: (data: { javas: JavaVersions }) => {
+        callback: (data: { javas: JavaVersion[] }) => {
           commit('loadVersions', data.javas);
         },
       },

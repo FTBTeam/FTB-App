@@ -21,7 +21,7 @@ import net.creeperhost.creeperlauncher.api.handlers.friends.GetFriendsHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.*;
 import net.creeperhost.creeperlauncher.api.handlers.irc.*;
 import net.creeperhost.creeperlauncher.api.handlers.other.*;
-import net.creeperhost.creeperlauncher.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

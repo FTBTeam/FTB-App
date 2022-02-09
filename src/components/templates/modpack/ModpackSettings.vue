@@ -55,10 +55,10 @@
           @change="saveSettings"
         >
           <option
-            v-for="versionName in Object.keys(javaVersions)"
-            :value="javaVersions[versionName]"
-            :key="versionName"
-            >{{ versionName }}</option
+            v-for="index in Object.keys(javaVersions)"
+            :value="javaVersions[index].path"
+            :key="javaVersions[index].name"
+            >{{ javaVersions[index].name }}</option
           >
         </select>
       </section>
@@ -281,7 +281,7 @@ export default class ModpackSettings extends Vue {
   }
 
   get javaVersions() {
-    return this.settingsState?.javaInstalls ?? {};
+    return this.settingsState?.javaInstalls ?? [];
   }
 
   get resolutionList() {

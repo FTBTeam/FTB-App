@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.util;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -228,7 +229,7 @@ public class FileUtils
                             Files.copy(path, outFile); // try and copy anyway
                             copyFailed = false;
                         } catch (IOException e2) {
-                            errors.put(new Pair<>(path, outFile), e2);
+                            errors.put(Pair.of(path, outFile), e2);
                             if (failFast)
                                 return FileVisitResult.TERMINATE;
                         }
@@ -292,7 +293,7 @@ public class FileUtils
                 Files.move(in, out);
             }
         } catch (IOException e) {
-            errors.put(new Pair<>(in, out), e);
+            errors.put(Pair.of(in, out), e);
         }
         return errors;
     }
