@@ -173,6 +173,7 @@ export default class LaunchingPage extends Vue {
   };
 
   finishedLoading = false;
+  preInitMessages: Set<string> = new Set();
 
   messages: string[] = [];
   launchProgress: Bar[] | null | undefined = null;
@@ -253,9 +254,10 @@ export default class LaunchingPage extends Vue {
       this.messages.push(e);
     }
 
-    // Purge the first 1000
-    if (this.messages.length > 1000) {
-      this.messages.splice(0, this.messages.length - 1000);
+    if (this.messages.length > 500) {
+      // Remove the first 400 items of the array so there isn't a huge jump in the UI
+      this.messages.splice(0, 400);
+      this.messages.push(`[FTB APP][INFO] Cleaning up last 500 messages...`);
     }
   }
 
@@ -265,6 +267,11 @@ export default class LaunchingPage extends Vue {
     this.currentStep.totalSteps = data.totalSteps;
     this.currentStep.stepProgress = data.stepProgress;
     this.currentStep.stepProgressHuman = data.stepProgressHuman;
+
+    if (!this.preInitMessages.has(data.stepDesc)) {
+      this.preInitMessages.add(data.stepDesc);
+      this.messages.push('[FTB APP][INFO] ' + data.stepDesc);
+    }
   }
 
   handleClientLaunch(data: any) {
