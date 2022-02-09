@@ -4,7 +4,12 @@
       <img :src="artSquare" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
-        <h3 class="text-xl font-bold mb-2">{{ preLaunch ? 'Initializing' : 'Starting' }} {{ instanceName }}</h3>
+        <h3 class="text-xl font-bold mb-2">
+          {{ !finishedLoading ? (preLaunch ? 'Initializing' : 'Starting') : 'Running' }} {{ instanceName }}
+        </h3>
+        <p v-if="finishedLoading">
+          {{ instanceName }} should be running! Enjoy <font-awesome-icon class="ml-2" icon="thumbs-up" />
+        </p>
         <template v-if="preLaunch">
           <div
             class="progress-container"
@@ -28,7 +33,7 @@
             {{ currentStep.stepProgressHuman }}
           </p>
         </template>
-        <template v-else>
+        <template v-else-if="!finishedLoading">
           <div class="loading-area" v-if="currentModpack !== null">
             <div
               class="progress-container"
@@ -49,6 +54,24 @@
             </div>
           </div>
         </template>
+        <div v-else class="flex mt-4">
+          <ftb-button
+            @click="cancelLoading"
+            class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
+            color="primary"
+          >
+            <font-awesome-icon icon="folder-open" class="mr-2" />
+            Open instance folder
+          </ftb-button>
+
+          <ftb-button
+            @click="cancelLoading"
+            class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
+          >
+            <font-awesome-icon icon="skull-crossbones" class="mr-2" />
+            Kill instance
+          </ftb-button>
+        </div>
       </div>
     </header>
 
@@ -149,6 +172,8 @@ export default class LaunchingPage extends Vue {
     stepProgressHuman: '',
   };
 
+  finishedLoading = false;
+
   messages: string[] = [];
   launchProgress: Bar[] | null | undefined = null;
 
@@ -227,6 +252,11 @@ export default class LaunchingPage extends Vue {
     for (const e of data.messages) {
       this.messages.push(e);
     }
+
+    // Purge the first 1000
+    if (this.messages.length > 1000) {
+      this.messages.splice(0, this.messages.length - 1000);
+    }
   }
 
   handleInstanceLaunch(data: any) {
@@ -244,8 +274,8 @@ export default class LaunchingPage extends Vue {
       if (data.clientData.bars) {
         this.launchProgress = data.clientData.bars;
       }
-    } else if (data.messageType === 'clientDisconnect') {
-      console.log('Client disconnected');
+    } else if (data.messageType === 'clientDisconnect' || (data.messageType === 'message' && data.message === 'done')) {
+      this.finishedLoading = true;
     }
   }
 
@@ -289,7 +319,7 @@ export default class LaunchingPage extends Vue {
           this.preLaunch = false;
           // An instance is already running
           this.msgBox.type = 'okOnly';
-          this.msgBox.title = 'An error occured whilst launching';
+          this.msgBox.title = 'An error occurred whilst launching';
           this.msgBox.okAction = () => (this.showMsgBox = false);
           this.msgBox.content = data.message;
           this.showMsgBox = true;
