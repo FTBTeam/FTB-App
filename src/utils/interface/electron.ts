@@ -34,6 +34,11 @@ class MiniWebServer extends EventEmitter {
         });
 
         req.on('end', () => {
+          if (!body) {
+            res.end();
+            return;
+          }
+
           const jsonResponse = JSON.parse(body);
           if (jsonResponse == null) {
             console.log('Failed to parse json response');
@@ -251,7 +256,7 @@ const Electron: ElectronOverwolfInterface = {
 
     axios
       .get(`https://minetogether.io/api/adPool`)
-      .then(res => {
+      .then((res) => {
         try {
           const id = parseInt(res.data, 10);
           if (id !== -1) {
@@ -325,8 +330,8 @@ const Electron: ElectronOverwolfInterface = {
     ipcRenderer.on('openModpack', (event, data) => {
       const { name, id } = data;
       getAPIRequest(store.state, `modpack/search/8?term=${name}`)
-        .then(response => response.json())
-        .then(async data => {
+        .then((response) => response.json())
+        .then(async (data) => {
           if (data.status === 'error') {
             return;
           }
@@ -341,7 +346,7 @@ const Electron: ElectronOverwolfInterface = {
             const packID = packIDs[i];
             const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
             if (pack !== undefined) {
-              const foundVersion = pack.versions.find(v => v.mtgID === id);
+              const foundVersion = pack.versions.find((v) => v.mtgID === id);
               if (foundVersion !== undefined) {
                 router.push({ name: 'modpackpage', query: { modpackid: packID } });
                 return;
@@ -349,7 +354,7 @@ const Electron: ElectronOverwolfInterface = {
             }
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.error(err);
         });
     });
