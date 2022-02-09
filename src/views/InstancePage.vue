@@ -24,10 +24,10 @@
           v-if="!this.searchingForMods"
           @mainAction="launchModPack()"
           @update="update()"
-          @tabChange="e => (activeTab = e)"
+          @tabChange="(e) => (activeTab = e)"
           @showVersion="showVersions = true"
           @searchForMods="searchingForMods = true"
-          @getModList="e => getModList(e)"
+          @getModList="(e) => getModList(e)"
           :pack-loading="packLoading"
           :searchingForMods="searchingForMods"
           :active-tab="activeTab"
@@ -162,7 +162,7 @@ export default class InstancePage extends Vue {
       this.$router.back();
     } else {
       this.searchingForMods = false;
-      this.activeTab = ModpackPageTabs.MODS;
+      this.activeTab = ModpackPageTabs.OVERVIEW;
     }
   }
 
@@ -276,7 +276,7 @@ export default class InstancePage extends Vue {
     if (this.modpacks == null) {
       return null;
     }
-    return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
+    return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
   }
 
   get isLatestVersion() {
@@ -295,7 +295,7 @@ export default class InstancePage extends Vue {
       return PackConst.defaultPackSplashArt;
     }
 
-    const splashArt = this.packInstance.art?.filter(art => art.type === 'splash');
+    const splashArt = this.packInstance.art?.filter((art) => art.type === 'splash');
     return splashArt?.length > 0 ? splashArt[0].url : PackConst.defaultPackSplashArt;
   }
 
@@ -311,7 +311,7 @@ export default class InstancePage extends Vue {
   }
 
   get versionType() {
-    return this.packInstance?.versions?.find(e => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
+    return this.packInstance?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
   }
 }
 </script>

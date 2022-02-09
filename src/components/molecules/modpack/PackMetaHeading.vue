@@ -2,7 +2,7 @@
   <div class="meta-heading" :class="{ bolder: hidePackDetails }">
     <div class="back" @click="() => $emit('back')">
       <font-awesome-icon icon="chevron-left" class="mr-2" />
-      Back to {{ hidePackDetails ? 'instance mods' : 'library' }}
+      Back to {{ hidePackDetails ? 'instance' : 'library' }}
     </div>
 
     <div
