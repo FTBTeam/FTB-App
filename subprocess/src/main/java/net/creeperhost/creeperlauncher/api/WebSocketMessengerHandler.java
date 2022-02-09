@@ -40,6 +40,7 @@ public class WebSocketMessengerHandler
     static {
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
         register("launchInstance", LaunchInstanceData.class, new LaunchInstanceHandler());
+        register("instance.kill", KillInstanceData.class, new KillInstanceHandler());
         register("installInstance", InstallInstanceData.class, new InstallInstanceHandler());
         register("cancelInstallInstance", CancelInstallInstanceData.class, new CancelInstallInstanceHandler());
         register("updateInstance", UpdateInstanceData.class, new UpdateInstanceHandler());
