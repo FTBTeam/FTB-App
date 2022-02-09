@@ -133,6 +133,7 @@ export default class Authentication extends Vue {
   }
 
   authenticated() {
+    this.loggedIn = true;
     this.back();
   }
 
