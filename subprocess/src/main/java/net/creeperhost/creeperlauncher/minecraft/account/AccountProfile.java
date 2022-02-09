@@ -46,20 +46,17 @@ public class AccountProfile {
         this.mcAuth = msAuth;
     }
 
-    /**
-     * Only equals if the uuids are equal. The rest of the info here is meaningless if the UUIDs are the same.
-     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AccountProfile that = (AccountProfile) o;
-        return Objects.equal(uuid, that.uuid);
+        return isMicrosoft == that.isMicrosoft && Objects.equal(uuid, that.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(uuid);
+        return Objects.hashCode(isMicrosoft, uuid);
     }
 
     public static class MSAuthStore {

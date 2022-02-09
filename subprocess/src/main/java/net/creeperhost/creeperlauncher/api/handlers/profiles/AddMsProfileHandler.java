@@ -18,6 +18,16 @@ public class AddMsProfileHandler implements IMessageHandler<AddMsProfileHandler.
 
       Triple<Boolean, AccountProfile, UUID> addResponse;
       if (!AccountManager.get().getProfiles().contains(profile)) {
+        // Quickly validate that the users UUID isn't already in use in a Minecraft account
+        if (profile.isMicrosoft) {
+          // Find the first account that has the same UUID but is not Microsoft and remove it if it's found
+          AccountManager.get().getProfiles().stream().filter(
+              p -> !p.isMicrosoft && p.uuid.equals(profile.uuid)
+          ).findFirst().ifPresent(e -> {
+            AccountManager.get().removeProfile(e.uuid);
+          });
+        }
+
         addResponse = AccountManager.get().addProfile(profile);
       } else {
         addResponse = Triple.of(false, null, null);
