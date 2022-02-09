@@ -29,7 +29,7 @@
         </p>
 
         <div class="buttons flex justify-center mt-6">
-          <a href="https://feed-the-beast.com/support" target="_blank" class="mr-4">
+          <a href="https://go.ftb.team/support" target="_blank" class="mr-4">
             <ftb-button color="primary" class="my-2 py-2 text-center rounded-br">Report issue</ftb-button>
           </a>
           <ftb-button color="danger" class="my-2 py-2 text-center rounded-br" @click="quitApp">Quit</ftb-button>

@@ -8,7 +8,7 @@
             class="item up"
             aria-label="FTB Discord"
             data-balloon-pos="down-left"
-            @click="() => platform.get.utils.openUrl('https://ftb.team/discord')"
+            @click="() => platform.get.utils.openUrl('https://go.ftb.team/discord')"
           >
             <font-awesome-icon :icon="['fab', 'discord']" />
           </div>
@@ -17,7 +17,7 @@
             class="item up"
             aria-label="FTB Twitter"
             data-balloon-pos="down-left"
-            @click="() => platform.get.utils.openUrl('https://twitter.com/FTB_Team')"
+            @click="() => platform.get.utils.openUrl('https://go.ftb.team/twitter')"
           >
             <font-awesome-icon :icon="['fab', 'twitter']" />
           </div>
@@ -26,20 +26,20 @@
             class="item up"
             aria-label="FTB Twitch"
             data-balloon-pos="down-left"
-            @click="() => platform.get.utils.openUrl('https://twitch.tv/ftb')"
+            @click="() => platform.get.utils.openUrl('https://go.ftb.team/twitch')"
           >
             <font-awesome-icon :icon="['fab', 'twitch']" />
           </div>
         </div>
 
         <p class="font-bold text-lg mt-6 mb-2">Support</p>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME')">
+        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/creeperhost')">
           Order a server from CreeperHost
         </div>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://feed-the-beast.com/support')">
+        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/support')">
           Need help using the app?
         </div>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://github.com/FTBTeam/FTB-App-Feedback')">
+        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/app-feedback')">
           Report an app bug
         </div>
         <div
@@ -47,7 +47,7 @@
           @click="
             () =>
               platform.get.utils.openUrl(
-                'https://feedthebeast.notion.site/How-do-I-setup-my-own-server-43b4c6b83f264dc6b2fb7a9566864ab0',
+                'https://go.ftb.team/server-setup',
               )
           "
         >
@@ -57,7 +57,7 @@
           class="item"
           @click="
             () =>
-              platform.get.utils.openUrl('https://feedthebeast.notion.site/FTB-App-cb0a0cfc8acc490b99290c21591c29dc')
+              platform.get.utils.openUrl('https://go.ftb.team/app-support')
           "
         >
           App Guides
@@ -85,7 +85,7 @@
             <!--            <div v-if="platform.isElectron()" id="777249406"></div>-->
           </div>
           <video
-            @click="platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME')"
+            @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')"
             class="cursor-pointer"
             width="400"
             height="300"

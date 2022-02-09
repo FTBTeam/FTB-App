@@ -109,7 +109,7 @@ export default class Sidebar extends Vue {
   }
 
   public openPromo(): void {
-    platform.get.utils.openUrl('https://creeperhost.net/applyPromo/FEEDME');
+    platform.get.utils.openUrl('https://go.ftb.team/creeperhost');
   }
 
   public openFriends() {
