@@ -164,9 +164,8 @@ export default class LaunchingPage extends Vue {
   public cancelLoading() {
     this.sendMessage({
       payload: {
-        type: 'messageClient',
+        type: 'instance.kill',
         uuid: this.instance?.uuid,
-        message: 'yeet',
       },
     });
   }
