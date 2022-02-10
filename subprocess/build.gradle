@@ -74,6 +74,7 @@ task cleanMedia(type: Delete) {
     delete "releaseUpload"
 }
 
+@Internal
 task media(type: com.install4j.gradle.Install4jTask) {
     projectFile = "installerstuff.install4j"
     release = version
