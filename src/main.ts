@@ -109,11 +109,13 @@ Vue.mixin({
 
 Vue.filter('dayjs', (value: any) => (value ? dayjs.unix(value).format('DD MMMM YYYY') : ''));
 Vue.filter('dayjsFromNow', (value: any) => {
+  if (!value) return 'Never';
+
   if (typeof value === 'number') {
-    return dayjs.unix(value).fromNow(true);
+    return dayjs.unix(value).fromNow(true) + ' ago';
   }
 
-  return value ? dayjs().from(dayjs(value), true) : 'Never';
+  return value ? dayjs().from(dayjs(value), true) + ' ago' : 'Never';
 });
 Vue.filter('formatNumber', (value: number) => (value ? value.toLocaleString() : '0'));
 Vue.filter('title', (value: string) => (!value ? '' : value[0].toUpperCase() + value.slice(1)));
