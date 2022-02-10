@@ -18,7 +18,12 @@
               <img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />
               Accounts
             </div>
-            <font-awesome-icon v-if="getProfiles.length" icon="edit" @click="editMode = !editMode" />
+            <font-awesome-icon
+              class="cursor-pointer"
+              v-if="getProfiles.length"
+              icon="edit"
+              @click="editMode = !editMode"
+            />
           </div>
           <div class="accounts" v-if="getProfiles && getProfiles.length">
             <div
@@ -124,7 +129,7 @@ export default class SidebarProfile extends Vue {
   loading = false;
 
   get mtAvatar() {
-    const provider = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
+    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
   }
 
@@ -166,7 +171,7 @@ export default class SidebarProfile extends Vue {
   }
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
+    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
   }
 }
