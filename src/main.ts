@@ -15,6 +15,7 @@ import vSelectMenu from 'v-selectmenu';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
+import '@/assets/fonts.scss';
 import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 
