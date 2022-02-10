@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.install;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import net.covers1624.quack.util.MultiHasher;
+import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -12,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Helper for validating file hashes and sizes.
@@ -21,9 +23,9 @@ import java.util.Map;
 public class FileValidation {
 
     public final long expectedSize;
-    public final Map<MultiHasher.HashFunc, HashCode> expectedHashes;
+    public final Map<HashFunc, HashCode> expectedHashes;
 
-    protected FileValidation(long expectedSize, Map<MultiHasher.HashFunc, HashCode> expectedHashes) {
+    protected FileValidation(long expectedSize, Map<HashFunc, HashCode> expectedHashes) {
         this.expectedSize = expectedSize;
         this.expectedHashes = expectedHashes;
     }
@@ -55,8 +57,19 @@ public class FileValidation {
      * @return The new {@link FileValidation}.
      */
     public FileValidation withHash(HashFunction hashFunc, HashCode hashCode) {
-        Map<MultiHasher.HashFunc, HashCode> expectedHashes = new HashMap<>(this.expectedHashes);
-        HashCode existing = expectedHashes.put(MultiHasher.HashFunc.find(hashFunc), hashCode);
+        return withHash(Objects.requireNonNull(HashFunc.find(hashFunc)), hashCode);
+    }
+
+    /**
+     * Creates a copy of this {@link FileValidation} with the provided hash validation.
+     *
+     * @param hashFunc The {@link HashFunction}.
+     * @param hashCode The {@link HashCode} for this function.
+     * @return The new {@link FileValidation}.
+     */
+    public FileValidation withHash(HashFunc hashFunc, HashCode hashCode) {
+        Map<HashFunc, HashCode> expectedHashes = new HashMap<>(this.expectedHashes);
+        HashCode existing = expectedHashes.put(hashFunc, hashCode);
         if (existing != null) throw new IllegalStateException("HashCode for given HashFunction already set.");
 
         return new FileValidation(expectedSize, expectedHashes);
@@ -86,7 +99,7 @@ public class FileValidation {
             }
         }
         if (hashResult != null) {
-            for (Map.Entry<MultiHasher.HashFunc, HashCode> entry : expectedHashes.entrySet()) {
+            for (Map.Entry<HashFunc, HashCode> entry : expectedHashes.entrySet()) {
                 if (!entry.getValue().equals(hashResult.get(entry.getKey()))) {
                     return false;
                 }
