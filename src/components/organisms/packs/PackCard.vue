@@ -24,13 +24,8 @@
         <div class="title">{{ name }}</div>
         <div class="version">{{ version }}</div>
         <div class="play-button" :class="{ 'opacity-50': starting }">
-          <div class="clickable-play" :class="{ disabled: loading, loading }">
-            <span v-if="!starting && !loading && kind !== 'cloudInstance'" @click="checkMemoryThenLaunch">Play</span>
-            <span v-else-if="kind === 'cloudInstance'" @click="sync">Sync</span>
-            <span v-else-if="starting">
-              <font-awesome-icon spin icon="spinner" />
-            </span>
-            <span v-else>Loading...</span>
+          <div class="clickable-play" :class="{ disabled: loading, loading }" @click="checkMemoryThenLaunch">
+            <span>Play</span>
           </div>
         </div>
       </div>
