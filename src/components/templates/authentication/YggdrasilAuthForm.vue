@@ -27,7 +27,6 @@
         class="mb-6 rounded py-4 bg-green-600 ftb-button block w-full hover:bg-green-500"
         :class="{ 'disabled opacity-50 cursor-not-allowed': username === '' || password === '' }"
         :disabled="username === '' || password === ''"
-        @click="submit"
       >
         Login
       </button>
