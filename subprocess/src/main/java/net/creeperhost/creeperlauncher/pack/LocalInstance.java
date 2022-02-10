@@ -6,16 +6,17 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
+import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.migration.migrators.DialogUtil;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
-import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSyncType;
@@ -98,7 +99,6 @@ public class LocalInstance implements IPack
     @Nullable
     public transient CancellationToken prepareToken;
     private transient int loadingModPort;
-    public transient boolean hasLoadingMod;
     public transient ModpackVersionManifest versionManifest;
 
     private transient long startTime;
@@ -297,46 +297,6 @@ public class LocalInstance implements IPack
         }
     }
 
-    private static final String[] candidates = new String[] {
-            "net/creeperhost/traylauncher/TrayLauncher.class",
-            "net/creeperhost/launchertray/LauncherTray.class",
-            "net/creeperhost/launchertray/transformer/HookLoader.class"
-    };
-
-    private boolean checkForLaunchMod() {
-        Path modsDir = path.resolve("mods");
-        if (!Files.exists(modsDir)) {
-            return false;
-        }
-        ElapsedTimer timer = new ElapsedTimer();
-
-        LOGGER.info("Checking for Launch Mod for instance {}}({})..", uuid, name);
-        boolean ret = FileUtils.listDir(modsDir).parallelStream()
-                .anyMatch(file -> {
-                    if (!Files.isRegularFile(file)) return false;
-
-                    try (InputStream fileStream = Files.newInputStream(file); ZipInputStream zin = new ZipInputStream(fileStream)) {
-                        Set<String> entries = new HashSet<>();
-
-                        ZipEntry entry;
-                        while ((entry = zin.getNextEntry()) != null) {
-                            entries.add(entry.getName());
-                        }
-
-                        for (String candidate : candidates) {
-                            if (entries.contains(candidate)) {
-                                return true;
-                            }
-                        }
-                    } catch (IOException ignored) {
-                    }
-                    return false;
-                });
-        String s = ret ? "Found" : "Didn't find";
-        LOGGER.info("{} Launch Mod for instance {}({}) in {}.", s, uuid, name, timer.elapsedStr());
-        return ret;
-    }
-
     private LocalInstance()
     {
     }
@@ -405,11 +365,6 @@ public class LocalInstance implements IPack
             ctx.extraJVMArgs.addAll(jvmArgs);
         });
 
-        launcher.withStartTask(ctx -> {
-            DownloadUtils.downloadFile(dir.resolve("Log4jPatcher-1.0.1.jar"), Constants.LOG4JPATCHER_URL);
-            ctx.extraJVMArgs.add("-javaagent:Log4jPatcher-1.0.1.jar");
-        });
-
         if (!Constants.S3_SECRET.isEmpty() && !Constants.S3_KEY.isEmpty() && !Constants.S3_HOST.isEmpty() && !Constants.S3_BUCKET.isEmpty()) {
             launcher.withStartTask(ctx -> {
                 LOGGER.info("Attempting start cloud sync..");
@@ -432,25 +387,20 @@ public class LocalInstance implements IPack
             Analytics.sendPlayRequest(getId(), getVersionId(), packType);
         });
 
-        this.hasLoadingMod = checkForLaunchMod();
+        launcher.withStartTask(ctx -> {
+            // Nuke old files.
+            Files.deleteIfExists(dir.resolve("Log4jPatcher-1.0.1.jar"));
+            Files.deleteIfExists(dir.resolve("mods/launchertray-1.0.jar"));
+            Files.deleteIfExists(dir.resolve("mods/launchertray-progress-1.0.jar"));
 
-        //TODO: THIS IS FOR TESTING ONLY, PLEASE REMOVE ME IN FUTURE
-        if(OS.CURRENT == OS.WIN && loadInApp)
-        {
-            if (!this.hasLoadingMod) {
-                if (modLoader.startsWith("1.7.10")) {
-                    DownloadUtils.downloadFile(dir.resolve("mods/launchertray-1.0.jar"), "https://dist.creeper.host/modpacks/maven/com/sun/jna/1.7.10-1.0.0/d4c2da853f1dbc80ab15b128701001fd3af6718f");
-                    this.hasLoadingMod = checkForLaunchMod();
-                } else if (modLoader.startsWith("1.12.2")) {
-                    DownloadUtils.downloadFile(dir.resolve("mods/launchertray-1.0.jar"), "https://dist.creeper.host/modpacks/maven/net/creeperhost/launchertray/transformer/1.0/381778e244181cc2bb7dd02f03fb745164e87ee0");
-                    this.hasLoadingMod = checkForLaunchMod();
-                } else if (modLoader.startsWith("1.15") || modLoader.startsWith("1.16")) {
-                    DownloadUtils.downloadFile(dir.resolve("mods/launchertray-1.0.jar"), "https://dist.creeper.host/modpacks/maven/net/creeperhost/traylauncher/1.0/134dd1944e04224ce53ff18750e81f5517704c8e");
-                    DownloadUtils.downloadFile(dir.resolve("mods/launchertray-progress-1.0.jar"), "https://dist.creeper.host/modpacks/maven/net/creeperhost/traylauncher/unknown/74ced30ca35e88b583969b6d74efa0f7c2470e8b");
-                    this.hasLoadingMod = checkForLaunchMod();
+            InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
+            List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
+            if (loadInApp && !loadingMods.isEmpty()) {
+                for (InstanceSupportMeta.SupportFile file : loadingMods) {
+                    if (!file.canApply(modLoader, OperatingSystem.current())) continue;
+                    file.createTask(dir.resolve("mods")).execute(null, null);
                 }
-            }
-            launcher.withStartTask(ctx -> {
+
                 CreeperLauncher.closeOldClient();
                 loadingModPort = MiscUtils.getRandomEphemeralPort();
                 if (loadingModPort != -1) {
@@ -471,8 +421,14 @@ public class LocalInstance implements IPack
                 } else {
                     LOGGER.warn("Failed to find free Ephemeral port.");
                 }
-            });
-        }
+            }
+            for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
+                for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
+                    file.createTask(dir).execute(null, null);
+                    ctx.extraJVMArgs.add("-javaagent:" + file.getName());
+                }
+            }
+        });
 
         if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled()) {
             launcher.withStartTask(ctx -> {

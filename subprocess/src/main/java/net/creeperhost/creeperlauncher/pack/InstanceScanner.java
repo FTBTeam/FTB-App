@@ -69,6 +69,7 @@ public class InstanceScanner {
         }
         for (Map.Entry<String, Collection<Path>> entry : foundMods.asMap().entrySet()) {
             if (entry.getValue().size() > 1) {
+                if (entry.getKey().equals("examplemod")) continue; // ._. I have no words.
                 String desc = entry.getValue().stream().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(",", "[", "]"));
                 LOGGER.info("Modid '{}' found in more than one Mod jar: {}", entry.getKey(), desc);
                 potentiallyInvalid = true;

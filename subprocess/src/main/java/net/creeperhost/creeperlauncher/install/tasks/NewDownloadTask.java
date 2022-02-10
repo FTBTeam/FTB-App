@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A task to download a file.
@@ -326,8 +327,19 @@ public class NewDownloadTask implements Task<Path> {
          * @return The new {@link DownloadValidation}.
          */
         public DownloadValidation withHash(HashFunction hashFunc, HashCode hashCode) {
+            return withHash(Objects.requireNonNull(HashFunc.find(hashFunc)), hashCode);
+        }
+
+        /**
+         * Creates a copy of this {@link DownloadValidation} with the provided hash validation.
+         *
+         * @param hashFunc The {@link HashFunction}.
+         * @param hashCode The {@link HashCode} for this function.
+         * @return The new {@link DownloadValidation}.
+         */
+        public DownloadValidation withHash(HashFunc hashFunc, HashCode hashCode) {
             Map<HashFunc, HashCode> expectedHashes = new HashMap<>(this.expectedHashes);
-            HashCode existing = expectedHashes.put(HashFunc.find(hashFunc), hashCode);
+            HashCode existing = expectedHashes.put(hashFunc, hashCode);
             if (existing != null) throw new IllegalStateException("HashCode for given HashFunction already set.");
 
             return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
