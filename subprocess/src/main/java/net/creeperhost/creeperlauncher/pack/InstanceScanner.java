@@ -67,15 +67,16 @@ public class InstanceScanner {
             LOGGER.warn("Instance has the following scripts which don't appear to be the correct sizes: {}", desc);
             potentiallyInvalid = true;
         }
+        int brokenMods = 0;
         for (Map.Entry<String, Collection<Path>> entry : foundMods.asMap().entrySet()) {
             if (entry.getValue().size() > 1) {
                 if (entry.getKey().equals("examplemod")) continue; // ._. I have no words.
                 String desc = entry.getValue().stream().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(",", "[", "]"));
                 LOGGER.info("Modid '{}' found in more than one Mod jar: {}", entry.getKey(), desc);
-                potentiallyInvalid = true;
+                brokenMods++;
             }
         }
-        return potentiallyInvalid;
+        return potentiallyInvalid || brokenMods >= 5;
     }
 
     public void scan() {
