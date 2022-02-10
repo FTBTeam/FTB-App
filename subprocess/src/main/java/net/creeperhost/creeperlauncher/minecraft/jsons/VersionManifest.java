@@ -173,7 +173,8 @@ public class VersionManifest {
             }
         }
         if (OperatingSystem.current().isMacos()) {
-            ret.add("-XstartOnFirstThread");
+            ret.add("-Xdock:name=Minecraft");
+            ret.add("-Xdock:icon=${minecraft_icon}");
         }
 
         ret.add("-Djava.library.path=${natives_directory}");

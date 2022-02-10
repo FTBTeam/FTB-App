@@ -321,7 +321,7 @@ public class InstanceLauncher {
             token.throwIfCancelled();
 
             progressTracker.startStep("Validate assets");
-            checkAssets(token);
+            AssetIndexManifest assetManifest = checkAssets(token);
             Path virtualAssets = buildVirtualAssets(gameDir, assetsDir);
             progressTracker.finishStep();
 
@@ -389,6 +389,14 @@ public class InstanceLauncher {
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
             subMap.put("classpath", classpath.stream().distinct().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
 
+            AssetIndexManifest.AssetObject icon = assetManifest.objects.get("icons/minecraft.icns");
+            if (icon != null) {
+                Path path = Constants.BIN_LOCATION.resolve("assets")
+                        .resolve("objects")
+                        .resolve(icon.getPath());
+                subMap.put("minecraft_icon", path.toAbsolutePath().toString());
+            }
+
             StrSubstitutor sub = new StrSubstitutor(new StrLookup<>() {
                 @Override
                 public String lookup(String key) {
@@ -446,18 +454,20 @@ public class InstanceLauncher {
         }
     }
 
-    private void checkAssets(CancellationToken token) throws IOException {
+    private AssetIndexManifest checkAssets(CancellationToken token) throws IOException {
         assert !manifests.isEmpty();
 
         LOGGER.info("Updating assets..");
         VersionManifest manifest = manifests.get(0);
         InstallAssetsTask assetsTask = new InstallAssetsTask(requireNonNull(manifest.assetIndex, "First Version Manifest missing AssetIndex. This should not happen."));
-        if (assetsTask.isRedundant()) return;
-        try {
-            assetsTask.execute(token, progressTracker.listenerForStep(true));
-        } catch (Throwable ex) {
-            throw new IOException("Failed to execute asset update task.", ex);
+        if (!assetsTask.isRedundant()) {
+            try {
+                assetsTask.execute(token, progressTracker.listenerForStep(true));
+            } catch (Throwable ex) {
+                throw new IOException("Failed to execute asset update task.", ex);
+            }
         }
+        return assetsTask.getResult();
     }
 
     private Path buildVirtualAssets(Path gameDir, Path assetsDir) throws IOException {
@@ -474,10 +484,9 @@ public class InstanceLauncher {
             for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
                 String name = entry.getKey();
                 AssetIndexManifest.AssetObject object = entry.getValue();
-                assert object.hash != null;
 
                 Path virtualPath = vAssets.resolve(name);
-                Path objectPath = objects.resolve(object.hash.toString().substring(0, 2) + "/" + object.hash);
+                Path objectPath = objects.resolve(object.getPath());
                 if (Files.exists(objectPath)) {
                     Files.copy(objectPath, IOUtils.makeParents(virtualPath), StandardCopyOption.REPLACE_EXISTING);
                 }

@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadVal
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -19,12 +20,15 @@ import static net.creeperhost.creeperlauncher.Constants.MC_RESOURCES;
  * <p>
  * Created by covers1624 on 17/11/21.
  */
-public class InstallAssetsTask implements Task<Void> {
+public class InstallAssetsTask implements Task<AssetIndexManifest> {
 
     private final List<NewDownloadTask> subTasks;
+    private final AssetIndexManifest manifest;
 
     public InstallAssetsTask(VersionManifest.AssetIndex assetIndex) throws IOException {
-        subTasks = buildTaskList(assetIndex);
+        Pair<AssetIndexManifest, List<NewDownloadTask>> pair = buildTaskList(assetIndex);
+        subTasks = pair.getValue();
+        manifest = pair.getKey();
     }
 
     @Override
@@ -53,8 +57,8 @@ public class InstallAssetsTask implements Task<Void> {
 
     @Nullable
     @Override
-    public Void getResult() {
-        return null;
+    public AssetIndexManifest getResult() {
+        return manifest;
     }
 
     /**
@@ -63,7 +67,7 @@ public class InstallAssetsTask implements Task<Void> {
      * @param assetIndex The asset index to download.
      * @return The list of tasks.
      */
-    private static List<NewDownloadTask> buildTaskList(VersionManifest.AssetIndex assetIndex) throws IOException {
+    private static Pair<AssetIndexManifest, List<NewDownloadTask>> buildTaskList(VersionManifest.AssetIndex assetIndex) throws IOException {
         Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
         AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
 
@@ -73,9 +77,8 @@ public class InstallAssetsTask implements Task<Void> {
         List<NewDownloadTask> tasks = new LinkedList<>();
         for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
             AssetIndexManifest.AssetObject object = entry.getValue();
-            assert object.hash != null;
 
-            String loc = object.hash.toString().substring(0, 2) + "/" + object.hash;
+            String loc = object.getPath();
             Path dest = objectsDir.resolve(loc);
 
             // Some vanilla assets (.ico files) have the same hash
@@ -86,8 +89,8 @@ public class InstallAssetsTask implements Task<Void> {
                     .url(MC_RESOURCES + loc)
                     .dest(dest)
                     .withValidation(DownloadValidation.of()
-                            .withExpectedSize(object.size)
-                            .withHash(Hashing.sha1(), object.hash)
+                            .withExpectedSize(object.getSize())
+                            .withHash(Hashing.sha1(), object.getHash())
                     )
                     .build();
             if (!task.isRedundant()) {
@@ -95,7 +98,7 @@ public class InstallAssetsTask implements Task<Void> {
             }
         }
 
-        return tasks;
+        return Pair.of(manifest, tasks);
     }
 
 }

@@ -19,6 +19,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Asset index json.
  * <p>
@@ -74,7 +76,16 @@ public class AssetIndexManifest {
 
         @Nullable
         @JsonAdapter (HashCodeAdapter.class)
-        public HashCode hash;
-        public int size;
+        private HashCode hash;
+        private int size;
+
+        public String getPath() {
+            return getHash().toString().substring(0, 2) + "/" + getHash();
+        }
+
+        // @formatter:off
+        public HashCode getHash() { return requireNonNull(hash); }
+        public int getSize() { return size; }
+        // @formatter:on
     }
 }
