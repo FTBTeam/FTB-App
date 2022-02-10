@@ -46,6 +46,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                         instance.packType
                 );
                 if (manifests == null) {
+                    CreeperLauncher.isInstalling = false;
+                    CreeperLauncher.currentInstall = null;
+                    CreeperLauncher.currentInstallFuture = null;
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
                     return;
                 }
@@ -58,6 +61,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                         data.packType
                 );
                 if (manifests == null) {
+                    CreeperLauncher.isInstalling = false;
+                    CreeperLauncher.currentInstall = null;
+                    CreeperLauncher.currentInstallFuture = null;
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
                     return;
                 }
@@ -68,6 +74,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         } catch (Throwable ex) {
             LOGGER.error("Fatal exception configuring modpack installation.", ex);
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception configuring modpack installation.", ""));
+            CreeperLauncher.isInstalling = false;
+            CreeperLauncher.currentInstall = null;
+            CreeperLauncher.currentInstallFuture = null;
         }
     }
 
@@ -93,6 +102,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         } catch (IOException ex) {
             LOGGER.error("Fatal exception preparing modpack installation.", ex);
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation.", ""));
+            CreeperLauncher.isInstalling = false;
+            CreeperLauncher.currentInstall = null;
+            CreeperLauncher.currentInstallFuture = null;
         }
     }
 }

@@ -61,7 +61,7 @@ public class ModpackManifest {
 
         ModpackManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackManifest.class);
         if (manifest.getStatus().equals("error")) {
-            // TODO Log error.
+            LOGGER.warn("Query failed. Got: " + sw);
             return null;
         }
 
