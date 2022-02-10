@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="8.0.8" transformSequenceNumber="8">
   <directoryPresets config="../release" />
-  <application name="FTBApp" applicationId="1726-2696-9539-5278" mediaDir="releaseBuild/" commonExternalFiles="true" shortName="FTBA" publisher="CreeperHost LTD" publisherWeb="https://www.creeperhost.net" version="test" allPathsRelative="true" backupOnSave="true" autoSave="true" macVolumeId="7b7ff548e0791aeb" javaMinVersion="11.0.5" javaMaxVersion="11.0.999" allowBetaVM="true">
+  <application name="FTBApp" applicationId="1726-2696-9539-5278" mediaDir="releaseBuild/" commonExternalFiles="true" shortName="FTBA" publisher="CreeperHost LTD" publisherWeb="https://www.creeperhost.net" version="test" allPathsRelative="true" backupOnSave="true" autoSave="true" macVolumeId="7b7ff548e0791aeb" javaMinVersion="17.0.1" javaMaxVersion="17.0.999" allowBetaVM="true">
     <codeSigning macEnabled="true" macPkcs12File="../signcert.p12" macNotarize="true" appleId="aaron_m@creeperhost.net">
       <macAdditionalBinaries>
         <entry>*</entry>
@@ -10,7 +10,7 @@
         <entry>*</entry>
       </macSearchedJars>
     </codeSigning>
-    <jreBundles jdkProviderId="AdoptOpenJDK" release="openjdk11/jdk-11.0.6+10_openj9-0.18.1">
+    <jreBundles jdkProviderId="AdoptOpenJDK" release="openjdk17/jdk-17.0.1+12">
       <modules>
         <module name="java.base" />
         <module name="java.datatransfer" />
@@ -1041,7 +1041,7 @@ file.getParent() != null || (file.getName().endsWith(".app") &amp;&amp; director
         <entry filesetId="58" />
         <entry filesetId="60" />
       </exclude>
-      <jreBundle jreBundleSource="generated" manualJreEntry="true" bundleType="dynamic" bundleUrl="https://apps.modpacks.ch/FTBApp/jres/linux-amd64-11.0.5.tar.gz" directDownload="true" />
+      <jreBundle jreBundleSource="generated" manualJreEntry="true" bundleType="dynamic" bundleUrl="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_x64_linux_hotspot_17.0.1_12.tar.gz" directDownload="true" />
     </unixInstaller>
     <macosArchive name="macOS Single Bundle Archive" id="70" launcherId="69">
       <exclude>
