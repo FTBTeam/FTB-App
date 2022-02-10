@@ -100,9 +100,7 @@ const mcAuthenticator: Authenticator = {
 
       logAuth(
         'debug',
-        `Received a response from the Mojang servers with the data of ${JSON.stringify(
-          await rawResponse.json(),
-        )} and status of ${rawResponse.status}`,
+        `Received a response from the Mojang servers with the status of ${rawResponse.status}`,
       );
       logAuth('debug', `The profile is ${rawResponse.status === 204 ? 'valid' : 'invalid'}`);
       return rawResponse.status === 204;
