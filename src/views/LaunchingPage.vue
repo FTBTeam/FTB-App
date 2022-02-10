@@ -246,7 +246,7 @@ export default class LaunchingPage extends Vue {
         this.handleClientLaunch(data);
       }
 
-      if (data.type === 'launchInstance.stopped') {
+      if (data.type === 'launchInstance.stopped' || (data.type === 'launchInstance.reply' && data.status === 'abort')) {
         this.$router.push({ name: RouterNames.ROOT_LIBRARY });
       }
     });
