@@ -45,15 +45,19 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
                 instance.play(instance.prepareToken, data.extraArgs, data.loadInApp);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
             } catch (InstanceLaunchException ex) {
-                LOGGER.error("Failed to launch instance.", ex);
+                if (ex instanceof InstanceLaunchException.Abort) {
+                    Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "abort", ex.getMessage()));
+                } else {
+                    LOGGER.error("Failed to launch instance.", ex);
 
-                String message = ex.getMessage();
-                Throwable cause = ex.getCause();
-                if (cause != null) {
-                    message += " because.. " + cause.getClass().getName() + ": " + cause.getMessage();
+                    String message = ex.getMessage();
+                    Throwable cause = ex.getCause();
+                    if (cause != null) {
+                        message += " because.. " + cause.getClass().getName() + ": " + cause.getMessage();
+                    }
+
+                    Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
                 }
-
-                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
             }
             instance.prepareToken = null;
             instance.prepareFuture = null;

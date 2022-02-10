@@ -1,23 +1,19 @@
 package net.creeperhost.creeperlauncher.pack;
 
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.*;
-import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
+import net.creeperhost.creeperlauncher.migration.migrators.DialogUtil;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
@@ -37,7 +33,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.BindException;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -384,6 +379,15 @@ public class LocalInstance implements IPack
         }
         launcher.reset();
         pollVersionManifest();
+
+        InstanceScanner scanner = new InstanceScanner(path, versionManifest);
+        scanner.scan();
+        if (scanner.isPotentiallyInvalid()) {
+            boolean abort = DialogUtil.confirmDialog("Potentially invalid instance", "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?");
+            if (abort) {
+                throw new InstanceLaunchException.Abort("Aborted.");
+            }
+        }
 
         launcher.withStartTask(ctx -> {
             // TODO, `extraArgs` and `jvmArgs` should be an array
