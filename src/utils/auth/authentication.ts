@@ -11,7 +11,7 @@ interface Authenticator {
 // Todo: reduce logging in the future
 
 export const logAuth = (level: 'debug' | 'warn' | 'error', message: any) =>
-  console.log(`[${dayjs().format('DD/MM/YY dd:mm:ss')}] [${level}] [auth] ${message}`);
+  console.log(`[${dayjs().format('DD/MM/YY hh:mm:ss')}] [${level}] [auth] ${message}`);
 
 const msAuthenticator: Authenticator = {
   async valid(profile: AuthProfile): Promise<boolean> {
