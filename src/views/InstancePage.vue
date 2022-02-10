@@ -159,7 +159,7 @@ export default class InstancePage extends Vue {
 
   public goBack(): void {
     if (!this.hidePackDetails) {
-      this.$router.back();
+      this.$router.push({ name: RouterNames.ROOT_LIBRARY });
     } else {
       this.searchingForMods = false;
       this.activeTab = ModpackPageTabs.OVERVIEW;
