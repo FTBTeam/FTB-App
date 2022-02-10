@@ -69,6 +69,8 @@ public class InstanceLauncher {
     @Nullable
     private LogThread logThread;
 
+    private boolean forceStopped;
+
     private final ProgressTracker progressTracker = new ProgressTracker();
     private final List<ThrowingConsumer<LaunchContext, IOException>> startTasks = new LinkedList<>();
     private final List<ThrowingRunnable<IOException>> exitTasks = new LinkedList<>();
@@ -150,6 +152,7 @@ public class InstanceLauncher {
                 } catch (IOException e) {
                     LOGGER.error("Failed to start minecraft process!", e);
                     setPhase(Phase.ERRORED);
+                    Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
                     process = null;
                     processThread = null;
                     return;
@@ -189,6 +192,8 @@ public class InstanceLauncher {
                 }
                 int exit = process.exitValue();
                 setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
+                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
+                forceStopped = false;
                 process = null;
                 processThread = null;
             } catch (Throwable t) {
@@ -201,6 +206,7 @@ public class InstanceLauncher {
                 }
                 processThread = null;
                 setPhase(Phase.ERRORED);
+                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
             }
         });
         processThread.setName("Instance Thread [" + THREAD_COUNTER.getAndIncrement() + "]");
@@ -218,6 +224,7 @@ public class InstanceLauncher {
 
         Process process = this.process;
         if (process == null) return;
+        forceStopped = true;
         process.destroyForcibly();
     }
 
@@ -239,13 +246,13 @@ public class InstanceLauncher {
 
     private void setPhase(Phase newPhase) {
         if (newPhase == Phase.STOPPED || newPhase == Phase.ERRORED) {
-            onStopped(newPhase);
+            onStopped();
         }
         LOGGER.info("Setting phase: {}", newPhase);
         phase = newPhase;
     }
 
-    private void onStopped(Phase reason) {
+    private void onStopped() {
         for (ThrowingRunnable<IOException> exitTask : exitTasks) {
             try {
                 exitTask.run();
@@ -268,8 +275,6 @@ public class InstanceLauncher {
             }
         }
         tempDirs.clear();
-
-        Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), reason == Phase.STOPPED ? "stopped" : "errored"));
     }
 
     private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {

@@ -56,13 +56,15 @@ public class LaunchInstanceData extends BaseData {
 
     public static class Stopped extends BaseData {
 
-        public UUID instanceId;
-        public String status;
+        public final UUID instanceId;
+        public final String status;
+        public final int exitCode;
 
-        public Stopped(UUID instanceId, String status) {
+        public Stopped(UUID instanceId, String status, int exitCode) {
             type = "launchInstance.stopped";
             this.instanceId = instanceId;
             this.status = status;
+            this.exitCode = exitCode;
         }
     }
 
