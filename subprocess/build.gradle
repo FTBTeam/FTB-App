@@ -6,7 +6,7 @@ plugins {
     id "org.beryx.runtime" version "1.7.0"
     id "de.undercouch.download" version "4.0.0"
     id "com.github.node-gradle.node" version "2.2.3"
-    id "com.install4j.gradle" version "8.0.4"
+    id "com.install4j.gradle" version "9.0.6"
     id "com.palantir.git-version" version "0.12.2"
     id "com.github.hierynomus.license" version "0.16.1" apply false
     id "com.dorongold.task-tree" version "2.1.0"
@@ -74,7 +74,6 @@ task cleanMedia(type: Delete) {
     delete "releaseUpload"
 }
 
-@Internal
 task media(type: com.install4j.gradle.Install4jTask) {
     projectFile = "installerstuff.install4j"
     release = version
