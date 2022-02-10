@@ -42,26 +42,10 @@
         <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/app-feedback')">
           Report an app bug
         </div>
-        <div
-          class="item"
-          @click="
-            () =>
-              platform.get.utils.openUrl(
-                'https://go.ftb.team/server-setup',
-              )
-          "
-        >
+        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/server-setup')">
           Server setup guide
         </div>
-        <div
-          class="item"
-          @click="
-            () =>
-              platform.get.utils.openUrl('https://go.ftb.team/app-support')
-          "
-        >
-          App Guides
-        </div>
+        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/app-support')">App Guides</div>
       </nav>
     </div>
 
@@ -80,7 +64,7 @@
             v-if="!showPlaceholder && !isElectron"
             id="ow-ad"
             ref="adRef"
-            style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto;"
+            style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto"
           >
             <!--            <div v-if="platform.isElectron()" id="777249406"></div>-->
           </div>
@@ -99,12 +83,12 @@
           </video>
         </div>
       </div>
-      <small
-        class="text-xs text-center block cursor-pointer mt-2 text-muted hover:text-white hover:shadow"
-        @click="reportAdvert"
-        v-if="!isElectron"
-        >Report advert</small
-      >
+      <!--      <small-->
+      <!--        class="text-xs text-center block cursor-pointer mt-2 text-muted hover:text-white hover:shadow"-->
+      <!--        @click="reportAdvert"-->
+      <!--        v-if="!isElectron"-->
+      <!--        >Report advert</small-->
+      <!--      >-->
     </div>
   </div>
 </template>
