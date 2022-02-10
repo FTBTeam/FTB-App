@@ -225,8 +225,8 @@ export default class LaunchingPage extends Vue {
     if (this.instance == null) {
       this.showAlert({
         title: 'Error',
-        content: 'Instance not found',
-        type: 'error',
+        message: 'Instance not found',
+        type: 'danger',
       });
 
       await this.$router.push(RouterNames.ROOT_LIBRARY);
@@ -247,7 +247,19 @@ export default class LaunchingPage extends Vue {
       }
 
       if (data.type === 'launchInstance.stopped' || (data.type === 'launchInstance.reply' && data.status === 'abort')) {
-        this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+        if (data.type === 'launchInstance.stopped' && data.status === 'errored') {
+          this.showAlert({
+            title: 'Instance failure',
+            message: 'The instance has crashed or has been externally closed.',
+            type: 'danger',
+          });
+        }
+
+        if (this.instance) {
+          this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
+        } else {
+          this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+        }
       }
     });
 
