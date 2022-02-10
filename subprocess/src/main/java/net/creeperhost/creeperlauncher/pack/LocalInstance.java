@@ -95,6 +95,7 @@ public class LocalInstance implements IPack
      * The current play time in millis.
      */
     public long totalPlayTime;
+    public long lastPlayed;
 
     private final transient InstanceLauncher launcher = new InstanceLauncher(this);
     @Nullable
@@ -165,6 +166,7 @@ public class LocalInstance implements IPack
 
         // Set to false, we are creating a new fresh instance.
         installComplete = false;
+        lastPlayed = System.currentTimeMillis() / 1000L;
 
         try {
             saveJson();
@@ -291,6 +293,8 @@ public class LocalInstance implements IPack
             if (installComplete) {
                 this.versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, path.resolve("version.json"), ModpackVersionManifest.class);
             }
+            this.totalPlayTime = jsonOutput.totalPlayTime;
+            this.lastPlayed = jsonOutput.lastPlayed;
         } catch(Exception e)
         {
             LOGGER.error("", e);
@@ -477,6 +481,8 @@ public class LocalInstance implements IPack
         }
         launcher.withStartTask(ctx -> {
             startTime = System.currentTimeMillis();
+            lastPlayed = startTime / 1000L;
+            saveJson();
         });
         launcher.withExitTask(() -> {
             long endTime = System.currentTimeMillis();
