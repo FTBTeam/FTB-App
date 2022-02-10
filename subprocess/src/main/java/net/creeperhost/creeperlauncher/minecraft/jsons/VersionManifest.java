@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static net.creeperhost.creeperlauncher.Constants.CH_MAVEN;
+import static org.apache.commons.lang3.StringUtils.removeStart;
 
 /**
  * Version manifest for a given game version.
@@ -309,9 +310,19 @@ public class VersionManifest {
                 validation = validation.withHash(Hashing.sha1(), artifact.sha1);
             }
 
+            // Dumb hack for Forge/Mojang as Mojang doesnt support classifiers in maven coords.
+            String url = artifact.url;
+            int startIdx =url.indexOf(name.toModulePath());
+            if (startIdx != -1) {
+                url = CH_MAVEN + removeStart(url.substring(startIdx), "/");
+            }
+            if (url.isEmpty()) {
+                url = CH_MAVEN + removeStart(artifact.path, "/");
+            }
+
             // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
             return NewDownloadTask.builder()
-                    .url(CH_MAVEN + StringUtils.removeStart(artifact.path, "/"))
+                    .url(url)
                     .dest(librariesDir.resolve(artifact.path))
                     .withValidation(validation)
                     .build();
