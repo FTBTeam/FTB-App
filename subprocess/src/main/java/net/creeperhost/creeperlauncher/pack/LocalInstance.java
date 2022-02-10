@@ -69,7 +69,7 @@ public class LocalInstance implements IPack
     private int minMemory = 2048;
     private int recMemory = 4096;
     public int memory = Integer.parseInt(Settings.settings.getOrDefault("memory", "2048"));
-    private String version;
+    public String version;
     @JsonAdapter(PathTypeAdapter.class)
     private Path dir;
     private List<String> authors;

@@ -247,6 +247,7 @@ public class InstanceInstaller {
 
             instance.installComplete = true;
             instance.versionId = manifest.getId();
+            instance.version = manifest.getName();
             instance.versionManifest = manifest;
             try {
                 instance.saveJson();
