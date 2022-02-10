@@ -246,11 +246,17 @@ export default class LaunchingPage extends Vue {
         this.handleClientLaunch(data);
       }
 
-      if (data.type === 'launchInstance.stopped' || (data.type === 'launchInstance.reply' && data.status === 'abort')) {
-        if (data.type === 'launchInstance.stopped' && data.status === 'errored') {
+      if (
+        data.type === 'launchInstance.stopped' ||
+        (data.type === 'launchInstance.reply' && (data.status === 'abort' || data.status === 'error'))
+      ) {
+        if (data.status === 'errored' || data.status === 'error') {
           this.showAlert({
             title: 'Instance failure',
-            message: 'The instance has crashed or has been externally closed.',
+            message:
+              data.status === 'error'
+                ? 'Unable to start pack... please see the instance logs...'
+                : 'The instance has crashed or has been externally closed.',
             type: 'danger',
           });
         }
