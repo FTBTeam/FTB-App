@@ -76,7 +76,7 @@ public class InstanceScanner {
                 brokenMods++;
             }
         }
-        return potentiallyInvalid || brokenMods >= 5;
+        return potentiallyInvalid || brokenMods >= 10;
     }
 
     public void scan() {
