@@ -695,6 +695,10 @@ public class InstanceLauncher {
                 @Override
                 public void update(long processed) {
                     stepProgress = (float) ((double) processed / (double) total);
+                    if (stepProgress == Float.NEGATIVE_INFINITY || stepProgress == Float.POSITIVE_INFINITY) {
+                        // Wat?
+                        stepProgress = 0;
+                    }
                     if (isDownload) {
                         humanDesc = DataUtils.humanSize(processed) + " / " + DataUtils.humanSize(total);
                     }
