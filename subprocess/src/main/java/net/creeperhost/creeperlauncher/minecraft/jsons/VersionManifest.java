@@ -309,6 +309,27 @@ public class VersionManifest {
 
         @Nullable
         public NewDownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
+            // We have 'natives'
+            if (natives != null) {
+                String classifier = natives.get(OS.current());
+                if (classifier == null) return null; // No natives for this platform.
+                if (downloads == null) {
+
+                    MavenNotation nativeNotation = name.withClassifier(classifier);
+                    return NewDownloadTask.builder()
+                            .url(CH_MAVEN + nativeNotation.toPath())
+                            .dest(nativeNotation.toPath(librariesDir))
+                            .build();
+                }
+
+                // We have 'downloads' too.
+                if (downloads.classifiers == null) return null; // What? but okay, just ignore.
+                LibraryDownload artifact = downloads.classifiers.get(classifier);
+                if (artifact == null) return null; // Shouldn't happen, but okay.
+                return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier), ignoreLocalLibraries);
+            }
+
+            // If we have a URL or no downloads, just do this.
             if (url != null || downloads == null) {
                 // The Vanilla launcher will explicitly use the 'url' property if it exists, however we override this to the CH maven.
                 // If the 'downloads' property is null, it tries from Mojang's maven directly, however we override this to the CH maven.
@@ -319,17 +340,8 @@ public class VersionManifest {
             }
 
             // We have a 'downlaods' property, but no 'natives'.
-            if (natives == null) {
-                if (downloads.artifact == null) return null;
-                return downloadTaskFor(librariesDir, downloads.artifact, name, ignoreLocalLibraries);
-            }
-            // We have natives.
-            if (downloads.classifiers == null) return null; // What? but okay, just ignore.
-            String classifier = natives.get(OS.current());
-            if (classifier == null) return null; // No natives for this platform.
-            LibraryDownload artifact = downloads.classifiers.get(classifier);
-            if (artifact == null) return null; // Shouldn't happen, but okay.
-            return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier), ignoreLocalLibraries);
+            if (downloads.artifact == null) return null;
+            return downloadTaskFor(librariesDir, downloads.artifact, name, ignoreLocalLibraries);
         }
 
         @Nullable
@@ -349,7 +361,7 @@ public class VersionManifest {
 
             // Dumb hack for Forge/Mojang as Mojang doesnt support classifiers in maven coords.
             String url = artifact.url;
-            int startIdx =url.indexOf(name.toModulePath());
+            int startIdx = url.indexOf(name.toModulePath());
             if (startIdx != -1) {
                 url = CH_MAVEN + removeStart(url.substring(startIdx), "/");
             }
