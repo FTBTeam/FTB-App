@@ -5,6 +5,8 @@ node_modules
 /.gradle
 
 # local env files
+.env
+
 .env.local
 .env.*.local
 
