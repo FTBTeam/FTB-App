@@ -16,6 +16,7 @@ import java.util.List;
 public class InstallProfile {
 
     public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(VersionManifest.OS.class, new VersionManifest.OsDeserializer())
             .registerTypeAdapter(MavenNotation.class, new MavenNotationAdapter())
             .create();
 

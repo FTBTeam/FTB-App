@@ -51,7 +51,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             InstallProfile profile = JsonUtils.parse(InstallProfile.GSON, installerRoot.resolve("install_profile.json"), InstallProfile.class);
             if (profile.install.transform != null) throw new IOException("Unable to process Forge v1 Installer with transforms.");
 
-            versionName = computeVersionName(profile.install.path);
+            versionName = profile.install.target;
 
             downloadVanilla(versionsDir, profile.install.minecraft);
 
@@ -83,15 +83,5 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
             JsonUtils.write(InstallProfile.GSON, IOUtils.makeParents(versionJson), profileJson.get("versionInfo"));
         }
-    }
-
-    @VisibleForTesting
-    static String computeVersionName(MavenNotation forgeNotation) {
-        requireNonNull(forgeNotation.version);
-
-        // It's weird, but mirrors the Forge v1 installer logic for this.
-        // 1.12.2-forge1.12.2-14.23.5.2838
-        int firstDash = forgeNotation.version.indexOf('-');
-        return forgeNotation.version.substring(0, firstDash) + "-" + forgeNotation.module + forgeNotation.version;
     }
 }
