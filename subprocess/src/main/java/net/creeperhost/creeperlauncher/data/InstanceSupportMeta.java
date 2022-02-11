@@ -35,7 +35,7 @@ public class InstanceSupportMeta {
     private List<SupportEntry> supportAgents = new LinkedList<>();
 
     public static InstanceSupportMeta update() throws IOException {
-        Path metaFile = Constants.BIN_LOCATION.resolve("support-meata.json");
+        Path metaFile = Constants.BIN_LOCATION.resolve("support-meta.json");
         NewDownloadTask task = NewDownloadTask.builder()
                 .url(URL)
                 .dest(metaFile)

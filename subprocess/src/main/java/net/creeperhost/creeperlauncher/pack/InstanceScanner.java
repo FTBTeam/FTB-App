@@ -33,6 +33,10 @@ public class InstanceScanner {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
+    private static final List<String> LJF_CLASSES = List.of(
+            "/net/minecraftforge/lex/legacyjavafixer/LegacyJavaFixer.class"
+    );
+
     private static final List<String> SCRIPTS_DIRS = List.of(
             "scripts",
             "kubejs"
@@ -45,6 +49,8 @@ public class InstanceScanner {
     private final Set<Path> invalidSizedMods = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<Path> invalidSizedScripts = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Multimap<String, Path> foundMods = HashMultimap.create();
+
+    private boolean hasLegacyJavaFixer;
 
     public InstanceScanner(Path instanceDir, ModpackVersionManifest manifest) {
         this.instanceDir = instanceDir;
@@ -77,6 +83,10 @@ public class InstanceScanner {
             }
         }
         return potentiallyInvalid || brokenMods >= 10;
+    }
+
+    public boolean hasLegacyJavaFixer() {
+        return hasLegacyJavaFixer;
     }
 
     public void scan() {
@@ -115,6 +125,14 @@ public class InstanceScanner {
 
     private void investigateMod(Path mod) {
         try (FileSystem fs = IOUtils.getJarFileSystem(mod, true)) {
+            if (!hasLegacyJavaFixer) {
+                for (String ljfClass : LJF_CLASSES) {
+                    if (Files.exists(fs.getPath(ljfClass))) {
+                        hasLegacyJavaFixer = true;
+                        break;
+                    }
+                }
+            }
             Path modsToml = fs.getPath("/META-INF/mods.toml");
             Path mcmodInfo = fs.getPath("/mcmod.info");
             Path fabricModJson = fs.getPath("/fabric.mod.json");

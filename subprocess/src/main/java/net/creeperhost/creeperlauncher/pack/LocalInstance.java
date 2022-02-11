@@ -387,6 +387,7 @@ public class LocalInstance implements IPack
             Analytics.sendPlayRequest(getId(), getVersionId(), packType);
         });
 
+        OperatingSystem os = OperatingSystem.current();
         launcher.withStartTask(ctx -> {
             // Nuke old files.
             Files.deleteIfExists(dir.resolve("Log4jPatcher-1.0.1.jar"));
@@ -397,7 +398,7 @@ public class LocalInstance implements IPack
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
             if (loadInApp && !loadingMods.isEmpty()) {
                 for (InstanceSupportMeta.SupportFile file : loadingMods) {
-                    if (!file.canApply(modLoader, OperatingSystem.current())) continue;
+                    if (!file.canApply(modLoader, os)) continue;
                     file.createTask(dir.resolve("mods")).execute(null, null);
                 }
 
@@ -424,8 +425,15 @@ public class LocalInstance implements IPack
             }
             for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
                 for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
+                    if (!file.canApply(modLoader, os)) continue;
                     file.createTask(dir).execute(null, null);
                     ctx.extraJVMArgs.add("-javaagent:" + file.getName());
+                }
+            }
+            if (!scanner.hasLegacyJavaFixer()) {
+                for (InstanceSupportMeta.SupportFile file : supportMeta.getSupportMods("legacyjavafixer")) {
+                    if (!file.canApply(modLoader, os)) continue;
+                    file.createTask(dir.resolve("mods")).execute(null, null);
                 }
             }
         });
