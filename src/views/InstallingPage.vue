@@ -155,6 +155,8 @@ import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import { SocketState } from '@/modules/websocket/types';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
+import eventBus from '@/utils/event-bus';
+import { RouterNames } from '@/router';
 
 export interface MsgBox {
   title: string;
@@ -195,6 +197,7 @@ export default class InstallingPage extends Vue {
   @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
   @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
   @Getter('getFileStatus') public getFileStatus!: (name: string) => string;
+  @Action('showAlert') public showAlert: any;
 
   platform = platform;
 
@@ -253,6 +256,25 @@ export default class InstallingPage extends Vue {
     if (this.modpacks.packsCache[packID] !== undefined) {
       this.loading = false;
     }
+    // eventBus.$on('ws.message', (data: any) => {
+    //   console.log(data.type, data.status);
+    //   if (data.type === 'installInstanceDataReply' && (data.status === 'abort' || data.status === 'error')) {
+    //     this.showAlert({
+    //       title: 'Instance failure',
+    //       message:
+    //         data.status === 'error'
+    //           ? 'Unable to start pack... please see the instance logs...'
+    //           : 'The instance has crashed or has been externally closed.',
+    //       type: 'danger',
+    //     });
+    //     this.finishInstall({
+    //       modpackID: packID,
+    //       messageID: data.requestId,
+    //     });
+    //     this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+    //   }
+    // });
+
     if (this.modpacks.installing === null) {
       this.updateInstall({ modpackID: packID, progress: 0 });
       let isPrivate = false;
@@ -299,13 +321,23 @@ export default class InstallingPage extends Vue {
               },
             });
           } else if (data.status === 'error') {
-            this.updateInstall({
+            // this.updateInstall({
+            //   modpackID: packID,
+            //   messageID: data.requestId,
+            //   error: true,
+            //   errorMessage: data.message,
+            //   instanceID: data.uuid,
+            // });
+            this.showAlert({
+              title: 'Install failure',
+              message: 'The modpack has failed to install, please check the logs.',
+              type: 'danger',
+            });
+            this.finishInstall({
               modpackID: packID,
               messageID: data.requestId,
-              error: true,
-              errorMessage: data.message,
-              instanceID: data.uuid,
             });
+            this.$router.push({ name: RouterNames.ROOT_LIBRARY });
           } else if (data.status === 'init') {
             this.updateInstall({
               modpackID: packID,
@@ -407,6 +439,11 @@ export default class InstallingPage extends Vue {
         }
       }
     }, 500);
+  }
+
+    destroyed() {
+    // Stop listening to events!
+    eventBus.$off('ws.message');
   }
 
   get limitedTags() {
