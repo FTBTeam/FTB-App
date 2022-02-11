@@ -21,7 +21,6 @@ export const state: ModpackState = {
   installing: null,
   loading: false,
   searchString: '',
-  launchProgress: null,
   privatePacks: [],
   curseLoading: false,
 };

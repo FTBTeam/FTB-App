@@ -8,7 +8,6 @@ export interface SocketState {
   reconnects: number;
   ircEventCallback: ((data: any) => void) | undefined;
   pingEventCallback: ((data: any) => void) | undefined;
-  modProgressCallback: ((data: any) => void) | undefined;
   exitCallback: ((data: any) => void) | undefined;
   downloadedFiles: { [index: string]: string };
 }

@@ -1,5 +1,7 @@
 // jacked from: https://github.com/sindresorhus/pretty-bytes
 // Jank = rushmead
+import store from '@/modules/store';
+
 export const prettyByteFormat = (bytes: number) => {
   if (isNaN(bytes)) {
     throw new TypeError('Expected a number');
@@ -24,4 +26,27 @@ export const prettyByteFormat = (bytes: number) => {
   unit = units[exponent];
 
   return (neg ? '-' : '') + bytes + ' ' + unit;
+};
+
+export const addHyphensToUuid = (uuid: string) => {
+  return uuid.replace(/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/, '$1-$2-$3-$4-$5');
+};
+
+/**
+ * Wraps the websocket send message in a timeout-able promise
+ */
+export const wsTimeoutWrapper = (payload: any, timeout: number = 10_000): Promise<any> => {
+  return new Promise(async (resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject('timed out');
+    }, timeout);
+
+    await store.dispatch('sendMessage', {
+      payload,
+      callback: (data: any) => {
+        clearTimeout(timer);
+        resolve(data);
+      },
+    });
+  });
 };

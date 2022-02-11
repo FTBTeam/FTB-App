@@ -31,15 +31,15 @@
         class="mb-8"
         small="When enabled, the MineTogether friends list will automatically open in a new window on startup. Currently disabled."
       />
-      <ftb-toggle
-        label="Enable cloud save uploads "
-        :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves === 'true'"
-        @change="toggleCloudSaves"
-        :disabled="auth.token.activePlan === null"
-        onColor="bg-primary"
-        class="mb-8"
-        small="Stores your worlds, configs and more in the cloud and syncs them across systems."
-      />
+      <!--      <ftb-toggle-->
+      <!--        label="Enable cloud save uploads "-->
+      <!--        :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves === 'true'"-->
+      <!--        @change="toggleCloudSaves"-->
+      <!--        :disabled="auth.token.activePlan === null"-->
+      <!--        onColor="bg-primary"-->
+      <!--        class="mb-8"-->
+      <!--        small="Stores your worlds, configs and more in the cloud and syncs them across systems."-->
+      <!--      />-->
       <ftb-toggle
         label="Enable Minetogether Connect"
         :value="settings.settings.mtConnect === true || settings.settings.mtConnect === 'true'"
@@ -72,8 +72,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-import FTBToggle from '@/components/FTBToggle.vue';
+import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { SettingsState } from '@/modules/settings/types';
@@ -93,7 +93,7 @@ export default class MTIntegration extends Vue {
   @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
+    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
   }
 

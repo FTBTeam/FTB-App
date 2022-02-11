@@ -1,5 +1,5 @@
 import router from '@/router';
-import store from '@/store';
+import store from '@/modules/store';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
@@ -40,6 +40,14 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
+    async openMsAuth() {
+      return new Promise(async (res, reject) => {
+        await overwolf.windows.getMainWindow().openWebserver((data: any) => {
+          res(data);
+        });
+        overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com`);
+      });
+    },
     openModpack(payload) {
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
     },
@@ -127,21 +135,11 @@ const Overwolf: ElectronOverwolfInterface = {
     },
     min(windowId: any) {
       overwolf.windows.minimize(windowId);
-      //@ts-ignore
-      if (window.ad) {
-        //@ts-ignore
-        window.ad.removeAd();
-      }
     },
     async max(windowId: any) {
       let maximised = await getWindowState(windowId);
       if (maximised === 'maximized') {
         overwolf.windows.restore(windowId);
-        //@ts-ignore
-        if (window.ad) {
-          //@ts-ignore
-          window.ad.refreshAd();
-        }
       } else {
         overwolf.windows.maximize(windowId);
       }
@@ -373,27 +371,33 @@ const Overwolf: ElectronOverwolfInterface = {
 
     async function addWindowListener() {
       let ourWindowID = await new Promise(resolve => {
-        //@ts-ignore
-        overwolf.windows.getCurrentWindow(function(e) {
+        overwolf.windows.getCurrentWindow((e: any) => {
           if (e.success) {
             resolve(e.window.id);
           }
         });
       });
-      //@ts-ignore
-      overwolf.windows.onStateChanged.addListener(function(event) {
+
+      overwolf.windows.onStateChanged.addListener((event: any) => {
+        console.log(event);
+        const windowAd: any = (window as any).ad;
+
         if (event.window_id === ourWindowID) {
-          if (event.window_previous_state_ex === 'minimized' && event.window_state_ex === 'normal') {
-            //@ts-ignore
-            if (window.ad) {
-              //@ts-ignore
-              window.ad.refreshAd();
+          if (
+            event.window_previous_state_ex === 'minimized' &&
+            (event.window_state_ex === 'normal' || event.window_state_ex === 'maximized')
+          ) {
+            if (windowAd) {
+              windowAd.refreshAd();
+              console.log('Refresh');
             }
-          } else if (event.window_state_ex === 'minimized' && event.window_previous_state_ex === 'normal') {
-            //@ts-ignore
-            if (window.ad) {
-              //@ts-ignore
-              window.ad.removeAd();
+          } else if (
+            event.window_state_ex === 'minimized' &&
+            (event.window_previous_state_ex === 'normal' || event.window_previous_state_ex === 'maximized')
+          ) {
+            if (windowAd) {
+              windowAd.removeAd();
+              console.log('Remove');
             }
           }
         }

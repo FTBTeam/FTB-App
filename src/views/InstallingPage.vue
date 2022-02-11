@@ -50,7 +50,7 @@
             <div class="mod-list bg-navbar w-1/3 overflow-y-auto relative" ref="modList" id="modList">
               <ul class="p-4">
                 <li
-                  v-for="stepID in Object.keys(steps).slice(0, 4)"
+                  v-for="stepID in Object.keys(steps).slice(0, 3)"
                   :class="steps[stepID].done ? 'downloaded text-gray-400' : 'text-white'"
                   :key="stepID"
                 >
@@ -84,7 +84,7 @@
                   </p>
                 </li>
                 <li
-                  v-for="stepID in Object.keys(steps).slice(4, 7)"
+                  v-for="stepID in Object.keys(steps).slice(3, 4)"
                   :class="steps[stepID].done ? 'downloaded text-gray-400' : 'text-white'"
                   :key="stepID"
                 >
@@ -144,17 +144,19 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
-import FTBToggle from '@/components/FTBToggle.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
-import FTBModal from '@/components/FTBModal.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
 import { shuffle } from '@/utils';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
-import ServerCard from '@/components/ServerCard.vue';
-import InstallModal from '@/components/modals/InstallModal.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
+import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import { SocketState } from '@/modules/websocket/types';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
+import eventBus from '@/utils/event-bus';
+import { RouterNames } from '@/router';
 
 export interface MsgBox {
   title: string;
@@ -195,6 +197,7 @@ export default class InstallingPage extends Vue {
   @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
   @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
   @Getter('getFileStatus') public getFileStatus!: (name: string) => string;
+  @Action('showAlert') public showAlert: any;
 
   platform = platform;
 
@@ -217,11 +220,9 @@ export default class InstallingPage extends Vue {
   private downloadedFiles: { [index: string]: string } = {};
   private steps: { [index: string]: { name: string; done: boolean } } = {
     INIT: { name: 'Initialise', done: false },
-    VANILLA: { name: 'Install Vanilla launcher', done: false },
-    API: { name: 'Gather data from API', done: false },
-    FORGE: { name: 'Get Forge information', done: false },
+    PREPARE: { name: 'Prepare installation', done: false },
+    MODLOADER: { name: 'Install Mod Loader', done: false },
     DOWNLOADS: { name: 'Download files', done: false },
-    POSTINSTALL: { name: 'Post-install tasks', done: false },
     FINISHED: { name: 'Finished', done: false },
   };
 
@@ -248,62 +249,6 @@ export default class InstallingPage extends Vue {
     // this.$router.push({name: 'browseModpacks', params: {search: tagName}});
   }
 
-  // public show300x250() {
-  //   const el = document.getElementById('ad');
-  //   this.starAPI({ kind: 'go', module: 'banner300x250', config: { target: { el, kind: 'replace' } } });
-  // }
-
-  // public addAdvert() {
-  //   try {
-  //     this.starAPI((api: { game: { setTarget: (e: unknown) => void } }) => {
-  //       api.game.setTarget(document.getElementById('ad'));
-  //     });
-  //     // @ts-ignore
-  //     this.starAPI({
-  //       kind: 'game.createInterstitial',
-  //       fail: () => {
-  //         console.log('API was blocked or failed to load');
-  //         this.showPlaceholder = true;
-  //       },
-  //     });
-  //     // @ts-ignore
-  //     this.starAPI({
-  //       kind: 'game.displayInterstitial',
-  //       onAdOpened() {
-  //         console.log('Interstitial opened');
-  //       },
-  //       onAdClosed: () => {
-  //         this.show300x250();
-  //       },
-  //       fail: () => {
-  //         this.show300x250();
-  //       },
-  //     });
-  //   } catch (error) {
-  //     this.showPlaceholder = true;
-  //   }
-  // }
-  //
-  // public reportAdvert() {
-  //   const el = document.getElementById('banner300x250');
-  //   if (!el) {
-  //     this.showPlaceholder = true;
-  //     return;
-  //   }
-  //   // @ts-ignore
-  //   const adHTML = el.children[0].contentDocument.body.innerHTML;
-  //   // @ts-ignore
-  //   this.starAPI(api => {
-  //     api.game.setTarget(null);
-  //   });
-  //   el.innerHTML = '';
-  //   this.ad = null;
-  //   // @ts-ignore
-  //   window.ad = null;
-  //   this.showPlaceholder = true;
-  //   this.reportAd({ object: '', html: adHTML });
-  // }
-
   async mounted() {
     const packID: number = parseInt(this.$route.query.modpackid as string, 10);
     const packType: number = parseInt(this.$route.query.type as string, 10);
@@ -311,6 +256,25 @@ export default class InstallingPage extends Vue {
     if (this.modpacks.packsCache[packID] !== undefined) {
       this.loading = false;
     }
+    // eventBus.$on('ws.message', (data: any) => {
+    //   console.log(data.type, data.status);
+    //   if (data.type === 'installInstanceDataReply' && (data.status === 'abort' || data.status === 'error')) {
+    //     this.showAlert({
+    //       title: 'Instance failure',
+    //       message:
+    //         data.status === 'error'
+    //           ? 'Unable to start pack... please see the instance logs...'
+    //           : 'The instance has crashed or has been externally closed.',
+    //       type: 'danger',
+    //     });
+    //     this.finishInstall({
+    //       modpackID: packID,
+    //       messageID: data.requestId,
+    //     });
+    //     this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+    //   }
+    // });
+
     if (this.modpacks.installing === null) {
       this.updateInstall({ modpackID: packID, progress: 0 });
       let isPrivate = false;
@@ -357,19 +321,23 @@ export default class InstallingPage extends Vue {
               },
             });
           } else if (data.status === 'error') {
-            this.updateInstall({
+            // this.updateInstall({
+            //   modpackID: packID,
+            //   messageID: data.requestId,
+            //   error: true,
+            //   errorMessage: data.message,
+            //   instanceID: data.uuid,
+            // });
+            this.showAlert({
+              title: 'Install failure',
+              message: 'The modpack has failed to install, please check the logs.',
+              type: 'danger',
+            });
+            this.finishInstall({
               modpackID: packID,
               messageID: data.requestId,
-              error: true,
-              errorMessage: data.message,
-              instanceID: data.uuid,
             });
-          } else if (data.currentStage === 'POSTINSTALL') {
-            this.updateInstall({
-              modpackID: packID,
-              messageID: data.requestId,
-              stage: data.currentStage,
-            });
+            this.$router.push({ name: RouterNames.ROOT_LIBRARY });
           } else if (data.status === 'init') {
             this.updateInstall({
               modpackID: packID,
@@ -471,6 +439,11 @@ export default class InstallingPage extends Vue {
         }
       }
     }, 500);
+  }
+
+    destroyed() {
+    // Stop listening to events!
+    eventBus.$off('ws.message');
   }
 
   get limitedTags() {

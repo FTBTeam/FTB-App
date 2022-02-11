@@ -4,7 +4,6 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.IntegrityCheckException;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
 import net.creeperhost.creeperlauncher.install.tasks.http.DownloadedFile;
 import net.creeperhost.creeperlauncher.install.tasks.http.IHttpClient;
 import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
@@ -27,7 +26,6 @@ public class DownloadableFile
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final String version;
     private final Path path;
     private final String downloadUrl;
     private final List<HashCode> expectedChecksums;
@@ -35,14 +33,12 @@ public class DownloadableFile
     private final long id;
     private final String name;
     private final String type;
-    private final String updated;
     private boolean hasPrepared;
     private HashCode sha1;
     private Path destination;
     private final IHttpClient client = new OkHttpClientImpl();
 
-    public DownloadableFile(String version, Path path, String url, List<HashCode> acceptedChecksums, long size, long id, String name, String type, String updated) {
-        this.version = version;
+    public DownloadableFile(Path path, String url, List<HashCode> acceptedChecksums, long size, long id, String name, String type) {
         this.path = path;
         this.downloadUrl = url;
         this.expectedChecksums = new ArrayList<>(acceptedChecksums);
@@ -50,7 +46,6 @@ public class DownloadableFile
         this.id = id;
         this.name = name;
         this.type = type;
-        this.updated = updated;
     }
 
     public void prepare() throws IOException {
@@ -111,11 +106,11 @@ public class DownloadableFile
         {
             if (this.getSize() > 0)
             {
-                FTBModPackInstallerTask.overallBytes.set(FTBModPackInstallerTask.overallBytes.get() - this.getSize());
+//                FTBModPackInstallerTask.overallBytes.set(FTBModPackInstallerTask.overallBytes.get() - this.getSize());
                 LOGGER.warn("{} size expected does not match remote file size. File size updated.", getName());
             }
             this.size = remoteSize;
-            FTBModPackInstallerTask.overallBytes.addAndGet(this.getSize());
+//            FTBModPackInstallerTask.overallBytes.addAndGet(this.getSize());
         }
         if (!remoteExists)
         {
@@ -144,23 +139,15 @@ public class DownloadableFile
             }
         }
         FileUtils.createDirectories(destination.getParent());
-        long speedLimit = 0;
-        try {
-            String speedLimit1 = Settings.settings.putIfAbsent("speedLimit", "0");
-            if(speedLimit1 == null)
-                speedLimit1 = "0";
-            speedLimit = Long.parseLong(speedLimit1);
-        } catch (Exception ignored) {
-        }
 
         DownloadedFile send = client.doDownload(
                 downloadUrl,
                 destination,
                 watcher,
                 Hashing.sha1(),
-                speedLimit * 1000L); // not really async - our client will run async things on same thread. bit of a hack, but async just froze.
-        Path body = send.getDestination();
-        sha1 = send.getChecksum();
+                Settings.getSpeedLimit() * 1000L); // not really async - our client will run async things on same thread. bit of a hack, but async just froze.
+        Path body = send.destination();
+        sha1 = send.checksum();
 
         this.destination = body;
     }
@@ -212,23 +199,7 @@ public class DownloadableFile
                 } catch (Exception e) {
                     throw new Exception("Unable to extract overrides due to error", e);
                 }
-
-                /*FileUtils.extractZip2ElectricBoogaloo(this.destination, this.path.getParent());
-                Path movePath = Path.of(this.destination.getParent().toString(),"overrides");
-                List<Path> files = FileUtils.listDir(movePath);
-                for(Path file : files) {
-                    try {
-                        Files.move(file, Path.of(this.destination.getParent().toString(), file.toString().replace(movePath.toString(), "")), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) { e.printStackTrace(); }
-                }*/
-//                FileUtils.move(Path.of(this.path, "overrides"));
         }
-    }
-
-
-    public String getVersion()
-    {
-        return version;
     }
 
     public Path getPath()
@@ -266,14 +237,8 @@ public class DownloadableFile
         return type;
     }
 
-    public String getUpdated()
-    {
-        return updated;
-    }
-
     public long getSize()
     {
         return size;
     }
-
 }

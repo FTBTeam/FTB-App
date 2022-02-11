@@ -30,20 +30,12 @@
       class="mb-8"
       small="Enabled you to use the MineTogether chat from within the app. Currently disabled..."
     />
-    <ftb-toggle
-      label="Automate Minecraft Launcher"
-      :value="localSettings.automateMojang"
-      @change="enableAutomate"
-      onColor="bg-primary"
-      class="mb-8"
-      small="When enabled, we'll do our best to automatically click play on the Minecraft Launcher. This doesn't always work due to how the Minecraft Launcher works."
-    />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import FTBToggle from '@/components/FTBToggle.vue';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Settings, SettingsState } from '@/modules/settings/types';
 import { Action, State } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
@@ -80,11 +72,6 @@ export default class AppSettings extends Vue {
       this.localSettings.enableChat = value;
       this.saveSettings(this.localSettings);
     }
-  }
-
-  public enableAutomate(value: boolean): void {
-    this.localSettings.automateMojang = value;
-    this.saveSettings(this.localSettings);
   }
 
   public exitOverwolf(value: boolean): void {

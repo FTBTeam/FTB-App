@@ -15,23 +15,6 @@
         overflow-y: hidden;
       }
     </style>
-    <script>
-      (function(zonefile) { 
-      var y = "cpmstarx";
-      var drutObj = window[y] = window[y] || {};
-      function failCpmstarAPI() { var failFn = function(o) { o && typeof(o) === "object" && o.fail && o.fail(); }; drutObj && Array.isArray(drutObj.cmd) && drutObj.cmd.forEach(failFn) && (drutObj.cmd.length = 0);  window.cpmstarAPI = window["_"+zonefile] = failFn; }
-      var rnd = Math.round(Math.random()*999999);
-      var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.onerror=failCpmstarAPI;
-      var proto = document.location.protocol;
-      var host = ( proto == "https:" || proto == "file:" || proto == "app:")?"https://server":"//cdn";
-      if(window.location.hash=="#cpmstarDev") host = "//dev.server";
-      if(window.location.hash=="#cpmstarStaging") host = "//staging.server"; 
-      s.src = host + ".cpmstar.com/cached/zonefiles/" + zonefile + ".js?rnd="+rnd; 
-      var s2=document.getElementsByTagName('script')[0];
-      s2.parentNode.insertBefore(s, s2);
-      window.cpmstarAPI = function(o) { (drutObj.cmd = drutObj.cmd || []).push(o); }
-      }('629_51795_gameapi'));
-      </script>
   </head>
   <body>
     <noscript>

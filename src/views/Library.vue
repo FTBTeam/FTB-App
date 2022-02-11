@@ -5,6 +5,7 @@
       <div class="w-3/4 self-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mb-4" />
       </div>
+
       <div class="pack-card-list grid">
         <pack-card-wrapper
           v-for="modpack in packs"
@@ -51,8 +52,8 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/packs/PackCardWrapper.vue';
-import FTBSearchBar from '@/components/FTBSearchBar.vue';
+import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
+import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
@@ -81,7 +82,7 @@ export default class Library extends Vue {
       this.isLoaded = false;
       try {
         await Promise.all(
-          this.modpacks.installedPacks.map(async instance => {
+          this.modpacks.installedPacks.map(async (instance) => {
             const pack = await this.fetchModpack(instance.id);
             return pack;
           }),
@@ -122,12 +123,7 @@ export default class Library extends Vue {
     if (this.modpacks) {
       this.isLoaded = false;
       try {
-        await Promise.all(
-          this.modpacks.installedPacks.map(async instance => {
-            const pack = await this.fetchModpack(instance.id);
-            return pack;
-          }),
-        );
+        await Promise.all(this.modpacks.installedPacks.map(async (instance) => await this.fetchModpack(instance.id)));
         this.isLoaded = true;
       } catch (err) {
         this.isLoaded = true;
@@ -139,7 +135,7 @@ export default class Library extends Vue {
     return this.modpacks == null
       ? []
       : this.searchTerm.length > 0
-      ? this.modpacks.installedPacks.filter(pack => {
+      ? this.modpacks.installedPacks.filter((pack) => {
           return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
         })
       : this.modpacks.installedPacks.sort((a, b) => {

@@ -17,7 +17,7 @@
     <div class="disclaimer mt-2 mb-6">
       <small class="text-muted">
         <font-awesome-icon icon="info" class="mr-4" />
-        The information on this page was valid as of {{ config.dateCompiled | moment }}
+        The information on this page was valid as of {{ config.dateCompiled | dayjs }}
       </small>
     </div>
 
@@ -33,7 +33,7 @@
     <div class="disclaimer mt-2 mb-6">
       <small class="text-muted">
         <font-awesome-icon icon="info" class="mr-4" />
-        The information on this page was valid as of {{ config.dateCompiled | moment }}
+        The information on this page was valid as of {{ config.dateCompiled | dayjs }}
       </small>
     </div>
   </div>

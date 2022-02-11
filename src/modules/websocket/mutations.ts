@@ -37,7 +37,8 @@ export const mutations: MutationTree<SocketState> = {
           message.type !== 'installInstanceDataReply' &&
           message.type !== 'installInstanceProgress' &&
           message.type !== 'updateInstanceProgress' &&
-          message.type !== 'updateInstanceDataReply'
+          message.type !== 'updateInstanceDataReply' &&
+          message.type !== 'launchInstance.status'
         ) {
           delete state.messages[message.requestId];
         } else if (message.status === 'success') {
@@ -65,11 +66,7 @@ export const mutations: MutationTree<SocketState> = {
       if (state.ircEventCallback) {
         state.ircEventCallback(message);
       }
-    } else if (message.type === 'clientLaunchData') {
-      if (state.modProgressCallback) {
-        state.modProgressCallback(message);
-      }
-    } else if (message.type === 'installedFileEventDataReply') {
+    } else if (message.type === 'install.filesEvent') {
       Object.keys(message.files).forEach((f: string) => {
         const status = message.files[f];
         Vue.set(state.downloadedFiles, f, status);
@@ -94,9 +91,6 @@ export const mutations: MutationTree<SocketState> = {
   },
   ADD_IRC_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
     state.ircEventCallback = callback;
-  },
-  ADD_MOD_PROGRESS_CALLBACK(state: any, callback: (data: any) => void) {
-    state.modProgressCallback = callback;
   },
   ADD_EXIT_CALLBACK(state: any, callback: (data: any) => void) {
     state.exitCallback = callback;

@@ -95,10 +95,32 @@ public class Settings
         return getPathOpt("instanceLocation", default_);
     }
 
+    public static boolean getBooleanOr(String name, boolean default_) {
+        String value = settings.get(name);
+
+        return name != null ? Boolean.parseBoolean(value) : default_;
+    }
+
     public static String getDefaultThreadLimit(String arg)
     {
         int defaultThreads = (Runtime.getRuntime().availableProcessors() / 2) - 1;
         if(defaultThreads < 2) defaultThreads = 2;
         return String.valueOf(defaultThreads);
+    }
+
+    public static long getSpeedLimit() {
+        String val = settings.putIfAbsent("speedLimit", "0");
+        if (val == null) {
+            return 0;
+        }
+        try {
+            return Long.parseLong(val);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    public static int getThreadLimit() {
+        return Integer.parseInt(Settings.settings.computeIfAbsent("threadLimit", Settings::getDefaultThreadLimit));
     }
 }

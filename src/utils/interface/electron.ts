@@ -4,13 +4,15 @@ import { clipboard, ipcRenderer } from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
-import store from '@/store';
+import store from '@/modules/store';
 import { getAPIRequest } from '@/modules/modpacks/actions';
 import { ModPack } from '@/modules/modpacks/types';
 import router from '@/router';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import axios from 'axios';
+import EventEmitter from 'events';
+import http from 'http';
 
 declare const __static: string;
 
@@ -18,6 +20,87 @@ const contents = fs.existsSync(path.join(__static, 'version.json'))
   ? fs.readFileSync(path.join(__static, 'version.json'), 'utf-8')
   : null;
 const jsonContent = contents ? JSON.parse(contents) : null;
+
+class MiniWebServer extends EventEmitter {
+  server: http.Server | null = null;
+  timeoutRef: NodeJS.Timeout | null = null;
+
+  open() {
+    if (this.server == null) {
+      this.server = http.createServer((req: any, res: any) => {
+        let body = '';
+        req.on('data', (chunk: any) => {
+          body += chunk;
+        });
+
+        req.on('end', () => {
+          if (!body) {
+            res.end();
+            return;
+          }
+
+          const jsonResponse = JSON.parse(body);
+          if (jsonResponse == null) {
+            console.log('Failed to parse json response');
+            res.end();
+            this.close();
+            return;
+          }
+
+          // HACKS
+          if (jsonResponse.key) {
+            this.emit('response', jsonResponse);
+            res.write('success');
+            res.end();
+            this.close();
+            return;
+          }
+
+          const { token, 'app-auth': appAuth } = jsonResponse;
+          if (token == null || appAuth == null) {
+            console.log('Failed to parse token or appAuth');
+            return;
+          }
+
+          this.emit('response', jsonResponse);
+          res.write('success');
+          res.end();
+          this.close();
+        });
+      });
+      this.server.listen(7755, () => {
+        console.log('MiniWebServer listening on 7755');
+        this.emit('open');
+      });
+    } else {
+      this.emit('open', false);
+    }
+  }
+
+  closeAfterFive() {
+    if (this.timeoutRef != null) {
+      clearTimeout(this.timeoutRef);
+    }
+
+    this.timeoutRef = setTimeout(() => {
+      this.emit('timeout');
+      this.close();
+    }, 1000 * 60 * 5);
+  }
+
+  close() {
+    this.server?.close(() => {
+      this.server = null;
+      if (this.timeoutRef != null) {
+        clearTimeout(this.timeoutRef);
+      }
+    });
+
+    this.emit('close');
+  }
+}
+
+const miniWebServer: MiniWebServer = new MiniWebServer();
 
 const Electron: ElectronOverwolfInterface = {
   config: {
@@ -36,15 +119,48 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
+    async openMsAuth() {
+      // return ipcRenderer.invoke('open-auth-window');
+      Electron.utils.openUrl(`https://msauth.feed-the-beast.com`);
+
+      return new Promise((resolve, reject) => {
+        miniWebServer.open();
+        miniWebServer.on('response', (data: { token: string; 'app-auth': string }) => {
+          resolve(data);
+        });
+
+        miniWebServer.on('open', () => {
+          miniWebServer.closeAfterFive();
+        });
+
+        miniWebServer.on('close', () => {
+          console.log('Web server closed');
+        });
+      });
+    },
     openModpack(payload: { name: string; id: string }) {
       ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
     },
     openFriends() {
       ipcRenderer.send('showFriends');
     },
-    openLogin() {
-      ipcRenderer.send('openOauthWindow');
+    openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
+      Electron.utils.openUrl(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
+
+      miniWebServer.open();
+      miniWebServer.on('response', (data: { token: string; 'app-auth': string }) => {
+        cb(data);
+      });
+
+      miniWebServer.on('open', () => {
+        miniWebServer.closeAfterFive();
+      });
+
+      miniWebServer.on('close', () => {
+        console.log('Web server closed');
+      });
     },
+
     logoutFromMinetogether() {
       ipcRenderer.send('logout');
     },
@@ -126,9 +242,21 @@ const Electron: ElectronOverwolfInterface = {
   },
 
   setupApp(vm) {
+    const showError = (title: string, message: string) => {
+      store.dispatch(
+        'showAlert',
+        {
+          type: 'danger',
+          title: title,
+          message: message,
+        },
+        { root: true },
+      );
+    };
+
     axios
       .get(`https://minetogether.io/api/adPool`)
-      .then(res => {
+      .then((res) => {
         try {
           const id = parseInt(res.data, 10);
           if (id !== -1) {
@@ -202,8 +330,8 @@ const Electron: ElectronOverwolfInterface = {
     ipcRenderer.on('openModpack', (event, data) => {
       const { name, id } = data;
       getAPIRequest(store.state, `modpack/search/8?term=${name}`)
-        .then(response => response.json())
-        .then(async data => {
+        .then((response) => response.json())
+        .then(async (data) => {
           if (data.status === 'error') {
             return;
           }
@@ -218,7 +346,7 @@ const Electron: ElectronOverwolfInterface = {
             const packID = packIDs[i];
             const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
             if (pack !== undefined) {
-              const foundVersion = pack.versions.find(v => v.mtgID === id);
+              const foundVersion = pack.versions.find((v) => v.mtgID === id);
               if (foundVersion !== undefined) {
                 router.push({ name: 'modpackpage', query: { modpackid: packID } });
                 return;
@@ -226,10 +354,12 @@ const Electron: ElectronOverwolfInterface = {
             }
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.error(err);
         });
     });
+
+    // TODO: this entire thing needs a registry + handler wrapper
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       let protocolURL = data;
       if (protocolURL === undefined) {

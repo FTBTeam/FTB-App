@@ -20,14 +20,15 @@
       </header>
 
       <div class="body" v-if="!searchingForMods" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
-        <pack-tabs-body
+        <pack-body
           v-if="!this.searchingForMods"
           @mainAction="launchModPack()"
           @update="update()"
-          @tabChange="e => (activeTab = e)"
+          @tabChange="(e) => (activeTab = e)"
           @showVersion="showVersions = true"
           @searchForMods="searchingForMods = true"
-          @getModList="e => getModList(e)"
+          @getModList="(e) => getModList(e)"
+          :pack-loading="packLoading"
           :searchingForMods="searchingForMods"
           :active-tab="activeTab"
           :isInstalled="true"
@@ -67,38 +68,28 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, ModpackState } from '@/modules/modpacks/types';
-import { Action, State } from 'vuex-class';
-import FTBToggle from '@/components/FTBToggle.vue';
-import FTBSlider from '@/components/FTBSlider.vue';
-import FTBModal from '@/components/FTBModal.vue';
-import ServerCard from '@/components/ServerCard.vue';
-import MessageModal from '@/components/modals/MessageModal.vue';
+import { Action, Getter, State } from 'vuex-class';
+import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import ServerCard from '@/components/organisms/ServerCard.vue';
+import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
-import FindMods from '@/components/modpack/FindMods.vue';
+import FindMods from '@/components/templates/modpack/FindMods.vue';
 import { PackConst } from '@/utils/contants';
-import ModpackVersions from '@/components/modpack/ModpackVersions.vue';
-import ModpackPublicServers from '@/components/modpack/ModpackPublicServers.vue';
-import ModpackSettings from '@/components/modpack/ModpackSettings.vue';
-import { getColorForChar } from '@/utils/colors';
-import PackMetaHeading from '@/components/modpack/modpack-elements/PackMetaHeading.vue';
-import PackTitleHeader from '@/components/modpack/modpack-elements/PackTitleHeader.vue';
-import PackTabsBody from '@/components/modpack/modpack-elements/PackTabsBody.vue';
-
-interface MsgBox {
-  title: string;
-  content: string;
-  type: string;
-  okAction: () => void;
-  cancelAction: () => void;
-}
-
-interface Changelogs {
-  [id: number]: string;
-}
+import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
+import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
+import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
+import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
+import PackBody from '@/components/molecules/modpack/PackBody.vue';
+import { App } from '@/types';
+import { AuthProfile } from '@/modules/core/core.types';
+import { RouterNames } from '@/router';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -121,7 +112,7 @@ export enum ModpackPageTabs {
     MessageModal,
     FindMods,
     ModpackPublicServers,
-    PackTabsBody
+    PackBody,
   },
 })
 export default class InstancePage extends Vue {
@@ -129,22 +120,30 @@ export default class InstancePage extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
   @State('auth') public auth!: AuthState;
+
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
 
+  @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
+  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
+
+  @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
+  @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
+  @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
+
+  packLoading = false;
+
   // New stuff
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
-
-  getColorForChar = getColorForChar;
 
   private packInstance: ModPack | null = null;
   deleting: boolean = false;
 
   private showMsgBox: boolean = false;
-  private msgBox: MsgBox = {
+  private msgBox: App.MsgBox = {
     title: '',
     content: '',
     type: '',
@@ -160,17 +159,18 @@ export default class InstancePage extends Vue {
 
   public goBack(): void {
     if (!this.hidePackDetails) {
-      this.$router.back();
+      this.$router.push({ name: RouterNames.ROOT_LIBRARY });
     } else {
       this.searchingForMods = false;
-      this.activeTab = ModpackPageTabs.MODS;
+      this.activeTab = ModpackPageTabs.OVERVIEW;
     }
   }
 
-  public launchModPack() {
+  public async launchModPack() {
     if (this.instance == null) {
       return;
     }
+
     if (this.instance.memory < this.instance.minMemory) {
       this.msgBox.type = 'okCancel';
       this.msgBox.title = 'Low Memory';
@@ -182,7 +182,7 @@ export default class InstancePage extends Vue {
         `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
       this.showMsgBox = true;
     } else {
-      this.launch();
+      await this.launch();
     }
   }
 
@@ -195,24 +195,10 @@ export default class InstancePage extends Vue {
     this.showMsgBox = true;
   }
 
-  public launch(): void {
-    if (this.showMsgBox) {
-      this.hideMsgBox();
-    }
-
-    const loadInApp =
-      this.settingsState.settings.loadInApp === true ||
-      this.settingsState.settings.loadInApp === 'true' ||
-      this.auth.token?.activePlan == null;
-    const disableChat = this.settingsState.settings.enableChat === true;
-    this.sendMessage({
-      payload: {
-        type: 'launchInstance',
-        loadInApp,
-        uuid: this.instance?.uuid,
-        extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
-      },
-      callback: (data: any) => {},
+  public async launch() {
+    await this.$router.push({
+      name: RouterNames.ROOT_LAUNCH_PACK,
+      query: { uuid: this.instance?.uuid },
     });
   }
 
@@ -226,7 +212,7 @@ export default class InstancePage extends Vue {
         versionID = this.packInstance.versions[0].id;
       }
       this.$router.replace({
-        name: 'installingpage',
+        name: RouterNames.ROOT_INSTALL_PACK,
         query: { modpackid: modpackID?.toString(), versionID: versionID?.toString(), uuid: this.instance?.uuid },
       });
     }
@@ -238,14 +224,14 @@ export default class InstancePage extends Vue {
 
   async mounted() {
     if (this.instance == null) {
-      await this.$router.push('/modpacks');
+      await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
     }
     try {
       this.packInstance =
         this.instance.packType == 0
-          ? await this.fetchModpack(this.instance.id).catch((err: any) => undefined)
-          : await this.fetchCursepack(this.instance.id).catch((err: any) => undefined);
+          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
+          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
     } catch (e) {
       console.log('Error getting instance modpack');
     }
@@ -290,7 +276,7 @@ export default class InstancePage extends Vue {
     if (this.modpacks == null) {
       return null;
     }
-    return this.modpacks.installedPacks.filter(pack => pack.uuid === this.$route.query.uuid)[0];
+    return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
   }
 
   get isLatestVersion() {
@@ -309,7 +295,7 @@ export default class InstancePage extends Vue {
       return PackConst.defaultPackSplashArt;
     }
 
-    const splashArt = this.packInstance.art?.filter(art => art.type === 'splash');
+    const splashArt = this.packInstance.art?.filter((art) => art.type === 'splash');
     return splashArt?.length > 0 ? splashArt[0].url : PackConst.defaultPackSplashArt;
   }
 
@@ -325,7 +311,7 @@ export default class InstancePage extends Vue {
   }
 
   get versionType() {
-    return this.packInstance?.versions?.find(e => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
+    return this.packInstance?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
   }
 }
 </script>

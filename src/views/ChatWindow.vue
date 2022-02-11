@@ -43,11 +43,11 @@
 </template>
 
 <script lang="ts">
-import TitleBar from '@/components/TitleBar.vue';
+import TitleBar from '@/components/layout/TitleBar.vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import FriendsList from '@/components/chat/FriendsList.vue';
-import AddFriend from '@/components/chat/AddFriend.vue';
-import FriendChat from '@/components/chat/FriendChat.vue';
+import FriendsList from '@/components/templates/chat/FriendsList.vue';
+import AddFriend from '@/components/templates/chat/AddFriend.vue';
+import FriendChat from '@/components/templates/chat/FriendChat.vue';
 import { AuthState, Friend } from '../modules/auth/types';
 import { Action, State } from 'vuex-class';
 import { FriendListResponse, Message, Messages } from '../types';

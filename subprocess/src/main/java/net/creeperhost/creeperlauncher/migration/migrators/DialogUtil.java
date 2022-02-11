@@ -8,24 +8,29 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DialogUtil {
+
     public static boolean confirmDialog(String title, String body) {
+        return confirmDialog(title, "Yes", "No", body);
+    }
+
+    public static boolean confirmDialog(String title, String confirmText, String denyText, String body) {
         AtomicBoolean result = new AtomicBoolean();
 
         OpenModalData.openModal(title, body, List.of(
-            new OpenModalData.ModalButton( "Yes", "green", () -> {
-                result.set(true);
-                synchronized (result) {
-                    Settings.webSocketAPI.sendMessage(new CloseModalData());
-                    result.notify();
-                }
-            }),
-            new OpenModalData.ModalButton("No", "red", () -> {
-                result.set(false);
-                synchronized (result) {
-                    Settings.webSocketAPI.sendMessage(new CloseModalData());
-                    result.notify();
-                }
-            })
+                new OpenModalData.ModalButton(confirmText, "primary", () -> {
+                    result.set(true);
+                    synchronized (result) {
+                        Settings.webSocketAPI.sendMessage(new CloseModalData());
+                        result.notify();
+                    }
+                }),
+                new OpenModalData.ModalButton(denyText, "red-600", () -> {
+                    result.set(false);
+                    synchronized (result) {
+                        Settings.webSocketAPI.sendMessage(new CloseModalData());
+                        result.notify();
+                    }
+                })
         ), false);
 
         try {
@@ -42,7 +47,7 @@ public class DialogUtil {
         Object lock = new Object();
 
         OpenModalData.openModal(title, body, List.of(
-                new OpenModalData.ModalButton( "Ok", "green", () -> {
+                new OpenModalData.ModalButton("Ok", "green", () -> {
                     synchronized (lock) {
                         Settings.webSocketAPI.sendMessage(new CloseModalData());
                         lock.notify();

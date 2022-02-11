@@ -49,7 +49,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Settings, SettingsState } from '@/modules/settings/types';
 import { Action, State } from 'vuex-class';
-import FTBSlider from '@/components/FTBSlider.vue';
+import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 
 @Component({
   components: {

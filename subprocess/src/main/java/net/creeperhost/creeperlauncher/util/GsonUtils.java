@@ -3,8 +3,9 @@ package net.creeperhost.creeperlauncher.util;
 import com.google.common.hash.HashCode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import net.covers1624.quack.gson.HashCodeAdapter;
-import net.covers1624.quack.gson.PathTypeAdapter;
+import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -13,12 +14,12 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@SuppressWarnings ("UnstableApiUsage")
+// TODO move away from global GSON instance, instead have specialized instances.
 public class GsonUtils {
 
     public static Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+            .registerTypeAdapter(VersionManifest.OS.class, new VersionManifest.OsDeserializer())
             .registerTypeAdapter(Artifact.class, new Artifact.Adapter())
-            .registerTypeAdapter(Path.class, new PathTypeAdapter())
             .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
             .create();
 
@@ -32,7 +33,8 @@ public class GsonUtils {
      * @param path The Path to read the json from.
      * @param type The Type to Deserialize to.
      * @return The Deserialized object.
-     * @throws IOException Thrown if there was an IO error.
+     * @throws IOException        Thrown if there was an IO error.
+     * @throws JsonParseException Thrown if the json fails to parse.
      */
     public static <T> T loadJson(Path path, Type type) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(path)) {

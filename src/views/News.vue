@@ -1,7 +1,13 @@
 <template>
-  <div class="px-6 py-4" v-if="!news.loading">
-    <div class="new" v-if="news">
-      <ftb-news v-for="(item, index) in news.news" :key="index" :title="item.title" :date="item.date" :link="item.link">
+  <div class="px-6 py-4" v-if="!getNews.loading">
+    <div class="new" v-if="getNews != null && getNews.length > 0">
+      <ftb-news
+        v-for="(item, index) in getNews"
+        :key="index"
+        :title="item.title"
+        :date="item.date"
+        :link="item.link"
+      >
         <span v-html="item.content"></span>
       </ftb-news>
     </div>
@@ -13,9 +19,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import FTBNews from '@/components/FTBNews.vue';
-import { State, Action } from 'vuex-class';
-import { NewsState } from '@/modules/news/types';
+import FTBNews from '@/components/templates/FTBNews.vue';
+import { Action, Getter } from 'vuex-class';
 
 const namespace: string = 'news';
 
@@ -25,11 +30,11 @@ const namespace: string = 'news';
   },
 })
 export default class Home extends Vue {
-  @State('news') public news: NewsState | undefined = undefined;
   @Action('fetchNews', { namespace }) public fetchNews: any;
+  @Getter('getNews', { namespace }) public getNews: any;
 
   public mounted() {
-    if (this.news == null || this.news.news.length < 1) {
+    if (this.getNews == null || this.getNews.length < 1) {
       this.fetchNews();
     }
   }

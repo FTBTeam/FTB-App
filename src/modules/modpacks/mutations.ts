@@ -1,6 +1,5 @@
-import { state } from './index';
 import { MutationTree } from 'vuex';
-import { ModpackState, ModPack, Instance, InstallProgress } from './types';
+import { InstallProgress, Instance, ModPack, ModpackState } from './types';
 
 export const mutations: MutationTree<ModpackState> = {
   searchLoaded(state, payload: ModPack[]) {
@@ -117,8 +116,5 @@ export const mutations: MutationTree<ModpackState> = {
   },
   clearSearch(state) {
     state.searchString = '';
-  },
-  setLaunchProgress(state, progress: any) {
-    state.launchProgress = progress;
   },
 };

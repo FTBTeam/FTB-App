@@ -84,6 +84,8 @@ public class Instances
 
 
     public static CompletableFuture<?> reloadCloudInstances() {
+
+        if (false) // FIXME, Disable loading of Cloud instances.
         if (StringUtils.isNotEmpty(Constants.S3_HOST) && StringUtils.isNotEmpty(Constants.S3_BUCKET) && StringUtils.isNotEmpty(Constants.S3_KEY) && StringUtils.isNotEmpty(Constants.S3_SECRET)) {
             return CompletableFuture.runAsync(() -> {
                 ElapsedTimer timer = new ElapsedTimer();

@@ -3,6 +3,7 @@ import { AuthState } from './types';
 import axios from 'axios';
 import { RootState } from '@/types';
 import platfrom from '@/utils/interface/electron-overwolf';
+
 export interface FriendRequestResponse {
   status: string;
   message: string;
