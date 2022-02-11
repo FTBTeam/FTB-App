@@ -149,21 +149,26 @@ public class NewDownloadTask implements Task<Path> {
         HashResult result = hashRequest != null ? hashRequest.finish() : null;
 
         if (!validation.validate(dest, result)) {
+            StringBuilder reason = new StringBuilder();
             // Validate will return false when both expectedSize and expectedHash are missing.
             if (validation.expectedSize != -1) {
                 long size = Files.size(dest);
                 if (validation.expectedSize != size) {
-                    throw new IOException("Downloaded size of file '" + url + "' does not match expected. Expected: " + validation.expectedSize + " Got: " + size);
+                    reason.append("Expected size: ").append(validation.expectedSize).append(" Got: ").append(size);
                 }
             }
             if (!validation.expectedHashes.isEmpty() && result != null) {
                 for (Map.Entry<HashFunc, HashCode> entry : validation.expectedHashes.entrySet()) {
                     HashCode got = result.get(entry.getKey());
                     if (!entry.getValue().equals(got)) {
-                        throw new IOException("Downloaded hash of file '" + url + "' does not match expected. Expected: " + entry.getValue() + " Got: " + got);
+                        if (reason.length() > 0) {
+                            reason.append(", ");
+                        }
+                        reason.append("Expected ").append(entry.getKey().getName()).append(" hash: ").append(entry.getValue()).append(" Got: ").append(got);
                     }
                 }
             }
+            throw new IOException("Downloaded file '" + url + "'(" + dest + ") failed validation. " + reason);
         }
     }
 
