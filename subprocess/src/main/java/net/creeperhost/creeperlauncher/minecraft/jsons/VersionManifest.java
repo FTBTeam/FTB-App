@@ -13,6 +13,8 @@ import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.platform.OperatingSystem;
+import net.covers1624.quack.util.MultiHasher.HashFunc;
+import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static net.creeperhost.creeperlauncher.Constants.CH_MAVEN;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 
@@ -59,9 +62,21 @@ public class VersionManifest {
             null
     );
 
+    public static final AssetIndex LEGACY_ASSETS = SneakyUtils.sneaky(() -> {
+        AssetIndex index = new AssetIndex();
+        index.id = "legacy";
+        index.url = "https://s3.amazonaws.com/Minecraft.Download/indexes/legacy.json";
+        index.size = -1;
+        index.totalSize = -1;
+        index.sha1 = null;
+
+        return index;
+    });
+
     public String id;
     @Nullable
     public Arguments arguments;
+    @Nullable
     public AssetIndex assetIndex;
     public String assets;
     public int complianceLevel;
@@ -227,12 +242,34 @@ public class VersionManifest {
 
     public static class AssetIndex {
 
-        public String id;
+        @Nullable
+        private String id;
+        @Nullable
         @JsonAdapter (HashCodeAdapter.class)
-        public HashCode sha1;
-        public int size;
-        public int totalSize;
-        public String url;
+        private HashCode sha1;
+        private int size;
+        private int totalSize;
+        @Nullable
+        private String url;
+
+        public DownloadValidation validation() {
+            DownloadValidation ret = DownloadValidation.of();
+            if (sha1 != null) {
+                ret = ret.withHash(HashFunc.SHA1, sha1);
+            }
+            if (size > 0) {
+                ret = ret.withExpectedSize(size);
+            }
+            return ret;
+        }
+
+        // @formatter:off
+        public String getId() { return requireNonNull(id); }
+        public HashCode getSha1() { return requireNonNull(sha1); }
+        public int getSize() { return size; }
+        public int getTotalSize() { return totalSize; }
+        public String getUrl() { return requireNonNull(url); }
+        // @formatter:on
     }
 
     public static class Download {

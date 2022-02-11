@@ -44,15 +44,13 @@ public class AssetIndexManifest {
      * @throws JsonParseException Thrown when the Json cannot be parsed.
      */
     public static AssetIndexManifest update(Path assetsDir, VersionManifest.AssetIndex assetIndex) throws IOException {
-        Path assetIndexFile = assetsDir.resolve("indexes/" + assetIndex.id + ".json");
-        LOGGER.info("Updating AssetIndex Manifest for '{}' from '{}'.", assetIndex.id, assetIndex.url);
+        Path assetIndexFile = assetsDir.resolve("indexes/" + assetIndex.getId() + ".json");
+        LOGGER.info("Updating AssetIndex Manifest for '{}' from '{}'.", assetIndex.getId(), assetIndex.getUrl());
 
         NewDownloadTask downloadTask = NewDownloadTask.builder()
-                .url(assetIndex.url)
+                .url(assetIndex.getUrl())
                 .dest(assetIndexFile)
-                .withValidation(DownloadValidation.of()
-                        .withExpectedSize(assetIndex.size)
-                        .withHash(Hashing.sha1(), assetIndex.sha1)
+                .withValidation(assetIndex.validation()
                         .withUseETag(true)
                         .withUseOnlyIfModified(true)
                 )

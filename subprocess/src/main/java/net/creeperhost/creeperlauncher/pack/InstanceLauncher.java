@@ -21,10 +21,12 @@ import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
+import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.AssetIndex;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +45,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static java.util.Objects.requireNonNull;
 import static net.covers1624.quack.collection.ColUtils.iterable;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 
@@ -321,8 +322,8 @@ public class InstanceLauncher {
             token.throwIfCancelled();
 
             progressTracker.startStep("Validate assets");
-            AssetIndexManifest assetManifest = checkAssets(token);
-            Path virtualAssets = buildVirtualAssets(gameDir, assetsDir);
+            Pair<AssetIndex, AssetIndexManifest> assetPair = checkAssets(token);
+            Path virtualAssets = buildVirtualAssets(assetPair.getLeft(), assetPair.getRight(), gameDir, assetsDir);
             progressTracker.finishStep();
 
             token.throwIfCancelled();
@@ -389,7 +390,7 @@ public class InstanceLauncher {
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
             subMap.put("classpath", classpath.stream().distinct().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
 
-            AssetIndexManifest.AssetObject icon = assetManifest.objects.get("icons/minecraft.icns");
+            AssetIndexManifest.AssetObject icon = assetPair.getRight().objects.get("icons/minecraft.icns");
             if (icon != null) {
                 Path path = Constants.BIN_LOCATION.resolve("assets")
                         .resolve("objects")
@@ -454,12 +455,18 @@ public class InstanceLauncher {
         }
     }
 
-    private AssetIndexManifest checkAssets(CancellationToken token) throws IOException {
+    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token) throws IOException {
         assert !manifests.isEmpty();
 
         LOGGER.info("Updating assets..");
         VersionManifest manifest = manifests.get(0);
-        InstallAssetsTask assetsTask = new InstallAssetsTask(requireNonNull(manifest.assetIndex, "First Version Manifest missing AssetIndex. This should not happen."));
+        AssetIndex index = manifest.assetIndex;
+        if (index == null) {
+            LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy.", manifest.id);
+            index = VersionManifest.LEGACY_ASSETS;
+        }
+
+        InstallAssetsTask assetsTask = new InstallAssetsTask(index);
         if (!assetsTask.isRedundant()) {
             try {
                 assetsTask.execute(token, progressTracker.listenerForStep(true));
@@ -467,21 +474,18 @@ public class InstanceLauncher {
                 throw new IOException("Failed to execute asset update task.", ex);
             }
         }
-        return assetsTask.getResult();
+        return Pair.of(index, assetsTask.getResult());
     }
 
-    private Path buildVirtualAssets(Path gameDir, Path assetsDir) throws IOException {
-        VersionManifest.AssetIndex assetIndex = requireNonNull(manifests.get(0).assetIndex, "First Version Manifest missing AssetIndex. This should not happen.");
-        AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
-
+    private Path buildVirtualAssets(AssetIndex index, AssetIndexManifest assetManifest, Path gameDir, Path assetsDir) throws IOException {
         Path objects = assetsDir.resolve("objects");
-        Path virtual = assetsDir.resolve("virtual").resolve(assetIndex.id);
+        Path virtual = assetsDir.resolve("virtual").resolve(index.getId());
         Path resourcesDir = gameDir.resolve("resources");
 
-        if (manifest.virtual || manifest.mapToResources) {
-            Path vAssets = manifest.virtual ? virtual : resourcesDir;
+        if (assetManifest.virtual || assetManifest.mapToResources) {
+            Path vAssets = assetManifest.virtual ? virtual : resourcesDir;
             LOGGER.info("Building virtual assets into {}..", vAssets);
-            for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
+            for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : assetManifest.objects.entrySet()) {
                 String name = entry.getKey();
                 AssetIndexManifest.AssetObject object = entry.getValue();
 
