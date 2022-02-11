@@ -14,7 +14,7 @@
                 size="1x"
               />
             </div>
-            <a class="cursor-pointer hover:underline" href="https://github.com/FTBTeam/FTB-App-Feedback" target="_blank"
+            <a class="cursor-pointer hover:underline" href="https://go.ftb.team/app-feedback" target="_blank"
               ><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
             /></a>
           </div>
@@ -32,10 +32,7 @@
                 size="1x"
               />
             </div>
-            <a
-              class="cursor-pointer hover:underline"
-              href="https://github.com/CreeperHost/modpacklauncher"
-              target="_blank"
+            <a class="cursor-pointer hover:underline" href="https://go.ftb.team/app-feedback" target="_blank"
               ><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
             /></a>
           </div>
