@@ -2,26 +2,27 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
+import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
+import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-
-import static java.util.Objects.requireNonNull;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Handles the installation of a Forge V1 installer.
@@ -53,7 +54,20 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
             versionName = profile.install.target;
 
-            downloadVanilla(versionsDir, profile.install.minecraft);
+            VersionManifest vanillaManifest = downloadVanilla(versionsDir, profile.install.minecraft);
+            if (profile.versionInfo.inheritsFrom == null || profile.versionInfo.jar == null) {
+                Path srcJar = versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar");
+                Path destJar = versionsDir.resolve(versionName).resolve(versionName + ".jar");
+                if (profile.install.stripMeta) {
+                    stripMeta(srcJar, destJar);
+                } else {
+                    Files.copy(
+                            srcJar,
+                            destJar,
+                            StandardCopyOption.REPLACE_EXISTING
+                    );
+                }
+            }
 
             for (InstallProfile.Library library : profile.versionInfo.libraries) {
                 if (library.clientreq == null || !library.clientreq) continue; // Skip, mirrors forge logic.
@@ -82,6 +96,23 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             LOGGER.info("Writing version profile {}.", versionName);
             Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
             JsonUtils.write(InstallProfile.GSON, IOUtils.makeParents(versionJson), profileJson.get("versionInfo"));
+        }
+    }
+
+    private void stripMeta(Path input, Path output) throws IOException {
+        try (ZipFile zIn = new ZipFile(input.toFile());
+             ZipOutputStream zOut = new ZipOutputStream(Files.newOutputStream(output))) {
+            for (ZipEntry entry : ColUtils.iterable(zIn.entries())) {
+                if (entry.getName().startsWith("META-INF")) continue;
+                if (entry.isDirectory()) {
+                    zOut.putNextEntry(entry);
+                } else {
+                    ZipEntry newEntry = new ZipEntry(entry.getName());
+                    newEntry.setTime(entry.getTime());
+                    zOut.putNextEntry(newEntry);
+                    IOUtils.copy(zIn.getInputStream(entry), zOut);
+                }
+            }
         }
     }
 }

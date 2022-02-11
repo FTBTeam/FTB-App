@@ -34,6 +34,7 @@ public class InstallProfile {
 
         @Nullable
         public JsonElement transform;
+        public boolean stripMeta;
     }
 
     public static class VersionInfo {
@@ -44,7 +45,9 @@ public class InstallProfile {
         public String type;
         public String minecraftArguments;
         public String mainClass;
+        @Nullable
         public String inheritsFrom;
+        @Nullable
         public String jar;
         public JsonObject logging;
         public List<Library> libraries = new LinkedList<>();
