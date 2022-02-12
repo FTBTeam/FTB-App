@@ -2,6 +2,7 @@ import { AuthProfile } from '@/modules/core/core.types';
 import store from '@/modules/store';
 import { addHyphensToUuid, wsTimeoutWrapper } from '../helpers';
 import dayjs from 'dayjs';
+import { finishAuthentication } from '@/utils/auth/msAuthentication';
 
 interface Authenticator {
   refresh: (profile: AuthProfile) => Promise<boolean>;
@@ -17,7 +18,7 @@ const msAuthenticator: Authenticator = {
   async valid(profile: AuthProfile): Promise<boolean> {
     const profileIsValid = profile.expiresAt ? Math.round(Date.now() / 1000) < profile.expiresAt : false;
     logAuth('debug', `Profile is ${profileIsValid ? 'valid' : 'invalid'}`);
-    return profileIsValid;
+    return !profileIsValid;
   },
 
   async refresh(profile: AuthProfile): Promise<boolean> {
@@ -51,13 +52,21 @@ const msAuthenticator: Authenticator = {
 
         logAuth('debug', `Sending retrieve request to decrypt the authentication data`);
         const data = await res.json();
-        const id: string = data.data.minecraftUuid;
+
+        // Use the new flow
+        const authRes = await finishAuthentication(
+          data.data.liveAccessToken,
+          data.data.liveRefreshToken,
+          data.data.liveExpires,
+        );
+
+        const id: string = authRes.minecraftUuid;
         const newUuid = addHyphensToUuid(id);
 
         const wsRes = await wsTimeoutWrapper({
           type: 'profiles.updateMs',
           uuid: profile.uuid,
-          ...data.data,
+          ...authRes,
           minecraftUuid: id.includes('-') ? id : newUuid,
         });
 
@@ -98,10 +107,7 @@ const mcAuthenticator: Authenticator = {
         }),
       });
 
-      logAuth(
-        'debug',
-        `Received a response from the Mojang servers with the status of ${rawResponse.status}`,
-      );
+      logAuth('debug', `Received a response from the Mojang servers with the status of ${rawResponse.status}`);
       logAuth('debug', `The profile is ${rawResponse.status === 204 ? 'valid' : 'invalid'}`);
       return rawResponse.status === 204;
     } catch {

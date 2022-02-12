@@ -30,6 +30,7 @@ httpClient.defaults.timeout = 5000;
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
+let electronMsAuthWindow: BrowserWindow | null;
 
 let protocolURL: string | null;
 
@@ -76,15 +77,15 @@ if (process.argv.indexOf('--pid') === -1) {
     child.on('exit', (code, signal) => {
       console.log('child process exited with ' + `code ${code} and signal ${signal}`);
     });
-    child.on('error', err => {
+    child.on('error', (err) => {
       console.error('Error starting binary', err);
     });
     // @ts-ignore
-    child.stdout.on('data', data => {
+    child.stdout.on('data', (data) => {
       console.log(`child stdout:\n${data}`);
     });
     // @ts-ignore
-    child.stderr.on('data', data => {
+    child.stderr.on('data', (data) => {
       console.error(`child stderr:\n${data}`);
     });
   } else {
@@ -112,7 +113,7 @@ ipcMain.on('websocketReceived', (event, message) => {
   }
 });
 
-ipcMain.on('sendMeSecret', event => {
+ipcMain.on('sendMeSecret', (event) => {
   event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
 });
 
@@ -122,7 +123,11 @@ ipcMain.on('showFriends', () => {
   }
 });
 
-ipcMain.on('appReady', async event => {
+ipcMain.on('createAuthWindow', async (event, args) => {
+  await createAuthWindow(args);
+});
+
+ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
     event.reply('parseProtocolURL', protocolURL);
   }
@@ -171,7 +176,7 @@ ipcMain.on('user', (event, data) => {
 //     connectToIRC();
 // });
 
-ipcMain.on('gimmeAuthData', event => {
+ipcMain.on('gimmeAuthData', (event) => {
   if (userData) {
     event.reply('hereAuthData', userData);
   }
@@ -255,6 +260,12 @@ ipcMain.on('openLink', (event, data) => {
   shell.openExternal(data);
 });
 
+ipcMain.on('close-auth-window', (event, data) => {
+  if (electronMsAuthWindow) {
+    electronMsAuthWindow.close();
+  }
+});
+
 function createFriendsWindow() {
   if (friendsWindow !== null && friendsWindow !== undefined) {
     friendsWindow.focus();
@@ -309,6 +320,43 @@ function createFriendsWindow() {
   });
 }
 
+const createAuthWindow = async (type: string) => {
+  electronMsAuthWindow = new BrowserWindow({
+    title: 'FTB Microsoft Authentication',
+    minWidth: 600,
+    minHeight: 690,
+    width: 600,
+    height: 690,
+    maxWidth: 600,
+    maxHeight: 690,
+    frame: true,
+    titleBarStyle: 'default',
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      disableBlinkFeatures: 'Auxclick',
+      webSecurity: false,
+    },
+  });
+
+  electronMsAuthWindow.on('closed', () => {
+    electronMsAuthWindow = null;
+    if (win) {
+      win.webContents.send('auth-window-closed');
+    }
+  });
+
+  await electronMsAuthWindow.loadURL(
+    type === 'microsoft'
+      ? 'https://msauth.feed-the-beast.com?new=true'
+      : 'https://minetogether.io/api/login?redirect=http://localhost:7755',
+  );
+};
+
 function createWindow() {
   win = new BrowserWindow({
     title: 'FTB App',
@@ -360,8 +408,12 @@ function createWindow() {
 
   win.on('closed', () => {
     win = null;
-    if (friendsWindow !== undefined && friendsWindow !== null) {
+    if (friendsWindow) {
       friendsWindow.close();
+    }
+
+    if (electronMsAuthWindow) {
+      electronMsAuthWindow.close();
     }
   });
 }
@@ -399,7 +451,7 @@ if (!gotTheLock) {
         win.restore();
       }
       win.focus();
-      commandLine.forEach(c => {
+      commandLine.forEach((c) => {
         log.info(c);
         if (c.indexOf('ftb://') !== -1) {
           log.info('parsing through protocol');
@@ -427,7 +479,7 @@ if (!gotTheLock) {
 
 if (isDevelopment) {
   if (process.platform === 'win32') {
-    process.on('message', data => {
+    process.on('message', (data) => {
       if (data === 'graceful-exit') {
         app.quit();
       }

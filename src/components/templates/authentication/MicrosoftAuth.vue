@@ -5,8 +5,8 @@
       <img class="mx-auto" src="@/assets/images/branding/microsoft.svg" alt="Microsoft logo" />
     </div>
     <p class="mb-6">
-      A browser window should have just popped up. Follow the instructions on screen, once you've finished, you'll see
-      that you've been signed in here.
+      A window should have just popped up. Follow the instructions on screen, once you've finished, you'll see that
+      you've been signed in here.
     </p>
   </div>
 </template>
@@ -19,6 +19,7 @@ import Loading from '@/components/atoms/Loading.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
 import { addHyphensToUuid } from '@/utils/helpers';
+import { finishAuthentication } from '@/utils/auth/msAuthentication';
 
 @Component({
   components: { YggdrasilAuthForm, Loading },
@@ -27,22 +28,20 @@ export default class MicrosoftAuth extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
 
-  loggedIn = false;
-  error = '';
   loading = false;
 
   mounted() {
     this.openMsAuth();
   }
 
-  // TODO: Move
   async openMsAuth() {
     try {
       this.loading = true;
       const res = await platform.get.actions.openMsAuth();
 
-      if (!res.key || !res.iv || !res.password) {
-        return; // TODO: handle error
+      if (!res || !res.key || !res.iv || !res.password) {
+        this.$emit('error', 'Unable to authenticate. Please try again.');
+        return;
       }
 
       const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
@@ -58,13 +57,21 @@ export default class MicrosoftAuth extends Vue {
       });
 
       const response: any = (await responseRaw.json()).data;
-      const id: string = response.minecraftUuid;
+
+      // Use the new flow
+      const authRes = await finishAuthentication(
+        response.liveAccessToken,
+        response.liveRefreshToken,
+        response.liveExpires,
+      );
+
+      const id: string = authRes.minecraftUuid;
       const newUuid = addHyphensToUuid(id);
 
       this.sendMessage({
         payload: {
           type: 'profiles.addMs',
-          ...response,
+          ...authRes,
           minecraftUuid: id.includes('-') ? id : newUuid,
         },
         callback: async (e: any) => {
