@@ -16,7 +16,7 @@ public class AddMsProfileHandler implements IMessageHandler<AddMsProfileHandler.
       AccountProfile.MSAuthStore msAccount = new AccountProfile.MSAuthStore(data);
       AccountProfile profile = new AccountProfile(data.minecraftUuid, Instant.now().getEpochSecond(), data.minecraftName, msAccount);
 
-      Triple<Boolean, AccountProfile, UUID> addResponse;
+      Reply reply;
       if (!AccountManager.get().getProfiles().contains(profile)) {
         // Quickly validate that the users UUID isn't already in use in a Minecraft account
         if (profile.isMicrosoft) {
@@ -28,12 +28,13 @@ public class AddMsProfileHandler implements IMessageHandler<AddMsProfileHandler.
           });
         }
 
-        addResponse = AccountManager.get().addProfile(profile);
+        Triple<Boolean, AccountProfile, UUID> profileAction = AccountManager.get().addProfile(profile);
+        reply = new Reply(data, profileAction.getMiddle(), profileAction.getRight(), profileAction.getLeft(), "completed");
       } else {
-        addResponse = Triple.of(false, null, null);
+        reply = new Reply(data, null, null, false, "profile_exists");
       }
       
-      Settings.webSocketAPI.sendMessage(new Reply(data, addResponse.getMiddle(), addResponse.getRight(), addResponse.getLeft()));
+      Settings.webSocketAPI.sendMessage(reply);
     }
 
     public static class Data extends BaseData {
@@ -53,15 +54,17 @@ public class AddMsProfileHandler implements IMessageHandler<AddMsProfileHandler.
   private static class Reply extends Data {
     UUID activeProfile;
     AccountProfile profile;
+    String status;
     boolean success;
 
-    public Reply(Data data, AccountProfile profile, UUID activeProfile, boolean success) {
+    public Reply(Data data, AccountProfile profile, UUID activeProfile, boolean success, String status) {
       this.requestId = data.requestId;
       this.type = data.type + "Reply";
 
       this.profile = profile;
       this.activeProfile = activeProfile;
       this.success = success;
+      this.status = status;
     }
   }
 }

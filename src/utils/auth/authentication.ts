@@ -3,6 +3,7 @@ import store from '@/modules/store';
 import { addHyphensToUuid, wsTimeoutWrapper } from '../helpers';
 import dayjs from 'dayjs';
 import { finishAuthentication } from '@/utils/auth/msAuthentication';
+import { issueCodes } from '@/components/templates/authentication/MicrosoftAuth.vue';
 
 interface Authenticator {
   refresh: (profile: AuthProfile) => Promise<boolean>;
@@ -60,7 +61,17 @@ const msAuthenticator: Authenticator = {
           data.data.liveExpires,
         );
 
-        const id: string = authRes.minecraftUuid;
+        if (!authRes || !authRes.ok) {
+          logAuth(
+            'error',
+            `Failed to authenticate with the refresh service for ${profile.username} because ${
+              authRes.code ? issueCodes[authRes.code] : 'failed...'
+            }`,
+          );
+          return false;
+        }
+
+        const id: string = authRes.minecraftUuid ?? '';
         const newUuid = addHyphensToUuid(id);
 
         const wsRes = await wsTimeoutWrapper({

@@ -334,6 +334,7 @@ const createAuthWindow = async (type: string) => {
     resizable: false,
     minimizable: false,
     maximizable: false,
+    icon: path.join(__static, 'favicon.ico'),
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
