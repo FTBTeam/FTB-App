@@ -6,9 +6,9 @@ module.exports = {
     process.env.TARGET_PLATFORM === 'overwolf'
       ? path.resolve(__dirname, './overwolf/dist/desktop')
       : path.resolve(__dirname, './dist'),
-  chainWebpack: config => {
+  chainWebpack: (config) => {
     if (process.env.TARGET_PLATFORM === 'overwolf') {
-      config.plugin('copy').tap(options => {
+      config.plugin('copy').tap((options) => {
         options[0][0].ignore.push('./public/css/**/*');
         options[0][0].ignore.push('/public/css/**/*');
         options[0][0].ignore.push('public/css/**/*');
@@ -48,7 +48,7 @@ module.exports = {
           gatekeeperAssess: false,
           entitlements: 'build/entitlements.mac.plist',
           entitlementsInherit: 'build/entitlements.mac.plist',
-          target: ['dir'],
+          target: ['dir', 'pkg'],
         },
         win: {
           target: ['portable'],
