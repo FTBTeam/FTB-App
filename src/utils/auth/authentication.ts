@@ -62,7 +62,7 @@ const msAuthenticator: Authenticator = {
           data.data.liveExpires,
         );
 
-        if (!authRes || !authRes.ok) {
+        if (!authRes || authRes.code) {
           logAuth(
             'error',
             `Failed to authenticate with the refresh service for ${profile.username} because ${
