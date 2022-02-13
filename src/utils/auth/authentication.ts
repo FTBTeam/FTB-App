@@ -34,6 +34,7 @@ const msAuthenticator: Authenticator = {
         body: JSON.stringify({
           code: (profile.tokens as any).refreshToken,
           refresh: true,
+          useNewFlow: true,
         }),
       });
 
