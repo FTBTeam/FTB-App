@@ -52,7 +52,7 @@ public class NewDownloadTask implements Task<Path> {
 
     private NewDownloadTask(int tries, String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator) {
         this.tries = tries;
-        this.url = MiscUtils.encodeURL(url);
+        this.url = url;
         this.dest = dest;
         this.validation = validation;
 
