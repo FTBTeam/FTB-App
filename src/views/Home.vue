@@ -62,11 +62,13 @@ import { ModPack, ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import FtbButton from '@/components/atoms/input/FTBButton.vue';
+import Loading from '@/components/atoms/Loading.vue';
 
 const namespace: string = 'modpacks';
 
 @Component({
   components: {
+    Loading,
     FtbButton,
     PackCardWrapper,
     ServerCard,
@@ -95,7 +97,7 @@ export default class Home extends Vue {
       this.isLoaded = false;
       try {
         await Promise.all(
-          newVal.installedPacks.map(async instance => {
+          newVal.installedPacks.map(async (instance) => {
             const pack =
               instance.packType == 0 ? await this.fetchModpack(instance.id) : await this.fetchCursepack(instance.id);
             return pack;
@@ -123,7 +125,7 @@ export default class Home extends Vue {
       this.isLoaded = false;
       try {
         await Promise.all(
-          this.modpacks.installedPacks.map(async instance => {
+          this.modpacks.installedPacks.map(async (instance) => {
             const pack =
               instance.packType == 0 ? await this.fetchModpack(instance.id) : await this.fetchCursepack(instance.id);
             return pack;

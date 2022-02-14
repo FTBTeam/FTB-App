@@ -10,6 +10,7 @@ import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.MiscUtils;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -51,7 +52,7 @@ public class NewDownloadTask implements Task<Path> {
 
     private NewDownloadTask(int tries, String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator) {
         this.tries = tries;
-        this.url = url;
+        this.url = MiscUtils.encodeURL(url);
         this.dest = dest;
         this.validation = validation;
 

@@ -21,11 +21,19 @@ const contents = fs.existsSync(path.join(__static, 'version.json'))
   : null;
 const jsonContent = contents ? JSON.parse(contents) : null;
 
+type msauthResponse = {
+  iv: string;
+  key: string;
+  password: string;
+};
+
 class MiniWebServer extends EventEmitter {
   server: http.Server | null = null;
   timeoutRef: NodeJS.Timeout | null = null;
+  closing = false;
 
   open() {
+    this.closing = false;
     if (this.server == null) {
       this.server = http.createServer((req: any, res: any) => {
         let body = '';
@@ -68,10 +76,13 @@ class MiniWebServer extends EventEmitter {
           this.close();
         });
       });
+
       this.server.listen(7755, () => {
         console.log('MiniWebServer listening on 7755');
         this.emit('open');
       });
+
+      this.closeAfterFive();
     } else {
       this.emit('open', false);
     }
@@ -82,25 +93,34 @@ class MiniWebServer extends EventEmitter {
       clearTimeout(this.timeoutRef);
     }
 
-    this.timeoutRef = setTimeout(() => {
+    this.timeoutRef = setTimeout(async () => {
       this.emit('timeout');
-      this.close();
+      await this.close();
     }, 1000 * 60 * 5);
   }
 
-  close() {
-    this.server?.close(() => {
-      this.server = null;
-      if (this.timeoutRef != null) {
-        clearTimeout(this.timeoutRef);
-      }
-    });
+  async close() {
+    if (!this.server || this.closing) {
+      return;
+    }
 
-    this.emit('close');
+    this.closing = true;
+    return new Promise((resolve) => {
+      this.server?.close(() => {
+        this.server = null;
+        if (this.timeoutRef != null) {
+          clearTimeout(this.timeoutRef);
+        }
+
+        this.closing = false;
+        this.emit('close');
+        resolve(true);
+      });
+    });
   }
 }
 
-const miniWebServer: MiniWebServer = new MiniWebServer();
+let miniServers: MiniWebServer[] = [];
 
 const Electron: ElectronOverwolfInterface = {
   config: {
@@ -120,45 +140,59 @@ const Electron: ElectronOverwolfInterface = {
   // Actions
   actions: {
     async openMsAuth() {
-      // return ipcRenderer.invoke('open-auth-window');
-      Electron.utils.openUrl(`https://msauth.feed-the-beast.com`);
+      ipcRenderer.send('createAuthWindow', 'microsoft');
 
-      return new Promise((resolve, reject) => {
-        miniWebServer.open();
-        miniWebServer.on('response', (data: { token: string; 'app-auth': string }) => {
+      const mini = new MiniWebServer();
+      miniServers.push(mini);
+      const result: msauthResponse | null = await new Promise((resolve, reject) => {
+        mini.open();
+        mini.on('response', (data: msauthResponse) => {
           resolve(data);
         });
 
-        miniWebServer.on('open', () => {
-          miniWebServer.closeAfterFive();
-        });
-
-        miniWebServer.on('close', () => {
-          console.log('Web server closed');
+        mini.on('close', () => {
+          resolve(null);
         });
       });
+
+      if (result?.iv) {
+        ipcRenderer.send('close-auth-window');
+      }
+
+      mini.close().catch(console.error);
+      return result;
     },
+
     openModpack(payload: { name: string; id: string }) {
       ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
     },
+
     openFriends() {
       ipcRenderer.send('showFriends');
     },
-    openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      Electron.utils.openUrl(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
 
-      miniWebServer.open();
-      miniWebServer.on('response', (data: { token: string; 'app-auth': string }) => {
-        cb(data);
+    async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
+      ipcRenderer.send('createAuthWindow', 'minetogether');
+
+      const mini = new MiniWebServer();
+      miniServers.push(mini);
+      const result: any = await new Promise((resolve, reject) => {
+        mini.open();
+        mini.on('response', (data: { token: string; 'app-auth': string }) => {
+          resolve(data);
+        });
+
+        mini.on('close', () => {
+          resolve(null);
+        });
       });
 
-      miniWebServer.on('open', () => {
-        miniWebServer.closeAfterFive();
-      });
+      if (result?.token) {
+        ipcRenderer.send('close-auth-window');
+      }
 
-      miniWebServer.on('close', () => {
-        console.log('Web server closed');
-      });
+      mini.close().catch(console.error);
+      cb(result);
     },
 
     logoutFromMinetogether() {
@@ -303,6 +337,15 @@ const Electron: ElectronOverwolfInterface = {
     });
     ipcRenderer.on('setFriendsWindow', (event, data) => {
       store.dispatch('auth/setWindow', data, { root: true });
+    });
+    ipcRenderer.on('auth-window-closed', (event, data) => {
+      miniServers.forEach((server) => {
+        server.close().then(() => {
+          console.log('Closed a mini server');
+        });
+      });
+
+      miniServers = [];
     });
     ipcRenderer.on('setSessionString', (event, data) => {
       const settings = store.state.settings?.settings;

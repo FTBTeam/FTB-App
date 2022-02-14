@@ -4,7 +4,9 @@ import com.google.gson.JsonObject;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
+import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.data.forge.VersionOverrides;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
@@ -12,11 +14,15 @@ import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallT
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +38,10 @@ import static org.apache.commons.lang3.StringUtils.appendIfMissing;
  */
 public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final MavenNotation FORGE_NOTATION = MavenNotation.parse("net.minecraftforge:forge");
+
+    private static final VersionOverrides SPECIAL_VERSIONS = VersionOverrides.compute();
 
     @Nullable
     protected String versionName;
@@ -110,6 +119,12 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     }
 
     private static MavenNotation getVersionNotation(String mcVersion, String forgeVersion) {
+        String override = SPECIAL_VERSIONS.find(forgeVersion);
+        if (override != null) {
+            LOGGER.info("Overriding Forge version from {} to {}.", forgeVersion, override);
+            return FORGE_NOTATION.withVersion(override);
+        }
+
         return FORGE_NOTATION.withVersion(mcVersion + "-" + forgeVersion);
     }
 

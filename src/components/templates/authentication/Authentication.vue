@@ -131,6 +131,7 @@ export default class Authentication extends Vue {
     this.onMainView = true;
     this.onMsAuth = false;
     this.onMcAuth = false;
+    this.error = '';
   }
 
   authenticated() {

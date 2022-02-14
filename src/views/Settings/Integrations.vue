@@ -13,7 +13,7 @@
             <div class="avatar mr-2">
               <img
                 :src="`https://api.mymcuu.id/head/${avatarName}`"
-                style="margin-right: 0.75em; width: 40px; height: 40px;"
+                style="margin-right: 0.75em; width: 40px; height: 40px"
                 class="rounded-full"
               />
             </div>
@@ -76,12 +76,16 @@ export default class AppInfo extends Vue {
   @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
+    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
   }
 
   private openLogin() {
-    platform.get.actions.openLogin((data: { token: string, 'app-auth': string }) => {
+    platform.get.actions.openLogin((data: { token: string; 'app-auth': string } | null) => {
+      if (data === null) {
+        return;
+      }
+
       if (data.token) {
         this.setSessionID(data.token);
       }
@@ -108,8 +112,6 @@ export default class AppInfo extends Vue {
 
     this.settings.settings.sessionString = undefined;
     this.saveSettings(this.settings.settings);
-
-    this.$router.push({ name: 'integrations' });
   }
 }
 </script>
