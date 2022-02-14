@@ -33,6 +33,8 @@ public abstract class ModLoaderInstallTask implements Task<String> {
      an external manifest as they don't have a universal jar.
     */
 
+    // See https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
+
     // Min and Max selectors for when Forge switched their formats as per the above table.
     public static final VersionRange FORGE_CLIENT_ZIP = createRange("(,4.0.0.182]");
     public static final VersionRange FORGE_UNIVERSAL_ZIP = createRange("[4.0.0.183,8.9.0.751]");
