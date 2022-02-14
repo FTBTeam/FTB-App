@@ -4,19 +4,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.net.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class MiscUtils
-{
+public class MiscUtils {
+
     private static final Logger LOGGER = LogManager.getLogger();
     public static final DateFormat ISO_8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 
-    public static CompletableFuture<?> allFutures(ArrayList<CompletableFuture<?>> futures)
-    {
+    public static CompletableFuture<?> allFutures(ArrayList<CompletableFuture<?>> futures) {
         CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(
                 futures.toArray(new CompletableFuture[0])).exceptionally((t) ->
                 {
@@ -83,5 +84,17 @@ public class MiscUtils
 
     public static long unixtime() {
         return System.currentTimeMillis() / 1000L;
+    }
+
+    public static String encodeURL(String urlStr) {
+        if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) return urlStr;
+        try {
+            URL url = new URL(urlStr);
+            URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
+            return uri.toString();
+        } catch (MalformedURLException | URISyntaxException ex) {
+            LOGGER.warn("Failed to re-encode URL.", ex);
+            return urlStr;
+        }
     }
 }
