@@ -11,13 +11,14 @@ import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.accounts.AccountManager;
+import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
-import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
-import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
+
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;

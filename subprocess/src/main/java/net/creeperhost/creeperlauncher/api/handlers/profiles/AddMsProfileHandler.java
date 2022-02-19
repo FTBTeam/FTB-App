@@ -1,10 +1,10 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.accounts.AccountManager;
+import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
-import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.time.Instant;
@@ -14,7 +14,7 @@ public class AddMsProfileHandler implements IMessageHandler<AddMsProfileHandler.
     @Override
     public void handle(Data data) {
       AccountProfile.MSAuthStore msAccount = new AccountProfile.MSAuthStore(data);
-      AccountProfile profile = new AccountProfile(data.minecraftUuid, Instant.now().getEpochSecond(), data.minecraftName, msAccount);
+      AccountProfile profile = new AccountProfile(data.minecraftUuid, Instant.now().getEpochSecond(), data.minecraftName, null, msAccount);
 
       Reply reply;
       if (!AccountManager.get().getProfiles().contains(profile)) {
@@ -41,14 +41,10 @@ public class AddMsProfileHandler implements IMessageHandler<AddMsProfileHandler.
       public String minecraftName;
       public UUID minecraftUuid;
       public String minecraftToken;
-      public String xstsUserHash;
-      public String xstsToken;
       public String xblUserHash;
-      public String xblToken;
       public String liveAccessToken;
       public String liveRefreshToken; // This is needed for the account refresh
       public String liveExpires;
-      public String liveExpiresAt;
     }
 
   private static class Reply extends Data {

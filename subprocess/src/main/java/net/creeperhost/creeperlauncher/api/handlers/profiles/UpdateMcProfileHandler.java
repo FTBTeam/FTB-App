@@ -3,42 +3,45 @@ package net.creeperhost.creeperlauncher.api.handlers.profiles;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.time.Instant;
 import java.util.UUID;
 
-public class AddMcProfileHandler implements IMessageHandler<AddMcProfileHandler.Data> {
+public class UpdateMcProfileHandler implements IMessageHandler<UpdateMcProfileHandler.Data> {
     @Override
     public void handle(Data data) {
         AccountProfile.YggdrasilAuthStore mcAuth = new AccountProfile.YggdrasilAuthStore(data.accessToken, data.clientToken);
         AccountProfile profile = new AccountProfile(data.userUuid, Instant.now().toEpochMilli(), data.username, null, mcAuth);
 
+        boolean removeResponse;
         Triple<Boolean, AccountProfile, UUID> addResponse;
-        if (!AccountManager.get().getProfiles().contains(profile)) {
-            addResponse = AccountManager.get().addProfile(profile);
+        if (AccountManager.get().getProfiles().contains(profile)) {
+            removeResponse = AccountManager.get().removeProfile(data.uuid);
+            if (removeResponse) {
+                addResponse = AccountManager.get().addProfile(profile);
+            } else {
+                addResponse = Triple.of(false, null, null);
+            }
         } else {
             addResponse = Triple.of(false, null, null);
         }
 
-        Settings.webSocketAPI.sendMessage(new Reply(data, addResponse.getMiddle(), addResponse.getRight(), addResponse.getLeft()));
+        Settings.webSocketAPI.sendMessage(new UpdateMcProfileHandler.Reply(data, addResponse.getMiddle(), addResponse.getRight(), addResponse.getLeft()));
+
     }
 
-    public static class Data extends BaseData {
-        public String username;
-        public UUID userUuid;
-        public String clientToken;
-        public String accessToken;
+    public static class Data extends AddMcProfileHandler.Data {
+        public UUID uuid;
     }
 
-    private static class Reply extends Data {
+    private static class Reply extends UpdateMcProfileHandler.Data {
         UUID activeProfile;
         AccountProfile profile;
         boolean success;
 
-        public Reply(Data data, AccountProfile profile, UUID activeProfile, boolean success) {
+        public Reply(AddMcProfileHandler.Data data, AccountProfile profile, UUID activeProfile, boolean success) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
 
