@@ -1,7 +1,8 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
 import com.google.gson.*;
-import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
+import net.creeperhost.creeperlauncher.util.MiscUtils;
 import okhttp3.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -20,10 +21,10 @@ public class MicrosoftOAuth {
             .header("Content-Type", "application/json")
             .header("Accept", "application/json");
 
-    public AccountProfile.MSAuthStore runFlow(String authToken, String liveRefreshToken, int liveExpiresAt, Consumer<Pair<Boolean, String>> onStage) {
-        AuthStepRes authXboxRes = this.authenticateWithXbox(authToken);
+    public static Pair<JsonObject, MSAuthStore> runFlow(String authToken, String liveRefreshToken, int liveExpiresAt, Consumer<Pair<Boolean, String>> onStage) {
+        StepReply authXboxRes = authenticateWithXbox(authToken);
 
-        if (this.isUnsuccessful(authXboxRes)) {
+        if (isUnsuccessful(authXboxRes)) {
             onStage.accept(Pair.of(false, "Failed to authenticate with Xbox"));
             return null;
         }
@@ -40,8 +41,8 @@ public class MicrosoftOAuth {
         onStage.accept(Pair.of(true, "Authenticated with Xbox"));
 
         // Authenticate with XSTS (the dev docs for this are private so fuck knows what it's actually doing)
-        AuthStepRes xstsRes = this.authenticateWithXSTS(xblToken);
-        if (this.isUnsuccessful(xstsRes)) {
+        StepReply xstsRes = authenticateWithXSTS(xblToken);
+        if (isUnsuccessful(xstsRes)) {
             onStage.accept(Pair.of(false, "Failed to authenticate with XSTS"));
             return null;
         }
@@ -73,8 +74,8 @@ public class MicrosoftOAuth {
         onStage.accept(Pair.of(true, "Authenticated with XSTS"));
 
         // Login with xbox
-        AuthStepRes loginWithXbox = this.loginWithXbox(xstsToken, userHash);
-        if (this.isUnsuccessful(loginWithXbox)) {
+        StepReply loginWithXbox = loginWithXbox(xstsToken, userHash);
+        if (isUnsuccessful(loginWithXbox)) {
             onStage.accept(Pair.of(false, "Unable to login with xbox live to your Minecraft account"));
             return null;
         }
@@ -91,11 +92,11 @@ public class MicrosoftOAuth {
         onStage.accept(Pair.of(true, "Checking ownership of Minecraft"));
         onStage.accept(Pair.of(true, "Fetching Minecraft account"));
 
-        AuthStepRes checkOwnershipRes = this.checkOwnership(accessToken);
-        AuthStepRes profileRes = this.getProfile(accessToken);
+        StepReply checkOwnershipRes = checkOwnership(accessToken);
+        StepReply profileRes = getProfile(accessToken);
 
         boolean hasOwnership = false;
-        if (this.isUnsuccessful(checkOwnershipRes)) {
+        if (isUnsuccessful(checkOwnershipRes)) {
             onStage.accept(Pair.of(false, "Unable to check ownership of Minecraft account"));
         } else {
             // Validate the ownership
@@ -113,7 +114,7 @@ public class MicrosoftOAuth {
         }
 
         // Validate the profile
-        if (this.isUnsuccessful(profileRes)) {
+        if (isUnsuccessful(profileRes)) {
             onStage.accept(Pair.of(false, "Unable to fetch profile from Minecraft account..."));
             LOGGER.error("Unable to fetch profile from Minecraft account... {}", profileRes.data.toString());
             return null;
@@ -126,14 +127,14 @@ public class MicrosoftOAuth {
             return null;
         }
 
-        return new AccountProfile.MSAuthStore(
-                UUID.fromString(profileData.get("id").getAsString()),
+        return Pair.of(profileData, new MSAuthStore(
+                MiscUtils.createUuidFromStringWithoutDashes(profileData.get("id").getAsString()),
                 accessToken,
                 userHash,
                 authToken,
                 liveRefreshToken,
                 Instant.now().getEpochSecond() + liveExpiresAt
-        );
+        ));
     }
 
     /**
@@ -141,10 +142,10 @@ public class MicrosoftOAuth {
      *
      * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Authenticate_with_XBL
      */
-    private AuthStepRes authenticateWithXbox(String authenticationToken) {
+    private static StepReply authenticateWithXbox(String authenticationToken) {
         return wrapRequest(
                 JSON_REQUEST.url(Endpoints.XBL_AUTHENTICATE.getUrl())
-                    .post(this.createJson(new XblAuthRequest(new XblAuthProperties("RPS", "user.auth.xboxlive.com", String.format("d=%s", authenticationToken)), "http://auth.xboxlive.com", "JWT")))
+                    .post(createJson(new XblAuthRequest(new XblAuthProperties("RPS", "user.auth.xboxlive.com", String.format("d=%s", authenticationToken)), "http://auth.xboxlive.com", "JWT")))
                     .build(),
                 "Successfully authenticated with Xbox",
                 "Failed to authenticate with Xbox"
@@ -156,10 +157,10 @@ public class MicrosoftOAuth {
      *
      * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Authenticate_with_XSTS
      */
-    private AuthStepRes authenticateWithXSTS(String xblToken) {
+    private static StepReply authenticateWithXSTS(String xblToken) {
         return wrapRequest(
                 JSON_REQUEST.url(Endpoints.XSTS_AUTHORIZE.getUrl())
-                    .post(this.createJson(new XstsAuthRequest(new XstsAuthProperties("RETAIL", List.of(xblToken)), "rp://api.minecraftservices.com/", "JWT")))
+                    .post(createJson(new XstsAuthRequest(new XstsAuthProperties("RETAIL", List.of(xblToken)), "rp://api.minecraftservices.com/", "JWT")))
                     .build(),
                 "Successfully authenticated with XSTS",
                 "Failed to authenticate with XSTS"
@@ -171,10 +172,10 @@ public class MicrosoftOAuth {
      *
      * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Authenticate_with_Minecraft
      */
-    private AuthStepRes loginWithXbox(String identityToken, String userHash) {
+    private static StepReply loginWithXbox(String identityToken, String userHash) {
         return wrapRequest(
                 JSON_REQUEST.url(Endpoints.LOGIN_WITH_XBOX.getUrl())
-                    .post(this.createJson(new LoginWithXboxRequest(String.format("XBL3.0 x=%s;%s", userHash, identityToken))))
+                    .post(createJson(new LoginWithXboxRequest(String.format("XBL3.0 x=%s;%s", userHash, identityToken))))
                     .build(),
                 "Successfully logged in with Xbox",
                 "Failed to log in with Xbox"
@@ -186,7 +187,7 @@ public class MicrosoftOAuth {
      *
      * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Checking_Game_Ownership
      */
-    private AuthStepRes checkOwnership(String minecraftToken) {
+    private static StepReply checkOwnership(String minecraftToken) {
         return wrapRequest(
                 JSON_REQUEST.url(Endpoints.CHECK_STORE.getUrl()).get()
                     .header("Authorization", String.format("Bearer %s", minecraftToken))
@@ -204,7 +205,7 @@ public class MicrosoftOAuth {
      *
      * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Get_the_profile
      */
-    private AuthStepRes getProfile(String minecraftToken) {
+    public static StepReply getProfile(String minecraftToken) {
         return wrapRequest(
                 JSON_REQUEST.url(Endpoints.GET_PROFILE.getUrl())
                     .get()
@@ -218,27 +219,27 @@ public class MicrosoftOAuth {
     /**
      * Safely wrap the request and attempt to form a readable response whilst logging the major issue if one is presented
      */
-    private AuthStepRes wrapRequest(Request request, String successMessage, String errorMessage) {
+    private static StepReply wrapRequest(Request request, String successMessage, String errorMessage) {
         try {
             Response execute = CLIENT.newCall(request).execute();
-            return new AuthStepRes(true, execute.code(), successMessage, execute.body() != null ? JsonParser.parseString(execute.body().string()) : JsonNull.INSTANCE, execute);
+            return new StepReply(true, execute.code(), successMessage, execute.body() != null ? JsonParser.parseString(execute.body().string()) : JsonNull.INSTANCE, execute);
         } catch (Exception e) {
             LOGGER.fatal("Error executing request to {}", request.url(), e);
-            return new AuthStepRes(false, -1, errorMessage, JsonNull.INSTANCE, null);
+            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null);
         }
     }
 
     /**
      * We do this a lot. let's do it in one place.
      */
-    private boolean isUnsuccessful(AuthStepRes response) {
+    private static boolean isUnsuccessful(StepReply response) {
         return response == null || !response.success || response.data == null || response.data.isJsonNull();
     }
 
     /**
      * Create a JSON object from the given object
      */
-    private RequestBody createJson(Object any) {
+    private static RequestBody createJson(Object any) {
         return RequestBody.create(new Gson().toJson(any), MediaType.parse("application/json"));
     }
 
@@ -266,7 +267,7 @@ public class MicrosoftOAuth {
     /**
      * Repsonses & requests.
      */
-    record AuthStepRes(
+    public record StepReply(
             boolean success,
             int status,
             String message,

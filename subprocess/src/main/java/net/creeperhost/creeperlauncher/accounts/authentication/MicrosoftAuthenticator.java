@@ -1,13 +1,16 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
+import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.time.Instant;
 
-public class MicrosoftAuthenticator implements AuthenticatorValidator<AccountProfile.MSAuthStore, MicrosoftAuthenticator.RefreshData, MicrosoftAuthenticator.RefreshData> {
+public class MicrosoftAuthenticator implements AuthenticatorValidator<Pair<JsonObject, MSAuthStore>, MicrosoftAuthenticator.AuthRequest, MicrosoftAuthenticator.AuthRequest> {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
@@ -22,25 +25,27 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<AccountPro
         return valid;
     }
 
+    /**
+     * Due to the way we handle authentication, this is basically ideal for a authentication, we only do the code twice to support different logger info.
+     * @param profile
+     * @param refreshData
+     * @return
+     */
     @Nullable
     @Override
-    public AuthenticatedWithData<AccountProfile.MSAuthStore> refresh(AccountProfile profile, RefreshData refreshData) {
-        MicrosoftOAuth oauth = new MicrosoftOAuth();
-
-        AccountProfile.MSAuthStore msAuthStore = oauth.runFlow(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt, LOGGER::info);
-        return new AuthenticatedWithData<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to refresh Microsoft authentication" : "Successfully refreshed Microsoft authentication");
+    public Reply<Pair<JsonObject, MSAuthStore>> refresh(AccountProfile profile, AuthRequest refreshData) {
+        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt, LOGGER::info);
+        return new Reply<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to refresh Microsoft authentication" : "Successfully refreshed Microsoft authentication");
     }
 
     @Nullable
     @Override
-    public AuthenticatedWithData<AccountProfile.MSAuthStore> authenticate(RefreshData accessData) {
-        MicrosoftOAuth oauth = new MicrosoftOAuth();
-
-        AccountProfile.MSAuthStore msAuthStore = oauth.runFlow(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt, LOGGER::info);
-        return new AuthenticatedWithData<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to authenticate Microsoft authentication" : "Successfully authenticated Microsoft authentication");
+    public Reply<Pair<JsonObject, MSAuthStore>> authenticate(AuthRequest accessData) {
+        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt, LOGGER::info);
+        return new Reply<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to authenticate Microsoft authentication" : "Successfully authenticated Microsoft authentication");
     }
 
-    record RefreshData(
+    public record AuthRequest(
             String authToken, String liveRefreshToken, int liveExpiresAt
     ) {}
 }

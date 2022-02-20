@@ -71,14 +71,12 @@ public class WebSocketMessengerHandler
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());
-        register("profiles.addMs", AddMsProfileHandler.Data.class, new AddMsProfileHandler());
-        register("profiles.updateMs", UpdateMsProfileHandler.Data.class, new UpdateMsProfileHandler());
-        register("profiles.addMc", AddMcProfileHandler.Data.class, new AddMcProfileHandler());
-        register("profiles.updateMc", UpdateMcProfileHandler.Data.class, new UpdateMcProfileHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
         register("profiles.mc.authenticate", AuthenticateMcProfileHandler.Data.class, new AuthenticateMcProfileHandler());
-        register("profiles.mc.refresh", RefreshAuthenticationMcProfileHandler.Data.class, new RefreshAuthenticationMcProfileHandler());
+        register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
+        register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
+        register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
     }
 
     public static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {

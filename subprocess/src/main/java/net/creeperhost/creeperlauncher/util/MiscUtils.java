@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class MiscUtils {
@@ -96,5 +97,19 @@ public class MiscUtils {
             LOGGER.warn("Failed to re-encode URL.", ex);
             return urlStr;
         }
+    }
+
+    /**
+     * For some reason Minecraft like to give us UUID's without the hyphens...
+     *
+     * This adds them back, if we get a string with hyphens, it returns the same string.
+     */
+    public static UUID createUuidFromStringWithoutDashes(String uuid) {
+        if (uuid.contains("-")) {
+            return UUID.fromString(uuid);
+        }
+
+        String uuidWithoutDashes = uuid.replaceFirst("([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]+)", "$1-$2-$3-$4-$5");
+        return UUID.fromString(uuidWithoutDashes);
     }
 }

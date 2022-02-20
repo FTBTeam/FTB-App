@@ -1,11 +1,15 @@
 package net.creeperhost.creeperlauncher.accounts;
 
 import com.google.common.base.Objects;
-import net.creeperhost.creeperlauncher.api.handlers.profiles.AddMsProfileHandler;
+import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
+import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
+import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
+import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.time.Instant;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -21,17 +25,17 @@ public class AccountProfile {
 
     @Nullable
     public YggdrasilAuthStore mcAuth;
-    public AccountSkins skins;
+    public AccountSkin[] skins;
 
-    public AccountProfile(UUID uuid, long lastLogin, String username, AccountSkins skins, @Nonnull MSAuthStore msAuth) {
+    public AccountProfile(UUID uuid, long lastLogin, String username, AccountSkin[] skins, @Nonnull MSAuthStore msAuth) {
         this(true, uuid, lastLogin, username, msAuth, null, skins);
     }
 
-    public AccountProfile(UUID uuid, long lastLogin, String username, AccountSkins skins, @Nonnull YggdrasilAuthStore mcAuth) {
+    public AccountProfile(UUID uuid, long lastLogin, String username, AccountSkin[] skins, @Nonnull YggdrasilAuthStore mcAuth) {
         this(false, uuid, lastLogin, username, null, mcAuth, skins);
     }
 
-    public AccountProfile(boolean isMicrosoft, UUID uuid, long lastLogin, String username, @Nullable MSAuthStore msAuth, @Nullable YggdrasilAuthStore mcAuth, AccountSkins skins) {
+    public AccountProfile(boolean isMicrosoft, UUID uuid, long lastLogin, String username, @Nullable MSAuthStore msAuth, @Nullable YggdrasilAuthStore mcAuth, AccountSkin[] skins) {
         this.isMicrosoft = isMicrosoft;
         this.uuid = uuid;
         this.lastLogin = lastLogin;
@@ -39,6 +43,10 @@ public class AccountProfile {
         this.msAuth = msAuth;
         this.mcAuth = mcAuth;
         this.skins = skins;
+    }
+
+    public AuthenticatorValidator<?, ?, ?> getValidator() {
+        return this.isMicrosoft ? new MicrosoftAuthenticator() : new MojangAuthenticator();
     }
 
     @Override
@@ -52,57 +60,6 @@ public class AccountProfile {
     @Override
     public int hashCode() {
         return Objects.hashCode(isMicrosoft, uuid);
-    }
-
-    public static class MSAuthStore {
-        public UUID minecraftUuid;
-        public String minecraftToken;
-        public String xblUserHash;
-        public String liveAccessToken;
-        public String liveRefreshToken; // This is needed for the account refresh
-        public long liveExpiresAt;
-
-        public MSAuthStore(UUID minecraftUuid, String minecraftToken, String xblUserHash, String liveAccessToken, String liveRefreshToken, long liveExpiresAt) {
-            this.minecraftUuid = minecraftUuid;
-            this.minecraftToken = minecraftToken;
-            this.xblUserHash = xblUserHash;
-            this.liveAccessToken = liveAccessToken;
-            this.liveRefreshToken = liveRefreshToken;
-            this.liveExpiresAt = liveExpiresAt;
-        }
-
-        public MSAuthStore(AddMsProfileHandler.Data data) {
-            this(data.minecraftUuid, data.minecraftToken, data.xblUserHash, data.liveAccessToken, data.liveRefreshToken, Instant.now().getEpochSecond() + Integer.parseInt(data.liveExpires));
-        }
-
-        @Override
-        public String toString() {
-            return new StringJoiner(", ", MSAuthStore.class.getSimpleName() + "[", "]")
-                    .add("minecraftUuid=" + minecraftUuid)
-                    .add("minecraftToken='" + minecraftToken + "'")
-                    .add("xblUserHash='" + xblUserHash + "'")
-                    .add("liveAccessToken='" + liveAccessToken + "'")
-                    .add("liveRefreshToken='" + liveRefreshToken + "'")
-                    .toString();
-        }
-    }
-
-    public static class YggdrasilAuthStore {
-        public String clientToken;
-        public String accessToken;
-
-        public YggdrasilAuthStore(String accessToken, String clientToken) {
-            this.clientToken = clientToken;
-            this.accessToken = accessToken;
-        }
-
-        @Override
-        public String toString() {
-            return new StringJoiner(", ", YggdrasilAuthStore.class.getSimpleName() + "[", "]")
-                    .add("clientToken=" + clientToken)
-                    .add("accessToken='" + accessToken + "'")
-                    .toString();
-        }
     }
 
     @Override

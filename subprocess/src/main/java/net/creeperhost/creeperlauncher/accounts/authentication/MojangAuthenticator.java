@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 import okhttp3.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +17,7 @@ import java.util.UUID;
  * *Slaps car*
  * This baby fits so much useless time into it.
  */
-public class MojangAuthenticator implements AuthenticatorValidator<AccountProfile.YggdrasilAuthStore, MojangAuthenticator.AuthenticationRequest, String> {
+public class MojangAuthenticator implements AuthenticatorValidator<YggdrasilAuthStore, MojangAuthenticator.LoginData, String> {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Agent AGENT = new Agent("Minecraft", 1);
 
@@ -64,10 +65,10 @@ public class MojangAuthenticator implements AuthenticatorValidator<AccountProfil
      */
     @Nullable
     @Override
-    public AuthenticatedWithData<AccountProfile.YggdrasilAuthStore> refresh(AccountProfile profile, String ignored) {
+    public Reply<YggdrasilAuthStore> refresh(AccountProfile profile, String ignored) {
         if (profile.isMicrosoft || profile.mcAuth == null) {
             LOGGER.warn("Microsoft accounts cannot be refreshed");
-            return new AuthenticatedWithData<>(null, false, "Microsoft accounts cannot be refreshed");
+            return new Reply<>(null, false, "Microsoft accounts cannot be refreshed");
         }
 
         try {
@@ -84,7 +85,7 @@ public class MojangAuthenticator implements AuthenticatorValidator<AccountProfil
 
             LOGGER.info("Received response from Mojang's authentication server with status code " + request.code());
             if (request.code() == 403) {
-                return new AuthenticatedWithData<>(null, false, "Invalid refresh token");
+                return new Reply<>(null, false, "Invalid refresh token");
             }
 
             ResponseBody body = request.body();
@@ -92,15 +93,17 @@ public class MojangAuthenticator implements AuthenticatorValidator<AccountProfil
                 String response = body.string();
                 JsonObject resData = JsonParser.parseString(response).getAsJsonObject();
                 if (resData.has("accessToken")) {
-                    return new AuthenticatedWithData<>(new AccountProfile.YggdrasilAuthStore(
-                            resData.get("accessToken").getAsString(),
-                            resData.get("clientToken").getAsString()
-                    ), true, "Success");
+                    return new Reply<>(
+                        new YggdrasilAuthStore(
+                                resData.get("accessToken").getAsString(),
+                                resData.get("clientToken").getAsString()
+                        ), true, "Success"
+                    );
                 }
             }
 
             LOGGER.warn("Mojang returned an error");
-            return new AuthenticatedWithData<>(null, false, body != null ? body.string() : "Unknown error");
+            return new Reply<>(null, false, body != null ? body.string() : "Unknown error");
         } catch (IOException e) {
             LOGGER.fatal("Failed to check for validity with Mojang", e);
         }
@@ -110,7 +113,7 @@ public class MojangAuthenticator implements AuthenticatorValidator<AccountProfil
 
     @Nullable
     @Override
-    public AuthenticatedWithData<AccountProfile.YggdrasilAuthStore> authenticate(AuthenticationRequest req) {
+    public Reply<YggdrasilAuthStore> authenticate(LoginData req) {
         UUID randomId = UUID.randomUUID();
 
         try {
@@ -127,13 +130,15 @@ public class MojangAuthenticator implements AuthenticatorValidator<AccountProfil
                 String response = body.string();
                 JsonObject resData = JsonParser.parseString(response).getAsJsonObject();
                 if (resData.has("accessToken")) {
-                    return new AuthenticatedWithData<>(new AccountProfile.YggdrasilAuthStore(
-                            resData.get("accessToken").getAsString(),
-                            resData.get("clientToken").getAsString()
-                    ), true, "Success");
+                    return new Reply<>(
+                        new YggdrasilAuthStore(
+                                resData.get("accessToken").getAsString(),
+                                resData.get("clientToken").getAsString()
+                        ), true, "Success"
+                    );
                 } else {
                     LOGGER.warn("Mojang returned an error: " + response);
-                    return new AuthenticatedWithData<>(null, false, response);
+                    return new Reply<>(null, false, response);
                 }
             }
         } catch (IOException e) {
@@ -143,21 +148,24 @@ public class MojangAuthenticator implements AuthenticatorValidator<AccountProfil
         return null;
     }
 
-    record AuthenticationRequest(
-        String username,
-        String password
-    ) {}
+    public record LoginData(
+            String username,
+            String password
+    ) {
+    }
 
     record ValidateRequestData(
             String accessToken,
             String clientToken
-    ) {}
+    ) {
+    }
 
     record RefreshRequestData(
             String accessToken,
             String clientToken,
             boolean requestUser
-    ) {}
+    ) {
+    }
 
     record RequestData(
             Agent agent,
@@ -165,10 +173,12 @@ public class MojangAuthenticator implements AuthenticatorValidator<AccountProfil
             String password,
             String clientToken,
             boolean requestUser
-    ) {}
+    ) {
+    }
 
-    record Agent (
+    record Agent(
             String name,
             int version
-    ) {}
+    ) {
+    }
 }
