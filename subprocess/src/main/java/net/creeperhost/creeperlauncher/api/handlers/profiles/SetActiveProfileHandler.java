@@ -1,13 +1,10 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.minecraft.account.AccountManager;
-import net.creeperhost.creeperlauncher.minecraft.account.AccountProfile;
 
-import javax.annotation.Nullable;
-import java.util.Set;
 import java.util.UUID;
 
 public class SetActiveProfileHandler implements IMessageHandler<SetActiveProfileHandler.Data> {

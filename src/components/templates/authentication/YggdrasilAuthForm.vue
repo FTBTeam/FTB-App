@@ -41,7 +41,6 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import { Action } from 'vuex-class';
-import { addHyphensToUuid } from '@/utils/helpers';
 import { Prop } from 'vue-property-decorator';
 
 // TODO: remove this after April 2022
@@ -72,41 +71,21 @@ export default class YggdrasilAuthForm extends Vue {
         username: this.username,
         password: this.password,
       },
-      callback: (data: any) => {
-        let json = {} as any;
-        try {
-          json = JSON.parse(data.response);
-        } catch (e) {
-          this.error = 'Invalid response from Mojang.';
+      callback: async (data: any) => {
+        if (!data || !data.success) {
+          if (data.response && data.response.includes('errorMessage')) {
+            const response = JSON.parse(data.response);
+            this.error = response.errorMessage;
+            return;
+          }
+
+          this.error = data.response || 'An unknown error occurred.';
           return;
         }
 
-        if (json.error || !json) {
-          this.error = json.errorMessage || 'Unknown error.';
-          return; // TODO: handle error
-        }
-
-        const id: string = json.selectedProfile.id;
-        const newUuid = addHyphensToUuid(id);
-
-        this.sendMessage({
-          payload: {
-            type: this.uuid ? 'profiles.updateMc' : 'profiles.addMc',
-            uuid: this.uuid ? this.uuid : undefined,
-            username: json.selectedProfile.name,
-            accessToken: json.accessToken,
-            clientToken: json.clientToken,
-            userUuid: id.includes('-') ? id : newUuid,
-          },
-          callback: async (e: any) => {
-            if (e.success) {
-              await this.loadProfiles();
-              this.$emit('authenticated');
-            } else {
-              this.error = 'Something went wrong';
-            }
-          },
-        });
+        // No error
+        await this.loadProfiles();
+        this.$emit('authenticated');
       },
     });
   }

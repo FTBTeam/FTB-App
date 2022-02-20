@@ -1,60 +1,45 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
-import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
-import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
-import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
+import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.util.MiscUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
  */
-public class AuthenticateMcProfileHandler implements IMessageHandler<AuthenticateMcProfileHandler.Data> {
+public class AuthenticateMsProfileHandler implements IMessageHandler<AuthenticateMsProfileHandler.Data> {
     @Override
     public void handle(Data data) {
-        MojangAuthenticator auth = new MojangAuthenticator();
+        MicrosoftAuthenticator auth = new MicrosoftAuthenticator();
 
         // Try and authenticate with the MC server
-        AuthenticatorValidator.Reply<YggdrasilAuthStore> authenticate =
-                auth.authenticate(new MojangAuthenticator.LoginData(data.username, data.password));
+        AuthenticatorValidator.Reply<Pair<JsonObject, MSAuthStore>> authenticate =
+                auth.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
 
         if (authenticate != null && authenticate.success()) {
-            // Try and get the user profile with the access token from above
-            MicrosoftOAuth.StepReply minecraftAccount = MicrosoftOAuth.getProfile(authenticate.data().accessToken);
-
-            // No profile? Fail!
-            String userId = minecraftAccount.data().getAsJsonObject().get("id").getAsString();
-            if (!minecraftAccount.success() || userId == null || userId.isEmpty()) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to get Minecraft account info."));
-                return;
-            }
-
             // Parse the users skins (We don't care if it fails).
             AccountSkin[] skins = new AccountSkin[] {};
             try {
-                skins = new Gson().fromJson(minecraftAccount.data().getAsJsonObject().get("skins").toString(), AccountSkin[].class);
+                skins = new Gson().fromJson(authenticate.data().getKey().getAsJsonObject().get("skins").toString(), AccountSkin[].class);
             } catch (Exception ignore) {}
 
-
-            // Create a generic profile
             AccountProfile profile = new AccountProfile(
-                    MiscUtils.createUuidFromStringWithoutDashes(userId),
-                    Instant.now().toEpochMilli(),
-                    minecraftAccount.data().getAsJsonObject().get("name").getAsString(),
+                    authenticate.data().getValue().minecraftUuid,
+                    Instant.now().getEpochSecond(),
+                    authenticate.data().getKey().getAsJsonObject().get("name").getAsString(),
                     skins,
-                    new YggdrasilAuthStore(
-                            authenticate.data().accessToken, authenticate.data().clientToken
-                    )
+                    authenticate.data().getValue()
             );
 
             // Try and add the profile
@@ -82,7 +67,8 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
     }
 
     public static class Data extends BaseData {
-        public String username;
-        public String password;
+        public String liveAccessToken;
+        public String liveRefreshToken;
+        public int liveExpires;
     }
 }

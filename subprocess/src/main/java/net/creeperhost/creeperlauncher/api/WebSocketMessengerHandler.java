@@ -33,8 +33,8 @@ public class WebSocketMessengerHandler
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-//    private static Map<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> handlers = new HashMap<>();
     private static final Map<String, Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>>> register = new HashMap<>();
+
     static Gson gson = new Gson();
 
     static {
@@ -51,7 +51,7 @@ public class WebSocketMessengerHandler
         register("getSettings", SettingsInfoData.class, new SettingsInfoHandler());
         register("saveSettings", SettingsConfigureData.class, new SettingsConfigureHandler());
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
-        register("fileHash", FileHashData.class, new FileHashHandler());
+        register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
         register("storeAuthDetails", StoreAuthDetailsData.class, new StoreAuthDetailsHandler());
         register("syncInstance", SyncInstanceData.class, new SyncInstanceHandler());
         register("ircConnect", IRCConnectData.class, new IRCConnectHandler());
@@ -63,22 +63,20 @@ public class WebSocketMessengerHandler
         register("blockFriend", BlockFriendData.class, new BlockFriendHandler());
         register("addFriend", AddFriendData.class, new AddFriendHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
-        register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
+        register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler()); // not used but referenced, this should be yeeted
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("ping", PingLauncherData.class);
-        register("messageClient", MessageClientData.class, new MessageClientHandler());
-        register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
+        register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
+        register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler()); // not used yet, keep
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());
-        register("profiles.addMs", AddMsProfileHandler.Data.class, new AddMsProfileHandler());
-        register("profiles.updateMs", UpdateMsProfileHandler.Data.class, new UpdateMsProfileHandler());
-        register("profiles.addMc", AddMcProfileHandler.Data.class, new AddMcProfileHandler());
-        register("profiles.updateMc", UpdateMcProfileHandler.Data.class, new UpdateMcProfileHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
         register("profiles.mc.authenticate", AuthenticateMcProfileHandler.Data.class, new AuthenticateMcProfileHandler());
-        register("profiles.mc.refresh", RefreshAuthenticationMcProfileHandler.Data.class, new RefreshAuthenticationMcProfileHandler());
+        register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
+        register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
+        register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
     }
 
     public static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {
@@ -91,8 +89,7 @@ public class WebSocketMessengerHandler
 
     public static void handleMessage(String data)
     {
-        JsonParser parser = new JsonParser();
-        JsonElement parse = parser.parse(data);
+        JsonElement parse = JsonParser.parseString(data);
         if (parse.isJsonObject()) {
             JsonObject jsonObject = parse.getAsJsonObject();
             if (jsonObject.has("type")) {

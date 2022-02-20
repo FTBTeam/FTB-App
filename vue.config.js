@@ -48,7 +48,7 @@ module.exports = {
           gatekeeperAssess: false,
           entitlements: 'build/entitlements.mac.plist',
           entitlementsInherit: 'build/entitlements.mac.plist',
-          target: ['dir', 'pkg'],
+          target: ['dir'],
         },
         win: {
           target: ['portable'],
