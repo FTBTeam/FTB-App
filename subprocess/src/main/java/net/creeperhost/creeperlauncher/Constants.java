@@ -57,8 +57,6 @@ public class Constants {
     public static final Path BIN_LOCATION_OURS = WORKING_DIR.resolve("bin");
     public static final Path BIN_LOCATION = getDataDir().resolve("bin");
 
-    public static final Path APP_CACHE = getDataDir().resolve("app_cache");
-
     public static final Path VERSIONS_FOLDER_LOC = getDataDir().resolve(Paths.get("bin", "versions"));
     public static final Path INSTANCES_FOLDER_LOC = getDataDir().resolve("instances");
     public static final Path LIBRARY_LOCATION = BIN_LOCATION.resolve("libraries");

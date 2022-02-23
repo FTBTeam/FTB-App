@@ -50,10 +50,10 @@ public class MigrationManager {
             } catch (IOException | JsonSyntaxException e) {
                 LOGGER.fatal("Failed to read FormatJson. Assuming FormatJson does not exist.", e);
             }
-        } else if (Files.exists(Settings.getSettingsPath())) {
+        } else if (Files.exists(Constants.BIN_LOCATION.resolve("settings.json"))) {
           // If the settings file exists, then we are v1. 
           formatJson = new FormatJson();
-          formatJson.format = CURRENT_DATA_FORMAT;
+          formatJson.format = 1;
           saveJson();
         }
     }
