@@ -94,14 +94,20 @@ public class WebSocketMessengerHandler
             JsonObject jsonObject = parse.getAsJsonObject();
             if (jsonObject.has("type")) {
                 String type = jsonObject.get("type").getAsString();
-                IMessageHandler<? extends BaseData> entry = register.get(type);
-                try {
-                    BaseData parsedData = gson.fromJson(data, entry.getDataClass());
-                    if (CreeperLauncher.isDevMode || (parsedData.secret != null && parsedData.secret.equals(CreeperLauncher.websocketSecret))) {
-                        CompletableFuture.runAsync(() -> entry.handle(parsedData), CreeperLauncher.taskExeggutor).exceptionally((t) -> {
-                            LOGGER.error("Error handling message", t);
-                            return null;
-                        });
+                Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> entry = register.get(type);
+                TypeToken typeToken = TypeToken.of(entry.getLeft());
+                IMessageHandler<? extends BaseData> iMessageHandler = entry.getRight();
+                if (iMessageHandler != null) {
+                    try {
+                        BaseData parsedData = gson.fromJson(data, typeToken.getType());
+                        if (CreeperLauncher.isDevMode || (parsedData.secret != null && parsedData.secret.equals(CreeperLauncher.websocketSecret))) {
+                            CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), CreeperLauncher.taskExeggutor).exceptionally((t) -> {
+                                LOGGER.error("Error handling message", t);
+                                return null;
+                            });
+                        }
+                    } catch(Exception e) {
+                        e.printStackTrace();
                     }
                 } else {
                     LOGGER.error("No handler for message type '{}'", type);
