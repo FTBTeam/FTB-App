@@ -11,6 +11,11 @@ import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 
+/**
+ * This file is only included in the Electron build. Overwolf uses it's own version of this file that sets up the
+ * app in pretty much the same way but with environment specific modifications.
+ */
+
 Object.assign(console, log.functions);
 (app as any).console = log;
 const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.indexOf('--dev') !== -1;
