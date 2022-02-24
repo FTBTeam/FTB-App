@@ -60,7 +60,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             VersionManifest vanillaManifest = downloadVanilla(versionsDir, profile.install.minecraft);
             if (profile.versionInfo.inheritsFrom == null || profile.versionInfo.jar == null) {
                 Path srcJar = versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar");
-                Path destJar = versionsDir.resolve(versionName).resolve(versionName + ".jar");
+                Path destJar = IOUtils.makeParents(versionsDir.resolve(versionName).resolve(versionName + ".jar"));
                 if (profile.install.stripMeta) {
                     stripMeta(srcJar, destJar);
                 } else {
