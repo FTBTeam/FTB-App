@@ -46,10 +46,8 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                         instance.packType
                 );
                 if (manifests == null) {
-                    CreeperLauncher.isInstalling = false;
-                    CreeperLauncher.currentInstall = null;
-                    CreeperLauncher.currentInstallFuture = null;
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
+                    clearInstallState();
                     return;
                 }
                 handleInstall(data, instance, manifests);
@@ -61,10 +59,8 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                         data.packType
                 );
                 if (manifests == null) {
-                    CreeperLauncher.isInstalling = false;
-                    CreeperLauncher.currentInstall = null;
-                    CreeperLauncher.currentInstallFuture = null;
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
+                    clearInstallState();
                     return;
                 }
                 instance = new LocalInstance(manifests.getLeft(), manifests.getRight(), data._private, data.packType);
@@ -74,9 +70,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         } catch (Throwable ex) {
             LOGGER.error("Fatal exception configuring modpack installation.", ex);
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception configuring modpack installation.", ""));
-            CreeperLauncher.isInstalling = false;
-            CreeperLauncher.currentInstall = null;
-            CreeperLauncher.currentInstallFuture = null;
+            clearInstallState();
         }
     }
 
@@ -95,16 +89,18 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                     LOGGER.error("Fatal exception whilst installing modpack.", ex);
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
                 }
-                CreeperLauncher.isInstalling = false;
-                CreeperLauncher.currentInstall = null;
-                CreeperLauncher.currentInstallFuture = null;
+                clearInstallState();
             });
         } catch (IOException ex) {
             LOGGER.error("Fatal exception preparing modpack installation.", ex);
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation.", ""));
-            CreeperLauncher.isInstalling = false;
-            CreeperLauncher.currentInstall = null;
-            CreeperLauncher.currentInstallFuture = null;
+            clearInstallState();
         }
+    }
+
+    private static void clearInstallState() {
+        CreeperLauncher.isInstalling = false;
+        CreeperLauncher.currentInstall = null;
+        CreeperLauncher.currentInstallFuture = null;
     }
 }
