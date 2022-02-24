@@ -75,6 +75,8 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             }
 
             runProcessors(instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir);
+
+            ForgeLegacyLibraryHelper.installLegacyLibs(instance, instManifest.minecraft);
         }
     }
 
