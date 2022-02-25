@@ -12,12 +12,14 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
+import net.covers1624.quack.platform.Architecture;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Contract;
@@ -61,6 +63,10 @@ public class VersionManifest {
             ),
             null
     );
+
+    private static final StrSubstitutor ARTIFACT_SUBSTITUTIONS = new StrSubstitutor(Map.of(
+            "arch", Architecture.current() == Architecture.X64 ? "64" : "32"
+    ));
 
     public static final AssetIndex LEGACY_ASSETS = SneakyUtils.sneaky(() -> {
         AssetIndex index = new AssetIndex();
@@ -322,7 +328,7 @@ public class VersionManifest {
         public NewDownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
             // We have 'natives'
             if (natives != null) {
-                String classifier = natives.get(OS.current());
+                String classifier = ARTIFACT_SUBSTITUTIONS.replace(natives.get(OS.current()));
                 if (classifier == null) return null; // No natives for this platform.
                 if (downloads == null) {
 
