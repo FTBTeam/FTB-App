@@ -83,8 +83,8 @@ public class ForgeLegacyLibraryHelper {
                 ));
                 libraries.add(makeTask(libsDir.resolve("scala-library-2.10.0.jar"),
                         "https://maven.creeperhost.net/org/scala-lang/scala-library/2.10.0/scala-library-2.10.0.jar",
-                        7114640,
-                        "458d046151ad179c85429ed7420ffb1eaf6ddf85"
+                        7114639,
+                        "43c6d98b445187c6b459a582c774ffb025120ef4"
                 ));
                 break;
         }
