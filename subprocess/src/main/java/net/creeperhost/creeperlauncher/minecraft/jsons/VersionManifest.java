@@ -78,6 +78,7 @@ public class VersionManifest {
     public Arguments arguments;
     @Nullable
     public AssetIndex assetIndex;
+    @Nullable
     public String assets;
     public int complianceLevel;
     public Map<String, Download> downloads = new HashMap<>();
@@ -261,6 +262,16 @@ public class VersionManifest {
                 ret = ret.withExpectedSize(size);
             }
             return ret;
+        }
+
+        public static AssetIndex forUnknown(String id) {
+            AssetIndex index = new AssetIndex();
+            index.id = id;
+            index.sha1 = null;
+            index.size = -1;
+            index.totalSize = -1;
+            index.url = "https://s3.amazonaws.com/Minecraft.Download/indexes/" + id + ".json";
+            return index;
         }
 
         // @formatter:off

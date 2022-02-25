@@ -18,7 +18,6 @@ import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
-
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
@@ -463,8 +462,12 @@ public class InstanceLauncher {
         VersionManifest manifest = manifests.get(0);
         AssetIndex index = manifest.assetIndex;
         if (index == null) {
-            LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy.", manifest.id);
-            index = VersionManifest.LEGACY_ASSETS;
+            if (manifest.assets == null) {
+                LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy.", manifest.id);
+                index = VersionManifest.LEGACY_ASSETS;
+            } else {
+                index = AssetIndex.forUnknown(manifest.assets);
+            }
         }
 
         InstallAssetsTask assetsTask = new InstallAssetsTask(index);
