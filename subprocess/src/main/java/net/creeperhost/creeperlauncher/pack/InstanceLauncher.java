@@ -140,15 +140,21 @@ public class InstanceLauncher {
             features.add("has_custom_resolution");
         }
 
+        Set<String> privateTokens = new HashSet<>();
+
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
-        ProcessBuilder builder = prepareProcess(token, assetsDir, versionsDir, librariesDir, features);
+        ProcessBuilder builder = prepareProcess(token, assetsDir, versionsDir, librariesDir, features, privateTokens);
 
         // Start thread.
         processThread = new Thread(() -> {
             try {
                 try {
-                    LOGGER.info("Starting Minecraft with command '{}'", String.join(" ", builder.command()));
+                    String logMessage = String.join(" ", builder.command());
+                    for (String privateToken : privateTokens) {
+                        logMessage = logMessage.replaceAll(privateToken, "*****");
+                    }
+                    LOGGER.info("Starting Minecraft with command '{}'", logMessage);
                     process = builder.start();
                 } catch (IOException e) {
                     LOGGER.error("Failed to start minecraft process!", e);
@@ -278,7 +284,7 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features) throws InstanceLaunchException {
+    private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
         try {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
@@ -363,11 +369,14 @@ public class InstanceLauncher {
                     subMap.put("user_type", "msa");
                     subMap.put("auth_access_token", profile.msAuth.minecraftToken);
                     subMap.put("xuid", profile.msAuth.xblUserHash);
+                    privateTokens.add(profile.msAuth.minecraftToken);
                 } else {
                     assert profile.mcAuth != null;
                     subMap.put("user_type", "mojang");
                     subMap.put("auth_access_token", profile.mcAuth.accessToken);
-                    subMap.put("auth_session", "token:" + profile.mcAuth.accessToken + ":" + profile.uuid.toString().replace("-", ""));
+                    String sessionToken = "token:" + profile.mcAuth.accessToken + ":" + profile.uuid.toString().replace("-", "");
+                    subMap.put("auth_session", sessionToken);
+                    privateTokens.add(sessionToken);
                 }
             }
 
