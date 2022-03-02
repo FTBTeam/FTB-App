@@ -70,5 +70,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
         if (!dlForgeVersionJson.isRedundant()) {
             dlForgeVersionJson.execute(null, null);
         }
+
+        ForgeLegacyLibraryHelper.installLegacyLibs(instance, mcVersion);
     }
 }

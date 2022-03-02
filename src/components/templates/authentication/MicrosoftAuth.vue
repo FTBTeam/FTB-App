@@ -25,8 +25,6 @@ import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAu
 import Loading from '@/components/atoms/Loading.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
-import { addHyphensToUuid } from '@/utils/helpers';
-import { finishAuthentication } from '@/utils/auth/msAuthentication';
 
 export const issueCodes: Record<string, string> = {
   '000001': "We can't verify with Microsoft, looks like somethings gone wrong!",
@@ -76,43 +74,32 @@ export default class MicrosoftAuth extends Vue {
 
       const response: any = (await responseRaw.json()).data;
 
-      // Use the new flow
-      const authRes = await finishAuthentication(
-        response.liveAccessToken,
-        response.liveRefreshToken,
-        response.liveExpires,
-      );
-
-      if (!authRes || authRes.code) {
-        this.$emit(
-          'error',
-          !authRes
-            ? 'Fatal error whilst trying to retrieve your account details, please try again.'
-            : issueCodes[authRes.code],
-        );
+      if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
+        this.$emit('error', 'Failed to retrieve essential information, please try again.');
         return;
       }
 
-      const id: string = authRes.minecraftUuid ?? '';
-      const newUuid = addHyphensToUuid(id);
+      console.log({
+        payload: {
+          type: 'profiles.ms.authenticate',
+          ...response,
+        },
+      });
 
       this.sendMessage({
         payload: {
-          type: 'profiles.addMs',
-          ...authRes,
-          minecraftUuid: id.includes('-') ? id : newUuid,
+          type: 'profiles.ms.authenticate',
+          ...response,
         },
-        callback: async (e: any) => {
-          if (e.success) {
-            await this.loadProfiles();
-            this.$emit('authenticated');
-          } else {
-            if (e.status === 'profile_exists') {
-              this.$emit('error', 'This profile already exists, please try another account.');
-            } else {
-              this.$emit('error', 'Failed to add new profile... Please try again.');
-            }
+        callback: async (data: any) => {
+          if (!data || !data.success) {
+            this.$emit('error', data.response || 'An unknown error occurred.');
+            return;
           }
+
+          // No error
+          await this.loadProfiles();
+          this.$emit('authenticated');
         },
       });
     } catch (e) {

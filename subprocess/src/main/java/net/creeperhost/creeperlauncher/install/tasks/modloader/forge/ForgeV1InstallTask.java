@@ -11,6 +11,7 @@ import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +37,11 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
+    private final LocalInstance instance;
     private final Path installerJar;
 
-    public ForgeV1InstallTask(Path installerJar) {
+    public ForgeV1InstallTask(LocalInstance instance, Path installerJar) {
+        this.instance = instance;
         this.installerJar = installerJar;
     }
 
@@ -57,7 +60,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             VersionManifest vanillaManifest = downloadVanilla(versionsDir, profile.install.minecraft);
             if (profile.versionInfo.inheritsFrom == null || profile.versionInfo.jar == null) {
                 Path srcJar = versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar");
-                Path destJar = versionsDir.resolve(versionName).resolve(versionName + ".jar");
+                Path destJar = IOUtils.makeParents(versionsDir.resolve(versionName).resolve(versionName + ".jar"));
                 if (profile.install.stripMeta) {
                     stripMeta(srcJar, destJar);
                 } else {
@@ -96,6 +99,8 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             LOGGER.info("Writing version profile {}.", versionName);
             Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
             JsonUtils.write(InstallProfile.GSON, IOUtils.makeParents(versionJson), profileJson.get("versionInfo"));
+
+            ForgeLegacyLibraryHelper.installLegacyLibs(instance, profile.install.minecraft);
         }
     }
 

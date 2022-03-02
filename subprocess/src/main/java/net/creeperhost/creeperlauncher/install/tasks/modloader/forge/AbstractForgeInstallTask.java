@@ -86,7 +86,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
             if (json.has("spec")) {
                 return new ForgeV2InstallTask(instance, installer);
             }
-            return new ForgeV1InstallTask(installer);
+            return new ForgeV1InstallTask(instance, installer);
         }
     }
 
