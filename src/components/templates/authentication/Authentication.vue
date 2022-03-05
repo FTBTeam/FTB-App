@@ -13,6 +13,24 @@
         <h2 class="text-3xl font-bold">Something went wrong.</h2>
         <p class="text-red-400 font-bold mt-6 mb-8">{{ error }}</p>
 
+        <div v-if="fatalAccountError" class="text-left mb-8">
+          <p>There is a few things that could have gone wrong...</p>
+          <ul class="list-decimal pl-6 my-4 leading-relaxed">
+            <li>You don't own Minecraft on this Microsoft account</li>
+            <li>You may be attempting to use an under 18s account</li>
+            <li>You're trying to use Gamepass and have not used the official Minecraft Launcher at least once</li>
+            <li>
+              You're using Gamepass but have not played Minecraft for a while. You'll need to use the Minecraft Launcher
+              again.
+            </li>
+          </ul>
+
+          <p class="opacity-50">
+            Sorry for any inconvenience. We're working on solving the last two issues above. For now, please use the
+            Official Launcher at least once.
+          </p>
+        </div>
+
         <ftb-button color="primary" class="px-6 py-4" @click="() => close()">Close</ftb-button>
       </div>
 
@@ -82,7 +100,7 @@
       </div>
 
       <div class="auth-views" v-else>
-        <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="(e) => (error = e)" />
+        <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="onError" />
         <yggdrasil-auth-form v-if="onMcAuth" :uuid="uuid" @authenticated="authenticated()" />
       </div>
     </div>
@@ -119,6 +137,8 @@ export default class Authentication extends Vue {
   onMcAuth = false;
   onMsAuth = false;
 
+  fatalAccountError = false;
+
   public mounted() {
     if (this.jump === 'mc') {
       this.onMainView = false;
@@ -132,6 +152,7 @@ export default class Authentication extends Vue {
     this.onMsAuth = false;
     this.onMcAuth = false;
     this.error = '';
+    this.fatalAccountError = false;
   }
 
   authenticated() {
@@ -145,6 +166,13 @@ export default class Authentication extends Vue {
     }
 
     this.$emit('close');
+  }
+
+  onError(e: string, type?: string) {
+    this.error = e;
+    if (type && type === 'final') {
+      this.fatalAccountError = true;
+    }
   }
 
   get mojangAuthAllowed() {

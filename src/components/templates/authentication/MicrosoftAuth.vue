@@ -93,7 +93,7 @@ export default class MicrosoftAuth extends Vue {
         },
         callback: async (data: any) => {
           if (!data || !data.success) {
-            this.$emit('error', data.response || 'An unknown error occurred.');
+            this.$emit('error', data.response || 'An unknown error occurred.', 'final');
             return;
           }
 

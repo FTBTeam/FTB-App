@@ -34,15 +34,26 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<Pair<JsonO
     @Nullable
     @Override
     public Reply<Pair<JsonObject, MSAuthStore>> refresh(AccountProfile profile, AuthRequest refreshData) {
-        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt, LOGGER::info);
+        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt, this::log);
         return new Reply<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to refresh Microsoft authentication" : "Successfully refreshed Microsoft authentication");
     }
 
     @Nullable
     @Override
     public Reply<Pair<JsonObject, MSAuthStore>> authenticate(AuthRequest accessData) {
-        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt, LOGGER::info);
+        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt, this::log);
         return new Reply<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to authenticate Microsoft authentication" : "Successfully authenticated Microsoft authentication");
+    }
+
+    /**
+     * Not super graceful.
+     */
+    private void log(Pair<Boolean, String> message) {
+        if (message.getLeft()) {
+            LOGGER.info(message.getRight());
+        } else {
+            LOGGER.error(message.getRight());
+        }
     }
 
     public record AuthRequest(
