@@ -115,7 +115,9 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         data.put("LIBRARY_DIR", librariesDir.toAbsolutePath().toString());
 
         for (InstallManifest.Processor processor : manifest.processors) {
-            runProcessor(processor, data, javaExecutable, librariesDir);
+            if (processor.sides.isEmpty() || processor.sides.contains("client")) {
+                runProcessor(processor, data, javaExecutable, librariesDir);
+            }
         }
     }
 
