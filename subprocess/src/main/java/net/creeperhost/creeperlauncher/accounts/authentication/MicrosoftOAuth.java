@@ -174,8 +174,8 @@ public class MicrosoftOAuth {
      */
     private static StepReply loginWithXbox(String identityToken, String userHash) {
         return wrapRequest(
-                JSON_REQUEST.url(Endpoints.LOGIN_WITH_XBOX.getUrl())
-                    .post(createJson(new LoginWithXboxRequest(String.format("XBL3.0 x=%s;%s", userHash, identityToken))))
+                JSON_REQUEST.url(Endpoints.LAUNCHER_LOGIN.getUrl())
+                    .post(createJson(new LoginWithXboxRequest(String.format("XBL3.0 x=%s;%s", userHash, identityToken), "PC_LAUNCHER")))
                     .build(),
                 "Successfully logged in with Xbox",
                 "Failed to log in with Xbox"
@@ -221,8 +221,21 @@ public class MicrosoftOAuth {
      */
     private static StepReply wrapRequest(Request request, String successMessage, String errorMessage) {
         try {
+            LOGGER.info("Making authentication request to {}", request.url());
             Response execute = CLIENT.newCall(request).execute();
-            return new StepReply(true, execute.code(), successMessage, execute.body() != null ? JsonParser.parseString(execute.body().string()) : JsonNull.INSTANCE, execute);
+            ResponseBody body = execute.body();
+            if (body != null) {
+                try {
+                    JsonElement jsonElement = JsonParser.parseString(body.string());
+                    LOGGER.info("{} responded with: {}", request.url(), jsonElement.toString().replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
+                    return new StepReply(true, execute.code(), successMessage, jsonElement, execute);
+                } catch (JsonParseException exception) {
+                    LOGGER.fatal("Unable to parse json response from {} with error of {}", request.url(), exception);
+                }
+            }
+
+            LOGGER.fatal("Failed to read and handle response from {}", request.url());
+            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null);
         } catch (Exception e) {
             LOGGER.fatal("Error executing request to {}", request.url(), e);
             return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null);
@@ -249,7 +262,7 @@ public class MicrosoftOAuth {
     private enum Endpoints {
         XBL_AUTHENTICATE("https://user.auth.xboxlive.com/user/authenticate"),
         XSTS_AUTHORIZE("https://xsts.auth.xboxlive.com/xsts/authorize"),
-        LOGIN_WITH_XBOX("https://api.minecraftservices.com/authentication/login_with_xbox"),
+        LAUNCHER_LOGIN("https://api.minecraftservices.com/launcher/login"),
         CHECK_STORE("https://api.minecraftservices.com/entitlements/mcstore"),
         GET_PROFILE("https://api.minecraftservices.com/minecraft/profile");
 
@@ -299,6 +312,7 @@ public class MicrosoftOAuth {
     ) {}
 
     private record LoginWithXboxRequest(
-            String identityToken
+            String xtoken,
+            String platform
     ) {}
 }
