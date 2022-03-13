@@ -60,14 +60,6 @@
         class="mb-8"
         small="Any paid plan can optionally disable ads throughout the app."
       />
-      <ftb-toggle
-        label="Load Minecraft in the App"
-        :value="settings.settings.loadInApp === true || settings.settings.loadInApp === 'true'"
-        @change="toggleLoading"
-        :disabled="auth.token.activePlan === null"
-        onColor="bg-primary"
-        small="When enabled, Minecraft will defer to the App to show loading progress, this typically comes with performance improvements."
-      />
     </div>
   </div>
 </template>
@@ -115,11 +107,6 @@ export default class MTIntegration extends Vue {
 
   public toggleAdverts(value: boolean) {
     this.settings.settings.showAdverts = value;
-    this.saveSettings(this.settings.settings);
-  }
-
-  public toggleLoading(value: boolean) {
-    this.settings.settings.loadInApp = value;
     this.saveSettings(this.settings.settings);
   }
 
