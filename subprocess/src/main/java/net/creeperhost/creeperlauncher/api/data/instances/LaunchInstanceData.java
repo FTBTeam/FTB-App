@@ -10,7 +10,6 @@ public class LaunchInstanceData extends BaseData {
 
     public String uuid;
     public String extraArgs = "";
-    public boolean loadInApp = true;
     public boolean cancelLaunch = false;
 
     public static class Status extends BaseData {

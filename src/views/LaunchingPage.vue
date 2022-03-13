@@ -332,11 +332,6 @@ export default class LaunchingPage extends Vue {
       return;
     }
 
-    const loadInApp =
-      this.settingsState.settings.loadInApp === true ||
-      this.settingsState.settings.loadInApp === 'true' ||
-      this.auth.token?.activePlan == null;
-
     const disableChat = this.settingsState.settings.enableChat;
     this.preLaunch = true;
 
@@ -344,7 +339,6 @@ export default class LaunchingPage extends Vue {
       payload: {
         type: 'launchInstance',
         uuid: this.instance?.uuid,
-        loadInApp,
         extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
       },
       callback: (data: any) => {

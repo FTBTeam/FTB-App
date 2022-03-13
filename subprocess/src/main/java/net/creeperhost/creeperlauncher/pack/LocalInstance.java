@@ -330,10 +330,9 @@ public class LocalInstance implements IPack
      *
      * @param token       The CancellationToken for cancelling the launch.
      * @param extraArgs   Extra JVM arguments.
-     * @param loadInApp   If 'launch mod' should be used.
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
-    public void play(CancellationToken token, String extraArgs, boolean loadInApp) throws InstanceLaunchException {
+    public void play(CancellationToken token, String extraArgs) throws InstanceLaunchException {
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -396,7 +395,7 @@ public class LocalInstance implements IPack
 
             InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
-            if (loadInApp && !loadingMods.isEmpty()) {
+            if (!loadingMods.isEmpty()) {
                 for (InstanceSupportMeta.SupportFile file : loadingMods) {
                     if (!file.canApply(modLoader, os)) continue;
                     file.createTask(dir.resolve("mods")).execute(null, null);

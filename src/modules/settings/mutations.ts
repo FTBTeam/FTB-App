@@ -24,8 +24,7 @@ const defaultSettings: Settings = {
   blockedUsers: [],
   mtConnect: false,
   automateMojang: true,
-  showAdverts: true,
-  loadInApp: true,
+  showAdverts: true
 };
 
 export const mutations: MutationTree<SettingsState> = {

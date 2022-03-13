@@ -42,7 +42,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         instance.prepareToken = new CancellationToken();
         instance.prepareFuture = CompletableFuture.runAsync(() -> {
             try {
-                instance.play(instance.prepareToken, data.extraArgs, data.loadInApp);
+                instance.play(instance.prepareToken, data.extraArgs);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
             } catch (InstanceLaunchException ex) {
                 if (ex instanceof InstanceLaunchException.Abort) {

@@ -22,7 +22,6 @@ export interface Settings {
   mtConnect: boolean;
   automateMojang: boolean;
   showAdverts: boolean | string;
-  loadInApp: boolean | string;
   exitOverwolf?: boolean;
 }
 
