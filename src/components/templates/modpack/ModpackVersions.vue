@@ -69,9 +69,12 @@
       </div>
       <!--      <div class="updated">{{ version.updated | momentFromNow }}</div>-->
       <div class="body-contents flex-1 overflow-y-auto">
-        <div class="loading" v-if="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
+        <div v-if="loading" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
+        <div v-else class="bg-orange-400 text-orange-900 font-bold px-4 py-4 rounded mb-6">
+          Warning! Always backup your worlds before updating.
+        </div>
         <VueShowdown
-          v-else-if="changelogs[activeLog] && changelogs[activeLog] !== ''"
+          v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''"
           flavor="github"
           :markdown="changelogs[activeLog]"
           :extensions="['classMap']"
@@ -108,7 +111,7 @@ export default class ModpackVersions extends Vue {
 
     // get the first log
     this.fetchLog(lcurrent)
-      .then(data => {
+      .then((data) => {
         this.changelogs['' + lcurrent] = data;
         this.setActive(lcurrent);
       })
@@ -127,7 +130,7 @@ export default class ModpackVersions extends Vue {
 
   setActive(versionId: number) {
     this.activeLog = versionId;
-    this.currentVersion = this.versions.find(e => e.id === this.activeLog) ?? null;
+    this.currentVersion = this.versions.find((e) => e.id === this.activeLog) ?? null;
   }
 
   async fetchLog(versionId: number) {
