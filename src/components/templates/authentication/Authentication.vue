@@ -16,8 +16,8 @@
         <div v-if="fatalAccountError" class="text-left mb-8">
           <p>There is a few things that could have gone wrong...</p>
           <ul class="list-decimal pl-6 my-4 leading-relaxed">
-            <li>You don't own Minecraft on this Microsoft account</li>
             <li>You may be attempting to use an under 18s account</li>
+            <li>You don't own Minecraft on this Microsoft account</li>
             <li>You're trying to use Gamepass and have not used the official Minecraft Launcher at least once</li>
             <li>
               You're using Gamepass but have not played Minecraft for a while. You'll need to use the Minecraft Launcher

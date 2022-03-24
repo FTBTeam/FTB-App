@@ -1,17 +1,19 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
 import com.google.gson.*;
+import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
+import net.creeperhost.creeperlauncher.accounts.data.StepReply;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
+import net.creeperhost.creeperlauncher.util.DataResult;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 import okhttp3.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Consumer;
 
 public class MicrosoftOAuth {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -21,44 +23,44 @@ public class MicrosoftOAuth {
             .header("Content-Type", "application/json")
             .header("Accept", "application/json");
 
-    public static Pair<JsonObject, MSAuthStore> runFlow(String authToken, String liveRefreshToken, int liveExpiresAt, Consumer<Pair<Boolean, String>> onStage) {
+    @Nonnull
+    public static DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> runFlow(String authToken, String liveRefreshToken, int liveExpiresAt) {
+        LOGGER.info("Starting Microsoft Authentication flow...");
         StepReply authXboxRes = authenticateWithXbox(authToken);
 
         if (isUnsuccessful(authXboxRes)) {
-            onStage.accept(Pair.of(false, "Failed to authenticate with Xbox"));
-            return null;
+            return DataResult.error(new ErrorWithCode("Failed to authenticate with Xbox", "xbx_auth_001"));
         }
 
         String xblToken = authXboxRes.data.getAsJsonObject().get("Token").getAsString();
         String userHash = authXboxRes.data.getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
         Instant xblIssuedAt = Instant.now();
         if (xblToken.isEmpty()) {
-            onStage.accept(Pair.of(false, "Unable to authenticate with Xbox Live..."));
-            return null; // Report error here, tokens missing? Why
+            return DataResult.error(new ErrorWithCode("Unable to authenticate with Xbox Live...", "xbx_auth_002"));
         }
 
         // This token expires after 24 hours.
-        onStage.accept(Pair.of(true, "Authenticated with Xbox"));
+        LOGGER.info("Authenticated with Xbox ✅");
 
         // Authenticate with XSTS (the dev docs for this are private so fuck knows what it's actually doing)
         StepReply xstsRes = authenticateWithXSTS(xblToken);
         if (isUnsuccessful(xstsRes)) {
-            onStage.accept(Pair.of(false, "Failed to authenticate with XSTS"));
-            return null;
+            return DataResult.error(new ErrorWithCode("Failed to authenticate with XSTS", "xbx_auth_003"));
         }
 
         // Sometimes this will succeed but fail nicely with a 401
         if (xstsRes.rawResponse.code() == 401) {
             // Get the correct error message, there are more but... again, no docs
-            String error = switch (xstsRes.data.getAsJsonObject().get("XErr").getAsString()) {
+            String xErr = xstsRes.data.getAsJsonObject().get("XErr").getAsString();
+            String error = switch (xErr) {
                 case "2148916233" -> "This account does not have an XBox Live account. You have likely not migrated your account.";
                 case "2148916235" -> "Your account resides in a region that does not support Xbox Live...";
+                case "2148916236", "2148916237" -> "The account needs adult verification on Xbox page.";
                 case "2148916238" -> "This is an under 18 account. You cannot proceed unless the account is added to a Family by an adult";
                 default -> "Unknown XSTS error";
             };
 
-            onStage.accept(Pair.of(false, error));
-            return null;
+            return DataResult.error(new ErrorWithCode(error, "xbx_auth_004_" + xErr));
         }
 
         // Get the XSTS token
@@ -66,38 +68,35 @@ public class MicrosoftOAuth {
         String xstsUserHash = xstsRes.data.getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
         Instant xstsIssuedAt = Instant.now();
         if (xstsToken.isEmpty()) {
-            onStage.accept(Pair.of(false, "Unable to authenticate with XSTS... (no token found)"));
-            return null;
+            return DataResult.error(new ErrorWithCode("Unable to authenticate with XSTS... (no token found)", "xbx_auth_005"));
         }
 
         // We've authenticated with XSTS
-        onStage.accept(Pair.of(true, "Authenticated with XSTS"));
+        LOGGER.info("Authenticated with XSTS ✅");
 
         // Login with xbox
         StepReply loginWithXbox = loginWithXbox(xstsToken, userHash);
         if (isUnsuccessful(loginWithXbox)) {
-            onStage.accept(Pair.of(false, "Unable to login with xbox live to your Minecraft account"));
-            return null;
+            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account", "xbx_auth_006"));
         }
 
         // Grab the access token
         String accessToken = loginWithXbox.data.getAsJsonObject().get("access_token").getAsString();
         if (accessToken.isEmpty()) {
-            onStage.accept(Pair.of(false, "Unable to login with xbox live to your Minecraft account (no access token found)"));
-            return null;
+            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account (no access token found)", "xbx_auth_006"));
         }
 
         // We logged in
-        onStage.accept(Pair.of(true, "Logged in with Xbox"));
-        onStage.accept(Pair.of(true, "Checking ownership of Minecraft"));
-        onStage.accept(Pair.of(true, "Fetching Minecraft account"));
-
+        LOGGER.info("Logged in with Xbox");
+        LOGGER.info("Checking ownership of Minecraft");
         StepReply checkOwnershipRes = checkOwnership(accessToken);
+
+        LOGGER.info("Fetching Minecraft account");
         StepReply profileRes = getProfile(accessToken);
 
         boolean hasOwnership = false;
         if (isUnsuccessful(checkOwnershipRes)) {
-            onStage.accept(Pair.of(false, "Unable to check ownership of Minecraft account"));
+            LOGGER.warn("Unable to check ownership of Minecraft account");
         } else {
             // Validate the ownership
             JsonArray items = checkOwnershipRes.data.getAsJsonObject().get("items").getAsJsonArray();
@@ -109,32 +108,27 @@ public class MicrosoftOAuth {
             }
         }
 
-        if (hasOwnership) {
-            onStage.accept(Pair.of(true, "Verified ownership of Minecraft account"));
-        }
+        LOGGER.info("Verified ownership of Minecraft account... result: {}", hasOwnership ? "Does not own" : "Owns");
 
         // Validate the profile
         if (isUnsuccessful(profileRes)) {
-            onStage.accept(Pair.of(false, "Unable to fetch profile from Minecraft account..."));
-            LOGGER.error("Unable to fetch profile from Minecraft account... {}", profileRes.data.toString());
-            return null;
+            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account...", "xbx_auth_007"));
         }
 
         // Figure out the type of account
         JsonObject profileData = profileRes.data.getAsJsonObject();
         if (!profileData.has("id")) {
-            onStage.accept(Pair.of(false, "Unable to fetch profile from Minecraft account (no id found)"));
-            return null;
+            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account (no id found)", "xbx_auth_008"));
         }
 
-        return Pair.of(profileData, new MSAuthStore(
+        return DataResult.data(Pair.of(profileData, new MSAuthStore(
                 MiscUtils.createUuidFromStringWithoutDashes(profileData.get("id").getAsString()),
                 accessToken,
                 userHash,
                 authToken,
                 liveRefreshToken,
                 Instant.now().getEpochSecond() + liveExpiresAt
-        ));
+        )));
     }
 
     /**
@@ -288,17 +282,6 @@ public class MicrosoftOAuth {
             return url;
         }
     }
-
-    /**
-     * Responses & requests.
-     */
-    public record StepReply(
-            boolean success,
-            int status,
-            String message,
-            JsonElement data,
-            @Nullable Response rawResponse
-    ) {}
 
     private record XblAuthRequest(
             XblAuthProperties Properties,

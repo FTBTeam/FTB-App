@@ -8,13 +8,7 @@ public interface AuthenticatorValidator<T, X, Y> {
      */
     boolean isValid(AccountProfile profile);
 
-    Reply<T> refresh(AccountProfile profile, Y refreshData);
+    T refresh(AccountProfile profile, Y refreshData);
 
-    Reply<T> authenticate(X request);
-
-   record Reply<T>(
-            T data,
-            boolean success,
-            String message
-    ) {}
+    T authenticate(X request);
 }

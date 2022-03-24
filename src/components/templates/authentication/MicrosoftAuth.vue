@@ -26,17 +26,6 @@ import Loading from '@/components/atoms/Loading.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
 
-export const issueCodes: Record<string, string> = {
-  '000001': "We can't verify with Microsoft, looks like somethings gone wrong!",
-  '000002': 'Somethings gone wrong with checking your login with Xbox live!',
-  '000003': 'Validating your Xbox live session has gone wrong...',
-  '000004': "We couldn't authenticate against Minecrafts servers...",
-  '000005': "We can't check your game ownership at the moment...",
-  '000006':
-    "We can't pull your Minecraft profile! This normally means we can't find an account on this Microsoft account",
-  '000007': "Oh no, it looks like your account doesn't own Minecraft!",
-};
-
 @Component({
   components: { YggdrasilAuthForm, Loading },
 })
@@ -78,13 +67,6 @@ export default class MicrosoftAuth extends Vue {
         this.$emit('error', 'Failed to retrieve essential information, please try again.');
         return;
       }
-
-      console.log({
-        payload: {
-          type: 'profiles.ms.authenticate',
-          ...response,
-        },
-      });
 
       this.sendMessage({
         payload: {
