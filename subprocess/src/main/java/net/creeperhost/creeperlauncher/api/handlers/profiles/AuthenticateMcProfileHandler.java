@@ -73,7 +73,7 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
             Settings.webSocketAPI.sendMessage(new Reply(data, true, "Success"));
         }, () -> {
             // Nope...
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate.error().map(e -> e.code() + "|" + e.error()).orElse("Fatal error for Microsoft auth")));
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate.error().map(ErrorWithCode::error).orElse("Fatal error for Microsoft auth")));
         });
     }
 

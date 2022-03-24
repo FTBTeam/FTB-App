@@ -32,8 +32,8 @@ public class MicrosoftOAuth {
             return DataResult.error(new ErrorWithCode("Failed to authenticate with Xbox", "xbx_auth_001"));
         }
 
-        String xblToken = authXboxRes.data.getAsJsonObject().get("Token").getAsString();
-        String userHash = authXboxRes.data.getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
+        String xblToken = authXboxRes.data().getAsJsonObject().get("Token").getAsString();
+        String userHash = authXboxRes.data().getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
         Instant xblIssuedAt = Instant.now();
         if (xblToken.isEmpty()) {
             return DataResult.error(new ErrorWithCode("Unable to authenticate with Xbox Live...", "xbx_auth_002"));
@@ -49,9 +49,9 @@ public class MicrosoftOAuth {
         }
 
         // Sometimes this will succeed but fail nicely with a 401
-        if (xstsRes.rawResponse.code() == 401) {
+        if (xstsRes.rawResponse().code() == 401) {
             // Get the correct error message, there are more but... again, no docs
-            String xErr = xstsRes.data.getAsJsonObject().get("XErr").getAsString();
+            String xErr = xstsRes.data().getAsJsonObject().get("XErr").getAsString();
             String error = switch (xErr) {
                 case "2148916233" -> "This account does not have an XBox Live account. You have likely not migrated your account.";
                 case "2148916235" -> "Your account resides in a region that does not support Xbox Live...";
@@ -64,8 +64,8 @@ public class MicrosoftOAuth {
         }
 
         // Get the XSTS token
-        String xstsToken = xstsRes.data.getAsJsonObject().get("Token").getAsString();
-        String xstsUserHash = xstsRes.data.getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
+        String xstsToken = xstsRes.data().getAsJsonObject().get("Token").getAsString();
+        String xstsUserHash = xstsRes.data().getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
         Instant xstsIssuedAt = Instant.now();
         if (xstsToken.isEmpty()) {
             return DataResult.error(new ErrorWithCode("Unable to authenticate with XSTS... (no token found)", "xbx_auth_005"));
@@ -81,7 +81,7 @@ public class MicrosoftOAuth {
         }
 
         // Grab the access token
-        String accessToken = loginWithXbox.data.getAsJsonObject().get("access_token").getAsString();
+        String accessToken = loginWithXbox.data().getAsJsonObject().get("access_token").getAsString();
         if (accessToken.isEmpty()) {
             return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account (no access token found)", "xbx_auth_006"));
         }
@@ -99,7 +99,7 @@ public class MicrosoftOAuth {
             LOGGER.warn("Unable to check ownership of Minecraft account");
         } else {
             // Validate the ownership
-            JsonArray items = checkOwnershipRes.data.getAsJsonObject().get("items").getAsJsonArray();
+            JsonArray items = checkOwnershipRes.data().getAsJsonObject().get("items").getAsJsonArray();
             for (JsonElement item : items) {
                 String name = item.getAsJsonObject().get("name").getAsString();
                 if (name.equals("product_minecraft") || name.equals("game_minecraft")) {
@@ -116,7 +116,7 @@ public class MicrosoftOAuth {
         }
 
         // Figure out the type of account
-        JsonObject profileData = profileRes.data.getAsJsonObject();
+        JsonObject profileData = profileRes.data().getAsJsonObject();
         if (!profileData.has("id")) {
             return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account (no id found)", "xbx_auth_008"));
         }
@@ -251,7 +251,7 @@ public class MicrosoftOAuth {
      * We do this a lot. let's do it in one place.
      */
     private static boolean isUnsuccessful(StepReply response) {
-        return response == null || !response.success || response.data == null || response.data.isJsonNull();
+        return response == null || !response.success() || response.data() == null || response.data().isJsonNull();
     }
 
     /**

@@ -7,10 +7,12 @@ import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.util.DataResult;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -38,33 +40,27 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
                 Settings.webSocketAPI.sendMessage(new Reply(data, false, "Missing essential information..."));
             }
 
-            AuthenticatorValidator.Reply<Pair<JsonObject, MSAuthStore>> refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
+            DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
                     data.liveAccessToken, data.liveRefreshToken, data.liveExpires
             ));
 
-            if (refresh != null && refresh.success()) {
-                // TODO: Check me
-                profile.msAuth = refresh.data().getRight();
+            refresh.data().ifPresentOrElse(d -> {
+                profile.msAuth = d.getRight();
                 AccountManager.get().saveProfiles();
                 Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated"));
-                return;
-            }
+            }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"))));
 
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + (refresh != null ? refresh.message() : "Unknown error")));
             return;
         }
 
         MojangAuthenticator validator = (MojangAuthenticator) specificValidator;
-        AuthenticatorValidator.Reply<YggdrasilAuthStore> refresh = validator.refresh(profile, "ignore me");
+        DataResult<YggdrasilAuthStore, ErrorWithCode> refresh = validator.refresh(profile, "ignore me");
 
-        if (refresh != null && refresh.success()) {
-            profile.mcAuth = refresh.data();
+        refresh.data().ifPresentOrElse(d -> {
+            profile.mcAuth = d;
             AccountManager.get().saveProfiles();
             Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated"));
-            return;
-        }
-
-        Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + (refresh != null ? refresh.message() : "Unknown error")));
+        }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"))));
     }
 
     private static class Reply extends Data {

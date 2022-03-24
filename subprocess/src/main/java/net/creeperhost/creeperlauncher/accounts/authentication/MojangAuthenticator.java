@@ -103,7 +103,7 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
                 }
             }
 
-            return DataResult.error(new ErrorWithCode("Mojang returned an error: " + (body != null ? body.string() : "Unknown error"), "yggd_auth_003"));
+            return DataResult.error(new ErrorWithCode((body != null ? body.string() : "Unknown error"), "yggd_auth_003"));
         } catch (IOException e) {
             LOGGER.fatal("Failed to check for validity with Mojang", e);
         }
@@ -113,7 +113,7 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
 
     @Nonnull
     @Override
-    public DataResult<YggdrasilAuthStore, ErrorWithCode>  authenticate(LoginData req) {
+    public DataResult<YggdrasilAuthStore, ErrorWithCode> authenticate(LoginData req) {
         UUID randomId = UUID.randomUUID();
 
         try {
@@ -137,7 +137,7 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
                         )
                     );
                 } else {
-                    return DataResult.error(new ErrorWithCode("Mojang returned an error: " + response, "yggd_auth_005"));
+                    return DataResult.error(new ErrorWithCode(response, "yggd_auth_005"));
                 }
             }
         } catch (IOException e) {
