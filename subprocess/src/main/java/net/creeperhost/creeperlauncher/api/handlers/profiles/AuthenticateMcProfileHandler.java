@@ -32,6 +32,16 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
             // Try and get the user profile with the access token from above
             MicrosoftOAuth.StepReply minecraftAccount = MicrosoftOAuth.getProfile(authenticate.data().accessToken);
 
+            // We've likely got a migration issue here
+            if (minecraftAccount.rawResponse() != null && minecraftAccount.rawResponse().code() == 403) {
+                MicrosoftOAuth.StepReply migrationStatus = MicrosoftOAuth.checkMigrationStatus(authenticate.data().accessToken);
+                // The user has to migrate, we should stop here.
+                if (migrationStatus.success() && migrationStatus.data().getAsJsonObject().get("rollout").getAsBoolean()) {
+                    Settings.webSocketAPI.sendMessage(new Reply(data, false, "You must migrate your account to a Microsoft account to continue playing Minecraft."));
+                    return;
+                }
+            }
+
             // No profile? Fail!
             String userId = minecraftAccount.data().getAsJsonObject().get("id").getAsString();
             if (!minecraftAccount.success() || userId == null || userId.isEmpty()) {

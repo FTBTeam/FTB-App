@@ -1,7 +1,5 @@
 package net.creeperhost.creeperlauncher.accounts.stores;
 
-import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-
 import java.util.StringJoiner;
 
 public class YggdrasilAuthStore {

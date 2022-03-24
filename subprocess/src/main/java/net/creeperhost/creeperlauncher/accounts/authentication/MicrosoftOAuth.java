@@ -216,6 +216,17 @@ public class MicrosoftOAuth {
         );
     }
 
+    public static StepReply checkMigrationStatus(String minecraftToken) {
+        return wrapRequest(
+                JSON_REQUEST.url(Endpoints.CHECK_MIGRATION.getUrl())
+                        .get()
+                        .header("Authorization", String.format("Bearer %s", minecraftToken))
+                        .build(),
+                "Migration status checked",
+                "Failed to check migration status"
+        );
+    }
+
     /**
      * Safely wrap the request and attempt to form a readable response whilst logging the major issue if one is presented
      */
@@ -227,7 +238,7 @@ public class MicrosoftOAuth {
             if (body != null) {
                 try {
                     JsonElement jsonElement = JsonParser.parseString(body.string());
-                    LOGGER.info("{} responded with: {}", request.url(), jsonElement.toString().replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
+                    LOGGER.info("{}|{} responded with: {}", execute.code(), request.url(), jsonElement.toString().replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
                     return new StepReply(true, execute.code(), successMessage, jsonElement, execute);
                 } catch (JsonParseException exception) {
                     LOGGER.fatal("Unable to parse json response from {} with error of {}", request.url(), exception);
@@ -264,7 +275,8 @@ public class MicrosoftOAuth {
         XSTS_AUTHORIZE("https://xsts.auth.xboxlive.com/xsts/authorize"),
         LAUNCHER_LOGIN("https://api.minecraftservices.com/launcher/login"),
         CHECK_STORE("https://api.minecraftservices.com/entitlements/mcstore"),
-        GET_PROFILE("https://api.minecraftservices.com/minecraft/profile");
+        GET_PROFILE("https://api.minecraftservices.com/minecraft/profile"),
+        CHECK_MIGRATION("https://api.minecraftservices.com/rollout/v1/msamigration");
 
         private final String url;
 
@@ -278,7 +290,7 @@ public class MicrosoftOAuth {
     }
 
     /**
-     * Repsonses & requests.
+     * Responses & requests.
      */
     public record StepReply(
             boolean success,

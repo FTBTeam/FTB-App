@@ -115,7 +115,6 @@ import Loading from '@/components/atoms/Loading.vue';
 import { Action } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 import { Prop } from 'vue-property-decorator';
-import dayjs from 'dayjs';
 import { RouterNames } from '@/router';
 
 @Component({
@@ -176,7 +175,7 @@ export default class Authentication extends Vue {
   }
 
   get mojangAuthAllowed() {
-    return !dayjs().isAfter('2022-03-10');
+    return true; // !dayjs().isAfter('2022-03-10');
   }
 }
 </script>
