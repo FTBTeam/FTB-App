@@ -361,23 +361,26 @@ public class InstanceLauncher {
                 subMap.put("user_type", "legacy");
                 subMap.put("auth_access_token", "null");
                 subMap.put("user_properties", "{}");
+                subMap.put("auth_session", "null");
             } else {
                 subMap.put("auth_player_name", profile.username);
                 subMap.put("auth_uuid", profile.uuid.toString());
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
+                String accessToken;
                 if (profile.msAuth != null) {
                     subMap.put("user_type", "msa");
-                    subMap.put("auth_access_token", profile.msAuth.minecraftToken);
                     subMap.put("xuid", profile.msAuth.xblUserHash);
-                    privateTokens.add(profile.msAuth.minecraftToken);
+                    accessToken = profile.msAuth.minecraftToken;
                 } else {
                     assert profile.mcAuth != null;
                     subMap.put("user_type", "mojang");
-                    subMap.put("auth_access_token", profile.mcAuth.accessToken);
-                    String sessionToken = "token:" + profile.mcAuth.accessToken + ":" + profile.uuid.toString().replace("-", "");
-                    subMap.put("auth_session", sessionToken);
-                    privateTokens.add(sessionToken);
+                    accessToken = profile.mcAuth.accessToken;
                 }
+                String sessionToken = "token:" + accessToken + ":" + profile.uuid.toString().replace("-", "");
+                subMap.put("auth_session", sessionToken);
+                subMap.put("auth_access_token", accessToken);
+                privateTokens.add(sessionToken);
+                privateTokens.add(accessToken);
             }
 
             subMap.put("version_name", instance.modLoader);
