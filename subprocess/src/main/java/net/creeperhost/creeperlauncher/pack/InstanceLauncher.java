@@ -29,6 +29,8 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -56,6 +58,7 @@ import static net.covers1624.quack.util.SneakyUtils.sneak;
 public class InstanceLauncher {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Marker MINECRAFT_MARKER = MarkerManager.getMarker("MINECRAFT");
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
     private final LocalInstance instance;
@@ -171,11 +174,11 @@ public class InstanceLauncher {
                 //  These take up slots on the builtin ForkJoin pool, and may not even execute on systems with low processor thread counts.
                 CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), message -> {
                     logThread.bufferMessage(message);
-                    logger.info(message);
+                    logger.info(MINECRAFT_MARKER, message);
                 });
                 CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), message -> {
                     logThread.bufferMessage(message);
-                    logger.error(message);
+                    logger.error(MINECRAFT_MARKER, message);
                 });
                 logThread.start();
 
