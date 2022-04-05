@@ -443,9 +443,15 @@ public class InstanceLauncher {
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
-            return new ProcessBuilder()
+            ProcessBuilder builder = new ProcessBuilder()
                     .directory(gameDir.toFile())
                     .command(command);
+
+            Map<String, String> env = builder.environment();
+            // Apparently this can override our passed in Java arguments.
+            env.remove("_JAVA_OPTIONS");
+
+            return builder;
         } catch (Throwable ex) {
             if (ex instanceof CancellationToken.Cancellation cancellation) {
                 throw cancellation;
