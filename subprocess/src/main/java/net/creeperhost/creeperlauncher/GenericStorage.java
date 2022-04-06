@@ -20,7 +20,7 @@ import java.util.Map;
 public class GenericStorage {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final Path STORAGE_FILE = Constants.WORKING_DIR.resolve("storage/storage.json");
+    private static final Path STORAGE_FILE = Constants.getDataDir().resolve("storage/storage.json");
     private static final Map<String, String> DATA = new HashMap<>();
 
     public static String getAllAsJson() {
