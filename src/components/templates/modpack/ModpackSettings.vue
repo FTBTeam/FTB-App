@@ -38,7 +38,7 @@
         >
           <ftb-button color="primary" class="py-2 px-4 my-1">
             <font-awesome-icon icon="desktop" size="1x" class="cursor-pointer" />
-            <span class="ml-4">Suggested resolutions</span>
+            <span class="ml-4">Resolutions</span>
           </ftb-button>
         </v-selectmenu>
       </div>
@@ -46,9 +46,7 @@
 
     <div class="flex items-center mb-8">
       <section class="w-1/2 mr-8">
-        <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
-          Java Version
-        </label>
+        <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2"> Java Version </label>
         <select
           class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
           v-model="localInstance.jrePath"
@@ -58,8 +56,9 @@
             v-for="index in Object.keys(javaVersions)"
             :value="javaVersions[index].path"
             :key="javaVersions[index].name"
-            >{{ javaVersions[index].name }}</option
           >
+            {{ javaVersions[index].name }}
+          </option>
         </select>
       </section>
 
@@ -85,16 +84,11 @@
       css-class="memory"
       :dark="true"
       class="mb-8"
-      :raw-style="
-        `background: linear-gradient(to right, #8e0c25 ${(this.localInstance.minMemory /
-          settingsState.hardware.totalMemory) *
-          100 -
-          5}%, #a55805 ${(this.localInstance.minMemory / settingsState.hardware.totalMemory) * 100}%, #a55805 ${(this
-          .localInstance.recMemory /
-          settingsState.hardware.totalMemory) *
-          100 -
-          5}%, #005540 ${(this.localInstance.recMemory / settingsState.hardware.totalMemory) * 100}%);`
-      "
+      :raw-style="`background: linear-gradient(to right, #8e0c25 ${
+        (this.localInstance.minMemory / settingsState.hardware.totalMemory) * 100 - 5
+      }%, #a55805 ${(this.localInstance.minMemory / settingsState.hardware.totalMemory) * 100}%, #a55805 ${
+        (this.localInstance.recMemory / settingsState.hardware.totalMemory) * 100 - 5
+      }%, #005540 ${(this.localInstance.recMemory / settingsState.hardware.totalMemory) * 100}%);`"
     />
 
     <ftb-toggle

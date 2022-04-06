@@ -1,18 +1,20 @@
 <template>
   <div class="minetogether-profile">
-    <div class="avatar flex items-center mb-16">
-      <img :src="`https://api.mymcuu.id/head/${avatarName}`" width="80" height="80" class="rounded-full mr-6" />
-      <div class="name">
-        <p class="text-lg bold">{{ auth.token.mc !== undefined ? auth.token.mc.display : auth.token.username }}</p>
-        <p class="opacity-75">
-          {{
-            auth.token.activePlan !== undefined && auth.token.activePlan !== null
-              ? auth.token.activePlan.name
-              : 'No paid plan'
-          }}
-        </p>
+    <div class="avatar sm:flex items-center mb-16">
+      <div class="account-info flex items-center">
+        <img :src="`https://api.mymcuu.id/head/${avatarName}`" width="80" height="80" class="rounded-full mr-6" />
+        <div class="name">
+          <p class="text-lg bold">{{ auth.token.mc !== undefined ? auth.token.mc.display : auth.token.username }}</p>
+          <p class="opacity-75">
+            {{
+              auth.token.activePlan !== undefined && auth.token.activePlan !== null
+                ? auth.token.activePlan.name
+                : 'No paid plan'
+            }}
+          </p>
+        </div>
       </div>
-      <div class="ml-auto flex items-center">
+      <div class="ml-auto mt-10 sm:mt-0 flex items-center">
         <ftb-button color="primary" class="text-center px-4 py-2 mr-2" title="Coming Soon" @click="openProfile">
           Update account
           <font-awesome-icon icon="external-link-square-alt" class="ml-2" />
@@ -57,14 +59,6 @@
         onColor="bg-primary"
         class="mb-8"
         small="Any paid plan can optionally disable ads throughout the app."
-      />
-      <ftb-toggle
-        label="Load Minecraft in the App"
-        :value="settings.settings.loadInApp === true || settings.settings.loadInApp === 'true'"
-        @change="toggleLoading"
-        :disabled="auth.token.activePlan === null"
-        onColor="bg-primary"
-        small="When enabled, Minecraft will defer to the App to show loading progress, this typically comes with performance improvements."
       />
     </div>
   </div>
@@ -113,11 +107,6 @@ export default class MTIntegration extends Vue {
 
   public toggleAdverts(value: boolean) {
     this.settings.settings.showAdverts = value;
-    this.saveSettings(this.settings.settings);
-  }
-
-  public toggleLoading(value: boolean) {
-    this.settings.settings.loadInApp = value;
     this.saveSettings(this.settings.settings);
   }
 

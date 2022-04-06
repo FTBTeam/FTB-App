@@ -2,15 +2,18 @@ package net.creeperhost.creeperlauncher.accounts.authentication;
 
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
+import net.creeperhost.creeperlauncher.util.DataResult;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Instant;
 
-public class MicrosoftAuthenticator implements AuthenticatorValidator<Pair<JsonObject, MSAuthStore>, MicrosoftAuthenticator.AuthRequest, MicrosoftAuthenticator.AuthRequest> {
+public class MicrosoftAuthenticator implements AuthenticatorValidator<DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode>, MicrosoftAuthenticator.AuthRequest, MicrosoftAuthenticator.AuthRequest> {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
@@ -31,18 +34,16 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<Pair<JsonO
      * @param refreshData
      * @return
      */
-    @Nullable
+    @Nonnull
     @Override
-    public Reply<Pair<JsonObject, MSAuthStore>> refresh(AccountProfile profile, AuthRequest refreshData) {
-        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt, LOGGER::info);
-        return new Reply<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to refresh Microsoft authentication" : "Successfully refreshed Microsoft authentication");
+    public DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> refresh(AccountProfile profile, AuthRequest refreshData) {
+        return MicrosoftOAuth.runFlow(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt);
     }
 
-    @Nullable
+    @Nonnull
     @Override
-    public Reply<Pair<JsonObject, MSAuthStore>> authenticate(AuthRequest accessData) {
-        Pair<JsonObject, MSAuthStore> msAuthStore = MicrosoftOAuth.runFlow(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt, LOGGER::info);
-        return new Reply<>(msAuthStore, msAuthStore != null, msAuthStore == null ? "Failed to authenticate Microsoft authentication" : "Successfully authenticated Microsoft authentication");
+    public DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> authenticate(AuthRequest accessData) {
+        return MicrosoftOAuth.runFlow(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt);
     }
 
     public record AuthRequest(

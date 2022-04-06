@@ -4,12 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
+import net.creeperhost.creeperlauncher.util.DataResult;
 import okhttp3.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -17,7 +19,7 @@ import java.util.UUID;
  * *Slaps car*
  * This baby fits so much useless time into it.
  */
-public class MojangAuthenticator implements AuthenticatorValidator<YggdrasilAuthStore, MojangAuthenticator.LoginData, String> {
+public class MojangAuthenticator implements AuthenticatorValidator<DataResult<YggdrasilAuthStore, ErrorWithCode>, MojangAuthenticator.LoginData, String> {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Agent AGENT = new Agent("Minecraft", 1);
 
@@ -61,14 +63,13 @@ public class MojangAuthenticator implements AuthenticatorValidator<YggdrasilAuth
     }
 
     /**
-     * The final string isn't needed so we just ignore it
+     * The final string isn't needed, so we just ignore it
      */
-    @Nullable
+    @Nonnull
     @Override
-    public Reply<YggdrasilAuthStore> refresh(AccountProfile profile, String ignored) {
+    public DataResult<YggdrasilAuthStore, ErrorWithCode> refresh(AccountProfile profile, String ignored) {
         if (profile.isMicrosoft || profile.mcAuth == null) {
-            LOGGER.warn("Microsoft accounts cannot be refreshed");
-            return new Reply<>(null, false, "Microsoft accounts cannot be refreshed");
+            return DataResult.error(new ErrorWithCode("Microsoft accounts cannot be refreshed", "yggd_auth_001"));
         }
 
         try {
@@ -85,7 +86,7 @@ public class MojangAuthenticator implements AuthenticatorValidator<YggdrasilAuth
 
             LOGGER.info("Received response from Mojang's authentication server with status code " + request.code());
             if (request.code() == 403) {
-                return new Reply<>(null, false, "Invalid refresh token");
+                return DataResult.error(new ErrorWithCode("Invalid refresh token", "yggd_auth_002"));
             }
 
             ResponseBody body = request.body();
@@ -93,27 +94,26 @@ public class MojangAuthenticator implements AuthenticatorValidator<YggdrasilAuth
                 String response = body.string();
                 JsonObject resData = JsonParser.parseString(response).getAsJsonObject();
                 if (resData.has("accessToken")) {
-                    return new Reply<>(
+                    return DataResult.data(
                         new YggdrasilAuthStore(
                                 resData.get("accessToken").getAsString(),
                                 resData.get("clientToken").getAsString()
-                        ), true, "Success"
+                        )
                     );
                 }
             }
 
-            LOGGER.warn("Mojang returned an error");
-            return new Reply<>(null, false, body != null ? body.string() : "Unknown error");
+            return DataResult.error(new ErrorWithCode((body != null ? body.string() : "Unknown error"), "yggd_auth_003"));
         } catch (IOException e) {
             LOGGER.fatal("Failed to check for validity with Mojang", e);
         }
 
-        return null;
+        return DataResult.error(new ErrorWithCode("Fatal error with Mojang auth flow", "yggd_auth_004"));
     }
 
-    @Nullable
+    @Nonnull
     @Override
-    public Reply<YggdrasilAuthStore> authenticate(LoginData req) {
+    public DataResult<YggdrasilAuthStore, ErrorWithCode> authenticate(LoginData req) {
         UUID randomId = UUID.randomUUID();
 
         try {
@@ -130,22 +130,21 @@ public class MojangAuthenticator implements AuthenticatorValidator<YggdrasilAuth
                 String response = body.string();
                 JsonObject resData = JsonParser.parseString(response).getAsJsonObject();
                 if (resData.has("accessToken")) {
-                    return new Reply<>(
+                    return DataResult.data(
                         new YggdrasilAuthStore(
                                 resData.get("accessToken").getAsString(),
                                 resData.get("clientToken").getAsString()
-                        ), true, "Success"
+                        )
                     );
                 } else {
-                    LOGGER.warn("Mojang returned an error: " + response);
-                    return new Reply<>(null, false, response);
+                    return DataResult.error(new ErrorWithCode(response, "yggd_auth_005"));
                 }
             }
         } catch (IOException e) {
             LOGGER.fatal("Failed to authenticate with Mojang", e);
         }
 
-        return null;
+        return DataResult.error(new ErrorWithCode("Fatal error with Mojang authentication flow", "yggd_auth_006"));
     }
 
     public record LoginData(

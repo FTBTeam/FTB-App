@@ -8,6 +8,7 @@ import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okio.Throttler;
 import org.apache.logging.log4j.LogManager;
@@ -71,6 +72,9 @@ public class Constants {
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
     public static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.MINUTES)
+            .readTimeout(5, TimeUnit.MINUTES)
+            .connectionPool(new ConnectionPool())
             .cookieJar(new SimpleCookieJar())
             .addInterceptor(new ThrottlerInterceptor())
             .addInterceptor(new MultiHasherInterceptor())

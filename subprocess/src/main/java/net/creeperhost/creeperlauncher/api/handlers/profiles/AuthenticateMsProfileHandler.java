@@ -7,10 +7,12 @@ import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.util.DataResult;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
@@ -24,33 +26,31 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         MicrosoftAuthenticator auth = new MicrosoftAuthenticator();
 
         // Try and authenticate with the MC server
-        AuthenticatorValidator.Reply<Pair<JsonObject, MSAuthStore>> authenticate =
-                auth.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
+        DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> authenticate = auth.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
 
-        if (authenticate != null && authenticate.success()) {
+        authenticate.data().ifPresentOrElse(authData -> {
             // Parse the users skins (We don't care if it fails).
             AccountSkin[] skins = new AccountSkin[] {};
             try {
-                skins = new Gson().fromJson(authenticate.data().getKey().getAsJsonObject().get("skins").toString(), AccountSkin[].class);
+                skins = new Gson().fromJson(authData.getKey().getAsJsonObject().get("skins").toString(), AccountSkin[].class);
             } catch (Exception ignore) {}
 
             AccountProfile profile = new AccountProfile(
-                    authenticate.data().getValue().minecraftUuid,
+                    authData.getValue().minecraftUuid,
                     Instant.now().getEpochSecond(),
-                    authenticate.data().getKey().getAsJsonObject().get("name").getAsString(),
+                    authData.getKey().getAsJsonObject().get("name").getAsString(),
                     skins,
-                    authenticate.data().getValue()
+                    authData.getValue()
             );
 
             // Try and add the profile
             AccountManager.get().addProfile(profile);
 
             Settings.webSocketAPI.sendMessage(new Reply(data, true, "Success"));
-            return;
-        }
-
-        // Nope...
-        Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate == null ? "Failed to authenticate with Minecraft server." : authenticate.message()));
+        }, () -> {
+            // Nope...
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate.error().map(ErrorWithCode::error).orElse("Fatal authentication error")));
+        });
     }
 
     private static class Reply extends Data {

@@ -29,8 +29,7 @@ export const state: SettingsState = {
     blockedUsers: [],
     mtConnect: false,
     automateMojang: true,
-    showAdverts: true,
-    loadInApp: true,
+    showAdverts: true
   },
   error: false,
   hardware: {

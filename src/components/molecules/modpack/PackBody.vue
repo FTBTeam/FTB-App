@@ -49,8 +49,8 @@
         <div class="options">
           <div class="update" v-if="isInstalled && !isLatestVersion">
             <ftb-button color="warning" class="update-btn px-4 py-1" @click="() => $emit('update')">
-              Update available
-              <font-awesome-icon icon="cloud-download-alt" class="ml-2" />
+              <span class="hidden sm:inline-block">Update available</span>
+              <font-awesome-icon icon="cloud-download-alt" class="sm:ml-2" />
             </ftb-button>
           </div>
           <div class="option" @click="() => $emit('showVersion')">

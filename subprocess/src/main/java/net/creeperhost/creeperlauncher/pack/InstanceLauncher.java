@@ -29,6 +29,8 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -56,6 +58,7 @@ import static net.covers1624.quack.util.SneakyUtils.sneak;
 public class InstanceLauncher {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Marker MINECRAFT_MARKER = MarkerManager.getMarker("MINECRAFT");
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
     private final LocalInstance instance;
@@ -171,11 +174,11 @@ public class InstanceLauncher {
                 //  These take up slots on the builtin ForkJoin pool, and may not even execute on systems with low processor thread counts.
                 CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), message -> {
                     logThread.bufferMessage(message);
-                    logger.info(message);
+                    logger.info(MINECRAFT_MARKER, message);
                 });
                 CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), message -> {
                     logThread.bufferMessage(message);
-                    logger.error(message);
+                    logger.error(MINECRAFT_MARKER, message);
                 });
                 logThread.start();
 
@@ -361,23 +364,26 @@ public class InstanceLauncher {
                 subMap.put("user_type", "legacy");
                 subMap.put("auth_access_token", "null");
                 subMap.put("user_properties", "{}");
+                subMap.put("auth_session", "null");
             } else {
                 subMap.put("auth_player_name", profile.username);
                 subMap.put("auth_uuid", profile.uuid.toString());
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
+                String accessToken;
                 if (profile.msAuth != null) {
                     subMap.put("user_type", "msa");
-                    subMap.put("auth_access_token", profile.msAuth.minecraftToken);
                     subMap.put("xuid", profile.msAuth.xblUserHash);
-                    privateTokens.add(profile.msAuth.minecraftToken);
+                    accessToken = profile.msAuth.minecraftToken;
                 } else {
                     assert profile.mcAuth != null;
                     subMap.put("user_type", "mojang");
-                    subMap.put("auth_access_token", profile.mcAuth.accessToken);
-                    String sessionToken = "token:" + profile.mcAuth.accessToken + ":" + profile.uuid.toString().replace("-", "");
-                    subMap.put("auth_session", sessionToken);
-                    privateTokens.add(sessionToken);
+                    accessToken = profile.mcAuth.accessToken;
                 }
+                String sessionToken = "token:" + accessToken + ":" + profile.uuid.toString().replace("-", "");
+                subMap.put("auth_session", sessionToken);
+                subMap.put("auth_access_token", accessToken);
+                privateTokens.add(sessionToken);
+                privateTokens.add(accessToken);
             }
 
             subMap.put("version_name", instance.modLoader);
@@ -437,9 +443,15 @@ public class InstanceLauncher {
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
-            return new ProcessBuilder()
+            ProcessBuilder builder = new ProcessBuilder()
                     .directory(gameDir.toFile())
                     .command(command);
+
+            Map<String, String> env = builder.environment();
+            // Apparently this can override our passed in Java arguments.
+            env.remove("_JAVA_OPTIONS");
+
+            return builder;
         } catch (Throwable ex) {
             if (ex instanceof CancellationToken.Cancellation cancellation) {
                 throw cancellation;

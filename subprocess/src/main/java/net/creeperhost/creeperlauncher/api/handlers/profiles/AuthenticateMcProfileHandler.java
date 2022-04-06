@@ -4,17 +4,18 @@ import com.google.gson.Gson;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
 import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
+import net.creeperhost.creeperlauncher.accounts.data.StepReply;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.util.DataResult;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
@@ -25,12 +26,21 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
         MojangAuthenticator auth = new MojangAuthenticator();
 
         // Try and authenticate with the MC server
-        AuthenticatorValidator.Reply<YggdrasilAuthStore> authenticate =
-                auth.authenticate(new MojangAuthenticator.LoginData(data.username, data.password));
+        DataResult<YggdrasilAuthStore, ErrorWithCode> authenticate = auth.authenticate(new MojangAuthenticator.LoginData(data.username, data.password));
 
-        if (authenticate != null && authenticate.success()) {
+        authenticate.data().ifPresentOrElse(store -> {
             // Try and get the user profile with the access token from above
-            MicrosoftOAuth.StepReply minecraftAccount = MicrosoftOAuth.getProfile(authenticate.data().accessToken);
+            StepReply minecraftAccount = MicrosoftOAuth.getProfile(store.accessToken);
+
+            // We've likely got a migration issue here
+            if (minecraftAccount.rawResponse() != null && minecraftAccount.rawResponse().code() == 403) {
+                StepReply migrationStatus = MicrosoftOAuth.checkMigrationStatus(store.accessToken);
+                // The user has to migrate, we should stop here.
+                if (migrationStatus.success() && migrationStatus.data().getAsJsonObject().get("rollout").getAsBoolean()) {
+                    Settings.webSocketAPI.sendMessage(new Reply(data, false, "You must migrate your account to a Microsoft account to continue playing Minecraft."));
+                    return;
+                }
+            }
 
             // No profile? Fail!
             String userId = minecraftAccount.data().getAsJsonObject().get("id").getAsString();
@@ -53,7 +63,7 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
                     minecraftAccount.data().getAsJsonObject().get("name").getAsString(),
                     skins,
                     new YggdrasilAuthStore(
-                            authenticate.data().accessToken, authenticate.data().clientToken
+                            store.accessToken, store.clientToken
                     )
             );
 
@@ -61,11 +71,10 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
             AccountManager.get().addProfile(profile);
 
             Settings.webSocketAPI.sendMessage(new Reply(data, true, "Success"));
-            return;
-        }
-
-        // Nope...
-        Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate == null ? "Failed to authenticate with Minecraft server." : authenticate.message()));
+        }, () -> {
+            // Nope...
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate.error().map(ErrorWithCode::error).orElse("Fatal error for Microsoft auth")));
+        });
     }
 
     private static class Reply extends Data {

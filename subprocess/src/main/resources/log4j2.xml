@@ -21,6 +21,8 @@
         <MarkerFilter marker="pircbotx.ddcChat.output" onMatch="${sys:pircbotx.ddcChat.output:-DENY}" onMismatch="NEUTRAL"/>
         <MarkerFilter marker="pircbotx.input" onMatch="${sys:pircbotx.input:-DENY}" onMismatch="NEUTRAL"/>
         <MarkerFilter marker="pircbotx.output" onMatch="${sys:pircbotx.output:-DENY}" onMismatch="NEUTRAL"/>
+        <!-- Drop Minecraft logging -->
+        <MarkerFilter marker="MINECRAFT" onMatch="${sys:InstanceLauncher.minecraft:-DENY}" onMismatch="NEUTRAL"/>
         <LoggerNameFilter logger="org.java_websocket" contains="true" onMatch="${sys:org.java_websocket:-DENY}" onMismatch="NEUTRAL"/>
     </Filters>
     <Appenders>

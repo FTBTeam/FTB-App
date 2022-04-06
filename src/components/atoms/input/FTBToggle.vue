@@ -2,7 +2,7 @@
   <div :class="`flex flex-${inline ? 'row' : 'col'} ${inline ? 'items-center' : ''} my-2 ftb-toggle-area`">
     <template v-if="!inline">
       <div class="w-full flex ftb-toggle">
-        <div class="main flex-1">
+        <div class="main flex-1 mr-8">
           <label class="block tracking-wide font-bold mb-2" :class="`${disabled ? 'opacity-50' : ''}`">
             {{ label }}
           </label>

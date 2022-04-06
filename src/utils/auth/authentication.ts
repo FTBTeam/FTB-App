@@ -207,9 +207,9 @@ export const preLaunchChecksValid = async (tryAgainInstanceUuid: any) => {
   }
 
   // TODO: remove in April 2022
-  if (dayjs().isAfter('2022-03-10')) {
-    await attemptToRemoveMojangAccounts(profiles, profile, signInAgain);
-  }
+  // if (dayjs().isAfter('2022-03-10')) {
+  //   await attemptToRemoveMojangAccounts(profiles, profile, signInAgain);
+  // }
   // TODO: end of remove in April 2022
 
   // Something went really wrong here...

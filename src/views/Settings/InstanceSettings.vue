@@ -1,29 +1,15 @@
 <template>
   <div class="instance-settings">
-    <p class="block uppercase text-white-700 font-bold mb-4">
-      Window Size
-    </p>
+    <p class="block uppercase text-white-700 font-bold mb-4">Window Size</p>
 
-    <div class="flex flex-row mb-2">
-      <ftb-input
-        class="flex-col"
-        label="Width"
-        v-model="localSettings.width"
-        :value="localSettings.width"
-        @blur="saveMutated"
-      />
+    <div class="sm:flex mb-2">
+      <div class="flex items-center">
+        <ftb-input label="Width" v-model="localSettings.width" :value="localSettings.width" @blur="saveMutated" />
+        <font-awesome-icon class="mt-auto mb-6 mx-4 text-gray-600" icon="times" size="1x" />
+        <ftb-input label="Height" v-model="localSettings.height" :value="localSettings.height" @blur="saveMutated" />
+      </div>
 
-      <font-awesome-icon class="mt-auto mb-6 mx-4 text-gray-600" icon="times" size="1x" />
-
-      <ftb-input
-        class="flex-col"
-        label="Height"
-        v-model="localSettings.height"
-        :value="localSettings.height"
-        @blur="saveMutated"
-      />
-
-      <div class="flex-col mt-auto mb-2 pl-4">
+      <div class="mb-2 sm:pl-4 mt-2 sm:mt-0 self-end">
         <v-selectmenu
           :title="false"
           :query="false"
@@ -32,17 +18,15 @@
           :value="resSelectedValue"
           @values="resChange"
         >
-          <ftb-button color="primary" class="py-2 px-4 my-1">
+          <ftb-button color="primary" class="py-2 px-4 my-1 flex items-center">
             <font-awesome-icon icon="desktop" size="1x" class="cursor-pointer" />
-            <span class="ml-4">Suggested resolutions</span>
+            <span class="ml-4">Resolutions</span>
           </ftb-button>
         </v-selectmenu>
       </div>
     </div>
 
-    <small class="text-muted block mb-8 max-w-xl">
-      This sets your default Minecraft window size
-    </small>
+    <small class="text-muted block mb-8 max-w-xl"> This sets your default Minecraft window size </small>
 
     <!--    <ftb-toggle-->
     <!--      label="Keep launcher open when game starts"-->
@@ -124,7 +108,7 @@ export default class InstanceSettings extends Vue {
   }
 
   browseForFolder() {
-    platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, path => {
+    platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
       this.localSettings.instanceLocation = path;
       this.saveSettings(this.localSettings);
     });

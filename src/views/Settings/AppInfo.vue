@@ -1,7 +1,7 @@
 <template>
   <div class="app-info">
     <div class="app-info-section mb-8">
-      <div class="items flex">
+      <div class="items sm:flex">
         <div class="title-value mr-10">
           <div class="title text-muted mb-1">UI Version</div>
           <div class="value">
@@ -20,7 +20,7 @@
           </div>
         </div>
 
-        <div class="title-value">
+        <div class="title-value mt-4 sm:mt-0">
           <div class="title text-muted mb-1">App Version</div>
           <div class="value">
             <span class="allow-selection">{{ appVersion }}</span>
@@ -43,7 +43,7 @@
         >Software License Information</router-link
       >
     </div>
-    <div class="section logs mb-8 flex items-center">
+    <div class="section logs mb-8 sm:flex items-center">
       <div class="desc flex-1">
         <p class="font-bold mb-1">Create app logs</p>
         <p class="text-muted mb-2 pr-10">
@@ -52,7 +52,7 @@
         </p>
       </div>
       <ftb-button
-        class="py-2 px-4 my-2 w-2/7 inline-block whitespace-no-wrap"
+        class="py-2 px-4 my-2 w-2/7 mt-4 sm:mt-0 inline-block whitespace-no-wrap"
         color="info"
         css-class="text-center text-l"
         @click="uploadLogData"
@@ -60,7 +60,7 @@
       >
     </div>
 
-    <div class="section cache mb-8 flex items-center">
+    <div class="section cache mb-8 sm:flex items-center">
       <div class="desc flex-1">
         <p class="font-bold mb-1">Manage cache</p>
         <p class="text-muted pr-10">
@@ -69,7 +69,7 @@
         </p>
       </div>
       <ftb-button
-        class="py-2 px-4 my-2 w-2/7 inline-block whitespace-no-wrap"
+        class="py-2 px-4 mt-6 sm:mt-0 my-2 w-2/7 inline-block whitespace-no-wrap"
         color="info"
         css-class="text-center text-l"
         @click="refreshCachePlz"
