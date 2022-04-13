@@ -12,6 +12,7 @@ import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,6 +65,28 @@ public class ModpackVersionManifest {
 
     private long updated;
     private long refreshed;
+
+    public ModpackVersionManifest() {
+    }
+
+    public ModpackVersionManifest(ModpackVersionManifest other) {
+        status = other.status;
+        id = other.id;
+        parent = other.parent;
+        name = other.name;
+        specs = other.specs != null ? other.specs.copy() : null;
+        type = other.type;
+        targets = StreamableIterable.of(other.targets)
+                .map(Target::copy)
+                .toLinkedList();
+        files = StreamableIterable.of(other.files)
+                .map(ModpackFile::copy)
+                .toLinkedList();
+        installs = other.installs;
+        plays = other.plays;
+        updated = other.updated;
+        refreshed = other.refreshed;
+    }
 
     @Nullable
     public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
@@ -152,6 +175,10 @@ public class ModpackVersionManifest {
         return target != null ? target.getVersion() : null;
     }
 
+    public ModpackVersionManifest copy() {
+        return new ModpackVersionManifest(this);
+    }
+
     // @formatter:off
     public String getStatus() { return requireNonNull(status); }
     public long getId() { return id; }
@@ -173,6 +200,19 @@ public class ModpackVersionManifest {
 
         private int minimum;
         private int recommended;
+
+        public Specs() {
+        }
+
+        public Specs(Specs other) {
+            id = other.id;
+            minimum = other.minimum;
+            recommended = other.recommended;
+        }
+
+        public Specs copy() {
+            return new Specs(this);
+        }
     }
 
     public static class Target {
@@ -187,6 +227,21 @@ public class ModpackVersionManifest {
         private String type;
 
         private long updated;
+
+        public Target() {
+        }
+
+        public Target(Target other) {
+            id = other.id;
+            version = other.version;
+            name = other.name;
+            type = other.type;
+            updated = other.updated;
+        }
+
+        public Target copy() {
+            return new Target(this);
+        }
 
         // @formatter:off
         public long getId() { return id; }
@@ -226,8 +281,39 @@ public class ModpackVersionManifest {
 
         public long updated;
 
+        public ModpackFile() {
+        }
+
+        public ModpackFile(long id, String path, String name, HashCode sha1, long size) {
+            this.id = id;
+            this.path = path;
+            this.name = name;
+            this.sha1 = sha1;
+            this.size = size;
+        }
+
+        public ModpackFile(ModpackFile other) {
+            id = other.id;
+            version = other.version;
+            path = other.path;
+            name = other.name;
+            url = other.url;
+            sha1 = other.sha1;
+            size = other.size;
+            clientOnly = other.clientOnly;
+            serverOnly = other.serverOnly;
+            optional = other.optional;
+            type = other.type;
+            tags = other.tags != null ? other.tags.deepCopy() : null;
+            updated = other.updated;
+        }
+
         public Path toPath(Path root) {
             return root.resolve(getPath()).resolve(getName());
+        }
+
+        public String instanceRelPath() {
+            return StringUtils.appendIfMissing(StringUtils.removeStart(getPath(), "./"), "/") + StringUtils.removeStart(getName(), "/");
         }
 
         public Path getCfExtractPath(Path root, String modpackVersion) {
@@ -247,6 +333,10 @@ public class ModpackVersionManifest {
             return validation;
         }
 
+        public ModpackFile copy() {
+            return new ModpackFile(this);
+        }
+
         // @formatter:off
         public long getId() { return id; }
         public String getVersion() { return requireNonNull(version); }
@@ -261,6 +351,9 @@ public class ModpackVersionManifest {
         public boolean isOptional() { return optional; }
         public String getType() { return requireNonNull(type); }
         public long getUpdated() { return updated; }
+        public void setUrl(@Nullable String url) { this.url = url; }
+        public void setSha1(HashCode sha1) { this.sha1 = sha1; }
+        public void setSize(long size) { this.size = size; }
         // @formatter:on
     }
 

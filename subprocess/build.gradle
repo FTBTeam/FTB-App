@@ -215,6 +215,7 @@ dependencies {
     implementation 'com.github.oshi:oshi-core:5.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'org.apache.commons:commons-compress:1.2'
+    implementation 'commons-io:commons-io:2.11.0'
     implementation 'net.java.dev.jna:jna:5.5.0'
     implementation 'net.java.dev.jna:jna-platform:5.5.0'
     implementation 'com.amazonaws:aws-java-sdk-s3:1.11.839'
@@ -436,7 +437,8 @@ idea.project.settings {
             jvmArgs += '-DDownloadTask.debug=true '                      // Enable Quack DownloadAction logging from DownloadTask
             jvmArgs += '-DInstanceLauncher.ProgressTracker.debug=true '  // Enable debug logging for InstanceLauncher's ProgressTracker TODO Log4j markers?
             jvmArgs += '-DInstanceInstaller.debug=true '                 // Enable debug logging for InstanceInstaller.
-            jvmArgs += '-DInstanceLauncher.minecraft=ACCEPT'             // Allow Minecraft logging Marker in Log4j.
+            jvmArgs += '-DInstanceLauncher.minecraft=ACCEPT '            // Allow Minecraft logging Marker in Log4j.
+            jvmArgs += '-DInstanceShareUploader.debug=true '             // Enable debug logging for InstanceShareUploader
             programParameters = '--dev'
         }
     }
