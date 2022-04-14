@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.install.tasks;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.net.HttpResponseException;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
@@ -10,7 +11,6 @@ import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.util.MiscUtils;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -23,10 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -45,18 +47,20 @@ public class NewDownloadTask implements Task<Path> {
     private final int tries;
     private final String url;
     private final Path dest;
-    private final DownloadValidation validation;
+    private DownloadValidation validation;
 
     @Nullable
     private final LocalFileLocator fileLocator;
+    private final boolean tryCompanionHashes;
 
-    private NewDownloadTask(int tries, String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator) {
+    private NewDownloadTask(int tries, String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator, boolean tryCompanionHashes) {
         this.tries = tries;
         this.url = url;
         this.dest = dest;
         this.validation = validation;
 
         this.fileLocator = fileLocator;
+        this.tryCompanionHashes = tryCompanionHashes;
     }
 
     /**
@@ -91,10 +95,24 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
 
+        if (tryCompanionHashes) {
+            HashCode sha1 = tryGetCompanionHash(HashFunc.SHA1);
+            if (sha1 != null) {
+                HashCode validationSha1 = validation.expectedHashes.get(HashFunc.SHA1);
+                if (validationSha1 != null) {
+                    if (!sha1.equals(validationSha1)) {
+                        LOGGER.error("SHA1 companion to {} does not match Validation. Got: {}, Expected: {}", url, sha1, validationSha1);
+                    }
+                } else {
+                    validation = validation.withHash(HashFunc.SHA1, sha1);
+                }
+            }
+        }
+
         Throwable fail = null;
         for (int i = 0; i < tries; i++) {
             try {
-                doRequest(progressListener);
+                doRequest(url, dest, validation, progressListener);
                 fail = null;
                 break;
             } catch (Throwable ex) {
@@ -116,7 +134,39 @@ public class NewDownloadTask implements Task<Path> {
         }
     }
 
-    private void doRequest(@Nullable TaskProgressListener progressListener) throws IOException {
+    @Nullable
+    private HashCode tryGetCompanionHash(HashFunc func) throws IOException {
+        String ext = "." + func.getName().toLowerCase(Locale.ROOT);
+        String url = this.url + ext;
+        Path dest = this.dest.resolveSibling(this.dest.getFileName().toString() + ext);
+
+        Throwable fail = null;
+        for (int i = 0; i < tries; i++) {
+            try {
+                doRequest(url, dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
+                fail = null;
+                break;
+            } catch (Throwable ex) {
+                if (ex instanceof HttpResponseException httpEx) {
+                    if (httpEx.code == 404) { // Resource doesn't exist.
+                        return null;
+                    }
+                }
+                if (fail != null) {
+                    fail.addSuppressed(ex);
+                } else {
+                    fail = ex;
+                }
+            }
+        }
+        if (fail != null) {
+            LOGGER.error("Failed to retrieve {} companion resource for {}.", func, this.url, fail);
+            return null;
+        }
+        return HashCode.fromString(Files.readString(dest, StandardCharsets.UTF_8).trim());
+    }
+
+    private static void doRequest(String url, Path dest, DownloadValidation validation, @Nullable TaskProgressListener progressListener) throws IOException {
         OkHttpDownloadAction action = new OkHttpDownloadAction()
                 .setClient(Constants.OK_HTTP_CLIENT)
                 .setUrl(url)
@@ -176,19 +226,16 @@ public class NewDownloadTask implements Task<Path> {
     @Override
     public boolean isRedundant() {
         try {
-            // Task is redundant if the file exists, and we can validate it.
-            return Files.exists(dest) && validation.validate(dest);
+            if (!Files.exists(dest)) return false; // File doesn't exist, not redundant.
+            if (validation.isRedundant()) return !tryCompanionHashes; // If validation is redundant, we are only redundant if we aren't checking companion hashes.
+            return validation.validate(dest); // Otherwise, we are redundant if validation passes.
         } catch (Throwable ignored) {
             return false;
         }
     }
 
-    @Override
-    public Path getResult() {
-        return dest;
-    }
-
     //@formatter:off
+    @Override public Path getResult() { return dest; }
     public String getUrl() { return url; }
     public Path getDest() { return dest; }
     public DownloadValidation getValidation() { return validation; }
@@ -237,6 +284,7 @@ public class NewDownloadTask implements Task<Path> {
         private DownloadValidation validation = DownloadValidation.of();
         @Nullable
         private LocalFileLocator fileLocator;
+        private boolean tryCompanionHashes;
 
         private Builder() { }
 
@@ -265,11 +313,16 @@ public class NewDownloadTask implements Task<Path> {
             return this;
         }
 
+        public Builder tryCompanionHashes() {
+            this.tryCompanionHashes = true;
+            return this;
+        }
+
         public NewDownloadTask build() {
             if (url == null) throw new IllegalStateException("URL not set.");
             if (dest == null) throw new IllegalStateException("Dest not set.");
 
-            return new NewDownloadTask(tries, url, dest, validation, fileLocator);
+            return new NewDownloadTask(tries, url, dest, validation, fileLocator, tryCompanionHashes);
         }
     }
 
@@ -371,6 +424,12 @@ public class NewDownloadTask implements Task<Path> {
          */
         public DownloadValidation withUseOnlyIfModified(boolean useOnlyIfModified) {
             return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
+        }
+
+        @Override
+        public boolean isRedundant() {
+            // We are redundant if super is, and we aren't using etag/onlyIfModified matching.
+            return super.isRedundant() && !useETag && !useOnlyIfModified;
         }
     }
 

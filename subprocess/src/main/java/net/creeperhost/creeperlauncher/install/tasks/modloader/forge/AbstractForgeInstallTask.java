@@ -69,6 +69,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
                 .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
                 .dest(notation.toPath(Constants.LIBRARY_LOCATION))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
+                .tryCompanionHashes()
                 .build();
 
         task.execute(null, null);

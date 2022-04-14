@@ -4,6 +4,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
+import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -84,6 +85,14 @@ public class FileValidation {
         return DownloadValidation.of(this);
     }
 
+    /**
+     * Checks if this validation passes the specified File.
+     *
+     * @param path The file to validate.
+     * @return If the file is validated by this validation.
+     * If this validation's {@link #isRedundant()} returns {@code true}, then this function also returns {@code true}.
+     * @throws IOException If an IO error occurs whilst validating.
+     */
     public boolean validate(Path path) throws IOException {
         if (expectedHashes.isEmpty()) return validate(path, null);
         MultiHasher hasher = new MultiHasher(expectedHashes.keySet());
@@ -91,7 +100,15 @@ public class FileValidation {
         return validate(path, hasher.finish());
     }
 
-    public boolean validate(Path path, @Nullable MultiHasher.HashResult hashResult) throws IOException {
+    /**
+     * Overload of {@link #validate(Path)} except takes a {@link HashResult} explicitly instead of calculating it.
+     *
+     * @param path The file to validate.
+     * @return If the file is validated by this validation.
+     * If this validation's {@link #isRedundant()} returns {@code true}, then this function also returns {@code true}.
+     * @throws IOException If an IO error occurs whilst validating.
+     */
+    public boolean validate(Path path, @Nullable HashResult hashResult) throws IOException {
         if (expectedSize != -1) {
             long size = Files.size(path);
             if (expectedSize != size) {
@@ -106,5 +123,14 @@ public class FileValidation {
             }
         }
         return true;
+    }
+
+    /**
+     * If this validation is effectively redundant and would always validate the file.
+     *
+     * @return If the validation is redundant.
+     */
+    public boolean isRedundant() {
+        return expectedHashes.isEmpty() && expectedSize == -1;
     }
 }
