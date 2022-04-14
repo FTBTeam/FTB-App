@@ -404,6 +404,8 @@ public class InstanceLauncher {
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
             subMap.put("classpath", classpath.stream().distinct().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
+            subMap.put("classpath_separator", File.pathSeparator);
+            subMap.put("library_directory", librariesDir.toAbsolutePath().toString());
 
             AssetIndexManifest.AssetObject icon = assetPair.getRight().objects.get("icons/minecraft.icns");
             if (icon != null) {
