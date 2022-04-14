@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 /**
  * Created by covers1624 on 13/4/22.
  */
-public class InstanceShareUploader extends InstanceOperation {
+public class InstanceSharer extends InstanceOperation {
 
     private static final String TRANSFER_HOST = "http://localhost:8081/";
 
@@ -49,7 +49,7 @@ public class InstanceShareUploader extends InstanceOperation {
     private final List<IndexedFile> modifiedFiles = new LinkedList<>();
     private final List<IndexedFile> removedFiles = new LinkedList<>();
 
-    public InstanceShareUploader(LocalInstance instance) {
+    public InstanceSharer(LocalInstance instance) {
         super(instance, instance.versionManifest);
     }
 
@@ -137,7 +137,7 @@ public class InstanceShareUploader extends InstanceOperation {
             for (Path path : ColUtils.iterable(files)) {
                 if (Files.isDirectory(path)) continue; // Skip directories.
                 if (FORCE_SKIP_FILES.contains(path.getFileName().toString())) continue; // Skip these files too.
-                String relPath = instance.getDir().relativize(path).toString();
+                String relPath = instance.getDir().relativize(path).toString().replace('\\', '/');
                 if (knownFiles.containsKey(relPath)) continue; // File is known.
 
                 untrackedFiles.add(new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
@@ -181,9 +181,8 @@ public class InstanceShareUploader extends InstanceOperation {
                 .addFormDataPart("file", "version.json", bodyOf(versionJson));
         for (IndexedFile file : Iterables.concat(modifiedFiles, untrackedFiles)) {
             assert file.sha1() != null;
-            // TODO assert that hash collisions have the same file length and ignore, else explode.
 
-            postBody.addFormDataPart("file", file.sha1().toString(), bodyOf(instance.getDir().resolve(file.path())));
+            postBody.addFormDataPart("file", file.path().replace('/', '_'), bodyOf(instance.getDir().resolve(file.path())));
         }
         Request.Builder requestBuilder = new Request.Builder()
                 .url(TRANSFER_HOST)

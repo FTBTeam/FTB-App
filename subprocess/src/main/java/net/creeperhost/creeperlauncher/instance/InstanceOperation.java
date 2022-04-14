@@ -50,7 +50,7 @@ public abstract class InstanceOperation {
         for (ModpackVersionManifest.ModpackFile file : manifest.getFiles()) {
             if (file.getType().equals("cf-extract")) continue;
             Path path = file.toPath(instance.getDir()).toAbsolutePath().normalize();
-            String relPath = instance.getDir().relativize(path).toString();
+            String relPath = instance.getDir().relativize(path).toString().replace('\\', '/');
             knownFiles.put(relPath, new IndexedFile(relPath, file.getSha1OrNull(), file.getSize()));
         }
         Path cfOverrides = getCFOverridesZip(manifest);
@@ -60,7 +60,7 @@ public abstract class InstanceOperation {
                 try (Stream<Path> paths = Files.walk(root)) {
                     for (Path path : ColUtils.iterable(paths)) {
                         if (Files.isDirectory(path)) continue;
-                        String relPath = root.relativize(path).toString();
+                        String relPath = root.relativize(path).toString().replace('\\', '/');
                         knownFiles.put(relPath, new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
                     }
                 }

@@ -1,45 +1,35 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
-import net.creeperhost.creeperlauncher.api.data.instances.BrowseInstanceData;
 import net.creeperhost.creeperlauncher.api.data.instances.ShareInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.instance.InstanceSharer;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
-import net.creeperhost.creeperlauncher.share.InstanceData;
-import net.creeperhost.creeperlauncher.util.GsonUtils;
-import net.creeperhost.creeperlauncher.util.WebUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public class ShareInstanceHandler implements IMessageHandler<ShareInstanceData>
-{
+public class ShareInstanceHandler implements IMessageHandler<ShareInstanceData> {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Override
-    public void handle(ShareInstanceData data)
-    {
-        try
-        {
-            CompletableFuture.runAsync(() ->
-            {
-                LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
-                try
-                {
-                    InstanceData instanceData = new InstanceData(instance);
-                    String code = instanceData.share();
+    public void handle(ShareInstanceData data) {
+        CompletableFuture.runAsync(() -> {
+            LocalInstance instance = Instances.getInstance(data.uuid);
+            try {
+                InstanceSharer instanceSharer = new InstanceSharer(instance);
+                // TODO We should probably pass some user configurable excludes?
+                instanceSharer.prepare();
 
-                    String URL = "https://api.modpacks.ch/" + Constants.KEY + "/modpack/share/" + code;
-                    String json = GsonUtils.GSON.toJson(instanceData);
-                    WebUtils.putWebResponse(URL, json, true, false);
-
-                    Settings.webSocketAPI.sendMessage(new ShareInstanceData.Reply(data, "success", "", data.uuid, code));
-                } catch (IOException e) { e.printStackTrace(); }
-            });
-        } catch (Exception err)
-        {
-            Settings.webSocketAPI.sendMessage(new ShareInstanceData.Reply(data, "error", "", data.uuid, ""));
-        }
+                String code = instanceSharer.execute();
+                Settings.webSocketAPI.sendMessage(new ShareInstanceData.Reply(data, "success", "", data.uuid, code));
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to share instance.", ex);
+                Settings.webSocketAPI.sendMessage(new ShareInstanceData.Reply(data, "error", ex.getMessage(), data.uuid, ""));
+            }
+        });
     }
 }

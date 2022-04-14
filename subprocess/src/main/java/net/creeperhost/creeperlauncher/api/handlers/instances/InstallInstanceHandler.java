@@ -50,7 +50,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                     clearInstallState();
                     return;
                 }
-                handleInstall(data, instance, manifests);
+                handleInstall(data, instance, manifests.getRight());
             } else {
                 Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
                         data.id,
@@ -65,7 +65,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 }
                 instance = new LocalInstance(manifests.getLeft(), manifests.getRight(), data._private, data.packType);
                 Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.packType);
-                handleInstall(data, instance, manifests);
+                handleInstall(data, instance, manifests.getRight());
             }
         } catch (Throwable ex) {
             LOGGER.error("Fatal exception configuring modpack installation.", ex);
@@ -74,10 +74,10 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         }
     }
 
-    private void handleInstall(InstallInstanceData data, LocalInstance instance, Pair<ModpackManifest, ModpackVersionManifest> manifests) {
+    private void handleInstall(InstallInstanceData data, LocalInstance instance, ModpackVersionManifest manifest) {
         try {
             InstallProgressTracker tracker = new InstallProgressTracker(data);
-            InstanceInstaller installer = new InstanceInstaller(instance, manifests.getRight(), tracker);
+            InstanceInstaller installer = new InstanceInstaller(instance, manifest, tracker);
             CreeperLauncher.currentInstall = installer;
             installer.prepare();
             CreeperLauncher.currentInstallFuture = CompletableFuture.runAsync(() -> {
