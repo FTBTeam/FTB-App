@@ -228,6 +228,7 @@ public class NewDownloadTask implements Task<Path> {
         try {
             if (!Files.exists(dest)) return false; // File doesn't exist, not redundant.
             if (validation.isRedundant()) return !tryCompanionHashes; // If validation is redundant, we are only redundant if we aren't checking companion hashes.
+            if (validation.expectedHashes.isEmpty() && validation.expectedSize == -1) return false; // If validation wouldn't check hashes or size, then we aren't redundant.
             return validation.validate(dest); // Otherwise, we are redundant if validation passes.
         } catch (Throwable ignored) {
             return false;
