@@ -48,6 +48,8 @@ public class Constants {
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
     public static final String MC_JSONS = "https://apps.modpacks.ch/versions/minecraftjsons/";
 
+    public static final String TRANSFER_HOST = "http://localhost:8081/";
+
     //Forge
     public static final String FORGE_XML = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/maven-metadata.xml";
     public static final String FORGE_MAVEN = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/";

@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.instance;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
 import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.creeperhost.creeperlauncher.Constants;
@@ -33,8 +32,6 @@ import java.util.stream.Stream;
  * Created by covers1624 on 13/4/22.
  */
 public class InstanceSharer extends InstanceOperation {
-
-    private static final String TRANSFER_HOST = "http://localhost:8081/";
 
     // Files known to be internal to the Instance system, they should not be shared.
     private static final Set<String> FORCE_SKIP_FILES = Set.of(
@@ -94,7 +91,7 @@ public class InstanceSharer extends InstanceOperation {
             assert modifiedFile.sha1() != null;
             for (ModpackFile file : modpackFiles) {
                 if (file.instanceRelPath().equals(modifiedFile.path())) {
-                    file.setUrl(null); // Marker for importer to calculate from the hash plus the share key.
+                    file.setUrl(Constants.TRANSFER_HOST + "${token}/" + modifiedFile.path().replace("/", "_"));
                     file.setSize(modifiedFile.length());
                     file.setSha1(modifiedFile.sha1());
                     break;
@@ -110,6 +107,7 @@ public class InstanceSharer extends InstanceOperation {
                     -1,
                     "./" + FilenameUtils.getFullPath(file.path()),
                     FilenameUtils.getName(file.path()),
+                    Constants.TRANSFER_HOST + "${token}/" + file.path().replace("/", "_"),
                     file.sha1(),
                     file.length()
             ));
@@ -185,7 +183,7 @@ public class InstanceSharer extends InstanceOperation {
             postBody.addFormDataPart("file", file.path().replace('/', '_'), bodyOf(instance.getDir().resolve(file.path())));
         }
         Request.Builder requestBuilder = new Request.Builder()
-                .url(TRANSFER_HOST)
+                .url(Constants.TRANSFER_HOST)
                 .post(postBody.build());
         try (Response response = Constants.OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute()) {
             ResponseBody body = response.body();
@@ -197,7 +195,7 @@ public class InstanceSharer extends InstanceOperation {
                 throw new IllegalStateException("Got empty response body on success??");
             }
             try (BufferedReader reader = new BufferedReader(body.charStream())) {
-                String line = reader.readLine().replace(TRANSFER_HOST, "");
+                String line = reader.readLine().replace(Constants.TRANSFER_HOST, "");
                 int slash = line.indexOf("/");
                 return line.substring(0, slash);
             }

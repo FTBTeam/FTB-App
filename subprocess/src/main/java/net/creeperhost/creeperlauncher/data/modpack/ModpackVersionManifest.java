@@ -284,10 +284,11 @@ public class ModpackVersionManifest {
         public ModpackFile() {
         }
 
-        public ModpackFile(long id, String path, String name, HashCode sha1, long size) {
+        public ModpackFile(long id, String path, String name, String url, HashCode sha1, long size) {
             this.id = id;
             this.path = path;
             this.name = name;
+            this.url = url;
             this.sha1 = sha1;
             this.size = size;
         }
