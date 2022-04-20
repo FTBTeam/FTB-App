@@ -81,6 +81,8 @@ public class VersionManifest {
 
     public String id;
     @Nullable
+    public String jar;
+    @Nullable
     public Arguments arguments;
     @Nullable
     public AssetIndex assetIndex;
@@ -160,7 +162,7 @@ public class VersionManifest {
     }
 
     @Nullable
-    public NewDownloadTask getClientDownload(Path versionsDir) {
+    public NewDownloadTask getClientDownload(Path versionsDir, String id) {
         Download download = downloads.get("client");
         if (download == null || download.url == null) return null;
 

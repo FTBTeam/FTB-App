@@ -404,6 +404,8 @@ public class InstanceLauncher {
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
             subMap.put("classpath", classpath.stream().distinct().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
+            subMap.put("classpath_separator", File.pathSeparator);
+            subMap.put("library_directory", librariesDir.toAbsolutePath().toString());
 
             AssetIndexManifest.AssetObject icon = assetPair.getRight().objects.get("icons/minecraft.icns");
             if (icon != null) {
@@ -526,10 +528,10 @@ public class InstanceLauncher {
     }
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
-        VersionManifest manifest = manifests.get(0);
-        NewDownloadTask task = manifest.getClientDownload(versionsDir);
+        VersionManifest vanillaManifest = manifests.get(0);
+        NewDownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
         if (task != null) {
-            LOGGER.info("Validating client download for {}", manifest.id);
+            LOGGER.info("Validating client download for {}", vanillaManifest.id);
             task.execute(token, progressTracker.listenerForStep(true));
         }
     }
@@ -638,8 +640,17 @@ public class InstanceLauncher {
     }
 
     private Path getGameJar(Path versionsDir) {
-        String rootId = manifests.get(0).id;
-        return versionsDir.resolve(rootId).resolve(rootId + ".jar");
+        String id = getClientId();
+        return versionsDir.resolve(id).resolve(id + ".jar");
+    }
+
+    private String getClientId() {
+        for (VersionManifest manifest : Lists.reverse(manifests)) {
+            if (manifest.jar != null) {
+                return manifest.jar;
+            }
+        }
+        return manifests.get(manifests.size() - 1).id;
     }
 
     public static class LaunchContext {

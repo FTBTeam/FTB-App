@@ -59,7 +59,7 @@ public abstract class ModLoaderInstallTask implements Task<String> {
             throw new IOException("No vanilla version manifest found for " + version);
         }
 
-        NewDownloadTask clientDownload = manifest.getClientDownload(versionsDir);
+        NewDownloadTask clientDownload = manifest.getClientDownload(versionsDir, manifest.id);
         if (clientDownload == null) {
             LOGGER.warn("Failed to find 'client' download for {}. Skipping..", version);
             return manifest;
