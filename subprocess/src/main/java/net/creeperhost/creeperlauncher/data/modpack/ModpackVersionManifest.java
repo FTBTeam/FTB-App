@@ -69,10 +69,13 @@ public class ModpackVersionManifest {
     public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
         ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, versionId, isPrivate, packType);
         if (modpackManifest != null) {
-            return Pair.of(
-                    modpackManifest,
-                    queryManifest(packId, versionId, isPrivate, packType)
-            );
+            ModpackVersionManifest versionManifest = queryManifest(packId, versionId, isPrivate, packType);
+            if (versionManifest != null) {
+                return Pair.of(
+                        modpackManifest,
+                        versionManifest
+                );
+            }
         }
         modpackManifest = ModpackManifest.queryManifest(packId, versionId, !isPrivate, packType);
 
