@@ -396,9 +396,11 @@ public class LocalInstance implements IPack
             InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
             if (!loadingMods.isEmpty()) {
-                for (InstanceSupportMeta.SupportFile file : loadingMods) {
-                    if (!file.canApply(modLoader, os)) continue;
-                    file.createTask(dir.resolve("mods")).execute(null, null);
+                if (Files.notExists(dir.resolve(".no_loading_mods.marker"))) {
+                    for (InstanceSupportMeta.SupportFile file : loadingMods) {
+                        if (!file.canApply(modLoader, os)) continue;
+                        file.createTask(dir.resolve("mods")).execute(null, null);
+                    }
                 }
 
                 CreeperLauncher.closeOldClient();
