@@ -75,7 +75,7 @@ public class NewDownloadTask implements Task<Path> {
     @Override
     public void execute(@Nullable CancellationToken token, @Nullable TaskProgressListener progressListener) throws IOException {
         LOGGER.info("Downloading file {}..", dest);
-        if (Files.exists(dest) && validation.validate(dest)) {
+        if (Files.exists(dest) && (validation.validate(dest) && !validation.useETag && !validation.useOnlyIfModified)) {
             LOGGER.info(" File validated.");
             // Validated, do nothing.
             return;
