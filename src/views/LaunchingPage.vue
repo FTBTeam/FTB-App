@@ -5,44 +5,21 @@
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">
-          {{ !finishedLoading ? (preLaunch ? 'Initializing' : 'Starting') : 'Running' }} {{ instanceName }}
+          {{ launchStatus.replace('%s', instanceName) }}
         </h3>
-        <p v-if="finishedLoading">
+        <p v-if="finishedLoading && !hasCrashed">
           {{ instanceName }} should be running! Enjoy <font-awesome-icon class="ml-2" icon="thumbs-up" />
         </p>
-        <template v-if="preLaunch">
-          <div
-            class="progress-container"
-            :aria-label="`Getting everything ready for ${instanceName}`"
-            data-balloon-pos="up"
-          >
-            <ProgressBar class="mt-6 mb-4" :progress="currentStep.stepProgress" />
-          </div>
-          <div class="mb-2 text-sm flex items-center">
-            <div
-              class="progress-spinner"
-              aria-label="If this takes more than 5 minutes, kill the instance and try again."
-              data-balloon-pos="down-left"
-            >
-              <font-awesome-icon spin icon="circle-notch" class="mr-4" />
-            </div>
-
-            {{ currentStep.stepDesc ? currentStep.stepDesc : 'Initializing...' }}
-          </div>
-          <p class="mb-2 text-sm" v-if="currentStep.stepProgressHuman !== undefined">
-            {{ currentStep.stepProgressHuman }}
-          </p>
-        </template>
-        <template v-else-if="!finishedLoading">
-          <div class="loading-area" v-if="currentModpack !== null">
+        <template v-if='!hasCrashed'>
+          <template v-if="preLaunch">
             <div
               class="progress-container"
-              :aria-label="`Starting ${instanceName}... this might take a few minutes`"
+              :aria-label="`Getting everything ready for ${instanceName}`"
               data-balloon-pos="up"
             >
-              <progress-bar class="mt-6 mb-4" :progress="bars && bars[0] ? bars[0].step / bars[0].steps : 0" />
+              <ProgressBar class="mt-6 mb-4" :progress="currentStep.stepProgress" />
             </div>
-            <div class="mb-2 flex items-center text-sm">
+            <div class="mb-2 text-sm flex items-center">
               <div
                 class="progress-spinner"
                 aria-label="If this takes more than 5 minutes, kill the instance and try again."
@@ -50,28 +27,81 @@
               >
                 <font-awesome-icon spin icon="circle-notch" class="mr-4" />
               </div>
-              {{ progressMessage }}
+
+              {{ currentStep.stepDesc ? currentStep.stepDesc : 'Initializing...' }}
             </div>
+            <p class="mb-2 text-sm" v-if="currentStep.stepProgressHuman !== undefined">
+              {{ currentStep.stepProgressHuman }}
+            </p>
+          </template>
+          <template v-else-if="!finishedLoading">
+            <div class="loading-area" v-if="currentModpack !== null">
+              <div
+                class="progress-container"
+                :aria-label="`Starting ${instanceName}... this might take a few minutes`"
+                data-balloon-pos="up"
+              >
+                <progress-bar class="mt-6 mb-4" :progress="bars && bars[0] ? bars[0].step / bars[0].steps : 0" />
+              </div>
+              <div class="mb-2 flex items-center text-sm">
+                <div
+                  class="progress-spinner"
+                  aria-label="If this takes more than 5 minutes, kill the instance and try again."
+                  data-balloon-pos="down-left"
+                >
+                  <font-awesome-icon spin icon="circle-notch" class="mr-4" />
+                </div>
+                {{ progressMessage }}
+              </div>
+            </div>
+          </template>
+          <div v-else class="flex mt-4">
+            <ftb-button
+              @click="openFolder"
+              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
+              color="primary"
+            >
+              <font-awesome-icon icon="folder-open" class="mr-2" />
+              Open instance folder
+            </ftb-button>
+
+            <ftb-button
+              @click="cancelLoading"
+              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
+            >
+              <font-awesome-icon icon="skull-crossbones" class="mr-2" />
+              Kill instance
+            </ftb-button>
           </div>
         </template>
-        <div v-else class="flex mt-4">
-          <ftb-button
-            @click="openFolder"
-            class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
-            color="primary"
-          >
-            <font-awesome-icon icon="folder-open" class="mr-2" />
-            Open instance folder
-          </ftb-button>
-
-          <ftb-button
-            @click="cancelLoading"
-            class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
-          >
-            <font-awesome-icon icon="skull-crossbones" class="mr-2" />
-            Kill instance
-          </ftb-button>
-        </div>
+        <template v-else>
+          <p>Looks like the instance has crashed during startup or whilst running...</p>
+          <div class="flex mt-4">
+            <ftb-button
+              @click="launch"
+              color="primary"
+              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
+            >
+              <font-awesome-icon icon="arrow-rotate-right" class="mr-2" />
+              Retry launch
+            </ftb-button>
+            <ftb-button
+              @click="openFolder"
+              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
+              color="info"
+            >
+              <font-awesome-icon icon="folder-open" class="mr-2" />
+              Open instance folder
+            </ftb-button>
+            <ftb-button
+              @click="leavePage"
+              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
+            >
+              <font-awesome-icon icon="arrow-left" class="mr-2" />
+              Exit
+            </ftb-button>
+          </div>
+        </template>
       </div>
     </header>
 
@@ -175,6 +205,8 @@ export default class LaunchingPage extends Vue {
   loading = false;
   preLaunch = true;
   platform = platform;
+  
+  hasCrashed = false;
 
   darkMode = true;
   wrapText = true;
@@ -186,6 +218,7 @@ export default class LaunchingPage extends Vue {
     stepProgress: 0,
     stepProgressHuman: '',
   };
+  emptyCurrentStep = {...this.currentStep};
 
   finishedLoading = false;
   preInitMessages: Set<string> = new Set();
@@ -250,6 +283,7 @@ export default class LaunchingPage extends Vue {
         data.type === 'launchInstance.stopped' ||
         (data.type === 'launchInstance.reply' && (data.status === 'abort' || data.status === 'error'))
       ) {
+        // Lets assume we've crashed
         if (data.status === 'errored' || data.status === 'error') {
           this.showAlert({
             title: 'Instance failure',
@@ -259,13 +293,12 @@ export default class LaunchingPage extends Vue {
                 : 'The instance has crashed or has been externally closed.',
             type: 'danger',
           });
+          
+          this.hasCrashed = true;
+          return; // block the redirection
         }
 
-        if (this.instance) {
-          this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
-        } else {
-          this.$router.push({ name: RouterNames.ROOT_LIBRARY });
-        }
+        this.leavePage();
       }
     });
 
@@ -277,6 +310,14 @@ export default class LaunchingPage extends Vue {
     await this.launch();
   }
 
+  leavePage() {
+    if (this.instance) {
+      this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
+    } else {
+      this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+    }
+  }
+  
   destroyed() {
     // Stop listening to events!
     eventBus.$off('ws.message');
@@ -320,6 +361,16 @@ export default class LaunchingPage extends Vue {
   }
 
   public async launch(): Promise<void> {
+    // Reset everything (supports relaunching)
+    this.loading = false;
+    this.preLaunch = true;
+    this.hasCrashed = false;
+    this.currentStep = this.emptyCurrentStep;
+    this.finishedLoading = false;
+    this.preInitMessages = new Set();
+    this.messages = [];
+    this.launchProgress = null;
+    
     if (!(await preLaunchChecksValid(this.instance?.uuid))) {
       this.showAlert({
         title: 'Error!',
@@ -415,6 +466,18 @@ export default class LaunchingPage extends Vue {
 
     const arts = this.currentModpack.art.filter((art) => art.type === 'square');
     return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+  }
+  
+  get launchStatus() {
+    if (this.hasCrashed) {
+      return '%s has crashed! 🔥'  
+    }
+    
+    if (!this.finishedLoading) {
+      return this.preLaunch ? 'Initializing %s' : 'Starting %s';
+    }
+    
+    return 'Running %s';
   }
 }
 </script>
