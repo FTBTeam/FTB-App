@@ -33,9 +33,7 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -168,7 +166,7 @@ public class InstanceLauncher {
                     return;
                 }
                 setPhase(Phase.STARTED);
-                logThread = new LogThread();
+                logThread = new LogThread(IOUtils.makeParents(instance.getDir().resolve("logs/console.log")));
                 Logger logger = LogManager.getLogger("Minecraft");
                 // TODO these should not use CompletableFutures, these should be separate logging threads setup manually.
                 //  These take up slots on the builtin ForkJoin pool, and may not even execute on systems with low processor thread counts.
@@ -781,10 +779,20 @@ public class InstanceLauncher {
 
         private boolean stop = false;
         private final List<String> pendingMessages = new ArrayList<>(100);
+        @Nullable
+        private final PrintStream pw;
 
-        public LogThread() {
+        public LogThread(Path path) {
             super("Instance Logging Thread");
             setDaemon(true);
+
+            PrintStream pw = null;
+            try {
+                pw = new PrintStream(Files.newOutputStream(path), true);
+            } catch (IOException ex) {
+                LOGGER.error("Failed to create console log for instance {}.", instance.getUuid(), ex);
+            }
+            this.pw = pw;
         }
 
         @Override
@@ -812,11 +820,17 @@ public class InstanceLauncher {
                     }
                 }
             }
+            if (pw != null) {
+                pw.close();
+            }
         }
 
         private void bufferMessage(String message) {
             synchronized (pendingMessages) {
                 pendingMessages.add(message);
+            }
+            if (pw != null) {
+                pw.println(message);
             }
         }
     }
