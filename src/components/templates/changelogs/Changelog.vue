@@ -1,7 +1,39 @@
 <template>
-  <ftb-modal :visible="changelogData" size="large">
-    <div class="title"></div>
-  </ftb-modal>
+  <modal :open="changelogData" title="Latest updates" :subTitle="changelogData.title" size="medium" class="wysiwyg">
+    <img :src="headingImage" class="heading-image" alt="Heading image" v-if="headingImage" />
+    <p>
+      <vue-showdown>
+        {{ changelogData.head }}
+      </vue-showdown>
+    </p>
+    <div class="changes">
+      <template v-for="(heading, key) in headings">
+        <template v-if="changelogData.changes[key]">
+          <h3 :style="{ color: heading.color, 'word-spacing': '.5rem' }">{{ heading.heading | title }}</h3>
+          <vue-showdown :markdown="changelogData.changes[key].map((e) => `- ${e}`).join('\n')" />
+        </template>
+      </template>
+    </div>
+
+    <template #footer> I'm a footer </template>
+  </modal>
+  <!--  <ftb-modal :visible="changelogData" size='medium'>-->
+  <!--    <div class='changelog-modal'>-->
+  <!--      <div class="title">{{changelogData.title}}</div>-->
+  <!--      <vue-showdown>-->
+  <!--        {{changelogData.head}}-->
+  <!--      </vue-showdown>-->
+  <!--      <div class='changes'>-->
+  <!--        <div class='subtitle'>Changes</div>-->
+  <!--        <template v-for='type in ["added", "changed", "fixed", "removed"]'>-->
+  <!--          <div class='change-list' v-if='changelogData.changes[type]'>-->
+  <!--            <div class='heading'>{{ type | title }}</div>-->
+  <!--            <vue-showdown :markdown="changelogData.changes[type].map(e => `- ${e}`).join('\n')" />-->
+  <!--          </div>-->
+  <!--        </template>-->
+  <!--      </div>-->
+  <!--    </div>-->
+  <!--  </ftb-modal>-->
 </template>
 
 <script lang="ts">
@@ -38,7 +70,26 @@ export type ChangelogEntry = {
 export default class Changelog extends Vue {
   @Action('sendMessage') public sendMessage: any;
 
-  changelogData = null;
+  changelogData: ChangelogEntry | null = null;
+
+  headings = {
+    added: {
+      heading: '🎉 Added',
+      color: '#53cb6a',
+    },
+    changed: {
+      heading: '🔧 Changed',
+      color: '#fcae21',
+    },
+    fixed: {
+      heading: '🐞 Fixed',
+      color: '#ff5e5e',
+    },
+    removed: {
+      heading: '🗑 Removed',
+      color: 'inherit',
+    },
+  };
 
   mounted() {
     setTimeout(() => {
@@ -46,18 +97,20 @@ export default class Changelog extends Vue {
         // Todo: soft crash
         console.log(e);
       });
-    }, 5_000);
+    }, 2_000);
   }
 
   async checkForUpdate() {
-    const data = await wsTimeoutWrapper({
-      type: 'storage.get',
-      key: 'lastVersion',
-    });
+    // const data = await wsTimeoutWrapper({
+    //   type: 'storage.get',
+    //   key: 'lastVersion',
+    // });
 
     // No held last version meaning we should find a changelog
     // if (!data.response || data.response !== this.getCurrentVersion()) {
     console.log('No last version');
+
+    // console.log(data);
 
     // Get the available versions
     try {
@@ -88,6 +141,11 @@ export default class Changelog extends Vue {
     // }
   }
 
+  get headingImage() {
+    const image = this.changelogData?.media?.find((e) => e.heading && e.type === 'image');
+    return image ? image.source : null;
+  }
+
   // Some magic to get the current version
   getCurrentVersion() {
     return '1.0.0';
@@ -95,4 +153,10 @@ export default class Changelog extends Vue {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.heading-image {
+  display: block;
+  margin-bottom: 1rem;
+  border-radius: 5px;
+}
+</style>
