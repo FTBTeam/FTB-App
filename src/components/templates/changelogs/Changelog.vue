@@ -27,8 +27,6 @@
         {{ changelogData.footer }}
       </vue-showdown>
     </p>
-
-    <!--    <template #footer></template>-->
   </modal>
 </template>
 
@@ -137,8 +135,6 @@ export default class Changelog extends Vue {
         // Stop here, don't do anything, something is wrong, we'll try again next launch.
         return;
       }
-    } else {
-      console.error('Error reading response from version call', data.response);
     }
   }
 
