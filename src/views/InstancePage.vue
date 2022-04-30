@@ -1,12 +1,12 @@
 <template>
   <div class="pack-page">
-    <div
-      class="pack-page-contents"
-      v-if="instance && packInstance"
-      :style="{
-        'background-image': `url(${packSplashArt})`,
-      }"
-    >
+    <div class="pack-page-contents" v-if="instance && packInstance">
+      <div
+        class="background"
+        :style="{
+          'background-image': `url(${packSplashArt})`,
+        }"
+      ></div>
       <header>
         <pack-meta-heading
           @back="goBack"

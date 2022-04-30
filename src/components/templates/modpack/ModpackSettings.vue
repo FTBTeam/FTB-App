@@ -105,11 +105,17 @@
 
     <div class="buttons flex flex-1">
       <ftb-button class="py-2 mr-4 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()">
-        <font-awesome-icon icon="folder" size="1x" />
+        <font-awesome-icon icon="folder" class="mr-2" size="1x" />
         Open Folder
       </ftb-button>
+
+      <ftb-button class="py-2 mr-4 px-4" color="info" css-class="text-center text-l" @click="shareConfirm = true">
+        <font-awesome-icon icon="upload" class="mr-2" size="1x" />
+        Share modpack
+      </ftb-button>
+
       <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()">
-        <font-awesome-icon icon="trash" size="1x" />
+        <font-awesome-icon icon="trash" class="mr-2" size="1x" />
         Delete
       </ftb-button>
     </div>
@@ -124,6 +130,32 @@
         :loading="deleting"
       />
     </ftb-modal>
+
+    <modal
+      :open="shareConfirm"
+      title="Are you sure?"
+      subTitle="You're about to share your instance"
+      @closed="shareConfirm = false"
+    >
+      <p>
+        You're about to share your Modpack with anyone that you provide the share link with. Once you have shared your
+        instance, you can not remove it!
+      </p>
+      <p class="mt-4">
+        <em
+          >Your instance will be uploaded to the cloud as is. This means any changes you make after uploading the
+          instance will not be shared.</em
+        >
+      </p>
+      <template #footer>
+        <div class="flex justify-end">
+          <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="browseInstance()">
+            <font-awesome-icon icon="upload" class="mr-2" size="1x" />
+            Share
+          </ftb-button>
+        </div>
+      </template>
+    </modal>
   </div>
 </template>
 
@@ -169,6 +201,8 @@ export default class ModpackSettings extends Vue {
 
   localInstance: Instance = {} as Instance;
   resSelectedValue = '0';
+
+  shareConfirm = false;
 
   deleting = false;
   showMsgBox = false;

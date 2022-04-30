@@ -1,13 +1,13 @@
 <template>
   <div class="pack-container">
     <div class="pack-page">
-      <div
-        class="pack-page-contents"
-        v-if="!loading && currentModpack"
-        :style="{
-          'background-image': `url(${packSplashArt})`,
-        }"
-      >
+      <div class="pack-page-contents" v-if="!loading && currentModpack">
+        <div
+          class="background"
+          :style="{
+            'background-image': `url(${packSplashArt})`,
+          }"
+        ></div>
         <header>
           <!--          TODO: fix isForgePack-->
           <pack-meta-heading
