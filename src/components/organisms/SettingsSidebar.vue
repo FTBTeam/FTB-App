@@ -38,19 +38,42 @@
           <font-awesome-icon icon="info" />
           <span>App info</span>
         </router-link>
+
+        <!--        <div @click="changesHistoryOpen = true" class="item app-info-item">-->
+        <!--          <font-awesome-icon icon="info" />-->
+        <!--          <span>Changelogs</span>-->
+        <!--        </div>-->
       </nav>
     </main>
 
     <div class="meta">
-      <div class="field">
-        <div class="head">UI Version</div>
-        <div class="value copyable">{{ uiVersion }}</div>
-      </div>
-      <div class="field">
-        <div class="head">Subprocess Version</div>
-        <div class="value copyable">{{ appVersion }}</div>
-      </div>
+      <span>App version</span>
+      <popover position="bottom">
+        <div class="value copyable pr-3">{{ version }}</div>
+        <template #inner>
+          <div class="version">
+            <div class="field mb-4">
+              <div class="head">UI Version</div>
+              <div class="value copyable">{{ uiVersion }}</div>
+            </div>
+            <div class="field">
+              <div class="head">Subprocess Version</div>
+              <div class="value copyable">{{ appVersion }}</div>
+            </div>
+          </div>
+        </template>
+      </popover>
     </div>
+
+    <!--    <modal-->
+    <!--      :open="changesHistoryOpen"-->
+    <!--      title="Changelogs"-->
+    <!--      subTitle="Checkout the changes we've been making!"-->
+    <!--      size="medium"-->
+    <!--      @closed="changesHistoryOpen = false"-->
+    <!--    >-->
+    <!--      <changelog-history v-if="changesHistoryOpen" />-->
+    <!--    </modal>-->
   </div>
 </template>
 
@@ -59,15 +82,20 @@ import { Component, Vue } from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import { State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
+import ChangelogHistory from '@/components/templates/changelogs/ChangelogHistory.vue';
 
-@Component
+@Component({
+  components: { ChangelogHistory },
+})
 export default class SettingsSidebar extends Vue {
   @State('auth') private auth!: AuthState;
 
   platform = platform;
 
-  uiVersion: string = platform.get.config.webVersion;
-  appVersion: string = platform.get.config.appVersion;
+  version = platform.get.config.publicVersion;
+  uiVersion = platform.get.config.webVersion;
+  appVersion = platform.get.config.appVersion;
+  changesHistoryOpen: boolean = false;
 }
 </script>
 
@@ -130,21 +158,17 @@ export default class SettingsSidebar extends Vue {
   }
 
   .meta {
-    .field {
-      margin-top: 0.5rem;
-      .head {
-        font-weight: bold;
-        opacity: 0.5;
-        font-size: 0.875rem;
-        margin-bottom: 0.2rem;
-      }
+    display: flex;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
 
-      .value {
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
+    span {
+      margin-right: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .value {
+      font-weight: bold;
     }
   }
 }

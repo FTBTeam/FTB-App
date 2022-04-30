@@ -124,6 +124,7 @@ let miniServers: MiniWebServer[] = [];
 
 const Electron: ElectronOverwolfInterface = {
   config: {
+    publicVersion: jsonContent?.publicVersion ?? 'Missing version file',
     appVersion: jsonContent?.jarVersion ?? 'Missing Version File',
     webVersion: jsonContent?.webVersion ?? 'Missing Version File',
     dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',

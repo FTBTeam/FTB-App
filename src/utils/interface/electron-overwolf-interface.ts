@@ -44,6 +44,7 @@ export interface Frame {
 }
 
 export interface Config {
+  publicVersion: string;
   appVersion: string;
   webVersion: string;
   dateCompiled: string;
