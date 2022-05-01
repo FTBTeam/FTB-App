@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
-import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

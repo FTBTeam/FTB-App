@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.api;
 
+import java.io.IOException;
 import java.net.BindException;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
@@ -21,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class WebSocketAPI extends WebSocketServer
 {
-    public static final Logger LOGGER = LogManager.getLogger("Websockets API");
+    public static final Logger LOGGER = LogManager.getLogger();
 
     private boolean fullyConnected = false;
 
@@ -92,12 +93,10 @@ public class WebSocketAPI extends WebSocketServer
     @Override
     public void onError(WebSocket conn, Exception ex)
     {
-        try
-        {
+        try {
             CreeperLauncher.websocketDisconnect = true;
-            LOGGER.error("an error occurred on connection {}", conn.getRemoteSocketAddress(), ex);
-        } catch (NullPointerException ignored)
-        {
+            LOGGER.error("an error occurred on connection {}", conn == null ? "[connection not set]" : conn.getRemoteSocketAddress(), ex);
+        } catch (Exception ignored) {
             if(ex instanceof BindException) {
                 CreeperLauncher.websocketPort = generateRandomPort();
                 LOGGER.info("New Port: {}", CreeperLauncher.websocketPort);
@@ -114,6 +113,12 @@ public class WebSocketAPI extends WebSocketServer
     public void onStart()
     {
         LOGGER.info("Server started successfully - {}", Constants.APPVERSION);
+    }
+
+    @Override
+    public void stop() throws IOException, InterruptedException {
+        LOGGER.info("Shutting down websockets on {}", this.getAddress());
+        super.stop();
     }
 
     // TODO: ensure thread safety

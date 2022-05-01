@@ -18,7 +18,7 @@ import java.util.HashMap;
 
 public class Settings
 {
-    private static final Logger LOGGER = LogManager.getLogger("Settings");
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private static final Type settingsToken = new TypeToken<HashMap<String, String>>(){}.getType();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
