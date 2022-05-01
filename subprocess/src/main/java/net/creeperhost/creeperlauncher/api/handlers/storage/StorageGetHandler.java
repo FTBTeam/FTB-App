@@ -15,7 +15,7 @@ public class StorageGetHandler implements IMessageHandler<StorageGetHandler.Data
             return;
         }
 
-        Settings.webSocketAPI.sendMessage(new Reply(data, GenericStorage.getValue(data.key)));
+        Settings.webSocketAPI.sendMessage(new Reply(data, GenericStorage.getInstance().getValue(data.key)));
     }
 
     public static class Data extends BaseData {

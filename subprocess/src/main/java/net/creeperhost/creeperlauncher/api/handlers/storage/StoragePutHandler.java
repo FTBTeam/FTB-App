@@ -15,7 +15,7 @@ public class StoragePutHandler implements IMessageHandler<StoragePutHandler.Data
             return;
         }
 
-        var success = GenericStorage.put(data.key, data.value);
+        var success = GenericStorage.getInstance().put(data.key, data.value);
         Settings.webSocketAPI.sendMessage(new Reply(data, success));
     }
 

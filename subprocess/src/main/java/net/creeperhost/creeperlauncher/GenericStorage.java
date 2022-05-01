@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,22 +22,48 @@ public class GenericStorage {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final Path STORAGE_FILE = Constants.getDataDir().resolve("storage/storage.json");
-    private static final Map<String, String> DATA = new HashMap<>();
+    private Map<String, String> data = new HashMap<>();
 
-    public static String getAllAsJson() {
-        return new Gson().toJson(DATA);
+    private static GenericStorage INSTANCE;
+    
+    public static GenericStorage getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new GenericStorage();
+        }
+        
+        return INSTANCE;
     }
 
-    public static String getValue(String key) {
-        return DATA.get(key);
+    public GenericStorage() {
+        this.load();
     }
 
-    public static boolean put(String key, String value) {
-        DATA.put(key, value);
+    private void load() {
+        if (!Files.exists(STORAGE_FILE)) {
+            return;
+        }
+
+        try {
+            data = new Gson().fromJson(Files.readString(STORAGE_FILE), new TypeToken<Map<String, String>>() {}.getType());
+        } catch (IOException e) {
+            LOGGER.error("Failed to read generic storage", e);
+        }
+    }
+
+    public String getAllAsJson() {
+        return new Gson().toJson(data);
+    }
+
+    public String getValue(String key) {
+        return data.get(key);
+    }
+
+    public boolean put(String key, String value) {
+        data.put(key, value);
         return save();
     }
 
-    private static boolean save() {
+    private boolean save() {
         // Create the folder if it's missing
         Path dir = STORAGE_FILE.getParent();
         if (!Files.exists(dir)) {
@@ -50,7 +77,7 @@ public class GenericStorage {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
-            Files.writeString(STORAGE_FILE, gson.toJson(DATA));
+            Files.writeString(STORAGE_FILE, gson.toJson(data));
         } catch (IOException e) {
             LOGGER.fatal("Failed to write data to the storage file", e);
             return false;

@@ -8,7 +8,7 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 public class StorageGetAllHandler implements IMessageHandler<BaseData> {
     @Override
     public void handle(BaseData data) {
-        Settings.webSocketAPI.sendMessage(new Reply(data, GenericStorage.getAllAsJson()));
+        Settings.webSocketAPI.sendMessage(new Reply(data, GenericStorage.getInstance().getAllAsJson()));
     }
 
     static class Reply extends BaseData {

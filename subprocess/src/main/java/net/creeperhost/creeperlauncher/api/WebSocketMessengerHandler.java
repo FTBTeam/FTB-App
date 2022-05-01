@@ -70,7 +70,7 @@ public class WebSocketMessengerHandler
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("ping", PingLauncherData.class);
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
-        register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler()); // not used yet, keep
+        register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());
