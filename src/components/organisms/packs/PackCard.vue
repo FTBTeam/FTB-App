@@ -1,9 +1,6 @@
 <template>
   <div v-if="settingsState !== undefined">
-    <div
-      class="pack-card"
-      v-if="currentModpack !== undefined || instance !== undefined || isDemo"
-    >
+    <div class="pack-card" v-if="currentModpack !== undefined || instance !== undefined || isDemo">
       <div class="art" @click.prevent="cardClicked">
         <span
           v-if="versionType !== 'release'"
@@ -59,7 +56,7 @@ import { Instance, ModpackState } from '../../../modules/modpacks/types';
 import placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
-import { logVerbose } from '../../../utils';
+import { logVerbose } from '@/utils';
 import { AuthState } from '../../../modules/auth/types';
 import { getColorForReleaseType } from '@/utils/colors';
 import { RouterNames } from '@/router';
@@ -344,7 +341,9 @@ export default class PackCard extends Vue {
   }
 
   get versionType() {
-    return this.currentModpack?.versions?.find(e => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
+    return (
+      this.currentModpack?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release'
+    );
   }
 }
 </script>

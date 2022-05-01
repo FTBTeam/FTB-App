@@ -131,31 +131,7 @@
       />
     </ftb-modal>
 
-    <modal
-      :open="shareConfirm"
-      title="Are you sure?"
-      subTitle="You're about to share your instance"
-      @closed="shareConfirm = false"
-    >
-      <p>
-        You're about to share your Modpack with anyone that you provide the share link with. Once you have shared your
-        instance, you can not remove it!
-      </p>
-      <p class="mt-4">
-        <em
-          >Your instance will be uploaded to the cloud as is. This means any changes you make after uploading the
-          instance will not be shared.</em
-        >
-      </p>
-      <template #footer>
-        <div class="flex justify-end">
-          <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="browseInstance()">
-            <font-awesome-icon icon="upload" class="mr-2" size="1x" />
-            Share
-          </ftb-button>
-        </div>
-      </template>
-    </modal>
+    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
 
@@ -169,6 +145,7 @@ import FTBModal from '@/components/atoms/FTBModal.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
+import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 
 interface MsgBox {
   title: string;
@@ -184,6 +161,7 @@ interface MsgBox {
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
     MessageModal,
+    ShareInstanceModal,
   },
 })
 export default class ModpackSettings extends Vue {

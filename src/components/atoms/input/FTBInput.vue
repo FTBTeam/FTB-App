@@ -5,7 +5,7 @@
         <arance-none leading-normal text-gray-300" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
            </div> -->
     <div class="w-full">
-      <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2">
+      <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2" v-if="label">
         {{ label }}
       </label>
       <div class="flex flex-row items-center">
@@ -14,6 +14,7 @@
           :type="type"
           :placeholder="placeholder"
           :value="value"
+          :disabled="disabled"
           @input="$emit('input', $event.target.value)"
           @blur="$emit('blur')"
         />
@@ -31,11 +32,12 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 @Component
 export default class FTBInput extends Vue {
   @Prop() public buttonClick!: () => void;
-  @Prop({default: 'text'}) type!: string;
+  @Prop({ default: 'text' }) type!: string;
   @Prop() value!: string;
-  @Prop({default: ''}) placeholder!: string;
+  @Prop({ default: false }) disabled!: boolean;
+  @Prop({ default: '' }) placeholder!: string;
   @Prop() button!: boolean;
-  @Prop({default: 'Submit'}) buttonText!: string;
+  @Prop({ default: 'Submit' }) buttonText!: string;
   @Prop() buttonColor!: string;
   @Prop() label!: string;
 

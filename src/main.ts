@@ -25,6 +25,7 @@ import FTBButton from '@/components/atoms/input/FTBButton.vue';
 import FTBInput from '@/components/atoms/input/FTBInput.vue';
 import Popover from '@/components/atoms/Popover.vue';
 import Modal from '@/components/atoms/Modal.vue';
+import Message from '@/components/atoms/Message.vue';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -95,6 +96,7 @@ Vue.component('ftb-button', FTBButton);
 Vue.component('ftb-input', FTBInput);
 Vue.component('popover', Popover);
 Vue.component('modal', Modal);
+Vue.component('message', Message);
 
 Vue.config.productionTip = false;
 Vue.config.devtools = true;
