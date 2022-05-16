@@ -53,7 +53,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
 
         if (loaderTarget.isPresent() && minecraftTarget.isPresent()) {
             dependencies = version.getDependencies(
-                    instance.getMods(),
+                    instance.getMods(true),
                     dependencies,
                     loaderTarget.get(),
                     minecraftTarget.get()

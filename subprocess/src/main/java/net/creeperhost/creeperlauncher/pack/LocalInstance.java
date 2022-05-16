@@ -1,7 +1,11 @@
 package net.creeperhost.creeperlauncher.pack;
 
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
+import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.covers1624.quack.net.DownloadAction;
@@ -43,9 +47,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
+import static net.covers1624.quack.util.SneakyUtils.sneak;
 import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
 
 // TODO move all properties from this class to a specific 'InstanceJson' data object.
@@ -766,15 +769,23 @@ public class LocalInstance implements IPack
         }
     }
 
-    public List<ModFile> getMods() {
+    public List<ModFile> getMods(boolean rich) {
         try {
+            Map<String, CurseProps> lookup = rich ? getHashLookup() : Map.of();
             try (Stream<Path> files = Files.walk(path.resolve("mods"))) {
                 return files.filter(Files::isRegularFile)
                         .filter(file -> ModFile.isPotentialMod(file.toString()))
-                        .map(path -> {
-                            File file = path.toFile();
-                            return new ModFile(file.getName(), "", file.length(), "").setPath(path);
-                        })
+                        .map(sneak(path -> {
+                            String sha1 = rich ? FileUtils.getHash(path, "SHA-1") :  "";
+                            CurseProps curseProps = lookup.get(sha1);
+                            ModFile modFile = new ModFile(path.getFileName().toString(), "", Files.size(path), sha1).setPath(path);
+                            if (curseProps != null) {
+                                modFile.setCurseProject(curseProps.curseProject());
+                                modFile.setCurseFile(curseProps.curseFile());
+                            }
+
+                            return modFile;
+                        }))
                         .collect(Collectors.toList());
             }
         } catch (IOException error) {
@@ -783,4 +794,38 @@ public class LocalInstance implements IPack
 
         return new ArrayList<>();
     }
+
+    private Map<String, CurseProps> getHashLookup() throws IOException {
+        // This hurts my soul, this system is pending a rewrite tho and this is a 'temporary' fix... Supposedly... Hopefully...
+        Map<Long, ModpackVersionManifest.ModpackFile> idLookup = StreamableIterable.of(versionManifest.getFiles())
+                .filter(e -> e.getSha1OrNull() != null)
+                .toImmutableMap(ModpackVersionManifest.ModpackFile::getId, e -> e);
+        String url = Constants.getCreeperhostModpackPrefix(_private, packType) + id + "/" + versionId + "/mods";
+        LOGGER.info("Querying: {}", url);
+        String resp = WebUtils.getAPIResponse(url);
+        JsonElement jElement = JsonUtils.parseRaw(resp);
+        if (!jElement.isJsonObject()) return Map.of();
+
+        JsonObject obj = jElement.getAsJsonObject();
+        if (JsonUtils.getString(obj, "status", "error").equalsIgnoreCase("error")) return Map.of();
+
+        if (!obj.has("mods")) return Map.of();
+        JsonArray mods = obj.getAsJsonArray("mods");
+
+        Map<String, CurseProps> ret = new HashMap<>();
+        for (JsonElement mod : mods) {
+            if (!mod.isJsonObject()) continue;
+            JsonObject modObject = mod.getAsJsonObject();
+            long fileId = JsonUtils.getInt(modObject, "fileId", -1);
+            long curseProject = JsonUtils.getInt(modObject, "curseProject", -1);
+            long curseFile = JsonUtils.getInt(modObject, "curseFile", -1);
+            ModpackVersionManifest.ModpackFile modpackFile = idLookup.get(fileId);
+            if (modpackFile != null) {
+                ret.put(modpackFile.getSha1().toString(), new CurseProps(curseProject, curseFile));
+            }
+        }
+        return ret;
+    }
+
+    private record CurseProps(long curseProject, long curseFile) { }
 }

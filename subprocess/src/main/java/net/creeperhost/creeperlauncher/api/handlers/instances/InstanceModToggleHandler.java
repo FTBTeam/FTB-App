@@ -16,7 +16,7 @@ public class InstanceModToggleHandler implements IMessageHandler<InstanceModTogg
     public void handle(InstanceModToggleData data) {
         LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
 
-        Optional<ModFile> mod = instance.getMods().stream()
+        Optional<ModFile> mod = instance.getMods(false).stream()
                 .filter(e -> e.getName().equals(data.fileName))
                 .findFirst();
 

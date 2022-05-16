@@ -21,7 +21,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
         LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
         ModPack pack = FTBModPackInstallerTask.getPackFromAPI(instance.getId(), instance.getVersionId(), data._private, instance.packType);
         if (pack != null) {
-            List<ModFile> cleanMods = instance.getMods().stream()
+            List<ModFile> cleanMods = instance.getMods(false).stream()
                     .map((currentMod) ->
                             pack.getMods().stream()
                                 .filter(e -> e.getName().equals(currentMod.getName()))
