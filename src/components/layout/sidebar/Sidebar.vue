@@ -116,8 +116,6 @@ export default class Sidebar extends Vue {
   }
 
   public openPromo(): void {
-    console.log('Hi');
-    throw new Error('Sentry Error');
     platform.get.utils.openUrl('https://go.ftb.team/creeperhost');
   }
 
