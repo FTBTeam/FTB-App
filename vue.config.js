@@ -1,10 +1,12 @@
 const path = require('path');
 const SentryWebpackPlugin = require('@sentry/webpack-plugin');
 
-console.log(process.env.VUE_APP_PLATFORM);
-
 const webpackPlugins = [];
-if (process.env.SENTRY_AUTH_TOKEN && (process.env.VERSION || process.env.VERSION_OVERRIDE)) {
+if (
+  process.env.SENTRY_AUTH_TOKEN &&
+  (process.env.VERSION || process.env.VERSION_OVERRIDE) &&
+  (process.env.CI_COMMIT_BRANCH === 'release' || process.env.CI_COMMIT_BRANCH === 'develop')
+) {
   webpackPlugins.push(
     new SentryWebpackPlugin({
       authToken: process.env.SENTRY_AUTH_TOKEN,
