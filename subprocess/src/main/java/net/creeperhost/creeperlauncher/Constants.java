@@ -66,6 +66,7 @@ public class Constants {
     public static final int WEBSOCKET_PORT = 13377;
     public static final String APPVERSION = "@APPVERSION@";
     public static final String BRANCH = "@BRANCH@";
+    public static final String SENTRY_DSN = "@SENTRY@";
     public static final String PLATFORM = WORKING_DIR.toAbsolutePath().toString().contains("Overwolf") ? "Overwolf" : "Electron";
     // TODO, can this be FTBApp instead of 'modpacklauncher'? Does the API rely on this user agent string?
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";

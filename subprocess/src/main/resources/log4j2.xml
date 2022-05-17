@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="warn">
+<Configuration status="warn" packages="io.sentry.log4j2">
     <Scripts>
         <!-- TODO Move to Groovy if we migrate FTBApp to use J15 -->
         <Script name="OsSelect" language="javascript"><![CDATA[
@@ -29,6 +29,8 @@
         <Console name="SysOut" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
         </Console>
+        <!-- Breadcrumbs: WARN, INFO, DEBUG, TRACE, ALL Events: FATAL, ERROR -->
+        <Sentry name="Sentry" minimumBreadcrumbLevel="WARN" minimumEventLevel="ERROR"/>
         <BetterScriptAppenderSelector name="Latest">
             <ScriptRef ref="OsSelect"/>
             <AppenderSet>
@@ -90,6 +92,7 @@
             <AppenderRef ref="SysOut" level="${sys:console.level:-info}"/>
             <AppenderRef ref="Latest" level="info"/>
             <AppenderRef ref="Debug" level="trace"/>
+            <AppenderRef ref="Sentry"/>
         </Root>
     </Loggers>
 </Configuration>

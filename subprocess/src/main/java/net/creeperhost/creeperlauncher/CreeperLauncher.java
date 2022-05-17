@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.install4j.api.launcher.ApplicationLauncher;
 import com.install4j.api.update.UpdateChecker;
+import io.sentry.Sentry;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
@@ -39,6 +40,21 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CreeperLauncher {
+
+    // Yes, second static block, this will run before Log4j is initialized, leave at the top.
+    static {
+        String sentryDSN = ""; // Blank, will disable sentry.
+
+        // noinspection ConstantConditions,MismatchedStringCase
+        if (Constants.SENTRY_DSN.startsWith("https")) {
+            sentryDSN = Constants.SENTRY_DSN;
+        }
+
+        // Sentry will auto pull these options. Sentry is initialized by the Log4j Appender.
+        System.setProperty("sentry.dsn", sentryDSN);
+        System.setProperty("sentry.uncaught.handler.enabled", "true");
+    }
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final Object DIE_LOCK = new Object();
@@ -89,7 +105,7 @@ public class CreeperLauncher {
     public static void main(String[] args) {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
-        
+
         System.out.println(Constants.LIB_SIGNATURE);
         // Construct immediately to properly detect the version.
         MigrationManager migrationManager = new MigrationManager();
@@ -536,9 +552,9 @@ public class CreeperLauncher {
             if (Settings.webSocketAPI != null) {
                 Settings.webSocketAPI.stop();
             }
-            
+
             closeSockets();
-            
+
             if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled() && CreeperLauncher.mtConnect.isConnected()) {
                 CreeperLauncher.mtConnect.disconnect();
             }
@@ -548,7 +564,7 @@ public class CreeperLauncher {
 
         Settings.saveSettings();
     }
-    
+
     public static void exit() {
         cleanUpBeforeExit();
         System.exit(0);

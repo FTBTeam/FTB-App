@@ -61,6 +61,7 @@ ext.calcVersion = getDate() + "-" + details.gitHash + (ext.details.branchName ==
 ext.calcVersion = calcVersion.replaceAll( '/', '-')
 version = System.getenv("VERSION_OVERRIDE") ?: calcVersion
 ext.webVersion = details.gitHash
+ext.sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 
 install4j {
     license = "$System.env.IJLICENSE"
@@ -207,6 +208,11 @@ ext {
 dependencies {
     compileOnly files("lib/i4jruntime.jar")
 
+    implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
+    implementation 'org.apache.logging.log4j:log4j-jul:2.17.2'
+    implementation 'io.sentry:sentry-log4j2:5.7.4'
+
     implementation 'net.creeperhost.minetogether:minetogether-api:1.0.20'
 
     implementation 'org.apache.tika:tika-core:1.22'
@@ -218,9 +224,6 @@ dependencies {
     implementation 'net.java.dev.jna:jna:5.5.0'
     implementation 'net.java.dev.jna:jna-platform:5.5.0'
     implementation 'com.amazonaws:aws-java-sdk-s3:1.11.839'
-    implementation 'org.apache.logging.log4j:log4j-core:2.16.0'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.16.0'
-    implementation 'org.apache.logging.log4j:log4j-jul:2.16.0'
     implementation('org.apache.maven:maven-artifact:3.8.4') {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
     }
@@ -237,8 +240,6 @@ dependencies {
 
     compileOnly 'org.jetbrains:annotations:22.0.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
-
-    annotationProcessor 'org.apache.logging.log4j:log4j-core:2.16.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
