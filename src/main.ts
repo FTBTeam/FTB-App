@@ -48,7 +48,6 @@ const appSetup = async () => {
           routingInstrumentation: Sentry.vueRouterInstrumentation(router),
         }),
       ],
-      debug: true,
       release: platform.get.config.appVersion,
       initialScope: {
         tags: {
