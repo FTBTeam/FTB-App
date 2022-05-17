@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import com.install4j.api.launcher.ApplicationLauncher;
 import com.install4j.api.update.UpdateChecker;
 import io.sentry.Sentry;
+import io.sentry.log4j2.BuildConfig;
+import io.sentry.protocol.SdkVersion;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
@@ -41,18 +43,34 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CreeperLauncher {
 
-    // Yes, second static block, this will run before Log4j is initialized, leave at the top.
+    // Yes, second static block, this will run before Log4j is initialized.
+    // Must be here so Sentry doesn't re-configure itself twice and bork the appender.
     static {
-        String sentryDSN = ""; // Blank, will disable sentry.
 
         // noinspection ConstantConditions,MismatchedStringCase
         if (Constants.SENTRY_DSN.startsWith("https")) {
-            sentryDSN = Constants.SENTRY_DSN;
-        }
+            Sentry.init(opts -> {
+                opts.setDsn(Constants.SENTRY_DSN);
 
-        // Sentry will auto pull these options. Sentry is initialized by the Log4j Appender.
-        System.setProperty("sentry.dsn", sentryDSN);
-        System.setProperty("sentry.uncaught.handler.enabled", "true");
+                // Yoinked from SentryAppender. There exists no way to configure attachServerName from system properties. We must init sentry manually.
+                // Ideally I'd just want to set the sentry properties file and let log4j auto initialize it.
+                opts.setSentryClientName(BuildConfig.SENTRY_LOG4J2_SDK_NAME);
+                SdkVersion sdkVersion = SdkVersion.updateSdkVersion(opts.getSdkVersion(), BuildConfig.SENTRY_LOG4J2_SDK_NAME, BuildConfig.VERSION_NAME);
+                sdkVersion.addPackage("maven:io.sentry:sentry-log4j2", BuildConfig.VERSION_NAME);
+                //noinspection UnstableApiUsage
+                opts.setSdkVersion(sdkVersion);
+                // End Yoinked from SentryAppender.
+
+                opts.setAttachServerName(false);
+                opts.setEnableUncaughtExceptionHandler(true);
+                opts.setRelease(Constants.APPVERSION);
+                opts.setTag("branch", Constants.BRANCH);
+                opts.setTag("platform", Constants.PLATFORM);
+                opts.setTag("os.name", System.getProperty("os.name"));
+                opts.setTag("os.version", System.getProperty("os.version"));
+                opts.setTag("os.arch", System.getProperty("os.arch"));
+            });
+        }
     }
 
     private static final Logger LOGGER = LogManager.getLogger();
