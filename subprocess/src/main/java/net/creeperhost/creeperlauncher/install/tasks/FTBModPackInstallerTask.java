@@ -39,7 +39,7 @@ import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
 
 public class FTBModPackInstallerTask implements IInstallTask<Void>
 {
-    private static final Logger LOGGER = LogManager.getLogger("Modpack Installer Task");
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static AtomicLong currentSpeed = new AtomicLong(0);
     public static AtomicLong averageSpeed = new AtomicLong(0);

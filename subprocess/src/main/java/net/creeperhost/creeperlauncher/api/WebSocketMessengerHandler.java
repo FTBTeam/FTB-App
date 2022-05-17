@@ -21,6 +21,9 @@ import net.creeperhost.creeperlauncher.api.handlers.friends.GetFriendsHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.*;
 import net.creeperhost.creeperlauncher.api.handlers.irc.*;
 import net.creeperhost.creeperlauncher.api.handlers.other.*;
+import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetAllHandler;
+import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetHandler;
+import net.creeperhost.creeperlauncher.api.handlers.storage.StoragePutHandler;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,7 +70,7 @@ public class WebSocketMessengerHandler
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("ping", PingLauncherData.class);
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
-        register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler()); // not used yet, keep
+        register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());
@@ -77,6 +80,10 @@ public class WebSocketMessengerHandler
         register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
+
+        register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
+        register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());
+        register("storage.get-all", BaseData.class, new StorageGetAllHandler());
     }
 
     public static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {

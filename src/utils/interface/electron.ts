@@ -13,6 +13,7 @@ import Vue from 'vue';
 import axios from 'axios';
 import EventEmitter from 'events';
 import http from 'http';
+import os from 'os';
 
 declare const __static: string;
 
@@ -124,6 +125,7 @@ let miniServers: MiniWebServer[] = [];
 
 const Electron: ElectronOverwolfInterface = {
   config: {
+    publicVersion: jsonContent?.publicVersion ?? 'Missing version file',
     appVersion: jsonContent?.jarVersion ?? 'Missing Version File',
     webVersion: jsonContent?.webVersion ?? 'Missing Version File',
     dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',
@@ -134,6 +136,14 @@ const Electron: ElectronOverwolfInterface = {
   utils: {
     openUrl(url: string) {
       ipcRenderer.send('openLink', url);
+    },
+
+    getOsArch() {
+      return os.arch();
+    },
+
+    async getPlatformVersion() {
+      return process.versions.electron;
     },
   },
 

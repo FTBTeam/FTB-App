@@ -30,8 +30,9 @@
 
       <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
     </div>
-    <popover text="Setup a server with CreeperHost" class="w-full" @click="openPromo()">
+    <popover text="Setup a server with CreeperHost" class="w-full">
       <img
+        @click="openPromo()"
         src="../../../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"

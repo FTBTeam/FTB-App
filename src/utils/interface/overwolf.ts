@@ -3,6 +3,7 @@ import store from '@/modules/store';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
+import os from 'os';
 
 declare global {
   var overwolf: any;
@@ -13,7 +14,7 @@ const versionData = overwolf.windows.getMainWindow().getVersionData();
 const getWindowState = (windowId: any) => {
   return new Promise((resolve, reject) => {
     //@ts-ignore
-    overwolf.windows.getWindowState(windowId, res => {
+    overwolf.windows.getWindowState(windowId, (res) => {
       if (res && res.status === 'success') {
         resolve(res.window_state_ex);
       } else {
@@ -25,6 +26,7 @@ const getWindowState = (windowId: any) => {
 
 const Overwolf: ElectronOverwolfInterface = {
   config: {
+    publicVersion: versionData.publicVersion ?? 'Missing version file',
     appVersion: versionData.jarVersion ?? 'Missing Version File',
     webVersion: versionData.webVersion ?? 'Missing Version File',
     dateCompiled: versionData.timestampBuilt ?? 'Missing Version File',
@@ -35,6 +37,16 @@ const Overwolf: ElectronOverwolfInterface = {
   utils: {
     openUrl(url: string) {
       overwolf.utils.openUrlInDefaultBrowser(url);
+    },
+
+    getOsArch() {
+      return os.arch();
+    },
+
+    async getPlatformVersion() {
+      return new Promise((resolve) => {
+        overwolf.extensions.current.getManifest((app: any) => resolve(app.meta.version));
+      });
     },
   },
 
@@ -250,7 +262,7 @@ const Overwolf: ElectronOverwolfInterface = {
     function setupWS(port: Number = 13377) {
       ws = new WebSocket('ws://localhost:' + port);
       Vue.prototype.$socket = ws;
-      ws.addEventListener('message', event => {
+      ws.addEventListener('message', (event) => {
         logVerbose(store.state, event.data);
         let content = JSON.parse(event.data);
         if (content.port && content.secret) {
@@ -262,7 +274,7 @@ const Overwolf: ElectronOverwolfInterface = {
           store.commit('SOCKET_ONMESSAGE', content);
         }
       });
-      ws.addEventListener('open', event => {
+      ws.addEventListener('open', (event) => {
         console.log('Connected to socket!');
         if (mainWindow.getWebsocketData().dev || mainWindow.getWebsocketData().secret !== undefined) {
           console.log('Socket opened correctly and ready!');
@@ -273,11 +285,11 @@ const Overwolf: ElectronOverwolfInterface = {
         }
         reconnectCount = 0;
       });
-      ws.addEventListener('error', err => {
+      ws.addEventListener('error', (err) => {
         console.log('Error!', err);
         store.commit('SOCKET_ONERROR', err);
       });
-      ws.addEventListener('close', event => {
+      ws.addEventListener('close', (event) => {
         if (event.target !== ws) {
           return;
         }
@@ -356,7 +368,7 @@ const Overwolf: ElectronOverwolfInterface = {
     //@ts-ignore
     if (window.isChat === undefined || !window.isChat) {
       //@ts-ignore
-      overwolf.extensions.onAppLaunchTriggered.addListener(function(event) {
+      overwolf.extensions.onAppLaunchTriggered.addListener(function (event) {
         if (event.origin === 'urlscheme') {
           let protocolURL = event.parameter;
           if (protocolURL === undefined) {
@@ -370,7 +382,7 @@ const Overwolf: ElectronOverwolfInterface = {
     }
 
     async function addWindowListener() {
-      let ourWindowID = await new Promise(resolve => {
+      let ourWindowID = await new Promise((resolve) => {
         overwolf.windows.getCurrentWindow((e: any) => {
           if (e.success) {
             resolve(e.window.id);

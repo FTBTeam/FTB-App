@@ -1,7 +1,15 @@
 package net.creeperhost.creeperlauncher.api.handlers;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.PathTypeAdapter;
+import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.util.DownloadUtils;
+import net.creeperhost.creeperlauncher.util.FileUtils;
+import net.creeperhost.creeperlauncher.util.WebUtils;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,12 +21,15 @@ public class ModFile {
     private final String name;
     private final String version;
     private final long size;
-    private final String sha1;
+    private String sha1;
     private boolean expected;
     private boolean exists;
     private boolean enabled;
     @JsonAdapter(PathTypeAdapter.class)
     private Path realPath;
+
+    private long curseProject = -1;
+    private long curseFile = -1;
 
     private final transient int hashCode;
 
@@ -92,7 +103,51 @@ public class ModFile {
     }
 
     public String getSha1() {
-        return sha1;
+        if (this.sha1.length() > 0) return this.sha1;
+        if (Files.exists(this.realPath)) this.sha1 = FileUtils.getHash(this.realPath, "SHA-1");
+        return this.sha1;
+    }
+
+    public long getCurseProject() {
+        if (this.curseProject > 0) return this.curseProject;
+        String url = Constants.CREEPERHOST_MODPACK + "/public/mod/lookup/" + this.getSha1();
+        LogManager.getLogger().info("Querying: {}", url);
+        String resp = WebUtils.getAPIResponse(url);
+        JsonElement jElement = new JsonParser().parse(resp);
+        if (jElement.isJsonObject()) {
+            JsonObject object = jElement.getAsJsonObject();
+            if (!object.getAsJsonPrimitive("status").getAsString().equalsIgnoreCase("error")) {
+                JsonObject meta = object.getAsJsonObject("meta");
+                this.curseProject = meta.get("curseProject").getAsInt();
+                this.curseFile = meta.get("curseFile").getAsInt();
+            }
+        }
+        return this.curseProject;
+    }
+
+    public void setCurseProject(long curseProject) {
+        this.curseProject = curseProject;
+    }
+
+    public long getCurseFile() {
+        if (this.curseFile > 0) return this.curseFile;
+        String url = Constants.CREEPERHOST_MODPACK + "/public/mod/lookup/" + this.getSha1();
+        LogManager.getLogger().info("Querying: {}", url);
+        String resp = WebUtils.getAPIResponse(url);
+        JsonElement jElement = new JsonParser().parse(resp);
+        if (jElement.isJsonObject()) {
+            JsonObject object = jElement.getAsJsonObject();
+            if (!object.getAsJsonPrimitive("status").getAsString().equalsIgnoreCase("error")) {
+                JsonObject meta = object.getAsJsonObject("meta");
+                this.curseProject = meta.get("curseProject").getAsInt();
+                this.curseFile = meta.get("curseFile").getAsInt();
+            }
+        }
+        return this.curseFile;
+    }
+
+    public void setCurseFile(long curseFile) {
+        this.curseFile = curseFile;
     }
 
     public long getSize() {

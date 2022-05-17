@@ -36,6 +36,9 @@
       :tryAgainInstanceUuid="getSignInOpened.tryAgainInstanceUuid"
       @close="closeSignIn()"
     />
+
+    <!-- Only checks for an update once during startup -->
+    <changelog />
   </div>
 </template>
 
@@ -46,9 +49,11 @@ import FTBModal from '@/components/atoms/FTBModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, Getter } from 'vuex-class';
 import Authentication from '@/components/templates/authentication/Authentication.vue';
+import Changelog from '@/components/templates/changelogs/Changelog.vue';
 
 @Component({
   components: {
+    Changelog,
     Authentication,
     FTBModal,
     MessageModal,

@@ -4,6 +4,11 @@
  * methods. Not super ideal. Working for now
  */
 export interface Util {
+  /**
+   * @deprecated don't use
+   */
+  getOsArch: () => string;
+  getPlatformVersion: () => Promise<string>;
   openUrl: (e: string) => void;
 }
 
@@ -44,6 +49,7 @@ export interface Frame {
 }
 
 export interface Config {
+  publicVersion: string;
   appVersion: string;
   webVersion: string;
   dateCompiled: string;

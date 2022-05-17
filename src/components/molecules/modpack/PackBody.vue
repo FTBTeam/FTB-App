@@ -76,7 +76,7 @@
           Mods
         </div>
         <div
-          v-if="isInstalled"
+          v-if="isInstalled && currentVersionObject"
           class="tab"
           :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
           @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"
@@ -132,7 +132,7 @@
 
       <!-- v-show to allow servers to load in the background -->
       <modpack-public-servers
-        v-if="isInstalled"
+        v-if="isInstalled && currentVersionObject"
         v-show="activeTab === tabs.PUBLIC_SERVERS && currentVersionObject.mtgID"
         :instance="instance"
         :current-version="currentVersionObject.mtgID"
