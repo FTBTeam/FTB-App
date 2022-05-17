@@ -20,6 +20,8 @@
   },
   "main": "background.js",
   "dependencies": {
+    "@sentry/tracing": "^6.19.7",
+    "@sentry/vue": "^6.19.7",
     "axios": "^0.21.1",
     "balloon-css": "^1.0.4",
     "dayjs": "^1.10.7",
