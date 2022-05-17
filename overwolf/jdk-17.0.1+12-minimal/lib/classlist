@@ -208,9 +208,9 @@ java/lang/ref/Reference$1
 java/lang/ref/Finalizer$FinalizerThread
 jdk/internal/access/JavaLangAccess
 java/lang/System$2
+jdk/internal/misc/VM
 jdk/internal/util/SystemProps
 jdk/internal/util/SystemProps$Raw
-jdk/internal/misc/VM
 java/lang/StringConcatHelper
 java/lang/VersionProps
 java/util/Arrays
@@ -375,6 +375,7 @@ jdk/internal/module/ModuleReferenceImpl
 jdk/internal/module/SystemModuleFinders$SystemModuleFinder
 jdk/internal/loader/BootLoader
 jdk/internal/loader/NativeLibraries
+jdk/internal/loader/ClassLoaderHelper
 java/util/Queue
 java/util/Deque
 java/util/ArrayDeque
@@ -462,6 +463,7 @@ java/lang/invoke/MethodHandleImpl$Intrinsic
 java/lang/Readable
 java/nio/CharBuffer
 java/nio/HeapCharBuffer
+java/lang/StringCoding
 java/nio/charset/CoderResult
 @lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L7_L
 java/lang/Module$ReflectionData
@@ -668,7 +670,6 @@ sun/nio/fs/NativeBuffer
 sun/nio/fs/NativeBuffer$Deallocator
 sun/nio/fs/WindowsNativeDispatcher
 jdk/internal/loader/NativeLibraries$LibraryPaths
-jdk/internal/loader/ClassLoaderHelper
 jdk/internal/loader/NativeLibraries$1
 java/util/ArrayDeque$DeqIterator
 jdk/internal/loader/NativeLibrary
@@ -705,7 +706,6 @@ java/util/Locale
 sun/util/locale/BaseLocale
 sun/util/locale/LocaleUtils
 jdk/internal/perf/PerfCounter$CoreCounters
-java/lang/StringCoding
 java/util/zip/ZipEntry
 java/util/jar/JarEntry
 java/util/jar/JarFile$JarFileEntry
@@ -958,6 +958,7 @@ java/nio/DirectIntBufferRU
 jdk/internal/jimage/ImageStrings
 jdk/internal/jimage/ImageStringsReader
 jdk/internal/jimage/decompressor/Decompressor
+jdk/internal/jimage/ImageLocation
 java/util/Collections$EmptyIterator
 java/util/Collections$EmptyEnumeration
 jdk/internal/loader/BuiltinClassLoader$1
@@ -1284,6 +1285,7 @@ sun/util/locale/provider/CalendarProviderImpl
 java/util/Calendar$Builder
 java/util/GregorianCalendar
 sun/util/calendar/CalendarSystem
+sun/util/calendar/CalendarSystem$GregorianHolder
 sun/util/calendar/AbstractCalendar
 sun/util/calendar/BaseCalendar
 sun/util/calendar/Gregorian
