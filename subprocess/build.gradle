@@ -365,7 +365,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 task processSource(type: Sync) {
     from sourceSets.main.java
     inputs.property 'version', version
-    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, BRANCH: branch])
+    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, BRANCH: branch, SENTRY: sentryDsn])
     into "$buildDir/src"
 }
 
