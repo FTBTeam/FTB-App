@@ -1,4 +1,23 @@
 const path = require('path');
+const SentryWebpackPlugin = require('@sentry/webpack-plugin');
+
+console.log(process.env.VUE_APP_PLATFORM);
+
+const webpackPlugins = [];
+if (process.env.SENTRY_AUTH_TOKEN && (process.env.VERSION || process.env.VERSION_OVERRIDE)) {
+  webpackPlugins.push(
+    new SentryWebpackPlugin({
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      org: 'creeperhost',
+      project: 'ftb-app',
+      release: `${process.env.VERSION || process.env.VERSION_OVERRIDE}-${process.env.VUE_APP_PLATFORM}`,
+      include: process.env.TARGET_PLATFORM === 'overwolf' ? './overwolf/dist/desktop/' : './dist_electron/bundled/',
+      ignore: ['node_modules', 'webpack.config.js'],
+    }),
+  );
+} else {
+  console.warn("Can't run Sentry source map uploader");
+}
 
 module.exports = {
   publicPath: './',
@@ -65,5 +84,8 @@ module.exports = {
         },
       },
     },
+  },
+  configureWebpack: {
+    plugins: webpackPlugins,
   },
 };
