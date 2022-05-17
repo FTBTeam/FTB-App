@@ -30,7 +30,7 @@
             <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
         </Console>
         <!-- Breadcrumbs: WARN, INFO, DEBUG, TRACE, ALL Events: FATAL, ERROR -->
-        <Sentry name="Sentry" minimumBreadcrumbLevel="WARN" minimumEventLevel="ERROR"/>
+        <Sentry name="Sentry" minimumBreadcrumbLevel="TRACE" minimumEventLevel="ERROR"/>
         <BetterScriptAppenderSelector name="Latest">
             <ScriptRef ref="OsSelect"/>
             <AppenderSet>
