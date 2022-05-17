@@ -321,8 +321,8 @@ def dependencySources = [
 task writeVersion() {
     dependsOn tasks.getByName("downloadLicenses")
     doLast {
-        def jsonSlurper = new JsonSlurper()
-        def data = jsonSlurper.parse(new File("$projectDir/build/reports/license/dependency-license.json"))
+        def packageJson = new JsonSlurper().parse(file("../package.json"))
+        def data = new JsonSlurper().parse(new File("$projectDir/build/reports/license/dependency-license.json"))
         def dependencies = data.get("dependencies")
         def licenses = [:]
         for (obj in dependencies) {
@@ -337,6 +337,7 @@ task writeVersion() {
                     [
                             jarVersion    : version,
                             webVersion    : webVersion,
+                            publicVersion : packageJson.version,
                             branch        : branch,
                             timestampBuilt: Instant.now().getEpochSecond(),
                             javaLicense   : licenses
