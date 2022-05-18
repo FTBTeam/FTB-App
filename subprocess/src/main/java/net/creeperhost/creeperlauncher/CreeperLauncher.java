@@ -553,7 +553,7 @@ public class CreeperLauncher {
             try {
                 LOGGER.info("Starting Electron: " + String.join(" ", args));
                 elect = app.start();
-                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::error);
+                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::warn);
                 StreamGobblerLog.redirectToLogger(elect.getInputStream(), LOGGER::info);
             } catch (IOException e) {
                 LOGGER.error("Error starting Electron: ", e);
