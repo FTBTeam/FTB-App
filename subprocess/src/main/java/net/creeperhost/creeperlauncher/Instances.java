@@ -69,7 +69,7 @@ public class Instances
                     .filter(e -> !e.getFileName().toString().startsWith("."))
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
             instances = loadedInstances.stream().collect(Collectors.toMap(LocalInstance::getUuid, Function.identity()));
             LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
         }
@@ -101,13 +101,13 @@ public class Instances
     private static LocalInstance loadInstance(Path path) {
         Path json = path.resolve("instance.json");
         if (Files.notExists(json)) {
-            LOGGER.error("Instance missing 'instance.json', Ignoring. {}", json.toAbsolutePath());
+            LOGGER.warn("Instance missing 'instance.json', Ignoring. {}", json.toAbsolutePath());
             return null;
         }
         try {
             LocalInstance localInstance = new LocalInstance(path);
             if (!localInstance.installComplete) {
-                LOGGER.error("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
+                LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
                 return null;
             }
             return localInstance;
