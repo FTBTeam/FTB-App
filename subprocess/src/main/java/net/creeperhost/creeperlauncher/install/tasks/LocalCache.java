@@ -1,12 +1,15 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.HashCode;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.util.FileUtils;
-import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocator {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Type setType = new TypeToken<Set<HashCode>>() { }.getType();
+    private static final Gson GSON = new GsonBuilder().create();
+    private static final Type SET_TYPE = new TypeToken<Set<HashCode>>() { }.getType();
 
     private final Path cacheLocation;
     private final Path cacheIndexFile;
@@ -46,7 +50,7 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
 
         if (Files.exists(cacheIndexFile)) {
             try {
-                Set<HashCode> index = GsonUtils.loadJson(cacheIndexFile, setType);
+                Set<HashCode> index = JsonUtils.parse(GSON, cacheIndexFile, SET_TYPE);
                 for (HashCode hash : index) {
                     Path file = cacheLocation.resolve(makePath(hash));
                     if (Files.notExists(file)) {
@@ -56,7 +60,7 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
                     }
                     files.add(hash);
                 }
-            } catch (IOException e) {
+            } catch (IOException | JsonSyntaxException e) {
                 LOGGER.error("Failed to load cache index.", e);
             }
         }
@@ -198,7 +202,7 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
             return;
         }
         try {
-            GsonUtils.saveJson(cacheIndexFile, files, setType);
+            JsonUtils.write(GSON, cacheIndexFile, files, SET_TYPE);
         } catch (IOException e) {
             LOGGER.error("Failed to save cache index.", e);
         }
