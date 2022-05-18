@@ -1,11 +1,13 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.install.FileValidation;
@@ -28,6 +30,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings ({ "deprecation", "UnstableApiUsage" })
 public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocator {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -124,13 +127,35 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
         String path = makePath(hash);
         Path file = cacheLocation.resolve(path);
         try {
+            // Alright.. the file already exists in cache, but not in our files set?
+            // TODO, detect these in validation pass on load.
+            LOGGER.warn("Existing file did not exist in LocalCache lookup? {}", hash);
+            if (Files.exists(file)) {
+                // The file has become corrupt..
+                if (!HashUtils.hash(Hashing.sha1(), file).equals(hash)) {
+                    // TODO, run a validation pass over LocalCache on load if this is a real problem.
+                    LOGGER.error("Corrupt file in LocalStorage! {} does not match its expected hash of {}", file, hash);
+                    return false;
+                }
+                // Yaaay sha1 hash collisions!
+                long aLen = Files.size(file);
+                long bLen = Files.size(f);
+                if (aLen != bLen) {
+                    LOGGER.fatal("Hash collision adding to local cache. Hash {}, A: {}, {} B: {}, {}", hash, file, aLen, f, bLen);
+                    return false;
+                }
+
+                // Well, the file exists, size and hash match, just add.
+                addAndSave(hash);
+                return true;
+            }
+        } catch (IOException ex) {
+            LOGGER.error("Failed to do LocalStorage.add pre-checks.", ex);
+        }
+        try {
             Files.createDirectories(file.getParent());
             Files.copy(f, file, StandardCopyOption.REPLACE_EXISTING);
-            synchronized (files) {
-                files.add(hash);
-                isDirty = true;
-                save();
-            }
+            addAndSave(hash);
         } catch (IOException e) {
             LOGGER.error("Failed to add '{}' to local cache.", f.toAbsolutePath(), e);
             return false;
@@ -157,16 +182,20 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
         try {
             Files.createDirectories(file.getParent());
             Files.move(f, file, StandardCopyOption.REPLACE_EXISTING);
-            synchronized (files) {
-                files.add(hash);
-                isDirty = true;
-                save();
-            }
+            addAndSave(hash);
         } catch (IOException e) {
             LOGGER.error("Failed to add '{}' to local cache.", f.toAbsolutePath(), e);
             return false;
         }
         return true;
+    }
+
+    private void addAndSave(HashCode hash) {
+        synchronized (files) {
+            files.add(hash);
+            isDirty = true;
+            save();
+        }
     }
 
     /**
