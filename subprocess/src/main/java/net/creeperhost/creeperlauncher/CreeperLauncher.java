@@ -10,6 +10,7 @@ import io.sentry.protocol.SdkVersion;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
+import net.covers1624.quack.platform.Architecture;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
@@ -68,7 +69,7 @@ public class CreeperLauncher {
                 opts.setTag("platform", Constants.PLATFORM);
                 opts.setTag("os.name", System.getProperty("os.name"));
                 opts.setTag("os.version", System.getProperty("os.version"));
-                opts.setTag("os.arch", System.getProperty("os.arch"));
+                opts.setTag("os.arch", Architecture.current().name());
             });
         }
     }
