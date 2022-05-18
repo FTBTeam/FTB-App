@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
@@ -34,7 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocator {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
+            .create();
     private static final Type SET_TYPE = new TypeToken<Set<HashCode>>() { }.getType();
 
     private final Path cacheLocation;
