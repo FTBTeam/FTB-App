@@ -63,7 +63,7 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
                     }
                     files.add(hash);
                 }
-            } catch (IOException | JsonSyntaxException e) {
+            } catch (Throwable e) {
                 LOGGER.error("Failed to load cache index.", e);
             }
         }
