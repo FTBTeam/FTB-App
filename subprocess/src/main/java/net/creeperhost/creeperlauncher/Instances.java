@@ -9,6 +9,7 @@ import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ public class Instances
         return true;
     }
 
+    @Nullable
     public static LocalInstance getInstance(UUID uuid)
     {
         return Instances.instances.get(uuid);
@@ -112,8 +114,7 @@ public class Instances
             }
             return localInstance;
         } catch(Exception e) {
-            LOGGER.error("Instance has corrupted 'instance.json'. {}", json.toAbsolutePath());
-            LOGGER.error(e);
+            LOGGER.error("Failed to load instance: {}", json.toAbsolutePath(), e);
             return null;
         }
     }

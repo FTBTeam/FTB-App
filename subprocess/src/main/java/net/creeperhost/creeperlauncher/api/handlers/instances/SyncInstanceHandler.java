@@ -14,6 +14,7 @@ import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -44,6 +45,7 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
                 CloudSaveManager.downloadFile(data.uuid + "/instance.json", instanceJson, true, null);
             } catch (Exception ignored) {
                 WebSocketAPI.LOGGER.error("Failed to download instance data from cloud saves");
+                return;
             }
 
             LocalInstance instance;
@@ -66,7 +68,7 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
                         Settings.webSocketAPI.sendMessage(new CloseModalData());
                     });
                 }
-            } catch (FileNotFoundException e) {
+            } catch (IOException e) {
                 Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", lastError.get(), data.uuid));
                 e.printStackTrace();
             }

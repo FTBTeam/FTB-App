@@ -254,8 +254,7 @@ public class LocalInstance implements IPack
         }
     }
 
-    public LocalInstance(Path path) throws FileNotFoundException
-    {
+    public LocalInstance(Path path) throws IOException {
         //We're loading an existing instance
         this.path = path;
         this.uuid = UUID.fromString(path.getFileName().toString());//TODO, this should not parse its uuid from the file name.
@@ -293,10 +292,6 @@ public class LocalInstance implements IPack
             }
             this.totalPlayTime = jsonOutput.totalPlayTime;
             this.lastPlayed = jsonOutput.lastPlayed;
-        } catch(Exception e)
-        {
-            LOGGER.error("", e);
-            throw new RuntimeException("Instance is corrupted!", e);
         }
     }
 
