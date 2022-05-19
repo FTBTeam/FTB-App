@@ -78,6 +78,7 @@ public class Constants {
             .cookieJar(new SimpleCookieJar())
             .addInterceptor(new ThrottlerInterceptor())
             .addInterceptor(new MultiHasherInterceptor())
+            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().removeHeader("User-Agent").addHeader("User-Agent", USER_AGENT).build()))
             .build();
 
     public static JdkInstallationManager JDK_INSTALL_MANAGER = new JdkInstallationManager(

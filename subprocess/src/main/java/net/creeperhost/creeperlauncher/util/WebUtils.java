@@ -277,6 +277,7 @@ public class WebUtils
         try
         {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", Constants.USER_AGENT);
             connection.setRequestMethod("HEAD");
             connection.connect();
             response = ((connection.getResponseCode() == 200) && (connection.getContentLength() >= 0));
@@ -294,6 +295,7 @@ public class WebUtils
         try
         {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", Constants.USER_AGENT);
             connection.setRequestMethod("HEAD");
             connection.connect();
             response = connection.getContentLength();
