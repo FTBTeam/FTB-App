@@ -355,4 +355,23 @@ public class FileUtils
         }
         return result.toString();
     }
+    
+    /**
+     * Sanitize filename or path segment name to not include problematic
+     * characters for some filesystems (eg: Windows)
+     * @param name the name to sanitize
+     * @return the name with problematic characters replaced with {@code _} (underscore)
+     */
+    public static String sanitizeName(String name) {
+        final String reserved = "<>:\"|?*";
+        StringBuilder result = new StringBuilder();
+        for (char c: name.toCharArray()) {
+            if (Character.isISOControl(c) || reserved.indexOf(c) >= 0) {
+                result.append('_'); // replacement char  
+            } else {
+                result.append(c);
+            }
+        }
+        return result.toString();
+    }
 }

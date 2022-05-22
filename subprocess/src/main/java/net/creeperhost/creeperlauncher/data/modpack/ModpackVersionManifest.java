@@ -12,6 +12,7 @@ import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -228,7 +229,7 @@ public class ModpackVersionManifest {
         }
 
         public Path getCfExtractPath(Path root, String modpackVersion) {
-            return root.resolve(getPath()).resolve(modpackVersion + "-" + getName());
+            return root.resolve(getPath()).resolve(FileUtils.sanitizeName(modpackVersion + "-" + getName()));
         }
 
         public FileValidation createValidation() {
