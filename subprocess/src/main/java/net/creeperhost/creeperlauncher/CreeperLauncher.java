@@ -59,6 +59,8 @@ public class CreeperLauncher {
     public static Process elect = null;
     public static boolean isDevMode = false;
 
+    // TODO replace these 3 fields with record class InstallProcess(InstanceInstaller, CompletableFuture<Void>)
+    //  Have 'Set<InstallProcess> runningInstalls' for tracking whats going on. (prereq for allowing multiple installations to run concurrently.)
     public static boolean isInstalling = false;
     @Nullable
     public static InstanceInstaller currentInstall;

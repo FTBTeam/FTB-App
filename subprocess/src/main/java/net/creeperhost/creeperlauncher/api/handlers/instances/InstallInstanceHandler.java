@@ -1,9 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import net.creeperhost.creeperlauncher.Analytics;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
@@ -12,11 +9,13 @@ import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -26,7 +25,11 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
 
     @Override
     public void handle(InstallInstanceData data) {
-        LOGGER.debug("Received install pack message for " + "ID:" + data.id + " VERSION:" + data.version + " PACKTYPE:" + data.packType);
+        if (data.shareCode != null) {
+            LOGGER.debug("Received install request for shared pack: " + data.shareCode);
+        } else {
+            LOGGER.debug("Received install pack message for " + "ID:" + data.id + " VERSION:" + data.version + " PACKTYPE:" + data.packType);
+        }
         if (CreeperLauncher.isInstalling) {
             assert CreeperLauncher.currentInstall != null;
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.getInstance().getUuid().toString()));
@@ -52,20 +55,57 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 }
                 handleInstall(data, instance, manifests.getRight());
             } else {
-                Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
-                        data.id,
-                        data.version,
-                        data._private,
-                        data.packType
-                );
-                if (manifests == null) {
-                    Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
-                    clearInstallState();
-                    return;
+                String code = data.shareCode;
+                ModpackManifest modpackManifest;
+                ModpackVersionManifest versionManifest;
+                boolean isPrivate = false;
+                byte packType = 0;
+                if (data.shareCode != null) {
+                    versionManifest = ModpackVersionManifest.queryManifest(Constants.TRANSFER_HOST + code + "/version.json");
+                    if (versionManifest == null) {
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Unable to download manifest for '" + code + "', Share code may have expired.", null));
+                        clearInstallState();
+                        return;
+                    }
+
+                    // TODO Sharing private packs is currently undefined, not sure how we should handle this.
+                    //       Likely need to save a metadata file on the share to expose if the pack is private and if its is a curse pack
+                    //       Similar logic will be needed for imported packs.
+                    modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), isPrivate, packType);
+//                    if (modpackManifest == null) {
+//                        modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), !isPrivate, packType);
+//                    }
+
+                    if (modpackManifest == null) {
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Unable to determine modpack for '" + code + "'.", null));
+                        clearInstallState();
+                        return;
+                    }
+                    // Run substitutions over manifest.
+                    StrSubstitutor sub = new StrSubstitutor(Map.of("token", code));
+                    for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
+                        file.setUrl(sub.replace(file.getUrl()));
+                    }
+                } else {
+                    isPrivate = data._private;
+                    packType = data.packType;
+                    Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
+                            data.id,
+                            data.version,
+                            data._private,
+                            data.packType
+                    );
+                    if (manifests == null) {
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
+                        clearInstallState();
+                        return;
+                    }
+                    modpackManifest = manifests.getLeft();
+                    versionManifest = manifests.getRight();
                 }
-                instance = new LocalInstance(manifests.getLeft(), manifests.getRight(), data._private, data.packType);
+                instance = new LocalInstance(modpackManifest, versionManifest, isPrivate, packType);
                 Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.packType);
-                handleInstall(data, instance, manifests.getRight());
+                handleInstall(data, instance, versionManifest);
             }
         } catch (Throwable ex) {
             LOGGER.error("Fatal exception configuring modpack installation.", ex);

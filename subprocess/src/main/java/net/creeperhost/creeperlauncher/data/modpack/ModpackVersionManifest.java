@@ -90,7 +90,7 @@ public class ModpackVersionManifest {
 
     @Nullable
     public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, versionId, isPrivate, packType);
+        ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, isPrivate, packType);
         if (modpackManifest != null) {
             ModpackVersionManifest versionManifest = queryManifest(packId, versionId, isPrivate, packType);
             if (versionManifest != null) {
@@ -100,7 +100,7 @@ public class ModpackVersionManifest {
                 );
             }
         }
-        modpackManifest = ModpackManifest.queryManifest(packId, versionId, !isPrivate, packType);
+        modpackManifest = ModpackManifest.queryManifest(packId, !isPrivate, packType);
 
         if (modpackManifest == null) return null; // We tried, really doesn't exist..
 
@@ -112,7 +112,11 @@ public class ModpackVersionManifest {
 
     @Nullable
     public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        String url = Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId;
+        return queryManifest(Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId);
+    }
+
+    @Nullable
+    public static ModpackVersionManifest queryManifest(String url) throws IOException, JsonParseException {
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
