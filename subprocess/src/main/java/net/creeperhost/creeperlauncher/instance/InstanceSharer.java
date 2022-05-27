@@ -2,10 +2,15 @@ package net.creeperhost.creeperlauncher.instance;
 
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.ColUtils;
+import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.accounts.AccountManager;
+import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
@@ -27,6 +32,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static net.creeperhost.creeperlauncher.Constants.MC_SESSION_SERVER_JOIN;
 
 /**
  * Created by covers1624 on 13/4/22.
@@ -194,6 +201,11 @@ public class InstanceSharer extends InstanceOperation {
         Request.Builder requestBuilder = new Request.Builder()
                 .url(Constants.TRANSFER_HOST)
                 .post(postBody.build());
+
+        JoinServerResult joinServerResult = joinServer();
+        requestBuilder.header("x-server-id", joinServerResult.serverId())
+                .header("x-mc-username", joinServerResult.username());
+
         try (Response response = Constants.OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute()) {
             ResponseBody body = response.body();
             if (!response.isSuccessful()) {
@@ -240,4 +252,54 @@ public class InstanceSharer extends InstanceOperation {
             throw new IllegalStateException("Failed to prepare body.", ex);
         }
     }
+
+    // Yes.. 'join server'
+    private static JoinServerResult joinServer() {
+        AccountProfile profile = AccountManager.get().getActiveProfile();
+        assert profile != null;
+
+        String username = profile.username;
+        UUID uuid = profile.uuid;
+        String token;
+        if (profile.msAuth != null) {
+            token = profile.msAuth.minecraftToken;
+        } else {
+            assert profile.mcAuth != null;
+            token = profile.mcAuth.accessToken;
+        }
+
+        String serverId = String.valueOf(new Random().nextLong());
+
+        JsonObject reqBody = new JsonObject();
+        reqBody.addProperty("accessToken", token);
+        reqBody.addProperty("selectedProfile", uuid.toString());
+        reqBody.addProperty("serverId", serverId);
+
+        Request.Builder req = new Request.Builder()
+                .url(MC_SESSION_SERVER_JOIN)
+                .post(RequestBody.create(reqBody.toString(), MediaType.parse("application/json")));
+
+        try (Response response = Constants.OK_HTTP_CLIENT.newCall(req.build()).execute()) {
+            ResponseBody body = response.body();
+            if (body == null) {
+                throw new IOException("Session server join returned no response body. Status code: " + response.code());
+            }
+            JsonElement elmResp = JsonUtils.parseRaw(body.string());
+            if (elmResp != null) {
+                JsonObject resp = elmResp.getAsJsonObject();
+                String error = JsonUtils.getString(resp, "error", null);
+                if (error != null) {
+                    String cause = JsonUtils.getString(resp, "cause", null);
+                    String message = JsonUtils.getString(resp, "message", null);
+                    throw new IOException("Session server returned error '" + error + "' with cause '" + cause + "' and message '" + message + "'");
+                }
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to 'join' server.", ex);
+        }
+
+        return new JoinServerResult(username, serverId);
+    }
+
+    private record JoinServerResult(String username, String serverId) { }
 }

@@ -38,6 +38,7 @@ public class Constants {
     public static final String MC_RESOURCES = "https://resources.download.minecraft.net/";
     public static final String MC_LIBS = "https://libraries.minecraft.net/";
     public static final String MC_LAUNCHER = "https://launcher.mojang.com/download/Minecraft.";
+    public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
     //API
     public static final String CREEPERHOST_MODPACK = CreeperLauncher.isDevMode ? "https://modpack-api.ch.tools" : "https://api.modpacks.ch";
