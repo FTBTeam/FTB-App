@@ -84,7 +84,7 @@ public class LocalInstance implements IPack
     public int height = Integer.parseInt(Settings.settings.getOrDefault("height", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2)));
     public String modLoader = "";
     private boolean isModified = false;
-    private boolean isImport = false;
+    public boolean isImport = false;
     public boolean cloudSaves = false;
     public boolean hasInstMods = false;
     public boolean installComplete = true;
@@ -283,6 +283,8 @@ public class LocalInstance implements IPack
             this.jrePath = jsonOutput.jrePath;
             this.dir = this.path;
             this.cloudSaves = jsonOutput.cloudSaves;
+            this.isImport = jsonOutput.isImport;
+            this.isModified = jsonOutput.isModified;
             this.hasInstMods = jsonOutput.hasInstMods;
             this.packType = jsonOutput.packType;
             this._private = jsonOutput._private;
@@ -300,6 +302,7 @@ public class LocalInstance implements IPack
     }
 
     public synchronized void pollVersionManifest() {
+        if (isImport) return; // Can't update manifests for imports.
         try {
             Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(id, versionId, _private, packType);
             if (newManifest == null) {

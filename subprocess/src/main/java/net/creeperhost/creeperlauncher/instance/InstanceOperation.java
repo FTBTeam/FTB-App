@@ -73,6 +73,10 @@ public abstract class InstanceOperation {
 
     @Nullable
     protected Path getCFOverridesZip(ModpackVersionManifest manifest) {
+        if (manifest.cfExtractOverride != null) {
+            return manifest.cfExtractOverride;
+        }
+
         LinkedList<ModpackVersionManifest.ModpackFile> cfExtractEntries = StreamableIterable.of(manifest.getFiles())
                 .filter(e -> e.getType().equals("cf-extract"))
                 .toLinkedList();

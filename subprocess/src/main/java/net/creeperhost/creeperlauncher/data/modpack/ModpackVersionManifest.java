@@ -12,6 +12,10 @@ import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import net.creeperhost.creeperlauncher.util.PathRequestBody;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static net.creeperhost.creeperlauncher.Constants.CREEPERHOST_MODPACK;
 
 /**
  * Models the <code>modpacks.ch</code> api.
@@ -89,6 +94,9 @@ public class ModpackVersionManifest {
     }
 
     @Nullable
+    public transient Path cfExtractOverride;
+
+    @Nullable
     public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
         ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, isPrivate, packType);
         if (modpackManifest != null) {
@@ -128,11 +136,33 @@ public class ModpackVersionManifest {
 
         ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
         if (manifest.getStatus().equals("error")) {
-            // TODO Log error.
+            LOGGER.error("Failed to request manifest got: " + manifest.getStatus());
             return null;
         }
 
         return manifest;
+    }
+
+    @Nullable
+    public static ModpackVersionManifest convert(Path manifest) throws IOException {
+        LOGGER.info("Converting pack '{}'.", manifest);
+
+        Request.Builder builder = new Request.Builder()
+                .url(CREEPERHOST_MODPACK + "/public/curseforge/import")
+                .post(new PathRequestBody(manifest));
+        try (Response response = Constants.OK_HTTP_CLIENT.newCall(builder.build()).execute()) {
+            ResponseBody body = response.body();
+            if (body == null) {
+                LOGGER.error("Request returned empty body. Status code: " + response.code());
+                return null;
+            }
+            ModpackVersionManifest versionManifest = JsonUtils.parse(GSON, body.string(), ModpackVersionManifest.class);
+            if (versionManifest.getStatus().equals("error")) {
+                LOGGER.error("Failed to convert pack. Got error: " + versionManifest.getStatus());
+                return null;
+            }
+            return versionManifest;
+        }
     }
 
     public int getMinimumSpec() {
