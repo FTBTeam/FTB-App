@@ -33,11 +33,19 @@ import java.util.stream.Stream;
  */
 public class InstanceSharer extends InstanceOperation {
 
-    // Files known to be internal to the Instance system, they should not be shared.
-    private static final Set<String> FORCE_SKIP_FILES = Set.of(
+    /**
+     * Files and paths known to contain sensitive information, or should otherwise be excluded.
+     * <p>
+     * Must be lower-case.
+     */
+    private static final Set<String> FORCE_IGNORED = Set.of(
+            // Internal to the instance system.
             "instance.json",
             "version.json",
-            "folder.jpg"
+            "folder.jpg",
+
+            // Sensitive
+            ".reauth.cfg"
     );
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("InstanceShareUploader.debug");
@@ -134,8 +142,9 @@ public class InstanceSharer extends InstanceOperation {
         try (Stream<Path> files = Files.walk(instance.getDir())) {
             for (Path path : ColUtils.iterable(files)) {
                 if (Files.isDirectory(path)) continue; // Skip directories.
-                if (FORCE_SKIP_FILES.contains(path.getFileName().toString())) continue; // Skip these files too.
                 String relPath = instance.getDir().relativize(path).toString().replace('\\', '/');
+
+                if (FORCE_IGNORED.contains(relPath.toLowerCase(Locale.ROOT))) continue; // Skip these files too.
                 if (knownFiles.containsKey(relPath)) continue; // File is known.
 
                 untrackedFiles.add(new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
