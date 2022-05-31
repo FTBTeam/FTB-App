@@ -57,7 +57,11 @@
       subTitle="A share code is a code you can use to install new packs"
       @closed="useShareCode = false"
     >
-      <ftb-input label="Share code" />
+      <message type="danger" v-if="shareCodeError" class="mb-4">
+        {{ shareCodeError }}
+      </message>
+
+      <ftb-input label="Share code" v-model="shareCode" />
       <div class="flex justify-end">
         <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="checkAndInstall">
           <font-awesome-icon icon="download" class="mr-2" size="1x" />
@@ -75,6 +79,8 @@ import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
+import { wsTimeoutWrapper, wsTimeoutWrapperTyped } from '@/utils';
+import { InstallingState } from '@/modules/app/appStore.types';
 
 @Component({
   components: {
@@ -89,11 +95,15 @@ export default class Library extends Vue {
   @Getter('packsCache', { namespace: 'modpacks' }) public packsCache!: ModPack[];
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (id: number) => Promise<ModPack>;
   @Action('sendMessage') public sendMessage!: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallingState) => void;
 
   private searchTerm: string = '';
   private isLoaded: boolean = false;
   isGrid: boolean = false;
+
   useShareCode = false;
+  shareCode: string = '';
+  shareCodeError = '';
 
   @Watch('modpacks', { deep: true })
   public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
@@ -126,7 +136,34 @@ export default class Library extends Vue {
   }
 
   async checkAndInstall() {
-    // const startInstall = await wsTimeoutWrapperTyped();
+    if (this.shareCode === '') {
+      return;
+    }
+
+    const checkCode = await wsTimeoutWrapperTyped<any, { success: boolean }>({
+      type: 'checkShareCode',
+      shareCode: this.shareCode,
+    });
+
+    if (!checkCode.success) {
+      this.shareCodeError = `Unable to find a valid pack with the code of ${this.shareCode} `;
+      return;
+    }
+
+    this.useShareCode = false;
+    await wsTimeoutWrapper({
+      type: 'installInstance',
+      shareCode: this.shareCode,
+    });
+
+    this.installModpack({
+      meta: {
+        name: 'Shared pack',
+        version: this.shareCode,
+      },
+    });
+
+    this.shareCode = '';
   }
 
   get packs(): Instance[] {

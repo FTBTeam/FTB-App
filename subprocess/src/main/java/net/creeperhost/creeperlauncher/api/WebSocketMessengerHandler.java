@@ -66,12 +66,14 @@ public class WebSocketMessengerHandler
         register("blockFriend", BlockFriendData.class, new BlockFriendHandler());
         register("addFriend", AddFriendData.class, new AddFriendHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
-        register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler()); // not used but referenced, this should be yeeted
+        register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("ping", PingLauncherData.class);
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
+
+        register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());

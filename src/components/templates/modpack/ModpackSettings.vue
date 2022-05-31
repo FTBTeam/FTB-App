@@ -109,7 +109,18 @@
         Open Folder
       </ftb-button>
 
-      <ftb-button class="py-2 mr-4 px-4" color="info" css-class="text-center text-l" @click="shareConfirm = true">
+      <ftb-button
+        :disabled="!getActiveMcProfile"
+        :title="
+          !getActiveMcProfile
+            ? 'You need to be logged in to your Minecraft account to share packs'
+            : 'Share your modpack with friends'
+        "
+        class="py-2 mr-4 px-4"
+        color="info"
+        css-class="text-center text-l"
+        @click="shareConfirm = true"
+      >
         <font-awesome-icon icon="upload" class="mr-2" size="1x" />
         Share modpack
       </ftb-button>
@@ -138,7 +149,7 @@
 <script lang="ts">
 import { Instance } from '@/modules/modpacks/types';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
+import { Action, Getter, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { SettingsState } from '@/modules/settings/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
@@ -168,6 +179,8 @@ export default class ModpackSettings extends Vue {
   // Vuex
   @State('auth') public auth!: AuthState;
   @State('settings') public settingsState!: SettingsState;
+
+  @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
   @Action('sendMessage') public sendMessage!: any;

@@ -21,7 +21,7 @@
     <message type="danger" v-else>
       {{ error }}
     </message>
-    <template #footer>
+    <template #footer v-if="!shareCode">
       <div class="flex justify-end">
         <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="shareInstance">
           <font-awesome-icon icon="upload" class="mr-2" size="1x" />
@@ -38,6 +38,7 @@ import { wsTimeoutWrapperTyped } from '@/utils';
 import { ShareInstance, ShareInstanceReply } from '@/typings/subprocess';
 import Loading from '@/components/atoms/Loading.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import { preLaunchChecksValid } from '@/utils/auth/authentication';
 
 // FIXME: definitely do the below
 // TODO: maybe move this over to a modal -> modal body system so we don't need to hack around the footer system
@@ -56,6 +57,10 @@ export default class ShareInstanceModal extends Vue {
 
   async shareInstance() {
     this.loading = true;
+    if (!(await preLaunchChecksValid(null))) {
+      this.close();
+      return;
+    }
 
     const shareRequest = await wsTimeoutWrapperTyped<ShareInstance, ShareInstanceReply>(
       {
