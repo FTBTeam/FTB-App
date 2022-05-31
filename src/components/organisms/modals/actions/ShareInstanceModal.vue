@@ -13,7 +13,7 @@
       </p>
     </div>
     <div class="loading" v-else-if="loading">
-      <progress-bar progress=".1" />
+      <progress-bar progress="0" />
     </div>
     <div class="share-code" v-else-if="shareCode">
       <ftb-input :value="shareCode" label="Your share code" :disabled="true" />

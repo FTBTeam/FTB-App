@@ -8,11 +8,7 @@
   >
     <div class="installer" v-if="installer">
       <div class="about">
-        <img
-          :src="`${installer.meta.art ? installer.meta.art : '@/assets/placeholder_art.png'}`"
-          class="logo"
-          alt="Pack artwork"
-        />
+        <img :src="`${art}`" class="logo" alt="Pack artwork" />
         <div class="info">
           <div class="name text-lg font-bold">{{ installer.meta.name }}</div>
           <div class="version">{{ installer.meta.version }}</div>
@@ -55,6 +51,7 @@ import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import eventBus from '@/utils/event-bus';
 import { Action, Getter } from 'vuex-class';
 import { InstallerState } from '@/modules/app/appStore.types';
+import placeholderArt from '@/assets/placeholder_art.png';
 
 @Component({
   components: {
@@ -181,6 +178,10 @@ export default class Installer extends Vue {
 
   destroyed() {
     eventBus.$off('ws.message');
+  }
+
+  get art() {
+    return this.installer?.meta.art ? this.installer?.meta.art : placeholderArt;
   }
 }
 </script>
