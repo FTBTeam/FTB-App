@@ -79,8 +79,8 @@ import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
-import { wsTimeoutWrapper, wsTimeoutWrapperTyped } from '@/utils';
-import { InstallingState } from '@/modules/app/appStore.types';
+import { wsTimeoutWrapperTyped } from '@/utils';
+import { InstallerState } from '@/modules/app/appStore.types';
 
 @Component({
   components: {
@@ -95,7 +95,7 @@ export default class Library extends Vue {
   @Getter('packsCache', { namespace: 'modpacks' }) public packsCache!: ModPack[];
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (id: number) => Promise<ModPack>;
   @Action('sendMessage') public sendMessage!: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallingState) => void;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   private searchTerm: string = '';
   private isLoaded: boolean = false;
@@ -151,12 +151,11 @@ export default class Library extends Vue {
     }
 
     this.useShareCode = false;
-    await wsTimeoutWrapper({
-      type: 'installInstance',
-      shareCode: this.shareCode,
-    });
 
     this.installModpack({
+      pack: {
+        shareCode: this.shareCode,
+      },
       meta: {
         name: 'Shared pack',
         version: this.shareCode,

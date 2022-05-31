@@ -1,5 +1,5 @@
 <template>
-  <div class="installer-page px-6 py-4"></div>
+  <div class="installer-page px-6 py-4">You shouldn't be here...</div>
   <!--  <div class="flex flex-1 flex-col h-full overflow-hidden">-->
   <!--    <div-->
   <!--      class="flex flex-col h-full"-->

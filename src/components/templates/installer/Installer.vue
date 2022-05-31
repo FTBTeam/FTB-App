@@ -1,17 +1,21 @@
 <template>
   <modal
-    :open="installingPack"
-    :title="`${error ? 'Install failed' : 'Installing Modpack'}`"
+    :open="installer"
+    :title="`${error ? 'Install failed' : completed ? `Modpack installed!` : 'Installing Modpack'}`"
     :subTitle="`${error ? 'Somethings gone wrong during the install...' : ''}`"
     :permanent="!error"
     @closed="closed"
   >
-    <div class="installer" v-if="installingPack">
+    <div class="installer" v-if="installer">
       <div class="about">
-        <img src="@/assets/placeholder_art.png" class="logo" alt="Pack artwork" />
+        <img
+          :src="`${installer.meta.art ? installer.meta.art : '@/assets/placeholder_art.png'}`"
+          class="logo"
+          alt="Pack artwork"
+        />
         <div class="info">
-          <div class="name text-lg font-bold">{{ installingPack.meta.name }}</div>
-          <div class="version">{{ installingPack.meta.version }}</div>
+          <div class="name text-lg font-bold">{{ installer.meta.name }}</div>
+          <div class="version">{{ installer.meta.version }}</div>
         </div>
       </div>
 
@@ -31,11 +35,7 @@
         </div>
       </template>
       <template v-else-if="completed && !error">
-        <ftb-button
-          class="py-2 px-4 mt-2 text-center float-right"
-          color="primary"
-          css-class="text-center text-l"
-          @click="() => navigateToInstance()"
+        <ftb-button class="py-3 px-4 mt-10 text-center w-full" color="primary" @click="() => navigateToInstance()"
           >Go to Instance</ftb-button
         >
       </template>
@@ -54,7 +54,7 @@ import Vue from 'vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import eventBus from '@/utils/event-bus';
 import { Action, Getter } from 'vuex-class';
-import { InstallingState } from '@/modules/app/appStore.types';
+import { InstallerState } from '@/modules/app/appStore.types';
 
 @Component({
   components: {
@@ -65,8 +65,8 @@ export default class Installer extends Vue {
   @Action('sendMessage') public sendMessage!: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
 
-  @Getter('installingPack', { namespace: 'app' }) public installingPack!: InstallingState | null;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallingState | null) => void;
+  @Getter('installer', { namespace: 'app' }) public installer!: InstallerState | null;
+  @Action('clearInstaller', { namespace: 'app' }) public clearInstaller!: () => void;
 
   tidyNameMap = new Map([
     ['init', 'Setting up installer'],
@@ -156,12 +156,12 @@ export default class Installer extends Vue {
   }
 
   navigateToInstance() {
+    this.closed();
+
     this.$router.push({
       name: 'instancepage',
       query: { uuid: this.completedUuid },
     });
-
-    this.cleanUp();
   }
 
   cleanUp() {
@@ -176,7 +176,7 @@ export default class Installer extends Vue {
 
   closed() {
     this.cleanUp();
-    this.installModpack(null);
+    this.clearInstaller();
   }
 
   destroyed() {

@@ -23,7 +23,7 @@
         <pack-body
           v-if="!this.searchingForMods"
           @mainAction="launchModPack()"
-          @update="update()"
+          @update="update"
           @tabChange="(e) => (activeTab = e)"
           @showVersion="showVersions = true"
           @searchForMods="searchingForMods = true"
@@ -90,6 +90,8 @@ import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
+import { InstallerState } from '@/modules/app/appStore.types';
+import { getPackArt } from '@/utils';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -132,6 +134,7 @@ export default class InstancePage extends Vue {
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   packLoading = false;
 
@@ -202,20 +205,35 @@ export default class InstancePage extends Vue {
     });
   }
 
-  public update(versionID?: number): void {
-    if (this.modpacks?.installing !== null) {
-      return;
-    }
-    const modpackID = this.instance?.id;
-    if (this.modpacks != null && this.packInstance != null) {
-      if (versionID === undefined && this.packInstance.kind === 'modpack') {
-        versionID = this.packInstance.versions[0].id;
-      }
-      this.$router.replace({
-        name: RouterNames.ROOT_INSTALL_PACK,
-        query: { modpackid: modpackID?.toString(), versionID: versionID?.toString(), uuid: this.instance?.uuid },
-      });
-    }
+  public update(): void {
+    const versionID = this.packInstance?.versions[0].id;
+
+    this.installModpack({
+      pack: {
+        uuid: this.instance?.uuid,
+        id: this.instance?.id,
+        version: versionID,
+        packType: this.instance?.packType,
+      },
+      meta: {
+        name: this.instance?.name ?? '',
+        version: this.packInstance?.versions[0].name ?? '',
+        art: getPackArt(this.instance?.art),
+      },
+    });
+    // if (this.modpacks?.installing !== null) {
+    //   return;
+    // }
+    // const modpackID = this.instance?.id;
+    // if (this.modpacks != null && this.packInstance != null) {
+    //   if (versionID === undefined && this.packInstance.kind === 'modpack') {
+    //     versionID = this.packInstance.versions[0].id;
+    //   }
+    //   this.$router.replace({
+    //     name: RouterNames.ROOT_INSTALL_PACK,
+    //     query: { modpackid: modpackID?.toString(), versionID: versionID?.toString(), uuid: this.instance?.uuid },
+    //   });
+    // }
   }
 
   public hideMsgBox(): void {

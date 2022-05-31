@@ -27,9 +27,7 @@
         </div>
       </div>
     </div>
-    <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
-      <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />
-    </FTBModal>
+
     <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox" :dismissable="true">
       <message-modal
         :title="msgBox.title"
@@ -253,16 +251,16 @@ export default class PackCard extends Vue {
     );
   }
 
-  public install(version: number): void {
-    if (this.modpacks.installing !== null) {
-      return;
-    }
-    this.$router.replace({
-      name: 'installingpage',
-      query: { modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type },
-    });
-    this.showInstall = false;
-  }
+  // public install(version: number): void {
+  //   if (this.modpacks.installing !== null) {
+  //     return;
+  //   }
+  //   this.$router.replace({
+  //     name: 'installingpage',
+  //     query: { modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type },
+  //   });
+  //   this.showInstall = false;
+  // }
 
   public deleteInstace(): void {
     this.sendMessage({

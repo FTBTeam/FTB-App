@@ -1,6 +1,8 @@
 // jacked from: https://github.com/sindresorhus/pretty-bytes
 // Jank = rushmead
 import store from '@/modules/store';
+// @ts-ignore
+import placeholderImage from '@/assets/placeholder_art.png';
 
 export const prettyByteFormat = (bytes: number) => {
   if (isNaN(bytes)) {
@@ -30,6 +32,15 @@ export const prettyByteFormat = (bytes: number) => {
 
 export const addHyphensToUuid = (uuid: string) => {
   return uuid?.replace(/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/, '$1-$2-$3-$4-$5') ?? '';
+};
+
+export const getPackArt = (packArt: any) => {
+  if (typeof packArt === 'string') return packArt;
+  let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
+  if (artP === undefined) {
+    return placeholderImage;
+  }
+  return artP.url;
 };
 
 /**

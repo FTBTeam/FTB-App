@@ -139,9 +139,9 @@ import * as placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
-import { logVerbose, wsTimeoutWrapper } from '@/utils';
+import { logVerbose } from '@/utils';
 import { RouterNames } from '@/router';
-import { InstallingState } from '@/modules/app/appStore.types';
+import { InstallerState } from '@/modules/app/appStore.types';
 
 export interface MsgBox {
   title: string;
@@ -196,7 +196,7 @@ export default class PackCardList extends Vue {
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
   @State('settings') public settingsState!: SettingsState;
   @Action('doSearch', { namespace: 'modpacks' }) public doSearch: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallingState) => void;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   public name!: string;
   @Prop() public instance!: Instance;
@@ -332,22 +332,20 @@ export default class PackCardList extends Vue {
     );
   }
 
-  public async install(version: number): void {
+  public async install(version: number, versionName: string): Promise<void> {
     if (this.modpacks.installing !== null) {
       return;
     }
 
-    await wsTimeoutWrapper({
-      type: 'installInstance',
-      id: this.$props.packID,
-      version: version,
-      packType: this.$props.type,
-    });
-
     this.installModpack({
+      pack: {
+        id: this.$props.packID,
+        version: version,
+        packType: this.$props.type,
+      },
       meta: {
         name: this.$props.name,
-        version: '',
+        version: versionName,
         art: this.getLogo(this.$props.art),
       },
     });

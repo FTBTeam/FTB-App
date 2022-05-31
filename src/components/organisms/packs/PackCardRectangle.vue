@@ -74,7 +74,9 @@ import InformationModal from '@/components/organisms/modals/InformationModal.vue
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
-import { Instance, ModpackState } from '../../../modules/modpacks/types';
+import { Instance, ModpackState } from '@/modules/modpacks/types';
+import { InstallerState } from '@/modules/app/appStore.types';
+import { getPackArt } from '@/utils';
 
 @Component({
   components: {
@@ -107,6 +109,7 @@ export default class PackCard extends Vue {
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
   @Action('errorInstall', { namespace: 'modpacks' }) public errorInstall: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   @Prop() public instance!: Instance;
 
@@ -121,17 +124,28 @@ export default class PackCard extends Vue {
     );
   }
 
-  public install(version: number): void {
+  public install(version: number, versionName: string): void {
     this.showInstall = false;
-
-    this.$router.replace({
-      name: 'installingpage',
-      query: {
-        modpackid: this.instance.id.toString(),
-        versionID: version.toString(),
-        type: this.instance.packType.toString(),
+    this.installModpack({
+      pack: {
+        id: this.instance.id,
+        version: version,
+        packType: this.instance.packType,
+      },
+      meta: {
+        name: this.$props.name,
+        version: versionName,
+        art: getPackArt(this.instance?.art),
       },
     });
+    // this.$router.replace({
+    //   name: 'installingpage',
+    //   query: {
+    //     modpackid: this.instance.id.toString(),
+    //     versionID: version.toString(),
+    //     type: this.instance.packType.toString(),
+    //   },
+    // });
     // this.updateInstall({ modpackID: this.$props.packID, progress: 0 });
     // this.sendMessage({
     //   payload: { type: 'installInstance', id: this.$props.packID, version },

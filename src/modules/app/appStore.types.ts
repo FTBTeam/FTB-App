@@ -3,7 +3,8 @@ export enum AppStoreMutations {
   INSTALL_PACK = 'installPack',
 }
 
-export type InstallingState = {
+export type InstallerState = {
+  pack: InstallerRequest;
   meta: {
     art?: string;
     name: string;
@@ -11,9 +12,18 @@ export type InstallingState = {
   };
 };
 
+export type InstallerRequest = {
+  uuid?: string;
+  id?: string | number;
+  version?: string | number;
+  shareCode?: string;
+  private?: string;
+  packType?: string | number; // 0 = modpackch | 1 = curseforge
+};
+
 export type AppStoreState = {
   pack: {
     currentlyRunning: string | null;
   };
-  installing: InstallingState | null;
+  installer: InstallerState | null;
 };
