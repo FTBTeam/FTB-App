@@ -41,14 +41,14 @@ const appSetup = async () => {
   if (process.env.NODE_ENV === 'production') {
     Sentry.init({
       Vue,
-      environment: process.env.NODE_ENV,
+      environment: process.env.VUE_APP_PLATFORM,
       dsn: process.env.VUE_APP_SENTRY_DSN,
       integrations: [
         new BrowserTracing({
           routingInstrumentation: Sentry.vueRouterInstrumentation(router),
         }),
       ],
-      release: platform.get.config.appVersion,
+      release: `${platform.get.config.appVersion}-${process.env.VUE_APP_PLATFORM}`,
       initialScope: {
         tags: {
           'release.vue': platform.get.config.webVersion,
