@@ -129,6 +129,7 @@ const appSetup = async () => {
   Vue.component('ftb-input', FTBInput);
   Vue.component('popover', Popover);
   Vue.component('modal', Modal);
+  Vue.component('message', Message);
 
   Vue.config.productionTip = false;
   Vue.config.devtools = true;
