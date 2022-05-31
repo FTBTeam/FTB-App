@@ -58,7 +58,8 @@ public class Mod {
             ArrayList<Version> dependTemp = new ArrayList<>();
             dependLoop:
             for (Dependency dependInt: dependencies) {
-                if(!dependInt.required) continue;
+                if (!dependInt.required) continue;
+                if (existingFiles.stream().anyMatch((ModFile f) -> f.getCurseProject() == dependInt.id)) continue;
                 for(Version candVer: fileCandidates) {
                     if (candVer.parentMod.id == dependInt.id) {
                         continue dependLoop;

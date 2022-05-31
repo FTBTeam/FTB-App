@@ -9,6 +9,7 @@ import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ public class Instances
         return true;
     }
 
+    @Nullable
     public static LocalInstance getInstance(UUID uuid)
     {
         return Instances.instances.get(uuid);
@@ -69,7 +71,7 @@ public class Instances
                     .filter(e -> !e.getFileName().toString().startsWith("."))
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
             instances = loadedInstances.stream().collect(Collectors.toMap(LocalInstance::getUuid, Function.identity()));
             LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
         }
@@ -101,19 +103,18 @@ public class Instances
     private static LocalInstance loadInstance(Path path) {
         Path json = path.resolve("instance.json");
         if (Files.notExists(json)) {
-            LOGGER.error("Instance missing 'instance.json', Ignoring. {}", json.toAbsolutePath());
+            LOGGER.warn("Instance missing 'instance.json', Ignoring. {}", json.toAbsolutePath());
             return null;
         }
         try {
             LocalInstance localInstance = new LocalInstance(path);
             if (!localInstance.installComplete) {
-                LOGGER.error("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
+                LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
                 return null;
             }
             return localInstance;
         } catch(Exception e) {
-            LOGGER.error("Instance has corrupted 'instance.json'. {}", json.toAbsolutePath());
-            LOGGER.error(e);
+            LOGGER.error("Failed to load instance: {}", json.toAbsolutePath(), e);
             return null;
         }
     }

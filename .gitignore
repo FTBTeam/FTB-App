@@ -27,6 +27,7 @@ electron.log
 #Electron-builder output
 /dist_electron
 release/
+/subprocess/storage
 
 public/version.json
 licenses.json

@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.api;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.IntegrityCheckException;
 import net.creeperhost.creeperlauncher.install.tasks.http.DownloadedFile;
@@ -54,6 +55,7 @@ public class DownloadableFile
         if (this.downloadUrl.length() > 10) {
             URL url = new URL(downloadUrl.replace(" ", "%20"));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", Constants.USER_AGENT);
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(15000);
             connection.setReadTimeout(25000);
@@ -80,6 +82,7 @@ public class DownloadableFile
                     connection.disconnect();
                     URL _url = new URL(origin.replace(" ", "%20"));
                     connection = (HttpURLConnection) _url.openConnection();
+                    connection.setRequestProperty("User-Agent", Constants.USER_AGENT);
                     connection.setRequestMethod("HEAD");
                     connection.setConnectTimeout(15000);
                     connection.setReadTimeout(25000);

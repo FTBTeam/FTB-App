@@ -58,6 +58,7 @@ public class DownloadUtils
                         connection.addRequestProperty("USER_SECRET", Constants.SECRET);
                     }
                 }
+                connection.setRequestProperty("User-Agent", Constants.USER_AGENT);
                 connection.setConnectTimeout(5000);
                 connection.setReadTimeout(5000);
                 if (connection instanceof HttpURLConnection)

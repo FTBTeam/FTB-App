@@ -81,13 +81,13 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
                 String sha1 = HashUtils.hash(Hashing.sha1(), libraryPath).toString();
 
                 if (!library.checksums.contains(sha1)) {
-                    LOGGER.error("Failed to validate checksums of library {}. Expected one of {}. Got: {}",
+                    LOGGER.warn("Failed to validate checksums of library {}. Expected one of {}. Got: {}",
                             library.name,
                             library.checksums,
                             sha1
                     );
                     // Some libraries in older v1 installers have changed. (scala iirc), just ignore these errors for now.
-                    LOGGER.error("Continuing anyway..");
+                    LOGGER.warn("Continuing anyway..");
                 }
             }
 

@@ -4,9 +4,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.install4j.api.launcher.ApplicationLauncher;
 import com.install4j.api.update.UpdateChecker;
+import io.sentry.Sentry;
+import io.sentry.log4j2.BuildConfig;
+import io.sentry.protocol.SdkVersion;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
+import net.covers1624.quack.platform.Architecture;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
@@ -39,6 +43,37 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CreeperLauncher {
+
+    // Yes, second static block, this will run before Log4j is initialized.
+    // Must be here so Sentry doesn't re-configure itself twice and bork the appender.
+    static {
+
+        // noinspection ConstantConditions,MismatchedStringCase
+        if (Constants.SENTRY_DSN.startsWith("https")) {
+            Sentry.init(opts -> {
+                opts.setDsn(Constants.SENTRY_DSN);
+
+                // Yoinked from SentryAppender. There exists no way to configure attachServerName from system properties. We must init sentry manually.
+                // Ideally I'd just want to set the sentry properties file and let log4j auto initialize it.
+                opts.setSentryClientName(BuildConfig.SENTRY_LOG4J2_SDK_NAME);
+                SdkVersion sdkVersion = SdkVersion.updateSdkVersion(opts.getSdkVersion(), BuildConfig.SENTRY_LOG4J2_SDK_NAME, BuildConfig.VERSION_NAME);
+                sdkVersion.addPackage("maven:io.sentry:sentry-log4j2", BuildConfig.VERSION_NAME);
+                //noinspection UnstableApiUsage
+                opts.setSdkVersion(sdkVersion);
+                // End Yoinked from SentryAppender.
+
+                opts.setAttachServerName(false);
+                opts.setEnableUncaughtExceptionHandler(true);
+                opts.setRelease(Constants.APPVERSION);
+                opts.setTag("branch", Constants.BRANCH);
+                opts.setTag("platform", Constants.PLATFORM);
+                opts.setTag("os.name", System.getProperty("os.name"));
+                opts.setTag("os.version", System.getProperty("os.version"));
+                opts.setTag("os.arch", Architecture.current().name());
+            });
+        }
+    }
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final Object DIE_LOCK = new Object();
@@ -91,7 +126,7 @@ public class CreeperLauncher {
     public static void main(String[] args) {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
-        
+
         System.out.println(Constants.LIB_SIGNATURE);
         // Construct immediately to properly detect the version.
         MigrationManager migrationManager = new MigrationManager();
@@ -521,7 +556,7 @@ public class CreeperLauncher {
             try {
                 LOGGER.info("Starting Electron: " + String.join(" ", args));
                 elect = app.start();
-                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::error);
+                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::warn);
                 StreamGobblerLog.redirectToLogger(elect.getInputStream(), LOGGER::info);
             } catch (IOException e) {
                 LOGGER.error("Error starting Electron: ", e);
@@ -538,9 +573,9 @@ public class CreeperLauncher {
             if (Settings.webSocketAPI != null) {
                 Settings.webSocketAPI.stop();
             }
-            
+
             closeSockets();
-            
+
             if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled() && CreeperLauncher.mtConnect.isConnected()) {
                 CreeperLauncher.mtConnect.disconnect();
             }
@@ -550,7 +585,7 @@ public class CreeperLauncher {
 
         Settings.saveSettings();
     }
-    
+
     public static void exit() {
         cleanUpBeforeExit();
         System.exit(0);

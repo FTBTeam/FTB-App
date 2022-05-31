@@ -22,8 +22,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Constants {
-
-    private static final Logger LOGGER = LogManager.getLogger();
+    // Don't put a Logger in this class, it is called before log4j can be initialized.
+    // Adding a logger will break sentry!
 
     //CWD
     public static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
@@ -69,8 +69,8 @@ public class Constants {
     public static final int WEBSOCKET_PORT = 13377;
     public static final String APPVERSION = "@APPVERSION@";
     public static final String BRANCH = "@BRANCH@";
+    public static final String SENTRY_DSN = "@SENTRY@";
     public static final String PLATFORM = WORKING_DIR.toAbsolutePath().toString().contains("Overwolf") ? "Overwolf" : "Electron";
-    // TODO, can this be FTBApp instead of 'modpacklauncher'? Does the API rely on this user agent string?
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
@@ -81,6 +81,7 @@ public class Constants {
             .cookieJar(new SimpleCookieJar())
             .addInterceptor(new ThrottlerInterceptor())
             .addInterceptor(new MultiHasherInterceptor())
+            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().removeHeader("User-Agent").addHeader("User-Agent", USER_AGENT).build()))
             .build();
 
     public static JdkInstallationManager JDK_INSTALL_MANAGER = new JdkInstallationManager(

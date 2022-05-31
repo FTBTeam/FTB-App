@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.accounts.authentication;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
@@ -25,7 +26,7 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
 
     private static final Request.Builder BASIC_REQUEST = new Request.Builder()
             .addHeader("Content-Type", "application/json")
-            .addHeader("User-Agent", "FTB App Subprocess/1.0")
+            .addHeader("User-Agent", Constants.USER_AGENT)
             .addHeader("Accept", "application/json");
 
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder().build();

@@ -3,6 +3,7 @@ import store from '@/modules/store';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
+import os from 'os';
 
 declare global {
   var overwolf: any;
@@ -36,6 +37,16 @@ const Overwolf: ElectronOverwolfInterface = {
   utils: {
     openUrl(url: string) {
       overwolf.utils.openUrlInDefaultBrowser(url);
+    },
+
+    getOsArch() {
+      return os.arch();
+    },
+
+    async getPlatformVersion() {
+      return new Promise((resolve) => {
+        overwolf.extensions.current.getManifest((app: any) => resolve(app.meta.version));
+      });
     },
   },
 
