@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.util.DataUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.creeperhost.creeperlauncher.Constants;
@@ -211,11 +212,19 @@ public class InstanceSharer extends InstanceOperation {
         MultipartBody.Builder postBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", "manifest.json", bodyOf(manifestJson));
+        long totalSize = 0;
         for (IndexedFile file : StreamableIterable.of(actions).filter(e -> e.action != Action.REMOVED).map(FileAction::file)) {
             assert file.sha1() != null;
 
-            postBody.addFormDataPart("file", file.path().replace('/', '_'), bodyOf(instance.getDir().resolve(file.path())));
+            Path filePath = instance.getDir().resolve(file.path());
+            postBody.addFormDataPart("file", file.path().replace('/', '_'), bodyOf(filePath));
+            try {
+                totalSize += Files.size(filePath);
+            } catch (IOException ex) {
+                LOGGER.warn("Could not get size of {}", filePath);
+            }
         }
+        LOGGER.info("Total upload size: {}", DataUtils.humanSize(totalSize));
         Request.Builder requestBuilder = new Request.Builder()
                 .url(Constants.TRANSFER_HOST)
                 .post(postBody.build());
