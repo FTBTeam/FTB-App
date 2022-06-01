@@ -5,6 +5,7 @@ import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import net.creeperhost.creeperlauncher.data.modpack.ShareManifest;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
@@ -58,23 +59,23 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 String code = data.shareCode;
                 ModpackManifest modpackManifest;
                 ModpackVersionManifest versionManifest;
-                boolean isPrivate = false;
-                byte packType = 0;
+                boolean isPrivate;
+                byte packType;
                 if (data.shareCode != null) {
-                    versionManifest = ModpackVersionManifest.queryManifest(Constants.TRANSFER_HOST + code + "/version.json");
-                    if (versionManifest == null) {
+                    ShareManifest shareManifest = ShareManifest.queryManifest(Constants.TRANSFER_HOST + code + "/manifest.json");
+                    if (shareManifest == null) {
                         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Unable to download manifest for '" + code + "', Share code may have expired.", null));
                         clearInstallState();
                         return;
                     }
+                    versionManifest = shareManifest.getVersionManifest();
+                    isPrivate = shareManifest.getType() == ShareManifest.Type.PRIVATE;
+                    packType = shareManifest.getType() == ShareManifest.Type.CURSE ? (byte) 1 : 0;
 
-                    // TODO Sharing private packs is currently undefined, not sure how we should handle this.
-                    //       Likely need to save a metadata file on the share to expose if the pack is private and if its is a curse pack
-                    //       Similar logic will be needed for imported packs.
                     modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), isPrivate, packType);
-//                    if (modpackManifest == null) {
-//                        modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), !isPrivate, packType);
-//                    }
+                    if (modpackManifest == null) {
+                        modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), !isPrivate, packType);
+                    }
 
                     if (modpackManifest == null) {
                         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Unable to determine modpack for '" + code + "'.", null));

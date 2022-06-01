@@ -1,10 +1,10 @@
 package net.creeperhost.creeperlauncher.instance;
 
-import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.ColUtils;
+import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
@@ -13,6 +13,7 @@ import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
+import net.creeperhost.creeperlauncher.data.modpack.ShareManifest;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import okhttp3.*;
@@ -58,9 +59,7 @@ public class InstanceSharer extends InstanceOperation {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("InstanceShareUploader.debug");
 
-    private final List<IndexedFile> untrackedFiles = new LinkedList<>();
-    private final List<IndexedFile> modifiedFiles = new LinkedList<>();
-    private final List<IndexedFile> removedFiles = new LinkedList<>();
+    private final List<FileAction> actions = new LinkedList<>();
 
     public InstanceSharer(LocalInstance instance) {
         super(instance, instance.versionManifest);
@@ -71,17 +70,9 @@ public class InstanceSharer extends InstanceOperation {
         locateModifiedFiles();
 
         if (DEBUG) {
-            LOGGER.info("Found the following removed files:");
-            for (IndexedFile removedFile : removedFiles) {
-                LOGGER.info("    " + removedFile.path());
-            }
-            LOGGER.info("Found the following modified files:");
-            for (IndexedFile modifiedFile : modifiedFiles) {
-                LOGGER.info("    " + modifiedFile.path());
-            }
-            LOGGER.info("Found the following untrakced files:");
-            for (IndexedFile untrackedFile : untrackedFiles) {
-                LOGGER.info("    " + untrackedFile.path());
+            LOGGER.info("Actions: ");
+            for (FileAction fileAction : actions) {
+                LOGGER.info("{}: {}", fileAction.action, fileAction.file.path());
             }
         }
     }
@@ -90,51 +81,61 @@ public class InstanceSharer extends InstanceOperation {
         ModpackVersionManifest manifest = this.manifest.copy();
         List<ModpackFile> modpackFiles = manifest.getFiles();
 
-        // TODO generify the outer loop of all of these to a 'FileAction'
-        // Apply removals.
-        for (IndexedFile removedFile : removedFiles) {
-            Iterator<ModpackFile> itr = modpackFiles.iterator();
-            while (itr.hasNext()) {
-                if (itr.next().instanceRelPath().equals(removedFile.path())) {
-                    itr.remove();
-                    break;
+        for (FileAction fileAction : actions) {
+            IndexedFile indexedFile = fileAction.file;
+            switch (fileAction.action) {
+                case REMOVED -> {
+                    Iterator<ModpackFile> itr = modpackFiles.iterator();
+                    while (itr.hasNext()) {
+                        if (itr.next().instanceRelPath().equals(indexedFile.path())) {
+                            itr.remove();
+                            break;
+                        }
+                    }
+                }
+                case MODIFIED -> {
+                    assert indexedFile.sha1() != null;
+                    for (ModpackFile file : modpackFiles) {
+                        if (file.instanceRelPath().equals(indexedFile.path())) {
+                            file.setUrl(Constants.TRANSFER_HOST + "${token}/" + indexedFile.path().replace("/", "_"));
+                            file.setSize(indexedFile.length());
+                            file.setSha1(indexedFile.sha1());
+                            break;
+                        }
+                    }
+                }
+                case UNTRACKED -> {
+                    assert indexedFile.sha1() != null;
+                    modpackFiles.add(new ModpackFile(
+                            -1,
+                            "./" + FilenameUtils.getFullPath(indexedFile.path()),
+                            FilenameUtils.getName(indexedFile.path()),
+                            Constants.TRANSFER_HOST + "${token}/" + indexedFile.path().replace("/", "_"),
+                            indexedFile.sha1(),
+                            indexedFile.length(),
+                            "shared_file" // Not reasonable to reconstruct the correct type here.
+                    ));
                 }
             }
         }
+        ShareManifest.Type type = instance.packType == 1 ? ShareManifest.Type.CURSE :
+                instance._private ? ShareManifest.Type.PRIVATE : ShareManifest.Type.PUBLIC;
+        String name = null; // TODO imported.
+        long modpackId = instance.getId();
 
-        // Apply modifications.
-        for (IndexedFile modifiedFile : modifiedFiles) {
-            assert modifiedFile.sha1() != null;
-            for (ModpackFile file : modpackFiles) {
-                if (file.instanceRelPath().equals(modifiedFile.path())) {
-                    file.setUrl(Constants.TRANSFER_HOST + "${token}/" + modifiedFile.path().replace("/", "_"));
-                    file.setSize(modifiedFile.length());
-                    file.setSha1(modifiedFile.sha1());
-                    break;
-                }
-            }
-        }
-
-        // Add Untracked files.
-        for (IndexedFile file : untrackedFiles) {
-            assert file.sha1() != null;
-
-            modpackFiles.add(new ModpackFile(
-                    -1,
-                    "./" + FilenameUtils.getFullPath(file.path()),
-                    FilenameUtils.getName(file.path()),
-                    Constants.TRANSFER_HOST + "${token}/" + file.path().replace("/", "_"),
-                    file.sha1(),
-                    file.length(),
-                    "shared_file" // Not reasonable to reconstruct the correct type here.
-            ));
-        }
 
         Path versionFile;
         try {
-            String versionJson = ModpackVersionManifest.GSON.toJson(manifest);
-            versionFile = Files.createTempFile("version", ".json");
-            Files.writeString(versionFile, versionJson, StandardCharsets.UTF_8);
+
+            ShareManifest shareManifest;
+            if (modpackId != -1) {
+                shareManifest = new ShareManifest(modpackId, type, manifest);
+            } else {
+                shareManifest = new ShareManifest(name, type, manifest);
+            }
+            String manifestJson = ShareManifest.GSON.toJson(shareManifest);
+            versionFile = Files.createTempFile("manifest", ".json");
+            Files.writeString(versionFile, manifestJson, StandardCharsets.UTF_8);
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to create temp file for version.json");
         }
@@ -156,7 +157,7 @@ public class InstanceSharer extends InstanceOperation {
                 if (shouldSkipFile(relPath.toLowerCase(Locale.ROOT))) continue; // Skip these files too.
                 if (knownFiles.containsKey(relPath)) continue; // File is known.
 
-                untrackedFiles.add(new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
+                actions.add(new FileAction(Action.UNTRACKED, new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path))));
             }
         } catch (IOException ex) {
             throw new IllegalStateException("An IO error occurred whilst locating untracked files.", ex);
@@ -178,7 +179,7 @@ public class InstanceSharer extends InstanceOperation {
             Path file = instance.getDir().resolve(entry.getKey());
             IndexedFile modpackFile = entry.getValue();
             if (Files.notExists(file)) {
-                removedFiles.add(modpackFile);
+                actions.add(new FileAction(Action.REMOVED, modpackFile));
                 continue;
             }
 
@@ -188,11 +189,11 @@ public class InstanceSharer extends InstanceOperation {
                 hasher.load(file);
                 MultiHasher.HashResult result = hasher.finish();
                 if (!validation.validate(file, result)) {
-                    modifiedFiles.add(new IndexedFile(
+                    actions.add(new FileAction(Action.MODIFIED, new IndexedFile(
                             modpackFile.path(),
                             result.get(MultiHasher.HashFunc.SHA1),
                             Files.size(file)
-                    ));
+                    )));
                 }
             } catch (IOException ex) {
                 throw new IllegalStateException("Failed to validate file '" + file + "'.", ex);
@@ -200,11 +201,17 @@ public class InstanceSharer extends InstanceOperation {
         }
     }
 
-    private String uploadFiles(Path versionJson) {
+    @Nullable
+    @Override
+    protected Path getCFOverridesZip(ModpackVersionManifest manifest) {
+        return null; // We don't operate like this.
+    }
+
+    private String uploadFiles(Path manifestJson) {
         MultipartBody.Builder postBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("file", "version.json", bodyOf(versionJson));
-        for (IndexedFile file : Iterables.concat(modifiedFiles, untrackedFiles)) {
+                .addFormDataPart("file", "manifest.json", bodyOf(manifestJson));
+        for (IndexedFile file : StreamableIterable.of(actions).filter(e -> e.action != Action.REMOVED).map(FileAction::file)) {
             assert file.sha1() != null;
 
             postBody.addFormDataPart("file", file.path().replace('/', '_'), bodyOf(instance.getDir().resolve(file.path())));
@@ -233,6 +240,12 @@ public class InstanceSharer extends InstanceOperation {
             }
         } catch (IOException ex) {
             throw new IllegalStateException("An IO error occurred whilst uploading pack.", ex);
+        } finally {
+            try {
+                Files.delete(manifestJson);
+            } catch (IOException ex) {
+                LOGGER.error("Failed to cleanup temporary manifest file: {}", manifestJson, ex);
+            }
         }
     }
 
@@ -313,4 +326,12 @@ public class InstanceSharer extends InstanceOperation {
     }
 
     private record JoinServerResult(String username, String serverId) { }
+
+    private enum Action {
+        REMOVED,
+        MODIFIED,
+        UNTRACKED,
+    }
+
+    private record FileAction(Action action, IndexedFile file) { }
 }
