@@ -43,12 +43,12 @@ public class Constants {
     //API
     public static final String CREEPERHOST_MODPACK = CreeperLauncher.isDevMode ? "https://modpack-api.ch.tools" : "https://api.modpacks.ch";
     public static final String CREEPERHOST_MODPACK_SEARCH2 = CREEPERHOST_MODPACK + "/public/modpack/";
-    public static final String SHARE_API = CREEPERHOST_MODPACK + Constants.KEY + "/modpack/share/";
     public static final String MOD_API = CREEPERHOST_MODPACK + "/public/mod/";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
     public static final String MC_JSONS = "https://apps.modpacks.ch/versions/minecraftjsons/";
 
+    public static final String UPLOAD_TRANSFER_HOST = "https://upload.share.modpacks.ch/";
     public static final String TRANSFER_HOST = "https://share.modpacks.ch/";
 
     //Forge

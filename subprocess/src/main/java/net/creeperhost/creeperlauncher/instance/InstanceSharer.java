@@ -226,7 +226,7 @@ public class InstanceSharer extends InstanceOperation {
         }
         LOGGER.info("Total upload size: {}", DataUtils.humanSize(totalSize));
         Request.Builder requestBuilder = new Request.Builder()
-                .url(Constants.TRANSFER_HOST)
+                .url(Constants.UPLOAD_TRANSFER_HOST)
                 .post(postBody.build());
 
         JoinServerResult joinServerResult = joinServer();
