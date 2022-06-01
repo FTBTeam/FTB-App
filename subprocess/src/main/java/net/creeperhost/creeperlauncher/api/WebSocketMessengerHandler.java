@@ -75,6 +75,7 @@ public class WebSocketMessengerHandler
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
+        register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());

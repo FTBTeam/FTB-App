@@ -178,7 +178,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     @Nullable
-    private static Pair<ModpackManifest, ModpackVersionManifest> prepareCurseImport(Path curseZip) throws IOException {
+    public static Pair<ModpackManifest, ModpackVersionManifest> prepareCurseImport(Path curseZip) throws IOException {
         ModpackVersionManifest versionManifest;
         try (FileSystem fs = IOUtils.getJarFileSystem(curseZip, true)) {
             Path manifestJson = fs.getPath("/manifest.json");
