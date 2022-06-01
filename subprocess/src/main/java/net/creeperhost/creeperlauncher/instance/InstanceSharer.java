@@ -124,7 +124,8 @@ public class InstanceSharer extends InstanceOperation {
                     FilenameUtils.getName(file.path()),
                     Constants.TRANSFER_HOST + "${token}/" + file.path().replace("/", "_"),
                     file.sha1(),
-                    file.length()
+                    file.length(),
+                    "shared_file" // Not reasonable to reconstruct the correct type here.
             ));
         }
 
