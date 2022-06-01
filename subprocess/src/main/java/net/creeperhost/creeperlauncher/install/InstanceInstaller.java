@@ -204,6 +204,7 @@ public class InstanceInstaller extends InstanceOperation {
 
     public void execute() throws InstallationFailureException {
         try {
+            LOGGER.info("Removing files..");
             for (Path path : filesToRemove) {
                 try {
                     Files.deleteIfExists(path);
@@ -214,6 +215,7 @@ public class InstanceInstaller extends InstanceOperation {
 
             tracker.nextStage(InstallStage.MODLOADER);
             if (modLoaderInstallTask != null) {
+                LOGGER.info("Installing ModLoader..");
                 modLoaderInstallTask.execute(cancelToken, null);
                 instance.modLoader = modLoaderInstallTask.getResult();
             } else {
@@ -221,6 +223,7 @@ public class InstanceInstaller extends InstanceOperation {
                 instance.modLoader = manifest.getTargetVersion("game");
             }
 
+            LOGGER.info("Downloading new files.");
             tracker.nextStage(InstallStage.DOWNLOADS);
             long totalSize = tasks.stream()
                     .mapToLong(e -> e.size)
@@ -235,6 +238,7 @@ public class InstanceInstaller extends InstanceOperation {
 
             Path cfOverrides = getCFOverridesZip(manifest);
             if (cfOverrides != null) {
+                LOGGER.info("Extracting CurseForge overrides.");
                 try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
                     Path root = fs.getPath("/overrides/");
                     Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
@@ -253,6 +257,7 @@ public class InstanceInstaller extends InstanceOperation {
                 throw new InstallationFailureException("Failed to save instance json.", ex);
             }
             tracker.nextStage(InstallStage.FINISHED);
+            LOGGER.info("Install finished!");
         } catch (InstallationFailureException ex) {
             throw ex;
         } catch (Throwable ex) {
