@@ -72,6 +72,7 @@ public class WebSocketMessengerHandler
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
+        register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
 

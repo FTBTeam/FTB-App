@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
+import javax.annotation.WillNotClose;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -147,18 +148,9 @@ public class LocalInstance implements IPack
                         .setUrl(art.getUrl())
                         .setDest(bos);
                 action.execute();
-
-                BufferedImage resizedArt = ImageUtils.resizeImage(bos.toByteArray(), 256, 256);
-                bos.reset();
-                ImageIO.write(resizedArt, "png", bos);
-                this.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
-                // folder.jpg is not strictly used, it exists for easy folder navigation.
-                try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
-                    ImageIO.write(resizedArt, "jpg", os);
-                }
+                doImportArt(new ByteArrayInputStream(bos.toByteArray()));
             } catch (IOException ex) {
-                LOGGER.error("Failed to download and resize Modpack art.", ex);
-                // TODO set art to missing image?
+                LOGGER.error("Failed to download art.", ex);
             }
         }
 
@@ -218,6 +210,24 @@ public class LocalInstance implements IPack
 
     private LocalInstance()
     {
+    }
+
+    public void importArt(Path file) throws IOException {
+        try (InputStream is = Files.newInputStream(file)) {
+            doImportArt(is);
+            saveJson();
+        }
+    }
+
+    private void doImportArt(@WillNotClose InputStream is) throws IOException {
+        BufferedImage resizedArt = ImageUtils.resizeImage(is, 256, 256);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ImageIO.write(resizedArt, "png", bos);
+        this.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
+        // folder.jpg is not strictly used, it exists for easy folder navigation.
+        try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
+            ImageIO.write(resizedArt, "jpg", os);
+        }
     }
 
     public synchronized void pollVersionManifest() {
@@ -693,7 +703,7 @@ public class LocalInstance implements IPack
                 return files.filter(Files::isRegularFile)
                         .filter(file -> ModFile.isPotentialMod(file.toString()))
                         .map(sneak(path -> {
-                            String sha1 = rich ? FileUtils.getHash(path, "SHA-1") :  "";
+                            String sha1 = rich ? FileUtils.getHash(path, "SHA-1") : "";
                             CurseProps curseProps = lookup.get(sha1);
                             ModFile modFile = new ModFile(path.getFileName().toString(), "", Files.size(path), sha1).setPath(path);
                             if (curseProps != null) {
