@@ -74,7 +74,9 @@ import InformationModal from '@/components/organisms/modals/InformationModal.vue
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
-import { Instance, ModpackState } from '../../../modules/modpacks/types';
+import { Instance, ModpackState } from '@/modules/modpacks/types';
+import { InstallerState } from '@/modules/app/appStore.types';
+import { getPackArt } from '@/utils';
 
 @Component({
   components: {
@@ -107,6 +109,7 @@ export default class PackCard extends Vue {
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
   @Action('errorInstall', { namespace: 'modpacks' }) public errorInstall: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   @Prop() public instance!: Instance;
 
@@ -121,66 +124,73 @@ export default class PackCard extends Vue {
     );
   }
 
-  public install(version: number): void {
-    this.updateInstall({ modpackID: this.$props.packID, progress: 0 });
-    this.sendMessage({
-      payload: { type: 'installInstance', id: this.$props.packID, version },
-      callback: (data: any) => {
-        if (this.showInstall) {
-          this.showInstall = false;
-        }
-        if (data.status === 'success') {
-          this.sendMessage({
-            payload: { type: 'installedInstances' },
-            callback: (data: any) => {
-              this.storePacks(data);
-              this.finishInstall({ modpackID: this.$props.packID, messageID: data.requestId });
-            },
-          });
-        } else if (data.status === 'error') {
-          this.updateInstall({
-            modpackID: this.$props.packID,
-            messageID: data.requestId,
-            error: true,
-            errorMessage: data.message,
-            instanceID: data.uuid,
-          });
-        } else if (data.currentStage === 'POSTINSTALL') {
-          // We don't care about this, keep progress bar showing.
-        } else if (data.status === 'init') {
-          this.updateInstall({
-            modpackID: this.$props.packID,
-            messageID: data.requestId,
-            stage: 'INIT',
-            message: data.message,
-          });
-        } else if (data.overallPercentage <= 100) {
-          this.updateInstall({
-            modpackID: this.$props.packID,
-            messageID: data.requestId,
-            progress: data.overallPercentage,
-            downloadSpeed: data.speed,
-            downloadedBytes: data.currentBytes,
-            totalBytes: data.overallBytes,
-            stage: data.currentStage,
-          });
-        }
+  public install(version: number, versionName: string): void {
+    this.showInstall = false;
+    this.installModpack({
+      pack: {
+        id: this.instance.id,
+        version: version,
+        packType: this.instance.packType,
+      },
+      meta: {
+        name: this.$props.name,
+        version: versionName,
+        art: getPackArt(this.instance?.art),
       },
     });
-  }
-
-  public deleteInstace(): void {
-    this.sendMessage({
-      payload: { type: 'uninstallInstance', uuid: this.$props.instanceID },
-      callback: (data: any) => {
-        this.sendMessage({
-          payload: { type: 'installedInstances' },
-          callback: (data: any) => {
-            this.storePacks(data);
-          },
-        });
-      },
-    });
+    // this.$router.replace({
+    //   name: 'installingpage',
+    //   query: {
+    //     modpackid: this.instance.id.toString(),
+    //     versionID: version.toString(),
+    //     type: this.instance.packType.toString(),
+    //   },
+    // });
+    // this.updateInstall({ modpackID: this.$props.packID, progress: 0 });
+    // this.sendMessage({
+    //   payload: { type: 'installInstance', id: this.$props.packID, version },
+    //   callback: (data: any) => {
+    //     if (this.showInstall) {
+    //       this.showInstall = false;
+    //     }
+    //     if (data.status === 'success') {
+    //       this.sendMessage({
+    //         payload: { type: 'installedInstances' },
+    //         callback: (data: any) => {
+    //           this.storePacks(data);
+    //           this.finishInstall({ modpackID: this.$props.packID, messageID: data.requestId });
+    //         },
+    //       });
+    //     } else if (data.status === 'error') {
+    //       this.updateInstall({
+    //         modpackID: this.$props.packID,
+    //         messageID: data.requestId,
+    //         error: true,
+    //         errorMessage: data.message,
+    //         instanceID: data.uuid,
+    //       });
+    //     } else if (data.currentStage === 'POSTINSTALL') {
+    //       // We don't care about this, keep progress bar showing.
+    //     } else if (data.status === 'init') {
+    //       this.updateInstall({
+    //         modpackID: this.$props.packID,
+    //         messageID: data.requestId,
+    //         stage: 'INIT',
+    //         message: data.message,
+    //       });
+    //     } else if (data.overallPercentage <= 100) {
+    //       this.updateInstall({
+    //         modpackID: this.$props.packID,
+    //         messageID: data.requestId,
+    //         progress: data.overallPercentage,
+    //         downloadSpeed: data.speed,
+    //         downloadedBytes: data.currentBytes,
+    //         totalBytes: data.overallBytes,
+    //         stage: data.currentStage,
+    //       });
+    //     }
+    //   },
+    // });
   }
 
   public goToInstance(): void {

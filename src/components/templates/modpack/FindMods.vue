@@ -1,7 +1,7 @@
 <template>
   <div class="find-mods">
     <div class="header flex items-center mt-2">
-      <ftb-search :alpha="true" class="flex-1" placeholder="Search for a mod" min="3" v-model="search" />
+      <ftb-search :alpha="true" class="w-full flex-1" placeholder="Search for a mod" min="3" v-model="search" />
     </div>
 
     <div class="body pt-6">
@@ -170,7 +170,7 @@ export default class FindMods extends Vue {
   private async searchForMod() {
     // Clean up all data, we have a new request
     this.resetSearch();
-    this.fetchRequests.forEach(e => e.abort());
+    this.fetchRequests.forEach((e) => e.abort());
 
     this.loadingTerm = true;
     this.visualLoadingFull = true;

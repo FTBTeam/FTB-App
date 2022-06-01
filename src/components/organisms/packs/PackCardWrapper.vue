@@ -31,7 +31,6 @@ import PackCardList from './PackCardList.vue';
     'isDemo',
     'size',
     'tags',
-    'preLaunch',
     'postLaunch',
     'kind',
   ],

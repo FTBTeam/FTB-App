@@ -2,8 +2,12 @@
   <div class="mod-packs h-full" v-if="isLoaded">
     <!-- My Modpacks Stuff -->
     <div class="packs px-6 py-4" v-if="modpacks.installedPacks.length > 0">
-      <div class="w-3/4 self-center">
-        <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mb-4" />
+      <div class="flex items-center mb-4">
+        <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mr-4 flex-1" />
+        <ftb-button class="py-3 px-4 flex items-center" color="info" @click="useShareCode = true">
+          <font-awesome-icon icon="code" class="mr-2" size="1x" />
+          <span>Use share code</span>
+        </ftb-button>
       </div>
 
       <div class="pack-card-list grid">
@@ -23,7 +27,6 @@
           :instance="modpack"
           :instanceID="modpack.uuid"
           :kind="modpack.kind"
-          :preLaunch="preLaunch"
         >
         </pack-card-wrapper>
       </div>
@@ -47,6 +50,25 @@
         </div>
       </div>
     </div>
+
+    <modal
+      :open="useShareCode"
+      title="Use a share code"
+      subTitle="A share code is a code you can use to install new packs"
+      @closed="useShareCode = false"
+    >
+      <message type="danger" v-if="shareCodeError" class="mb-4">
+        {{ shareCodeError }}
+      </message>
+
+      <ftb-input label="Share code" v-model="shareCode" />
+      <div class="flex justify-end">
+        <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="checkAndInstall">
+          <font-awesome-icon icon="download" class="mr-2" size="1x" />
+          Install
+        </ftb-button>
+      </div>
+    </modal>
   </div>
 </template>
 
@@ -57,6 +79,8 @@ import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
+import { wsTimeoutWrapperTyped } from '@/utils';
+import { InstallerState } from '@/modules/app/appStore.types';
 
 @Component({
   components: {
@@ -71,10 +95,15 @@ export default class Library extends Vue {
   @Getter('packsCache', { namespace: 'modpacks' }) public packsCache!: ModPack[];
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (id: number) => Promise<ModPack>;
   @Action('sendMessage') public sendMessage!: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   private searchTerm: string = '';
   private isLoaded: boolean = false;
   isGrid: boolean = false;
+
+  useShareCode = false;
+  shareCode: string = '';
+  shareCodeError = '';
 
   @Watch('modpacks', { deep: true })
   public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
@@ -94,31 +123,6 @@ export default class Library extends Vue {
     }
   }
 
-  /**
-   * @MichaelHillcox I didn't comment this out, just saying, no clue what this does :+1:
-   */
-  public preLaunch(instance: Instance) {
-    //   let serverID = "283861";
-    // let newArgs = instance.jvmArgs;
-    // if(newArgs.indexOf("-Dmt.server") !== 1){
-    //   let args = newArgs.split(" ");
-    //   args.splice(args.findIndex(value => value.indexOf("-Dmt.server") !== -1), 1);
-    //   newArgs = args.join(" ");
-    // }
-    // if(newArgs[newArgs.length - 1] === " " || newArgs.length === 0){
-    //   newArgs += "-Dmt.server=" + serverID;
-    // } else {
-    //   newArgs += " -Dmt.server=" + serverID;
-    // }
-    // return new Promise((res, rej) => {
-    //   this.sendMessage({
-    //       payload: {type: 'instanceConfigure', uuid: instance.uuid, instanceInfo: {jvmargs: newArgs}}, callback: (data: any) => {
-    //           res();
-    //       },
-    //   });
-    // })
-  }
-
   public async mounted() {
     if (this.modpacks) {
       this.isLoaded = false;
@@ -129,6 +133,36 @@ export default class Library extends Vue {
         this.isLoaded = true;
       }
     }
+  }
+
+  async checkAndInstall() {
+    if (this.shareCode === '') {
+      return;
+    }
+
+    const checkCode = await wsTimeoutWrapperTyped<any, { success: boolean }>({
+      type: 'checkShareCode',
+      shareCode: this.shareCode,
+    });
+
+    if (!checkCode.success) {
+      this.shareCodeError = `Unable to find a valid pack with the code of ${this.shareCode} `;
+      return;
+    }
+
+    this.useShareCode = false;
+
+    this.installModpack({
+      pack: {
+        shareCode: this.shareCode,
+      },
+      meta: {
+        name: 'Shared pack',
+        version: this.shareCode,
+      },
+    });
+
+    this.shareCode = '';
   }
 
   get packs(): Instance[] {

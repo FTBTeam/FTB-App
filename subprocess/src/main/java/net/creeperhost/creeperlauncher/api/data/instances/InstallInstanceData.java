@@ -7,13 +7,12 @@ import java.util.Map;
 
 public class InstallInstanceData extends BaseData {
 
-    public static final String typePrefix = "install";
-
     public String uuid;
     public long id;
     public long version;
     public boolean _private = false;
     public byte packType = 0;
+    public String shareCode;
 
     public static class Reply extends BaseData {
 
@@ -22,7 +21,7 @@ public class InstallInstanceData extends BaseData {
         public final String uuid;
 
         public Reply(InstallInstanceData data, String status, String message, String uuid) {
-            type = typePrefix + "InstanceDataReply";
+            type = "installInstanceDataReply";
             requestId = data.requestId;
             this.status = status;
             this.message = message;
@@ -39,8 +38,8 @@ public class InstallInstanceData extends BaseData {
         public final InstallStage currentStage;
 
         public Progress(InstallInstanceData data, Double overallPercentage, long speed, long currentBytes, long overallBytes, InstallStage currentStage) {
-            this.requestId = data.requestId;
-            type = typePrefix + "InstanceProgress";
+            requestId = data.requestId;
+            type = "installInstanceProgress";
             this.overallPercentage = overallPercentage;
             this.speed = speed;
             this.currentBytes = currentBytes;

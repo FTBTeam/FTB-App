@@ -47,21 +47,21 @@
                 :key="`tag-${i}`"
                 @click="clickTag(tag.name)"
                 class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                style="font-variant: small-caps;"
+                style="font-variant: small-caps"
                 >{{ tag.name }}</span
               >
               <span
                 v-if="tags.length > 5"
                 :key="`tag-more`"
                 class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                style="font-variant: small-caps;"
+                style="font-variant: small-caps"
                 >+{{ tags.length - 5 }}</span
               >
             </div>
           </div>
         </div>
         <div
-          style="width:50px;"
+          style="width: 50px"
           class="flex flex-col list-action-button-holder"
           v-if="installed && kind === 'instance'"
         >
@@ -86,7 +86,7 @@
           </FTBButton>
           <!-- <FTBButton @click="goToInstance" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
         </div>
-        <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="!installed">
+        <div style="width: 50px" class="flex flex-col list-action-button-holder" v-if="!installed">
           <FTBButton
             @click="openInstall"
             :isRounded="false"
@@ -97,7 +97,7 @@
           >
           <!-- <FTBButton @click="openInfo" :isRounded="false" color="info" class="list-action-button py-2 px-4 h-full text-center flex flex-col items-center justify-center rounded-br"><font-awesome-icon icon="ellipsis-h" size="sm" class="cursor-pointer"/><p>More</p></FTBButton> -->
         </div>
-        <div style="width:50px;" class="flex flex-col list-action-button-holder" v-if="kind === 'cloudInstance'">
+        <div style="width: 50px" class="flex flex-col list-action-button-holder" v-if="kind === 'cloudInstance'">
           <FTBButton
             @click="sync"
             :isRounded="false"
@@ -141,6 +141,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { logVerbose } from '@/utils';
 import { RouterNames } from '@/router';
+import { InstallerState } from '@/modules/app/appStore.types';
 
 export interface MsgBox {
   title: string;
@@ -195,6 +196,7 @@ export default class PackCardList extends Vue {
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
   @State('settings') public settingsState!: SettingsState;
   @Action('doSearch', { namespace: 'modpacks' }) public doSearch: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   public name!: string;
   @Prop() public instance!: Instance;
@@ -330,14 +332,22 @@ export default class PackCardList extends Vue {
     );
   }
 
-  public install(version: number): void {
+  public async install(version: number, versionName: string): Promise<void> {
     if (this.modpacks.installing !== null) {
       return;
     }
 
-    this.$router.replace({
-      name: 'installingpage',
-      query: { modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type },
+    this.installModpack({
+      pack: {
+        id: this.$props.packID,
+        version: version,
+        packType: this.$props.type,
+      },
+      meta: {
+        name: this.$props.name,
+        version: versionName,
+        art: this.getLogo(this.$props.art),
+      },
     });
 
     this.showInstall = false;

@@ -25,6 +25,7 @@ import FTBButton from '@/components/atoms/input/FTBButton.vue';
 import FTBInput from '@/components/atoms/input/FTBInput.vue';
 import Popover from '@/components/atoms/Popover.vue';
 import Modal from '@/components/atoms/Modal.vue';
+import Message from '@/components/atoms/Message.vue';
 import { BrowserTracing } from '@sentry/tracing';
 import * as Sentry from '@sentry/vue';
 
@@ -128,6 +129,7 @@ const appSetup = async () => {
   Vue.component('ftb-input', FTBInput);
   Vue.component('popover', Popover);
   Vue.component('modal', Modal);
+  Vue.component('message', Message);
 
   Vue.config.productionTip = false;
   Vue.config.devtools = true;

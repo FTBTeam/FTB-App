@@ -40,15 +40,15 @@ export default class ProgressBar extends Vue {
 
     @keyframes leftToRight {
       0% {
-        opacity: 0.1;
+        opacity: 0.08;
         left: -100%;
       }
       50% {
-        opacity: 0.2;
+        opacity: 0.15;
         left: 0;
       }
       100% {
-        opacity: 0.1;
+        opacity: 0.08;
         left: 100%;
       }
     }

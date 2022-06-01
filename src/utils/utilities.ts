@@ -1,4 +1,4 @@
-import { SettingsState } from './modules/settings/types';
+import { SettingsState } from '@/modules/settings/types';
 import { RootState } from '@/types';
 import { MCProtocol } from '@/modules/servers/types';
 // @ts-ignore
@@ -6,7 +6,7 @@ import mcQuery from 'mcping-js';
 
 export function debounce(func: () => void, wait: number): () => void {
   let timeout: number | undefined;
-  return function() {
+  return function () {
     clearTimeout(timeout);
     // @ts-ignore
     timeout = setTimeout(() => {

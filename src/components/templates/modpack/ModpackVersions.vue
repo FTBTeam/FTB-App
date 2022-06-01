@@ -60,7 +60,7 @@
             class="py-2 px-4 ml-1"
             color="warning"
             css-class="text-center text-l"
-            @click="update(currentVersion.id)"
+            @click="update"
           >
             <font-awesome-icon icon="download" class="mr-2" />
             {{ isOlderVersion(currentVersion.id) ? 'Downgrade' : 'Update' }}
@@ -89,10 +89,13 @@ import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
+import { InstallerState } from '@/modules/app/appStore.types';
+import { getPackArt } from '@/utils';
 
 @Component
 export default class ModpackVersions extends Vue {
   @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   @Prop() versions!: Versions[];
   @Prop() packInstance!: ModPack;
@@ -149,13 +152,23 @@ export default class ModpackVersions extends Vue {
     return this.instance?.versionId > version ?? false;
   }
 
-  public update(versionId?: number): void {
-    const modpackID = this.instance?.id;
-    const version = versionId || this.packInstance?.kind === 'modpack' ? versionId : this.versions[0].id;
-    this.$router.replace({
-      name: 'installingpage',
-      query: { modpackid: modpackID?.toString(), versionID: version?.toString(), uuid: this.instance?.uuid },
+  public update(): void {
+    this.installModpack({
+      pack: {
+        id: this.instance.id,
+        version: this.currentVersion?.id,
+        packType: this.instance.packType,
+      },
+      meta: {
+        name: this.instance.name,
+        version: this.currentVersion?.name ?? '',
+        art: getPackArt(this.instance?.art),
+      },
     });
+    // this.$router.replace({
+    //   name: 'installingpage',
+    //   query: { modpackid: modpackID?.toString(), versionID: version?.toString(), uuid: this.instance?.uuid },
+    // });
   }
 }
 </script>

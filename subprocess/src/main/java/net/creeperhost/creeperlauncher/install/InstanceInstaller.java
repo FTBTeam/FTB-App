@@ -18,6 +18,7 @@ import net.creeperhost.creeperlauncher.install.InstallProgressTracker.DlFile;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
+import net.creeperhost.creeperlauncher.instance.InstanceOperation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.apache.logging.log4j.LogManager;
@@ -38,7 +39,7 @@ import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifes
 /**
  * Created by covers1624 on 3/2/22.
  */
-public class InstanceInstaller {
+public class InstanceInstaller extends InstanceOperation {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("InstanceInstaller.debug");
@@ -53,8 +54,6 @@ public class InstanceInstaller {
             "scripts"
     );
 
-    private final LocalInstance instance;
-    private final ModpackVersionManifest manifest;
     private final InstallProgressTracker tracker;
 
     @Nullable
@@ -110,8 +109,7 @@ public class InstanceInstaller {
     private Map<String, IndexedFile> knownFiles;
 
     public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest, InstallProgressTracker tracker) throws IOException {
-        this.instance = instance;
-        this.manifest = manifest;
+        super(instance, manifest);
         this.tracker = tracker;
 
         Path instanceVersionFile = instance.getDir().resolve("version.json");
@@ -206,6 +204,7 @@ public class InstanceInstaller {
 
     public void execute() throws InstallationFailureException {
         try {
+            LOGGER.info("Removing files..");
             for (Path path : filesToRemove) {
                 try {
                     Files.deleteIfExists(path);
@@ -216,6 +215,7 @@ public class InstanceInstaller {
 
             tracker.nextStage(InstallStage.MODLOADER);
             if (modLoaderInstallTask != null) {
+                LOGGER.info("Installing ModLoader..");
                 modLoaderInstallTask.execute(cancelToken, null);
                 instance.modLoader = modLoaderInstallTask.getResult();
             } else {
@@ -223,6 +223,7 @@ public class InstanceInstaller {
                 instance.modLoader = manifest.getTargetVersion("game");
             }
 
+            LOGGER.info("Downloading new files.");
             tracker.nextStage(InstallStage.DOWNLOADS);
             long totalSize = tasks.stream()
                     .mapToLong(e -> e.size)
@@ -237,6 +238,7 @@ public class InstanceInstaller {
 
             Path cfOverrides = getCFOverridesZip(manifest);
             if (cfOverrides != null) {
+                LOGGER.info("Extracting CurseForge overrides.");
                 try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
                     Path root = fs.getPath("/overrides/");
                     Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
@@ -255,6 +257,7 @@ public class InstanceInstaller {
                 throw new InstallationFailureException("Failed to save instance json.", ex);
             }
             tracker.nextStage(InstallStage.FINISHED);
+            LOGGER.info("Install finished!");
         } catch (InstallationFailureException ex) {
             throw ex;
         } catch (Throwable ex) {
@@ -378,63 +381,6 @@ public class InstanceInstaller {
         tracker.submitFiles(dlFiles);
     }
 
-    private Map<String, IndexedFile> getKnownFiles() {
-        if (knownFiles == null) {
-            knownFiles = computeKnownFiles(manifest);
-        }
-
-        return knownFiles;
-    }
-
-    private Map<String, IndexedFile> computeKnownFiles(ModpackVersionManifest manifest) {
-        Map<String, IndexedFile> knownFiles = new HashMap<>();
-        for (ModpackFile file : manifest.getFiles()) {
-            if (file.getType().equals("cf-extract")) continue;
-            Path path = file.toPath(instance.getDir()).toAbsolutePath().normalize();
-            String relPath = instance.getDir().relativize(path).toString();
-            knownFiles.put(relPath, new IndexedFile(relPath, file.getSha1OrNull(), file.getSize()));
-        }
-        Path cfOverrides = getCFOverridesZip(manifest);
-        if (cfOverrides != null) {
-            try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
-                Path root = fs.getPath("/overrides/");
-                try (Stream<Path> paths = Files.walk(root)) {
-                    for (Path path : ColUtils.iterable(paths)) {
-                        if (Files.isDirectory(path)) continue;
-                        String relPath = root.relativize(path).toString();
-                        knownFiles.put(relPath, new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
-                    }
-                }
-            } catch (IOException ex) {
-                throw new IllegalStateException("Failed to read CurseForge Overrides zip.", ex);
-            }
-        }
-        return knownFiles;
-    }
-
-    @Nullable
-    private Path getCFOverridesZip(ModpackVersionManifest manifest) {
-        LinkedList<ModpackFile> cfExtractEntries = StreamableIterable.of(manifest.getFiles())
-                .filter(e -> e.getType().equals("cf-extract"))
-                .toLinkedList();
-
-        if (cfExtractEntries.isEmpty()) return null;
-        if (cfExtractEntries.size() > 1) throw new IllegalStateException("More than one cf-extract entry found.");
-
-        ModpackFile cfExtractEntry = cfExtractEntries.getFirst();
-        NewDownloadTask task = NewDownloadTask.builder()
-                .url(cfExtractEntry.getUrl())
-                .dest(cfExtractEntry.getCfExtractPath(instance.getDir(), manifest.getName()))
-                .withValidation(cfExtractEntry.createValidation().asDownloadValidation())
-                .build();
-        try {
-            task.execute(null, null);
-        } catch (Throwable ex) {
-            throw new IllegalStateException("Failed to retrieve CurseForge overrides.");
-        }
-
-        return task.getDest();
-    }
 
     /**
      * Defines what type of operation will be performed on the instance.
@@ -470,22 +416,6 @@ public class InstanceInstaller {
 
         public InstallationFailureException(String message, Throwable cause) {
             super(message, cause);
-        }
-    }
-
-    private static record IndexedFile(String path, @Nullable HashCode sha1, long length) {
-
-        public FileValidation createValidation() {
-            FileValidation validation = FileValidation.of();
-            // Not sure if size can ever be -1, but sure.
-            if (length != -1) {
-                validation = validation.withExpectedSize(length);
-            }
-            // sha1 might be null
-            if (sha1 != null) {
-                validation = validation.withHash(Hashing.sha1(), sha1);
-            }
-            return validation;
         }
     }
 
