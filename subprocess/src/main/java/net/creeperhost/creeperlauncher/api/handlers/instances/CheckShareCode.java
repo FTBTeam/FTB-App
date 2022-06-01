@@ -12,11 +12,13 @@ public class CheckShareCode implements IMessageHandler<CheckShareCodeData> {
     
     @Override
     public void handle(CheckShareCodeData data) {
+        boolean success;
         try {
-            ModpackVersionManifest.queryManifest(Constants.TRANSFER_HOST + data.shareCode + "/version.json");
-            Settings.webSocketAPI.sendMessage(new CheckShareCodeData.Reply(data, true));
+            ModpackVersionManifest manifest = ModpackVersionManifest.queryManifest(Constants.TRANSFER_HOST + data.shareCode + "/version.json");
+            success = manifest != null;
         } catch (IOException e) {
-            Settings.webSocketAPI.sendMessage(new CheckShareCodeData.Reply(data, false));
+            success = false;
         }
+        Settings.webSocketAPI.sendMessage(new CheckShareCodeData.Reply(data, success));
     }
 }

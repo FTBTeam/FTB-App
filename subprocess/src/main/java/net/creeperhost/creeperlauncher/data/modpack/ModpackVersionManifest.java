@@ -125,7 +125,7 @@ public class ModpackVersionManifest {
                 .setUrl(url)
                 .setDest(sw);
         action.execute();
-        
+
         ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
         if (manifest.getStatus().equals("error")) {
             // TODO Log error.
