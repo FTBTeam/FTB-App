@@ -52,6 +52,7 @@ public class InstanceSharer extends InstanceOperation {
             "folder.jpg",
 
             // Sensitive
+            "logs/",
             ".reauth.cfg"
     );
     private static final Logger LOGGER = LogManager.getLogger();
@@ -152,7 +153,7 @@ public class InstanceSharer extends InstanceOperation {
                 if (Files.isDirectory(path)) continue; // Skip directories.
                 String relPath = instance.getDir().relativize(path).toString().replace('\\', '/');
 
-                if (FORCE_IGNORED.contains(relPath.toLowerCase(Locale.ROOT))) continue; // Skip these files too.
+                if (shouldSkipFile(relPath.toLowerCase(Locale.ROOT))) continue; // Skip these files too.
                 if (knownFiles.containsKey(relPath)) continue; // File is known.
 
                 untrackedFiles.add(new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
@@ -160,6 +161,15 @@ public class InstanceSharer extends InstanceOperation {
         } catch (IOException ex) {
             throw new IllegalStateException("An IO error occurred whilst locating untracked files.", ex);
         }
+    }
+
+    private boolean shouldSkipFile(String relPath) {
+        for (String ignore : FORCE_IGNORED) {
+            if (relPath.startsWith(ignore)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void locateModifiedFiles() {
