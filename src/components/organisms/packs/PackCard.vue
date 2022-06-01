@@ -322,6 +322,7 @@ export default class PackCard extends Vue {
   }
 
   public getLogo(packArt: any) {
+    if (packArt === undefined) return placeholderImage;
     if (typeof packArt === 'string') return packArt;
     let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
     if (artP === undefined) {

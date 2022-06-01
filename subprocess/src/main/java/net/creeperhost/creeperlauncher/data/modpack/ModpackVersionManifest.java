@@ -151,7 +151,7 @@ public class ModpackVersionManifest {
 
         Request.Builder builder = new Request.Builder()
                 .url(CREEPERHOST_MODPACK + "/public/curseforge/import")
-                .post(new PathRequestBody(manifest));
+                .put(new PathRequestBody(manifest));
         try (Response response = Constants.OK_HTTP_CLIENT.newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
             if (body == null) {
