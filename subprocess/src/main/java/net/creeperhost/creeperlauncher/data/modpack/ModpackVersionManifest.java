@@ -51,6 +51,8 @@ public class ModpackVersionManifest {
 
     @Nullable
     private String status;
+    @Nullable
+    private String message;
 
     private long id;
     private long parent;
@@ -136,7 +138,7 @@ public class ModpackVersionManifest {
 
         ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
         if (manifest.getStatus().equals("error")) {
-            LOGGER.error("Failed to request manifest got: " + manifest.getStatus());
+            LOGGER.error("Failed to request manifest got: " + manifest.getMessage());
             return null;
         }
 
@@ -158,7 +160,7 @@ public class ModpackVersionManifest {
             }
             ModpackVersionManifest versionManifest = JsonUtils.parse(GSON, body.string(), ModpackVersionManifest.class);
             if (versionManifest.getStatus().equals("error")) {
-                LOGGER.error("Failed to convert pack. Got error: " + versionManifest.getStatus());
+                LOGGER.error("Failed to convert pack. Got error: " + versionManifest.getMessage());
                 return null;
             }
             return versionManifest;
@@ -215,6 +217,7 @@ public class ModpackVersionManifest {
 
     // @formatter:off
     public String getStatus() { return requireNonNull(status); }
+    public String getMessage() { return requireNonNull(message); }
     public long getId() { return id; }
     public long getParent() { return parent; }
     public String getName() { return requireNonNull(name); }
