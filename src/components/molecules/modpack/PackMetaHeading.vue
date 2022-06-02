@@ -34,7 +34,25 @@
       <div class="modloader icon" v-else data-balloon-pos="left" aria-label="Fabric Modloader">
         <img src="@/assets/images/fabric.png" alt="" />
       </div>
+
+      <ftb-button
+        v-if="instance.uuid && instance.isModified"
+        :disabled="!getActiveMcProfile"
+        :title="
+          !getActiveMcProfile
+            ? 'You need to be logged in to your Minecraft account to share packs'
+            : 'Share your modpack with friends'
+        "
+        class="py-1 ml-6 px-4"
+        color="info"
+        css-class="text-center text-l"
+        @click="shareConfirm = true"
+      >
+        <font-awesome-icon icon="share" class="" size="1x" />
+      </ftb-button>
     </div>
+
+    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
 
@@ -43,15 +61,23 @@ import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
 import { getColorForReleaseType } from '@/utils/colors';
+import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
+import { Getter } from 'vuex-class';
 
-@Component
+@Component({
+  components: { ShareInstanceModal },
+})
 export default class PackMetaHeading extends Vue {
+  @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
+
   @Prop() hidePackDetails!: boolean;
   @Prop() isForgePack!: boolean;
   @Prop() versionType!: string;
   @Prop() instance!: any;
 
   getColorForReleaseType = getColorForReleaseType;
+
+  shareConfirm = false;
 }
 </script>
 
