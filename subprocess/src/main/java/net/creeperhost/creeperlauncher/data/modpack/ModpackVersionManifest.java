@@ -11,6 +11,7 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.util.PathRequestBody;
 import okhttp3.Request;
@@ -230,6 +231,17 @@ public class ModpackVersionManifest {
     public long getUpdated() { return updated; }
     public long getRefreshed() { return refreshed; }
     // @formatter:on
+
+    public List<ModFile> toLegacyFiles() {
+        List<ModFile> files = new LinkedList<>();
+        for (ModpackFile file : this.files) {
+            if (!file.getPath().startsWith("./mods") || !ModFile.isPotentialMod(file.getName())) continue;
+            String sha1 = file.getSha1OrNull() != null ? file.getSha1OrNull().toString() : "";
+            files.add(new ModFile(file.getName(), file.getVersion(), file.getSize(), sha1));
+        }
+        files.sort((e1, e2) -> e1.getRealName().compareToIgnoreCase(e2.getRealName()));
+        return files;
+    }
 
     public static class Specs {
 
