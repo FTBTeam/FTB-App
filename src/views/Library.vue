@@ -157,7 +157,13 @@
           {{ shareCodeError }}
         </message>
 
-        <ftb-input placeholder="share code" label="Share code" v-model="shareCode" />
+        <ftb-input
+          placeholder="share code"
+          label="Share code"
+          v-model="shareCode"
+          class="mb-4 text-base"
+          :copyable="true"
+        />
         <div class="flex justify-end">
           <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="checkAndInstall">
             <font-awesome-icon icon="download" class="mr-2" size="1x" />

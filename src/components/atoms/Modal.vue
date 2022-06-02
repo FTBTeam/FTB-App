@@ -79,10 +79,12 @@ export default class Modal extends Vue {
 
     .modal-heading {
       flex: 1;
+      padding-right: 1rem;
 
       .title {
         font-size: 1.3rem;
         font-weight: 900;
+        margin-bottom: 0.3rem;
       }
 
       .subtitle {
