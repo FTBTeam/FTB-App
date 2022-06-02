@@ -268,8 +268,7 @@ export default class Library extends Vue {
   }
 
   fileAttach(event: any) {
-    const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
-    if (file == null || file.type !== 'application/zip') {
+    if (file == null || !file.name.endsWith('.zip')) {
       return;
     }
 
