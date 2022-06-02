@@ -415,6 +415,9 @@ export default class PackCard extends Vue {
       transition: opacity 0.25s ease-in-out;
       font-size: 0.875rem;
       line-height: 1em;
+      max-width: 100%;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
     .play-button {
