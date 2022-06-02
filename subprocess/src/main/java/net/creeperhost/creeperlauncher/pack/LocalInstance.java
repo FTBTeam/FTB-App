@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
+import javax.annotation.WillNotClose;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -84,7 +85,7 @@ public class LocalInstance implements IPack
     public int height = Integer.parseInt(Settings.settings.getOrDefault("height", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2)));
     public String modLoader = "";
     private boolean isModified = false;
-    private boolean isImport = false;
+    public boolean isImport = false;
     public boolean cloudSaves = false;
     public boolean hasInstMods = false;
     public boolean installComplete = true;
@@ -147,18 +148,9 @@ public class LocalInstance implements IPack
                         .setUrl(art.getUrl())
                         .setDest(bos);
                 action.execute();
-
-                BufferedImage resizedArt = ImageUtils.resizeImage(bos.toByteArray(), 256, 256);
-                bos.reset();
-                ImageIO.write(resizedArt, "png", bos);
-                this.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
-                // folder.jpg is not strictly used, it exists for easy folder navigation.
-                try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
-                    ImageIO.write(resizedArt, "jpg", os);
-                }
+                doImportArt(new ByteArrayInputStream(bos.toByteArray()));
             } catch (IOException ex) {
-                LOGGER.error("Failed to download and resize Modpack art.", ex);
-                // TODO set art to missing image?
+                LOGGER.error("Failed to download art.", ex);
             }
         }
 
@@ -170,87 +162,6 @@ public class LocalInstance implements IPack
             saveJson();
         } catch (IOException ex) {
             LOGGER.error("Failed to save instance.", ex);
-        }
-    }
-
-    @Deprecated
-    public LocalInstance(ModPack pack, long versionId, boolean _private, byte packType)
-    {
-        //We're making an instance!
-        String tmpArt = "";
-        UUID uuid = UUID.randomUUID();
-        this.uuid = uuid;
-        this.versionId = versionId;
-        this.path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(this.uuid.toString());
-        this.cloudSaves = Boolean.getBoolean(Settings.settings.getOrDefault("cloudSaves", "false"));
-        this.name = pack.getName();
-        this.version = pack.getVersion();
-        this.dir = this.path;
-        this.authors = pack.getAuthors();
-        this.description = pack.getDescription();
-        this.mcVersion = pack.getMcVersion();
-        this.url = pack.getUrl();
-        this.artUrl = pack.getArtURL();
-        this.id = pack.getId();
-        this.packType = packType;
-        this._private = _private;
-        if (Settings.settings.containsKey("jvmargs"))
-        {
-            this.jvmArgs = Settings.settings.get("jvmargs");
-        }
-        this.recMemory = pack.getRecMemory();
-        this.minMemory = pack.getMinMemory();
-        this.memory = this.recMemory;
-        SystemInfo si = new SystemInfo();
-        HardwareAbstractionLayer hal = si.getHardware();
-        long totalMemory = hal.getMemory().getTotal() / 1024 / 1024;
-        if(this.recMemory > (totalMemory-2048))
-        {
-            this.memory = this.minMemory;
-        }
-        FileUtils.createDirectories(path);
-        Path artFile = path.resolve("art.png");
-        if (Files.notExists(artFile))
-        {
-            try
-            {
-                if (ForgeUtils.isUrlValid(this.getArtURL()))
-                {
-                    DownloadUtils.downloadFile(artFile, this.getArtURL());
-                } else
-                {
-                    LOGGER.error("The url '{}' is not valid.", getArtURL());
-                }
-            } catch (Exception err)
-            {
-                LOGGER.error("Unable to download and save artwork.", err);
-            }
-        }
-        try
-        {
-            Base64.Encoder en = Base64.getEncoder();
-            //Resize the image, 1024x1024 is gonna cause issues with OOM's on poorer systems and just isn't used.
-            BufferedImage manipulatedArt = ImageUtils.resizeImage(Files.readAllBytes(artFile), 256, 256);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(manipulatedArt, "png", baos);
-            tmpArt = "data:image/png;base64," + en.encodeToString(baos.toByteArray());
-            //Replace "art.png" with "folder.jpg", smaller and will show as a preview folder art like album art on windows. Should make identifying instances a bit easier and reduce file size.
-            Path folderArt = path.resolve("folder.jpg");
-            baos.reset();
-            ImageIO.write(manipulatedArt, "jpg", baos);
-            Files.write(folderArt, baos.toByteArray());
-            Files.delete(artFile);
-        } catch (Exception err)
-        {
-            LOGGER.error("Unable to encode artwork for embedding.", err);
-        }
-        this.art = tmpArt;
-        try
-        {
-            this.saveJson();
-        } catch (Exception err)
-        {
-            LOGGER.error("Unable to write instance configuration.", err);
         }
     }
 
@@ -283,6 +194,8 @@ public class LocalInstance implements IPack
             this.jrePath = jsonOutput.jrePath;
             this.dir = this.path;
             this.cloudSaves = jsonOutput.cloudSaves;
+            this.isImport = jsonOutput.isImport;
+            this.isModified = jsonOutput.isModified;
             this.hasInstMods = jsonOutput.hasInstMods;
             this.packType = jsonOutput.packType;
             this._private = jsonOutput._private;
@@ -299,7 +212,26 @@ public class LocalInstance implements IPack
     {
     }
 
+    public void importArt(Path file) throws IOException {
+        try (InputStream is = Files.newInputStream(file)) {
+            doImportArt(is);
+            saveJson();
+        }
+    }
+
+    private void doImportArt(@WillNotClose InputStream is) throws IOException {
+        BufferedImage resizedArt = ImageUtils.resizeImage(is, 256, 256);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ImageIO.write(resizedArt, "png", bos);
+        this.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
+        // folder.jpg is not strictly used, it exists for easy folder navigation.
+        try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
+            ImageIO.write(resizedArt, "jpg", os);
+        }
+    }
+
     public synchronized void pollVersionManifest() {
+        if (isImport) return; // Can't update manifests for imports.
         try {
             Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(id, versionId, _private, packType);
             if (newManifest == null) {
@@ -771,7 +703,7 @@ public class LocalInstance implements IPack
                 return files.filter(Files::isRegularFile)
                         .filter(file -> ModFile.isPotentialMod(file.toString()))
                         .map(sneak(path -> {
-                            String sha1 = rich ? FileUtils.getHash(path, "SHA-1") :  "";
+                            String sha1 = rich ? FileUtils.getHash(path, "SHA-1") : "";
                             CurseProps curseProps = lookup.get(sha1);
                             ModFile modFile = new ModFile(path.getFileName().toString(), "", Files.size(path), sha1).setPath(path);
                             if (curseProps != null) {

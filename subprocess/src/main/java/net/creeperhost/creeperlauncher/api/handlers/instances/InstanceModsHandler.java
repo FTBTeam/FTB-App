@@ -19,20 +19,20 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
     @Override
     public void handle(InstanceModsData data) {
         LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
-        ModPack pack = FTBModPackInstallerTask.getPackFromAPI(instance.getId(), instance.getVersionId(), data._private, instance.packType);
-        if (pack != null) {
-            List<ModFile> cleanMods = instance.getMods(false).stream()
-                    .map((currentMod) ->
-                            pack.getMods().stream()
+        if (instance == null) return;
+
+        List<ModFile> packMods = instance.versionManifest.toLegacyFiles();
+        List<ModFile> cleanMods = instance.getMods(false).stream()
+                .map((currentMod) ->
+                        packMods.stream()
                                 .filter(e -> e.getName().equals(currentMod.getName()))
                                 .findFirst()
                                 .map(e -> new ModFile(currentMod.getRealName(), currentMod.getVersion(), e.getSize(), currentMod.getSha1()).setExists(true).setExpected(true))
                                 .orElse(currentMod)
-                    )
-                    .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-                    .collect(Collectors.toList());
+                )
+                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+                .collect(Collectors.toList());
 
-            Settings.webSocketAPI.sendMessage(new InstanceModsData.Reply(data, cleanMods));
-        }
+        Settings.webSocketAPI.sendMessage(new InstanceModsData.Reply(data, cleanMods));
     }
 }

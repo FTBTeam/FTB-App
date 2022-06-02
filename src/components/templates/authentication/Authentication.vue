@@ -17,7 +17,8 @@
           <p>There is a few things that could have gone wrong...</p>
           <ul class="list-decimal pl-6 my-4 leading-relaxed">
             <li>You may be attempting to use an under 18s account</li>
-            <li>You don't own Minecraft on this Microsoft account</li>
+            <li>You don't own Minecraft: Java Edition on this Microsoft account</li>
+            <li>Ensure you're using the correct Microsoft Account</li>
             <li>You're trying to use Gamepass and have not used the official Minecraft Launcher at least once</li>
             <li>
               You're using Gamepass but have not played Minecraft for a while. You'll need to use the Minecraft Launcher
@@ -25,10 +26,7 @@
             </li>
           </ul>
 
-          <p class="opacity-50">
-            Sorry for any inconvenience. We're working on solving the last two issues above. For now, please use the
-            Official Launcher at least once.
-          </p>
+          <p class="opacity-50">Sorry for any inconvenience.</p>
         </div>
 
         <ftb-button color="primary" class="px-6 py-4" @click="() => close()">Close</ftb-button>

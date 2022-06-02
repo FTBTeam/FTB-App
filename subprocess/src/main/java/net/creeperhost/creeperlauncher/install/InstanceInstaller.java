@@ -381,7 +381,6 @@ public class InstanceInstaller extends InstanceOperation {
         tracker.submitFiles(dlFiles);
     }
 
-
     /**
      * Defines what type of operation will be performed on the instance.
      */

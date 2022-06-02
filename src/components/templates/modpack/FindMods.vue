@@ -97,8 +97,7 @@
 import { AuthState } from '@/modules/auth/types';
 import { Instance } from '@/modules/modpacks/types';
 import { Mod } from '@/types';
-import { debounce } from '@/utils';
-import axios from 'axios';
+import { debounce, wsTimeoutWrapper } from '@/utils';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
@@ -291,21 +290,21 @@ export default class FindMods extends Vue {
    */
   private async loadInstanceVersion() {
     this.loading = true;
+
     // TODO: prevent this by fixing the instance construction to contain the mc version and more version data.
     let packData;
     try {
-      packData = await axios.get(
-        `${process.env.VUE_APP_MODPACK_API}/${this.auth.token?.attributes.modpackschkey ?? 'public'}/${
-          this.instance.packType == 0 ? 'modpack' : 'curseforge'
-        }/${this.instance.id}/${this.instance.versionId}`,
-      );
+      packData = await wsTimeoutWrapper({
+        type: 'instanceVersionInfo',
+        uuid: this.instance.uuid,
+      });
     } catch {
       console.log('Failed to find pack version data...');
     } finally {
       this.loading = false;
     }
 
-    if (!packData || !packData.data?.updated) {
+    if (!packData || !packData.versionManifest) {
       this.showAlert({
         title: 'Failed!',
         message: 'Could not find instance version data',
@@ -315,8 +314,8 @@ export default class FindMods extends Vue {
       return;
     }
 
-    this.target = packData.data.targets.find((e: any) => e.type === 'game')?.version ?? '';
-    this.modLoader = packData.data.targets.find((e: any) => e.type === 'modloader')?.name ?? 'forge'; // default to forge? Not super nice
+    this.target = packData.versionManifest.targets.find((e: any) => e.type === 'game')?.version ?? '';
+    this.modLoader = packData.versionManifest.targets.find((e: any) => e.type === 'modloader')?.name ?? 'forge'; // default to forge? Not super nice
   }
 
   private async getModFromId(modId: number): Promise<Mod | null> {

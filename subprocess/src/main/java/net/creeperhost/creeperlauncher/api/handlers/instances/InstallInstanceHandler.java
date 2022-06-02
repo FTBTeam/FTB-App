@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
+import net.covers1624.quack.io.IOUtils;
 import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
@@ -14,8 +15,13 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -61,6 +67,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 ModpackVersionManifest versionManifest;
                 boolean isPrivate;
                 byte packType;
+                boolean isImport = false;
                 if (data.shareCode != null) {
                     ShareManifest shareManifest = ShareManifest.queryManifest(Constants.TRANSFER_HOST + code + "/manifest.json");
                     if (shareManifest == null) {
@@ -87,6 +94,30 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                     for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
                         file.setUrl(sub.replace(file.getUrl()));
                     }
+                }
+                if (data.importFrom != null) {
+                    Path importFrom = Paths.get(data.importFrom);
+                    if (Files.notExists(importFrom)) {
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack import file does not exist.", ""));
+                        clearInstallState();
+                        return;
+                    }
+                    if (!Files.isRegularFile(importFrom)) {
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack import file is not a file.", ""));
+                        clearInstallState();
+                        return;
+                    }
+                    Pair<ModpackManifest, ModpackVersionManifest> manifests = prepareCurseImport(importFrom);
+                    if (manifests == null) {
+                        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Failed to import curse pack.", ""));
+                        clearInstallState();
+                        return;
+                    }
+                    modpackManifest = manifests.getLeft();
+                    versionManifest = manifests.getRight();
+                    isImport = true;
+                    isPrivate = false;
+                    packType = (byte) 0;
                 } else {
                     isPrivate = data._private;
                     packType = data.packType;
@@ -105,6 +136,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                     versionManifest = manifests.getRight();
                 }
                 instance = new LocalInstance(modpackManifest, versionManifest, isPrivate, packType);
+                instance.isImport = isImport;
                 Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.packType);
                 handleInstall(data, instance, versionManifest);
             }
@@ -143,5 +175,19 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         CreeperLauncher.isInstalling = false;
         CreeperLauncher.currentInstall = null;
         CreeperLauncher.currentInstallFuture = null;
+    }
+
+    @Nullable
+    public static Pair<ModpackManifest, ModpackVersionManifest> prepareCurseImport(Path curseZip) throws IOException {
+        ModpackVersionManifest versionManifest;
+        try (FileSystem fs = IOUtils.getJarFileSystem(curseZip, true)) {
+            Path manifestJson = fs.getPath("/manifest.json");
+            versionManifest = ModpackVersionManifest.convert(manifestJson);
+            if (versionManifest == null) {
+                return null;
+            }
+            versionManifest.cfExtractOverride = curseZip;
+            return Pair.of(ModpackManifest.fakeManifest(versionManifest.getName()), versionManifest);
+        }
     }
 }

@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -13,6 +14,8 @@ public class InstallInstanceData extends BaseData {
     public boolean _private = false;
     public byte packType = 0;
     public String shareCode;
+    @Nullable
+    public String importFrom;
 
     public static class Reply extends BaseData {
 

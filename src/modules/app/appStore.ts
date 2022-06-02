@@ -40,6 +40,10 @@ export const appStore: Module<AppStoreState, RootState> = {
         payload = {
           shareCode: pack.shareCode,
         };
+      } else if (pack.importFrom) {
+        payload = {
+          importFrom: pack.importFrom,
+        };
       } else if (pack.uuid && pack.version) {
         payload = {
           uuid: pack.uuid,
@@ -61,15 +65,12 @@ export const appStore: Module<AppStoreState, RootState> = {
         payload['_private'] = true;
       }
 
-      console.log(payload, pack.version ? 'updateInstance' : 'installInstance', request);
       // This event brings back lots of request, so instead we just assume the first one is either a
       // success or error
       const rest = await wsTimeoutWrapper({
         type: pack.version ? 'updateInstance' : 'installInstance',
         ...payload,
       });
-
-      console.log(rest);
 
       commit(AppStoreMutations.INSTALL_PACK, request);
     },

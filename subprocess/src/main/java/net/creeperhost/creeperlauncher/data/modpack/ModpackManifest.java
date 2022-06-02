@@ -68,6 +68,16 @@ public class ModpackManifest {
         return manifest;
     }
 
+    public static ModpackManifest fakeManifest(String name) {
+        ModpackManifest manifest = new ModpackManifest();
+        manifest.status = "success";
+        manifest.id = -1;
+        manifest.name = name;
+        manifest.description = "";
+        manifest.synopsis = "";
+        return manifest;
+    }
+
     @Nullable
     public Art getFirstArt(String type) {
         return StreamableIterable.of(art)

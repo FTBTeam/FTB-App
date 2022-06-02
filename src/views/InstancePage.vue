@@ -16,7 +16,12 @@
           :isForgePack="isForgePack"
         />
 
-        <pack-title-header v-if="!hidePackDetails" :pack-instance="packInstance" :pack-name="instance.name" />
+        <pack-title-header
+          v-if="!hidePackDetails"
+          :pack-instance="packInstance"
+          :instance="instance"
+          :pack-name="instance.name"
+        />
       </header>
 
       <div class="body" v-if="!searchingForMods" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
@@ -271,6 +276,7 @@ export default class InstancePage extends Vue {
           uuid: this.instance?.uuid,
         },
         callback: (data: any) => {
+          console.log(data.files);
           this.modlist = data.files;
           this.updatingModlist = false;
 
