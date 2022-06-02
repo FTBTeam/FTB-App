@@ -73,6 +73,7 @@ public class WebSocketMessengerHandler
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
+        register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());
