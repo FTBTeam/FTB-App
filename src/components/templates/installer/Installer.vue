@@ -152,13 +152,17 @@ export default class Installer extends Vue {
     this.filesComplete += Object.keys(data.files).length ?? 0;
   }
 
-  navigateToInstance() {
+  async navigateToInstance() {
     this.closed();
 
-    this.$router.push({
-      name: 'instancepage',
-      query: { uuid: this.completedUuid },
-    });
+    try {
+      await this.$router.push({
+        name: 'instancepage',
+        query: { uuid: this.completedUuid },
+      });
+    } catch {
+      // we don't care if the router fails
+    }
   }
 
   cleanUp() {
@@ -174,6 +178,23 @@ export default class Installer extends Vue {
   closed() {
     this.cleanUp();
     this.clearInstaller();
+  }
+
+  public retry() {
+    this.closed();
+
+    this.sendMessage({
+      payload: { type: 'uninstallInstance', uuid: this.installer?.pack.uuid },
+      callback: (data: any) => {
+        this.sendMessage({
+          payload: { type: 'installedInstances', refresh: true },
+          callback: (data: any) => {
+            this.storePacks(data);
+            // run install pack method again
+          },
+        });
+      },
+    });
   }
 
   destroyed() {

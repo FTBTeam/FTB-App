@@ -2,7 +2,7 @@
   <div class="pack-info">
     <div class="info">
       <div class="name">{{ packName }}</div>
-      <div class="desc" v-if="!instance.isImport">
+      <div class="desc" v-if="!instance || !instance.isImport">
         {{ packInstance.name }}
         <template v-if="packInstance.authors && packInstance.authors.length"
           >by <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span></template

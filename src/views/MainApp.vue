@@ -6,71 +6,6 @@
         <sidebar v-if="showSidebar" />
         <div class="app-content relative">
           <router-view />
-          <div class="bottom-area">
-            <div v-if="modpacks.installing != null">
-              <div class="progress-bar relative">
-                <div class="pl-4 w-full" v-bind:style="{ position: 'absolute' }" v-if="modpacks.installing.error">
-                  Error installing {{ modpacks.installing.pack.name }} - {{ modpacks.installing.errorMessage }} -
-                  <button
-                    class="bg-orange-500 hover:bg-orange-600 text-white-600 font-bold py-2 px-4 inline-flex items-center cursor-pointer"
-                    @click="retry(modpacks.installing)"
-                  >
-                    <span class="cursor-pointer">Retry?</span>
-                  </button>
-                </div>
-                <p
-                  class="pl-4 w-full"
-                  v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage === 'INIT'"
-                >
-                  Initialising install...
-                </p>
-                <p
-                  class="pl-4 w-full"
-                  v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage === 'PREPARE'"
-                >
-                  Downloading modpack metadata...
-                </p>
-                <p
-                  class="pl-4 w-full"
-                  v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage === 'MODLOADER'"
-                >
-                  Installing Mod Loader...
-                </p>
-                <p
-                  class="pl-4 w-full"
-                  v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage === 'DOWNLOADS'"
-                >
-                  Installing {{ modpacks.installing.pack.name }} - {{ modpacks.installing.progress.toFixed(2) }}% ({{
-                    (modpacks.installing.downloadSpeed / 1000000).toFixed(2)
-                  }}
-                  mbps)
-                </p>
-                <p
-                  class="pl-4 w-full"
-                  v-bind:style="{ position: 'absolute' }"
-                  v-else-if="modpacks.installing.stage == 'FINISHED'"
-                >
-                  Install Finished
-                </p>
-                <div class="w-full h-full bg-grey-light justify-center">
-                  <div
-                    v-if="!modpacks.installing.error"
-                    class="h-full bg-primary text-xs leading-none py-1 text-white"
-                    v-bind:style="{ width: `${modpacks.installing.progress}%`, transition: 'width 0.5s ease' }"
-                  ></div>
-                  <div
-                    v-else
-                    class="h-full bg-error-button text-xs leading-none py-1 text-white"
-                    v-bind:style="{ width: `100%`, transition: 'width 0.5s ease' }"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
         <ad-aside />
       </main>
@@ -110,8 +45,7 @@ import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import { logVerbose } from '@/utils';
-import { InstallProgress, ModpackState } from '@/modules/modpacks/types';
+import { ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
@@ -197,71 +131,6 @@ export default class MainApp extends Vue {
         },
       });
     });
-  }
-
-  public retry(modpack: InstallProgress) {
-    if (this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID).length > 0) {
-      logVerbose(this.settings, 'The instance already exists, assume an update.');
-    } else {
-      logVerbose(this.settings, 'Instance does not exist, we can assume delete is fine');
-      const foundPack = this.modpacks.installedPacks.filter((pack) => pack.uuid === modpack.instanceID)[0];
-      if (!foundPack) {
-        // TODO: Fix me, handle this issue
-        return;
-      }
-      this.sendMessage({
-        payload: { type: 'uninstallInstance', uuid: foundPack.uuid },
-        callback: (data: any) => {
-          this.sendMessage({
-            payload: { type: 'installedInstances', refresh: true },
-            callback: (data: any) => {
-              this.storePacks(data);
-              this.updateInstall({ modpackID: foundPack.id, progress: 0 });
-              this.sendMessage({
-                payload: { type: 'installInstance', id: foundPack.id, version: foundPack.versionId },
-                callback: (data: any) => {
-                  if (data.status === 'success') {
-                    this.sendMessage({
-                      payload: { type: 'installedInstances', refresh: true },
-                      callback: (data: any) => {
-                        this.storePacks(data);
-                        this.finishInstall({ modpackID: foundPack.id, messageID: data.requestId });
-                      },
-                    });
-                  } else if (data.status === 'error') {
-                    this.updateInstall({
-                      modpackID: foundPack.id,
-                      messageID: data.requestId,
-                      error: true,
-                      errorMessage: data.message,
-                      instanceID: data.uuid,
-                    });
-                  } else if (data.status === 'init') {
-                    this.updateInstall({
-                      modpackID: foundPack.id,
-                      messageID: data.requestId,
-                      stage: 'INIT',
-                      message: data.message,
-                    });
-                  } else if (data.overallPercentage <= 100) {
-                    this.updateInstall({
-                      modpackID: foundPack.id,
-                      messageID: data.requestId,
-                      progress: data.overallPercentage,
-                      downloadSpeed: data.speed,
-                      downloadedBytes: data.currentBytes,
-                      totalBytes: data.overallBytes,
-                      stage: data.currentStage,
-                    });
-                  }
-                  logVerbose(this.settings, 'Update Data', JSON.stringify(data));
-                },
-              });
-            },
-          });
-        },
-      });
-    }
   }
 
   get showSidebar() {

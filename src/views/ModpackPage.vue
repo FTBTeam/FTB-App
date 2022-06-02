@@ -9,13 +9,12 @@
           }"
         ></div>
         <header>
-          <!--          TODO: fix isForgePack-->
           <pack-meta-heading
             @back="$router.back()"
             :hidePackDetails="false"
             versionType="release"
             :instance="currentModpack"
-            :isForgePack="true"
+            :isForgePack="isForgePack"
           />
 
           <pack-title-header :pack-instance="currentModpack" :pack-name="currentModpack.name" />
@@ -331,6 +330,15 @@ export default class ModpackPage extends Vue {
       this.changelogs[id] = changelog.content;
     }
     this.activeChangelog = id;
+  }
+
+  get isForgePack() {
+    const latestRelease = this.latestRelease ?? this.currentModpack?.versions[0]?.id ?? null;
+    return (
+      (this.currentModpack?.versions?.find((e) => e.id === latestRelease) as any)?.targets.find(
+        (e: any) => e.type === 'modloader',
+      )?.name === 'forge'
+    );
   }
 
   get packSplashArt() {

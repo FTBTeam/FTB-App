@@ -13,11 +13,19 @@
       Running {{ versionType }} version
     </div>
 
-    <div class="meta">
-      <div class="origin icon" v-if="instance.packType === 0" data-balloon-pos="left" aria-label="FTB Modpack">
+    <div class="meta" v-if="instance.name.toLowerCase() !== 'vanilla'">
+      <div
+        class="origin icon"
+        v-if="
+          (!instance.packType ? instance.type.toLowerCase() !== 'curseforge' : instance.packType === 0) &&
+          !instance.isImport
+        "
+        data-balloon-pos="left"
+        aria-label="FTB Modpack"
+      >
         <img src="@/assets/ftb-white-logo.svg" alt="" />
       </div>
-      <div class="origin icon" v-else data-balloon-pos="left" aria-label="Curseforge Modpack">
+      <div class="origin icon" v-else-if="!instance.isImport" data-balloon-pos="left" aria-label="Curseforge Modpack">
         <img src="@/assets/curse-logo.svg" alt="" />
       </div>
       <div class="modloader icon" v-if="isForgePack" data-balloon-pos="left" aria-label="Forge Modloader">
@@ -34,7 +42,6 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Instance } from '@/modules/modpacks/types';
 import { getColorForReleaseType } from '@/utils/colors';
 
 @Component
@@ -42,9 +49,13 @@ export default class PackMetaHeading extends Vue {
   @Prop() hidePackDetails!: boolean;
   @Prop() isForgePack!: boolean;
   @Prop() versionType!: string;
-  @Prop() instance!: Instance;
+  @Prop() instance!: any;
 
   getColorForReleaseType = getColorForReleaseType;
+
+  mounted() {
+    console.log(this.instance);
+  }
 }
 </script>
 
