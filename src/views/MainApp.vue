@@ -13,22 +13,22 @@
     <div class="app-container centered" v-else>
       <div class="pushed-content">
         <report-form
-          v-if="(!websockets.firstStart && !loading) || websockets.reconnects > 20"
+          v-if="websockets.reconnects > 10 && this.loading"
           :loadingFailed="loading"
-          :websocketsFailed="!websockets || websockets.reconnects > 20"
+          :websocketsFailed="!websockets || websockets.reconnects > 10"
           :websockets="websockets"
-          :max-tries="20"
+          :max-tries="10"
         />
         <div
           class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
           style="flex-direction: column; justify-content: center; align-items: center"
           v-else
         >
-          <div class="background-animation"></div>
           <img src="../assets/logo_ftb.png" width="300" class="loader-logo-animation" />
           <div class="progress">
             <div class="bar"></div>
           </div>
+          <em class="mt-6">{{ stage }}</em>
         </div>
       </div>
     </div>
@@ -74,7 +74,7 @@ export default class MainApp extends Vue {
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
   @Action('disconnect') public disconnect: any;
-  private loading: boolean = false;
+  private loading: boolean = true;
   private hasLoaded: boolean = false;
 
   @Action('registerExitCallback') private registerExitCallback: any;
@@ -83,8 +83,10 @@ export default class MainApp extends Vue {
   @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: any;
 
   private platfrom = platfrom;
-
   private windowId: string | null = null;
+
+  stage = 'Setting up...';
+  hasInitialized = false;
 
   public mounted() {
     this.registerPingCallback((data: any) => {
@@ -108,15 +110,23 @@ export default class MainApp extends Vue {
 
   @Watch('websockets', { deep: true })
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
-    if (newVal.socket.isConnected && !this.loading && !this.hasLoaded) {
-      this.loading = true;
-      await this.fetchStartData();
-      this.hasLoaded = true;
+    if (newVal.socket.isConnected && this.loading) {
       this.loading = false;
-      this.platfrom.get.actions.onAppReady();
-    } else if (!newVal.socket.isConnected) {
-      this.hasLoaded = false;
+      await this.setupApp();
     }
+
+    if (!newVal.socket.isConnected && !this.loading) {
+      this.loading = true;
+      this.stage = 'Attempting to reconnect to the apps agent...';
+    }
+  }
+
+  async setupApp() {
+    if (!this.hasInitialized) {
+      await this.fetchStartData();
+      this.hasInitialized = true;
+    }
+    this.platfrom.get.actions.onAppReady();
   }
 
   public fetchStartData() {
@@ -237,34 +247,10 @@ main.main {
 }
 .loader-logo-animation {
   animation-name: saturation;
-  animation-duration: 2.5s;
+  animation-duration: 1.8s;
   animation-iteration-count: infinite;
   animation-direction: alternate;
 }
-
-.background-animation {
-  background-image: url('../assets/ftb-tiny-desat.png');
-  filter: brightness(0.5);
-  animation-name: background-animation;
-  animation-duration: 10s;
-  animation-iteration-count: 1;
-  animation-fill-mode: forwards;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  mask-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.4)), to(rgba(0, 0, 0, 0)));
-}
-
-@keyframes background-animation {
-  from {
-    height: 0;
-  }
-  to {
-    height: 100vh;
-  }
-}
-
 @keyframes saturation {
   from {
     filter: saturate(0);
