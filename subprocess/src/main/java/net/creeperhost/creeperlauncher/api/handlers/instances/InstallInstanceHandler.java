@@ -68,7 +68,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 boolean isPrivate;
                 byte packType;
                 boolean isImport = false;
-                if (data.shareCode != null) {
+                if (StringUtils.isNotEmpty(data.shareCode)) {
                     ShareManifest shareManifest = ShareManifest.queryManifest(Constants.TRANSFER_HOST + code + "/manifest.json");
                     if (shareManifest == null) {
                         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Unable to download manifest for '" + code + "', Share code may have expired.", null));
@@ -94,8 +94,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                     for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
                         file.setUrl(sub.replace(file.getUrl()));
                     }
-                }
-                if (data.importFrom != null) {
+                } else if (StringUtils.isNotEmpty(data.importFrom)) {
                     Path importFrom = Paths.get(data.importFrom);
                     if (Files.notExists(importFrom)) {
                         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack import file does not exist.", ""));
@@ -161,8 +160,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 } catch (InstanceInstaller.InstallationFailureException ex) {
                     LOGGER.error("Fatal exception whilst installing modpack.", ex);
                     Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
+                } finally {
+                    clearInstallState();
                 }
-                clearInstallState();
             });
         } catch (IOException ex) {
             LOGGER.error("Fatal exception preparing modpack installation.", ex);
