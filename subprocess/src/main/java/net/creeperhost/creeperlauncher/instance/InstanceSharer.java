@@ -22,6 +22,7 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -244,9 +245,10 @@ public class InstanceSharer extends InstanceOperation {
                 throw new IllegalStateException("Got empty response body on success??");
             }
             try (BufferedReader reader = new BufferedReader(body.charStream())) {
-                String line = reader.readLine().replace(Constants.TRANSFER_HOST, "");
-                int slash = line.indexOf("/");
-                return line.substring(0, slash);
+                String line = reader.readLine();
+                line = StringUtils.removeEnd(line, "/manifest.json");
+                int slash = line.lastIndexOf("/");
+                return line.substring(slash + 1);
             }
         } catch (IOException ex) {
             throw new IllegalStateException("An IO error occurred whilst uploading pack.", ex);
