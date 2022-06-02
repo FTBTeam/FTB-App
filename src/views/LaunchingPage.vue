@@ -10,7 +10,7 @@
         <p v-if="finishedLoading && !hasCrashed">
           {{ instanceName }} should be running! Enjoy <font-awesome-icon class="ml-2" icon="thumbs-up" />
         </p>
-        <template v-if='!hasCrashed'>
+        <template v-if="!hasCrashed">
           <template v-if="preLaunch">
             <div
               class="progress-container"
@@ -131,6 +131,15 @@
           <font-awesome-icon :icon="['fas', darkMode ? 'sun' : 'moon']" />
         </div>
         <ftb-button
+          @click="showInstance"
+          class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-blue-600 border border-solid hover:bg-blue-600 hover:text-white"
+          aria-label="Sometimes an instance can get stuck hidden in the background... You can use this to show the instance if it's not showing up after you think it's finished loading."
+          data-balloon-pos="up-right"
+          data-balloon-length="xlarge"
+        >
+          <font-awesome-icon icon="eye" class="" />
+        </ftb-button>
+        <ftb-button
           @click="cancelLoading"
           class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-red-600 border border-solid hover:bg-red-600 hover:text-white"
         >
@@ -175,6 +184,7 @@ import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
 import eventBus from '@/utils/event-bus';
 import { RouterNames } from '@/router';
+import { wsTimeoutWrapper } from '@/utils';
 
 export interface Bar {
   title: string;
@@ -205,7 +215,7 @@ export default class LaunchingPage extends Vue {
   loading = false;
   preLaunch = true;
   platform = platform;
-  
+
   hasCrashed = false;
 
   darkMode = true;
@@ -218,7 +228,7 @@ export default class LaunchingPage extends Vue {
     stepProgress: 0,
     stepProgressHuman: '',
   };
-  emptyCurrentStep = {...this.currentStep};
+  emptyCurrentStep = { ...this.currentStep };
 
   finishedLoading = false;
   preInitMessages: Set<string> = new Set();
@@ -293,7 +303,7 @@ export default class LaunchingPage extends Vue {
                 : 'The instance has crashed or has been externally closed.',
             type: 'danger',
           });
-          
+
           this.hasCrashed = true;
           return; // block the redirection
         }
@@ -317,7 +327,15 @@ export default class LaunchingPage extends Vue {
       this.$router.push({ name: RouterNames.ROOT_LIBRARY });
     }
   }
-  
+
+  async showInstance() {
+    await wsTimeoutWrapper({
+      type: 'messageClient',
+      uuid: this.instance?.uuid,
+      message: 'show',
+    });
+  }
+
   destroyed() {
     // Stop listening to events!
     eventBus.$off('ws.message');
@@ -370,7 +388,7 @@ export default class LaunchingPage extends Vue {
     this.preInitMessages = new Set();
     this.messages = [];
     this.launchProgress = null;
-    
+
     if (!(await preLaunchChecksValid(this.instance?.uuid))) {
       this.showAlert({
         title: 'Error!',
@@ -467,16 +485,16 @@ export default class LaunchingPage extends Vue {
     const arts = this.currentModpack.art.filter((art) => art.type === 'square');
     return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
-  
+
   get launchStatus() {
     if (this.hasCrashed) {
-      return '%s has crashed! 🔥'  
+      return '%s has crashed! 🔥';
     }
-    
+
     if (!this.finishedLoading) {
       return this.preLaunch ? 'Initializing %s' : 'Starting %s';
     }
-    
+
     return 'Running %s';
   }
 }

@@ -144,6 +144,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 
+// FIX: Yeet this page, no longer used (if you couldn't tell)
 @Component
 export default class InstallingPage extends Vue {
   // @State('modpacks') public modpacks!: ModpackState;
