@@ -68,9 +68,13 @@ export const appStore: Module<AppStoreState, RootState> = {
       // This event brings back lots of request, so instead we just assume the first one is either a
       // success or error
       const rest = await wsTimeoutWrapper({
-        type: pack.version ? 'updateInstance' : 'installInstance',
+        type: pack.uuid && pack.version ? 'updateInstance' : 'installInstance',
         ...payload,
       });
+
+      if (pack.uuid && pack.version) {
+        request = { ...request, meta: { ...request.meta, isUpdate: true } };
+      }
 
       commit(AppStoreMutations.INSTALL_PACK, request);
     },

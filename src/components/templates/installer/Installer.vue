@@ -1,9 +1,14 @@
 <template>
   <modal
     :open="installer"
-    :title="`${error ? 'Install failed' : completed ? `Modpack installed!` : 'Installing Modpack'}`"
+    :title="`${
+      error
+        ? 'Install failed'
+        : completed
+        ? `Modpack installed!`
+        : `${installer && installer.meta && installer.meta.isUpdate ? 'Updating' : 'Installing'} Modpack`
+    }`"
     :subTitle="`${error ? 'Somethings gone wrong during the install...' : ''}`"
-    :permanent="!error"
     @closed="closed"
   >
     <div class="installer" v-if="installer">
@@ -52,6 +57,7 @@ import eventBus from '@/utils/event-bus';
 import { Action, Getter } from 'vuex-class';
 import { InstallerState } from '@/modules/app/appStore.types';
 import placeholderArt from '@/assets/placeholder_art.png';
+import { wsTimeoutWrapper } from '@/utils';
 
 @Component({
   components: {
@@ -73,8 +79,8 @@ export default class Installer extends Vue {
     ['finished', 'Finished'],
   ]);
 
-  packName = 'FTB Presents Stoneblock 2';
-  packVersion = '1.2.0';
+  packName = '';
+  packVersion = '';
 
   files = null;
   filesComplete = 0;
@@ -86,6 +92,10 @@ export default class Installer extends Vue {
 
   mounted() {
     eventBus.$on('ws.message', (data: any) => {
+      if (!this.installer) {
+        return;
+      }
+
       if (
         data.type !== 'installInstanceDataReply' &&
         data.type !== 'installInstanceProgress' &&
@@ -175,27 +185,34 @@ export default class Installer extends Vue {
     this.filesComplete = 0;
   }
 
-  closed() {
+  async closed() {
+    if (!this.completed && !this.error) {
+      wsTimeoutWrapper({
+        type: 'cancelInstallInstance',
+        uuid: '-1',
+      }).catch(() => {});
+    }
+
     this.cleanUp();
     this.clearInstaller();
   }
 
-  public retry() {
-    this.closed();
-
-    this.sendMessage({
-      payload: { type: 'uninstallInstance', uuid: this.installer?.pack.uuid },
-      callback: (data: any) => {
-        this.sendMessage({
-          payload: { type: 'installedInstances', refresh: true },
-          callback: (data: any) => {
-            this.storePacks(data);
-            // run install pack method again
-          },
-        });
-      },
-    });
-  }
+  // public retry() {
+  //   this.closed();
+  //
+  //   this.sendMessage({
+  //     payload: { type: 'uninstallInstance', uuid: this.installer?.pack.uuid },
+  //     callback: (data: any) => {
+  //       this.sendMessage({
+  //         payload: { type: 'installedInstances', refresh: true },
+  //         callback: (data: any) => {
+  //           this.storePacks(data);
+  //           // run install pack method again
+  //         },
+  //       });
+  //     },
+  //   });
+  // }
 
   destroyed() {
     eventBus.$off('ws.message');

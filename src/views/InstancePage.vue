@@ -276,7 +276,6 @@ export default class InstancePage extends Vue {
           uuid: this.instance?.uuid,
         },
         callback: (data: any) => {
-          console.log(data.files);
           this.modlist = data.files;
           this.updatingModlist = false;
 

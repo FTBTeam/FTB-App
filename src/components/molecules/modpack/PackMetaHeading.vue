@@ -13,11 +13,11 @@
       Running {{ versionType }} version
     </div>
 
-    <div class="meta" v-if="instance.name.toLowerCase() !== 'vanilla'">
+    <div class="meta" v-if="!instance.name || instance.name.toLowerCase() !== 'vanilla'">
       <div
         class="origin icon"
         v-if="
-          (!instance.packType ? instance.type.toLowerCase() !== 'curseforge' : instance.packType === 0) &&
+          (!instance.packType ? (instance.type || '').toLowerCase() !== 'curseforge' : instance.packType === 0) &&
           !instance.isImport
         "
         data-balloon-pos="left"
@@ -52,10 +52,6 @@ export default class PackMetaHeading extends Vue {
   @Prop() instance!: any;
 
   getColorForReleaseType = getColorForReleaseType;
-
-  mounted() {
-    console.log(this.instance);
-  }
 }
 </script>
 

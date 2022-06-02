@@ -49,10 +49,6 @@ export default class InstallModal extends Vue {
     this.selectedVersion === null || this.selectedVersion === undefined ? this.versions[0].id : this.selectedVersion;
 
   public install(): void {
-    console.log(
-      this.versions,
-      this.versions.find((e) => e.id === this.version),
-    );
     this.doInstall(this.version, this.versions.find((e) => e.id === this.version)?.name);
   }
 

@@ -78,9 +78,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     changeExitOverwolfSetting(value: boolean) {
-      overwolf.settings.setExtensionSettings({ exit_overwolf_on_exit: value }, (data: any) => {
-        console.log(data);
-      });
+      overwolf.settings.setExtensionSettings({ exit_overwolf_on_exit: value }, (data: any) => {});
     },
 
     logoutFromMinetogether() {

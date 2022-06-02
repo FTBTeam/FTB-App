@@ -9,6 +9,7 @@ export type InstallerState = {
     art?: string;
     name: string;
     version: string;
+    isUpdate?: boolean;
   };
 };
 
