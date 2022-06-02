@@ -55,6 +55,7 @@ public class InstanceSharer extends InstanceOperation {
 
             // Sensitive
             "logs/",
+            "local/",
             ".reauth.cfg"
     );
     private static final Logger LOGGER = LogManager.getLogger();
