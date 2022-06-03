@@ -58,6 +58,7 @@ import { Action, Getter } from 'vuex-class';
 import { InstallerState } from '@/modules/app/appStore.types';
 import placeholderArt from '@/assets/placeholder_art.png';
 import { wsTimeoutWrapper } from '@/utils';
+import { Instance } from '@/modules/modpacks/types';
 
 @Component({
   components: {
@@ -66,7 +67,10 @@ import { wsTimeoutWrapper } from '@/utils';
 })
 export default class Installer extends Vue {
   @Action('sendMessage') public sendMessage!: any;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
+  @Action('storeInstalledPack', { namespace: 'modpacks' }) public storePack!: (payload: {
+    pack: Instance;
+    type: 'instance' | 'cloudInstance';
+  }) => void;
 
   @Getter('installer', { namespace: 'app' }) public installer!: InstallerState | null;
   @Action('clearInstaller', { namespace: 'app' }) public clearInstaller!: () => void;
@@ -137,12 +141,11 @@ export default class Installer extends Vue {
     }
 
     if (data.status === 'success') {
-      this.sendMessage({
-        payload: { type: 'installedInstances', refresh: true },
-        callback: (data: any) => {
-          this.storePacks(data);
-        },
+      this.storePack({
+        pack: data.instanceData,
+        type: 'instance',
       });
+
       this.completed = true;
       this.files = null;
       this.completedUuid = data.uuid;
