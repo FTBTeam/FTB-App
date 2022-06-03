@@ -103,6 +103,8 @@ export default class Installer extends Vue {
           // Failsafe to ensure everything is reset if we see an error even after the installer has been closed.
           this.closed();
         }
+
+        console.log(`I'm not running or accepting this data ${data.type} because the installer isn't set`);
         return;
       }
 
@@ -111,8 +113,11 @@ export default class Installer extends Vue {
         data.type !== 'installInstanceProgress' &&
         data.type !== 'install.filesEvent'
       ) {
+        console.log(`I rejected data as it wasn't part of my accepted list... Data type: ${data.type}`);
         return;
       }
+
+      console.log(`I'm accepting a WS data from the installer, I received: ${data.type}`);
 
       // Actual install status update
       if (data.type === 'installInstanceDataReply') {
@@ -139,10 +144,7 @@ export default class Installer extends Vue {
       this.error = data.message;
       this.completed = true;
       this.percentage = '100';
-      return;
-    }
-
-    if (data.status === 'success') {
+    } else if (data.status === 'success') {
       if (this.installer?.meta.isUpdate) {
         this.updatePackInStore(data.instanceData);
       } else {
@@ -155,15 +157,11 @@ export default class Installer extends Vue {
       this.completed = true;
       this.files = null;
       this.completedUuid = data.uuid;
-      return;
-    }
-
-    if (data.status === 'files' && !this.files) {
+    } else if (data.status === 'files' && !this.files) {
       this.files = JSON.parse(data.message).length;
-      return;
+    } else {
+      this.status = data.status;
     }
-
-    this.status = data.status;
   }
 
   onProgressUpdate(data: any) {
