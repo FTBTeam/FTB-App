@@ -32,8 +32,19 @@ export const addHyphensToUuid = (uuid: string) => {
   return uuid?.replace(/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/, '$1-$2-$3-$4-$5') ?? '';
 };
 
+export const getPackArt = (packArt: any) => {
+  if (typeof packArt === 'string') return packArt;
+  let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
+  if (artP === undefined) {
+    return null;
+  }
+  return artP.url;
+};
+
 /**
  * Wraps the websocket send message in a timeout-able promise
+ *
+ * @deprecated use the typed version
  */
 export const wsTimeoutWrapper = (payload: any, timeout: number = 10_000): Promise<any> => {
   return new Promise(async (resolve, reject) => {
@@ -44,6 +55,22 @@ export const wsTimeoutWrapper = (payload: any, timeout: number = 10_000): Promis
     await store.dispatch('sendMessage', {
       payload,
       callback: (data: any) => {
+        clearTimeout(timer);
+        resolve(data);
+      },
+    });
+  });
+};
+
+export const wsTimeoutWrapperTyped = <T, R>(payload: T, timeout: number = 10_000): Promise<R> => {
+  return new Promise(async (resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject('timed out');
+    }, timeout);
+
+    await store.dispatch('sendMessage', {
+      payload,
+      callback: (data: R) => {
         clearTimeout(timer);
         resolve(data);
       },

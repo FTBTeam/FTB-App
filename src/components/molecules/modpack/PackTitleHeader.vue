@@ -2,9 +2,9 @@
   <div class="pack-info">
     <div class="info">
       <div class="name">{{ packName }}</div>
-      <div class="desc">
+      <div class="desc" v-if="!instance || !instance.isImport">
         {{ packInstance.name }}
-        <template v-if="packInstance.authors.length"
+        <template v-if="packInstance.authors && packInstance.authors.length"
           >by <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span></template
         >
         -
@@ -18,12 +18,14 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { ModPack } from '@/modules/modpacks/types';
+import { Instance, ModPack } from '@/modules/modpacks/types';
 
 @Component
 export default class PackTitleHeader extends Vue {
   @Prop() packInstance!: ModPack;
   @Prop() packName!: string;
+
+  @Prop() instance!: Instance;
 }
 </script>
 

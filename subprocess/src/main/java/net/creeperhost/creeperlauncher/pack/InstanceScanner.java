@@ -119,7 +119,7 @@ public class InstanceScanner {
                 });
             }
         } catch (IOException ex) {
-            LOGGER.error("Failed to scan.", ex);
+            LOGGER.warn("Failed to scan.", ex);
         }
     }
 
@@ -144,7 +144,7 @@ public class InstanceScanner {
                 handleFabricModJson(mod, fabricModJson);
             }
         } catch (Throwable ex) {
-            LOGGER.error("Failed to scan mod '{}'.", mod, ex);
+            LOGGER.warn("Failed to scan mod '{}'.", mod, ex);
         }
     }
 

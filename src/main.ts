@@ -25,6 +25,7 @@ import FTBButton from '@/components/atoms/input/FTBButton.vue';
 import FTBInput from '@/components/atoms/input/FTBInput.vue';
 import Popover from '@/components/atoms/Popover.vue';
 import Modal from '@/components/atoms/Modal.vue';
+import Message from '@/components/atoms/Message.vue';
 import { BrowserTracing } from '@sentry/tracing';
 import * as Sentry from '@sentry/vue';
 
@@ -41,14 +42,14 @@ const appSetup = async () => {
   if (process.env.NODE_ENV === 'production') {
     Sentry.init({
       Vue,
-      environment: process.env.NODE_ENV,
+      environment: process.env.VUE_APP_PLATFORM,
       dsn: process.env.VUE_APP_SENTRY_DSN,
       integrations: [
         new BrowserTracing({
           routingInstrumentation: Sentry.vueRouterInstrumentation(router),
         }),
       ],
-      release: platform.get.config.appVersion,
+      release: `${platform.get.config.appVersion}-${process.env.VUE_APP_PLATFORM}`,
       initialScope: {
         tags: {
           'release.vue': platform.get.config.webVersion,
@@ -128,6 +129,7 @@ const appSetup = async () => {
   Vue.component('ftb-input', FTBInput);
   Vue.component('popover', Popover);
   Vue.component('modal', Modal);
+  Vue.component('message', Message);
 
   Vue.config.productionTip = false;
   Vue.config.devtools = true;

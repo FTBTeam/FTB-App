@@ -1,9 +1,6 @@
 <template>
   <div v-if="settingsState !== undefined">
-    <div
-      class="pack-card"
-      v-if="currentModpack !== undefined || instance !== undefined || isDemo"
-    >
+    <div class="pack-card" v-if="currentModpack !== undefined || instance !== undefined || isDemo">
       <div class="art" @click.prevent="cardClicked">
         <span
           v-if="versionType !== 'release'"
@@ -30,9 +27,7 @@
         </div>
       </div>
     </div>
-    <FTBModal :visible="showInstall" @dismiss-modal="hideInstall" :dismissable="true">
-      <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />
-    </FTBModal>
+
     <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox" :dismissable="true">
       <message-modal
         :title="msgBox.title"
@@ -59,7 +54,7 @@ import { Instance, ModpackState } from '../../../modules/modpacks/types';
 import placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
-import { logVerbose } from '../../../utils';
+import { logVerbose } from '@/utils';
 import { AuthState } from '../../../modules/auth/types';
 import { getColorForReleaseType } from '@/utils/colors';
 import { RouterNames } from '@/router';
@@ -256,16 +251,16 @@ export default class PackCard extends Vue {
     );
   }
 
-  public install(version: number): void {
-    if (this.modpacks.installing !== null) {
-      return;
-    }
-    this.$router.replace({
-      name: 'installingpage',
-      query: { modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type },
-    });
-    this.showInstall = false;
-  }
+  // public install(version: number): void {
+  //   if (this.modpacks.installing !== null) {
+  //     return;
+  //   }
+  //   this.$router.replace({
+  //     name: 'installingpage',
+  //     query: { modpackid: this.$props.packID, versionID: version.toString(), type: this.$props.type },
+  //   });
+  //   this.showInstall = false;
+  // }
 
   public deleteInstace(): void {
     this.sendMessage({
@@ -327,6 +322,7 @@ export default class PackCard extends Vue {
   }
 
   public getLogo(packArt: any) {
+    if (packArt === undefined) return placeholderImage;
     if (typeof packArt === 'string') return packArt;
     let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
     if (artP === undefined) {
@@ -344,7 +340,9 @@ export default class PackCard extends Vue {
   }
 
   get versionType() {
-    return this.currentModpack?.versions?.find(e => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
+    return (
+      this.currentModpack?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release'
+    );
   }
 }
 </script>
@@ -417,6 +415,9 @@ export default class PackCard extends Vue {
       transition: opacity 0.25s ease-in-out;
       font-size: 0.875rem;
       line-height: 1em;
+      max-width: 100%;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
     .play-button {

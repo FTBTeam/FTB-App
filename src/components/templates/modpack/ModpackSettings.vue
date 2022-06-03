@@ -105,11 +105,28 @@
 
     <div class="buttons flex flex-1">
       <ftb-button class="py-2 mr-4 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()">
-        <font-awesome-icon icon="folder" size="1x" />
+        <font-awesome-icon icon="folder" class="mr-2" size="1x" />
         Open Folder
       </ftb-button>
+
+      <ftb-button
+        :disabled="!getActiveMcProfile"
+        :title="
+          !getActiveMcProfile
+            ? 'You need to be logged in to your Minecraft account to share packs'
+            : 'Share your modpack with friends'
+        "
+        class="py-2 mr-4 px-4"
+        color="info"
+        css-class="text-center text-l"
+        @click="shareConfirm = true"
+      >
+        <font-awesome-icon icon="upload" class="mr-2" size="1x" />
+        Share modpack
+      </ftb-button>
+
       <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()">
-        <font-awesome-icon icon="trash" size="1x" />
+        <font-awesome-icon icon="trash" class="mr-2" size="1x" />
         Delete
       </ftb-button>
     </div>
@@ -124,19 +141,22 @@
         :loading="deleting"
       />
     </ftb-modal>
+
+    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
 
 <script lang="ts">
 import { Instance } from '@/modules/modpacks/types';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
+import { Action, Getter, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { SettingsState } from '@/modules/settings/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
+import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 
 interface MsgBox {
   title: string;
@@ -152,12 +172,15 @@ interface MsgBox {
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
     MessageModal,
+    ShareInstanceModal,
   },
 })
 export default class ModpackSettings extends Vue {
   // Vuex
   @State('auth') public auth!: AuthState;
   @State('settings') public settingsState!: SettingsState;
+
+  @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
   @Action('sendMessage') public sendMessage!: any;
@@ -169,6 +192,8 @@ export default class ModpackSettings extends Vue {
 
   localInstance: Instance = {} as Instance;
   resSelectedValue = '0';
+
+  shareConfirm = false;
 
   deleting = false;
   showMsgBox = false;

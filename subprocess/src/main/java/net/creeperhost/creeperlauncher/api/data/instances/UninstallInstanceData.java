@@ -2,9 +2,11 @@ package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 
+import java.util.UUID;
+
 public class UninstallInstanceData extends BaseData
 {
-    public String uuid;
+    public UUID uuid;
 
     public static class Reply extends BaseData
     {

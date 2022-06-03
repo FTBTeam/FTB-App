@@ -4,7 +4,7 @@
     <p class="mb-6">{{ packDescription }}</p>
 
     <selection
-      @selected="e => (version = e.id)"
+      @selected="(e) => (version = e.id)"
       placeholder="Selection version"
       :inheritedSelection="versionOptions[0]"
       :options="versionOptions"
@@ -40,7 +40,7 @@ import { getColorForReleaseType } from '@/utils/colors';
 })
 export default class InstallModal extends Vue {
   @Prop() private versions!: Versions[];
-  @Prop() private doInstall!: (version: number) => {};
+  @Prop() private doInstall!: (version: number, versionName?: string) => {};
   @Prop() private selectedVersion!: number | null;
 
   showBetaAndAlpha = false;
@@ -49,11 +49,11 @@ export default class InstallModal extends Vue {
     this.selectedVersion === null || this.selectedVersion === undefined ? this.versions[0].id : this.selectedVersion;
 
   public install(): void {
-    this.doInstall(this.version);
+    this.doInstall(this.version, this.versions.find((e) => e.id === this.version)?.name);
   }
 
   get hasReleaseVersion() {
-    return this.versions.findIndex(e => e.type.toLowerCase() === 'release') !== -1;
+    return this.versions.findIndex((e) => e.type.toLowerCase() === 'release') !== -1;
   }
 
   get versionsBasedOnBeta() {
@@ -61,12 +61,12 @@ export default class InstallModal extends Vue {
       return this.versions;
     }
 
-    const onlyReleaseVersions = this.versions.filter(e => e.type.toLowerCase() === 'release');
+    const onlyReleaseVersions = this.versions.filter((e) => e.type.toLowerCase() === 'release');
     return !onlyReleaseVersions.length ? this.versions : onlyReleaseVersions;
   }
 
   get versionOptions() {
-    return this.versionsBasedOnBeta.map(e => ({
+    return this.versionsBasedOnBeta.map((e) => ({
       value: e,
       text: this.$props.packName + ' ' + e.name,
       badge: { text: e.type[0].toUpperCase() + e.type.slice(1), color: getColorForReleaseType(e.type) },

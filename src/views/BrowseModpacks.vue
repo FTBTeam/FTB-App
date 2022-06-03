@@ -20,6 +20,7 @@
       </div>
       <FTBSearchBar
         v-model="searchValue"
+        class="w-full"
         :placeholder="`Search ${currentTab === 'ftbsearch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
         :min="3"
       />
@@ -42,7 +43,7 @@
             </div>
             <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
               <pack-card-list
-                v-for="(modpack, index) in modpacks.search.filter(m => m.versions.length > 0)"
+                v-for="(modpack, index) in modpacks.search.filter((m) => m.versions.length > 0)"
                 :key="index"
                 :packID="modpack.id"
                 :art="modpack.art"
@@ -69,7 +70,7 @@
             </div>
             <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch">
               <pack-card-list
-                v-for="(modpack, index) in modpacks.searchCurse.filter(m => m.versions.length > 0)"
+                v-for="(modpack, index) in modpacks.searchCurse.filter((m) => m.versions.length > 0)"
                 :key="index"
                 :packID="modpack.id"
                 :art="modpack.art"

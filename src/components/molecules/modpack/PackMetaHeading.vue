@@ -13,11 +13,19 @@
       Running {{ versionType }} version
     </div>
 
-    <div class="meta">
-      <div class="origin icon" v-if="instance.packType === 0" data-balloon-pos="left" aria-label="FTB Modpack">
+    <div class="meta" v-if="!instance.name || instance.name.toLowerCase() !== 'vanilla'">
+      <div
+        class="origin icon"
+        v-if="
+          (!instance.packType ? (instance.type || '').toLowerCase() !== 'curseforge' : instance.packType === 0) &&
+          !instance.isImport
+        "
+        data-balloon-pos="left"
+        aria-label="FTB Modpack"
+      >
         <img src="@/assets/ftb-white-logo.svg" alt="" />
       </div>
-      <div class="origin icon" v-else data-balloon-pos="left" aria-label="Curseforge Modpack">
+      <div class="origin icon" v-else-if="!instance.isImport" data-balloon-pos="left" aria-label="Curseforge Modpack">
         <img src="@/assets/curse-logo.svg" alt="" />
       </div>
       <div class="modloader icon" v-if="isForgePack" data-balloon-pos="left" aria-label="Forge Modloader">
@@ -26,7 +34,25 @@
       <div class="modloader icon" v-else data-balloon-pos="left" aria-label="Fabric Modloader">
         <img src="@/assets/images/fabric.png" alt="" />
       </div>
+
+      <ftb-button
+        v-if="instance.uuid && instance.isModified"
+        :disabled="!getActiveMcProfile"
+        :title="
+          !getActiveMcProfile
+            ? 'You need to be logged in to your Minecraft account to share packs'
+            : 'Share your modpack with friends'
+        "
+        class="py-1 ml-6 px-4"
+        color="info"
+        css-class="text-center text-l"
+        @click="shareConfirm = true"
+      >
+        <font-awesome-icon icon="share" class="" size="1x" />
+      </ftb-button>
     </div>
+
+    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
 
@@ -34,17 +60,24 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Instance } from '@/modules/modpacks/types';
 import { getColorForReleaseType } from '@/utils/colors';
+import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
+import { Getter } from 'vuex-class';
 
-@Component
+@Component({
+  components: { ShareInstanceModal },
+})
 export default class PackMetaHeading extends Vue {
+  @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
+
   @Prop() hidePackDetails!: boolean;
   @Prop() isForgePack!: boolean;
   @Prop() versionType!: string;
-  @Prop() instance!: Instance;
+  @Prop() instance!: any;
 
   getColorForReleaseType = getColorForReleaseType;
+
+  shareConfirm = false;
 }
 </script>
 

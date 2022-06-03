@@ -221,6 +221,7 @@ dependencies {
     implementation 'com.github.oshi:oshi-core:5.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'org.apache.commons:commons-compress:1.2'
+    implementation 'commons-io:commons-io:2.11.0'
     implementation 'net.java.dev.jna:jna:5.5.0'
     implementation 'net.java.dev.jna:jna-platform:5.5.0'
     implementation 'com.amazonaws:aws-java-sdk-s3:1.11.839'
@@ -228,7 +229,7 @@ dependencies {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
     }
     implementation 'com.github.pircbotx:pircbotx:2.2'
-    implementation 'net.covers1624:Quack:0.4.1.46'
+    implementation 'net.covers1624:Quack:0.4.2.51'
     implementation 'net.covers1624:JdkUtils:0.4.0.9'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
@@ -438,7 +439,8 @@ idea.project.settings {
             jvmArgs += '-DDownloadTask.debug=true '                      // Enable Quack DownloadAction logging from DownloadTask
             jvmArgs += '-DInstanceLauncher.ProgressTracker.debug=true '  // Enable debug logging for InstanceLauncher's ProgressTracker TODO Log4j markers?
             jvmArgs += '-DInstanceInstaller.debug=true '                 // Enable debug logging for InstanceInstaller.
-            jvmArgs += '-DInstanceLauncher.minecraft=ACCEPT'             // Allow Minecraft logging Marker in Log4j.
+            jvmArgs += '-DInstanceLauncher.minecraft=ACCEPT '            // Allow Minecraft logging Marker in Log4j.
+            jvmArgs += '-DInstanceShareUploader.debug=true '             // Enable debug logging for InstanceShareUploader
             programParameters = '--dev'
         }
     }

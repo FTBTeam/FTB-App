@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
 import com.google.gson.*;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.data.StepReply;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
@@ -21,6 +22,7 @@ public class MicrosoftOAuth {
 
     private static final Request.Builder JSON_REQUEST = new Request.Builder()
             .header("Content-Type", "application/json")
+            .header("User-Agent", Constants.USER_AGENT)
             .header("Accept", "application/json");
 
     @Nonnull

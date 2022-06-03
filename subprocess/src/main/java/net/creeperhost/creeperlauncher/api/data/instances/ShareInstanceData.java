@@ -2,19 +2,20 @@ package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 
-public class ShareInstanceData extends BaseData
-{
-    public String uuid;
+import java.util.UUID;
 
-    public static class Reply extends BaseData
-    {
-        final String status;
-        final String message;
-        final String uuid;
-        final String code;
+public class ShareInstanceData extends BaseData {
 
-        public Reply(ShareInstanceData data, String status, String message, String uuid, String code)
-        {
+    public UUID uuid;
+
+    public static class Reply extends BaseData {
+
+        public final String status;
+        public final String message;
+        public final UUID uuid;
+        public final String code;
+
+        public Reply(ShareInstanceData data, String status, String message, UUID uuid, String code) {
             type = "ShareInstanceDataReply";
             requestId = data.requestId;
             this.status = status;

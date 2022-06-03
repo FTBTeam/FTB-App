@@ -82,7 +82,7 @@ const store: StoreOptions<RootState> = {
     discovery,
     servers,
     core,
-    appStore,
+    app: appStore,
   },
 };
 

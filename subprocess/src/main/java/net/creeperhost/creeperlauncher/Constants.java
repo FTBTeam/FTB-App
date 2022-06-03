@@ -38,15 +38,18 @@ public class Constants {
     public static final String MC_RESOURCES = "https://resources.download.minecraft.net/";
     public static final String MC_LIBS = "https://libraries.minecraft.net/";
     public static final String MC_LAUNCHER = "https://launcher.mojang.com/download/Minecraft.";
+    public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
     //API
     public static final String CREEPERHOST_MODPACK = CreeperLauncher.isDevMode ? "https://modpack-api.ch.tools" : "https://api.modpacks.ch";
     public static final String CREEPERHOST_MODPACK_SEARCH2 = CREEPERHOST_MODPACK + "/public/modpack/";
-    public static final String SHARE_API = CREEPERHOST_MODPACK + Constants.KEY + "/modpack/share/";
     public static final String MOD_API = CREEPERHOST_MODPACK + "/public/mod/";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
     public static final String MC_JSONS = "https://apps.modpacks.ch/versions/minecraftjsons/";
+
+    public static final String UPLOAD_TRANSFER_HOST = "http://upload.share.modpacks.ch/";
+    public static final String TRANSFER_HOST = "https://share.modpacks.ch/get/";
 
     //Forge
     public static final String FORGE_XML = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/maven-metadata.xml";
@@ -78,6 +81,7 @@ public class Constants {
             .cookieJar(new SimpleCookieJar())
             .addInterceptor(new ThrottlerInterceptor())
             .addInterceptor(new MultiHasherInterceptor())
+            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().removeHeader("User-Agent").addHeader("User-Agent", USER_AGENT).build()))
             .build();
 
     public static JdkInstallationManager JDK_INSTALL_MANAGER = new JdkInstallationManager(

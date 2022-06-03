@@ -1,21 +1,20 @@
 <template>
   <div class="pack-container">
     <div class="pack-page">
-      <div
-        class="pack-page-contents"
-        v-if="!loading && currentModpack"
-        :style="{
-          'background-image': `url(${packSplashArt})`,
-        }"
-      >
+      <div class="pack-page-contents" v-if="!loading && currentModpack">
+        <div
+          class="background"
+          :style="{
+            'background-image': `url(${packSplashArt})`,
+          }"
+        ></div>
         <header>
-          <!--          TODO: fix isForgePack-->
           <pack-meta-heading
             @back="$router.back()"
             :hidePackDetails="false"
             versionType="release"
             :instance="currentModpack"
-            :isForgePack="true"
+            :isForgePack="isForgePack"
           />
 
           <pack-title-header :pack-instance="currentModpack" :pack-name="currentModpack.name" />
@@ -144,7 +143,7 @@ import { Action, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import { shuffle } from '../utils';
+import { getPackArt, shuffle } from '../utils';
 import { SettingsState } from '../modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import ServerCard from '@/components/organisms/ServerCard.vue';
@@ -156,6 +155,7 @@ import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import { AuthState } from '@/modules/auth/types';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
+import { InstallerState } from '@/modules/app/appStore.types';
 
 interface Changelogs {
   [id: number]: string;
@@ -199,6 +199,7 @@ export default class ModpackPage extends Vue {
   @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
   @State('servers') public serverListState!: ServersState;
   @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   private showInstallBox: boolean = false;
   private installSelectedVersion: number | null = null;
@@ -222,18 +223,30 @@ export default class ModpackPage extends Vue {
     this.activeTab = tabItem as unknown as ModpackPageTabs;
   }
 
-  public install(version: number): void {
-    if (this.showInstallBox) {
-      this.showInstallBox = false;
-    }
-    this.$router.replace({
-      name: 'installingpage',
-      query: {
-        modpackid: this.$route.query.modpackid,
-        versionID: version.toString(),
-        type: this.$route.query.type,
+  public install(version: number, versionName: string): void {
+    this.installModpack({
+      pack: {
+        id: this.$route.query.modpackid as string,
+        version: version,
+        packType: this.$route.query.type as string,
+      },
+      meta: {
+        name: this.currentModpack?.name ?? '',
+        version: versionName,
+        art: getPackArt(this.currentModpack?.art),
       },
     });
+    // if (this.showInstallBox) {
+    //   this.showInstallBox = false;
+    // }
+    // this.$router.replace({
+    //   name: 'installingpage',
+    //   query: {
+    //     modpackid: this.$route.query.modpackid,
+    //     versionID: version.toString(),
+    //     type: this.$route.query.type,
+    //   },
+    // });
   }
 
   private async mounted() {
@@ -317,6 +330,15 @@ export default class ModpackPage extends Vue {
       this.changelogs[id] = changelog.content;
     }
     this.activeChangelog = id;
+  }
+
+  get isForgePack() {
+    const latestRelease = this.latestRelease ?? this.currentModpack?.versions[0]?.id ?? null;
+    return (
+      (this.currentModpack?.versions?.find((e) => e.id === latestRelease) as any)?.targets.find(
+        (e: any) => e.type === 'modloader',
+      )?.name === 'forge'
+    );
   }
 
   get packSplashArt() {

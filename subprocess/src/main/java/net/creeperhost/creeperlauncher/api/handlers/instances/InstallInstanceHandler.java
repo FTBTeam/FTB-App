@@ -1,106 +1,176 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import net.creeperhost.creeperlauncher.Analytics;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.covers1624.quack.io.IOUtils;
+import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
-import net.creeperhost.creeperlauncher.install.InstanceInstaller;
+import net.creeperhost.creeperlauncher.data.modpack.ShareManifest;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.task.InstallationOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class InstallInstanceHandler implements IMessageHandler<InstallInstanceData> {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void handle(InstallInstanceData data) {
-        LOGGER.debug("Received install pack message for " + "ID:" + data.id + " VERSION:" + data.version + " PACKTYPE:" + data.packType);
-        if (CreeperLauncher.isInstalling) {
-            assert CreeperLauncher.currentInstall != null;
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.getInstance().getUuid().toString()));
+    public synchronized void handle(InstallInstanceData data) {
+        if (CreeperLauncher.LONG_TASK_MANAGER.anyTasksRunning(InstallationOperation.class)) {
+            abort(data, "Installation already in progress");
             return;
         }
-        CreeperLauncher.isInstalling = true;
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Install started.", ""));
 
         try {
-            LocalInstance instance;
             if (StringUtils.isNotEmpty(data.uuid)) {
-                instance = Instances.getInstance(UUID.fromString(data.uuid));
-                Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
-                        data.id,
-                        data.version,
-                        data._private,
-                        instance.packType
-                );
-                if (manifests == null) {
-                    Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
-                    clearInstallState();
-                    return;
-                }
-                handleInstall(data, instance, manifests);
+                handleUpdate(data);
+            } else if (StringUtils.isNotEmpty(data.shareCode)) {
+                handleShareImport(data, data.shareCode);
+            } else if (StringUtils.isNotEmpty(data.importFrom)) {
+                handleCurseImport(data, data.importFrom);
             } else {
-                Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
-                        data.id,
-                        data.version,
-                        data._private,
-                        data.packType
-                );
-                if (manifests == null) {
-                    Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Modpack not found", ""));
-                    clearInstallState();
-                    return;
-                }
-                instance = new LocalInstance(manifests.getLeft(), manifests.getRight(), data._private, data.packType);
-                Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.packType);
-                handleInstall(data, instance, manifests);
+                handleNewInstall(data);
             }
         } catch (Throwable ex) {
-            LOGGER.error("Fatal exception configuring modpack installation.", ex);
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception configuring modpack installation.", ""));
-            clearInstallState();
+            LOGGER.error("Error preparing Modpack installation.", ex);
+            abort(data, "Fatal exception preparing installation task.");
         }
     }
 
-    private void handleInstall(InstallInstanceData data, LocalInstance instance, Pair<ModpackManifest, ModpackVersionManifest> manifests) {
-        try {
-            InstallProgressTracker tracker = new InstallProgressTracker(data);
-            InstanceInstaller installer = new InstanceInstaller(instance, manifests.getRight(), tracker);
-            CreeperLauncher.currentInstall = installer;
-            installer.prepare();
-            CreeperLauncher.currentInstallFuture = CompletableFuture.runAsync(() -> {
-                try {
-                    installer.execute();
-                    Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.getUuid().toString()));
-                    Instances.addInstance(instance.getUuid(), instance);
-                } catch (InstanceInstaller.InstallationFailureException ex) {
-                    LOGGER.error("Fatal exception whilst installing modpack.", ex);
-                    Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
-                }
-                clearInstallState();
-            });
-        } catch (IOException ex) {
-            LOGGER.error("Fatal exception preparing modpack installation.", ex);
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation.", ""));
-            clearInstallState();
+    private void handleUpdate(InstallInstanceData data) throws IOException {
+        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        if (instance == null) {
+            abort(data, "Install not started.");
+            return;
         }
+
+        Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
+                data.id,
+                data.version,
+                data._private,
+                instance.packType
+        );
+        if (manifests == null) {
+            abort(data, "Modpack not found");
+            return;
+        }
+        beginInstallTask(data, instance, manifests.getRight());
     }
 
-    private static void clearInstallState() {
-        CreeperLauncher.isInstalling = false;
-        CreeperLauncher.currentInstall = null;
-        CreeperLauncher.currentInstallFuture = null;
+    private void handleShareImport(InstallInstanceData data, String shareCode) throws IOException {
+        ShareManifest shareManifest = ShareManifest.queryManifest(Constants.TRANSFER_HOST + shareCode + "/manifest.json");
+        if (shareManifest == null) {
+            abort(data, "Unable to download manifest for '" + shareCode + "', Share code may have expired.");
+            return;
+        }
+
+        ModpackVersionManifest versionManifest = shareManifest.getVersionManifest();
+        boolean isPrivate = shareManifest.getType() == ShareManifest.Type.PRIVATE;
+        byte packType = shareManifest.getType() == ShareManifest.Type.CURSE ? (byte) 1 : 0;
+        boolean isImport = shareManifest.getType() == ShareManifest.Type.IMPORT;
+
+        ModpackManifest modpackManifest;
+        if (isImport) {
+            modpackManifest = ModpackManifest.fakeManifest(shareManifest.getName());
+        } else {
+            modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), isPrivate, packType);
+            if (modpackManifest == null) {
+                modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), !isPrivate, packType);
+            }
+
+            if (modpackManifest == null) {
+                abort(data, "Unable to determine modpack for '" + shareCode + "'.");
+                return;
+            }
+        }
+        // Run substitutions over manifest.
+        StrSubstitutor sub = new StrSubstitutor(Map.of("token", shareCode));
+        for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
+            file.setUrl(sub.replace(file.getUrl()));
+        }
+
+        beginNewInstall(data, modpackManifest, versionManifest, isPrivate, packType, false);
+    }
+
+    private void handleCurseImport(InstallInstanceData data, String importFrom) throws IOException {
+        Path path = Paths.get(importFrom);
+        if (Files.notExists(path)) {
+            abort(data, "Modpack import file does not exist.");
+            return;
+        }
+        if (!Files.isRegularFile(path)) {
+            abort(data, "Modpack import file is not a file.");
+            return;
+        }
+        Pair<ModpackManifest, ModpackVersionManifest> manifests = prepareCurseImport(path);
+        if (manifests == null) {
+            abort(data, "Failed to import curse pack.");
+            return;
+        }
+
+        beginNewInstall(data, manifests.getLeft(), manifests.getRight(), false, (byte) 0, true);
+    }
+
+    private void handleNewInstall(InstallInstanceData data) throws IOException {
+        Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
+                data.id,
+                data.version,
+                data._private,
+                data.packType
+        );
+        if (manifests == null) {
+            abort(data, "Modpack not found");
+            return;
+        }
+
+        beginNewInstall(data, manifests.getLeft(), manifests.getRight(), data._private, data.packType, false);
+    }
+
+    private void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
+        LocalInstance instance = new LocalInstance(modpackManifest, versionManifest, isPrivate, packType);
+        instance.isImport = isImport;
+        if (instance.getId() != -1 && instance.getVersionId() != -1) {
+            Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.packType);
+        }
+        beginInstallTask(data, instance, versionManifest);
+    }
+
+    private void beginInstallTask(InstallInstanceData data, LocalInstance instance, ModpackVersionManifest manifest) throws IOException {
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance.getUuid().toString()));
+
+        InstallationOperation op = new InstallationOperation(CreeperLauncher.LONG_TASK_MANAGER, data, instance, manifest);
+        op.submit();
+    }
+
+    private void abort(InstallInstanceData data, String reason) {
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason, ""));
+    }
+
+    @Nullable
+    public static Pair<ModpackManifest, ModpackVersionManifest> prepareCurseImport(Path curseZip) throws IOException {
+        ModpackVersionManifest versionManifest;
+        try (FileSystem fs = IOUtils.getJarFileSystem(curseZip, true)) {
+            Path manifestJson = fs.getPath("/manifest.json");
+            versionManifest = ModpackVersionManifest.convert(manifestJson);
+            if (versionManifest == null) {
+                return null;
+            }
+            versionManifest.cfExtractOverride = curseZip;
+            return Pair.of(ModpackManifest.fakeManifest(versionManifest.getName()), versionManifest);
+        }
     }
 }

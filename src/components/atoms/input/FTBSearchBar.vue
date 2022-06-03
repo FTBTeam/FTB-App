@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full flex flex-row items-center relative shadow rounded ftb-search"
+    class="flex flex-row items-center relative shadow rounded ftb-search"
     :class="{ darker: darkMode, alpha, nope: min > 0 && value.length > 0 && value.length < min }"
   >
     <input

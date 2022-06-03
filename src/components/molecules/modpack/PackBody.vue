@@ -183,6 +183,7 @@ export default class PackBody extends Vue {
   getColorForChar = getColorForChar;
 
   get tags() {
+    if (this.packInstance.tags === undefined) return [];
     return this.packInstance.tags.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) ?? [];
   }
 

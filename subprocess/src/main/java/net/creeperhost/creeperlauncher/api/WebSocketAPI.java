@@ -129,7 +129,12 @@ public class WebSocketAPI extends WebSocketServer
         {
             notConnectedQueue.add(s);
         } else {
-            getConnections().forEach((client) -> client.send(s));
+            for (WebSocket client : getConnections()) {
+                // I have no idea why the connection would still be there if it was marked as not open, but apparently it can be!
+                // This library is getting nuked at some point to resolve this bs..
+                if (!client.isOpen()) continue;
+                client.send(s);
+            }
         }
     }
 }

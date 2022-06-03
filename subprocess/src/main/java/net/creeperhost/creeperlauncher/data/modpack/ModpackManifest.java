@@ -48,7 +48,7 @@ public class ModpackManifest {
     private List<Version> versions = new LinkedList<>();
 
     @Nullable
-    public static ModpackManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
+    public static ModpackManifest queryManifest(long packId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
         String url = Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId;
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
@@ -65,6 +65,16 @@ public class ModpackManifest {
             return null;
         }
 
+        return manifest;
+    }
+
+    public static ModpackManifest fakeManifest(String name) {
+        ModpackManifest manifest = new ModpackManifest();
+        manifest.status = "success";
+        manifest.id = -1;
+        manifest.name = name;
+        manifest.description = "";
+        manifest.synopsis = "";
         return manifest;
     }
 

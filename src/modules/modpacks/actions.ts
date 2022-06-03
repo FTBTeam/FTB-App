@@ -29,8 +29,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
     commit('curseLoading', true);
     commit('setSearch', searchTerm);
     return getAPIRequest(rootState, `modpack/search/8?term=${searchTerm}`)
-      .then(response => response.json())
-      .then(async data => {
+      .then((response) => response.json())
+      .then(async (data) => {
         if (data.status === 'error') {
           commit('searchError', data.message);
           commit('setLoading', false);
@@ -56,7 +56,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('searchCurseLoaded', cursePacks);
         commit('curseLoading', false);
       })
-      .catch(err => {
+      .catch((err) => {
         commit('searchError', err);
         commit('setLoading', false);
         console.error(err);
@@ -65,8 +65,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
   getPopularInstalls({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/installs/20`)
-      .then(response => response.json())
-      .then(async data => {
+      .then((response) => response.json())
+      .then(async (data) => {
         const packIDs = data.packs;
         if (packIDs == null) {
           return;
@@ -83,7 +83,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('popularInstalls', packs);
         commit('setLoading', false);
       })
-      .catch(err => {
+      .catch((err) => {
         commit('popularInstallsError', err);
         commit('setLoading', false);
         console.error(err);
@@ -92,8 +92,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
   getPopularPlays({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/plays/20`)
-      .then(response => response.json())
-      .then(async data => {
+      .then((response) => response.json())
+      .then(async (data) => {
         const packIDs = data.packs;
         if (packIDs == null) {
           return;
@@ -110,7 +110,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('popularPlays', packs);
         commit('setLoading', false);
       })
-      .catch(err => {
+      .catch((err) => {
         commit('popularPlaysError', err);
         commit('setLoading', false);
         console.error(err);
@@ -119,8 +119,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
   getPrivatePacks({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
     return getAPIRequest(rootState, `modpack/private/20`)
-      .then(response => response.json())
-      .then(async data => {
+      .then((response) => response.json())
+      .then(async (data) => {
         const packIDs = data.packs;
         if (packIDs == null) {
           return;
@@ -137,7 +137,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('privatePacks', packs);
         commit('setLoading', false);
       })
-      .catch(err => {
+      .catch((err) => {
         commit('privatePacksError', err);
         commit('setLoading', false);
         console.error(err);
@@ -153,8 +153,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
   loadFeaturedPacks({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/featured/20`)
-      .then(response => response.json())
-      .then(async data => {
+      .then((response) => response.json())
+      .then(async (data) => {
         const packIDs = data.packs;
         if (packIDs == null) {
           return;
@@ -171,7 +171,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('featuredPacksLoaded', packs);
         commit('setLoading', false);
       })
-      .catch(err => {
+      .catch((err) => {
         commit('featuredPacksError', err);
         commit('setLoading', false);
         console.error(err);
@@ -180,8 +180,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
   loadAllPacks({ commit, rootState, dispatch }: any): any {
     commit('setLoading', true);
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`)
-      .then(response => response.json())
-      .then(async data => {
+      .then((response) => response.json())
+      .then(async (data) => {
         const packIDs = data.packs;
         if (packIDs == null) {
           return;
@@ -210,7 +210,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         commit('allPacksLoaded', packs);
         commit('setLoading', false);
       })
-      .catch(err => {
+      .catch((err) => {
         commit('allPacksError', err);
         commit('setLoading', false);
         console.error(err);
@@ -218,25 +218,32 @@ export const actions: ActionTree<ModpackState, RootState> = {
   },
   storeInstalledPacks({ commit }, packsPayload): any {
     const packs: Instance[] = [];
-    asyncForEach(Object.keys(packsPayload.instances), async index => {
+    asyncForEach(Object.keys(packsPayload.instances), async (index) => {
       const instance: Instance = packsPayload.instances[index];
       instance.kind = 'instance';
       packs.push(instance);
     });
-    asyncForEach(Object.keys(packsPayload.cloudInstances), async index => {
+    asyncForEach(Object.keys(packsPayload.cloudInstances), async (index) => {
       const instance: Instance = packsPayload.cloudInstances[index];
       instance.kind = 'cloudInstance';
       packs.push(instance);
     });
     commit('storeInstalledPacks', packs);
   },
+  storeInstalledPack({ commit, state }, packPayload: { pack: Instance; type: 'instance' | 'cloudInstance' }): any {
+    packPayload.pack.kind = packPayload.type;
+    commit('pushToInstalledPack', packPayload.pack);
+  },
+  updatePackInStore({ commit }, payload: Instance): any {
+    commit('updatePackInStore', payload);
+  },
   async updateInstall({ commit, rootState }: any, install: InstallProgress): Promise<any> {
     if (rootState.modpacks.packsCache[install.modpackID]) {
       install.pack = rootState.modpacks.packsCache[install.modpackID];
     } else {
-      const pack = await fetch(
-        `${process.env.VUE_APP_MODPACK_API}/public/modpack/${install.modpackID}`,
-      ).then(response => response.json());
+      const pack = await fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/${install.modpackID}`).then(
+        (response) => response.json(),
+      );
       install.pack = pack;
       logVerbose(rootState, 'Adding to cache', pack);
       commit('addToCache', pack);
@@ -306,7 +313,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     return new Promise(async (resolve, reject) => {
       let modpackRoute = type == 0 ? 'modpack' : 'curseforge';
       const changelog = (await getAPIRequest(rootState, `${modpackRoute}/${packID}/${versionID}/changelog`)
-        .catch(err => console.error(err))
+        .catch((err) => console.error(err))
         .then((response: any) => {
           response = response as Response;
           return response.json();
@@ -323,7 +330,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     return new Promise(async (resolve, reject) => {
       logVerbose(rootState, 'Fetching...', packID);
       await getAPIRequest(rootState, `modpack/${packID}`)
-        .catch(err => console.error(err))
+        .catch((err) => console.error(err))
         .then(async (response: any) => {
           response = response as Response;
           const pack: ModPack = (await response.json()) as ModPack;
@@ -333,7 +340,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
           }
 
           if (pack.versions !== undefined) {
-            pack.versions.forEach(version => {
+            pack.versions.forEach((version) => {
               version.mtgID = btoa(pack.id + '' + version.id);
             });
             try {
@@ -350,7 +357,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
           logVerbose(rootState, 'Resolving...', packID);
           resolve(pack);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Error getting modpack', err);
           reject('Pack is unavailable');
         });
@@ -365,7 +372,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
     return new Promise(async (resolve, reject) => {
       logVerbose(rootState, 'Fetching...', packID);
       await getAPIRequest(rootState, `curseforge/${packID}`)
-        .catch(err => console.error(err))
+        .catch((err) => console.error(err))
         .then(async (response: any) => {
           response = response as Response;
           const pack: ModPack = (await response.json()) as ModPack;
@@ -375,7 +382,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
           }
 
           if (pack.versions !== undefined) {
-            pack.versions.forEach(version => {
+            pack.versions.forEach((version) => {
               version.mtgID = btoa(pack.id + '' + version.id);
             });
             try {
@@ -392,7 +399,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
           logVerbose(rootState, 'Resolving...', packID);
           resolve(pack);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Error getting modpack', err);
           reject('Pack is unavailable');
         });

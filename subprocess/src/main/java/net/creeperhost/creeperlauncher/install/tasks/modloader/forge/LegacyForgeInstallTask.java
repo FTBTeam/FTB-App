@@ -45,13 +45,15 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
 
         instance.jvmArgs = instance.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath() + "\"";
 
+        if (cancelToken != null) cancelToken.throwIfCancelled();
+
         MavenNotation universal = getForgeNotation(mcVersion, forgeVersion);
         NewDownloadTask dlForge = NewDownloadTask.builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, "/") + universal.toPath())
                 .dest(instMods.resolve(versionName + ".jar"))
                 .build();
         if (!dlForge.isRedundant()) {
-            dlForge.execute(null, null);
+            dlForge.execute(cancelToken, null);
         }
 
         VersionManifest vanillaManifest = downloadVanilla(versionsDir, mcVersion);
@@ -68,9 +70,11 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .build();
         if (!dlForgeVersionJson.isRedundant()) {
-            dlForgeVersionJson.execute(null, null);
+            dlForgeVersionJson.execute(cancelToken, null);
         }
 
-        ForgeLegacyLibraryHelper.installLegacyLibs(instance, mcVersion);
+        if (cancelToken != null) cancelToken.throwIfCancelled();
+
+        ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, instance, mcVersion);
     }
 }

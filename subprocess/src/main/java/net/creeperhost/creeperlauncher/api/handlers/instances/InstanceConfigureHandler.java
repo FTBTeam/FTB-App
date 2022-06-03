@@ -1,6 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceConfigureData;
@@ -9,7 +8,6 @@ import net.creeperhost.creeperlauncher.pack.LocalInstance;
 
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.UUID;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData>
 {
@@ -18,8 +16,12 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
     {
         try
         {
-            //TODO, instance lookup?
-            LocalInstance instance = new LocalInstance(Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(data.uuid));
+            LocalInstance instance = Instances.getInstance(data.uuid);
+            if (instance == null) {
+                // TODO, This message needs to be improved. We should tell the frontend _why_
+                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error"));
+                return;
+            }
             for (Map.Entry<String, String> setting : data.instanceInfo.entrySet())
             {
                 switch (setting.getKey().toLowerCase())
@@ -54,7 +56,6 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
                 }
             }
             instance.saveJson();
-            Instances.refreshInstances();
             Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "success"));
         } catch (Exception err)
         {

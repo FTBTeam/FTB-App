@@ -11,7 +11,13 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import net.creeperhost.creeperlauncher.util.PathRequestBody;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static net.creeperhost.creeperlauncher.Constants.CREEPERHOST_MODPACK;
 
 /**
  * Models the <code>modpacks.ch</code> api.
@@ -45,6 +52,8 @@ public class ModpackVersionManifest {
 
     @Nullable
     private String status;
+    @Nullable
+    private String message;
 
     private long id;
     private long parent;
@@ -65,9 +74,34 @@ public class ModpackVersionManifest {
     private long updated;
     private long refreshed;
 
+    public ModpackVersionManifest() {
+    }
+
+    public ModpackVersionManifest(ModpackVersionManifest other) {
+        status = other.status;
+        id = other.id;
+        parent = other.parent;
+        name = other.name;
+        specs = other.specs != null ? other.specs.copy() : null;
+        type = other.type;
+        targets = StreamableIterable.of(other.targets)
+                .map(Target::copy)
+                .toLinkedList();
+        files = StreamableIterable.of(other.files)
+                .map(ModpackFile::copy)
+                .toLinkedList();
+        installs = other.installs;
+        plays = other.plays;
+        updated = other.updated;
+        refreshed = other.refreshed;
+    }
+
+    @Nullable
+    public transient Path cfExtractOverride;
+
     @Nullable
     public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, versionId, isPrivate, packType);
+        ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, isPrivate, packType);
         if (modpackManifest != null) {
             ModpackVersionManifest versionManifest = queryManifest(packId, versionId, isPrivate, packType);
             if (versionManifest != null) {
@@ -77,7 +111,7 @@ public class ModpackVersionManifest {
                 );
             }
         }
-        modpackManifest = ModpackManifest.queryManifest(packId, versionId, !isPrivate, packType);
+        modpackManifest = ModpackManifest.queryManifest(packId, !isPrivate, packType);
 
         if (modpackManifest == null) return null; // We tried, really doesn't exist..
 
@@ -89,7 +123,11 @@ public class ModpackVersionManifest {
 
     @Nullable
     public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        String url = Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId;
+        return queryManifest(Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId);
+    }
+
+    @Nullable
+    public static ModpackVersionManifest queryManifest(String url) throws IOException, JsonParseException {
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
@@ -101,11 +139,33 @@ public class ModpackVersionManifest {
 
         ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
         if (manifest.getStatus().equals("error")) {
-            // TODO Log error.
+            LOGGER.error("Failed to request manifest got: " + manifest.getMessage());
             return null;
         }
 
         return manifest;
+    }
+
+    @Nullable
+    public static ModpackVersionManifest convert(Path manifest) throws IOException {
+        LOGGER.info("Converting pack '{}'.", manifest);
+
+        Request.Builder builder = new Request.Builder()
+                .url(CREEPERHOST_MODPACK + "/public/curseforge/import")
+                .put(new PathRequestBody(manifest));
+        try (Response response = Constants.OK_HTTP_CLIENT.newCall(builder.build()).execute()) {
+            ResponseBody body = response.body();
+            if (body == null) {
+                LOGGER.error("Request returned empty body. Status code: " + response.code());
+                return null;
+            }
+            ModpackVersionManifest versionManifest = JsonUtils.parse(GSON, body.string(), ModpackVersionManifest.class);
+            if (versionManifest.getStatus().equals("error")) {
+                LOGGER.error("Failed to convert pack. Got error: " + versionManifest.getMessage());
+                return null;
+            }
+            return versionManifest;
+        }
     }
 
     public int getMinimumSpec() {
@@ -152,8 +212,13 @@ public class ModpackVersionManifest {
         return target != null ? target.getVersion() : null;
     }
 
+    public ModpackVersionManifest copy() {
+        return new ModpackVersionManifest(this);
+    }
+
     // @formatter:off
     public String getStatus() { return requireNonNull(status); }
+    public String getMessage() { return requireNonNull(message); }
     public long getId() { return id; }
     public long getParent() { return parent; }
     public String getName() { return requireNonNull(name); }
@@ -167,12 +232,36 @@ public class ModpackVersionManifest {
     public long getRefreshed() { return refreshed; }
     // @formatter:on
 
+    public List<ModFile> toLegacyFiles() {
+        List<ModFile> files = new LinkedList<>();
+        for (ModpackFile file : this.files) {
+            if (!file.getPath().startsWith("./mods") || !ModFile.isPotentialMod(file.getName())) continue;
+            String sha1 = file.getSha1OrNull() != null ? file.getSha1OrNull().toString() : "";
+            files.add(new ModFile(file.getName(), file.getVersion(), file.getSize(), sha1));
+        }
+        files.sort((e1, e2) -> e1.getRealName().compareToIgnoreCase(e2.getRealName()));
+        return files;
+    }
+
     public static class Specs {
 
         private long id;
 
         private int minimum;
         private int recommended;
+
+        public Specs() {
+        }
+
+        public Specs(Specs other) {
+            id = other.id;
+            minimum = other.minimum;
+            recommended = other.recommended;
+        }
+
+        public Specs copy() {
+            return new Specs(this);
+        }
     }
 
     public static class Target {
@@ -187,6 +276,21 @@ public class ModpackVersionManifest {
         private String type;
 
         private long updated;
+
+        public Target() {
+        }
+
+        public Target(Target other) {
+            id = other.id;
+            version = other.version;
+            name = other.name;
+            type = other.type;
+            updated = other.updated;
+        }
+
+        public Target copy() {
+            return new Target(this);
+        }
 
         // @formatter:off
         public long getId() { return id; }
@@ -226,8 +330,41 @@ public class ModpackVersionManifest {
 
         public long updated;
 
+        public ModpackFile() {
+        }
+
+        public ModpackFile(long id, String path, String name, String url, HashCode sha1, long size, String type) {
+            this.id = id;
+            this.path = path;
+            this.name = name;
+            this.url = url;
+            this.sha1 = sha1;
+            this.size = size;
+            this.type = type;
+        }
+
+        public ModpackFile(ModpackFile other) {
+            id = other.id;
+            version = other.version;
+            path = other.path;
+            name = other.name;
+            url = other.url;
+            sha1 = other.sha1;
+            size = other.size;
+            clientOnly = other.clientOnly;
+            serverOnly = other.serverOnly;
+            optional = other.optional;
+            type = other.type;
+            tags = other.tags != null ? other.tags.deepCopy() : null;
+            updated = other.updated;
+        }
+
         public Path toPath(Path root) {
             return root.resolve(getPath()).resolve(getName());
+        }
+
+        public String instanceRelPath() {
+            return StringUtils.appendIfMissing(StringUtils.removeStart(getPath(), "./"), "/") + StringUtils.removeStart(getName(), "/");
         }
 
         public Path getCfExtractPath(Path root, String modpackVersion) {
@@ -247,6 +384,10 @@ public class ModpackVersionManifest {
             return validation;
         }
 
+        public ModpackFile copy() {
+            return new ModpackFile(this);
+        }
+
         // @formatter:off
         public long getId() { return id; }
         public String getVersion() { return requireNonNull(version); }
@@ -261,6 +402,9 @@ public class ModpackVersionManifest {
         public boolean isOptional() { return optional; }
         public String getType() { return requireNonNull(type); }
         public long getUpdated() { return updated; }
+        public void setUrl(@Nullable String url) { this.url = url; }
+        public void setSha1(HashCode sha1) { this.sha1 = sha1; }
+        public void setSize(long size) { this.size = size; }
         // @formatter:on
     }
 

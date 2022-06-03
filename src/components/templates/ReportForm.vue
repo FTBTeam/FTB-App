@@ -1,8 +1,8 @@
 <template>
   <div class="report-form">
     <div
-      class=" container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
-      style="flex-direction: column; justify-content: center; align-items: center;"
+      class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
+      style="flex-direction: column; justify-content: center; align-items: center"
     >
       <img src="@/assets/logo_ftb.png" width="200px" class="mb-4" />
       <div class="wrapper" v-if="!disabled">
@@ -21,11 +21,10 @@
         </div>
       </div>
       <div class="wrapper text-center" v-else>
-        <h1 class="text-2xl font-bold">Oh...</h1>
-        <p>This is a bit awkward</p>
+        <h1 class="text-2xl font-bold">Oh... This doesn't look right...</h1>
         <p class="mt-4 w-1/2 mx-auto">
           It looks like something has gone wrong with the App. It's likely that this is a one off issue, but if it keeps
-          happening please report the issue below.
+          happening please report the issue below. We'd recommend trying to restart and see if that fixes it.
         </p>
 
         <div class="buttons flex justify-center mt-6">
@@ -39,17 +38,21 @@
 
     <div class="debug-info text-left">
       <div class="flex items-start opacity-25">
-        <div class="item mr-4">
-          <p class="font-bold mb-2">UI Version</p>
-          <div class="rounded bg-black px-2 py-1">{{ uiVersion }}</div>
-        </div>
-        <div class="item mr-4">
+        <div class="item mr-6">
           <p class="font-bold mb-2">App Version</p>
-          <div class="rounded bg-black px-2 py-1">{{ appVersion }}</div>
+          <div class="rounded bg-black px-2 py-1 inline-block">{{ publicVersion }}</div>
+        </div>
+        <div class="item mr-6">
+          <p class="font-bold mb-2">UI Version</p>
+          <div class="rounded bg-black px-2 py-1 inline-block">{{ uiVersion }}</div>
+        </div>
+        <div class="item mr-6">
+          <p class="font-bold mb-2">Subprocess Version</p>
+          <div class="rounded bg-black px-2 py-1 inline-block">{{ appVersion }}</div>
         </div>
         <div class="item">
           <p class="font-bold mb-2">Tries</p>
-          <div class="rounded bg-black px-2 py-1">Reconnect tries: {{ websockets.reconnects }}</div>
+          <div class="rounded bg-black px-2 py-1 inline-block">Reconnect tries: {{ websockets.reconnects }}</div>
         </div>
       </div>
     </div>
@@ -74,10 +77,12 @@ export default class ReportForm extends Vue {
   // TODO: enable once the report form is working again
   disabled = true;
 
-  static emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  static emailRegex =
+    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
   uiVersion: string = platform.get.config.webVersion;
   appVersion: string = platform.get.config.appVersion;
+  publicVersion: string = platform.get.config.publicVersion;
 
   errorEmail = '';
   errorDescription = '';
@@ -94,7 +99,7 @@ export default class ReportForm extends Vue {
       return;
     }
     this.submittingError = true;
-    const logLink = await this.uploadLogData().catch(err => {
+    const logLink = await this.uploadLogData().catch((err) => {
       if (err) {
         this.submittingError = false;
         // Show an error here...

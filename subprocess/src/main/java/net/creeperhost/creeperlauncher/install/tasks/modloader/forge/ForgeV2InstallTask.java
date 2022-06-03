@@ -71,16 +71,17 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             libraries.addAll(instManifest.libraries);
 
             for (VersionManifest.Library library : libraries) {
+                if (cancelToken != null) cancelToken.throwIfCancelled();
                 processLibrary(cancelToken, installerRoot, librariesDir, library);
             }
 
-            runProcessors(instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir);
+            runProcessors(cancelToken, instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir);
 
-            ForgeLegacyLibraryHelper.installLegacyLibs(instance, instManifest.minecraft);
+            ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, instance, instManifest.minecraft);
         }
     }
 
-    private void runProcessors(InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir) throws IOException {
+    private void runProcessors(@Nullable CancellationToken cancelToken, InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir) throws IOException {
         String javaTarget = instance.versionManifest.getTargetVersion("runtime");
         Path javaHome;
         if (javaTarget == null) {
@@ -115,6 +116,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         data.put("LIBRARY_DIR", librariesDir.toAbsolutePath().toString());
 
         for (InstallManifest.Processor processor : manifest.processors) {
+            if (cancelToken != null) cancelToken.throwIfCancelled();
             if (processor.sides.isEmpty() || processor.sides.contains("client")) {
                 runProcessor(processor, data, javaExecutable, librariesDir);
             }

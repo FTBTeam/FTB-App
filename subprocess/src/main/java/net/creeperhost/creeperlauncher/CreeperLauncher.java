@@ -10,22 +10,22 @@ import io.sentry.protocol.SdkVersion;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
+import net.covers1624.quack.platform.Architecture;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
-import net.creeperhost.creeperlauncher.install.InstanceInstaller;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.migration.MigrationManager;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -68,7 +68,7 @@ public class CreeperLauncher {
                 opts.setTag("platform", Constants.PLATFORM);
                 opts.setTag("os.name", System.getProperty("os.name"));
                 opts.setTag("os.version", System.getProperty("os.version"));
-                opts.setTag("os.arch", System.getProperty("os.arch"));
+                opts.setTag("os.arch", Architecture.current().name());
             });
         }
     }
@@ -93,11 +93,8 @@ public class CreeperLauncher {
     public static Process elect = null;
     public static boolean isDevMode = false;
 
-    public static boolean isInstalling = false;
-    @Nullable
-    public static InstanceInstaller currentInstall;
-    @Nullable
-    public static CompletableFuture<Void> currentInstallFuture;
+    // He a wide boi
+    public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
 
     public static LocalCache localCache;
 
@@ -553,7 +550,7 @@ public class CreeperLauncher {
             try {
                 LOGGER.info("Starting Electron: " + String.join(" ", args));
                 elect = app.start();
-                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::error);
+                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::warn);
                 StreamGobblerLog.redirectToLogger(elect.getInputStream(), LOGGER::info);
             } catch (IOException e) {
                 LOGGER.error("Error starting Electron: ", e);
