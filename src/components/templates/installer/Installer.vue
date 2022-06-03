@@ -72,6 +72,8 @@ export default class Installer extends Vue {
     type: 'instance' | 'cloudInstance';
   }) => void;
 
+  @Action('updatePackInStore', { namespace: 'modpacks' }) public updatePackInStore!: (pack: Instance) => void;
+
   @Getter('installer', { namespace: 'app' }) public installer!: InstallerState | null;
   @Action('clearInstaller', { namespace: 'app' }) public clearInstaller!: () => void;
 
@@ -141,10 +143,14 @@ export default class Installer extends Vue {
     }
 
     if (data.status === 'success') {
-      this.storePack({
-        pack: data.instanceData,
-        type: 'instance',
-      });
+      if (this.installer?.meta.isUpdate) {
+        this.updatePackInStore(data.instanceData);
+      } else {
+        this.storePack({
+          pack: data.instanceData,
+          type: 'instance',
+        });
+      }
 
       this.completed = true;
       this.files = null;

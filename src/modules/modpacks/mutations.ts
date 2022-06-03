@@ -62,6 +62,9 @@ export const mutations: MutationTree<ModpackState> = {
   pushToInstalledPack(state, payload: Instance) {
     state.installedPacks.push(payload);
   },
+  updatePackInStore(state, payload: Instance) {
+    state.installedPacks = state.installedPacks.map((e) => (e.uuid === payload.uuid ? payload : e));
+  },
   updateInstall(state, payload: InstallProgress) {
     if (state.installing !== null) {
       const foundPack = state.installing;

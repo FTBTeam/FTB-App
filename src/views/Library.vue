@@ -99,10 +99,7 @@
         <h4 class="text-lg font-bold mb-2">
           <font-awesome-icon icon="download" class="mr-2" size="1x" /> CurseForge imports
         </h4>
-        <p class="mb-4">
-          You can share modpacks using share codes from within the app. If you've been given one of these codes. You can
-          import the modpack using the button below.
-        </p>
+        <p class="mb-4">You can import CurseForge Modpacks using the button below</p>
         <ftb-button color="primary" class="py-2 px-6 mt-2 text-center font-bold text-md" @click="modalType = 'curse'">
           <font-awesome-icon icon="download" class="mr-2" size="1x" />
           Import a CurseForge modpack zip

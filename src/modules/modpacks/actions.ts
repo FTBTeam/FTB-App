@@ -234,6 +234,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
     packPayload.pack.kind = packPayload.type;
     commit('pushToInstalledPack', packPayload.pack);
   },
+  updatePackInStore({ commit }, payload: Instance): any {
+    commit('updatePackInStore', payload);
+  },
   async updateInstall({ commit, rootState }: any, install: InstallProgress): Promise<any> {
     if (rootState.modpacks.packsCache[install.modpackID]) {
       install.pack = rootState.modpacks.packsCache[install.modpackID];
