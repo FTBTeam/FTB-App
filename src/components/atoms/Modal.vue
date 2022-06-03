@@ -1,13 +1,13 @@
 <template>
   <Transition name="fade-and-grow">
-    <div v-if="open" class="modal-container" @mousedown.self="close">
+    <div v-if="open" class="modal-container" @mousedown.self="() => close(true)">
       <div class="modal-contents" :class="`${size}`">
         <div class="modal-header">
           <div class="modal-heading">
             <div class="title">{{ title }}</div>
             <div class="subtitle" v-if="subTitle">{{ subTitle }}</div>
           </div>
-          <div class="modal-closer" v-if="!permanent" @click="close">
+          <div class="modal-closer" v-if="!permanent" @click="() => close(false)">
             <font-awesome-icon class="closer" icon="times" />
           </div>
         </div>
@@ -39,9 +39,15 @@ export default class Modal extends Vue {
 
   @Prop() open!: boolean;
   @Prop({ default: ModalSizes.SMALL }) size!: ModalSizes;
-  @Prop({ default: false }) private permanent!: boolean;
+  @Prop({ default: false }) permanent!: boolean;
 
-  public close(): void {
+  @Prop({ default: true }) closeOnBackgroundClick!: boolean;
+
+  public close(background = false): void {
+    if (!this.closeOnBackgroundClick && background) {
+      return;
+    }
+
     if (this.permanent) {
       return;
     }
