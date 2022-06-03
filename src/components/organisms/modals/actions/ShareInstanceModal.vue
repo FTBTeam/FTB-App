@@ -16,7 +16,7 @@
       <progress-bar progress="0" />
     </div>
     <div class="share-code" v-else-if="shareCode">
-      <ftb-input :value="shareCode" label="Your share code" :disabled="true" />
+      <ftb-input :value="shareCode" label="Your share code" :copyable="true" :disabled="true" />
     </div>
     <message type="danger" v-else>
       {{ error }}

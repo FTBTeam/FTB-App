@@ -31,7 +31,7 @@ export const appStore: Module<AppStoreState, RootState> = {
       commit(AppStoreMutations.SET_RUNNING_PACK);
     },
 
-    async installModpack({ commit }, request: InstallerState) {
+    async installModpack({ commit, dispatch }, request: InstallerState) {
       const pack = request.pack;
 
       // Prepare the request, we're either updating, using a share code or installing fresh
@@ -65,6 +65,12 @@ export const appStore: Module<AppStoreState, RootState> = {
         payload['_private'] = true;
       }
 
+      if (pack.uuid && pack.version) {
+        request = { ...request, meta: { ...request.meta, isUpdate: true } };
+      }
+
+      commit(AppStoreMutations.INSTALL_PACK, request);
+
       // This event brings back lots of request, so instead we just assume the first one is either a
       // success or error
       const rest = await wsTimeoutWrapper({
@@ -72,11 +78,19 @@ export const appStore: Module<AppStoreState, RootState> = {
         ...payload,
       });
 
-      if (pack.uuid && pack.version) {
-        request = { ...request, meta: { ...request.meta, isUpdate: true } };
-      }
+      if (rest.status === 'error' || rest.status === 'prepare_error') {
+        dispatch(
+          'showAlert',
+          {
+            type: 'danger',
+            title: 'Error installing modpack',
+            message: rest.message,
+          },
+          { root: true },
+        );
 
-      commit(AppStoreMutations.INSTALL_PACK, request);
+        commit(AppStoreMutations.INSTALL_PACK, null);
+      }
     },
 
     clearInstaller({ commit }) {

@@ -93,6 +93,10 @@ export default class Installer extends Vue {
   mounted() {
     eventBus.$on('ws.message', (data: any) => {
       if (!this.installer) {
+        if (data.type === 'installInstanceDataReply' && (data.status === 'error' || data.status === 'prepare_error')) {
+          // Failsafe to ensure everything is reset if we see an error even after the installer has been closed.
+          this.closed();
+        }
         return;
       }
 
@@ -120,8 +124,12 @@ export default class Installer extends Vue {
     });
   }
 
-  onUpdate(data: any) {
-    if (data.status === 'error') {
+  async onUpdate(data: any) {
+    if (data.status === 'init' && this.error) {
+      this.error = '';
+    }
+
+    if (data.status === 'error' || data.status === 'prepare_error') {
       this.error = data.message;
       this.completed = true;
       this.percentage = '100';
@@ -162,17 +170,14 @@ export default class Installer extends Vue {
     this.filesComplete += Object.keys(data.files).length ?? 0;
   }
 
-  async navigateToInstance() {
+  navigateToInstance() {
     this.closed();
-
-    try {
-      await this.$router.push({
+    this.$router
+      .push({
         name: 'instancepage',
         query: { uuid: this.completedUuid },
-      });
-    } catch {
-      // we don't care if the router fails
-    }
+      })
+      .catch(() => {});
   }
 
   cleanUp() {
@@ -186,15 +191,15 @@ export default class Installer extends Vue {
   }
 
   async closed() {
+    this.cleanUp();
+    this.clearInstaller();
+
     if (!this.completed && !this.error) {
       wsTimeoutWrapper({
         type: 'cancelInstallInstance',
         uuid: '-1',
       }).catch(() => {});
     }
-
-    this.cleanUp();
-    this.clearInstaller();
   }
 
   // public retry() {
