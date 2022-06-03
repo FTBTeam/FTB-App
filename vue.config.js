@@ -2,10 +2,12 @@ const path = require('path');
 const SentryWebpackPlugin = require('@sentry/webpack-plugin');
 
 const webpackPlugins = [];
+
+//process.env.CI_COMMIT_BRANCH === 'develop' add back when we start using preview builds in production
 if (
   process.env.SENTRY_AUTH_TOKEN &&
   (process.env.VERSION || process.env.VERSION_OVERRIDE) &&
-  (process.env.CI_COMMIT_BRANCH === 'release' || process.env.CI_COMMIT_BRANCH === 'develop')
+  process.env.CI_COMMIT_BRANCH === 'release'
 ) {
   webpackPlugins.push(
     new SentryWebpackPlugin({
