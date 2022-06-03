@@ -9,6 +9,7 @@
         : `${installer && installer.meta && installer.meta.isUpdate ? 'Updating' : 'Installing'} Modpack`
     }`"
     :subTitle="`${error ? 'Somethings gone wrong during the install...' : ''}`"
+    :closeOnBackgroundClick="false"
     @closed="closed"
   >
     <div class="installer" v-if="installer">
@@ -59,6 +60,7 @@ import { InstallerState } from '@/modules/app/appStore.types';
 import placeholderArt from '@/assets/placeholder_art.png';
 import { wsTimeoutWrapper } from '@/utils';
 import { Instance } from '@/modules/modpacks/types';
+import dayjs from 'dayjs';
 
 @Component({
   components: {
@@ -73,6 +75,7 @@ export default class Installer extends Vue {
   }) => void;
 
   @Action('updatePackInStore', { namespace: 'modpacks' }) public updatePackInStore!: (pack: Instance) => void;
+  @Action('showAlert') public showAlert: any;
 
   @Getter('installer', { namespace: 'app' }) public installer!: InstallerState | null;
   @Action('clearInstaller', { namespace: 'app' }) public clearInstaller!: () => void;
@@ -104,7 +107,20 @@ export default class Installer extends Vue {
           this.closed();
         }
 
-        console.log(`I'm not running or accepting this data ${data.type} because the installer isn't set`);
+        // This is a failsafe if at any point the installer breaks but the WS still sees it
+        if (
+          data.type === 'installInstanceDataReply' &&
+          data.status === 'success' &&
+          !(data.message ?? '').includes('Triggered cancellation')
+        ) {
+          this.complete(data, true);
+          this.showAlert({
+            title: 'Success!',
+            message: `Modpack installed!`,
+            type: 'primary',
+          });
+        }
+
         return;
       }
 
@@ -113,11 +129,12 @@ export default class Installer extends Vue {
         data.type !== 'installInstanceProgress' &&
         data.type !== 'install.filesEvent'
       ) {
-        console.log(`I rejected data as it wasn't part of my accepted list... Data type: ${data.type}`);
         return;
       }
 
-      console.log(`I'm accepting a WS data from the installer, I received: ${data.type}`);
+      if (data.status !== 'files') {
+        console.log(`[${dayjs().toISOString()}] [DEBUG] [installer] type: ${data.type}, body: ${JSON.stringify(data)}`);
+      }
 
       // Actual install status update
       if (data.type === 'installInstanceDataReply') {
@@ -145,18 +162,7 @@ export default class Installer extends Vue {
       this.completed = true;
       this.percentage = '100';
     } else if (data.status === 'success') {
-      if (this.installer?.meta.isUpdate) {
-        this.updatePackInStore(data.instanceData);
-      } else {
-        this.storePack({
-          pack: data.instanceData,
-          type: 'instance',
-        });
-      }
-
-      this.completed = true;
-      this.files = null;
-      this.completedUuid = data.uuid;
+      this.complete(data);
     } else if (data.status === 'files' && !this.files) {
       this.files = JSON.parse(data.message).length;
     } else {
@@ -167,6 +173,25 @@ export default class Installer extends Vue {
   onProgressUpdate(data: any) {
     this.status = data.currentStage.toLowerCase();
     this.percentage = data.overallPercentage.toFixed(2);
+  }
+
+  complete(data: any, close = false) {
+    if (this.installer?.meta.isUpdate) {
+      this.updatePackInStore(data.instanceData);
+    } else {
+      this.storePack({
+        pack: data.instanceData,
+        type: 'instance',
+      });
+    }
+
+    this.completed = true;
+    this.files = null;
+    this.completedUuid = data.uuid;
+
+    if (close) {
+      this.closed();
+    }
   }
 
   onFilesEvent(data: any) {
