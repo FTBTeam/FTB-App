@@ -43,7 +43,6 @@ public class ParallelTaskHelper {
                     for (CompletableFuture<?> f2 : futures) {
                         f2.cancel(true);
                     }
-                    break;
                 }
             } catch (ExecutionException e) {
                 LOGGER.error("Failed to execute task.", e);
