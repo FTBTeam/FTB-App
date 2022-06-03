@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.task;
 
+import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
@@ -62,7 +63,10 @@ public class InstallationOperation extends LongRunningOperation {
     @Override
     protected void onComplete(CompletionReason reason) {
         switch (reason) {
-            case NORMAL -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.getUuid().toString()));
+            case NORMAL -> {
+                Instances.addInstance(instance);
+                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance));
+            }
             case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", ""));
         }
     }

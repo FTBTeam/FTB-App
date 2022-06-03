@@ -25,31 +25,21 @@ public class Instances
     private static Map<UUID, LocalInstance> instances = new HashMap<>();
     private static Map<UUID, JsonObject> cloudInstances = new HashMap<>();
 
-    public static boolean addInstance(UUID uuid, LocalInstance instance)
-    {
-        Instances.instances.put(uuid, instance);
-        return true;
-    }
-
     @Nullable
-    public static LocalInstance getInstance(UUID uuid)
-    {
+    public static LocalInstance getInstance(UUID uuid) {
         return Instances.instances.get(uuid);
     }
 
-    public static List<String> listInstances()
-    {
-        return instances.keySet().stream().map(UUID::toString).collect(Collectors.toList());
+    public static void addInstance(LocalInstance instance) {
+        instances.put(instance.getUuid(), instance);
     }
 
     //TODO, do these need to copy?
-    public static List<LocalInstance> allInstances()
-    {
+    public static List<LocalInstance> allInstances() {
         return new ArrayList<>(Instances.instances.values());
     }
 
-    public static List<JsonObject> cloudInstances()
-    {
+    public static List<JsonObject> cloudInstances() {
         return new ArrayList<>(Instances.cloudInstances.values());
     }
 
