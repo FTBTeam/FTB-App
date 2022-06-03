@@ -57,6 +57,8 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
             versionName = profile.install.target;
 
+            if (cancelToken != null) cancelToken.throwIfCancelled();
+
             VersionManifest vanillaManifest = downloadVanilla(versionsDir, profile.install.minecraft);
             if (profile.versionInfo.inheritsFrom == null || profile.versionInfo.jar == null) {
                 Path srcJar = versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar");
@@ -73,6 +75,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             }
 
             for (InstallProfile.Library library : profile.versionInfo.libraries) {
+                if (cancelToken != null) cancelToken.throwIfCancelled();
                 if (library.clientreq == null || !library.clientreq) continue; // Skip, mirrors forge logic.
                 Path libraryPath = processLibrary(cancelToken, installerRoot, librariesDir, library);
 
@@ -91,6 +94,8 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
                 }
             }
 
+            if (cancelToken != null) cancelToken.throwIfCancelled();
+
             LOGGER.info("Extracting {} from installer jar.", profile.install.path);
             Path universalPath = profile.install.path.toPath(librariesDir);
             Files.copy(installerRoot.resolve(profile.install.filePath), IOUtils.makeParents(universalPath), StandardCopyOption.REPLACE_EXISTING);
@@ -100,7 +105,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
             JsonUtils.write(InstallProfile.GSON, IOUtils.makeParents(versionJson), profileJson.get("versionInfo"));
 
-            ForgeLegacyLibraryHelper.installLegacyLibs(instance, profile.install.minecraft);
+            ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, instance, profile.install.minecraft);
         }
     }
 

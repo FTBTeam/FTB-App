@@ -222,6 +222,8 @@ public class InstanceInstaller extends InstanceOperation {
                 instance.modLoader = manifest.getTargetVersion("game");
             }
 
+            cancelToken.throwIfCancelled();
+
             LOGGER.info("Downloading new files.");
             tracker.nextStage(InstallStage.DOWNLOADS);
             long totalSize = tasks.stream()
@@ -235,6 +237,8 @@ public class InstanceInstaller extends InstanceOperation {
 
             rootListener.finish(progressAggregator.getProcessed());
 
+            cancelToken.throwIfCancelled();
+
             Path cfOverrides = getCFOverridesZip(manifest);
             if (cfOverrides != null) {
                 LOGGER.info("Extracting CurseForge overrides.");
@@ -243,6 +247,8 @@ public class InstanceInstaller extends InstanceOperation {
                     Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
                 }
             }
+
+            cancelToken.throwIfCancelled();
 
             JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
 
@@ -257,7 +263,7 @@ public class InstanceInstaller extends InstanceOperation {
             }
             tracker.nextStage(InstallStage.FINISHED);
             LOGGER.info("Install finished!");
-        } catch (InstallationFailureException ex) {
+        } catch (InstallationFailureException | CancellationToken.Cancellation ex) {
             throw ex;
         } catch (Throwable ex) {
             throw new InstallationFailureException("Failed to install.", ex);

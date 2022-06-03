@@ -42,6 +42,7 @@ public class FabricInstallTask extends ModLoaderInstallTask {
         downloadVanilla(versionsDir, mcVersion);
 
         for (VersionManifest.Library library : loaderManifest.libraries) {
+            if (cancelToken != null) cancelToken.throwIfCancelled();
             processLibrary(cancelToken, librariesDir, library);
         }
     }
