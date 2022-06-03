@@ -256,6 +256,7 @@ export default class Library extends Vue {
     }
 
     this.showImport = false;
+    this.modalType = null;
 
     this.installModpack({
       pack: {
@@ -298,7 +299,9 @@ export default class Library extends Vue {
       this.activeFile = null;
       this.fileError = res.message ?? "We're unable to detect a CurseForge pack in this zip file.";
     } else {
+      this.modalType = null;
       this.showImport = false;
+
       this.installModpack({
         pack: {
           importFrom: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
