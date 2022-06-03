@@ -14,13 +14,17 @@ public class CancellationToken {
     }
 
     public void cancel(CompletableFuture<?> future) {
-        isCanceled = true;
+        cancel();
         future.cancel(true);
     }
 
     public void cancel(Thread thread) {
-        isCanceled = true;
+        cancel();
         thread.interrupt();
+    }
+
+    public void cancel() {
+        isCanceled = true;
     }
 
     public void throwIfCancelled() {

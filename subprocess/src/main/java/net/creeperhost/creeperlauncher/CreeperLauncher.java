@@ -16,17 +16,16 @@ import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
-import net.creeperhost.creeperlauncher.install.InstanceInstaller;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.migration.MigrationManager;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -94,13 +93,8 @@ public class CreeperLauncher {
     public static Process elect = null;
     public static boolean isDevMode = false;
 
-    // TODO replace these 3 fields with record class InstallProcess(InstanceInstaller, CompletableFuture<Void>)
-    //  Have 'Set<InstallProcess> runningInstalls' for tracking whats going on. (prereq for allowing multiple installations to run concurrently.)
-    public static boolean isInstalling = false;
-    @Nullable
-    public static InstanceInstaller currentInstall;
-    @Nullable
-    public static CompletableFuture<Void> currentInstallFuture;
+    // He a wide boi
+    public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
 
     public static LocalCache localCache;
 

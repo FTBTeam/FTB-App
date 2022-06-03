@@ -27,13 +27,17 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
     @Override
     public void handle(InstallInstanceData data)
     {
+        if (true) {
+            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Cloud saves are currently disabled!", ""));
+            throw new UnsupportedOperationException();
+        }
         if(data.uuid != null && data.uuid.length() > 0) {
-            if (CreeperLauncher.isInstalling) {
-                assert CreeperLauncher.currentInstall != null;
-                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.getInstance().getUuid().toString()));
-                return;
-            }
-            CreeperLauncher.isInstalling = true;
+//            if (CreeperLauncher.isInstalling) {
+//                assert CreeperLauncher.currentInstall != null;
+//                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Install in progress.", CreeperLauncher.currentInstall.getInstance().getUuid().toString()));
+//                return;
+//            }
+//            CreeperLauncher.isInstalling = true;
             Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Install started.", data.uuid));
             //Create the folder
             Path instanceDir = Constants.INSTANCES_FOLDER_LOC.resolve(data.uuid);

@@ -1,16 +1,12 @@
 package net.creeperhost.creeperlauncher.install;
 
 import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
 import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.CopyingFileVisitor;
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
@@ -29,7 +25,10 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -55,13 +54,12 @@ public class InstanceInstaller extends InstanceOperation {
     );
 
     private final InstallProgressTracker tracker;
+    private final CancellationToken cancelToken;
 
     @Nullable
     private final ModpackVersionManifest oldManifest;
 
     private final OperationType operationType;
-
-    private final CancellationToken cancelToken = new CancellationToken();
 
     //region Tracking
     /**
@@ -108,8 +106,9 @@ public class InstanceInstaller extends InstanceOperation {
     @Nullable
     private Map<String, IndexedFile> knownFiles;
 
-    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest, InstallProgressTracker tracker) throws IOException {
+    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, InstallProgressTracker tracker) throws IOException {
         super(instance, manifest);
+        this.cancelToken = cancelToken;
         this.tracker = tracker;
 
         Path instanceVersionFile = instance.getDir().resolve("version.json");
