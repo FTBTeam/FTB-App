@@ -77,19 +77,25 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             abort(data, "Unable to download manifest for '" + shareCode + "', Share code may have expired.");
             return;
         }
-        // TODO tiny bit of cleanup for sharing curse imports.
+
         ModpackVersionManifest versionManifest = shareManifest.getVersionManifest();
         boolean isPrivate = shareManifest.getType() == ShareManifest.Type.PRIVATE;
         byte packType = shareManifest.getType() == ShareManifest.Type.CURSE ? (byte) 1 : 0;
+        boolean isImport = shareManifest.getType() == ShareManifest.Type.IMPORT;
 
-        ModpackManifest modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), isPrivate, packType);
-        if (modpackManifest == null) {
-            modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), !isPrivate, packType);
-        }
+        ModpackManifest modpackManifest;
+        if (isImport) {
+            modpackManifest = ModpackManifest.fakeManifest(shareManifest.getName());
+        } else {
+            modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), isPrivate, packType);
+            if (modpackManifest == null) {
+                modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), !isPrivate, packType);
+            }
 
-        if (modpackManifest == null) {
-            abort(data, "Unable to determine modpack for '" + shareCode + "'.");
-            return;
+            if (modpackManifest == null) {
+                abort(data, "Unable to determine modpack for '" + shareCode + "'.");
+                return;
+            }
         }
         // Run substitutions over manifest.
         StrSubstitutor sub = new StrSubstitutor(Map.of("token", shareCode));

@@ -76,6 +76,7 @@ public class ShareManifest {
     public enum Type {
         PUBLIC,
         PRIVATE,
-        CURSE
+        CURSE,
+        IMPORT,
     }
 }

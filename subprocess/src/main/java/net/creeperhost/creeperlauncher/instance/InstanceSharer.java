@@ -121,20 +121,24 @@ public class InstanceSharer extends InstanceOperation {
                 }
             }
         }
-        ShareManifest.Type type = instance.packType == 1 ? ShareManifest.Type.CURSE :
-                instance._private ? ShareManifest.Type.PRIVATE : ShareManifest.Type.PUBLIC;
-        String name = null; // TODO imported.
-        long modpackId = instance.getId();
-
+        ShareManifest.Type type;
+        if (instance.isImport) {
+            type = ShareManifest.Type.IMPORT;
+        } else if (instance.packType == 1) {
+            type = ShareManifest.Type.CURSE;
+        } else if (instance._private) {
+            type = ShareManifest.Type.PRIVATE;
+        } else {
+            type = ShareManifest.Type.PUBLIC;
+        }
 
         Path versionFile;
         try {
-
             ShareManifest shareManifest;
-            if (modpackId != -1) {
-                shareManifest = new ShareManifest(modpackId, type, manifest);
+            if (type != ShareManifest.Type.IMPORT) {
+                shareManifest = new ShareManifest(instance.getId(), type, manifest);
             } else {
-                shareManifest = new ShareManifest(name, type, manifest);
+                shareManifest = new ShareManifest(instance.getName(), type, manifest);
             }
             String manifestJson = ShareManifest.GSON.toJson(shareManifest);
             versionFile = Files.createTempFile("manifest", ".json");
