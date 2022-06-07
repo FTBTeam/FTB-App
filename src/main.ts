@@ -18,7 +18,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import '@/assets/fonts.scss';
 import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
-import '../node_modules/wysiwyg.css/wysiwyg.css';
+import 'wysiwyg.css/wysiwyg.css';
 
 import store from './modules/store';
 import FTBButton from '@/components/atoms/input/FTBButton.vue';
