@@ -73,10 +73,9 @@ const appSetup = async () => {
         const value = event.exception.values[0]
     
         if (value.stacktrace && value.stacktrace.frames) {
-          const root = process.cwd()
           value.stacktrace.frames.forEach(function (frame: any) {
             if (frame.filename.startsWith('/')) {
-              frame.filename = 'app:///' + path.relative(root, frame.filename)
+              frame.filename = 'overwolf-extension:///' + path.relative('js', frame.filename)
             }
           })
         }
