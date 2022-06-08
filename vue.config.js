@@ -7,7 +7,7 @@ const webpackPlugins = [];
 if (
   process.env.SENTRY_AUTH_TOKEN &&
   (process.env.VERSION || process.env.VERSION_OVERRIDE) &&
-  process.env.CI_COMMIT_BRANCH === 'release'
+  (process.env.CI_COMMIT_BRANCH === 'release' || process.env.CI_COMMIT_BRANCH === 'develop')
 ) {
   webpackPlugins.push(
     new SentryWebpackPlugin({

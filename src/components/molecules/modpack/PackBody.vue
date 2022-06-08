@@ -106,9 +106,11 @@
             >{{ tag.name }}</router-link
           >
         </div>
-        <div class="" v-if="packInstance.description !== undefined">
-          <VueShowdown :markdown="packInstance.description" :extensions="['classMap', 'newLine']" />
-        </div>
+        <div
+          class="wysiwyg"
+          v-if="packInstance.description !== undefined"
+          v-html="parseMarkdown(packInstance.description)"
+        />
         <div v-else>
           <h2>No description available</h2>
         </div>
@@ -159,6 +161,7 @@ import { getColorForChar } from '@/utils/colors';
 import { State } from 'vuex-class';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import Loading from '@/components/atoms/Loading.vue';
+import MarkdownIt from 'markdown-it';
 
 @Component({
   name: 'pack-body',
@@ -185,6 +188,14 @@ export default class PackBody extends Vue {
   get tags() {
     if (this.packInstance.tags === undefined) return [];
     return this.packInstance.tags.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) ?? [];
+  }
+
+  parseMarkdown(input: string) {
+    if (!input) {
+      return '';
+    }
+
+    return new MarkdownIt().render(input);
   }
 
   get currentVersionObject(): Versions | null {

@@ -1,4 +1,5 @@
 import platform from '@/utils/interface/electron-overwolf';
+const path = require('path');
 
 import Vue from 'vue';
 import App from './App.vue';
@@ -18,7 +19,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import '@/assets/fonts.scss';
 import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
-import '../node_modules/wysiwyg.css/wysiwyg.css';
+import 'wysiwyg.css/wysiwyg.css';
 
 import store from './modules/store';
 import FTBButton from '@/components/atoms/input/FTBButton.vue';
@@ -60,6 +61,27 @@ const appSetup = async () => {
       },
       trackComponents: true,
       tracesSampleRate: 1.0,
+      beforeSend (event: any) {
+        if (
+          !event.exception ||
+          !event.exception.values ||
+          !event.exception.values[0]
+        ) {
+          return event
+        }
+    
+        const value = event.exception.values[0]
+    
+        if (value.stacktrace && value.stacktrace.frames) {
+          value.stacktrace.frames.forEach(function (frame: any) {
+            if (frame.filename.startsWith('/')) {
+              frame.filename = 'overwolf-extension:///' + path.relative('js', frame.filename)
+            }
+          })
+        }
+    
+        return event
+      }
     });
   }
 
