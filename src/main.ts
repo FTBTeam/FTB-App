@@ -1,4 +1,5 @@
 import platform from '@/utils/interface/electron-overwolf';
+const path = require('path');
 
 import Vue from 'vue';
 import App from './App.vue';
@@ -60,6 +61,28 @@ const appSetup = async () => {
       },
       trackComponents: true,
       tracesSampleRate: 1.0,
+      beforeSend (event: any) {
+        if (
+          !event.exception ||
+          !event.exception.values ||
+          !event.exception.values[0]
+        ) {
+          return event
+        }
+    
+        const value = event.exception.values[0]
+    
+        if (value.stacktrace && value.stacktrace.frames) {
+          const root = process.cwd()
+          value.stacktrace.frames.forEach(function (frame: any) {
+            if (frame.filename.startsWith('/')) {
+              frame.filename = 'app:///' + path.relative(root, frame.filename)
+            }
+          })
+        }
+    
+        return event
+      }
     });
   }
 
