@@ -159,6 +159,7 @@ export default class ModpackVersions extends Vue {
     this.installModpack({
       pack: {
         id: this.instance.id,
+        uuid: this.instance.uuid,
         version: this.currentVersion?.id,
         packType: this.instance.packType,
       },
