@@ -10,7 +10,10 @@
           :key="index"
         >
           <div class="main" @click="() => loadChanges(version.id)">
-            <div class="version">{{ version.name }}</div>
+            <header class="flex justify-between flex-wrap">
+              <div class="version">{{ version.name }}</div>
+              <div class="updated">{{ version.updated | dayjsFromNow }}</div>
+            </header>
             <div class="type-data">
               <div
                 class="type"

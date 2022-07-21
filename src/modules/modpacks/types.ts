@@ -13,6 +13,7 @@ export interface ModPack {
   name: string;
   type: string;
   updated: number;
+  released: number | 'unknown';
   tags: ModPackTag[];
   notification: string;
   links: ModPackLink[];
