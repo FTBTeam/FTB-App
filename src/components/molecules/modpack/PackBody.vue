@@ -78,7 +78,7 @@
               <div class="value">{{ instance.version }}</div>
             </div>
           </template>
-          <template v-else>
+          <template v-else-if="packInstance.type !== 'Curseforge'">
             <div class="stat">
               <div class="name">Installs</div>
               <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
