@@ -134,7 +134,6 @@
       <!-- Tab views, we're not using the router because it's a pain-->
       <modpack-mods
         v-if="activeTab === tabs.MODS"
-        v-show="!searchingForMods"
         :modlist="mods"
         :pack-installed="isInstalled"
         :updatingModlist="updatingModlist"
@@ -194,7 +193,6 @@ export default class PackBody extends Vue {
   @Prop() isInstalled!: boolean;
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
-  @Prop() searchingForMods!: boolean;
   @Prop() updatingModlist!: boolean;
 
   tabs = ModpackPageTabs;
