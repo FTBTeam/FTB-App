@@ -199,6 +199,7 @@ public class InstanceLauncher {
                     }
                 }
                 int exit = process.exitValue();
+                LOGGER.info("Minecraft exited with status code: " + exit);
                 setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
                 forceStopped = false;
@@ -232,6 +233,7 @@ public class InstanceLauncher {
 
         Process process = this.process;
         if (process == null) return;
+        LOGGER.info("Force quitting Minecraft..");
         forceStopped = true;
         process.destroyForcibly();
     }
