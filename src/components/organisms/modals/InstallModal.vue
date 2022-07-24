@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col">
-    <h1 class="text-3xl font-bold">{{ packName }}</h1>
-    <p class="mb-6">{{ packDescription }}</p>
+    <h1 class="select-text text-2xl mt-2 mb-4 font-bold">{{ packName }}</h1>
+    <p class="select-text mb-6 leading-6">{{ packDescription }}</p>
 
     <selection
       @selected="(e) => (version = e.id)"
@@ -10,17 +10,21 @@
       :options="versionOptions"
     />
 
-    <label class="inline-flex items-center mt-4">
-      <input
-        type="checkbox"
-        :disabled="!hasReleaseVersion"
-        class="h-5 w-5"
-        v-model="showBetaAndAlpha"
-        :checked="showBetaAndAlpha"
-      /><span class="ml-4" :class="{ 'opacity-25': !hasReleaseVersion }">Show Beta and Alpha versions</span>
-    </label>
+    <div class="flex justify-between items-center">
+      <label class="inline-flex items-center mt-4 cursor-pointer">
+        <input
+          type="checkbox"
+          :disabled="!hasReleaseVersion"
+          class="h-5 w-5"
+          v-model="showBetaAndAlpha"
+          :checked="showBetaAndAlpha"
+        /><span class="ml-4" :class="{ 'opacity-25': !hasReleaseVersion }">Show unstable versions</span>
+      </label>
 
-    <FTBButton color="secondary" class="mt-8 mb-4 py-2 px-4 rounded text-center" @click="install">Install</FTBButton>
+      <FTBButton color="secondary" class="mt-8 mb-4 py-2 px-4 w-1/3 rounded text-center" @click="install"
+        >Install</FTBButton
+      >
+    </div>
   </div>
 </template>
 <script lang="ts">

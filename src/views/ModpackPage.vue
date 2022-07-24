@@ -48,7 +48,7 @@
         />
       </ftb-modal>
     </div>
-    <ftb-modal :visible="showInstallBox" v-if="currentModpack" size="medium" @dismiss-modal="hideInstall">
+    <ftb-modal :visible="showInstallBox" v-if="currentModpack" size="large-dynamic" @dismiss-modal="hideInstall">
       <InstallModal
         :pack-name="currentModpack.name"
         :doInstall="install"
