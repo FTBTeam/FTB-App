@@ -49,8 +49,8 @@
         <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2"> Java Version </label>
         <select
           class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
-          v-model="localInstance.jrePath"
-          @change="saveSettings"
+          v-model="jreSelection"
+          @change="updateJrePath"
         >
           <option
             v-for="index in Object.keys(javaVersions)"
@@ -195,6 +195,8 @@ export default class ModpackSettings extends Vue {
 
   shareConfirm = false;
 
+  jreSelection = '';
+
   deleting = false;
   showMsgBox = false;
   msgBox: MsgBox = {
@@ -207,6 +209,9 @@ export default class ModpackSettings extends Vue {
 
   mounted() {
     this.localInstance = { ...this.instance }; // copy, don't reference
+    if (this.localInstance.jrePath) {
+      this.jreSelection = this.localInstance.jrePath;
+    }
 
     if (Object.keys(this.settingsState.javaInstalls).length < 1) {
       this.loadJavaVersions();
@@ -242,6 +247,11 @@ export default class ModpackSettings extends Vue {
       this.saveSettings();
       return;
     }
+  }
+
+  updateJrePath(value: any) {
+    this.localInstance.jrePath = value.target.value;
+    this.saveSettings();
   }
 
   public async saveSettings() {
