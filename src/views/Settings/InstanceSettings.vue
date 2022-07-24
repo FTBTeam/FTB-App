@@ -86,7 +86,7 @@ export default class InstanceSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-
+  @Action('showAlert') public showAlert: any;
   localSettings: Settings = {} as Settings;
 
   resSelectedValue: string = '0';
@@ -109,6 +109,14 @@ export default class InstanceSettings extends Vue {
 
   browseForFolder() {
     platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
+      if (path == null) {
+        this.showAlert({
+          title: 'Error',
+          message: 'Unable to set new instances location as the path could not be found...',
+          type: 'danger',
+        });
+        return;
+      }
       this.localSettings.instanceLocation = path;
       this.saveSettings(this.localSettings);
     });

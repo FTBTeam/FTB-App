@@ -1,5 +1,5 @@
 import { MutationTree } from 'vuex';
-import { SettingsState, Settings, Resolution } from './types';
+import { Resolution, Settings, SettingsState } from './types';
 
 const defaultSettings: Settings = {
   width: 1720,
@@ -24,7 +24,7 @@ const defaultSettings: Settings = {
   blockedUsers: [],
   mtConnect: false,
   automateMojang: true,
-  showAdverts: true
+  showAdverts: true,
 };
 
 export const mutations: MutationTree<SettingsState> = {
@@ -47,9 +47,6 @@ export const mutations: MutationTree<SettingsState> = {
             }) as Resolution[])
           : [],
     };
-  },
-  loadVersions(state, payload: any) {
-    state.javaInstalls = payload;
   },
   updateSetting() {},
 };

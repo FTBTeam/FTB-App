@@ -43,24 +43,33 @@
         </v-selectmenu>
       </div>
     </div>
-
     <div class="flex items-center mb-8">
-      <section class="w-1/2 mr-8">
-        <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2"> Java Version </label>
-        <select
-          class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
-          v-model="jreSelection"
-          @change="updateJrePath"
-        >
-          <option
-            v-for="index in Object.keys(javaVersions)"
-            :value="javaVersions[index].path"
-            :key="javaVersions[index].name"
+      <div class="w-1/2 mr-8 flex items-end justify-between">
+        <section class="mr-4 flex-1">
+          <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2"> Java Version </label>
+          <select
+            class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
+            v-model="jreSelection"
+            @change="updateJrePath"
           >
-            {{ javaVersions[index].name }}
-          </option>
-        </select>
-      </section>
+            <option value="-1" v-if="jreSelection === '-1'" disabled>
+              Custom selection ({{ localInstance.jrePath }})
+            </option>
+            <option
+              v-for="index in Object.keys(javaVersions)"
+              :value="javaVersions[index].path"
+              :key="javaVersions[index].name"
+            >
+              {{ javaVersions[index].name }}
+            </option>
+          </select>
+        </section>
+
+        <ftb-button color="primary" class="py-2 px-4 mb-1" @click="browseForJava">
+          <font-awesome-icon icon="folder" size="1x" class="cursor-pointer" />
+          <span class="ml-4">Browse</span>
+        </ftb-button>
+      </div>
 
       <ftb-input
         label="Java runtime arguments"
@@ -151,12 +160,13 @@ import { Instance } from '@/modules/modpacks/types';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, Getter, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
-import { SettingsState } from '@/modules/settings/types';
+import { JavaVersion, SettingsState } from '@/modules/settings/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
+import Platform from '@/utils/interface/electron-overwolf';
 
 interface MsgBox {
   title: string;
@@ -184,7 +194,6 @@ export default class ModpackSettings extends Vue {
 
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
   @Action('sendMessage') public sendMessage!: any;
-  @Action('loadJavaVersions', { namespace: 'settings' }) public loadJavaVersions!: any;
   @Action('saveInstance', { namespace: 'modpacks' }) public saveInstance: any;
   @Action('showAlert') public showAlert: any;
 
@@ -196,6 +205,7 @@ export default class ModpackSettings extends Vue {
   shareConfirm = false;
 
   jreSelection = '';
+  javaVersions: JavaVersion[] = [];
 
   deleting = false;
   showMsgBox = false;
@@ -213,9 +223,17 @@ export default class ModpackSettings extends Vue {
       this.jreSelection = this.localInstance.jrePath;
     }
 
-    if (Object.keys(this.settingsState.javaInstalls).length < 1) {
-      this.loadJavaVersions();
-    }
+    this.sendMessage({
+      payload: { type: 'getJavas' },
+      callback: (data: { javas: JavaVersion[] }) => {
+        this.javaVersions = data.javas;
+
+        // Java version not in our list, thus it must be custom so flag it as custom
+        if (!data.javas.find((e) => e.path === this.localInstance.jrePath)) {
+          this.jreSelection = '-1';
+        }
+      },
+    });
   }
 
   /**
@@ -249,6 +267,28 @@ export default class ModpackSettings extends Vue {
     }
   }
 
+  browseForJava() {
+    Platform.get.io.selectFileDialog((path) => {
+      if (typeof path !== 'undefined' && path == null) {
+        this.showAlert({
+          title: 'Error',
+          message: 'Unable to set Java location as the path was not found',
+          type: 'danger',
+        });
+
+        return;
+      } else if (!path) {
+        return;
+      }
+
+      const javaVersion = this.javaVersions.find((e) => e.path === path);
+      this.jreSelection = !javaVersion ? '-1' : javaVersion.path;
+
+      this.localInstance.jrePath = path;
+      this.saveSettings();
+    });
+  }
+
   updateJrePath(value: any) {
     this.localInstance.jrePath = value.target.value;
     this.saveSettings();
@@ -259,12 +299,20 @@ export default class ModpackSettings extends Vue {
       return;
     }
 
-    await this.saveInstance(this.localInstance);
-    this.showAlert({
-      title: 'Saved!',
-      message: 'The settings for this instance have been saved',
-      type: 'primary',
-    });
+    const response = await this.saveInstance(this.localInstance);
+    if (response.status === 'error') {
+      this.showAlert({
+        title: 'Error',
+        message: response.errorMessage,
+        type: 'danger',
+      });
+    } else {
+      this.showAlert({
+        title: 'Saved!',
+        message: 'The settings for this instance have been saved',
+        type: 'primary',
+      });
+    }
   }
 
   public browseInstance(): void {
@@ -307,10 +355,6 @@ export default class ModpackSettings extends Vue {
         });
       },
     });
-  }
-
-  get javaVersions() {
-    return this.settingsState?.javaInstalls ?? [];
   }
 
   get resolutionList() {

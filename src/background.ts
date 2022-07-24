@@ -202,16 +202,40 @@ ipcMain.on('expandMeScotty', (event, data) => {
   }
 });
 
-ipcMain.on('selectFolder', async (event, data) => {
+ipcMain.handle('selectFolder', async (event, data) => {
   if (win === null) {
     return;
   }
+
   const result = await dialog.showOpenDialog(win, {
     properties: ['openDirectory'],
     defaultPath: data,
   });
+
   if (result.filePaths.length > 0) {
-    event.reply('setInstanceFolder', result.filePaths[0]);
+    return result.filePaths[0];
+  } else {
+    return null;
+  }
+});
+
+ipcMain.handle('selectFile', async (event) => {
+  if (win === null) {
+    return null;
+  }
+
+  const result = await dialog.showOpenDialog(win, {
+    properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
+    filters: [
+      {
+        name: 'Java',
+        extensions: ['.*'],
+      },
+    ],
+  });
+
+  if (result.filePaths.length > 0) {
+    return result.filePaths[0];
   }
 });
 
