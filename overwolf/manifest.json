@@ -36,7 +36,6 @@
         "is_background_page": true
       },
       "index": {
-        "mute": true,
         "file": "dist/desktop/index.html",
         "native_window": true,
         "transparent": true,
