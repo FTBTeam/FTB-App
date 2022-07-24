@@ -228,6 +228,11 @@ export default class ModpackSettings extends Vue {
       callback: (data: { javas: JavaVersion[] }) => {
         this.javaVersions = data.javas;
 
+        // If it's embedded we don't need to do anything special
+        if (this.localInstance.embeddedJre) {
+          return;
+        }
+
         // Java version not in our list, thus it must be custom so flag it as custom
         if (!data.javas.find((e) => e.path === this.localInstance.jrePath)) {
           this.jreSelection = '-1';

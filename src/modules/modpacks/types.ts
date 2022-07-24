@@ -50,6 +50,7 @@ export interface Instance {
   cloudSaves: boolean;
   packType: number;
   modLoader: string;
+  embeddedJre: boolean;
 }
 
 export interface Art {
