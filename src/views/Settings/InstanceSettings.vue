@@ -55,8 +55,8 @@
     <ftb-input
       label="Instance Location"
       :value="localSettings.instanceLocation"
+      :disabled="true"
       v-model="localSettings.instanceLocation"
-      @blur="saveMutated"
       button="true"
       buttonText="Browse"
       buttonColor="primary"
@@ -110,13 +110,9 @@ export default class InstanceSettings extends Vue {
   browseForFolder() {
     platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
       if (path == null) {
-        this.showAlert({
-          title: 'Error',
-          message: 'Unable to set new instances location as the path could not be found...',
-          type: 'danger',
-        });
         return;
       }
+
       this.localSettings.instanceLocation = path;
       this.saveSettings(this.localSettings);
     });
