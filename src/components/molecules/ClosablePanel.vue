@@ -50,7 +50,7 @@ export default class ClosablePanel extends Vue {
   background-color: #2e3031;
 
   &.overwolf {
-    width: calc(100% - 300px);
+    width: calc(100% - 400px - (1.5rem * 2));
   }
 
   > .heading {
