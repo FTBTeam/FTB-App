@@ -13,6 +13,7 @@ import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.PathRequestBody;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -368,7 +369,7 @@ public class ModpackVersionManifest {
         }
 
         public Path getCfExtractPath(Path root, String modpackVersion) {
-            return root.resolve(getPath()).resolve(modpackVersion + "-" + getName());
+            return root.resolve(getPath()).resolve(FileUtils.stripInvalidChars(modpackVersion + "-" + getName()));
         }
 
         public FileValidation createValidation() {

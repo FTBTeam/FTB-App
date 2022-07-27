@@ -272,8 +272,19 @@ const Electron: ElectronOverwolfInterface = {
   // IO
   io: {
     selectFolderDialog(startPath, cb) {
-      ipcRenderer.send('selectFolder', startPath);
-      ipcRenderer.on('setInstanceFolder', (_, dir) => cb(dir));
+      ipcRenderer
+        .invoke('selectFolder', startPath)
+        .then((dir) => cb(dir))
+        .catch(() => cb(null));
+    },
+
+    selectFileDialog(cb) {
+      ipcRenderer
+        .invoke('selectFile')
+        .then((dir) => {
+          cb(dir);
+        })
+        .catch(() => cb(null));
     },
   },
 

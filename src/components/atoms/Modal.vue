@@ -60,7 +60,7 @@ export default class Modal extends Vue {
 <style lang="scss" scoped>
 .modal-container {
   position: fixed;
-  z-index: 50001; // just ontop of the title bar
+  z-index: 49999; // just under of the title bar
   background: rgba(black, 0.85);
   width: 100vw;
   height: 100vh;

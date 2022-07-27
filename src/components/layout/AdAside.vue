@@ -65,9 +65,7 @@
             id="ow-ad"
             ref="adRef"
             style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto"
-          >
-            <!--            <div v-if="platform.isElectron()" id="777249406"></div>-->
-          </div>
+          />
           <video
             @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')"
             class="cursor-pointer"
@@ -77,7 +75,7 @@
             muted
             loop
             style="margin: 0 auto"
-            v-if="isElectron"
+            v-if="isElectron && !isDev"
           >
             <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
           </video>
@@ -182,6 +180,10 @@ export default class AdAside extends Vue {
 
     // If this fails, show the ads
     return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+  }
+
+  get isDev() {
+    return process.env.NODE_ENV === 'development';
   }
 
   public reportAdvert() {

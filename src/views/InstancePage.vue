@@ -24,9 +24,8 @@
         />
       </header>
 
-      <div class="body" v-if="!searchingForMods" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
+      <div class="body" :class="{ 'settings-open': activeTab === tabs.SETTINGS }">
         <pack-body
-          v-if="!this.searchingForMods"
           @mainAction="launchModPack()"
           @update="update"
           @tabChange="(e) => (activeTab = e)"
@@ -34,7 +33,6 @@
           @searchForMods="searchingForMods = true"
           @getModList="(e) => getModList(e)"
           :pack-loading="packLoading"
-          :searchingForMods="searchingForMods"
           :active-tab="activeTab"
           :isInstalled="true"
           :instance="instance"
@@ -53,8 +51,6 @@
           :current="instance.versionId"
         />
       </ftb-modal>
-
-      <find-mods :instance="instance" @modInstalled="getModList" v-if="searchingForMods" />
     </div>
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
@@ -67,6 +63,15 @@
         :loading="deleting"
       />
     </ftb-modal>
+
+    <closable-panel
+      :open="searchingForMods"
+      @close="searchingForMods = false"
+      :title="`Add mods to ${packInstance ? packInstance.name : ''}`"
+      subtitle="You can find mods for this pack using the search area below"
+    >
+      <find-mods :instance="instance" @modInstalled="getModList" />
+    </closable-panel>
   </div>
 </template>
 
@@ -97,6 +102,7 @@ import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
 import { InstallerState } from '@/modules/app/appStore.types';
 import { getPackArt } from '@/utils';
+import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -108,6 +114,7 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
+    ClosablePanel,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
@@ -330,7 +337,7 @@ export default class InstancePage extends Vue {
    * Determines if we need to hide the bulk of the page
    */
   get hidePackDetails() {
-    return this.activeTab === ModpackPageTabs.SETTINGS || this.searchingForMods;
+    return this.activeTab === ModpackPageTabs.SETTINGS;
   }
 
   get versionType() {

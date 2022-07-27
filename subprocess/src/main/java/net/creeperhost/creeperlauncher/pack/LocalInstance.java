@@ -78,7 +78,7 @@ public class LocalInstance implements IPack
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
     public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
     @JsonAdapter(PathTypeAdapter.class)
-    public Path jrePath = Settings.getPathOpt("jrepath", null);
+    public Path jrePath = Settings.getPathOpt("jrePath", null);
     private String url;
     private String artUrl;
     public int width = Integer.parseInt(Settings.settings.getOrDefault("width", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2)));
@@ -168,12 +168,15 @@ public class LocalInstance implements IPack
     public LocalInstance(Path path) throws IOException {
         //We're loading an existing instance
         this.path = path;
-        this.uuid = UUID.fromString(path.getFileName().toString());//TODO, this should not parse its uuid from the file name.
+        this.uuid = UUID.fromString(path.getFileName().toString()); //TODO, this should not parse its uuid from the file name.
         Path json = path.resolve("instance.json");
-        if (Files.notExists(json)) throw new FileNotFoundException("Instance does not exist!");
-
+        if (Files.notExists(json)) {
+            throw new FileNotFoundException("Instance does not exist!");
+        }
+        
         try (BufferedReader reader = Files.newBufferedReader(json)) {
             LocalInstance jsonOutput = GsonUtils.GSON.fromJson(reader, LocalInstance.class);
+
             this.id = jsonOutput.id;
             this.name = jsonOutput.name;
             this.artUrl = jsonOutput.artUrl;
@@ -190,13 +193,16 @@ public class LocalInstance implements IPack
             this.recMemory = jsonOutput.recMemory;
             this.jvmArgs = jsonOutput.jvmArgs;
             this.modLoader = jsonOutput.modLoader;
-            if((this.modLoader == null || this.modLoader.isEmpty()) && (this.mcVersion == null || this.mcVersion.isEmpty())) this.modLoader = jsonOutput.getVersion();
+            if ((this.modLoader == null || this.modLoader.isEmpty()) && (this.mcVersion == null || this.mcVersion.isEmpty())) {
+                this.modLoader = jsonOutput.getVersion();
+            }
             this.jrePath = jsonOutput.jrePath;
             this.dir = this.path;
             this.cloudSaves = jsonOutput.cloudSaves;
             this.isImport = jsonOutput.isImport;
             this.isModified = jsonOutput.isModified;
             this.hasInstMods = jsonOutput.hasInstMods;
+            this.embeddedJre = jsonOutput.embeddedJre;
             this.packType = jsonOutput.packType;
             this._private = jsonOutput._private;
             this.installComplete = jsonOutput.installComplete;

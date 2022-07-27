@@ -19,32 +19,6 @@
             </template>
           </ftb-button>
         </div>
-        <div class="stats" v-if="isInstalled">
-          <div class="stat">
-            <div class="name">Last played</div>
-            <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
-          </div>
-          <div class="stat">
-            <div class="name">Version</div>
-            <div class="value">{{ instance.version }}</div>
-          </div>
-        </div>
-        <div class="stats" v-else>
-          <div class="stat">
-            <div class="name">Installs</div>
-            <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
-          </div>
-
-          <div class="stat">
-            <div class="name">Plays</div>
-            <div class="value font-sans">{{ packInstance.plays | formatNumber }}</div>
-          </div>
-
-          <!--          <div class="stat">-->
-          <!--            <div class="name">Released on</div>-->
-          <!--            <div class="value font-sans">{{ packInstance.updated | moment }}</div>-->
-          <!--          </div>-->
-        </div>
 
         <div class="options">
           <div class="update" v-if="isInstalled && !isLatestVersion">
@@ -93,12 +67,53 @@
       </div>
 
       <div class="pack-overview" v-if="activeTab === tabs.OVERVIEW">
+        <div class="stats">
+          <template v-if="isInstalled">
+            <div class="stat">
+              <div class="name">Last played</div>
+              <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
+            </div>
+            <div class="stat">
+              <div class="name">Version</div>
+              <div class="value">{{ instance.version }}</div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="stat">
+              <div class="name">Installs</div>
+              <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
+            </div>
+
+            <div class="stat" v-if="packInstance.type !== 'Curseforge'">
+              <div class="name">Plays</div>
+              <div class="value font-sans">{{ packInstance.plays | formatNumber }}</div>
+            </div>
+          </template>
+
+          <div
+            class="stat"
+            v-if="packInstance && packInstance.released !== 'unknown'"
+            :title="(packInstance.released || packInstance.updated) | dayjsFull"
+          >
+            <div class="name">Released</div>
+            <div class="value font-sans">{{ (packInstance.released || packInstance.updated) | dayjsFromNow }}</div>
+          </div>
+          <div
+            class="stat"
+            v-if="packInstance && packInstance.versions && packInstance.versions[0]"
+            :title="packInstance.versions[0].updated | dayjsFull"
+          >
+            <div class="name">Updated</div>
+            <div class="value font-sans">{{ packInstance.versions[0].updated | dayjsFromNow }}</div>
+          </div>
+        </div>
+
         <div class="tags mb-6" v-if="tags.length">
           <router-link
             v-for="(tag, i) in tags"
             :key="`tag-${i}`"
             :to="{ name: 'browseModpacks', params: { search: tag.name } }"
-            class="cursor-pointer tag rounded mr-2 text-sm px-4 py-1 lowercase"
+            class="cursor-pointer tag rounded mr-2 lowercase"
             :style="{
               fontVariant: 'small-caps',
               backgroundColor: `hsla(${getColorForChar(tag.name, 90, 70)}, .5)`,
@@ -119,7 +134,6 @@
       <!-- Tab views, we're not using the router because it's a pain-->
       <modpack-mods
         v-if="activeTab === tabs.MODS"
-        v-show="!searchingForMods"
         :modlist="mods"
         :pack-installed="isInstalled"
         :updatingModlist="updatingModlist"
@@ -179,7 +193,6 @@ export default class PackBody extends Vue {
   @Prop() isInstalled!: boolean;
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
-  @Prop() searchingForMods!: boolean;
   @Prop() updatingModlist!: boolean;
 
   tabs = ModpackPageTabs;
@@ -226,19 +239,6 @@ export default class PackBody extends Vue {
 
   .play {
     margin-right: 2rem;
-  }
-
-  .stats {
-    display: flex;
-
-    .stat {
-      margin-right: 2rem;
-
-      .name {
-        opacity: 0.7;
-        font-size: 0.875rem;
-      }
-    }
   }
 
   .options {
@@ -309,11 +309,32 @@ export default class PackBody extends Vue {
 }
 
 .pack-overview {
+  .stats {
+    display: flex;
+    margin-bottom: 1.5rem;
+
+    .stat {
+      margin-right: 2rem;
+
+      .name {
+        opacity: 0.7;
+        font-size: 0.875rem;
+      }
+
+      .value {
+        font-weight: bold;
+      }
+    }
+  }
+
   .tags {
     display: flex;
     flex-wrap: wrap;
+
     .tag {
       margin-bottom: 0.5rem;
+      padding: 0.15rem 0.5rem;
+      font-weight: bold;
     }
   }
 }

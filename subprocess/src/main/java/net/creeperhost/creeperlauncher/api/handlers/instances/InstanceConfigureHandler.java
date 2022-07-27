@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
+import net.covers1624.jdkutils.JavaLocator;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceConfigureData;
@@ -19,7 +20,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             LocalInstance instance = Instances.getInstance(data.uuid);
             if (instance == null) {
                 // TODO, This message needs to be improved. We should tell the frontend _why_
-                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error"));
+                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));
                 return;
             }
             for (Map.Entry<String, String> setting : data.instanceInfo.entrySet())
@@ -50,16 +51,21 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
                             instance.jrePath = null;
                         } else {
                             instance.embeddedJre = false;
-                            instance.jrePath = Paths.get(setting.getValue());
+                            var jreLocation = Paths.get(setting.getValue());
+                            if (JavaLocator.parseInstall(jreLocation) == null) {
+                                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
+                                return;
+                            }
+                            instance.jrePath = jreLocation;
                         }
                         break;
                 }
             }
             instance.saveJson();
-            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "success"));
+            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "success", ""));
         } catch (Exception err)
         {
-            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error"));
+            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Fatal error on settings saving..."));
         }
 
     }

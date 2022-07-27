@@ -13,6 +13,7 @@ export interface ModPack {
   name: string;
   type: string;
   updated: number;
+  released: number | 'unknown';
   tags: ModPackTag[];
   notification: string;
   links: ModPackLink[];
@@ -49,6 +50,7 @@ export interface Instance {
   cloudSaves: boolean;
   packType: number;
   modLoader: string;
+  embeddedJre: boolean;
 }
 
 export interface Art {

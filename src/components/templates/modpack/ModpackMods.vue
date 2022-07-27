@@ -1,9 +1,5 @@
 <template>
   <div class="modpack-mods">
-    <div class="px-4 py-3 bg-blue-600 rounded mb-6" v-if="!packInstalled">
-      This mod list is representative of the latest version of this Modpack. Different versions of this Modpack may have
-      different mods.
-    </div>
     <div class="flex mb-8 items-center">
       <f-t-b-search-bar :alpha="true" placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
       <div class="actions flex ml-6" v-if="packInstalled">
