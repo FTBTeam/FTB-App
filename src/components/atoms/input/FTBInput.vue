@@ -101,5 +101,9 @@ export default class FTBInput extends Vue {
       opacity: 0;
     }
   }
+
+  input[disabled] {
+    color: rgba(white, 0.5);
+  }
 }
 </style>

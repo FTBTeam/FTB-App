@@ -55,8 +55,8 @@
     <ftb-input
       label="Instance Location"
       :value="localSettings.instanceLocation"
+      :disabled="true"
       v-model="localSettings.instanceLocation"
-      @blur="saveMutated"
       button="true"
       buttonText="Browse"
       buttonColor="primary"
@@ -86,7 +86,7 @@ export default class InstanceSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-
+  @Action('showAlert') public showAlert: any;
   localSettings: Settings = {} as Settings;
 
   resSelectedValue: string = '0';
@@ -109,6 +109,10 @@ export default class InstanceSettings extends Vue {
 
   browseForFolder() {
     platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
+      if (path == null) {
+        return;
+      }
+
       this.localSettings.instanceLocation = path;
       this.saveSettings(this.localSettings);
     });

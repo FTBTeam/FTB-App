@@ -29,7 +29,7 @@
         <div class="stat">
           <div class="text">Author{{ mod.authors.length > 1 ? 's' : '' }}</div>
           <div class="value authors">
-            {{ mod.authors.map(e => e.name).join(', ') }}
+            {{ mod.authors.map((e) => e.name).join(', ') }}
           </div>
         </div>
         <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
@@ -53,10 +53,10 @@
         <selection
           class="my-6"
           label="Selection mod version"
-          @selected="e => (selectedVersion = e)"
+          @selected="(e) => (selectedVersion = e)"
           v-if="versions"
           :options="
-            versions.map(e => ({
+            versions.map((e) => ({
               value: e.id,
               text: e.name,
               badge: {
@@ -166,8 +166,8 @@ export default class ModCard extends Vue {
     this.versions =
       this.mod.versions
         .filter(
-          e =>
-            e.targets.findIndex(a => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
+          (e) =>
+            e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
         )
         .sort((a, b) => b.id - a.id) ?? [];
 
@@ -237,7 +237,7 @@ export default class ModCard extends Vue {
   }
 
   get curseLink() {
-    return this.mod.links.find(e => e.type === 'curseforge');
+    return this.mod.links.find((e) => e.type === 'curseforge');
   }
 }
 </script>

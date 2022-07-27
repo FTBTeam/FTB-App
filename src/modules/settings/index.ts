@@ -29,7 +29,7 @@ export const state: SettingsState = {
     blockedUsers: [],
     mtConnect: false,
     automateMojang: true,
-    showAdverts: true
+    showAdverts: true,
   },
   error: false,
   hardware: {
@@ -42,7 +42,6 @@ export const state: SettingsState = {
     },
     supportedResolutions: [],
   },
-  javaInstalls: [],
 };
 
 export const settings: Module<SettingsState, RootState> = {

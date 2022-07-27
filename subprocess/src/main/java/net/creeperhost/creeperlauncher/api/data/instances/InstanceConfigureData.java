@@ -12,15 +12,17 @@ public class InstanceConfigureData extends BaseData
 
     public static class Reply extends BaseData
     {
+        String errorMessage;
         UUID uuid;
         String status;
 
-        public Reply(InstanceConfigureData data, String status)
+        public Reply(InstanceConfigureData data, String status, String errorMessage)
         {
             type = "instanceConfigureReply";
             this.requestId = data.requestId;
             this.uuid = data.uuid;
-            this.status = "success";
+            this.errorMessage = errorMessage;
+            this.status = status;
         }
     }
 }

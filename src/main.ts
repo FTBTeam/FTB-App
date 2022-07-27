@@ -1,6 +1,4 @@
 import platform from '@/utils/interface/electron-overwolf';
-const path = require('path');
-
 import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
@@ -29,6 +27,8 @@ import Modal from '@/components/atoms/Modal.vue';
 import Message from '@/components/atoms/Message.vue';
 import { BrowserTracing } from '@sentry/tracing';
 import * as Sentry from '@sentry/vue';
+
+const path = require('path');
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -61,27 +61,23 @@ const appSetup = async () => {
       },
       trackComponents: true,
       tracesSampleRate: 1.0,
-      beforeSend (event: any) {
-        if (
-          !event.exception ||
-          !event.exception.values ||
-          !event.exception.values[0]
-        ) {
-          return event
+      beforeSend(event: any) {
+        if (!event.exception || !event.exception.values || !event.exception.values[0]) {
+          return event;
         }
-    
-        const value = event.exception.values[0]
-    
+
+        const value = event.exception.values[0];
+
         if (value.stacktrace && value.stacktrace.frames) {
           value.stacktrace.frames.forEach(function (frame: any) {
             if (frame.filename.startsWith('/')) {
-              frame.filename = 'overwolf-extension:///' + path.relative('js', frame.filename)
+              frame.filename = 'overwolf-extension:///' + path.relative('js', frame.filename);
             }
-          })
+          });
         }
-    
-        return event
-      }
+
+        return event;
+      },
     });
   }
 
@@ -169,6 +165,7 @@ const appSetup = async () => {
   });
 
   Vue.filter('dayjs', (value: any) => (value ? dayjs.unix(value).format('DD MMMM YYYY') : ''));
+  Vue.filter('dayjsFull', (value: any) => (value ? dayjs.unix(value).format('DD MMMM YYYY, HH:mm') : ''));
   Vue.filter('dayjsFromNow', (value: any) => {
     if (!value) return 'Never';
 

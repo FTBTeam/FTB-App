@@ -204,6 +204,14 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+
+    selectFileDialog(cb) {
+      overwolf.utils.openFilePicker('', (resp: any) => {
+        if (resp && resp.status === 'success') {
+          cb(resp.path);
+        }
+      });
+    },
   },
 
   // Websockets

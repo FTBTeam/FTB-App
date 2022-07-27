@@ -57,7 +57,8 @@ export interface Config {
 }
 
 export interface InputOutput {
-  selectFolderDialog: (startPath: string, cb: (selectedFile: string) => void) => void;
+  selectFolderDialog: (startPath: string, cb: (selectedFile: string | null) => void) => void;
+  selectFileDialog: (cb: (selectedFile: string | null) => void) => void;
 }
 
 export interface Websocket {

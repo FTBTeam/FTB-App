@@ -21,6 +21,7 @@ export enum ModalSizes {
   SMALL = 'small',
   MEDIUM = 'medium',
   LARGE = 'large',
+  LARGE_DYNAMIC = 'large-dynamic',
 }
 
 @Component
@@ -68,6 +69,11 @@ export default class FTBModal extends Vue {
   &.large {
     width: 80%;
     height: 80%;
+  }
+
+  &.large-dynamic {
+    width: 95%;
+    max-width: 700px;
   }
 }
 </style>

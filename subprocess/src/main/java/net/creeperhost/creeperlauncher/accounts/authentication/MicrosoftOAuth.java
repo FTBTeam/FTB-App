@@ -110,7 +110,7 @@ public class MicrosoftOAuth {
             }
         }
 
-        LOGGER.info("Verified ownership of Minecraft account... result: {}", hasOwnership ? "Does not own" : "Owns");
+        LOGGER.info("Verified ownership of Minecraft account... result: {}", hasOwnership ? "Owns" : "Does not own");
 
         // Validate the profile
         if (isUnsuccessful(profileRes)) {
@@ -231,6 +231,11 @@ public class MicrosoftOAuth {
             LOGGER.info("Making authentication request to {}", request.url());
             Response execute = CLIENT.newCall(request).execute();
             ResponseBody body = execute.body();
+            
+            if (execute.code() >= 500) {
+                return new StepReply(false, execute.code(), "There are currently issues with the authentication system. Please try again in a few minutes.", JsonNull.INSTANCE, null);
+            }
+            
             if (body != null) {
                 try {
                     JsonElement jsonElement = JsonParser.parseString(body.string());

@@ -81,7 +81,10 @@ public class AccountManager {
         try {
             // Get the profile data from the json file.
             AccountStore store = JsonUtils.parse(GSON, STORE_FILE, AccountStore.class);
-
+            if (store == null) {
+                return;
+            }
+            
             // TODO: create a migration system if this ever gets changed again.
             //       For this implementation, we actually want it to drop the old data as it's likely fucked anyway.
             if (!Objects.equals(store.version, SPEC_VERSION)) {

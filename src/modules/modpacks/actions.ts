@@ -291,18 +291,22 @@ export const actions: ActionTree<ModpackState, RootState> = {
               cloudSaves: instance.cloudSaves,
             },
           },
-          callback: (msg: any) => {
-            dispatch(
-              'sendMessage',
-              {
-                payload: { type: 'installedInstances', refresh: true },
-                callback: (data: any) => {
-                  dispatch('storeInstalledPacks', data);
-                  resolve(null);
+          callback: async (msg: any) => {
+            await new Promise((resolve2) =>
+              dispatch(
+                'sendMessage',
+                {
+                  payload: { type: 'installedInstances', refresh: true },
+                  callback: (data: any) => {
+                    dispatch('storeInstalledPacks', data);
+                    resolve2(null);
+                  },
                 },
-              },
-              { root: true },
+                { root: true },
+              ),
             );
+
+            resolve(msg);
           },
         },
         { root: true },

@@ -39,7 +39,10 @@
           <font-awesome-icon spin icon="spinner" />
           <p>Loading results</p>
         </div>
-        <div class="no-results" v-else-if="search !== '' && !loadingTerm && !visualLoadingFull && !results.length">
+        <div
+          class="no-results"
+          v-else-if="search !== '' && !begunSearching && !loadingTerm && !visualLoadingFull && !results.length"
+        >
           <div
             class="fancy"
             data-balloon-length="large"
@@ -73,7 +76,8 @@
               <font-awesome-icon icon="search" class="primary" />
               <font-awesome-icon icon="search" class="secondary" />
             </div>
-            <p>Use the search box above to find new mods</p>
+            <p v-if="!begunSearching && !loadingExtra && !loading">Use the search box above to find new mods</p>
+            <p v-else>Searching...</p>
           </div>
         </div>
       </div>
@@ -142,6 +146,7 @@ export default class FindMods extends Vue {
   resultsBuffer: Mod[] = [];
 
   searchDebounce: any;
+  begunSearching = false;
 
   fetchRequests: { abort: () => void; ready: Promise<Response> }[] = [];
 
@@ -163,6 +168,7 @@ export default class FindMods extends Vue {
 
   @Watch('search')
   onSearch() {
+    this.begunSearching = true;
     this.searchDebounce();
   }
 
@@ -176,7 +182,7 @@ export default class FindMods extends Vue {
     const start = new Date().getTime();
 
     const results = this.abortableFetch(
-      `${process.env.VUE_APP_MODPACK_API}/public/mod/search/${this.target || 'all'}/${this.modLoader}/100?term=${
+      `${process.env.VUE_APP_MODPACK_API}/public/mod/search/${this.target || 'all'}/${this.modLoader}/50?term=${
         this.search
       }`,
       null,
@@ -193,6 +199,8 @@ export default class FindMods extends Vue {
 
     this.resultingIds = searchResults?.mods || [];
     await this.loadResultsProgressively();
+
+    this.begunSearching = false;
 
     // TODO: remove later on, kinda helpful right now
     this.timeTaken = new Date().getTime() - start;
@@ -347,9 +355,6 @@ export default class FindMods extends Vue {
 
 <style lang="scss" scoped>
 .find-mods {
-  background: rgba(#2a2a2a, 0.95);
-  padding: 1rem;
-  flex: 1;
 }
 
 .stats-bar {
