@@ -233,7 +233,7 @@ public class MicrosoftOAuth {
             ResponseBody body = execute.body();
             
             if (execute.code() >= 500) {
-                return new StepReply(false, execute.code(), "Service responded with a 500 error meaning it's offline or having major issues", JsonNull.INSTANCE, null);
+                return new StepReply(false, execute.code(), "There are currently issues with the authentication system. Please try again in a few minutes.", JsonNull.INSTANCE, null);
             }
             
             if (body != null) {

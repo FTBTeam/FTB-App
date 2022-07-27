@@ -53,7 +53,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
                             instance.embeddedJre = false;
                             var jreLocation = Paths.get(setting.getValue());
                             if (JavaLocator.parseInstall(jreLocation) == null) {
-                                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Selected Java version does not resolve to a valid java binary. Please ensure you're selecting the bin/java file"));
+                                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
                                 return;
                             }
                             instance.jrePath = jreLocation;
