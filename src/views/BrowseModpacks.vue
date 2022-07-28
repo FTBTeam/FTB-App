@@ -25,100 +25,122 @@
         :min="3"
       />
     </div>
-    <div v-if="modpacks.error" class="m-4 p-3" style="background-color: #e55812">
-      <span>{{ modpacks.errorMsg }}</span>
-    </div>
-    <div
-      class="flex flex-col flex-1"
-      v-if="!modpacks.loading && !(modpacks.search.length <= 0 && modpacks.curseLoading)"
-    >
-      <div
-        class="flex pt-1 flex-wrap overflow-x-auto items-stretch"
-        v-if="modpacks.search.length > 0 || modpacks.searchCurse.length > 0"
-      >
-        <div v-if="currentTab === 'ftbsearch'" key="ftbsearch" class="w-full">
-          <div>
-            <div v-if="modpacks.search.length < 1" class="m-4 p-3" style="background-color: #e55812">
-              <span>No modpacks found</span>
-            </div>
-            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
-              <pack-card-list
-                v-for="(modpack, index) in modpacks.search.filter((m) => m && m.versions && m.versions.length > 0)"
-                :key="index"
-                :packID="modpack.id"
-                :art="modpack.art"
-                :installed="false"
-                :minecraft="'1.7.10'"
-                :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-                :versionID="modpack.versions[0].id"
-                :name="modpack.name"
-                :authors="modpack.authors"
-                :versions="modpack.versions"
-                :tags="modpack.tags"
-                :description="modpack.synopsis"
-                type="0"
-              >
-                {{ modpack.id }}
-              </pack-card-list>
-            </div>
-          </div>
-        </div>
-        <div v-else-if="currentTab === 'cursesearch'" key="cursesearch">
-          <div v-if="!modpacks.curseLoading">
-            <div v-if="modpacks.searchCurse.length < 1" class="m-4 p-3 w-full" style="background-color: #e55812">
-              <span>No modpacks found</span>
-            </div>
-            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch">
-              <pack-card-list
-                v-for="(modpack, index) in modpacks.searchCurse.filter((m) => m.versions.length > 0)"
-                :key="index"
-                :packID="modpack.id"
-                :art="modpack.art"
-                :installed="false"
-                :minecraft="'1.7.10'"
-                :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-                :versionID="modpack.versions[0].id"
-                :name="modpack.name"
-                :authors="modpack.authors"
-                type="1"
-                :versions="modpack.versions"
-                :tags="modpack.tags"
-                :description="modpack.synopsis"
-                >{{ modpack.id }}
-              </pack-card-list>
-            </div>
-          </div>
-          <div v-else class="flex flex-1 justify-center items-center">
-            <Loading class="mt-8" />
-          </div>
-        </div>
-      </div>
-      <div v-else>
-        <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
-          <pack-card-list
-            v-for="modpack in modpacks.all"
-            :key="`plays-${modpack.id}`"
-            :list-mode="settingsState.settings.listMode"
-            :packID="modpack.id"
-            :versions="modpack.versions"
-            :art="modpack.art"
-            :installed="false"
-            :minecraft="'1.7.10'"
-            :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"
-            :versionID="modpack.versions[0].id"
-            :name="modpack.name"
-            :authors="modpack.authors"
-            :tags="modpack.tags"
-            :description="modpack.synopsis"
-            :featured="modpack.featured"
-            >{{ modpack.id }}
-          </pack-card-list>
-        </div>
-      </div>
-    </div>
-    <div v-else class="flex flex-1 justify-center items-center">
-      <Loading class="mt-8" />
-    </div>
+
+    <Loading class="mt-20" v-if="searchStarted || loading" />
+    <search-result-pack-card v-for="(pack, index) in results" :pack="pack" :key="index" />
+
+    <!--    <div class="">-->
+    <!--      <pack-card-list-->
+    <!--        v-for="(modpack, index) in results"-->
+    <!--        :key="index"-->
+    <!--        :packID="modpack.id"-->
+    <!--        :art="modpack.art"-->
+    <!--        :installed="false"-->
+    <!--        :minecraft="'1.7.10'"-->
+    <!--        :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
+    <!--        :versionID="modpack.versions[0].id"-->
+    <!--        :name="modpack.name"-->
+    <!--        :authors="modpack.authors"-->
+    <!--        :versions="modpack.versions"-->
+    <!--        :tags="modpack.tags"-->
+    <!--        :description="modpack.synopsis"-->
+    <!--        type="0"-->
+    <!--      >-->
+    <!--        {{ modpack.id }}-->
+    <!--      </pack-card-list>-->
+    <!--    </div>-->
+
+    <!--    <div-->
+    <!--      class="flex flex-col flex-1"-->
+    <!--      v-if="!modpacks.loading && !(modpacks.search.length <= 0 && modpacks.curseLoading)"-->
+    <!--    >-->
+    <!--      <div-->
+    <!--        class="flex pt-1 flex-wrap overflow-x-auto items-stretch"-->
+    <!--        v-if="modpacks.search.length > 0 || modpacks.searchCurse.length > 0"-->
+    <!--      >-->
+    <!--        <div v-if="currentTab === 'ftbsearch'" key="ftbsearch" class="w-full">-->
+    <!--          <div>-->
+    <!--            <div v-if="modpacks.search.length < 1" class="m-4 p-3" style="background-color: #e55812">-->
+    <!--              <span>No modpacks found</span>-->
+    <!--            </div>-->
+    <!--            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>-->
+    <!--              <pack-card-list-->
+    <!--                v-for="(modpack, index) in modpacks.search.filter((m) => m.versions.length > 0)"-->
+    <!--                :key="index"-->
+    <!--                :packID="modpack.id"-->
+    <!--                :art="modpack.art"-->
+    <!--                :installed="false"-->
+    <!--                :minecraft="'1.7.10'"-->
+    <!--                :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
+    <!--                :versionID="modpack.versions[0].id"-->
+    <!--                :name="modpack.name"-->
+    <!--                :authors="modpack.authors"-->
+    <!--                :versions="modpack.versions"-->
+    <!--                :tags="modpack.tags"-->
+    <!--                :description="modpack.synopsis"-->
+    <!--                type="0"-->
+    <!--              >-->
+    <!--                {{ modpack.id }}-->
+    <!--              </pack-card-list>-->
+    <!--            </div>-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--        <div v-else-if="currentTab === 'cursesearch'" key="cursesearch">-->
+    <!--          <div v-if="!modpacks.curseLoading">-->
+    <!--            <div v-if="modpacks.searchCurse.length < 1" class="m-4 p-3 w-full" style="background-color: #e55812">-->
+    <!--              <span>No modpacks found</span>-->
+    <!--            </div>-->
+    <!--            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch">-->
+    <!--              <pack-card-list-->
+    <!--                v-for="(modpack, index) in modpacks.searchCurse.filter((m) => m.versions.length > 0)"-->
+    <!--                :key="index"-->
+    <!--                :packID="modpack.id"-->
+    <!--                :art="modpack.art"-->
+    <!--                :installed="false"-->
+    <!--                :minecraft="'1.7.10'"-->
+    <!--                :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
+    <!--                :versionID="modpack.versions[0].id"-->
+    <!--                :name="modpack.name"-->
+    <!--                :authors="modpack.authors"-->
+    <!--                type="1"-->
+    <!--                :versions="modpack.versions"-->
+    <!--                :tags="modpack.tags"-->
+    <!--                :description="modpack.synopsis"-->
+    <!--                >{{ modpack.id }}-->
+    <!--              </pack-card-list>-->
+    <!--            </div>-->
+    <!--          </div>-->
+    <!--          <div v-else class="flex flex-1 justify-center items-center">-->
+    <!--            <Loading class="mt-8" />-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--      <div v-else>-->
+    <!--        <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>-->
+    <!--          <pack-card-list-->
+    <!--            v-for="modpack in modpacks.all"-->
+    <!--            :key="`plays-${modpack.id}`"-->
+    <!--            :list-mode="settingsState.settings.listMode"-->
+    <!--            :packID="modpack.id"-->
+    <!--            :versions="modpack.versions"-->
+    <!--            :art="modpack.art"-->
+    <!--            :installed="false"-->
+    <!--            :minecraft="'1.7.10'"-->
+    <!--            :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
+    <!--            :versionID="modpack.versions[0].id"-->
+    <!--            :name="modpack.name"-->
+    <!--            :authors="modpack.authors"-->
+    <!--            :tags="modpack.tags"-->
+    <!--            :description="modpack.synopsis"-->
+    <!--            :featured="modpack.featured"-->
+    <!--            >{{ modpack.id }}-->
+    <!--          </pack-card-list>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </div>-->
+    <!--    <div v-else class="flex flex-1 justify-center items-center">-->
+    <!--      <Loading class="mt-8" />-->
+    <!--    </div>-->
   </div>
 </template>
 
@@ -127,17 +149,19 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
-import { SettingsState } from '@/modules/settings/types';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { ModpackState } from '../modules/modpacks/types';
-import { debounce } from '@/utils';
 import { Route } from 'vue-router';
 import { AuthState } from '../modules/auth/types';
+import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
+import { ListPackSearchResults, PackSearchEntries } from '@/typings/modpackch';
+import SearchResultPackCard from '@/components/molecules/SearchResultPackCard.vue';
 
 const namespace: string = 'modpacks';
 
 @Component({
   components: {
+    SearchResultPackCard,
     PackCardList,
     FTBSearchBar,
     Loading,
@@ -145,54 +169,26 @@ const namespace: string = 'modpacks';
 })
 export default class BrowseModpacks extends Vue {
   @State('auth') public authState!: AuthState;
-  @State('settings') public settingsState!: SettingsState;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-  @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
   @Action('loadAllPacks', { namespace }) public loadAllPacks: any;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('getPopularInstalls', { namespace }) public getPopularInstalls: any;
   @Action('getPopularPlays', { namespace }) public getPopularPlays: any;
   @Action('getPrivatePacks', { namespace }) public getPrivatePacks: any;
-  @Action('doSearch', { namespace }) public doSearch: any;
-  @Action('clearSearch', { namespace }) public clearSearch: any;
 
-  private searchValue: string = '';
-  private currentTab: string = 'ftbsearch';
-  private cardsToShow = 20;
+  searchValue: string = '';
+  currentTab: string = 'ftbsearch';
 
-  public isActiveTab(tab: string): boolean {
-    return tab === 'home' && this.$route.path === '/' ? true : this.$route.path.startsWith(`/${tab}`);
-  }
+  currentSearch: AbortableRequest | null = null;
+  searchResults: PackSearchEntries.Packs[] = [];
 
-  @Watch('$route')
-  public onPropertyChanged(value: Route, oldValue: Route) {
-    if (value.params.search !== oldValue.params.search) {
-      this.searchValue = value.params.search;
-      this.doSearch(this.searchValue);
-    }
-  }
-  private debounceSearch: () => void = () => {};
+  loading = false;
+  searchStarted = false;
 
-  private changeTab(tab: string) {
-    this.currentTab = tab;
-  }
-
-  private async mounted() {
+  async mounted() {
     if (this.$route.params.search) {
       this.searchValue = this.$route.params.search;
-      this.doSearch(this.searchValue);
-    } else if (this.modpacks !== undefined && this.modpacks.searchString.length > 0) {
-      this.searchValue = this.modpacks.searchString;
-      this.doSearch(this.searchValue);
-    } else {
-      this.searchValue = '';
-      this.clearSearch();
+      await this.searchPacks();
     }
-    this.debounceSearch = debounce(() => {
-      if (this.searchValue !== this.modpacks?.searchString) {
-        this.doSearch(this.searchValue);
-      }
-    }, 1000);
+
     if (this.modpacks === undefined || this.modpacks.all === undefined || this.modpacks.all.length <= 0) {
       await this.loadAllPacks();
       if (this.authState.token !== null) {
@@ -201,13 +197,83 @@ export default class BrowseModpacks extends Vue {
     }
   }
 
+  @Watch('$route')
+  public async onPropertyChanged(value: Route, oldValue: Route) {
+    if (value.params.search !== oldValue.params.search) {
+      this.searchValue = value.params.search;
+      await this.searchPacks();
+    }
+  }
+
+  private debounceSearch = debounce(() => {
+    this.searchPacks();
+  }, 1000);
+
+  private async changeTab(tab: string) {
+    this.currentTab = tab;
+    this.searchResults = [];
+    await this.searchPacks();
+  }
+
   @Watch('searchValue')
   private onSearch() {
-    if (this.searchValue === '' || this.searchValue == null) {
-      this.clearSearch();
-    } else {
-      this.debounceSearch();
+    this.searchStarted = true;
+    this.debounceSearch();
+  }
+
+  async searchPacks() {
+    if (this.searchValue.length < 2) {
+      return;
     }
+
+    if (this.currentSearch) {
+      this.currentSearch.abort();
+    }
+
+    this.loading = true;
+
+    this.currentSearch = abortableFetch(
+      createModpackchUrl(
+        `/modpack/search/20/detailed?term=${this.searchValue}&platform=${
+          this.currentTab !== 'ftbsearch' ? 'curseforge' : 'modpacksch'
+        }`,
+      ),
+    );
+
+    // Caught as this request will be aborted if it's slow and a new search term comes in
+    try {
+      const fetch = await this.currentSearch.ready;
+      const data = await fetch.json();
+
+      if (data.status !== 'error') {
+        this.searchResults = (data as ListPackSearchResults).packs;
+      }
+    } catch {
+    } finally {
+      this.loading = false;
+      this.searchStarted = false;
+    }
+  }
+
+  get results(): PackSearchEntries.Packs[] {
+    // Transform the 'in state' packs to a search result for displaying all packs
+    if (this.searchValue === '' && typeof this.modpacks?.all !== 'undefined') {
+      return this.modpacks?.all.map(
+        (e) =>
+          ({
+            platform: 'modpacksch',
+            name: e.name,
+            art: e.art as unknown as PackSearchEntries.Art[],
+            authors: e.authors as PackSearchEntries.Authors[],
+            tags: e.tags as PackSearchEntries.Tags[],
+            synopsis: e.synopsis,
+            id: e.id,
+            updated: e.updated,
+          } as PackSearchEntries.Packs),
+      );
+    }
+
+    return this.searchResults;
   }
 }
 </script>

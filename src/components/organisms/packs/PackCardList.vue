@@ -195,7 +195,6 @@ export default class PackCardList extends Vue {
   @Action('errorInstall', { namespace: 'modpacks' }) public errorInstall: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
   @State('settings') public settingsState!: SettingsState;
-  @Action('doSearch', { namespace: 'modpacks' }) public doSearch: any;
   @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   public name!: string;
