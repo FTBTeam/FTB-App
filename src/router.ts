@@ -26,6 +26,7 @@ export enum RouterNames {
   SETTINGS_APP_LICENSE = 'license',
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   CHAT = 'chat',
+  DEVELOPER = 'dev',
 }
 
 export default new Router({
@@ -130,6 +131,11 @@ export default new Router({
           path: '/server',
           name: RouterNames.ROOT_SERVER,
           component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
+        },
+        {
+          path: '/dev',
+          name: RouterNames.DEVELOPER,
+          component: () => import(/* webpackChunkName: "nothingtoseehere" */ './views/DeveloperPage.vue'),
         },
       ],
     },

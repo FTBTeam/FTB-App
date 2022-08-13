@@ -32,7 +32,8 @@
     </div>
     <popover text="Setup a server with CreeperHost" class="w-full">
       <img
-        @click="openPromo()"
+        @click="openPromo"
+        @mousedown="onMouseDown"
         src="../../../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
@@ -52,6 +53,7 @@ import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import { RouterNames } from '@/router';
+import { yeetError } from '@/utils';
 
 @Component({
   components: { SidebarProfile },
@@ -115,8 +117,15 @@ export default class Sidebar extends Vue {
     );
   }
 
-  public openPromo(): void {
+  public openPromo(event: any): void {
     platform.get.utils.openUrl('https://go.ftb.team/creeperhost');
+  }
+
+  // Developer page
+  public onMouseDown(event: any): void {
+    if (event.button === 2 && event.ctrlKey && event.altKey && event.shiftKey) {
+      yeetError(() => this.$router.push(RouterNames.DEVELOPER));
+    }
   }
 
   public openFriends() {
