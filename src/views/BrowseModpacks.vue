@@ -43,7 +43,7 @@
             </div>
             <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>
               <pack-card-list
-                v-for="(modpack, index) in modpacks.search.filter((m) => m.versions.length > 0)"
+                v-for="(modpack, index) in modpacks.search.filter((m) => m && m.versions && m.versions.length > 0)"
                 :key="index"
                 :packID="modpack.id"
                 :art="modpack.art"
