@@ -1,17 +1,14 @@
 <template>
-  <div class="titlebar" :class="{ isMac }" @mousedown="startDragging">
+  <div class="titlebar" :class="{ isMac, 'is-dev': isDev }" @mousedown="startDragging">
     <div class="debug-items" v-if="inDevMode">
       <span>Dev tools</span>
       <router-link class="item" :to="{ name: 'home' }">
         <font-awesome-icon icon="home" />
       </router-link>
     </div>
-    <div class="meta-title">
-      <img src="@/assets/ftb-white-logo.svg" alt="" />
-      FTB App
-    </div>
-    <div class="action-buttons">
-      <div class="icons" v-if="!isMac">
+    <div class="meta-title">FTB App</div>
+    <div class="action-buttons" v-if="!isMac">
+      <div class="icons">
         <div class="title-action close" @click="close">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -46,7 +43,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import os from 'os';
 import platform from '@/utils/interface/electron-overwolf';
@@ -58,6 +55,9 @@ export default class TitleBar extends Vue {
   @Action('disconnect') public disconnect: any;
   @State('settings') private settings!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
+
+  @Prop({ default: false }) isDev!: boolean;
+
   public isMac: boolean = false;
   private windowId: string | null = null;
 
@@ -70,7 +70,7 @@ export default class TitleBar extends Vue {
       this.isMac = false;
     }
 
-    platform.get.frame.setupTitleBar(windowId => (this.windowId = windowId));
+    platform.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
   }
 
   public startDragging(event: any) {
@@ -105,12 +105,27 @@ export default class TitleBar extends Vue {
   -webkit-app-region: drag;
   z-index: 50000;
   position: relative;
+  transition: background-color 0.3s ease-in-out;
+
+  &.is-dev {
+    background-color: #0c0d0f;
+  }
 
   &.isMac {
-    flex-direction: row-reverse;
+    height: 1.8em;
+    text-align: center;
 
     .meta-title {
-      text-align: right;
+      font-weight: 800;
+      width: 100%;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+        'Helvetica Neue', sans-serif;
+
+      img {
+        margin-left: 1rem;
+        margin-right: 0;
+      }
     }
   }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
+  <div class="sidebar small" :class="{ 'is-transparent': isTransparent, 'is-dev': isDev }">
     <router-link to="/" :class="{ 'item-disabled': disableNav }">
       <img
         src="../../../assets/images/ftb-logo.svg"
@@ -32,7 +32,8 @@
     </div>
     <popover text="Setup a server with CreeperHost" class="w-full">
       <img
-        @click="openPromo()"
+        @click="openPromo"
+        @mousedown="onMouseDown"
         src="../../../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
@@ -52,6 +53,7 @@ import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import { RouterNames } from '@/router';
+import { yeetError } from '@/utils';
 
 @Component({
   components: { SidebarProfile },
@@ -61,6 +63,7 @@ export default class Sidebar extends Vue {
   @State('modpacks') private modpacks!: ModpackState;
   @State('settings') private settings!: SettingsState;
   @Prop({ default: false }) isTransparent!: boolean;
+  @Prop({ default: false }) isDev!: boolean;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
 
@@ -115,8 +118,15 @@ export default class Sidebar extends Vue {
     );
   }
 
-  public openPromo(): void {
+  public openPromo(event: any): void {
     platform.get.utils.openUrl('https://go.ftb.team/creeperhost');
+  }
+
+  // Developer page
+  public onMouseDown(event: any): void {
+    if (event.button === 2 && event.ctrlKey && event.altKey && event.shiftKey) {
+      yeetError(() => this.$router.push(RouterNames.DEVELOPER));
+    }
   }
 
   public openFriends() {
@@ -138,6 +148,11 @@ export default class Sidebar extends Vue {
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
+  transition: background-color 0.3s ease-in-out;
+
+  &.is-dev {
+    background-color: #171c1f;
+  }
 
   .item-disabled {
     opacity: 0.1;

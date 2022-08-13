@@ -1,5 +1,5 @@
 <template>
-  <div class="ad-aside">
+  <div class="ad-aside" :class="{ 'is-dev': isDev }">
     <div class="heading">
       <nav>
         <p class="font-bold text-lg mb-4">Helpful links</p>
@@ -75,7 +75,7 @@
             muted
             loop
             style="margin: 0 auto"
-            v-if="isElectron && !isDev"
+            v-if="isElectron && !isDevEnv"
           >
             <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
           </video>
@@ -98,6 +98,7 @@ import Component from 'vue-class-component';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
+import { Prop } from 'vue-property-decorator';
 
 /**
  * TODO: clean all of this up, it's a mess and a copy of a different component
@@ -107,6 +108,7 @@ export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
   @State('auth') public auth!: AuthState;
   @Action('reportAdvert') public reportAd!: any;
+  @Prop({ default: false }) public isDev!: boolean;
 
   private ad: any;
   platform = platform;
@@ -182,7 +184,7 @@ export default class AdAside extends Vue {
     return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
   }
 
-  get isDev() {
+  get isDevEnv() {
     return process.env.NODE_ENV === 'development';
   }
 
@@ -217,6 +219,11 @@ export default class AdAside extends Vue {
   flex-direction: column;
 
   justify-content: space-between;
+  transition: background-color 0.3s ease-in-out;
+
+  &.is-dev {
+    background-color: #171c1f;
+  }
 
   .heading {
     nav {
