@@ -1,5 +1,5 @@
 <template>
-  <div class="px-6 py-4 h-full">
+  <div class="px-6 py-4 h-full search-container">
     <div class="search-and-switcher mb-4">
       <div class="switcher shadow">
         <div
@@ -27,7 +27,10 @@
     </div>
 
     <Loading class="mt-20" v-if="searchStarted || loading" />
-    <search-result-pack-card v-for="(pack, index) in results" :pack="pack" :key="index" />
+
+    <div class="result-cards">
+      <search-result-pack-card v-for="(pack, index) in results" :pack="pack" :key="index" />
+    </div>
 
     <!--    <div class="">-->
     <!--      <pack-card-list-->
@@ -150,9 +153,9 @@ import { Action, State } from 'vuex-class';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import { ModpackState } from '../modules/modpacks/types';
+import { ModpackState } from '@/modules/modpacks/types';
 import { Route } from 'vue-router';
-import { AuthState } from '../modules/auth/types';
+import { AuthState } from '@/modules/auth/types';
 import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
 import { ListPackSearchResults, PackSearchEntries } from '@/typings/modpackch';
 import SearchResultPackCard from '@/components/molecules/SearchResultPackCard.vue';
@@ -283,8 +286,16 @@ h1 {
   text-transform: capitalize;
 }
 
+.result-cards {
+  position: relative;
+  z-index: 1;
+}
+
 .search-and-switcher {
+  position: relative;
   display: flex;
+  z-index: 1;
+
   .switcher {
     margin-right: 1rem;
     display: flex;

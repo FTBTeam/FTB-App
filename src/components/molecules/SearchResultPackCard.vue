@@ -6,8 +6,8 @@
     </div>
     <div class="pack-main">
       <div class="name">{{ pack.name }} <span>by</span> {{ pack.authors.map((e) => e.name).join(', ') }}</div>
-      <div class="desc" :title="pack.synopsis">
-        {{ pack.synopsis.length > 116 ? pack.synopsis.slice(0, 116) + '...' : pack.synopsis }}
+      <div class="desc max-2-lines" :title="pack.synopsis">
+        {{ pack.synopsis.length > 500 ? pack.synopsis.slice(0, 116) + '...' : pack.synopsis }}
       </div>
       <div class="tags">
         <div class="tag" v-for="(tag, index) in tags" :key="index">{{ tag.name }}</div>
@@ -47,6 +47,7 @@ export default class SearchResultPackCard extends Vue {
 <style lang="scss" scoped>
 .search-result-pack {
   position: relative;
+  z-index: 1;
   overflow: hidden;
   display: flex;
   padding: 1.5rem;
@@ -54,40 +55,56 @@ export default class SearchResultPackCard extends Vue {
   margin-bottom: 1.5rem;
   align-items: center;
   font-size: 14px;
-  background-color: rgba(white, 0.05);
+  background: var(--color-sidebar-item);
   cursor: pointer;
-  box-shadow: 0 5px 20px rgba(black, 0.2);
+  box-shadow: 0 3px 15px rgba(black, 0.2);
+  transform-origin: top center;
+  transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(black, 0.4);
+    transform: translateY(-0.5rem);
+
+    .splash-art {
+      background-size: 120%;
+    }
+  }
 
   .splash-art {
     position: absolute;
     z-index: -1;
-    top: -2.5%;
-    left: -2.5%;
-    width: 110%;
-    height: 110%;
-    filter: blur(4px);
-
-    &::after {
-      position: absolute;
-      background-color: rgba(black, 0.4);
-      content: '';
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    filter: blur(5px) brightness(60%);
+    background-position: top center;
+    background-size: 100%;
+    transition: background-size 0.25s ease-in-out;
+    transform: scale(1.2);
   }
 
   .logo {
     align-self: flex-start;
     margin-right: 2rem;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
 
     img {
-      width: 100px;
-      height: 100px;
+      height: 100%;
       border-radius: 5px;
       box-shadow: 0 4px 15px rgba(black, 0.2);
     }
+  }
+
+  .max-2-lines {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 
   .pack-main {
@@ -100,24 +117,25 @@ export default class SearchResultPackCard extends Vue {
       margin-bottom: 0.35rem;
 
       span {
-        margin-left: 0.5rem;
+        margin: 0 0.5rem;
         font-weight: normal;
         font-style: italic;
       }
     }
 
     .desc {
-      margin-bottom: 0.6rem;
+      padding-right: 1rem;
     }
 
     .tags {
+      margin-top: 0.6rem;
       display: flex;
       gap: 0.35rem;
       flex-wrap: wrap;
 
       .tag {
         background-color: rgba(black, 0.4);
-        padding: 0.1rem 0.3rem;
+        padding: 0.2rem 0.5rem;
         border-radius: 3px;
       }
     }
