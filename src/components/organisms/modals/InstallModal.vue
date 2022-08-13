@@ -4,7 +4,7 @@
     <p class="select-text mb-6 leading-6">{{ packDescription }}</p>
 
     <selection
-      @selected="(e) => (version = e.id)"
+      @selected="(e) => (version = !e ? null : e.id)"
       placeholder="Selection version"
       :inheritedSelection="versionOptions[0]"
       :options="versionOptions"
@@ -21,7 +21,11 @@
         /><span class="ml-4" :class="{ 'opacity-25': !hasReleaseVersion }">Show unstable versions</span>
       </label>
 
-      <FTBButton color="secondary" class="mt-8 mb-4 py-2 px-4 w-1/3 rounded text-center" @click="install"
+      <FTBButton
+        color="secondary"
+        :disabled="!version"
+        class="mt-8 mb-4 py-2 px-4 w-1/3 rounded text-center"
+        @click="install"
         >Install</FTBButton
       >
     </div>
@@ -49,10 +53,14 @@ export default class InstallModal extends Vue {
 
   showBetaAndAlpha = false;
 
-  private version: number =
+  private version: number | null =
     this.selectedVersion === null || this.selectedVersion === undefined ? this.versions[0].id : this.selectedVersion;
 
   public install(): void {
+    if (this.version === null) {
+      return;
+    }
+
     this.doInstall(this.version, this.versions.find((e) => e.id === this.version)?.name);
   }
 
