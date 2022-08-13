@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
+  <div class="sidebar small" :class="{ 'is-transparent': isTransparent, 'is-dev': isDev }">
     <router-link to="/" :class="{ 'item-disabled': disableNav }">
       <img
         src="../../../assets/images/ftb-logo.svg"
@@ -63,6 +63,7 @@ export default class Sidebar extends Vue {
   @State('modpacks') private modpacks!: ModpackState;
   @State('settings') private settings!: SettingsState;
   @Prop({ default: false }) isTransparent!: boolean;
+  @Prop({ default: false }) isDev!: boolean;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
 
@@ -147,6 +148,11 @@ export default class Sidebar extends Vue {
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
+  transition: background-color 0.3s ease-in-out;
+
+  &.is-dev {
+    background-color: #171c1f;
+  }
 
   .item-disabled {
     opacity: 0.1;
