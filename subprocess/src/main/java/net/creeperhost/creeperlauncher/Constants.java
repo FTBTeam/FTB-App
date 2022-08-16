@@ -77,6 +77,7 @@ public class Constants {
     public static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(5, TimeUnit.MINUTES)
             .readTimeout(5, TimeUnit.MINUTES)
+            .writeTimeout(5, TimeUnit.MINUTES)
             .connectionPool(new ConnectionPool())
             .cookieJar(new SimpleCookieJar())
             .addInterceptor(new ThrottlerInterceptor())
