@@ -52,6 +52,9 @@
           <router-link to="/discover">
             <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>
           </router-link>
+          <ftb-button color="primary" class="py-2 px-6 mx-2 flex items-center" @click="showImport = true">
+            Import
+          </ftb-button>
         </div>
       </div>
     </div>
