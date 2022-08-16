@@ -5,6 +5,7 @@ import com.google.gson.JsonSyntaxException;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.pack.IPack;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.LoaderTarget;
@@ -48,6 +49,10 @@ public class Mod {
             }
 
             return new DownloadableFile(instance.getDir().resolve(path).resolve(name), url, hashes, size, id, name, type);
+        }
+        
+        public ModpackVersionManifest.ModpackFile getModpackFile(){
+            return new ModpackVersionManifest.ModpackFile(-1, path, name, url, HashCode.fromString(sha1), size, type);
         }
 
         public List<Version> getDependencies(List<ModFile> existingFiles, List<Version> fileCandidates, LoaderTarget gameTarget, LoaderTarget loaderTarget) {

@@ -428,6 +428,10 @@ public class LocalInstance implements IPack
         }
         return true;
     }
+    
+    public void saveVersion() throws IOException{
+        JsonUtils.write(ModpackVersionManifest.GSON, path.resolve("version.json"), versionManifest, ModpackVersionManifest.class);
+    }
 
     @Override
     public long getId()
