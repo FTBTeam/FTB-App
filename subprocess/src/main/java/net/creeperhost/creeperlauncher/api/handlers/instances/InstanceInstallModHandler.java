@@ -83,6 +83,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         ArrayList<DownloadTask> downloadTasks = new ArrayList<>();
 
         for(Mod.Version ver: filesToDownload) {
+            instance.versionManifest.getFiles().add(ver.getModpackFile());
             DownloadableFile downloadableFile = ver.getDownloadableFile(instance);
             DownloadTask downloadTask = new DownloadTask(downloadableFile, downloadableFile.getPath(), new ProgressTracker(downloadableFile));
             fileTracker.put(downloadableFile, (ProgressTracker) downloadTask.getWatcher());
@@ -139,6 +140,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
               try {
                   instance.setModified(true);
                   instance.saveJson();
+                  instance.saveVersion();
               } catch(Exception ignored) {
                   LOGGER.error("Failed to update instance json for {}", instance.getName());
               }
