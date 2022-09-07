@@ -63,10 +63,10 @@ export default class SearchResultPackCard extends Vue {
 
   &:hover {
     box-shadow: 0 8px 25px rgba(black, 0.4);
-    transform: translateY(-0.5rem);
+    transform: translateY(-0.3rem);
 
     .splash-art {
-      background-size: 120%;
+      background-size: 105%;
     }
   }
 
@@ -145,6 +145,12 @@ export default class SearchResultPackCard extends Vue {
     padding: 0.5rem 1rem;
     background-color: #27ae60;
     border-radius: 5px;
+    box-shadow: 0 4px 15px rgba(black, 0.2);
+    transition: background-color 0.25s ease-in-out;
+
+    &:hover {
+      background-color: #39d05f;
+    }
   }
 }
 </style>

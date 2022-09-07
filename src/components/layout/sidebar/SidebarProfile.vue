@@ -3,6 +3,7 @@
     <div class="profile" v-if="getActiveProfile || auth.token">
       <div class="avatar">
         <img
+          v-if="getActiveProfile ? getActiveProfile.uuid : mtAvatar"
           :src="`https://api.mymcuu.id/head/${getActiveProfile ? getActiveProfile.uuid : mtAvatar}`"
           alt="Profile"
           class="rounded"

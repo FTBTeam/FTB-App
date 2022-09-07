@@ -28,7 +28,7 @@
 
     <Loading class="mt-20" v-if="searchStarted || loading" />
 
-    <div class="result-cards">
+    <div class="result-cards" v-else>
       <search-result-pack-card v-for="(pack, index) in results" :pack="pack" :key="index" />
     </div>
 
@@ -220,6 +220,12 @@ export default class BrowseModpacks extends Vue {
 
   @Watch('searchValue')
   private onSearch() {
+    if (this.searchValue === '') {
+      this.searchStarted = false;
+      this.loading = false;
+      return;
+    }
+
     this.searchStarted = true;
     this.debounceSearch();
   }
