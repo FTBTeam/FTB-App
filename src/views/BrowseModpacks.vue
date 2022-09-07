@@ -26,124 +26,31 @@
       />
     </div>
 
-    <Loading class="mt-20" v-if="searchStarted || loading" />
+    <Loading class="mt-20" v-if="searchStarted || loading || (modpacks.loading && searchValue === '')" />
 
     <div class="result-cards" v-else>
-      <search-result-pack-card v-for="(pack, index) in results" :pack="pack" :key="index" />
+      <search-result-pack-card
+        v-for="(pack, index) in results"
+        :pack="pack"
+        :key="index"
+        :type="currentTab === 'ftbsearch' ? 0 : 1"
+        @install="displayInstallModpack"
+      />
     </div>
 
-    <!--    <div class="">-->
-    <!--      <pack-card-list-->
-    <!--        v-for="(modpack, index) in results"-->
-    <!--        :key="index"-->
-    <!--        :packID="modpack.id"-->
-    <!--        :art="modpack.art"-->
-    <!--        :installed="false"-->
-    <!--        :minecraft="'1.7.10'"-->
-    <!--        :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
-    <!--        :versionID="modpack.versions[0].id"-->
-    <!--        :name="modpack.name"-->
-    <!--        :authors="modpack.authors"-->
-    <!--        :versions="modpack.versions"-->
-    <!--        :tags="modpack.tags"-->
-    <!--        :description="modpack.synopsis"-->
-    <!--        type="0"-->
-    <!--      >-->
-    <!--        {{ modpack.id }}-->
-    <!--      </pack-card-list>-->
-    <!--    </div>-->
-
-    <!--    <div-->
-    <!--      class="flex flex-col flex-1"-->
-    <!--      v-if="!modpacks.loading && !(modpacks.search.length <= 0 && modpacks.curseLoading)"-->
-    <!--    >-->
-    <!--      <div-->
-    <!--        class="flex pt-1 flex-wrap overflow-x-auto items-stretch"-->
-    <!--        v-if="modpacks.search.length > 0 || modpacks.searchCurse.length > 0"-->
-    <!--      >-->
-    <!--        <div v-if="currentTab === 'ftbsearch'" key="ftbsearch" class="w-full">-->
-    <!--          <div>-->
-    <!--            <div v-if="modpacks.search.length < 1" class="m-4 p-3" style="background-color: #e55812">-->
-    <!--              <span>No modpacks found</span>-->
-    <!--            </div>-->
-    <!--            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>-->
-    <!--              <pack-card-list-->
-    <!--                v-for="(modpack, index) in modpacks.search.filter((m) => m.versions.length > 0)"-->
-    <!--                :key="index"-->
-    <!--                :packID="modpack.id"-->
-    <!--                :art="modpack.art"-->
-    <!--                :installed="false"-->
-    <!--                :minecraft="'1.7.10'"-->
-    <!--                :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
-    <!--                :versionID="modpack.versions[0].id"-->
-    <!--                :name="modpack.name"-->
-    <!--                :authors="modpack.authors"-->
-    <!--                :versions="modpack.versions"-->
-    <!--                :tags="modpack.tags"-->
-    <!--                :description="modpack.synopsis"-->
-    <!--                type="0"-->
-    <!--              >-->
-    <!--                {{ modpack.id }}-->
-    <!--              </pack-card-list>-->
-    <!--            </div>-->
-    <!--          </div>-->
-    <!--        </div>-->
-    <!--        <div v-else-if="currentTab === 'cursesearch'" key="cursesearch">-->
-    <!--          <div v-if="!modpacks.curseLoading">-->
-    <!--            <div v-if="modpacks.searchCurse.length < 1" class="m-4 p-3 w-full" style="background-color: #e55812">-->
-    <!--              <span>No modpacks found</span>-->
-    <!--            </div>-->
-    <!--            <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch">-->
-    <!--              <pack-card-list-->
-    <!--                v-for="(modpack, index) in modpacks.searchCurse.filter((m) => m.versions.length > 0)"-->
-    <!--                :key="index"-->
-    <!--                :packID="modpack.id"-->
-    <!--                :art="modpack.art"-->
-    <!--                :installed="false"-->
-    <!--                :minecraft="'1.7.10'"-->
-    <!--                :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
-    <!--                :versionID="modpack.versions[0].id"-->
-    <!--                :name="modpack.name"-->
-    <!--                :authors="modpack.authors"-->
-    <!--                type="1"-->
-    <!--                :versions="modpack.versions"-->
-    <!--                :tags="modpack.tags"-->
-    <!--                :description="modpack.synopsis"-->
-    <!--                >{{ modpack.id }}-->
-    <!--              </pack-card-list>-->
-    <!--            </div>-->
-    <!--          </div>-->
-    <!--          <div v-else class="flex flex-1 justify-center items-center">-->
-    <!--            <Loading class="mt-8" />-->
-    <!--          </div>-->
-    <!--        </div>-->
-    <!--      </div>-->
-    <!--      <div v-else>-->
-    <!--        <div class="flex pt-1 flex-wrap overflow-x-auto items-stretch" appear>-->
-    <!--          <pack-card-list-->
-    <!--            v-for="modpack in modpacks.all"-->
-    <!--            :key="`plays-${modpack.id}`"-->
-    <!--            :list-mode="settingsState.settings.listMode"-->
-    <!--            :packID="modpack.id"-->
-    <!--            :versions="modpack.versions"-->
-    <!--            :art="modpack.art"-->
-    <!--            :installed="false"-->
-    <!--            :minecraft="'1.7.10'"-->
-    <!--            :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
-    <!--            :versionID="modpack.versions[0].id"-->
-    <!--            :name="modpack.name"-->
-    <!--            :authors="modpack.authors"-->
-    <!--            :tags="modpack.tags"-->
-    <!--            :description="modpack.synopsis"-->
-    <!--            :featured="modpack.featured"-->
-    <!--            >{{ modpack.id }}-->
-    <!--          </pack-card-list>-->
-    <!--        </div>-->
-    <!--      </div>-->
-    <!--    </div>-->
-    <!--    <div v-else class="flex flex-1 justify-center items-center">-->
-    <!--      <Loading class="mt-8" />-->
-    <!--    </div>-->
+    <FTBModal :visible="showInstallModal" @dismiss-modal="clearInstallModal" size="medium">
+      <install-modal
+        v-if="!installerLoading && installModalData"
+        :pack-name="installModalData.pack.name"
+        :pack-description="installModalData.pack.synopsis"
+        :versions="installModalData.versions"
+        :do-install="runInstaller"
+      />
+      <div v-else class="py-6">
+        <p class="font-bold text-center mt-2">Loading Modpack Versions</p>
+        <Loading :size="`5`" class="mt-8" />
+      </div>
+    </FTBModal>
   </div>
 </template>
 
@@ -153,12 +60,15 @@ import { Action, State } from 'vuex-class';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import { ModpackState } from '@/modules/modpacks/types';
+import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
 import { Route } from 'vue-router';
 import { AuthState } from '@/modules/auth/types';
 import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
 import { ListPackSearchResults, PackSearchEntries } from '@/typings/modpackch';
 import SearchResultPackCard from '@/components/molecules/SearchResultPackCard.vue';
+import InstallModal from '@/components/organisms/modals/InstallModal.vue';
+import FTBModal from '@/components/atoms/FTBModal.vue';
+import { InstallerState } from '@/modules/app/appStore.types';
 
 const namespace: string = 'modpacks';
 
@@ -168,6 +78,8 @@ const namespace: string = 'modpacks';
     PackCardList,
     FTBSearchBar,
     Loading,
+    InstallModal,
+    FTBModal,
   },
 })
 export default class BrowseModpacks extends Vue {
@@ -176,6 +88,7 @@ export default class BrowseModpacks extends Vue {
   @Action('loadAllPacks', { namespace }) public loadAllPacks: any;
   @Action('getPopularPlays', { namespace }) public getPopularPlays: any;
   @Action('getPrivatePacks', { namespace }) public getPrivatePacks: any;
+  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   searchValue: string = '';
   currentTab: string = 'ftbsearch';
@@ -185,6 +98,14 @@ export default class BrowseModpacks extends Vue {
 
   loading = false;
   searchStarted = false;
+
+  // Installing
+  showInstallModal = false;
+  installModalData: {
+    pack: PackSearchEntries.Packs;
+    versions: Versions[];
+  } | null = null;
+  installerLoading = false;
 
   async mounted() {
     if (this.$route.params.search) {
@@ -262,6 +183,51 @@ export default class BrowseModpacks extends Vue {
       this.loading = false;
       this.searchStarted = false;
     }
+  }
+
+  async displayInstallModpack(pack: PackSearchEntries.Packs) {
+    this.showInstallModal = true;
+    this.installerLoading = true;
+
+    try {
+      const request = await fetch(
+        createModpackchUrl(`/${this.currentTab === 'ftbsearch' ? 'modpack' : 'curseforge'}/${pack.id}`),
+      );
+      const response: ModPack = await request.json();
+
+      this.installModalData = {
+        pack,
+        versions: response.versions.sort((a, b) => b.id - a.id),
+      };
+    } catch (error) {
+      // TODO: user error
+      console.error(error);
+      return;
+    } finally {
+      this.installerLoading = false;
+    }
+  }
+
+  runInstaller(version: number, versionName: string) {
+    this.showInstallModal = false;
+    this.installModpack({
+      pack: {
+        id: this.installModalData?.pack.id,
+        version: version,
+        packType: this.currentTab === 'ftbsearch' ? 0 : 1,
+      },
+      meta: {
+        name: this.installModalData?.pack.name ?? '',
+        version: versionName,
+        art: PackCardList.getLogo(this.installModalData?.pack.art),
+      },
+    });
+  }
+
+  clearInstallModal() {
+    this.showInstallModal = false;
+    this.installModalData = null;
+    this.installerLoading = false;
   }
 
   get results(): PackSearchEntries.Packs[] {

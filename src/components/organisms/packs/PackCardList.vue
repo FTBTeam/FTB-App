@@ -345,7 +345,7 @@ export default class PackCardList extends Vue {
       meta: {
         name: this.$props.name,
         version: versionName,
-        art: this.getLogo(this.$props.art),
+        art: PackCardList.getLogo(this.$props.art),
       },
     });
 
@@ -397,7 +397,10 @@ export default class PackCardList extends Vue {
     return this.instance.versionId === this.currentModpack?.versions[0].id;
   }
 
-  public getLogo(packArt: any) {
+  public getLogo = PackCardList.getLogo;
+  public getBackground = PackCardList.getBackground;
+
+  public static getLogo(packArt: any) {
     if (typeof packArt === 'string') return packArt;
     let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
     if (artP === undefined) {
@@ -406,7 +409,7 @@ export default class PackCardList extends Vue {
     return artP.url;
   }
 
-  public getBackground(packArt: any) {
+  public static getBackground(packArt: any) {
     if (typeof packArt === 'string') return '';
     let artP = packArt.filter((art: any) => art.type === 'splash')[0];
     if (artP === undefined) {

@@ -1,19 +1,19 @@
 <template>
-  <div class="search-result-pack">
+  <div class="search-result-pack" @click="openInfo">
     <div class="splash-art" v-if="splash" :style="{ backgroundImage: `url(${splash})` }"></div>
     <div class="logo">
       <img :src="squareArt" :alt="`Pack art for ${pack.name}`" />
     </div>
     <div class="pack-main">
       <div class="name">{{ pack.name }} <span>by</span> {{ pack.authors.map((e) => e.name).join(', ') }}</div>
-      <div class="desc max-2-lines" :title="pack.synopsis">
-        {{ pack.synopsis.length > 500 ? pack.synopsis.slice(0, 116) + '...' : pack.synopsis }}
+      <div class="desc max-2-lines" :title="pack.synopsis ? pack.synopsis : ''">
+        {{ pack.synopsis ? (pack.synopsis.length > 500 ? pack.synopsis.slice(0, 116) + '...' : pack.synopsis) : '' }}
       </div>
       <div class="tags">
         <div class="tag" v-for="(tag, index) in tags" :key="index">{{ tag.name }}</div>
       </div>
     </div>
-    <div class="install-btn">
+    <div class="install-btn" @click.prevent="install">
       <font-awesome-icon icon="download" />
     </div>
   </div>
@@ -23,12 +23,26 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import { PackSearchEntries } from '@/typings/modpackch';
-import { Prop } from 'vue-property-decorator';
+import { Emit, Prop } from 'vue-property-decorator';
 import { getPackArt } from '@/utils';
+import { RouterNames } from '@/router';
 
 @Component
 export default class SearchResultPackCard extends Vue {
   @Prop() pack!: PackSearchEntries.Packs;
+  @Prop() type!: number; // 0 == FTB, 1 == Curseforge
+
+  @Emit()
+  install() {
+    return this.pack;
+  }
+
+  openInfo() {
+    this.$router.push({
+      name: RouterNames.ROOT_PREVIEW_PACK,
+      query: { modpackid: '' + this.pack.id, type: '' + (this.type ?? 0) },
+    });
+  }
 
   get squareArt() {
     return getPackArt(this.pack.art);
@@ -50,7 +64,7 @@ export default class SearchResultPackCard extends Vue {
   z-index: 1;
   overflow: hidden;
   display: flex;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 5px;
   margin-bottom: 1.5rem;
   align-items: center;
