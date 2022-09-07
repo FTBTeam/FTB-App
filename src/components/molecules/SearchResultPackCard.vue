@@ -1,5 +1,5 @@
 <template>
-  <div class="search-result-pack" @click="openInfo">
+  <div class="search-result-pack" @click.prevent="openInfo">
     <div class="splash-art" v-if="splash" :style="{ backgroundImage: `url(${splash})` }"></div>
     <div class="logo">
       <img :src="squareArt" :alt="`Pack art for ${pack.name}`" />
@@ -13,7 +13,7 @@
         <div class="tag" v-for="(tag, index) in tags" :key="index">{{ tag.name }}</div>
       </div>
     </div>
-    <div class="install-btn" @click.prevent="install">
+    <div class="install-btn" @click.stop="install">
       <font-awesome-icon icon="download" />
     </div>
   </div>

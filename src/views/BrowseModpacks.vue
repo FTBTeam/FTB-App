@@ -38,7 +38,7 @@
       />
     </div>
 
-    <FTBModal :visible="showInstallModal" @dismiss-modal="clearInstallModal" size="medium">
+    <FTBModal :visible="showInstallModal" @dismiss-modal="clearInstallModal" size="large-dynamic">
       <install-modal
         v-if="!installerLoading && installModalData"
         :pack-name="installModalData.pack.name"
