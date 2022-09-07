@@ -26,6 +26,10 @@
       />
     </div>
 
+    <message icon="warning" type="danger" class="m-6" v-if="error">
+      {{ error }}
+    </message>
+
     <Loading class="mt-20" v-if="searchStarted || loading || (modpacks.loading && searchValue === '')" />
 
     <div class="result-cards" v-else>
@@ -106,6 +110,7 @@ export default class BrowseModpacks extends Vue {
     versions: Versions[];
   } | null = null;
   installerLoading = false;
+  error = '';
 
   async mounted() {
     if (this.$route.params.search) {
@@ -147,6 +152,7 @@ export default class BrowseModpacks extends Vue {
       return;
     }
 
+    this.error = '';
     this.searchStarted = true;
     this.debounceSearch();
   }
@@ -200,7 +206,8 @@ export default class BrowseModpacks extends Vue {
         versions: response.versions.sort((a, b) => b.id - a.id),
       };
     } catch (error) {
-      // TODO: user error
+      this.error = 'Failed to find pack version information, please try again in a minute...';
+      this.clearInstallModal();
       console.error(error);
       return;
     } finally {
