@@ -2,7 +2,7 @@ import { MutationTree } from 'vuex';
 import { SocketState } from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
-import eventBus from '@/utils/event-bus';
+import { emitter } from '@/utils/event-bus';
 
 export const mutations: MutationTree<SocketState> = {
   SOCKET_ONOPEN(state: any, event: any) {
@@ -27,7 +27,7 @@ export const mutations: MutationTree<SocketState> = {
       if (process.env.NODE_ENV === 'development') {
         console.info(`[ws//${message.type}]${message.requestId ? `[${message.requestId}]` : ''}:"`, message);
       }
-      eventBus.$emit('ws.message', message);
+      emitter.emit('ws.message', message);
     }
 
     if (message.requestId) {
