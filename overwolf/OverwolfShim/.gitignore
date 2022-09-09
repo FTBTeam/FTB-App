@@ -1,0 +1,13 @@
+# Exclude all
+/*
+
+# Solution files
+!OverwolfShim.csproj
+!OverwolfShim.sln
+
+# Git
+!.gitignore
+
+# Other
+!README.md
+!src/

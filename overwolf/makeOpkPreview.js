@@ -10,7 +10,7 @@ function makeOPK() {
       manifestData.meta.name +
       ' - ' +
       version +
-      '.opk" dist/ jdk-17.0.1+12-minimal/ FTBOverwolfShim.dll ' +
+      '.opk" dist/ jdk-17.0.1+12-minimal/ OverwolfShim.dll ' +
       manifestData.meta.icon +
       ' *.jar launchericon.ico manifest.json version.json -x windows/*',
   );

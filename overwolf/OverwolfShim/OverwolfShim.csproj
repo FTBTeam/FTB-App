@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <AssemblyName>OverwolfShim</AssemblyName>
+        <Version>1.0.0</Version>
+    </PropertyGroup>
+</Project>
