@@ -1,6 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
-import com.google.common.reflect.TypeToken;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
@@ -36,8 +35,8 @@ public class InstanceGetBackupsHandler implements IMessageHandler<InstanceGetBac
         }
 
         try {
-            List<Backup> backups = GsonUtils.loadJson(backupsJsonPath, new TypeToken<List<Backup>>(){}.getType());
-            Settings.webSocketAPI.sendMessage(new Reply(data, backups));
+            BackupsJson backups = GsonUtils.loadJson(backupsJsonPath, BackupsJson.class);
+            Settings.webSocketAPI.sendMessage(new Reply(data, backups.backups));
         } catch (IOException e) {
             LOGGER.warn("Unable to read backups json...", e);
             Settings.webSocketAPI.sendMessage(emptyReply);
@@ -52,6 +51,7 @@ public class InstanceGetBackupsHandler implements IMessageHandler<InstanceGetBac
         public List<Backup> backups;
         public Reply(Request data, List<Backup> backups) {
             this.uuid = data.uuid;
+            this.requestId = data.requestId;
             this.type = data.type + "Reply";
             this.backups = backups;
         }
@@ -63,11 +63,16 @@ public class InstanceGetBackupsHandler implements IMessageHandler<InstanceGetBac
         public InstanceBackupsErrorReply(Request data, String message) {
             this.uuid = data.uuid;
             this.type = data.type + "ErrorReply";
+            this.requestId = data.requestId;
             this.message = message;
         }
     }
 
-    private static class Backup {
+    public static class BackupsJson {
+        public List<Backup> backups;
+    }
+    
+    public static class Backup {
         public String worldName = "";
         public long createTime = 0;
         public String backupLocation = "";

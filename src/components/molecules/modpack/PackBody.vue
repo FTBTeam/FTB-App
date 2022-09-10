@@ -50,6 +50,14 @@
           Mods
         </div>
         <div
+          v-if="isInstalled && backups.length > 0"
+          class="tab"
+          :class="{ active: activeTab === tabs.BACKUPS }"
+          @click="() => $emit('tabChange', tabs.BACKUPS)"
+        >
+          Backups
+        </div>
+        <div
           v-if="isInstalled && currentVersionObject"
           class="tab"
           :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
@@ -154,6 +162,13 @@
         :current-version="currentVersionObject.mtgID"
         :pack-instance="packInstance"
       />
+
+      <modpack-backups
+        @backupsChanged="$emit('backupsChanged')"
+        v-if="activeTab === tabs.BACKUPS"
+        :instance="instance"
+        :backups="backups"
+      />
     </div>
   </div>
   <div class="loading pt-12" v-else>
@@ -176,10 +191,12 @@ import { State } from 'vuex-class';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import MarkdownIt from 'markdown-it';
+import { InstanceBackup } from '@/typings/subprocess/instanceBackups';
+import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 
 @Component({
   name: 'pack-body',
-  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
+  components: { ModpackBackups, Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
 })
 export default class PackBody extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
@@ -194,6 +211,8 @@ export default class PackBody extends Vue {
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
   @Prop() updatingModlist!: boolean;
+
+  @Prop({ default: [] }) backups!: InstanceBackup[];
 
   tabs = ModpackPageTabs;
   getColorForChar = getColorForChar;

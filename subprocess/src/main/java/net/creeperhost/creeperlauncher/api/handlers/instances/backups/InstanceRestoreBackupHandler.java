@@ -53,7 +53,7 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
         }
         
         // Extract the zip in a tmp location
-        instance.createSafeAction(localInstance -> {
+        var result = instance.createSafeAction(localInstance -> {
                 // Remove the overlapping files 
                 basePaths.stream()
                     .map(e -> localInstance.getDir().resolve(e))
@@ -90,6 +90,13 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
             })
             .specifyEffectedFiles(basePaths)
             .run();
+
+        if (result.isFailure()) {
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to restore backup file"));
+            return;
+        }
+        
+        Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
     }
 
     public static class Request extends BaseData {
@@ -104,6 +111,7 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
         public Reply(Request data, boolean success, String message) {
             this.uuid = data.uuid;
             this.type = data.type + "Reply";
+            this.requestId = data.requestId;
             this.message = message;
             this.success = success;
         }
