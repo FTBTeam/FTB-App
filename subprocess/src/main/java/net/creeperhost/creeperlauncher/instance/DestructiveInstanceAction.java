@@ -77,6 +77,8 @@ public class DestructiveInstanceAction {
                 }
             }
             
+            // If it worked, remove the snapshot from storage as it's no longer needed
+            this.removeSnapshot();
             return actionResult;
         } catch (Exception exception) {
             LOGGER.error("Fatal error on {} action... reverting to original data", this.snapshotIdentifier, exception);
