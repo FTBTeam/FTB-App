@@ -10,26 +10,20 @@ import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRestoreBackupHandler.InstanceRestoreRequestData> {
+public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRestoreBackupHandler.Request> {
     public static final Logger LOGGER = LogManager.getLogger();
     
     @Override
-    public void handle(InstanceRestoreRequestData data) {
+    public void handle(Request data) {
         LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
             Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate modpack for backup restore"));
@@ -98,16 +92,16 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
             .run();
     }
 
-    public static class InstanceRestoreRequestData extends BaseData {
+    public static class Request extends BaseData {
         public String uuid;
         public String backupLocation;
     }
     
-    private static class Reply extends InstanceRestoreRequestData {
+    private static class Reply extends Request {
         public String message;
         public boolean success;
         
-        public Reply(InstanceRestoreRequestData data, boolean success, String message) {
+        public Reply(Request data, boolean success, String message) {
             this.uuid = data.uuid;
             this.type = data.type + "Reply";
             this.message = message;
