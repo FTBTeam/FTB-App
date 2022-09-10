@@ -13,6 +13,8 @@ import net.creeperhost.creeperlauncher.api.data.friends.GetFriendsData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
 import net.creeperhost.creeperlauncher.api.data.irc.*;
 import net.creeperhost.creeperlauncher.api.data.other.*;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceGetBackupsHandler;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceRestoreBackupHandler;
 import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
 import net.creeperhost.creeperlauncher.api.handlers.*;
 import net.creeperhost.creeperlauncher.api.handlers.friends.AddFriendHandler;
@@ -75,6 +77,9 @@ public class WebSocketMessengerHandler
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
 
+        register("instanceGetBackups", InstanceGetBackupsHandler.BackupsData.class, new InstanceGetBackupsHandler());
+        register("instanceRestoreBackup", InstanceRestoreBackupHandler.InstanceRestoreRequestData.class, new InstanceRestoreBackupHandler());
+        
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());
 

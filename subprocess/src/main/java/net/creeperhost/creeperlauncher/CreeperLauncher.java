@@ -17,6 +17,7 @@ import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
+import net.creeperhost.creeperlauncher.instance.DestructiveInstanceAction;
 import net.creeperhost.creeperlauncher.migration.MigrationManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
