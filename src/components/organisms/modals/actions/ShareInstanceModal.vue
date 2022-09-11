@@ -1,5 +1,5 @@
 <template>
-  <modal :open="internalOpen" :title="title[0]" :subTitle="title[1]" @closed="close">
+  <modal :open="internalOpen" :title="title[0]" :subTitle="title[1]" @closed="close" :closeOnBackgroundClick="!loading">
     <div class="share-message" v-if="!error && !loading && !shareCode">
       <p>
         You're about to share your Modpack with anyone that you provide the share link with. Once you have shared your
@@ -23,7 +23,13 @@
     </message>
     <template #footer v-if="!shareCode">
       <div class="flex justify-end">
-        <ftb-button class="py-2 px-4" color="primary" css-class="text-center text-l" @click="shareInstance">
+        <ftb-button
+          :disabled="loading"
+          class="py-2 px-4"
+          color="primary"
+          css-class="text-center text-l"
+          @click="shareInstance"
+        >
           <font-awesome-icon icon="upload" class="mr-2" size="1x" />
           Share
         </ftb-button>
@@ -56,6 +62,10 @@ export default class ShareInstanceModal extends Vue {
   loading = false;
 
   async shareInstance() {
+    if (this.loading) {
+      return;
+    }
+
     this.loading = true;
     if (!(await preLaunchChecksValid(null))) {
       this.close();
