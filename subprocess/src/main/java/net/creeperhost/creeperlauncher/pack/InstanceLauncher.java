@@ -592,6 +592,7 @@ public class InstanceLauncher {
                 continue;
             }
             LOGGER.info(" Extracting from '{}'.", nativesJar);
+            // TODO: move to NIO File system for zip?
             try (ZipFile zipFile = new ZipFile(nativesJar.toFile())) {
                 for (ZipEntry entry : iterable(zipFile.entries())) {
                     if (entry.isDirectory()) continue;

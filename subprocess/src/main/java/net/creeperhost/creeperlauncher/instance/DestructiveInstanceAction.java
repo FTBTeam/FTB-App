@@ -3,7 +3,7 @@ package net.creeperhost.creeperlauncher.instance;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
-import net.creeperhost.creeperlauncher.util.GZipUtils;
+import net.creeperhost.creeperlauncher.util.ZipUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,7 +47,7 @@ public class DestructiveInstanceAction {
         this.createdAt = Instant.now();
         
         this.snapshotIdentifier = UUID.randomUUID();
-        this.snapshotLocation = Constants.getDataDir().resolve("snapshots/snapshot-%s-%s.tar.gz".formatted(this.instance.getUuid(), this.snapshotIdentifier));
+        this.snapshotLocation = Constants.getDataDir().resolve("snapshots/snapshot-%s-%s.zip".formatted(this.instance.getUuid(), this.snapshotIdentifier));
     }
     
     public DestructiveInstanceAction specifyEffectedFiles(Set<String> affectedRootFiles) {
@@ -105,7 +105,7 @@ public class DestructiveInstanceAction {
         }
 
         try {
-            GZipUtils.createTarBall(this.instance.getDir(), this.snapshotLocation, this.affectedRootFiles);
+            ZipUtils.createZipFromDirectory(this.instance.getDir(), this.snapshotLocation, this.affectedRootFiles);
             return true;
         } catch (IOException e) {
             LOGGER.error("Unable to create snapshot [{}] due to", this.snapshotIdentifier, e);
@@ -125,7 +125,7 @@ public class DestructiveInstanceAction {
             }
 
             LOGGER.info("Decompressing snapshot to tmp directory");
-            GZipUtils.decompressTarBall(this.snapshotLocation, tmpLocation);
+            ZipUtils.extractZip(this.snapshotLocation, tmpLocation);
             
             // If nothing was thrown, we know the decompression went well. Let's delete the 
             // instances folders and replace them with our new ones
