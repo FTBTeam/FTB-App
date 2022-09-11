@@ -10,12 +10,14 @@ import net.creeperhost.creeperlauncher.pack.InstanceSnapshot;
 import net.creeperhost.creeperlauncher.pack.InstanceSnapshotException;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
+import net.creeperhost.creeperlauncher.util.ZipUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -47,42 +49,32 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
                     .map(e -> e.getFileName().toString().split("\\/")[0])
                     .collect(Collectors.toSet());
             }
-
-            // Extract the zip in a tmp location
-            InstanceSnapshot snapshotExecutor = instance.withSnapshot(localInstance -> {
-                    // Remove the overlapping files 
-                    basePaths.stream()
-                        .map(e -> localInstance.getDir().resolve(e))
-                        .forEach(e -> FileUtils.deletePath(e));
-
-                    // Seems that FTB Backups 2 doesn't actually create a directory, so we'll need to figure it out ourselves
-                    try (var files = Files.walk(zipRoot)) {
-                        for (Path path : files.filter(e -> !e.toString().isEmpty()).toList()) {
-                            var instanceOutputLocation = localInstance.getDir().resolve(path.toString());
-
-                            if (Files.notExists(instanceOutputLocation.getParent())) {
-                                Files.createDirectories(instanceOutputLocation.getParent());
-                            }
-
-                            if (!Files.isDirectory(path)) {
-                                Files.copy(path, instanceOutputLocation);
-                            }
-                        }
-                    } catch (IOException e) {
-                        LOGGER.error("Unable to read zip files from {} - {}", zipRoot, backupLocation, e);
-                    }
-                })
-                .specifyEffectedFiles(basePaths);
-            
-            try {
-                snapshotExecutor.run();
-
-                Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
-            } catch (Throwable e) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to restore backup file"));
-            }
         } catch (IOException e) {
             Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to read backup file"));
+            return;
+        }
+
+        // Extract the zip in a tmp location
+        InstanceSnapshot snapshotExecutor = instance.withSnapshot(localInstance -> {
+                // Remove the overlapping files 
+                basePaths.stream()
+                    .map(e -> localInstance.getDir().resolve(e))
+                    .forEach(e -> FileUtils.deletePath(e));
+                
+                // Extract from the backups location
+                try {
+                    ZipUtils.extractZip(backupLocation, localInstance.getDir());
+                } catch (IOException e) {
+                    LOGGER.error("Unable to extract zip files from {}", backupLocation, e);
+                }
+            })
+            .specifyEffectedFiles(basePaths);
+        
+        try {
+            snapshotExecutor.run();
+            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
+        } catch (Throwable e) {
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to restore backup file"));
         }
     }
 
