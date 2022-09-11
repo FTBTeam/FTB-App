@@ -1,11 +1,13 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
 import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.instance.DestructiveInstanceAction;
+import net.creeperhost.creeperlauncher.pack.InstanceSnapshot;
+import net.creeperhost.creeperlauncher.pack.InstanceSnapshotException;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +49,7 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
             }
 
             // Extract the zip in a tmp location
-            var result = instance.createSafeAction(localInstance -> {
+            InstanceSnapshot snapshotExecutor = instance.withSnapshot(localInstance -> {
                     // Remove the overlapping files 
                     basePaths.stream()
                         .map(e -> localInstance.getDir().resolve(e))
@@ -64,24 +66,21 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
 
                             if (!Files.isDirectory(path)) {
                                 Files.copy(path, instanceOutputLocation);
-                            }   
+                            }
                         }
                     } catch (IOException e) {
                         LOGGER.error("Unable to read zip files from {} - {}", zipRoot, backupLocation, e);
-                        return DestructiveInstanceAction.Result.FATAL_ERROR;
                     }
-
-                    return DestructiveInstanceAction.Result.SUCCESS;
                 })
-                .specifyEffectedFiles(basePaths)
-                .run();
+                .specifyEffectedFiles(basePaths);
+            
+            try {
+                snapshotExecutor.run();
 
-            if (result.isFailure()) {
+                Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
+            } catch (Throwable e) {
                 Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to restore backup file"));
-                return;
             }
-
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
         } catch (IOException e) {
             Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to read backup file"));
         }

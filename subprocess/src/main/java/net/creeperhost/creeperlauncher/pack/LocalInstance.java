@@ -19,7 +19,6 @@ import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.instance.DestructiveInstanceAction;
 import net.creeperhost.creeperlauncher.migration.migrators.DialogUtil;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.util.*;
@@ -47,6 +46,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -762,8 +762,8 @@ public class LocalInstance implements IPack
         return ret;
     }
     
-    public DestructiveInstanceAction createSafeAction(Function<LocalInstance, DestructiveInstanceAction.Result> action) {
-        return DestructiveInstanceAction.create(
+    public InstanceSnapshot withSnapshot(Consumer<LocalInstance> action) {
+        return InstanceSnapshot.create(
             this,
             action
         );
