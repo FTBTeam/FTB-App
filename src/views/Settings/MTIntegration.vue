@@ -43,15 +43,6 @@
       <!--        small="Stores your worlds, configs and more in the cloud and syncs them across systems."-->
       <!--      />-->
       <ftb-toggle
-        label="Enable Minetogether Connect"
-        :value="settings.settings.mtConnect === true || settings.settings.mtConnect === 'true'"
-        @change="toggleMTConnect"
-        :disabled="auth.token.activePlan === null"
-        onColor="bg-primary"
-        class="mb-8"
-        small="Minetogether Connect allows you to open your local games up to any of your friends on Minetogether. Pretty nifty."
-      />
-      <ftb-toggle
         label="Show adverts"
         :value="settings.settings.showAdverts === true || settings.settings.showAdverts === 'true'"
         @change="toggleAdverts"
@@ -95,13 +86,9 @@ export default class MTIntegration extends Vue {
     this.settings.settings.cloudSaves = value;
     this.saveSettings(this.settings.settings);
   }
+
   public toggleAutoOpenChat(value: boolean) {
     this.settings.settings.autoOpenChat = value;
-    this.saveSettings(this.settings.settings);
-  }
-
-  public toggleMTConnect(value: boolean) {
-    this.settings.settings.mtConnect = value;
     this.saveSettings(this.settings.settings);
   }
 
