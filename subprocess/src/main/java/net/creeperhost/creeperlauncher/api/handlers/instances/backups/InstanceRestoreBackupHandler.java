@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
+import net.covers1624.quack.io.IOUtils;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
@@ -11,11 +12,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -37,66 +40,55 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
         }
 
         // Find the files in the zip to know what we need to recover if any of this goes wrong
-        Set<String> basePaths = new HashSet<>();
-        try (var zipFile = new ZipFile(backupLocation.toFile())) {
-            var entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry zipEntry = entries.nextElement();
-                if (zipEntry.getName().equals("")) {
-                    continue;
-                }
-                
-                basePaths.add(zipEntry.getName().split("\\/")[0]);
+        Set<String> basePaths;
+        try (var zipFs = IOUtils.getJarFileSystem(backupLocation, true)) {
+            Path zipRoot = zipFs.getPath("");
+            try (var zipRootFiles = Files.walk(zipRoot, 1)) {
+                basePaths = zipRootFiles
+                    .filter(e -> !e.toString().isEmpty())
+                    .map(e -> e.getFileName().toString().split("\\/")[0])
+                    .collect(Collectors.toSet());
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        
-        // Extract the zip in a tmp location
-        var result = instance.createSafeAction(localInstance -> {
-                // Remove the overlapping files 
-                basePaths.stream()
-                    .map(e -> localInstance.getDir().resolve(e))
-                    .forEach(e -> FileUtils.deletePath(e));
-            
-                try (var zipFile = new ZipFile(backupLocation.toFile())) {
-                    var entries = zipFile.entries();
-                    while (entries.hasMoreElements()) {
-                        var zipEntry = entries.nextElement();
-                        
-                        // Seems that FTB Backups 2 doesn't actually create a directory, so we'll need to figure it out ourselves
-                        var file = Path.of(zipEntry.getName());
-                        var instanceOutputLocation = localInstance.getDir().resolve(file);
-                        
-                        if (Files.notExists(instanceOutputLocation.getParent())) {
-                            Files.createDirectories(instanceOutputLocation.getParent());
-                        }
-                        
-                        if (!zipEntry.isDirectory()) {
-                            try (
-                                var inputStream = zipFile.getInputStream(zipEntry);
-                                var output = Files.newOutputStream(instanceOutputLocation);
-                            ) {
-                                output.write(inputStream.readAllBytes());
+
+            // Extract the zip in a tmp location
+            var result = instance.createSafeAction(localInstance -> {
+                    // Remove the overlapping files 
+                    basePaths.stream()
+                        .map(e -> localInstance.getDir().resolve(e))
+                        .forEach(e -> FileUtils.deletePath(e));
+
+                    // Seems that FTB Backups 2 doesn't actually create a directory, so we'll need to figure it out ourselves
+                    try (var files = Files.walk(zipRoot)) {
+                        for (Path path : files.filter(e -> !e.toString().isEmpty()).toList()) {
+                            var instanceOutputLocation = localInstance.getDir().resolve(path.toString());
+
+                            if (Files.notExists(instanceOutputLocation.getParent())) {
+                                Files.createDirectories(instanceOutputLocation.getParent());
                             }
+
+                            if (!Files.isDirectory(path)) {
+                                Files.copy(path, instanceOutputLocation);
+                            }   
                         }
+                    } catch (IOException e) {
+                        LOGGER.error("Unable to read zip files from {} - {}", zipRoot, backupLocation, e);
+                        return DestructiveInstanceAction.Result.FATAL_ERROR;
                     }
-                } catch (IOException e) {
-                    LOGGER.error("Unable to use provided zip, {}", backupLocation, e);
-                    return DestructiveInstanceAction.Result.FATAL_ERROR;
-                }
 
-                return DestructiveInstanceAction.Result.SUCCESS;
-            })
-            .specifyEffectedFiles(basePaths)
-            .run();
+                    return DestructiveInstanceAction.Result.SUCCESS;
+                })
+                .specifyEffectedFiles(basePaths)
+                .run();
 
-        if (result.isFailure()) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to restore backup file"));
-            return;
+            if (result.isFailure()) {
+                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to restore backup file"));
+                return;
+            }
+
+            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
+        } catch (IOException e) {
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to read backup file"));
         }
-        
-        Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
     }
 
     public static class Request extends BaseData {
