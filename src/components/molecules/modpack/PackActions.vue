@@ -142,7 +142,7 @@ export default class PackActions extends Vue {
     position: absolute;
     white-space: nowrap;
     top: 110%;
-    left: 20px;
+    left: 10px;
     background-color: black;
     z-index: 500;
     padding: 1rem 0.8rem;
