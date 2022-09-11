@@ -74,6 +74,14 @@
               <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
             </div>
             <div class="stat">
+              <div class="name">Total Playtime</div>
+              <div class="value">
+                <span v-for="(unit, index) in computeTime(instance.totalPlayTime)" :key="index">
+                  <template v-if="unit !== ''"> {{ unit }} </template>
+                </span>
+              </div>
+            </div>
+            <div class="stat">
               <div class="name">Version</div>
               <div class="value">{{ instance.version }}</div>
             </div>
@@ -209,6 +217,21 @@ export default class PackBody extends Vue {
     }
 
     return new MarkdownIt().render(input);
+  }
+
+  computeTime(second: number) {
+    second = second / 1000;
+    const days = Math.floor(second / (3600 * 24));
+    const hours = Math.floor((second % (3600 * 24)) / 3600);
+    const minutes = Math.floor((second % 3600) / 60);
+    const seconds = Math.floor(second % 60);
+
+    return {
+      days: days > 0 ? days + 'd' : '',
+      hours: hours > 0 ? hours + 'h' : '',
+      minutes: minutes > 0 ? minutes + 'm' : '',
+      seconds: seconds > 0 ? seconds + 's' : '',
+    };
   }
 
   get currentVersionObject(): Versions | null {
