@@ -46,8 +46,6 @@ import Loading from '@/components/atoms/Loading.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import { preLaunchChecksValid } from '@/utils/auth/authentication';
 
-// FIXME: definitely do the below
-// TODO: maybe move this over to a modal -> modal body system so we don't need to hack around the footer system
 @Component({
   components: { ProgressBar, Loading },
 })

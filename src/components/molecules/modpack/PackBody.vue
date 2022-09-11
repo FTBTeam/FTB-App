@@ -5,19 +5,19 @@
         <div class="play">
           <ftb-button
             color="primary"
-            class="py-3 px-8"
+            class="py-3 px-8 ftb-play-button"
             @click="() => $emit('mainAction')"
             :disabled="!isInstalled && modpacks.installing !== null"
           >
-            <template v-if="!packLoading">
-              <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
-              {{ isInstalled ? 'Play' : 'Install' }}
-            </template>
-            <template v-else>
-              <font-awesome-icon :icon="'spinner'" spin class="mr-4" />
-              Starting...
-            </template>
+            <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
+            {{ isInstalled ? 'Play' : 'Install' }}
           </ftb-button>
+
+          <pack-actions
+            v-if="instance && isInstalled"
+            :instance="instance"
+            @openSettings="$emit('tabChange', tabs.SETTINGS)"
+          />
         </div>
 
         <div class="options">
@@ -73,7 +73,7 @@
               <div class="name">Last played</div>
               <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
             </div>
-            <div class="stat">
+            <div class="stat" v-if="instance.totalPlayTime !== 0">
               <div class="name">Total Playtime</div>
               <div class="value">
                 <span v-for="(unit, index) in computeTime(instance.totalPlayTime)" :key="index">
@@ -180,17 +180,19 @@ import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import { getColorForChar } from '@/utils/colors';
-import { State } from 'vuex-class';
+import { Action, State } from 'vuex-class';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import MarkdownIt from 'markdown-it';
+import PackActions from '@/components/molecules/modpack/PackActions.vue';
 
 @Component({
   name: 'pack-body',
-  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
+  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods, PackActions },
 })
 export default class PackBody extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
+  @Action('sendMessage') public sendMessage!: any;
 
   // The stored instance for an installed pack
   @Prop({ default: null }) instance!: Instance;
@@ -262,6 +264,13 @@ export default class PackBody extends Vue {
 
   .play {
     margin-right: 2rem;
+    position: relative;
+    display: flex;
+
+    .ftb-play-button {
+      position: relative;
+      z-index: 2;
+    }
   }
 
   .options {

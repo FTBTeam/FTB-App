@@ -11,12 +11,15 @@
             <font-awesome-icon class="closer" icon="times" />
           </div>
         </div>
-        <div class="modal-body">
-          <slot></slot>
-        </div>
-        <div class="modal-footer" v-if="$slots.footer">
-          <slot name="footer"></slot>
-        </div>
+        <slot v-if="externalContents"></slot>
+        <template v-else>
+          <div class="modal-body">
+            <slot></slot>
+          </div>
+          <div class="modal-footer" v-if="$slots.footer">
+            <slot name="footer"></slot>
+          </div>
+        </template>
       </div>
     </div>
   </Transition>
@@ -42,6 +45,7 @@ export default class Modal extends Vue {
   @Prop({ default: false }) permanent!: boolean;
 
   @Prop({ default: true }) closeOnBackgroundClick!: boolean;
+  @Prop({ default: false }) externalContents!: boolean;
 
   public close(background = false): void {
     if (!this.closeOnBackgroundClick && background) {

@@ -16,7 +16,8 @@ public class BrowseInstanceHandler implements IMessageHandler<BrowseInstanceData
         try
         {
             LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
-            if (instance.browse())
+            var success = data.folder != null ? instance.browse(data.folder) : instance.browse();
+            if (success)
             {
                 Settings.webSocketAPI.sendMessage(new BrowseInstanceData.Reply(data, "success"));
             } else
