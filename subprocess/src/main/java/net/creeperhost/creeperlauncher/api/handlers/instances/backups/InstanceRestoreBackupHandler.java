@@ -1,13 +1,11 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.InstanceSnapshot;
-import net.creeperhost.creeperlauncher.pack.InstanceSnapshotException;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.ZipUtils;
@@ -17,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;

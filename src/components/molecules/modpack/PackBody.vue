@@ -55,7 +55,7 @@
           :class="{ active: activeTab === tabs.BACKUPS }"
           @click="() => $emit('tabChange', tabs.BACKUPS)"
         >
-          Backups
+          World Backups
         </div>
         <div
           v-if="isInstalled && currentVersionObject"
