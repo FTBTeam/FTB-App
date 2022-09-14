@@ -76,6 +76,20 @@ public class FileUtils
         }
     }
 
+    public static void deletePath(Path path) {
+        if (Files.notExists(path)) {
+            return;
+        }
+        
+        if (Files.isDirectory(path)) {
+            deleteDirectory(path);
+        } else {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException ignored) {}
+        }
+    }
+    
     public static void deleteDirectory(Path file)
     {
         if (Files.notExists(file)) return;
@@ -300,6 +314,7 @@ public class FileUtils
 
     public static void move(Path from, Path to, boolean replaceExisting) throws IOException {
         if (Files.isDirectory(from)) {
+            System.out.println(to);
             if (!Files.isDirectory(to)) throw new IllegalArgumentException("Requested to move directory into file.");
             try (Stream<Path> children = Files.list(from)) {
                 children.filter(e -> e != from)
