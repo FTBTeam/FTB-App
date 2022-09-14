@@ -51,6 +51,7 @@ export interface Instance {
   packType: number;
   modLoader: string;
   embeddedJre: boolean;
+  totalPlayTime: number;
 }
 
 export interface Art {

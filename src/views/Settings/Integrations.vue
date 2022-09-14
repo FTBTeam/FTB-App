@@ -43,13 +43,11 @@
 
     <h3 class="text-xl font-bold mb-4" v-if="auth.token === null">Available integrations</h3>
     <div class="integrations" v-if="auth.token === null">
-      <div class="card" :class="{ disabled: auth.token !== null || auth.loggingIn }">
+      <div class="card" :class="{ disabled: auth.loggingIn }">
         <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
         <div class="main">
           <div class="name font-bold mb-1">MineTogether</div>
-          <div class="desc opacity-75">
-            Integrate with MineTogether to use cloudsaves, MineTogether Connect and private packs.
-          </div>
+          <div class="desc opacity-75">Integrate with MineTogether to use cloudsaves and private packs.</div>
           <div class="setup inline-block mt-4 text-sm">
             <ftb-button class="px-4 py-2" color="primary" @click="openLogin">Login to setup</ftb-button>
           </div>

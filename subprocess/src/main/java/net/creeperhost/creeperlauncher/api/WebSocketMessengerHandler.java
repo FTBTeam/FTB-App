@@ -54,6 +54,8 @@ public class WebSocketMessengerHandler
         register("instanceConfigure", InstanceConfigureData.class, new InstanceConfigureHandler());
         register("instanceModToggle", InstanceModToggleData.class, new InstanceModToggleHandler());
         register("instanceBrowse", BrowseInstanceData.class, new BrowseInstanceHandler());
+        register("getInstanceFolders", GetInstanceFoldersHandler.Request.class, new GetInstanceFoldersHandler());
+        register("duplicateInstance", DuplicateInstanceHandler.Request.class, new DuplicateInstanceHandler());
         register("getSettings", SettingsInfoData.class, new SettingsInfoHandler());
         register("saveSettings", SettingsConfigureData.class, new SettingsConfigureHandler());
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());

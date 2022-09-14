@@ -2,7 +2,7 @@
   <div class="pack-info">
     <div class="info">
       <div class="name">{{ packName }}</div>
-      <div class="desc" v-if="!instance || !instance.isImport">
+      <div class="desc" v-if="(!instance || !instance.isImport) && !isInstalled">
         {{ packInstance.name }}
         <template v-if="packInstance.authors && packInstance.authors.length"
           >by <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span></template
@@ -24,6 +24,7 @@ import { Instance, ModPack } from '@/modules/modpacks/types';
 export default class PackTitleHeader extends Vue {
   @Prop() packInstance!: ModPack;
   @Prop() packName!: string;
+  @Prop({ default: false }) isInstalled!: boolean;
 
   @Prop() instance!: Instance;
 }

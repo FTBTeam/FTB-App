@@ -20,6 +20,7 @@
           v-if="!hidePackDetails"
           :pack-instance="packInstance"
           :instance="instance"
+          :isInstalled="true"
           :pack-name="instance.name"
         />
       </header>
