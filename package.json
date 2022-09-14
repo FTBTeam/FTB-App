@@ -28,6 +28,7 @@
     "electron": "^18.0.1",
     "markdown-it": "^13.0.1",
     "mcping-js": "^1.5.0",
+    "mitt": "^3.0.0",
     "qs": "^6.10.1",
     "rss-parser": "^3.8.0",
     "semver": "^7.3.2",

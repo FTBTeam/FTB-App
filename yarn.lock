@@ -8522,6 +8522,11 @@
     "stream-each" "^1.1.0"
     "through2" "^2.0.0"
 
+"mitt@^3.0.0":
+  "integrity" "sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ=="
+  "resolved" "https://registry.npmjs.org/mitt/-/mitt-3.0.0.tgz"
+  "version" "3.0.0"
+
 "mixin-deep@^1.2.0":
   "integrity" "sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA=="
   "resolved" "https://registry.npmjs.org/mixin-deep/-/mixin-deep-1.3.2.tgz"
