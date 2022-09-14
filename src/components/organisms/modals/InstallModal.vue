@@ -44,12 +44,13 @@ import { getColorForReleaseType } from '@/utils/colors';
     FTBButton,
   },
   name: 'InstallModal',
-  props: ['packName', 'packDescription', 'versions', 'doInstall', 'selectedVersion'],
 })
 export default class InstallModal extends Vue {
-  @Prop() private versions!: Versions[];
-  @Prop() private doInstall!: (version: number, versionName?: string) => {};
-  @Prop() private selectedVersion!: number | null;
+  @Prop() packName!: string;
+  @Prop() packDescription!: string;
+  @Prop() versions!: Versions[];
+  @Prop() doInstall!: (version: number, versionName?: string) => {};
+  @Prop() selectedVersion!: number | null;
 
   showBetaAndAlpha = false;
 

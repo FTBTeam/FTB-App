@@ -33,6 +33,7 @@
           @showVersion="showVersions = true"
           @searchForMods="searchingForMods = true"
           @getModList="(e) => getModList(e)"
+          @backupsChanged="loadBackups"
           :pack-loading="packLoading"
           :active-tab="activeTab"
           :isInstalled="true"
@@ -41,6 +42,7 @@
           :pack-instance="packInstance"
           :isLatestVersion="isLatestVersion"
           :updating-mod-list="updatingModlist"
+          :backups="instanceBackups"
         />
       </div>
 
@@ -102,14 +104,16 @@ import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
 import { InstallerState } from '@/modules/app/appStore.types';
-import { getPackArt } from '@/utils';
+import { getPackArt, wsTimeoutWrapperTyped } from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
+import { InstanceBackup, InstanceBackupsReply, InstanceBackupsRequest } from '@/typings/subprocess/instanceBackups';
 
 export enum ModpackPageTabs {
   OVERVIEW,
   MODS,
   PUBLIC_SERVERS,
   SETTINGS,
+  BACKUPS,
 }
 
 @Component({
@@ -172,6 +176,8 @@ export default class InstancePage extends Vue {
   searchingForMods = false;
   updatingModlist = false;
   showVersions = false;
+
+  instanceBackups: InstanceBackup[] = [];
 
   public goBack(): void {
     if (!this.hidePackDetails) {
@@ -273,6 +279,16 @@ export default class InstancePage extends Vue {
     }
 
     this.getModList();
+    this.loadBackups().catch(console.error);
+  }
+
+  public async loadBackups() {
+    const backups = await wsTimeoutWrapperTyped<InstanceBackupsRequest, InstanceBackupsReply>({
+      type: 'instanceGetBackups',
+      uuid: this.instance?.uuid ?? '',
+    });
+
+    this.instanceBackups = backups.backups.sort((a, b) => b.createTime - a.createTime);
   }
 
   private getModList(showAlert = false) {

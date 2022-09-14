@@ -31,6 +31,8 @@ export const appStore: Module<AppStoreState, RootState> = {
       commit(AppStoreMutations.SET_RUNNING_PACK);
     },
 
+    // FIXME: This is messy as all hell, tidy this up to be less mismatched, ensure validity and
+    //        ensure the correct payload at the source.
     async installModpack({ commit, dispatch }, request: InstallerState) {
       const pack = request.pack;
 

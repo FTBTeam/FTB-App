@@ -54,7 +54,7 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import eventBus from '@/utils/event-bus';
+import { emitter } from '@/utils/event-bus';
 import { Action, Getter } from 'vuex-class';
 import { InstallerState } from '@/modules/app/appStore.types';
 import placeholderArt from '@/assets/placeholder_art.png';
@@ -100,56 +100,58 @@ export default class Installer extends Vue {
   error = '';
 
   mounted() {
-    eventBus.$on('ws.message', (data: any) => {
-      if (!this.installer) {
-        if (data.type === 'installInstanceDataReply' && (data.status === 'error' || data.status === 'prepare_error')) {
-          // Failsafe to ensure everything is reset if we see an error even after the installer has been closed.
-          this.closed();
-        }
+    emitter.on('ws.message', this.onInstallStatusChange);
+  }
 
-        // This is a failsafe if at any point the installer breaks but the WS still sees it
-        if (
-          data.type === 'installInstanceDataReply' &&
-          data.status === 'success' &&
-          !(data.message ?? '').includes('Triggered cancellation')
-        ) {
-          this.complete(data, true);
-          this.showAlert({
-            title: 'Success!',
-            message: `Modpack installed!`,
-            type: 'primary',
-          });
-        }
-
-        return;
+  onInstallStatusChange(data: any) {
+    if (!this.installer) {
+      if (data.type === 'installInstanceDataReply' && (data.status === 'error' || data.status === 'prepare_error')) {
+        // Failsafe to ensure everything is reset if we see an error even after the installer has been closed.
+        this.closed();
       }
 
+      // This is a failsafe if at any point the installer breaks but the WS still sees it
       if (
-        data.type !== 'installInstanceDataReply' &&
-        data.type !== 'installInstanceProgress' &&
-        data.type !== 'install.filesEvent'
+        data.type === 'installInstanceDataReply' &&
+        data.status === 'success' &&
+        !(data.message ?? '').includes('Triggered cancellation')
       ) {
-        return;
+        this.complete(data, true);
+        this.showAlert({
+          title: 'Success!',
+          message: `Modpack installed!`,
+          type: 'primary',
+        });
       }
 
-      if (data.status !== 'files') {
-        console.log(`[${dayjs().toISOString()}] [DEBUG] [installer] type: ${data.type}, body: ${JSON.stringify(data)}`);
-      }
+      return;
+    }
 
-      // Actual install status update
-      if (data.type === 'installInstanceDataReply') {
-        this.onUpdate(data);
-      }
+    if (
+      data.type !== 'installInstanceDataReply' &&
+      data.type !== 'installInstanceProgress' &&
+      data.type !== 'install.filesEvent'
+    ) {
+      return;
+    }
 
-      // Just install progress
-      if (data.type === 'installInstanceProgress') {
-        this.onProgressUpdate(data);
-      }
+    if (data.status !== 'files') {
+      console.log(`[${dayjs().toISOString()}] [DEBUG] [installer] type: ${data.type}, body: ${JSON.stringify(data)}`);
+    }
 
-      if (data.type === 'install.filesEvent') {
-        this.onFilesEvent(data);
-      }
-    });
+    // Actual install status update
+    if (data.type === 'installInstanceDataReply') {
+      this.onUpdate(data);
+    }
+
+    // Just install progress
+    if (data.type === 'installInstanceProgress') {
+      this.onProgressUpdate(data);
+    }
+
+    if (data.type === 'install.filesEvent') {
+      this.onFilesEvent(data);
+    }
   }
 
   async onUpdate(data: any) {
@@ -252,7 +254,7 @@ export default class Installer extends Vue {
   // }
 
   destroyed() {
-    eventBus.$off('ws.message');
+    emitter.off('ws.message', this.onInstallStatusChange);
   }
 
   get art() {

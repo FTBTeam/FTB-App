@@ -232,7 +232,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
   },
   storeInstalledPack({ commit, state }, packPayload: { pack: Instance; type: 'instance' | 'cloudInstance' }): any {
     packPayload.pack.kind = packPayload.type;
-    commit('pushToInstalledPack', packPayload.pack);
+
+    const existing = state.installedPacks.find((e) => e.uuid === packPayload.pack.uuid);
+    commit('pushToInstalledPack', { pack: packPayload.pack, existing: !!existing });
   },
   updatePackInStore({ commit }, payload: Instance): any {
     commit('updatePackInStore', payload);
