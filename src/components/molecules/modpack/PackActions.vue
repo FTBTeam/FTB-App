@@ -126,6 +126,7 @@ export default class PackActions extends Vue {
 
 .pack-actions {
   display: flex;
+  position: relative;
   align-items: center;
   margin-left: -5px;
   border-radius: 5px;
@@ -180,8 +181,7 @@ export default class PackActions extends Vue {
         cursor: default;
       }
 
-      &:hover,
-      &:focus-within {
+      &:hover {
         background-color: var(--color-info-button);
       }
 
@@ -210,9 +210,18 @@ export default class PackActions extends Vue {
     left: 110%;
     top: 0;
 
+    &::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      top: 0;
+      left: -18px;
+      height: 100%;
+    }
+
     &::after {
       transform: rotateZ(-45deg);
-      top: 1rem;
+      top: 6.4rem;
       left: -8px;
     }
   }
@@ -225,7 +234,7 @@ export default class PackActions extends Vue {
     }
   }
 
-  .actions li:focus-within ul {
+  .actions li:hover ul {
     visibility: visible;
     opacity: 1;
     left: 102%;
