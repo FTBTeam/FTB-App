@@ -13,6 +13,9 @@ import net.creeperhost.creeperlauncher.api.data.friends.GetFriendsData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
 import net.creeperhost.creeperlauncher.api.data.irc.*;
 import net.creeperhost.creeperlauncher.api.data.other.*;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceDeleteBackupHandler;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceGetBackupsHandler;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceRestoreBackupHandler;
 import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
 import net.creeperhost.creeperlauncher.api.handlers.*;
 import net.creeperhost.creeperlauncher.api.handlers.friends.AddFriendHandler;
@@ -51,6 +54,8 @@ public class WebSocketMessengerHandler
         register("instanceConfigure", InstanceConfigureData.class, new InstanceConfigureHandler());
         register("instanceModToggle", InstanceModToggleData.class, new InstanceModToggleHandler());
         register("instanceBrowse", BrowseInstanceData.class, new BrowseInstanceHandler());
+        register("getInstanceFolders", GetInstanceFoldersHandler.Request.class, new GetInstanceFoldersHandler());
+        register("duplicateInstance", DuplicateInstanceHandler.Request.class, new DuplicateInstanceHandler());
         register("getSettings", SettingsInfoData.class, new SettingsInfoHandler());
         register("saveSettings", SettingsConfigureData.class, new SettingsConfigureHandler());
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
@@ -74,6 +79,10 @@ public class WebSocketMessengerHandler
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
+
+        register("instanceGetBackups", InstanceGetBackupsHandler.Request.class, new InstanceGetBackupsHandler());
+        register("instanceRestoreBackup", InstanceRestoreBackupHandler.Request.class, new InstanceRestoreBackupHandler());
+        register("instanceDeleteBackup", InstanceDeleteBackupHandler.Request.class, new InstanceDeleteBackupHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());

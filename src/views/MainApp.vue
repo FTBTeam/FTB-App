@@ -1,13 +1,13 @@
 <template>
   <div id="app" class="theme-dark" v-if="platfrom.get.config">
-    <title-bar />
+    <title-bar :is-dev="isDev" />
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
-        <sidebar v-if="showSidebar" />
+        <sidebar :is-dev="isDev" v-if="showSidebar" />
         <div class="app-content relative">
           <router-view />
         </div>
-        <ad-aside />
+        <ad-aside :is-dev="isDev" />
       </main>
     </div>
     <div class="app-container centered" v-else>
@@ -51,6 +51,7 @@ import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
+import { RouterNames } from '@/router';
 
 @Component({
   components: {
@@ -145,6 +146,10 @@ export default class MainApp extends Vue {
 
   get showSidebar() {
     return !this.$route.path.startsWith('/settings');
+  }
+
+  get isDev() {
+    return this.$route.name === RouterNames.DEVELOPER;
   }
 }
 </script>

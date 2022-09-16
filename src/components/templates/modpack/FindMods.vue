@@ -101,7 +101,7 @@
 import { AuthState } from '@/modules/auth/types';
 import { Instance } from '@/modules/modpacks/types';
 import { Mod } from '@/types';
-import { debounce, wsTimeoutWrapper } from '@/utils';
+import { abortableFetch, debounce, wsTimeoutWrapper } from '@/utils';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
@@ -181,11 +181,10 @@ export default class FindMods extends Vue {
     this.visualLoadingFull = true;
     const start = new Date().getTime();
 
-    const results = this.abortableFetch(
+    const results = abortableFetch(
       `${process.env.VUE_APP_MODPACK_API}/public/mod/search/${this.target || 'all'}/${this.modLoader}/50?term=${
         this.search
       }`,
-      null,
     );
 
     this.fetchRequests.push(results);
@@ -328,23 +327,12 @@ export default class FindMods extends Vue {
 
   private async getModFromId(modId: number): Promise<Mod | null> {
     try {
-      const req = this.abortableFetch(`${process.env.VUE_APP_MODPACK_API}/public/mod/${modId}`, null);
+      const req = abortableFetch(`${process.env.VUE_APP_MODPACK_API}/public/mod/${modId}`);
       this.fetchRequests.push(req);
       return await (await req.ready).json();
     } catch {
       return null;
     }
-  }
-
-  // Yonk: https://developers.google.com/web/updates/2017/09/abortable-fetch
-  abortableFetch(request: RequestInfo, opts: RequestInit | null) {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    return {
-      abort: () => controller.abort(),
-      ready: fetch(request, { ...opts, signal }),
-    };
   }
 
   get hasResults() {

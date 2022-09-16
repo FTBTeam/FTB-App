@@ -1,11 +1,11 @@
 <template>
-  <div class="flex flex-col h-full bg-background" style="width: 300px;">
-    <div class="profile bg-navbar flex flex-row items-center relative" style="height: 92px;">
+  <div class="flex flex-col h-full bg-background" style="width: 300px">
+    <div class="profile bg-navbar flex flex-row items-center relative" style="height: 92px">
       <div class="minimtg pointer-events-none"></div>
       <div class="p-4 flex flex-row items-center">
         <img
           :src="`https://api.mymcuu.id/head/${avatarName}`"
-          style="margin-right: 0.75em;"
+          style="margin-right: 0.75em"
           width="30px"
           class="rounded-full"
         />
@@ -20,13 +20,13 @@
         </div>
       </div>
     </div>
-    <div class="friends flex flex-col overflow-hidden" style="max-height: 300px;">
+    <div class="friends flex flex-col overflow-hidden" style="max-height: 300px">
       <div class="bg-background-lighten p-2 flex flex-row">
         <p class="ml-2">Friends</p>
         <input
           type="search"
           class="bg-input text-xs mx-2"
-          style="padding: 0 2px;"
+          style="padding: 0 2px"
           placeholder="Search..."
           v-if="showSearch"
           v-model="search"
@@ -38,24 +38,20 @@
       </div>
       <div class="overflow-y-auto">
         <div
-          :class="
-            `flex flex-row p-2 items-center ${
-              currentPage === 'chatFriend' && activeFriend !== undefined && activeFriend === friend.shortHash
-                ? 'bg-background-lighten'
-                : 'hover:bg-background-lighten'
-            } cursor-pointer`
-          "
+          :class="`flex flex-row p-2 items-center ${
+            currentPage === 'chatFriend' && activeFriend !== undefined && activeFriend === friend.shortHash
+              ? 'bg-background-lighten'
+              : 'hover:bg-background-lighten'
+          } cursor-pointer`"
           v-for="friend in currentFriends"
           :key="friend.id"
           @click="openFriendChat(friend)"
         >
           <p
-            :class="
-              `ml-2 cursor-pointer overflow-hidden ${
-                friend.isOnline ? 'text-white font-bold' : 'text-muted font-normal'
-              }`
-            "
-            style="text-overflow: ellipsis;"
+            :class="`ml-2 cursor-pointer overflow-hidden ${
+              friend.isOnline ? 'text-white font-bold' : 'text-muted font-normal'
+            }`"
+            style="text-overflow: ellipsis"
           >
             {{ friend.friendName }}
           </p>
@@ -87,9 +83,7 @@
         class="flex flex-col items-center mt-4 text-sm"
       >
         <font-awesome-icon icon="sad-tear" size="lg" />
-        <p class="p-2 text-center">
-          It looks like you don't have any friends added at the moment!
-        </p>
+        <p class="p-2 text-center">It looks like you don't have any friends added at the moment!</p>
       </div>
     </div>
     <div class="friends flex flex-col overflow-y-auto">
@@ -168,7 +162,7 @@ export default class MainChat extends Vue {
   }
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
+    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
   }
 
@@ -210,7 +204,7 @@ export default class MainChat extends Vue {
         userHash: self.auth.token?.mc.display,
         target: hash,
       },
-      callback: function() {
+      callback: function () {
         let index = self.acceptingFriends.indexOf(hash);
         if (index !== -1) {
           self.acceptingFriends.splice(index, 1);
@@ -228,11 +222,11 @@ export default class MainChat extends Vue {
       method: 'POST',
       body: JSON.stringify({ hash }),
     })
-      .then(response => response.json())
-      .then(async data => {
+      .then((response) => response.json())
+      .then(async (data) => {
         return data.code;
       })
-      .catch(err => {
+      .catch((err) => {
         throw err;
       });
   }
@@ -246,26 +240,26 @@ export default class MainChat extends Vue {
 
   get unreadMessages() {
     const unread: UnreadMessages = {};
-    Object.keys(this.messages).forEach(shortHash => {
-      unread[shortHash] = this.messages[shortHash].filter(m => !m.read).length;
+    Object.keys(this.messages).forEach((shortHash) => {
+      unread[shortHash] = this.messages[shortHash].filter((m) => !m.read).length;
     });
     return unread;
   }
 
   get currentFriends() {
     let friends = [
-      ...this.friends.online.filter(a => !a.pending),
-      ...this.friends.offline.filter(a => !a.pending),
+      ...this.friends.online.filter((a) => !a.pending),
+      ...this.friends.offline.filter((a) => !a.pending),
     ].sort((a, b) => (a.isOnline ? (b.isOnline ? 0 : -1) : 1));
     if (this.search.length > 0) {
-      friends = friends.filter(a => a.userDisplay?.indexOf(this.search) !== -1);
+      friends = friends.filter((a) => a.userDisplay?.indexOf(this.search) !== -1);
     }
     return friends;
   }
 
   get friendRequests() {
     return this.friends.pending.filter(
-      friend => this.currentFriends.find(f => f.longHash === friend.longHash) === undefined,
+      (friend) => this.currentFriends.find((f) => f.longHash === friend.longHash) === undefined,
     );
   }
 

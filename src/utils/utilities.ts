@@ -4,6 +4,12 @@ import { MCProtocol } from '@/modules/servers/types';
 // @ts-ignore
 import mcQuery from 'mcping-js';
 
+export const yeetError = async <T>(promise: () => Promise<T>) => {
+  try {
+    await promise();
+  } catch {}
+};
+
 export function debounce(func: () => void, wait: number): () => void {
   let timeout: number | undefined;
   return function () {

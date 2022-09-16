@@ -5,7 +5,7 @@ async function blah() {
   let versionObj = await raw.json();
   versionData = versionObj;
   const version = versionObj.jarVersion;
-  var plugin = new OverwolfPlugin('FTBOverwolfShim', true);
+  var plugin = new OverwolfPlugin('OverwolfShim', true);
   let status = await p(plugin.initialize).catch(e => console.log(e));
   if (status == false) {
     console.error("Plugin couldn't be loaded??");

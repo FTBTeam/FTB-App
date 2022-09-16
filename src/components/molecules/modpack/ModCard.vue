@@ -116,7 +116,7 @@ import { Action } from 'vuex-class';
 import Selection from '@/components/atoms/input/Selection.vue';
 import FTBModal from '../../atoms/FTBModal.vue';
 import MessageModal from '../../organisms/modals/MessageModal.vue';
-import eventBus from '@/utils/event-bus';
+import { emitter } from '@/utils/event-bus';
 import { prettyByteFormat } from '@/utils/helpers';
 import { getColorForReleaseType } from '@/utils/colors';
 
@@ -171,35 +171,37 @@ export default class ModCard extends Vue {
         )
         .sort((a, b) => b.id - a.id) ?? [];
 
-    eventBus.$on('ws.message', (data: any) => {
-      if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
-        return;
-      }
+    emitter.on('ws.message', this.onInstallMessage);
+  }
 
-      // Handle progress
-      if (data.type === 'instanceInstallModProgress') {
-        this.installProgress = {
-          percentage: data.overallPrecentage,
-          speed: data.speed,
-          current: data.currentBytes,
-          total: data.overallBytes,
-        };
-      }
+  onInstallMessage(data: any) {
+    if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
+      return;
+    }
 
-      // Handle completion
-      if (data.type === 'instanceInstallModReply') {
-        this.wsReqId = -1;
-        this.installing = false;
-        this.installProgress = ModCard.emptyProgress;
-        this.finishedInstalling = true;
-        this.$emit('modInstalled');
-      }
-    });
+    // Handle progress
+    if (data.type === 'instanceInstallModProgress') {
+      this.installProgress = {
+        percentage: data.overallPrecentage,
+        speed: data.speed,
+        current: data.currentBytes,
+        total: data.overallBytes,
+      };
+    }
+
+    // Handle completion
+    if (data.type === 'instanceInstallModReply') {
+      this.wsReqId = -1;
+      this.installing = false;
+      this.installProgress = ModCard.emptyProgress;
+      this.finishedInstalling = true;
+      this.$emit('modInstalled');
+    }
   }
 
   destroyed() {
     // Stop listening to events!
-    eventBus.$off('ws.message');
+    emitter.off('ws.message', this.onInstallMessage);
   }
 
   installMod() {

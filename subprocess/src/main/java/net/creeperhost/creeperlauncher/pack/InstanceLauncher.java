@@ -33,7 +33,10 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -462,7 +465,7 @@ public class InstanceLauncher {
         }
     }
 
-    private void prepareManifests(CancellationToken token, Path versionsDir) throws IOException {
+    private void prepareManifests(CancellationToken token, Path versionsDir) throws IOException, InstanceLaunchException {
         manifests.clear();
         VersionListManifest versions = VersionListManifest.update(versionsDir);
         Set<String> seen = new HashSet<>();
@@ -472,6 +475,9 @@ public class InstanceLauncher {
             if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.modLoader);
             LOGGER.info("Preparing manifest {}", id);
             VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
+            if (manifest == null) {
+                throw new InstanceLaunchException("Failed to prepare instance. Missing installed version " + id + ". Please validate/re-install.");
+            }
             // Build in reverse order. First in list should be Minecraft's.
             manifests.add(0, manifest);
             id = manifest.inheritsFrom;
@@ -586,6 +592,7 @@ public class InstanceLauncher {
                 continue;
             }
             LOGGER.info(" Extracting from '{}'.", nativesJar);
+            // TODO: move to NIO File system for zip?
             try (ZipFile zipFile = new ZipFile(nativesJar.toFile())) {
                 for (ZipEntry entry : iterable(zipFile.entries())) {
                     if (entry.isDirectory()) continue;

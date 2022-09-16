@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.task;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ThreadFactory;
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by covers1624 on 3/6/22.
  */
+@Disabled // Disabled as we don't need to actively test this functionality. It is pretty flaky and timing sensitive.
 public class LongRunningOperationTest {
 
     @Test

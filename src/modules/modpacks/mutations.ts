@@ -59,8 +59,14 @@ export const mutations: MutationTree<ModpackState> = {
   storeInstalledPacks(state, payload: Instance[]) {
     state.installedPacks = payload;
   },
-  pushToInstalledPack(state, payload: Instance) {
-    state.installedPacks.push(payload);
+  pushToInstalledPack(state, payload: { pack: Instance; existing: boolean }) {
+    // Prevent pack duplication if somehow the pack is installed / updated at the sametime...
+    // Mostly happens on users clicking buttons to fast and the subprocess not cancelling the installation quick enough
+    if (payload.existing) {
+      state.installedPacks = state.installedPacks.filter((e) => e.uuid !== payload.pack.uuid);
+    }
+
+    state.installedPacks.push(payload.pack);
   },
   updatePackInStore(state, payload: Instance) {
     state.installedPacks = state.installedPacks.map((e) => (e.uuid === payload.uuid ? payload : e));

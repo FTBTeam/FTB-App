@@ -5,19 +5,19 @@
         <div class="play">
           <ftb-button
             color="primary"
-            class="py-3 px-8"
+            class="py-3 px-8 ftb-play-button"
             @click="() => $emit('mainAction')"
             :disabled="!isInstalled && modpacks.installing !== null"
           >
-            <template v-if="!packLoading">
-              <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
-              {{ isInstalled ? 'Play' : 'Install' }}
-            </template>
-            <template v-else>
-              <font-awesome-icon :icon="'spinner'" spin class="mr-4" />
-              Starting...
-            </template>
+            <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
+            {{ isInstalled ? 'Play' : 'Install' }}
           </ftb-button>
+
+          <pack-actions
+            v-if="instance && isInstalled"
+            :instance="instance"
+            @openSettings="$emit('tabChange', tabs.SETTINGS)"
+          />
         </div>
 
         <div class="options">
@@ -50,6 +50,14 @@
           Mods
         </div>
         <div
+          v-if="isInstalled && backups.length > 0"
+          class="tab"
+          :class="{ active: activeTab === tabs.BACKUPS }"
+          @click="() => $emit('tabChange', tabs.BACKUPS)"
+        >
+          World Backups
+        </div>
+        <div
           v-if="isInstalled && currentVersionObject"
           class="tab"
           :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
@@ -72,6 +80,14 @@
             <div class="stat">
               <div class="name">Last played</div>
               <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
+            </div>
+            <div class="stat" v-if="instance.totalPlayTime !== 0">
+              <div class="name">Total Playtime</div>
+              <div class="value">
+                <span v-for="(unit, index) in computeTime(instance.totalPlayTime)" :key="index">
+                  <template v-if="unit !== ''"> {{ unit }} </template>
+                </span>
+              </div>
             </div>
             <div class="stat">
               <div class="name">Version</div>
@@ -154,6 +170,13 @@
         :current-version="currentVersionObject.mtgID"
         :pack-instance="packInstance"
       />
+
+      <modpack-backups
+        @backupsChanged="$emit('backupsChanged')"
+        v-if="activeTab === tabs.BACKUPS"
+        :instance="instance"
+        :backups="backups"
+      />
     </div>
   </div>
   <div class="loading pt-12" v-else>
@@ -172,17 +195,21 @@ import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import { getColorForChar } from '@/utils/colors';
-import { State } from 'vuex-class';
+import { Action, State } from 'vuex-class';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import MarkdownIt from 'markdown-it';
+import PackActions from '@/components/molecules/modpack/PackActions.vue';
+import { InstanceBackup } from '@/typings/subprocess/instanceBackups';
+import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 
 @Component({
   name: 'pack-body',
-  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods },
+  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods, PackActions, ModpackBackups },
 })
 export default class PackBody extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
+  @Action('sendMessage') public sendMessage!: any;
 
   // The stored instance for an installed pack
   @Prop({ default: null }) instance!: Instance;
@@ -194,6 +221,8 @@ export default class PackBody extends Vue {
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
   @Prop() updatingModlist!: boolean;
+
+  @Prop({ default: [] }) backups!: InstanceBackup[];
 
   tabs = ModpackPageTabs;
   getColorForChar = getColorForChar;
@@ -209,6 +238,21 @@ export default class PackBody extends Vue {
     }
 
     return new MarkdownIt().render(input);
+  }
+
+  computeTime(second: number) {
+    second = second / 1000;
+    const days = Math.floor(second / (3600 * 24));
+    const hours = Math.floor((second % (3600 * 24)) / 3600);
+    const minutes = Math.floor((second % 3600) / 60);
+    const seconds = Math.floor(second % 60);
+
+    return {
+      days: days > 0 ? days + 'd' : '',
+      hours: hours > 0 ? hours + 'h' : '',
+      minutes: minutes > 0 ? minutes + 'm' : '',
+      seconds: seconds > 0 ? seconds + 's' : '',
+    };
   }
 
   get currentVersionObject(): Versions | null {
@@ -239,6 +283,13 @@ export default class PackBody extends Vue {
 
   .play {
     margin-right: 2rem;
+    position: relative;
+    display: flex;
+
+    .ftb-play-button {
+      position: relative;
+      z-index: 2;
+    }
   }
 
   .options {

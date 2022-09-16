@@ -2,7 +2,7 @@ import { MutationTree } from 'vuex';
 import { SocketState } from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
-import eventBus from '@/utils/event-bus';
+import { emitter } from '@/utils/event-bus';
 
 export const mutations: MutationTree<SocketState> = {
   SOCKET_ONOPEN(state: any, event: any) {
@@ -25,9 +25,13 @@ export const mutations: MutationTree<SocketState> = {
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
     if (message.type !== 'ping' && message.type !== 'pong') {
       if (process.env.NODE_ENV === 'development') {
-        console.info(`[ws//${message.type}]${message.requestId ? `[${message.requestId}]` : ''}:"`, message);
+        const { requestId, type, ...rest } = message;
+        console.info(
+          `[${message.requestId ? ('' + message.requestId).padStart(6, '0') : '......'}][id//${message.type}]`,
+          rest,
+        );
       }
-      eventBus.$emit('ws.message', message);
+      emitter.emit('ws.message', message);
     }
 
     if (message.requestId) {

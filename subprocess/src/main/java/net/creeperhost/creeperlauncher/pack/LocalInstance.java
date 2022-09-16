@@ -46,6 +46,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -410,13 +412,23 @@ public class LocalInstance implements IPack
 
     public boolean browse() throws IOException
     {
+        return browse("");
+    }
+
+    public boolean browse(String extraPath) throws IOException
+    {
+        if (Files.notExists(path.resolve(extraPath))) {
+            return false;
+        }
+        
         if (Desktop.isDesktopSupported())
         {
-            Desktop.getDesktop().open(path.toFile());
+            Desktop.getDesktop().open(path.resolve(extraPath).toFile());
             return true;
         }
         return false;
     }
+    
     public void setModified(boolean state)
     {
         this.isModified = state;
@@ -427,6 +439,29 @@ public class LocalInstance implements IPack
             GsonUtils.GSON.toJson(this, writer);
         }
         return true;
+    }
+    
+    @Nullable
+    public LocalInstance duplicate(String instanceName) throws IOException {
+        // Hack around GSON to duplicate the fields here... kinda lazy
+        LocalInstance copiedInstance = GsonUtils.GSON.fromJson(GsonUtils.GSON.toJson(this), LocalInstance.class);
+        copiedInstance.uuid = UUID.randomUUID();
+        copiedInstance.name = instanceName.isEmpty() ? this.name : instanceName;
+        copiedInstance.path = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(copiedInstance.uuid.toString());
+        copiedInstance.dir = copiedInstance.path;
+        copiedInstance.totalPlayTime = 0;
+        copiedInstance.lastPlayed = 0;
+
+        if (Files.notExists(copiedInstance.getDir())) {
+            Files.createDirectories(copiedInstance.getDir());
+        }
+
+        org.apache.commons.io.FileUtils.copyDirectory(this.dir.toFile(), copiedInstance.getDir().toFile());
+        if (!copiedInstance.saveJson()) {
+            return null;
+        }
+        
+        return copiedInstance;
     }
 
     @Override
@@ -758,6 +793,13 @@ public class LocalInstance implements IPack
             }
         }
         return ret;
+    }
+    
+    public InstanceSnapshot withSnapshot(Consumer<LocalInstance> action) {
+        return InstanceSnapshot.create(
+            this,
+            action
+        );
     }
 
     private record CurseProps(long curseProject, long curseFile) { }
