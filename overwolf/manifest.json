@@ -70,9 +70,9 @@
       }
     },
     "extra-objects": {
-      "FTBOverwolfShim": {
-        "file": "FTBOverwolfShim.dll",
-        "class": "net.creeperhost.ftbapp.overwolfshim.OverwolfShim"
+      "OverwolfShim": {
+        "file": "OverwolfShim.dll",
+        "class": "OverwolfShim.OverwolfShim"
       }
     },
     "force_browser": "user",

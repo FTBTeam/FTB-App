@@ -37,7 +37,6 @@ import { Action } from 'vuex-class';
 import { wsTimeoutWrapper } from '@/utils/helpers';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
-import EventBus from '@/utils/event-bus';
 
 export type ChangelogEntry = {
   version: string;
@@ -93,14 +92,6 @@ export default class Changelog extends Vue {
         console.log('Unable to find any changelog data, maybe the servers down?', e);
       });
     }, 2_000);
-
-    EventBus.$on('changelog-open', (data: any) => {
-      console.log('changelog open', data);
-    });
-  }
-
-  destroyed() {
-    EventBus.$off('changelog-open');
   }
 
   async checkForUpdate() {

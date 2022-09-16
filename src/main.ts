@@ -23,10 +23,12 @@ import store from './modules/store';
 import FTBButton from '@/components/atoms/input/FTBButton.vue';
 import FTBInput from '@/components/atoms/input/FTBInput.vue';
 import Popover from '@/components/atoms/Popover.vue';
-import Modal from '@/components/atoms/Modal.vue';
+import Modal from '@/components/atoms/modal/Modal.vue';
 import Message from '@/components/atoms/Message.vue';
 import { BrowserTracing } from '@sentry/tracing';
 import * as Sentry from '@sentry/vue';
+import ModalFooter from '@/components/atoms/modal/ModalFooter.vue';
+import ModalBody from '@/components/atoms/modal/ModalBody.vue';
 
 const path = require('path');
 
@@ -147,6 +149,8 @@ const appSetup = async () => {
   Vue.component('ftb-input', FTBInput);
   Vue.component('popover', Popover);
   Vue.component('modal', Modal);
+  Vue.component('modal-body', ModalBody);
+  Vue.component('modal-footer', ModalFooter);
   Vue.component('message', Message);
 
   Vue.config.productionTip = false;

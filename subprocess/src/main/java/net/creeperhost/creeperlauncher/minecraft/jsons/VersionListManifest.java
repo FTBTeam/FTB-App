@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,13 +84,22 @@ public class VersionListManifest {
         return VersionManifest.update(versionsFolder, version);
     }
 
+    /**
+     * Tries to resolve a remote upstream id, or find it installed locally.
+     *
+     * @param versionsFolder The Versions folder to look in.
+     * @param id             The id of the manifest to find.
+     * @return The found manifest, {@code null} if no manifest was found.
+     * @throws IOException If an IO Error occurs.
+     */
+    @Nullable
     public VersionManifest resolveOrLocal(Path versionsFolder, String id) throws IOException {
         VersionManifest ret = resolve(versionsFolder, id);
         if (ret != null) return ret;
 
         LOGGER.info("Version {} not found on remote list, trying locally.", id);
         Path versionJson = versionsFolder.resolve(id).resolve(id + ".json");
-        if (Files.notExists(versionJson)) throw new FileNotFoundException("Unable to find version json for: '" + id + "'. Searched: '" + versionJson + "'.");
+        if (Files.notExists(versionJson)) return null;
         return JsonUtils.parse(VersionManifest.GSON, versionJson, VersionManifest.class);
     }
 

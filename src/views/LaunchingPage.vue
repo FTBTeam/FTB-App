@@ -182,7 +182,7 @@ import { preLaunchChecksValid } from '@/utils/auth/authentication';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
-import eventBus from '@/utils/event-bus';
+import { emitter } from '@/utils/event-bus';
 import { RouterNames } from '@/router';
 import { wsTimeoutWrapper } from '@/utils';
 
@@ -276,41 +276,7 @@ export default class LaunchingPage extends Vue {
       return;
     }
 
-    eventBus.$on('ws.message', (data: any) => {
-      if (data.type === 'launchInstance.logs') {
-        this.handleLogMessages(data);
-      }
-
-      if (data.type === 'launchInstance.status') {
-        this.handleInstanceLaunch(data);
-      }
-
-      if (data.type === 'clientLaunchData') {
-        this.handleClientLaunch(data);
-      }
-
-      if (
-        data.type === 'launchInstance.stopped' ||
-        (data.type === 'launchInstance.reply' && (data.status === 'abort' || data.status === 'error'))
-      ) {
-        // Lets assume we've crashed
-        if (data.status === 'errored' || data.status === 'error') {
-          this.showAlert({
-            title: 'Instance failure',
-            message:
-              data.status === 'error'
-                ? 'Unable to start pack... please see the instance logs...'
-                : 'The instance has crashed or has been externally closed.',
-            type: 'danger',
-          });
-
-          this.hasCrashed = true;
-          return; // block the redirection
-        }
-
-        this.leavePage();
-      }
-    });
+    emitter.on('ws.message', this.onLaunchProgressUpdate);
 
     await this.fetchModpack(this.instance?.id);
     if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
@@ -318,6 +284,42 @@ export default class LaunchingPage extends Vue {
     }
 
     await this.launch();
+  }
+
+  onLaunchProgressUpdate(data: any) {
+    if (data.type === 'launchInstance.logs') {
+      this.handleLogMessages(data);
+    }
+
+    if (data.type === 'launchInstance.status') {
+      this.handleInstanceLaunch(data);
+    }
+
+    if (data.type === 'clientLaunchData') {
+      this.handleClientLaunch(data);
+    }
+
+    if (
+      data.type === 'launchInstance.stopped' ||
+      (data.type === 'launchInstance.reply' && (data.status === 'abort' || data.status === 'error'))
+    ) {
+      // Lets assume we've crashed
+      if (data.status === 'errored' || data.status === 'error') {
+        this.showAlert({
+          title: 'Instance failure',
+          message:
+            data.status === 'error'
+              ? 'Unable to start pack... please see the instance logs...'
+              : 'The instance has crashed or has been externally closed.',
+          type: 'danger',
+        });
+
+        this.hasCrashed = true;
+        return; // block the redirection
+      }
+
+      this.leavePage();
+    }
   }
 
   leavePage() {
@@ -338,7 +340,7 @@ export default class LaunchingPage extends Vue {
 
   destroyed() {
     // Stop listening to events!
-    eventBus.$off('ws.message');
+    emitter.off('ws.message', this.onLaunchProgressUpdate);
   }
 
   handleLogMessages(data: any) {

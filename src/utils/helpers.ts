@@ -42,6 +42,37 @@ export const getPackArt = (packArt: any) => {
 };
 
 /**
+ * Creates a modpackch api url with the ability to inject an authentication key by default to the url
+ *
+ * @param url the remainder of the url (Automatically removes the `/` at the start of a string)
+ */
+export const createModpackchUrl = (url: string): string => {
+  const key = store.state.auth?.token?.attributes.modpackschkey;
+  return `${process.env.VUE_APP_MODPACK_API}/${key ?? 'public'}/${url.startsWith('/') ? url.slice(1) : url}`;
+};
+
+export type AbortableRequest = {
+  abort: () => void;
+  ready: Promise<Response>;
+};
+
+/**
+ * A fetch that you can abort, automatically attaching a method that can be aborted
+ *
+ * @param request the normal fetch request args
+ * @param opts    fetch request init
+ */
+export const abortableFetch = (request: RequestInfo, opts?: RequestInit): AbortableRequest => {
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  return {
+    abort: () => controller.abort(),
+    ready: fetch(request, { ...opts, signal }),
+  };
+};
+
+/**
  * Wraps the websocket send message in a timeout-able promise
  *
  * @deprecated use the typed version
