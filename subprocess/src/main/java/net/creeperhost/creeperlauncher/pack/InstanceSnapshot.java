@@ -68,6 +68,9 @@ public class InstanceSnapshot {
         
         try {
             this.action.accept(this.instance);
+            
+            // If successful, yeet the snapshot
+            this.removeSnapshot();
         } catch (Throwable exception) {
             try {
                 this.rollback();
