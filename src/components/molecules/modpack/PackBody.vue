@@ -205,7 +205,15 @@ import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 
 @Component({
   name: 'pack-body',
-  components: { Loading, ModpackVersions, ModpackPublicServers, ModpackSettings, ModpackMods, PackActions, ModpackBackups },
+  components: {
+    Loading,
+    ModpackVersions,
+    ModpackPublicServers,
+    ModpackSettings,
+    ModpackMods,
+    PackActions,
+    ModpackBackups,
+  },
 })
 export default class PackBody extends Vue {
   @State('modpacks') public modpacks!: ModpackState;
@@ -222,7 +230,7 @@ export default class PackBody extends Vue {
   @Prop() mods!: any[];
   @Prop() updatingModlist!: boolean;
 
-  @Prop({ default: [] }) backups!: InstanceBackup[];
+  @Prop({ default: () => [] }) backups!: InstanceBackup[];
 
   tabs = ModpackPageTabs;
   getColorForChar = getColorForChar;

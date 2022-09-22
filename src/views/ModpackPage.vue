@@ -202,7 +202,10 @@ export default class ModpackPage extends Vue {
     }
 
     const res = await fetch(
-      createModpackchUrl(`/${this.packType === 0 ? 'modpack' : 'curseforge'}/${packID}/${pack.versions[0].id}`),
+      createModpackchUrl(
+        `/${this.packType === 0 ? 'modpack' : 'curseforge'}/${packID}/${pack.versions[0].id}`,
+        !pack.private && !pack.versions[0].private,
+      ),
     );
 
     this.loading = false;

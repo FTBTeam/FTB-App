@@ -90,7 +90,7 @@ export default class ModpackBackups extends Vue {
   @Action('showAlert') public showAlert: any;
 
   @Prop() instance!: Instance;
-  @Prop({ default: [] }) backups!: InstanceBackup[];
+  @Prop({ default: () => [] }) backups!: InstanceBackup[];
 
   prettyBytes = prettyByteFormat;
 

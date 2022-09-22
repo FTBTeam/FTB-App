@@ -17,6 +17,7 @@ export interface ModPack {
   tags: ModPackTag[];
   notification: string;
   links: ModPackLink[];
+  private?: boolean;
 }
 
 export interface ModPackLink {
@@ -80,6 +81,7 @@ export interface Versions {
   type: string;
   updated: number;
   mtgID?: string;
+  private?: boolean;
 }
 
 export interface VersionSpecs {
