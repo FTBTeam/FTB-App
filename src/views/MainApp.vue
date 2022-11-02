@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="theme-dark" v-if="platfrom.get.config">
     <title-bar :is-dev="isDev" />
-    <div class="app-container" v-if="false">
+    <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
         <sidebar :is-dev="isDev" v-if="showSidebar" />
         <div class="app-content relative">
@@ -13,7 +13,7 @@
     <div class="app-container centered" v-else>
       <div class="pushed-content">
         <report-form
-          v-if="true"
+          v-if="websockets.reconnects > 10 && this.loading"
           :loadingFailed="loading"
           :websocketsFailed="!websockets || websockets.reconnects > 10"
           :websockets="websockets"
