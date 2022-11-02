@@ -7,7 +7,7 @@
           class="btn-icon bg-navbar ftb"
           :class="{ active: currentTab === 'ftbsearch' }"
         >
-          <img src="@/assets/ftb-white-logo.svg" alt="" />
+          <img src="@/assets/images/ftb-logo.svg" alt="" />
         </div>
 
         <div
@@ -295,7 +295,7 @@ h1 {
       }
 
       &.ftb img {
-        margin-top: -4px;
+        filter: saturate(0%);
       }
 
       &.active {

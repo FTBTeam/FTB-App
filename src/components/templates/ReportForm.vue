@@ -4,7 +4,7 @@
       class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
       style="flex-direction: column; justify-content: center; align-items: center"
     >
-      <img src="@/assets/logo_ftb.png" width="200px" class="mb-4" />
+      <img src="@/assets/images/ftb-logo-full.svg" width="200px" class="mb-8" />
       <div class="wrapper" v-if="!disabled">
         <h1 class="text-2xl text-center">There was an error with the FTB App.</h1>
         <div v-if="!submitted" class="flex flex-col">

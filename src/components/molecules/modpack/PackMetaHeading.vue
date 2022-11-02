@@ -15,7 +15,7 @@
 
     <div class="meta" v-if="!instance.name || instance.name.toLowerCase() !== 'vanilla'">
       <div
-        class="origin icon"
+        class="origin icon ftb"
         v-if="
           (!instance.packType ? (instance.type || '').toLowerCase() !== 'curseforge' : instance.packType === 0) &&
           !instance.isImport
@@ -23,7 +23,7 @@
         data-balloon-pos="left"
         aria-label="FTB Modpack"
       >
-        <img src="@/assets/ftb-white-logo.svg" alt="" />
+        <img src="@/assets/images/ftb-logo.svg" alt="" />
       </div>
       <div class="origin icon" v-else-if="!instance.isImport" data-balloon-pos="left" aria-label="Curseforge Modpack">
         <img src="@/assets/curse-logo.svg" alt="" />
@@ -126,6 +126,10 @@ export default class PackMetaHeading extends Vue {
       margin-left: 1.5rem;
       img {
         width: 30px;
+      }
+
+      & .ftb {
+        filter: saturate(0%);
       }
     }
   }

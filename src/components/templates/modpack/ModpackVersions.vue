@@ -244,7 +244,8 @@ export default class ModpackVersions extends Vue {
 
         .version {
           font-weight: bold;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
           margin-bottom: 0.4rem;
         }
 

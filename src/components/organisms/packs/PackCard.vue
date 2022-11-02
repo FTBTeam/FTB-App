@@ -390,7 +390,8 @@ export default class PackCard extends Vue {
       background: rgba(41, 130, 212, 0.5);
       backdrop-filter: blur(3px);
       padding: 0.2rem 0.5rem;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
       text-align: center;
       bottom: 0;
       width: 100%;
