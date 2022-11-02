@@ -116,6 +116,7 @@ public class NewDownloadTask implements Task<Path> {
                 fail = null;
                 break;
             } catch (Throwable ex) {
+                LOGGER.debug("Download attempt failed. Attempt {}, URL {}.", i, url, ex);
                 if (fail != null) {
                     fail.addSuppressed(ex);
                 } else {
@@ -124,7 +125,8 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
         if (fail != null) {
-            throw new IOException("Download task failed.", fail);
+            LOGGER.error("Download task failed for " + url);
+            throw new IOException("Download task failed for " + url, fail);
         }
 
         LOGGER.info("  File downloaded.");
