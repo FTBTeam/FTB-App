@@ -77,42 +77,14 @@ public class WebUtils
 
             rd.close();
             return respData.toString();
-        } catch (Throwable ignored)
+        } catch (Throwable ex)
         {
+            LOGGER.error("Failed Get request.", ex);
         }
 
         return "error";
     }
-    public static String mtAPIGet(String urlString)
-    {
-        try
-        {
-            URL url = new URL(urlString);
-            URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
-            url = uri.toURL();
-            // lul
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 
-            conn.setRequestMethod("GET");
-            conn.addRequestProperty("APP_AUTH", Settings.settings.get("sessionString"));
-
-            conn.setRequestProperty("User-Agent", Constants.USER_AGENT);
-            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String line;
-            StringBuilder respData = new StringBuilder();
-            while ((line = rd.readLine()) != null)
-            {
-                respData.append(line);
-                respData.append("\n");
-            }
-            rd.close();
-            return respData.toString();
-        } catch (Throwable ignored)
-        {
-        }
-
-        return "error";
-    }
     public static String getWebResponse(String urlString)
     {
         try
@@ -151,42 +123,12 @@ public class WebUtils
 
             rd.close();
             return respData.toString();
-        } catch (Throwable ignored)
+        } catch (Throwable ex)
         {
+            LOGGER.error("Failed request:", ex);
         }
 
         return "error";
-    }
-
-    private static String mapToFormString(Map<String, String> map)
-    {
-        StringBuilder postDataStringBuilder = new StringBuilder();
-
-        String postDataString;
-
-        try
-        {
-            for (Map.Entry<String, String> entry : map.entrySet())
-            {
-                postDataStringBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8)).append("=").append(URLEncoder.encode(entry.getValue(), "UTF-8")).append("&");
-            }
-        } catch (Exception ignored)
-        {
-        } finally
-        {
-            postDataString = postDataStringBuilder.toString();
-        }
-        return postDataString;
-    }
-
-    public static String postWebResponse(String urlString, Map<String, String> postDataMap)
-    {
-        return postWebResponse(urlString, mapToFormString(postDataMap));
-    }
-
-    public static String methodWebResponse(String urlString, String postDataString, String method, boolean isJson, boolean silent)
-    {
-        return methodWebResponse(urlString, postDataString, method, isJson ? "application/json" : "application/x-www-form-urlencoded", isJson, silent);
     }
 
     public static String methodWebResponse(String urlString, String postDataString, String method, String contentType, boolean isJson, boolean silent)
@@ -244,31 +186,22 @@ public class WebUtils
             rd.close();
             logHide = false;
             return respData.toString();
-        } catch (Throwable t)
+        } catch (Throwable ex)
         {
             if (silent || logHide)
             {
                 return "error";
             }
             logHide = true;
+            LOGGER.error("Failed request:", ex);
         }
 
         return "error";
     }
 
-    public static String postWebResponse(String urlString, String postDataString)
-    {
-        return methodWebResponse(urlString, postDataString, "POST", false, false);
-    }
-
     public static String postWebResponse(String urlString, String postDataString, String contentType)
     {
         return methodWebResponse(urlString, postDataString, "POST", contentType, false, false);
-    }
-
-    public static String putWebResponse(String urlString, String body, boolean isJson, boolean isSilent)
-    {
-        return methodWebResponse(urlString, body, "PUT", isJson, isSilent);
     }
 
     public static boolean checkExist(URL url)
@@ -282,27 +215,10 @@ public class WebUtils
             connection.connect();
             response = ((connection.getResponseCode() == 200) && (connection.getContentLength() >= 0));
             connection.disconnect();
-        } catch (Exception err)
+        } catch (Exception ex)
         {
+            LOGGER.error("Failed request:", ex);
             response = false;
-        }
-        return response;
-    }
-
-    public static long getFileSize(URL url)
-    {
-        long response = -1;
-        try
-        {
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("User-Agent", Constants.USER_AGENT);
-            connection.setRequestMethod("HEAD");
-            connection.connect();
-            response = connection.getContentLength();
-            connection.disconnect();
-        } catch (Exception err)
-        {
-            response = -1;
         }
         return response;
     }
