@@ -445,6 +445,8 @@ public class InstanceLauncher {
             for (String arg : Constants.MOJANG_DEFAULT_ARGS) {
                 command.add(sub.replace(arg));
             }
+            command.add("-Duser.language=en");
+            command.add("-Duser.country=US");
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
@@ -455,6 +457,8 @@ public class InstanceLauncher {
             Map<String, String> env = builder.environment();
             // Apparently this can override our passed in Java arguments.
             env.remove("_JAVA_OPTIONS");
+            env.remove("JAVA_TOOL_OPTIONS");
+            env.remove("JAVA_OPTIONS");
 
             return builder;
         } catch (Throwable ex) {

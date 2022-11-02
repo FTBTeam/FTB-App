@@ -2,7 +2,7 @@
   <div id="app" class="theme-dark">
     <title-bar />
     <div class="flex flex-col h-full justify-center" v-if="!websocket.socket.isConnected">
-      <font-awesome-icon icon="sync-alt" spin class="mx-auto" style="font-size: 25vw;"></font-awesome-icon>
+      <font-awesome-icon icon="sync-alt" spin class="mx-auto" style="font-size: 25vw"></font-awesome-icon>
     </div>
     <div class="flex flex-row h-full" v-else-if="isMinecraftLinked">
       <friends-list
@@ -30,10 +30,10 @@
       </div>
     </div>
     <div class="flex flex-col h-full justify-center" v-else-if="auth.loggingIn">
-      <font-awesome-icon icon="sync-alt" spin class="mx-auto" style="font-size: 25vw;"></font-awesome-icon>
+      <font-awesome-icon icon="sync-alt" spin class="mx-auto" style="font-size: 25vw"></font-awesome-icon>
     </div>
     <div class="flex flex-col h-full justify-center" v-else>
-      <font-awesome-icon icon="user" class="mx-auto" style="font-size: 25vw;"></font-awesome-icon>
+      <font-awesome-icon icon="user" class="mx-auto" style="font-size: 25vw"></font-awesome-icon>
       <h2 class="text-center">In order to use this feature, you must complete your account setup</h2>
       <ftb-button color="primary" class="mx-auto py-2 px-4 my-2" @click="openProfile"
         >Click here to continue</ftb-button
@@ -116,7 +116,7 @@ export default class ChatWindow extends Vue {
   // }
 
   get isMinecraftLinked() {
-    const p = this.auth.token?.accounts.find(s => s.identityProvider === 'mcauth');
+    const p = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return p !== undefined && p != null;
   }
 
@@ -136,7 +136,7 @@ export default class ChatWindow extends Vue {
         Vue.set(this.friends, 'pending', data.pending);
         let requests = this.friends.pending;
         requests = data.pending.map((request: Friend) => {
-          const existing = this.friends.pending.find(f => f.longHash === request.longHash);
+          const existing = this.friends.pending.find((f) => f.longHash === request.longHash);
           if (existing !== undefined) {
             request.friendCode = existing.friendCode;
             request.userDisplay = existing.userDisplay;
@@ -173,7 +173,7 @@ export default class ChatWindow extends Vue {
       this.friend = friend;
       if (this.messages[friend.mediumHash]) {
         let messages = this.messages[friend.mediumHash];
-        messages = messages.map(message => {
+        messages = messages.map((message) => {
           message.read = true;
           return message;
         });
@@ -300,7 +300,8 @@ export default class ChatWindow extends Vue {
 <style lang="scss" scoped>
 #app {
   margin: 0;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);

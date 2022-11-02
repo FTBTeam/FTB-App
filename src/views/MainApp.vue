@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="theme-dark" v-if="platfrom.get.config">
     <title-bar :is-dev="isDev" />
-    <div class="app-container" v-if="websockets.socket.isConnected && !loading">
+    <div class="app-container" v-if="false">
       <main class="main">
         <sidebar :is-dev="isDev" v-if="showSidebar" />
         <div class="app-content relative">
@@ -13,7 +13,7 @@
     <div class="app-container centered" v-else>
       <div class="pushed-content">
         <report-form
-          v-if="websockets.reconnects > 10 && this.loading"
+          v-if="true"
           :loadingFailed="loading"
           :websocketsFailed="!websockets || websockets.reconnects > 10"
           :websockets="websockets"
@@ -24,7 +24,7 @@
           style="flex-direction: column; justify-content: center; align-items: center"
           v-else
         >
-          <img src="../assets/logo_ftb.png" width="300" class="loader-logo-animation" />
+          <img src="../assets/images/ftb-logo-full.svg" width="300" class="loader-logo-animation" />
           <div class="progress">
             <div class="bar"></div>
           </div>
