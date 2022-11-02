@@ -123,6 +123,7 @@ export default class ModpackMods extends Vue {
 
 <style lang="scss" scoped>
 .clean-font {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol';
 }
 </style>

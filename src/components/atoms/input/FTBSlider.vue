@@ -94,7 +94,8 @@ export default class FTBSlider extends Vue {
     background-color: var(--color-background);
     padding: 0.8rem 1.3rem 1rem 1.3rem;
     border-radius: 5px;
-    font-family: Helvetica Neue, Helvetica, Arial, serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
     position: relative;
     z-index: 1;
 
