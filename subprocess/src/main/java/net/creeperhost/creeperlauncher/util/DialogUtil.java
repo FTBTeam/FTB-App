@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.migration.migrators;
+package net.creeperhost.creeperlauncher.util;
 
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;

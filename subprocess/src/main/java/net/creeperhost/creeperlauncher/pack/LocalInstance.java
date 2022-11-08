@@ -19,7 +19,6 @@ import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.migration.migrators.DialogUtil;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
