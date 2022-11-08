@@ -246,17 +246,19 @@ public class NewDownloadTask implements Task<Path> {
     //@formatter:on
 
     public static long getContentLength(String url) {
-        Request request = new Request.Builder()
-                .head()
-                .url(url)
-                .build();
-        try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
-            ResponseBody body = response.body();
-            if (body != null) return body.contentLength();
+        try {
+            Request request = new Request.Builder()
+                    .head()
+                    .url(url)
+                    .build();
+            try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
+                ResponseBody body = response.body();
+                if (body != null) return body.contentLength();
 
-            return NumberUtils.toInt(response.header("Content-Length"));
-        } catch (IOException e) {
-            LOGGER.error("Could not perform a HEAD request to {}", url);
+                return NumberUtils.toInt(response.header("Content-Length"));
+            }
+        } catch (Throwable ex) {
+            LOGGER.error("Could not perform a HEAD request to '{}'", url, ex);
         }
         return 0;
     }
