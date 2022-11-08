@@ -51,8 +51,8 @@ public class InstallationOperation extends LongRunningOperation {
     @Override
     protected void onOperationException(Throwable ex) {
         if (ex instanceof PrepareException pex) {
-            LOGGER.error("Fatal exception whilst preparing modpack installation.");
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack instllation.", ""));
+            LOGGER.error("Fatal exception whilst preparing modpack installation.", pex);
+            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation.", ""));
             return;
         }
 
