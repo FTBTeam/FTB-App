@@ -31,6 +31,7 @@ public class MicrosoftOAuth {
         StepReply authXboxRes = authenticateWithXbox(authToken);
 
         if (isUnsuccessful(authXboxRes)) {
+            LOGGER.error("Unable to auth with xbox: " + authXboxRes.message());
             return DataResult.error(new ErrorWithCode("Failed to authenticate with Xbox", "xbx_auth_001"));
         }
 
@@ -47,6 +48,7 @@ public class MicrosoftOAuth {
         // Authenticate with XSTS (the dev docs for this are private so fuck knows what it's actually doing)
         StepReply xstsRes = authenticateWithXSTS(xblToken);
         if (isUnsuccessful(xstsRes)) {
+            LOGGER.error("Unable to login with xsts: " + xstsRes.message());
             return DataResult.error(new ErrorWithCode("Failed to authenticate with XSTS", "xbx_auth_003"));
         }
 
@@ -79,6 +81,7 @@ public class MicrosoftOAuth {
         // Login with xbox
         StepReply loginWithXbox = loginWithXbox(xstsToken, userHash);
         if (isUnsuccessful(loginWithXbox)) {
+            LOGGER.error("Unable to login with xbox: " + loginWithXbox.message());
             return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account", "xbx_auth_006"));
         }
 
@@ -98,7 +101,7 @@ public class MicrosoftOAuth {
 
         boolean hasOwnership = false;
         if (isUnsuccessful(checkOwnershipRes)) {
-            LOGGER.warn("Unable to check ownership of Minecraft account");
+            LOGGER.warn("Unable to check ownership of Minecraft account. " + checkOwnershipRes.message());
         } else {
             // Validate the ownership
             JsonArray items = checkOwnershipRes.data().getAsJsonObject().get("items").getAsJsonArray();
@@ -114,6 +117,7 @@ public class MicrosoftOAuth {
 
         // Validate the profile
         if (isUnsuccessful(profileRes)) {
+            LOGGER.warn("Unable to fetch profile. " + profileRes.message());
             return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account...", "xbx_auth_007"));
         }
 
