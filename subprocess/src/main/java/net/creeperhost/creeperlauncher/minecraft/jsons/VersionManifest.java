@@ -68,16 +68,10 @@ public class VersionManifest {
             "arch", Architecture.current() == Architecture.X64 ? "64" : "32"
     ));
 
-    public static final AssetIndex LEGACY_ASSETS = SneakyUtils.sneaky(() -> {
-        AssetIndex index = new AssetIndex();
-        index.id = "legacy";
-        index.url = "https://s3.amazonaws.com/Minecraft.Download/indexes/legacy.json";
-        index.size = -1;
-        index.totalSize = -1;
-        index.sha1 = null;
-
-        return index;
-    });
+    /**
+     * Version known to contain 'legacy' assets.
+     */
+    public static final String LEGACY_ASSETS_VERSION = "1.6.4";
 
     public String id;
     @Nullable
@@ -142,6 +136,17 @@ public class VersionManifest {
             }
         }
         return JsonUtils.parse(GSON, versionFile, VersionManifest.class);
+    }
+
+    @Nullable
+    public static AssetIndex assetsFor(Path versionsDir, String version) throws IOException {
+        VersionListManifest versionList = VersionListManifest.update(versionsDir);
+        VersionManifest manifest = versionList.resolve(versionsDir, version);
+        if (manifest == null) {
+            LOGGER.error("Failed to retrieve valid Vanilla version for '{}'.", version);
+            return null;
+        }
+        return manifest.assetIndex;
     }
 
     public Stream<Library> getLibraries(Set<String> features) {

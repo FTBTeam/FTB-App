@@ -31,6 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
+import org.apache.tools.ant.launch.LaunchException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -50,6 +51,7 @@ import java.util.zip.ZipFile;
 
 import static net.covers1624.quack.collection.ColUtils.iterable;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
+import static net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.LEGACY_ASSETS_VERSION;
 
 /**
  * Responsible for launching a specific instance.
@@ -334,7 +336,7 @@ public class InstanceLauncher {
             token.throwIfCancelled();
 
             progressTracker.startStep("Validate assets");
-            Pair<AssetIndex, AssetIndexManifest> assetPair = checkAssets(token);
+            Pair<AssetIndex, AssetIndexManifest> assetPair = checkAssets(token, versionsDir);
             Path virtualAssets = buildVirtualAssets(assetPair.getLeft(), assetPair.getRight(), gameDir, assetsDir);
             progressTracker.finishStep();
 
@@ -488,18 +490,23 @@ public class InstanceLauncher {
         }
     }
 
-    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token) throws IOException {
+    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token, Path versionsDir) throws IOException, LaunchException {
         assert !manifests.isEmpty();
 
         LOGGER.info("Updating assets..");
         VersionManifest manifest = manifests.get(0);
         AssetIndex index = manifest.assetIndex;
         if (index == null) {
+            LOGGER.info("Old manifest with broken assets. Querying vanilla manifest for assets..");
             if (manifest.assets == null) {
-                LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy.", manifest.id);
-                index = VersionManifest.LEGACY_ASSETS;
+                LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy. (Harvesting from {})", manifest.id, LEGACY_ASSETS_VERSION);
+                index = VersionManifest.assetsFor(versionsDir, LEGACY_ASSETS_VERSION);
             } else {
-                index = AssetIndex.forUnknown(manifest.assets);
+                index = VersionManifest.assetsFor(versionsDir, manifest.assets);
+            }
+            if (index == null) {
+                LOGGER.error("Unable to find assets for '{}'.", manifest.id);
+                throw new LaunchException("Unable to prepare Legacy/Unknown assets for '" + manifest.id + "'.");
             }
         }
 
