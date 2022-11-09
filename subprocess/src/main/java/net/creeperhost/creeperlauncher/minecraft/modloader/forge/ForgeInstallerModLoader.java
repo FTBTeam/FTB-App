@@ -34,7 +34,7 @@ public class ForgeInstallerModLoader extends ForgeModLoader
 	@Override
 	public Path install(LocalInstance instance)
 	{
-		instance.modLoader = getMinecraftVersion() + "-forge-" + getForgeVersion();
+		instance.props.modLoader = getMinecraftVersion() + "-forge-" + getForgeVersion();
 
 		String forgeUrl = Constants.FORGE_CH + getMinecraftVersion() + "-" + getForgeVersion() + "/forge-" + getMinecraftVersion() + "-" + getForgeVersion() + "-installer.jar";
 		String forgeUrlJson = Constants.FORGE_CH + getMinecraftVersion() + "-" + getForgeVersion() + "/forge-" + getMinecraftVersion() + "-" + getForgeVersion() + "-installer.json";

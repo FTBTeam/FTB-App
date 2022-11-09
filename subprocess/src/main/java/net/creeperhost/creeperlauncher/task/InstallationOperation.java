@@ -65,7 +65,7 @@ public class InstallationOperation extends LongRunningOperation {
         switch (reason) {
             case NORMAL -> {
                 Instances.addInstance(instance);
-                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance));
+                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.props));
             }
             case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", ""));
         }

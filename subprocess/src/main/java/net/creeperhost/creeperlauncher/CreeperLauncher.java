@@ -113,7 +113,7 @@ public class CreeperLauncher {
 
     public static void initSettingsAndCache() {
         Settings.loadSettings();
-        localCache = new LocalCache(Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache"));
+        localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
     }
 
     public static void main(String[] args) {
@@ -308,13 +308,13 @@ public class CreeperLauncher {
                             new OpenModalData.ModalButton("Ok", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                         ));
                     } else {
-                        Path oldCache = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache");
+                        Path oldCache = Settings.getInstancesDir().resolve(".localCache");
                         oldCache.toFile().deleteOnExit();
                         Settings.settings.remove("instanceLocation");
                         Settings.settings.put("instanceLocation", value);
                         Settings.saveSettings();
                         Instances.refreshInstances();
-                        localCache = new LocalCache(Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache"));
+                        localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
                         OpenModalData.openModal("Success", "Moved instance folder location successfully", List.of(
                             new OpenModalData.ModalButton("Yay!", "green", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                         ));

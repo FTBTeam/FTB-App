@@ -54,7 +54,7 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
 
             LocalInstance instance;
             try {
-                instance = new LocalInstance(instanceDir);
+                instance = new LocalInstance(instanceDir, instanceJson);
                 instance.cloudSync(true);
 
                 List<ModLoader> modLoaders = ModLoaderManager.getModLoaders(McUtils.getTargets(instance.getDir()));

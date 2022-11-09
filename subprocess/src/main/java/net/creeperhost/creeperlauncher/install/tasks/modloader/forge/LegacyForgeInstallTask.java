@@ -39,11 +39,11 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
         assert versionName != null;
 
-        instance.hasInstMods = true;
+        instance.props.hasInstMods = true;
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
         Path instMods = instance.getDir().resolve("instmods");
 
-        instance.jvmArgs = instance.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath() + "\"";
+        instance.props.jvmArgs = instance.props.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath() + "\"";
 
         if (cancelToken != null) cancelToken.throwIfCancelled();
 

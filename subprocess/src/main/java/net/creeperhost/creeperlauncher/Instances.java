@@ -35,18 +35,17 @@ public class Instances
         instances.put(instance.getUuid(), instance);
     }
 
-    //TODO, do these need to copy?
-    public static List<LocalInstance> allInstances() {
-        return new ArrayList<>(Instances.instances.values());
+    public static Iterable<LocalInstance> allInstances() {
+        return Collections.unmodifiableCollection(Instances.instances.values());
     }
 
-    public static List<JsonObject> cloudInstances() {
-        return new ArrayList<>(Instances.cloudInstances.values());
+    public static Iterable<JsonObject> cloudInstances() {
+        return Collections.unmodifiableCollection(Instances.cloudInstances.values());
     }
 
     public static void refreshInstances() {
         ElapsedTimer totalTimer = new ElapsedTimer();
-        Path instancesDir = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC);
+        Path instancesDir = Settings.getInstancesDir();
 
         LOGGER.info("Reloading instances..");
         instances.clear();
@@ -57,8 +56,8 @@ public class Instances
             LOGGER.info("Instances directory missing, skipping..");
         } else {
             ElapsedTimer timer = new ElapsedTimer();
-            List<LocalInstance> loadedInstances = FileUtils.listDir(instancesDir).stream()
-                    .parallel()
+            List<LocalInstance> loadedInstances = FileUtils.listDir(instancesDir)
+                    .parallelStream()
                     .filter(e -> !e.getFileName().toString().startsWith("."))
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
@@ -98,8 +97,8 @@ public class Instances
             return null;
         }
         try {
-            LocalInstance localInstance = new LocalInstance(path);
-            if (!localInstance.installComplete) {
+            LocalInstance localInstance = new LocalInstance(path, json);
+            if (!localInstance.props.installComplete) {
                 // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
                 LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
                 return null;
@@ -117,24 +116,19 @@ public class Instances
         }
     }
 
-    private static HashMap<UUID, JsonObject> loadCloudInstances()
-    {
+    private static HashMap<UUID, JsonObject> loadCloudInstances() {
         List<UUID> uuidList = CloudSaveManager.getPrefixes();
         HashMap<UUID, JsonObject> hashMap = new HashMap<>();
 
-        for (UUID uuid : uuidList)
-        {
-            try
-            {
-                if(Instances.getInstance(uuid) == null)
-                {
+        for (UUID uuid : uuidList) {
+            try {
+                if(Instances.getInstance(uuid) == null) {
                     String jsonResp = CloudSaveManager.getFile(uuid.toString() + "/instance.json");
                     Gson gson = new Gson();
                     JsonObject object = gson.fromJson(jsonResp, JsonObject.class);
                     hashMap.put(uuid, object);
                 }
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 LOGGER.error("Invalid cloudsave found with UUID of {}", uuid);
             }
 

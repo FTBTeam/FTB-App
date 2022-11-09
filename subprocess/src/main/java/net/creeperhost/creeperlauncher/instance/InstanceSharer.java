@@ -122,11 +122,11 @@ public class InstanceSharer extends InstanceOperation {
             }
         }
         ShareManifest.Type type;
-        if (instance.isImport) {
+        if (instance.props.isImport) {
             type = ShareManifest.Type.IMPORT;
-        } else if (instance.packType == 1) {
+        } else if (instance.props.packType == 1) {
             type = ShareManifest.Type.CURSE;
-        } else if (instance._private) {
+        } else if (instance.props._private) {
             type = ShareManifest.Type.PRIVATE;
         } else {
             type = ShareManifest.Type.PUBLIC;

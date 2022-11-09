@@ -41,7 +41,7 @@ public class FabricModLoader extends ModLoader
         LOGGER.info("Minecraft version: {} Fabric version: {}", getMinecraftVersion(), getFabricVersion());
 		var profileName = String.format("fabric-loader-%s-%s", getFabricVersion(), getMinecraftVersion());
 
-		instance.modLoader = profileName;
+		instance.props.modLoader = profileName;
 
 		JsonObject loaderMeta;
 		try

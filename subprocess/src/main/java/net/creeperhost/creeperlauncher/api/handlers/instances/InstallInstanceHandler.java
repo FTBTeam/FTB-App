@@ -62,7 +62,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
                 data.id,
                 data.version,
                 data._private,
-                instance.packType
+                instance.props.packType
         );
         if (manifests == null) {
             abort(data, "Modpack not found");
@@ -142,9 +142,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
 
     private void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
         LocalInstance instance = new LocalInstance(modpackManifest, versionManifest, isPrivate, packType);
-        instance.isImport = isImport;
+        instance.props.isImport = isImport;
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
-            Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.packType);
+            Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);
         }
         beginInstallTask(data, instance, versionManifest);
     }

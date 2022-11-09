@@ -138,7 +138,7 @@ public class InstanceLauncher {
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
         Set<String> features = new HashSet<>();
-        if (instance.width != 0 && instance.height != 0) {
+        if (instance.props.width != 0 && instance.props.height != 0) {
             features.add("has_custom_resolution");
         }
 
@@ -313,7 +313,7 @@ public class InstanceLauncher {
 
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
-            if (instance.embeddedJre) {
+            if (instance.props.embeddedJre) {
                 String javaTarget = instance.versionManifest.getTargetVersion("runtime");
                 Path javaHome;
                 if (javaTarget == null) {
@@ -334,7 +334,7 @@ public class InstanceLauncher {
                 }
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
-                javaExecutable = instance.jrePath;
+                javaExecutable = instance.props.jrePath;
             }
             progressTracker.finishStep();
 
@@ -364,7 +364,7 @@ public class InstanceLauncher {
 
             token.throwIfCancelled();
 
-            Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
+            Path nativesDir = versionsDir.resolve(instance.props.modLoader).resolve(instance.props.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
 
             Map<String, String> subMap = new HashMap<>();
@@ -398,7 +398,7 @@ public class InstanceLauncher {
                 privateTokens.add(accessToken);
             }
 
-            subMap.put("version_name", instance.modLoader);
+            subMap.put("version_name", instance.props.modLoader);
             subMap.put("game_directory", gameDir.toString());
             subMap.put("assets_root", assetsDir.toAbsolutePath().toString());
             subMap.put("game_assets", virtualAssets.toAbsolutePath().toString());
@@ -408,10 +408,10 @@ public class InstanceLauncher {
             subMap.put("launcher_name", "FTBApp");
             subMap.put("launcher_version", Constants.APPVERSION);
             subMap.put("primary_jar", getGameJar(versionsDir).toAbsolutePath().toString());
-            subMap.put("memory", String.valueOf(instance.memory));
+            subMap.put("memory", String.valueOf(instance.props.memory));
 
-            subMap.put("resolution_width", String.valueOf(instance.width));
-            subMap.put("resolution_height", String.valueOf(instance.height));
+            subMap.put("resolution_width", String.valueOf(instance.props.width));
+            subMap.put("resolution_height", String.valueOf(instance.props.height));
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
@@ -482,10 +482,10 @@ public class InstanceLauncher {
         manifests.clear();
         VersionListManifest versions = VersionListManifest.update(versionsDir);
         Set<String> seen = new HashSet<>();
-        String id = instance.modLoader;
+        String id = instance.props.modLoader;
         while (id != null) {
             token.throwIfCancelled();
-            if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.modLoader);
+            if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.props.modLoader);
             LOGGER.info("Preparing manifest {}", id);
             VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
             if (manifest == null) {

@@ -42,9 +42,9 @@ public class ForgeJarModLoader extends ForgeModLoader
 	{
 		Path returnFile = null;
 		String newname = getMinecraftVersion() + "-forge" + getMinecraftVersion() + "-" + getForgeVersion();
-		instance.mcVersion = getMinecraftVersion();
-		instance.modLoader = newname;
-		instance.hasInstMods = true;
+		instance.props.mcVersion = getMinecraftVersion();
+		instance.props.modLoader = newname;
+		instance.props.hasInstMods = true;
 
 		LOGGER.info("Minecraft version: {} Forge version: {} NewName: {}", getMinecraftVersion(), getForgeVersion(), newname);
 
@@ -52,7 +52,7 @@ public class ForgeJarModLoader extends ForgeModLoader
 		FileUtils.createDirectories(file);
 
 		//Add the jvm args to fix loading older forge versions
-		instance.jvmArgs = instance.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath().toString().trim() + "\"";
+		instance.props.jvmArgs = instance.props.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath().toString().trim() + "\"";
 		try
 		{
 			URI url = null;

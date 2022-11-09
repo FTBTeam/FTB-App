@@ -90,7 +90,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
             startTime.set(System.currentTimeMillis());
             lastError.set("");
             LOGGER.info("{} {} {}", instance.getName(), instance.getId(), instance.getVersionId());
-            Path instanceRoot = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC);
+            Path instanceRoot = Settings.getInstancesDir();
             FileUtils.createDirectories(instanceRoot);
             LOGGER.debug("Setting stage to VANILLA");
             currentStage = Stage.VANILLA;
@@ -100,7 +100,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
             FileUtils.createDirectories(instanceDir);
             LOGGER.debug("Setting stage to API");
             currentStage = Stage.API;
-            downloadJsons(instanceDir, this.instance._private, this.instance.packType);
+            downloadJsons(instanceDir, this.instance.props._private, this.instance.props.packType);
             LOGGER.debug("Setting stage to FORGE");
             currentStage = Stage.FORGE;
             Path forgeJson = installModLoaders();
@@ -271,7 +271,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
                 }
             }
         }
-        return new ModPack(name, version, Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve("name"), authorList, description, mc_version, url, arturl, id, minMemory, recMemory, downloadableFileList);
+        return new ModPack(name, version, Settings.getInstancesDir().resolve("name"), authorList, description, mc_version, url, arturl, id, minMemory, recMemory, downloadableFileList);
     }
 
     public static ModPack getPackFromFile(Path _path)
@@ -388,7 +388,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
 //        }
             } catch (IOException exception) { exception.printStackTrace(); }
 
-            return new ModPack(name, version, Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve("name"), authorList, description, mc_version, url, arturl, id, minMemory, recMemory, null);
+            return new ModPack(name, version, Settings.getInstancesDir().resolve("name"), authorList, description, mc_version, url, arturl, id, minMemory, recMemory, null);
     }
 
     public List<DownloadableFile> getModList(File target) {

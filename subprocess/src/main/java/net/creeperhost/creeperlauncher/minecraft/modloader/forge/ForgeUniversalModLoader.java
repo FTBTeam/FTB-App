@@ -38,7 +38,7 @@ public class ForgeUniversalModLoader extends ForgeModLoader
 	{
         Path returnFile = null;
 		String newname = getMinecraftVersion() + "-forge" + getMinecraftVersion() + "-" + getForgeVersion();
-		instance.modLoader = newname;
+		instance.props.modLoader = newname;
         LOGGER.info("Minecraft version: {} Forge version: {}", getMinecraftVersion(), getForgeVersion());
         Path file = Constants.VERSIONS_FOLDER_LOC.resolve(newname);
         FileUtils.createDirectories(file);

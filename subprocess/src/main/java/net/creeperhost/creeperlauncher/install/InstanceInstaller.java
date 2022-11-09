@@ -216,10 +216,10 @@ public class InstanceInstaller extends InstanceOperation {
             if (modLoaderInstallTask != null) {
                 LOGGER.info("Installing ModLoader..");
                 modLoaderInstallTask.execute(cancelToken, null);
-                instance.modLoader = modLoaderInstallTask.getResult();
+                instance.props.modLoader = modLoaderInstallTask.getResult();
             } else {
                 // Mod loader doesn't exist. This must be vanilla
-                instance.modLoader = manifest.getTargetVersion("game");
+                instance.props.modLoader = manifest.getTargetVersion("game");
             }
 
             cancelToken.throwIfCancelled();
@@ -252,9 +252,9 @@ public class InstanceInstaller extends InstanceOperation {
 
             JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
 
-            instance.installComplete = true;
-            instance.versionId = manifest.getId();
-            instance.version = manifest.getName();
+            instance.props.installComplete = true;
+            instance.props.versionId = manifest.getId();
+            instance.props.version = manifest.getName();
             instance.versionManifest = manifest;
             try {
                 instance.saveJson();

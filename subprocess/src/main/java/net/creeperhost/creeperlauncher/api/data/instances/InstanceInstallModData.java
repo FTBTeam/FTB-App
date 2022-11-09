@@ -46,15 +46,4 @@ public class InstanceInstallModData extends BaseData {
         }
 
     }
-
-    public static void main(String[] args) {
-        CreeperLauncher.initSettingsAndCache();
-        Instances.refreshInstances();
-        LocalInstance localInstance = Instances.allInstances().get(0);
-        InstanceInstallModData instanceInstallModData = new InstanceInstallModData();
-        instanceInstallModData.modId = 222880;
-        instanceInstallModData.versionId = 3099576;
-        instanceInstallModData.uuid = localInstance.getUuid().toString();
-        new InstanceInstallModHandler().handle(instanceInstallModData);
-    }
 }

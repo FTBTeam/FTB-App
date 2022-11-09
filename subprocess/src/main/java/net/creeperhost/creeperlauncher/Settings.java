@@ -93,8 +93,8 @@ public class Settings
         return Paths.get(value);
     }
 
-    public static Path getInstanceLocOr(Path default_) {
-        return getPathOpt("instanceLocation", default_);
+    public static Path getInstancesDir() {
+        return getPathOpt("instanceLocation", Constants.INSTANCES_FOLDER_LOC);
     }
 
     public static boolean getBooleanOr(String name, boolean default_) {
