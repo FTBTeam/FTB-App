@@ -456,7 +456,7 @@ export default class LaunchingPage extends Vue {
   }
 
   get instanceName() {
-    return this.instance?.name ?? 'Unknown';
+    return (this.instance?.name ?? 'Unknown') + ' ' + (this.instance?.version ?? '');
   }
 
   get currentModpack() {
