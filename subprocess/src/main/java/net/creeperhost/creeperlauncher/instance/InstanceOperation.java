@@ -48,6 +48,7 @@ public abstract class InstanceOperation {
     protected Map<String, IndexedFile> computeKnownFiles(ModpackVersionManifest manifest) {
         Map<String, IndexedFile> knownFiles = new HashMap<>();
         for (ModpackVersionManifest.ModpackFile file : manifest.getFiles()) {
+            if (file.getName().isEmpty() || file.getUrl().isEmpty()) continue; // What??
             if (file.getType().equals("cf-extract")) continue;
             Path path = file.toPath(instance.getDir()).toAbsolutePath().normalize();
             String relPath = instance.getDir().relativize(path).toString().replace('\\', '/');

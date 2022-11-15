@@ -116,6 +116,7 @@ public class NewDownloadTask implements Task<Path> {
                 fail = null;
                 break;
             } catch (Throwable ex) {
+                LOGGER.debug("Download attempt failed. Attempt {}, URL {}.", i, url, ex);
                 if (fail != null) {
                     fail.addSuppressed(ex);
                 } else {
@@ -124,7 +125,8 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
         if (fail != null) {
-            throw new IOException("Download task failed.", fail);
+            LOGGER.error("Download task failed for " + url);
+            throw new IOException("Download task failed for " + url, fail);
         }
 
         LOGGER.info("  File downloaded.");
@@ -244,17 +246,19 @@ public class NewDownloadTask implements Task<Path> {
     //@formatter:on
 
     public static long getContentLength(String url) {
-        Request request = new Request.Builder()
-                .head()
-                .url(url)
-                .build();
-        try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
-            ResponseBody body = response.body();
-            if (body != null) return body.contentLength();
+        try {
+            Request request = new Request.Builder()
+                    .head()
+                    .url(url)
+                    .build();
+            try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
+                ResponseBody body = response.body();
+                if (body != null) return body.contentLength();
 
-            return NumberUtils.toInt(response.header("Content-Length"));
-        } catch (IOException e) {
-            LOGGER.error("Could not perform a HEAD request to {}", url);
+                return NumberUtils.toInt(response.header("Content-Length"));
+            }
+        } catch (Throwable ex) {
+            LOGGER.error("Could not perform a HEAD request to '{}'", url, ex);
         }
         return 0;
     }
