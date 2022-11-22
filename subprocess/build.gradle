@@ -229,7 +229,7 @@ dependencies {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
     }
     implementation 'com.github.pircbotx:pircbotx:2.2'
-    implementation 'net.covers1624:Quack:0.4.2.51'
+    implementation 'net.covers1624:Quack:0.4.3.59'
     implementation 'net.covers1624:JdkUtils:0.4.0.14'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
@@ -245,7 +245,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 
-    testImplementation 'io.netty:netty-codec-http:4.1.76.Final'
+    testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
 }
 
 test {
