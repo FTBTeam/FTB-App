@@ -12,6 +12,8 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
+import net.creeperhost.creeperlauncher.util.SSLUtils;
+import net.creeperhost.creeperlauncher.util.X509Formatter;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -23,11 +25,13 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.cert.X509Certificate;
 import java.util.*;
 
 /**
@@ -119,10 +123,11 @@ public class NewDownloadTask implements Task<Path> {
                     break outer;
                 } catch (Throwable ex) {
                     LOGGER.debug("Download attempt failed. Attempt {}, URL {}.", i, url, ex);
-                    downloadAttempts.add(new FailedDownloadAttempt(url, urlIdx, i, ex));
+                    downloadAttempts.add(new FailedDownloadAttempt(url, urlIdx, i, ex, SSLUtils.getThreadCertificates()));
                 }
             }
         }
+        SSLUtils.clearThreadCertificates();
         if (!success) {
             Map<String, List<FailedDownloadAttempt>> groups = new LinkedHashMap<>();
             for (FailedDownloadAttempt attempt : downloadAttempts) {
@@ -134,14 +139,9 @@ public class NewDownloadTask implements Task<Path> {
                 List<FailedDownloadAttempt> tries = entry.getValue();
                 sb.append("Tried URL: '%s' %d times.\n".formatted(url, tries.size()));
                 for (int i = 0; i < tries.size(); i++) {
-                    FailedDownloadAttempt aTry = tries.get(i);
-                    String exception = ExceptionUtils.getStackTrace(aTry.ex())
-                            .replace("\r\n", "\n")
-                            .replace("\n", "\n  ");
-                    sb.append("Try %d: %s".formatted(i, exception));
+                    sb.append("Try %d: %s".formatted(i, tries.get(i).formatException()));
                 }
             }
-            LOGGER.warn("Failed to download file.\n{}", sb);
             throw new DownloadFailedException("Download failed.\n" + sb);
         }
 
@@ -459,7 +459,31 @@ public class NewDownloadTask implements Task<Path> {
         }
     }
 
-    private record FailedDownloadAttempt(String url, int urlIndex, int tryNum, Throwable ex) {
+    private record FailedDownloadAttempt(String url, int urlIndex, int tryNum, Throwable ex, @Nullable X509Certificate[] certs) {
+
+        public String formatException() {
+            StringBuilder sb = new StringBuilder();
+            String exception = ExceptionUtils.getStackTrace(ex)
+                    .replace("\r\n", "\n")
+                    .replace("\n", "\n  ");
+            sb.append(exception);
+            if (sb.charAt(sb.length() - 1) != '\n') {
+                sb.append("\n");
+            }
+            if (ex instanceof SSLException && certs != null && certs.length != 0) {
+                sb.append("Certificate Trace:\n");
+                for (int i = 0; i < certs.length; i++) {
+                    sb.append("Cert ").append(i).append(": ");
+                    if (certs[i] == null) {
+                        sb.append("null");
+                    } else {
+                        sb.append(X509Formatter.printCertificate(certs[i]));
+                    }
+                }
+            }
+
+            return sb.toString();
+        }
     }
 
 }

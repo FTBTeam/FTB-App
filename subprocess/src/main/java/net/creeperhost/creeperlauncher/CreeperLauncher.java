@@ -87,6 +87,7 @@ public class CreeperLauncher {
 
     static {
         Log4jUtils.redirectStreams();
+        SSLUtils.inject();
         DNSUtils.logImportantHosts();
         System.setProperty("apple.awt.UIElement", "true");
     }
