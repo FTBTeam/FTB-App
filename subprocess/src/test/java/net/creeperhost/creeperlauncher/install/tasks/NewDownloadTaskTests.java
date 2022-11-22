@@ -8,6 +8,8 @@ import net.covers1624.quack.util.SneakyUtils;
 import net.covers1624.quack.util.TimeUtils;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -77,6 +79,51 @@ public class NewDownloadTaskTests {
         }
     }
 
+    @Test
+    public void testMirrors() throws IOException {
+        try (TestWebServer testWebServer = new TestWebServer()) {
+            Path dest = Files.createTempFile("tmp", ".dat");
+            dest.toFile().deleteOnExit();
+            Files.delete(dest);
+
+            String pathA = "/test/missing";
+            testWebServer.responseMap.put(pathA, new BakedResponse(null, "", -1));
+            String pathB = "/test/notMissing";
+
+            NewDownloadTask firstRequest = NewDownloadTask.builder()
+                    .url(testWebServer.getAddr() + pathA)
+                    .withMirror(testWebServer.getAddr() + pathB)
+                    .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
+                    .dest(dest)
+                    .build();
+            firstRequest.execute(null, null);
+        }
+    }
+
+    @Test
+    public void testMirrorsFail() throws IOException {
+        try (TestWebServer testWebServer = new TestWebServer()) {
+            Path dest = Files.createTempFile("tmp", ".dat");
+            dest.toFile().deleteOnExit();
+            Files.delete(dest);
+
+            String pathA = "/test/missing";
+            String pathB = "/test/missing2";
+            testWebServer.responseMap.put(pathA, new BakedResponse(null, "", -1));
+            testWebServer.responseMap.put(pathB, new BakedResponse(null, "", -1));
+
+            Assertions.assertThrows(DownloadFailedException.class, () -> {
+                NewDownloadTask firstRequest = NewDownloadTask.builder()
+                        .url(testWebServer.getAddr() + pathA)
+                        .withMirror(testWebServer.getAddr() + pathB)
+                        .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
+                        .dest(dest)
+                        .build();
+                firstRequest.execute(null, null);
+            });
+        }
+    }
+
     @SuppressWarnings ("UnstableApiUsage")
     private static class TestWebServer extends NanoHTTPD implements AutoCloseable {
 
@@ -113,6 +160,11 @@ public class NewDownloadTaskTests {
         private Response serveInternal(IHTTPSession session) throws Throwable {
             BakedResponse response = responseMap.get(session.getUri());
             if (response != null) {
+                // Null bytes simulates a failure of some kind.
+                // Just return bad request, 404 triggers special handling.
+                if (response.bytes == null) {
+                    return newFixedLengthResponse(Response.Status.BAD_REQUEST, null, null);
+                }
                 String etagHeader = session.getHeaders().get("if-none-match");
                 Date modifiedHeader = TimeUtils.parseDate(session.getHeaders().get("if-modified-since"));
                 if (response.etag.equals(etagHeader) && (modifiedHeader == null || Objects.equals(modifiedHeader.getTime(), response.lastModified))) {
@@ -150,5 +202,5 @@ public class NewDownloadTaskTests {
         }
     }
 
-    private record BakedResponse(byte[] bytes, String etag, long lastModified) { }
+    private record BakedResponse(@Nullable byte[] bytes, String etag, long lastModified) { }
 }
