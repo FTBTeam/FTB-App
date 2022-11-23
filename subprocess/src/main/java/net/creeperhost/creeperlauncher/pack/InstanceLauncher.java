@@ -32,7 +32,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.apache.tools.ant.launch.LaunchException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -492,7 +491,7 @@ public class InstanceLauncher {
         }
     }
 
-    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token, Path versionsDir) throws IOException, LaunchException {
+    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token, Path versionsDir) throws IOException, InstanceLaunchException {
         assert !manifests.isEmpty();
 
         LOGGER.info("Updating assets..");
@@ -508,7 +507,7 @@ public class InstanceLauncher {
             }
             if (index == null) {
                 LOGGER.error("Unable to find assets for '{}'.", manifest.id);
-                throw new LaunchException("Unable to prepare Legacy/Unknown assets for '" + manifest.id + "'.");
+                throw new InstanceLaunchException("Unable to prepare Legacy/Unknown assets for '" + manifest.id + "'.");
             }
         }
 
