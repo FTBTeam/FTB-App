@@ -21,7 +21,6 @@ import net.creeperhost.creeperlauncher.migration.MigrationManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
-import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -105,7 +104,6 @@ public class CreeperLauncher {
     public static final String websocketSecret = WebSocketAPI.generateSecret();
     public static boolean websocketDisconnect = false;
     public static AtomicBoolean isSyncing = new AtomicBoolean(false);
-    public static MineTogetherConnect mtConnect;
 
     private static boolean warnedDevelop = false;
 
@@ -571,10 +569,6 @@ public class CreeperLauncher {
             }
 
             closeSockets();
-
-            if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled() && CreeperLauncher.mtConnect.isConnected()) {
-                CreeperLauncher.mtConnect.disconnect();
-            }
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Failed to close sockets...", e);
         }

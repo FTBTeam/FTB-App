@@ -377,15 +377,6 @@ public class LocalInstance implements IPack
             }
         });
 
-        if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled()) {
-            launcher.withStartTask(ctx -> {
-                LOGGER.info("Starting MineTogether connect..");
-                CreeperLauncher.mtConnect.connect();
-            });
-            launcher.withExitTask(() -> {
-                CreeperLauncher.mtConnect.disconnect();
-            });
-        }
         launcher.withStartTask(ctx -> {
             startTime = System.currentTimeMillis();
             lastPlayed = startTime / 1000L;
