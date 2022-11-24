@@ -550,13 +550,24 @@ public class CreeperLauncher {
             try {
                 LOGGER.info("Starting Electron: " + String.join(" ", args));
                 elect = app.start();
-                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::warn);
-                StreamGobblerLog.redirectToLogger(elect.getInputStream(), LOGGER::info);
+                StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
+                        .setName("Electron STDOUT gobbler")
+                        .setInput(elect.getInputStream())
+                        .setOutput(LOGGER::info);
+                stdoutGobbler.start();
+                StreamGobblerLog stderrGobbler = new StreamGobblerLog()
+                        .setName("Electron STDERR gobbler")
+                        .setInput(elect.getErrorStream())
+                        .setOutput(LOGGER::warn);
+                stderrGobbler.start();
+                elect.onExit().thenRunAsync(() -> {
+                    stdoutGobbler.stop();
+                    stderrGobbler.stop();
+                    CreeperLauncher.exit();
+                });
             } catch (IOException e) {
                 LOGGER.error("Error starting Electron: ", e);
             }
-            CompletableFuture<Process> completableFuture = elect.onExit();
-            completableFuture.thenRun(CreeperLauncher::exit);
             Runtime.getRuntime().addShutdownHook(new Thread(elect::destroy));
         }
     }
