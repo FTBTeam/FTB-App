@@ -42,7 +42,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -262,6 +261,12 @@ public class InstanceLauncher {
         startTasks.clear();
         exitTasks.clear();
         setPhase(Phase.NOT_STARTED);
+    }
+
+    public void setLogStreaming(boolean state) {
+        if (logThread == null) return;
+
+        logThread.setStreamingEnabled(state);
     }
 
     private void setPhase(Phase newPhase) {
@@ -802,6 +807,8 @@ public class InstanceLauncher {
          */
         private static final long INTERVAL = 250;
 
+        private boolean streamingEnabled = true;
+
         private boolean stop = false;
         private final List<String> pendingMessages = new ArrayList<>(100);
         @Nullable
@@ -851,11 +858,22 @@ public class InstanceLauncher {
         }
 
         private void bufferMessage(String message) {
-            synchronized (pendingMessages) {
-                pendingMessages.add(message);
+            if (streamingEnabled) {
+                synchronized (pendingMessages) {
+                    pendingMessages.add(message);
+                }
             }
             if (pw != null) {
                 pw.println(message);
+            }
+        }
+
+        public void setStreamingEnabled(boolean state) {
+            streamingEnabled = state;
+            if (!state) {
+                synchronized (pendingMessages) {
+                    pendingMessages.clear();
+                }
             }
         }
     }
