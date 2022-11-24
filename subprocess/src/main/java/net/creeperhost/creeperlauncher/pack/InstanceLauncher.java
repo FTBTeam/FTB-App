@@ -172,28 +172,32 @@ public class InstanceLauncher {
                     return;
                 }
                 setPhase(Phase.STARTED);
+
+                // Start up the logging threads.
                 logThread = new LogThread(IOUtils.makeParents(instance.getDir().resolve("logs/console.log")));
                 Logger logger = LogManager.getLogger("Minecraft");
-                // TODO these should not use CompletableFutures, these should be separate logging threads setup manually.
-                //  These take up slots on the builtin ForkJoin pool, and may not even execute on systems with low processor thread counts.
-                CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), message -> {
-                    logThread.bufferMessage(message);
-                    logger.info(MINECRAFT_MARKER, message);
-                });
-                CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), message -> {
-                    logThread.bufferMessage(message);
-                    logger.error(MINECRAFT_MARKER, message);
-                });
+                StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
+                        .setName("Instance STDOUT log Gobbler")
+                        .setInput(process.getInputStream())
+                        .setOutput(message -> {
+                            logThread.bufferMessage(message);
+                            logger.info(MINECRAFT_MARKER, message);
+                        });
+                StreamGobblerLog stderrGobbler = new StreamGobblerLog()
+                        .setName("Instance STDERR log Gobbler")
+                        .setInput(process.getErrorStream())
+                        .setOutput(message -> {
+                            logThread.bufferMessage(message);
+                            logger.error(MINECRAFT_MARKER, message);
+                        });
+                stdoutGobbler.start();
+                stderrGobbler.start();
                 logThread.start();
 
                 process.onExit().thenRunAsync(() -> {
-                    if (!stdoutFuture.isDone()) {
-                        stdoutFuture.cancel(true);
-                    }
-                    if (!stderrFuture.isDone()) {
-                        stderrFuture.cancel(true);
-                    }
-                    // Not strictly necessary, but exits the log thread faster.
+                    // Not strictly necessary, but exits the log threads faster.
+                    stdoutGobbler.stop();
+                    stderrGobbler.stop();
                     logThread.stop = true;
                     logThread.interrupt();
                 });
