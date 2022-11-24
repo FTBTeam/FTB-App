@@ -70,16 +70,4 @@ public class StreamGobblerLog {
     public void stop() {
         stop = true;
     }
-
-    @Deprecated // Don't use random futures without an executor.
-    public static CompletableFuture<Void> redirectToLogger(final InputStream inputStream, final Consumer<String> logLineConsumer) {
-        return CompletableFuture.runAsync(sneak(() -> {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    logLineConsumer.accept(line);
-                }
-            }
-        }));
-    }
 }
