@@ -108,16 +108,16 @@ export default class MTIntegration extends Vue {
       this.proxyPort = null;
       this.proxyUser = "";
       this.proxyPass = "";
+      this.save(true)
     }
   }
 
   isInvalid() {
-    console.log(this.proxyHost, this.proxyPort)
     return this.proxyHost === "" || this.proxyPort === null || this.proxyPort < 1;
   }
   
-  save() {
-    if (this.isInvalid()) {
+  save(remove = false) {
+    if (this.isInvalid() && !remove) {
       this.showAlert({
         type: 'danger',
         title: 'Error',
@@ -125,19 +125,15 @@ export default class MTIntegration extends Vue {
       });
       return;
     }
-
-    const payload = {
-      ...this.settings.settings,
-      proxyUser: this.proxyUser,
-      proxyPort: this.proxyPort,
-      proxyHost: this.proxyHost,
-      proxyPassword: this.proxyPass,
-      proxyType: this.proxyType,
-    };
     
-    console.log(payload)
-
-    this.saveSettings(payload)
+    this.saveSettings({
+      ...this.settings.settings,
+      proxyUser: remove ? null : this.proxyUser,
+      proxyPort: remove ? null : this.proxyPort,
+      proxyHost: remove ? null : this.proxyHost,
+      proxyPassword: remove ? null : this.proxyPass,
+      proxyType: remove ? "none" : this.proxyType,
+    })
 
     this.showAlert({
       type: 'primary',
