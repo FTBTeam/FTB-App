@@ -23,6 +23,13 @@ export interface Settings {
   automateMojang: boolean;
   showAdverts: boolean | string;
   exitOverwolf?: boolean;
+
+  // new ish
+  proxyHost: string | null;
+  proxyPort: number | null;
+  proxyUser: string | null;
+  proxyPassword: string | null;
+  proxyType: 'http' | 'sock5' | null;
 }
 
 export interface Hardware {

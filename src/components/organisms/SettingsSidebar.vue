@@ -8,33 +8,37 @@
     <main>
       <nav>
         <div class="heading">Settings</div>
-        <router-link :to="{ name: 'instance-settings' }" class="item">
+        <router-link :to="{ name: RouterNames.SETTINGS_INSTANCE }" class="item">
           <font-awesome-icon icon="gamepad" />
           <span>Instances</span>
         </router-link>
-        <router-link :to="{ name: 'download-settings' }" class="item">
+        <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
           <font-awesome-icon icon="cloud-download-alt" />
           <span>Downloads</span>
         </router-link>
-        <router-link :to="{ name: 'app-settings' }" class="item">
+        <router-link :to="{ name: RouterNames.SETTINGS_APP }" class="item">
           <font-awesome-icon icon="rocket" />
           <span>App</span>
         </router-link>
-        <router-link :to="{ name: 'integrations' }" class="item">
+        <router-link :to="{ name: RouterNames.SETTINGS_INTEGRATION }" class="item">
           <font-awesome-icon icon="link" />
           <span>Integrations</span>
+        </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_PROXY }" class="item">
+          <font-awesome-icon icon="shuffle" />
+          <span>Proxy</span>
         </router-link>
       </nav>
       <nav v-if="auth.token !== null">
         <div class="heading">Integrations</div>
-        <router-link :to="{ name: 'MTIntegration' }" class="item app-info-item">
+        <router-link :to="{ name: RouterNames.SETTINGS_MT_INTEGRATION }" class="item app-info-item">
           <img src="@/assets/images/mt-logo.png" alt="" />
           <span>MineTogether</span>
         </router-link>
       </nav>
       <nav>
         <div class="heading">Info</div>
-        <router-link :to="{ name: 'app-info' }" class="item app-info-item">
+        <router-link :to="{ name: RouterNames.SETTINGS_INFO }" class="item app-info-item">
           <font-awesome-icon icon="info" />
           <span>App info</span>
         </router-link>
@@ -83,6 +87,7 @@ import platform from '@/utils/interface/electron-overwolf';
 import { State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import ChangelogHistory from '@/components/templates/changelogs/ChangelogHistory.vue';
+import { RouterNames } from '@/router';
 
 @Component({
   components: { ChangelogHistory },
@@ -91,6 +96,7 @@ export default class SettingsSidebar extends Vue {
   @State('auth') private auth!: AuthState;
 
   platform = platform;
+  RouterNames = RouterNames;
 
   version = platform.get.config.publicVersion;
   uiVersion = platform.get.config.webVersion;
