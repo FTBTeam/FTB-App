@@ -95,10 +95,10 @@ export default class MTIntegration extends Vue {
     const {proxyUser, proxyPort, proxyHost, proxyPassword, proxyType} = this.settings.settings;
 
     this.proxyType = proxyType ?? "none";
-    this.proxyHost = proxyHost ?? null;
+    this.proxyHost = proxyHost ?? "";
     this.proxyPort = proxyPort ?? null;
-    this.proxyUser = proxyUser ?? null;
-    this.proxyPass = proxyPassword ?? null;
+    this.proxyUser = proxyUser ?? "";
+    this.proxyPass = proxyPassword ?? "";
   }
   
   @Watch('proxyType')
@@ -128,10 +128,10 @@ export default class MTIntegration extends Vue {
     
     this.saveSettings({
       ...this.settings.settings,
-      proxyUser: remove ? null : this.proxyUser,
-      proxyPort: remove ? null : this.proxyPort,
-      proxyHost: remove ? null : this.proxyHost,
-      proxyPassword: remove ? null : this.proxyPass,
+      proxyUser: remove ? "" : this.proxyUser,
+      proxyPort: remove ? "" : this.proxyPort,
+      proxyHost: remove ? "" : this.proxyHost,
+      proxyPassword: remove ? "" : this.proxyPass,
       proxyType: remove ? "none" : this.proxyType,
     })
 

@@ -25,11 +25,11 @@ export interface Settings {
   exitOverwolf?: boolean;
 
   // new ish
-  proxyHost: string | null;
-  proxyPort: number | null;
-  proxyUser: string | null;
-  proxyPassword: string | null;
-  proxyType: 'http' | 'sock5' | null;
+  proxyHost: string;
+  proxyPort: string;
+  proxyUser: string;
+  proxyPassword: string;
+  proxyType: 'http' | 'sock5' | 'none';
 }
 
 export interface Hardware {
