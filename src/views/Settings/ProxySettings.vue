@@ -96,7 +96,7 @@ export default class MTIntegration extends Vue {
 
     this.proxyType = proxyType ?? "none";
     this.proxyHost = proxyHost ?? "";
-    this.proxyPort = proxyPort ?? null;
+    this.proxyPort = (proxyPort === "" ? null : parseInt(proxyPort, 10)) ?? null;
     this.proxyUser = proxyUser ?? "";
     this.proxyPass = proxyPassword ?? "";
   }
