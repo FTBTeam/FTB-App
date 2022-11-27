@@ -237,24 +237,24 @@ public class MicrosoftOAuth {
             ResponseBody body = execute.body();
             
             if (execute.code() >= 500) {
-                return new StepReply(false, execute.code(), "There are currently issues with the authentication system. Please try again in a few minutes.", JsonNull.INSTANCE, null);
+                return new StepReply(false, execute.code(), "There are currently issues with the authentication system. Please try again in a few minutes.", JsonNull.INSTANCE, null, false);
             }
             
             if (body != null) {
                 try {
                     JsonElement jsonElement = JsonParser.parseString(body.string());
                     LOGGER.info("{}|{} responded with: {}", execute.code(), request.url(), jsonElement.toString().replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
-                    return new StepReply(true, execute.code(), successMessage, jsonElement, execute);
+                    return new StepReply(true, execute.code(), successMessage, jsonElement, execute, false);
                 } catch (JsonParseException exception) {
                     LOGGER.fatal("Unable to parse json response from {} with error of {}", request.url(), exception);
                 }
             }
 
             LOGGER.fatal("Failed to read and handle response from {}", request.url());
-            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null);
+            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null, false);
         } catch (Exception e) {
             LOGGER.fatal("Error executing request to {}", request.url(), e);
-            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null);
+            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null, true);
         }
     }
 

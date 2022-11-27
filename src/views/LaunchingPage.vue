@@ -178,7 +178,7 @@ import ServerCard from '@/components/organisms/ServerCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import { preLaunchChecksValid } from '@/utils/auth/authentication';
+import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
@@ -391,15 +391,13 @@ export default class LaunchingPage extends Vue {
     this.messages = [];
     this.launchProgress = null;
 
-    if (!(await preLaunchChecksValid(this.instance?.uuid))) {
-      this.showAlert({
-        title: 'Error!',
-        message: 'Unable to update, validate or find your profile, please sign in again.',
-        type: 'danger',
-      });
+    if (!(await validateAuthenticationOrSignIn(this.instance?.uuid))) {
+      if (!this.instance) {
+        await this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+        return;
+      }
 
-      await this.$router.push(RouterNames.ROOT_LIBRARY);
-
+      await this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
       return;
     }
 

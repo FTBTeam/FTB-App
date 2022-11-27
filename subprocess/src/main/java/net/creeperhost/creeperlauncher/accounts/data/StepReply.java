@@ -10,6 +10,8 @@ public record StepReply(
         int status,
         String message,
         JsonElement data,
-        @Nullable Response rawResponse
+        @Nullable Response rawResponse,
+        boolean networkError
 ) {
+    
 }

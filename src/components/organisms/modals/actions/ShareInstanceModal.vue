@@ -44,7 +44,7 @@ import { wsTimeoutWrapperTyped } from '@/utils';
 import { ShareInstance, ShareInstanceReply } from '@/typings/subprocess';
 import Loading from '@/components/atoms/Loading.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import { preLaunchChecksValid } from '@/utils/auth/authentication';
+import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
 
 @Component({
   components: { ProgressBar, Loading },
@@ -65,7 +65,7 @@ export default class ShareInstanceModal extends Vue {
     }
 
     this.loading = true;
-    if (!(await preLaunchChecksValid(null))) {
+    if (!(await validateAuthenticationOrSignIn())) {
       this.close();
       return;
     }
