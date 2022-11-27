@@ -24,20 +24,20 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
     @Override
     public void handle(Data data) {
         if (data.profileUuid == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found", false));
             return;
         }
 
         AccountProfile profile = AccountManager.get().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found", false));
             return;
         }
 
         AuthenticatorValidator<?, ?, ?> specificValidator = profile.getValidator();
         if (specificValidator instanceof MicrosoftAuthenticator validator) {
             if (data.liveAccessToken == null) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Missing essential information..."));
+                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Missing essential information...", false));
             }
 
             DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
@@ -47,8 +47,8 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             refresh.data().ifPresentOrElse(d -> {
                 profile.msAuth = d.getRight();
                 AccountManager.get().saveProfiles();
-                Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated"));
-            }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"))));
+                Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated", false));
+            }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"), refresh.error().map(e -> e.rawReply() != null && e.rawReply().networkError()).orElse(false))));
 
             return;
         }
@@ -59,20 +59,22 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
         refresh.data().ifPresentOrElse(d -> {
             profile.mcAuth = d;
             AccountManager.get().saveProfiles();
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated"));
-        }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"))));
+            Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated", false));
+        }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"), false)));
     }
 
     private static class Reply extends Data {
+        public boolean networkError;
         public boolean success;
         public String response;
 
-        public Reply(Data data, boolean success, String rawResult) {
+        public Reply(Data data, boolean success, String rawResult, boolean networkError) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
 
             this.success = success;
             this.response = rawResult;
+            this.networkError = networkError;
         }
     }
 

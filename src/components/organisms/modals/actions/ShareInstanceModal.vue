@@ -65,7 +65,7 @@ export default class ShareInstanceModal extends Vue {
     }
 
     this.loading = true;
-    if (!(await validateAuthenticationOrSignIn())) {
+    if (!(await validateAuthenticationOrSignIn()).ok) {
       this.close();
       return;
     }

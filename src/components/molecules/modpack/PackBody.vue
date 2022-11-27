@@ -16,7 +16,9 @@
           <pack-actions
             v-if="instance && isInstalled"
             :instance="instance"
+            :allow-offline="allowOffline"
             @openSettings="$emit('tabChange', tabs.SETTINGS)"
+            @playOffline="$emit('playOffline')"
           />
         </div>
 
@@ -229,6 +231,7 @@ export default class PackBody extends Vue {
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
   @Prop() updatingModlist!: boolean;
+  @Prop({ default: false }) allowOffline!: boolean;
 
   @Prop({ default: () => [] }) backups!: InstanceBackup[];
 

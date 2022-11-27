@@ -391,14 +391,23 @@ export default class LaunchingPage extends Vue {
     this.messages = [];
     this.launchProgress = null;
 
-    if (!(await validateAuthenticationOrSignIn(this.instance?.uuid))) {
-      if (!this.instance) {
-        await this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+    if (!this.$route.query.offline) {
+      const refreshResponse = await validateAuthenticationOrSignIn(this.instance?.uuid);
+      if (!refreshResponse.ok && !refreshResponse.networkError) {
+        if (!this.instance) {
+          await this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+          return;
+        }
+
+        await this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
+        return;
+      } else if (refreshResponse.networkError) {
+        await this.$router.push({
+          name: RouterNames.ROOT_LOCAL_PACK,
+          query: { uuid: this.instance?.uuid, presentOffline: 'true' },
+        });
         return;
       }
-
-      await this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
-      return;
     }
 
     const disableChat = this.settingsState.settings.enableChat;
@@ -409,8 +418,11 @@ export default class LaunchingPage extends Vue {
         type: 'launchInstance',
         uuid: this.instance?.uuid,
         extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
+        offline: this.$route.query.offline,
+        offlineUsername: this.$route.query.username ?? 'FTB Player',
       },
       callback: (data: any) => {
+        // TODO: Replace with something much better!
         if (data.status === 'error') {
           this.preLaunch = false;
           // An instance is already running

@@ -43,6 +43,8 @@
           :isLatestVersion="isLatestVersion"
           :updating-mod-list="updatingModlist"
           :backups="instanceBackups"
+          :allow-offline="offlineAllowed"
+          @playOffline="offlineMessageOpen = true"
         />
       </div>
 
@@ -66,6 +68,30 @@
         :loading="deleting"
       />
     </ftb-modal>
+
+    <modal
+      :open="offlineMessageOpen"
+      :title="$route.query.presentOffline ? 'Unable to update your profile' : 'Play offline'"
+      :subTitle="
+        $route.query.presentOffline
+          ? 'Would you like to play in Offline Mode?'
+          : 'Playing in offline mode will prevent you from being able to join servers.'
+      "
+      @closed="() => closeOfflineModel()"
+    >
+      <p v-if="$route.query.presentOffline" class="mb-4">
+        Please be aware, running in offline mode will mean you can not play on servers.
+      </p>
+
+      <ftb-input placeholder="Steve" label="Username" v-model="offlineUserName" class="mb-4 text-base" />
+
+      <div class="flex justify-end">
+        <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="playOffline">
+          <font-awesome-icon icon="play" class="mr-2" size="1x" />
+          Play offline
+        </ftb-button>
+      </div>
+    </modal>
 
     <closable-panel
       :open="searchingForMods"
@@ -176,6 +202,9 @@ export default class InstancePage extends Vue {
   searchingForMods = false;
   updatingModlist = false;
   showVersions = false;
+  offlineMessageOpen = false;
+  offlineUserName = '';
+  offlineAllowed = false;
 
   instanceBackups: InstanceBackup[] = [];
 
@@ -224,6 +253,13 @@ export default class InstancePage extends Vue {
     });
   }
 
+  public async playOffline() {
+    await this.$router.push({
+      name: RouterNames.ROOT_LAUNCH_PACK,
+      query: { uuid: this.instance?.uuid, offline: 'true', username: this.offlineUserName },
+    });
+  }
+
   public update(): void {
     const versionID = this.packInstance?.versions[0].id;
 
@@ -264,6 +300,7 @@ export default class InstancePage extends Vue {
       await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
     }
+
     try {
       this.packInstance =
         this.instance.packType == 0
@@ -280,6 +317,15 @@ export default class InstancePage extends Vue {
 
     this.getModList();
     this.loadBackups().catch(console.error);
+
+    if (this.getActiveProfile) {
+      this.offlineAllowed = true;
+    }
+
+    if (this.$route.query.presentOffline) {
+      this.offlineMessageOpen = true;
+    }
+    this.offlineUserName = this.getActiveProfile?.username;
   }
 
   public async loadBackups() {
@@ -316,6 +362,13 @@ export default class InstancePage extends Vue {
     } catch (e) {
       console.log(e);
       console.log('Error getting instance modlist');
+    }
+  }
+
+  closeOfflineModel() {
+    this.offlineMessageOpen = false;
+    if (this.$route.query.presentOffline) {
+      this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
     }
   }
 

@@ -7,6 +7,9 @@
 
       <ul class="actions">
         <li class="title">Tools</li>
+        <li v-if="allowOffline" @click="$emit('playOffline')">
+          <span><font-awesome-icon icon="play" /></span> Play Offline
+        </li>
         <li @click="$emit('openSettings')">
           <span><font-awesome-icon icon="cog" /></span>Settings
         </li>
@@ -89,6 +92,7 @@ import DuplicateInstanceModal from '@/components/organisms/modals/actions/Duplic
 })
 export default class PackActions extends Vue {
   @Prop() instance!: Instance;
+  @Prop({ default: false }) allowOffline!: boolean;
 
   instanceFolders: string[] = [];
   shareConfirm = false;
