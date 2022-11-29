@@ -30,6 +30,11 @@ export const state: SettingsState = {
     mtConnect: false,
     automateMojang: true,
     showAdverts: true,
+    proxyPort: '',
+    proxyType: 'none',
+    proxyHost: '',
+    proxyPassword: '',
+    proxyUser: '',
   },
   error: false,
   hardware: {
