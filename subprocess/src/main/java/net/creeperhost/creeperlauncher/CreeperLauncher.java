@@ -261,7 +261,7 @@ public class CreeperLauncher {
     }
 
     private static void registerSettingsListeners(String[] args) {
-        SettingsChangeUtil.registerListener("instanceLocation", (key, value) -> {
+        SettingsChangeUtil.registerChangeHandler("instanceLocation", (key, value) -> {
             OpenModalData.openModal("Confirmation", "Are you sure you wish to move your instances to this location? <br tag='haha line break go brr'> All content in your current instance location will be moved, and if content exists with the same name in the destination it will be replaced.", List.of(
                 new OpenModalData.ModalButton("Yes", "green", () -> {
                     OpenModalData.openModal("Please wait", "Your instances are now moving", List.of());
@@ -333,7 +333,7 @@ public class CreeperLauncher {
         });
 
 
-        SettingsChangeUtil.registerListener("enablePreview", (key, value) -> {
+        SettingsChangeUtil.registerChangeHandler("enablePreview", (key, value) -> {
             if (Settings.settings.getOrDefault("enablePreview", "").isEmpty() && value.equals("false")) return true;
             if (Constants.BRANCH.equals("release") || Constants.BRANCH.equals("preview")) {
                 OpenModalData.openModal("Update", "Do you wish to change to this branch now?", List.of(
@@ -356,10 +356,12 @@ public class CreeperLauncher {
             }
         });
 
-        SettingsChangeUtil.registerListener("verbose", (key, value) -> {
+        SettingsChangeUtil.registerChangeHandler("verbose", (key, value) -> {
             verbose = value.equals("true");
             return true;
         });
+
+        SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -381,10 +383,6 @@ public class CreeperLauncher {
         } catch (Throwable e) {
 
         }
-    }
-
-    public static long unixtimestamp() {
-        return System.currentTimeMillis() / 1000L;
     }
 
     private static void pingPong() {

@@ -185,7 +185,7 @@ public class NewDownloadTask implements Task<Path> {
 
     private static void doRequest(String url, Path dest, DownloadValidation validation, @Nullable TaskProgressListener progressListener) throws IOException {
         OkHttpDownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.OK_HTTP_CLIENT)
+                .setClient(Constants.httpClient())
                 .setUrl(url)
                 .setDest(dest)
                 .setUseETag(validation.useETag)
@@ -267,7 +267,7 @@ public class NewDownloadTask implements Task<Path> {
                     .head()
                     .url(url)
                     .build();
-            try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
+            try (Response response = Constants.httpClient().newCall(request).execute()) {
                 ResponseBody body = response.body();
                 if (body != null) return body.contentLength();
 

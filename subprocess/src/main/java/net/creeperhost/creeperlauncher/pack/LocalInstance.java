@@ -146,7 +146,7 @@ public class LocalInstance implements IPack
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 DownloadAction action = new OkHttpDownloadAction()
                         .setUserAgent(Constants.USER_AGENT)
-                        .setClient(Constants.OK_HTTP_CLIENT)
+                        .setClient(Constants.httpClient())
                         .setUrl(art.getUrl())
                         .setDest(bos);
                 action.execute();

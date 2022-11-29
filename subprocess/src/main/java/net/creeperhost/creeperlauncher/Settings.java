@@ -4,12 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
+import net.creeperhost.creeperlauncher.util.ProxyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,9 +47,9 @@ public class Settings
         }
     }
 
-    public static void loadSettings()
-    {
+    public static void loadSettings() {
         loadSettings(Constants.BIN_LOCATION.resolve("settings.json"), true);
+        ProxyUtils.loadProxy();
     }
 
     // Only use directly during migrate logic to avoid saving settings immediately
