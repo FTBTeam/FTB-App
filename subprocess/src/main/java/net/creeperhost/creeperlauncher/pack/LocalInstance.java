@@ -332,6 +332,8 @@ public class LocalInstance implements IPack
             Files.deleteIfExists(dir.resolve("mods/launchertray-progress-1.0.jar"));
 
             InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
+            if (supportMeta == null) return; // Should be _incredibly_ rare. But just incase...
+
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
             if (!loadingMods.isEmpty()) {
                 if (Files.notExists(dir.resolve(".no_loading_mods.marker"))) {
