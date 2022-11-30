@@ -162,6 +162,7 @@ export default class ModpackVersions extends Vue {
         uuid: this.instance.uuid,
         version: this.currentVersion?.id,
         packType: this.instance.packType,
+        private: this.packInstance.private ?? false,
       },
       meta: {
         name: this.instance.name,

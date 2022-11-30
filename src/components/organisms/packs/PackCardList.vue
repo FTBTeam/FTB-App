@@ -341,6 +341,7 @@ export default class PackCardList extends Vue {
         id: this.$props.packID,
         version: version,
         packType: this.$props.type,
+        private: this.currentModpack?.private ?? false,
       },
       meta: {
         name: this.$props.name,

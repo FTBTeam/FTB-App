@@ -103,6 +103,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
             for(ProgressTracker progress: fileTracker.values()) {
                 curBytes = progress.downloadedBytes.get();
                 totalBytes = progress.file.getSize();
+                
             }
 
             long time = System.currentTimeMillis() / 1000L;

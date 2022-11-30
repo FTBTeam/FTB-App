@@ -156,6 +156,7 @@ export default class ModpackPage extends Vue {
         id: this.$route.query.modpackid as string,
         version: version,
         packType: this.$route.query.type as string,
+        private: this.currentModpack?.private ?? false,
       },
       meta: {
         name: this.currentModpack?.name ?? '',
