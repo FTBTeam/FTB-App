@@ -73,6 +73,8 @@ public class ProxyUtils {
 
     @Nullable
     private static ProxyWithAuth loadProxy(String type, String host, String port, String username, String password) {
+        if ("none".equals(type)) return null;
+
         if (StringUtils.isEmpty(type) || StringUtils.isEmpty(host) || StringUtils.isEmpty(port)) {
             return null;
         }
