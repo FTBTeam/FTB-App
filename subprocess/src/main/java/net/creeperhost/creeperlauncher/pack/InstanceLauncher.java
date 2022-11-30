@@ -130,7 +130,7 @@ public class InstanceLauncher {
      *
      * @throws InstanceLaunchException If there was a direct error preparing the instance to be launched.
      */
-    public synchronized void launch(CancellationToken token) throws InstanceLaunchException {
+    public synchronized void launch(CancellationToken token, @Nullable String offlineUsername) throws InstanceLaunchException {
         assert !isRunning();
         DNSUtils.logImportantHosts();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
@@ -150,7 +150,7 @@ public class InstanceLauncher {
 
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
-        ProcessBuilder builder = prepareProcess(token, assetsDir, versionsDir, librariesDir, features, privateTokens);
+        ProcessBuilder builder = prepareProcess(token, offlineUsername, assetsDir, versionsDir, librariesDir, features, privateTokens);
 
         // Start thread.
         processThread = new Thread(() -> {
@@ -302,7 +302,7 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
+    private ProcessBuilder prepareProcess(CancellationToken token, String offlineUsername, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
         try {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
@@ -372,9 +372,9 @@ public class InstanceLauncher {
 
             Map<String, String> subMap = new HashMap<>();
             AccountProfile profile = AccountManager.get().getActiveProfile();
-            if (profile == null) {
+            if (offlineUsername != null || profile == null) {
                 // Offline
-                subMap.put("auth_player_name", "Player"); // TODO, give user ability to set name?
+                subMap.put("auth_player_name", offlineUsername);
                 subMap.put("auth_uuid", new UUID(0, 0).toString());
                 subMap.put("user_type", "legacy");
                 subMap.put("auth_access_token", "null");

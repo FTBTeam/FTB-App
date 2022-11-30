@@ -11,6 +11,9 @@ public class LaunchInstanceData extends BaseData {
     public String uuid;
     public String extraArgs = "";
     public boolean cancelLaunch = false;
+    public boolean offline = false;
+    @Nullable
+    public String username;
 
     public static class Status extends BaseData {
 

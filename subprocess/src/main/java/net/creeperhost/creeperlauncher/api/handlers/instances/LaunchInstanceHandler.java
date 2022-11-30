@@ -14,6 +14,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.Objects.requireNonNull;
+
 public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData> {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -42,7 +44,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         instance.prepareToken = new CancellationToken();
         instance.prepareFuture = CompletableFuture.runAsync(() -> {
             try {
-                instance.play(instance.prepareToken, data.extraArgs);
+                instance.play(instance.prepareToken, data.extraArgs, data.offline ? requireNonNull(data.username, "Username not specified for offline launch") : null);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
             } catch (InstanceLaunchException ex) {
                 if (ex instanceof InstanceLaunchException.Abort) {

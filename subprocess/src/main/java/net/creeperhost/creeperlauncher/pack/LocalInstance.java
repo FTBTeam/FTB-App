@@ -270,7 +270,7 @@ public class LocalInstance implements IPack
      * @param extraArgs   Extra JVM arguments.
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
-    public void play(CancellationToken token, String extraArgs) throws InstanceLaunchException {
+    public void play(CancellationToken token, String extraArgs, @Nullable String offlineUsername) throws InstanceLaunchException {
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -387,7 +387,7 @@ public class LocalInstance implements IPack
             totalPlayTime += endTime - startTime;
             saveJson();
         });
-        launcher.launch(token);
+        launcher.launch(token, offlineUsername);
     }
 
     public InstanceLauncher getLauncher() {
