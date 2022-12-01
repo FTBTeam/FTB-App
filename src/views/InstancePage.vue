@@ -40,7 +40,6 @@
           :instance="instance"
           :mods="modlist"
           :pack-instance="packInstance"
-          :isLatestVersion="isLatestVersion"
           :updating-mod-list="updatingModlist"
           :backups="instanceBackups"
         />
@@ -89,8 +88,6 @@ import ServerCard from '@/components/organisms/ServerCard.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
-// @ts-ignore
-import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import { PackConst } from '@/utils/contants';
@@ -179,6 +176,29 @@ export default class InstancePage extends Vue {
 
   instanceBackups: InstanceBackup[] = [];
 
+  async mounted() {
+    if (this.instance == null) {
+      await this.$router.push(RouterNames.ROOT_LIBRARY);
+      return;
+    }
+    try {
+      this.packInstance =
+        this.instance.packType == 0
+          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
+          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
+    } catch (e) {
+      console.log('Error getting instance modpack');
+    }
+    this.$forceUpdate();
+
+    if (this.$route.query.shouldPlay === 'true') {
+      this.confirmLaunch();
+    }
+
+    this.getModList();
+    this.loadBackups().catch(console.error);
+  }
+
   public goBack(): void {
     if (!this.hidePackDetails) {
       this.$router.push({ name: RouterNames.ROOT_LIBRARY });
@@ -240,46 +260,10 @@ export default class InstancePage extends Vue {
         art: getPackArt(this.instance?.art),
       },
     });
-    // if (this.modpacks?.installing !== null) {
-    //   return;
-    // }
-    // const modpackID = this.instance?.id;
-    // if (this.modpacks != null && this.packInstance != null) {
-    //   if (versionID === undefined && this.packInstance.kind === 'modpack') {
-    //     versionID = this.packInstance.versions[0].id;
-    //   }
-    //   this.$router.replace({
-    //     name: RouterNames.ROOT_INSTALL_PACK,
-    //     query: { modpackid: modpackID?.toString(), versionID: versionID?.toString(), uuid: this.instance?.uuid },
-    //   });
-    // }
   }
 
   public hideMsgBox(): void {
     this.showMsgBox = false;
-  }
-
-  async mounted() {
-    if (this.instance == null) {
-      await this.$router.push(RouterNames.ROOT_LIBRARY);
-      return;
-    }
-    try {
-      this.packInstance =
-        this.instance.packType == 0
-          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
-          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
-    } catch (e) {
-      console.log('Error getting instance modpack');
-    }
-    this.$forceUpdate();
-
-    if (this.$route.query.shouldPlay === 'true') {
-      this.confirmLaunch();
-    }
-
-    this.getModList();
-    this.loadBackups().catch(console.error);
   }
 
   public async loadBackups() {
@@ -324,17 +308,6 @@ export default class InstancePage extends Vue {
       return null;
     }
     return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
-  }
-
-  get isLatestVersion() {
-    if (
-      this.packInstance === undefined ||
-      this.packInstance?.kind !== 'modpack' ||
-      this.packInstance.versions === undefined
-    ) {
-      return true;
-    }
-    return this.instance?.versionId === this.packInstance?.versions[0].id;
   }
 
   get packSplashArt() {

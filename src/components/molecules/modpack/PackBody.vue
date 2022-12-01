@@ -21,12 +21,12 @@
         </div>
 
         <div class="options">
-          <div class="update" v-if="isInstalled && !isLatestVersion">
-            <ftb-button color="warning" class="update-btn px-4 py-1" @click="() => $emit('update')">
-              <span class="hidden sm:inline-block">Update available</span>
-              <font-awesome-icon icon="cloud-download-alt" class="sm:ml-2" />
-            </ftb-button>
-          </div>
+          <PackUpdateButton
+            v-if="isInstalled"
+            :instance="packInstance"
+            :localInstance="instance"
+            @update="$emit('update')"
+          />
           <div class="option" @click="() => $emit('showVersion')">
             Versions
             <font-awesome-icon icon="code-branch" class="ml-2" />
@@ -202,10 +202,12 @@ import MarkdownIt from 'markdown-it';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import { InstanceBackup } from '@/typings/subprocess/instanceBackups';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
+import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
 
 @Component({
   name: 'pack-body',
   components: {
+    PackUpdateButton,
     Loading,
     ModpackVersions,
     ModpackPublicServers,
@@ -224,7 +226,6 @@ export default class PackBody extends Vue {
   @Prop({ default: false }) packLoading!: boolean;
   // Pack Instance is the modpack api response
   @Prop() packInstance!: ModPack;
-  @Prop() isLatestVersion!: boolean;
   @Prop() isInstalled!: boolean;
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
@@ -313,27 +314,6 @@ export default class PackBody extends Vue {
 
       &:hover {
         opacity: 1;
-      }
-    }
-  }
-
-  .update-btn {
-    position: relative;
-
-    box-shadow: 0 0 0 0 rgba(#ff801e, 1);
-    animation: pulse 1.8s ease-in-out infinite;
-
-    @keyframes pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(#ff801e, 0.7);
-      }
-
-      70% {
-        box-shadow: 0 0 0 10px rgba(#ff801e, 0);
-      }
-
-      100% {
-        box-shadow: 0 0 0 0 rgba(#ff801e, 0);
       }
     }
   }
