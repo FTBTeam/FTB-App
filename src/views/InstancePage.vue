@@ -66,6 +66,23 @@
       />
     </ftb-modal>
 
+    <modal
+      :open="borkedVersionNotification != null"
+      @closed="closeBorked"
+      title="Version archived"
+      sub-title="You will need to update or downgrade the pack"
+      size="medium"
+      :external-contents="true"
+    >
+      <versions-borked-modal
+        @closed="closeBorked"
+        @action="(e) => updateOrDowngrade(e)"
+        :is-downgrade="borkedVersionIsDowngrade"
+        :fixed-version="borkedVersionDowngradeId"
+        :notification="borkedVersionNotification"
+      />
+    </modal>
+
     <closable-panel
       :open="searchingForMods"
       @close="searchingForMods = false"
@@ -79,7 +96,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, ModpackState } from '@/modules/modpacks/types';
+import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
@@ -101,9 +118,10 @@ import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
 import { InstallerState } from '@/modules/app/appStore.types';
-import { getPackArt, wsTimeoutWrapperTyped } from '@/utils';
+import { abortableFetch, AbortableRequest, createModpackchUrl, getPackArt, wsTimeoutWrapperTyped } from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import { InstanceBackup, InstanceBackupsReply, InstanceBackupsRequest } from '@/typings/subprocess/instanceBackups';
+import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -116,6 +134,7 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
+    VersionsBorkedModal,
     ClosablePanel,
     PackTitleHeader,
     PackMetaHeading,
@@ -175,6 +194,11 @@ export default class InstancePage extends Vue {
   showVersions = false;
 
   instanceBackups: InstanceBackup[] = [];
+  requestHolder: AbortableRequest[] = [];
+
+  borkedVersionNotification: string | null = null;
+  borkedVersionDowngradeId: number | null = null;
+  borkedVersionIsDowngrade = false;
 
   async mounted() {
     if (this.instance == null) {
@@ -197,6 +221,52 @@ export default class InstancePage extends Vue {
 
     this.getModList();
     this.loadBackups().catch(console.error);
+
+    // Throwaway error, don't block
+    this.checkForBorkedVersion().catch(console.error);
+  }
+
+  /**
+   * Tries to fetch the current version data and warn the user if the version should be downgraded. Will only request
+   * if the held version is set to `archived`
+   */
+  private async checkForBorkedVersion() {
+    if (!this.instance?.versionId || !this.packInstance) {
+      return;
+    }
+
+    const currentVersion = this.packInstance.versions.find((e) => e.id === this.instance?.versionId);
+    if (!currentVersion || currentVersion.type.toLowerCase() !== 'archived') {
+      return;
+    }
+
+    const currentVersionApiReq = await abortableFetch(
+      createModpackchUrl(
+        `/${this.instance.packType === 0 ? 'modpack' : 'curseforge'}/${this.instance.id}/${this.instance.versionId}`,
+      ),
+    );
+
+    this.requestHolder.push(currentVersionApiReq);
+    const apiData = await (await currentVersionApiReq.ready).json();
+    this.requestHolder = this.requestHolder.filter((e) => e === currentVersionApiReq); // Remove from the request holder
+    if (apiData.notification) {
+      this.borkedVersionNotification = apiData.notification;
+    }
+
+    // Find a downgrade / upgrade version
+    const nextAvailableVersion = this.packInstance.versions.find((e) => e.type !== 'archived');
+    if (nextAvailableVersion) {
+      this.borkedVersionDowngradeId = nextAvailableVersion.id;
+      if (nextAvailableVersion.id < this.instance.versionId) {
+        this.borkedVersionIsDowngrade = true;
+      }
+    }
+  }
+
+  closeBorked() {
+    this.borkedVersionNotification = null;
+    this.borkedVersionDowngradeId = null;
+    this.borkedVersionIsDowngrade = false;
   }
 
   public goBack(): void {
@@ -244,22 +314,42 @@ export default class InstancePage extends Vue {
     });
   }
 
-  public update(): void {
-    const versionID = this.packInstance?.versions[0].id;
+  public update(version: Versions | null = null): void {
+    const targetVersion = version ?? this.packInstance?.versions.sort((a, b) => b.id - a.id)[0];
+    if (!targetVersion) {
+      // How?
+      return;
+    }
 
     this.installModpack({
       pack: {
         uuid: this.instance?.uuid,
         id: this.instance?.id,
-        version: versionID,
+        version: targetVersion.id,
         packType: this.instance?.packType,
       },
       meta: {
         name: this.instance?.name ?? '',
-        version: this.packInstance?.versions[0].name ?? '',
+        version: targetVersion.name ?? '',
         art: getPackArt(this.instance?.art),
       },
     });
+  }
+
+  public updateOrDowngrade(versionId: number) {
+    const pack = this.packInstance?.versions.find((e) => e.id === versionId);
+    if (!pack) {
+      this.showAlert({
+        title: 'Unable to recover',
+        message: 'The selected recovery pack version id was not available...',
+        type: 'danger',
+      });
+      return;
+    }
+
+    // update
+    this.update(pack);
+    this.closeBorked();
   }
 
   public hideMsgBox(): void {
@@ -301,6 +391,10 @@ export default class InstancePage extends Vue {
       console.log(e);
       console.log('Error getting instance modlist');
     }
+  }
+
+  destroyed() {
+    this.requestHolder.forEach((e) => e.abort());
   }
 
   get instance() {

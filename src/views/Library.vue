@@ -30,7 +30,7 @@
           :authors="modpack.authors"
           :instance="modpack"
           :instanceID="modpack.uuid"
-          :kind="modpack.kind"
+          kind="instance"
         >
         </pack-card-wrapper>
       </div>
@@ -323,6 +323,10 @@ export default class Library extends Vue {
           return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
         })
       : this.modpacks.installedPacks.sort((a, b) => {
+          if (!a.lastPlayed || !b.lastPlayed) {
+            return a.name.localeCompare(b.name);
+          }
+
           return b.lastPlayed - a.lastPlayed;
         });
   }
