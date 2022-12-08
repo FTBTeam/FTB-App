@@ -82,6 +82,11 @@ export default class Modal extends Vue {
   background: #2a2a2a;
   border-radius: 5px;
 
+  &.medium {
+    max-width: 680px;
+    width: 98%;
+  }
+
   .modal-header {
     display: flex;
     justify-content: space-between;

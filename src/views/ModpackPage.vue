@@ -39,7 +39,6 @@
             :instance="null"
             :mods="mods"
             :pack-instance="currentModpack"
-            :isLatestVersion="true"
             :updating-mod-list="false"
           />
         </div>

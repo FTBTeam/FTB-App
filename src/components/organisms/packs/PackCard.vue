@@ -315,10 +315,15 @@ export default class PackCard extends Vue {
   }
 
   get isLatestVersion() {
-    if (this.currentModpack === undefined || this.currentModpack === null) {
+    const firstNoneArchived = this.currentModpack?.versions
+      .sort((a, b) => b.id - a.id)
+      .find((e) => e.type.toLowerCase() !== 'archived');
+
+    if (!firstNoneArchived) {
       return true;
     }
-    return this.instance.versionId === this.currentModpack?.versions[0].id;
+
+    return this.instance.versionId >= firstNoneArchived.id;
   }
 
   public getLogo(packArt: any) {

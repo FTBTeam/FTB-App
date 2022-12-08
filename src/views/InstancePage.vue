@@ -40,7 +40,6 @@
           :instance="instance"
           :mods="modlist"
           :pack-instance="packInstance"
-          :isLatestVersion="isLatestVersion"
           :updating-mod-list="updatingModlist"
           :backups="instanceBackups"
           :allow-offline="offlineAllowed"
@@ -93,6 +92,23 @@
       </div>
     </modal>
 
+    <modal
+      :open="borkedVersionNotification != null"
+      @closed="closeBorked"
+      title="Version archived"
+      sub-title="You will need to update or downgrade the pack"
+      size="medium"
+      :external-contents="true"
+    >
+      <versions-borked-modal
+        @closed="closeBorked"
+        @action="(e) => updateOrDowngrade(e)"
+        :is-downgrade="borkedVersionIsDowngrade"
+        :fixed-version="borkedVersionDowngradeId"
+        :notification="borkedVersionNotification"
+      />
+    </modal>
+
     <closable-panel
       :open="searchingForMods"
       @close="searchingForMods = false"
@@ -106,7 +122,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, ModpackState } from '@/modules/modpacks/types';
+import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
@@ -115,8 +131,6 @@ import ServerCard from '@/components/organisms/ServerCard.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
-// @ts-ignore
-import placeholderImage from '@/assets/placeholder_art.png';
 import { AuthState } from '@/modules/auth/types';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import { PackConst } from '@/utils/contants';
@@ -130,9 +144,10 @@ import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
 import { InstallerState } from '@/modules/app/appStore.types';
-import { getPackArt, wsTimeoutWrapperTyped } from '@/utils';
+import { abortableFetch, AbortableRequest, createModpackchUrl, getPackArt, wsTimeoutWrapperTyped } from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import { InstanceBackup, InstanceBackupsReply, InstanceBackupsRequest } from '@/typings/subprocess/instanceBackups';
+import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -145,6 +160,7 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
+    VersionsBorkedModal,
     ClosablePanel,
     PackTitleHeader,
     PackMetaHeading,
@@ -207,6 +223,92 @@ export default class InstancePage extends Vue {
   offlineAllowed = false;
 
   instanceBackups: InstanceBackup[] = [];
+  requestHolder: AbortableRequest[] = [];
+
+  borkedVersionNotification: string | null = null;
+  borkedVersionDowngradeId: number | null = null;
+  borkedVersionIsDowngrade = false;
+
+  async mounted() {
+    if (this.instance == null) {
+      await this.$router.push(RouterNames.ROOT_LIBRARY);
+      return;
+    }
+    try {
+      this.packInstance =
+        this.instance.packType == 0
+          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
+          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
+    } catch (e) {
+      console.log('Error getting instance modpack');
+    }
+    this.$forceUpdate();
+
+    if (this.$route.query.shouldPlay === 'true') {
+      this.confirmLaunch();
+    }
+
+    this.getModList();
+    this.loadBackups().catch(console.error);
+
+    // Throwaway error, don't block
+    this.checkForBorkedVersion().catch(console.error);
+
+    this.getModList();
+    this.loadBackups().catch(console.error);
+
+    if (this.getActiveProfile) {
+      this.offlineAllowed = true;
+    }
+
+    if (this.$route.query.presentOffline) {
+      this.offlineMessageOpen = true;
+    }
+    this.offlineUserName = this.getActiveProfile?.username;
+  }
+
+  /**
+   * Tries to fetch the current version data and warn the user if the version should be downgraded. Will only request
+   * if the held version is set to `archived`
+   */
+  private async checkForBorkedVersion() {
+    if (!this.instance?.versionId || !this.packInstance) {
+      return;
+    }
+
+    const currentVersion = this.packInstance.versions.find((e) => e.id === this.instance?.versionId);
+    if (!currentVersion || currentVersion.type.toLowerCase() !== 'archived') {
+      return;
+    }
+
+    const currentVersionApiReq = await abortableFetch(
+      createModpackchUrl(
+        `/${this.instance.packType === 0 ? 'modpack' : 'curseforge'}/${this.instance.id}/${this.instance.versionId}`,
+      ),
+    );
+
+    this.requestHolder.push(currentVersionApiReq);
+    const apiData = await (await currentVersionApiReq.ready).json();
+    this.requestHolder = this.requestHolder.filter((e) => e === currentVersionApiReq); // Remove from the request holder
+    if (apiData.notification) {
+      this.borkedVersionNotification = apiData.notification;
+    }
+
+    // Find a downgrade / upgrade version
+    const nextAvailableVersion = this.packInstance.versions.find((e) => e.type !== 'archived');
+    if (nextAvailableVersion) {
+      this.borkedVersionDowngradeId = nextAvailableVersion.id;
+      if (nextAvailableVersion.id < this.instance.versionId) {
+        this.borkedVersionIsDowngrade = true;
+      }
+    }
+  }
+
+  closeBorked() {
+    this.borkedVersionNotification = null;
+    this.borkedVersionDowngradeId = null;
+    this.borkedVersionIsDowngrade = false;
+  }
 
   public goBack(): void {
     if (!this.hidePackDetails) {
@@ -260,72 +362,46 @@ export default class InstancePage extends Vue {
     });
   }
 
-  public update(): void {
-    const versionID = this.packInstance?.versions[0].id;
+  public update(version: Versions | null = null): void {
+    const targetVersion = version ?? this.packInstance?.versions.sort((a, b) => b.id - a.id)[0];
+    if (!targetVersion) {
+      // How?
+      return;
+    }
 
     this.installModpack({
       pack: {
         uuid: this.instance?.uuid,
         id: this.instance?.id,
-        version: versionID,
+        version: targetVersion.id,
         packType: this.instance?.packType,
       },
       meta: {
         name: this.instance?.name ?? '',
-        version: this.packInstance?.versions[0].name ?? '',
+        version: targetVersion.name ?? '',
         art: getPackArt(this.instance?.art),
       },
     });
-    // if (this.modpacks?.installing !== null) {
-    //   return;
-    // }
-    // const modpackID = this.instance?.id;
-    // if (this.modpacks != null && this.packInstance != null) {
-    //   if (versionID === undefined && this.packInstance.kind === 'modpack') {
-    //     versionID = this.packInstance.versions[0].id;
-    //   }
-    //   this.$router.replace({
-    //     name: RouterNames.ROOT_INSTALL_PACK,
-    //     query: { modpackid: modpackID?.toString(), versionID: versionID?.toString(), uuid: this.instance?.uuid },
-    //   });
-    // }
+  }
+
+  public updateOrDowngrade(versionId: number) {
+    const pack = this.packInstance?.versions.find((e) => e.id === versionId);
+    if (!pack) {
+      this.showAlert({
+        title: 'Unable to recover',
+        message: 'The selected recovery pack version id was not available...',
+        type: 'danger',
+      });
+      return;
+    }
+
+    // update
+    this.update(pack);
+    this.closeBorked();
   }
 
   public hideMsgBox(): void {
     this.showMsgBox = false;
-  }
-
-  async mounted() {
-    if (this.instance == null) {
-      await this.$router.push(RouterNames.ROOT_LIBRARY);
-      return;
-    }
-
-    try {
-      this.packInstance =
-        this.instance.packType == 0
-          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
-          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
-    } catch (e) {
-      console.log('Error getting instance modpack');
-    }
-    this.$forceUpdate();
-
-    if (this.$route.query.shouldPlay === 'true') {
-      this.confirmLaunch();
-    }
-
-    this.getModList();
-    this.loadBackups().catch(console.error);
-
-    if (this.getActiveProfile) {
-      this.offlineAllowed = true;
-    }
-
-    if (this.$route.query.presentOffline) {
-      this.offlineMessageOpen = true;
-    }
-    this.offlineUserName = this.getActiveProfile?.username;
   }
 
   public async loadBackups() {
@@ -372,22 +448,15 @@ export default class InstancePage extends Vue {
     }
   }
 
+  destroyed() {
+    this.requestHolder.forEach((e) => e.abort());
+  }
+
   get instance() {
     if (this.modpacks == null) {
       return null;
     }
     return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
-  }
-
-  get isLatestVersion() {
-    if (
-      this.packInstance === undefined ||
-      this.packInstance?.kind !== 'modpack' ||
-      this.packInstance.versions === undefined
-    ) {
-      return true;
-    }
-    return this.instance?.versionId === this.packInstance?.versions[0].id;
   }
 
   get packSplashArt() {
