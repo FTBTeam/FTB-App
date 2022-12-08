@@ -3,12 +3,7 @@
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
         <div class="play">
-          <ftb-button
-            color="primary"
-            class="py-3 px-8 ftb-play-button"
-            @click="() => $emit('mainAction')"
-            :disabled="!isInstalled"
-          >
+          <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
             <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
             {{ isInstalled ? 'Play' : 'Install' }}
           </ftb-button>
