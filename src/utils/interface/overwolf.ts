@@ -269,8 +269,12 @@ const Overwolf: ElectronOverwolfInterface = {
       ws = new WebSocket('ws://localhost:' + port);
       Vue.prototype.$socket = ws;
       ws.addEventListener('message', (event) => {
-        logVerbose(store.state, event.data);
         let content = JSON.parse(event.data);
+        if (!(content?.type && content?.type !== '' && content?.type.startsWith('profiles.'))) {
+          logVerbose(store.state, event.data);
+        } else {
+          logVerbose(store.state, 'Rejecting logging of profile data');
+        }
         if (content.port && content.secret) {
           ws.close(4000, 'newport');
           store.commit('STORE_WS', content);

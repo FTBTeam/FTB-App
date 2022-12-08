@@ -32,7 +32,7 @@ public class MicrosoftOAuth {
 
         if (isUnsuccessful(authXboxRes)) {
             LOGGER.error("Unable to auth with xbox: " + authXboxRes.message());
-            return DataResult.error(new ErrorWithCode("Failed to authenticate with Xbox", "xbx_auth_001"));
+            return DataResult.error(new ErrorWithCode("Failed to authenticate with Xbox", "xbx_auth_001", authXboxRes));
         }
 
         String xblToken = authXboxRes.data().getAsJsonObject().get("Token").getAsString();
@@ -49,7 +49,7 @@ public class MicrosoftOAuth {
         StepReply xstsRes = authenticateWithXSTS(xblToken);
         if (isUnsuccessful(xstsRes)) {
             LOGGER.error("Unable to login with xsts: " + xstsRes.message());
-            return DataResult.error(new ErrorWithCode("Failed to authenticate with XSTS", "xbx_auth_003"));
+            return DataResult.error(new ErrorWithCode("Failed to authenticate with XSTS", "xbx_auth_003", xstsRes));
         }
 
         // Sometimes this will succeed but fail nicely with a 401
@@ -64,7 +64,7 @@ public class MicrosoftOAuth {
                 default -> "Unknown XSTS error";
             };
 
-            return DataResult.error(new ErrorWithCode(error, "xbx_auth_004_" + xErr));
+            return DataResult.error(new ErrorWithCode(error, "xbx_auth_004_" + xErr, xstsRes));
         }
 
         // Get the XSTS token
@@ -82,13 +82,13 @@ public class MicrosoftOAuth {
         StepReply loginWithXbox = loginWithXbox(xstsToken, userHash);
         if (isUnsuccessful(loginWithXbox)) {
             LOGGER.error("Unable to login with xbox: " + loginWithXbox.message());
-            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account", "xbx_auth_006"));
+            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account", "xbx_auth_006", loginWithXbox));
         }
 
         // Grab the access token
         String accessToken = loginWithXbox.data().getAsJsonObject().get("access_token").getAsString();
         if (accessToken.isEmpty()) {
-            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account (no access token found)", "xbx_auth_006"));
+            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account (no access token found)", "xbx_auth_006", loginWithXbox));
         }
 
         // We logged in
@@ -118,13 +118,13 @@ public class MicrosoftOAuth {
         // Validate the profile
         if (isUnsuccessful(profileRes)) {
             LOGGER.warn("Unable to fetch profile. " + profileRes.message());
-            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account...", "xbx_auth_007"));
+            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account...", "xbx_auth_007", profileRes));
         }
 
         // Figure out the type of account
         JsonObject profileData = profileRes.data().getAsJsonObject();
         if (!profileData.has("id")) {
-            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account (no id found)", "xbx_auth_008"));
+            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account (no id found)", "xbx_auth_008", profileRes));
         }
 
         return DataResult.data(Pair.of(profileData, new MSAuthStore(
@@ -237,24 +237,24 @@ public class MicrosoftOAuth {
             ResponseBody body = execute.body();
             
             if (execute.code() >= 500) {
-                return new StepReply(false, execute.code(), "There are currently issues with the authentication system. Please try again in a few minutes.", JsonNull.INSTANCE, null);
+                return new StepReply(false, execute.code(), "There are currently issues with the authentication system. Please try again in a few minutes.", JsonNull.INSTANCE, null, false);
             }
             
             if (body != null) {
                 try {
                     JsonElement jsonElement = JsonParser.parseString(body.string());
                     LOGGER.info("{}|{} responded with: {}", execute.code(), request.url(), jsonElement.toString().replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
-                    return new StepReply(true, execute.code(), successMessage, jsonElement, execute);
+                    return new StepReply(true, execute.code(), successMessage, jsonElement, execute, false);
                 } catch (JsonParseException exception) {
                     LOGGER.fatal("Unable to parse json response from {} with error of {}", request.url(), exception);
                 }
             }
 
             LOGGER.fatal("Failed to read and handle response from {}", request.url());
-            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null);
+            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null, false);
         } catch (Exception e) {
             LOGGER.fatal("Error executing request to {}", request.url(), e);
-            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null);
+            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null, true);
         }
     }
 

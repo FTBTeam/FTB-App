@@ -1,10 +1,16 @@
 import { AuthProfile } from '@/modules/core/core.types';
 import store from '@/modules/store';
-import { wsTimeoutWrapper } from '../helpers';
+import { wsTimeoutWrapper } from '@/utils';
 import dayjs from 'dayjs';
+import { createError } from '@/core/errors/errorCodes';
+
+type RefreshResponse = {
+  ok: boolean;
+  networkError?: boolean;
+};
 
 interface Authenticator {
-  refresh: (profile: AuthProfile) => Promise<boolean>;
+  refresh: (profile: AuthProfile) => Promise<RefreshResponse>;
 }
 
 // Todo: reduce logging in the future
@@ -13,7 +19,7 @@ export const logAuth = (level: 'debug' | 'warn' | 'error', message: any) =>
   console.log(`[${dayjs().format('DD/MM/YY hh:mm:ss')}] [${level}] [auth] ${message}`);
 
 const msAuthenticator: Authenticator = {
-  async refresh(profile: AuthProfile): Promise<boolean> {
+  async refresh(profile: AuthProfile): Promise<RefreshResponse> {
     logAuth('debug', `Asking the refresh service to refresh the token for ${profile.username}`);
 
     try {
@@ -54,29 +60,29 @@ const msAuthenticator: Authenticator = {
 
         if (authenticator?.response === 'updated') {
           logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
-          return true;
+          return { ok: true };
         } else {
           logAuth(
             'warn',
             `Failed to refresh the token for ${profile.username} due to ${authenticator?.response ?? 'unknown'}`,
           );
-          return false;
+          return { ok: false };
         }
       } else {
         logAuth('error', `No encryption details, we can not proceed...`);
         console.log('Unable to refresh token due to missing encryption details', response);
-        return false;
+        return { ok: false };
       }
     } catch (e) {
       logAuth('error', `Request errored with the response of ${(e as any).message}`);
       console.log(e);
-      return false;
+      return { ok: false, networkError: true };
     }
   },
 };
 
 const mcAuthenticator: Authenticator = {
-  async refresh(profile: AuthProfile): Promise<boolean> {
+  async refresh(profile: AuthProfile): Promise<RefreshResponse> {
     const authenticator = await wsTimeoutWrapper({
       type: 'profiles.refresh',
       profileUuid: profile.uuid,
@@ -84,13 +90,13 @@ const mcAuthenticator: Authenticator = {
 
     if (authenticator?.response === 'updated') {
       logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
-      return true;
+      return { ok: true };
     } else {
       logAuth(
         'warn',
         `Failed to refresh the token for ${profile.username} due to ${authenticator?.response ?? 'unknown'}`,
       );
-      return false;
+      return { ok: false };
     }
   },
 };
@@ -185,25 +191,51 @@ const attemptToRemoveMojangAccounts = async (
   }
 };
 
+export type LaunchCheckResult = {
+  ok: boolean;
+  requiresSignIn: boolean;
+  allowOffline?: boolean;
+  quite?: boolean;
+  error?: {
+    message: string;
+    code: string;
+  };
+};
+
+export const removeActiveProfile = async (): Promise<boolean> => {
+  const { 'core/getActiveProfile': activeProfile } = store.getters;
+  if (activeProfile) {
+    await wsTimeoutWrapper({
+      type: 'profiles.remove',
+      uuid: activeProfile.uuid,
+    });
+  }
+
+  // No profile found, assume success
+  return true;
+};
+
 // 🚀
-export const preLaunchChecksValid = async (tryAgainInstanceUuid: any) => {
+export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
   const { 'core/getProfiles': profiles, 'core/getActiveProfile': activeProfile } = store.getters;
 
-  const signInAgain = async () => {
-    await store.dispatch('core/openSignIn', { open: true, tryAgainInstanceUuid }, { root: true });
-  };
-
   if (profiles.length === 0) {
-    logAuth('debug', 'No profiles found, prompting user to sign in');
-    await signInAgain();
-    return false;
+    return {
+      ok: false,
+      requiresSignIn: true,
+      quite: true,
+      error: createError('ftb-auth#1000'),
+    };
   }
 
   let profile: AuthProfile | null = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
   if (!profile) {
-    logAuth('debug', 'No active profile found, prompting user to sign in');
-    await signInAgain();
-    return false;
+    return {
+      ok: false,
+      requiresSignIn: true,
+      quite: true,
+      error: createError('ftb-auth#1001'),
+    };
   }
 
   // TODO: remove in April 2022
@@ -211,13 +243,6 @@ export const preLaunchChecksValid = async (tryAgainInstanceUuid: any) => {
   //   await attemptToRemoveMojangAccounts(profiles, profile, signInAgain);
   // }
   // TODO: end of remove in April 2022
-
-  // Something went really wrong here...
-  if (profile == null) {
-    logAuth('error', `Fatal error, falling back to sign in`);
-    await signInAgain();
-    return false;
-  }
 
   const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
 
@@ -237,16 +262,64 @@ export const preLaunchChecksValid = async (tryAgainInstanceUuid: any) => {
   if (!isValid?.success) {
     logAuth('debug', `Found a profile that no longer can be validated. Trying to refresh`);
     const refresh = await validator.refresh(profile);
-    if (!refresh) {
-      logAuth('error', `Failed to refresh token`);
-    }
 
     // Update the profiles
     await store.dispatch('core/loadProfiles');
-    logAuth('debug', `The refresh was ${refresh ? 'successful' : 'unsuccessful'}`);
-    return refresh;
+    logAuth('debug', `The refresh was ${refresh.ok ? 'successful' : 'unsuccessful'}`);
+    return {
+      ok: refresh.ok,
+      allowOffline: true,
+      requiresSignIn: !refresh.ok,
+      error: refresh.ok ? createError('ftb-auth#1002') : undefined,
+    };
   }
 
   logAuth('debug', `Successfully authenticated ${profile.username} with uuid ${profile.uuid}`);
-  return true;
+  return {
+    ok: true,
+    requiresSignIn: false,
+  };
+};
+
+/**
+ * Runs the above validation, logs any errors, and handles the removal of the profile if it's invalid / errored and
+ * will force the displaying of the login modal if needed.
+ *
+ * @param instanceId
+ */
+export const validateAuthenticationOrSignIn = async (instanceId?: string): Promise<RefreshResponse> => {
+  const validationResult = await preLaunchChecksValid();
+  if (validationResult.ok) {
+    return {
+      ok: true,
+    };
+  }
+
+  if (validationResult.error) {
+    logAuth('error', validationResult.error?.code + ': ' + validationResult.error?.message);
+  }
+
+  if (!validationResult.quite) {
+    await store.dispatch(
+      'showAlert',
+      {
+        title: 'Error!',
+        message:
+          'Profile validation failed, please login again. If this keeps happening, as for support in our Discord',
+        type: 'danger',
+      },
+      { root: true },
+    );
+  }
+
+  if (validationResult.requiresSignIn && !validationResult.allowOffline) {
+    logAuth('debug', 'Removing active profile and asking the user to sign-in again');
+    await removeActiveProfile();
+    await store.dispatch('core/openSignIn', { open: true, tryAgainInstanceUuid: instanceId ?? null }, { root: true });
+  }
+
+  return {
+    ok: false,
+    networkError: validationResult.allowOffline,
+  };
 };
