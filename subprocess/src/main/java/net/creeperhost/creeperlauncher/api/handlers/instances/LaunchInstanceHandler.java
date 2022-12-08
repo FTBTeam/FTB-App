@@ -8,6 +8,7 @@ import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.InstanceLaunchException;
 import net.creeperhost.creeperlauncher.pack.InstanceLauncher;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,6 +38,10 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
             Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", "Instance is already running."));
             return;
         }
+        if (data.offline && StringUtils.isEmpty(data.username)) {
+            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", "Offline username not specified."));
+            return;
+        }
 
         assert instance.prepareFuture == null;
         assert instance.prepareToken == null;
@@ -44,7 +49,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         instance.prepareToken = new CancellationToken();
         instance.prepareFuture = CompletableFuture.runAsync(() -> {
             try {
-                instance.play(instance.prepareToken, data.extraArgs, data.offline ? requireNonNull(data.username, "Username not specified for offline launch") : null);
+                instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.username : null);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
             } catch (InstanceLaunchException ex) {
                 if (ex instanceof InstanceLaunchException.Abort) {
@@ -60,6 +65,9 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
 
                     Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
                 }
+            } catch (Throwable ex) {
+                LOGGER.error("Unknown error whilst starting instance.", ex);
+                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", "Unexpected error whilst starting instance."));
             }
             instance.prepareToken = null;
             instance.prepareFuture = null;
