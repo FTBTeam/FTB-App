@@ -53,7 +53,7 @@ public class ModpackManifest {
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.OK_HTTP_CLIENT)
+                .setClient(Constants.httpClient())
                 .setUserAgent(Constants.USER_AGENT)
                 .setUrl(url)
                 .setDest(sw);

@@ -132,7 +132,7 @@ public class ModpackVersionManifest {
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.OK_HTTP_CLIENT)
+                .setClient(Constants.httpClient())
                 .setUserAgent(Constants.USER_AGENT)
                 .setUrl(url)
                 .setDest(sw);
@@ -154,7 +154,7 @@ public class ModpackVersionManifest {
         Request.Builder builder = new Request.Builder()
                 .url(CREEPERHOST_MODPACK + "/public/curseforge/import")
                 .put(new PathRequestBody(manifest));
-        try (Response response = Constants.OK_HTTP_CLIENT.newCall(builder.build()).execute()) {
+        try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
             if (body == null) {
                 LOGGER.error("Request returned empty body. Status code: " + response.code());

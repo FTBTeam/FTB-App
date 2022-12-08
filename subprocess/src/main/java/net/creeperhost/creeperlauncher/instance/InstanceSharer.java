@@ -239,7 +239,7 @@ public class InstanceSharer extends InstanceOperation {
         requestBuilder.header("x-server-id", joinServerResult.serverId())
                 .header("x-mc-username", joinServerResult.username());
 
-        try (Response response = Constants.OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute()) {
+        try (Response response = Constants.httpClient().newCall(requestBuilder.build()).execute()) {
             ResponseBody body = response.body();
             if (!response.isSuccessful()) {
                 String bodyStr = body != null ? body.string() : null;
@@ -319,7 +319,7 @@ public class InstanceSharer extends InstanceOperation {
                 .url(MC_SESSION_SERVER_JOIN)
                 .post(RequestBody.create(reqBody.toString(), MediaType.parse("application/json")));
 
-        try (Response response = Constants.OK_HTTP_CLIENT.newCall(req.build()).execute()) {
+        try (Response response = Constants.httpClient().newCall(req.build()).execute()) {
             ResponseBody body = response.body();
             if (body == null) {
                 throw new IOException("Session server join returned no response body. Status code: " + response.code());

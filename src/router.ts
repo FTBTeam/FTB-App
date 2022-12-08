@@ -25,6 +25,7 @@ export enum RouterNames {
   SETTINGS_INFO = 'app-info',
   SETTINGS_APP_LICENSE = 'license',
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
+  SETTINGS_PROXY = 'app-proxy',
   CHAT = 'chat',
   DEVELOPER = 'dev',
 }
@@ -93,7 +94,12 @@ export default new Router({
             {
               path: 'profile',
               name: RouterNames.SETTINGS_MT_INTEGRATION,
-              component: () => import(/* webpackChunkName: "profile" */ './views/Settings/MTIntegration.vue'),
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/MTIntegration.vue'),
+            },
+            {
+              path: 'proxy',
+              name: RouterNames.SETTINGS_PROXY,
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/ProxySettings.vue'),
             },
           ],
         },

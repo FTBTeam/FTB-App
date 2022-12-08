@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col my-2">
+  <div class="flex flex-col my-2 ftb-input" :class="{ disabled }">
     <!-- <div class="flex flex-row justify-center my-4">
         <input class="bg-background focus:bg-background-lighten focus:outline-none border border-gray-700 block w-full p-2 appep class="text-white w-64 pr-4 mx-auto">{{label}}</p>
         <arance-none leading-normal text-gray-300" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
@@ -78,6 +78,22 @@ export default class FTBInput extends Vue {
 </script>
 
 <style lang="scss" scoped>
+label {
+  transition: opacity 0.25s ease-in-out;
+}
+
+.ftb-input {
+  &.disabled {
+    * {
+      cursor: not-allowed !important;
+    }
+
+    label {
+      opacity: 0.5;
+    }
+  }
+}
+
 .ftb-btn {
   &::placeholder {
     color: rgba(white, 0.2);
