@@ -59,10 +59,12 @@
     />
     
     <p class='text-muted text-xs italic'>Please be aware that proxy passwords are stored in plain text in the apps settings file. You have been warned!</p>
+    <message type='warning' class='mt-4 mb-8'>We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</message>
 
     <div class='action flex justify-end'>
-      <ftb-button :disabled='proxyType === "none" || isInvalid()' color="primary" @click='save' class="inline-block py-2 px-10 mt-8">Test & Save</ftb-button>
+      <ftb-button :disabled='proxyType === "none" || isInvalid()' color="primary" @click='save' class="inline-block py-2 px-10">Test & Save</ftb-button>
     </div>
+    
   </div>
 </template>
 
