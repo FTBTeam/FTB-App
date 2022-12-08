@@ -13,7 +13,7 @@ public class LaunchInstanceData extends BaseData {
     public boolean cancelLaunch = false;
     public boolean offline = false;
     @Nullable
-    public String username;
+    public String offlineUsername;
 
     public static class Status extends BaseData {
 

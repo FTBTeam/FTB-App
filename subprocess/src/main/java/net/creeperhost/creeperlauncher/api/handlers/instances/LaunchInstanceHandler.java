@@ -38,7 +38,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
             Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", "Instance is already running."));
             return;
         }
-        if (data.offline && StringUtils.isEmpty(data.username)) {
+        if (data.offline && StringUtils.isEmpty(data.offlineUsername)) {
             Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "error", "Offline username not specified."));
             return;
         }
@@ -49,7 +49,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         instance.prepareToken = new CancellationToken();
         instance.prepareFuture = CompletableFuture.runAsync(() -> {
             try {
-                instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.username : null);
+                instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.offlineUsername : null);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
             } catch (InstanceLaunchException ex) {
                 if (ex instanceof InstanceLaunchException.Abort) {
