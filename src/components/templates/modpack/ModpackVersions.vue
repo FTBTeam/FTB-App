@@ -1,5 +1,8 @@
 <template>
   <div class="pack-versions py-4">
+    <div class="closer" @click="close">
+      <font-awesome-icon icon="times" />
+    </div>
     <div class="aside">
       <p>Versions</p>
       <div class="items">
@@ -100,7 +103,7 @@
 
 <script lang="ts">
 import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import { InstallerState } from '@/modules/app/appStore.types';
@@ -115,6 +118,9 @@ export default class ModpackVersions extends Vue {
   @Prop() packInstance!: ModPack;
   @Prop() instance!: Instance;
   @Prop() current!: number;
+
+  @Emit('close')
+  public close() {}
 
   platform = platform;
 
@@ -189,6 +195,8 @@ export default class ModpackVersions extends Vue {
 .pack-versions {
   display: flex;
   height: 100%;
+  position: relative;
+  font-size: 0.875rem;
 
   .aside,
   .main {
@@ -273,6 +281,20 @@ export default class ModpackVersions extends Vue {
     flex: 1;
     overflow-x: auto;
     height: 100%;
+  }
+
+  .closer {
+    cursor: pointer;
+    padding: 0.5rem 0.8rem;
+    font-size: 1.2rem;
+    position: absolute;
+    top: -1rem;
+    right: -2rem;
+    opacity: 0.5;
+    transition: opacity 0.2s ease-in-out;
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 </style>

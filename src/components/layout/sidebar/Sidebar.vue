@@ -49,7 +49,6 @@ import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { AuthState } from '@/modules/auth/types';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
-import { ModpackState } from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import { RouterNames } from '@/router';
@@ -60,7 +59,6 @@ import { yeetError } from '@/utils';
 })
 export default class Sidebar extends Vue {
   @State('auth') private auth!: AuthState;
-  @State('modpacks') private modpacks!: ModpackState;
   @State('settings') private settings!: SettingsState;
   @Prop({ default: false }) isTransparent!: boolean;
   @Prop({ default: false }) isDev!: boolean;
@@ -112,10 +110,7 @@ export default class Sidebar extends Vue {
   }
 
   get disableNav() {
-    return (
-      this.currentRoute === RouterNames.ROOT_LAUNCH_PACK ||
-      (this.modpacks.installing !== null && !this.modpacks.installing.error)
-    );
+    return this.currentRoute === RouterNames.ROOT_LAUNCH_PACK;
   }
 
   public openPromo(event: any): void {

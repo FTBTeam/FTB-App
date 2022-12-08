@@ -49,6 +49,7 @@
           :pack-instance="currentModpack"
           :instance="null"
           :current="null"
+          @close="showVersions = false"
         />
       </ftb-modal>
     </div>
@@ -67,7 +68,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
+import { ModPack, Versions } from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
@@ -111,7 +112,6 @@ export default class ModpackPage extends Vue {
   showVersions = false;
 
   @State('auth') public auth!: AuthState;
-  @State('modpacks') public modpacks!: ModpackState;
   @State('settings') public settings!: SettingsState;
   @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;

@@ -7,7 +7,7 @@
             color="primary"
             class="py-3 px-8 ftb-play-button"
             @click="() => $emit('mainAction')"
-            :disabled="!isInstalled && modpacks.installing !== null"
+            :disabled="!isInstalled"
           >
             <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
             {{ isInstalled ? 'Play' : 'Install' }}
@@ -191,14 +191,13 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
+import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import { getColorForChar } from '@/utils/colors';
-import { Action, State } from 'vuex-class';
-import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
+import { Action } from 'vuex-class';
 import Loading from '@/components/atoms/Loading.vue';
 import MarkdownIt from 'markdown-it';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
@@ -211,7 +210,6 @@ import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vu
   components: {
     PackUpdateButton,
     Loading,
-    ModpackVersions,
     ModpackPublicServers,
     ModpackSettings,
     ModpackMods,
@@ -220,7 +218,6 @@ import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vu
   },
 })
 export default class PackBody extends Vue {
-  @State('modpacks') public modpacks!: ModpackState;
   @Action('sendMessage') public sendMessage!: any;
 
   // The stored instance for an installed pack

@@ -45,7 +45,6 @@ import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import { ModpackState } from '@/modules/modpacks/types';
 import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
@@ -66,7 +65,6 @@ import { RouterNames } from '@/router';
 })
 export default class MainApp extends Vue {
   @State('websocket') public websockets!: SocketState;
-  @State('modpacks') public modpacks!: ModpackState;
   @State('settings') public settings!: SettingsState;
   @Action('sendMessage') public sendMessage: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;

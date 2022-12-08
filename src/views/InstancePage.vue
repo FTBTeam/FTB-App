@@ -53,6 +53,7 @@
           :pack-instance="packInstance"
           :instance="instance"
           :current="instance.versionId"
+          @close="showVersions = false"
         />
       </ftb-modal>
     </div>
