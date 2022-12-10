@@ -30,6 +30,6 @@ body:
     id: additional
     attributes:
       label: Additional information
-      description: Add any other context about the problem here
+      description: Add any other context about the suggestion here
     validations:
       required: false
