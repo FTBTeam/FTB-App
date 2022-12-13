@@ -34,6 +34,9 @@ export const addHyphensToUuid = (uuid: string) => {
 
 export const getPackArt = (packArt: any) => {
   if (typeof packArt === 'string') return packArt;
+  if (!packArt) {
+    return null;
+  }
   let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
   if (artP === undefined) {
     return null;
