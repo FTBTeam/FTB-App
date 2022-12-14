@@ -178,7 +178,7 @@ import ServerCard from '@/components/organisms/ServerCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import { preLaunchChecksValid } from '@/utils/auth/authentication';
+import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
@@ -391,16 +391,23 @@ export default class LaunchingPage extends Vue {
     this.messages = [];
     this.launchProgress = null;
 
-    if (!(await preLaunchChecksValid(this.instance?.uuid))) {
-      this.showAlert({
-        title: 'Error!',
-        message: 'Unable to update, validate or find your profile, please sign in again.',
-        type: 'danger',
-      });
+    if (!this.$route.query.offline) {
+      const refreshResponse = await validateAuthenticationOrSignIn(this.instance?.uuid);
+      if (!refreshResponse.ok && !refreshResponse.networkError) {
+        if (!this.instance) {
+          await this.$router.push({ name: RouterNames.ROOT_LIBRARY });
+          return;
+        }
 
-      await this.$router.push(RouterNames.ROOT_LIBRARY);
-
-      return;
+        await this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
+        return;
+      } else if (refreshResponse.networkError) {
+        await this.$router.push({
+          name: RouterNames.ROOT_LOCAL_PACK,
+          query: { uuid: this.instance?.uuid, presentOffline: 'true' },
+        });
+        return;
+      }
     }
 
     const disableChat = this.settingsState.settings.enableChat;
@@ -411,8 +418,11 @@ export default class LaunchingPage extends Vue {
         type: 'launchInstance',
         uuid: this.instance?.uuid,
         extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
+        offline: this.$route.query.offline,
+        offlineUsername: this.$route.query.username ?? 'FTB Player',
       },
       callback: (data: any) => {
+        // TODO: Replace with something much better!
         if (data.status === 'error') {
           this.preLaunch = false;
           // An instance is already running

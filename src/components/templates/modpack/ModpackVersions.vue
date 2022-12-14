@@ -1,5 +1,8 @@
 <template>
   <div class="pack-versions py-4">
+    <div class="closer" @click="close">
+      <font-awesome-icon icon="times" />
+    </div>
     <div class="aside">
       <p>Versions</p>
       <div class="items">
@@ -9,7 +12,11 @@
           v-for="(version, index) in versions"
           :key="index"
         >
-          <div class="main" @click="() => loadChanges(version.id)">
+          <div
+            class="main"
+            :class="{ disabled: version.type.toLowerCase() === 'archived' }"
+            @click="() => loadChanges(version.id)"
+          >
             <header class="flex justify-between flex-wrap">
               <div class="version">{{ version.name }}</div>
               <div class="updated">{{ version.updated | dayjsFromNow }}</div>
@@ -43,14 +50,7 @@
         </div>
         <div class="buttons flex text-sm">
           <ftb-button
-            @click="
-              () =>
-                platform.get.utils.openUrl(
-                  `https://feed-the-beast.com/modpacks/${packInstance.id}/server/${currentVersion.id}${
-                    packInstance.type.toLowerCase() === 'curseforge' ? '/curseforge' : ''
-                  }`,
-                )
-            "
+            @click="() => platform.get.utils.openUrl(`https://feed-the-beast.com/modpacks/server-files`)"
             class="py-2 px-4 ml-auto mr-1"
             color="info"
             css-class="text-center text-l"
@@ -59,7 +59,12 @@
             Server files
           </ftb-button>
           <ftb-button
-            v-if="instance && currentVersion && instance.versionId !== activeLog"
+            v-if="
+              instance &&
+              currentVersion &&
+              instance.versionId !== activeLog &&
+              currentVersion.type.toLowerCase() !== 'archived'
+            "
             class="py-2 px-4 ml-1"
             color="warning"
             css-class="text-center text-l"
@@ -73,9 +78,18 @@
       <!--      <div class="updated">{{ version.updated | momentFromNow }}</div>-->
       <div class="body-contents flex-1 overflow-y-auto">
         <div v-if="loading" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
-        <div v-else class="bg-orange-400 text-orange-900 font-bold px-4 py-4 rounded mb-6">
+        <div
+          v-else-if="currentVersion && currentVersion.type.toLowerCase() !== 'archived'"
+          class="bg-orange-400 text-orange-900 font-bold px-4 py-4 rounded mb-6"
+        >
           Warning! Always backup your worlds before updating.
         </div>
+        <message class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-else>
+          <p>
+            This version has been archived! This typically means the update contained a fatal error causing the version
+            to be too unstable for players to use.
+          </p>
+        </message>
         <VueShowdown
           v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''"
           flavor="github"
@@ -89,7 +103,7 @@
 
 <script lang="ts">
 import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import { InstallerState } from '@/modules/app/appStore.types';
@@ -104,6 +118,9 @@ export default class ModpackVersions extends Vue {
   @Prop() packInstance!: ModPack;
   @Prop() instance!: Instance;
   @Prop() current!: number;
+
+  @Emit('close')
+  public close() {}
 
   platform = platform;
 
@@ -162,6 +179,7 @@ export default class ModpackVersions extends Vue {
         uuid: this.instance.uuid,
         version: this.currentVersion?.id,
         packType: this.instance.packType,
+        private: this.packInstance.private ?? false,
       },
       meta: {
         name: this.instance.name,
@@ -169,10 +187,6 @@ export default class ModpackVersions extends Vue {
         art: getPackArt(this.instance?.art),
       },
     });
-    // this.$router.replace({
-    //   name: 'installingpage',
-    //   query: { modpackid: modpackID?.toString(), versionID: version?.toString(), uuid: this.instance?.uuid },
-    // });
   }
 }
 </script>
@@ -181,6 +195,8 @@ export default class ModpackVersions extends Vue {
 .pack-versions {
   display: flex;
   height: 100%;
+  position: relative;
+  font-size: 0.875rem;
 
   .aside,
   .main {
@@ -212,6 +228,10 @@ export default class ModpackVersions extends Vue {
         &.active,
         &:hover {
           background-color: var(--color-background);
+        }
+
+        .main.disabled {
+          opacity: 0.3;
         }
 
         .type-data {
@@ -261,6 +281,20 @@ export default class ModpackVersions extends Vue {
     flex: 1;
     overflow-x: auto;
     height: 100%;
+  }
+
+  .closer {
+    cursor: pointer;
+    padding: 0.5rem 0.8rem;
+    font-size: 1.2rem;
+    position: absolute;
+    top: -1rem;
+    right: -2rem;
+    opacity: 0.5;
+    transition: opacity 0.2s ease-in-out;
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 </style>

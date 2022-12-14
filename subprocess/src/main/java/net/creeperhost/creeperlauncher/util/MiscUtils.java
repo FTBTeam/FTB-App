@@ -87,18 +87,6 @@ public class MiscUtils {
         return System.currentTimeMillis() / 1000L;
     }
 
-    public static String encodeURL(String urlStr) {
-        if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) return urlStr;
-        try {
-            URL url = new URL(urlStr);
-            URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
-            return uri.toString();
-        } catch (MalformedURLException | URISyntaxException ex) {
-            LOGGER.warn("Failed to re-encode URL.", ex);
-            return urlStr;
-        }
-    }
-
     /**
      * For some reason Minecraft like to give us UUID's without the hyphens...
      *

@@ -25,6 +25,11 @@ const defaultSettings: Settings = {
   mtConnect: false,
   automateMojang: true,
   showAdverts: true,
+  proxyPort: '',
+  proxyType: 'none',
+  proxyHost: '',
+  proxyPassword: '',
+  proxyUser: '',
 };
 
 export const mutations: MutationTree<SettingsState> = {

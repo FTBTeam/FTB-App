@@ -368,6 +368,8 @@ const createAuthWindow = async (type: string) => {
     },
   });
 
+  electronMsAuthWindow?.webContents.session.clearStorageData();
+
   electronMsAuthWindow.on('closed', () => {
     electronMsAuthWindow = null;
     if (win) {

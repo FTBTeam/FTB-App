@@ -12,25 +12,27 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
+import net.creeperhost.creeperlauncher.util.SSLUtils;
+import net.creeperhost.creeperlauncher.util.X509Formatter;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Throttler;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
 /**
  * A task to download a file.
@@ -45,7 +47,7 @@ public class NewDownloadTask implements Task<Path> {
     private static final int DEFAULT_NUM_TRIES = 3;
 
     private final int tries;
-    private final String url;
+    private final List<String> urls;
     private final Path dest;
     private DownloadValidation validation;
 
@@ -53,9 +55,9 @@ public class NewDownloadTask implements Task<Path> {
     private final LocalFileLocator fileLocator;
     private final boolean tryCompanionHashes;
 
-    private NewDownloadTask(int tries, String url, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator, boolean tryCompanionHashes) {
+    private NewDownloadTask(int tries, List<String> urls, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator, boolean tryCompanionHashes) {
         this.tries = tries;
-        this.url = url;
+        this.urls = urls;
         this.dest = dest;
         this.validation = validation;
 
@@ -82,7 +84,7 @@ public class NewDownloadTask implements Task<Path> {
         }
 
         if (fileLocator != null) {
-            Path localPath = fileLocator.getLocalFile(url, validation, dest);
+            Path localPath = fileLocator.getLocalFile(validation, dest);
             if (localPath != null && Files.exists(localPath)) {
                 LOGGER.info(" File existed locally.");
                 Files.copy(localPath, IOUtils.makeParents(dest), StandardCopyOption.REPLACE_EXISTING);
@@ -95,57 +97,70 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
 
-        if (tryCompanionHashes) {
-            HashCode sha1 = tryGetCompanionHash(HashFunc.SHA1);
-            if (sha1 != null) {
-                HashCode validationSha1 = validation.expectedHashes.get(HashFunc.SHA1);
-                if (validationSha1 != null) {
-                    if (!sha1.equals(validationSha1)) {
-                        LOGGER.error("SHA1 companion to {} does not match Validation. Got: {}, Expected: {}", url, sha1, validationSha1);
+        boolean success = false;
+        List<FailedDownloadAttempt> downloadAttempts = new LinkedList<>();
+        outer:
+        for (int urlIdx = 0; urlIdx < urls.size(); urlIdx++) {
+            String url = urls.get(urlIdx);
+            if (tryCompanionHashes) {
+                HashCode sha1 = tryGetCompanionHash(url, HashFunc.SHA1);
+                if (sha1 != null) {
+                    HashCode validationSha1 = validation.expectedHashes.get(HashFunc.SHA1);
+                    if (validationSha1 != null) {
+                        if (!sha1.equals(validationSha1)) {
+                            LOGGER.error("SHA1 companion to {} does not match Validation. Got: {}, Expected: {}", url, sha1, validationSha1);
+                        }
+                    } else {
+                        validation = validation.withHash(HashFunc.SHA1, sha1);
                     }
-                } else {
-                    validation = validation.withHash(HashFunc.SHA1, sha1);
                 }
             }
-        }
 
-        Throwable fail = null;
-        for (int i = 0; i < tries; i++) {
-            try {
-                doRequest(url, dest, validation, progressListener);
-                fail = null;
-                break;
-            } catch (Throwable ex) {
-                LOGGER.debug("Download attempt failed. Attempt {}, URL {}.", i, url, ex);
-                if (fail != null) {
-                    fail.addSuppressed(ex);
-                } else {
-                    fail = ex;
+            for (int i = 0; i < tries; i++) {
+                try {
+                    doRequest(url, dest, validation, progressListener);
+                    success = true;
+                    break outer;
+                } catch (Throwable ex) {
+                    LOGGER.debug("Download attempt failed. Attempt {}, URL {}.", i, url, ex);
+                    downloadAttempts.add(new FailedDownloadAttempt(url, urlIdx, i, ex, SSLUtils.getThreadCertificates()));
                 }
             }
         }
-        if (fail != null) {
-            LOGGER.error("Download task failed for " + url);
-            throw new IOException("Download task failed for " + url, fail);
+        SSLUtils.clearThreadCertificates();
+        if (!success) {
+            Map<String, List<FailedDownloadAttempt>> groups = new LinkedHashMap<>();
+            for (FailedDownloadAttempt attempt : downloadAttempts) {
+                groups.computeIfAbsent(attempt.url(), e -> new LinkedList<>()).add(attempt);
+            }
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, List<FailedDownloadAttempt>> entry : groups.entrySet()) {
+                String url = entry.getKey();
+                List<FailedDownloadAttempt> tries = entry.getValue();
+                sb.append("Tried URL: '%s' %d times.\n".formatted(url, tries.size()));
+                for (int i = 0; i < tries.size(); i++) {
+                    sb.append("Try %d: %s".formatted(i, tries.get(i).formatException()));
+                }
+            }
+            throw new DownloadFailedException("Download failed.\n" + sb);
         }
 
         LOGGER.info("  File downloaded.");
 
         if (fileLocator != null) {
-            fileLocator.onFileDownloaded(url, validation, dest);
+            fileLocator.onFileDownloaded(validation, dest);
         }
     }
 
     @Nullable
-    private HashCode tryGetCompanionHash(HashFunc func) throws IOException {
+    private HashCode tryGetCompanionHash(String url, HashFunc func) throws IOException {
         String ext = "." + func.getName().toLowerCase(Locale.ROOT);
-        String url = this.url + ext;
         Path dest = this.dest.resolveSibling(this.dest.getFileName().toString() + ext);
 
         Throwable fail = null;
         for (int i = 0; i < tries; i++) {
             try {
-                doRequest(url, dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
+                doRequest(url + ext, dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
                 fail = null;
                 break;
             } catch (Throwable ex) {
@@ -162,7 +177,7 @@ public class NewDownloadTask implements Task<Path> {
             }
         }
         if (fail != null) {
-            LOGGER.error("Failed to retrieve {} companion resource for {}.", func, this.url, fail);
+            LOGGER.error("Failed to retrieve {} companion resource for {}.", func, url, fail);
             return null;
         }
         return HashCode.fromString(Files.readString(dest, StandardCharsets.UTF_8).trim());
@@ -170,7 +185,7 @@ public class NewDownloadTask implements Task<Path> {
 
     private static void doRequest(String url, Path dest, DownloadValidation validation, @Nullable TaskProgressListener progressListener) throws IOException {
         OkHttpDownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.OK_HTTP_CLIENT)
+                .setClient(Constants.httpClient())
                 .setUrl(url)
                 .setDest(dest)
                 .setUseETag(validation.useETag)
@@ -239,19 +254,20 @@ public class NewDownloadTask implements Task<Path> {
 
     //@formatter:off
     @Override public Path getResult() { return dest; }
-    public String getUrl() { return url; }
+    public String getUrl() { return urls.get(0); } // TODO REMOVE THIS
     public Path getDest() { return dest; }
     public DownloadValidation getValidation() { return validation; }
     @Nullable public LocalFileLocator getFileLocator() { return fileLocator; }
     //@formatter:on
 
+    // TODO CONVERT TO INSTANCE METHOD WHICH TRIES MIRRORS.
     public static long getContentLength(String url) {
         try {
             Request request = new Request.Builder()
                     .head()
                     .url(url)
                     .build();
-            try (Response response = Constants.OK_HTTP_CLIENT.newCall(request).execute()) {
+            try (Response response = Constants.httpClient().newCall(request).execute()) {
                 ResponseBody body = response.body();
                 if (body != null) return body.contentLength();
 
@@ -270,7 +286,7 @@ public class NewDownloadTask implements Task<Path> {
      */
     public Builder toBuilder() {
         Builder builder = new Builder();
-        builder.url = url;
+        builder.urls = new LinkedList<>(urls);
         builder.dest = dest;
         builder.validation = validation;
         builder.fileLocator = fileLocator;
@@ -281,8 +297,7 @@ public class NewDownloadTask implements Task<Path> {
     public static class Builder {
 
         private int tries = DEFAULT_NUM_TRIES;
-        @Nullable
-        private String url;
+        private List<String> urls = new LinkedList<>();
         @Nullable
         private Path dest;
 
@@ -299,7 +314,13 @@ public class NewDownloadTask implements Task<Path> {
         }
 
         public Builder url(String url) {
-            this.url = url;
+            assert urls.isEmpty();
+            urls.add(url);
+            return this;
+        }
+
+        public Builder withMirror(String mirror) {
+            urls.add(mirror);
             return this;
         }
 
@@ -324,19 +345,19 @@ public class NewDownloadTask implements Task<Path> {
         }
 
         public NewDownloadTask build() {
-            if (url == null) throw new IllegalStateException("URL not set.");
+            if (urls.isEmpty()) throw new IllegalStateException("URL not set.");
             if (dest == null) throw new IllegalStateException("Dest not set.");
 
-            return new NewDownloadTask(tries, url, dest, validation, fileLocator, tryCompanionHashes);
+            return new NewDownloadTask(tries, urls, dest, validation, fileLocator, tryCompanionHashes);
         }
     }
 
     public interface LocalFileLocator {
 
         @Nullable
-        Path getLocalFile(String url, FileValidation validation, Path dest);
+        Path getLocalFile(FileValidation validation, Path dest);
 
-        void onFileDownloaded(String url, FileValidation validation, Path dest);
+        void onFileDownloaded(FileValidation validation, Path dest);
     }
 
     /**
@@ -435,6 +456,33 @@ public class NewDownloadTask implements Task<Path> {
         public boolean isRedundant() {
             // We are redundant if super is, and we aren't using etag/onlyIfModified matching.
             return super.isRedundant() && !useETag && !useOnlyIfModified;
+        }
+    }
+
+    private record FailedDownloadAttempt(String url, int urlIndex, int tryNum, Throwable ex, @Nullable X509Certificate[] certs) {
+
+        public String formatException() {
+            StringBuilder sb = new StringBuilder();
+            String exception = ExceptionUtils.getStackTrace(ex)
+                    .replace("\r\n", "\n")
+                    .replace("\n", "\n  ");
+            sb.append(exception);
+            if (sb.charAt(sb.length() - 1) != '\n') {
+                sb.append("\n");
+            }
+            if (ex instanceof SSLException && certs != null && certs.length != 0) {
+                sb.append("Certificate Trace:\n");
+                for (int i = 0; i < certs.length; i++) {
+                    sb.append("Cert ").append(i).append(": ");
+                    if (certs[i] == null) {
+                        sb.append("null");
+                    } else {
+                        sb.append(X509Formatter.printCertificate(certs[i]));
+                    }
+                }
+            }
+
+            return sb.toString();
         }
     }
 

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static net.covers1624.quack.collection.ColUtils.onlyOrDefault;
+import static net.creeperhost.creeperlauncher.Constants.JSON_PROXY;
 
 /**
  * Minecraft 'Versions List' manifest.
@@ -43,6 +44,7 @@ public class VersionListManifest {
         Path versionsFile = versionsDir.resolve("version_manifest.json");
         NewDownloadTask downloadTask = NewDownloadTask.builder()
                 .url(URL)
+                .withMirror(JSON_PROXY + URL)
                 .dest(versionsFile)
                 .withValidation(DownloadValidation.of()
                         .withUseETag(true)

@@ -5,20 +5,17 @@ import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
-import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.util.ProxyUtils;
+import net.creeperhost.creeperlauncher.util.SSLUtils;
+import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okio.Throttler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Constants {
@@ -44,6 +41,7 @@ public class Constants {
     public static final String CREEPERHOST_MODPACK = CreeperLauncher.isDevMode ? "https://modpack-api.ch.tools" : "https://api.modpacks.ch";
     public static final String CREEPERHOST_MODPACK_SEARCH2 = CREEPERHOST_MODPACK + "/public/modpack/";
     public static final String MOD_API = CREEPERHOST_MODPACK + "/public/mod/";
+    public static final String JSON_PROXY = "https://api.modpacks.ch/public/meta/proxy/";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
     public static final String MC_JSONS = "https://apps.modpacks.ch/versions/minecraftjsons/";
@@ -74,20 +72,12 @@ public class Constants {
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
-    public static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
-            .connectTimeout(5, TimeUnit.MINUTES)
-            .readTimeout(5, TimeUnit.MINUTES)
-            .connectionPool(new ConnectionPool())
-            .cookieJar(new SimpleCookieJar())
-            .addInterceptor(new ThrottlerInterceptor())
-            .addInterceptor(new MultiHasherInterceptor())
-            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().removeHeader("User-Agent").addHeader("User-Agent", USER_AGENT).build()))
-            .build();
+    private static OkHttpClient OK_HTTP_CLIENT;
 
     public static JdkInstallationManager JDK_INSTALL_MANAGER = new JdkInstallationManager(
             Constants.BIN_LOCATION.resolve("runtime"),
             new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
-                    .setClient(OK_HTTP_CLIENT)
+                    .setClient(httpClient())
                     .addTag(Throttler.class, Constants.getGlobalThrottler())
             ),
             true
@@ -121,6 +111,29 @@ public class Constants {
     public static String S3_HOST = "";
 
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
+
+    static {
+        refreshHttpClient();
+    }
+
+    public static void refreshHttpClient() {
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES)
+                .readTimeout(5, TimeUnit.MINUTES)
+                .connectionPool(new ConnectionPool())
+                .cookieJar(new SimpleCookieJar())
+                .addInterceptor(new ThrottlerInterceptor())
+                .addInterceptor(new MultiHasherInterceptor())
+                .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT).build()));
+
+        SSLUtils.inject(builder);
+        ProxyUtils.inject(builder);
+        OK_HTTP_CLIENT = builder.build();
+    }
+
+    public static OkHttpClient httpClient() {
+        return OK_HTTP_CLIENT;
+    }
 
     public static String getCreeperhostModpackPrefix(boolean isPrivate, byte packType) {
         String key = "public";

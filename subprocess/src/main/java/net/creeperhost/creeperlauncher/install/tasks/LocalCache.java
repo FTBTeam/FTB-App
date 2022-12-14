@@ -4,7 +4,6 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
@@ -290,14 +289,14 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
 
     @Nullable
     @Override
-    public Path getLocalFile(String url, FileValidation validation, Path dest) {
+    public Path getLocalFile(FileValidation validation, Path dest) {
         HashCode expectedSha1 = validation.expectedHashes.get(HashFunc.SHA1);
         return expectedSha1 == null ? null : get(expectedSha1);
 
     }
 
     @Override
-    public void onFileDownloaded(String url, FileValidation validation, Path dest) {
+    public void onFileDownloaded(FileValidation validation, Path dest) {
         HashCode expectedSha1 = validation.expectedHashes.get(HashFunc.SHA1);
         if (expectedSha1 != null) {
             put(dest, expectedSha1);

@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static net.creeperhost.creeperlauncher.Constants.CH_MAVEN;
+import static net.creeperhost.creeperlauncher.Constants.JSON_PROXY;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 
 /**
@@ -117,6 +118,7 @@ public class VersionManifest {
         LOGGER.info("Updating version manifest for '{}' from '{}'.", version.id, version.url);
         NewDownloadTask downloadTask = NewDownloadTask.builder()
                 .url(version.url)
+                .withMirror(JSON_PROXY + version.url)
                 .dest(versionFile)
                 .withValidation(DownloadValidation.of()
                         .withUseETag(true)

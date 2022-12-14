@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
+import static net.creeperhost.creeperlauncher.Constants.JSON_PROXY;
 
 /**
  * Asset index json.
@@ -49,6 +50,7 @@ public class AssetIndexManifest {
 
         NewDownloadTask downloadTask = NewDownloadTask.builder()
                 .url(assetIndex.getUrl())
+                .withMirror(JSON_PROXY + assetIndex.getUrl())
                 .dest(assetIndexFile)
                 .withValidation(assetIndex.validation()
                         .withUseETag(true)

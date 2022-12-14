@@ -1,29 +1,32 @@
 package net.creeperhost.creeperlauncher.api;
 
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.api.data.*;
+import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.data.friends.AddFriendData;
 import net.creeperhost.creeperlauncher.api.data.friends.BlockFriendData;
 import net.creeperhost.creeperlauncher.api.data.friends.GetFriendsData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
-import net.creeperhost.creeperlauncher.api.data.irc.*;
+import net.creeperhost.creeperlauncher.api.data.irc.IRCConnectData;
+import net.creeperhost.creeperlauncher.api.data.irc.IRCQuitRequestData;
+import net.creeperhost.creeperlauncher.api.data.irc.IRCSendMessageData;
 import net.creeperhost.creeperlauncher.api.data.other.*;
-import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceDeleteBackupHandler;
-import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceGetBackupsHandler;
-import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceRestoreBackupHandler;
-import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
-import net.creeperhost.creeperlauncher.api.handlers.*;
+import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.AddFriendHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.BlockFriendHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.GetFriendsHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.*;
-import net.creeperhost.creeperlauncher.api.handlers.irc.*;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceDeleteBackupHandler;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceGetBackupsHandler;
+import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceRestoreBackupHandler;
+import net.creeperhost.creeperlauncher.api.handlers.irc.IRCConnectHandler;
+import net.creeperhost.creeperlauncher.api.handlers.irc.IRCQuitRequestHandler;
+import net.creeperhost.creeperlauncher.api.handlers.irc.IRCSendMessageHandler;
 import net.creeperhost.creeperlauncher.api.handlers.other.*;
+import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetAllHandler;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetHandler;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StoragePutHandler;
@@ -35,8 +38,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class WebSocketMessengerHandler
-{
+public class WebSocketMessengerHandler {
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final Map<String, Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>>> register = new HashMap<>();
@@ -98,6 +101,8 @@ public class WebSocketMessengerHandler
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());
+
+        register("webRequest", WebRequestData.class, new WebRequestHandler());
     }
 
     public static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {
@@ -108,32 +113,31 @@ public class WebSocketMessengerHandler
         register.put(name, Pair.of(clazz, null));
     }
 
-    public static void handleMessage(String data)
-    {
+    public static void handleMessage(String data) {
         JsonElement parse = JsonParser.parseString(data);
-        if (parse.isJsonObject()) {
-            JsonObject jsonObject = parse.getAsJsonObject();
-            if (jsonObject.has("type")) {
-                String type = jsonObject.get("type").getAsString();
-                Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> entry = register.get(type);
-                TypeToken typeToken = TypeToken.of(entry.getLeft());
-                IMessageHandler<? extends BaseData> iMessageHandler = entry.getRight();
-                if (iMessageHandler != null) {
-                    try {
-                        BaseData parsedData = gson.fromJson(data, typeToken.getType());
-                        if (CreeperLauncher.isDevMode || (parsedData.secret != null && parsedData.secret.equals(CreeperLauncher.websocketSecret))) {
-                            CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), CreeperLauncher.taskExeggutor).exceptionally((t) -> {
-                                LOGGER.error("Error handling message", t);
-                                return null;
-                            });
-                        }
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    LOGGER.error("No handler for message type '{}'", type);
-                }
+        if (!parse.isJsonObject()) return;
+
+        JsonObject jsonObject = parse.getAsJsonObject();
+        if (!jsonObject.has("type")) return;
+
+        String type = jsonObject.get("type").getAsString();
+        Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> entry = register.get(type);
+        IMessageHandler<? extends BaseData> iMessageHandler = entry.getRight();
+        if (iMessageHandler == null) {
+            LOGGER.error("No handler for message type '{}'", type);
+            return;
+        }
+
+        try {
+            BaseData parsedData = gson.fromJson(data, entry.getLeft());
+            if (CreeperLauncher.isDevMode || (parsedData.secret != null && parsedData.secret.equals(CreeperLauncher.websocketSecret))) {
+                CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), CreeperLauncher.taskExeggutor).exceptionally((t) -> {
+                    LOGGER.error("Error handling message", t);
+                    return null;
+                });
             }
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse message.", e);
         }
     }
 }

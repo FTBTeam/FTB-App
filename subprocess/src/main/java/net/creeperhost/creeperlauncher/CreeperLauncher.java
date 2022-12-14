@@ -21,7 +21,6 @@ import net.creeperhost.creeperlauncher.migration.MigrationManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
-import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -87,6 +86,8 @@ public class CreeperLauncher {
 
     static {
         Log4jUtils.redirectStreams();
+        SSLUtils.inject();
+        DNSUtils.logImportantHosts();
         System.setProperty("apple.awt.UIElement", "true");
     }
 
@@ -103,7 +104,6 @@ public class CreeperLauncher {
     public static final String websocketSecret = WebSocketAPI.generateSecret();
     public static boolean websocketDisconnect = false;
     public static AtomicBoolean isSyncing = new AtomicBoolean(false);
-    public static MineTogetherConnect mtConnect;
 
     private static boolean warnedDevelop = false;
 
@@ -261,7 +261,7 @@ public class CreeperLauncher {
     }
 
     private static void registerSettingsListeners(String[] args) {
-        SettingsChangeUtil.registerListener("instanceLocation", (key, value) -> {
+        SettingsChangeUtil.registerChangeHandler("instanceLocation", (key, value) -> {
             OpenModalData.openModal("Confirmation", "Are you sure you wish to move your instances to this location? <br tag='haha line break go brr'> All content in your current instance location will be moved, and if content exists with the same name in the destination it will be replaced.", List.of(
                 new OpenModalData.ModalButton("Yes", "green", () -> {
                     OpenModalData.openModal("Please wait", "Your instances are now moving", List.of());
@@ -333,7 +333,7 @@ public class CreeperLauncher {
         });
 
 
-        SettingsChangeUtil.registerListener("enablePreview", (key, value) -> {
+        SettingsChangeUtil.registerChangeHandler("enablePreview", (key, value) -> {
             if (Settings.settings.getOrDefault("enablePreview", "").isEmpty() && value.equals("false")) return true;
             if (Constants.BRANCH.equals("release") || Constants.BRANCH.equals("preview")) {
                 OpenModalData.openModal("Update", "Do you wish to change to this branch now?", List.of(
@@ -356,10 +356,12 @@ public class CreeperLauncher {
             }
         });
 
-        SettingsChangeUtil.registerListener("verbose", (key, value) -> {
+        SettingsChangeUtil.registerChangeHandler("verbose", (key, value) -> {
             verbose = value.equals("true");
             return true;
         });
+
+        SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -381,10 +383,6 @@ public class CreeperLauncher {
         } catch (Throwable e) {
 
         }
-    }
-
-    public static long unixtimestamp() {
-        return System.currentTimeMillis() / 1000L;
     }
 
     private static void pingPong() {
@@ -550,13 +548,24 @@ public class CreeperLauncher {
             try {
                 LOGGER.info("Starting Electron: " + String.join(" ", args));
                 elect = app.start();
-                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::warn);
-                StreamGobblerLog.redirectToLogger(elect.getInputStream(), LOGGER::info);
+                StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
+                        .setName("Electron STDOUT gobbler")
+                        .setInput(elect.getInputStream())
+                        .setOutput(LOGGER::info);
+                stdoutGobbler.start();
+                StreamGobblerLog stderrGobbler = new StreamGobblerLog()
+                        .setName("Electron STDERR gobbler")
+                        .setInput(elect.getErrorStream())
+                        .setOutput(LOGGER::warn);
+                stderrGobbler.start();
+                elect.onExit().thenRunAsync(() -> {
+                    stdoutGobbler.stop();
+                    stderrGobbler.stop();
+                    CreeperLauncher.exit();
+                });
             } catch (IOException e) {
                 LOGGER.error("Error starting Electron: ", e);
             }
-            CompletableFuture<Process> completableFuture = elect.onExit();
-            completableFuture.thenRun(CreeperLauncher::exit);
             Runtime.getRuntime().addShutdownHook(new Thread(elect::destroy));
         }
     }
@@ -569,10 +578,6 @@ public class CreeperLauncher {
             }
 
             closeSockets();
-
-            if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled() && CreeperLauncher.mtConnect.isConnected()) {
-                CreeperLauncher.mtConnect.disconnect();
-            }
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Failed to close sockets...", e);
         }

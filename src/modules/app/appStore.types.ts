@@ -18,7 +18,7 @@ export type InstallerRequest = {
   id?: string | number;
   version?: string | number;
   shareCode?: string;
-  private?: string;
+  private?: boolean;
   importFrom?: string;
   packType?: string | number; // 0 = modpackch | 1 = curseforge
 };

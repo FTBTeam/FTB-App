@@ -22,6 +22,7 @@ import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.AssetIndex;
+import net.creeperhost.creeperlauncher.util.DNSUtils;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.text.StrLookup;
@@ -31,7 +32,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.apache.tools.ant.launch.LaunchException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -42,7 +42,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -131,8 +130,9 @@ public class InstanceLauncher {
      *
      * @throws InstanceLaunchException If there was a direct error preparing the instance to be launched.
      */
-    public synchronized void launch(CancellationToken token) throws InstanceLaunchException {
+    public synchronized void launch(CancellationToken token, @Nullable String offlineUsername) throws InstanceLaunchException {
         assert !isRunning();
+        DNSUtils.logImportantHosts();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
         setPhase(Phase.INITIALIZING);
         progressTracker.reset(NUM_STEPS);
@@ -150,7 +150,7 @@ public class InstanceLauncher {
 
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
-        ProcessBuilder builder = prepareProcess(token, assetsDir, versionsDir, librariesDir, features, privateTokens);
+        ProcessBuilder builder = prepareProcess(token, offlineUsername, assetsDir, versionsDir, librariesDir, features, privateTokens);
 
         // Start thread.
         processThread = new Thread(() -> {
@@ -171,28 +171,32 @@ public class InstanceLauncher {
                     return;
                 }
                 setPhase(Phase.STARTED);
+
+                // Start up the logging threads.
                 logThread = new LogThread(IOUtils.makeParents(instance.getDir().resolve("logs/console.log")));
                 Logger logger = LogManager.getLogger("Minecraft");
-                // TODO these should not use CompletableFutures, these should be separate logging threads setup manually.
-                //  These take up slots on the builtin ForkJoin pool, and may not even execute on systems with low processor thread counts.
-                CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), message -> {
-                    logThread.bufferMessage(message);
-                    logger.info(MINECRAFT_MARKER, message);
-                });
-                CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), message -> {
-                    logThread.bufferMessage(message);
-                    logger.error(MINECRAFT_MARKER, message);
-                });
+                StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
+                        .setName("Instance STDOUT log Gobbler")
+                        .setInput(process.getInputStream())
+                        .setOutput(message -> {
+                            logThread.bufferMessage(message);
+                            logger.info(MINECRAFT_MARKER, message);
+                        });
+                StreamGobblerLog stderrGobbler = new StreamGobblerLog()
+                        .setName("Instance STDERR log Gobbler")
+                        .setInput(process.getErrorStream())
+                        .setOutput(message -> {
+                            logThread.bufferMessage(message);
+                            logger.error(MINECRAFT_MARKER, message);
+                        });
+                stdoutGobbler.start();
+                stderrGobbler.start();
                 logThread.start();
 
                 process.onExit().thenRunAsync(() -> {
-                    if (!stdoutFuture.isDone()) {
-                        stdoutFuture.cancel(true);
-                    }
-                    if (!stderrFuture.isDone()) {
-                        stderrFuture.cancel(true);
-                    }
-                    // Not strictly necessary, but exits the log thread faster.
+                    // Not strictly necessary, but exits the log threads faster.
+                    stdoutGobbler.stop();
+                    stderrGobbler.stop();
                     logThread.stop = true;
                     logThread.interrupt();
                 });
@@ -259,6 +263,12 @@ public class InstanceLauncher {
         setPhase(Phase.NOT_STARTED);
     }
 
+    public void setLogStreaming(boolean state) {
+        if (logThread == null) return;
+
+        logThread.setStreamingEnabled(state);
+    }
+
     private void setPhase(Phase newPhase) {
         if (newPhase == Phase.STOPPED || newPhase == Phase.ERRORED) {
             onStopped();
@@ -292,7 +302,7 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
+    private ProcessBuilder prepareProcess(CancellationToken token, String offlineUsername, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
         try {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
@@ -362,9 +372,9 @@ public class InstanceLauncher {
 
             Map<String, String> subMap = new HashMap<>();
             AccountProfile profile = AccountManager.get().getActiveProfile();
-            if (profile == null) {
+            if (offlineUsername != null || profile == null) {
                 // Offline
-                subMap.put("auth_player_name", "Player"); // TODO, give user ability to set name?
+                subMap.put("auth_player_name", offlineUsername);
                 subMap.put("auth_uuid", new UUID(0, 0).toString());
                 subMap.put("user_type", "legacy");
                 subMap.put("auth_access_token", "null");
@@ -490,7 +500,7 @@ public class InstanceLauncher {
         }
     }
 
-    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token, Path versionsDir) throws IOException, LaunchException {
+    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token, Path versionsDir) throws IOException, InstanceLaunchException {
         assert !manifests.isEmpty();
 
         LOGGER.info("Updating assets..");
@@ -506,7 +516,7 @@ public class InstanceLauncher {
             }
             if (index == null) {
                 LOGGER.error("Unable to find assets for '{}'.", manifest.id);
-                throw new LaunchException("Unable to prepare Legacy/Unknown assets for '" + manifest.id + "'.");
+                throw new InstanceLaunchException("Unable to prepare Legacy/Unknown assets for '" + manifest.id + "'.");
             }
         }
 
@@ -797,6 +807,8 @@ public class InstanceLauncher {
          */
         private static final long INTERVAL = 250;
 
+        private boolean streamingEnabled = true;
+
         private boolean stop = false;
         private final List<String> pendingMessages = new ArrayList<>(100);
         @Nullable
@@ -846,11 +858,22 @@ public class InstanceLauncher {
         }
 
         private void bufferMessage(String message) {
-            synchronized (pendingMessages) {
-                pendingMessages.add(message);
+            if (streamingEnabled) {
+                synchronized (pendingMessages) {
+                    pendingMessages.add(message);
+                }
             }
             if (pw != null) {
                 pw.println(message);
+            }
+        }
+
+        public void setStreamingEnabled(boolean state) {
+            streamingEnabled = state;
+            if (!state) {
+                synchronized (pendingMessages) {
+                    pendingMessages.clear();
+                }
             }
         }
     }

@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
-import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.VersionOverrides;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
@@ -21,8 +20,6 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -213,12 +210,12 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     protected record PackedJarLocator(Path localPath) implements LocalFileLocator {
 
         @Override
-        public Path getLocalFile(String url, FileValidation validation, Path dest) {
+        public Path getLocalFile(FileValidation validation, Path dest) {
             return localPath;
         }
 
         @Override
-        public void onFileDownloaded(String url, FileValidation validation, Path dest) {
+        public void onFileDownloaded(FileValidation validation, Path dest) {
         }
     }
 }

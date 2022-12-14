@@ -24,7 +24,11 @@ export const actions: ActionTree<SocketState, RootState> = {
     const messageID = Math.round(Math.random() * 1000);
     payload.payload.requestId = messageID;
     payload.payload.secret = rootState.wsSecret;
-    logVerbose(rootState, payload.payload);
+    if (!(payload.payload?.type && payload.payload?.type !== '' && payload.payload?.type.startsWith('profiles.'))) {
+      logVerbose(rootState, payload.payload);
+    } else {
+      logVerbose(rootState, 'Rejecting logging of profile data');
+    }
     Vue.prototype.$socket[platform.isElectron() ? 'sendObj' : 'send'](
       platform.isElectron() ? payload.payload : JSON.stringify(payload.payload),
     ); // TODO: This conditional logic might be wrong

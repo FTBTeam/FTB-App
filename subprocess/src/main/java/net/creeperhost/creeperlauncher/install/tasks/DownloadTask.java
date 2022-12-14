@@ -141,8 +141,8 @@ public class DownloadTask implements IInstallTask<Void>
         return Math.min(returnVal, 100.00d);
     }
 
-  public IProgressUpdater getWatcher()
-  {
-    return watcher;
-  }
+    public IProgressUpdater getWatcher()
+    {
+        return watcher;
+    }
 }

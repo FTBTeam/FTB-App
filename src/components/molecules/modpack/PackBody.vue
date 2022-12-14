@@ -3,12 +3,7 @@
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
         <div class="play">
-          <ftb-button
-            color="primary"
-            class="py-3 px-8 ftb-play-button"
-            @click="() => $emit('mainAction')"
-            :disabled="!isInstalled && modpacks.installing !== null"
-          >
+          <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
             <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
             {{ isInstalled ? 'Play' : 'Install' }}
           </ftb-button>
@@ -16,17 +11,19 @@
           <pack-actions
             v-if="instance && isInstalled"
             :instance="instance"
+            :allow-offline="allowOffline"
             @openSettings="$emit('tabChange', tabs.SETTINGS)"
+            @playOffline="$emit('playOffline')"
           />
         </div>
 
         <div class="options">
-          <div class="update" v-if="isInstalled && !isLatestVersion">
-            <ftb-button color="warning" class="update-btn px-4 py-1" @click="() => $emit('update')">
-              <span class="hidden sm:inline-block">Update available</span>
-              <font-awesome-icon icon="cloud-download-alt" class="sm:ml-2" />
-            </ftb-button>
-          </div>
+          <PackUpdateButton
+            v-if="isInstalled"
+            :instance="packInstance"
+            :localInstance="instance"
+            @update="$emit('update')"
+          />
           <div class="option" @click="() => $emit('showVersion')">
             Versions
             <font-awesome-icon icon="code-branch" class="ml-2" />
@@ -189,25 +186,25 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
+import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import { getColorForChar } from '@/utils/colors';
-import { Action, State } from 'vuex-class';
-import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
+import { Action } from 'vuex-class';
 import Loading from '@/components/atoms/Loading.vue';
 import MarkdownIt from 'markdown-it';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import { InstanceBackup } from '@/typings/subprocess/instanceBackups';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
+import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
 
 @Component({
   name: 'pack-body',
   components: {
+    PackUpdateButton,
     Loading,
-    ModpackVersions,
     ModpackPublicServers,
     ModpackSettings,
     ModpackMods,
@@ -216,7 +213,6 @@ import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
   },
 })
 export default class PackBody extends Vue {
-  @State('modpacks') public modpacks!: ModpackState;
   @Action('sendMessage') public sendMessage!: any;
 
   // The stored instance for an installed pack
@@ -224,11 +220,11 @@ export default class PackBody extends Vue {
   @Prop({ default: false }) packLoading!: boolean;
   // Pack Instance is the modpack api response
   @Prop() packInstance!: ModPack;
-  @Prop() isLatestVersion!: boolean;
   @Prop() isInstalled!: boolean;
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
   @Prop() updatingModlist!: boolean;
+  @Prop({ default: false }) allowOffline!: boolean;
 
   @Prop({ default: () => [] }) backups!: InstanceBackup[];
 
@@ -313,27 +309,6 @@ export default class PackBody extends Vue {
 
       &:hover {
         opacity: 1;
-      }
-    }
-  }
-
-  .update-btn {
-    position: relative;
-
-    box-shadow: 0 0 0 0 rgba(#ff801e, 1);
-    animation: pulse 1.8s ease-in-out infinite;
-
-    @keyframes pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(#ff801e, 0.7);
-      }
-
-      70% {
-        box-shadow: 0 0 0 10px rgba(#ff801e, 0);
-      }
-
-      100% {
-        box-shadow: 0 0 0 0 rgba(#ff801e, 0);
       }
     }
   }

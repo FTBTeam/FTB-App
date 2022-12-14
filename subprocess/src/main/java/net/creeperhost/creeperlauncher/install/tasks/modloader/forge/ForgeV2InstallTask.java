@@ -201,16 +201,18 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         LOGGER.info("Starting processor with command '{}'", String.join(" ", builder.command()));
         try {
             Process process = builder.start();
-            CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), LOGGER::info);
-            CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), LOGGER::error);
+            StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
+                    .setInput(process.getInputStream())
+                    .setOutput(LOGGER::info);
+            stdoutGobbler.start();
+            StreamGobblerLog stderrGobbler = new StreamGobblerLog()
+                    .setInput(process.getErrorStream())
+                    .setOutput(LOGGER::warn);
+            stderrGobbler.start();
 
             process.onExit().thenRunAsync(() -> {
-                if (!stdoutFuture.isDone()) {
-                    stdoutFuture.cancel(true);
-                }
-                if (!stderrFuture.isDone()) {
-                    stderrFuture.cancel(true);
-                }
+                stdoutGobbler.stop();
+                stderrGobbler.stop();
             });
             while (process.isAlive()) {
                 try {

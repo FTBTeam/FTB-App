@@ -20,6 +20,7 @@ export namespace PackSearchEntries {
     synopsis: string;
     id: number;
     updated: number;
+    private: boolean;
   }
 
   export interface Art {

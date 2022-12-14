@@ -17,6 +17,7 @@ import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallT
 import net.creeperhost.creeperlauncher.instance.InstanceOperation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.util.DNSUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -168,6 +169,7 @@ public class InstanceInstaller extends InstanceOperation {
      * Sets up internal state ready for the installation process.
      */
     public void prepare() {
+        DNSUtils.logImportantHosts();
         tracker.nextStage(InstallStage.PREPARE);
         if (operationType == OperationType.VALIDATE) {
             validateFiles();

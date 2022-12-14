@@ -222,6 +222,7 @@ export default class BrowseModpacks extends Vue {
         id: this.installModalData?.pack.id,
         version: version,
         packType: this.currentTab === 'ftbsearch' ? 0 : 1,
+        private: this.installModalData?.pack.private ?? false,
       },
       meta: {
         name: this.installModalData?.pack.name ?? '',

@@ -1,20 +1,15 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.Hashing;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.DateFormatter;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.stream.ChunkedWriteHandler;
+import fi.iki.elonen.NanoHTTPD;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
+import net.covers1624.quack.util.SneakyUtils;
+import net.covers1624.quack.util.TimeUtils;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -62,7 +57,7 @@ public class NewDownloadTaskTests {
                     .dest(dest)
                     .build();
             firstRequest.execute(null, null);
-            Response resp = testWebServer.responseMap.get(path);
+            BakedResponse resp = testWebServer.responseMap.get(path);
 
             assertArrayEquals(resp.bytes, Files.readAllBytes(dest));
             assertEquals(resp.etag, Files.readString(dest.resolveSibling(dest.getFileName() + ".etag")));
@@ -84,47 +79,68 @@ public class NewDownloadTaskTests {
         }
     }
 
-    @ChannelHandler.Sharable
+    @Test
+    public void testMirrors() throws IOException {
+        try (TestWebServer testWebServer = new TestWebServer()) {
+            Path dest = Files.createTempFile("tmp", ".dat");
+            dest.toFile().deleteOnExit();
+            Files.delete(dest);
+
+            String pathA = "/test/missing";
+            testWebServer.responseMap.put(pathA, new BakedResponse(null, "", -1));
+            String pathB = "/test/notMissing";
+
+            NewDownloadTask firstRequest = NewDownloadTask.builder()
+                    .url(testWebServer.getAddr() + pathA)
+                    .withMirror(testWebServer.getAddr() + pathB)
+                    .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
+                    .dest(dest)
+                    .build();
+            firstRequest.execute(null, null);
+        }
+    }
+
+    @Test
+    public void testMirrorsFail() throws IOException {
+        try (TestWebServer testWebServer = new TestWebServer()) {
+            Path dest = Files.createTempFile("tmp", ".dat");
+            dest.toFile().deleteOnExit();
+            Files.delete(dest);
+
+            String pathA = "/test/missing";
+            String pathB = "/test/missing2";
+            testWebServer.responseMap.put(pathA, new BakedResponse(null, "", -1));
+            testWebServer.responseMap.put(pathB, new BakedResponse(null, "", -1));
+
+            Assertions.assertThrows(DownloadFailedException.class, () -> {
+                NewDownloadTask firstRequest = NewDownloadTask.builder()
+                        .url(testWebServer.getAddr() + pathA)
+                        .withMirror(testWebServer.getAddr() + pathB)
+                        .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
+                        .dest(dest)
+                        .build();
+                firstRequest.execute(null, null);
+            });
+        }
+    }
+
     @SuppressWarnings ("UnstableApiUsage")
-    private static class TestWebServer extends SimpleChannelInboundHandler<FullHttpRequest> implements AutoCloseable {
+    private static class TestWebServer extends NanoHTTPD implements AutoCloseable {
 
         private static final Random random = new Random();
 
-        public final Map<String, Response> responseMap = new HashMap<>();
+        public final Map<String, BakedResponse> responseMap = new HashMap<>();
 
         private final int port;
-        private final EventLoopGroup group;
-        private final Channel channel;
 
-        public TestWebServer() {
+        public TestWebServer() throws IOException {
             this(MiscUtils.getRandomEphemeralPort());
         }
 
-        public TestWebServer(int port) {
+        public TestWebServer(int port) throws IOException {
+            super(port);
             this.port = port;
-            try {
-                group = new NioEventLoopGroup(0, new ThreadFactoryBuilder()
-                        .setNameFormat("TestWebServer Netty IO #%d")
-                        .setDaemon(true)
-                        .build()
-                );
-
-                ServerBootstrap b = new ServerBootstrap();
-                b.group(group).channel(NioServerSocketChannel.class);
-                b.childHandler(new ChannelInitializer<>() {
-                    @Override
-                    protected void initChannel(@NotNull Channel ch) throws Exception {
-                        ChannelPipeline pipe = ch.pipeline();
-                        pipe.addLast(new HttpServerCodec());
-                        pipe.addLast(new HttpObjectAggregator(10 * 1024 * 1024));
-                        pipe.addLast(new ChunkedWriteHandler());
-                        pipe.addLast(TestWebServer.this);
-                    }
-                });
-                channel = b.bind("localhost", port).sync().channel();
-            } catch (InterruptedException ex) {
-                throw new RuntimeException("Failed to start netty server.", ex);
-            }
+            start();
         }
 
         public String getAddr() {
@@ -133,47 +149,45 @@ public class NewDownloadTaskTests {
 
         @Override
         public void close() {
-            channel.close().awaitUninterruptibly();
-            group.shutdownGracefully();
+            stop();
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
-            QueryStringDecoder decoder = new QueryStringDecoder(msg.uri());
+        public Response serve(IHTTPSession session) {
+            return SneakyUtils.sneaky(() -> serveInternal(session));
+        }
 
-            Response response = responseMap.get(decoder.path());
+        private Response serveInternal(IHTTPSession session) throws Throwable {
+            BakedResponse response = responseMap.get(session.getUri());
             if (response != null) {
-                String etagHeader = msg.headers().get(HttpHeaderNames.IF_NONE_MATCH);
-                Long modifiedHeader = msg.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE);
-                if (response.etag.equals(etagHeader) && Objects.equals(modifiedHeader, response.lastModified)) {
-                    ctx.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_MODIFIED))
-                            .addListener(ChannelFutureListener.CLOSE);
-                    return;
+                // Null bytes simulates a failure of some kind.
+                // Just return bad request, 404 triggers special handling.
+                if (response.bytes == null) {
+                    return newFixedLengthResponse(Response.Status.BAD_REQUEST, null, null);
+                }
+                String etagHeader = session.getHeaders().get("if-none-match");
+                Date modifiedHeader = TimeUtils.parseDate(session.getHeaders().get("if-modified-since"));
+                if (response.etag.equals(etagHeader) && (modifiedHeader == null || Objects.equals(modifiedHeader.getTime(), response.lastModified))) {
+                    return newFixedLengthResponse(Response.Status.NOT_MODIFIED, null, null);
                 }
             } else {
                 byte[] data = genRandomData();
-                response = new Response(
+                response = new BakedResponse(
                         data,
                         HashUtils.hash(Hashing.sha256(), new ByteArrayInputStream(data)).toString(),
                         System.currentTimeMillis()
                 );
-                responseMap.put(decoder.path(), response);
+                responseMap.put(session.getUri(), response);
             }
-            DefaultFullHttpResponse resp = new DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.OK,
-                    Unpooled.wrappedBuffer(response.bytes)
-            );
-            resp.headers().add(HttpHeaderNames.ETAG, response.etag);
-            resp.headers().add(HttpHeaderNames.LAST_MODIFIED, DateFormatter.format(new Date(response.lastModified)));
-
-            ctx.writeAndFlush(resp)
-                    .addListener(ChannelFutureListener.CLOSE);
+            Response resp = newFixedLengthResponse(Response.Status.OK, null, new ByteArrayInputStream(response.bytes), response.bytes.length);
+            resp.addHeader("ETag", response.etag);
+            resp.addHeader("Last-Modified", TimeUtils.FORMAT_RFC1123.format(new Date(response.lastModified)));
+            return resp;
         }
 
-        public Response generateResponseData(Response prev) throws IOException {
+        public BakedResponse generateResponseData(BakedResponse prev) throws IOException {
             byte[] data = genRandomData();
-            return new Response(
+            return new BakedResponse(
                     data,
                     HashUtils.hash(Hashing.sha256(), new ByteArrayInputStream(data)).toString(),
                     prev.lastModified + random.nextInt(30000)
@@ -188,5 +202,5 @@ public class NewDownloadTaskTests {
         }
     }
 
-    private record Response(byte[] bytes, String etag, long lastModified) { }
+    private record BakedResponse(@Nullable byte[] bytes, String etag, long lastModified) { }
 }

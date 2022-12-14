@@ -146,7 +146,7 @@ public class LocalInstance implements IPack
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 DownloadAction action = new OkHttpDownloadAction()
                         .setUserAgent(Constants.USER_AGENT)
-                        .setClient(Constants.OK_HTTP_CLIENT)
+                        .setClient(Constants.httpClient())
                         .setUrl(art.getUrl())
                         .setDest(bos);
                 action.execute();
@@ -270,7 +270,7 @@ public class LocalInstance implements IPack
      * @param extraArgs   Extra JVM arguments.
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
-    public void play(CancellationToken token, String extraArgs) throws InstanceLaunchException {
+    public void play(CancellationToken token, String extraArgs, @Nullable String offlineUsername) throws InstanceLaunchException {
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -332,6 +332,8 @@ public class LocalInstance implements IPack
             Files.deleteIfExists(dir.resolve("mods/launchertray-progress-1.0.jar"));
 
             InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
+            if (supportMeta == null) return; // Should be _incredibly_ rare. But just incase...
+
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
             if (!loadingMods.isEmpty()) {
                 if (Files.notExists(dir.resolve(".no_loading_mods.marker"))) {
@@ -377,15 +379,6 @@ public class LocalInstance implements IPack
             }
         });
 
-        if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled()) {
-            launcher.withStartTask(ctx -> {
-                LOGGER.info("Starting MineTogether connect..");
-                CreeperLauncher.mtConnect.connect();
-            });
-            launcher.withExitTask(() -> {
-                CreeperLauncher.mtConnect.disconnect();
-            });
-        }
         launcher.withStartTask(ctx -> {
             startTime = System.currentTimeMillis();
             lastPlayed = startTime / 1000L;
@@ -396,7 +389,7 @@ public class LocalInstance implements IPack
             totalPlayTime += endTime - startTime;
             saveJson();
         });
-        launcher.launch(token);
+        launcher.launch(token, offlineUsername);
     }
 
     public InstanceLauncher getLauncher() {
