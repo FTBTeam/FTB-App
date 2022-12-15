@@ -99,6 +99,7 @@ import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { Prop } from 'vue-property-decorator';
+import { getLogger } from '@/utils';
 
 /**
  * TODO: clean all of this up, it's a mess and a copy of a different component
@@ -110,68 +111,74 @@ export default class AdAside extends Vue {
   @Action('reportAdvert') public reportAd!: any;
   @Prop({ default: false }) public isDev!: boolean;
 
+  private logger = getLogger('ad-aside-vue');
+
   private ad: any;
   platform = platform;
   showPlaceholder = false;
-
-  private starAPI = (window as any).cpmstarAPI;
 
   get isElectron() {
     return platform.isElectron();
   }
 
   async mounted() {
-    console.log('Loading ad sidebar widget');
+    this.logger.info('Loaded ad sidebar widget');
     // Kinda dirty hack for this file
-    if (this.platform.isOverwolf()) {
-      setTimeout(() => {
-        console.log('Loading advert');
-        //@ts-ignore
-        if (!OwAd) {
-          this.showPlaceholder = true;
-          console.log('No advert loaded');
-        } else {
-          //@ts-ignore
-          if (window.ad) {
-            console.log('Is window advert');
-            //@ts-ignore
-            this.ad = window.ad;
-            this.ad.refreshAd();
-          } else {
-            console.log('Created advert');
-            //@ts-ignore
-            this.ad = new OwAd(document.getElementById('ow-ad'));
-            console.log(this.ad, document.getElementById('ow-ad'));
+    if (!this.platform.isOverwolf()) {
+      return;
+    }
 
-            //@ts-ignore
-            window.ad = this.ad;
-          }
-          this.ad.add;
-          this.ad.addEventListener('error', (error: any) => {
-            this.showPlaceholder = true;
-            console.log('Failed to load ad');
-            console.log(error);
-          });
-          this.ad.addEventListener('player_loaded', () => {
-            console.log('player loaded for overwolf');
-          });
-          this.ad.addEventListener('display_ad_loaded', () => {
-            console.log('display_ad_loaded overwolf');
-          });
-          this.ad.addEventListener('play', () => {
-            console.log('play overwolf');
-          });
-          this.ad.addEventListener('complete', () => {
-            console.log('complete ads for overwolf');
-          });
-          this.ad.addEventListener('impression', () => {
-            fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
-          });
-          this.ad.addEventListener('display_ad_loaded', () => {
-            fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
-          });
-        }
-      }, 1500); // Wait 1.5 seconds
+    setTimeout(() => {
+      this.loadAds();
+    }, 1500);
+  }
+
+  loadAds() {
+    this.logger.info('Loading advert system');
+    //@ts-ignore
+    if (typeof OwAd === 'undefined' || !OwAd) {
+      this.showPlaceholder = true;
+      this.logger.info('No advert loaded');
+    } else {
+      //@ts-ignore
+      if (window.ad) {
+        this.logger.info('Is window advert');
+        //@ts-ignore
+        this.ad = window.ad;
+        this.ad.refreshAd();
+      } else {
+        this.logger.info('Created advert');
+        //@ts-ignore
+        this.ad = new OwAd(document.getElementById('ow-ad'));
+        this.logger.info(this.ad, document.getElementById('ow-ad'));
+
+        //@ts-ignore
+        window.ad = this.ad;
+      }
+
+      this.ad.addEventListener('error', (error: any) => {
+        this.showPlaceholder = true;
+        this.logger.info('Failed to load ad');
+        this.logger.info(error);
+      });
+      this.ad.addEventListener('player_loaded', () => {
+        this.logger.info('player loaded for overwolf');
+      });
+      this.ad.addEventListener('display_ad_loaded', () => {
+        this.logger.info('display_ad_loaded overwolf');
+      });
+      this.ad.addEventListener('play', () => {
+        this.logger.info('play overwolf');
+      });
+      this.ad.addEventListener('complete', () => {
+        this.logger.info('complete ads for overwolf');
+      });
+      this.ad.addEventListener('impression', () => {
+        fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
+      });
+      this.ad.addEventListener('display_ad_loaded', () => {
+        fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
+      });
     }
   }
 

@@ -1,6 +1,6 @@
 import router from '@/router';
 import store from '@/modules/store';
-import { logVerbose } from '@/utils';
+import { getLogger, logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
@@ -10,6 +10,8 @@ declare global {
 }
 
 const versionData = overwolf.windows.getMainWindow().getVersionData();
+
+const logger = getLogger('overwolf-bridge');
 
 const getWindowState = (windowId: any) => {
   return new Promise((resolve, reject) => {
@@ -224,12 +226,12 @@ const Overwolf: ElectronOverwolfInterface = {
     // setup websockets and the actual window
     let mainWindow = overwolf.windows.getMainWindow();
     let initialData = mainWindow.getWebsocketData();
-    console.log('Initial WS data: ', initialData);
+    logger.info('Initial WS data: ', initialData);
     let ws: WebSocket;
     let reconnectCount = 0;
 
     async function onConnect() {
-      console.log('Auth data:', mainWindow.getAuthData());
+      logger.info('Auth data:', mainWindow.getAuthData());
       //@ts-ignore
       if (mainWindow.getAuthData() !== undefined) {
         //@ts-ignore
@@ -374,6 +376,7 @@ const Overwolf: ElectronOverwolfInterface = {
         store.commit('STORE_WS', initialData);
       }
     }
+
     mainWindow.setNewWebsocketCallback(handleWSInfo);
     //@ts-ignore
     if (window.isChat === undefined || !window.isChat) {
@@ -388,7 +391,8 @@ const Overwolf: ElectronOverwolfInterface = {
           parseAndHandleURL(protocolURL);
         }
       });
-      addWindowListener();
+
+      addWindowListener().catch(logger.error);
     }
 
     async function addWindowListener() {
@@ -401,7 +405,11 @@ const Overwolf: ElectronOverwolfInterface = {
       });
 
       overwolf.windows.onStateChanged.addListener((event: any) => {
-        console.log(event);
+        if (typeof (window as any).ad === 'undefined' || !(window as any).ad) {
+          logger.warn("Unable to control ad as it's not set");
+          return;
+        }
+
         const windowAd: any = (window as any).ad;
 
         if (event.window_id === ourWindowID) {
@@ -411,7 +419,7 @@ const Overwolf: ElectronOverwolfInterface = {
           ) {
             if (windowAd) {
               windowAd.refreshAd();
-              console.log('Refresh');
+              logger.info('Refreshing owAd');
             }
           } else if (
             event.window_state_ex === 'minimized' &&
@@ -419,7 +427,7 @@ const Overwolf: ElectronOverwolfInterface = {
           ) {
             if (windowAd) {
               windowAd.removeAd();
-              console.log('Remove');
+              logger.info('removing owAd');
             }
           }
         }

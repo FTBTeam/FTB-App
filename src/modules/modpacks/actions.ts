@@ -1,7 +1,7 @@
 import { ActionTree } from 'vuex';
 import { Changelog, InstallProgress, Instance, ModPack, ModpackState } from './types';
 import { RootState } from '@/types';
-import { asyncForEach, logVerbose } from '@/utils';
+import { asyncForEach, getLogger, Logger, logVerbose } from '@/utils';
 import semver from 'semver';
 import { AuthState } from '../auth/types';
 
@@ -19,6 +19,11 @@ export function getAPIRequest(rootState: RootState, url: string): Promise<Respon
     },
   });
 }
+
+// Apparently this module loads to late?
+const logger = (): Logger => {
+  return getLogger('modpacks-vuex');
+};
 
 export const actions: ActionTree<ModpackState, RootState> = {
   doSearch({ commit, rootState, dispatch }: any, searchTerm): any {
@@ -178,6 +183,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
       });
   },
   loadAllPacks({ commit, rootState, dispatch }: any): any {
+    logger().info('Loading all modpacks from the api');
     commit('setLoading', true);
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`)
       .then((response) => response.json())
@@ -186,8 +192,10 @@ export const actions: ActionTree<ModpackState, RootState> = {
         if (packIDs == null) {
           return;
         }
+        logger().info(`Received ${packIDs.length} from the api`);
         const packs: ModPack[] = [];
         await asyncForEach(packIDs, async (packID: number) => {
+          logger().info(`Fetching ${packID} from the api [${packIDs.indexOf(packID) + 1}/${packIDs.length}]`);
           const pack = await dispatch('fetchModpack', packID);
           if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
             logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
@@ -195,6 +203,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
           }
           packs.push(pack);
         });
+
         // Sort all packs here according to featured or not
         packs.sort((a, b) => {
           if (a.featured !== null && a.featured == true) {
