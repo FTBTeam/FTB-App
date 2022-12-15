@@ -131,7 +131,9 @@ export default class PackUpdateButton extends Vue {
   }
 
   get latestVersion() {
-    return this.instance.versions.sort((a, b) => b.id - a.id).find((e) => e.type.toLowerCase() !== 'archived');
+    const versions = [...this.instance.versions];
+
+    return versions.sort((a, b) => b.id - a.id).find((e) => e.type.toLowerCase() !== 'archived');
   }
 }
 </script>

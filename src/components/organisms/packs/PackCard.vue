@@ -315,9 +315,8 @@ export default class PackCard extends Vue {
   }
 
   get isLatestVersion() {
-    const firstNoneArchived = this.currentModpack?.versions
-      .sort((a, b) => b.id - a.id)
-      .find((e) => e.type.toLowerCase() !== 'archived');
+    const versions = [...(this.currentModpack?.versions ?? [])];
+    const firstNoneArchived = versions.sort((a, b) => b.id - a.id).find((e) => e.type.toLowerCase() !== 'archived');
 
     if (!firstNoneArchived) {
       return true;

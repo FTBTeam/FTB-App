@@ -1,15 +1,15 @@
 'use strict';
-import { app, BrowserWindow, dialog, ipcMain, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
 import axios from 'axios';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -18,6 +18,8 @@ const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.inde
 log.transports.file.resolvePath = (variables, message): string => {
   return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
 };
+
+protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
 
 if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
   app.setAsDefaultProtocolClient('ftb', process.execPath, [path.resolve(process.argv[1])]);
@@ -422,6 +424,8 @@ function createWindow() {
       },
     });
   });
+
+  win.focus();
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
