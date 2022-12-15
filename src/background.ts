@@ -9,6 +9,7 @@ import axios from 'axios';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 
 Object.assign(console, log.functions);
 (app as any).console = log;
