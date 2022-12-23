@@ -35,6 +35,7 @@ export const state: SettingsState = {
     proxyHost: '',
     proxyPassword: '',
     proxyUser: '',
+    shellArgs: '',
   },
   error: false,
   hardware: {

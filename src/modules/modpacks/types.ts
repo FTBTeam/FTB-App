@@ -53,6 +53,7 @@ export interface Instance {
   modLoader: string;
   embeddedJre: boolean;
   totalPlayTime: number;
+  shellArgs: string;
 }
 
 export interface Art {

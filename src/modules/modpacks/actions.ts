@@ -300,6 +300,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
               width: instance.width,
               height: instance.height,
               cloudSaves: instance.cloudSaves,
+              shellArgs: instance.shellArgs,
             },
           },
           callback: async (msg: any) => {

@@ -59,6 +59,9 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
                             instance.jrePath = jreLocation;
                         }
                         break;
+                    case "shellargs":
+                        instance.shellArgs = setting.getValue();
+                        break;
                 }
             }
             instance.saveJson();

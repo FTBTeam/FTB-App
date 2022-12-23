@@ -110,6 +110,14 @@
       class="mb-4"
     />
 
+    <ftb-input
+      label="Shell"
+      :value="localInstance.shellArgs"
+      v-model="localInstance.shellArgs"
+      @blur="saveSettings"
+      class="mb-8"
+    />
+
     <p class="text-lg font-bold mb-4">Actions</p>
 
     <div class="buttons flex flex-1">

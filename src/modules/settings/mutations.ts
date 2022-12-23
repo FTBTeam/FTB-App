@@ -30,6 +30,7 @@ const defaultSettings: Settings = {
   proxyHost: '',
   proxyPassword: '',
   proxyUser: '',
+  shellArgs: '',
 };
 
 export const mutations: MutationTree<SettingsState> = {

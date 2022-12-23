@@ -30,6 +30,8 @@ export interface Settings {
   proxyUser: string;
   proxyPassword: string;
   proxyType: 'http' | 'sock5' | 'none';
+
+  shellArgs: string;
 }
 
 export interface Hardware {

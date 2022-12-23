@@ -92,6 +92,7 @@ public class LocalInstance implements IPack
     public boolean hasInstMods = false;
     public boolean installComplete = true;
     public byte packType;
+    public String shellArgs = Settings.settings.getOrDefault("shellArgs", "");
 
     /**
      * The current play time in millis.
@@ -213,6 +214,7 @@ public class LocalInstance implements IPack
             }
             this.totalPlayTime = jsonOutput.totalPlayTime;
             this.lastPlayed = jsonOutput.lastPlayed;
+            this.shellArgs = jsonOutput.shellArgs;
         }
     }
 
@@ -300,6 +302,8 @@ public class LocalInstance implements IPack
                 }
             }
             ctx.extraJVMArgs.addAll(jvmArgs);
+
+            ctx.shellArgs.addAll(MiscUtils.splitCommand(shellArgs));
         });
 
         if (!Constants.S3_SECRET.isEmpty() && !Constants.S3_KEY.isEmpty() && !Constants.S3_HOST.isEmpty() && !Constants.S3_BUCKET.isEmpty()) {

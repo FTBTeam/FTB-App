@@ -66,6 +66,13 @@
       >Changing your instance location with instances installed will cause your instances to be moved to the new
       location automatically.</small
     >
+
+    <ftb-input
+      label="Shell"
+      :value="localSettings.shellArgs"
+      v-model="localSettings.shellArgs"
+      @blur="saveMutated"
+    />
   </div>
 </template>
 
