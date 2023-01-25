@@ -57,22 +57,6 @@
           </div>
         </div>
       </div>
-      <!--      <aside>-->
-      <!--        <h2>Topics</h2>-->
-      <!--        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/creeperhost')">-->
-      <!--          Order a server from CreeperHost-->
-      <!--        </div>-->
-      <!--        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/support')">-->
-      <!--          Need help using the app?-->
-      <!--        </div>-->
-      <!--        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/app-feedback')">-->
-      <!--          Report an app bug-->
-      <!--        </div>-->
-      <!--        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/server-setup')">-->
-      <!--          Server setup guide-->
-      <!--        </div>-->
-      <!--        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/app-support')">App Guides</div>-->
-      <!--      </aside>-->
     </div>
   </div>
 </template>
