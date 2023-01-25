@@ -62,6 +62,10 @@
         >
           Public servers
         </div>
+        <a class="cta" @click.prevent="Platform.get.utils.openUrl(`https://www.creeperhost.net/modpack/${packSlug}`)">
+          <img class="ch-logo" src="@/assets/ch-logo.svg" alt="" />
+          Order a server
+        </a>
       </div>
     </div>
 
@@ -199,6 +203,7 @@ import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import { InstanceBackup } from '@/typings/subprocess/instanceBackups';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
+import Platform from '@/utils/interface/electron-overwolf';
 
 @Component({
   name: 'pack-body',
@@ -227,6 +232,8 @@ export default class PackBody extends Vue {
   @Prop({ default: false }) allowOffline!: boolean;
 
   @Prop({ default: () => [] }) backups!: InstanceBackup[];
+
+  Platform = Platform;
 
   tabs = ModpackPageTabs;
   getColorForChar = getColorForChar;
@@ -274,6 +281,10 @@ export default class PackBody extends Vue {
       }
     }
     return null;
+  }
+
+  get packSlug() {
+    return `${this.packInstance.id}_${this.packInstance.name.replaceAll(' ', '-').replaceAll(/[^\w|-]+/g, '')}`;
   }
 }
 </script>
@@ -338,6 +349,29 @@ export default class PackBody extends Vue {
 
     &:hover {
       color: white;
+    }
+  }
+
+  .cta {
+    display: flex;
+    align-items: center;
+    background-color: #1d1d1d;
+    padding: 0.45rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: border-color 0.25s ease-in-out, background-color 0.25s ease-in-out, color 0.25s ease-in-out;
+    color: rgba(white, 0.8);
+
+    &:hover {
+      background-color: #272727;
+      border-color: #8ab839;
+      color: white;
+    }
+
+    img {
+      max-width: 12px;
+      margin-right: 1rem;
     }
   }
 }

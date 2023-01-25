@@ -179,7 +179,7 @@ export default class AdAside extends Vue {
   justify-content: flex-end;
   transition: background-color 0.3s ease-in-out;
   position: relative;
-  z-index: 1;
+  //z-index: 1; // Breaks modals atm
   border-left: 2px solid rgba(black, 0.1);
 
   //&::after {
