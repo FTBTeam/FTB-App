@@ -141,7 +141,7 @@ const topicList = [
         'App guides',
         'book',
         'app-support',
-        'Here you can find a some useful guides on how to use the app, debugging support with common problems and steps on how to do things like setting up a server and backing up your game.',
+        'Here you can find some useful guides on how to use the app, debugging support with common problems and steps on how to do things like setting up a server and backing up your game.',
       ),
       mkTopic(
         'MineTogether Guides',
