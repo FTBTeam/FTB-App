@@ -46,8 +46,11 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
-    <strong>Loading</strong>
+  <div class="loading-screen" v-else>
+    <Loading2 />
+    <div class="packs-to-load" v-if="modpacks.packsLoaded">
+      <span>{{ modpacks.packsLoaded }} / {{ modpacks.packsToLoad }}</span> Modpacks Loaded
+    </div>
   </div>
 </template>
 
@@ -63,11 +66,13 @@ import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import FtbButton from '@/components/atoms/input/FTBButton.vue';
 import Loading from '@/components/atoms/Loading.vue';
+import Loading2 from "@/components/atoms/Loading2.vue";
 
 const namespace: string = 'modpacks';
 
 @Component({
   components: {
+    Loading2,
     Loading,
     FtbButton,
     PackCardWrapper,
@@ -164,6 +169,30 @@ export default class Home extends Vue {
     width: 150px;
 
     &:not(:last-child) {
+      margin-right: 1rem;
+    }
+  }
+}
+
+.loading-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  
+  .packs-to-load {
+    background: black;
+    box-shadow: 0 0 15px rgba(black, .15);
+    padding: .4rem 1rem;
+    border-radius: 3px;
+    
+    span {
+      font-weight: bold;
+      // TODO: Replace with .fontfallback from new branches
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
       margin-right: 1rem;
     }
   }
