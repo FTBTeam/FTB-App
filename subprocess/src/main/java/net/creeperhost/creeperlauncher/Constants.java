@@ -12,7 +12,9 @@ import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import okhttp3.*;
 import okhttp3.dnsoverhttps.DnsOverHttps;
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Throttler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
@@ -133,8 +135,20 @@ public class Constants {
             throw new RuntimeException("Failed to create InetAddress for ip??", ex);
         }
 
+        // TODO Currently required for unit tests, but might be good to just enable? Probably only useful in dev?
+        boolean strict = !Boolean.getBoolean("DNS.fallback_to_system");
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .dns(DNS)
+                .dns(host -> {
+                    try {
+                        return DNS.lookup(host);
+                    } catch (UnknownHostException ex) {
+                        if (strict) {
+                            throw ex;
+                        }
+                    }
+
+                    return Dns.SYSTEM.lookup(host);
+                })
                 .connectTimeout(5, TimeUnit.MINUTES)
                 .readTimeout(5, TimeUnit.MINUTES)
                 .connectionPool(new ConnectionPool())
