@@ -161,7 +161,7 @@ export default class AdAside extends Vue {
   }
   
   get isDevEnv() {
-    return process.env.NODE_ENV === 'production';
+    return process.env.NODE_ENV !== 'production';
   }
 }
 </script>
