@@ -2,6 +2,11 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import joptsimple.OptionException;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+import joptsimple.util.PathConverter;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.gson.JsonUtils;
@@ -10,6 +15,7 @@ import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.installerv2.InstallManifest;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -27,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -118,12 +123,12 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         for (InstallManifest.Processor processor : manifest.processors) {
             if (cancelToken != null) cancelToken.throwIfCancelled();
             if (processor.sides.isEmpty() || processor.sides.contains("client")) {
-                runProcessor(processor, data, javaExecutable, librariesDir);
+                runProcessor(cancelToken, vanillaManifest, processor, data, javaExecutable, librariesDir);
             }
         }
     }
 
-    private void runProcessor(InstallManifest.Processor processor, Map<String, String> data, Path javaExecutable, Path librariesDir) throws IOException {
+    private void runProcessor(@Nullable CancellationToken cancelToken, VersionManifest vanillaManifest, InstallManifest.Processor processor, Map<String, String> data, Path javaExecutable, Path librariesDir) throws IOException {
         Map<Path, String> outputs = new HashMap<>();
 
         boolean cached = !processor.outputs.isEmpty();
@@ -164,6 +169,21 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             return;
         }
 
+        List<String> args = new ArrayList<>(processor.args.size());
+        for (String arg : processor.args) {
+            if (surroundedBy(arg, '[', ']')) {
+                args.add(MavenNotation.parse(topAndTail(arg)).toPath(librariesDir).toAbsolutePath().toString());
+            } else {
+                args.add(replaceTokens(data, arg));
+            }
+        }
+        // Do custom stuff for DOWNLOAD_MOJMAPS as this bypasses our proxy settings, etc.
+        if (args.size() > 2 && args.get(0).equals("--task") && args.get(1).equals("DOWNLOAD_MOJMAPS")) {
+            if (downloadMojMaps(cancelToken, vanillaManifest, args.subList(2, args.size()))) {
+                return;
+            }
+        }
+
         Path jar = processor.jar.toPath(librariesDir);
         List<Path> classpath = new ArrayList<>(processor.classpath.size() + 2);
         classpath.add(jar);
@@ -180,20 +200,13 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             }
         }
 
-        List<String> command = new ArrayList<>(5 + processor.args.size());
+        List<String> command = new ArrayList<>(5 + args.size());
         command.add(javaExecutable.toAbsolutePath().toString());
         command.add("-cp");
         command.add(classpath.stream().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
         command.add(getMainClass(jar));
         command.add(jar.toAbsolutePath().toString());
-
-        for (String arg : processor.args) {
-            if (surroundedBy(arg, '[', ']')) {
-                command.add(MavenNotation.parse(topAndTail(arg)).toPath(librariesDir).toAbsolutePath().toString());
-            } else {
-                command.add(replaceTokens(data, arg));
-            }
-        }
+        command.addAll(args);
 
         ProcessBuilder builder = new ProcessBuilder()
                 .directory(Constants.BIN_LOCATION.toFile())
@@ -253,5 +266,36 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             LOGGER.error("Processor output validation errors occurred.");
             throw new IOException("Processor output validation errors occurred.");
         }
+    }
+
+    private boolean downloadMojMaps(@Nullable CancellationToken cancelToken, VersionManifest vanillaManifest, List<String> args) throws IOException {
+        OptionParser parser = new OptionParser();
+        OptionSpec<String> versionOpt = parser.accepts("version").withRequiredArg().ofType(String.class).required();
+        OptionSpec<String> sideOpt = parser.accepts("side").withRequiredArg().ofType(String.class).required();
+        OptionSpec<Path> outputOpt = parser.accepts("output").withRequiredArg().withValuesConvertedBy(new PathConverter()).required();
+
+        OptionSet optSet;
+        try {
+            optSet = parser.parse(args.toArray(new String[0]));
+        } catch (OptionException ex) {
+            LOGGER.warn("Failed to parse DOWNLOAD_MOJMAPS args. Falling back to InstallerTools invoke. Args: {}", args, ex);
+            return false;
+        }
+        String version = optSet.valueOf(versionOpt);
+        String side = optSet.valueOf(sideOpt);
+        Path output = optSet.valueOf(outputOpt);
+        if (!vanillaManifest.id.equals(version)) {
+            LOGGER.warn("DOWNLOAD_MOJMAPS uses different minecraft version? Args: {}. Expected mc: {}", args, vanillaManifest.id);
+            return false;
+        }
+
+
+        NewDownloadTask task = vanillaManifest.getDownload(side + "_mappings", output);
+        if (task == null) {
+            LOGGER.warn("Failed to find {}_mappings download. Falling back to InstallerTools invoke.", side);
+            return false;
+        }
+        task.execute(cancelToken, null);
+        return true;
     }
 }

@@ -170,7 +170,12 @@ public class VersionManifest {
 
     @Nullable
     public NewDownloadTask getClientDownload(Path versionsDir, String id) {
-        Download download = downloads.get("client");
+        return getDownload("client", versionsDir.resolve(id).resolve(id + ".jar"));
+    }
+
+    @Nullable
+    public NewDownloadTask getDownload(String dlName, Path dest) {
+        Download download = downloads.get(dlName);
         if (download == null || download.url == null) return null;
 
         DownloadValidation validation = DownloadValidation.of()
@@ -180,7 +185,7 @@ public class VersionManifest {
         }
         return NewDownloadTask.builder()
                 .url(download.url)
-                .dest(versionsDir.resolve(id).resolve(id + ".jar"))
+                .dest(dest)
                 .withValidation(validation)
                 .build();
     }
