@@ -28,6 +28,7 @@ export enum RouterNames {
   SETTINGS_PROXY = 'app-proxy',
   CHAT = 'chat',
   DEVELOPER = 'dev',
+  SUPPORT = 'support-index',
 }
 
 export default new Router({
@@ -142,6 +143,17 @@ export default new Router({
           path: '/dev',
           name: RouterNames.DEVELOPER,
           component: () => import(/* webpackChunkName: "nothingtoseehere" */ './views/DeveloperPage.vue'),
+        },
+        {
+          path: '/support',
+          component: () => import(/* webpackChunkName: "support" */ './views/Support/SupportBase.vue'),
+          children: [
+            {
+              path: '',
+              name: RouterNames.SUPPORT,
+              component: () => import(/* webpackChunkName: "support" */ './views/Support/SupportIndex.vue'),
+            },
+          ],
         },
       ],
     },

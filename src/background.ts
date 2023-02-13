@@ -394,7 +394,7 @@ function createWindow() {
     icon: path.join(__static, 'favicon.ico'),
     // Size Settings
     minWidth: 1120,
-    minHeight: 690,
+    minHeight: 800,
     width: 1320,
     height: 800,
     frame: false,
