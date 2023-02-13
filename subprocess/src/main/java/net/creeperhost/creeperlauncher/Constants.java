@@ -10,12 +10,13 @@ import net.creeperhost.creeperlauncher.util.ProxyUtils;
 import net.creeperhost.creeperlauncher.util.SSLUtils;
 import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
+import okhttp3.*;
+import okhttp3.dnsoverhttps.DnsOverHttps;
 import okio.Throttler;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -75,6 +76,11 @@ public class Constants {
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
+    // 50MB cache for DNS.
+    private static final Cache DOH_CACHE = new Cache(getDataDir().resolve(".doh_cache").toFile(), 50 * 1024 * 1024);
+
+    private static DnsOverHttps DNS;
+
     @Nullable
     private static OkHttpClient OK_HTTP_CLIENT;
     @Nullable
@@ -113,7 +119,22 @@ public class Constants {
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
     public static void refreshHttpClient() {
+        OkHttpClient dohClient = new OkHttpClient.Builder()
+                .cache(DOH_CACHE).build();
+        try {
+            // TODO we should make this static and not reload it each time we refresh proxies.
+            DNS = new DnsOverHttps.Builder()
+                    .client(dohClient)
+                    // TODO we can only specify one host. Perhaps we should flip flop between CF and Google? or have a config option?
+                    .url(HttpUrl.get("https://1.1.1.1/dns-query"))
+                    .bootstrapDnsHosts(InetAddress.getByName("1.1.1.1"), InetAddress.getByName("1.0.0.1"))
+                    .build();
+        } catch (UnknownHostException ex) {
+            throw new RuntimeException("Failed to create InetAddress for ip??", ex);
+        }
+
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                .dns(DNS)
                 .connectTimeout(5, TimeUnit.MINUTES)
                 .readTimeout(5, TimeUnit.MINUTES)
                 .connectionPool(new ConnectionPool())
