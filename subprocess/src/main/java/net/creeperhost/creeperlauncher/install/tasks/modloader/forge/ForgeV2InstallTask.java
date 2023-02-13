@@ -85,9 +85,9 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         String javaTarget = instance.versionManifest.getTargetVersion("runtime");
         Path javaHome;
         if (javaTarget == null) {
-            javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(vanillaManifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8), null, true, null);
+            javaHome = Constants.getJdkManager().provisionJdk(vanillaManifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8), null, true, null);
         } else {
-            javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(javaTarget, true, null);
+            javaHome = Constants.getJdkManager().provisionJdk(javaTarget, true, null);
         }
         Path javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
 

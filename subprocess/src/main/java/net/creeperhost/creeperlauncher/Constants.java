@@ -12,10 +12,13 @@ import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okio.Throttler;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class Constants {
@@ -72,16 +75,13 @@ public class Constants {
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
+    @Nullable
     private static OkHttpClient OK_HTTP_CLIENT;
+    @Nullable
+    private static OkHttpClient OK_HTTP_1_CLIENT;
 
-    public static JdkInstallationManager JDK_INSTALL_MANAGER = new JdkInstallationManager(
-            Constants.BIN_LOCATION.resolve("runtime"),
-            new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
-                    .setClient(httpClient())
-                    .addTag(Throttler.class, Constants.getGlobalThrottler())
-            ),
-            true
-    );
+    @Nullable
+    private static JdkInstallationManager JDK_INSTALL_MANAGER;
 
     // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
     public static final String[] MOJANG_DEFAULT_ARGS = {
@@ -112,10 +112,6 @@ public class Constants {
 
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
-    static {
-        refreshHttpClient();
-    }
-
     public static void refreshHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.MINUTES)
@@ -129,10 +125,36 @@ public class Constants {
         SSLUtils.inject(builder);
         ProxyUtils.inject(builder);
         OK_HTTP_CLIENT = builder.build();
+        builder.protocols(List.of(Protocol.HTTP_1_1));
+        OK_HTTP_1_CLIENT = builder.build();
     }
 
     public static OkHttpClient httpClient() {
+        if (OK_HTTP_CLIENT == null) {
+            refreshHttpClient();
+        }
         return OK_HTTP_CLIENT;
+    }
+
+    public static OkHttpClient http1Client() {
+        if (OK_HTTP_1_CLIENT == null) {
+            refreshHttpClient();
+        }
+        return OK_HTTP_1_CLIENT;
+    }
+
+    public static JdkInstallationManager getJdkManager() {
+        if (JDK_INSTALL_MANAGER == null) {
+            JDK_INSTALL_MANAGER = new JdkInstallationManager(
+                    Constants.BIN_LOCATION.resolve("runtime"),
+                    new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
+                            .setClient(httpClient())
+                            .addTag(Throttler.class, Constants.getGlobalThrottler())
+                    ),
+                    true
+            );
+        }
+        return JDK_INSTALL_MANAGER;
     }
 
     public static String getCreeperhostModpackPrefix(boolean isPrivate, byte packType) {

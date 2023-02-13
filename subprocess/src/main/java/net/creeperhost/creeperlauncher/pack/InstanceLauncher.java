@@ -322,14 +322,14 @@ public class InstanceLauncher {
                 if (javaTarget == null) {
                     LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
                     JavaVersion version = getJavaVersion();
-                    javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(
+                    javaHome = Constants.getJdkManager().provisionJdk(
                             version,
                             null,
                             true,
                             new QuackProgressAdapter(progressTracker.listenerForStep(true))
                     );
                 } else {
-                    javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(
+                    javaHome = Constants.getJdkManager().provisionJdk(
                             javaTarget,
                             true,
                             new QuackProgressAdapter(progressTracker.listenerForStep(true))
