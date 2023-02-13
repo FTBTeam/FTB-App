@@ -18,7 +18,13 @@ public class DNSUtils {
             "sessionserver.mojang.com",
             "launchermeta.mojang.com",
             "api.mojang.com",
-            "session.minecraft.net"
+            "session.minecraft.net",
+            "piston-meta.mojang.com",
+            "api.modpacks.ch",
+            "api.creeperhost.net",
+            "maven.creeperhost.net",
+            "maven.fabricmc.net",
+            "maven.minecraftforge.net"
     };
 
     public static void logImportantHosts() {

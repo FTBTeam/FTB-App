@@ -1,5 +1,14 @@
 <template>
   <div class="ad-aside" :class="{ 'is-dev': isDev }">
+    
+    <div class="ftb-ad-frame" v-if="!isDevEnv">
+      <iframe class="mb-4" id='ae54e7c2' name='ae54e7c2' :src='`https://adserver.ftb.team/www/delivery/afr.php?zoneid=${adZone}&amp;target=_blank&amp;cb=${random}`' frameborder='0' scrolling='no' :width='adSizes.width' :height='adSizes.height' allowtransparency='true' allow='autoplay'>
+        <a :href='`https://adserver.ftb.team/www/delivery/ck.php?n=acea66f5&amp;cb=${random}`' target='_blank'>
+          <img :src='`https://adserver.ftb.team/www/delivery/avw.php?zoneid=${adZone}&amp;cb=${random}&amp;n=acea66f5`' border='0' alt='' />
+        </a>
+      </iframe>
+    </div>
+    
     <div class="ad-space">
       <div class="heart text-center mb-4" v-if="!isElectron">
         <div class="heart-hearts">
@@ -9,6 +18,7 @@
         </div>
         <p class="font-bold">Supports FTB & Curseforge Authors</p>
       </div>
+      
       <div class="ad-box" :class="{ overwolf: !isElectron }">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
@@ -32,12 +42,6 @@
           </video>
         </div>
       </div>
-      <!--      <small-->
-      <!--        class="text-xs text-center block cursor-pointer mt-2 text-muted hover:text-white hover:shadow"-->
-      <!--        @click="reportAdvert"-->
-      <!--        v-if="!isElectron"-->
-      <!--        >Report advert</small-->
-      <!--      >-->
     </div>
   </div>
 </template>
@@ -52,9 +56,6 @@ import { AuthState } from '@/modules/auth/types';
 import { Prop } from 'vue-property-decorator';
 import { getLogger } from '@/utils';
 
-/**
- * TODO: clean all of this up, it's a mess and a copy of a different component
- */
 @Component
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
@@ -68,6 +69,8 @@ export default class AdAside extends Vue {
   platform = platform;
   showPlaceholder = false;
 
+  random = AdAside.mkRandom();
+  
   get isElectron() {
     return platform.isElectron();
   }
@@ -142,28 +145,23 @@ export default class AdAside extends Vue {
     return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
   }
 
-  get isDevEnv() {
-    return process.env.NODE_ENV === 'development';
+  static mkRandom() {
+    return Math.round(Math.random() * 999999999999);
   }
-
-  public reportAdvert() {
-    // const el = document.getElementById('banner300x250');
-    // if (!el) {
-    //   this.showPlaceholder = true;
-    //   return;
-    // }
-    // // @ts-ignore
-    // const adHTML = el.children[0].contentDocument.body.innerHTML;
-    // // @ts-ignore
-    // this.starAPI(api => {
-    //   api.game.setTarget(null);
-    // });
-    // el.innerHTML = '';
-    // this.ad = null;
-    // // @ts-ignore
-    // window.ad = null;
-    // this.showPlaceholder = true;
-    // this.reportAd({ object: '', html: adHTML });
+  
+  get adZone() {
+    return this.platform.isElectron() ? "4" : "1"
+  }
+  
+  get adSizes() {
+    return {
+      width: this.platform.isElectron() ? 300 : 400,
+      height: 300,
+    }
+  }
+  
+  get isDevEnv() {
+    return process.env.NODE_ENV === 'production';
   }
 }
 </script>
@@ -175,6 +173,7 @@ export default class AdAside extends Vue {
 
   display: flex;
   flex-direction: column;
+  align-items: center;
 
   justify-content: flex-end;
   transition: background-color 0.3s ease-in-out;
@@ -195,6 +194,18 @@ export default class AdAside extends Vue {
   //  opacity: 0.5;
   //}
 
+  .ftb-ad-frame {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    
+    iframe {
+      overflow: hidden;
+      border-radius: 5px;
+    }
+  }
+  
   .ad-space {
     .heart {
       position: relative;
