@@ -185,6 +185,8 @@ export const actions: ActionTree<ModpackState, RootState> = {
   loadAllPacks({ commit, rootState, dispatch }: any): any {
     logger().info('Loading all modpacks from the api');
     commit('setLoading', true);
+    commit('setPacksToLoad', 0)
+    commit('setPacksLoaded', 0)
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`)
       .then((response) => response.json())
       .then(async (data) => {
@@ -192,6 +194,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         if (packIDs == null) {
           return;
         }
+        commit('setPacksToLoad', packIDs.length)
         logger().info(`Received ${packIDs.length} from the api`);
         const packs: ModPack[] = [];
         await asyncForEach(packIDs, async (packID: number) => {
@@ -201,6 +204,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
             logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
             return;
           }
+          commit('updatePacksLoaded')
           packs.push(pack);
         });
 

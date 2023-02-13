@@ -23,6 +23,8 @@ export const state: ModpackState = {
   searchString: '',
   privatePacks: [],
   curseLoading: false,
+  packsToLoad: 0,
+  packsLoaded: 0
 };
 
 export const modpacks: Module<ModpackState, RootState> = {

@@ -129,6 +129,8 @@ export interface ModpackState {
   currentModpack: ModPack | null;
   packsCache: ModPacks;
   searchString: string;
+  packsToLoad: number,
+  packsLoaded: number
 }
 
 export interface ModPacks {
