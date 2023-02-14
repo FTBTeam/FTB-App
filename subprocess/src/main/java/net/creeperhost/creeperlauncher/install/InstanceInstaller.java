@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.install;
 import com.google.common.hash.HashCode;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.io.CopyingFileVisitor;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
@@ -17,6 +16,7 @@ import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallT
 import net.creeperhost.creeperlauncher.instance.InstanceOperation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.util.PathFixingCopyingFileVisitor;
 import net.creeperhost.creeperlauncher.util.DNSUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -246,7 +246,7 @@ public class InstanceInstaller extends InstanceOperation {
                 LOGGER.info("Extracting CurseForge overrides.");
                 try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
                     Path root = fs.getPath("/overrides/");
-                    Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
+                    Files.walkFileTree(root, new PathFixingCopyingFileVisitor(root, instance.getDir()));
                 }
             }
 
