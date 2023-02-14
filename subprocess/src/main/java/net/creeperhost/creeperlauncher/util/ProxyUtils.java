@@ -81,8 +81,8 @@ public class ProxyUtils {
 
         Proxy.Type proxyType = switch (type) {
             case "http" -> Proxy.Type.HTTP;
-            case "socks5" -> Proxy.Type.SOCKS;
-            default -> throw new IllegalArgumentException("Unknown proxy type '" + type + "'. Expected one of 'http', or 'socks'.");
+            case "socks", "socks5" -> Proxy.Type.SOCKS;
+            default -> throw new IllegalArgumentException("Unknown proxy type '" + type + "'. Expected one of 'http', or 'socks5'.");
         };
         PasswordAuthentication auth = null;
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
