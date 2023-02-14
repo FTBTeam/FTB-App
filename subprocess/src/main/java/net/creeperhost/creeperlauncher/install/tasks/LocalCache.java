@@ -131,8 +131,8 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
         try {
             // Alright.. the file already exists in cache, but not in our files set?
             // TODO, detect these in validation pass on load.
-            LOGGER.warn("Existing file did not exist in LocalCache lookup? {}", hash);
             if (Files.exists(file)) {
+                LOGGER.warn("Existing file did not exist in LocalCache lookup? {}", hash);
                 // The file has become corrupt..
                 if (!HashUtils.hash(Hashing.sha1(), file).equals(hash)) {
                     // TODO, run a validation pass over LocalCache on load if this is a real problem.
