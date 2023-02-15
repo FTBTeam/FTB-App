@@ -74,6 +74,15 @@ export default class AdAside extends Vue {
 
   async mounted() {
     this.logger.info('Loaded ad sidebar widget');
+    
+    // I've lost brain cells from this. Please just fucking work 
+    // - Covers
+    const helpMe = document.createElement("script");
+    helpMe.src = "//adserver.ftb.team/www/delivery/asyncjs.php";
+    helpMe.async = true;
+
+    document.head.append(helpMe)
+
     // Kinda dirty hack for this file
     if (!this.platform.isOverwolf()) {
       return;
@@ -82,14 +91,6 @@ export default class AdAside extends Vue {
     setTimeout(() => {
       this.loadAds();
     }, 1500);
-
-    // I've lost brain cells from this. Please just fucking work 
-    // - Covers
-    const helpMe = document.createElement("script");
-    helpMe.src = "//adserver.ftb.team/www/delivery/asyncjs.php";
-    helpMe.async = true;
-
-    document.head.append(helpMe)
   }
 
   loadAds() {
@@ -140,10 +141,6 @@ export default class AdAside extends Vue {
       });
     }
   }
-
-  logmeplx(...a: any[]) {
-    console.log(a)
-  }
   
   get advertsEnabled(): boolean {
     if (this.auth?.token?.activePlan === null) {
@@ -162,15 +159,8 @@ export default class AdAside extends Vue {
     return this.platform.isElectron() ? "4" : "1"
   }
   
-  get adSizes() {
-    return {
-      width: this.platform.isElectron() ? 300 : 400,
-      height: 300,
-    }
-  }
-  
   get isDevEnv() {
-    return process.env.NODE_ENV === 'production';
+    return process.env.NODE_ENV !== 'production';
   }
 }
 </script>
