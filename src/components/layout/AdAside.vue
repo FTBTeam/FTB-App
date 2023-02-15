@@ -2,12 +2,9 @@
   <div class="ad-aside" :class="{ 'is-dev': isDev }">
     
     <div class="ftb-ad-frame" v-if="!isDevEnv">
-      <iframe class="mb-4" id='ae54e7c2' name='ae54e7c2' :src='`https://adserver.ftb.team/www/delivery/afr.php?zoneid=${adZone}&amp;target=_blank&amp;cb=${random}`' frameborder='0' scrolling='no' :width='adSizes.width' :height='adSizes.height' allowtransparency='true' allow='autoplay'>
-        <a :href='`https://adserver.ftb.team/www/delivery/ck.php?n=acea66f5&amp;cb=${random}`' target='_blank'>
-          <img :src='`https://adserver.ftb.team/www/delivery/avw.php?zoneid=${adZone}&amp;cb=${random}&amp;n=acea66f5`' border='0' alt='' />
-        </a>
-      </iframe>
+      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>
     </div>
+    
     
     <div class="ad-space">
       <div class="heart text-center mb-4" v-if="!isElectron">
@@ -85,6 +82,14 @@ export default class AdAside extends Vue {
     setTimeout(() => {
       this.loadAds();
     }, 1500);
+
+    // I've lost brain cells from this. Please just fucking work 
+    // - Covers
+    const helpMe = document.createElement("script");
+    helpMe.src = "//adserver.ftb.team/www/delivery/asyncjs.php";
+    helpMe.async = true;
+
+    document.head.append(helpMe)
   }
 
   loadAds() {
@@ -136,6 +141,10 @@ export default class AdAside extends Vue {
     }
   }
 
+  logmeplx(...a: any[]) {
+    console.log(a)
+  }
+  
   get advertsEnabled(): boolean {
     if (this.auth?.token?.activePlan === null) {
       return true;
@@ -161,7 +170,7 @@ export default class AdAside extends Vue {
   }
   
   get isDevEnv() {
-    return process.env.NODE_ENV !== 'production';
+    return process.env.NODE_ENV === 'production';
   }
 }
 </script>

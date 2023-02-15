@@ -26,7 +26,8 @@
         "https://login.live.com",
         "https://*.xboxlive.com",
         "https://api.minecraftservices.com",
-        "https://*.mojang.com"
+        "https://*.mojang.com",
+        "https://adserver.ftb.team"
       ]
     },
     "start_window": "background",
