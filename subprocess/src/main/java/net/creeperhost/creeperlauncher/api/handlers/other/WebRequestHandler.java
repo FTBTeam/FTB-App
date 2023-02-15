@@ -5,21 +5,21 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.other.WebRequestData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import okhttp3.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.io.OutputStream;
+import java.util.*;
 
 /**
  * Created by covers1624 on 30/11/22.
  */
 public class WebRequestHandler implements IMessageHandler<WebRequestData> {
-
     private static final Logger LOGGER = LogManager.getLogger();
-
+        
     @Override
     public void handle(WebRequestData data) {
         Request.Builder builder = new Request.Builder()
@@ -30,7 +30,7 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
                 builder.addHeader(headerEntry.getKey(), s);
             }
         }
-
+        
         try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             WebRequestData.WebRequestDataResponse resp = new WebRequestData.WebRequestDataResponse(data, "success");
             resp.statusCode = response.code();
@@ -48,6 +48,8 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
                 }
                 resp.body.bytes = body.bytes();
             }
+            
+            Settings.webSocketAPI.sendMessage(resp);
         } catch (IOException ex) {
             Settings.webSocketAPI.sendMessage(new WebRequestData.WebRequestDataResponse(data, "error", ex.getMessage()));
             LOGGER.warn("Failed to make web request to {}.", data.url, ex);

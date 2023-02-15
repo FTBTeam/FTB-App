@@ -113,7 +113,6 @@ export default class ModpackPage extends Vue {
 
   @State('auth') public auth!: AuthState;
   @State('settings') public settings!: SettingsState;
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
   @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall!: any;

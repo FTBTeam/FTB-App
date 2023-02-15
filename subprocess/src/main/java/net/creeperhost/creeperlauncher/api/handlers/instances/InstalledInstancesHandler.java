@@ -15,7 +15,7 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
     @Override
     public void handle(InstalledInstancesData data)
     {
-        int id = data.requestId;
+        String id = data.requestId;
         boolean refresh = data.refresh;
         CompletableFuture.runAsync(() -> {
             if(refresh) Instances.refreshInstances();

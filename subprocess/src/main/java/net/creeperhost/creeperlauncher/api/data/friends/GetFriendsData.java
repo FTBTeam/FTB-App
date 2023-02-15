@@ -4,6 +4,7 @@ import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.minetogether.lib.chat.data.Profile;
 
 import java.util.List;
+import java.util.UUID;
 
 public class GetFriendsData extends BaseData {
 
@@ -11,7 +12,7 @@ public class GetFriendsData extends BaseData {
         List<Profile> online;
         List<Profile> offline;
         List<Profile> pending;
-        public Reply(int requestId, List<Profile> online, List<Profile> offline, List<Profile> pending) {
+        public Reply(String requestId, List<Profile> online, List<Profile> offline, List<Profile> pending) {
             this.type = "ircFriendsReply";
             this.online = online;
             this.offline = offline;
