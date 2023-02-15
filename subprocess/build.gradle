@@ -222,6 +222,7 @@ dependencies {
     implementation 'org.java-websocket:Java-WebSocket:1.4.0'
     implementation 'com.github.oshi:oshi-core:5.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.9.3'
     implementation 'org.apache.commons:commons-compress:1.2'
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'net.java.dev.jna:jna:5.5.0'
