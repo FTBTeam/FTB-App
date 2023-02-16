@@ -77,12 +77,13 @@ export default class AdAside extends Vue {
     
     // I've lost brain cells from this. Please just fucking work 
     // - Covers
-    const helpMe = document.createElement("script");
-    helpMe.src = "//adserver.ftb.team/www/delivery/asyncjs.php";
-    helpMe.async = true;
-
-    document.head.append(helpMe)
-
+    if (!this.isDevEnv) {
+      const helpMe = document.createElement("script");
+      helpMe.src = "https://adserver.ftb.team/www/delivery/asyncjs.php";
+      helpMe.async = true;
+      document.head.append(helpMe)
+    }
+    
     // Kinda dirty hack for this file
     if (!this.platform.isOverwolf()) {
       return;
@@ -94,6 +95,10 @@ export default class AdAside extends Vue {
   }
 
   loadAds() {
+    if (this.isDevEnv) {
+      return;
+    }
+    
     this.logger.info('Loading advert system');
     //@ts-ignore
     if (typeof OwAd === 'undefined' || !OwAd) {
