@@ -144,6 +144,12 @@ const Electron: ElectronOverwolfInterface = {
     async getPlatformVersion() {
       return process.versions.electron;
     },
+    
+    crypto: {
+      randomUUID(): string {
+        return (crypto as any).randomUUID();
+      }
+    }
   },
 
   // Actions

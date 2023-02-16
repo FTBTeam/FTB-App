@@ -10,6 +10,9 @@ export interface Util {
   getOsArch: () => string;
   getPlatformVersion: () => Promise<string>;
   openUrl: (e: string) => void;
+  crypto: {
+    randomUUID(): string;
+  }
 }
 
 export interface Actions {

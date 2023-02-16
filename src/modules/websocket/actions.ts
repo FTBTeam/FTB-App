@@ -21,7 +21,7 @@ export const actions: ActionTree<SocketState, RootState> = {
       );
       return;
     }
-    const requestId = (crypto as any).randomUUID();
+    const requestId = platform.get.utils.crypto.randomUUID();
     payload.payload.requestId = requestId;
     payload.payload.secret = rootState.wsSecret;
     if (!(payload.payload?.type && payload.payload?.type !== '' && payload.payload?.type.startsWith('profiles.'))) {

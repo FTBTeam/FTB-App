@@ -50,6 +50,12 @@ const Overwolf: ElectronOverwolfInterface = {
         overwolf.extensions.current.getManifest((app: any) => resolve(app.meta.version));
       });
     },
+    
+    crypto: {
+      randomUUID(): string {
+        return overwolf.windows.getMainWindow().randomUUID() as string;
+      }
+    }
   },
 
   // Actions
