@@ -51,6 +51,8 @@ async function blah() {
       overwolf.windows.close('background');
     }
   });
+  
+  return plugin;
 }
 
 let server;
@@ -139,7 +141,13 @@ async function openWebserver(authDataCallback) {
 }
 
 const dev = false; // todo: get from overwolf, but only used for launch java currently anyway
-blah().catch(e => console.log(e));
+const plugin = blah()
+  .then(e => e)
+  .catch(e => console.log(e));
+
+function randomUUID() {
+  return plugin.get().RandomUUID()
+}
 
 async function p(func, ...args) {
   return new Promise((acc, rej) => {
