@@ -98,7 +98,7 @@ public class OverwolfShim : IDisposable {
         LaunchJava(
             overwolfDir,
             Path.Combine(overwolfDir, @".\jdk-17.0.1+12-minimal\bin\java.exe"),
-            new List<string> { "-Xmx32m" },
+            new List<string>(),
             $"launcher-{version}-all.jar",
             args,
             callback
