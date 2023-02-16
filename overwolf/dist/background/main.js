@@ -141,8 +141,10 @@ async function openWebserver(authDataCallback) {
 }
 
 const dev = false; // todo: get from overwolf, but only used for launch java currently anyway
-const plugin = blah()
-  .then(e => e)
+let plugin = null; // TODO: all of this code is awful
+
+blah()
+  .then(e => plugin = e)
   .catch(e => console.log(e));
 
 function randomUUID() {
