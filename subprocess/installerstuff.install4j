@@ -76,7 +76,7 @@
   <launchers>
     <launcher name="FTBApp" id="69" icnsFile="./ftbl.icns">
       <executable name="FTBApp" iconSet="true" iconFile="./ftbl.ico" executableMode="gui" singleInstance="true" checkConsoleParameter="true" />
-      <java mainClass="net.creeperhost.creeperlauncher.CreeperLauncher" vmParameters="-Xms32m">
+      <java mainClass="net.creeperhost.creeperlauncher.CreeperLauncher">
         <classPath>
           <archive location="launcher-${compiler:sys.version}-all.jar" failOnError="false" />
         </classPath>
