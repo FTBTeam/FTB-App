@@ -48,6 +48,8 @@ public class ModpackVersionManifest {
 
     public static final Gson GSON = new Gson();
 
+    public static final int INVALID_ID = -1000;
+
     public static final int MINIMUM_SPEC = 4096;
     public static final int RECOMMENDED_SPEC = 6132;
 
@@ -75,6 +77,9 @@ public class ModpackVersionManifest {
     private long updated;
     private long refreshed;
 
+    @Nullable
+    public transient Path cfExtractOverride;
+
     public ModpackVersionManifest() {
     }
 
@@ -97,8 +102,13 @@ public class ModpackVersionManifest {
         refreshed = other.refreshed;
     }
 
-    @Nullable
-    public transient Path cfExtractOverride;
+    public static ModpackVersionManifest makeInvalid() {
+        ModpackVersionManifest manifest = new ModpackVersionManifest();
+        manifest.id = INVALID_ID;
+        manifest.parent = INVALID_ID;
+        manifest.name = "Corrupt instance install.";
+        return manifest;
+    }
 
     @Nullable
     public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
