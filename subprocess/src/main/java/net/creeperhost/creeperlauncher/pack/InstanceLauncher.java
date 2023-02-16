@@ -280,7 +280,8 @@ public class InstanceLauncher {
             try {
                 exitTask.run();
             } catch (IOException e) {
-                LOGGER.error("Failed to execute exit task for instance {}({})", instance.getName(), instance.getUuid(), e);
+                LOGGER.error(NO_SENTRY, "Failed to execute exit task for instance {}({})", instance.getName(), instance.getUuid(), e);
+                LOGGER.error(SENTRY_ONLY, "Failed to execute instance exit tasks.", e);
             }
         }
 
