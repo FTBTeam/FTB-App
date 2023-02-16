@@ -21,8 +21,8 @@ export const actions: ActionTree<SocketState, RootState> = {
       );
       return;
     }
-    const messageID = Math.round(Math.random() * 1000);
-    payload.payload.requestId = messageID;
+    const requestId = (crypto as any).randomUUID();
+    payload.payload.requestId = requestId;
     payload.payload.secret = rootState.wsSecret;
     if (!(payload.payload?.type && payload.payload?.type !== '' && payload.payload?.type.startsWith('profiles.'))) {
       logVerbose(rootState, payload.payload);
@@ -32,7 +32,7 @@ export const actions: ActionTree<SocketState, RootState> = {
     Vue.prototype.$socket[platform.isElectron() ? 'sendObj' : 'send'](
       platform.isElectron() ? payload.payload : JSON.stringify(payload.payload),
     ); // TODO: This conditional logic might be wrong
-    commit('ADD_CALLBACK', { id: messageID, callback: payload.callback });
+    commit('ADD_CALLBACK', { id: requestId, callback: payload.callback });
   },
   disconnect() {
     Vue.prototype.$socket.close();

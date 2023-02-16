@@ -5,7 +5,6 @@ import os from 'os';
 import fs from 'fs';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
-import axios from 'axios';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
@@ -26,9 +25,6 @@ if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
 } else {
   app.setAsDefaultProtocolClient('ftb');
 }
-
-const httpClient = axios.create();
-httpClient.defaults.timeout = 5000;
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
@@ -394,7 +390,7 @@ function createWindow() {
     icon: path.join(__static, 'favicon.ico'),
     // Size Settings
     minWidth: 1120,
-    minHeight: 690,
+    minHeight: 800,
     width: 1320,
     height: 800,
     frame: false,

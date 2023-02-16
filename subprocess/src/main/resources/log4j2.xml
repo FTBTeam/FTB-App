@@ -89,10 +89,18 @@
     </Appenders>
     <Loggers>
         <Root level="all">
-            <AppenderRef ref="SysOut" level="${sys:console.level:-info}"/>
-            <AppenderRef ref="Latest" level="info"/>
-            <AppenderRef ref="Debug" level="trace"/>
-            <AppenderRef ref="Sentry"/>
+            <AppenderRef ref="SysOut" level="${sys:console.level:-info}">
+                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
+            <AppenderRef ref="Latest" level="info">
+                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
+            <AppenderRef ref="Debug" level="trace">
+                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
+            <AppenderRef ref="Sentry">
+                <MarkerFilter marker="NO_SENTRY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
         </Root>
     </Loggers>
 </Configuration>

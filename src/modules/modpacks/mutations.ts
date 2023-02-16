@@ -129,4 +129,13 @@ export const mutations: MutationTree<ModpackState> = {
   clearSearch(state) {
     state.searchString = '';
   },
+  setPacksToLoad(state, payload) {
+    state.packsToLoad = payload;
+  },
+  setPacksLoaded(state, payload) {
+    state.packsLoaded = payload;
+  },
+  updatePacksLoaded(state) {
+    state.packsLoaded ++;
+  }
 };

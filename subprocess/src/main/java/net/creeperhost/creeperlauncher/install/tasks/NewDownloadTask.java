@@ -118,11 +118,22 @@ public class NewDownloadTask implements Task<Path> {
 
             for (int i = 0; i < tries; i++) {
                 try {
-                    doRequest(url, dest, validation, progressListener);
+                    doRequest(url, false, dest, validation, progressListener);
                     success = true;
                     break outer;
                 } catch (Throwable ex) {
-                    LOGGER.debug("Download attempt failed. Attempt {}, URL {}.", i, url, ex);
+                    LOGGER.debug("HTTP/2, Download attempt failed. Attempt {}, URL {}.", i, url, ex);
+                    downloadAttempts.add(new FailedDownloadAttempt(url, urlIdx, i, ex, SSLUtils.getThreadCertificates()));
+                }
+            }
+            LOGGER.warn("Download failed 3 times. Trying HTTP/1.1");
+            for (int i = 0; i < tries; i++) {
+                try {
+                    doRequest(url, true, dest, validation, progressListener);
+                    success = true;
+                    break outer;
+                } catch (Throwable ex) {
+                    LOGGER.debug("HTTP/1.1 Download attempt failed. Attempt {}, URL {}.", i, url, ex);
                     downloadAttempts.add(new FailedDownloadAttempt(url, urlIdx, i, ex, SSLUtils.getThreadCertificates()));
                 }
             }
@@ -160,15 +171,11 @@ public class NewDownloadTask implements Task<Path> {
         Throwable fail = null;
         for (int i = 0; i < tries; i++) {
             try {
-                doRequest(url + ext, dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
+                doRequest(url + ext, false, dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
                 fail = null;
                 break;
             } catch (Throwable ex) {
-                if (ex instanceof HttpResponseException httpEx) {
-                    if (httpEx.code == 404) { // Resource doesn't exist.
-                        return null;
-                    }
-                }
+                if (ex instanceof HttpResponseException httpEx && httpEx.code == 404) return null; // Resource doesn't exist.
                 if (fail != null) {
                     fail.addSuppressed(ex);
                 } else {
@@ -183,9 +190,9 @@ public class NewDownloadTask implements Task<Path> {
         return HashCode.fromString(Files.readString(dest, StandardCharsets.UTF_8).trim());
     }
 
-    private static void doRequest(String url, Path dest, DownloadValidation validation, @Nullable TaskProgressListener progressListener) throws IOException {
+    private static void doRequest(String url, boolean http1, Path dest, DownloadValidation validation, @Nullable TaskProgressListener progressListener) throws IOException {
         OkHttpDownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.httpClient())
+                .setClient(http1 ? Constants.http1Client() : Constants.httpClient())
                 .setUrl(url)
                 .setDest(dest)
                 .setUseETag(validation.useETag)

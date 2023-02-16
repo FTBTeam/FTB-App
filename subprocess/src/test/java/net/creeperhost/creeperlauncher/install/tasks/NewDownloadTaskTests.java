@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class NewDownloadTaskTests {
 
     static {
+        System.setProperty("DNS.fallback_to_system", "true");
         System.setProperty("DownloadTask.debug", "true");
     }
 

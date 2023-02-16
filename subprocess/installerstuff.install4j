@@ -76,7 +76,7 @@
   <launchers>
     <launcher name="FTBApp" id="69" icnsFile="./ftbl.icns">
       <executable name="FTBApp" iconSet="true" iconFile="./ftbl.ico" executableMode="gui" singleInstance="true" checkConsoleParameter="true" />
-      <java mainClass="net.creeperhost.creeperlauncher.CreeperLauncher">
+      <java mainClass="net.creeperhost.creeperlauncher.CreeperLauncher" vmParameters="-Xms32m">
         <classPath>
           <archive location="launcher-${compiler:sys.version}-all.jar" failOnError="false" />
         </classPath>
@@ -1041,7 +1041,7 @@ file.getParent() != null || (file.getName().endsWith(".app") &amp;&amp; director
         <entry filesetId="58" />
         <entry filesetId="60" />
       </exclude>
-      <jreBundle jreBundleSource="generated" manualJreEntry="true" bundleType="dynamic" bundleUrl="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_x64_linux_hotspot_17.0.1_12.tar.gz" directDownload="true" />
+      <jreBundle jreBundleSource="generated" manualJreEntry="true" bundleType="dynamic" bundleUrl="https://apps.modpacks.ch/FTBApp/jres/linux-amd64-17.0.1_12.tar.gz" directDownload="true" />
     </unixInstaller>
     <macosArchive name="macOS Single Bundle Archive" id="70" launcherId="69">
       <exclude>

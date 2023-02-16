@@ -12,7 +12,7 @@ public class AddFriendData extends BaseData {
         private boolean status;
         private String message;
         private String hash;
-        public Reply(int requestId, boolean status, String message, String hash) {
+        public Reply(String requestId, boolean status, String message, String hash) {
             this.type = "addFriendReply";
             this.requestId = requestId;
             this.hash  = hash;

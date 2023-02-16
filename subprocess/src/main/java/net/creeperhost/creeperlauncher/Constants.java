@@ -10,12 +10,18 @@ import net.creeperhost.creeperlauncher.util.ProxyUtils;
 import net.creeperhost.creeperlauncher.util.SSLUtils;
 import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
+import okhttp3.*;
+import okhttp3.dnsoverhttps.DnsOverHttps;
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Throttler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class Constants {
@@ -72,16 +78,18 @@ public class Constants {
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
-    private static OkHttpClient OK_HTTP_CLIENT;
+    // 50MB cache for DNS.
+    private static final Cache DOH_CACHE = new Cache(getDataDir().resolve(".doh_cache").toFile(), 50 * 1024 * 1024);
 
-    public static JdkInstallationManager JDK_INSTALL_MANAGER = new JdkInstallationManager(
-            Constants.BIN_LOCATION.resolve("runtime"),
-            new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
-                    .setClient(httpClient())
-                    .addTag(Throttler.class, Constants.getGlobalThrottler())
-            ),
-            true
-    );
+    private static DnsOverHttps DNS;
+
+    @Nullable
+    private static OkHttpClient OK_HTTP_CLIENT;
+    @Nullable
+    private static OkHttpClient OK_HTTP_1_CLIENT;
+
+    @Nullable
+    private static JdkInstallationManager JDK_INSTALL_MANAGER;
 
     // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
     public static final String[] MOJANG_DEFAULT_ARGS = {
@@ -112,12 +120,35 @@ public class Constants {
 
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
-    static {
-        refreshHttpClient();
-    }
-
     public static void refreshHttpClient() {
+        OkHttpClient dohClient = new OkHttpClient.Builder()
+                .cache(DOH_CACHE).build();
+        try {
+            // TODO we should make this static and not reload it each time we refresh proxies.
+            DNS = new DnsOverHttps.Builder()
+                    .client(dohClient)
+                    // TODO we can only specify one host. Perhaps we should flip flop between CF and Google? or have a config option?
+                    .url(HttpUrl.get("https://1.1.1.1/dns-query"))
+                    .bootstrapDnsHosts(InetAddress.getByName("1.1.1.1"), InetAddress.getByName("1.0.0.1"))
+                    .build();
+        } catch (UnknownHostException ex) {
+            throw new RuntimeException("Failed to create InetAddress for ip??", ex);
+        }
+
+        // TODO Currently required for unit tests, but might be good to just enable? Probably only useful in dev?
+        boolean strict = !Boolean.getBoolean("DNS.fallback_to_system");
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                .dns(host -> {
+                    try {
+                        return DNS.lookup(host);
+                    } catch (UnknownHostException ex) {
+                        if (strict) {
+                            throw ex;
+                        }
+                    }
+
+                    return Dns.SYSTEM.lookup(host);
+                })
                 .connectTimeout(5, TimeUnit.MINUTES)
                 .readTimeout(5, TimeUnit.MINUTES)
                 .connectionPool(new ConnectionPool())
@@ -129,10 +160,36 @@ public class Constants {
         SSLUtils.inject(builder);
         ProxyUtils.inject(builder);
         OK_HTTP_CLIENT = builder.build();
+        builder.protocols(List.of(Protocol.HTTP_1_1));
+        OK_HTTP_1_CLIENT = builder.build();
     }
 
     public static OkHttpClient httpClient() {
+        if (OK_HTTP_CLIENT == null) {
+            refreshHttpClient();
+        }
         return OK_HTTP_CLIENT;
+    }
+
+    public static OkHttpClient http1Client() {
+        if (OK_HTTP_1_CLIENT == null) {
+            refreshHttpClient();
+        }
+        return OK_HTTP_1_CLIENT;
+    }
+
+    public static JdkInstallationManager getJdkManager() {
+        if (JDK_INSTALL_MANAGER == null) {
+            JDK_INSTALL_MANAGER = new JdkInstallationManager(
+                    Constants.BIN_LOCATION.resolve("runtime"),
+                    new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
+                            .setClient(httpClient())
+                            .addTag(Throttler.class, Constants.getGlobalThrottler())
+                    ),
+                    true
+            );
+        }
+        return JDK_INSTALL_MANAGER;
     }
 
     public static String getCreeperhostModpackPrefix(boolean isPrivate, byte packType) {

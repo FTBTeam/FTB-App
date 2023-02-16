@@ -14,7 +14,7 @@ public class InstalledInstancesData extends BaseData
         List<LocalInstance> instances;
         List<JsonObject> cloudInstances;
 
-        public Reply(int requestId, List<LocalInstance> instances, List<JsonObject> cloudInstances)
+        public Reply(String requestId, List<LocalInstance> instances, List<JsonObject> cloudInstances)
         {
             this.instances = instances;
             this.type = "installedInstancesReply";

@@ -1,14 +1,17 @@
 <template>
   <div class="ms-auth text-center">
     <template v-if="!loading">
-      <h3 class="text-3xl mt-6 mb-4 font-bold">Waiting for response...</h3>
       <div class="logo my-12">
         <img class="mx-auto" src="@/assets/images/branding/microsoft.svg" alt="Microsoft logo" />
       </div>
+      
+      <h3 class="text-3xl mt-6 mb-4 font-bold">Waiting for response<span class="dot" /><span class="dot" /><span class="dot" /></h3>
       <p class="mb-6">
         A window should have just popped up. Follow the instructions on screen, once you've finished, you'll see that
         you've been signed in here.
       </p>
+      
+      <p>If no window has opened, you can go to <br/><a class="link" @click="platform.get.utils.openUrl('https://msauth.feed-the-beast.com')">https://msauth.feed-the-beast.com</a></p>
     </template>
     <template v-else>
       <h3 class="text-3xl mt-6 mb-4 font-bold">Loading</h3>
@@ -34,11 +37,12 @@ export default class MicrosoftAuth extends Vue {
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
 
   loading = false;
-
+  platform = platform;
+  
   mounted() {
     this.openMsAuth();
   }
-
+  
   async openMsAuth() {
     try {
       const res = await platform.get.actions.openMsAuth();
@@ -94,4 +98,41 @@ export default class MicrosoftAuth extends Vue {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.link {
+  text-decoration: underline;
+}
+
+.dot {
+  $size: 5px;
+  $totalTime: 1.8;
+  $count: 3;
+  display: inline-block;
+  background: white;
+  
+  border-radius: $size;
+  width: $size;
+  height: $size;
+  margin-left: .3rem;
+  opacity: 0;
+  
+  animation: dotsLoop #{$totalTime}s ease-in-out infinite;
+  
+  &:nth-child(2) {
+    animation-delay: #{($totalTime/$count)}s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: #{(($totalTime/$count)*2)}s;
+  }
+  
+  @keyframes dotsLoop {
+    0%, 100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+</style>

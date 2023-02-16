@@ -26,7 +26,8 @@
         "https://login.live.com",
         "https://*.xboxlive.com",
         "https://api.minecraftservices.com",
-        "https://*.mojang.com"
+        "https://*.mojang.com",
+        "https://adserver.ftb.team"
       ]
     },
     "start_window": "background",
@@ -47,7 +48,7 @@
         },
         "min_size": {
           "width": 1220,
-          "height": 780
+          "height": 800
         },
         "block_top_window_navigation": true,
         "popup_blocker": true

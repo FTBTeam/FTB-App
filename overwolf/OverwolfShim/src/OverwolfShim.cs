@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -92,7 +92,7 @@ public class OverwolfShim : IDisposable {
         LaunchJava(
             overwolfDir,
             Path.Combine(overwolfDir, @".\jdk-17.0.1+12-minimal\bin\java.exe"),
-            new List<string>(),
+            new List<string> { "-Xmx32m" },
             $"launcher-{version}-all.jar",
             args,
             callback

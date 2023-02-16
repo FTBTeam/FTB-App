@@ -149,3 +149,22 @@ export interface ModSearchResults {
   limit: number;
   refreshed: number;
 }
+
+export interface DiscordWidget {
+  id: string;
+  name: string;
+  instant_invite: string;
+  channels: any[];
+  members: {
+    id: string;
+    username: string;
+    discriminator: string;
+    avatar: null;
+    status: "dnd" | "idle" | "online";
+    avatar_url: string;
+    game?: {
+      name: string;
+    };
+  }[];
+  presence_count: number;
+}

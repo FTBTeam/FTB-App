@@ -10,7 +10,6 @@ import { ModPack } from '@/modules/modpacks/types';
 import router from '@/router';
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
-import axios from 'axios';
 import EventEmitter from 'events';
 import http from 'http';
 import os from 'os';
@@ -297,36 +296,6 @@ const Electron: ElectronOverwolfInterface = {
   },
 
   setupApp(vm) {
-    const showError = (title: string, message: string) => {
-      store.dispatch(
-        'showAlert',
-        {
-          type: 'danger',
-          title: title,
-          message: message,
-        },
-        { root: true },
-      );
-    };
-
-    axios
-      .get(`https://minetogether.io/api/adPool`)
-      .then((res) => {
-        try {
-          const id = parseInt(res.data, 10);
-          if (id !== -1) {
-            (window as any).adPoolID = null;
-          } else {
-            (window as any).adPoolID = id;
-          }
-        } catch (err) {
-          (window as any).adPoolID = null;
-        }
-      })
-      .catch(() => {
-        (window as any).adPoolID = null;
-      });
-
     ipcRenderer.send('sendMeSecret');
     ipcRenderer.on('hereIsSecret', (event, data) => {
       if (data.port === 13377 && !data.isDevMode) {

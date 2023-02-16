@@ -209,7 +209,13 @@ public class LocalInstance implements IPack
             this._private = jsonOutput._private;
             this.installComplete = jsonOutput.installComplete;
             if (installComplete) {
-                this.versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, path.resolve("version.json"), ModpackVersionManifest.class);
+                Path versionJson = path.resolve("version.json");
+                if (Files.exists(versionJson)) {
+                    this.versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, path.resolve("version.json"), ModpackVersionManifest.class);
+                } else {
+                    // The installation is corrupt.
+                    this.versionManifest = ModpackVersionManifest.makeInvalid();
+                }
             }
             this.totalPlayTime = jsonOutput.totalPlayTime;
             this.lastPlayed = jsonOutput.lastPlayed;

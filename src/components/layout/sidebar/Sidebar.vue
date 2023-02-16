@@ -98,6 +98,11 @@ export default class Sidebar extends Vue {
       icon: 'newspaper',
     },
     {
+      name: 'Support',
+      to: RouterNames.SUPPORT,
+      icon: 'info-circle',
+    },
+    {
       name: 'Settings',
       to: RouterNames.SETTINGS_INSTANCE,
       icon: 'cog',

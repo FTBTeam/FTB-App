@@ -12,7 +12,7 @@ public class UploadLogsHandler implements IMessageHandler<UploadLogsData> {
         uploadLogs(data.uiVersion, data.frontendLogs, data.requestId);
     }
 
-    public static void uploadLogs(String uiVersion, String frontendLogs, int requestId) {
+    public static void uploadLogs(String uiVersion, String frontendLogs, String requestId) {
         String code = LogsUploader.uploadUILogs(uiVersion, frontendLogs);
         if (code == null) {
             Settings.webSocketAPI.sendMessage(new UploadLogsData.Reply(requestId)); // error

@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
 import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
@@ -99,7 +100,14 @@ public class Instances
         try {
             LocalInstance localInstance = new LocalInstance(path);
             if (!localInstance.installComplete) {
+                // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
                 LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
+                return null;
+            }
+            if (localInstance.getId() == ModpackVersionManifest.INVALID_ID) {
+                // TODO, not really sure how an instance can get into this state at the moment.
+                //       but instead of generating a sentry event for the error message, we emit a warning and ignore the instance.
+                LOGGER.warn("Instance install complete and missing 'version.json', Ignoring. {}", json.toAbsolutePath());
                 return null;
             }
             return localInstance;
