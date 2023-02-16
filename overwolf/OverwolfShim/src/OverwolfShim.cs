@@ -35,6 +35,12 @@ public class OverwolfShim : IDisposable {
 
     #region Shim
 
+    /// <summary>
+    /// Generate a new random GUID
+    /// </summary>
+    /// <returns>The random GUID</returns>
+    public string RandomUUID() => Guid.NewGuid().ToString();
+
     #region IO
 
     /// <summary>
