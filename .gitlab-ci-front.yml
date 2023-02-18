@@ -10,7 +10,7 @@ build:
   tags:
     - linux-aarch64
   script:
-    - apt update && apt install zip jq curl -y
+    - apt update && apt install zip jq -y
     - 'export VERSION=`curl -s --header "PRIVATE-TOKEN: $WHY_GITLAB_WHY " "$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages?order_by=version&sort=desc" | jq -r "first(.[] | select(.pipeline.ref == \"$CI_COMMIT_BRANCH\")).version"`'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o public/version.json $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION/creeperlauncher-$VERSION.json'
     - rm overwolf/*.jar
@@ -23,6 +23,7 @@ build:
     - cd overwolf
     - node buildUpdate.js patch
     - node makeOpk.js
+    - ls -lAh ./overwolf/
     - chmod +x notification.sh
     - ./notification.sh
   interruptible: true
@@ -40,7 +41,7 @@ preview:
   tags:
     - linux-aarch64
   script:
-    - apt update && apt install zip jq curl -y
+    - apt update && apt install zip jq -y
     - 'export VERSION=`curl -s --header "PRIVATE-TOKEN: $WHY_GITLAB_WHY " "$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages?order_by=version&sort=desc" | jq -r "first(.[] | select(.pipeline.ref == \"$CI_COMMIT_BRANCH\")).version"`'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o public/version.json $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION/creeperlauncher-$VERSION.json'
     - rm overwolf/*.jar
@@ -53,6 +54,7 @@ preview:
     - cd overwolf
     - node buildUpdate.js patch preview
     - node makeOpkPreview.js
+    - ls -lAh ./overwolf/
     - chmod +x notification.sh
     - ./notification.sh
   interruptible: true
