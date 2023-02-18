@@ -1,4 +1,4 @@
-image: node:16
+image: node:16-slim
 
 build:
   cache: []
@@ -23,6 +23,7 @@ build:
     - node makeOpk.js
     - chmod +x notification.sh
     - ./notification.sh
+  interruptible: true
   artifacts:
     paths:
         - ./overwolf/*.opk
@@ -50,6 +51,7 @@ preview:
     - node makeOpkPreview.js
     - chmod +x notification.sh
     - ./notification.sh
+  interruptible: true
   artifacts:
     paths:
         - ./overwolf/*.opk

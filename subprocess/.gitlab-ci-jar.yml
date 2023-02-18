@@ -1,4 +1,4 @@
-image: gradle:7.3.2-jdk17
+image: gradle:7.3.2-jdk17-alpine
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -8,14 +8,10 @@ before_script:
 
 build:
   stage: build
+  interruptible: true
   tags:
     - linux-aarch64
   script: 
     - cd `pwd`/subprocess
     - gradle publish
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-    paths:
-      - build
-      - .gradle
+  cache: []
