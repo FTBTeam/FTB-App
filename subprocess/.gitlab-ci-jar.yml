@@ -8,6 +8,8 @@ before_script:
 
 build:
   stage: build
+  tags:
+    - linux-aarch64
   script: 
     - cd `pwd`/subprocess
     - gradle publish
