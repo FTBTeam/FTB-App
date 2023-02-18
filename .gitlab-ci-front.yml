@@ -1,7 +1,11 @@
 image: node:16
 
+cache:
+  key: ftb-app-frontend
+
 build:
-  cache: []
+  cache:
+    untracked: true
   only:
     - release
   tags:
@@ -28,7 +32,8 @@ build:
         - ./overwolf/*.opk
 
 preview:
-  cache: []
+  cache:
+    untracked: true
   only:
     - develop
   tags:
