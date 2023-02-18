@@ -3,6 +3,7 @@ image: node:16
 build:
   cache:
     key: ftb-app-frontend
+    policy: pull
     paths:
       - node_modules/
   only:
@@ -34,6 +35,7 @@ build:
 preview:
   cache:
     key: ftb-app-frontend
+    policy: pull
     paths:
       - node_modules/
   only:

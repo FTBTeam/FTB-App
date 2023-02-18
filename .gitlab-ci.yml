@@ -1,6 +1,21 @@
 stages:
+  - prepare
   - build_jar
   - build
+
+prepare_frontend:
+  stage: prepare
+  cache:
+    key: ftb-app-frontend
+    policy: pull-push
+    paths:
+      - node_modules/
+  tags:
+    - linux-aarch64
+  script:
+    - npm install --global yarn || true
+    - yarn install
+  interruptible: false
 
 build_jar:
   stage: build_jar
@@ -10,14 +25,14 @@ build_jar:
 
 build_overwolf:
   stage: build
-  needs: ["build_jar"]
+  needs: ["build_jar", "prepare_frontend"]
   trigger:
     include: .gitlab-ci-front.yml
     strategy: depend
 
 build_electron:
   stage: build
-  needs: ["build_jar"]
+  needs: ["build_jar", "prepare_frontend"]
   trigger:
     include: subprocess/.gitlab-ci.yml
     strategy: depend
