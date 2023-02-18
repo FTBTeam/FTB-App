@@ -4,6 +4,7 @@ stages:
 
 prepare_frontend:
   stage: prepare
+  image: node:16
   cache:
     key: ftb-app-frontend
     policy: pull-push
