@@ -1,5 +1,5 @@
 image: node:18
-
+  
 build:
   cache:
     key: ftb-app-frontend

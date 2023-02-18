@@ -91,8 +91,5 @@ module.exports = {
   },
   configureWebpack: {
     plugins: webpackPlugins,
-    output: {
-      hashFunction: 'sha512'
-    }
   },
 };

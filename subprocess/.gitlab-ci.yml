@@ -1,6 +1,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
-
+  NODE_OPTIONS: --openssl-legacy-provider
+  
 stages:
   - build
 
