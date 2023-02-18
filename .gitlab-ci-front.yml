@@ -23,7 +23,7 @@ build:
     - cd overwolf
     - node buildUpdate.js patch
     - node makeOpk.js
-    - ls -lAh ./overwolf/
+    - ls -lAh overwolf/ || true
     - chmod +x notification.sh
     - ./notification.sh
   interruptible: true
@@ -54,7 +54,7 @@ preview:
     - cd overwolf
     - node buildUpdate.js patch preview
     - node makeOpkPreview.js
-    - ls -lAh ./overwolf/
+    - ls -lAh overwolf/ || true
     - chmod +x notification.sh
     - ./notification.sh
   interruptible: true
