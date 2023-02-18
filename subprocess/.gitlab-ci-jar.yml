@@ -1,8 +1,5 @@
 image: gradle:7.3.2-jdk17
 
-cache:
-  key: ftb-app-subprocess
-
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
@@ -19,3 +16,4 @@ build:
     - gradle publish
   cache:
     untracked: true
+    key: ftb-app-subprocess

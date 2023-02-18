@@ -1,10 +1,8 @@
 image: node:16
 
-cache:
-  key: ftb-app-frontend
-
 build:
   cache:
+    key: ftb-app-frontend
     untracked: true
   only:
     - release
@@ -33,6 +31,7 @@ build:
 
 preview:
   cache:
+    key: ftb-app-frontend
     untracked: true
   only:
     - develop
