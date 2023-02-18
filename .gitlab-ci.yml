@@ -1,6 +1,5 @@
 stages:
   - prepare
-  - build_jar
   - build
 
 prepare_frontend:
@@ -18,7 +17,7 @@ prepare_frontend:
   interruptible: false
 
 build_jar:
-  stage: build_jar
+  stage: prepare
   trigger:
     include: subprocess/.gitlab-ci-jar.yml
     strategy: depend
