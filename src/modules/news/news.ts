@@ -1,9 +1,9 @@
 import { Module } from 'vuex';
 import { RootState } from '@/types';
 import { NewsItem, NewsMutations, NewsState } from '@/modules/news/news.types';
-import Parser from 'rss-parser';
+// import Parser from 'rss-parser';
 
-const parser: Parser = new Parser();
+// const parser: Parser = new Parser();
 
 /**
  * Vuex store for the news section of the app.
@@ -28,18 +28,19 @@ export const news: Module<NewsState, RootState> = {
       commit(NewsMutations.NEWS_LOADING);
 
       try {
-        const feed = await parser.parseURL(
-          'https://forum.feed-the-beast.com/forum/feed-the-beast-news.35/index.rss?order=post_date',
-        );
+        const feed = null;
+        // await parser.parseURL(
+        //   'https://forum.feed-the-beast.com/forum/feed-the-beast-news.35/index.rss?order=post_date',
+        // );
 
         // Verify that the feed is valid
-        if (feed === undefined || feed.items === undefined) {
+        if (feed === undefined || (feed as any)?.items === undefined) {
           commit(NewsMutations.NEWS_ERROR);
           return;
         }
 
         // Remap the news feed items to a cleaner format for the news page
-        const items = feed.items.reduce((acc: NewsItem[], item: any) => {
+        const items = (feed as any)?.items?.reduce((acc: NewsItem[], item: any) => {
           // Replace and links with a clickable link
           const content: string = item['content:encoded'].replace(
             /<a\b[^>]* class="link link--internal">(.*?)<\/a>/gi,

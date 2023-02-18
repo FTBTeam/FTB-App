@@ -75,3 +75,5 @@ subprocess/launcher.log.1
 subprocess/launcher.log.1.lck
 subprocess/tempDMGExtract/
 subprocess/electron.log
+
+**/.yarn

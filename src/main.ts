@@ -8,9 +8,9 @@ import { far } from '@fortawesome/free-regular-svg-icons';
 import { fab } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 // @ts-ignore
-import VueShowdown, { showdown } from 'vue-showdown';
+// import VueShowdown, { showdown } from 'vue-showdown';
 // @ts-ignore
-import vSelectMenu from 'v-selectmenu';
+// import vSelectMenu from 'v-selectmenu';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -100,15 +100,15 @@ const appSetup = async () => {
     // a: '@click="openExternal"',
   };*/
 
-  showdown.extension(
-    'classMap',
-    Object.keys(classMap).map((key) => ({
-      type: 'output',
-      regex: new RegExp(`<${key}(.*)>`, 'g'),
-      // @ts-ignore
-      replace: `<${key} class='${classMap[key]}' $1>`,
-    })),
-  );
+  // showdown.extension(
+  //   'classMap',
+  //   Object.keys(classMap).map((key) => ({
+  //     type: 'output',
+  //     regex: new RegExp(`<${key}(.*)>`, 'g'),
+  //     // @ts-ignore
+  //     replace: `<${key} class='${classMap[key]}' $1>`,
+  //   })),
+  // );
 
   // showdown.extension(
   //   'attribMap',
@@ -120,28 +120,28 @@ const appSetup = async () => {
   //   })),
   // );
 
-  showdown.extension('newLine', () => [
-    {
-      type: 'output',
-      regex: new RegExp(`\n`, 'g'),
-      replace: '<br>',
-    },
-  ]);
+  // showdown.extension('newLine', () => [
+  //   {
+  //     type: 'output',
+  //     regex: new RegExp(`\n`, 'g'),
+  //     replace: '<br>',
+  //   },
+  // ]);
 
   library.add(fas);
   library.add(far);
   library.add(fab);
 
-  Vue.use(vSelectMenu, { language: 'en' });
-  Vue.use(VueShowdown, {
-    options: {
-      emoji: true,
-      tables: true,
-      underline: true,
-      openLinksInNewWindow: true,
-      strikethrough: true,
-    },
-  });
+  // Vue.use(vSelectMenu, { language: 'en' });
+  // Vue.use(VueShowdown, {
+  //   options: {
+  //     emoji: true,
+  //     tables: true,
+  //     underline: true,
+  //     openLinksInNewWindow: true,
+  //     strikethrough: true,
+  //   },
+  // });
 
   // global components
   Vue.component('font-awesome-icon', FontAwesomeIcon);

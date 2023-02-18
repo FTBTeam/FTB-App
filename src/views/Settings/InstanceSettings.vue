@@ -10,19 +10,19 @@
       </div>
 
       <div class="mb-2 sm:pl-4 mt-2 sm:mt-0 self-end">
-        <v-selectmenu
-          :title="false"
-          :query="false"
-          :data="resolutionList"
-          align="left"
-          :value="resSelectedValue"
-          @values="resChange"
-        >
-          <ftb-button color="primary" class="py-2 px-4 my-1 flex items-center">
-            <font-awesome-icon icon="desktop" size="1x" class="cursor-pointer" />
-            <span class="ml-4">Resolutions</span>
-          </ftb-button>
-        </v-selectmenu>
+<!--        <v-selectmenu-->
+<!--          :title="false"-->
+<!--          :query="false"-->
+<!--          :data="resolutionList"-->
+<!--          align="left"-->
+<!--          :value="resSelectedValue"-->
+<!--          @values="resChange"-->
+<!--        >-->
+<!--          <ftb-button color="primary" class="py-2 px-4 my-1 flex items-center">-->
+<!--            <font-awesome-icon icon="desktop" size="1x" class="cursor-pointer" />-->
+<!--            <span class="ml-4">Resolutions</span>-->
+<!--          </ftb-button>-->
+<!--        </v-selectmenu>-->
       </div>
     </div>
 
