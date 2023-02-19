@@ -8,41 +8,39 @@
       class="mb-8"
     />
 
-    <div class="flex flex-row mb-8">
-      <ftb-input
-        class="flex-col"
-        label="Window Width"
-        v-model="localInstance.width"
-        :value="localInstance.width"
-        @blur="saveSettings"
-      />
+    <h3 class="font-bold text-lg mb-4">Minecraft window size</h3>
+    <div class="mb-6">
+      <div class="flex items-center mb-2">
+        <div class="block flex-1 mr-2">
+          <b>Size presets</b>
+          <p class="text-muted text-sm">Select a preset based on your system</p>
+        </div>
 
-      <font-awesome-icon class="mt-auto mb-6 mx-4 text-gray-600" icon="times" size="1x" />
-
-      <ftb-input
-        class="flex-col"
-        label="Window Height"
-        v-model="localInstance.height"
-        :value="localInstance.height"
-        @blur="saveSettings"
-      />
-
-      <div class="flex-col mt-auto mb-2 pl-4">
-<!--        <v-selectmenu-->
-<!--          :title="false"-->
-<!--          :query="false"-->
-<!--          :data="resolutionList"-->
-<!--          align="left"-->
-<!--          :value="resSelectedValue"-->
-<!--          @values="resChange"-->
-<!--        >-->
-<!--          <ftb-button color="primary" class="py-2 px-4 my-1">-->
-<!--            <font-awesome-icon icon="desktop" size="1x" class="cursor-pointer" />-->
-<!--            <span class="ml-4">Resolutions</span>-->
-<!--          </ftb-button>-->
-<!--        </v-selectmenu>-->
+        <selection
+          v-if="resolutionList.length"
+          @selected="(e) => e && selectResolution(e)"
+          :inheritedSelection="resolutionList.find((e) => e.text === `${localInstance.width.toString()} x ${localInstance.height.toString()}px`)"
+          :style="{width: '240px'}"
+          :options="resolutionList"
+        />
+      </div>
+      <div class="flex items-center mb-2">
+        <div class="block flex-1 mr-2">
+          <b>Width</b>
+          <p class="text-muted text-sm">The Minecraft windows screen width</p>
+        </div>
+        <ftb-input class="mb-0" v-model="localInstance.width" :value="localInstance.width" @blur="saveSettings" />
+      </div>
+      <div class="flex items-center">
+        <div class="block flex-1 mr-2">
+          <b>Height</b>
+          <p class="text-muted text-sm">The Minecraft windows screen height</p>
+        </div>
+        <ftb-input class="mb-0" v-model="localInstance.height" :value="localInstance.height" @blur="saveSettings" />
       </div>
     </div>
+
+    <h3 class="font-bold text-lg mb-4">Java Runtime</h3>
     <div class="flex items-center mb-8">
       <div class="w-1/2 mr-8 flex items-end justify-between">
         <section class="mr-4 flex-1">
@@ -167,6 +165,7 @@ import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
+import Selection from '@/components/atoms/input/Selection.vue';
 
 interface MsgBox {
   title: string;
@@ -178,6 +177,7 @@ interface MsgBox {
 
 @Component({
   components: {
+    Selection,
     'ftb-modal': FTBModal,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
@@ -257,19 +257,16 @@ export default class ModpackSettings extends Vue {
   public toggleCloudSaves() {
     this.localInstance.cloudSaves = !this.localInstance.cloudSaves;
   }
-
-  public resChange(data: any) {
-    if (data && data.length) {
-      if (this.resSelectedValue === data[0].value) {
-        return;
-      }
-      this.resSelectedValue = data[0].value;
-      this.localInstance.width = this.settingsState.hardware.supportedResolutions[data[0].id].width;
-      this.localInstance.height = this.settingsState.hardware.supportedResolutions[data[0].id].height;
-
-      this.saveSettings();
+  
+  selectResolution(id: number) {
+    const selected = this.settingsState.hardware.supportedResolutions[id];
+    if (!selected) {
       return;
     }
+
+    this.localInstance.width = this.settingsState.hardware.supportedResolutions[id].width;
+    this.localInstance.height = this.settingsState.hardware.supportedResolutions[id].height;
+    this.saveSettings();
   }
 
   browseForJava() {
@@ -363,11 +360,14 @@ export default class ModpackSettings extends Vue {
   }
 
   get resolutionList() {
-    return Object.entries(this.settingsState.hardware.supportedResolutions).map(([key, res]) => ({
-      id: key,
-      name: res.width + 'x' + res.height,
-      value: key,
-    }));
+    const resList = [];
+    for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
+      resList.push({
+        value: key,
+        text: `${res.width} x ${res.height}px`,
+      })
+    }
+    return resList;
   }
 
   get canUseCloudSaves() {

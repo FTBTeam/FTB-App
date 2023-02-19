@@ -23,7 +23,6 @@
     "npm": "dont-use-npm",
     "yarn": "^1.22.19"
   },
-  "main": "background.js",
   "dependencies": {
     "@sentry/tracing": "^6.19.7",
     "@sentry/vue": "^6.19.7",
@@ -35,7 +34,6 @@
     "mcping-js": "^1.5.0",
     "mitt": "^3.0.0",
     "semver": "^7.3.2",
-    "showdown": "^1.9.1",
     "tailwindcss": "^1.9.6",
     "vue": "^2.7.14",
     "vue-native-websocket": "^2.0.14",
@@ -65,7 +63,7 @@
     "@vue/cli-plugin-typescript": "^4.5.19",
     "@vue/cli-plugin-unit-jest": "^4.5.19",
     "@vue/cli-service": "^4.5.19",
-    "@vue/devtools": "^6.1.4",
+    "@vue/devtools": "^6.5.0",
     "@vue/test-utils": "1.0.2",
     "babel-core": "7.0.0-bridge.0",
     "core-js": "^3.6.5",

@@ -1,33 +1,37 @@
 <template>
   <div class="instance-settings">
     <p class="block uppercase text-white-700 font-bold mb-4">Window Size</p>
-
-    <div class="sm:flex mb-2">
-      <div class="flex items-center">
-        <ftb-input label="Width" v-model="localSettings.width" :value="localSettings.width" @blur="saveMutated" />
-        <font-awesome-icon class="mt-auto mb-6 mx-4 text-gray-600" icon="times" size="1x" />
-        <ftb-input label="Height" v-model="localSettings.height" :value="localSettings.height" @blur="saveMutated" />
+    <div class="mb-4">
+      <div class="flex items-center mb-2">
+        <div class="block flex-1 mr-2">
+          <b>Size presets</b>
+          <p class="text-muted text-sm">Select a preset based on your system</p>
+        </div>
+        
+        <selection
+          v-if="loadedSettings"
+          @selected="(e) => e && selectResolution(e)"
+          :inheritedSelection="resolutionList.find((e) => e.text === `${localSettings.width} x ${localSettings.height}px`)"
+          :style="{width: '240px'}"
+          :options="resolutionList" 
+        />
       </div>
-
-      <div class="mb-2 sm:pl-4 mt-2 sm:mt-0 self-end">
-<!--        <v-selectmenu-->
-<!--          :title="false"-->
-<!--          :query="false"-->
-<!--          :data="resolutionList"-->
-<!--          align="left"-->
-<!--          :value="resSelectedValue"-->
-<!--          @values="resChange"-->
-<!--        >-->
-<!--          <ftb-button color="primary" class="py-2 px-4 my-1 flex items-center">-->
-<!--            <font-awesome-icon icon="desktop" size="1x" class="cursor-pointer" />-->
-<!--            <span class="ml-4">Resolutions</span>-->
-<!--          </ftb-button>-->
-<!--        </v-selectmenu>-->
+      <div class="flex items-center mb-2">
+        <div class="block flex-1 mr-2">
+          <b>Width</b>
+          <p class="text-muted text-sm">The Minecraft windows screen width</p>
+        </div>
+        <ftb-input class="mb-0" v-model="localSettings.width" :value="localSettings.width" @blur="saveMutated" />  
+      </div>
+      <div class="flex items-center">
+        <div class="block flex-1 mr-2">
+          <b>Height</b>
+          <p class="text-muted text-sm">The Minecraft windows screen height</p>
+        </div>
+        <ftb-input class="mb-0" v-model="localSettings.height" :value="localSettings.height" @blur="saveMutated" />
       </div>
     </div>
-
-    <small class="text-muted block mb-8 max-w-xl"> This sets your default Minecraft window size </small>
-
+    
     <!--    <ftb-toggle-->
     <!--      label="Keep launcher open when game starts"-->
     <!--      :value="localSettings.keepLauncherOpen"-->
@@ -76,9 +80,11 @@ import { Action, State } from 'vuex-class';
 import { Settings, SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import Selection from '@/components/atoms/input/Selection.vue';
 
 @Component({
   components: {
+    Selection,
     'ftb-toggle': FTBToggle,
   },
 })
@@ -89,10 +95,11 @@ export default class InstanceSettings extends Vue {
   @Action('showAlert') public showAlert: any;
   localSettings: Settings = {} as Settings;
 
-  resSelectedValue: string = '0';
+  loadedSettings = false;
 
   async created() {
     await this.loadSettings();
+    this.loadedSettings = true;
 
     // Make a copy of the settings so we don't mutate the vuex state
     this.localSettings = { ...this.settingsState.settings };
@@ -118,28 +125,32 @@ export default class InstanceSettings extends Vue {
     });
   }
 
-  resChange(data: any) {
-    if (data && data.length) {
-      if (this.resSelectedValue === data[0].value) {
-        return;
-      }
-      this.resSelectedValue = data[0].value;
-      this.localSettings.width = this.settingsState.hardware.supportedResolutions[data[0].id].width;
-      this.localSettings.height = this.settingsState.hardware.supportedResolutions[data[0].id].height;
-
-      this.saveMutated();
+  selectResolution(id: number) {
+    const selected = this.settingsState.hardware.supportedResolutions[id];
+    if (!selected) {
       return;
     }
+    
+    this.localSettings.width = selected.width;
+    this.localSettings.height = selected.height;
+    this.saveMutated();
   }
 
   get resolutionList() {
     const resList = [];
     for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
-      resList.push({ id: key, name: res.width + 'x' + res.height, value: key });
+      resList.push({
+        value: key,
+        text: `${res.width} x ${res.height}px`,
+      })
     }
     return resList;
   }
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.flex-1 {
+  flex: 1;
+}
+</style>

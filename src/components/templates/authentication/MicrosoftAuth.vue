@@ -99,6 +99,8 @@ export default class MicrosoftAuth extends Vue {
 </script>
 
 <style lang="scss" scoped>
+@use "sass:math";
+
 .link {
   text-decoration: underline;
 }
@@ -119,11 +121,11 @@ export default class MicrosoftAuth extends Vue {
   animation: dotsLoop #{$totalTime}s ease-in-out infinite;
   
   &:nth-child(2) {
-    animation-delay: #{($totalTime/$count)}s;
+    animation-delay: #{math.div($totalTime, $count)}s;
   }
 
   &:nth-child(3) {
-    animation-delay: #{(($totalTime/$count)*2)}s;
+    animation-delay: #{(math.div($totalTime, $count)*2)}s;
   }
   
   @keyframes dotsLoop {

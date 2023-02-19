@@ -90,12 +90,8 @@
             to be too unstable for players to use.
           </p>
         </message>
-        <VueShowdown
-          v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''"
-          flavor="github"
-          :markdown="changelogs[activeLog]"
-          :extensions="['classMap']"
-        />
+        
+        <div class="wysiwyg" v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''" v-html="parseMarkdown(changelogs[activeLog])" />
       </div>
     </div>
   </div>
@@ -107,7 +103,8 @@ import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import { InstallerState } from '@/modules/app/appStore.types';
-import { getPackArt } from '@/utils';
+import {getPackArt, parseMarkdown} from '@/utils';
+import MarkdownIt from 'markdown-it';
 
 @Component
 export default class ModpackVersions extends Vue {
@@ -128,6 +125,8 @@ export default class ModpackVersions extends Vue {
   currentVersion: Versions | null = null;
   activeLog: number = -1;
   loading = true;
+
+  parseMarkdown = parseMarkdown;
 
   mounted() {
     const lcurrent = this.current ?? this.versions[0].id;

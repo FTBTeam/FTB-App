@@ -1,9 +1,7 @@
 import { Module } from 'vuex';
 import { RootState } from '@/types';
 import { NewsItem, NewsMutations, NewsState } from '@/modules/news/news.types';
-// import Parser from 'rss-parser';
-
-// const parser: Parser = new Parser();
+import * as process from 'process';
 
 /**
  * Vuex store for the news section of the app.
@@ -22,43 +20,20 @@ export const news: Module<NewsState, RootState> = {
     getNews: (state: NewsState): NewsItem[] => {
       return state.news;
     },
+    
+    newsLoading: (state: NewsState): boolean => {
+      return state.loading
+    }
   },
   actions: {
     async fetchNews({ commit }): Promise<void> {
       commit(NewsMutations.NEWS_LOADING);
 
       try {
-        const feed = null;
-        // await parser.parseURL(
-        //   'https://forum.feed-the-beast.com/forum/feed-the-beast-news.35/index.rss?order=post_date',
-        // );
-
-        // Verify that the feed is valid
-        if (feed === undefined || (feed as any)?.items === undefined) {
-          commit(NewsMutations.NEWS_ERROR);
-          return;
-        }
-
-        // Remap the news feed items to a cleaner format for the news page
-        const items = (feed as any)?.items?.reduce((acc: NewsItem[], item: any) => {
-          // Replace and links with a clickable link
-          const content: string = item['content:encoded'].replace(
-            /<a\b[^>]* class="link link--internal">(.*?)<\/a>/gi,
-            '',
-          );
-
-          acc.push({
-            title: item.title || '',
-            content: content || '',
-            date: item.pubDate || '',
-            link: item.link || '',
-          });
-
-          return acc;
-        }, []);
-
+        const data = await fetch(`${process.env.VUE_APP_META_API}/v1/news`);
+        
         // Update the news state
-        commit(NewsMutations.NEWS_LOADED, items);
+        commit(NewsMutations.NEWS_LOADED, await data.json());
       } catch {
         commit(NewsMutations.NEWS_ERROR);
       }

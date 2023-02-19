@@ -1,6 +1,9 @@
 // jacked from: https://github.com/sindresorhus/pretty-bytes
 // Jank = rushmead
 import store from '@/modules/store';
+import MarkdownIt from 'markdown-it';
+
+const markdownParser = new MarkdownIt();
 
 export const prettyByteFormat = (bytes: number) => {
   if (isNaN(bytes)) {
@@ -102,7 +105,7 @@ export const wsTimeoutWrapper = (payload: any, timeout: number = 10_000): Promis
 export const wsTimeoutWrapperTyped = <T, R>(payload: T, timeout: number = 10_000): Promise<R> => {
   return new Promise(async (resolve, reject) => {
     const timer = setTimeout(() => {
-      reject('timed out');
+      reject(`Failed to resolve response from [type: ${(payload as any).type}]`);
     }, timeout);
 
     await store.dispatch('sendMessage', {
@@ -114,3 +117,5 @@ export const wsTimeoutWrapperTyped = <T, R>(payload: T, timeout: number = 10_000
     });
   });
 };
+
+export const parseMarkdown = (input: string) => markdownParser.render(input); 

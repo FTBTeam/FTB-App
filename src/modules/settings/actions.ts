@@ -2,6 +2,7 @@ import { ActionTree } from 'vuex';
 import { Settings, SettingsState } from './types';
 import { RootState } from '@/types';
 import platform from '@/utils/interface/electron-overwolf';
+import {setExtra} from '@sentry/vue';
 
 export const actions: ActionTree<SettingsState, RootState> = {
   loadSettings({ dispatch, commit }) {
@@ -24,7 +25,7 @@ export const actions: ActionTree<SettingsState, RootState> = {
                 (settings as any)[key] = true;
               } else if ((settings as any)[key] === 'false') {
                 (settings as any)[key] = false;
-              } else if (key !== 'jvmargs' && key !== 'instanceLocation' && !isNaN((settings as any)[key])) {
+              } else if (!isNaN(parseInt((settings as any)[key], 10))) {
                 (settings as any)[key] = parseInt((settings as any)[key], 10);
               }
             });

@@ -7,10 +7,6 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { fab } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-// @ts-ignore
-// import VueShowdown, { showdown } from 'vue-showdown';
-// @ts-ignore
-// import vSelectMenu from 'v-selectmenu';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -83,65 +79,9 @@ const appSetup = async () => {
     });
   }
 
-  const classMap: object = {
-    h1: 'text-4xl',
-    h2: 'text-3xl',
-    h3: 'text-2xl',
-    h4: 'text-xl',
-    h5: 'text-lg',
-    h6: 'title is-6',
-    em: 'italic',
-    ul: 'list-inside list-disc mt-2 mb-4',
-    a: 'text-gray-400 hover:text-white leading-none cursor-pointer hover:underline',
-    p: 'my-2',
-  };
-
-  /*const attributeMap = {
-    // a: '@click="openExternal"',
-  };*/
-
-  // showdown.extension(
-  //   'classMap',
-  //   Object.keys(classMap).map((key) => ({
-  //     type: 'output',
-  //     regex: new RegExp(`<${key}(.*)>`, 'g'),
-  //     // @ts-ignore
-  //     replace: `<${key} class='${classMap[key]}' $1>`,
-  //   })),
-  // );
-
-  // showdown.extension(
-  //   'attribMap',
-  //   Object.keys(attributeMap).map(key => ({
-  //     type: 'output',
-  //     regex: new RegExp(`<${key}(.*)>`, 'g'),
-  //     // @ts-ignore
-  //     replace: `<${key} ${attributeMap[key]} $1>`,
-  //   })),
-  // );
-
-  // showdown.extension('newLine', () => [
-  //   {
-  //     type: 'output',
-  //     regex: new RegExp(`\n`, 'g'),
-  //     replace: '<br>',
-  //   },
-  // ]);
-
   library.add(fas);
   library.add(far);
   library.add(fab);
-
-  // Vue.use(vSelectMenu, { language: 'en' });
-  // Vue.use(VueShowdown, {
-  //   options: {
-  //     emoji: true,
-  //     tables: true,
-  //     underline: true,
-  //     openLinksInNewWindow: true,
-  //     strikethrough: true,
-  //   },
-  // });
 
   // global components
   Vue.component('font-awesome-icon', FontAwesomeIcon);
