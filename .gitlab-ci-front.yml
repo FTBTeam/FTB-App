@@ -1,4 +1,7 @@
 image: node:18
+
+variables:
+  NODE_OPTIONS: --openssl-legacy-provider
   
 build:
   cache:
