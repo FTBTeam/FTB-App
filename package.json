@@ -2,6 +2,7 @@
   "name": "ftb-app",
   "version": "1.5.0",
   "private": true,
+  "main": "background.js", 
   "author": "Feed The Beast",
   "description": "FTB Desktop App for downloading and managing Modpacks",
   "scripts": {
@@ -13,7 +14,7 @@
     "vue:serve": "cross-env TARGET_PLATFORM=electron vue-cli-service serve",
     "vue:serve:overwolf": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
     "build": "vue-cli-service electron:build",
-    "buildall": "vue-cli-service electron:build -mwl",
+    "buildall": "vue-cli-service electron:build -ml",
     "gen:license": "license-checker --json > licenses.json",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
