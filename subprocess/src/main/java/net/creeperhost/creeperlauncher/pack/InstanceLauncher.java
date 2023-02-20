@@ -22,7 +22,6 @@ import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.AssetIndex;
-import net.creeperhost.creeperlauncher.util.DNSUtils;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.text.StrLookup;
@@ -130,7 +129,6 @@ public class InstanceLauncher {
      */
     public synchronized void launch(CancellationToken token, @Nullable String offlineUsername) throws InstanceLaunchException {
         assert !isRunning();
-        DNSUtils.logImportantHosts();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
         setPhase(Phase.INITIALIZING);
         progressTracker.reset(NUM_STEPS);

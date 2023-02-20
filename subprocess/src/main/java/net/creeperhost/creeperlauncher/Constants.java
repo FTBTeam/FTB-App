@@ -9,14 +9,9 @@ import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import okhttp3.*;
-import okhttp3.dnsoverhttps.DnsOverHttps;
-import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Throttler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -79,10 +74,10 @@ public class Constants {
     // 50MB cache for DNS.
     private static final Cache DOH_CACHE = new Cache(getDataDir().resolve(".doh_cache").toFile(), 50 * 1024 * 1024);
 
-    private static final DNSChain DNS_CHAIN = new DNSChain(
-            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHosts.CLOUDFLARE),
-            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHosts.GOOGLE),
-            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHosts.CREEPERHOST),
+    public static final DNSChain DNS_CHAIN = new DNSChain(
+            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.CLOUDFLARE),
+            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.GOOGLE),
+            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.CREEPERHOST),
             new DNSChain.SystemDNSStep()
     );
 
