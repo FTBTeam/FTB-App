@@ -7,16 +7,10 @@ stages:
 build:
   tags:
     - shell
-  only:
-    - branches
-  except:
-    - tags
-    - /^no-ci/.*$/
   stage: build
   script:
     - mkdir -p subprocess/build/libs
     - 'export VERSION_OVERRIDE=`curl -s --header "PRIVATE-TOKEN: $WHY_GITLAB_WHY " "$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages?order_by=version&sort=desc" | jq -r "first(.[] | select(.pipeline.ref == \"$CI_COMMIT_BRANCH\")).version"`'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o public/version.json $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION_OVERRIDE/creeperlauncher-$VERSION_OVERRIDE.json'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" -o subprocess/build/libs/launcher-$VERSION_OVERRIDE-all.jar $CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/maven/net/creeperhost/creeperlauncher/$VERSION_OVERRIDE/creeperlauncher-$VERSION_OVERRIDE-all.jar'
-    - cd /Users/aaronmills
-    - ./runBuild.sh
+    - ./gradlew ftpReleaseXML

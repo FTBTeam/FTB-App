@@ -64,10 +64,10 @@ ext.webVersion = details.gitHash
 ext.sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 
 install4j {
-    license = "$System.env.IJLICENSE"
+    license = System.getenv("INSTALL4J_LICENSE")
     installDir = file("/Applications/install4j.app")
-    appleIdPassword = "$System.env.APPLEPASSWORD"
-    macKeystorePassword = "$System.env.KEYSTOREPASSWORD"
+    appleIdPassword = System.getenv("INSTALL4J_APPLE_ID_PW")
+    macKeystorePassword = System.getenv("INSTALL4J_APPLE_KEYSTORE_PASSWORD")
     disableSigning = true
 }
 
@@ -113,14 +113,13 @@ task prepareUpload {
 prepareUpload.dependsOn cleanJREs
 
 task ftpRelease(type: Exec) {
-    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTPSERVER}"
 }
 
 ftpRelease.dependsOn prepareUpload
 
 task ftpReleaseXML(type: Exec) {
-    commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
-
+    commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTPSERVER}"
 }
 
 ftpReleaseXML.dependsOn ftpRelease
@@ -168,11 +167,11 @@ task prepareUploadManual {
 prepareUploadManual.dependsOn cleanJREsManual
 
 task ftpReleaseManual(type: Exec) {
-    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTPSERVER}"
 }
 
 task ftpReleaseXMLManual(type: Exec) {
-    commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTPUSER},${System.env.FTPPASS}", "${System.env.FTPSERVER}"
+    commandLine "lftp", "-e", "put ${projectDir}/releaseBuild/updates.xml -o ${branch}.xml", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTPSERVER}"
 }
 
 ftpReleaseXMLManual.dependsOn ftpReleaseManual
