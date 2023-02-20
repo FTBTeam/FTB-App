@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="theme-dark" v-if="platfrom.get.config">
+  <div id="app" class="theme-dark">
     <title-bar :is-dev="isDev" />
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
@@ -44,7 +44,6 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { SettingsState } from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
@@ -59,7 +58,6 @@ import { RouterNames } from '@/router';
     TitleBar,
     FTBModal,
     ReportForm,
-    'message-modal': MessageModal,
     AdAside,
   },
 })

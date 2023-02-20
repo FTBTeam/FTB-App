@@ -1,42 +1,35 @@
 <template>
   <modal
     v-if="changelogData"
-    :open="changelogData"
+    :open="!!changelogData"
     title="Latest updates"
     :subTitle="changelogData.title"
     size="medium"
-    class="wysiwyg"
+    class="wysiwyg select-text"
     @closed="changelogData = null"
   >
     <img :src="headingImage" class="heading-image" alt="Heading image" v-if="headingImage" />
-    <p v-if="changelogData.header">
-      <vue-showdown>
-        {{ changelogData.header }}
-      </vue-showdown>
-    </p>
+    <div v-if="changelogData.header" v-html="parseMarkdown(changelogData.header)" />
 
     <template v-for="(heading, key) in headings">
       <template v-if="changelogData.changes[key]">
         <h3 :style="{ color: heading.color, 'word-spacing': '.5rem' }">{{ heading.heading | title }}</h3>
-        <vue-showdown :markdown="changelogData.changes[key].map((e) => `- ${e}`).join('\n')" />
+        <div v-html="parseMarkdown(changelogData.changes[key].map((e) => `- ${e}`).join('\n'))" />
       </template>
     </template>
-
-    <p v-if="changelogData.footer" class="mt-4">
-      <vue-showdown>
-        {{ changelogData.footer }}
-      </vue-showdown>
-    </p>
+    
+    <p class="mt-4" v-if="changelogData.footer" v-html="parseMarkdown(changelogData.footer)" />
   </modal>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Action } from 'vuex-class';
-import { wsTimeoutWrapper } from '@/utils/helpers';
+import {Action, State} from 'vuex-class';
+import {parseMarkdown, wsTimeoutWrapper} from '@/utils/helpers';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
+import {SocketState} from '@/modules/websocket/types';
 
 export type ChangelogEntry = {
   version: string;
@@ -63,9 +56,11 @@ export type ChangelogEntry = {
   },
 })
 export default class Changelog extends Vue {
+  @State('websocket') public websockets!: SocketState;
   @Action('sendMessage') public sendMessage: any;
 
   changelogData: ChangelogEntry | null = null;
+  parseMarkdown = parseMarkdown;
 
   headings = {
     added: {
@@ -86,12 +81,22 @@ export default class Changelog extends Vue {
     },
   };
 
+  checkIntervalRef: number | null = null;
+  
   mounted() {
-    setTimeout(() => {
-      this.checkForUpdate().catch((e) => {
-        console.log('Unable to find any changelog data, maybe the servers down?', e);
-      });
-    }, 2_000);
+    // TODO: All of this should be part of an initial handshake with the backend
+    // Check if the websockets is connected each second. If it is, get the changelog
+    this.checkIntervalRef = setInterval(() => {
+      if (this.websockets.socket.isConnected) {
+        if (this.checkIntervalRef) {
+          clearInterval(this.checkIntervalRef);
+        }
+        
+        this.checkForUpdate().catch((e) => {
+          console.log('Unable to find any changelog data, maybe the servers down?', e);
+        });
+      }
+    }, 1_000) as unknown as number; // Once a second
   }
 
   async checkForUpdate() {

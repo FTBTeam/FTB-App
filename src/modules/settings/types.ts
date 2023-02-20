@@ -26,7 +26,7 @@ export interface Settings {
 
   // new ish
   proxyHost: string;
-  proxyPort: string;
+  proxyPort: number;
   proxyUser: string;
   proxyPassword: string;
   proxyType: 'http' | 'sock5' | 'none';

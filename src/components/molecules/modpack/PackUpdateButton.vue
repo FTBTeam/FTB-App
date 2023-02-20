@@ -32,13 +32,7 @@
             even if the changelog isn't loading.
           </message>
 
-          <vue-showdown
-            class="changes mt-6 wysiwyg"
-            v-else
-            key="changes-available"
-            :markdown="changes"
-            flavor="github"
-          />
+          <div v-else class="wysiwyg changes mt-6" v-html="parseMarkdown(changes)" />
         </div>
       </modal-body>
       <modal-footer class="flex justify-end">
@@ -58,9 +52,10 @@ import { Instance, ModPack } from '@/modules/modpacks/types';
 import Component from 'vue-class-component';
 import Loading from '@/components/atoms/Loading.vue';
 import Loading2 from '@/components/atoms/Loading2.vue';
-import { createModpackchUrl } from '@/utils';
+import {createModpackchUrl, parseMarkdown} from '@/utils';
 
 @Component({
+  methods: {parseMarkdown},
   components: { Loading2, Loading },
 })
 export default class PackUpdateButton extends Vue {

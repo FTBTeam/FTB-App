@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "FTBAppOverwolf",
   "main": "buildUpdate.js",
+  "type": "commonjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,9 +11,14 @@
     "type": "git",
     "url": "git@git.creeper.host:creeperhost-launcher/frontend/ftbappoverwolf.git"
   },
+  "engines": {
+    "node": "^18",
+    "npm": "dont-use-npm",
+    "yarn": "^1.22.19"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "semver": "^7.3.2"
+    "semver": "^7.3.8"
   }
 }

@@ -318,10 +318,10 @@ function createFriendsWindow() {
     },
   });
 
-  friendsWindow.webContents.on('new-window', (event, url) => {
-    event.preventDefault();
-    shell.openExternal(url);
-  });
+  friendsWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+    return { action: 'deny' }
+  })
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     friendsWindow.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL as string}#chat`);
@@ -403,10 +403,10 @@ function createWindow() {
     },
   });
 
-  win.webContents.on('new-window', (event, url) => {
-    event.preventDefault();
-    shell.openExternal(url);
-  });
+  win.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+    return { action: 'deny' }
+  })
 
   win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
     callback({ requestHeaders: { Origin: '*', ...details.requestHeaders } });
@@ -446,7 +446,9 @@ function createWindow() {
 }
 
 app.on('ready', async () => {
-  await install(VUEJS_DEVTOOLS);
+  if (isDevelopment) {
+    await install(VUEJS_DEVTOOLS);
+  }
 });
 
 app.on('window-all-closed', () => {

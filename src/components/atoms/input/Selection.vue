@@ -3,7 +3,7 @@
     <div class="label" v-if="label">{{ label }}</div>
     <div class="selection" tabindex="0" @focus="open = true" @focusout="open = false" :class="{ open }" ref="selection">
       <div class="main">
-        <div class="item" v-if="!selected">
+        <div class="item with-empty" v-if="!selected">
           <div class="badge empty">_</div>
           {{ placeholder }}
         </div>
@@ -11,6 +11,7 @@
           <div class="badge" :style="{ backgroundColor: selected.badge.color }" v-if="selected.badge">
             {{ selected.badge.text }}
           </div>
+          <div v-else class="badge empty">_</div>
           <div class="text">{{ selected.text }}</div>
           <div class="meta" v-if="selected.meta">{{ selected.meta }}</div>
         </div>
@@ -91,12 +92,13 @@ export default class Selection extends Vue {
 }
 
 .selection {
-  background: var(--color-background);
+  background: #252525;
   border-radius: 5px;
-  padding: 0.8rem 1rem;
+  padding: 0.55rem 1rem;
   cursor: pointer;
-
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
   position: relative;
+  border: 1px solid #1b1b1b;
 
   .main {
     padding-right: 2rem;
@@ -150,7 +152,7 @@ export default class Selection extends Vue {
     display: flex;
     align-items: center;
     cursor: pointer;
-
+    
     &.list-item:not(:last-child) {
       margin-bottom: 1rem;
     }
