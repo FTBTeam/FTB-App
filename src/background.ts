@@ -8,7 +8,8 @@ import childProcess from 'child_process';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
-import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
+
+const protocolSpace = process.env.NODE_ENV === 'production' ? 'ftb' : 'ftb-dev';
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -21,9 +22,9 @@ log.transports.file.resolvePath = (variables, message): string => {
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
 
 if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
-  app.setAsDefaultProtocolClient('ftb', process.execPath, [path.resolve(process.argv[1])]);
+  app.setAsDefaultProtocolClient(protocolSpace, process.execPath, [path.resolve(process.argv[1])]);
 } else {
-  app.setAsDefaultProtocolClient('ftb');
+  app.setAsDefaultProtocolClient(protocolSpace);
 }
 
 let win: BrowserWindow | null;
@@ -33,7 +34,7 @@ let electronMsAuthWindow: BrowserWindow | null;
 let protocolURL: string | null;
 
 for (let i = 0; i < process.argv.length; i++) {
-  if (process.argv[i].indexOf('ftb://') !== -1) {
+  if (process.argv[i].indexOf(protocolSpace) !== -1) {
     protocolURL = process.argv[i];
     break;
   }
@@ -198,6 +199,12 @@ ipcMain.on('expandMeScotty', (event, data) => {
     }
     window.setSize(width, height);
   }
+});
+
+app.on('open-url', async (event, customSchemeData) => {
+  event.preventDefault();
+
+  win?.webContents.send('parseProtocolURL', customSchemeData);
 });
 
 ipcMain.handle('selectFolder', async (event, data) => {
@@ -377,7 +384,7 @@ const createAuthWindow = async (type: string) => {
 
   await electronMsAuthWindow.loadURL(
     type === 'microsoft'
-      ? 'https://msauth.feed-the-beast.com?new=true'
+      ? 'https://msauth.feed-the-beast.com?useNew=true'
       : 'https://minetogether.io/api/login?redirect=http://localhost:7755',
   );
 };
@@ -429,7 +436,6 @@ function createWindow() {
       win.webContents.openDevTools();
     }
   } else {
-    createProtocol('app');
     win.loadURL('app://./index.html');
   }
 

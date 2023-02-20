@@ -62,12 +62,16 @@ const Overwolf: ElectronOverwolfInterface = {
   actions: {
     async openMsAuth() {
       return new Promise(async (res, reject) => {
-        await overwolf.windows.getMainWindow().openWebserver((data: any) => {
-          res(data);
-        });
+        // await overwolf.windows.getMainWindow().openWebserver((data: any) => {
+        //   res(data);
+        // });
         overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com`);
       });
     },
+    
+    closeAuthWindow() {
+    },
+
     openModpack(payload) {
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
     },

@@ -8,11 +8,11 @@ import store from '@/modules/store';
 import { getAPIRequest } from '@/modules/modpacks/actions';
 import { ModPack } from '@/modules/modpacks/types';
 import router from '@/router';
-import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import EventEmitter from 'events';
 import http from 'http';
 import os from 'os';
+import {handleAction} from '@/core/protocol/protocolActions';
 
 declare const __static: string;
 
@@ -178,6 +178,10 @@ const Electron: ElectronOverwolfInterface = {
       return result;
     },
 
+    closeAuthWindow() {
+      ipcRenderer.send("close-auth-window");
+    },
+    
     openModpack(payload: { name: string; id: string }) {
       ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
     },
@@ -400,58 +404,59 @@ const Electron: ElectronOverwolfInterface = {
 
     // TODO: this entire thing needs a registry + handler wrapper
     ipcRenderer.on('parseProtocolURL', (event, data) => {
-      let protocolURL = data;
-      if (protocolURL === undefined) {
-        return;
-      }
-      protocolURL = protocolURL.substring(6, protocolURL.length);
-      const parts = protocolURL.split('/');
-      const command = parts[0];
-      const args = parts.slice(1, parts.length);
-      if (command === 'modpack') {
-        if (args.length === 0) {
-          return;
-        }
-        logVerbose(store.state, 'Received modpack protocol message', args);
-        const modpackID = args[0];
-        if (args.length === 1) {
-          // Navigate to page for modpack
-          logVerbose(store.state, 'Navigating to page for modpack', modpackID);
-          router.push({ name: 'modpackpage', query: { modpackid: modpackID } });
-        } else if (args.length === 2) {
-          if (args[1] === 'install') {
-            // Popup install for modpack
-            logVerbose(store.state, 'Popping up install for modpack', modpackID);
-            router.push({ name: 'modpackpage', query: { modpackid: modpackID, showInstall: 'true' } });
-          }
-        } else if (args.length === 3) {
-          if (args[2] === 'install') {
-            // Popup install for modpack with version default selected
-            router.push({
-              name: 'modpackpage',
-              query: { modpackid: modpackID, showInstall: 'true', version: args[1] },
-            });
-          }
-        }
-      } else if (command === 'instance') {
-        if (args.length === 0) {
-          return;
-        }
-        const instanceID = args[0];
-        if (args.length === 1) {
-          // Open instance page
-          router.push({ name: 'instancepage', query: { uuid: instanceID } });
-        } else if (args.length === 2) {
-          // Start instance
-          router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
-        }
-      } else if (command === 'server') {
-        if (args.length === 0) {
-          return;
-        }
-        const serverID = args[0];
-        router.push({ name: 'server', query: { serverid: serverID } });
-      }
+      handleAction(data);
+      // let protocolURL = data;
+      // if (protocolURL === undefined) {
+      //   return;
+      // }
+      // protocolURL = protocolURL.substring(6, protocolURL.length);
+      // const parts = protocolURL.split('/');
+      // const command = parts[0];
+      // const args = parts.slice(1, parts.length);
+      // if (command === 'modpack') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   logVerbose(store.state, 'Received modpack protocol message', args);
+      //   const modpackID = args[0];
+      //   if (args.length === 1) {
+      //     // Navigate to page for modpack
+      //     logVerbose(store.state, 'Navigating to page for modpack', modpackID);
+      //     router.push({ name: 'modpackpage', query: { modpackid: modpackID } });
+      //   } else if (args.length === 2) {
+      //     if (args[1] === 'install') {
+      //       // Popup install for modpack
+      //       logVerbose(store.state, 'Popping up install for modpack', modpackID);
+      //       router.push({ name: 'modpackpage', query: { modpackid: modpackID, showInstall: 'true' } });
+      //     }
+      //   } else if (args.length === 3) {
+      //     if (args[2] === 'install') {
+      //       // Popup install for modpack with version default selected
+      //       router.push({
+      //         name: 'modpackpage',
+      //         query: { modpackid: modpackID, showInstall: 'true', version: args[1] },
+      //       });
+      //     }
+      //   }
+      // } else if (command === 'instance') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   const instanceID = args[0];
+      //   if (args.length === 1) {
+      //     // Open instance page
+      //     router.push({ name: 'instancepage', query: { uuid: instanceID } });
+      //   } else if (args.length === 2) {
+      //     // Start instance
+      //     router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
+      //   }
+      // } else if (command === 'server') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   const serverID = args[0];
+      //   router.push({ name: 'server', query: { serverid: serverID } });
+      // }
     });
     ipcRenderer.on('sendWebsocket', (event, data) => {
       console.log('Request received to send ', data);
