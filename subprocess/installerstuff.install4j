@@ -1065,5 +1065,4 @@ file.getParent() != null || (file.getName().endsWith(".app") &amp;&amp; director
   <buildIds>
     <mediaSet refId="563" />
   </buildIds>
-  <buildOptions disableSigning="true" disableNotarization="true" />
 </install4j>
