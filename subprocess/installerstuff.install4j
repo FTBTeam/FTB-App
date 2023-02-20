@@ -2,7 +2,7 @@
 <install4j version="8.0.8" transformSequenceNumber="8">
   <directoryPresets config="../release" />
   <application name="FTBApp" applicationId="1726-2696-9539-5278" mediaDir="releaseBuild/" commonExternalFiles="true" shortName="FTBA" publisher="CreeperHost LTD" publisherWeb="https://www.creeperhost.net" version="test" allPathsRelative="true" backupOnSave="true" autoSave="true" macVolumeId="7b7ff548e0791aeb" javaMinVersion="17.0.1" javaMaxVersion="17.0.999" allowBetaVM="true">
-    <codeSigning macEnabled="true" macPkcs12File="../signcert.p12" macNotarize="true" appleId="aaron_m@creeperhost.net">
+    <codeSigning macEnabled="true" macPkcs12File="/Users/aaronmills/signcert.p12" macNotarize="true" appleId="aaron_m@creeperhost.net">
       <macAdditionalBinaries>
         <entry>*</entry>
       </macAdditionalBinaries>
