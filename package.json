@@ -2,7 +2,7 @@
   "name": "ftb-app",
   "version": "1.5.0",
   "private": true,
-  "main": "background.js", 
+  "main": "background.js",
   "author": "Feed The Beast",
   "description": "FTB Desktop App for downloading and managing Modpacks",
   "scripts": {
@@ -16,7 +16,7 @@
     "build": "vue-cli-service electron:build",
     "buildall": "vue-cli-service electron:build -ml",
     "gen:license": "license-checker --json > licenses.json",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps && patch-package",
     "postuninstall": "electron-builder install-app-deps"
   },
   "engines": {
@@ -73,6 +73,7 @@
     "electron-dl": "^3.0.0",
     "electron-log": "^4.1.2",
     "license-checker": "25.0.1",
+    "patch-package": "^6.5.1",
     "sass": "^1.35.1",
     "sass-loader": "^10.4.1",
     "typescript": "^4.9.5",
