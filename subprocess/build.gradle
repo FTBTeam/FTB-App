@@ -113,7 +113,7 @@ task prepareUpload {
 prepareUpload.dependsOn cleanJREs
 
 task ftpRelease(type: Exec) {
-    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTP_SERVER}"
+    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ /", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTP_SERVER}"
 }
 
 ftpRelease.dependsOn prepareUpload
@@ -167,7 +167,7 @@ task prepareUploadManual {
 prepareUploadManual.dependsOn cleanJREsManual
 
 task ftpReleaseManual(type: Exec) {
-    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ ${System.env.FTPDIR}", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTP_SERVER}"
+    commandLine "lftp", "-e", "mirror -R --verbose ${projectDir}/releaseUpload/ /", "-u", "${System.env.FTP_USER},${System.env.FTP_PASSWORD}", "${System.env.FTP_SERVER}"
 }
 
 task ftpReleaseXMLManual(type: Exec) {
