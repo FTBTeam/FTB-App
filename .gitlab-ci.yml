@@ -3,14 +3,9 @@ stages:
     - build_app
     - packaging
 
-workflow:
-    rules:
-        - if: '$CI_COMMIT_REF_NAME == /release/'
-          variables:
-              CI_RELEASE: "true"
-
 variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+    CI_RELEASE: "$CI_COMMIT_REF_NAME == 'release'"
 
 build_jar:
     stage: build
