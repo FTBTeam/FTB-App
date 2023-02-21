@@ -17,7 +17,9 @@ if (
       release: `${process.env.VERSION || process.env.VERSION_OVERRIDE}-${process.env.VUE_APP_PLATFORM}`,
       include: process.env.TARGET_PLATFORM === 'overwolf' ? './overwolf/dist/desktop/' : './dist_electron/bundled/',
       ignore: ['node_modules', 'webpack.config.js'],
-      urlPrefix: "overwolf-extension://nelapelmednbnaigieobbdgbinpgcgkfmmdjembg/dist/desktop/"
+      urlPrefix: process.env.TARGET_PLATFORM === 'overwolf' 
+        ? `overwolf-extension://${process.env.CI_COMMIT_BRANCH === 'release' ? "cmogmmciplgmocnhikmphehmeecmpaggknkjlbag" : "nelapelmednbnaigieobbdgbinpgcgkfmmdjembg"}/dist/desktop/` 
+        : ""
     }),
   );
 } else {
