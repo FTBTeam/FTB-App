@@ -27,7 +27,7 @@ public class Constants {
     private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), INNER_DATA_DIR);
 
     //Launcher titles
-    public static final String windowTitle = "FTBApp";
+    public static final String windowTitle = "FTB App";
 
     //Mojang
     public static final String MC_VERSION_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";

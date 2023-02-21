@@ -9,7 +9,7 @@
     "icon": "icon_256.png",
     "icon_gray": "icon_256_preview.png",
     "launcher_icon": "launchericon.ico",
-    "description": "As the home of FTB modpacks the FTBApp allows you to quickly download and install FTB modpacks with ease, allowing you to spend more time enjoying the game."
+    "description": "As the home of FTB modpacks the FTB App allows you to quickly download and install FTB modpacks with ease, allowing you to spend more time enjoying the game."
   },
   "permissions": [
     "Extensions",

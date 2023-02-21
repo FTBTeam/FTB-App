@@ -57,6 +57,7 @@ if (process.argv.indexOf('--ws') !== -1) {
   wsSecret = '';
 }
 
+// TODO: Da fuck is this
 if (process.argv.indexOf('--pid') === -1) {
   console.log('No backend found, starting our own');
   const ourPID = process.pid;

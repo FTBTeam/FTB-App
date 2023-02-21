@@ -405,7 +405,7 @@ public class InstanceLauncher {
             subMap.put("assets_index_name", manifests.get(0).assets);
             subMap.put("version_type", manifests.get(0).type);
 
-            subMap.put("launcher_name", "FTBApp");
+            subMap.put("launcher_name", "FTB App");
             subMap.put("launcher_version", Constants.APPVERSION);
             subMap.put("primary_jar", getGameJar(versionsDir).toAbsolutePath().toString());
             subMap.put("memory", String.valueOf(instance.memory));

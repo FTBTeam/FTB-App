@@ -62,7 +62,7 @@ module.exports = {
       nodeIntegration: true,
       builderOptions: {
         generateUpdatesFilesForAllChannels: true,
-        productName: 'ftbapp',
+        productName: 'FTB App',
         appId: 'com.feedthebeast.Launcher',
         mac: {
           // #TODO https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/
