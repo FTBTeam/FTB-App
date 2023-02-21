@@ -210,7 +210,7 @@ public class CreeperLauncher {
         CompletableFuture.runAsync(localCache::clean);
 
         if (!Files.isWritable(Constants.getDataDir())) {
-            OpenModalData.openModal("Critical Error", "The FTB App is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
+            OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
                 new OpenModalData.ModalButton("Exit", "green", CreeperLauncher::exit),
                 new OpenModalData.ModalButton("Continue", "", () -> {
                     Settings.webSocketAPI.sendMessage(new CloseModalData());

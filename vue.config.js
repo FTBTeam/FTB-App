@@ -66,7 +66,7 @@ module.exports = {
       customFileProtocol: `${process.env.NODE_ENV !== "development" ? "ftb" : "ftb-dev"}://./`,
       builderOptions: {
         generateUpdatesFilesForAllChannels: true,
-        productName: 'FTB App',
+        productName: 'ftbapp',
         appId: 'com.feedthebeast.Launcher',
         
         mac: {

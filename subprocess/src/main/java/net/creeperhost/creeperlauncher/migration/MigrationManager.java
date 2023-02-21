@@ -29,7 +29,7 @@ public class MigrationManager {
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
-     * Specifies the highest data format version the FTB App is capable of reading.
+     * Specifies the highest data format version the FTBApp is capable of reading.
      */
     private static final int CURRENT_DATA_FORMAT = 2;
 

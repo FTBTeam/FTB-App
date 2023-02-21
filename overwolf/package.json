@@ -1,7 +1,7 @@
 {
-  "name": "ftb-app-overwolf",
+  "name": "ftbappoverwolf",
   "version": "1.0.0",
-  "description": "FTB App for Overwolf",
+  "description": "FTBAppOverwolf",
   "main": "buildUpdate.js",
   "type": "commonjs",
   "scripts": {
