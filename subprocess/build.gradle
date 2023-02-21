@@ -1,10 +1,6 @@
 plugins {
     id 'java'
-    id 'maven-publish'
-    id 'eclipse'
     id "com.github.johnrengelman.shadow" version "7.0.0"
-    id "org.beryx.runtime" version "1.7.0"
-    id "de.undercouch.download" version "4.0.0"
     id "com.github.node-gradle.node" version "3.5.1"
     id "com.install4j.gradle" version "9.0.6"
     id "com.palantir.git-version" version "0.12.2"
@@ -17,12 +13,6 @@ apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-ext.mavenUrl = null
-
-if (System.getenv("CI_API_V4_URL") != null) {
-    ext.mavenUrl = "${System.env.CI_API_V4_URL}/projects/${System.env.CI_PROJECT_ID}/packages/maven"
-}
-
 repositories {
     mavenLocal()
     maven { url 'https://maven.creeperhost.net' }
@@ -30,38 +20,17 @@ repositories {
     jcenter() // Gradle _Says_ it wont resolve artifacts, but its gone into read-only indefinitely. (JdkUtils uses some libraries from here)
     maven { url 'https://jitpack.io' }
     maven { url 'https://maven.covers1624.net/' }
-    if(mavenUrl != null) {
-        maven {
-            url mavenUrl
-            name "GitLab"
-            credentials(HttpHeaderCredentials) {
-                name = 'Job-Token'
-                value = System.getenv("CI_JOB_TOKEN")
-            }
-            authentication {
-                header(HttpHeaderAuthentication)
-            }
-        }
-    }
 }
 
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-
-def getDate() {
-    return new Date().format('yyyyMMddHHmm')
-}
+def date = new Date().format('yyyyMMddHHmm')
 
 group = "net.creeperhost"
 archivesBaseName = "launcher"
-ext.details = versionDetails()
-ext.tempBranch = (ext.details.branchName == null ? System.env.CI_COMMIT_BRANCH : ext.details.branchName)
-ext.branch = ext.tempBranch == "master" ? "develop" : ext.tempBranch
-ext.branch = branch.replaceAll( '/', '-' )
-ext.calcVersion = getDate() + "-" + details.gitHash + (ext.details.branchName == "release" ? "" : "-" + ext.branch)
-ext.calcVersion = calcVersion.replaceAll( '/', '-')
-version = System.getenv("VERSION_OVERRIDE") ?: calcVersion
-ext.webVersion = details.gitHash
-ext.sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
+def details = versionDetails()
+def branch = (details.branchName ?: System.getenv("CI_COMMIT_BRANCH")).replaceAll('/', '-')
+version = System.getenv("VERSION_OVERRIDE") ?: (date + "-" + details.gitHash + (branch != 'release' ? "-" + branch : ""))
+def webVersion = details.gitHash
+def sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 
 install4j {
     license = System.getenv("INSTALL4J_LICENSE")
@@ -103,8 +72,8 @@ task prepareUpload {
             from("$projectDir/releaseBuild/")
             into new File("$projectDir/releaseUpload/" + branch + "/" + version + "/")
             includeEmptyDirs = false
-            eachFile { details ->
-                details.setRelativePath new RelativePath(true, details.name)
+            eachFile {
+                it.setRelativePath new RelativePath(true, it.name)
             }
         }
     }
@@ -157,8 +126,8 @@ task prepareUploadManual {
             from("$projectDir/releaseBuild/")
             into new File("$projectDir/releaseUpload/" + branch + "/" + version + "/")
             includeEmptyDirs = false
-            eachFile { details ->
-                details.setRelativePath new RelativePath(true, details.name)
+            eachFile {
+                it.setRelativePath new RelativePath(true, it.name)
             }
         }
     }
@@ -185,14 +154,10 @@ sourceSets {
     }
 }
 
-def mainClassNameGlobal = "net.creeperhost.creeperlauncher.CreeperLauncher"
-
-mainClassName = mainClassNameGlobal
-
 ext {
     MANIFEST = manifest{
         attributes([
-                "Main-Class":               mainClassName,
+                "Main-Class":               'net.creeperhost.creeperlauncher.CreeperLauncher',
                 "Specification-Title":      "Launcher",
                 "Specification-Vendor":     "Creeperhost LTD",
                 "Specification-Version":    version,
@@ -291,10 +256,6 @@ project(":web") {
     }
 }
 
-task buildWithElectron(dependsOn: "build") {}
-
-buildWithElectron.dependsOn(":web:yarn_build")
-
 task buildAll() {}
 buildAll.dependsOn(":web:yarn_buildall")
 
@@ -321,8 +282,8 @@ def dependencySources = [
         "net.covers1624:Quack": "https://github.com/covers1624/Quack"
 ]
 
-task writeVersion() {
-    dependsOn tasks.getByName("downloadLicenses")
+tasks.register('writeVersion') {
+    it.dependsOn 'downloadLicenses'
     doLast {
         def packageJson = new JsonSlurper().parse(file("../package.json"))
         def data = new JsonSlurper().parse(new File("$projectDir/build/reports/license/dependency-license.json"))
@@ -335,7 +296,7 @@ task writeVersion() {
                     repository: dependencySources.get(value.name.take(value.name.lastIndexOf(":")) as String)
             ])
         }
-        file("$projectDir/build/version.json").newWriter().withWriter { w ->
+        file("$projectDir/build/libs/version.json").newWriter().withWriter { w ->
             w << JsonOutput.toJson(
                     [
                             jarVersion    : version,
@@ -349,20 +310,10 @@ task writeVersion() {
         }
     }
 }
+build.dependsOn 'writeVersion'
 
-def versionFile = layout.buildDirectory.file('version.json')
-def versionArtifact = artifacts.add('archives', versionFile.get().asFile) {
-    type 'json'
-    builtBy 'writeVersion'
-}
-
-//writeVersion.dependsOn project(":web").tasks.getByName("genLicense")
-//project(":web").tasks.getByName("yarn_gen:license").dependsOn project(":web").npmInstall
-//project(":web").npm_run_buildall.dependsOn writeVersion
-//project(":web").npm_run_build.dependsOn writeVersion
 project(":web").yarn_buildall.dependsOn project(":web").tasks.getByName("genLicense")
 project(":web").yarn_buildall.dependsOn project(":web").tasks.getByName("yarn")
-build.dependsOn writeVersion
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
@@ -379,49 +330,11 @@ compileJava {
     source = processSource.outputs
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = "sources"
-    from sourceSets.main.allSource
-    manifest.from(MANIFEST)
-}
-
+jar.enabled = false
 shadowJar {
     transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
 }
-
-artifacts {
-    archives sourcesJar
-    archives shadowJar
-}
-
-jar {
-    manifest.from(MANIFEST)
-}
-
-def currentOS = DefaultNativePlatform.getCurrentOperatingSystem()
-
-task copyElectron(dependsOn: ":web:yarn_build", type: Copy) {
-    try {
-        if (currentOS.isWindows()) {
-            copy {
-                from fileTree("${projectDir}/../release/win-unpacked/")
-                into new File(projectDir, "/bin")
-            }
-        } else if (currentOS.isLinux()) {
-            copy {
-                from fileTree("${projectDir}/../release/linux-unpacked/")
-                into new File(projectDir, "/bin")
-            }
-        } else if (currentOS.isMacOsX()) {
-            copy {
-                from fileTree("${projectDir}/../release/mac/ftbapp.app")
-                into new File(projectDir, "/bin/ftbapp.app")
-            }
-        }
-    } catch (Throwable t) {
-        print "Error while copying files, continuing anyway";
-    }
-}
+assemble.dependsOn 'shadowJar'
 
 wrapper {
     gradleVersion = "7.3"
@@ -445,30 +358,6 @@ idea.project.settings {
             jvmArgs += '-DInstanceShareUploader.debug=true '             // Enable debug logging for InstanceShareUploader
             jvmArgs += '-DDNSChain.debug=true '                          // Enable debug logging for DNSChain
             programParameters = '--dev'
-        }
-    }
-}
-
-publishing {
-    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-            artifact versionArtifact
-        }
-    }
-    repositories {
-        if (mavenUrl != null) {
-            maven {
-                url mavenUrl
-                name "GitLab"
-                credentials(HttpHeaderCredentials) {
-                    name = 'Job-Token'
-                    value = System.getenv("CI_JOB_TOKEN")
-                }
-                authentication {
-                    header(HttpHeaderAuthentication)
-                }
-            }
         }
     }
 }

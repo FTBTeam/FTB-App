@@ -61,7 +61,6 @@ module.exports = {
     electronBuilder: {
       nodeIntegration: true,
       builderOptions: {
-        generateUpdatesFilesForAllChannels: true,
         productName: 'ftbapp',
         appId: 'com.feedthebeast.Launcher',
         mac: {
@@ -71,16 +70,13 @@ module.exports = {
           gatekeeperAssess: false,
           entitlements: 'build/entitlements.mac.plist',
           entitlementsInherit: 'build/entitlements.mac.plist',
-          target: ['dir'],
-        },
-        win: {
-          target: ['portable'],
-          artifactName: '${productName}.${ext}',
+          target: ['zip'],
+          artifactName: '${productName}-mac.${ext}',
         },
         linux: {
-          target: ['AppImage'],
+          target: ['zip'],
           category: 'Game',
-          artifactName: '${productName}.${ext}',
+          artifactName: '${productName}-linux.${ext}',
         },
         directories: {
           output: 'release',

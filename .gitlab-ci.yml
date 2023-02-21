@@ -1,38 +1,117 @@
 stages:
-  - prepare
-  - build
+    - build
+    - build_app
+    - packaging
 
-prepare_frontend:
-  stage: prepare
-  image: node:18
-  cache:
-    key: ftb-app-frontend
-    policy: pull-push
-    paths:
-      - node_modules/
-  tags:
-    - linux-aarch64
-  script:
-    - npm install --global yarn || true
-    - yarn install
-  interruptible: false
+workflow:
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == /release/'
+          variables:
+              CI_RELEASE: "true"
+
+variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
 build_jar:
-  stage: prepare
-  trigger:
-    include: subprocess/.gitlab-ci-jar.yml
-    strategy: depend
+    stage: build
+    image: gradle:7.3.2-jdk17
+    interruptible: true
+    dependencies: []
+    tags:
+        - linux-aarch64
+    script:
+        - cd subprocess
+        - export GRADLE_USER_HOME=.gradle
+        - gradle clean build -si
+    artifacts:
+        paths:
+            - subprocess/build/libs/
+    cache:
+        key: gradle-build-$CI_COMMIT_REF_SLUG
+        paths:
+            - subprocess/.gradle
 
+cache_node:
+    stage: build
+    image: node:18
+    interruptible: false
+    dependencies: []
+    tags:
+        - linux-aarch64
+    script:
+        - npm install --global yarn || true
+        - yarn install
+    cache:
+        key: ftb-app-frontend
+        paths:
+            - node_modules/
+
+# TODO build shim step
 build_overwolf:
-  stage: build
-  needs: ["build_jar", "prepare_frontend"]
-  trigger:
-    include: .gitlab-ci-front.yml
-    strategy: depend
+    stage: build_app
+    image: node:18
+    tags:
+        - linux-aarch64
+    interruptible: true
+    dependencies:
+        - build_jar
+    cache:
+        key: ftb-app-frontend
+        policy: pull
+        paths:
+            - node_modules/
+    script:
+        - cp subprocess/build/libs/version.json public/version.json
+        - npm install --global yarn || true
+        - yarn install
+        - yarn gen:license
+        - node overwolf/patchManifest.js
+        - yarn vue:build:overwolf
+        - node overwolf/packageOpk.js
+    artifacts:
+        paths:
+            - overwolf/*.opk
 
 build_electron:
-  stage: build
-  needs: ["build_jar", "prepare_frontend"]
-  trigger:
-    include: subprocess/.gitlab-ci.yml
-    strategy: depend
+    stage: build_app
+    image: node:18
+    tags:
+        - linux-aarch64
+    interruptible: true
+    dependencies:
+        - build_jar
+    cache:
+        key: ftb-app-frontend
+        policy: pull
+        paths:
+            - node_modules/
+    script:
+        - cp subprocess/build/libs/version.json public/version.json
+        - npm install --global yarn || true
+        - yarn install
+        - yarn gen:license
+        - yarn build:electron
+    artifacts:
+        paths:
+            - release/ftbapp-linux.zip
+            - release/ftbapp-mac.zip
+
+electron_install4j:
+    stage: packaging
+    tags:
+        - shell
+    interruptible: true
+    dependencies:
+        - build_jar
+        - build_electron
+    script:
+        - cd release
+        - rm -rf linux-unpacked mac
+        - mkdir linux-unpacked mac
+        - unzip ftbapp-linux.zip -d linux-unpacked
+        - unzip ftbapp-mac.zip -d mac
+        - cd ../subprocess
+        - rm -rf releaseBuild
+        - 'export VERSION=`jq -r .jarVersion build/libs/version.json`'
+        - /Applications/install4j.app/Contents/Resources/app/bin/install4jc -L $INSTALL4J_LICENSE
+        - /Applications/install4j.app/Contents/Resources/app/bin/install4jc --disable-signing --mac-keystore-password $INSTALL4J_APPLE_KEYSTORE_PASSWORD --apple-id-password $INSTALL4J_APPLE_ID_PW -r $VERSION -D branch=$CI_COMMIT_BRANCH ftbapp.install4j

@@ -14,7 +14,7 @@
     "vue:serve": "cross-env TARGET_PLATFORM=electron vue-cli-service serve",
     "vue:serve:overwolf": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
     "build": "vue-cli-service electron:build",
-    "buildall": "vue-cli-service electron:build -ml",
+    "build:electron": "vue-cli-service electron:build -ml --x64",
     "gen:license": "license-checker --json > licenses.json",
     "postinstall": "electron-builder install-app-deps && patch-package",
     "postuninstall": "electron-builder install-app-deps"
@@ -66,6 +66,7 @@
     "@vue/cli-service": "^4.5.19",
     "@vue/devtools": "^6.5.0",
     "@vue/test-utils": "1.0.2",
+    "archiver": "^5.3.1",
     "babel-core": "7.0.0-bridge.0",
     "core-js": "^3.6.5",
     "cross-env": "^7.0.3",
