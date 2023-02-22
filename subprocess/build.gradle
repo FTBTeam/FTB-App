@@ -1,3 +1,9 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import org.apache.tools.ant.filters.ReplaceTokens
+
+import java.time.Instant
+
 plugins {
     id 'java'
     id "com.github.johnrengelman.shadow" version "7.0.0"
@@ -11,15 +17,6 @@ apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-repositories {
-    mavenLocal()
-    maven { url 'https://maven.creeperhost.net' }
-    mavenCentral()
-    jcenter() // Gradle _Says_ it wont resolve artifacts, but its gone into read-only indefinitely. (JdkUtils uses some libraries from here)
-    maven { url 'https://jitpack.io' }
-    maven { url 'https://maven.covers1624.net/' }
-}
-
 def date = new Date().format('yyyyMMddHHmm')
 
 group = "net.creeperhost"
@@ -30,19 +27,13 @@ version = System.getenv("VERSION_OVERRIDE") ?: (date + "-" + details.gitHash + (
 def webVersion = details.gitHash
 def sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 
-ext {
-    MANIFEST = manifest{
-        attributes([
-                "Main-Class":               'net.creeperhost.creeperlauncher.CreeperLauncher',
-                "Specification-Title":      "Launcher",
-                "Specification-Vendor":     "Creeperhost LTD",
-                "Specification-Version":    version,
-                "Implementation-Title":     "CreeperLauncher",
-                "Implementation-Version":   version,
-                "Implementation-Vendor":    "Creeperhost LTD"
-        ] as LinkedHashMap, "net/creeperhost/creeperlauncher/")
-        attributes 'Multi-Release': 'true'
-    }
+repositories {
+    mavenLocal()
+    maven { url 'https://maven.creeperhost.net' }
+    mavenCentral()
+    jcenter() // Gradle _Says_ it wont resolve artifacts, but its gone into read-only indefinitely. (JdkUtils uses some libraries from here)
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://maven.covers1624.net/' }
 }
 
 dependencies {
@@ -95,29 +86,56 @@ test {
     useJUnitPlatform()
 }
 
+task processSource(type: Sync) {
+    from sourceSets.main.java
+    inputs.property 'version', version
+    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, BRANCH: branch, SENTRY: sentryDsn])
+    into "$buildDir/src"
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+    dependsOn processSource
+    source = processSource.outputs
+}
+
+jar.enabled = false
+shadowJar {
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
+    manifest {
+        attributes([
+                "Main-Class"            : 'net.creeperhost.creeperlauncher.CreeperLauncher',
+                "Specification-Title"   : "Launcher",
+                "Specification-Vendor"  : "Creeperhost LTD",
+                "Specification-Version" : version,
+                "Implementation-Title"  : "CreeperLauncher",
+                "Implementation-Version": version,
+                "Implementation-Vendor" : "Creeperhost LTD"
+        ] as LinkedHashMap, "net/creeperhost/creeperlauncher/")
+        attributes 'Multi-Release': 'true'
+    }
+}
+assemble.dependsOn 'shadowJar'
+
 // TODO make root dir a bare gradle project and subprocess the submodule
 project(":web") {
 }
 
-import groovy.json.JsonOutput
-import java.time.Instant
-import groovy.json.JsonSlurper
-
 def dependencySources = [
-        "org.jetbrains:annotations": "https://github.com/JetBrains/java-annotations",
-        "com.squareup.okio:okio": "https://github.com/square/okio",
-        "com.github.oshi:oshi-core": "https://github.com/oshi/oshi",
-        "net.java.dev.jna:jna-platform": "https://github.com/java-native-access/jna",
-        "org.apache.commons:commons-compress": "https://github.com/apache/commons-compress",
+        "org.jetbrains:annotations"                : "https://github.com/JetBrains/java-annotations",
+        "com.squareup.okio:okio"                   : "https://github.com/square/okio",
+        "com.github.oshi:oshi-core"                : "https://github.com/oshi/oshi",
+        "net.java.dev.jna:jna-platform"            : "https://github.com/java-native-access/jna",
+        "org.apache.commons:commons-compress"      : "https://github.com/apache/commons-compress",
         "org.jetbrains.kotlin:kotlin-stdlib-common": "https://github.com/JetBrains/kotlin/tree/master/libraries",
-        "org.java-websocket:Java-WebSocket": "https://github.com/TooTallNate/Java-WebSocket",
-        "com.squareup.okhttp3:okhttp": "https://github.com/square/okhttp",
-        "net.java.dev.jna:jna": "https://github.com/java-native-access/jna",
-        "org.slf4j:slf4j-api": "https://github.com/qos-ch/slf4j",
-        "com.google.code.gson:gson": "https://github.com/google/gson",
-        "org.jetbrains.kotlin:kotlin-stdlib": "https://github.com/JetBrains/kotlin/tree/master/libraries/stdlib",
-        "org.apache.tika:tika-core": "https://github.com/apache/tika",
-        "net.covers1624:Quack": "https://github.com/covers1624/Quack"
+        "org.java-websocket:Java-WebSocket"        : "https://github.com/TooTallNate/Java-WebSocket",
+        "com.squareup.okhttp3:okhttp"              : "https://github.com/square/okhttp",
+        "net.java.dev.jna:jna"                     : "https://github.com/java-native-access/jna",
+        "org.slf4j:slf4j-api"                      : "https://github.com/qos-ch/slf4j",
+        "com.google.code.gson:gson"                : "https://github.com/google/gson",
+        "org.jetbrains.kotlin:kotlin-stdlib"       : "https://github.com/JetBrains/kotlin/tree/master/libraries/stdlib",
+        "org.apache.tika:tika-core"                : "https://github.com/apache/tika",
+        "net.covers1624:Quack"                     : "https://github.com/covers1624/Quack"
 ]
 
 tasks.register('writeVersion') {
@@ -149,27 +167,6 @@ tasks.register('writeVersion') {
     }
 }
 build.dependsOn 'writeVersion'
-
-import org.apache.tools.ant.filters.ReplaceTokens
-
-task processSource(type: Sync) {
-    from sourceSets.main.java
-    inputs.property 'version', version
-    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, BRANCH: branch, SENTRY: sentryDsn])
-    into "$buildDir/src"
-}
-
-compileJava {
-    options.encoding = "UTF-8"
-    dependsOn processSource
-    source = processSource.outputs
-}
-
-jar.enabled = false
-shadowJar {
-    transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
-}
-assemble.dependsOn 'shadowJar'
 
 wrapper {
     gradleVersion = "7.3"
