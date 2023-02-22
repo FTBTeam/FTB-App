@@ -98,9 +98,10 @@ electron_install4j:
     dependencies:
         - build_jar
         - build_electron
+    variables:
+        GIT_STRATEGY: clone
     script:
         - cd release
-        - rm -rf linux-unpacked mac
         - mkdir linux-unpacked mac
         - unzip ftbapp-linux.zip -d linux-unpacked
         - unzip ftbapp-mac.zip -d mac
