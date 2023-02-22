@@ -84,7 +84,6 @@ build_electron:
         paths:
             - .pnpm-store/
     before_script:
-        - apt update && apt install zip
         - npm install --global pnpm || true
         - pnpm config set store-dir .pnpm-store
     script:
@@ -93,13 +92,13 @@ build_electron:
         - pnpm gen:license
         - pnpm build:electron
         - cd release
-        - zip --symlinks -r linux-unpacked.zip linux-unpacked
-        - zip --symlinks -r mac.zip mac
+        - tar -czvf linux-unpacked.tar.gz linux-unpacked
+        - tar -czvf mac.tar.gz mac
     artifacts:
         expire_in: 2 days
         paths:
-            - release/linux-unpacked.zip
-            - release/mac.zip
+            - release/linux-unpacked.tar.gz
+            - release/mac.tar.gz
 
 electron_install4j:
     stage: packaging
@@ -113,10 +112,9 @@ electron_install4j:
         GIT_STRATEGY: clone
     script:
         - cd release
-        - unzip linux-unpacked.zip
-        - unzip mac.zip
+        - tar -xvf linux-unpacked.tar.gz
+        - tar -xvf mac.tar.gz
         - cd ../subprocess
-        - rm -rf releaseBuild
         - 'export VERSION=`jq -r .jarVersion build/libs/version.json`'
         - 'export BRANCH=`jq -r .branch build/libs/version.json`'
         - /Applications/install4j.app/Contents/Resources/app/bin/install4jc -L $INSTALL4J_LICENSE
