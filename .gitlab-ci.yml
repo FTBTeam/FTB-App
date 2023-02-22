@@ -35,13 +35,12 @@ cache_node:
     script:
         - npm install --global pnpm || true
         - pnpm config set store-dir .pnpm-store
-        - pnpm i
+        - pnpm install
         - pnpm prune
     cache:
         key: ftb-app-pnpm
         paths:
             - .pnpm-store/
-            - node_modules/
 
 # TODO build shim step
 build_overwolf:
@@ -57,7 +56,6 @@ build_overwolf:
         policy: pull
         paths:
             - .pnpm-store/
-            - node_modules/
     before_script:
         - npm install --global pnpm || true
         - pnpm config set store-dir .pnpm-store
@@ -85,13 +83,12 @@ build_electron:
         policy: pull
         paths:
             - .pnpm-store/
-            - node_modules/
     before_script:
         - npm install --global pnpm || true
         - pnpm config set store-dir .pnpm-store
     script:
         - cp subprocess/build/libs/version.json public/version.json
-        - pnpm i
+        - pnpm install
         - pnpm gen:license
         - pnpm build:electron
     artifacts:
