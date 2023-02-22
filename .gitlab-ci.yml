@@ -33,11 +33,14 @@ cache_node:
     tags:
         - linux-aarch64
     script:
-        - npm install --global yarn || true
-        - yarn install
+        - npm install --global pnpm || true
+        - pnpm config set store-dir .pnpm-store
+        - pnpm i
+        - pnpm prune
     cache:
-        key: ftb-app-frontend
+        key: ftb-app-pnpm
         paths:
+            - .pnpm-store/
             - node_modules/
 
 # TODO build shim step
@@ -50,17 +53,20 @@ build_overwolf:
     dependencies:
         - build_jar
     cache:
-        key: ftb-app-frontend
+        key: ftb-app-pnpm
         policy: pull
         paths:
+            - .pnpm-store/
             - node_modules/
+    before_script:
+        - npm install --global pnpm || true
+        - pnpm config set store-dir .pnpm-store
     script:
         - cp subprocess/build/libs/version.json public/version.json
-        - npm install --global yarn || true
-        - yarn install
-        - yarn gen:license
+        - pnpm install
+        - pnpm gen:license
         - node overwolf/patchManifest.js
-        - yarn vue:build:overwolf
+        - pnpm vue:build:overwolf
         - node overwolf/packageOpk.js
     artifacts:
         paths:
@@ -75,16 +81,19 @@ build_electron:
     dependencies:
         - build_jar
     cache:
-        key: ftb-app-frontend
+        key: ftb-app-pnpm
         policy: pull
         paths:
+            - .pnpm-store/
             - node_modules/
+    before_script:
+        - npm install --global pnpm || true
+        - pnpm config set store-dir .pnpm-store
     script:
         - cp subprocess/build/libs/version.json public/version.json
-        - npm install --global yarn || true
-        - yarn install
-        - yarn gen:license
-        - yarn build:electron
+        - pnpm i
+        - pnpm gen:license
+        - pnpm build:electron
     artifacts:
         expire_in: 2 days
         paths:
