@@ -123,3 +123,11 @@ electron_install4j:
         - 'export BRANCH=`jq -r .branch build/libs/version.json`'
         - /Applications/install4j.app/Contents/Resources/app/bin/install4jc -L $INSTALL4J_LICENSE
         - /Applications/install4j.app/Contents/Resources/app/bin/install4jc --disable-signing --mac-keystore-password $INSTALL4J_APPLE_KEYSTORE_PASSWORD --apple-id-password $INSTALL4J_APPLE_ID_PW -r $VERSION -D branch=$BRANCH ftbapp.install4j
+        - |
+            if [ "$BRANCH" != "release" ] || [ ! -z "$CI_BUILD_TAG" ]; then
+                mkdir -p "releaseUpload/$BRANCH/$VERSION/"
+                mv releaseBuild/jres releaseUpload
+                cp releaseBuild/updates.xml "releaseUpload/$BRANCH.xml"
+                find releaseBuild -type f -exec mv {} "releaseUpload/$BRANCH/$VERSION/" \;
+                find releaseUpload
+            fi
