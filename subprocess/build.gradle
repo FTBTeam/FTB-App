@@ -27,7 +27,7 @@ def date = new Date().format('yyyyMMddHHmm')
 group = "net.creeperhost"
 archivesBaseName = "launcher"
 def details = versionDetails()
-def branch = (details.branchName ?: System.getenv("CI_COMMIT_BRANCH")).replaceAll('/', '-')
+def branch = (details.branchName ?: (System.getenv("CI_COMMIT_BRANCH") ?: System.getenv("CI_TAGGED_BRANCH"))).replaceAll('/', '-')
 version = System.getenv("VERSION_OVERRIDE") ?: (date + "-" + details.gitHash + (branch != 'release' ? "-" + branch : ""))
 def webVersion = details.gitHash
 def sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
