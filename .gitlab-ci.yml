@@ -93,8 +93,8 @@ build_electron:
         - pnpm gen:license
         - pnpm build:electron
         - cd release
-        - zip -r linux-unpacked.zip linux-unpacked
-        - zip -r mac.zip mac
+        - zip --symlinks -r linux-unpacked.zip linux-unpacked
+        - zip --symlinks -r mac.zip mac
     artifacts:
         expire_in: 2 days
         paths:
