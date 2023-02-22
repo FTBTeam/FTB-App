@@ -13,6 +13,10 @@ build_jar:
     dependencies: []
     tags:
         - linux-aarch64
+    before_script:
+        - echo "~~~   ENV   ~~~"
+        - env
+        - echo "~~~ END ENV ~~~"
     script:
         - cd subprocess
         - export GRADLE_USER_HOME=.gradle
