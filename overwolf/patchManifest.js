@@ -14,7 +14,7 @@ version =
     '.' +
     versionTime.substring(6);
 manifestData.meta.version = version;
-if (process.env.CI_RELEASE) {
+if (versionData.branch === 'release') {
     manifestData.meta.name = 'FTB App';
     manifestData.meta.icon = 'icon_256.png';
     manifestData.meta.icon_gray = 'icon_256.png';

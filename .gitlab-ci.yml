@@ -5,7 +5,6 @@ stages:
 
 variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-    CI_RELEASE: "$CI_COMMIT_REF_NAME == 'release'"
 
 build_jar:
     stage: build
@@ -108,5 +107,6 @@ electron_install4j:
         - cd ../subprocess
         - rm -rf releaseBuild
         - 'export VERSION=`jq -r .jarVersion build/libs/version.json`'
+        - 'export BRANCH=`jq -r .branch build/libs/version.json`'
         - /Applications/install4j.app/Contents/Resources/app/bin/install4jc -L $INSTALL4J_LICENSE
-        - /Applications/install4j.app/Contents/Resources/app/bin/install4jc --disable-signing --mac-keystore-password $INSTALL4J_APPLE_KEYSTORE_PASSWORD --apple-id-password $INSTALL4J_APPLE_ID_PW -r $VERSION -D branch=$CI_COMMIT_BRANCH ftbapp.install4j
+        - /Applications/install4j.app/Contents/Resources/app/bin/install4jc --disable-signing --mac-keystore-password $INSTALL4J_APPLE_KEYSTORE_PASSWORD --apple-id-password $INSTALL4J_APPLE_ID_PW -r $VERSION -D branch=$BRANCH ftbapp.install4j
