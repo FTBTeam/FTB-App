@@ -21,7 +21,7 @@ build_jar:
         paths:
             - subprocess/build/libs/
     cache:
-        key: gradle-build-$CI_COMMIT_REF_SLUG
+        key: ftb-app-gradle
         paths:
             - subprocess/.gradle
 
