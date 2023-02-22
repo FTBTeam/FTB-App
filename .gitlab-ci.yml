@@ -132,5 +132,5 @@ electron_install4j:
                 find releaseBuild -type f -exec mv {} "releaseUpload/$BRANCH/$VERSION/" \;
                 echo "Files to upload:"
                 find releaseUpload
-                lftp -e mirror -R --verbose releaseUpload/ / -u "$FTP_USER,$FTP_PASSWORD" "$FTP_SERVER"
+                lftp -e "mirror -R --verbose releaseUpload/ /" -u "$FTP_USER,$FTP_PASSWORD" "$FTP_SERVER"
             fi
