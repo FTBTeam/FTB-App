@@ -86,6 +86,7 @@ build_electron:
         - yarn gen:license
         - yarn build:electron
     artifacts:
+        expire_in: 2 days
         paths:
             - release/ftbapp-linux.zip
             - release/ftbapp-mac.zip
