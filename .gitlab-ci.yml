@@ -14,6 +14,7 @@ build_jar:
     tags:
         - linux-aarch64
     before_script:
+        - '[[ ! -z "$CI_BUILD_TAG" ]] && export CI_TAGGED_BRANCH=$(git branch -a --contains "tags/$CI_BUILD_TAG" | grep origin | sed "s|.*origin/||")'
         - echo "~~~   ENV   ~~~"
         - env
         - echo "~~~ END ENV ~~~"
