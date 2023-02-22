@@ -70,11 +70,11 @@ module.exports = {
           gatekeeperAssess: false,
           entitlements: 'build/entitlements.mac.plist',
           entitlementsInherit: 'build/entitlements.mac.plist',
-          target: ['zip'],
+          target: ['dir'],
           artifactName: '${productName}-mac.${ext}',
         },
         linux: {
-          target: ['zip'],
+          target: ['dir'],
           category: 'Game',
           artifactName: '${productName}-linux.${ext}',
         },
