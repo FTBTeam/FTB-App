@@ -125,9 +125,12 @@ electron_install4j:
         - /Applications/install4j.app/Contents/Resources/app/bin/install4jc --disable-signing --mac-keystore-password $INSTALL4J_APPLE_KEYSTORE_PASSWORD --apple-id-password $INSTALL4J_APPLE_ID_PW -r $VERSION -D branch=$BRANCH ftbapp.install4j
         - |
             if [ "$BRANCH" != "release" ] || [ ! -z "$CI_BUILD_TAG" ]; then
+                echo "Preparing files for FTP.."
                 mkdir -p "releaseUpload/$BRANCH/$VERSION/"
                 mv releaseBuild/jres releaseUpload
                 cp releaseBuild/updates.xml "releaseUpload/$BRANCH.xml"
                 find releaseBuild -type f -exec mv {} "releaseUpload/$BRANCH/$VERSION/" \;
+                echo "Files to upload:"
                 find releaseUpload
+                lftp -e mirror -R --verbose releaseUpload/ / -u "$FTP_USER,$FTP_PASSWORD" "$FTP_SERVER"
             fi
