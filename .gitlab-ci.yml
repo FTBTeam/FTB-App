@@ -13,6 +13,10 @@ build_jar:
     dependencies: []
     tags:
         - linux-aarch64
+    cache:
+        key: ftb-app-gradle
+        paths:
+            - subprocess/.gradle
     before_script:
         - git fetch
         - '[[ ! -z "$CI_BUILD_TAG" ]] && export CI_TAGGED_BRANCH=$(git branch -a --contains "tags/$CI_BUILD_TAG" | grep origin | sed "s|.*origin/||")'
@@ -24,10 +28,6 @@ build_jar:
     artifacts:
         paths:
             - subprocess/build/libs/
-    cache:
-        key: ftb-app-gradle
-        paths:
-            - subprocess/.gradle
 
 cache_node:
     stage: build
@@ -36,25 +36,25 @@ cache_node:
     dependencies: []
     tags:
         - linux-aarch64
+    cache:
+        key: ftb-app-pnpm
+        paths:
+            - .pnpm-store/
     script:
         - npm install --global pnpm || true
         - pnpm config set store-dir .pnpm-store
         - pnpm install
         - pnpm prune
-    cache:
-        key: ftb-app-pnpm
-        paths:
-            - .pnpm-store/
 
 # TODO build shim step
 build_overwolf:
     stage: build_app
     image: node:18
-    tags:
-        - linux-aarch64
     interruptible: true
     dependencies:
         - build_jar
+    tags:
+        - linux-aarch64
     cache:
         key: ftb-app-pnpm
         policy: pull
@@ -77,11 +77,11 @@ build_overwolf:
 build_electron:
     stage: build_app
     image: node:18
-    tags:
-        - linux-aarch64
     interruptible: true
     dependencies:
         - build_jar
+    tags:
+        - linux-aarch64
     cache:
         key: ftb-app-pnpm
         policy: pull
@@ -106,14 +106,14 @@ build_electron:
 
 electron_install4j:
     stage: packaging
-    tags:
-        - shell
     interruptible: true
     dependencies:
         - build_jar
         - build_electron
     variables:
         GIT_STRATEGY: clone
+    tags:
+        - shell
     script:
         - cd release
         - tar -xvf linux-unpacked.tar.gz
