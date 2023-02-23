@@ -70,6 +70,18 @@ build_overwolf:
         - node overwolf/patchManifest.js
         - pnpm vue:build:overwolf
         - node overwolf/packageOpk.js
+        - |
+            if [ "$CI_COMMIT_BRANCH" == 'preview' ]; then
+                echo "Signing OPK.."
+                pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
+                echo "Uploading OPK to beta channel.."
+                pnpm ow opk upload -c 109 -w overwolf/signed.opk
+            elif [ ! -z "$CI_BUILD_TAG" ]; then
+                echo "Signing OPK.."
+                pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
+                echo "Uploading OPK to release channel.."
+                pnpm ow opk upload -w overwolf/signed.opk
+            fi
     artifacts:
         paths:
             - overwolf/*.opk
