@@ -1,7 +1,7 @@
 <template>
   <div class="ad-aside" :class="{ 'is-dev': isDev }">
     
-    <div class="ftb-ad-frame" v-if="isDevEnv">
+    <div class="ftb-ad-frame" v-if="!isDevEnv">
       <div class="sponsor-area">
         <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>
         <p class="text-sm">FTB App proudly sponsored by NordVPN</p>
@@ -80,12 +80,12 @@ export default class AdAside extends Vue {
     
     // I've lost brain cells from this. Please just fucking work 
     // - Covers
-    // if (!this.isDevEnv) {
+    if (!this.isDevEnv) {
       const helpMe = document.createElement("script");
       helpMe.src = "https://adserver.ftb.team/www/delivery/asyncjs.php";
       helpMe.async = true;
       document.head.append(helpMe)
-    // }
+    }
     
     // Kinda dirty hack for this file
     if (!this.platform.isOverwolf()) {
