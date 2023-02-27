@@ -8,6 +8,7 @@ import childProcess from 'child_process';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 
 const protocolSpace = process.env.NODE_ENV === 'production' ? 'ftb' : 'ftb-dev';
 
@@ -19,7 +20,7 @@ log.transports.file.resolvePath = (variables, message): string => {
   return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
 };
 
-protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
+protocol.registerSchemesAsPrivileged([{ scheme: protocolSpace, privileges: { secure: true, standard: true } }]);
 
 if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
   app.setAsDefaultProtocolClient(protocolSpace, process.execPath, [path.resolve(process.argv[1])]);
@@ -437,7 +438,8 @@ function createWindow() {
       win.webContents.openDevTools();
     }
   } else {
-    win.loadURL('app://./index.html');
+    createProtocol(protocolSpace)
+    win.loadURL(`${protocolSpace}://./index.html`);
   }
 
   win.on('closed', () => {

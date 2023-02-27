@@ -17,7 +17,7 @@ function getGitCommitHash() {
 }
 
 function buildFrontend() {
-  return childProcess.execSync('cd ../ && npm install && npm run vue:build:overwolf', { stdio: 'inherit' });
+  return childProcess.execSync('cd ../ && yarn install && yarn run vue:build:overwolf', { stdio: 'inherit' });
 }
 
 let versionFile = fs.readFileSync('version.json', 'utf-8');

@@ -63,10 +63,12 @@ module.exports = {
   pluginOptions: {
     electronBuilder: {
       nodeIntegration: true,
+      customFileProtocol: `${process.env.NODE_ENV !== "development" ? "ftb" : "ftb-dev"}://./`,
       builderOptions: {
         generateUpdatesFilesForAllChannels: true,
         productName: 'FTB App',
         appId: 'com.feedthebeast.Launcher',
+        
         mac: {
           // #TODO https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/
           identity: 'null',
