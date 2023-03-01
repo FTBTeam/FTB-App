@@ -66,12 +66,10 @@ const Overwolf: ElectronOverwolfInterface = {
     },
     
     onAuthenticationCompleted(callback: (success: boolean) => void) {
-      console.log(callback, "hello")
       overwolf.windows.getMainWindow().authCallback = callback;
     },
 
     closeAuthWindow(success: boolean) {
-      console.log(overwolf.windows.getMainWindow(), "hello2")
       overwolf.windows.getMainWindow().authCallback(success);
       overwolf.windows.getMainWindow().authCallback = null;
     },
