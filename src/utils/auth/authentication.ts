@@ -305,7 +305,7 @@ export const validateAuthenticationOrSignIn = async (instanceId?: string): Promi
       {
         title: 'Error!',
         message:
-          'Profile validation failed, please login again. If this keeps happening, as for support in our Discord',
+          'Profile validation failed, please login again. If this keeps happening, ask for support in our Discord',
         type: 'danger',
       },
       { root: true },
