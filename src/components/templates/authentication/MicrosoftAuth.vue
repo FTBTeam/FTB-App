@@ -44,56 +44,61 @@ export default class MicrosoftAuth extends Vue {
   }
   
   async openMsAuth() {
-    try {
-      const res = await platform.get.actions.openMsAuth();
-
-      this.loading = true;
-      if (!res || !res.key || !res.iv || !res.password) {
-        this.$emit('error', 'Unable to authenticate. Please try again.');
-        return;
-      }
-
-      const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          key: res.key,
-          iv: res.iv,
-          password: res.password,
-        }),
-      });
-
-      const response: any = (await responseRaw.json()).data;
-
-      if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
-        this.$emit('error', 'Failed to retrieve essential information, please try again.');
-        return;
-      }
-
-      this.sendMessage({
-        payload: {
-          type: 'profiles.ms.authenticate',
-          ...response,
-        },
-        callback: async (data: any) => {
-          if (!data || !data.success) {
-            this.$emit('error', data.response || 'An unknown error occurred.', 'final');
-            return;
-          }
-
-          // No error
-          await this.loadProfiles();
-          this.$emit('authenticated');
-        },
-      });
-    } catch (e) {
-      console.log(e);
-      this.$emit('error', 'Fatal error whilst trying to retrieve your account details, please try again.');
-    } finally {
-      this.loading = false;
-    }
+    platform.get.actions.openMsAuth();
+    platform.get.actions.onAuthenticationCompleted((success) => {
+      // TODO: handle errors
+      this.$emit('authenticated');
+    });
+    
+      
+      // try {
+      //   this.loading = true;
+      //   if (!res || !res.key || !res.iv || !res.password) {
+      //     this.$emit('error', 'Unable to authenticate. Please try again.');
+      //     return;
+      //   }
+      //
+      //   const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
+      //     method: 'POST',
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //     },
+      //     body: JSON.stringify({
+      //       key: res.key,
+      //       iv: res.iv,
+      //       password: res.password,
+      //     }),
+      //   });
+      //
+      //   const response: any = (await responseRaw.json()).data;
+      //
+      //   if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
+      //     this.$emit('error', 'Failed to retrieve essential information, please try again.');
+      //     return;
+      //   }
+      //
+      //   this.sendMessage({
+      //     payload: {
+      //       type: 'profiles.ms.authenticate',
+      //       ...response,
+      //     },
+      //     callback: async (data: any) => {
+      //       if (!data || !data.success) {
+      //         this.$emit('error', data.response || 'An unknown error occurred.', 'final');
+      //         return;
+      //       }
+      //
+      //       // No error
+      //       await this.loadProfiles();
+      //       this.$emit('authenticated');
+      //     },
+      //   });
+      // } catch (e) {
+      //   console.log(e);
+      //   this.$emit('error', 'Fatal error whilst trying to retrieve your account details, please try again.');
+      // } finally {
+      //   this.loading = false;
+      // }
   }
 }
 </script>

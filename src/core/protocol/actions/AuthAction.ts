@@ -37,7 +37,7 @@ export class AuthAction implements Action {
 
     if (res.success) {
       await store.dispatch('core/loadProfiles');
-      await platform.get.actions.closeAuthWindow();
+      await platform.get.actions.closeAuthWindow(true);
     }
   }
 }

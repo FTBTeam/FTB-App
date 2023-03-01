@@ -63,7 +63,7 @@ module.exports = {
   pluginOptions: {
     electronBuilder: {
       nodeIntegration: true,
-      customFileProtocol: `${process.env.NODE_ENV !== "development" ? "ftb" : "ftb-dev"}://./`,
+      customFileProtocol: `ftb://./`,
       builderOptions: {
         generateUpdatesFilesForAllChannels: true,
         productName: 'ftbapp',

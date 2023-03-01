@@ -16,7 +16,7 @@ export interface Action {
   run: (context: ActionContext) => void;
 }
 
-const protocolSpace = process.env.NODE_ENV === 'production' ? 'ftb' : 'ftb-dev';
+const protocolSpace = 'ftb';
 
 const actions: Action[] = [
   // NOTE: Used in test cases, don't remove without updating tests!
@@ -59,7 +59,7 @@ export const parseInput = (rawInput: string, log = true) => {
 export const handleAction = (rawInput: string) => {
   const input = parseInput(rawInput);
   if (input == null) {
-    console.log('Rejecting protocol as we could not parse the input');
+    console.log('Rejecting protocol as we could not parse the input', rawInput);
     return;
   }
 

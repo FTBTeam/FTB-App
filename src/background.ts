@@ -1,5 +1,5 @@
 'use strict';
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell, Menu } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -10,7 +10,7 @@ import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 
-const protocolSpace = process.env.NODE_ENV === 'production' ? 'ftb' : 'ftb-dev';
+const protocolSpace = 'ftb';
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -124,7 +124,7 @@ ipcMain.on('showFriends', () => {
 });
 
 ipcMain.on('createAuthWindow', async (event, args) => {
-  await createAuthWindow(args);
+  await createAuthWindow(args.type);
 });
 
 ipcMain.on('appReady', async (event) => {
@@ -291,6 +291,9 @@ ipcMain.on('openLink', (event, data) => {
 });
 
 ipcMain.on('close-auth-window', (event, data) => {
+  const {success} = data;
+  event.reply("authenticationFlowCompleted", {success})
+  
   if (electronMsAuthWindow) {
     electronMsAuthWindow.close();
   }
@@ -352,7 +355,7 @@ function createFriendsWindow() {
 
 const createAuthWindow = async (type: string) => {
   electronMsAuthWindow = new BrowserWindow({
-    title: 'FTB Microsoft Authentication',
+    title: type === "microsoft" ? 'FTB Microsoft Authentication' : "MineTogether Login",
     minWidth: 600,
     minHeight: 690,
     width: 600,
@@ -390,7 +393,7 @@ const createAuthWindow = async (type: string) => {
   );
 };
 
-function createWindow() {
+async function createWindow() {
   win = new BrowserWindow({
     title: 'FTB App',
 
@@ -428,17 +431,21 @@ function createWindow() {
       },
     });
   });
-
-  win.focus();
-
+  
   if (process.env.WEBPACK_DEV_SERVER_URL) {
-    win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
-    if (!process.env.IS_TEST) {
+    await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
+    
+    if (process.env.NODE_ENV !== "production") {
       win.webContents.openDevTools();
     }
+
+    win.blur();
+    setTimeout(() => {
+      win?.focus();
+    }, 100)
   } else {
     createProtocol(protocolSpace)
-    win.loadURL(`${protocolSpace}://./index.html`);
+    await win.loadURL(`${protocolSpace}://./index.html`);
   }
 
   win.on('closed', () => {
@@ -500,6 +507,15 @@ if (!gotTheLock) {
   });
 
   app.on('ready', async () => {
+    // TODO: come back to this :D
+    // var template = [
+    //   ...Menu.getApplicationMenu()?.items as any,
+    //   {label: 'View Sexy', submenu: [
+    //       {label: 'HTML/Markdown', click: () => console.log("hello")}
+    //     ]}
+    // ];
+    // Menu.setApplicationMenu(Menu.buildFromTemplate(template as any));
+    //
     createWindow();
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {

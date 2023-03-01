@@ -154,32 +154,25 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    async openMsAuth() {
-      ipcRenderer.send('createAuthWindow', 'microsoft');
-
-      const mini = new MiniWebServer();
-      miniServers.push(mini);
-      const result: msauthResponse | null = await new Promise((resolve, reject) => {
-        mini.open();
-        mini.on('response', (data: msauthResponse) => {
-          resolve(data);
-        });
-
-        mini.on('close', () => {
-          resolve(null);
-        });
-      });
-
-      if (result?.iv) {
-        ipcRenderer.send('close-auth-window');
-      }
-
-      mini.close().catch(console.error);
-      return result;
+    openMsAuth() {
+      ipcRenderer.send('createAuthWindow', {type: 'microsoft'});
     },
 
-    closeAuthWindow() {
-      ipcRenderer.send("close-auth-window");
+    onAuthenticationCompleted(callback: (success: boolean) => void) {
+      console.log("Setup")
+      const listener = (event: any) => {
+        callback(event.success)
+        ipcRenderer.removeListener("authenticationFlowCompleted", listener);
+      };
+      
+      ipcRenderer.on("authenticationFlowCompleted", listener);
+      ipcRenderer.on("authenticationFlowCompleted", (event: any, data: any) => {
+        console.log(event, data)
+      });
+    },
+    
+    closeAuthWindow(success: boolean) {
+      ipcRenderer.send("close-auth-window", {success});
     },
     
     openModpack(payload: { name: string; id: string }) {
