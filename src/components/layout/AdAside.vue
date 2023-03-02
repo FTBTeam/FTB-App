@@ -2,10 +2,7 @@
   <div class="ad-aside" :class="{ 'is-dev': isDev }">
     
     <div class="ftb-ad-frame" v-if="!isDevEnv">
-      <div class="sponsor-area">
-        <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>
-        <p class="text-sm">FTB App proudly sponsored by NordVPN</p>
-      </div>
+      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>
     </div>
     
     
@@ -208,22 +205,6 @@ export default class AdAside extends Vue {
     flex-direction: column;
     align-items: center;
     flex: 1;
-    
-    iframe {
-      overflow: hidden;
-      border-radius: 5px;
-    }
-    
-    .sponsor-area {
-      overflow: hidden;
-      border-radius: 5px;
-      background-color: #262626;
-      text-align: center;
-      
-      p {
-        padding: .5rem;
-      }
-    }
   }
   
   .ad-space {
