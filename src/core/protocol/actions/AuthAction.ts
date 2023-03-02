@@ -21,7 +21,6 @@ export class AuthAction implements Action {
     }
     
     const result = await loginWithMicrosoft(credentials);
-    console.log(result)
     if (result.success) {
       await store.dispatch('core/loadProfiles');
       await platform.get.actions.closeAuthWindow(true);
