@@ -201,13 +201,10 @@ export default class AdAside extends Vue {
   .ftb-ad-frame {
     width: 100%;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: center;
     flex: 1;
-    
-    iframe {
-      overflow: hidden;
-      border-radius: 5px;
-    }
   }
   
   .ad-space {
