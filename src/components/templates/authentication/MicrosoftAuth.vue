@@ -55,7 +55,6 @@ export default class MicrosoftAuth extends Vue {
   
   async openMsAuth() {
     platform.get.actions.openMsAuth((success) => {
-      console.log(success);
       if (!success) {
         this.$emit('error', 'Failed to retrieve essential information, please try again.');
         return;
