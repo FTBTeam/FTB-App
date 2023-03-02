@@ -2,42 +2,37 @@ import { Action, ActionContext, ActionType } from '../protocolActions';
 import { wsTimeoutWrapperTyped } from '@/utils';
 import store from '@/modules/store';
 import platform from '@/utils/interface/electron-overwolf';
+import {loginWithMicrosoft} from '@/utils/auth/authentication';
 
 export class AuthAction implements Action {
   namespace: ActionType = 'auth';
   action = 'process';
 
   async run(context: ActionContext) {
-    // const res = await platform.get.actions.openMsAuth();
-
     const credentials = context.query.get('credentials');
     
-    const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        credentials,
-      }),
-    });
-
-    const response: any = (await responseRaw.json()).data;
-    console.log(response);
-
-    if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
-      // this.$emit('error', 'Failed to retrieve essential information, please try again.');
+    if (credentials == null) {
+      await store.dispatch('showAlert', {
+        type: 'danger',
+        title: 'Unable to login',
+        message: `Failed to login due to missing credentials...`,
+      });
       return;
     }
-
-    const res = await wsTimeoutWrapperTyped<any, { success: boolean }>({
-      type: 'profiles.ms.authenticate',
-      ...response,
-    });
-
-    if (res.success) {
+    
+    const result = await loginWithMicrosoft(credentials);
+    console.log(result)
+    if (result.success) {
       await store.dispatch('core/loadProfiles');
       await platform.get.actions.closeAuthWindow(true);
+      return;
     }
+      
+    await platform.get.actions.closeAuthWindow(false);
+    await store.dispatch('showAlert', {
+      type: 'danger',
+      title: 'Unable to login',
+      message: `Failed to login due to: ${result.response}`,
+    });
   }
 }

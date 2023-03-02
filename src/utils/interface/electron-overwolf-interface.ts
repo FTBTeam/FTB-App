@@ -16,8 +16,7 @@ export interface Util {
 }
 
 export interface Actions {
-  openMsAuth(): void;
-  onAuthenticationCompleted(callback: (success: boolean) => void): void;
+  openMsAuth(callback: (success: boolean) => void): void;
   closeAuthWindow(success: boolean): void;
   openModpack: (payload: { name: string; id: string }) => void;
   openFriends: () => void;

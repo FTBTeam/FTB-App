@@ -154,21 +154,15 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openMsAuth() {
+    openMsAuth(callback: (success: boolean) => void) {
       ipcRenderer.send('createAuthWindow', {type: 'microsoft'});
-    },
-
-    onAuthenticationCompleted(callback: (success: boolean) => void) {
-      console.log("Setup")
-      const listener = (event: any) => {
-        callback(event.success)
+      
+      const listener = (event: any, data: any) => {
+        callback(data.success)
         ipcRenderer.removeListener("authenticationFlowCompleted", listener);
       };
-      
+
       ipcRenderer.on("authenticationFlowCompleted", listener);
-      ipcRenderer.on("authenticationFlowCompleted", (event: any, data: any) => {
-        console.log(event, data)
-      });
     },
     
     closeAuthWindow(success: boolean) {

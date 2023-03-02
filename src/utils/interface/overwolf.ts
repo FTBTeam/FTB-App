@@ -61,11 +61,8 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openMsAuth() {
+    openMsAuth(callback: (success: boolean) => void) {
       overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com?useNew=true`);
-    },
-    
-    onAuthenticationCompleted(callback: (success: boolean) => void) {
       overwolf.windows.getMainWindow().authCallback = callback;
     },
 
