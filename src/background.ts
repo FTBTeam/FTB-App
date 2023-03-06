@@ -203,8 +203,9 @@ ipcMain.on('expandMeScotty', (event, data) => {
 });
 
 app.on('open-url', async (event, customSchemeData) => {
-  event.preventDefault();
+  // event.preventDefault();
 
+  console.log("Deep link", customSchemeData)
   win?.webContents.send('parseProtocolURL', customSchemeData);
 });
 
@@ -340,6 +341,7 @@ function createFriendsWindow() {
       friendsWindow.webContents.openDevTools();
     }
   } else {
+    createProtocol(protocolSpace)
     friendsWindow.loadURL('app://./index.html#chat');
   }
   if (win) {
@@ -385,7 +387,8 @@ const createAuthWindow = async (type: string) => {
       win.webContents.send('auth-window-closed');
     }
   });
-
+  
+  createProtocol(protocolSpace)
   await electronMsAuthWindow.loadURL(
     type === 'microsoft'
       ? 'https://msauth.feed-the-beast.com?useNew=true'

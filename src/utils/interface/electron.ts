@@ -391,6 +391,7 @@ const Electron: ElectronOverwolfInterface = {
 
     // TODO: this entire thing needs a registry + handler wrapper
     ipcRenderer.on('parseProtocolURL', (event, data) => {
+      console.log("Hit")
       handleAction(data);
       // let protocolURL = data;
       // if (protocolURL === undefined) {
