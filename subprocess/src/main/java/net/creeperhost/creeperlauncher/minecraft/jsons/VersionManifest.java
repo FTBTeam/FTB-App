@@ -185,6 +185,7 @@ public class VersionManifest {
         }
         return NewDownloadTask.builder()
                 .url(download.url)
+                .tryResumeDownload()
                 .dest(dest)
                 .withValidation(validation)
                 .build();
