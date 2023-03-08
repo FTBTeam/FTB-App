@@ -16,7 +16,7 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.data.modpack.ShareManifest;
 import net.creeperhost.creeperlauncher.install.FileValidation;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import okhttp3.*;
 import okio.BufferedSink;
 import okio.Okio;
@@ -64,7 +64,7 @@ public class InstanceSharer extends InstanceOperation {
 
     private final List<FileAction> actions = new LinkedList<>();
 
-    public InstanceSharer(LocalInstance instance) {
+    public InstanceSharer(Instance instance) {
         super(instance, instance.versionManifest);
     }
 

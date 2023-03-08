@@ -17,7 +17,7 @@ import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoaderManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.os.OSUtils;
 import net.creeperhost.creeperlauncher.pack.ModPack;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.creeperlauncher.util.Artifact;
 import org.apache.logging.log4j.LogManager;
@@ -51,7 +51,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
     public String currentUUID = "";
     public CompletableFuture<Void> currentTask = null;
     public static Stage currentStage = Stage.INIT;
-    LocalInstance instance;
+    Instance instance;
 
     public enum Stage
     {
@@ -64,7 +64,7 @@ public class FTBModPackInstallerTask implements IInstallTask<Void>
         FINISHED
     }
 
-    public FTBModPackInstallerTask(LocalInstance instance)
+    public FTBModPackInstallerTask(Instance instance)
     {
         this.instance = instance;
         try

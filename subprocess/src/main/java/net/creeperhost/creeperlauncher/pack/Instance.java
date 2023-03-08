@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
 
-public class LocalInstance implements IPack {
+public class Instance implements IPack {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -66,7 +66,7 @@ public class LocalInstance implements IPack {
 
     private long startTime;
 
-    public LocalInstance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+    public Instance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
         props = new InstanceJson(modpack, versionManifest, isPrivate, packType);
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         FileUtils.createDirectories(path);
@@ -80,12 +80,17 @@ public class LocalInstance implements IPack {
         }
     }
 
-    public LocalInstance(Path path, Path json) throws IOException {
+    public Instance(Path path, Path json) throws IOException {
         //We're loading an existing instance
         this.path = path;
         props = InstanceJson.load(json);
         if (props.installComplete) {
-            versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, path.resolve("version.json"), ModpackVersionManifest.class);
+            Path versionJson = path.resolve("version.json");
+            if (Files.exists(versionJson)) {
+                versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, versionJson, ModpackVersionManifest.class);
+            } else {
+                versionManifest = ModpackVersionManifest.makeInvalid();
+            }
         }
     }
 
@@ -293,7 +298,7 @@ public class LocalInstance implements IPack {
     }
 
     @Nullable
-    public LocalInstance duplicate(String instanceName) throws IOException {
+    public Instance duplicate(String instanceName) throws IOException {
         // Hack around GSON to duplicate the fields here... kinda lazy
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
@@ -307,7 +312,7 @@ public class LocalInstance implements IPack {
         org.apache.commons.io.FileUtils.copyDirectory(path.toFile(), newDir.toFile());
         InstanceJson.save(newJson, json);
 
-        return new LocalInstance(newDir, newJson);
+        return new Instance(newDir, newJson);
     }
 
     @Override
@@ -600,7 +605,7 @@ public class LocalInstance implements IPack {
         return ret;
     }
 
-    public InstanceSnapshot withSnapshot(Consumer<LocalInstance> action) {
+    public InstanceSnapshot withSnapshot(Consumer<Instance> action) {
         return InstanceSnapshot.create(
                 this,
                 action

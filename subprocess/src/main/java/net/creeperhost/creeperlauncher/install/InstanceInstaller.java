@@ -15,7 +15,7 @@ import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.instance.InstanceOperation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.PathFixingCopyingFileVisitor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,7 +106,7 @@ public class InstanceInstaller extends InstanceOperation {
     @Nullable
     private Map<String, IndexedFile> knownFiles;
 
-    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, InstallProgressTracker tracker) throws IOException {
+    public InstanceInstaller(Instance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, InstallProgressTracker tracker) throws IOException {
         super(instance, manifest);
         this.cancelToken = cancelToken;
         this.tracker = tracker;
@@ -152,7 +152,7 @@ public class InstanceInstaller extends InstanceOperation {
         return filesToDownload;
     }
 
-    public LocalInstance getInstance() {
+    public Instance getInstance() {
         return instance;
     }
 

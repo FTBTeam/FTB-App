@@ -4,7 +4,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.instances.BrowseInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
 import java.util.UUID;
 
@@ -15,7 +15,7 @@ public class BrowseInstanceHandler implements IMessageHandler<BrowseInstanceData
     {
         try
         {
-            LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+            Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
             var success = data.folder != null ? instance.browse(data.folder) : instance.browse();
             if (success)
             {

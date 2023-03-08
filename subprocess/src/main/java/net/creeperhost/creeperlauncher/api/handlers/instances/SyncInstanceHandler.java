@@ -10,10 +10,9 @@ import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoader;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoaderManager;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -52,9 +51,9 @@ public class SyncInstanceHandler implements IMessageHandler<InstallInstanceData>
                 return;
             }
 
-            LocalInstance instance;
+            Instance instance;
             try {
-                instance = new LocalInstance(instanceDir, instanceJson);
+                instance = new Instance(instanceDir, instanceJson);
                 instance.cloudSync(true);
 
                 List<ModLoader> modLoaders = ModLoaderManager.getModLoaders(McUtils.getTargets(instance.getDir()));

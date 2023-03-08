@@ -7,7 +7,7 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ShareManifest;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.task.InstallationOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
@@ -52,7 +52,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private void handleUpdate(InstallInstanceData data) throws IOException {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
             abort(data, "Install not started.");
             return;
@@ -141,7 +141,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
-        LocalInstance instance = new LocalInstance(modpackManifest, versionManifest, isPrivate, packType);
+        Instance instance = new Instance(modpackManifest, versionManifest, isPrivate, packType);
         instance.props.isImport = isImport;
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
             Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);
@@ -149,7 +149,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         beginInstallTask(data, instance, versionManifest);
     }
 
-    private void beginInstallTask(InstallInstanceData data, LocalInstance instance, ModpackVersionManifest manifest) throws IOException {
+    private void beginInstallTask(InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance.getUuid().toString()));
 
         InstallationOperation op = new InstallationOperation(CreeperLauncher.LONG_TASK_MANAGER, data, instance, manifest);

@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.api.data.instances;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;

@@ -8,7 +8,7 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.InstanceLaunchException;
 import net.creeperhost.creeperlauncher.pack.InstanceLauncher;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.Log4jMarkers;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +31,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
     public void handle(LaunchInstanceData data) {
         String _uuid = data.uuid;
         UUID uuid = UUID.fromString(_uuid);
-        LocalInstance instance = Instances.getInstance(uuid);
+        Instance instance = Instances.getInstance(uuid);
         InstanceLauncher launcher = instance.getLauncher();
 
         if (data.cancelLaunch && instance.prepareFuture != null && instance.prepareToken != null) {

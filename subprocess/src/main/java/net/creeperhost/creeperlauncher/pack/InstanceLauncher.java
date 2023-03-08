@@ -60,7 +60,7 @@ public class InstanceLauncher {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
-    private final LocalInstance instance;
+    private final Instance instance;
     private Phase phase = Phase.NOT_STARTED;
 
     private final List<VersionManifest> manifests = new ArrayList<>();
@@ -80,7 +80,7 @@ public class InstanceLauncher {
 
     private static final int NUM_STEPS = 5;
 
-    public InstanceLauncher(LocalInstance instance) {
+    public InstanceLauncher(Instance instance) {
         this.instance = instance;
     }
 

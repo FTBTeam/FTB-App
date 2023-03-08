@@ -5,11 +5,8 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceModsData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
-import net.creeperhost.creeperlauncher.install.tasks.FTBModPackInstallerTask;
-import net.creeperhost.creeperlauncher.pack.ModPack;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,7 +15,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
 
     @Override
     public void handle(InstanceModsData data) {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) return;
 
         List<ModFile> packMods = instance.versionManifest.toLegacyFiles();

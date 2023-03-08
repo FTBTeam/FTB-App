@@ -5,7 +5,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -13,14 +13,14 @@ import java.util.UUID;
 public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstanceHandler.Request> {
     @Override
     public void handle(Request data) {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
             Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate instance", "-1"));
             return;
         }
 
         try {
-            LocalInstance newInstance = instance.duplicate(data.newName);
+            Instance newInstance = instance.duplicate(data.newName);
             if (newInstance == null) {
                 Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to duplicate instance...", "-1"));
                 return;

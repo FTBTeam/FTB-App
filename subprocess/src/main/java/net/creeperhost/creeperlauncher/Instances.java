@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,19 +23,19 @@ public class Instances
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static Map<UUID, LocalInstance> instances = new HashMap<>();
+    private static Map<UUID, Instance> instances = new HashMap<>();
     private static Map<UUID, JsonObject> cloudInstances = new HashMap<>();
 
     @Nullable
-    public static LocalInstance getInstance(UUID uuid) {
+    public static Instance getInstance(UUID uuid) {
         return Instances.instances.get(uuid);
     }
 
-    public static void addInstance(LocalInstance instance) {
+    public static void addInstance(Instance instance) {
         instances.put(instance.getUuid(), instance);
     }
 
-    public static Iterable<LocalInstance> allInstances() {
+    public static Iterable<Instance> allInstances() {
         return Collections.unmodifiableCollection(Instances.instances.values());
     }
 
@@ -56,13 +56,13 @@ public class Instances
             LOGGER.info("Instances directory missing, skipping..");
         } else {
             ElapsedTimer timer = new ElapsedTimer();
-            List<LocalInstance> loadedInstances = FileUtils.listDir(instancesDir)
+            List<Instance> loadedInstances = FileUtils.listDir(instancesDir)
                     .parallelStream()
                     .filter(e -> !e.getFileName().toString().startsWith("."))
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
                     .toList();
-            instances = loadedInstances.stream().collect(Collectors.toMap(LocalInstance::getUuid, Function.identity()));
+            instances = loadedInstances.stream().collect(Collectors.toMap(Instance::getUuid, Function.identity()));
             LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
         }
 
@@ -90,14 +90,14 @@ public class Instances
         return null;
     }
 
-    private static LocalInstance loadInstance(Path path) {
+    private static Instance loadInstance(Path path) {
         Path json = path.resolve("instance.json");
         if (Files.notExists(json)) {
             LOGGER.warn("Instance missing 'instance.json', Ignoring. {}", json.toAbsolutePath());
             return null;
         }
         try {
-            LocalInstance localInstance = new LocalInstance(path, json);
+            Instance localInstance = new Instance(path, json);
             if (!localInstance.props.installComplete) {
                 // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
                 LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());

@@ -5,7 +5,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
 import java.nio.file.Paths;
 import java.util.Map;
@@ -17,7 +17,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
     {
         try
         {
-            LocalInstance instance = Instances.getInstance(data.uuid);
+            Instance instance = Instances.getInstance(data.uuid);
             if (instance == null) {
                 // TODO, This message needs to be improved. We should tell the frontend _why_
                 Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));

@@ -4,7 +4,7 @@ import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.SetInstanceArtData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,7 +21,7 @@ public class SetInstanceArtHandler implements IMessageHandler<SetInstanceArtData
 
     @Override
     public void handle(SetInstanceArtData data) {
-        LocalInstance instance = Instances.getInstance(data.uuid);
+        Instance instance = Instances.getInstance(data.uuid);
         if (instance == null) {
             Settings.webSocketAPI.sendMessage(new SetInstanceArtData.Reply(data, "error", "Instance does not exist."));
             return;

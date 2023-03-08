@@ -7,7 +7,7 @@ import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadVal
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
@@ -24,11 +24,11 @@ import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 // TODO We control the entire launch process now, this can be done _very_ differently.
 public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
 
-    private final LocalInstance instance;
+    private final Instance instance;
     private final String mcVersion;
     private final String forgeVersion;
 
-    public LegacyForgeInstallTask(LocalInstance instance, String mcVersion, String forgeVersion) {
+    public LegacyForgeInstallTask(Instance instance, String mcVersion, String forgeVersion) {
         this.instance = instance;
         this.mcVersion = mcVersion;
         this.forgeVersion = forgeVersion;
