@@ -13,6 +13,7 @@ import EventEmitter from 'events';
 import http from 'http';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
+import platform from '@/utils/interface/electron-overwolf';
 
 declare const __static: string;
 
@@ -155,14 +156,11 @@ const Electron: ElectronOverwolfInterface = {
   // Actions
   actions: {
     openMsAuth(callback: (success: boolean) => void) {
-      ipcRenderer.send('createAuthWindow', {type: 'microsoft'});
-      
-      const listener = (event: any, data: any) => {
-        callback(data.success)
-        ipcRenderer.removeListener("authenticationFlowCompleted", listener);
-      };
+      platform.get.utils.openUrl("https://msauth.feed-the-beast.com?useNew=true");
 
-      ipcRenderer.on("authenticationFlowCompleted", listener);
+      ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
+        callback(data.success)
+      });
     },
     
     closeAuthWindow(success: boolean) {
@@ -178,8 +176,9 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      ipcRenderer.send('createAuthWindow', 'minetogether');
-
+      // TODO: Fix soon plz
+      platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=http://localhost:7755")
+      
       const mini = new MiniWebServer();
       miniServers.push(mini);
       const result: any = await new Promise((resolve, reject) => {

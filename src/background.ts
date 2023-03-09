@@ -123,10 +123,6 @@ ipcMain.on('showFriends', () => {
   }
 });
 
-ipcMain.on('createAuthWindow', async (event, args) => {
-  await createAuthWindow(args.type);
-});
-
 ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
     event.reply('parseProtocolURL', protocolURL);
@@ -205,7 +201,6 @@ ipcMain.on('expandMeScotty', (event, data) => {
 app.on('open-url', async (event, customSchemeData) => {
   // event.preventDefault();
 
-  console.log("Deep link", customSchemeData)
   win?.webContents.send('parseProtocolURL', customSchemeData);
 });
 
@@ -341,7 +336,6 @@ function createFriendsWindow() {
       friendsWindow.webContents.openDevTools();
     }
   } else {
-    createProtocol(protocolSpace)
     friendsWindow.loadURL('app://./index.html#chat');
   }
   if (win) {
@@ -354,47 +348,6 @@ function createFriendsWindow() {
     }
   });
 }
-
-const createAuthWindow = async (type: string) => {
-  electronMsAuthWindow = new BrowserWindow({
-    title: type === "microsoft" ? 'FTB Microsoft Authentication' : "MineTogether Login",
-    minWidth: 600,
-    minHeight: 690,
-    width: 600,
-    height: 690,
-    maxWidth: 600,
-    maxHeight: 690,
-    frame: true,
-    titleBarStyle: 'default',
-    resizable: false,
-    minimizable: false,
-    maximizable: false,
-    icon: path.join(__static, 'favicon.ico'),
-    autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      disableBlinkFeatures: 'Auxclick',
-      webSecurity: false,
-    },
-  });
-
-  electronMsAuthWindow?.webContents.session.clearStorageData();
-
-  electronMsAuthWindow.on('closed', () => {
-    electronMsAuthWindow = null;
-    if (win) {
-      win.webContents.send('auth-window-closed');
-    }
-  });
-  
-  createProtocol(protocolSpace)
-  await electronMsAuthWindow.loadURL(
-    type === 'microsoft'
-      ? 'https://msauth.feed-the-beast.com?useNew=true'
-      : 'https://minetogether.io/api/login?redirect=http://localhost:7755',
-  );
-};
 
 async function createWindow() {
   win = new BrowserWindow({

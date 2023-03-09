@@ -57,7 +57,6 @@ export const parseInput = (rawInput: string, log = true) => {
 };
 
 export const handleAction = (rawInput: string) => {
-  console.log(rawInput)
   const input = parseInput(rawInput);
   if (input == null) {
     console.log('Rejecting protocol as we could not parse the input', rawInput);
