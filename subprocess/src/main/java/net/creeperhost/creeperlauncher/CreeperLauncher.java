@@ -11,6 +11,7 @@ import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.covers1624.quack.platform.Architecture;
+import net.creeperhost.creeperlauncher.api.DebugTools;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
@@ -107,6 +108,8 @@ public class CreeperLauncher {
     private static boolean warnedDevelop = false;
 
     public static boolean verbose = false;
+
+    public static DebugTools DEBUG_TOOLS = DebugTools.NONE;
 
     public CreeperLauncher() {
     }
@@ -581,6 +584,20 @@ public class CreeperLauncher {
     public static void exit() {
         cleanUpBeforeExit();
         System.exit(0);
+    }
+
+    public static void openDebugTools() {
+        if (!DebugTools.IS_AVAILABLE || DEBUG_TOOLS != DebugTools.NONE) return;
+        LOGGER.info("Trying to open Debug Tools.");
+        DEBUG_TOOLS = DebugTools.load();
+    }
+
+    public static void closeDebugTools() {
+        if (DEBUG_TOOLS != DebugTools.NONE) {
+            LOGGER.info("Closing Debug Tools.");
+            DEBUG_TOOLS.close();
+            DEBUG_TOOLS = DebugTools.NONE;
+        }
     }
 }
 
