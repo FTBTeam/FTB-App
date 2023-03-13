@@ -7,6 +7,7 @@ import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
@@ -38,11 +39,9 @@ public class InstanceJson {
 
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
     public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
-    ;
     @JsonAdapter (PathTypeAdapter.class)
     public Path jrePath = Settings.getPathOpt("jrePath", null);
     public int width = Integer.parseInt(Settings.settings.getOrDefault("width", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2)));
-    ;
     public int height = Integer.parseInt(Settings.settings.getOrDefault("height", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2)));
     public String modLoader = "";
 
@@ -62,43 +61,50 @@ public class InstanceJson {
     public long totalPlayTime;
     public long lastPlayed;
 
+    @Nullable
+    @Deprecated // TODO Replace with Artv2 system.
+    public String art;
+
     // Gson
     InstanceJson() {
     }
 
     public InstanceJson(InstanceJson other) {
-        this.uuid = other.uuid;
-        this.id = other.id;
-        this.versionId = other.versionId;
-        this.name = other.name;
-        this.version = other.version;
-        this.mcVersion = other.mcVersion;
-        this.minMemory = other.minMemory;
-        this.recMemory = other.recMemory;
-        this.memory = other.memory;
-        this.jvmArgs = other.jvmArgs;
-        this.embeddedJre = other.embeddedJre;
-        this.jrePath = other.jrePath;
-        this.width = other.width;
-        this.height = other.height;
-        this.modLoader = other.modLoader;
-        this.isModified = other.isModified;
-        this.isImport = other.isImport;
-        this.cloudSaves = other.cloudSaves;
-        this.hasInstMods = other.hasInstMods;
-        this.installComplete = other.installComplete;
-        this.packType = other.packType;
-        this._private = other._private;
-        this.totalPlayTime = other.totalPlayTime;
-        this.lastPlayed = other.lastPlayed;
+        uuid = other.uuid;
+        id = other.id;
+        versionId = other.versionId;
+        name = other.name;
+        version = other.version;
+        mcVersion = other.mcVersion;
+        minMemory = other.minMemory;
+        recMemory = other.recMemory;
+        memory = other.memory;
+        jvmArgs = other.jvmArgs;
+        embeddedJre = other.embeddedJre;
+        jrePath = other.jrePath;
+        width = other.width;
+        height = other.height;
+        modLoader = other.modLoader;
+        isModified = other.isModified;
+        isImport = other.isImport;
+        cloudSaves = other.cloudSaves;
+        hasInstMods = other.hasInstMods;
+        installComplete = other.installComplete;
+        packType = other.packType;
+        _private = other._private;
+        totalPlayTime = other.totalPlayTime;
+        lastPlayed = other.lastPlayed;
+        art = other.art;
     }
 
+    // Copy instance.
     public InstanceJson(InstanceJson other, UUID uuid, String name) {
         this(other);
         this.uuid = uuid;
         this.name = name;
     }
 
+    // New instance.
     public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
         uuid = UUID.randomUUID();
 
@@ -115,6 +121,8 @@ public class InstanceJson {
         memory = recMemory;
         adjustMemory();
 
+        this._private = isPrivate;
+        this.packType = packType;
     }
 
     public static InstanceJson load(Path path) throws IOException {

@@ -16,6 +16,7 @@ import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
@@ -31,6 +32,7 @@ import javax.annotation.WillNotClose;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,12 +68,40 @@ public class Instance implements IPack {
 
     private long startTime;
 
+    // Brand-new instance.
     public Instance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
         props = new InstanceJson(modpack, versionManifest, isPrivate, packType);
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         FileUtils.createDirectories(path);
 
         this.versionManifest = versionManifest;
+
+        ModpackManifest.Art art = modpack.getFirstArt("square");
+        if (art != null) {
+            Path tempFile = null;
+            try {
+                tempFile = Files.createTempFile("art", "");
+                Files.delete(tempFile);
+                NewDownloadTask task = NewDownloadTask.builder()
+                        .url(art.getUrl())
+                        .dest(tempFile)
+                        .build();
+                task.execute(null, null);
+                try (InputStream is = Files.newInputStream(tempFile)) {
+                    doImportArt(is);
+                }
+            } catch (IOException ex) {
+                LOGGER.error("Failed to download art.", ex);
+            } finally {
+                if (tempFile != null) {
+                    try {
+                        Files.deleteIfExists(tempFile);
+                    } catch (IOException ex) {
+                        LOGGER.error("Failed to cleanup temp file from art.", ex);
+                    }
+                }
+            }
+        }
 
         try {
             saveJson();
@@ -80,8 +110,8 @@ public class Instance implements IPack {
         }
     }
 
+    // Loading an existing instance.
     public Instance(Path path, Path json) throws IOException {
-        //We're loading an existing instance
         this.path = path;
         props = InstanceJson.load(json);
         if (props.installComplete) {
@@ -103,6 +133,9 @@ public class Instance implements IPack {
 
     private void doImportArt(@WillNotClose InputStream is) throws IOException {
         BufferedImage resizedArt = ImageUtils.resizeImage(is, 256, 256);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ImageIO.write(resizedArt, "png", bos);
+        props.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
         // folder.jpg is not strictly used, it exists for easy folder navigation.
         try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
             ImageIO.write(resizedArt, "jpg", os);
@@ -299,7 +332,6 @@ public class Instance implements IPack {
 
     @Nullable
     public Instance duplicate(String instanceName) throws IOException {
-        // Hack around GSON to duplicate the fields here... kinda lazy
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
