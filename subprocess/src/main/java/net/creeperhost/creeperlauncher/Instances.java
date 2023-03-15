@@ -1,9 +1,7 @@
 package net.creeperhost.creeperlauncher;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
 import net.creeperhost.creeperlauncher.util.FileUtils;
@@ -117,22 +115,22 @@ public class Instances
     }
 
     private static HashMap<UUID, JsonObject> loadCloudInstances() {
-        List<UUID> uuidList = CloudSaveManager.getPrefixes();
         HashMap<UUID, JsonObject> hashMap = new HashMap<>();
-
-        for (UUID uuid : uuidList) {
-            try {
-                if(Instances.getInstance(uuid) == null) {
-                    String jsonResp = CloudSaveManager.getFile(uuid.toString() + "/instance.json");
-                    Gson gson = new Gson();
-                    JsonObject object = gson.fromJson(jsonResp, JsonObject.class);
-                    hashMap.put(uuid, object);
-                }
-            } catch (Exception e) {
-                LOGGER.error("Invalid cloudsave found with UUID of {}", uuid);
-            }
-
-        }
+//        List<UUID> uuidList = CloudSaveManager.getPrefixes();
+//
+//        for (UUID uuid : uuidList) {
+//            try {
+//                if(Instances.getInstance(uuid) == null) {
+//                    String jsonResp = CloudSaveManager.getFile(uuid.toString() + "/instance.json");
+//                    Gson gson = new Gson();
+//                    JsonObject object = gson.fromJson(jsonResp, JsonObject.class);
+//                    hashMap.put(uuid, object);
+//                }
+//            } catch (Exception e) {
+//                LOGGER.error("Invalid cloudsave found with UUID of {}", uuid);
+//            }
+//
+//        }
         return hashMap;
     }
 }
