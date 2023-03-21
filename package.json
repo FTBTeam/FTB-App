@@ -31,7 +31,7 @@
     "axios": "^1.3.3",
     "balloon-css": "^1.2.0",
     "dayjs": "^1.11.7",
-    "electron": "^23.1.0",
+    "electron": "^22.3.3",
     "markdown-it": "^13.0.1",
     "mcping-js": "^1.5.0",
     "mitt": "^3.0.0",

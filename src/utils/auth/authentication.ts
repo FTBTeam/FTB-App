@@ -14,15 +14,13 @@ interface Authenticator {
   refresh: (profile: AuthProfile) => Promise<RefreshResponse>;
 }
 
-export async function loginWithMicrosoft(credentials: string): Promise<{ success: boolean; response: string }> {
+export async function loginWithMicrosoft(payload: string | {key: string; iv: string; password: string}): Promise<{ success: boolean; response: string }> {
   const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      credentials,
-    }),
+    body: JSON.stringify(typeof payload === "string" ? {credentials: payload} : payload),
   });
 
   const response: any = (await responseRaw.json()).data;

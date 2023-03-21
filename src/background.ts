@@ -30,7 +30,6 @@ if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
-let electronMsAuthWindow: BrowserWindow | null;
 
 let protocolURL: string | null;
 
@@ -289,10 +288,6 @@ ipcMain.on('openLink', (event, data) => {
 ipcMain.on('close-auth-window', (event, data) => {
   const {success} = data;
   event.reply("authenticationFlowCompleted", {success})
-  
-  if (electronMsAuthWindow) {
-    electronMsAuthWindow.close();
-  }
 });
 
 function createFriendsWindow() {
@@ -408,10 +403,6 @@ async function createWindow() {
     win = null;
     if (friendsWindow) {
       friendsWindow.close();
-    }
-
-    if (electronMsAuthWindow) {
-      electronMsAuthWindow.close();
     }
   });
 }

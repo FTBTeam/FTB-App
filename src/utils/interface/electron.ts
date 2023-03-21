@@ -14,6 +14,7 @@ import http from 'http';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
 import platform from '@/utils/interface/electron-overwolf';
+import {loginWithMicrosoft} from '@/utils/auth/authentication';
 
 declare const __static: string;
 
@@ -155,12 +156,52 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openMsAuth(callback: (success: boolean) => void) {
-      platform.get.utils.openUrl("https://msauth.feed-the-beast.com?useNew=true");
+    async openMsAuth(callback: (success: boolean) => void) {
+      platform.get.utils.openUrl("https://msauth.feed-the-beast.com");
 
-      ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
-        callback(data.success)
+      const mini = new MiniWebServer();
+      miniServers.push(mini);
+      const result: any = await new Promise((resolve, reject) => {
+        mini.open();
+        mini.on('response', (data: { token: string; 'app-auth': string }) => {
+          console.log(data)
+          resolve(data);
+        });
+
+        mini.on('close', () => {
+          resolve(null);
+        });
       });
+
+      if (result?.key) {
+        ipcRenderer.send('close-auth-window', {success: true});
+      }
+
+      const res = await loginWithMicrosoft({
+        key: result.key,
+        iv: result.iv,
+        password: result.password
+      });
+      
+      if (res.success) {
+        mini.close().catch(console.error);
+        await store.dispatch('core/loadProfiles');
+        callback(true);
+        return;
+      }
+      
+      await store.dispatch('showAlert', {
+        type: 'danger',
+        title: 'Unable to login',
+        message: `Failed to login due to: ${result.response}`,
+      });
+    
+      mini.close().catch(console.error);
+      callback(false);
+      
+      // ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
+      //   callback(data.success)
+      // });
     },
     
     closeAuthWindow(success: boolean) {
@@ -193,7 +234,7 @@ const Electron: ElectronOverwolfInterface = {
       });
 
       if (result?.token) {
-        ipcRenderer.send('close-auth-window');
+        ipcRenderer.send('close-auth-window', {success: true});
       }
 
       mini.close().catch(console.error);
@@ -390,7 +431,6 @@ const Electron: ElectronOverwolfInterface = {
 
     // TODO: this entire thing needs a registry + handler wrapper
     ipcRenderer.on('parseProtocolURL', (event, data) => {
-      console.log("Hit")
       handleAction(data);
       // let protocolURL = data;
       // if (protocolURL === undefined) {
