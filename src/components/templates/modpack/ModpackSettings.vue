@@ -7,7 +7,7 @@
       @blur="saveSettings"
       class="mb-8"
     />
-
+    
     <h3 class="font-bold text-lg mb-4">Minecraft window size</h3>
     <div class="mb-6">
       <div class="flex items-center mb-2">
@@ -15,11 +15,11 @@
           <b>Size presets</b>
           <p class="text-muted text-sm">Select a preset based on your system</p>
         </div>
-
+        
         <selection
-          v-if="resolutionList.length"
+          v-if="resolutionList.length && localInstance"
           @selected="(e) => e && selectResolution(e)"
-          :inheritedSelection="resolutionList.find((e) => e.text === `${localInstance.width.toString()} x ${localInstance.height.toString()}px`)"
+          :inheritedSelection="resolutionList.find((e) => e.text === `${localInstance.width ? localInstance.width.toString() : ''} x ${localInstance.height ? localInstance.height.toString() : ''}px`)"
           :style="{width: '240px'}"
           :options="resolutionList"
         />
