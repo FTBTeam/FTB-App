@@ -14,7 +14,7 @@
     "vue:serve": "cross-env TARGET_PLATFORM=electron vue-cli-service serve",
     "vue:serve:overwolf": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
     "build": "vue-cli-service electron:build",
-    "buildall": "vue-cli-service electron:build -ml",
+    "build:electron": "vue-cli-service electron:build -ml --x64",
     "gen:license": "license-checker --json > licenses.json",
     "postinstall": "electron-builder install-app-deps && patch-package",
     "postuninstall": "electron-builder install-app-deps"
@@ -22,7 +22,8 @@
   "engines": {
     "node": "^18",
     "npm": "dont-use-npm",
-    "yarn": "^1.22.19"
+    "yarn": "dont-use-yarn",
+    "pnpm": "^7.26.2"
   },
   "dependencies": {
     "@sentry/tracing": "^6.19.7",
@@ -52,6 +53,7 @@
     "@fortawesome/free-regular-svg-icons": "^6.1.1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@fortawesome/vue-fontawesome": "^2.0.6",
+    "@overwolf/ow-cli": "0.0.5-0",
     "@overwolf/types": "^3.16.0",
     "@sentry/webpack-plugin": "^1.18.9",
     "@types/markdown-it": "^12.2.3",
@@ -66,6 +68,7 @@
     "@vue/cli-service": "^4.5.19",
     "@vue/devtools": "^6.5.0",
     "@vue/test-utils": "1.0.2",
+    "archiver": "^5.3.1",
     "babel-core": "7.0.0-bridge.0",
     "core-js": "^3.6.5",
     "cross-env": "^7.0.3",
