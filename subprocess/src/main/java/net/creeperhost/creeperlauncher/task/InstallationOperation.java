@@ -6,7 +6,7 @@ import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,11 +20,11 @@ public class InstallationOperation extends LongRunningOperation {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final InstallInstanceData data;
-    private final LocalInstance instance;
+    private final Instance instance;
     private final ModpackVersionManifest manifest;
     private final InstanceInstaller installer;
 
-    public InstallationOperation(LongRunningTaskManager manager, InstallInstanceData data, LocalInstance instance, ModpackVersionManifest manifest) throws IOException {
+    public InstallationOperation(LongRunningTaskManager manager, InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
         super(manager);
         this.data = data;
         this.instance = instance;
@@ -33,7 +33,7 @@ public class InstallationOperation extends LongRunningOperation {
         installer = new InstanceInstaller(instance, manifest, cancelToken, tracker);
     }
 
-    public LocalInstance getInstance() {
+    public Instance getInstance() {
         return instance;
     }
 
@@ -65,7 +65,7 @@ public class InstallationOperation extends LongRunningOperation {
         switch (reason) {
             case NORMAL -> {
                 Instances.addInstance(instance);
-                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance));
+                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.props));
             }
             case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", ""));
         }

@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Creates a wrapper around a pack instance to handle fatal errors in a graceful way. We provide an 
@@ -27,12 +26,12 @@ import java.util.function.Function;
 public class InstanceSnapshot {
     private static final Logger LOGGER = LogManager.getLogger();
     
-    public static InstanceSnapshot create(LocalInstance instance, Consumer<LocalInstance> action) {
+    public static InstanceSnapshot create(Instance instance, Consumer<Instance> action) {
         return new InstanceSnapshot(instance, action);
     }
     
-    private final LocalInstance instance;
-    private final Consumer<LocalInstance> action;
+    private final Instance instance;
+    private final Consumer<Instance> action;
     private final Instant createdAt;
     
     private final UUID snapshotIdentifier;
@@ -40,7 +39,7 @@ public class InstanceSnapshot {
     
     private Set<String> affectedRootFiles = new HashSet<>();
     
-    private InstanceSnapshot(LocalInstance instance, Consumer<LocalInstance> action) {
+    private InstanceSnapshot(Instance instance, Consumer<Instance> action) {
         this.instance = instance;
         this.action = action;
         this.createdAt = Instant.now();

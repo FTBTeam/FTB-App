@@ -12,7 +12,7 @@ import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
@@ -49,7 +49,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return versionName;
     }
 
-    public static AbstractForgeInstallTask createInstallTask(LocalInstance instance, String mcVersion, String forgeVersion) throws IOException {
+    public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion) throws IOException {
         if (FORGE_LEGACY_INSTALL.containsVersion(new DefaultArtifactVersion(mcVersion))) {
             return new LegacyForgeInstallTask(instance, mcVersion, forgeVersion);
         }
@@ -73,7 +73,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return detectInstallerVersion(instance, task.getDest());
     }
 
-    private static AbstractForgeInstallTask detectInstallerVersion(LocalInstance instance, Path installer) throws IOException {
+    private static AbstractForgeInstallTask detectInstallerVersion(Instance instance, Path installer) throws IOException {
         try (FileSystem fs = IOUtils.getJarFileSystem(installer, true)) {
             Path installProfile = fs.getPath("/install_profile.json");
 

@@ -1,11 +1,7 @@
 package net.creeperhost.creeperlauncher.api.data.instances;
 
-import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
-import net.creeperhost.creeperlauncher.api.handlers.instances.InstanceInstallModHandler;
 import net.creeperhost.creeperlauncher.mod.Mod;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
 
 import java.util.List;
 
@@ -45,16 +41,5 @@ public class InstanceInstallModData extends BaseData {
             this.overallBytes = overallBytes;
         }
 
-    }
-
-    public static void main(String[] args) {
-        CreeperLauncher.initSettingsAndCache();
-        Instances.refreshInstances();
-        LocalInstance localInstance = Instances.allInstances().get(0);
-        InstanceInstallModData instanceInstallModData = new InstanceInstallModData();
-        instanceInstallModData.modId = 222880;
-        instanceInstallModData.versionId = 3099576;
-        instanceInstallModData.uuid = localInstance.getUuid().toString();
-        new InstanceInstallModHandler().handle(instanceInstallModData);
     }
 }

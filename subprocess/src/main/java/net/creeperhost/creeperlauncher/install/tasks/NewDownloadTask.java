@@ -4,24 +4,25 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.net.HttpResponseException;
-import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
+import net.covers1624.quack.util.TimeUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.SSLUtils;
 import net.creeperhost.creeperlauncher.util.X509Formatter;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okio.Throttler;
+import okio.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
@@ -31,8 +32,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileTime;
 import java.security.cert.X509Certificate;
 import java.util.*;
+
+import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
+import static java.net.HttpURLConnection.HTTP_PARTIAL;
 
 /**
  * A task to download a file.
@@ -54,15 +60,21 @@ public class NewDownloadTask implements Task<Path> {
     @Nullable
     private final LocalFileLocator fileLocator;
     private final boolean tryCompanionHashes;
+    private final boolean tryResumeDownload;
 
-    private NewDownloadTask(int tries, List<String> urls, Path dest, DownloadValidation validation, @Nullable LocalFileLocator fileLocator, boolean tryCompanionHashes) {
-        this.tries = tries;
-        this.urls = urls;
-        this.dest = dest;
-        this.validation = validation;
+    private NewDownloadTask(Builder builder) {
+        if (builder.urls.isEmpty()) throw new IllegalStateException("URL not set.");
+        if (builder.dest == null) throw new IllegalStateException("Dest not set.");
 
-        this.fileLocator = fileLocator;
-        this.tryCompanionHashes = tryCompanionHashes;
+        tries = builder.tries;
+        urls = builder.urls;
+        dest = builder.dest;
+        validation = builder.validation;
+
+        fileLocator = builder.fileLocator;
+        tryCompanionHashes = builder.tryCompanionHashes;
+        tryResumeDownload = builder.tryResumeDownload
+                && validation.expectedSize != -1 && !validation.expectedHashes.isEmpty(); // We must have hashes and file length, we can't validate the file otherwise.
     }
 
     /**
@@ -118,7 +130,7 @@ public class NewDownloadTask implements Task<Path> {
 
             for (int i = 0; i < tries; i++) {
                 try {
-                    doRequest(url, false, dest, validation, progressListener);
+                    doRequest(url, Constants.httpClient(), dest, validation, progressListener);
                     success = true;
                     break outer;
                 } catch (Throwable ex) {
@@ -129,7 +141,7 @@ public class NewDownloadTask implements Task<Path> {
             LOGGER.warn("Download failed 3 times. Trying HTTP/1.1");
             for (int i = 0; i < tries; i++) {
                 try {
-                    doRequest(url, true, dest, validation, progressListener);
+                    doRequest(url, Constants.http1Client(), dest, validation, progressListener);
                     success = true;
                     break outer;
                 } catch (Throwable ex) {
@@ -171,7 +183,7 @@ public class NewDownloadTask implements Task<Path> {
         Throwable fail = null;
         for (int i = 0; i < tries; i++) {
             try {
-                doRequest(url + ext, false, dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
+                doRequest(url + ext, Constants.httpClient(), dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
                 fail = null;
                 break;
             } catch (Throwable ex) {
@@ -190,39 +202,146 @@ public class NewDownloadTask implements Task<Path> {
         return HashCode.fromString(Files.readString(dest, StandardCharsets.UTF_8).trim());
     }
 
-    private static void doRequest(String url, boolean http1, Path dest, DownloadValidation validation, @Nullable TaskProgressListener progressListener) throws IOException {
-        OkHttpDownloadAction action = new OkHttpDownloadAction()
-                .setClient(http1 ? Constants.http1Client() : Constants.httpClient())
-                .setUrl(url)
-                .setDest(dest)
-                .setUseETag(validation.useETag)
-                .setOnlyIfModified(validation.useOnlyIfModified)
-                .addTag(Throttler.class, Constants.getGlobalThrottler());
+    private void doRequest(String url, OkHttpClient httpClient, Path path, DownloadValidation validation, @Nullable TaskProgressListener progressListener) throws IOException {
+        Path tempFile = path.resolveSibling("__tmp_" + path.getFileName());
+        Path eTagFile = path.resolveSibling(path.getFileName() + ".etag");
 
-        if (progressListener != null) {
-            action.setDownloadListener(new QuackProgressAdapter(progressListener));
+        boolean success = false;
+        boolean readAnyBytes = false;
+        int tries = 0;
+        List<Throwable> downloadFailures = null;
+        while (tries++ == 0 || !success && readAnyBytes && tries < 10) {
+            readAnyBytes = false;
+            LOGGER.info("Trying to download from {}..", url);
+            if (tries > 1) {
+                LOGGER.info(" Resume try {}.", tries);
+            }
+
+            Request.Builder builder = new Request.Builder()
+                    .url(url)
+                    .addHeader("User-Agent", Constants.USER_AGENT);
+
+            if (validation.useETag && Files.exists(eTagFile)) {
+                builder.addHeader("If-None-Match", Files.readString(eTagFile));
+            }
+
+            long lastModified = -1;
+            if (validation.useOnlyIfModified && Files.exists(path)) {
+                lastModified = Files.getLastModifiedTime(path).toMillis();
+                builder.addHeader("If-Modified-Since", TimeUtils.FORMAT_RFC1123.format(new Date(lastModified)));
+            }
+
+            builder.tag(Throttler.class, Constants.getGlobalThrottler());
+
+            boolean tempExists = Files.exists(tempFile);
+            long existingSize = tempExists ? Files.size(tempFile) : -1;
+            boolean tryResume = tryResumeDownload && tempExists;
+
+            if (tryResume) {
+                builder.addHeader("Range", "bytes=" + existingSize + "-");
+            }
+
+            if (DEBUG) {
+                LOGGER.info("Connecting to {}.", url);
+            }
+
+            try (Response response = httpClient.newCall(builder.build()).execute()) {
+                int code = response.code();
+                validation.validateResponseCode(code, response.message());
+
+                Date lastModifiedHeader = response.headers().getDate("Last-Modified");
+                if (validation.validateNotModified(url, code, lastModified, lastModifiedHeader)) {
+                    LOGGER.info("  File passed ETag/OnlyIfModified checks.");
+                    // We validated ETag/OnlyIfModified
+                    return;
+                }
+
+                ResponseBody body = response.body();
+                if (body == null) {
+                    throw new IOException("Got empty response body??");
+                }
+
+                boolean isPartial = code == HTTP_PARTIAL;
+
+                long totalLen = body.contentLength();
+                if (isPartial) {
+                    totalLen += existingSize;
+                }
+
+                if (progressListener != null) {
+                    progressListener.start(totalLen);
+                }
+
+                if (DEBUG) {
+                    LOGGER.info("Downloading: '{}' Bytes: {}.", url, totalLen);
+                    if (isPartial) {
+                        LOGGER.info(" Continuing download. Offset: {}", existingSize);
+                    }
+                }
+
+                Source s = body.source();
+                if (progressListener != null) {
+                    s = new ProgressSource(s, progressListener);
+                }
+
+                boolean deleteFile = false;
+                try (Source source = s) {
+                    Path output = IOUtils.makeParents(tempFile);
+                    try (BufferedSink sink = Okio.buffer(isPartial ? Okio.sink(output, StandardOpenOption.WRITE, StandardOpenOption.APPEND) : Okio.sink(output))) {
+                        long read;
+                        while (true) {
+                            read = source.read(sink.getBuffer(), 8192);
+                            readAnyBytes = true;
+                            if (read == -1) break;
+                            sink.emitCompleteSegments();
+                        }
+                        success = true;
+                    }
+                } catch (IOException ex) {
+                    // If we aren't in resume mode, or we tried to resume and did not get 206 partial. Just bonk out.
+                    if (!tryResumeDownload || !isPartial && tries > 1) {
+                        deleteFile = true;
+                        throw ex;
+                    }
+                    success = false;
+                    if (downloadFailures == null) {
+                        downloadFailures = new ArrayList<>(10);
+                    }
+                    downloadFailures.add(ex);
+                } finally {
+                    if (DEBUG) {
+                        LOGGER.info("Finished '{}'. Success? {}", url, success);
+                    }
+                    if (success) {
+                        Files.move(tempFile, path, StandardCopyOption.REPLACE_EXISTING);
+                    } else if (deleteFile) {
+                        Files.deleteIfExists(tempFile);
+                    }
+                }
+                if (validation.useOnlyIfModified && lastModifiedHeader != null) {
+                    Files.setLastModifiedTime(path, FileTime.fromMillis(lastModifiedHeader.getTime()));
+                }
+                String eTagHeader = response.header("ETag");
+                if (validation.useETag && eTagHeader != null) {
+                    Files.writeString(IOUtils.makeParents(eTagFile), eTagHeader, StandardCharsets.UTF_8);
+                }
+            }
         }
-        if (DEBUG) {
-            action.setQuiet(false);
+
+        if (!success) {
+            IOException ex = new IOException("Failed to download file after 10 resume attempts.");
+            for (Throwable failure : downloadFailures) {
+                ex.addSuppressed(failure);
+            }
+            Files.delete(tempFile);
+            throw ex;
         }
 
-        LOGGER.info(" Trying to download from {}..", url);
-        action.execute();
+        validateDownload(url, path, validation);
+    }
 
-        if (action.isUpToDate()) {
-            LOGGER.info("  File passed ETag/OnlyIfModified checks.");
-            // We validated ETag/OnlyIfModified
-            return;
-        }
-
-        MultiHasher hashRequest = null;
-        if (!validation.expectedHashes.isEmpty()) {
-            hashRequest = new MultiHasher(validation.expectedHashes.keySet());
-            hashRequest.load(dest);
-        }
-
-        HashResult result = hashRequest != null ? hashRequest.finish() : null;
-
+    private static void validateDownload(String url, Path dest, DownloadValidation validation) throws IOException {
+        HashResult result = hash(dest, validation);
         if (!validation.validate(dest, result)) {
             StringBuilder reason = new StringBuilder();
             // Validate will return false when both expectedSize and expectedHash are missing.
@@ -245,6 +364,16 @@ public class NewDownloadTask implements Task<Path> {
             }
             throw new IOException("Downloaded file '" + url + "'(" + dest + ") failed validation. " + reason);
         }
+    }
+
+    @Nullable
+    @Deprecated // Might be redundant now, can probably go back to using the interceptor.
+    private static HashResult hash(Path dest, DownloadValidation validation) throws IOException {
+        if (validation.expectedHashes.isEmpty()) return null;
+
+        MultiHasher hasher = new MultiHasher(validation.expectedHashes.keySet());
+        hasher.load(dest);
+        return hasher.finish();
     }
 
     @Override
@@ -312,6 +441,7 @@ public class NewDownloadTask implements Task<Path> {
         @Nullable
         private LocalFileLocator fileLocator;
         private boolean tryCompanionHashes;
+        private boolean tryResumeDownload;
 
         private Builder() { }
 
@@ -351,11 +481,13 @@ public class NewDownloadTask implements Task<Path> {
             return this;
         }
 
-        public NewDownloadTask build() {
-            if (urls.isEmpty()) throw new IllegalStateException("URL not set.");
-            if (dest == null) throw new IllegalStateException("Dest not set.");
+        public Builder tryResumeDownload() {
+            this.tryResumeDownload = true;
+            return this;
+        }
 
-            return new NewDownloadTask(tries, urls, dest, validation, fileLocator, tryCompanionHashes);
+        public NewDownloadTask build() {
+            return new NewDownloadTask(this);
         }
     }
 
@@ -464,6 +596,35 @@ public class NewDownloadTask implements Task<Path> {
             // We are redundant if super is, and we aren't using etag/onlyIfModified matching.
             return super.isRedundant() && !useETag && !useOnlyIfModified;
         }
+
+        protected boolean expectNotModified() {
+            return useETag || useOnlyIfModified;
+        }
+
+        protected void validateResponseCode(int code, String reasonPhrase) throws HttpResponseException {
+            if ((code < 200 || code > 299) && (!expectNotModified() || code != HTTP_NOT_MODIFIED)) {
+                throw new HttpResponseException(code, reasonPhrase);
+            }
+        }
+
+        protected boolean validateNotModified(String url, int code, long lastModifiedDisk, @Nullable Date lastModifiedHeader) {
+            boolean timestampNotModified = useOnlyIfModified && lastModifiedHeader != null && lastModifiedDisk >= lastModifiedHeader.getTime();
+            boolean notModified = expectNotModified() && code == HTTP_NOT_MODIFIED;
+            if (notModified || timestampNotModified) {
+                if (DEBUG) {
+                    String reason = "";
+                    if (code == HTTP_NOT_MODIFIED) {
+                        reason += "304 not modified ";
+                    }
+                    if (timestampNotModified) {
+                        reason += "Last-Modified header";
+                    }
+                    LOGGER.info("Not Modified ({}). Skipping '{}'.", reason.trim(), url);
+                }
+                return true;
+            }
+            return false;
+        }
     }
 
     private record FailedDownloadAttempt(String url, int urlIndex, int tryNum, Throwable ex, @Nullable X509Certificate[] certs) {
@@ -493,4 +654,26 @@ public class NewDownloadTask implements Task<Path> {
         }
     }
 
+    private static class ProgressSource extends ForwardingSource {
+
+        private final TaskProgressListener listener;
+        private long totalLen;
+
+        public ProgressSource(@NotNull Source delegate, TaskProgressListener listener) {
+            super(delegate);
+            this.listener = listener;
+        }
+
+        @Override
+        public long read(@NotNull Buffer sink, long byteCount) throws IOException {
+            long len = super.read(sink, byteCount);
+            if (len == -1) {
+                listener.finish(totalLen);
+            } else {
+                totalLen += len;
+                listener.update(totalLen);
+            }
+            return len;
+        }
+    }
 }
