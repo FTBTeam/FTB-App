@@ -5,7 +5,7 @@ import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ public class ForgeLegacyLibraryHelper {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void installLegacyLibs(@Nullable CancellationToken cancelToken, LocalInstance instance, String mcVersion) throws IOException {
+    public static void installLegacyLibs(@Nullable CancellationToken cancelToken, Instance instance, String mcVersion) throws IOException {
         List<NewDownloadTask> tasks = getLibraryTasks(instance, mcVersion);
         if (tasks.isEmpty()) return;
 
@@ -36,7 +36,7 @@ public class ForgeLegacyLibraryHelper {
         }
     }
 
-    public static List<NewDownloadTask> getLibraryTasks(LocalInstance instance, String mcVersion) {
+    public static List<NewDownloadTask> getLibraryTasks(Instance instance, String mcVersion) {
         Path libsDir = instance.getDir().resolve("lib");
         List<NewDownloadTask> libraries = new LinkedList<>();
         switch (mcVersion) {

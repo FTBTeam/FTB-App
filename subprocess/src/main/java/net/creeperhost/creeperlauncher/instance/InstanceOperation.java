@@ -9,7 +9,7 @@ import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -26,13 +26,13 @@ import java.util.stream.Stream;
  */
 public abstract class InstanceOperation {
 
-    protected final LocalInstance instance;
+    protected final Instance instance;
     protected final ModpackVersionManifest manifest;
 
     @Nullable
     protected Map<String, IndexedFile> knownFiles;
 
-    protected InstanceOperation(LocalInstance instance, ModpackVersionManifest manifest) {
+    protected InstanceOperation(Instance instance, ModpackVersionManifest manifest) {
         this.instance = instance;
         this.manifest = manifest;
     }

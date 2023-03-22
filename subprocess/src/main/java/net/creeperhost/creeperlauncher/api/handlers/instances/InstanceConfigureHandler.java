@@ -5,7 +5,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
 import java.nio.file.Paths;
 import java.util.Map;
@@ -17,7 +17,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
     {
         try
         {
-            LocalInstance instance = Instances.getInstance(data.uuid);
+            Instance instance = Instances.getInstance(data.uuid);
             if (instance == null) {
                 // TODO, This message needs to be improved. We should tell the frontend _why_
                 Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));
@@ -28,35 +28,35 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
                 switch (setting.getKey().toLowerCase())
                 {
                     case "memory":
-                        instance.memory = Integer.parseInt(setting.getValue());
+                        instance.props.memory = Integer.parseInt(setting.getValue());
                         break;
                     case "name":
-                        instance.name = setting.getValue();
+                        instance.props.name = setting.getValue();
                         break;
                     case "jvmargs":
-                        instance.jvmArgs = setting.getValue();
+                        instance.props.jvmArgs = setting.getValue();
                         break;
                     case "width":
-                        instance.width = Integer.parseInt(setting.getValue());
+                        instance.props.width = Integer.parseInt(setting.getValue());
                         break;
                     case "height":
-                        instance.height = Integer.parseInt(setting.getValue());
+                        instance.props.height = Integer.parseInt(setting.getValue());
                         break;
                     case "cloudsaves":
-                        instance.cloudSaves = Boolean.parseBoolean(setting.getValue());
+                        instance.props.cloudSaves = Boolean.parseBoolean(setting.getValue());
                         break;
                     case "jrepath":
                         if(setting.getValue().length() == 0){
-                            instance.embeddedJre = true;
-                            instance.jrePath = null;
+                            instance.props.embeddedJre = true;
+                            instance.props.jrePath = null;
                         } else {
-                            instance.embeddedJre = false;
+                            instance.props.embeddedJre = false;
                             var jreLocation = Paths.get(setting.getValue());
                             if (JavaLocator.parseInstall(jreLocation) == null) {
                                 Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
                                 return;
                             }
-                            instance.jrePath = jreLocation;
+                            instance.props.jrePath = jreLocation;
                         }
                         break;
                 }

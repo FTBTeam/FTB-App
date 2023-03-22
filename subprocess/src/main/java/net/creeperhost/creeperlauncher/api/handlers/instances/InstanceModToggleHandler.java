@@ -5,7 +5,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceModToggleData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,7 +14,7 @@ public class InstanceModToggleHandler implements IMessageHandler<InstanceModTogg
 
     @Override
     public void handle(InstanceModToggleData data) {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
 
         Optional<ModFile> mod = instance.getMods(false).stream()
                 .filter(e -> e.getName().equals(data.fileName))

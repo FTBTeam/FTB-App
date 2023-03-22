@@ -4,7 +4,7 @@ import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +19,7 @@ public class InstanceGetBackupsHandler implements IMessageHandler<InstanceGetBac
     
     @Override
     public void handle(Request data) {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
             Settings.webSocketAPI.sendMessage(new InstanceBackupsErrorReply(data, "Unable to locate modpack for backups"));
             return;
