@@ -1,8 +1,8 @@
 package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -24,23 +24,23 @@ public class InstallInstanceData extends BaseData {
         public final String message;
         public final String uuid;
         @Nullable
-        public final LocalInstance instanceData;
+        public final InstanceJson instanceData;
 
         public Reply(InstallInstanceData data, String status, String message, String uuid) {
             this(data, status, message, uuid, null);
         }
 
-        public Reply(InstallInstanceData data, String status, String message, LocalInstance instanceData) {
-            this(data, status, message, instanceData.getUuid().toString(), instanceData);
+        public Reply(InstallInstanceData data, String status, String message, InstanceJson props) {
+            this(data, status, message, props.uuid.toString(), props);
         }
 
-        public Reply(InstallInstanceData data, String status, String message, String uuid, LocalInstance instanceData) {
+        public Reply(InstallInstanceData data, String status, String message, String uuid, InstanceJson props) {
             type = "installInstanceDataReply";
             requestId = data.requestId;
             this.status = status;
             this.message = message;
             this.uuid = uuid;
-            this.instanceData = instanceData;
+            this.instanceData = props;
         }
     }
 

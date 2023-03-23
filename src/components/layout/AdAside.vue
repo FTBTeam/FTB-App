@@ -1,19 +1,29 @@
 <template>
   <div class="ad-aside" :class="{ 'is-dev': isDev }">
     
-    <div class="ftb-ad-frame" v-if="!isDevEnv">
-      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>
-    </div>
+<!--    <div class="ftb-ad-frame" v-if="!isDevEnv">-->
+<!--      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>-->
+<!--    </div>-->
     
     
     <div class="ad-space">
-      <div class="heart text-center mb-4" v-if="!isElectron">
-        <div class="heart-hearts">
-          <font-awesome-icon icon="heart" size="2x" class="mb-2" />
-          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-2 mb-2" />
-          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-3 mb-2" />
+<!--      <div class="heart text-center mb-4" v-if="!isElectron">-->
+<!--        <div class="heart-hearts">-->
+<!--          <font-awesome-icon icon="heart" size="2x" class="mb-2" />-->
+<!--          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-2 mb-2" />-->
+<!--          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-3 mb-2" />-->
+<!--        </div>-->
+<!--        <p class="font-bold">Supports FTB & Curseforge Authors</p>-->
+<!--      </div>-->
+      <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }">
+        <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
+          <div
+            v-if="!showPlaceholder && !isElectron"
+            id="ow-ad-second"
+            ref="adRefSecond"
+            style="max-width: 300px; max-height: 250px; display: flex; margin: 0 auto"
+          />
         </div>
-        <p class="font-bold">Supports FTB & Curseforge Authors</p>
       </div>
       
       <div class="ad-box" :class="{ overwolf: !isElectron }">
@@ -62,7 +72,7 @@ export default class AdAside extends Vue {
 
   private logger = getLogger('ad-aside-vue');
 
-  private ad: any;
+  private ads: Record<string, any> = {};
   platform = platform;
   showPlaceholder = false;
 
@@ -90,58 +100,67 @@ export default class AdAside extends Vue {
     }
 
     setTimeout(() => {
-      this.loadAds();
+      this.loadAds("ow-ad");
+      this.loadAds("ow-ad-second");
     }, 1500);
   }
 
-  loadAds() {
-    if (this.isDevEnv) {
-      return;
-    }
+  loadAds(id: string) {
+    // if (this.isDevEnv) {
+    //   return;
+    // }
     
-    this.logger.info('Loading advert system');
+    this.logger.info('Loading advert system for ' + id);
     //@ts-ignore
     if (typeof OwAd === 'undefined' || !OwAd) {
       this.showPlaceholder = true;
-      this.logger.info('No advert loaded');
+      this.logger.info('No advert object available');
     } else {
       //@ts-ignore
-      if (window.ad) {
+      if (window.ads && window.ads[id]) {
         this.logger.info('Is window advert');
         //@ts-ignore
-        this.ad = window.ad;
-        this.ad.refreshAd();
+        this.ads[id] = window.ads[id];
+        this.ads[id].refreshAd();
       } else {
         this.logger.info('Created advert');
         //@ts-ignore
-        this.ad = new OwAd(document.getElementById('ow-ad'));
-        this.logger.info(this.ad, document.getElementById('ow-ad'));
+        this.ads[id] = new OwAd(document.getElementById(id));
+        this.logger.info(this.ads[id], document.getElementById(id));
 
         //@ts-ignore
-        window.ad = this.ad;
+        if (!window.ads) {
+          //@ts-ignore
+          
+          window.ads = {};
+        }
+        
+        //@ts-ignore
+        window.ads[id] = this.ads[id];
       }
 
-      this.ad.addEventListener('error', (error: any) => {
+      this.ads[id].addEventListener('error', (error: any) => {
         this.showPlaceholder = true;
+        console.log(error)
         this.logger.info('Failed to load ad');
         this.logger.info(error);
       });
-      this.ad.addEventListener('player_loaded', () => {
+      this.ads[id].addEventListener('player_loaded', () => {
         this.logger.info('player loaded for overwolf');
       });
-      this.ad.addEventListener('display_ad_loaded', () => {
+      this.ads[id].addEventListener('display_ad_loaded', () => {
         this.logger.info('display_ad_loaded overwolf');
       });
-      this.ad.addEventListener('play', () => {
+      this.ads[id].addEventListener('play', () => {
         this.logger.info('play overwolf');
       });
-      this.ad.addEventListener('complete', () => {
+      this.ads[id].addEventListener('complete', () => {
         this.logger.info('complete ads for overwolf');
       });
-      this.ad.addEventListener('impression', () => {
+      this.ads[id].addEventListener('impression', () => {
         fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
       });
-      this.ad.addEventListener('display_ad_loaded', () => {
+      this.ads[id].addEventListener('display_ad_loaded', () => {
         fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
       });
     }
@@ -254,17 +273,22 @@ export default class AdAside extends Vue {
     }
 
     .ad-box {
-      background: black;
+      //background: black;
       width: 300px;
       height: 250px;
       overflow: hidden;
       display: flex;
       align-items: center;
-      border-radius: 3px;
-
+      justify-content: center;
+      
       &.overwolf {
         width: 400px;
         height: 300px;
+      }
+      
+      &.overwolf-smaller {
+        width: 300px;
+        height: 250px;
       }
     }
   }

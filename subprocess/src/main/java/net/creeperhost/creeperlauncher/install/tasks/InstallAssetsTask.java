@@ -88,6 +88,7 @@ public class InstallAssetsTask implements Task<AssetIndexManifest> {
             NewDownloadTask task = NewDownloadTask.builder()
                     .url(MC_RESOURCES + loc)
                     .dest(dest)
+                    .tryResumeDownload()
                     .withValidation(DownloadValidation.of()
                             .withExpectedSize(object.getSize())
                             .withHash(Hashing.sha1(), object.getHash())

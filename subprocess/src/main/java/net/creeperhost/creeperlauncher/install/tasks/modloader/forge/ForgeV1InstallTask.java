@@ -11,7 +11,7 @@ import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +37,10 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final LocalInstance instance;
+    private final Instance instance;
     private final Path installerJar;
 
-    public ForgeV1InstallTask(LocalInstance instance, Path installerJar) {
+    public ForgeV1InstallTask(Instance instance, Path installerJar) {
         this.instance = instance;
         this.installerJar = installerJar;
     }

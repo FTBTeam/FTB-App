@@ -4,7 +4,7 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.ForgeUtils;
 import net.creeperhost.creeperlauncher.util.LoaderTarget;
@@ -34,11 +34,11 @@ public class ForgeUniversalModLoader extends ForgeModLoader
 	}
 
 	@Override
-	public Path install(LocalInstance instance)
+	public Path install(Instance instance)
 	{
         Path returnFile = null;
 		String newname = getMinecraftVersion() + "-forge" + getMinecraftVersion() + "-" + getForgeVersion();
-		instance.modLoader = newname;
+		instance.props.modLoader = newname;
         LOGGER.info("Minecraft version: {} Forge version: {}", getMinecraftVersion(), getForgeVersion());
         Path file = Constants.VERSIONS_FOLDER_LOC.resolve(newname);
         FileUtils.createDirectories(file);

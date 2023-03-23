@@ -65,7 +65,6 @@ module.exports = {
       nodeIntegration: true,
       customFileProtocol: `ftb://./`,
       builderOptions: {
-        generateUpdatesFilesForAllChannels: true,
         productName: 'ftbapp',
         appId: 'com.feedthebeast.Launcher',
         
@@ -77,15 +76,12 @@ module.exports = {
           entitlements: 'build/entitlements.mac.plist',
           entitlementsInherit: 'build/entitlements.mac.plist',
           target: ['dir'],
-        },
-        win: {
-          target: ['portable'],
-          artifactName: '${productName}.${ext}',
+          artifactName: '${productName}-mac.${ext}',
         },
         linux: {
-          target: ['AppImage'],
+          target: ['dir'],
           category: 'Game',
-          artifactName: '${productName}.${ext}',
+          artifactName: '${productName}-linux.${ext}',
         },
         directories: {
           output: 'release',

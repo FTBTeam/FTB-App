@@ -9,7 +9,7 @@ import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
 import net.creeperhost.creeperlauncher.mod.Mod;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.LoaderTarget;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 import org.apache.logging.log4j.LogManager;
@@ -28,7 +28,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
     public void handle(InstanceInstallModData data) {
         String _uuid = data.uuid;
         UUID uuid = UUID.fromString(_uuid);
-        LocalInstance instance = Instances.getInstance(uuid);
+        Instance instance = Instances.getInstance(uuid);
         Mod mod = Mod.getFromAPI(data.modId);
         if (mod == null) {
             Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Cannot find version "  + data.versionId, new ArrayList<>()));

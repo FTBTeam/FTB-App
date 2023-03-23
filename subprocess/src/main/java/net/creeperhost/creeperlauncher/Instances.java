@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,30 +23,29 @@ public class Instances
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static Map<UUID, LocalInstance> instances = new HashMap<>();
+    private static Map<UUID, Instance> instances = new HashMap<>();
     private static Map<UUID, JsonObject> cloudInstances = new HashMap<>();
 
     @Nullable
-    public static LocalInstance getInstance(UUID uuid) {
+    public static Instance getInstance(UUID uuid) {
         return Instances.instances.get(uuid);
     }
 
-    public static void addInstance(LocalInstance instance) {
+    public static void addInstance(Instance instance) {
         instances.put(instance.getUuid(), instance);
     }
 
-    //TODO, do these need to copy?
-    public static List<LocalInstance> allInstances() {
-        return new ArrayList<>(Instances.instances.values());
+    public static Iterable<Instance> allInstances() {
+        return Collections.unmodifiableCollection(Instances.instances.values());
     }
 
-    public static List<JsonObject> cloudInstances() {
-        return new ArrayList<>(Instances.cloudInstances.values());
+    public static Iterable<JsonObject> cloudInstances() {
+        return Collections.unmodifiableCollection(Instances.cloudInstances.values());
     }
 
     public static void refreshInstances() {
         ElapsedTimer totalTimer = new ElapsedTimer();
-        Path instancesDir = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC);
+        Path instancesDir = Settings.getInstancesDir();
 
         LOGGER.info("Reloading instances..");
         instances.clear();
@@ -57,13 +56,13 @@ public class Instances
             LOGGER.info("Instances directory missing, skipping..");
         } else {
             ElapsedTimer timer = new ElapsedTimer();
-            List<LocalInstance> loadedInstances = FileUtils.listDir(instancesDir).stream()
-                    .parallel()
+            List<Instance> loadedInstances = FileUtils.listDir(instancesDir)
+                    .parallelStream()
                     .filter(e -> !e.getFileName().toString().startsWith("."))
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
                     .toList();
-            instances = loadedInstances.stream().collect(Collectors.toMap(LocalInstance::getUuid, Function.identity()));
+            instances = loadedInstances.stream().collect(Collectors.toMap(Instance::getUuid, Function.identity()));
             LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
         }
 
@@ -91,15 +90,15 @@ public class Instances
         return null;
     }
 
-    private static LocalInstance loadInstance(Path path) {
+    private static Instance loadInstance(Path path) {
         Path json = path.resolve("instance.json");
         if (Files.notExists(json)) {
             LOGGER.warn("Instance missing 'instance.json', Ignoring. {}", json.toAbsolutePath());
             return null;
         }
         try {
-            LocalInstance localInstance = new LocalInstance(path);
-            if (!localInstance.installComplete) {
+            Instance localInstance = new Instance(path, json);
+            if (!localInstance.props.installComplete) {
                 // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
                 LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
                 return null;
@@ -117,24 +116,19 @@ public class Instances
         }
     }
 
-    private static HashMap<UUID, JsonObject> loadCloudInstances()
-    {
+    private static HashMap<UUID, JsonObject> loadCloudInstances() {
         List<UUID> uuidList = CloudSaveManager.getPrefixes();
         HashMap<UUID, JsonObject> hashMap = new HashMap<>();
 
-        for (UUID uuid : uuidList)
-        {
-            try
-            {
-                if(Instances.getInstance(uuid) == null)
-                {
+        for (UUID uuid : uuidList) {
+            try {
+                if(Instances.getInstance(uuid) == null) {
                     String jsonResp = CloudSaveManager.getFile(uuid.toString() + "/instance.json");
                     Gson gson = new Gson();
                     JsonObject object = gson.fromJson(jsonResp, JsonObject.class);
                     hashMap.put(uuid, object);
                 }
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 LOGGER.error("Invalid cloudsave found with UUID of {}", uuid);
             }
 

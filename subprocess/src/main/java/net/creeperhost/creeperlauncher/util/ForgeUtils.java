@@ -4,7 +4,7 @@ import com.google.gson.*;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.minecraft.StartJson;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -88,7 +88,7 @@ public class ForgeUtils
         return null;
     }
 
-    public static boolean validateJson(Path file, LocalInstance instance)
+    public static boolean validateJson(Path file, Instance instance)
     {
         StartJson sj = getFromJson(file);
         if (sj == null) return false;

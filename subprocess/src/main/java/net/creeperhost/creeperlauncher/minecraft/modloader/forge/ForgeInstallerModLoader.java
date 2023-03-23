@@ -3,7 +3,7 @@ package net.creeperhost.creeperlauncher.minecraft.modloader.forge;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.minecraft.McUtils;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.DownloadUtils;
 import net.creeperhost.creeperlauncher.util.ForgeUtils;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
@@ -32,9 +32,9 @@ public class ForgeInstallerModLoader extends ForgeModLoader
 	}
 
 	@Override
-	public Path install(LocalInstance instance)
+	public Path install(Instance instance)
 	{
-		instance.modLoader = getMinecraftVersion() + "-forge-" + getForgeVersion();
+		instance.props.modLoader = getMinecraftVersion() + "-forge-" + getForgeVersion();
 
 		String forgeUrl = Constants.FORGE_CH + getMinecraftVersion() + "-" + getForgeVersion() + "/forge-" + getMinecraftVersion() + "-" + getForgeVersion() + "-installer.jar";
 		String forgeUrlJson = Constants.FORGE_CH + getMinecraftVersion() + "-" + getForgeVersion() + "/forge-" + getMinecraftVersion() + "-" + getForgeVersion() + "-installer.json";
