@@ -61,14 +61,23 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openMsAuth(callback: (success: boolean) => void) {
+    openMsAuth(callback: (status: 'processing' | 'done') => void) {
       overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com?useNew=true`);
       overwolf.windows.getMainWindow().authCallback = callback;
     },
 
-    closeAuthWindow(success: boolean) {
-      overwolf.windows.getMainWindow().authCallback(success);
-      overwolf.windows.getMainWindow().authCallback = null;
+    closeAuthWindow(status: 'processing' | 'done', success?: boolean) {
+      overwolf.windows.getMainWindow().authCallback({
+        status, success
+      });
+      
+      if (status === "done") {
+        overwolf.windows.getMainWindow().authCallback = null;
+      }
+    },
+
+    closeWebservers() {
+      // Should likely do something but right now it's not as important
     },
 
     openModpack(payload) {

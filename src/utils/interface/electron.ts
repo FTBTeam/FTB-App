@@ -156,7 +156,7 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    async openMsAuth(callback: (success: boolean) => void) {
+    async openMsAuth(callback) {
       platform.get.utils.openUrl("https://msauth.feed-the-beast.com");
 
       const mini = new MiniWebServer();
@@ -177,6 +177,7 @@ const Electron: ElectronOverwolfInterface = {
         ipcRenderer.send('close-auth-window', {success: true});
       }
 
+      callback("processing");
       const res = await loginWithMicrosoft({
         key: result.key,
         iv: result.iv,
@@ -186,7 +187,7 @@ const Electron: ElectronOverwolfInterface = {
       if (res.success) {
         mini.close().catch(console.error);
         await store.dispatch('core/loadProfiles');
-        callback(true);
+        callback("done", true);
         return;
       }
       
@@ -197,17 +198,23 @@ const Electron: ElectronOverwolfInterface = {
       });
     
       mini.close().catch(console.error);
-      callback(false);
+      callback("done", false);
       
       // ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
       //   callback(data.success)
       // });
     },
     
-    closeAuthWindow(success: boolean) {
-      ipcRenderer.send("close-auth-window", {success});
+    closeAuthWindow(status: 'processing' | 'done', success?: boolean) {
+      // Not used atm due to the protocol on mac and linux being borked
+      ipcRenderer.send("close-auth-window", {success, status});
     },
     
+    closeWebservers() {
+      miniServers.forEach(e => e.close())
+      miniServers = [];
+    },
+
     openModpack(payload: { name: string; id: string }) {
       ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
     },

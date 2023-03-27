@@ -54,7 +54,12 @@ export default class MicrosoftAuth extends Vue {
   }
   
   async openMsAuth() {
-    platform.get.actions.openMsAuth((success) => {
+    platform.get.actions.openMsAuth((status, success) => {
+      if (status === "processing") {
+        this.loading = true;
+        return;
+      }
+      
       if (!success) {
         this.$emit('error', 'Failed to retrieve essential information, please try again.');
         return;
@@ -69,14 +74,18 @@ export default class MicrosoftAuth extends Vue {
       return;
     }
     
+    this.loading = true;
     const result = await loginWithMicrosoft(this.manualCode);
     if (result.success) {
       await this.loadProfiles();
-      await platform.get.actions.closeAuthWindow(true);
+      await platform.get.actions.closeWebservers();
+      await platform.get.actions.closeAuthWindow("done", true);
       this.$emit('authenticated');
+      this.loading = false;
       return;
     }
 
+    this.loading = false;
     this.$emit('error', `Failed to login due to: ${result.response}`);
   }
 }

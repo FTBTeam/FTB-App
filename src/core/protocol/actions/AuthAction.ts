@@ -19,15 +19,16 @@ export class AuthAction implements Action {
       });
       return;
     }
-    
+
+    await platform.get.actions.closeAuthWindow("processing");
     const result = await loginWithMicrosoft(credentials);
     if (result.success) {
       await store.dispatch('core/loadProfiles');
-      await platform.get.actions.closeAuthWindow(true);
+      await platform.get.actions.closeAuthWindow("done", true);
       return;
     }
       
-    await platform.get.actions.closeAuthWindow(false);
+    await platform.get.actions.closeAuthWindow("done", false);
     await store.dispatch('showAlert', {
       type: 'danger',
       title: 'Unable to login',
