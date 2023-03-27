@@ -1,17 +1,21 @@
 <template>
-  <div class="ms-auth text-center">
+  <div class="ms-auth" :class="{'text-left': somethingIsWrong}">
     <template v-if="!loading">
       <div class="logo my-12">
         <img class="mx-auto" src="@/assets/images/branding/microsoft.svg" alt="Microsoft logo" />
       </div>
       
-      <h3 class="text-3xl mt-6 mb-4 font-bold">Waiting for response<span class="dot" /><span class="dot" /><span class="dot" /></h3>
-      <p class="mb-6">
-        A window should have just popped up. Follow the instructions on screen, once you've finished, you'll see that
-        you've been signed in here.
+      <h3 class="text-3xl mt-6 mb-4 font-bold" v-if="!somethingIsWrong">Waiting for login<span class="dot" /><span class="dot" /><span class="dot" /></h3>
+      <p class="mb-6" v-if="!somethingIsWrong">
+        Please login with the window that has opened. If no window has opened, <a class="link" @click="platform.get.utils.openUrl('https://msauth.feed-the-beast.com?useNew')">Click here</a>.
       </p>
       
-      <p>If no window has opened, you can go to <br/><a class="link" @click="platform.get.utils.openUrl('https://msauth.feed-the-beast.com')">https://msauth.feed-the-beast.com</a></p>
+      <ftb-button v-if="!somethingIsWrong" class="inline-block px-4 py-1" color="warning" @click="somethingIsWrong = true">Something gone wrong?</ftb-button>
+      <div class="something-is-wrong" v-if="somethingIsWrong">
+        <h3 class="text-xl font-bold mb-4">Something isn't working correct?</h3>
+        <p class="mb-6">Damn! That's not good. Hopefully we can resolve it. If you logged in using the website that popped up you should be able to use the code from the website in the box below. If the website did not open, you can <a class="link" @click="platform.get.utils.openUrl('https://msauth.feed-the-beast.com?useNew')">Click here</a> to open it.</p>
+        <ftb-input v-model="manualCode" :button="true" button-color="primary" :button-click="loginWithCode" label="Authentication Code" placeholder="The code provided by the website." />
+      </div>
     </template>
     <template v-else>
       <h3 class="text-3xl mt-6 mb-4 font-bold">Loading</h3>
@@ -28,6 +32,8 @@ import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAu
 import Loading from '@/components/atoms/Loading.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
+import {loginWithMicrosoft} from '@/utils/auth/authentication';
+import store from '@/modules/store';
 
 @Component({
   components: { YggdrasilAuthForm, Loading },
@@ -35,65 +41,52 @@ import { Action } from 'vuex-class';
 export default class MicrosoftAuth extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
-
+  @Action('showAlert') public showAlert: any;
+  
   loading = false;
   platform = platform;
+
+  somethingIsWrong = false;
+  manualCode = "";
   
   mounted() {
     this.openMsAuth();
   }
   
   async openMsAuth() {
-    try {
-      const res = await platform.get.actions.openMsAuth();
-
-      this.loading = true;
-      if (!res || !res.key || !res.iv || !res.password) {
-        this.$emit('error', 'Unable to authenticate. Please try again.');
+    platform.get.actions.openMsAuth((status, success) => {
+      if (status === "processing") {
+        this.loading = true;
         return;
       }
-
-      const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          key: res.key,
-          iv: res.iv,
-          password: res.password,
-        }),
-      });
-
-      const response: any = (await responseRaw.json()).data;
-
-      if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
+      
+      if (!success) {
         this.$emit('error', 'Failed to retrieve essential information, please try again.');
         return;
       }
+      
+      this.$emit('authenticated');
+    });
+  }
 
-      this.sendMessage({
-        payload: {
-          type: 'profiles.ms.authenticate',
-          ...response,
-        },
-        callback: async (data: any) => {
-          if (!data || !data.success) {
-            this.$emit('error', data.response || 'An unknown error occurred.', 'final');
-            return;
-          }
-
-          // No error
-          await this.loadProfiles();
-          this.$emit('authenticated');
-        },
-      });
-    } catch (e) {
-      console.log(e);
-      this.$emit('error', 'Fatal error whilst trying to retrieve your account details, please try again.');
-    } finally {
-      this.loading = false;
+  async loginWithCode() {
+    if (!this.manualCode) {
+      return;
     }
+    
+    this.loading = true;
+    const result = await loginWithMicrosoft(this.manualCode);
+    if (result.success) {
+      await this.loadProfiles();
+      await platform.get.actions.closeWebservers();
+      await platform.get.actions.closeAuthWindow("done", true);
+      this.$emit('authenticated');
+      this.loading = false;
+      return;
+    }
+
+    this.loading = false;
+    this.$emit('error', `Failed to login due to: ${result.response}`);
   }
 }
 </script>

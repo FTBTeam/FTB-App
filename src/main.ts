@@ -57,28 +57,12 @@ const appSetup = async () => {
           'os.arch': platform.get.utils.getOsArch(),
         },
       },
+      
       trackComponents: true,
       tracesSampleRate: 1.0,
-      beforeSend(event: any) {
-        if (!event.exception || !event.exception.values || !event.exception.values[0]) {
-          return event;
-        }
-
-        const value = event.exception.values[0];
-
-        if (value.stacktrace && value.stacktrace.frames) {
-          value.stacktrace.frames.forEach(function (frame: any) {
-            if (frame.filename.startsWith('/')) {
-              frame.filename = 'overwolf-extension:///' + path.relative('js', frame.filename);
-            }
-          });
-        }
-
-        return event;
-      },
     });
   }
-
+  
   library.add(fas);
   library.add(far);
   library.add(fab);

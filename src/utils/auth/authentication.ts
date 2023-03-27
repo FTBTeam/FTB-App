@@ -1,8 +1,9 @@
 import { AuthProfile } from '@/modules/core/core.types';
 import store from '@/modules/store';
-import { wsTimeoutWrapper } from '@/utils';
+import {wsTimeoutWrapper, wsTimeoutWrapperTyped} from '@/utils';
 import dayjs from 'dayjs';
 import { createError } from '@/core/errors/errorCodes';
+import platform from '@/utils/interface/electron-overwolf';
 
 type RefreshResponse = {
   ok: boolean;
@@ -11,6 +12,34 @@ type RefreshResponse = {
 
 interface Authenticator {
   refresh: (profile: AuthProfile) => Promise<RefreshResponse>;
+}
+
+export async function loginWithMicrosoft(payload: string | {key: string; iv: string; password: string}): Promise<{ success: boolean; response: string }> {
+  const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(typeof payload === "string" ? {credentials: payload} : payload),
+  });
+
+  const response: any = (await responseRaw.json()).data;
+  if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
+    return {
+      success: false,
+      response: "Missing essential login credentials."
+    };
+  }
+
+  const res = await wsTimeoutWrapperTyped<any, { success: boolean; response: string }>({
+    type: 'profiles.ms.authenticate',
+    ...response,
+  });
+
+  return {
+    success: res.success ?? false,
+    response: res.response ?? "unknown cause"
+  }
 }
 
 // Todo: reduce logging in the future
@@ -305,7 +334,7 @@ export const validateAuthenticationOrSignIn = async (instanceId?: string): Promi
       {
         title: 'Error!',
         message:
-          'Profile validation failed, please login again. If this keeps happening, as for support in our Discord',
+          'Profile validation failed, please login again. If this keeps happening, ask for support in our Discord',
         type: 'danger',
       },
       { root: true },
