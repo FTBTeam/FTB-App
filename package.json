@@ -23,8 +23,7 @@
   "engines": {
     "node": "^18",
     "npm": "dont-use-npm",
-    "yarn": "dont-use-yarn",
-    "pnpm": "^7.26.2"
+    "yarn": "dont-use-yarn"
   },
   "dependencies": {
     "@sentry/tracing": "^6.19.7",
