@@ -46,7 +46,7 @@
         label="Show adverts"
         :value="settings.settings.showAdverts === true || settings.settings.showAdverts === 'true'"
         @change="toggleAdverts"
-        :disabled="auth.token.activePlan === null"
+        :disabled="!auth?.token?.activePlan"
         onColor="bg-primary"
         class="mb-8"
         small="Any paid plan can optionally disable ads throughout the app."

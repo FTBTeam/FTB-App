@@ -167,10 +167,10 @@ export default class AdAside extends Vue {
   }
   
   get advertsEnabled(): boolean {
-    if (this.auth?.token?.activePlan === null) {
+    if (!this.auth?.token?.activePlan) {
       return true;
     }
-
+    
     // If this fails, show the ads
     return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
   }
