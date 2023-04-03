@@ -5,7 +5,6 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
 import net.creeperhost.creeperlauncher.util.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +16,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class Instances
-{
+public class Instances {
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static Map<UUID, Instance> instances = new HashMap<>();
@@ -72,11 +71,8 @@ public class Instances
 
     }
 
-
     public static CompletableFuture<?> reloadCloudInstances() {
-
-        if (false) // FIXME, Disable loading of Cloud instances.
-        if (StringUtils.isNotEmpty(Constants.S3_HOST) && StringUtils.isNotEmpty(Constants.S3_BUCKET) && StringUtils.isNotEmpty(Constants.S3_KEY) && StringUtils.isNotEmpty(Constants.S3_SECRET)) {
+        if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured()) {
             return CompletableFuture.runAsync(() -> {
                 ElapsedTimer timer = new ElapsedTimer();
                 LOGGER.info("Loading cloud instances");
@@ -108,7 +104,7 @@ public class Instances
                 return null;
             }
             return localInstance;
-        } catch(Exception e) {
+        } catch (Exception e) {
             LOGGER.error("Failed to load instance: {}", json.toAbsolutePath(), e);
             return null;
         }

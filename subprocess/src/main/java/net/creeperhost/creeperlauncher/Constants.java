@@ -110,12 +110,6 @@ public class Constants {
     public static String MT_HASH = "";
     public static Path MTCONNECT_DIR = getDataDir().resolve("MTConnect");
 
-    //S3 Auth
-    public static String S3_KEY = "";
-    public static String S3_SECRET = "";
-    public static String S3_BUCKET = "";
-    public static String S3_HOST = "";
-
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
     public static void refreshHttpClient() {

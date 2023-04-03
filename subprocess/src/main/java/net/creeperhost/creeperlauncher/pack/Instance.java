@@ -203,7 +203,7 @@ public class Instance implements IPack {
             ctx.extraJVMArgs.addAll(jvmArgs);
         });
 
-        if (!Constants.S3_SECRET.isEmpty() && !Constants.S3_KEY.isEmpty() && !Constants.S3_HOST.isEmpty() && !Constants.S3_BUCKET.isEmpty()) {
+        if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured()) {
             launcher.withStartTask(ctx -> {
                 LOGGER.info("Attempting start cloud sync..");
                 cloudSync(false);

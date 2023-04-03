@@ -18,6 +18,7 @@ import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
@@ -96,6 +97,7 @@ public class CreeperLauncher {
 
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
+    public static CloudSaveManager CLOUD_SAVE_MANAGER = new CloudSaveManager();
 
     public static LocalCache localCache;
 
@@ -187,7 +189,6 @@ public class CreeperLauncher {
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
         initSettingsAndCache();
-        Instances.refreshInstances();
 
         doUpdate(args);
 

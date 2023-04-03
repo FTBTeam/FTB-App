@@ -44,5 +44,5 @@ public interface Task<T> {
      * @return The task's result or <code>null</code> if the task has no result.
      */
     @Nullable
-    T getResult();
+    default T getResult() { return null; }
 }
