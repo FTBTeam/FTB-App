@@ -10,8 +10,10 @@ import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.LazyValue;
 import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.ParallelTaskHelper;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -284,6 +286,34 @@ public class CloudSyncOperation {
 
         if (direction == SyncDirection.DOWNLOAD) {
             instance.reloadProperties();
+
+            LOGGER.info("Validating ModLoader installation..");
+            ModpackVersionManifest.Target gameTarget = instance.versionManifest.findTarget("game");
+            if (gameTarget != null) {
+                ModpackVersionManifest.Target modloaderTarget = instance.versionManifest.findTarget("modloader");
+                if (modloaderTarget != null) {
+                    ModLoaderInstallTask modLoaderInstallTask;
+                    try {
+                        modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
+                                instance,
+                                gameTarget.getVersion(),
+                                modloaderTarget.getName(),
+                                modloaderTarget.getVersion()
+                        );
+                    } catch (Throwable ex) {
+                        LOGGER.error("Failed to prepare ModLoader install task.", ex);
+                        throw ex;
+                    }
+                    try {
+                        modLoaderInstallTask.execute(null, null);
+                    } catch (Throwable ex) {
+                        LOGGER.error("Failed to execute ModLoader install task.", ex);
+                        SneakyUtils.throwUnchecked(ex);
+                    }
+                }
+            } else {
+                LOGGER.error("Game target missing from version manifest?");
+            }
         }
 
         LOGGER.info("Cloud sync finished!");
