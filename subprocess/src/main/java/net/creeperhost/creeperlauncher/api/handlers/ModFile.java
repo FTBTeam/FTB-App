@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.util.DownloadUtils;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.WebUtils;
 import org.apache.logging.log4j.LogManager;

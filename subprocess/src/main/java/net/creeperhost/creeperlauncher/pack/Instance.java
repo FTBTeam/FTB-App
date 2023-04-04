@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 
-public class Instance implements IPack {
+public class Instance {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -346,73 +346,6 @@ public class Instance implements IPack {
         return new Instance(newDir, newJson);
     }
 
-    @Override
-    public long getId() {
-        return props.id;
-    }
-
-    @Override
-    public String getName() {
-        return props.name;
-    }
-
-    @Override
-    public String getVersion() {
-        return props.version;
-    }
-
-    @Override
-    public Path getDir() {
-        return path;
-    }
-
-    @Override
-    public List<String> getAuthors() {
-        return List.of();
-    }
-
-    @Override
-    public String getDescription() {
-        return "";
-    }
-
-    @Override
-    public String getMcVersion() {
-        return props.mcVersion;
-    }
-
-    @Override
-    public String getUrl() {
-        return "";
-    }
-
-    @Override
-    public String getArtURL() {
-        return "";
-    }
-
-    @Override
-    public int getMinMemory() {
-        return props.minMemory;
-    } // Not needed but oh well, may as well return a value.
-
-    @Override
-    public int getRecMemory() {
-        return props.recMemory;
-    }
-
-    public long getVersionId() {
-        return props.versionId;
-    }
-
-    public UUID getUuid() {
-        return props.uuid;
-    }
-
-    public String getModLoader() {
-        return props.modLoader;
-    }
-
     public void cloudSync(boolean forceCloud) {
 //        if (!props.cloudSaves || !Boolean.parseBoolean(Settings.settings.getOrDefault("cloudSaves", "false"))) return;
 //        OpenModalData.openModal("Please wait", "Checking cloud save synchronization <br>", List.of());
@@ -647,6 +580,16 @@ public class Instance implements IPack {
         // TODO, generate folder name from instance name.
         return props.uuid.toString();
     }
+
+    // @formatter:off
+    public long getId() { return props.id; }
+    public long getVersionId() { return props.versionId; }
+    public String getName() { return props.name; }
+    public Path getDir() { return path; }
+    public String getMcVersion() { return props.mcVersion; }
+    public UUID getUuid() { return props.uuid; }
+    @Deprecated public String getModLoader() { return props.modLoader; }
+    // @formatter:on
 
     private record CurseProps(long curseProject, long curseFile) { }
 }

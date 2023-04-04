@@ -21,15 +21,6 @@ public class FileUtils
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void fileFromZip(Path zip, Path dest, String fileName) throws IOException
-    {
-        try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip))
-        {
-            Path fileToExtract = fileSystem.getPath(fileName);
-            Files.copy(fileToExtract, dest, REPLACE_EXISTING);
-        }
-    }
-
     public static void extractFromZip(Path zip, Path dest, String fileName, boolean relative) throws IOException
     {
         try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip))
