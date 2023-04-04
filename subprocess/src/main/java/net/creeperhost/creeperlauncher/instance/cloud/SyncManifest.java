@@ -8,8 +8,17 @@ public class SyncManifest {
     public long lastSync;
     public State state;
 
+    public SyncManifest() {
+    }
+
+    public SyncManifest(long lastSync, State state) {
+        this.lastSync = lastSync;
+        this.state = state;
+    }
+
     public enum State {
-        SYNCING,
-        SYNCED
+        SYNCING,    // An FTBA instance is currently syncing this instance.
+        UNFINISHED, // An FTBA instance 'finished' the sync process, but it failed.
+        SYNCED,     // The cloud is in a fully synced state.
     }
 }

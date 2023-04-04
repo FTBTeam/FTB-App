@@ -8,6 +8,7 @@ import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.LazyValue;
+import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.install.tasks.ParallelTaskHelper;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -25,7 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static net.covers1624.quack.util.SneakyUtils.sneak;
@@ -93,6 +95,7 @@ public class CloudSyncOperation {
         }
         LOGGER.info("Detected sync direction: {}", upload ? "Upload" : "Download");
 
+        // TODO remove sync_manifest.json from these indexes.
         Map<String, LocalFile> instanceFiles = indexInstance();
         Map<String, RemoteFile> cloudFiles = indexCloud(s3ObjectIndex);
 
@@ -169,51 +172,104 @@ public class CloudSyncOperation {
 
         LOGGER.info("Processing sync..");
 
-        List<Task<Void>> tasks = new LinkedList<>();
-        tasks.add((cancelToken, listener) -> {
-            // Delete all local files.
-            for (FileOperation op : deleteOperations) {
-                if (op.local != null) {
-                    LOGGER.info("Deleting local file {}", op.local.path);
-                    Files.delete(op.local.path);
+        LOGGER.info("Updating sync manifest..");
+        SyncManifest manifest = new SyncManifest();
+        Path syncManifestFile = instance.getDir().resolve("sync_manifest.json");
+        manifest.state = SyncManifest.State.SYNCING;
+        manifest.lastSync = System.currentTimeMillis();
+        try {
+            JsonUtils.write(GSON, syncManifestFile, manifest);
+        } catch (IOException ex) {
+            LOGGER.error("Failed to update local sync manifest before sync", ex);
+            throw ex;
+        }
+        Throwable syncError = null;
+        try {
+            saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json");
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to update remote sync manifest before sync.");
+            syncError = ex;
+        }
+
+        if (syncError == null) {
+            try {
+                List<Task<Void>> tasks = new LinkedList<>();
+                tasks.add((cancelToken, listener) -> {
+                    // Delete all local files.
+                    for (FileOperation op : deleteOperations) {
+                        if (op.local != null) {
+                            LOGGER.info("Deleting local file {}", op.local.path);
+                            Files.delete(op.local.path);
+                        }
+                    }
+                    // Delete all remote files.
+                    saveManager.deleteObjects(FastStream.of(deleteOperations)
+                            .filter(e -> e.remote != null)
+                            .map(e -> e.remote.s3Object).toList()
+                    );
+                });
+                for (FileOperation op : uploadOperations) {
+                    tasks.add((cancelToken, listener) -> {
+                        assert op.local != null;
+                        LOGGER.info("Uploading file to S3: {}", op.local.path);
+                        if (op.remote != null) {
+                            saveManager.uploadFile(op.local.path, op.remote.s3Object.key());
+                        } else {
+                            String key = instance.getUuid() + "/" + instance.getDir().relativize(op.local.path);
+                            saveManager.uploadFile(op.local.path, key);
+                        }
+                    });
+                }
+                for (FileOperation op : downloadOperations) {
+                    tasks.add((cancelToken, listener) -> {
+                        assert op.remote != null;
+                        LOGGER.info("Downloading file from S3: {}", op.remote.path);
+                        if (op.local != null) {
+                            saveManager.downloadFile(op.local.path, op.remote.s3Object);
+                        } else {
+                            Path path = instance.getDir().resolve(op.remote.path);
+                            saveManager.downloadFile(path, op.remote.s3Object);
+                        }
+                    });
+                }
+                ParallelTaskHelper.executeInParallel(null, Task.TASK_POOL, tasks, null);
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to process sync, instance may be in an invalid state.", ex);
+                syncError = ex;
+            }
+        }
+        boolean jsonUpdated = false;
+        try {
+            manifest.lastSync = System.currentTimeMillis();
+            manifest.state = syncError == null ? SyncManifest.State.SYNCED : SyncManifest.State.UNFINISHED;
+            JsonUtils.write(GSON, syncManifestFile, manifest);
+            jsonUpdated = true;
+        } catch (IOException ex) {
+            LOGGER.error("Failed to update local sync_manifest after sync.", ex);
+            if (syncError != null) {
+                syncError.addSuppressed(ex);
+            } else {
+                syncError = ex;
+            }
+        }
+
+        if (jsonUpdated) {
+            try {
+                saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json");
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to upload sync manifest after sync.", ex);
+                if (syncError != null) {
+                    syncError.addSuppressed(ex);
+                } else {
+                    syncError = ex;
                 }
             }
-            // Delete all remote files.
-            saveManager.deleteObjects(FastStream.of(deleteOperations)
-                    .filter(e -> e.remote != null)
-                    .map(e -> e.remote.s3Object).toList()
-            );
-        });
-        for (FileOperation op : uploadOperations) {
-            tasks.add((cancelToken, listener) -> {
-                assert op.local != null;
-                LOGGER.info("Uploading file to S3: {}", op.local.path);
-                if (op.remote != null) {
-                    saveManager.uploadFile(op.local.path, op.remote.s3Object.key());
-                } else {
-                    String key = instance.getUuid() + "/" + instance.getDir().relativize(op.local.path);
-                    saveManager.uploadFile(op.local.path, key);
-                }
-            });
         }
-        for (FileOperation op : downloadOperations) {
-            tasks.add((cancelToken, listener) -> {
-                assert op.remote != null;
-                LOGGER.info("Downloading file from S3: {}", op.remote.path);
-                if (op.local != null) {
-                    saveManager.downloadFile(op.local.path, op.remote.s3Object);
-                } else {
-                    Path path = instance.getDir().resolve(op.remote.path);
-                    saveManager.downloadFile(path, op.remote.s3Object);
-                }
-            });
+        if (syncError != null) {
+            LOGGER.error("Sync failed with error: ", syncError);
+            SneakyUtils.throwUnchecked(syncError);
         }
-        try {
-            ParallelTaskHelper.executeInParallel(null, Task.TASK_POOL, tasks, null);
-        } catch (Throwable ex) {
-            // TODO propagate exception out?
-            LOGGER.error("Failed sync.", ex);
-        }
+        LOGGER.info("Cloud sync finished!");
     }
 
     private Map<String, LocalFile> indexInstance() throws IOException {
