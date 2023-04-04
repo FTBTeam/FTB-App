@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.instance.cloud;
 import com.google.common.collect.*;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
@@ -11,8 +10,6 @@ import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.LazyValue;
 import net.creeperhost.creeperlauncher.install.tasks.ParallelTaskHelper;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
-import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -87,9 +84,6 @@ public class CloudSyncOperation {
         } else if (localManifest == null) {
             upload = false;
         } else {
-            // TODO, localManifest needs to be upaded at the end of a sync?
-            //       Not sure the best way to do this.
-            //       But this needs to decide if our local copy is 'more up to date' than remote.
             if (localManifest.lastSync == remoteManifest.lastSync) {
                 upload = true; // TODO check for local time runout?
             } else {
@@ -138,8 +132,6 @@ public class CloudSyncOperation {
         deleteOperations = deletes.build();
         uploadOperations = uploads.build();
         downloadOperations = downloads.build();
-
-        LOGGER.info("{} mode", upload ? "Upload" : "Download");
 
         LOGGER.info("Operations:");
         for (FileOperation fileOperation : Iterables.concat(deleteOperations, uploadOperations, downloadOperations)) {

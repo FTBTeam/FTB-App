@@ -129,39 +129,10 @@ public final class CloudSaveManager {
             CloudSyncOperation operation = new CloudSyncOperation(this, instance);
             operation.prepare();
             operation.operate();
-//            Path instanceRoot = instance.path;
-//            String instanceFolder = instanceRoot.getFileName().toString();
-//            Set<String> instanceIndex = indexFolder(instanceRoot);
-//            Set<String> cloudIndex = FastStream.of(listBucket(instanceFolder))
-//                    .map(e -> StringUtils.removeStart(e.key().replace(instanceFolder, ""), "/"))
-//                    .toSet();
-//
-//            Set<String> toUpload = Sets.difference(instanceIndex, cloudIndex);
-//
-//            for (String upload : toUpload) {
-//                LOGGER.info("Uploading: {}", upload);
-//                uploadFile(instanceRoot.resolve(upload), instanceFolder + "/" + upload, new HashMap<>());
-//            }
-//
-//            LOGGER.info(instanceIndex);
         } catch (IOException ex) {
             // TODO, better
             LOGGER.error("Failed to run cloud sync.", ex);
         }
-    }
-
-    private static Set<String> indexFolder(Path rootDir) throws IOException {
-        Set<String> files = new HashSet<>();
-        if (!Files.exists(rootDir)) return files;
-
-        try (Stream<Path> stream = Files.walk(rootDir)) {
-            stream.forEach(e -> {
-                if (!Files.isDirectory(e)) {
-                    files.add(rootDir.relativize(e).toString());
-                }
-            });
-        }
-        return files;
     }
 
     public boolean isConfigured() {
