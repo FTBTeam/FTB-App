@@ -9,6 +9,7 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.LazyValue;
 import net.covers1624.quack.util.SneakyUtils;
+import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.install.tasks.ParallelTaskHelper;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -33,6 +34,7 @@ import java.util.stream.Stream;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 import static net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager.HASH_METADATA;
 import static net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager.LAST_MODIFIED_METADATA;
+import static net.creeperhost.creeperlauncher.instance.cloud.SyncManifest.State.*;
 
 /**
  * Created by covers1624 on 15/3/23.
@@ -45,6 +47,7 @@ public class CloudSyncOperation {
     private final CloudSaveManager saveManager;
     private final Instance instance;
 
+    private SyncDirection direction = SyncDirection.UP_TO_DATE;
     private List<FileOperation> deleteOperations = List.of();
     private List<FileOperation> uploadOperations = List.of();
     private List<FileOperation> downloadOperations = List.of();
@@ -58,18 +61,26 @@ public class CloudSyncOperation {
     public void prepare() throws IOException {
         Map<String, S3Object> s3ObjectIndex = saveManager.listInstance(instance);
 
-        LOGGER.info("Checking for remote manifest..");
+        LOGGER.info("Checking for remote manifests..");
         SyncManifest remoteManifest = null;
+        InstanceJson remoteInstance = null;
         {
-            S3Object obj = s3ObjectIndex.get("sync_manifest.json");
-            if (obj != null) {
+            S3Object syncManifest = s3ObjectIndex.get("sync_manifest.json");
+            if (syncManifest != null) {
                 LOGGER.info(" Found remote manifest.");
-                byte[] bytes = saveManager.downloadToBytes(obj);
+                byte[] bytes = saveManager.downloadToBytes(syncManifest);
                 remoteManifest = JsonUtils.parse(GSON, new ByteArrayInputStream(bytes), SyncManifest.class);
+            }
+            S3Object instanceManifest = s3ObjectIndex.get("instance.json");
+            if (instanceManifest != null) {
+                LOGGER.info(" Found remote instance json.");
+                byte[] bytes = saveManager.downloadToBytes(instanceManifest);
+                remoteInstance = InstanceJson.load(bytes);
             }
         }
         LOGGER.info("Checking for local manifest..");
         SyncManifest localManifest = null;
+        InstanceJson localInstance = instance.props;
         {
             Path file = instance.getDir().resolve("sync_manifest.json");
             if (Files.exists(file)) {
@@ -78,24 +89,19 @@ public class CloudSyncOperation {
             }
         }
 
-//        long currTime = System.currentTimeMillis();
-
-        boolean upload;
-        if (remoteManifest == null) {
-            upload = true;
-        } else if (localManifest == null) {
-            upload = false;
-        } else {
-            if (localManifest.lastSync == remoteManifest.lastSync) {
-                upload = true; // TODO check for local time runout?
-            } else {
-                // TODO not correct
-                upload = localManifest.lastSync < remoteManifest.lastSync;
-            }
+        direction = determineDirection(remoteManifest, remoteInstance, localManifest, localInstance);
+        if (direction == SyncDirection.REQUIRES_CONFLICT_RESOLUTION) {
+            LOGGER.error("Sync requires conflict resolution. TODO, Not implemented.");
+            return;
         }
-        LOGGER.info("Detected sync direction: {}", upload ? "Upload" : "Download");
+        // TODO perhaps we should pick a default direction (UPLOAD?) and still do a files check?
+        if (direction == SyncDirection.UP_TO_DATE) {
+            LOGGER.info("Sync is up-to-date.");
+            return;
+        }
 
-        // TODO remove sync_manifest.json from these indexes.
+        LOGGER.info("Detected sync direction: {}", direction);
+
         Map<String, LocalFile> instanceFiles = indexInstance();
         Map<String, RemoteFile> cloudFiles = indexCloud(s3ObjectIndex);
 
@@ -111,7 +117,7 @@ public class CloudSyncOperation {
         ImmutableList.Builder<FileOperation> deletes = ImmutableList.builder();
         ImmutableList.Builder<FileOperation> uploads = ImmutableList.builder();
         ImmutableList.Builder<FileOperation> downloads = ImmutableList.builder();
-        if (upload) {
+        if (direction == SyncDirection.UPLOAD) {
             for (String s : missingRemote) {
                 uploads.add(new FileOperation(OperationKind.UPLOAD, instanceFiles.get(s), null));
             }
@@ -158,13 +164,19 @@ public class CloudSyncOperation {
         }
     }
 
+    public boolean requiresConflictResolution() {
+        return direction == SyncDirection.REQUIRES_CONFLICT_RESOLUTION;
+    }
+
     public boolean isInSync() {
-        return deleteOperations.isEmpty()
-                && uploadOperations.isEmpty()
-                && downloadOperations.isEmpty();
+        return direction == SyncDirection.UP_TO_DATE;
     }
 
     public void operate() throws IOException {
+        if (requiresConflictResolution()) {
+            LOGGER.error("Requires conflict resolution, cant sync.");
+            return;
+        }
         if (isInSync()) {
             LOGGER.info("Already up-to-date.");
             return;
@@ -241,7 +253,7 @@ public class CloudSyncOperation {
         boolean jsonUpdated = false;
         try {
             manifest.lastSync = System.currentTimeMillis();
-            manifest.state = syncError == null ? SyncManifest.State.SYNCED : SyncManifest.State.UNFINISHED;
+            manifest.state = syncError == null ? SyncManifest.State.SYNCED : direction == SyncDirection.UPLOAD ? SyncManifest.State.UNFINISHED_UP : UNFINISHED_DOWN;
             JsonUtils.write(GSON, syncManifestFile, manifest);
             jsonUpdated = true;
         } catch (IOException ex) {
@@ -279,6 +291,9 @@ public class CloudSyncOperation {
             stream.forEach(e -> {
                 if (!Files.isDirectory(e)) {
                     LocalFile path = new LocalFile(e);
+                    // Don't index sync_manifest.json
+                    if (path.path().equals("sync_manifest.json")) return;
+
                     builder.put(path.path(), path);
                 }
             });
@@ -292,9 +307,57 @@ public class CloudSyncOperation {
         for (S3Object s3Object : s3ObjectIndex.values()) {
             CompletableFuture<Map<String, String>> metadataFuture = CompletableFuture.supplyAsync(() -> saveManager.getMetadata(s3Object), Task.TASK_POOL);
             RemoteFile path = new RemoteFile(s3Object, metadataFuture);
+
+            // Don't index sync_manifest.json
+            if (path.path().equals("sync_manifest.json")) continue;
+
             builder.put(path.path(), path);
         }
         return builder.build();
+    }
+
+    // TODO, Do we really need a sync state for UNFINISHED_DOWNLOAD? Should be safe to just do whatever?
+    private static SyncDirection determineDirection(@Nullable SyncManifest remoteManifest, @Nullable InstanceJson remoteInstance, @Nullable SyncManifest localManifest, InstanceJson localInstance) {
+        if (remoteManifest == null) return SyncDirection.UPLOAD; // Sync manifest does not exist on remote, must be UPLOAD.
+        if (localManifest == null) return SyncDirection.DOWNLOAD; // We have never tried syncing this instance, and remote manifest exists. Must be DOWNLOAD.
+
+        if (remoteManifest.state == SYNCING) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO Throw exception that another sync is in progress? We need to check the timestamp?
+        if (localManifest.state == UNFINISHED_UP) {
+            if (remoteManifest.state != UNFINISHED_UP) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO, Can't sync, requires conflict resolution. Local thought it was unfinished, but someone has already 'resolved'. So perhaps just DOWNLOAD?
+            // Resume the upload
+            // TODO check timestamp? if it does not match ours then another FTBA failed to sync up?
+            return SyncDirection.UPLOAD;
+        }
+        if (localManifest.state == UNFINISHED_DOWN) {
+            if (remoteManifest.state != UNFINISHED_DOWN) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO Can't sync, requires conflict resolution. Local thought it was unfinished, but someone has already 'resolved'. So perhaps just DOWNLOAD?
+            // Resume the download.
+            // TODO Check timestamp? if it does not match ours then another FTBA failed to download? Do we care?
+            return SyncDirection.DOWNLOAD;
+        }
+        if (remoteManifest.state == UNFINISHED_UP) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO, Requires conflict resolution, someone failed to sync up?
+        if (remoteManifest.state == UNFINISHED_DOWN) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO, Requires conflict resolution, someone failed to sync down? Do we care about this state??
+
+        // These can probably be asserts.
+        if (localManifest.state != SYNCED) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // What?
+        if (remoteManifest.state != SYNCED) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // What?
+
+        // In theory this branch should never be hit, only if upload fails partway and the json is not synced.
+        if (remoteInstance == null) return SyncDirection.UPLOAD;
+
+        // If remote played last, download.
+        if (remoteInstance.lastPlayed > localInstance.lastPlayed) return SyncDirection.DOWNLOAD;
+        // If we played last, upload.
+        if (remoteInstance.lastPlayed < localInstance.lastPlayed) return SyncDirection.UPLOAD;
+
+        // Up-to-date.
+        return SyncDirection.UP_TO_DATE;
+    }
+
+    public enum SyncDirection {
+        UP_TO_DATE,
+        DOWNLOAD,
+        UPLOAD,
+        REQUIRES_CONFLICT_RESOLUTION // TODO this should be removed and replaced with exceptions?
     }
 
     public record FileOperation(OperationKind kind, @Nullable LocalFile local, @Nullable RemoteFile remote) {

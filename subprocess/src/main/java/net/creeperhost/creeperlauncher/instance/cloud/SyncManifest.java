@@ -18,7 +18,8 @@ public class SyncManifest {
 
     public enum State {
         SYNCING,    // An FTBA instance is currently syncing this instance.
-        UNFINISHED, // An FTBA instance 'finished' the sync process, but it failed.
+        UNFINISHED_UP, // An FTBA instance 'finished' the sync process, but it failed.
+        UNFINISHED_DOWN, // An FTBA instance 'finished' the sync process, but it failed.
         SYNCED,     // The cloud is in a fully synced state.
     }
 }
