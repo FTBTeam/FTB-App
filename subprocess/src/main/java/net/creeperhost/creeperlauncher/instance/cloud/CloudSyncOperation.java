@@ -281,6 +281,11 @@ public class CloudSyncOperation {
             LOGGER.error("Sync failed with error: ", syncError);
             SneakyUtils.throwUnchecked(syncError);
         }
+
+        if (direction == SyncDirection.DOWNLOAD) {
+            instance.reloadProperties();
+        }
+
         LOGGER.info("Cloud sync finished!");
     }
 

@@ -7,18 +7,14 @@ import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.*;
-import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
-import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.util.*;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -39,21 +35,18 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static net.covers1624.quack.util.SneakyUtils.sneak;
-import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
 
 public class Instance implements IPack {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     public final Path path;
-    public final InstanceJson props;
+    public InstanceJson props;
 
     private final InstanceLauncher launcher = new InstanceLauncher(this);
     @Nullable
@@ -111,6 +104,15 @@ public class Instance implements IPack {
     public Instance(Path path, Path json) throws IOException {
         this.path = path;
         props = InstanceJson.load(json);
+        loadVersionManifest();
+    }
+
+    public void reloadProperties() throws IOException {
+        props = InstanceJson.load(getDir().resolve("instance.json"));
+        loadVersionManifest();
+    }
+
+    private void loadVersionManifest() throws IOException {
         if (props.installComplete) {
             Path versionJson = path.resolve("version.json");
             if (Files.exists(versionJson)) {
