@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +23,7 @@ public class ParallelTaskHelper {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static <T extends Task<?>> void executeInParallel(@Nullable CancellationToken token, ExecutorService executor, List<T> tasks, @Nullable TaskProgressAggregator listener) throws Throwable {
-        List<Throwable> failures = new LinkedList<>();
+        List<Throwable> failures = Collections.synchronizedList(new LinkedList<>());
         List<CompletableFuture<?>> futures = new LinkedList<>();
         for (Task<?> task : tasks) {
             CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
