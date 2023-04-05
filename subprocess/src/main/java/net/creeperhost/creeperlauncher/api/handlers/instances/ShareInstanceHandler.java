@@ -6,7 +6,7 @@ import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.api.data.instances.ShareInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.instance.InstanceSharer;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,7 +24,7 @@ public class ShareInstanceHandler implements IMessageHandler<ShareInstanceData> 
         }
 
         CompletableFuture.runAsync(() -> {
-            LocalInstance instance = Instances.getInstance(data.uuid);
+            Instance instance = Instances.getInstance(data.uuid);
             try {
                 InstanceSharer instanceSharer = new InstanceSharer(instance);
                 // TODO We should probably pass some user configurable excludes?

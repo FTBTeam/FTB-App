@@ -1,23 +1,148 @@
 stages:
-  - build_jar
-  - build
+    - build
+    - build_app
+    - packaging
+
+variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
 build_jar:
-  stage: build_jar
-  trigger:
-    include: subprocess/.gitlab-ci-jar.yml
-    strategy: depend
+    stage: build
+    image: gradle:7.3.2-jdk17
+    interruptible: true
+    dependencies: []
+    tags:
+        - linux-aarch64
+    cache:
+        key: ftb-app-gradle
+        paths:
+            - subprocess/.gradle
+    before_script:
+        - git fetch
+        - '[[ ! -z "$CI_BUILD_TAG" ]] && export CI_TAGGED_BRANCH=$(git branch -a --contains "tags/$CI_BUILD_TAG" | grep origin | sed "s|.*origin/||")'
+        - '[[ ! -z "$CI_BUILD_TAG" ]] && [[ "$CI_TAGGED_BRANCH" != "release" ]] && echo "Tagged builds only allowed on the release branch." && exit 1 || true'
+    script:
+        - cd subprocess
+        - export GRADLE_USER_HOME=.gradle
+        - gradle clean build -si
+    artifacts:
+        paths:
+            - subprocess/build/libs/
 
+cache_node:
+    stage: build
+    image: node:18
+    interruptible: false
+    dependencies: []
+    tags:
+        - linux-aarch64
+    cache:
+        key: ftb-app-pnpm
+        paths:
+            - .pnpm-store/
+    script:
+        - npm install --global pnpm || true
+        - pnpm config set store-dir .pnpm-store
+        - pnpm install
+        - pnpm prune
+
+# TODO build shim step
 build_overwolf:
-  stage: build
-  needs: ["build_jar"]
-  trigger:
-    include: .gitlab-ci-front.yml
-    strategy: depend
+    stage: build_app
+    image: node:18
+    interruptible: true
+    dependencies:
+        - build_jar
+    tags:
+        - linux-aarch64
+    cache:
+        key: ftb-app-pnpm
+        policy: pull
+        paths:
+            - .pnpm-store/
+    before_script:
+        - npm install --global pnpm || true
+        - pnpm config set store-dir .pnpm-store
+    script:
+        - cp subprocess/build/libs/version.json public/version.json
+        - pnpm install
+        - pnpm gen:license
+        - node overwolf/patchManifest.js
+        - pnpm vue:build:overwolf
+        - node overwolf/packageOpk.js
+        - |
+            if [ "$CI_COMMIT_BRANCH" == 'preview' ]; then
+                echo "Signing OPK.."
+                pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
+                echo "Uploading OPK to beta channel.."
+                pnpm ow opk upload -c 109 -w overwolf/signed.opk
+            elif [ ! -z "$CI_BUILD_TAG" ]; then
+                echo "Signing OPK.."
+                pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
+                echo "Uploading OPK to release channel.."
+                pnpm ow opk upload -w overwolf/signed.opk
+            fi
+    artifacts:
+        paths:
+            - overwolf/*.opk
 
 build_electron:
-  stage: build
-  needs: ["build_jar"]
-  trigger:
-    include: subprocess/.gitlab-ci.yml
-    strategy: depend
+    stage: build_app
+    image: node:18
+    interruptible: true
+    dependencies:
+        - build_jar
+    tags:
+        - linux-aarch64
+    cache:
+        key: ftb-app-pnpm
+        policy: pull
+        paths:
+            - .pnpm-store/
+    before_script:
+        - npm install --global pnpm || true
+        - pnpm config set store-dir .pnpm-store
+    script:
+        - cp subprocess/build/libs/version.json public/version.json
+        - pnpm install
+        - pnpm gen:license
+        - pnpm build:electron
+        - cd release
+        - tar -czvf linux-unpacked.tar.gz linux-unpacked
+        - tar -czvf mac.tar.gz mac
+    artifacts:
+        expire_in: 2 days
+        paths:
+            - release/linux-unpacked.tar.gz
+            - release/mac.tar.gz
+
+electron_install4j:
+    stage: packaging
+    interruptible: true
+    dependencies:
+        - build_jar
+        - build_electron
+    variables:
+        GIT_STRATEGY: clone
+    tags:
+        - shell
+    script:
+        - cd release
+        - tar -xvf linux-unpacked.tar.gz
+        - tar -xvf mac.tar.gz
+        - cd ../subprocess
+        - 'export VERSION=`jq -r .jarVersion build/libs/version.json`'
+        - 'export BRANCH=`jq -r .branch build/libs/version.json`'
+        - /Applications/install4j.app/Contents/Resources/app/bin/install4jc -L $INSTALL4J_LICENSE
+        - /Applications/install4j.app/Contents/Resources/app/bin/install4jc --disable-signing --mac-keystore-password $INSTALL4J_APPLE_KEYSTORE_PASSWORD --apple-id-password $INSTALL4J_APPLE_ID_PW -r $VERSION -D branch=$BRANCH ftbapp.install4j
+        - |
+            if [ "$BRANCH" != "release" ] || [ ! -z "$CI_BUILD_TAG" ]; then
+                echo "Preparing files for FTP.."
+                mkdir -p "releaseUpload/$BRANCH/$VERSION/"
+                mv releaseBuild/jres releaseUpload
+                cp releaseBuild/updates.xml "releaseUpload/$BRANCH.xml"
+                find releaseBuild -type f -exec mv {} "releaseUpload/$BRANCH/$VERSION/" \;
+                echo "Files to upload:"
+                find releaseUpload
+                lftp -e "mirror -R -P=5 --verbose releaseUpload/ /" -u "$FTP_USER,$FTP_PASSWORD" "$FTP_SERVER"
+            fi

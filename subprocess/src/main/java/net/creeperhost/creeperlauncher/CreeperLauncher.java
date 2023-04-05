@@ -17,7 +17,6 @@ import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
-import net.creeperhost.creeperlauncher.migration.MigrationManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
@@ -87,7 +86,7 @@ public class CreeperLauncher {
     static {
         Log4jUtils.redirectStreams();
         SSLUtils.inject();
-        DNSUtils.logImportantHosts();
+        DNSDebug.printDebugReport();
         System.setProperty("apple.awt.UIElement", "true");
     }
 
@@ -114,7 +113,7 @@ public class CreeperLauncher {
 
     public static void initSettingsAndCache() {
         Settings.loadSettings();
-        localCache = new LocalCache(Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache"));
+        localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
     }
 
     public static void main(String[] args) {
@@ -122,10 +121,6 @@ public class CreeperLauncher {
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
 
         System.out.println(Constants.LIB_SIGNATURE);
-        // Construct immediately to properly detect the version.
-        MigrationManager migrationManager = new MigrationManager();
-        // Do this as soon as possible. Settings and instance location SHOULD be right by this point
-        // (with a slim chance of legacy migration), but better to have some settings than none
         Settings.loadSettings();
         Instances.refreshInstances();
 
@@ -185,8 +180,6 @@ public class CreeperLauncher {
         if (startProcess) {
             startElectron();
         }
-
-        migrationManager.doMigrations();
 
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
@@ -315,13 +308,13 @@ public class CreeperLauncher {
                             new OpenModalData.ModalButton("Ok", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                         ));
                     } else {
-                        Path oldCache = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache");
+                        Path oldCache = Settings.getInstancesDir().resolve(".localCache");
                         oldCache.toFile().deleteOnExit();
                         Settings.settings.remove("instanceLocation");
                         Settings.settings.put("instanceLocation", value);
                         Settings.saveSettings();
                         Instances.refreshInstances();
-                        localCache = new LocalCache(Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache"));
+                        localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
                         OpenModalData.openModal("Success", "Moved instance folder location successfully", List.of(
                             new OpenModalData.ModalButton("Yay!", "green", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                         ));

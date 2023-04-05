@@ -22,7 +22,6 @@ import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.AssetIndex;
-import net.creeperhost.creeperlauncher.util.DNSUtils;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.text.StrLookup;
@@ -61,7 +60,7 @@ public class InstanceLauncher {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
-    private final LocalInstance instance;
+    private final Instance instance;
     private Phase phase = Phase.NOT_STARTED;
 
     private final List<VersionManifest> manifests = new ArrayList<>();
@@ -81,7 +80,7 @@ public class InstanceLauncher {
 
     private static final int NUM_STEPS = 5;
 
-    public InstanceLauncher(LocalInstance instance) {
+    public InstanceLauncher(Instance instance) {
         this.instance = instance;
     }
 
@@ -130,7 +129,6 @@ public class InstanceLauncher {
      */
     public synchronized void launch(CancellationToken token, @Nullable String offlineUsername) throws InstanceLaunchException {
         assert !isRunning();
-        DNSUtils.logImportantHosts();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
         setPhase(Phase.INITIALIZING);
         progressTracker.reset(NUM_STEPS);
@@ -140,7 +138,7 @@ public class InstanceLauncher {
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
         Set<String> features = new HashSet<>();
-        if (instance.width != 0 && instance.height != 0) {
+        if (instance.props.width != 0 && instance.props.height != 0) {
             features.add("has_custom_resolution");
         }
 
@@ -315,7 +313,7 @@ public class InstanceLauncher {
 
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
-            if (instance.embeddedJre) {
+            if (instance.props.embeddedJre) {
                 String javaTarget = instance.versionManifest.getTargetVersion("runtime");
                 Path javaHome;
                 if (javaTarget == null) {
@@ -336,7 +334,7 @@ public class InstanceLauncher {
                 }
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
-                javaExecutable = instance.jrePath;
+                javaExecutable = instance.props.jrePath;
             }
             progressTracker.finishStep();
 
@@ -366,7 +364,7 @@ public class InstanceLauncher {
 
             token.throwIfCancelled();
 
-            Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
+            Path nativesDir = versionsDir.resolve(instance.props.modLoader).resolve(instance.props.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
 
             Map<String, String> subMap = new HashMap<>();
@@ -400,7 +398,7 @@ public class InstanceLauncher {
                 privateTokens.add(accessToken);
             }
 
-            subMap.put("version_name", instance.modLoader);
+            subMap.put("version_name", instance.props.modLoader);
             subMap.put("game_directory", gameDir.toString());
             subMap.put("assets_root", assetsDir.toAbsolutePath().toString());
             subMap.put("game_assets", virtualAssets.toAbsolutePath().toString());
@@ -410,10 +408,10 @@ public class InstanceLauncher {
             subMap.put("launcher_name", "FTBApp");
             subMap.put("launcher_version", Constants.APPVERSION);
             subMap.put("primary_jar", getGameJar(versionsDir).toAbsolutePath().toString());
-            subMap.put("memory", String.valueOf(instance.memory));
+            subMap.put("memory", String.valueOf(instance.props.memory));
 
-            subMap.put("resolution_width", String.valueOf(instance.width));
-            subMap.put("resolution_height", String.valueOf(instance.height));
+            subMap.put("resolution_width", String.valueOf(instance.props.width));
+            subMap.put("resolution_height", String.valueOf(instance.props.height));
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
@@ -484,10 +482,10 @@ public class InstanceLauncher {
         manifests.clear();
         VersionListManifest versions = VersionListManifest.update(versionsDir);
         Set<String> seen = new HashSet<>();
-        String id = instance.modLoader;
+        String id = instance.props.modLoader;
         while (id != null) {
             token.throwIfCancelled();
-            if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.modLoader);
+            if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.props.modLoader);
             LOGGER.info("Preparing manifest {}", id);
             VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
             if (manifest == null) {

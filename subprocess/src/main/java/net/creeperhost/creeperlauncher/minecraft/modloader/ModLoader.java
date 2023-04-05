@@ -1,9 +1,8 @@
 package net.creeperhost.creeperlauncher.minecraft.modloader;
 
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.LoaderTarget;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +18,7 @@ public abstract class ModLoader {
 
 	public abstract String getName();
 
-	public abstract Path install(LocalInstance instance);
+	public abstract Path install(Instance instance);
 
 	public boolean isApplicable()
 	{

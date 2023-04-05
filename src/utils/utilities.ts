@@ -92,3 +92,7 @@ export function queryServer(serverInfo: string): Promise<MCProtocol | undefined>
     }
   });
 }
+
+export function prettyNumber(num: number): string {
+  return Intl.NumberFormat("en", {notation: "compact"}).format(num);
+}

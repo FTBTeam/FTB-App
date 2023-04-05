@@ -1,0 +1,69 @@
+diff --git a/lib/HashedModuleIdsPlugin.js b/lib/HashedModuleIdsPlugin.js
+index 7a860f74f4438b5a93a8c40341b231c28354ae19..ef7df31a247ddc77fb1a7a8ba54a35209c26330f 100644
+--- a/lib/HashedModuleIdsPlugin.js
++++ b/lib/HashedModuleIdsPlugin.js
+@@ -23,7 +23,7 @@ class HashedModuleIdsPlugin {
+ 		this.options = Object.assign(
+ 			{
+ 				context: null,
+-				hashFunction: "md4",
++				hashFunction: "md5",
+ 				hashDigest: "base64",
+ 				hashDigestLength: 4
+ 			},
+diff --git a/lib/NamedModulesPlugin.js b/lib/NamedModulesPlugin.js
+index 2d84aafe297a2423af70e1606183790c09c101d8..c4d06e26e448c2b9257df65eb8b9d6ec9c583097 100644
+--- a/lib/NamedModulesPlugin.js
++++ b/lib/NamedModulesPlugin.js
+@@ -8,7 +8,7 @@ const createHash = require("./util/createHash");
+ const RequestShortener = require("./RequestShortener");
+ 
+ const getHash = str => {
+-	const hash = createHash("md4");
++	const hash = createHash("md5");
+ 	hash.update(str);
+ 	const digest = /** @type {string} */ (hash.digest("hex"));
+ 	return digest.substr(0, 4);
+diff --git a/lib/WebpackOptionsDefaulter.js b/lib/WebpackOptionsDefaulter.js
+index f0e552f661b3b4ec7c24a740f1267943587c5aeb..060d5fcce819d04c4ed51058e225bb877a75f003 100644
+--- a/lib/WebpackOptionsDefaulter.js
++++ b/lib/WebpackOptionsDefaulter.js
+@@ -159,7 +159,7 @@ class WebpackOptionsDefaulter extends OptionsDefaulter {
+ 		this.set("output.crossOriginLoading", false);
+ 		this.set("output.jsonpScriptType", false);
+ 		this.set("output.chunkLoadTimeout", 120000);
+-		this.set("output.hashFunction", "md4");
++		this.set("output.hashFunction", "md5");
+ 		this.set("output.hashDigest", "hex");
+ 		this.set("output.hashDigestLength", 20);
+ 		this.set("output.devtoolLineToLine", false);
+diff --git a/lib/optimize/SplitChunksPlugin.js b/lib/optimize/SplitChunksPlugin.js
+index e7d560bf6ce0eab8c57e820f406ea77838425898..10e83839339947f9996fcaa14790fe1c249eb7ca 100644
+--- a/lib/optimize/SplitChunksPlugin.js
++++ b/lib/optimize/SplitChunksPlugin.js
+@@ -22,7 +22,7 @@ const deterministicGroupingForModules = /** @type {function(DeterministicGroupin
+ 
+ const hashFilename = name => {
+ 	return crypto
+-		.createHash("md4")
++		.createHash("md5")
+ 		.update(name)
+ 		.digest("hex")
+ 		.slice(0, 8);
+diff --git a/lib/util/createHash.js b/lib/util/createHash.js
+index 64de510da5c054682329e59f2e98287d7cd76b28..d204c59249a45688a41789868bbcce4b591b278e 100644
+--- a/lib/util/createHash.js
++++ b/lib/util/createHash.js
+@@ -127,6 +127,12 @@ module.exports = algorithm => {
+ 	if (typeof algorithm === "function") {
+ 		return new BulkUpdateDecorator(new algorithm());
+ 	}
++  
++  // arg mutation... lovely xD
++  if (algorithm === "md4") {
++      algorithm = "md5"
++  }
++
+ 	switch (algorithm) {
+ 		// TODO add non-cryptographic algorithm here
+ 		case "debug":

@@ -85,11 +85,11 @@ export default class MTIntegration extends Vue {
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('showAlert') public showAlert: any;
   
-  proxyType: string | null = "none";
-  proxyHost: string | null = "";
-  proxyPort: null | number = null;
-  proxyUser: string | null = "";
-  proxyPass: string | null = "";
+  proxyType: string = "none";
+  proxyHost: string = "";
+  proxyPort = -1;
+  proxyUser: string = "";
+  proxyPass: string = "";
 
   async created() {
     await this.loadSettings();
@@ -98,7 +98,7 @@ export default class MTIntegration extends Vue {
 
     this.proxyType = proxyType ?? "none";
     this.proxyHost = proxyHost ?? "";
-    this.proxyPort = (proxyPort === "" ? null : parseInt(proxyPort, 10)) ?? null;
+    this.proxyPort = proxyPort;
     this.proxyUser = proxyUser ?? "";
     this.proxyPass = proxyPassword ?? "";
   }
@@ -107,7 +107,7 @@ export default class MTIntegration extends Vue {
   onTypeChange(newValue: string | null) {
     if (newValue === "none") {
       this.proxyHost = "";
-      this.proxyPort = null;
+      this.proxyPort = -1;
       this.proxyUser = "";
       this.proxyPass = "";
       this.save(true)
@@ -115,7 +115,7 @@ export default class MTIntegration extends Vue {
   }
 
   isInvalid() {
-    return this.proxyHost === "" || this.proxyPort === null || this.proxyPort < 1;
+    return this.proxyHost === "" || this.proxyPort === -1 || this.proxyPort < 1;
   }
   
   save(remove = false) {
@@ -131,7 +131,7 @@ export default class MTIntegration extends Vue {
     this.saveSettings({
       ...this.settings.settings,
       proxyUser: remove ? "" : this.proxyUser,
-      proxyPort: remove ? "" : this.proxyPort,
+      proxyPort: remove ? -1 : this.proxyPort,
       proxyHost: remove ? "" : this.proxyHost,
       proxyPassword: remove ? "" : this.proxyPass,
       proxyType: remove ? "none" : this.proxyType,

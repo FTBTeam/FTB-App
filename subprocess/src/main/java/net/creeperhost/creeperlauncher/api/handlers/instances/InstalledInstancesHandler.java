@@ -1,40 +1,40 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import com.google.gson.JsonObject;
-import net.creeperhost.creeperlauncher.Settings;
+import com.google.gson.annotations.JsonAdapter;
+import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Instances;
+import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstalledInstancesData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.data.InstanceJson;
 
+import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-public class InstalledInstancesHandler implements IMessageHandler<InstalledInstancesData>
-{
+public class InstalledInstancesHandler implements IMessageHandler<InstalledInstancesData> {
+
     @Override
-    public void handle(InstalledInstancesData data)
-    {
-        String id = data.requestId;
-        boolean refresh = data.refresh;
-        CompletableFuture.runAsync(() -> {
-            if(refresh) Instances.refreshInstances();
-            List<LocalInstance> installedInstances;
-            List<JsonObject> cloudInstances;
-            try {
-                //TODO, an exception will never be produced here.
-                Instances.allInstances();
-                Instances.cloudInstances();
-            } catch(Throwable t)
-            {
-                Instances.refreshInstances();
-            } finally
-            {
-                installedInstances = Instances.allInstances();
-                cloudInstances = Instances.cloudInstances();
-            }
-            InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(id, installedInstances, cloudInstances);
-            Settings.webSocketAPI.sendMessage(reply);
-        });
+    public void handle(InstalledInstancesData data) {
+        if (data.refresh) {
+            Instances.refreshInstances();
+        }
+
+        List<InstanceJson> instanceJsons = StreamableIterable.of(Instances.allInstances())
+                .<InstanceJson>map(e -> new SugaredInstanceJson(e.props, e.path))
+                .toLinkedList();
+        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, List.of());
+        Settings.webSocketAPI.sendMessage(reply);
+    }
+
+    public static class SugaredInstanceJson extends InstanceJson {
+
+        @JsonAdapter (PathTypeAdapter.class)
+        public final Path path;
+
+        public SugaredInstanceJson(InstanceJson other, Path path) {
+            super(other);
+            this.path = path;
+        }
     }
 }

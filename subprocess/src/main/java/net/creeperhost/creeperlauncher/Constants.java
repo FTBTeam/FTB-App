@@ -6,19 +6,12 @@ import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.os.OS;
-import net.creeperhost.creeperlauncher.util.ProxyUtils;
-import net.creeperhost.creeperlauncher.util.SSLUtils;
-import net.creeperhost.creeperlauncher.util.SimpleCookieJar;
+import net.creeperhost.creeperlauncher.util.*;
 import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import okhttp3.*;
-import okhttp3.dnsoverhttps.DnsOverHttps;
-import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Throttler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -81,7 +74,12 @@ public class Constants {
     // 50MB cache for DNS.
     private static final Cache DOH_CACHE = new Cache(getDataDir().resolve(".doh_cache").toFile(), 50 * 1024 * 1024);
 
-    private static DnsOverHttps DNS;
+    public static final DNSChain DNS_CHAIN = new DNSChain(
+            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.CLOUDFLARE),
+            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.GOOGLE),
+            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.CREEPERHOST),
+            new DNSChain.SystemDNSStep()
+    );
 
     @Nullable
     private static OkHttpClient OK_HTTP_CLIENT;
@@ -121,34 +119,8 @@ public class Constants {
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
     public static void refreshHttpClient() {
-        OkHttpClient dohClient = new OkHttpClient.Builder()
-                .cache(DOH_CACHE).build();
-        try {
-            // TODO we should make this static and not reload it each time we refresh proxies.
-            DNS = new DnsOverHttps.Builder()
-                    .client(dohClient)
-                    // TODO we can only specify one host. Perhaps we should flip flop between CF and Google? or have a config option?
-                    .url(HttpUrl.get("https://1.1.1.1/dns-query"))
-                    .bootstrapDnsHosts(InetAddress.getByName("1.1.1.1"), InetAddress.getByName("1.0.0.1"))
-                    .build();
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException("Failed to create InetAddress for ip??", ex);
-        }
-
-        // TODO Currently required for unit tests, but might be good to just enable? Probably only useful in dev?
-        boolean strict = !Boolean.getBoolean("DNS.fallback_to_system");
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .dns(host -> {
-                    try {
-                        return DNS.lookup(host);
-                    } catch (UnknownHostException ex) {
-                        if (strict) {
-                            throw ex;
-                        }
-                    }
-
-                    return Dns.SYSTEM.lookup(host);
-                })
+                .dns(new DNSChain.OkHTTPAdapter(DNS_CHAIN))
                 .connectTimeout(5, TimeUnit.MINUTES)
                 .readTimeout(5, TimeUnit.MINUTES)
                 .connectionPool(new ConnectionPool())

@@ -5,7 +5,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.KillInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.InstanceLauncher;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
 /**
  * Created by covers1624 on 9/2/22.
@@ -14,7 +14,7 @@ public class KillInstanceHandler implements IMessageHandler<KillInstanceData> {
 
     @Override
     public void handle(KillInstanceData data) {
-        LocalInstance instance = Instances.getInstance(data.uuid);
+        Instance instance = Instances.getInstance(data.uuid);
         if (instance == null) {
             Settings.webSocketAPI.sendMessage(new KillInstanceData.Reply(data, "error", "Instance does not exist"));
             return;

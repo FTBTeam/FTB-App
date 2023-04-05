@@ -18,7 +18,6 @@ import java.util.*;
 
 public class MicrosoftOAuth {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final OkHttpClient CLIENT = new OkHttpClient.Builder().build();
 
     private static final Request.Builder JSON_REQUEST = new Request.Builder()
             .header("Content-Type", "application/json")
@@ -233,7 +232,7 @@ public class MicrosoftOAuth {
     private static StepReply wrapRequest(Request request, String successMessage, String errorMessage) {
         try {
             LOGGER.info("Making authentication request to {}", request.url());
-            Response execute = CLIENT.newCall(request).execute();
+            Response execute = Constants.httpClient().newCall(request).execute();
             ResponseBody body = execute.body();
             
             if (execute.code() >= 500) {

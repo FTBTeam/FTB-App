@@ -72,6 +72,8 @@ export default class Modal extends Vue {
   left: 0;
   display: grid;
   place-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+  'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
 }
 
 .modal-contents {

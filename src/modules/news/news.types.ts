@@ -6,9 +6,10 @@ export enum NewsMutations {
 
 export interface NewsItem {
   title: string;
-  date: string;
-  content: string;
-  link: string;
+  url: string;
+  createdAt: number;
+  postData: string;
+  views: number;
 }
 
 export interface NewsState {

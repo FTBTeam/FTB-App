@@ -15,9 +15,8 @@ import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.instance.InstanceOperation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.PathFixingCopyingFileVisitor;
-import net.creeperhost.creeperlauncher.util.DNSUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +106,7 @@ public class InstanceInstaller extends InstanceOperation {
     @Nullable
     private Map<String, IndexedFile> knownFiles;
 
-    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, InstallProgressTracker tracker) throws IOException {
+    public InstanceInstaller(Instance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, InstallProgressTracker tracker) throws IOException {
         super(instance, manifest);
         this.cancelToken = cancelToken;
         this.tracker = tracker;
@@ -153,7 +152,7 @@ public class InstanceInstaller extends InstanceOperation {
         return filesToDownload;
     }
 
-    public LocalInstance getInstance() {
+    public Instance getInstance() {
         return instance;
     }
 
@@ -169,7 +168,6 @@ public class InstanceInstaller extends InstanceOperation {
      * Sets up internal state ready for the installation process.
      */
     public void prepare() {
-        DNSUtils.logImportantHosts();
         tracker.nextStage(InstallStage.PREPARE);
         if (operationType == OperationType.VALIDATE) {
             validateFiles();
@@ -218,10 +216,10 @@ public class InstanceInstaller extends InstanceOperation {
             if (modLoaderInstallTask != null) {
                 LOGGER.info("Installing ModLoader..");
                 modLoaderInstallTask.execute(cancelToken, null);
-                instance.modLoader = modLoaderInstallTask.getResult();
+                instance.props.modLoader = modLoaderInstallTask.getResult();
             } else {
                 // Mod loader doesn't exist. This must be vanilla
-                instance.modLoader = manifest.getTargetVersion("game");
+                instance.props.modLoader = manifest.getTargetVersion("game");
             }
 
             cancelToken.throwIfCancelled();
@@ -254,9 +252,9 @@ public class InstanceInstaller extends InstanceOperation {
 
             JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
 
-            instance.installComplete = true;
-            instance.versionId = manifest.getId();
-            instance.version = manifest.getName();
+            instance.props.installComplete = true;
+            instance.props.versionId = manifest.getId();
+            instance.props.version = manifest.getName();
             instance.versionManifest = manifest;
             try {
                 instance.saveJson();

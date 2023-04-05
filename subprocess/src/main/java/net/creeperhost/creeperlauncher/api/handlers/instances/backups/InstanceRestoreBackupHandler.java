@@ -6,7 +6,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.InstanceSnapshot;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.ZipUtils;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +24,7 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
     
     @Override
     public void handle(Request data) {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
             Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate modpack for backup restore"));
             return;

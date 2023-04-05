@@ -25,7 +25,7 @@ const defaultSettings: Settings = {
   mtConnect: false,
   automateMojang: true,
   showAdverts: true,
-  proxyPort: '',
+  proxyPort: -1,
   proxyType: 'none',
   proxyHost: '',
   proxyPassword: '',

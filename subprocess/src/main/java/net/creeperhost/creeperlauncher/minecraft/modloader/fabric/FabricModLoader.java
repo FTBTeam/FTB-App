@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.minecraft.modloader.ModLoader;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,12 +36,12 @@ public class FabricModLoader extends ModLoader
 	}
 
 	@Override
-	public Path install(LocalInstance instance)
+	public Path install(Instance instance)
 	{
         LOGGER.info("Minecraft version: {} Fabric version: {}", getMinecraftVersion(), getFabricVersion());
 		var profileName = String.format("fabric-loader-%s-%s", getFabricVersion(), getMinecraftVersion());
 
-		instance.modLoader = profileName;
+		instance.props.modLoader = profileName;
 
 		JsonObject loaderMeta;
 		try
