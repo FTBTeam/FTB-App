@@ -1,7 +1,7 @@
 let versionData = {};
 
 async function blah() {
-  let raw = await fetch('../../version.json');
+  let raw = await fetch('../desktop/version.json');
   let versionObj = await raw.json();
   versionData = versionObj;
   const version = versionObj.jarVersion;
