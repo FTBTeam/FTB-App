@@ -75,12 +75,12 @@ build_overwolf:
                 echo "Signing OPK.."
                 pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
                 echo "Uploading OPK to beta channel.."
-                pnpm ow opk upload -c 109 -w overwolf/signed.opk
+                pnpm ow opk upload -c 109 -w true overwolf/signed.opk
             elif [ ! -z "$CI_BUILD_TAG" ]; then
                 echo "Signing OPK.."
                 pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
                 echo "Uploading OPK to release channel.."
-                pnpm ow opk upload -w overwolf/signed.opk
+                pnpm ow opk upload -w true overwolf/signed.opk
             fi
     artifacts:
         paths:

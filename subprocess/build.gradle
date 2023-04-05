@@ -104,7 +104,6 @@ shadowJar {
     transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
     manifest {
         attributes([
-                "Main-Class"            : 'net.creeperhost.creeperlauncher.CreeperLauncher',
                 "Specification-Title"   : "Launcher",
                 "Specification-Vendor"  : "Creeperhost LTD",
                 "Specification-Version" : version,
@@ -113,6 +112,7 @@ shadowJar {
                 "Implementation-Vendor" : "Creeperhost LTD"
         ] as LinkedHashMap, "net/creeperhost/creeperlauncher/")
         attributes 'Multi-Release': 'true'
+        attributes 'Main-Class': 'net.creeperhost.creeperlauncher.CreeperLauncher'
     }
 }
 assemble.dependsOn 'shadowJar'
