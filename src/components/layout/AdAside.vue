@@ -7,14 +7,10 @@
     
     
     <div class="ad-space">
-<!--      <div class="heart text-center mb-4" v-if="!isElectron">-->
-<!--        <div class="heart-hearts">-->
-<!--          <font-awesome-icon icon="heart" size="2x" class="mb-2" />-->
-<!--          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-2 mb-2" />-->
-<!--          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-3 mb-2" />-->
-<!--        </div>-->
-<!--        <p class="font-bold">Supports FTB & Curseforge Authors</p>-->
-<!--      </div>-->
+      <div class="heart text-center mb-4" v-if="!isElectron">
+        <p class="font-bold">Supports FTB & CurseForge Authors</p>
+      </div>
+      
       <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
@@ -87,12 +83,12 @@ export default class AdAside extends Vue {
     
     // I've lost brain cells from this. Please just fucking work 
     // - Covers
-    if (!this.isDevEnv) {
-      const helpMe = document.createElement("script");
-      helpMe.src = "https://adserver.ftb.team/www/delivery/asyncjs.php";
-      helpMe.async = true;
-      document.head.append(helpMe)
-    }
+    // if (!this.isDevEnv) {
+    //   const helpMe = document.createElement("script");
+    //   helpMe.src = "https://adserver.ftb.team/www/delivery/asyncjs.php";
+    //   helpMe.async = true;
+    //   document.head.append(helpMe)
+    // }
     
     // Kinda dirty hack for this file
     if (!this.platform.isOverwolf()) {
@@ -100,20 +96,20 @@ export default class AdAside extends Vue {
     }
 
     setTimeout(() => {
-      this.loadAds("ow-ad");
-      this.loadAds("ow-ad-second");
+      this.loadAds("ow-ad", {width: 400, height: 300});
+      this.loadAds("ow-ad-second", {width: 300, height: 250});
     }, 1500);
   }
 
-  loadAds(id: string) {
-    // if (this.isDevEnv) {
-    //   return;
-    // }
+  loadAds(id: string, options?: any) {
+    if (this.isDevEnv) {
+      return;
+    }
     
     this.logger.info('Loading advert system for ' + id);
     //@ts-ignore
     if (typeof OwAd === 'undefined' || !OwAd) {
-      this.showPlaceholder = true;
+      // this.showPlaceholder = true;
       this.logger.info('No advert object available');
     } else {
       //@ts-ignore
@@ -125,7 +121,7 @@ export default class AdAside extends Vue {
       } else {
         this.logger.info('Created advert');
         //@ts-ignore
-        this.ads[id] = new OwAd(document.getElementById(id));
+        this.ads[id] = new OwAd(document.getElementById(id), options);
         this.logger.info(this.ads[id], document.getElementById(id));
 
         //@ts-ignore
@@ -140,7 +136,7 @@ export default class AdAside extends Vue {
       }
 
       this.ads[id].addEventListener('error', (error: any) => {
-        this.showPlaceholder = true;
+        // this.showPlaceholder = true;
         console.log(error)
         this.logger.info('Failed to load ad');
         this.logger.info(error);
@@ -227,6 +223,10 @@ export default class AdAside extends Vue {
   }
   
   .ad-space {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    
     .heart {
       position: relative;
       svg {
