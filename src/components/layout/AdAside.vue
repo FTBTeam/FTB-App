@@ -6,31 +6,31 @@
 <!--    </div>-->
 
 
-    <div class="heart text-right mt-2 mb-4" v-if="!isElectron">
-      <p class="font-bold">Our ads support FTB & CurseForge Authors ❤️</p>
+    <div class="ad-head-test mt-2 mb-4" v-if="!isElectron && !(this.showPlaceholder['ow-ad-second'] && this.showPlaceholder['ow-ad'])">
+      <p class="font-bold">Ads support FTB & Mod Authors ❤️</p>
     </div>
 
-    <div class="ad-space">
-      <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }">
+    <div class="ad-space" :key="adSpaceKey">
+      <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }" v-if="!isElectron">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
-            v-if="!showPlaceholder && !isElectron"
+            v-if="!isElectron"
             id="ow-ad-second"
             ref="adRefSecond"
             style="max-width: 300px; max-height: 250px; display: flex; margin: 0 auto"
           />
-          <div class='place-holder small' ></div>
+          <div class='place-holder small' v-else-if="!isElectron && showPlaceholder['ow-ad-second']"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>
         </div>
       </div>
       <div class="ad-box" :class="{ overwolf: !isElectron }">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
-            v-if="!showPlaceholder && !isElectron"
+            v-if="!isElectron"
             id="ow-ad"
             ref="adRef"
             style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto"
           />
-          <div class='place-holder' v-else-if=''></div>
+          <div class='place-holder' v-else-if="!isElectron && showPlaceholder['ow-ad']"><span>❤️</span>These ads support FTB & CurseForge Mod Authors</div>
           <video
             @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')"
             class="cursor-pointer"
@@ -74,9 +74,10 @@ export default class AdAside extends Vue {
   showPlaceholder: Record<string, boolean> = {};
 
   random = AdAside.mkRandom();
+  adSpaceKey = 'ad-space-key'
   
   get isElectron() {
-    return false; //platform.isElectron();
+    return platform.isElectron();
   }
 
   async mounted() {
@@ -92,9 +93,9 @@ export default class AdAside extends Vue {
     // }
     
     // Kinda dirty hack for this file
-    // if (!this.platform.isOverwolf()) {
-    //   return;
-    // }
+    if (this.isElectron) {
+      return;
+    }
 
     setTimeout(() => {
       this.loadAds("ow-ad", {size: { width: 400, height: 300 }});
@@ -102,8 +103,14 @@ export default class AdAside extends Vue {
     }, 1500);
   }
 
-  loadAds(id: string, options?: any) {
+  async loadAds(id: string, options?: any) {
     this.showPlaceholder[id] = true;
+    this.adSpaceKey = 'ad-space-key' + Math.random();
+    
+    // Wait for the view to update so getting the elm doesn't fail
+    await new Promise((res) => {
+      this.$nextTick(() => res(null))
+    });
     
     if (this.isDevEnv) {
       return;
@@ -113,6 +120,7 @@ export default class AdAside extends Vue {
     //@ts-ignore
     if (typeof OwAd === 'undefined' || !OwAd) {
       this.showPlaceholder[id] = true;
+      this.adSpaceKey = 'ad-space-key' + Math.random();
       this.logger.info('No advert object available');
     } else {
       //@ts-ignore
@@ -140,21 +148,25 @@ export default class AdAside extends Vue {
 
       this.ads[id].addEventListener('error', (error: any) => {
         this.showPlaceholder[id] = true;
+        this.adSpaceKey = 'ad-space-key' + Math.random();
         console.log(error)
         this.logger.info('Failed to load ad');
         this.logger.info(error);
       });
       this.ads[id].addEventListener('player_loaded', () => {
         this.showPlaceholder[id] = false;
+        this.adSpaceKey = 'ad-space-key' + Math.random();
         this.logger.info('player loaded for overwolf');
       });
       this.ads[id].addEventListener('display_ad_loaded', () => {
         this.showPlaceholder[id] = false;
+        this.adSpaceKey = 'ad-space-key' + Math.random();
         this.logger.info('display_ad_loaded overwolf');
         fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
       });
       this.ads[id].addEventListener('play', () => {
         this.showPlaceholder[id] = false;
+        this.adSpaceKey = 'ad-space-key' + Math.random();
         this.logger.info('play overwolf');
       });
       this.ads[id].addEventListener('complete', () => {
@@ -232,60 +244,39 @@ export default class AdAside extends Vue {
     background: black;
     border-radius: 5px;
     
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    flex-direction: column;
+    padding: 3rem;
+    text-align: center;
+    font-weight: bold;
+    
+    span {
+      display: block;
+      margin-bottom: 1rem;
+    }
+    
+    .logo {
+      max-width: 60px;
+      margin-bottom: 1rem;
+    }
+    
     &.small {
       width: 300px;
       height: 250px;
+      padding: 2rem;
     }
   }
   
   .ad-space {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     flex-direction: column;
     
-    .heart {
-      position: relative;
-      svg {
-        color: #ff4040;
-      }
-
-      .less-than-three {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%) scale(1.5);
-        opacity: 0;
-
-        animation: scale 2s ease-in-out infinite;
-
-        &.heart-3 {
-          animation: scale2 2s ease-in-out infinite;
-          animation-delay: 0.4s;
-        }
-
-        @keyframes scale {
-          0%,
-          100% {
-            transform: translateX(-50%) scale(1);
-            opacity: 0;
-          }
-          50% {
-            transform: translateX(-50%) scale(1.5);
-            opacity: 0.6;
-          }
-        }
-
-        @keyframes scale2 {
-          0%,
-          100% {
-            transform: translateX(-50%) scale(1);
-            opacity: 0;
-          }
-          50% {
-            transform: translateX(-50%) scale(1.8);
-            opacity: 0.2;
-          }
-        }
-      }
+    .ad-head-test {
+      max-width: 300px;
     }
 
     .ad-box {
