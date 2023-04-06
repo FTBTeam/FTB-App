@@ -10,9 +10,9 @@ version =
   '.' +
   versionTime.substring(0, 2) +
   '.' +
-  versionTime.substring(2, 6) +
+  parseInt(versionTime.substring(2, 6)) +
   '.' +
-  versionTime.substring(6);
+  parseInt(versionTime.substring(6));
 manifestData.meta.version = version;
 if (versionData.branch === 'release') {
   manifestData.meta.name = 'FTB App';
