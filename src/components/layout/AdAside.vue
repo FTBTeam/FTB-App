@@ -4,13 +4,13 @@
 <!--    <div class="ftb-ad-frame" v-if="!isDevEnv">-->
 <!--      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>-->
 <!--    </div>-->
-    
-    
+
+
+    <div class="heart text-right mt-2 mb-4" v-if="!isElectron">
+      <p class="font-bold">Our ads support FTB & CurseForge Authors ❤️</p>
+    </div>
+
     <div class="ad-space">
-      <div class="heart text-center mb-4" v-if="!isElectron">
-        <p class="font-bold">Supports FTB & CurseForge Authors</p>
-      </div>
-      
       <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
@@ -19,9 +19,9 @@
             ref="adRefSecond"
             style="max-width: 300px; max-height: 250px; display: flex; margin: 0 auto"
           />
+          <div class='place-holder small' ></div>
         </div>
       </div>
-      
       <div class="ad-box" :class="{ overwolf: !isElectron }">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
@@ -30,6 +30,7 @@
             ref="adRef"
             style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto"
           />
+          <div class='place-holder' v-else-if=''></div>
           <video
             @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')"
             class="cursor-pointer"
@@ -68,14 +69,14 @@ export default class AdAside extends Vue {
 
   private logger = getLogger('ad-aside-vue');
 
-  private ads: Record<string, any> = {};
+  ads: Record<string, any> = {};
   platform = platform;
-  showPlaceholder = false;
+  showPlaceholder: Record<string, boolean> = {};
 
   random = AdAside.mkRandom();
   
   get isElectron() {
-    return platform.isElectron();
+    return false; //platform.isElectron();
   }
 
   async mounted() {
@@ -91,17 +92,19 @@ export default class AdAside extends Vue {
     // }
     
     // Kinda dirty hack for this file
-    if (!this.platform.isOverwolf()) {
-      return;
-    }
+    // if (!this.platform.isOverwolf()) {
+    //   return;
+    // }
 
     setTimeout(() => {
-      this.loadAds("ow-ad", {width: 400, height: 300});
-      this.loadAds("ow-ad-second", {width: 300, height: 250});
+      this.loadAds("ow-ad", {size: { width: 400, height: 300 }});
+      this.loadAds("ow-ad-second", {size: {width: 300, height: 250}});
     }, 1500);
   }
 
   loadAds(id: string, options?: any) {
+    this.showPlaceholder[id] = true;
+    
     if (this.isDevEnv) {
       return;
     }
@@ -109,7 +112,7 @@ export default class AdAside extends Vue {
     this.logger.info('Loading advert system for ' + id);
     //@ts-ignore
     if (typeof OwAd === 'undefined' || !OwAd) {
-      // this.showPlaceholder = true;
+      this.showPlaceholder[id] = true;
       this.logger.info('No advert object available');
     } else {
       //@ts-ignore
@@ -136,18 +139,22 @@ export default class AdAside extends Vue {
       }
 
       this.ads[id].addEventListener('error', (error: any) => {
-        // this.showPlaceholder = true;
+        this.showPlaceholder[id] = true;
         console.log(error)
         this.logger.info('Failed to load ad');
         this.logger.info(error);
       });
       this.ads[id].addEventListener('player_loaded', () => {
+        this.showPlaceholder[id] = false;
         this.logger.info('player loaded for overwolf');
       });
       this.ads[id].addEventListener('display_ad_loaded', () => {
+        this.showPlaceholder[id] = false;
         this.logger.info('display_ad_loaded overwolf');
+        fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
       });
       this.ads[id].addEventListener('play', () => {
+        this.showPlaceholder[id] = false;
         this.logger.info('play overwolf');
       });
       this.ads[id].addEventListener('complete', () => {
@@ -155,9 +162,6 @@ export default class AdAside extends Vue {
       });
       this.ads[id].addEventListener('impression', () => {
         fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
-      });
-      this.ads[id].addEventListener('display_ad_loaded', () => {
-        fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
       });
     }
   }
@@ -222,9 +226,21 @@ export default class AdAside extends Vue {
     flex: 1;
   }
   
+  .place-holder {
+    width: 400px;
+    height: 300px;
+    background: black;
+    border-radius: 5px;
+    
+    &.small {
+      width: 300px;
+      height: 250px;
+    }
+  }
+  
   .ad-space {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     flex-direction: column;
     
     .heart {
