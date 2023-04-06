@@ -9,7 +9,7 @@
     <div class="ad-head-test mt-2 mb-4" v-if="!isElectron && !(this.showPlaceholder['ow-ad-second'] && this.showPlaceholder['ow-ad'])">
       <p class="font-bold">Ads support FTB & Mod Authors ❤️</p>
     </div>
-
+    
     <div class="ad-space" :key="adSpaceKey">
       <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }" v-if="!isElectron">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
@@ -19,7 +19,7 @@
             ref="adRefSecond"
             style="max-width: 300px; max-height: 250px; display: flex; margin: 0 auto"
           />
-          <div class='place-holder small' v-else-if="!isElectron && showPlaceholder['ow-ad-second']"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>
+          <div class='place-holder small' v-if="!isElectron && showPlaceholder['ow-ad-second']"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>
         </div>
       </div>
       <div class="ad-box" :class="{ overwolf: !isElectron }">
@@ -30,7 +30,7 @@
             ref="adRef"
             style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto"
           />
-          <div class='place-holder' v-else-if="!isElectron && showPlaceholder['ow-ad']"><span>❤️</span>These ads support FTB & CurseForge Mod Authors</div>
+          <div class='place-holder' v-if="!isElectron && showPlaceholder['ow-ad']"><span>❤️</span>These ads support FTB & CurseForge Mod Authors</div>
           <video
             @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')"
             class="cursor-pointer"
@@ -134,6 +134,7 @@ export default class AdAside extends Vue {
         //@ts-ignore
         this.ads[id] = new OwAd(document.getElementById(id), options);
         this.logger.info(this.ads[id], document.getElementById(id));
+        this.logger.info("Loaded ads");
 
         //@ts-ignore
         if (!window.ads) {
