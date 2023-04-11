@@ -15,4 +15,5 @@ declare global {
 
 declare global {
   var window: Window & typeof globalThis;
+  var OwAd: any;
 }

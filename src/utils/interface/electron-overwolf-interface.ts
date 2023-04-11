@@ -16,7 +16,7 @@ export interface Util {
 }
 
 export interface Actions {
-  openMsAuth(callback: (status: 'processing' | 'done', success?: boolean) => void): void;
+  openMsAuth(callback: (data: { status: 'processing' | 'done', success?: boolean }) => void): void;
   closeAuthWindow(status: 'processing' | 'done', success?: boolean): void;
   openModpack: (payload: { name: string; id: string }) => void;
   closeWebservers(): void;
