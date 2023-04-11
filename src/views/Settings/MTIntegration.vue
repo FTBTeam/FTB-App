@@ -95,6 +95,12 @@ export default class MTIntegration extends Vue {
   public toggleAdverts(value: boolean) {
     this.settings.settings.showAdverts = value;
     this.saveSettings(this.settings.settings);
+    
+    if (value) {
+      Object.values((window as any).ads ?? {}).forEach((e: any) => e.refreshAd());
+    } else {
+      Object.values((window as any).ads ?? {}).forEach((e: any) => e.removeAd());
+    }
   }
 
   public openProfile() {

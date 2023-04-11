@@ -77,3 +77,5 @@ subprocess/tempDMGExtract/
 subprocess/electron.log
 
 **/.yarn
+
+frontend

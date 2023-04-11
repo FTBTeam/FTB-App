@@ -7,7 +7,7 @@
         <div class="app-content relative">
           <router-view />
         </div>
-        <ad-aside :is-dev="isDev" />
+        <ad-aside v-show="advertsEnabled" :is-dev="isDev" />
       </main>
     </div>
     <div class="app-container centered" v-else>
@@ -50,6 +50,7 @@ import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
 import { RouterNames } from '@/router';
+import {AuthState} from '@/modules/auth/types';
 
 @Component({
   components: {
@@ -65,6 +66,7 @@ export default class MainApp extends Vue {
   @State('websocket') public websockets!: SocketState;
   @State('settings') public settings!: SettingsState;
   @Action('sendMessage') public sendMessage: any;
+  @State('auth') public auth!: AuthState;
   @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
   @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall: any;
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
@@ -146,6 +148,15 @@ export default class MainApp extends Vue {
 
   get isDev() {
     return this.$route.name === RouterNames.DEVELOPER;
+  }
+
+  get advertsEnabled(): boolean {
+    if (!this.auth?.token?.activePlan) {
+      return true;
+    }
+
+    // If this fails, show the ads
+    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
   }
 }
 </script>

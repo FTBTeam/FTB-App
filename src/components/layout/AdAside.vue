@@ -6,22 +6,22 @@
 <!--    </div>-->
 
 
-    <div class="ad-head-test mt-2 mb-4" v-if="!isElectron && !(this.showPlaceholder['ow-ad-second'] && this.showPlaceholder['ow-ad'])">
+    <div class="ad-head-test mt-2 mb-4" v-if="!isElectron && noAdShowing">
       <p class="font-bold">Ads support FTB & Mod Authors ❤️</p>
     </div>
     
     <div class="ad-space" :key="adSpaceKey">
-      <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }" v-if="!isElectron">
-        <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
-          <div
-            v-if="!isElectron"
-            id="ow-ad-second"
-            ref="adRefSecond"
-            style="max-width: 300px; max-height: 250px; display: flex; margin: 0 auto"
-          />
-          <div class='place-holder small' v-if="!isElectron && showPlaceholder['ow-ad-second']"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>
-        </div>
-      </div>
+<!--      <div class="ad-box mb-4" :class="{ 'overwolf-smaller': !isElectron }" v-if="!isElectron">-->
+<!--        <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">-->
+<!--          <div-->
+<!--            v-if="!isElectron"-->
+<!--            id="ow-ad-second"-->
+<!--            ref="adRefSecond"-->
+<!--            style="max-width: 300px; max-height: 250px; display: flex; margin: 0 auto"-->
+<!--          />-->
+<!--          <div class='place-holder small' v-if="!isElectron && showPlaceholder['ow-ad-second']"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>-->
+<!--        </div>-->
+<!--      </div>-->
       <div class="ad-box" :class="{ overwolf: !isElectron }">
         <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
           <div
@@ -40,7 +40,7 @@
             muted
             loop
             style="margin: 0 auto"
-            v-if="isElectron && !isDevEnv"
+            v-if="isElectron && !isDevEnv && advertsEnabled"
           >
             <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
           </video>
@@ -99,11 +99,11 @@ export default class AdAside extends Vue {
 
     setTimeout(() => {
       this.loadAds("ow-ad", {size: { width: 400, height: 300 }});
-      this.loadAds("ow-ad-second", {size: {width: 300, height: 250}});
+      // this.loadAds("ow-ad-second", {size: {width: 300, height: 250}});
     }, 1500);
   }
 
-  async loadAds(id: string, options?: any) {
+  async loadAds(id: string, options?: any) {    
     this.showPlaceholder[id] = true;
     this.adSpaceKey = 'ad-space-key' + Math.random();
     
@@ -198,6 +198,12 @@ export default class AdAside extends Vue {
   
   get isDevEnv() {
     return process.env.NODE_ENV !== 'production';
+  }
+  
+  get noAdShowing() {
+    // Change to this one if we start showing two ads
+    // return !(this.showPlaceholder['ow-ad-second'] && this.showPlaceholder['ow-ad']);
+    return !this.showPlaceholder['ow-ad'];
   }
 }
 </script>
