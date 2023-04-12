@@ -54,7 +54,7 @@ export default class MicrosoftAuth extends Vue {
   }
   
   async openMsAuth() {
-    platform.get.actions.openMsAuth((status, success) => {
+    platform.get.actions.openMsAuth(({status, success}) => {
       if (status === "processing") {
         this.loading = true;
         return;

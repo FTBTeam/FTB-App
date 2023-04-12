@@ -61,7 +61,7 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openMsAuth(callback: (status: 'processing' | 'done') => void) {
+    openMsAuth(callback: (data: { status: 'processing' | 'done', success: boolean }) => void) {
       overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com?useNew=true`);
       overwolf.windows.getMainWindow().authCallback = callback;
     },
@@ -437,7 +437,7 @@ const Overwolf: ElectronOverwolfInterface = {
             (event.window_state_ex === 'normal' || event.window_state_ex === 'maximized')
           ) {
             if (windowAd) {
-              windowAd.refreshAd();
+              Object.values((window as any).ads ?? {}).forEach((e: any) => e.refreshAd());
               logger.info('Refreshing owAd');
             }
           } else if (
@@ -445,7 +445,7 @@ const Overwolf: ElectronOverwolfInterface = {
             (event.window_previous_state_ex === 'normal' || event.window_previous_state_ex === 'maximized')
           ) {
             if (windowAd) {
-              windowAd.removeAd();
+              Object.values((window as any).ads ?? {}).forEach((e: any) => e.removeAd());
               logger.info('removing owAd');
             }
           }

@@ -177,7 +177,7 @@ const Electron: ElectronOverwolfInterface = {
         ipcRenderer.send('close-auth-window', {success: true});
       }
 
-      callback("processing");
+      callback({status: 'processing'});
       const res = await loginWithMicrosoft({
         key: result.key,
         iv: result.iv,
@@ -187,7 +187,7 @@ const Electron: ElectronOverwolfInterface = {
       if (res.success) {
         mini.close().catch(console.error);
         await store.dispatch('core/loadProfiles');
-        callback("done", true);
+        callback({status: 'done', success: true});
         return;
       }
       
@@ -198,7 +198,7 @@ const Electron: ElectronOverwolfInterface = {
       });
     
       mini.close().catch(console.error);
-      callback("done", false);
+      callback({status: 'done', success: false});
       
       // ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
       //   callback(data.success)
