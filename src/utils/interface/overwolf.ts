@@ -429,7 +429,9 @@ const Overwolf: ElectronOverwolfInterface = {
           return;
         }
 
-        const windowAd: any = (window as any).ad;
+        const windowAd: any = (window as any).ads;
+        console.log("Active ads: ", windowAd)
+        console.log(windowAd)
 
         if (event.window_id === ourWindowID) {
           if (
@@ -437,7 +439,7 @@ const Overwolf: ElectronOverwolfInterface = {
             (event.window_state_ex === 'normal' || event.window_state_ex === 'maximized')
           ) {
             if (windowAd) {
-              Object.values((window as any).ads ?? {}).forEach((e: any) => e.refreshAd());
+              Object.values(windowAd.ads ?? {}).forEach((e: any) => e.refreshAd());
               logger.info('Refreshing owAd');
             }
           } else if (
@@ -445,7 +447,7 @@ const Overwolf: ElectronOverwolfInterface = {
             (event.window_previous_state_ex === 'normal' || event.window_previous_state_ex === 'maximized')
           ) {
             if (windowAd) {
-              Object.values((window as any).ads ?? {}).forEach((e: any) => e.removeAd());
+              Object.values(windowAd.ads ?? {}).forEach((e: any) => e.removeAd());
               logger.info('removing owAd');
             }
           }
