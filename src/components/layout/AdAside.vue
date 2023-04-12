@@ -4,6 +4,8 @@
     <!--      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>-->
     <!--    </div>-->
 
+    <p class="mb-4 font-bold text-lg">Ads support FTB ❤️</p>
+    
     <div class="ad-container ads" v-if="!isElectron" key="adside-ad-type">
 <!--      <div class="ad-holder small mb-4">-->
 <!--        <div-->

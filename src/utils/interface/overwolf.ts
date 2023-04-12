@@ -424,12 +424,12 @@ const Overwolf: ElectronOverwolfInterface = {
       });
 
       overwolf.windows.onStateChanged.addListener((event: any) => {
-        if (typeof (window as any).ad === 'undefined' || !(window as any).ad) {
+        const windowAd: any = (window as any).ads;
+        if (!windowAd) {
           logger.warn("Unable to control ad as it's not set");
           return;
         }
 
-        const windowAd: any = (window as any).ads;
         console.log("Active ads: ", windowAd)
         console.log(windowAd)
 
