@@ -5,7 +5,7 @@
 
     <selection
       @selected="(e) => (version = !e ? null : e.id)"
-      placeholder="Selection version"
+      placeholder="Select version"
       :inheritedSelection="versionOptions[0]"
       :options="versionOptions"
     />
