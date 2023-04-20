@@ -62,7 +62,15 @@ public class Instances
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
                     .toList();
-            instances = loadedInstances.stream().collect(Collectors.toMap(Instance::getUuid, Function.identity()));
+            instances = new HashMap<>();
+            for (Instance instance : loadedInstances) {
+                // TODO, there is probably a better solution to this.
+                if (instances.containsKey(instance.getUuid())) {
+                    LOGGER.warn("Found duplicate instance {} with id {}. Ignoring.", instance.getDir(), instance.getUuid());
+                    continue;
+                }
+                instances.put(instance.getUuid(), instance);
+            }
             LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
         }
 
