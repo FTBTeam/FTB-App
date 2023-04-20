@@ -117,6 +117,14 @@ public class CreeperLauncher {
     }
 
     public static void main(String[] args) {
+        try {
+            mainImpl(args);
+        } catch (Throwable ex) {
+            LOGGER.error("Main method threw exception:", ex);
+        }
+    }
+
+    private static void mainImpl(String[] args) {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
 
