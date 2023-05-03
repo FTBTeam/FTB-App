@@ -1,1 +1,0 @@
-This is not a minimal JRE, this is jdk-17.0.3+7-jre from Adoptium. This is temporary. Hopefully. Theoretically.
