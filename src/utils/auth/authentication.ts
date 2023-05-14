@@ -3,11 +3,11 @@ import store from '@/modules/store';
 import {wsTimeoutWrapper, wsTimeoutWrapperTyped} from '@/utils';
 import dayjs from 'dayjs';
 import { createError } from '@/core/errors/errorCodes';
-import platform from '@/utils/interface/electron-overwolf';
 
 type RefreshResponse = {
   ok: boolean;
   networkError?: boolean;
+  tryLoginAgain?: boolean;
 };
 
 interface Authenticator {
@@ -100,7 +100,11 @@ const msAuthenticator: Authenticator = {
       } else {
         logAuth('error', `No encryption details, we can not proceed...`);
         console.log('Unable to refresh token due to missing encryption details', response);
-        return { ok: false };
+        if (response?.raw?.issue?.error === "invalid_grant") {
+          return {ok: false, tryLoginAgain: true};
+        }
+        
+        return {ok: false}
       }
     } catch (e) {
       logAuth('error', `Request errored with the response of ${(e as any).message}`);
@@ -297,8 +301,8 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
     logAuth('debug', `The refresh was ${refresh.ok ? 'successful' : 'unsuccessful'}`);
     return {
       ok: refresh.ok,
-      allowOffline: true,
-      requiresSignIn: !refresh.ok,
+      allowOffline: !refresh.ok && !refresh.tryLoginAgain,
+      requiresSignIn: refresh.tryLoginAgain ?? false,
       error: refresh.ok ? createError('ftb-auth#1002') : undefined,
     };
   }
@@ -334,7 +338,9 @@ export const validateAuthenticationOrSignIn = async (instanceId?: string): Promi
       {
         title: 'Error!',
         message:
-          'Profile validation failed, please login again. If this keeps happening, ask for support in our Discord',
+          validationResult.requiresSignIn 
+            ? "We've been unable to refresh your account details, please sign back in"
+            : 'Profile validation failed, please login again. If this keeps happening, ask for support in our Discord',
         type: 'danger',
       },
       { root: true },
