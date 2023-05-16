@@ -35,7 +35,7 @@ public class Instances
         instances.put(instance.getUuid(), instance);
     }
 
-    public static Iterable<Instance> allInstances() {
+    public static Collection<Instance> allInstances() {
         return Collections.unmodifiableCollection(Instances.instances.values());
     }
 

@@ -5,6 +5,7 @@
       <router-link class="item" :to="{ name: 'home' }">
         <font-awesome-icon icon="home" />
       </router-link>
+      <font-awesome-icon class="item ml-2" icon="fire" @click="openDebugger"/>
     </div>
     <div class="meta-title">FTB App</div>
     <div class="action-buttons" v-if="!isMac">
@@ -91,6 +92,14 @@ export default class TitleBar extends Vue {
 
   public max(): void {
     platform.get.frame.max(this.windowId);
+  }
+
+  openDebugger() {
+    this.sendMessage({
+      payload: {
+        type:"openDebugTools"
+      }
+    })
   }
 }
 </script>
