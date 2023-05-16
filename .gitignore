@@ -78,3 +78,5 @@ subprocess/electron.log
 subprocess/debugger
 
 **/.yarn
+
+frontend

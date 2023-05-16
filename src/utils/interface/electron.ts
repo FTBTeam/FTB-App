@@ -8,11 +8,13 @@ import store from '@/modules/store';
 import { getAPIRequest } from '@/modules/modpacks/actions';
 import { ModPack } from '@/modules/modpacks/types';
 import router from '@/router';
-import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import EventEmitter from 'events';
 import http from 'http';
 import os from 'os';
+import {handleAction} from '@/core/protocol/protocolActions';
+import platform from '@/utils/interface/electron-overwolf';
+import {loginWithMicrosoft} from '@/utils/auth/authentication';
 
 declare const __static: string;
 
@@ -154,14 +156,15 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    async openMsAuth() {
-      ipcRenderer.send('createAuthWindow', 'microsoft');
+    async openMsAuth(callback) {
+      platform.get.utils.openUrl("https://msauth.feed-the-beast.com");
 
       const mini = new MiniWebServer();
       miniServers.push(mini);
-      const result: msauthResponse | null = await new Promise((resolve, reject) => {
+      const result: any = await new Promise((resolve, reject) => {
         mini.open();
-        mini.on('response', (data: msauthResponse) => {
+        mini.on('response', (data: { token: string; 'app-auth': string }) => {
+          console.log(data)
           resolve(data);
         });
 
@@ -170,12 +173,46 @@ const Electron: ElectronOverwolfInterface = {
         });
       });
 
-      if (result?.iv) {
-        ipcRenderer.send('close-auth-window');
+      if (result?.key) {
+        ipcRenderer.send('close-auth-window', {success: true});
       }
 
+      callback({status: 'processing'});
+      const res = await loginWithMicrosoft({
+        key: result.key,
+        iv: result.iv,
+        password: result.password
+      });
+      
+      if (res.success) {
+        mini.close().catch(console.error);
+        await store.dispatch('core/loadProfiles');
+        callback({status: 'done', success: true});
+        return;
+      }
+      
+      await store.dispatch('showAlert', {
+        type: 'danger',
+        title: 'Unable to login',
+        message: `Failed to login due to: ${result.response}`,
+      });
+    
       mini.close().catch(console.error);
-      return result;
+      callback({status: 'done', success: false});
+      
+      // ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
+      //   callback(data.success)
+      // });
+    },
+    
+    closeAuthWindow(status: 'processing' | 'done', success?: boolean) {
+      // Not used atm due to the protocol on mac and linux being borked
+      ipcRenderer.send("close-auth-window", {success, status});
+    },
+    
+    closeWebservers() {
+      miniServers.forEach(e => e.close())
+      miniServers = [];
     },
 
     openModpack(payload: { name: string; id: string }) {
@@ -187,8 +224,9 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      ipcRenderer.send('createAuthWindow', 'minetogether');
-
+      // TODO: Fix soon plz
+      platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=http://localhost:7755")
+      
       const mini = new MiniWebServer();
       miniServers.push(mini);
       const result: any = await new Promise((resolve, reject) => {
@@ -203,7 +241,7 @@ const Electron: ElectronOverwolfInterface = {
       });
 
       if (result?.token) {
-        ipcRenderer.send('close-auth-window');
+        ipcRenderer.send('close-auth-window', {success: true});
       }
 
       mini.close().catch(console.error);
@@ -400,58 +438,59 @@ const Electron: ElectronOverwolfInterface = {
 
     // TODO: this entire thing needs a registry + handler wrapper
     ipcRenderer.on('parseProtocolURL', (event, data) => {
-      let protocolURL = data;
-      if (protocolURL === undefined) {
-        return;
-      }
-      protocolURL = protocolURL.substring(6, protocolURL.length);
-      const parts = protocolURL.split('/');
-      const command = parts[0];
-      const args = parts.slice(1, parts.length);
-      if (command === 'modpack') {
-        if (args.length === 0) {
-          return;
-        }
-        logVerbose(store.state, 'Received modpack protocol message', args);
-        const modpackID = args[0];
-        if (args.length === 1) {
-          // Navigate to page for modpack
-          logVerbose(store.state, 'Navigating to page for modpack', modpackID);
-          router.push({ name: 'modpackpage', query: { modpackid: modpackID } });
-        } else if (args.length === 2) {
-          if (args[1] === 'install') {
-            // Popup install for modpack
-            logVerbose(store.state, 'Popping up install for modpack', modpackID);
-            router.push({ name: 'modpackpage', query: { modpackid: modpackID, showInstall: 'true' } });
-          }
-        } else if (args.length === 3) {
-          if (args[2] === 'install') {
-            // Popup install for modpack with version default selected
-            router.push({
-              name: 'modpackpage',
-              query: { modpackid: modpackID, showInstall: 'true', version: args[1] },
-            });
-          }
-        }
-      } else if (command === 'instance') {
-        if (args.length === 0) {
-          return;
-        }
-        const instanceID = args[0];
-        if (args.length === 1) {
-          // Open instance page
-          router.push({ name: 'instancepage', query: { uuid: instanceID } });
-        } else if (args.length === 2) {
-          // Start instance
-          router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
-        }
-      } else if (command === 'server') {
-        if (args.length === 0) {
-          return;
-        }
-        const serverID = args[0];
-        router.push({ name: 'server', query: { serverid: serverID } });
-      }
+      handleAction(data);
+      // let protocolURL = data;
+      // if (protocolURL === undefined) {
+      //   return;
+      // }
+      // protocolURL = protocolURL.substring(6, protocolURL.length);
+      // const parts = protocolURL.split('/');
+      // const command = parts[0];
+      // const args = parts.slice(1, parts.length);
+      // if (command === 'modpack') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   logVerbose(store.state, 'Received modpack protocol message', args);
+      //   const modpackID = args[0];
+      //   if (args.length === 1) {
+      //     // Navigate to page for modpack
+      //     logVerbose(store.state, 'Navigating to page for modpack', modpackID);
+      //     router.push({ name: 'modpackpage', query: { modpackid: modpackID } });
+      //   } else if (args.length === 2) {
+      //     if (args[1] === 'install') {
+      //       // Popup install for modpack
+      //       logVerbose(store.state, 'Popping up install for modpack', modpackID);
+      //       router.push({ name: 'modpackpage', query: { modpackid: modpackID, showInstall: 'true' } });
+      //     }
+      //   } else if (args.length === 3) {
+      //     if (args[2] === 'install') {
+      //       // Popup install for modpack with version default selected
+      //       router.push({
+      //         name: 'modpackpage',
+      //         query: { modpackid: modpackID, showInstall: 'true', version: args[1] },
+      //       });
+      //     }
+      //   }
+      // } else if (command === 'instance') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   const instanceID = args[0];
+      //   if (args.length === 1) {
+      //     // Open instance page
+      //     router.push({ name: 'instancepage', query: { uuid: instanceID } });
+      //   } else if (args.length === 2) {
+      //     // Start instance
+      //     router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
+      //   }
+      // } else if (command === 'server') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   const serverID = args[0];
+      //   router.push({ name: 'server', query: { serverid: serverID } });
+      // }
     });
     ipcRenderer.on('sendWebsocket', (event, data) => {
       console.log('Request received to send ', data);

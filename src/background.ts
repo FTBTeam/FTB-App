@@ -1,5 +1,5 @@
 'use strict';
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell, Menu } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -8,7 +8,9 @@ import childProcess from 'child_process';
 import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
-import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
+import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
+
+const protocolSpace = 'ftb';
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -18,22 +20,21 @@ log.transports.file.resolvePath = (variables, message): string => {
   return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
 };
 
-protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
+protocol.registerSchemesAsPrivileged([{ scheme: protocolSpace, privileges: { secure: true, standard: true } }]);
 
 if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
-  app.setAsDefaultProtocolClient('ftb', process.execPath, [path.resolve(process.argv[1])]);
+  app.setAsDefaultProtocolClient(protocolSpace, process.execPath, [path.resolve(process.argv[1])]);
 } else {
-  app.setAsDefaultProtocolClient('ftb');
+  app.setAsDefaultProtocolClient(protocolSpace);
 }
 
 let win: BrowserWindow | null;
 let friendsWindow: BrowserWindow | null;
-let electronMsAuthWindow: BrowserWindow | null;
 
 let protocolURL: string | null;
 
 for (let i = 0; i < process.argv.length; i++) {
-  if (process.argv[i].indexOf('ftb://') !== -1) {
+  if (process.argv[i].indexOf(protocolSpace) !== -1) {
     protocolURL = process.argv[i];
     break;
   }
@@ -121,10 +122,6 @@ ipcMain.on('showFriends', () => {
   }
 });
 
-ipcMain.on('createAuthWindow', async (event, args) => {
-  await createAuthWindow(args);
-});
-
 ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
     event.reply('parseProtocolURL', protocolURL);
@@ -198,6 +195,12 @@ ipcMain.on('expandMeScotty', (event, data) => {
     }
     window.setSize(width, height);
   }
+});
+
+app.on('open-url', async (event, customSchemeData) => {
+  // event.preventDefault();
+
+  win?.webContents.send('parseProtocolURL', customSchemeData);
 });
 
 ipcMain.handle('selectFolder', async (event, data) => {
@@ -283,9 +286,8 @@ ipcMain.on('openLink', (event, data) => {
 });
 
 ipcMain.on('close-auth-window', (event, data) => {
-  if (electronMsAuthWindow) {
-    electronMsAuthWindow.close();
-  }
+  const {success} = data;
+  event.reply("authenticationFlowCompleted", {success})
 });
 
 function createFriendsWindow() {
@@ -342,47 +344,7 @@ function createFriendsWindow() {
   });
 }
 
-const createAuthWindow = async (type: string) => {
-  electronMsAuthWindow = new BrowserWindow({
-    title: 'FTB Microsoft Authentication',
-    minWidth: 600,
-    minHeight: 690,
-    width: 600,
-    height: 690,
-    maxWidth: 600,
-    maxHeight: 690,
-    frame: true,
-    titleBarStyle: 'default',
-    resizable: false,
-    minimizable: false,
-    maximizable: false,
-    icon: path.join(__static, 'favicon.ico'),
-    autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      disableBlinkFeatures: 'Auxclick',
-      webSecurity: false,
-    },
-  });
-
-  electronMsAuthWindow?.webContents.session.clearStorageData();
-
-  electronMsAuthWindow.on('closed', () => {
-    electronMsAuthWindow = null;
-    if (win) {
-      win.webContents.send('auth-window-closed');
-    }
-  });
-
-  await electronMsAuthWindow.loadURL(
-    type === 'microsoft'
-      ? 'https://msauth.feed-the-beast.com?new=true'
-      : 'https://minetogether.io/api/login?redirect=http://localhost:7755',
-  );
-};
-
-function createWindow() {
+async function createWindow() {
   win = new BrowserWindow({
     title: 'FTB App',
 
@@ -420,27 +382,27 @@ function createWindow() {
       },
     });
   });
-
-  win.focus();
-
+  
   if (process.env.WEBPACK_DEV_SERVER_URL) {
-    win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
-    if (!process.env.IS_TEST) {
+    await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
+    
+    if (process.env.NODE_ENV !== "production") {
       win.webContents.openDevTools();
     }
+
+    win.blur();
+    setTimeout(() => {
+      win?.focus();
+    }, 100)
   } else {
-    createProtocol('app');
-    win.loadURL('app://./index.html');
+    createProtocol(protocolSpace)
+    await win.loadURL(`${protocolSpace}://./index.html`);
   }
 
   win.on('closed', () => {
     win = null;
     if (friendsWindow) {
       friendsWindow.close();
-    }
-
-    if (electronMsAuthWindow) {
-      electronMsAuthWindow.close();
     }
   });
 }
@@ -492,6 +454,15 @@ if (!gotTheLock) {
   });
 
   app.on('ready', async () => {
+    // TODO: come back to this :D
+    // var template = [
+    //   ...Menu.getApplicationMenu()?.items as any,
+    //   {label: 'View Sexy', submenu: [
+    //       {label: 'HTML/Markdown', click: () => console.log("hello")}
+    //     ]}
+    // ];
+    // Menu.setApplicationMenu(Menu.buildFromTemplate(template as any));
+    //
     createWindow();
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {

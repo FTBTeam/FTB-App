@@ -208,11 +208,11 @@ java/lang/ref/Reference$1
 java/lang/ref/Finalizer$FinalizerThread
 jdk/internal/access/JavaLangAccess
 java/lang/System$2
-jdk/internal/misc/VM
 jdk/internal/util/SystemProps
 jdk/internal/util/SystemProps$Raw
 java/lang/StringConcatHelper
 java/lang/VersionProps
+jdk/internal/misc/VM
 java/util/Arrays
 java/lang/CharacterData
 java/lang/CharacterDataLatin1
@@ -892,6 +892,11 @@ java/security/Security$1
 java/util/Properties$LineReader
 java/util/concurrent/ConcurrentHashMap$ForwardingNode
 java/io/FileInputStream$1
+java/util/concurrent/ConcurrentHashMap$EntrySetView
+java/util/concurrent/ConcurrentHashMap$EntryIterator
+java/util/concurrent/ConcurrentHashMap$MapEntry
+jdk/internal/access/JavaSecurityPropertiesAccess
+java/security/Security$2
 java/io/FilePermission
 java/lang/System$LoggerFinder
 jdk/internal/logger/DefaultLoggerFinder
@@ -915,11 +920,8 @@ java/util/concurrent/ConcurrentHashMap$KeySetView
 java/util/Collections$3
 java/util/concurrent/ConcurrentHashMap$KeyIterator
 java/util/Properties$EntrySet
-java/util/concurrent/ConcurrentHashMap$EntrySetView
 java/util/Collections$SynchronizedCollection
 java/util/Collections$SynchronizedSet
-java/util/concurrent/ConcurrentHashMap$EntryIterator
-java/util/concurrent/ConcurrentHashMap$MapEntry
 java/util/Hashtable$Enumerator
 @lambda-proxy java/util/logging/Level apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/logging/Level$KnownLevel mirrored ()Ljava/util/Optional; (Ljava/util/logging/Level$KnownLevel;)Ljava/util/Optional;
 java/util/ArrayList$ArrayListSpliterator
@@ -958,7 +960,6 @@ java/nio/DirectIntBufferRU
 jdk/internal/jimage/ImageStrings
 jdk/internal/jimage/ImageStringsReader
 jdk/internal/jimage/decompressor/Decompressor
-jdk/internal/jimage/ImageLocation
 java/util/Collections$EmptyIterator
 java/util/Collections$EmptyEnumeration
 jdk/internal/loader/BuiltinClassLoader$1
@@ -1278,7 +1279,6 @@ sun/util/calendar/ZoneInfoFile
 sun/util/calendar/ZoneInfoFile$1
 java/io/DataInputStream
 sun/util/calendar/ZoneInfoFile$ZoneOffsetTransitionRule
-sun/util/calendar/ZoneInfoFile$Checksum
 sun/util/spi/CalendarProvider
 @lambda-proxy sun/util/locale/provider/JRELocaleProviderAdapter run (Lsun/util/locale/provider/JRELocaleProviderAdapter;)Ljava/security/PrivilegedAction; ()Ljava/lang/Object; REF_invokeVirtual sun/util/locale/provider/JRELocaleProviderAdapter lambda$getCalendarProvider$11 ()Lsun/util/spi/CalendarProvider; ()Lsun/util/spi/CalendarProvider;
 sun/util/locale/provider/CalendarProviderImpl

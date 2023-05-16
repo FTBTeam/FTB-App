@@ -241,8 +241,9 @@ public class MicrosoftOAuth {
             
             if (body != null) {
                 try {
-                    JsonElement jsonElement = JsonParser.parseString(body.string());
-                    LOGGER.info("{}|{} responded with: {}", execute.code(), request.url(), jsonElement.toString().replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
+                    String stringBody = body.string();
+                    JsonElement jsonElement = JsonParser.parseString(stringBody);
+                    LOGGER.info("{}|{} responded with: {}", execute.code(), request.url(), stringBody.replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
                     return new StepReply(true, execute.code(), successMessage, jsonElement, execute, false);
                 } catch (JsonParseException exception) {
                     LOGGER.fatal("Unable to parse json response from {} with error of {}", request.url(), exception);

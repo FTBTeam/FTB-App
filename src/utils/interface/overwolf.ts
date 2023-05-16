@@ -4,6 +4,7 @@ import { getLogger, logVerbose } from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
+import {handleAction} from "@/core/protocol/protocolActions";
 
 declare global {
   var overwolf: any;
@@ -60,14 +61,25 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    async openMsAuth() {
-      return new Promise(async (res, reject) => {
-        await overwolf.windows.getMainWindow().openWebserver((data: any) => {
-          res(data);
-        });
-        overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com`);
-      });
+    openMsAuth(callback: (data: { status: 'processing' | 'done', success: boolean }) => void) {
+      overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com?useNew=true`);
+      overwolf.windows.getMainWindow().authCallback = callback;
     },
+
+    closeAuthWindow(status: 'processing' | 'done', success?: boolean) {
+      overwolf.windows.getMainWindow().authCallback({
+        status, success
+      });
+      
+      if (status === "done") {
+        overwolf.windows.getMainWindow().authCallback = null;
+      }
+    },
+
+    closeWebservers() {
+      // Should likely do something but right now it's not as important
+    },
+
     openModpack(payload) {
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
     },
@@ -323,54 +335,55 @@ const Overwolf: ElectronOverwolfInterface = {
     }
 
     function parseAndHandleURL(protocolURL: string) {
-      protocolURL = protocolURL.substring(6, protocolURL.length);
-      const parts = protocolURL.split('/');
-      const command = parts[0];
-      const args = parts.slice(1, parts.length);
-      if (command === 'modpack') {
-        if (args.length === 0) {
-          return;
-        }
-        logVerbose(store.state, 'Received modpack protocol message', args);
-        const modpackID = args[0];
-        if (args.length === 1) {
-          // Navigate to page for modpack
-          logVerbose(store.state, 'Navigating to page for modpack', modpackID);
-          router.push({ name: 'modpackpage', query: { modpackid: modpackID } });
-        } else if (args.length === 2) {
-          if (args[1] === 'install') {
-            // Popup install for modpack
-            logVerbose(store.state, 'Popping up install for modpack', modpackID);
-            router.push({ name: 'modpackpage', query: { modpackid: modpackID, showInstall: 'true' } });
-          }
-        } else if (args.length === 3) {
-          if (args[2] === 'install') {
-            // Popup install for modpack with version default selected
-            router.push({
-              name: 'modpackpage',
-              query: { modpackid: modpackID, showInstall: 'true', version: args[1] },
-            });
-          }
-        }
-      } else if (command === 'instance') {
-        if (args.length === 0) {
-          return;
-        }
-        const instanceID = args[0];
-        if (args.length === 1) {
-          // Open instance page
-          router.push({ name: 'instancepage', query: { uuid: instanceID } });
-        } else if (args.length === 2) {
-          // Start instance
-          router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
-        }
-      } else if (command === 'server') {
-        if (args.length === 0) {
-          return;
-        }
-        const serverID = args[0];
-        router.push({ name: 'server', query: { serverid: serverID } });
-      }
+      handleAction(protocolURL);
+      // protocolURL = protocolURL.substring(6, protocolURL.length);
+      // const parts = protocolURL.split('/');
+      // const command = parts[0];
+      // const args = parts.slice(1, parts.length);
+      // if (command === 'modpack') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   logVerbose(store.state, 'Received modpack protocol message', args);
+      //   const modpackID = args[0];
+      //   if (args.length === 1) {
+      //     // Navigate to page for modpack
+      //     logVerbose(store.state, 'Navigating to page for modpack', modpackID);
+      //     router.push({ name: 'modpackpage', query: { modpackid: modpackID } });
+      //   } else if (args.length === 2) {
+      //     if (args[1] === 'install') {
+      //       // Popup install for modpack
+      //       logVerbose(store.state, 'Popping up install for modpack', modpackID);
+      //       router.push({ name: 'modpackpage', query: { modpackid: modpackID, showInstall: 'true' } });
+      //     }
+      //   } else if (args.length === 3) {
+      //     if (args[2] === 'install') {
+      //       // Popup install for modpack with version default selected
+      //       router.push({
+      //         name: 'modpackpage',
+      //         query: { modpackid: modpackID, showInstall: 'true', version: args[1] },
+      //       });
+      //     }
+      //   }
+      // } else if (command === 'instance') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   const instanceID = args[0];
+      //   if (args.length === 1) {
+      //     // Open instance page
+      //     router.push({ name: 'instancepage', query: { uuid: instanceID } });
+      //   } else if (args.length === 2) {
+      //     // Start instance
+      //     router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
+      //   }
+      // } else if (command === 'server') {
+      //   if (args.length === 0) {
+      //     return;
+      //   }
+      //   const serverID = args[0];
+      //   router.push({ name: 'server', query: { serverid: serverID } });
+      // }
     }
 
     handleWSInfo(initialData.port, true, initialData.secret, initialData.dev);
@@ -411,12 +424,14 @@ const Overwolf: ElectronOverwolfInterface = {
       });
 
       overwolf.windows.onStateChanged.addListener((event: any) => {
-        if (typeof (window as any).ad === 'undefined' || !(window as any).ad) {
+        const windowAd: any = (window as any).ads;
+        if (!windowAd) {
           logger.warn("Unable to control ad as it's not set");
           return;
         }
 
-        const windowAd: any = (window as any).ad;
+        console.log("Active ads: ", windowAd)
+        console.log(windowAd)
 
         if (event.window_id === ourWindowID) {
           if (
@@ -424,7 +439,7 @@ const Overwolf: ElectronOverwolfInterface = {
             (event.window_state_ex === 'normal' || event.window_state_ex === 'maximized')
           ) {
             if (windowAd) {
-              windowAd.refreshAd();
+              Object.values(windowAd.ads ?? {}).forEach((e: any) => e.refreshAd());
               logger.info('Refreshing owAd');
             }
           } else if (
@@ -432,7 +447,7 @@ const Overwolf: ElectronOverwolfInterface = {
             (event.window_previous_state_ex === 'normal' || event.window_previous_state_ex === 'maximized')
           ) {
             if (windowAd) {
-              windowAd.removeAd();
+              Object.values(windowAd.ads ?? {}).forEach((e: any) => e.removeAd());
               logger.info('removing owAd');
             }
           }

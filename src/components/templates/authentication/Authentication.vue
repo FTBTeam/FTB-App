@@ -14,16 +14,12 @@
         <p class="text-red-400 font-bold mt-6 mb-8">{{ error }}</p>
 
         <div v-if="fatalAccountError" class="text-left mb-8">
-          <p>There is a few things that could have gone wrong...</p>
+          <p>We've listed the most common issues in order below.</p>
           <ul class="list-decimal pl-6 my-4 leading-relaxed">
-            <li>You may be attempting to use an under 18s account</li>
-            <li>You don't own Minecraft: Java Edition on this Microsoft account</li>
-            <li>Ensure you're using the correct Microsoft Account</li>
-            <li>You're trying to use Gamepass and have not used the official Minecraft Launcher at least once</li>
-            <li>
-              You're using Gamepass but have not played Minecraft for a while. You'll need to use the Minecraft Launcher
-              again.
-            </li>
+            <li>Ensure you're using the correct Microsoft Account.</li>
+            <li>You don't own <b class="font-bold">Minecraft: Java Edition</b> on this Microsoft account</li>
+            <li>You may be attempting to use an under 18s account. Your account will need to be added <a @click="openExternal" href="https://go.ftb.team/ms-support-family-account">to a Family account.</a></li>
+            <li>You're trying to use Gamepass and have not used the official Minecraft Launcher at least once or in a while. Try Launching Vanilla Minecraft using the Minecraft Launcher. Then attempt to login again.</li>
           </ul>
 
           <p class="opacity-50">Sorry for any inconvenience.</p>
@@ -35,11 +31,8 @@
       <div class="main" v-else-if="onMainView && !loggedIn">
         <h3 class="text-2xl mb-4"><b>Minecraft Login</b></h3>
         <p class="mb-8">
-          Now that Minecraft uses Microsoft to login, we now require to login to your Microsoft account or your Mojang
-          account.
+          Use your Microsoft account to Login into your Minecraft account
         </p>
-
-        <h4 class="text-center font-bold mb-8">Sign in with</h4>
 
         <button
           class="actionable-button"
@@ -58,19 +51,15 @@
           <div class="or">
             <span>or</span>
           </div>
-
-          <button
-            class="actionable-button"
-            @click="
+          
+          <div class="login-with-legacy" @click="
               () => {
                 onMcAuth = true;
                 onMsAuth = false;
                 onMainView = false;
-              }
-            "
-          >
-            <img src="@/assets/images/branding/mojang.svg" alt="Mojang Login" />
-          </button>
+              }">
+            Login with Mojang Account (Legacy)
+          </div>
 
           <small class="text-red-400 mt-4 block text-center"
             >Mojang accounts must be migrated before March 10th, see this
@@ -179,7 +168,19 @@ export default class Authentication extends Vue {
 </script>
 
 <style lang="scss" scoped>
+a[href] {
+  text-decoration: underline;
+}
+
 .authentication {
+  .login-with-legacy {
+    cursor: pointer;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   .or {
     display: flex;
     justify-content: center;
@@ -208,6 +209,7 @@ export default class Authentication extends Vue {
       color: rgba(white, 0.25);
     }
   }
+
 
   .checks {
     svg {

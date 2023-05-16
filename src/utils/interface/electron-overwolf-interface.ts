@@ -16,8 +16,10 @@ export interface Util {
 }
 
 export interface Actions {
-  openMsAuth: () => Promise<any>;
+  openMsAuth(callback: (data: { status: 'processing' | 'done', success?: boolean }) => void): void;
+  closeAuthWindow(status: 'processing' | 'done', success?: boolean): void;
   openModpack: (payload: { name: string; id: string }) => void;
+  closeWebservers(): void;
   openFriends: () => void;
   openLogin: (cb: (data: { token: string; 'app-auth': string }) => void) => void;
   uploadClientLogs: () => void;

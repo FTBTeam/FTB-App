@@ -46,7 +46,7 @@
         label="Show adverts"
         :value="settings.settings.showAdverts === true || settings.settings.showAdverts === 'true'"
         @change="toggleAdverts"
-        :disabled="auth.token.activePlan === null"
+        :disabled="!auth?.token?.activePlan"
         onColor="bg-primary"
         class="mb-8"
         small="Any paid plan can optionally disable ads throughout the app."
@@ -95,6 +95,12 @@ export default class MTIntegration extends Vue {
   public toggleAdverts(value: boolean) {
     this.settings.settings.showAdverts = value;
     this.saveSettings(this.settings.settings);
+    
+    if (value) {
+      Object.values((window as any).ads ?? {}).forEach((e: any) => e.refreshAd());
+    } else {
+      Object.values((window as any).ads ?? {}).forEach((e: any) => e.removeAd());
+    }
   }
 
   public openProfile() {
