@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.*;
@@ -209,11 +208,11 @@ public class Instance {
         if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured() && props.cloudSaves) {
             launcher.withStartTask(ctx -> {
                 LOGGER.info("Attempting start cloud sync..");
-                CreeperLauncher.CLOUD_SAVE_MANAGER.syncInstance(this);
+                CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this);
             });
             launcher.withExitTask(() -> {
                 LOGGER.info("Attempting close cloud sync..");
-                CreeperLauncher.CLOUD_SAVE_MANAGER.syncInstance(this);
+                CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this);
             });
         }
 

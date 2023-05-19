@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
@@ -34,7 +35,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -46,6 +49,8 @@ public final class CloudSaveManager {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("CloudSaveManager.debug");
+
+    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Cloud Save Manager").setDaemon(true).build());
 
     public static final String HASH_METADATA = "x-sha256";
     public static final String LAST_MODIFIED_METADATA = "x-last-modified";
@@ -62,6 +67,8 @@ public final class CloudSaveManager {
 
     @Nullable
     private S3Client s3Client;
+
+    private final List<SyncEntry> syncOperations = new ArrayList<>();
 
     public CloudSaveManager() {
         String sysProp = System.getProperty("CloudSaveManager.creds");
@@ -124,14 +131,29 @@ public final class CloudSaveManager {
         }
     }
 
-    public void syncInstance(Instance instance) {
-        try {
-            CloudSyncOperation operation = new CloudSyncOperation(this, instance);
-            operation.prepare();
-            operation.operate();
-        } catch (IOException ex) {
-            // TODO, better
-            LOGGER.error("Failed to run cloud sync.", ex);
+    public void requestInstanceSync(Instance instance) {
+        synchronized (syncOperations) {
+            SyncEntry entry = new SyncEntry(new CloudSyncOperation(this, instance));
+            syncOperations.add(entry);
+            entry.future = EXECUTOR.submit(() -> {
+                try {
+                    entry.operation.prepare();
+                    entry.operation.operate();
+                } catch (Throwable ex) {
+                    // TODO push to UI.
+                    LOGGER.error("Cloud sync failed!", ex);
+                } finally {
+                    synchronized (syncOperations) {
+                        syncOperations.remove(entry);
+                    }
+                }
+            });
+        }
+    }
+
+    public List<SyncEntry> getSyncOperations() {
+        synchronized(syncOperations) {
+            return new ArrayList<>(syncOperations);
         }
     }
 
@@ -299,5 +321,17 @@ public final class CloudSaveManager {
             s3Client.close();
             s3Client = null;
         }
+    }
+
+    public static final class SyncEntry {
+
+        @Nullable
+        public Future<?> future;
+        public final CloudSyncOperation operation;
+
+        public SyncEntry(CloudSyncOperation operation) {
+            this.operation = operation;
+        }
+
     }
 }
