@@ -9,7 +9,10 @@ import java.util.Optional;
  *
  * @param <D> data
  * @param <E> error
+ *           
+ * @deprecated use {@link Result} instead!  
  */
+@Deprecated
 public abstract class DataResult<D, E> {
     public abstract Optional<D> data();
 
