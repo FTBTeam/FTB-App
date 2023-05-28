@@ -165,7 +165,6 @@ const Electron: ElectronOverwolfInterface = {
       const result: any = await new Promise((resolve, reject) => {
         mini.open();
         mini.on('response', (data: { token: string; 'app-auth': string }) => {
-          console.log(data)
           resolve(data);
         });
 
@@ -175,37 +174,6 @@ const Electron: ElectronOverwolfInterface = {
       });
 
       emitter.emit("authentication.callback", result?.key ? result : undefined);
-      
-      // if (result?.key) {
-      //   ipcRenderer.send('close-auth-window', {success: true});
-      // }
-      //
-      // callback({status: 'processing'});
-      // const res = await loginWithMicrosoft({
-      //   key: result.key,
-      //   iv: result.iv,
-      //   password: result.password
-      // });
-      //
-      // if (res.success) {
-      //   mini.close().catch(console.error);
-      //   await store.dispatch('core/loadProfiles');
-      //   callback({status: 'done', success: true});
-      //   return;
-      // }
-      //
-      // await store.dispatch('showAlert', {
-      //   type: 'danger',
-      //   title: 'Unable to login',
-      //   message: `Failed to login due to: ${result.response}`,
-      // });
-      //
-      // mini.close().catch(console.error);
-      // callback({status: 'done', success: false});
-      
-      // ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
-      //   callback(data.success)
-      // });
     },
     
     emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload) {
