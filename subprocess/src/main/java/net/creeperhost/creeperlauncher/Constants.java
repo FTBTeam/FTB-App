@@ -62,6 +62,14 @@ public class Constants {
     public static final Path INSTANCES_FOLDER_LOC = getDataDir().resolve("instances");
     public static final Path LIBRARY_LOCATION = BIN_LOCATION.resolve("libraries");
 
+    // Microsoft Authentication Dance
+    public static final String MS_OAUTH_XBL_AUTHENTICATE = "https://user.auth.xboxlive.com/user/authenticate";
+    public static final String MS_OAUTH_XSTS_AUTHORIZE = "https://xsts.auth.xboxlive.com/xsts/authorize";
+    public static final String MS_OAUTH_LAUNCHER_LOGIN = "https://api.minecraftservices.com/launcher/login";
+    public static final String MS_OAUTH_CHECK_STORE = "https://api.minecraftservices.com/entitlements/mcstore";
+    public static final String MC_GET_PROFILE = "https://api.minecraftservices.com/minecraft/profile";
+    public static final String MC_CHECK_MIGRATION = "https://api.minecraftservices.com/rollout/v1/msamigration";
+    
     //Other
     public static final int WEBSOCKET_PORT = 13377;
     public static final String APPVERSION = "@APPVERSION@";

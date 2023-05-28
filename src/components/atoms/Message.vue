@@ -81,6 +81,7 @@ export default class Message extends Vue {
 
   &.danger .message-body {
     border-color: var(--color-danger-button);
+    background-color: #862929;
   }
 
   &.success .message-header {

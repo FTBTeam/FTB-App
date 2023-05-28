@@ -1,10 +1,11 @@
 import router from '@/router';
 import store from '@/modules/store';
-import { getLogger, logVerbose } from '@/utils';
+import {emitter, getLogger, logVerbose} from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
 import {handleAction} from "@/core/protocol/protocolActions";
+import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 
 declare global {
   var overwolf: any;
@@ -61,19 +62,12 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openMsAuth(callback: (data: { status: 'processing' | 'done', success: boolean }) => void) {
+    openMsAuth() {
       overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com?useNew=true`);
-      overwolf.windows.getMainWindow().authCallback = callback;
     },
 
-    closeAuthWindow(status: 'processing' | 'done', success?: boolean) {
-      overwolf.windows.getMainWindow().authCallback({
-        status, success
-      });
-      
-      if (status === "done") {
-        overwolf.windows.getMainWindow().authCallback = null;
-      }
+    emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload) {
+      emitter.emit("authentication.callback", credentials)
     },
 
     closeWebservers() {

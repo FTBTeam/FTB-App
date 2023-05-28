@@ -1,19 +1,20 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
-import com.google.gson.JsonObject;
+import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
-import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
-import net.creeperhost.creeperlauncher.util.DataResult;
-import org.apache.commons.lang3.tuple.Pair;
+import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.time.Instant;
 
-public class MicrosoftAuthenticator implements AuthenticatorValidator<DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode>, MicrosoftAuthenticator.AuthRequest, MicrosoftAuthenticator.AuthRequest> {
+public class MicrosoftAuthenticator implements AuthenticatorValidator<
+    Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError>, 
+    MicrosoftAuthenticator.AuthRequest, 
+    MicrosoftAuthenticator.AuthRequest
+> {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
@@ -30,23 +31,45 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<DataResult
 
     /**
      * Due to the way we handle authentication, this is basically ideal for a authentication, we only do the code twice to support different logger info.
-     * @param profile
-     * @param refreshData
-     * @return
      */
     @Nonnull
     @Override
-    public DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> refresh(AccountProfile profile, AuthRequest refreshData) {
-        return MicrosoftOAuth.runFlow(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt);
+    public Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh(AccountProfile profile, AuthRequest refreshData) {
+        return MicrosoftOAuth.
+            create(new MicrosoftOAuth.DanceContext(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt), step -> {
+                Settings.webSocketAPI.sendMessage(new StepProgressReply(step));
+            })
+            .runOAuthDance();
     }
 
     @Nonnull
     @Override
-    public DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> authenticate(AuthRequest accessData) {
-        return MicrosoftOAuth.runFlow(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt);
+    public Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate(AuthRequest accessData) {
+        return MicrosoftOAuth
+            .create(new MicrosoftOAuth.DanceContext(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt), step -> {
+                Settings.webSocketAPI.sendMessage(new StepProgressReply(step));
+            })
+            .runOAuthDance();
+    }
+    
+    private static class StepProgressReply extends BaseData {
+        public String id;
+        public boolean working;
+        public boolean successful;
+        public boolean error;
+
+        public StepProgressReply(MicrosoftOAuth.DanceStep step) {
+            this.type = "authenticationStepUpdate";
+            this.id = step.step().name();
+            this.working = step.working();
+            this.successful = step.successful();
+            this.error = step.error();
+        }
     }
 
     public record AuthRequest(
-            String authToken, String liveRefreshToken, int liveExpiresAt
+            String authToken, 
+            String liveRefreshToken, 
+            int liveExpiresAt
     ) {}
 }

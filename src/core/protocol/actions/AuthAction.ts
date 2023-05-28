@@ -1,8 +1,6 @@
 import { Action, ActionContext, ActionType } from '../protocolActions';
-import { wsTimeoutWrapperTyped } from '@/utils';
 import store from '@/modules/store';
 import platform from '@/utils/interface/electron-overwolf';
-import {loginWithMicrosoft} from '@/utils/auth/authentication';
 
 export class AuthAction implements Action {
   namespace: ActionType = 'auth';
@@ -17,22 +15,13 @@ export class AuthAction implements Action {
         title: 'Unable to login',
         message: `Failed to login due to missing credentials...`,
       });
+      
+      // Failed
+      await platform.get.actions.emitAuthenticationUpdate();
       return;
     }
 
-    await platform.get.actions.closeAuthWindow("processing");
-    const result = await loginWithMicrosoft(credentials);
-    if (result.success) {
-      await store.dispatch('core/loadProfiles');
-      await platform.get.actions.closeAuthWindow("done", true);
-      return;
-    }
-      
-    await platform.get.actions.closeAuthWindow("done", false);
-    await store.dispatch('showAlert', {
-      type: 'danger',
-      title: 'Unable to login',
-      message: `Failed to login due to: ${result.response}`,
-    });
+    // Send the credentials!
+    await platform.get.actions.emitAuthenticationUpdate(credentials);
   }
 }
