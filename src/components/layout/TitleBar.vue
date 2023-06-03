@@ -5,7 +5,8 @@
       <router-link class="item" :to="{ name: 'home' }">
         <font-awesome-icon icon="home" />
       </router-link>
-      <font-awesome-icon class="item ml-2" icon="fire" @click="openDebugger"/>
+      <font-awesome-icon class="item ml-4" icon="fire" @click="openDebugger"/>
+      <font-awesome-icon class="bars ml-4" icon="bars" @click="toggleDebugDisableAdAside" />
     </div>
     <div class="meta-title">FTB App</div>
     <div class="action-buttons" v-if="!isMac">
@@ -45,7 +46,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
+import {Action, Mutation, State} from 'vuex-class';
 import os from 'os';
 import platform from '@/utils/interface/electron-overwolf';
 import { SettingsState } from '@/modules/settings/types';
@@ -56,6 +57,7 @@ export default class TitleBar extends Vue {
   @Action('disconnect') public disconnect: any;
   @State('settings') private settings!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
+  @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
 
   @Prop({ default: false }) isDev!: boolean;
 

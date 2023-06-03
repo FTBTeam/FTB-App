@@ -158,7 +158,7 @@ export default class MicrosoftAuth extends Vue {
     await this.handleLogIn(this.manualCode);
   }
 
-  async handleLogIn(credentials: string) {
+  async handleLogIn(credentials: AuthenticationCredentialsPayload) {
     this.receivedSiteResponse = true;
     const result = await loginWithMicrosoft(credentials);
     if (!result.success) {

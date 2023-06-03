@@ -7,16 +7,16 @@
     <p class="mb-4 font-bold text-lg">Ads support FTB ❤️</p>
     
     <div class="ad-container ads" v-if="!isElectron" key="adside-ad-type">
-<!--      <div class="ad-holder small mb-4">-->
-<!--        <div-->
-<!--          v-if="!isElectron"-->
-<!--          v-show="advertsEnabled ?? true"-->
-<!--          id="ow-ad-second"-->
-<!--          ref="adRefSecond"-->
-<!--          style="max-width: 300px; max-height: 250px;"-->
-<!--        />-->
-<!--        <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>-->
-<!--      </div>-->
+      <div class="ad-holder small mb-4">
+        <div
+          v-if="!isElectron"
+          v-show="advertsEnabled ?? true"
+          id="ow-ad-second"
+          ref="adRefSecond"
+          style="max-width: 300px; max-height: 250px;"
+        />
+        <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>
+      </div>
 
       <div class="ad-holder">
         <div
@@ -97,7 +97,7 @@ export default class AdAside extends Vue {
 
     setTimeout(() => {
       this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: { width: 400, height: 300 }});
-      // this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {size: {width: 300, height: 250}});
+      this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {size: {width: 300, height: 250}});
     }, 1500);
   }
 

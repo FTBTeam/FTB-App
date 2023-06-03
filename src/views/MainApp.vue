@@ -41,7 +41,7 @@
 import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
+import {Action, Getter, State} from 'vuex-class';
 import { SocketState } from '@/modules/websocket/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import { SettingsState } from '@/modules/settings/types';
@@ -80,6 +80,7 @@ export default class MainApp extends Vue {
   @Action('registerPingCallback') private registerPingCallback: any;
 
   @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: any;
+  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
 
   private platfrom = platfrom;
   private windowId: string | null = null;
@@ -151,6 +152,10 @@ export default class MainApp extends Vue {
   }
 
   get advertsEnabled(): boolean {
+    if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
+      return false
+    }
+    
     if (!this.auth?.token?.activePlan) {
       return true;
     }
