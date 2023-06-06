@@ -1,66 +1,68 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import com.google.gson.Gson;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.authentication.ApiRecords;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
+import net.creeperhost.creeperlauncher.accounts.authentication.MinecraftProfileData;
 import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
-import net.creeperhost.creeperlauncher.accounts.data.StepReply;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.DataResult;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
+import net.creeperhost.creeperlauncher.util.Result;
 
 import java.time.Instant;
 
-/**
- * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
- */
 public class AuthenticateMcProfileHandler implements IMessageHandler<AuthenticateMcProfileHandler.Data> {
     @Override
     public void handle(Data data) {
         MojangAuthenticator auth = new MojangAuthenticator();
 
         // Try and authenticate with the MC server
+        // TODO: Use Result
         DataResult<YggdrasilAuthStore, ErrorWithCode> authenticate = auth.authenticate(new MojangAuthenticator.LoginData(data.username, data.password));
 
         authenticate.data().ifPresentOrElse(store -> {
             // Try and get the user profile with the access token from above
-            StepReply minecraftAccount = MicrosoftOAuth.getProfile(store.accessToken);
+            Result<MinecraftProfileData, MicrosoftOAuth.RequestError> minecraftAccount = MicrosoftOAuth.fetchMcProfile(store.accessToken);
 
             // We've likely got a migration issue here
-            if (minecraftAccount.rawResponse() != null && minecraftAccount.rawResponse().code() == 403) {
-                StepReply migrationStatus = MicrosoftOAuth.checkMigrationStatus(store.accessToken);
+            if (minecraftAccount.isErr() && minecraftAccount.unwrapErr().status() == 403) {
+                Result<ApiRecords.Responses.Migration, MicrosoftOAuth.RequestError> migrationStatus = MicrosoftOAuth.checkMigrationStatus(store.accessToken);
                 // The user has to migrate, we should stop here.
-                if (migrationStatus.success() && migrationStatus.data().getAsJsonObject().get("rollout").getAsBoolean()) {
+                if (migrationStatus.isOk() && migrationStatus.unwrap().rollout) {
                     Settings.webSocketAPI.sendMessage(new Reply(data, false, "You must migrate your account to a Microsoft account to continue playing Minecraft."));
                     return;
                 }
             }
 
+            if (minecraftAccount.isErr()) {
+                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to get Minecraft account info."));
+                return;
+            }
+            
+            var minecraftAccountData = minecraftAccount.unwrap();
             // No profile? Fail!
-            String userId = minecraftAccount.data().getAsJsonObject().get("id").getAsString();
-            if (!minecraftAccount.success() || userId == null || userId.isEmpty()) {
+            // Pretty overkill here tbh 
+            String userId = minecraftAccountData.id();
+            if (userId == null || userId.isEmpty()) {
                 Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to get Minecraft account info."));
                 return;
             }
 
             // Parse the users skins (We don't care if it fails).
-            AccountSkin[] skins = new AccountSkin[] {};
-            try {
-                skins = new Gson().fromJson(minecraftAccount.data().getAsJsonObject().get("skins").toString(), AccountSkin[].class);
-            } catch (Exception ignore) {}
-
-
+            AccountSkin[] skins = minecraftAccountData.skins().toArray(new AccountSkin[0]);
+            
             // Create a generic profile
             AccountProfile profile = new AccountProfile(
                     MiscUtils.createUuidFromStringWithoutDashes(userId),
                     Instant.now().toEpochMilli(),
-                    minecraftAccount.data().getAsJsonObject().get("name").getAsString(),
+                    minecraftAccountData.name(),
                     skins,
                     new YggdrasilAuthStore(
                             store.accessToken, store.clientToken
@@ -69,7 +71,6 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
 
             // Try and add the profile
             AccountManager.get().addProfile(profile);
-
             Settings.webSocketAPI.sendMessage(new Reply(data, true, "Success"));
         }, () -> {
             // Nope...

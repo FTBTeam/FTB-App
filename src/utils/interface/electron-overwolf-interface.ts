@@ -1,3 +1,5 @@
+import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
+
 /**
  * This isn't my final form, I should be more unified and less hacky on some of
  * the overwolf methods as we're doing a lot of dropping of passed params on specific
@@ -16,8 +18,8 @@ export interface Util {
 }
 
 export interface Actions {
-  openMsAuth(callback: (data: { status: 'processing' | 'done', success?: boolean }) => void): void;
-  closeAuthWindow(status: 'processing' | 'done', success?: boolean): void;
+  openMsAuth(): void;
+  emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload): void;
   openModpack: (payload: { name: string; id: string }) => void;
   closeWebservers(): void;
   openFriends: () => void;

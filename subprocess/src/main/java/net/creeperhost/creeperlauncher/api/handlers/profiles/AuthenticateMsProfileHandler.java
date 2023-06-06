@@ -1,20 +1,16 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
-import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
+import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
-import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.util.DataResult;
-import org.apache.commons.lang3.tuple.Pair;
+import net.creeperhost.creeperlauncher.util.Result;
 
+import javax.annotation.Nullable;
 import java.time.Instant;
 
 /**
@@ -26,43 +22,47 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         MicrosoftAuthenticator auth = new MicrosoftAuthenticator();
 
         // Try and authenticate with the MC server
-        DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> authenticate = auth.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
+        Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate = auth.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
 
-        authenticate.data().ifPresentOrElse(authData -> {
-            // Parse the users skins (We don't care if it fails).
-            AccountSkin[] skins = new AccountSkin[] {};
-            try {
-                skins = new Gson().fromJson(authData.getKey().getAsJsonObject().get("skins").toString(), AccountSkin[].class);
-            } catch (Exception ignore) {}
+        if (authenticate.isErr()) {
+            MicrosoftOAuth.DanceCodedError danceCodedError = authenticate.unwrapErr();
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
+            return;
+        }
 
-            AccountProfile profile = new AccountProfile(
-                    authData.getValue().minecraftUuid,
-                    Instant.now().getEpochSecond(),
-                    authData.getKey().getAsJsonObject().get("name").getAsString(),
-                    skins,
-                    authData.getValue()
-            );
+        MicrosoftOAuth.DanceResult result = authenticate.unwrap();
+        // Parse the users skins (We don't care if it fails).
+        AccountSkin[] skins = result.profile().skins().toArray(new AccountSkin[0]);
+        AccountProfile profile = new AccountProfile(
+                result.store().minecraftUuid,
+                Instant.now().getEpochSecond(),
+                result.profile().name(),
+                skins,
+                result.store()
+        );
 
-            // Try and add the profile
-            AccountManager.get().addProfile(profile);
+        // Try and add the profile
+        AccountManager.get().addProfile(profile);
 
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Success"));
-        }, () -> {
-            // Nope...
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate.error().map(ErrorWithCode::error).orElse("Fatal authentication error")));
-        });
+        Settings.webSocketAPI.sendMessage(new Reply(data));
     }
 
     private static class Reply extends Data {
         public boolean success;
-        public String response;
+        public boolean networkError;
+        @Nullable public String code;
 
-        public Reply(Data data, boolean success, String rawResult) {
+        public Reply(Data data, boolean success, @Nullable String code, boolean networkError) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
 
             this.success = success;
-            this.response = rawResult;
+            this.code = code;
+            this.networkError = networkError;
+        }
+
+        public Reply(Data data) {
+            this(data, true, null, false);
         }
     }
 

@@ -14,7 +14,8 @@ import http from 'http';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
 import platform from '@/utils/interface/electron-overwolf';
-import {loginWithMicrosoft} from '@/utils/auth/authentication';
+import {emitter} from '@/utils';
+import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 
 declare const __static: string;
 
@@ -57,7 +58,7 @@ class MiniWebServer extends EventEmitter {
             return;
           }
 
-          // HACKS
+          // HACKS Hijank the old flow
           if (jsonResponse.key) {
             this.emit('response', jsonResponse);
             res.write('success');
@@ -156,7 +157,7 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    async openMsAuth(callback) {
+    async openMsAuth() {
       platform.get.utils.openUrl("https://msauth.feed-the-beast.com");
 
       const mini = new MiniWebServer();
@@ -164,7 +165,6 @@ const Electron: ElectronOverwolfInterface = {
       const result: any = await new Promise((resolve, reject) => {
         mini.open();
         mini.on('response', (data: { token: string; 'app-auth': string }) => {
-          console.log(data)
           resolve(data);
         });
 
@@ -173,43 +173,13 @@ const Electron: ElectronOverwolfInterface = {
         });
       });
 
-      if (result?.key) {
-        ipcRenderer.send('close-auth-window', {success: true});
-      }
+      emitter.emit("authentication.callback", result?.key ? result : undefined);
+    },
+    
+    emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload) {
+      emitter.emit("authentication.callback", credentials)
+    },
 
-      callback({status: 'processing'});
-      const res = await loginWithMicrosoft({
-        key: result.key,
-        iv: result.iv,
-        password: result.password
-      });
-      
-      if (res.success) {
-        mini.close().catch(console.error);
-        await store.dispatch('core/loadProfiles');
-        callback({status: 'done', success: true});
-        return;
-      }
-      
-      await store.dispatch('showAlert', {
-        type: 'danger',
-        title: 'Unable to login',
-        message: `Failed to login due to: ${result.response}`,
-      });
-    
-      mini.close().catch(console.error);
-      callback({status: 'done', success: false});
-      
-      // ipcRenderer.once("authenticationFlowCompleted", (event: any, data: any) => {
-      //   callback(data.success)
-      // });
-    },
-    
-    closeAuthWindow(status: 'processing' | 'done', success?: boolean) {
-      // Not used atm due to the protocol on mac and linux being borked
-      ipcRenderer.send("close-auth-window", {success, status});
-    },
-    
     closeWebservers() {
       miniServers.forEach(e => e.close())
       miniServers = [];
@@ -239,11 +209,7 @@ const Electron: ElectronOverwolfInterface = {
           resolve(null);
         });
       });
-
-      if (result?.token) {
-        ipcRenderer.send('close-auth-window', {success: true});
-      }
-
+      
       mini.close().catch(console.error);
       cb(result);
     },

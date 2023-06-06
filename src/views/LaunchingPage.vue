@@ -150,8 +150,8 @@
     </div>
 
     <div class="log-contents text-sm" :class="{ 'dark-mode': darkMode, wrap: wrapText }">
-      <div class="log-item" v-for="i in messages.length" :key="i">
-        {{ messages[messages.length - i] }}
+      <div v-for="i in messages.length" :key="i" class="log-item" :class="messageTypes[messages[messages.length - i].t]">
+        {{ messages[messages.length - i].m }}
       </div>
     </div>
 
@@ -184,7 +184,7 @@ import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
 import { emitter } from '@/utils/event-bus';
 import { RouterNames } from '@/router';
-import { wsTimeoutWrapper } from '@/utils';
+import {wsTimeoutWrapper, yeetError} from '@/utils';
 
 export interface Bar {
   title: string;
@@ -233,7 +233,7 @@ export default class LaunchingPage extends Vue {
   finishedLoading = false;
   preInitMessages: Set<string> = new Set();
 
-  messages: string[] = [];
+  messages: { t: string; m: string }[] = [];
   launchProgress: Bar[] | null | undefined = null;
 
   private showMsgBox = false;
@@ -331,27 +331,43 @@ export default class LaunchingPage extends Vue {
   }
 
   async showInstance() {
-    await wsTimeoutWrapper({
-      type: 'messageClient',
-      uuid: this.instance?.uuid,
-      message: 'show',
-    });
+    await yeetError(async () => {
+      await wsTimeoutWrapper({
+        type: 'messageClient',
+        uuid: this.instance?.uuid,
+        message: 'show',
+      });
+    })
   }
 
   destroyed() {
     // Stop listening to events!
     emitter.off('ws.message', this.onLaunchProgressUpdate);
   }
+  
+  async lazyLogChecker(messages: string[]) {
+    if (this.finishedLoading) {
+      return;
+    }
+    
+    // Make an educated guess that when this shows, we're likely good to assume it's loaded
+    for (const message of messages) {
+      if (message.includes("Created: 512x256x0 minecraft:textures/atlas")) {
+        this.finishedLoading = true;
+      }
+    }
+  }
 
   handleLogMessages(data: any) {
+    yeetError(() => this.lazyLogChecker(data.messages));
     for (const e of data.messages) {
-      this.messages.push(e);
+      this.messages.push(this.formatMessage(e));
     }
 
     if (this.messages.length > 500) {
       // Remove the first 400 items of the array so there isn't a huge jump in the UI
       this.messages.splice(0, 400);
-      this.messages.push(`[FTB APP][INFO] Cleaning up last 500 messages...`);
+      this.messages.push({t: "INFO", m: `[FTB APP][INFO] Cleaning up last 500 messages...`});
     }
   }
 
@@ -364,11 +380,12 @@ export default class LaunchingPage extends Vue {
 
     if (!this.preInitMessages.has(data.stepDesc)) {
       this.preInitMessages.add(data.stepDesc);
-      this.messages.push('[FTB APP][INFO] ' + data.stepDesc);
+      this.messages.push({t: "INFO", m: '[FTB APP][INFO] ' + data.stepDesc});
     }
   }
 
   handleClientLaunch(data: any) {
+    console.log("Launch data", data);
     if (data.messageType === 'message') {
       this.launchProgress = data.message === 'init' ? [] : undefined;
     } else if (data.messageType === 'progress') {
@@ -480,13 +497,25 @@ export default class LaunchingPage extends Vue {
     return this.modpacks.packsCache[id];
   }
 
-  get art() {
-    if (!this.currentModpack?.art) {
-      return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+  messageTypes = {
+    "WARN": "text-orange-200",
+    "INFO": "text-blue-200",
+    "ERROR": "text-red-200",
+  };
+  
+  lastType = "INFO";
+  formatMessage(message: string) {
+    let type = this.lastType ?? "INFO";
+    const result = /^\[[^\/]+\/([^\]]+)]/.exec(message);
+    if (result !== null && result[1]) {
+      type = result[1];
+      this.lastType = type;
     }
-
-    const arts = this.currentModpack.art.filter((art) => art.type === 'splash');
-    return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+    
+    return {
+      t: type,
+      m: message
+    };
   }
 
   get artSquare() {
@@ -497,7 +526,7 @@ export default class LaunchingPage extends Vue {
     const arts = this.currentModpack.art.filter((art) => art.type === 'square');
     return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
   }
-
+    
   get launchStatus() {
     if (this.hasCrashed) {
       return '%s has crashed! 🔥';

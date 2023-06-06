@@ -198,6 +198,9 @@ export const actions: ActionTree<ModpackState, RootState> = {
         logger().info(`Received ${packIDs.length} from the api`);
         const packs: ModPack[] = [];
         await asyncForEach(packIDs, async (packID: number) => {
+          if (packID === 104) {
+            return; // Nope to forge
+          }
           logger().info(`Fetching ${packID} from the api [${packIDs.indexOf(packID) + 1}/${packIDs.length}]`);
           const pack = await dispatch('fetchModpack', packID);
           if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
