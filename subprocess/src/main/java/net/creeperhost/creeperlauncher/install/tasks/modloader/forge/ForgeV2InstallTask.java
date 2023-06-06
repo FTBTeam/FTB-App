@@ -1,7 +1,10 @@
 package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -28,10 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.lang.reflect.Type;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,11 @@ import java.util.stream.Collectors;
 public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = new Gson();
+    private static final Type STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+
+    @SuppressWarnings ("deprecation")
+    private static final HashFunction SHA_1 = Hashing.sha1();
 
     private final Instance instance;
     private final Path installerJar;
@@ -80,13 +86,24 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                 processLibrary(cancelToken, installerRoot, librariesDir, library);
             }
 
-            runProcessors(cancelToken, instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir);
+            Map<String, String> dataCache = null;
+            Path dataCacheFile = versionsDir.resolve(instManifest.version).resolve(instManifest.version + "-data-cache.json");
+            if (Files.exists(dataCacheFile)) {
+                dataCache = JsonUtils.parse(GSON, dataCacheFile, STRING_MAP);
+            }
+            if (dataCache == null) {
+                dataCache = new HashMap<>();
+            }
+
+            runProcessors(cancelToken, instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir, dataCache);
+
+            JsonUtils.write(GSON, IOUtils.makeParents(dataCacheFile), dataCache, STRING_MAP);
 
             ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, instance, instManifest.minecraft);
         }
     }
 
-    private void runProcessors(@Nullable CancellationToken cancelToken, InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir) throws IOException {
+    private void runProcessors(@Nullable CancellationToken cancelToken, InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir, Map<String, String> dataCache) throws IOException {
         String javaTarget = instance.versionManifest.getTargetVersion("runtime");
         Path javaHome;
         if (javaTarget == null) {
@@ -99,10 +116,12 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         Path tempDir = Files.createTempDirectory("forge_installer_");
         tempDir.toFile().deleteOnExit();
         Map<String, String> data = new HashMap<>();
+        List<String> fileKeys = new LinkedList<>();
         for (Map.Entry<String, InstallManifest.DataEntry> entry : manifest.data.entrySet()) {
             String value = entry.getValue().client;
             if (surroundedBy(value, '[', ']')) { // Artifact
                 value = MavenNotation.parse(topAndTail(value)).toPath(librariesDir).toAbsolutePath().toString();
+                fileKeys.add(entry.getKey());
             } else if (surroundedBy(value, '\'', '\'')) { // Literal
                 value = topAndTail(value);
             } else {
@@ -113,6 +132,18 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             data.put(entry.getKey(), value); // Hard coded to client.
         }
 
+        // Remove any keys that are not referenced.
+        fileKeys.removeIf(e -> {
+            for (InstallManifest.Processor processor : manifest.processors) {
+                if (processor.sides.isEmpty() || processor.sides.contains("client")) {
+                    if (processor.args.contains("{" + e + "}")) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+
         data.put("SIDE", "client");
         data.put("MINECRAFT_JAR", versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar").toAbsolutePath().toString());
         data.put("MINECRAFT_VERSION", vanillaManifest.id);
@@ -120,11 +151,41 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         data.put("INSTALLER", installerJar.toAbsolutePath().toString());
         data.put("LIBRARY_DIR", librariesDir.toAbsolutePath().toString());
 
+        if (!fileKeys.isEmpty()) {
+            boolean cached = true;
+            for (String key : fileKeys) {
+                Path file = Paths.get(data.get(key));
+                if (Files.notExists(file)) {
+                    cached = false;
+                    break;
+                }
+                String hash = HashUtils.hash(SHA_1, file).toString();
+                if (!hash.equals(dataCache.get(key))) {
+                    cached = false;
+                    break;
+                }
+            }
+            if (cached) {
+                LOGGER.info("Skipping installer processors. Outputs are cached.");
+                return;
+            }
+        }
+
         for (InstallManifest.Processor processor : manifest.processors) {
             if (cancelToken != null) cancelToken.throwIfCancelled();
             if (processor.sides.isEmpty() || processor.sides.contains("client")) {
                 runProcessor(cancelToken, vanillaManifest, processor, data, javaExecutable, librariesDir);
             }
+        }
+
+        for (String key : fileKeys) {
+            Path file = Paths.get(data.get(key));
+            if (Files.notExists(file)) {
+                LOGGER.warn("File argument {} does not exist after processing.", file);
+                continue;
+            }
+            String hash = HashUtils.hash(SHA_1, file).toString();
+            dataCache.put(key, hash);
         }
     }
 
@@ -153,7 +214,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                 cached = false;
                 continue;
             }
-            HashCode hash = HashUtils.hash(Hashing.sha1(), output);
+            HashCode hash = HashUtils.hash(SHA_1, output);
             if (!HashUtils.equals(hash, value)) {
                 LOGGER.warn("Output '{}' failed to validate, it will be deleted.", output);
                 LOGGER.warn(" Expected: {}", value);
@@ -251,7 +312,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                 LOGGER.error("Output '{}' does not exist.", output);
                 validated = false;
             } else {
-                HashCode hash = HashUtils.hash(Hashing.sha1(), output);
+                HashCode hash = HashUtils.hash(SHA_1, output);
                 if (!HashUtils.equals(hash, value)) {
                     LOGGER.warn("Output '{}' failed to validate.", output);
                     LOGGER.warn(" Expected: {}", value);
@@ -288,7 +349,6 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             LOGGER.warn("DOWNLOAD_MOJMAPS uses different minecraft version? Args: {}. Expected mc: {}", args, vanillaManifest.id);
             return false;
         }
-
 
         NewDownloadTask task = vanillaManifest.getDownload(side + "_mappings", output);
         if (task == null) {

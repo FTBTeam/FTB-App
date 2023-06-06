@@ -14,7 +14,7 @@ interface Authenticator {
   refresh: (profile: AuthProfile) => Promise<RefreshResponse>;
 }
 
-export async function loginWithMicrosoft(payload: string | {key: string; iv: string; password: string}): Promise<{ success: boolean; response: string }> {
+export async function loginWithMicrosoft(payload: string | {key: string; iv: string; password: string}): Promise<{ success: boolean; code: string, networkError: boolean }> {
   const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
     method: 'POST',
     headers: {
@@ -27,18 +27,24 @@ export async function loginWithMicrosoft(payload: string | {key: string; iv: str
   if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
     return {
       success: false,
-      response: "Missing essential login credentials."
+      code: "ftb-f-auth-000001",
+      networkError: false,
     };
   }
 
-  const res = await wsTimeoutWrapperTyped<any, { success: boolean; response: string }>({
+  const res = await wsTimeoutWrapperTyped<any, { 
+    code?: string,
+    networkError?: boolean, // Not important here as we can't do anything about it.
+    success: boolean
+  }>({
     type: 'profiles.ms.authenticate',
     ...response,
   });
 
   return {
     success: res.success ?? false,
-    response: res.response ?? "unknown cause"
+    code: res.code ?? "ftb-f-auth-000002",
+    networkError: res.networkError ?? false
   }
 }
 
@@ -87,15 +93,15 @@ const msAuthenticator: Authenticator = {
           ...data,
         });
 
-        if (authenticator?.response === 'updated') {
+        if (authenticator?.success) {
           logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
           return { ok: true };
         } else {
           logAuth(
             'warn',
-            `Failed to refresh the token for ${profile.username} due to ${authenticator?.response ?? 'unknown'}`,
+            `Failed to refresh the token for ${profile.username}... Error code ${authenticator?.code ?? 'unknown'}`,
           );
-          return { ok: false };
+          return { ok: false, networkError: authenticator?.networkError ?? false };
         }
       } else {
         logAuth('error', `No encryption details, we can not proceed...`);

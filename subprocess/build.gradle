@@ -49,7 +49,7 @@ dependencies {
     implementation 'net.creeperhost.minetogether:minetogether-api:1.0.20'
 
     implementation 'org.apache.tika:tika-core:1.22'
-    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.java-websocket:Java-WebSocket:1.4.0'
     implementation 'com.github.oshi:oshi-core:5.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
@@ -75,6 +75,10 @@ dependencies {
 
     compileOnly 'org.jetbrains:annotations:22.0.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+
+    if (file('debugger').exists()) {
+        runtimeOnly project(":debugger")
+    }
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'

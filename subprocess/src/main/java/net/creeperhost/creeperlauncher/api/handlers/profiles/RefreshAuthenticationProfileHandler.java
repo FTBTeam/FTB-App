@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
 import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
@@ -13,6 +14,7 @@ import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.DataResult;
+import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -36,24 +38,42 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
 
         AuthenticatorValidator<?, ?, ?> specificValidator = profile.getValidator();
         if (specificValidator instanceof MicrosoftAuthenticator validator) {
-            if (data.liveAccessToken == null) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Missing essential information...", false));
-            }
-
-            DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
-                    data.liveAccessToken, data.liveRefreshToken, data.liveExpires
-            ));
-
-            refresh.data().ifPresentOrElse(d -> {
-                profile.msAuth = d.getRight();
-                AccountManager.get().saveProfiles();
-                Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated", false));
-            }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, true, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"), refresh.error().map(e -> e.rawReply() != null && e.rawReply().networkError()).orElse(false))));
-
+            refreshMicrosoft(validator, data, profile);
             return;
         }
 
-        MojangAuthenticator validator = (MojangAuthenticator) specificValidator;
+        refreshMinecraft((MojangAuthenticator) specificValidator, data, profile);
+    }
+
+    /**
+     * Refresh using Microsoft flow
+     */
+    private void refreshMicrosoft(MicrosoftAuthenticator validator, Data data, AccountProfile profile) {
+        if (data.liveAccessToken == null) {
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Missing essential information...", false));
+        }
+
+        Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
+            data.liveAccessToken, data.liveRefreshToken, data.liveExpires
+        ));
+
+        if (refresh.isErr()) {
+            MicrosoftOAuth.DanceCodedError danceCodedError = refresh.unwrapErr();
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
+            return;
+        }
+
+        profile.msAuth = refresh.unwrap().store();
+        AccountManager.get().saveProfiles();
+        Settings.webSocketAPI.sendMessage(new Reply(data, true, "", false));
+    }
+
+    /**
+     * Refresh using the Minecraft flow
+     * 
+     * @implNote Minecraft auth is being yeeted
+     */
+    private void refreshMinecraft(MojangAuthenticator validator, Data data, AccountProfile profile) {
         DataResult<YggdrasilAuthStore, ErrorWithCode> refresh = validator.refresh(profile, "ignore me");
 
         refresh.data().ifPresentOrElse(d -> {
@@ -66,14 +86,14 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
     private static class Reply extends Data {
         public boolean networkError;
         public boolean success;
-        public String response;
+        public String code;
 
-        public Reply(Data data, boolean success, String rawResult, boolean networkError) {
+        public Reply(Data data, boolean success, String code, boolean networkError) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
 
             this.success = success;
-            this.response = rawResult;
+            this.code = code;
             this.networkError = networkError;
         }
     }

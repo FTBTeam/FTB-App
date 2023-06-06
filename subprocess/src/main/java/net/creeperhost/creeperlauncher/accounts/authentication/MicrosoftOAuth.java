@@ -1,324 +1,356 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
-import net.creeperhost.creeperlauncher.accounts.data.StepReply;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
-import net.creeperhost.creeperlauncher.util.DataResult;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
+import net.creeperhost.creeperlauncher.util.Result;
 import okhttp3.*;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.IOException;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+
+import static net.creeperhost.creeperlauncher.accounts.authentication.ApiRecords.*;
 
 public class MicrosoftOAuth {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final Request.Builder JSON_REQUEST = new Request.Builder()
+    private final Consumer<DanceStep> onUpdate;
+    private final DanceContext context;
+    
+    private MicrosoftOAuth(Consumer<DanceStep> onUpdate, DanceContext context) {
+        this.onUpdate = onUpdate;
+        this.context = context;
+    }
+    
+    public static MicrosoftOAuth create(DanceContext context, Consumer<DanceStep> onUpdate) {
+        return new MicrosoftOAuth(onUpdate, context);
+    }
+
+    public Result<DanceResult, DanceCodedError> runOAuthDance() {
+        emit("Beginning dance", Step.START_DANCE.createSuccessStep());
+
+        // Login with Xbox live service
+        emit("Logging into XBox Live", Step.AUTH_XBOX.createWorkingStep());
+        var xblAuthResult = request(new Request.Builder()
+                .url(Constants.MS_OAUTH_XBL_AUTHENTICATE)
+                .post(jsonBody(new Requests.XblAuth(new Requests.XblAuthProperties("RPS", "user.auth.xboxlive.com", String.format("d=%s", context.authToken)), "http://auth.xboxlive.com", "JWT"))),
+            Responses.XblAuth.class
+        );
+
+        if (xblAuthResult.isErr()) {
+            return emitAndError("Failed to authenticate with XBL", "ftb-auth-000001", Step.AUTH_XBOX.createErrorStep(), xblAuthResult);
+        }
+
+        emit("Logged into XBox live", Step.AUTH_XBOX.createSuccessStep());
+        emit("Logging into XSTS service", Step.AUTH_XSTS.createWorkingStep());
+
+        // Log into XSTS service 
+        var xblAuth = xblAuthResult.unwrap();
+
+        // Login with XSTS service using the token from the xbl auth
+        var xstsResult = request(new Request.Builder()
+                .url(Constants.MS_OAUTH_XSTS_AUTHORIZE)
+                .post(jsonBody(new Requests.XstsAuth(new Requests.XstsAuthProperties("RETAIL", List.of(xblAuth.Token)), "rp://api.minecraftservices.com/", "JWT"))),
+            Responses.XblAuth.class
+        );
+
+        if (xstsResult.isErr()) {
+            String errorCode = "ftb-auth-000002";
+            
+            // Attempt to figure out what the cause might have been
+            RequestError requestError = xstsResult.unwrapErr();
+            JsonElement jsonError = requestError.json();
+            if (jsonError != null && jsonError.isJsonObject() && jsonError.getAsJsonObject().has("XErr")) {
+                errorCode = decipherXErr(jsonError.getAsJsonObject().get("XErr").getAsString());
+            }
+
+            return emitAndError("Failed to authenticate with XSTS system", errorCode, Step.AUTH_XSTS.createErrorStep(), xstsResult);
+        }
+
+        var xstsAuth = xstsResult.unwrap();
+
+        // Login with Xbox to the Minecraft services
+        String userHash = xblAuth.DisplayClaims.xui.get(0).uhs;
+        emit("Logged in successfully to XSTS", Step.AUTH_XSTS.createSuccessStep());
+        emit("Logging into Minecraft via Xbox", Step.LOGIN_XBOX.createWorkingStep());
+        var loginResult = request(new Request.Builder()
+                .url(Constants.MS_OAUTH_LAUNCHER_LOGIN)
+                .post(jsonBody(new Requests.LoginWithXbox(String.format("XBL3.0 x=%s;%s", userHash, xstsAuth.Token), "PC_LAUNCHER"))),
+            Responses.LoginWithXbox.class
+        );
+
+        if (loginResult.isErr()) {
+            return emitAndError("Failed to login with Xbox", "ftb-auth-000003", Step.LOGIN_XBOX.createErrorStep(), loginResult);
+        }
+
+        emit("Logged into Minecraft via Xbox", Step.LOGIN_XBOX.createSuccessStep());
+        
+        emit("Getting profile", Step.GET_PROFILE.createWorkingStep());
+        emit("Checking Entitlements", Step.CHECK_ENTITLEMENTS.createWorkingStep());
+
+        // The minecraft process is super stupid at this point. You can have about 12 different valid states but only 
+        // one of them is valid enough for us to pull the UUID from the players profile.
+        // 
+        // - First we need to see if both checks isErr, this is likely due to network issues.
+        // - Next we'll check the ownership claims for a few different flags. See if they own MC, bedrock and gamepass
+        // - Then we'll check if the profile was valid, if it's not, we can't progress but with the above we can give 
+        //   the user some valuable feedback on why their account couldn't be validated
+        // - Finally if the claim or the profile are valid we can continue. Sometimes the claim will be empty but their 
+        //   profile will not be... All we actually need is the users profile UUID at this state as we already have the
+        //   accounts access token, and we only require the uuid and access token.
+
+        var loginData = loginResult.unwrap();
+
+        // The flowing two requests don't depend on each other and per the above comment, can change the outcome
+        var ownershipResult = request(new Request.Builder()
+                .url(Constants.MS_OAUTH_CHECK_STORE).get()
+                .header("Authorization", String.format("Bearer %s", loginData.access_token)),
+            Responses.Entitlements.class
+        );
+
+        var profile = fetchMcProfile(loginData.access_token);
+        var ownershipClaims = getOwnershipClaims(ownershipResult.unwrapOrElse(() -> null));
+
+        // First, ignore all ownership claims, we don't care
+        if (profile.isOk()) {
+            emit("Successfully found Minecraft Profile", Step.GET_PROFILE.createSuccessStep());
+            emit("Entitlements checked (Lazy)", Step.CHECK_ENTITLEMENTS.createSuccessStep());
+            
+            // We're good, lets return
+            MinecraftProfileData profileData = profile.unwrap();
+            return Result.ok(new DanceResult(
+                profileData,
+                // This all feels like it shouldn't be here...
+                new MSAuthStore(
+                    MiscUtils.createUuidFromStringWithoutDashes(profileData.id()),
+                    loginData.access_token,
+                    userHash,
+                    context.authToken(),
+                    context.refreshToken(),
+                    Instant.now().getEpochSecond() + context.expiresAt
+                )
+            ));
+        }
+
+        emit("Failed to find Minecraft Profile", Step.GET_PROFILE.createErrorStep());
+        
+        // Anything below here is purely to provide valuable information to the user
+        if (ownershipClaims == null) {
+            return emitAndError("Failed to check Entitlements", "ftb-auth-000004", Step.CHECK_ENTITLEMENTS.createErrorStep(), ownershipResult);
+        }
+
+        // Now it's time to provide useful responses to the user
+        // should launch the vanilla launcher at least once
+        if (ownershipClaims.ownsGamepass()) {
+            return emitAndError("Entitlements show that the user owns gamepass", "ftb-auth-000005", Step.CHECK_ENTITLEMENTS.createErrorStep(), false);
+        }
+
+        if (ownershipClaims.ownsMinecraft()) {
+            // The user owns minecraft... but does not have a profile. This means they need to run the vanilla launcher at least once
+            return emitAndError("Entitlements show that the user owns Minecraft", "ftb-auth-000005", Step.CHECK_ENTITLEMENTS.createErrorStep(), false);
+        }
+
+        // You just don't have minecraft, wrong account like normal, Request was successful though!
+        return emitAndError("Entitlements show that the does not own minecraft", "ftb-auth-000006", Step.CHECK_ENTITLEMENTS.createErrorStep(), false);
+    }
+
+    /**
+     * Attempt to figure out why the user might not be allowed to log in with xbox
+     */
+    private static String decipherXErr(String xerr) {
+        return switch (xerr) {
+            case "2148916233" -> "ftb-auth-000012"; //"This account does not have an XBox Live account. You have likely not migrated your account.";
+            case "2148916235" -> "ftb-auth-000013"; //"Your account resides in a region that does not support Xbox Live...";
+            case "2148916236", "2148916237" -> "ftb-auth-000014"; //"The account needs adult verification on Xbox page.";
+            case "2148916238" -> "ftb-auth-000015"; //"This is an under 18 account. You cannot proceed unless the account is added to a Family by an adult";
+            default -> "ftb-auth-000016";
+        };
+    }
+
+    public static Result<MinecraftProfileData, RequestError> fetchMcProfile(String accessToken) {
+        return request(new Request.Builder().get()
+                .url(Constants.MC_GET_PROFILE)
+                .header("Authorization", String.format("Bearer %s", accessToken)),
+            MinecraftProfileData.class
+        );
+    }
+    
+    public static Result<Responses.Migration, RequestError> checkMigrationStatus(String accessToken) {
+         return request(new Request.Builder().get()
+                 .url(Constants.MC_CHECK_MIGRATION)
+                 .header("Authorization", String.format("Bearer %s", accessToken)),
+             Responses.Migration.class
+         );
+    }
+    
+    @Nullable
+    private OwnershipClaims getOwnershipClaims(@Nullable Responses.Entitlements entitlements) {
+        if (entitlements == null) {
+            return null;
+        }
+
+        boolean ownsMinecraft = false;
+        boolean ownsGamepass = false;
+        boolean ownsBedrock = false;
+
+        for (Responses.Entitlements.Entitlement item : entitlements.items) {
+            if (item.name.equals("product_minecraft") || item.name.equals("game_minecraft")) {
+                ownsMinecraft = true;
+            }
+            if (item.name.equals("product_game_pass_pc")) {
+                ownsGamepass = true;
+            }
+            if (item.name.equals("game_minecraft_bedrock") || item.name.equals("product_minecraft_bedrock")) {
+                ownsBedrock = true;
+            }
+        }
+
+        return new OwnershipClaims(ownsMinecraft, ownsBedrock, ownsGamepass);
+    }
+
+
+    private static <TResult> Result<TResult, RequestError> request(Request.Builder request, Class<TResult> responseClass) {
+        OkHttpClient client = Constants.httpClient();
+        Request requestInput = request
             .header("Content-Type", "application/json")
             .header("User-Agent", Constants.USER_AGENT)
-            .header("Accept", "application/json");
+            .header("Accept", "application/json")
+            .build();
 
-    @Nonnull
-    public static DataResult<Pair<JsonObject, MSAuthStore>, ErrorWithCode> runFlow(String authToken, String liveRefreshToken, int liveExpiresAt) {
-        LOGGER.info("Starting Microsoft Authentication flow...");
-        StepReply authXboxRes = authenticateWithXbox(authToken);
+        try (Response response = client.newCall(requestInput).execute()) {
+            int status = response.code();
+            ResponseBody body = response.body();
+            var stringBody = body == null ? "" : body.string();
 
-        if (isUnsuccessful(authXboxRes)) {
-            LOGGER.error("Unable to auth with xbox: " + authXboxRes.message());
-            return DataResult.error(new ErrorWithCode("Failed to authenticate with Xbox", "xbx_auth_001", authXboxRes));
-        }
-
-        String xblToken = authXboxRes.data().getAsJsonObject().get("Token").getAsString();
-        String userHash = authXboxRes.data().getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
-        Instant xblIssuedAt = Instant.now();
-        if (xblToken.isEmpty()) {
-            return DataResult.error(new ErrorWithCode("Unable to authenticate with Xbox Live...", "xbx_auth_002"));
-        }
-
-        // This token expires after 24 hours.
-        LOGGER.info("Authenticated with Xbox ✅");
-
-        // Authenticate with XSTS (the dev docs for this are private so fuck knows what it's actually doing)
-        StepReply xstsRes = authenticateWithXSTS(xblToken);
-        if (isUnsuccessful(xstsRes)) {
-            LOGGER.error("Unable to login with xsts: " + xstsRes.message());
-            return DataResult.error(new ErrorWithCode("Failed to authenticate with XSTS", "xbx_auth_003", xstsRes));
-        }
-
-        // Sometimes this will succeed but fail nicely with a 401
-        if (xstsRes.rawResponse().code() == 401) {
-            // Get the correct error message, there are more but... again, no docs
-            String xErr = xstsRes.data().getAsJsonObject().get("XErr").getAsString();
-            String error = switch (xErr) {
-                case "2148916233" -> "This account does not have an XBox Live account. You have likely not migrated your account.";
-                case "2148916235" -> "Your account resides in a region that does not support Xbox Live...";
-                case "2148916236", "2148916237" -> "The account needs adult verification on Xbox page.";
-                case "2148916238" -> "This is an under 18 account. You cannot proceed unless the account is added to a Family by an adult";
-                default -> "Unknown XSTS error";
-            };
-
-            return DataResult.error(new ErrorWithCode(error, "xbx_auth_004_" + xErr, xstsRes));
-        }
-
-        // Get the XSTS token
-        String xstsToken = xstsRes.data().getAsJsonObject().get("Token").getAsString();
-        String xstsUserHash = xstsRes.data().getAsJsonObject().get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString(); // ffs json
-        Instant xstsIssuedAt = Instant.now();
-        if (xstsToken.isEmpty()) {
-            return DataResult.error(new ErrorWithCode("Unable to authenticate with XSTS... (no token found)", "xbx_auth_005"));
-        }
-
-        // We've authenticated with XSTS
-        LOGGER.info("Authenticated with XSTS ✅");
-
-        // Login with xbox
-        StepReply loginWithXbox = loginWithXbox(xstsToken, userHash);
-        if (isUnsuccessful(loginWithXbox)) {
-            LOGGER.error("Unable to login with xbox: " + loginWithXbox.message());
-            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account", "xbx_auth_006", loginWithXbox));
-        }
-
-        // Grab the access token
-        String accessToken = loginWithXbox.data().getAsJsonObject().get("access_token").getAsString();
-        if (accessToken.isEmpty()) {
-            return DataResult.error(new ErrorWithCode("Unable to login with xbox live to your Minecraft account (no access token found)", "xbx_auth_006", loginWithXbox));
-        }
-
-        // We logged in
-        LOGGER.info("Logged in with Xbox");
-        LOGGER.info("Checking ownership of Minecraft");
-        StepReply checkOwnershipRes = checkOwnership(accessToken);
-
-        LOGGER.info("Fetching Minecraft account");
-        StepReply profileRes = getProfile(accessToken);
-
-        boolean hasOwnership = false;
-        if (isUnsuccessful(checkOwnershipRes)) {
-            LOGGER.warn("Unable to check ownership of Minecraft account. " + checkOwnershipRes.message());
-        } else {
-            // Validate the ownership
-            JsonArray items = checkOwnershipRes.data().getAsJsonObject().get("items").getAsJsonArray();
-            for (JsonElement item : items) {
-                String name = item.getAsJsonObject().get("name").getAsString();
-                if (name.equals("product_minecraft") || name.equals("game_minecraft")) {
-                    hasOwnership = true;
+            if (status < 200 || status >= 300) {
+                // Handle >500 differently
+                if (status >= 500) {
+                    LOGGER.info("Server for {} is currently unavailable", requestInput.url().toString());
+                    return Result.err(RequestError.create(response, stringBody, null));
+                } else {
+                    LOGGER.info("Request to [{}] isErr with a status code of [{}]", requestInput.url().toString(), status);
                 }
-            }
-        }
 
-        LOGGER.info("Verified ownership of Minecraft account... result: {}", hasOwnership ? "Owns" : "Does not own");
-
-        // Validate the profile
-        if (isUnsuccessful(profileRes)) {
-            LOGGER.warn("Unable to fetch profile. " + profileRes.message());
-            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account...", "xbx_auth_007", profileRes));
-        }
-
-        // Figure out the type of account
-        JsonObject profileData = profileRes.data().getAsJsonObject();
-        if (!profileData.has("id")) {
-            return DataResult.error(new ErrorWithCode("Unable to fetch profile from Minecraft account (no id found)", "xbx_auth_008", profileRes));
-        }
-
-        return DataResult.data(Pair.of(profileData, new MSAuthStore(
-                MiscUtils.createUuidFromStringWithoutDashes(profileData.get("id").getAsString()),
-                accessToken,
-                userHash,
-                authToken,
-                liveRefreshToken,
-                Instant.now().getEpochSecond() + liveExpiresAt
-        )));
-    }
-
-    /**
-     * Login with Xbox
-     *
-     * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Authenticate_with_XBL
-     */
-    private static StepReply authenticateWithXbox(String authenticationToken) {
-        return wrapRequest(
-                JSON_REQUEST.url(Endpoints.XBL_AUTHENTICATE.getUrl())
-                    .post(createJson(new XblAuthRequest(new XblAuthProperties("RPS", "user.auth.xboxlive.com", String.format("d=%s", authenticationToken)), "http://auth.xboxlive.com", "JWT")))
-                    .build(),
-                "Successfully authenticated with Xbox",
-                "Failed to authenticate with Xbox"
-        );
-    }
-
-    /**
-     * Login with XSTS
-     *
-     * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Authenticate_with_XSTS
-     */
-    private static StepReply authenticateWithXSTS(String xblToken) {
-        return wrapRequest(
-                JSON_REQUEST.url(Endpoints.XSTS_AUTHORIZE.getUrl())
-                    .post(createJson(new XstsAuthRequest(new XstsAuthProperties("RETAIL", List.of(xblToken)), "rp://api.minecraftservices.com/", "JWT")))
-                    .build(),
-                "Successfully authenticated with XSTS",
-                "Failed to authenticate with XSTS"
-        );
-    }
-
-    /**
-     * Login with Xbox to the Minecraft Services API
-     *
-     * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Authenticate_with_Minecraft
-     */
-    private static StepReply loginWithXbox(String identityToken, String userHash) {
-        return wrapRequest(
-                JSON_REQUEST.url(Endpoints.LAUNCHER_LOGIN.getUrl())
-                    .post(createJson(new LoginWithXboxRequest(String.format("XBL3.0 x=%s;%s", userHash, identityToken), "PC_LAUNCHER")))
-                    .build(),
-                "Successfully logged in with Xbox",
-                "Failed to log in with Xbox"
-        );
-    }
-
-    /**
-     * Check the ownership of the game, if the user is using gamepass you can expect this to be empty
-     *
-     * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Checking_Game_Ownership
-     */
-    private static StepReply checkOwnership(String minecraftToken) {
-        return wrapRequest(
-                JSON_REQUEST.url(Endpoints.CHECK_STORE.getUrl()).get()
-                    .header("Authorization", String.format("Bearer %s", minecraftToken))
-                    .build(),
-                "Found ownership",
-                "Failed to find ownership"
-        );
-    }
-
-    /**
-     * Get the Minecraft Profile.
-     *
-     * @implNote Looks like this can be empty if the user is on gamepass and have not used the account in a while. To
-     *           solve this we'll just prompt the frontend to sign-in again.
-     *
-     * @implSpec https://wiki.vg/Microsoft_Authentication_Scheme#Get_the_profile
-     */
-    public static StepReply getProfile(String minecraftToken) {
-        return wrapRequest(
-                JSON_REQUEST.url(Endpoints.GET_PROFILE.getUrl())
-                    .get()
-                    .header("Authorization", String.format("Bearer %s", minecraftToken))
-                    .build(),
-                "Successfully found profile",
-                "Failed to find profile"
-        );
-    }
-
-    public static StepReply checkMigrationStatus(String minecraftToken) {
-        return wrapRequest(
-                JSON_REQUEST.url(Endpoints.CHECK_MIGRATION.getUrl())
-                        .get()
-                        .header("Authorization", String.format("Bearer %s", minecraftToken))
-                        .build(),
-                "Migration status checked",
-                "Failed to check migration status"
-        );
-    }
-
-    /**
-     * Safely wrap the request and attempt to form a readable response whilst logging the major issue if one is presented
-     */
-    private static StepReply wrapRequest(Request request, String successMessage, String errorMessage) {
-        try {
-            LOGGER.info("Making authentication request to {}", request.url());
-            Response execute = Constants.httpClient().newCall(request).execute();
-            ResponseBody body = execute.body();
-            
-            if (execute.code() >= 500) {
-                return new StepReply(false, execute.code(), "There are currently issues with the authentication system. Please try again in a few minutes.", JsonNull.INSTANCE, null, false);
-            }
-            
-            if (body != null) {
-                try {
-                    String stringBody = body.string();
-                    JsonElement jsonElement = JsonParser.parseString(stringBody);
-                    LOGGER.info("{}|{} responded with: {}", execute.code(), request.url(), stringBody.replaceAll("\"ey[a-zA-Z0-9._-]+", "****"));
-                    return new StepReply(true, execute.code(), successMessage, jsonElement, execute, false);
-                } catch (JsonParseException exception) {
-                    LOGGER.fatal("Unable to parse json response from {} with error of {}", request.url(), exception);
+                if (!stringBody.isEmpty() && Objects.equals(response.header("content-type"), "application/json")) {
+                    try {
+                        return Result.err(RequestError.create(response, stringBody, JsonUtils.parseRaw(stringBody)));
+                    } catch (Exception ignored) {
+                    }
                 }
+
+                return Result.err(RequestError.create(response, stringBody, null));
             }
 
-            LOGGER.fatal("Failed to read and handle response from {}", request.url());
-            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null, false);
-        } catch (Exception e) {
-            LOGGER.fatal("Error executing request to {}", request.url(), e);
-            return new StepReply(false, -1, errorMessage, JsonNull.INSTANCE, null, true);
+            // All our requests expect a body to be returned so it is safe to return fail here.
+            if (body == null) {
+                LOGGER.info("Request to [{}] isErr as the body was empty", requestInput.url().toString());
+                return Result.err(RequestError.create(response, stringBody, null));
+            }
+
+            // Try and parse 
+            TResult jsonResponse = JsonUtils.parse(new Gson(), stringBody, responseClass);
+            return Result.ok(jsonResponse);
+        } catch (IOException | JsonParseException e) {
+            if (e instanceof JsonParseException) {
+                LOGGER.error("Request to [{}] due to the response body being invalid", requestInput.url().toString(), e);
+            }
+      
+            return Result.err(RequestError.create(null, "", null));
         }
     }
 
-    /**
-     * We do this a lot. let's do it in one place.
-     */
-    private static boolean isUnsuccessful(StepReply response) {
-        return response == null || !response.success() || response.data() == null || response.data().isJsonNull();
+    enum Step {
+        START_DANCE,
+        AUTH_XBOX,
+        AUTH_XSTS,
+        LOGIN_XBOX,
+        GET_PROFILE,
+        CHECK_ENTITLEMENTS;
+
+        DanceStep createSuccessStep() {
+            return new DanceStep(this, true, false, false);
+        }
+
+        DanceStep createErrorStep() {
+            return new DanceStep(this, false, true, false);
+        }
+        
+        DanceStep createWorkingStep() {
+            return new DanceStep(this, false, false, true);
+        }
     }
 
-    /**
-     * Create a JSON object from the given object
-     */
-    private static RequestBody createJson(Object any) {
+    record DanceStep(
+        Step step,
+        boolean successful,
+        boolean error,
+        boolean working
+    ) {}
+    
+    private void emit(String message, DanceStep step) {
+        LOGGER.info(message);
+        this.onUpdate.accept(step);
+    }
+
+    private <T> Result<T, DanceCodedError> emitAndError(String message, String code, DanceStep step, Result<?, RequestError> resultError) {
+        return this.emitAndError(message, code, step, resultError.unwrapErr().status() == -1);
+    }
+
+    private <T> Result<T, DanceCodedError> emitAndError(String message, String code, DanceStep step, boolean networkError) {
+        this.emit(message, step);
+        return Result.err(new DanceCodedError(networkError, code));
+    }
+
+    private static RequestBody jsonBody(Object any) {
         return RequestBody.create(new Gson().toJson(any), MediaType.parse("application/json"));
     }
 
-    /**
-     * See the implementation notes for each request to know what these methods go to.
-     */
-    private enum Endpoints {
-        XBL_AUTHENTICATE("https://user.auth.xboxlive.com/user/authenticate"),
-        XSTS_AUTHORIZE("https://xsts.auth.xboxlive.com/xsts/authorize"),
-        LAUNCHER_LOGIN("https://api.minecraftservices.com/launcher/login"),
-        CHECK_STORE("https://api.minecraftservices.com/entitlements/mcstore"),
-        GET_PROFILE("https://api.minecraftservices.com/minecraft/profile"),
-        CHECK_MIGRATION("https://api.minecraftservices.com/rollout/v1/msamigration");
+    record DanceContext(
+        String authToken,
+        String refreshToken,
+        int expiresAt
+    ) {
+    }
 
-        private final String url;
+    public record DanceResult(
+        MinecraftProfileData profile,
+        MSAuthStore store
+    ) {}
+    
+    public record DanceCodedError(
+        boolean networkError,
+        String code
+    ) {}
 
-        Endpoints(String url) {
-            this.url = url;
-        }
+    public record RequestError(
+        String body,
+        int status,
+        @Nullable JsonElement json,
+        @Nullable Response response
+    ) {
+        static RequestError create(Response response, String body, @Nullable JsonElement json) {
+            if (response == null) {
+                return new RequestError(body, -1, json, null);
+            }
 
-        public String getUrl() {
-            return url;
+            return new RequestError(body, response.code(), json, response);
         }
     }
 
-    private record XblAuthRequest(
-            XblAuthProperties Properties,
-            String RelyingParty,
-            String TokenType
-    ) {}
-
-    private record XblAuthProperties(
-            String AuthMethod,
-            String SiteName,
-            String RpsTicket
-    ) {}
-
-    private record XstsAuthRequest(
-            XstsAuthProperties Properties,
-            String RelyingParty,
-            String TokenType
-    ) {}
-
-    private record XstsAuthProperties(
-            String SandboxId,
-            List<String> UserTokens
-    ) {}
-
-    private record LoginWithXboxRequest(
-            String xtoken,
-            String platform
-    ) {}
+    private record OwnershipClaims(
+        boolean ownsMinecraft,
+        boolean ownsBedrock,
+        boolean ownsGamepass
+    ) {
+    }
 }

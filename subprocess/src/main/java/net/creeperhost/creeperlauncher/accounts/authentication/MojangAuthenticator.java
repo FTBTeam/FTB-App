@@ -29,8 +29,6 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
             .addHeader("User-Agent", Constants.USER_AGENT)
             .addHeader("Accept", "application/json");
 
-    private static final OkHttpClient CLIENT = new OkHttpClient.Builder().build();
-
     @Override
     public boolean isValid(AccountProfile profile) {
         if (profile.isMicrosoft || profile.mcAuth == null) {
@@ -38,17 +36,15 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
             return false;
         }
 
-        try {
-            Response request = CLIENT.newCall(
-                    BASIC_REQUEST
-                            .url("https://authserver.mojang.com/validate")
-                            .post(RequestBody.create(new Gson().toJson(new ValidateRequestData(
-                                    profile.mcAuth.accessToken,
-                                    profile.mcAuth.clientToken
-                            )), MediaType.parse("application/json")))
-                            .build()
-            ).execute();
-
+        try (Response request = Constants.httpClient().newCall(
+            BASIC_REQUEST
+                .url("https://authserver.mojang.com/validate")
+                .post(RequestBody.create(new Gson().toJson(new ValidateRequestData(
+                    profile.mcAuth.accessToken,
+                    profile.mcAuth.clientToken
+                )), MediaType.parse("application/json")))
+                .build()
+        ).execute()) {
             LOGGER.info("Received response from Mojang's authentication server with status code " + request.code());
             if (request.code() == 204) {
                 return true;
@@ -73,18 +69,16 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
             return DataResult.error(new ErrorWithCode("Microsoft accounts cannot be refreshed", "yggd_auth_001"));
         }
 
-        try {
-            Response request = CLIENT.newCall(
-                    BASIC_REQUEST
-                            .url("https://authserver.mojang.com/refresh")
-                            .post(RequestBody.create(new Gson().toJson(new RefreshRequestData(
-                                    profile.mcAuth.accessToken,
-                                    profile.mcAuth.clientToken,
-                                    true
-                            )), MediaType.parse("application/json")))
-                            .build()
-            ).execute();
-
+        try (Response request = Constants.httpClient().newCall(
+            BASIC_REQUEST
+                .url("https://authserver.mojang.com/refresh")
+                .post(RequestBody.create(new Gson().toJson(new RefreshRequestData(
+                    profile.mcAuth.accessToken,
+                    profile.mcAuth.clientToken,
+                    true
+                )), MediaType.parse("application/json")))
+                .build()
+        ).execute()) {
             LOGGER.info("Received response from Mojang's authentication server with status code " + request.code());
             if (request.code() == 403) {
                 return DataResult.error(new ErrorWithCode("Invalid refresh token", "yggd_auth_002"));
@@ -117,14 +111,12 @@ public class MojangAuthenticator implements AuthenticatorValidator<DataResult<Yg
     public DataResult<YggdrasilAuthStore, ErrorWithCode> authenticate(LoginData req) {
         UUID randomId = UUID.randomUUID();
 
-        try {
-            Response request = CLIENT.newCall(
-                    BASIC_REQUEST
-                            .url("https://authserver.mojang.com/authenticate")
-                            .post(RequestBody.create(new Gson().toJson(new RequestData(AGENT, req.username, req.password, randomId.toString(), true)), MediaType.parse("application/json")))
-                            .build()
-            ).execute();
-
+        try (Response request = Constants.httpClient().newCall(
+            BASIC_REQUEST
+                .url("https://authserver.mojang.com/authenticate")
+                .post(RequestBody.create(new Gson().toJson(new RequestData(AGENT, req.username, req.password, randomId.toString(), true)), MediaType.parse("application/json")))
+                .build()
+        ).execute()) {
             ResponseBody body = request.body();
             LOGGER.info("Received response from Mojang's authentication server with status code " + request.code());
             if (body != null) {
