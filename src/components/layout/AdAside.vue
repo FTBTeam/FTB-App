@@ -1,22 +1,20 @@
 <template>
-  <div class="ad-aside" :class="{ 'is-dev': isDev }">
+  <div class="ad-aside" :class="{ 'is-dev': isDev, 'electron': isElectron }">
     <!--    <div class="ftb-ad-frame" v-if="!isDevEnv">-->
     <!--      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>-->
     <!--    </div>-->
-
-    <p class="mb-4 font-bold text-lg">Ads support FTB ❤️</p>
     
     <div class="ad-container ads" v-if="!isElectron" key="adside-ad-type">
-<!--      <div class="ad-holder small mb-4">-->
-<!--        <div-->
-<!--          v-if="!isElectron"-->
-<!--          v-show="advertsEnabled ?? true"-->
-<!--          id="ow-ad-second"-->
-<!--          ref="adRefSecond"-->
-<!--          style="max-width: 300px; max-height: 250px;"-->
-<!--        />-->
-<!--        <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder"><img class="logo" src="@/assets/images/ftb-logo.svg" alt="FTB Logo" />Thank you for using the FTB App</div>-->
-<!--      </div>-->
+      <div class="ad-holder small">
+        <div
+          v-if="!isElectron"
+          v-show="advertsEnabled ?? true"
+          id="ow-ad-second"
+          ref="adRefSecond"
+          style="max-width: 300px; max-height: 250px;"
+        />
+        <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder" />
+      </div>
 
       <div class="ad-holder">
         <div
@@ -24,16 +22,24 @@
           v-show="advertsEnabled ?? true"
           id="ow-ad"
           ref="adRef"
-          style="max-width: 400px; max-height: 300px;"
+          style="max-width: 400px; max-height: 600px;"
         />
 
-        <div class='place-holder' v-if="!isElectron && showAdOnePlaceholder"><span>❤️</span>These ads support FTB & CurseForge Mod Authors</div>
+        <div class='place-holder' v-if="!isElectron && showAdOnePlaceholder">
+          <img src="@/assets/images/ftb-logo.svg" class="mb-8" width="70" alt="FTB Logo">
+          <p class="mb-1">Thank you for supporting FTB ❤️</p>
+          <p>Ads support FTB & CurseForge Authors!</p>
+        </div>
       </div>
     </div>
 
-    <div class="ad-container ads-electron electron" v-else key="adside-ad-type">
+    <div class="ad-container ads-electron electron cursor-pointer" v-else key="adside-ad-type" @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')">
+      <div class="flex flex-col items-center mb-6">
+        <img src="@/assets/ch-logo.svg" class="mb-4" width="30" alt="CreeperHost Logo">
+        <p class="font-sans font-bold">Get your own server at CreeperHost</p>
+      </div>
+      
       <video
-        @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')"
         class="cursor-pointer"
         width="300"
         height="250"
@@ -75,6 +81,7 @@ export default class AdAside extends Vue {
   random = AdAside.mkRandom();
 
   get isElectron() {
+    // TODO: DO NOT RELEASE
     return platform.isElectron();
   }
 
@@ -96,8 +103,8 @@ export default class AdAside extends Vue {
     }
 
     setTimeout(() => {
-      this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: { width: 400, height: 300 }});
-      // this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {size: {width: 300, height: 250}});
+      this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: { width: 400, height: 600 }});
+      this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {size: {width: 300, height: 250}});
     }, 1500);
   }
 
@@ -176,10 +183,8 @@ export default class AdAside extends Vue {
 
 <style lang="scss" scoped>
 .ad-aside {
-  padding: 1rem;
-  background: rgb(17 17 17);
-
-  min-width: calc(300px + 2.5rem); // Why? Fuck knows, Thanks css
+  background-color: black;
+  min-width: 400px;
 
   display: flex;
   flex-direction: column;
@@ -188,6 +193,12 @@ export default class AdAside extends Vue {
 
   border-left: 2px solid rgba(black, 0.1);
 
+  &.electron {
+    padding: 1rem;
+    min-width: 300px;
+    width: calc(300px + 2.5rem); // Why? Fuck knows, Thanks css
+  }
+  
   .ads {
     display: flex;
     align-items: center;
@@ -205,7 +216,7 @@ export default class AdAside extends Vue {
     .ad-holder {
       position: relative;
       width: 400px;
-      height: 300px;
+      height: 600px;
 
       &.small {
         width: 300px;
@@ -215,7 +226,7 @@ export default class AdAside extends Vue {
       .place-holder {
         position: absolute;
         width: 400px;
-        height: 300px;
+        height: 600px;
         background: black;
         border-radius: 5px;
         top: 0;
