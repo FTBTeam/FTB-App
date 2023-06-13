@@ -88,6 +88,7 @@ public abstract class InstanceOperation {
         ModpackVersionManifest.ModpackFile cfExtractEntry = cfExtractEntries.getFirst();
         NewDownloadTask task = NewDownloadTask.builder()
                 .url(cfExtractEntry.getUrl())
+                .withMirrors(cfExtractEntry.getMirror())
                 .dest(cfExtractEntry.getCfExtractPath(instance.getDir(), manifest.getName()))
                 .withValidation(cfExtractEntry.createValidation().asDownloadValidation())
                 .build();

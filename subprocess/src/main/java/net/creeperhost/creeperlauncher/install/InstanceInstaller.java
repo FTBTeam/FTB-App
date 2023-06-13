@@ -369,6 +369,7 @@ public class InstanceInstaller extends InstanceOperation {
             if (file.getType().equals("cf-extract")) continue;
             NewDownloadTask task = NewDownloadTask.builder()
                     .url(file.getUrl())
+                    .withMirrors(file.getMirror())
                     .dest(file.toPath(instance.getDir()))
                     .withValidation(file.createValidation().asDownloadValidation())
                     .withFileLocator(CreeperLauncher.localCache)
