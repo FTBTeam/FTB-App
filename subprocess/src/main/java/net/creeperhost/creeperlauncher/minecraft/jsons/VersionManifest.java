@@ -285,16 +285,6 @@ public class VersionManifest {
             return ret;
         }
 
-        public static AssetIndex forUnknown(String id) {
-            AssetIndex index = new AssetIndex();
-            index.id = id;
-            index.sha1 = null;
-            index.size = -1;
-            index.totalSize = -1;
-            index.url = "https://s3.amazonaws.com/Minecraft.Download/indexes/" + id + ".json";
-            return index;
-        }
-
         // @formatter:off
         public String getId() { return requireNonNull(id); }
         public HashCode getSha1() { return requireNonNull(sha1); }
