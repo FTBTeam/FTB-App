@@ -119,50 +119,49 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
      *
      * @param f    The file to add.
      * @param hash The Hash of the file. Must be an SHA1 hash.
-     * @return If the file was added to the cache.
      * @throws IllegalArgumentException If an SHA1 hash was not provided.
      */
-    public boolean put(Path f, HashCode hash) throws IllegalArgumentException {
+    public void put(Path f, HashCode hash) throws IllegalArgumentException {
         if (hash.bits() != 160) throw new IllegalArgumentException("SHA1 hash not provided.");
-        if (Files.notExists(f)) return false;// File doesn't exist.
-        if (files.contains(hash)) return false;// File already cached.
+        if (Files.notExists(f)) return;// File doesn't exist.
+        if (files.contains(hash)) return;// File already cached.
         String path = makePath(hash);
         Path file = cacheLocation.resolve(path);
-        try {
-            // Alright.. the file already exists in cache, but not in our files set?
-            // TODO, detect these in validation pass on load.
-            if (Files.exists(file)) {
+
+        // Alright.. the file already exists in cache, but not in our files set?
+        // TODO, detect these in validation pass on load.
+        if (Files.exists(file)) {
+            try {
                 LOGGER.warn("Existing file did not exist in LocalCache lookup? {}", hash);
                 // The file has become corrupt..
                 if (!HashUtils.hash(Hashing.sha1(), file).equals(hash)) {
                     // TODO, run a validation pass over LocalCache on load if this is a real problem.
                     LOGGER.error("Corrupt file in LocalStorage! {} does not match its expected hash of {}", file, hash);
-                    return false;
+                    return;
                 }
                 // Yaaay sha1 hash collisions!
                 long aLen = Files.size(file);
                 long bLen = Files.size(f);
                 if (aLen != bLen) {
                     LOGGER.fatal("Hash collision adding to local cache. Hash {}, A: {}, {} B: {}, {}", hash, file, aLen, f, bLen);
-                    return false;
+                    return;
                 }
 
                 // Well, the file exists, size and hash match, just add.
                 addAndSave(hash);
-                return true;
+            } catch (IOException ex) {
+                LOGGER.error("Failed to do LocalStorage.add pre-checks.", ex);
             }
-        } catch (IOException ex) {
-            LOGGER.error("Failed to do LocalStorage.add pre-checks.", ex);
+            return;
         }
+
         try {
             Files.createDirectories(file.getParent());
             Files.copy(f, file, StandardCopyOption.REPLACE_EXISTING);
             addAndSave(hash);
         } catch (IOException e) {
             LOGGER.error("Failed to add '{}' to local cache.", f.toAbsolutePath(), e);
-            return false;
         }
-        return true;
     }
 
     /**
