@@ -147,6 +147,16 @@ public class LocalCache implements NewDownloadTask.LocalFileLocator {
         }
 
         try {
+            // dfuq? But okay..
+            Path parent = file.getParent();
+            if (Files.exists(parent) && !Files.isDirectory(parent)) {
+                try {
+                    Files.delete(parent);
+                } catch (IOException ex) {
+                    LOGGER.warn("Parent already existed and was not a directory. Failed to delete..", ex);
+                    return;
+                }
+            }
             Files.createDirectories(file.getParent());
             Files.copy(f, file, StandardCopyOption.REPLACE_EXISTING);
             addAndSave(hash);
