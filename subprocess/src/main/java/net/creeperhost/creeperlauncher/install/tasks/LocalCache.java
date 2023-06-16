@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings ({ "deprecation", "UnstableApiUsage" })
-public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocator {
+public class LocalCache implements NewDownloadTask.LocalFileLocator {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new GsonBuilder()
@@ -43,7 +43,6 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
     private final Path cacheIndexFile;
     private final Set<HashCode> files = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private boolean isDirty = false;
-    private boolean autoSaveEnabled = true;
 
     public LocalCache(Path cacheLocation) {
         this.cacheLocation = cacheLocation;
@@ -70,14 +69,6 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
             }
         }
         save();
-    }
-
-    /**
-     * Disables auto saving of the cache index.
-     * This should only be used inside a Try-With-Resources, as to ensure auto save is re-enabled.
-     */
-    public void disableAutoSave() {
-        autoSaveEnabled = false;
     }
 
     /**
@@ -164,33 +155,6 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
         }
     }
 
-    /**
-     * Moves the given file into the cache.
-     * <p>
-     * This will use a move operation, causing the file to be deleted form its original location.
-     *
-     * @param f    The file to add.
-     * @param hash The Hash of the file. Must be an SHA1 hash.
-     * @return If the file was added to the cache.
-     * @throws IllegalArgumentException If an SHA1 hash was not provided.
-     */
-    public boolean ingest(Path f, HashCode hash) throws IllegalArgumentException {
-        if (hash.bits() != 160) throw new IllegalArgumentException("SHA1 hash not provided.");
-        if (Files.notExists(f)) return false;// File doesn't exist.
-        if (files.contains(hash)) return false;// File already cached.
-        String path = makePath(hash);
-        Path file = cacheLocation.resolve(path);
-        try {
-            Files.createDirectories(file.getParent());
-            Files.move(f, file, StandardCopyOption.REPLACE_EXISTING);
-            addAndSave(hash);
-        } catch (IOException e) {
-            LOGGER.error("Failed to add '{}' to local cache.", f.toAbsolutePath(), e);
-            return false;
-        }
-        return true;
-    }
-
     private void addAndSave(HashCode hash) {
         synchronized (files) {
             files.add(hash);
@@ -227,10 +191,9 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
     /**
      * Flushes the Cache index to disk if it has been marked as dirty.
      */
-    public void save() {
-        if (!isDirty || !autoSaveEnabled) {
-            return;
-        }
+    private void save() {
+        if (!isDirty) return;
+
         try {
             JsonUtils.write(GSON, cacheIndexFile, files, SET_TYPE);
         } catch (IOException e) {
@@ -278,12 +241,6 @@ public class LocalCache implements AutoCloseable, NewDownloadTask.LocalFileLocat
     private static String makePath(HashCode hashCode) {
         String hash = hashCode.toString();
         return hash.substring(0, 2) + "/" + hash;
-    }
-
-    @Override
-    public void close() {
-        autoSaveEnabled = true;
-        save();
     }
 
     @Nullable
