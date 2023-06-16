@@ -58,7 +58,7 @@ public class Instances
             ElapsedTimer timer = new ElapsedTimer();
             List<Instance> loadedInstances = FileUtils.listDir(instancesDir)
                     .parallelStream()
-                    .filter(e -> !e.getFileName().toString().startsWith("."))
+                    .filter(e -> Files.isDirectory(e) && !e.getFileName().toString().startsWith("."))
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
                     .toList();
