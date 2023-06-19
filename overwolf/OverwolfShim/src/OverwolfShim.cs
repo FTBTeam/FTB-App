@@ -147,8 +147,10 @@ public class OverwolfShim : IDisposable {
             javaProcess.StartInfo.UseShellExecute = false;
             javaProcess.StartInfo.FileName = javaPath;
             javaProcess.StartInfo.Arguments = string.Join(" ", args);
-            // Strip "_JAVA_OPTIONS" from the environment variables. If this env variable has unknown or bad arguments, it can cause crashes.
+            // Strip known problem environment variables. If these env vars have unknown or bad arguments, it can cause crashes.
             javaProcess.StartInfo.Environment.Remove("_JAVA_OPTIONS");
+            javaProcess.StartInfo.Environment.Remove("JAVA_TOOL_OPTIONS");
+            javaProcess.StartInfo.Environment.Remove("JAVA_OPTIONS");
             javaProcess.StartInfo.CreateNoWindow = true;
             javaProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             javaProcess.StartInfo.RedirectStandardInput = true;
