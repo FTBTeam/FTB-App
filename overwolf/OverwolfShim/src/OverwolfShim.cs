@@ -20,6 +20,10 @@ public class OverwolfShim : IDisposable {
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     private static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
 
+    [DllImport("shell32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsUserAnAdmin();
+
     private const UInt32 WM_CLOSE = 0x0010;
 
     private Process javaProcess;
@@ -40,6 +44,9 @@ public class OverwolfShim : IDisposable {
     /// </summary>
     /// <returns>The random GUID</returns>
     public string RandomUUID() => Guid.NewGuid().ToString();
+
+    /// <returns>If the current process is running with admin permissions.</returns>
+    public bool IsRunningAsAdministrator() => IsUserAnAdmin();
 
     #region IO
 
