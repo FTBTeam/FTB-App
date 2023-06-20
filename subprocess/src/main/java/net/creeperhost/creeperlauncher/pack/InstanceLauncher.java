@@ -60,7 +60,7 @@ public class InstanceLauncher {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
-    private static final List<String> IGNORRED_ARG_LIST = List.of("clientid", "auth_xuid"); // Tracking & XBox related
+    private static final List<String> TELEMETRY_ARGS = List.of("clientid", "auth_xuid"); // Tracking & XBox related
     
     private final Instance instance;
     private Phase phase = Phase.NOT_STARTED;
@@ -432,7 +432,7 @@ public class InstanceLauncher {
             StrSubstitutor sub = new StrSubstitutor(new StrLookup<>() {
                 @Override
                 public String lookup(String key) {
-                    if (IGNORRED_ARG_LIST.contains(key)) {
+                    if (TELEMETRY_ARGS.contains(key)) {
                         return null;
                     }
                     
