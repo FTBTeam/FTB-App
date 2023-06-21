@@ -15,6 +15,7 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.util.*;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -55,6 +56,8 @@ public class Instance {
     public CancellationToken prepareToken;
     private int loadingModPort;
     public ModpackVersionManifest versionManifest;
+
+    private boolean pendingCloudInstance;
 
     private long startTime;
 
@@ -107,12 +110,23 @@ public class Instance {
         loadVersionManifest();
     }
 
+    // Pending cloud save instance.
+    public Instance(Path path, InstanceJson props, ModpackVersionManifest versionManifest) {
+        this.path = path;
+        this.props = props;
+        this.versionManifest = versionManifest;
+        pendingCloudInstance = true;
+    }
+
     public void reloadProperties() throws IOException {
         props = InstanceJson.load(getDir().resolve("instance.json"));
         loadVersionManifest();
     }
 
     private void loadVersionManifest() throws IOException {
+        // Do nothing for pending cloud saves.
+        if (pendingCloudInstance) return;
+
         if (props.installComplete) {
             Path versionJson = path.resolve("version.json");
             if (Files.exists(versionJson)) {
@@ -124,6 +138,10 @@ public class Instance {
     }
 
     public void importArt(Path file) throws IOException {
+        if (pendingCloudInstance) {
+            throw new UnsupportedOperationException("Can't import art for pending cloud instances.");
+        }
+
         try (InputStream is = Files.newInputStream(file)) {
             doImportArt(is);
             saveJson();
@@ -142,6 +160,7 @@ public class Instance {
     }
 
     public synchronized void pollVersionManifest() {
+        if (pendingCloudInstance) return; // Do nothing for pending cloud save instances.
         if (props.isImport) return; // Can't update manifests for imports.
         try {
             Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(props.id, props.versionId, props._private, props.packType);
@@ -174,6 +193,10 @@ public class Instance {
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
     public void play(CancellationToken token, String extraArgs, @Nullable String offlineUsername) throws InstanceLaunchException {
+        if (pendingCloudInstance) {
+            // Technically a UI bug, should display Install/Sync instead of Launch.
+            throw new InstanceLaunchException("Cloud instance needs to be installed before it can be launched.");
+        }
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -300,6 +323,10 @@ public class Instance {
     }
 
     public boolean uninstall() throws IOException {
+        if (pendingCloudInstance) {
+            // TODO should we wire this up to delete even when not synced?
+            throw new NotImplementedException("Unable to delete non-synced cloud instance.");
+        }
         FileUtils.deleteDirectory(path);
         Instances.refreshInstances();
         return true;
@@ -310,6 +337,8 @@ public class Instance {
     }
 
     public boolean browse(String extraPath) throws IOException {
+        if (pendingCloudInstance) return false;
+
         if (Files.notExists(path.resolve(extraPath))) {
             return false;
         }
@@ -322,15 +351,20 @@ public class Instance {
     }
 
     public void setModified(boolean state) {
+        if (pendingCloudInstance) throw new UnsupportedOperationException("Can't set un synced cloud instance as modified.");
         props.isModified = state;
     }
 
     public void saveJson() throws IOException {
+        if (pendingCloudInstance) return; // Do nothing for pending cloud save instances.
+
         InstanceJson.save(path.resolve("instance.json"), props);
     }
 
     @Nullable
     public Instance duplicate(String instanceName) throws IOException {
+        if (pendingCloudInstance) throw new UnsupportedOperationException("Can't duplicate un synced cloud instances.");
+
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
@@ -347,6 +381,7 @@ public class Instance {
     }
 
     public List<ModFile> getMods(boolean rich) {
+        if (pendingCloudInstance) return List.of();
         try {
             Map<String, CurseProps> lookup = rich ? getHashLookup() : Map.of();
             try (Stream<Path> files = Files.walk(path.resolve("mods"))) {

@@ -11,6 +11,10 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.Instances;
+import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.data.InstanceJson;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.s3.OkHTTPS3HttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -27,9 +31,11 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -38,6 +44,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -49,6 +57,9 @@ public final class CloudSaveManager {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("CloudSaveManager.debug");
+
+    // Match uuid at either the start of the line, or prefixed with a slash.
+    private static final Pattern INSTANCE_UUID_REGEX = Pattern.compile("(?>^/|^)([0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12})/");
 
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Cloud Save Manager").setDaemon(true).build());
 
@@ -151,8 +162,90 @@ public final class CloudSaveManager {
         }
     }
 
+    public void pollCloudInstances() {
+        if (!isConfigured()) {
+            LOGGER.info("Skipping loading cloud saves. Not configured.");
+            return;
+        }
+
+        EXECUTOR.submit(() -> {
+            // TODO poke UI we are polling for cloud saves.
+            Set<String> keys = new HashSet<>();
+            List<S3Object> index;
+            try {
+                Matcher matcher = INSTANCE_UUID_REGEX.matcher("");
+                index = listBucket("");
+                for (S3Object s3Object : index) {
+                    matcher.reset(s3Object.key());
+                    if (!matcher.find()) continue;
+                    String uuid = matcher.group(1);
+                    keys.add(uuid);
+                }
+            } catch (Throwable ex) {
+                LOGGER.warn("Failed to list bucket.", ex);
+                return;
+            }
+            for (Instance instance : Instances.allInstances()) {
+                // Remove any synced instances.
+                keys.remove(instance.getUuid().toString());
+            }
+            // Make sure the directories the un synced cloud instances would use, don't exist, or are empty.
+            Path instancesDir = Settings.getInstancesDir();
+            boolean loaded = false;
+            for (String key : keys) {
+                Path instanceDir = instancesDir.resolve(key);
+                if (Files.notExists(instanceDir)) continue;
+                if (!Files.isDirectory(instanceDir)) {
+                    // TODO UI warning for this.
+                    LOGGER.warn("Error loading cloud save list, {} exists, but is not a directory. This cloud save cannot be loaded.", instanceDir);
+                    continue;
+                }
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(instanceDir)) {
+                    if (stream.iterator().hasNext()) {
+                        // TODO UI warning for this.
+                        LOGGER.warn("Error loading cloud save list, {} exist and is not empty. THis could save cannot be loaded.", instanceDir);
+                        continue;
+                    }
+                } catch (IOException ex) {
+                    // TODO UI warning for this.
+                    LOGGER.warn("Error loading cloud save list. Unable to iterate directory {}. This cloud save cannot be loaded.", instanceDir);
+                    continue;
+                }
+
+                Map<String, S3Object> objects = FastStream.of(index)
+                        .filter(e -> e.key().startsWith(key))
+                        .toMap(e -> StringUtils.stripStart(key + "/", e.key()), e -> e);
+
+                S3Object manifest = objects.get("instance.json");
+                if (manifest == null) {
+                    LOGGER.warn("Error loading cloud save list. Cloud instance {} is missing instance.json file. Loading impossible.", key);
+                    continue;
+                }
+
+                S3Object version = objects.get("version.json");
+                if (version == null) {
+                    LOGGER.warn("Error loading cloud save list. Cloud instance {} is missing version.json file. Loading impossible.", key);
+                    continue;
+                }
+
+                try {
+                    InstanceJson instanceManifest =  InstanceJson.load(downloadToBytes(manifest));
+                    ModpackVersionManifest versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, new ByteArrayInputStream(downloadToBytes(version)), ModpackVersionManifest.class);
+                    LOGGER.info("Loaded pending cloud instance {}.", key);
+                    Instances.addInstance(new Instance(instanceDir, instanceManifest, versionManifest));
+                    loaded = true;
+                } catch (IOException ex) {
+                    LOGGER.warn("Failed to load pending cloud instance {}.", key, ex);
+                }
+            }
+            if (loaded) {
+                // TODO, poke UI that new instances exist.
+            }
+        });
+    }
+
     public List<SyncEntry> getSyncOperations() {
-        synchronized(syncOperations) {
+        synchronized (syncOperations) {
             return new ArrayList<>(syncOperations);
         }
     }
