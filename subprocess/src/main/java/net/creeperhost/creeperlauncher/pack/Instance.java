@@ -336,7 +336,9 @@ public class Instance implements IPack {
         Path backupJson = path.resolve("instance.json.bak");
         Path newJson = path.resolve("instance.json__tmp");
         InstanceJson.save(newJson, props);
-        Files.move(realJson, backupJson, StandardCopyOption.REPLACE_EXISTING);
+        if (Files.exists(realJson)) {
+            Files.move(realJson, backupJson, StandardCopyOption.REPLACE_EXISTING);
+        }
         Files.move(newJson, realJson);
     }
 
