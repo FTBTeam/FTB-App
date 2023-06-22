@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
+import com.google.gson.JsonSyntaxException;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
@@ -37,7 +38,7 @@ public class InstanceGetBackupsHandler implements IMessageHandler<InstanceGetBac
         try {
             BackupsJson backups = GsonUtils.loadJson(backupsJsonPath, BackupsJson.class);
             Settings.webSocketAPI.sendMessage(new Reply(data, backups.backups));
-        } catch (IOException e) {
+        } catch (IOException | JsonSyntaxException e) {
             LOGGER.warn("Unable to read backups json...", e);
             Settings.webSocketAPI.sendMessage(emptyReply);
         }

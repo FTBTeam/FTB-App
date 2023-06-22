@@ -39,6 +39,7 @@ import java.io.OutputStream;
 import java.net.BindException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -327,7 +328,16 @@ public class Instance implements IPack {
     }
 
     public void saveJson() throws IOException {
-        InstanceJson.save(path.resolve("instance.json"), props);
+        // When saving the file we:
+        // - write to .json__tmp
+        // - move .json -> .json.bak
+        // - move .json__tmp -> .json
+        Path realJson = path.resolve("instance.json");
+        Path backupJson = path.resolve("instance.json.bak");
+        Path newJson = path.resolve("instance.json__tmp");
+        InstanceJson.save(newJson, props);
+        Files.move(realJson, backupJson, StandardCopyOption.REPLACE_EXISTING);
+        Files.move(newJson, realJson);
     }
 
     @Nullable

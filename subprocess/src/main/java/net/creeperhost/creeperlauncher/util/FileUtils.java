@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.util;
 
+import net.covers1624.quack.util.SneakyUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -77,9 +78,7 @@ public class FileUtils
     }
 
     public static void deletePath(Path path) {
-        if (Files.notExists(path)) {
-            return;
-        }
+        if (Files.notExists(path)) return;
         
         if (Files.isDirectory(path)) {
             deleteDirectory(path);
@@ -90,14 +89,22 @@ public class FileUtils
         }
     }
     
-    public static void deleteDirectory(Path file)
-    {
+    public static void deleteDirectory(Path file) {
         if (Files.notExists(file)) return;
+
         try (Stream<Path> files = Files.walk(file)) {
                     files
                     .filter(Files::exists)
                     .sorted(Comparator.reverseOrder())
-                    .forEach(sneak(Files::delete));
+                    .forEach(e -> {
+                        try {
+                            Files.deleteIfExists(e);
+                        } catch (IOException ex) {
+                            if (Files.exists(e)) {
+                                SneakyUtils.throwUnchecked(ex);
+                            }
+                        }
+                    });
 
         } catch (IOException e) {
             LOGGER.error("Failed to delete directory. {}", file, e);

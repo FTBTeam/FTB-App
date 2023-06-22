@@ -20,6 +20,10 @@ public class OverwolfShim : IDisposable {
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     private static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
 
+    [DllImport("shell32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsUserAnAdmin();
+
     private const UInt32 WM_CLOSE = 0x0010;
 
     private Process javaProcess;
@@ -40,6 +44,9 @@ public class OverwolfShim : IDisposable {
     /// </summary>
     /// <returns>The random GUID</returns>
     public string RandomUUID() => Guid.NewGuid().ToString();
+
+    /// <returns>If the current process is running with admin permissions.</returns>
+    public bool IsRunningAsAdministrator() => IsUserAnAdmin();
 
     #region IO
 
@@ -140,8 +147,10 @@ public class OverwolfShim : IDisposable {
             javaProcess.StartInfo.UseShellExecute = false;
             javaProcess.StartInfo.FileName = javaPath;
             javaProcess.StartInfo.Arguments = string.Join(" ", args);
-            // Strip "_JAVA_OPTIONS" from the environment variables. If this env variable has unknown or bad arguments, it can cause crashes.
+            // Strip known problem environment variables. If these env vars have unknown or bad arguments, it can cause crashes.
             javaProcess.StartInfo.Environment.Remove("_JAVA_OPTIONS");
+            javaProcess.StartInfo.Environment.Remove("JAVA_TOOL_OPTIONS");
+            javaProcess.StartInfo.Environment.Remove("JAVA_OPTIONS");
             javaProcess.StartInfo.CreateNoWindow = true;
             javaProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             javaProcess.StartInfo.RedirectStandardInput = true;
