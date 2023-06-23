@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -80,6 +81,9 @@ public final class CloudSaveManager {
     private S3Client s3Client;
 
     private final List<SyncEntry> syncOperations = new ArrayList<>();
+
+    @Nullable
+    private CompletableFuture<Void> pollFuture;
 
     public CloudSaveManager() {
         String sysProp = System.getProperty("CloudSaveManager.creds");
@@ -162,13 +166,19 @@ public final class CloudSaveManager {
         }
     }
 
-    public void pollCloudInstances() {
+    public boolean isCloudPollInProgress() {
+        return pollFuture != null && !pollFuture.isDone();
+    }
+
+    public CompletableFuture<Void> pollCloudInstances() {
+        if (isCloudPollInProgress()) return pollFuture;
+
         if (!isConfigured()) {
             LOGGER.info("Skipping loading cloud saves. Not configured.");
-            return;
+            return CompletableFuture.failedFuture(new Throwable("Cloud saves not configured."));
         }
 
-        EXECUTOR.submit(() -> {
+        return CompletableFuture.runAsync(() -> {
             // TODO poke UI we are polling for cloud saves.
             Set<String> keys = new HashSet<>();
             List<S3Object> index;
@@ -241,7 +251,7 @@ public final class CloudSaveManager {
             if (loaded) {
                 // TODO, poke UI that new instances exist.
             }
-        });
+        }, EXECUTOR);
     }
 
     public List<SyncEntry> getSyncOperations() {
