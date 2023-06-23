@@ -285,11 +285,6 @@ ipcMain.on('openLink', (event, data) => {
   shell.openExternal(data);
 });
 
-ipcMain.on('close-auth-window', (event, data) => {
-  const {success} = data;
-  event.reply("authenticationFlowCompleted", {success})
-});
-
 function createFriendsWindow() {
   if (friendsWindow !== null && friendsWindow !== undefined) {
     friendsWindow.focus();

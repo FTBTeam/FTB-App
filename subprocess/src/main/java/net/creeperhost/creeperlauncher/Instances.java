@@ -8,8 +8,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class Instances {
@@ -44,7 +46,7 @@ public class Instances {
             ElapsedTimer timer = new ElapsedTimer();
             List<Instance> loadedInstances = FileUtils.listDir(instancesDir)
                     .parallelStream()
-                    .filter(e -> !e.getFileName().toString().startsWith("."))
+                    .filter(e -> Files.isDirectory(e) && !e.getFileName().toString().startsWith("."))
                     .map(Instances::loadInstance)
                     .filter(Objects::nonNull)
                     .toList();
@@ -66,28 +68,53 @@ public class Instances {
     }
 
     private static Instance loadInstance(Path path) {
-        Path json = path.resolve("instance.json");
-        if (Files.notExists(json)) {
-            LOGGER.warn("Instance missing 'instance.json', Ignoring. {}", json.toAbsolutePath());
+        Path realJson = path.resolve("instance.json");
+        Path backupJson = path.resolve("instance.json.bak");
+        if (Files.notExists(realJson) && Files.notExists(backupJson)) {
+            LOGGER.warn("Instance missing 'instance.json', Ignoring. {}", realJson.toAbsolutePath());
             return null;
         }
         try {
-            Instance localInstance = new Instance(path, json);
-            if (!localInstance.props.installComplete) {
-                // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
-                LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
+            return tryLoadInstance(path, realJson);
+        } catch (Throwable ex) {
+            if (Files.notExists(backupJson)) {
+                LOGGER.error("Failed to load instance: {}", realJson.toAbsolutePath(), ex);
                 return null;
             }
-            if (localInstance.getId() == ModpackVersionManifest.INVALID_ID) {
-                // TODO, not really sure how an instance can get into this state at the moment.
-                //       but instead of generating a sentry event for the error message, we emit a warning and ignore the instance.
-                LOGGER.warn("Instance install complete and missing 'version.json', Ignoring. {}", json.toAbsolutePath());
+            LOGGER.warn("Failed to load instance via real json {}. Trying backup..", realJson.toAbsolutePath(), ex);
+            try {
+                Instance instance = tryLoadInstance(path, backupJson);
+                LOGGER.info("Loading backup json successful!");
+                try {
+                    LOGGER.info("Restoring real json from backup.");
+                    Files.copy(backupJson, realJson, StandardCopyOption.REPLACE_EXISTING);
+                    LOGGER.info("Real json restored!");
+                } catch (IOException ex2) {
+                    LOGGER.error("Failed to restore backup json.", ex2);
+                }
+
+                return instance;
+            } catch (Throwable ex2) {
+                ex.addSuppressed(ex2); // Log and report first exception, with second attached as suppressed.
+                LOGGER.error("Also failed to load instance via backup json.: {}", realJson.toAbsolutePath(), ex);
                 return null;
             }
-            return localInstance;
-        } catch (Exception e) {
-            LOGGER.error("Failed to load instance: {}", json.toAbsolutePath(), e);
+        }
+    }
+
+    private static Instance tryLoadInstance(Path path, Path json) throws IOException {
+        Instance localInstance = new Instance(path, json);
+        if (!localInstance.props.installComplete) {
+            // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
+            LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
             return null;
         }
+        if (localInstance.getId() == ModpackVersionManifest.INVALID_ID) {
+            // TODO, not really sure how an instance can get into this state at the moment.
+            //       but instead of generating a sentry event for the error message, we emit a warning and ignore the instance.
+            LOGGER.warn("Instance install complete and missing 'version.json', Ignoring. {}", json.toAbsolutePath());
+            return null;
+        }
+        return localInstance;
     }
 }

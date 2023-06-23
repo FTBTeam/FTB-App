@@ -8,11 +8,20 @@ import store from '../store';
  */
 export const core: Module<CoreState, RootState> = {
   namespaced: true,
-  state: {
-    profiles: [],
-    activeProfile: {} as AuthProfile,
-    signInOpened: { open: false, jumpToAuth: null, uuid: null },
-    instanceLoading: false,
+  state: () => {
+    let disableAdAside = false;
+    const localEntry = localStorage.getItem("debug-disable-ad-aside");
+    if (localEntry !== null && localEntry === "true") {
+      disableAdAside = true;
+    }
+    
+    return {
+      profiles: [],
+      activeProfile: {} as AuthProfile,
+      signInOpened: { open: false, jumpToAuth: null, uuid: null },
+      instanceLoading: false,
+      debugDisableAdAside: disableAdAside,
+    }
   },
   getters: {
     /**
@@ -42,6 +51,8 @@ export const core: Module<CoreState, RootState> = {
     getInstanceLoading: (state: CoreState): boolean => {
       return state.instanceLoading;
     },
+    
+    getDebugDisabledAdAside: state => process.env.NODE_ENV !== "production" && state.debugDisableAdAside
   },
   actions: {
     openSignIn: (
@@ -101,6 +112,11 @@ export const core: Module<CoreState, RootState> = {
         },
       });
     },
+
+    toggleDebugDisableAdAside({commit, state}) {
+      commit(CoreMutations.TOGGLE_DEBUG_AD_ASIDE);
+      localStorage.setItem("debug-disable-ad-aside", "" + state.debugDisableAdAside);
+    }
   },
   mutations: {
     openSignIn(
@@ -136,5 +152,7 @@ export const core: Module<CoreState, RootState> = {
     setActiveProfile: (state: CoreState, profile: AuthProfile) => {
       state.activeProfile = profile;
     },
+    
+    toggleDebugDisableAdAside: (state) => state.debugDisableAdAside = !state.debugDisableAdAside  
   },
 };

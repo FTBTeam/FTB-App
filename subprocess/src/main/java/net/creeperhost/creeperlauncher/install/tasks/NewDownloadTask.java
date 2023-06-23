@@ -461,6 +461,11 @@ public class NewDownloadTask implements Task<Path> {
             return this;
         }
 
+        public Builder withMirrors(List<String> mirrors) {
+            urls.addAll(mirrors);
+            return this;
+        }
+
         public Builder dest(Path dest) {
             this.dest = dest;
             return this;

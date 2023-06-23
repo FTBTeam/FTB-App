@@ -46,7 +46,8 @@ public abstract class ModLoaderInstallTask implements Task<String> {
     public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion) throws IOException {
         return switch (mlName) {
             case "forge" -> AbstractForgeInstallTask.createInstallTask(instance, mcVersion, mlVersion);
-            case "fabric" -> new FabricInstallTask(mcVersion, mlVersion);
+            case "fabric" -> FabricInstallTask.fabric(mcVersion, mlVersion);
+            case "quilt" -> FabricInstallTask.quilt(mcVersion, mlVersion);
             default -> throw new IllegalArgumentException("Unknown ModLoader name: " + mlName);
         };
     }

@@ -1,9 +1,12 @@
 <template>
-  <div class="global__fullscreen-modal authentication" @mousedown.self="() => close()">
+  <div class="global__fullscreen-modal authentication">
     <div class="body-contents text-center">
       <div class="back" v-if="!onMainView && !loggedIn && !loading" @click="back()">
         <font-awesome-icon icon="chevron-left" />
         <span>Back to options</span>
+      </div>
+      <div class="closer" @click="close()">
+        <font-awesome-icon icon="times" />
       </div>
       <div class="main" v-if="loading">
         <Loading />
@@ -130,7 +133,7 @@ export default class Authentication extends Vue {
       this.onMainView = false;
       this.onMcAuth = true;
       this.onMsAuth = false;
-    }
+    } 
   }
 
   back() {

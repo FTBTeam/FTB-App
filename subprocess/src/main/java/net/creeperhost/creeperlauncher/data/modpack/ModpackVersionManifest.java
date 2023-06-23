@@ -324,6 +324,7 @@ public class ModpackVersionManifest {
         private String name;
         @Nullable
         private String url;
+        private List<String> mirror = new LinkedList<>();
         @Nullable
         @JsonAdapter (HashCodeAdapter.class)
         private HashCode sha1;
@@ -405,6 +406,7 @@ public class ModpackVersionManifest {
         public String getPath() { return requireNonNull(path); }
         public String getName() { return requireNonNull(name); }
         public String getUrl() { return requireNonNull(url); }
+        public List<String> getMirror() { return mirror; }
         public HashCode getSha1() { return requireNonNull(sha1); }
         @Nullable public HashCode getSha1OrNull() { return sha1; }
         public long getSize() { return size; }

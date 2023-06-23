@@ -4,7 +4,8 @@ export enum CoreMutations {
   SET_ACTIVE_PROFILE = 'setActiveProfile',
   OPEN_SIGNIN = 'openSignIn',
   REMOVE_PROFILE = 'removeProfile',
-  INSTANCE_LOADING = "instanceLoading"
+  INSTANCE_LOADING = "instanceLoading",
+  TOGGLE_DEBUG_AD_ASIDE = "toggleDebugDisableAdAside"
 }
 
 export interface AuthProfile {
@@ -30,4 +31,5 @@ export type CoreState = {
   activeProfile?: AuthProfile;
   signInOpened: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null, uuid: string | null};
   instanceLoading: boolean;
+  debugDisableAdAside: boolean;
 };
