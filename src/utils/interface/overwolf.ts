@@ -249,17 +249,19 @@ const Overwolf: ElectronOverwolfInterface = {
 
         // Work out the smallest monitor and use that as the max height we can work within
         if (!result.displays) {
+          console.log("No displays found")
           return;
         }
 
-        let maxHeight = 0;
-        for (const displays of result.displays) {
-          const windowHeight = Math.floor(displays.height / scale);
-          if (windowHeight > maxHeight) {
-            maxHeight = windowHeight;
-          }
-        }
-
+        let maxHeight = Infinity;
+        result.displays.forEach((display: any) => {
+          const windowHeight = Math.floor(display.height / scale);
+          console.log("Window height: ", windowHeight)
+          maxHeight = Math.min(maxHeight, windowHeight);
+        });
+        
+        console.log("Max height: ", maxHeight)
+        
         resolve(maxHeight)
       });
     }).then(async (height: any) => {
