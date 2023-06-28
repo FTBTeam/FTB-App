@@ -18,7 +18,8 @@
     "Streaming",
     "Profile",
     "GameInfo",
-    "Shutdown"
+    "Shutdown",
+    "DesktopStreaming"
   ],
   "data": {
     "externally_connectable": {
