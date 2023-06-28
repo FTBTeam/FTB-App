@@ -5,7 +5,7 @@
     <!--    </div>-->
     
     <div class="ad-container ads" v-if="!isElectron" key="adside-ad-type">
-      <div class="ad-holder small">
+      <div class="ad-holder small" v-if="!isSmallDisplay">
         <div
           v-if="!isElectron"
           v-show="advertsEnabled ?? true"
@@ -84,6 +84,10 @@ export default class AdAside extends Vue {
     return platform.isElectron();
   }
 
+  get isSmallDisplay() {
+    return (window as any)?.ftbFlags?.smallMonitor;
+  }
+  
   async mounted() {
     this.logger.info('Loaded ad sidebar widget');
 
