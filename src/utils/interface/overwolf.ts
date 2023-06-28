@@ -236,12 +236,46 @@ const Overwolf: ElectronOverwolfInterface = {
 
   setupApp(vm) {
     // setup websockets and the actual window
-    let mainWindow = overwolf.windows.getMainWindow();
+    let mainWindow = overwolf.windows.getMainWindow();    
     let initialData = mainWindow.getWebsocketData();
     logger.info('Initial WS data: ', initialData);
     let ws: WebSocket;
     let reconnectCount = 0;
+    
+    new Promise(resolve => {
+      overwolf.utils.getMonitorsList(async (result: any) => {
+        // Get the window scaling
+        const scale = window.devicePixelRatio;
 
+        // Work out the smallest monitor and use that as the max height we can work within
+        if (!result.displays) {
+          return;
+        }
+
+        let maxHeight = 0;
+        for (const displays of result.displays) {
+          const windowHeight = Math.floor(displays.height / scale);
+          if (windowHeight > maxHeight) {
+            maxHeight = windowHeight;
+          }
+        }
+
+        resolve(maxHeight)
+      });
+    }).then(async (height: any) => {
+      const manifestData: any = await new Promise(resolve => overwolf.extensions.current.getManifest((manifest: any) => resolve(manifest)));
+      const indexWindow = manifestData.data.windows.index;
+
+      if (height < 880) {
+        overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, console.log);
+        if (!(window as any).ftbFlags) {
+          (window as any).ftbFlags = {};
+        }
+
+        (window as any).ftbFlags.smallMonitor = true;
+      }
+    })
+    
     async function onConnect() {
       logger.info('Auth data:', mainWindow.getAuthData());
       //@ts-ignore

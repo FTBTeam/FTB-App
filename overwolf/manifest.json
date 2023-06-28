@@ -48,7 +48,7 @@
         },
         "min_size": {
           "width": 1220,
-          "height": 800
+          "height": 895
         },
         "block_top_window_navigation": true,
         "popup_blocker": true
