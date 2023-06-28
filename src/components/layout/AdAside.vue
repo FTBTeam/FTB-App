@@ -81,7 +81,6 @@ export default class AdAside extends Vue {
   random = AdAside.mkRandom();
 
   get isElectron() {
-    // TODO: DO NOT RELEASE
     return platform.isElectron();
   }
 
@@ -104,7 +103,14 @@ export default class AdAside extends Vue {
 
     setTimeout(() => {
       this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: { width: 400, height: 600 }});
-      this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {size: {width: 300, height: 250}});
+      if (!(window as any)?.ftbFlags?.smallMonitor) {
+        this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {
+          size: {
+            width: 300,
+            height: 250
+          }
+        });
+      }
     }, 1500);
   }
 
@@ -221,6 +227,7 @@ export default class AdAside extends Vue {
       &.small {
         width: 300px;
         height: 250px;
+        margin-bottom: .5rem;
       }
 
       .place-holder {
