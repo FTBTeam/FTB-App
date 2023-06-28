@@ -71,7 +71,7 @@
 
       <ftb-input
         label="Java runtime arguments"
-        placeholder="-Xmx1G"
+        placeholder="-TestArgument=120"
         v-model="localInstance.jvmArgs"
         @blur="saveSettings"
         class="flex-1"
