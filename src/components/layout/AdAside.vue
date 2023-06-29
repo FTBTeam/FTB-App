@@ -106,7 +106,7 @@ export default class AdAside extends Vue {
     }
 
     setTimeout(() => {
-      this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: { width: 400, height: 600 }});
+      this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
       if (!(window as any)?.ftbFlags?.smallMonitor) {
         this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {
           size: {
