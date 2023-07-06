@@ -2,11 +2,11 @@
   <Transition name="fade">
     <div
       v-if="visible"
-      class="left-0 top-0 flex items-center justify-center bg-transparent-black h-screen w-full ftb-modal"
+      class="left-0 top-0 flex items-center justify-center bg-transparent-black h-screen ftb-modal"
       @mousedown.self="hide"
     >
       <div
-        class="bg-navbar rounded shadow px-8 m-4 py-4 max-h-full text-white pointer-events-auto ftb-modal-contents"
+        class="bg-navbar rounded shadow px-4 m-4 py-4 max-h-full text-white pointer-events-auto ftb-modal-contents"
         :class="`${size}`"
       >
         <slot></slot>
@@ -44,6 +44,7 @@ export default class FTBModal extends Vue {
   position: fixed;
   z-index: 500;
   background: rgba(black, 0.85);
+  width: calc(100% - (300px + 2.5rem));
 }
 
 .fade-enter-active,
@@ -67,7 +68,7 @@ export default class FTBModal extends Vue {
   }
 
   &.large {
-    width: 80%;
+    width: 95%;
     height: 80%;
   }
 

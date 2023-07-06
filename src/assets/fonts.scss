@@ -1,107 +1,123 @@
-/* raleway-regular - latin */
 @font-face {
-  font-family: 'Raleway';
+  font-family: 'Interr';  
+  font-stretch: 25% 150%;
   font-style: normal;
-  font-weight: 400;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-regular.woff2') format('woff2');
+  font-weight: 100 900;
+  src: url('./fonts/Inter-VariableFont_slnt,wght.ttf') format('truetype');
 }
 
-/* raleway-500 - latin */
 @font-face {
-  font-family: 'Raleway';
+  font-family: 'JetBrains Mono';  
+  font-stretch: 25% 150%;
   font-style: normal;
-  font-weight: 500;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-500.woff2') format('woff2');
+  font-weight: 100 800;
+  src: url('./fonts/JetBrainsMono-VariableFont_wght.ttf') format('truetype');
 }
 
-/* raleway-600 - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: normal;
-  font-weight: 600;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-600.woff2') format('woff2');
-}
-
-/* raleway-700 - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: normal;
-  font-weight: 700;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-700.woff2') format('woff2');
-}
-
-/* raleway-800 - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: normal;
-  font-weight: 800;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-800.woff2') format('woff2');
-}
-
-/* raleway-900 - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: normal;
-  font-weight: 900;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-900.woff2') format('woff2');
-}
-
-/* raleway-italic - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: italic;
-  font-weight: 400;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-italic.woff2') format('woff2');
-}
-
-/* raleway-500italic - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: italic;
-  font-weight: 500;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-500italic.woff2') format('woff2');
-}
-
-/* raleway-700italic - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: italic;
-  font-weight: 700;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-700italic.woff2') format('woff2');
-}
-
-/* raleway-600italic - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: italic;
-  font-weight: 600;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-600italic.woff2') format('woff2');
-}
-
-/* raleway-800italic - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: italic;
-  font-weight: 800;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-800italic.woff2') format('woff2');
-}
-
-/* raleway-900italic - latin */
-@font-face {
-  font-family: 'Raleway';
-  font-style: italic;
-  font-weight: 900;
-  src: local(''),
-  url('./fonts/raleway-v26-latin-900italic.woff2') format('woff2');
-}
+///* raleway-regular - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: normal;
+//  font-weight: 400;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-regular.woff2') format('woff2');
+//}
+//
+///* raleway-500 - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: normal;
+//  font-weight: 500;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-500.woff2') format('woff2');
+//}
+//
+///* raleway-600 - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: normal;
+//  font-weight: 600;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-600.woff2') format('woff2');
+//}
+//
+///* raleway-700 - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: normal;
+//  font-weight: 700;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-700.woff2') format('woff2');
+//}
+//
+///* raleway-800 - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: normal;
+//  font-weight: 800;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-800.woff2') format('woff2');
+//}
+//
+///* raleway-900 - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: normal;
+//  font-weight: 900;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-900.woff2') format('woff2');
+//}
+//
+///* raleway-italic - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: italic;
+//  font-weight: 400;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-italic.woff2') format('woff2');
+//}
+//
+///* raleway-500italic - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: italic;
+//  font-weight: 500;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-500italic.woff2') format('woff2');
+//}
+//
+///* raleway-700italic - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: italic;
+//  font-weight: 700;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-700italic.woff2') format('woff2');
+//}
+//
+///* raleway-600italic - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: italic;
+//  font-weight: 600;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-600italic.woff2') format('woff2');
+//}
+//
+///* raleway-800italic - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: italic;
+//  font-weight: 800;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-800italic.woff2') format('woff2');
+//}
+//
+///* raleway-900italic - latin */
+//@font-face {
+//  font-family: 'Raleway';
+//  font-style: italic;
+//  font-weight: 900;
+//  src: local(''),
+//  url('./fonts/raleway-v26-latin-900italic.woff2') format('woff2');
+//}
