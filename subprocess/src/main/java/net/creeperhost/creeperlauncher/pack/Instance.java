@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.BindException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -335,7 +336,12 @@ public class Instance implements IPack {
         Path realJson = path.resolve("instance.json");
         Path backupJson = path.resolve("instance.json.bak");
         Path newJson = path.resolve("instance.json__tmp");
-        InstanceJson.save(newJson, props);
+        try {
+            InstanceJson.save(newJson, props);
+        } catch (AccessDeniedException ex) {
+            LOGGER.warn("Failed to write file, access denied. ACL: {}", FileUtils.getAcl(path));
+            throw ex;
+        }
         if (Files.exists(realJson)) {
             Files.move(realJson, backupJson, StandardCopyOption.REPLACE_EXISTING);
         }
