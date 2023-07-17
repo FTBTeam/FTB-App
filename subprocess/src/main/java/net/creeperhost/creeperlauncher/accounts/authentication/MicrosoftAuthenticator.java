@@ -25,7 +25,13 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<
         }
 
         boolean valid = Instant.now().getEpochSecond() < profile.msAuth.liveExpiresAt;
-        LOGGER.info("Checking if Microsoft account is still valid... It's {}", valid ? "valid" : "invalid");
+        LOGGER.info("Checking if Microsoft account is expired... It's {}", valid ? "OK" : "Expired");
+        if (!valid) return false;
+
+        LOGGER.info("Checking if Minecraft token is usable....");
+        var result = MicrosoftOAuth.fetchMcProfile(profile.msAuth.minecraftToken);
+        valid = result.isOk();
+        LOGGER.info(" It's {}", valid ? "OK" : "Invalid: " + result.unwrapErr().status() + " : "+ result.unwrapErr().body());
         return valid;
     }
 
