@@ -9,7 +9,7 @@ body {
 #app {
   background-color: var(--color-background);
   margin: 0;
-  font-family: 'Interr';
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);

@@ -2,8 +2,9 @@
   <div class="pack-versions">
     <div class="aside mb-6">
       <selection
-        :options="versions.map(e => ({ value: e, text: e.name, meta: e.type, badge: {color: 'green', text: 'dw'} }))"
-        :inheritedSelection="selectedVersion"
+        :badge-end="true"
+        :options="packVersions"
+        :inheritedSelection="packVersions[0]"
         @selected="version => loadChanges(version)"
       />
 
@@ -86,7 +87,7 @@
         >         
           <font-awesome-icon icon="triangle-exclamation" size="xl" class="mr-4" /> Always backup your worlds before updating.
         </div>
-        <message class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-else>
+        <message class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-if="currentVersion && currentVersion.type.toLowerCase() === 'archived'">
           <p>
             This version has been archived! This typically means the update contained a fatal error causing the version
             to be too unstable for players to use.
@@ -105,9 +106,10 @@ import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
 import { Action } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import { InstallerState } from '@/modules/app/appStore.types';
-import {getPackArt, parseMarkdown} from '@/utils';
+import {getColorForReleaseType, getPackArt, parseMarkdown} from '@/utils';
 import MarkdownIt from 'markdown-it';
 import Selection from '@/components/atoms/input/Selection.vue';
+import dayjs from 'dayjs';
 
 @Component({
   components: {Selection}
@@ -189,6 +191,15 @@ export default class ModpackVersions extends Vue {
       },
     });
   }
+  
+  get packVersions() {
+    return this.versions.map(e => ({
+      value: e.id, 
+      text: e.name + (this.instance?.versionId === e.id ? ' (Current)' : ''), 
+      meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"), 
+      badge: {color: getColorForReleaseType(e.type), text: e.type} 
+    }))
+  }
 }
 </script>
 
@@ -200,8 +211,6 @@ export default class ModpackVersions extends Vue {
   font-size: 0.875rem;
 
   line-height: 1.8em;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
 
   .aside,
   .main {

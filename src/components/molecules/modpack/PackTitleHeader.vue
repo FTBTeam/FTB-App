@@ -49,8 +49,6 @@ export default class PackTitleHeader extends Vue {
 
   .name {
     font-size: 2.2rem;
-    font-family: "JetBrains Mono";
-    //font-weight: 400;
     font-weight: bold;
     line-height: 1.2em;
     margin-bottom: 0.5rem;

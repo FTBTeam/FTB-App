@@ -3,6 +3,7 @@
     <div
       v-if="visible"
       class="left-0 top-0 flex items-center justify-center bg-transparent-black h-screen ftb-modal"
+      :class="{os: isOverwolf}"
       @mousedown.self="hide"
     >
       <div
@@ -16,6 +17,7 @@
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import Platform from '@/utils/interface/electron-overwolf';
 
 export enum ModalSizes {
   SMALL = 'small',
@@ -36,6 +38,10 @@ export default class FTBModal extends Vue {
       this.$emit('dismiss-modal');
     }
   }
+  
+  get isOverwolf() {
+    return Platform.isOverwolf();
+  }
 }
 </script>
 
@@ -45,6 +51,10 @@ export default class FTBModal extends Vue {
   z-index: 500;
   background: rgba(black, 0.85);
   width: calc(100% - (300px + 2.5rem));
+  
+  &.ow {
+    width: calc(100vw - 400px);
+  }
 }
 
 .fade-enter-active,

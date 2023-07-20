@@ -5,7 +5,7 @@
         <arance-none leading-normal text-gray-300" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
            </div> -->
     <div class="w-full">
-      <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2" v-if="label">
+      <label class="block tracking-wide mb-2" v-if="label">
         {{ label }}
       </label>
       <div class="flex flex-row items-center">
@@ -83,8 +83,7 @@ label {
 }
 
 .ftb-input {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-  
+
   &.disabled {
     * {
       cursor: not-allowed !important;

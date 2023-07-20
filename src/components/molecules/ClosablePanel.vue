@@ -58,6 +58,10 @@ export default class ClosablePanel extends Vue {
   z-index: 10000;
   background-color: rgba(black, .6);
   backdrop-filter: blur(5px);
+  
+  &.overwolf {
+    width: calc(100% - 400px);
+  }
 
   &.is-mac {
     top: 1.8rem;

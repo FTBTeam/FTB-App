@@ -21,11 +21,15 @@
 
       <div class="dropdown">
         <div class="item list-item" v-for="(option, index) in options" :key="index" @click="() => select(option)">
-          <div class="badge" :style="{ backgroundColor: option.badge.color }" v-if="option.badge">
+          <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
             {{ option.badge.text }}
           </div>
           <div class="text">{{ option.text }}</div>
           <div class="meta" v-if="option.meta">{{ option.meta }}</div>
+          <!-- Eww -->
+          <div v-if="badgeEnd && option.badge" class="badge end" :style="{ backgroundColor: option.badge.color }">
+            {{ option.badge.text }}
+          </div>
         </div>
       </div>
     </div>
@@ -52,7 +56,10 @@ export default class Selection extends Vue {
   @Prop({ default: [] }) options!: Option[];
 
   @Prop({ default: null }) inheritedSelection!: Option | null;
+  @Prop({default: false}) badgeEnd!: boolean;
 
+  @Prop({default: false}) allowDeselect!: boolean;
+  
   open = false;
   selected: Option | null = null;
 
@@ -70,8 +77,10 @@ export default class Selection extends Vue {
 
   select(option: Option) {
     if (option.value === this.selected?.value) {
-      this.selected = null;
-      this.$emit('selected', null);
+      if (this.allowDeselect) {
+        this.selected = null;
+        this.$emit('selected', null);
+      }
       return;
     }
 
@@ -94,9 +103,8 @@ export default class Selection extends Vue {
 .selection {
   background: #252525;
   border-radius: 5px;
-  padding: 0.55rem 1rem;
+  padding: 0.55rem;
   cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
   position: relative;
   border: 1px solid #1b1b1b;
 
@@ -182,10 +190,15 @@ export default class Selection extends Vue {
     }
 
     .badge {
-      padding: 0.2rem 0.5rem;
-      border-radius: 5px;
+      padding: 0.1rem 0.5rem;
+      border-radius: 3px;
       font-size: 0.875rem;
       margin-right: 1rem;
+      
+      &.end {
+        margin-right: 0;
+        margin-left: 1rem;
+      }
 
       &.empty {
         width: 0;
@@ -202,10 +215,12 @@ export default class Selection extends Vue {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-weight: bold;
     }
 
     .meta {
       margin-left: 1rem;
+      opacity: .8;
     }
   }
 }

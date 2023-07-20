@@ -46,16 +46,15 @@ import FTBButton from '@/components/atoms/input/FTBButton.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import SettingsModal from '@/components/organisms/modals/SettingsModal.vue';
 import InformationModal from '@/components/organisms/modals/InformationModal.vue';
-import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
-import { Instance, ModpackState } from '../../../modules/modpacks/types';
+import { Instance, ModpackState } from '@/modules/modpacks/types';
 // @ts-ignore
 import placeholderImage from '@/assets/placeholder_art.png';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '@/utils';
-import { AuthState } from '../../../modules/auth/types';
+import { AuthState } from '@/modules/auth/types';
 import { getColorForReleaseType } from '@/utils/colors';
 import { RouterNames } from '@/router';
 
@@ -75,7 +74,6 @@ export interface MsgBox {
     FTBModal,
     SettingsModal,
     InformationModal,
-    InstallModal,
     'message-modal': MessageModal,
   },
   props: [
@@ -394,8 +392,6 @@ export default class PackCard extends Vue {
       background: rgba(41, 130, 212, 0.5);
       backdrop-filter: blur(3px);
       padding: 0.2rem 0.5rem;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
       text-align: center;
       bottom: 0;
       width: 100%;
