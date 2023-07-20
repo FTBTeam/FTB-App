@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade-and-grow">
-    <div v-if="open" class="modal-container" @mousedown.self="() => close(true)">
+    <div v-if="open" class="modal-container" :class="{ow: isOverwolf}" @mousedown.self="() => close(true)">
       <div class="modal-contents" :class="`${size}`">
         <div class="modal-header">
           <div class="modal-heading">
@@ -27,6 +27,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import Platform from "../../../utils/interface/electron-overwolf";
 
 export enum ModalSizes {
   SMALL = 'small',
@@ -47,6 +48,10 @@ export default class Modal extends Vue {
   @Prop({ default: true }) closeOnBackgroundClick!: boolean;
   @Prop({ default: false }) externalContents!: boolean;
 
+  get isOverwolf() {
+    return Platform.isOverwolf();
+  }
+  
   public close(background = false): void {
     if (!this.closeOnBackgroundClick && background) {
       return;
@@ -66,7 +71,7 @@ export default class Modal extends Vue {
   position: fixed;
   z-index: 49999; // just under of the title bar
   background: rgba(black, 0.85);
-  width: 100vw;
+  width: calc(100vw - (300px + 2.5rem));
   height: 100vh;
   top: 0;
   left: 0;
@@ -74,6 +79,10 @@ export default class Modal extends Vue {
   place-items: center;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
   'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  
+  &.ow {
+    width: calc(100vw - 400px);
+  }
 }
 
 .modal-contents {
