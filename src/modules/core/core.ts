@@ -52,7 +52,7 @@ export const core: Module<CoreState, RootState> = {
       return state.instanceLoading;
     },
     
-    getDebugDisabledAdAside: state => process.env.NODE_ENV !== "production" && state.debugDisableAdAside
+    getDebugDisabledAdAside: state => process.env.NODE_ENV !== "production" && state.debugDisableAdAside,
   },
   actions: {
     openSignIn: (

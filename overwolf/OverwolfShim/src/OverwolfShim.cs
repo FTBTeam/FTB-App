@@ -98,6 +98,7 @@ public class OverwolfShim : IDisposable {
         var args = new List<string>();
         args.Add("--pid");
         args.Add(Process.GetCurrentProcess().Id.ToString());
+        args.Add("--overwolf");
         if (dev) {
             args.Add("--dev");
         }

@@ -370,8 +370,6 @@ export default class InstancePage extends Vue {
       return;
     }
     
-    console.log(targetVersion)
-    
     this.installModpack({
       pack: {
         uuid: this.instance?.uuid,

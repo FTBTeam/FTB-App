@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade-and-grow">
-    <div v-if="open" class="modal-container" :class="{ow: isOverwolf}" @mousedown.self="() => close(true)">
+    <div v-if="open" class="modal-container" :class="{ow: isOverwolf, ads: advertsEnabled}" @mousedown.self="() => close(true)">
       <div class="modal-contents" :class="`${size}`">
         <div class="modal-header">
           <div class="modal-heading">
@@ -28,6 +28,9 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import Platform from "../../../utils/interface/electron-overwolf";
+import {Getter, State} from 'vuex-class';
+import {SettingsState} from '@/modules/settings/types';
+import {AuthState} from '@/modules/auth/types';
 
 export enum ModalSizes {
   SMALL = 'small',
@@ -63,6 +66,23 @@ export default class Modal extends Vue {
 
     this.$emit('closed');
   }
+
+  // Not ideal...
+  @State('settings') public settings!: SettingsState;
+  @State('auth') public auth!: AuthState;
+  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  get advertsEnabled(): boolean {
+    if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
+      return false
+    }
+
+    if (!this.auth?.token?.activePlan) {
+      return true;
+    }
+
+    // If this fails, show the ads
+    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+  }
 }
 </script>
 
@@ -71,15 +91,19 @@ export default class Modal extends Vue {
   position: fixed;
   z-index: 49999; // just under of the title bar
   background: rgba(black, 0.85);
-  width: calc(100vw - (300px + 2.5rem));
+  width: 100vw;
   height: 100vh;
   top: 0;
   left: 0;
   display: grid;
   place-items: center;
   
-  &.ow {
-    width: calc(100vw - 400px);
+  &.ads {
+    width: calc(100vw - (300px + 2.5rem));
+    
+    &.ow {
+      width: calc(100vw - 400px);
+    }
   }
 }
 

@@ -52,16 +52,6 @@
           @close="showVersions = false"
         />
       </closable-panel>
-      
-      <ftb-modal size="large" v-if="currentModpack" :visible="showVersions" @dismiss-modal="showVersions = false">
-        <modpack-versions
-          :versions="currentModpack.versions"
-          :pack-instance="currentModpack"
-          :instance="null"
-          :current="null"
-          @close="showVersions = false"
-        />
-      </ftb-modal>
     </div>
     <ftb-modal :visible="showInstallBox" v-if="currentModpack" size="large-dynamic" @dismiss-modal="hideInstall">
       <InstallModal

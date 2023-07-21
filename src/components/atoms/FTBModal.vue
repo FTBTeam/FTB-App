@@ -3,7 +3,7 @@
     <div
       v-if="visible"
       class="left-0 top-0 flex items-center justify-center bg-transparent-black h-screen ftb-modal"
-      :class="{os: isOverwolf}"
+      :class="{ow: isOverwolf, ads: advertsEnabled}"
       @mousedown.self="hide"
     >
       <div
@@ -18,6 +18,9 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import Platform from '@/utils/interface/electron-overwolf';
+import {Getter, State} from 'vuex-class';
+import {SettingsState} from '@/modules/settings/types';
+import {AuthState} from '@/modules/auth/types';
 
 export enum ModalSizes {
   SMALL = 'small',
@@ -42,6 +45,23 @@ export default class FTBModal extends Vue {
   get isOverwolf() {
     return Platform.isOverwolf();
   }
+
+  // Not ideal...
+  @State('settings') public settings!: SettingsState;
+  @State('auth') public auth!: AuthState;
+  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  get advertsEnabled(): boolean {
+    if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
+      return false
+    }
+
+    if (!this.auth?.token?.activePlan) {
+      return true;
+    }
+
+    // If this fails, show the ads
+    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+  }
 }
 </script>
 
@@ -50,10 +70,14 @@ export default class FTBModal extends Vue {
   position: fixed;
   z-index: 500;
   background: rgba(black, 0.85);
-  width: calc(100% - (300px + 2.5rem));
+  width: 100vw;
   
-  &.ow {
-    width: calc(100vw - 400px);
+  &.ads {
+    width: calc(100% - (300px + 2.5rem));
+
+    &.ow {
+      width: calc(100vw - 400px);
+    }
   }
 }
 

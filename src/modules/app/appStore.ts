@@ -66,8 +66,7 @@ export const appStore: Module<AppStoreState, RootState> = {
       if (pack.packType) {
         payload['packType'] = pack.packType;
       }
-
-      console.log(pack.private)
+      
       if (pack.private) {
         payload['_private'] = true;
       }

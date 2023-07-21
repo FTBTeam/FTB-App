@@ -18,11 +18,11 @@ class Platform {
   }
 
   public isOverwolf() {
-    return true;//process.env.VUE_APP_PLATFORM !== 'electron';
+    return process.env.VUE_APP_PLATFORM !== 'electron';
   }
 
   public isElectron() {
-    return false;//process.env.VUE_APP_PLATFORM === 'electron';
+    return process.env.VUE_APP_PLATFORM === 'electron';
   }
 }
 
