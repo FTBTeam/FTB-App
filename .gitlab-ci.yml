@@ -19,9 +19,8 @@ build_jar:
             - subprocess/.gradle
     before_script:
         - git fetch
-        - '[[ ! -z "$CI_BUILD_TAG" ]] && export CI_TAGGED_BRANCH=$(git branch -a --contains "tags/$CI_BUILD_TAG" | grep origin | sed "s|.*origin/||")'
-        - '[[ ! -z "$CI_BUILD_TAG" ]] && [[ "$CI_TAGGED_BRANCH" != "release" ]] && echo "Tagged builds only allowed on the release branch." && exit 1 || true'
-        - echo $CI_TAGGED_BRANCH
+        - '[[ ! -z "$CI_COMMIT_TAG" ]] && export CI_TAGGED_BRANCH=$(git branch -a --contains "tags/$CI_COMMIT_TAG" | grep origin | sed "s|.*origin/||")'
+        - '[[ ! -z "$CI_COMMIT_TAG" ]] && [[ "$CI_TAGGED_BRANCH" != "release" ]] && echo "Tagged builds only allowed on the release branch." && exit 1 || true'
     script:
         - cd subprocess
         - export GRADLE_USER_HOME=.gradle
