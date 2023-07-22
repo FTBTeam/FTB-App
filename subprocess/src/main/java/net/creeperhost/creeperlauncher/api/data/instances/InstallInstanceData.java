@@ -17,6 +17,7 @@ public class InstallInstanceData extends BaseData {
     public String shareCode;
     @Nullable
     public String importFrom;
+    @Nullable public String name;
 
     public static class Reply extends BaseData {
 

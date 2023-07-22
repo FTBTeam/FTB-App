@@ -43,7 +43,7 @@
           />
         </div>
       </div>
-      <ftb-modal size="large" v-if="currentModpack" :visible="showVersions" @dismiss-modal="showVersions = false">
+      <closable-panel :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
         <modpack-versions
           :versions="currentModpack.versions"
           :pack-instance="currentModpack"
@@ -51,7 +51,7 @@
           :current="null"
           @close="showVersions = false"
         />
-      </ftb-modal>
+      </closable-panel>
     </div>
     <ftb-modal :visible="showInstallBox" v-if="currentModpack" size="large-dynamic" @dismiss-modal="hideInstall">
       <InstallModal
@@ -86,6 +86,7 @@ import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue'
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { InstallerState } from '@/modules/app/appStore.types';
 import Loading from '@/components/atoms/Loading.vue';
+import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 
 interface Changelogs {
   [id: number]: string;
@@ -94,6 +95,7 @@ interface Changelogs {
 @Component({
   name: 'ModpackPage',
   components: {
+    ClosablePanel,
     Loading,
     ModpackVersions,
     PackTitleHeader,
@@ -138,9 +140,10 @@ export default class ModpackPage extends Vue {
     this.showInstallBox = false;
   }
 
-  public install(version: number, versionName: string): void {
+  public install(name: string, version: number, versionName: string): void {
     this.installModpack({
       pack: {
+        name,
         id: this.$route.query.modpackid as string,
         version: version,
         packType: this.$route.query.type as string,

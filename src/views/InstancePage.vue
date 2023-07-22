@@ -47,7 +47,7 @@
         />
       </div>
 
-      <ftb-modal size="large" :visible="showVersions" @dismiss-modal="showVersions = false">
+      <closable-panel :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
         <modpack-versions
           :versions="packInstance.versions"
           :pack-instance="packInstance"
@@ -55,7 +55,7 @@
           :current="instance.versionId"
           @close="showVersions = false"
         />
-      </ftb-modal>
+      </closable-panel>
     </div>
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
@@ -369,13 +369,14 @@ export default class InstancePage extends Vue {
       // How?
       return;
     }
-
+    
     this.installModpack({
       pack: {
         uuid: this.instance?.uuid,
         id: this.instance?.id,
         version: targetVersion.id,
         packType: this.instance?.packType,
+        private: this.packInstance?.private ?? targetVersion.private ?? false,
       },
       meta: {
         name: this.instance?.name ?? '',

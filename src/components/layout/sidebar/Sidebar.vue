@@ -237,8 +237,6 @@ export default class Sidebar extends Vue {
 }
 
 .account .hash {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol';
   letter-spacing: 0.07rem;
 }
 

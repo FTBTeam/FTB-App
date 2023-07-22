@@ -71,13 +71,17 @@ public class Instance implements IPack {
     private long startTime;
 
     // Brand-new instance.
-    public Instance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+    public Instance(@Nullable String name, ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
         props = new InstanceJson(modpack, versionManifest, isPrivate, packType);
+        if (name != null) {
+            props.name = name;
+        }
+        
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         FileUtils.createDirectories(path);
 
         this.versionManifest = versionManifest;
-
+        
         ModpackManifest.Art art = modpack.getFirstArt("square");
         if (art != null) {
             Path tempFile = null;
