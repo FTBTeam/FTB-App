@@ -359,11 +359,6 @@ export default class FindMods extends Vue {
       opacity: 0.8;
       margin-right: 0.5rem;
     }
-
-    .value {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-    }
   }
 }
 

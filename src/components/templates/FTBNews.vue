@@ -42,8 +42,6 @@ export default class FTBNews extends Vue {
 }
 
 .news-item {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-  
   header {
     align-items: center;
     gap: 2rem;

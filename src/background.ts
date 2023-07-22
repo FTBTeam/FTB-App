@@ -153,7 +153,7 @@ ipcMain.on('user', (event, data) => {
       friendsWindow.webContents.send('hereAuthData', userData);
     }
     log.info('Checking if linked Minecraft Account');
-    if (userData.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
+    if (userData?.accounts?.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
       log.info('Linked Minecraft account, connecting to IRC');
     }
   }

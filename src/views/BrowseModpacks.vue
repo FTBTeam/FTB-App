@@ -215,10 +215,11 @@ export default class BrowseModpacks extends Vue {
     }
   }
 
-  runInstaller(version: number, versionName: string) {
+  runInstaller(name: string, version: number, versionName: string) {
     this.showInstallModal = false;
     this.installModpack({
       pack: {
+        name,
         id: this.installModalData?.pack.id,
         version: version,
         packType: this.currentTab === 'ftbsearch' ? 0 : 1,

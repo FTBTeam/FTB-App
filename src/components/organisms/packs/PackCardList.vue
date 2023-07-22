@@ -46,15 +46,13 @@
                 v-for="(tag, i) in limitedTags"
                 :key="`tag-${i}`"
                 @click="clickTag(tag.name)"
-                class="cursor-pointer rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                style="font-variant: small-caps"
+                class="cursor-pointer rounded mr-2 bg-gray-600 px-2 font-bold text-xs"
                 >{{ tag.name }}</span
               >
               <span
                 v-if="tags.length > 5"
                 :key="`tag-more`"
-                class="rounded mr-2 text-sm bg-gray-600 px-2 lowercase font-light"
-                style="font-variant: small-caps"
+                class="rounded mr-2 bg-gray-600 px-2 font-bold text-xs"
                 >+{{ tags.length - 5 }}</span
               >
             </div>
@@ -331,13 +329,14 @@ export default class PackCardList extends Vue {
     );
   }
 
-  public async install(version: number, versionName: string): Promise<void> {
+  public async install(name: string, version: number, versionName: string): Promise<void> {
     if (this.modpacks.installing !== null) {
       return;
     }
 
     this.installModpack({
       pack: {
+        name,
         id: this.$props.packID,
         version: version,
         packType: this.$props.type,

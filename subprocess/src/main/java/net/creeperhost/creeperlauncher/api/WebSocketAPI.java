@@ -88,6 +88,12 @@ public class WebSocketAPI extends WebSocketServer
     @Override
     public void onMessage(WebSocket conn, ByteBuffer message)
     {
+        // Log in debug to see if anything is ever getting piped to this method
+        LOGGER.debug("received ByteBuffer from {}", conn.getRemoteSocketAddress());
+        
+        // Decoded data
+        String decoded = new String(message.array());
+        LOGGER.debug("Decoded: {}", decoded);
     }
 
     @Override
