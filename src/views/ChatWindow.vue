@@ -300,7 +300,7 @@ export default class ChatWindow extends Vue {
 <style lang="scss" scoped>
 #app {
   margin: 0;
-  font-family: 'Interr';
+  font-family: 'Inter';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);
