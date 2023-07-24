@@ -13,9 +13,10 @@ namespace OverwolfShim;
 
 public class OverwolfShim : IDisposable {
 
-    private readonly string    overwolfDir   = new FileInfo(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!).FullName;
-    private readonly string    dotFtbaDir    = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ".ftba");
-    private readonly List<int> openedWindows = new();
+    private static readonly string    overwolfDir   = new FileInfo(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!).FullName;
+    private static readonly string    dotFtbaDir    = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ".ftba");
+    private static readonly string    subprocessPid = Path.Combine(dotFtbaDir, "subprocess.pid");
+    private readonly        List<int> openedWindows = new();
 
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     private static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
@@ -93,6 +94,41 @@ public class OverwolfShim : IDisposable {
     /// <returns>If the sub-process is running or not.</returns>
     public bool IsJavaRunning() => javaProcess != null && !javaProcess.HasExited;
 
+    /// <summary>
+    /// Checks if the Java sub-process is still running in the background.
+    /// </summary>
+    /// <returns>If another copy of the sub-process is still running.</returns>
+    public bool IsJavaStillRunning() {
+        try {
+            if (!File.Exists(subprocessPid)) return false;
+            
+            int pid;
+            if (!int.TryParse(File.ReadAllText(subprocessPid), out pid)) return false;
+
+            Process process = Process.GetProcessById(pid);
+            return process.StartInfo.FileName.Contains("java");
+        } catch (Exception) {
+            return false;
+        }
+
+    }
+
+    /// <summary>
+    /// Try to yeet the old sub-process still running in the background.
+    /// </summary>
+    public void YeetOldJavaProcess() {
+        try {
+            if (!File.Exists(subprocessPid)) return;
+            
+            int pid;
+            if (!int.TryParse(File.ReadAllText(subprocessPid), out pid)) return;
+            
+            Process process = Process.GetProcessById(pid);
+            process.Kill();
+        } catch (Exception) {
+        }
+    }
+
     [Obsolete("Provided for binary compatibility until new method is used by Frontend.")]
     public void LaunchJava(string version, bool dev, Action<object> callback) {
         var args = new List<string>();
@@ -167,6 +203,7 @@ public class OverwolfShim : IDisposable {
             javaProcess.BeginErrorReadLine();
             javaProcess.BeginOutputReadLine();
             callback(new { success = true, message = "Started Java with pid " + javaProcess.Id, pid = javaProcess.Id });
+            WriteJavaPID(javaProcess.Id);
         } catch (Exception ex) {
             javaProcess = null;
             callback(new { successs = false, message = "Failed to start process: " + ex });
@@ -261,6 +298,14 @@ public class OverwolfShim : IDisposable {
     private void JavaProcess_Exited(object sender, EventArgs e) {
         openedWindows.ForEach(CloseWindow);
         javaProcess = null;
+    }
+
+    private void WriteJavaPID(int pid) {
+        try {
+            File.WriteAllText(subprocessPid, pid.ToString());
+        } catch (Exception) {
+            // ignored We don't care about this.
+        }
     }
 
     void CloseWindow(int hwnd) {
