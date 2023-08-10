@@ -20,6 +20,11 @@ export function getAPIRequest(rootState: RootState, url: string): Promise<Respon
   });
 }
 
+const packBlacklist = [
+  104,
+  116
+]
+
 // Apparently this module loads to late?
 const logger = (): Logger => {
   return getLogger('modpacks-vuex');
@@ -198,7 +203,7 @@ export const actions: ActionTree<ModpackState, RootState> = {
         logger().info(`Received ${packIDs.length} from the api`);
         const packs: ModPack[] = [];
         await asyncForEach(packIDs, async (packID: number) => {
-          if (packID === 104) {
+          if (packBlacklist.includes(packID)) {
             return; // Nope to forge
           }
           logger().info(`Fetching ${packID} from the api [${packIDs.indexOf(packID) + 1}/${packIDs.length}]`);

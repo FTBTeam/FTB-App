@@ -30,6 +30,33 @@ async function blah() {
     }
   });
 
+  // Check if running as admin
+  let isRunningAsAdmin = await p(plugin.get().IsRunningAsAdministrator);
+  if (isRunningAsAdmin) {
+    // Show error and on confirm close the app
+    const windowRet = await p(overwolf.windows.getCurrentWindow);
+    const windowId = windowRet.window.id;
+
+    await p(overwolf.windows.displayMessageBox, {
+      message_title: "Running as Admin!",
+      message_body: "The FTB App does not support running as admin. Please restart the app without admin privileges.",
+      confirm_button_text: "Confirm",
+      cancel_button_text: "Cancel",
+      message_box_icon:  overwolf.windows.enums.MessagePromptIcon.ExclamationMark
+    })
+
+    await p(overwolf.windows.close, windowId);
+  }
+  
+  // If the background process is already running, close it
+  let backgroundProcess = plugin.get().IsJavaStillRunning();
+  if (backgroundProcess) {
+    console.log('Yeeting old java process');
+    plugin.get().YeetOldJavaProcess();
+  } else {
+    console.log('No old java process');
+  }
+  
   let javaResp = await p(plugin.get().LaunchJava, version, dev);
 
   console.log(JSON.stringify(javaResp));
