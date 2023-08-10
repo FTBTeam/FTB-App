@@ -137,5 +137,8 @@ export const mutations: MutationTree<ModpackState> = {
   },
   updatePacksLoaded(state) {
     state.packsLoaded ++;
+  },
+  setIsPullingPacks(state, payload) {
+    state.isPullingPacks = payload;
   }
 };

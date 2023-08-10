@@ -1,9 +1,15 @@
 import { ActionTree } from 'vuex';
 import { Changelog, InstallProgress, Instance, ModPack, ModpackState } from './types';
 import { RootState } from '@/types';
-import { asyncForEach, getLogger, Logger, logVerbose } from '@/utils';
+import {asyncForEach, chunkArray, getLogger, Logger, logVerbose, removeTailingSlash} from '@/utils';
 import semver from 'semver';
-import { AuthState } from '../auth/types';
+import {AuthState} from '@/modules/auth/types';
+
+const packIdBlacklist = [
+  104,
+  105,
+  116
+];
 
 export function getAPIRequest(rootState: RootState, url: string): Promise<Response> {
   if (rootState.auth === null) {
@@ -19,11 +25,6 @@ export function getAPIRequest(rootState: RootState, url: string): Promise<Respon
     },
   });
 }
-
-const packBlacklist = [
-  104,
-  116
-]
 
 // Apparently this module loads to late?
 const logger = (): Logger => {
@@ -187,55 +188,77 @@ export const actions: ActionTree<ModpackState, RootState> = {
         console.error(err);
       });
   },
-  loadAllPacks({ commit, rootState, dispatch }: any): any {
+  async loadAllPacks({ commit, rootState, dispatch, state }): Promise<any> {
+    if (state.isPullingPacks) {
+      return;
+    }
+    
+    // Eww
+    const cleanUp = (loading: boolean = false) => {
+      commit('setLoading', loading);
+      commit('setPacksToLoad', 0)
+      commit('setPacksLoaded', 0)
+      commit('setIsPullingPacks', loading);
+    }
+    
     logger().info('Loading all modpacks from the api');
-    commit('setLoading', true);
-    commit('setPacksToLoad', 0)
-    commit('setPacksLoaded', 0)
-    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`)
-      .then((response) => response.json())
-      .then(async (data) => {
-        const packIDs = data.packs;
-        if (packIDs == null) {
-          return;
-        }
-        commit('setPacksToLoad', packIDs.length)
-        logger().info(`Received ${packIDs.length} from the api`);
-        const packs: ModPack[] = [];
-        await asyncForEach(packIDs, async (packID: number) => {
-          if (packBlacklist.includes(packID)) {
-            return; // Nope to forge
-          }
-          logger().info(`Fetching ${packID} from the api [${packIDs.indexOf(packID) + 1}/${packIDs.length}]`);
-          const pack = await dispatch('fetchModpack', packID);
-          if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
-            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
-            return;
-          }
-          commit('updatePacksLoaded')
-          packs.push(pack);
-        });
+    cleanUp(true);
+    
+    try {
+      const allPacks = await fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`);
+      let {packs}: {packs: number[]} = await allPacks.json();
+      
+      if (packs == null || packs.length <= 0) {
+        cleanUp();
+        return;
+      }
+      
+      packs = packs.filter(packId => packIdBlacklist.indexOf(packId) === -1);
+      commit('setPacksToLoad', packs.length);
+      logger().info(`Received ${packs.length} from the api`);
 
-        // Sort all packs here according to featured or not
-        packs.sort((a, b) => {
-          if (a.featured !== null && a.featured == true) {
-            if (b.featured !== null && b.featured == true) {
-              return 0;
-            } else {
-              return -1;
-            }
-          } else {
-            return 0;
+      const packChunks = chunkArray(packs,5);
+      const loadedPackChunks = await Promise.all(packChunks.map(async (chunk) => {
+        let loadedPacksHolder = [];
+        for (const packID of chunk) {
+          logger().info(`Loading ${packID}`);
+          
+          const loadedPack = await dispatch('fetchModpack', packID);
+          if (!loadedPack || (loadedPack.status !== undefined && loadedPack.status === 'error') || loadedPack.versions.length <= 0) {
+            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
+            continue;
           }
-        });
-        commit('allPacksLoaded', packs);
-        commit('setLoading', false);
-      })
-      .catch((err) => {
-        commit('allPacksError', err);
-        commit('setLoading', false);
-        console.error(err);
+          
+          loadedPacksHolder.push(loadedPack)
+          commit('updatePacksLoaded')
+        }
+        
+        return loadedPacksHolder as ModPack[];
+      }))
+      
+      const loadedPacks = loadedPackChunks.flat();
+      const sortedPacks = loadedPacks.sort((a, b) => {
+        if (a.featured !== null && a.featured) {
+          if (b.featured !== null && b.featured) {
+            return 0;
+          } else {
+            return -1;
+          }
+        } else {
+          return 0;
+        }
       });
+
+      commit('allPacksLoaded', sortedPacks);
+      commit('setLoading', false);
+      commit('setIsPullingPacks', false);
+    } catch (error) {
+      cleanUp()
+      commit('allPacksError', error);
+      commit('setLoading', false);
+    } finally {
+      cleanUp()
+    }
   },
   storeInstalledPacks({ commit }, packsPayload): any {
     const packs: Instance[] = [];

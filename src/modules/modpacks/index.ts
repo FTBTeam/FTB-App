@@ -24,7 +24,8 @@ export const state: ModpackState = {
   privatePacks: [],
   curseLoading: false,
   packsToLoad: 0,
-  packsLoaded: 0
+  packsLoaded: 0,
+  isPullingPacks: false,
 };
 
 export const modpacks: Module<ModpackState, RootState> = {
