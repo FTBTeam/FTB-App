@@ -135,7 +135,7 @@ public class LogsUploader {
             var appData = System.getenv("LOCALAPPDATA");
             
             // Overwolf logs
-            var appLocation = Path.of(appData, "Overwolf/Logs/Apps", "FTB App");
+            var appLocation = Path.of(appData, "Overwolf/Log/Apps", "FTB App");
             if (Files.exists(appLocation)) {
                 String[] logs = {"index.html.log", "background.html.log", "chat.html.log"};
                 for (String log : logs) {
@@ -192,8 +192,10 @@ public class LogsUploader {
             Instances.allInstances().stream()
                 .map(e -> e.props)
                 .map(e -> {
-                    e.art = "";
-                    return new InstanceJson(e);
+                    // Not lovely but it should work
+                    var json = new InstanceJson(e);
+                    json.art = "";
+                    return json;
                 })
                 .toList()
         );

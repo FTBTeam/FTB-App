@@ -31,7 +31,7 @@ async function blah() {
   });
 
   // Check if running as admin
-  let isRunningAsAdmin = await p(plugin.get().IsRunningAsAdministrator);
+  let isRunningAsAdmin = plugin.get().IsRunningAsAdministrator();
   if (isRunningAsAdmin) {
     // Show error and on confirm close the app
     const windowRet = await p(overwolf.windows.getCurrentWindow);
