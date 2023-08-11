@@ -96,3 +96,20 @@ export function queryServer(serverInfo: string): Promise<MCProtocol | undefined>
 export function prettyNumber(num: number): string {
   return Intl.NumberFormat("en", {notation: "compact"}).format(num);
 }
+
+// Chunk array into smaller arrays
+export function chunkArray<T>(array: T[], size: number): T[][] {
+  const results = [];
+  while (array.length) {
+    results.push(array.splice(0, size));
+  }
+  return results;
+}
+
+export function removeTailingSlash(uri: string): string {
+  if (uri.endsWith('/')) {
+    return uri.slice(0, -1);
+  }
+
+  return uri;
+}

@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.api.data.other;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 
 public class UploadLogsData extends BaseData {
-    public String frontendLogs;
     public String uiVersion;
     public UploadLogsData()
     {

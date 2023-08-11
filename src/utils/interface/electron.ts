@@ -16,6 +16,20 @@ import {handleAction} from '@/core/protocol/protocolActions';
 import platform from '@/utils/interface/electron-overwolf';
 import {emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
+import log from 'electron-log';
+
+function getAppHome() {
+  if (os.platform() === "darwin") {
+    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+  } else {
+    return path.join(os.homedir(), '.ftba');
+  }
+}
+
+log.transports.file.resolvePath = (vars, message) => path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
+
+
+Object.assign(console, log.functions);
 
 declare const __static: string;
 

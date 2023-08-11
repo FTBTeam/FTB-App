@@ -130,7 +130,8 @@ export interface ModpackState {
   packsCache: ModPacks;
   searchString: string;
   packsToLoad: number,
-  packsLoaded: number
+  packsLoaded: number;
+  isPullingPacks: boolean;
 }
 
 export interface ModPacks {
