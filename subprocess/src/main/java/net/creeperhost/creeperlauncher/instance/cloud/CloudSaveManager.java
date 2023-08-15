@@ -7,12 +7,16 @@ import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesReloadedData;
+import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -199,6 +203,7 @@ public final class CloudSaveManager {
                 // Remove any synced instances.
                 keys.remove(instance.getUuid().toString());
             }
+            List<Instance> newInstances = new ArrayList<>();
             // Make sure the directories the un synced cloud instances would use, don't exist, or are empty.
             Path instancesDir = Settings.getInstancesDir();
             boolean loaded = false;
@@ -242,14 +247,18 @@ public final class CloudSaveManager {
                     InstanceJson instanceManifest =  InstanceJson.load(downloadToBytes(manifest));
                     ModpackVersionManifest versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, new ByteArrayInputStream(downloadToBytes(version)), ModpackVersionManifest.class);
                     LOGGER.info("Loaded pending cloud instance {}.", key);
-                    Instances.addInstance(new Instance(instanceDir, instanceManifest, versionManifest));
-                    loaded = true;
+                    Instance instance = new Instance(instanceDir, instanceManifest, versionManifest);
+                    Instances.addInstance(instance);
+                    newInstances.add(instance);
                 } catch (IOException ex) {
                     LOGGER.warn("Failed to load pending cloud instance {}.", key, ex);
                 }
             }
-            if (loaded) {
-                // TODO, poke UI that new instances exist.
+            if (!newInstances.isEmpty()) {
+                List<InstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
+                        .map(e -> new InstalledInstancesHandler.SugaredInstanceJson(e.props, e.path))
+                        .toLinkedList(FastStream.infer());
+                Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, List.of()));
             }
         }, EXECUTOR);
     }
