@@ -125,7 +125,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         beginNewInstall(data, manifests.getLeft(), manifests.getRight(), false, (byte) 0, true);
     }
 
-    private void handleNewInstall(InstallInstanceData data) throws IOException {
+    public static void handleNewInstall(InstallInstanceData data) throws IOException {
         Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
                 data.id,
                 data.version,
@@ -140,8 +140,8 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         beginNewInstall(data, manifests.getLeft(), manifests.getRight(), data._private, data.packType, false);
     }
 
-    private void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
-        Instance instance = new Instance(modpackManifest, versionManifest, isPrivate, packType);
+    private static void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
+        Instance instance = new Instance(data.name, modpackManifest, versionManifest, isPrivate, packType);
         instance.props.isImport = isImport;
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
             Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);
@@ -149,14 +149,14 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         beginInstallTask(data, instance, versionManifest);
     }
 
-    private void beginInstallTask(InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
+    private static void beginInstallTask(InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance.getUuid().toString()));
 
         InstallationOperation op = new InstallationOperation(CreeperLauncher.LONG_TASK_MANAGER, data, instance, manifest);
         op.submit();
     }
 
-    private void abort(InstallInstanceData data, String reason) {
+    private static void abort(InstallInstanceData data, String reason) {
         Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason, ""));
     }
 

@@ -58,11 +58,15 @@ export const appStore: Module<AppStoreState, RootState> = {
           version: pack.version,
         };
       }
+      
+      if (pack.name) {
+        payload["name"] = pack.name;
+      }
 
       if (pack.packType) {
         payload['packType'] = pack.packType;
       }
-
+      
       if (pack.private) {
         payload['_private'] = true;
       }

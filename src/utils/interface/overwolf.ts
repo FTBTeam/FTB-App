@@ -222,7 +222,7 @@ const Overwolf: ElectronOverwolfInterface = {
     selectFileDialog(cb) {
       overwolf.utils.openFilePicker('', (resp: any) => {
         if (resp && resp.status === 'success') {
-          cb(resp.path);
+          cb(resp.file);
         }
       });
     },
@@ -236,12 +236,48 @@ const Overwolf: ElectronOverwolfInterface = {
 
   setupApp(vm) {
     // setup websockets and the actual window
-    let mainWindow = overwolf.windows.getMainWindow();
+    let mainWindow = overwolf.windows.getMainWindow();    
     let initialData = mainWindow.getWebsocketData();
     logger.info('Initial WS data: ', initialData);
     let ws: WebSocket;
     let reconnectCount = 0;
+    
+    new Promise(resolve => {
+      overwolf.utils.getMonitorsList(async (result: any) => {
+        // Get the window scaling
+        const scale = window.devicePixelRatio;
 
+        // Work out the smallest monitor and use that as the max height we can work within
+        if (!result.displays) {
+          console.log("No displays found")
+          return;
+        }
+
+        let maxHeight = Infinity;
+        result.displays.forEach((display: any) => {
+          const windowHeight = Math.floor(display.height / scale);
+          console.log("Window height: ", windowHeight)
+          maxHeight = Math.min(maxHeight, windowHeight);
+        });
+        
+        console.log("Max height: ", maxHeight)
+        
+        resolve(maxHeight)
+      });
+    }).then(async (height: any) => {
+      const manifestData: any = await new Promise(resolve => overwolf.extensions.current.getManifest((manifest: any) => resolve(manifest)));
+      const indexWindow = manifestData.data.windows.index;
+
+      if (height < 880) {
+        overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, console.log);
+        if (!(window as any).ftbFlags) {
+          (window as any).ftbFlags = {};
+        }
+
+        (window as any).ftbFlags.smallMonitor = true;
+      }
+    })
+    
     async function onConnect() {
       logger.info('Auth data:', mainWindow.getAuthData());
       //@ts-ignore
@@ -463,42 +499,3 @@ const Overwolf: ElectronOverwolfInterface = {
 };
 
 export default Overwolf;
-
-// FIXME: Code I found not being used anywhere
-
-// private readDirSync(path: string): Promise<Array<any>> {
-//   return new Promise((resolve, reject) => {
-//       //@ts-ignore
-//       overwolf.io.dir(path, (result) => {
-//           if(result.success === true && result.data){
-//               resolve(result.data);
-//           }
-//       })
-//   });
-// }
-
-// private readFileSync(path: string, options?: any): Promise<string> {
-//   return new Promise((resolve, reject) => {
-//       //@ts-ignore
-//       overwolf.io.readTextFile(path, options, (result) => {
-//           if(result.success === true){
-//               resolve(result.content);
-//           } else {
-//               reject(result.error);
-//           }
-//       });
-//   });
-// }
-
-// private existsSync(path: string): Promise<boolean> {
-//   return new Promise((resolve, reject) => {
-//       //@ts-ignore
-//       overwolf.io.exist(path,(result) => {
-//           if(result.success === true){
-//               resolve(result.exist);
-//           } else {
-//               reject(result.error);
-//           }
-//       });
-//   });
-// }

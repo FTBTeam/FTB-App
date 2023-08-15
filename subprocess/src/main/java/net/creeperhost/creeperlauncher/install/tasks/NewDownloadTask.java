@@ -222,7 +222,11 @@ public class NewDownloadTask implements Task<Path> {
                     .addHeader("User-Agent", Constants.USER_AGENT);
 
             if (validation.useETag && Files.exists(eTagFile)) {
-                builder.addHeader("If-None-Match", Files.readString(eTagFile));
+                try {
+                    builder.addHeader("If-None-Match", Files.readString(eTagFile));
+                } catch (IllegalArgumentException ignored) {
+                    // Thrown if the etag file is corrupt.
+                }
             }
 
             long lastModified = -1;

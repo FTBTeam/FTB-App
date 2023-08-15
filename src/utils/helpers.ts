@@ -86,13 +86,14 @@ export const abortableFetch = (request: RequestInfo, opts?: RequestInit): Aborta
  *
  * @deprecated use the typed version
  */
-export const wsTimeoutWrapper = (payload: any, timeout: number = 10_000): Promise<any> => {
+export const wsTimeoutWrapper = (payload: any, timeout: number = 20_000): Promise<any> => {
   return new Promise(async (resolve, reject) => {
+    let requestId = "";
     const timer = setTimeout(() => {
-      reject('timed out');
+      reject(`[Websocket Timeout] Failed to resolve response from [type: ${payload.type}] with id ${requestId}`);
     }, timeout);
 
-    await store.dispatch('sendMessage', {
+    requestId = await store.dispatch('sendMessage', {
       payload,
       callback: (data: any) => {
         clearTimeout(timer);

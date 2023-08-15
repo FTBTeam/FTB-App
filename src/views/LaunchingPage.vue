@@ -146,11 +146,17 @@
           <font-awesome-icon icon="skull-crossbones" class="mr-2" />
           Kill instance
         </ftb-button>
+        <ftb-button
+          @click="showOptions = true"
+          class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-orange-600 border border-solid hover:bg-orange-600 hover:text-white"
+        >
+          <font-awesome-icon icon="ellipsis-vertical" />
+        </ftb-button>
       </div>
     </div>
 
-    <div class="log-contents text-sm" :class="{ 'dark-mode': darkMode, wrap: wrapText }">
-      <div v-for="i in messages.length" :key="i" class="log-item" :class="messageTypes[messages[messages.length - i].t]">
+    <div class="log-contents text-sm select-text" :class="{ 'dark-mode': darkMode, wrap: wrapText }">
+      <div v-for="i in messages.length" :key="i" class="log-item" :class="messageTypes[messages[messages.length - i].t + (!darkMode ? '-LIGHT': '')]">
         {{ messages[messages.length - i].m }}
       </div>
     </div>
@@ -164,12 +170,33 @@
         :type="msgBox.type"
       />
     </FTBModal>
+    
+    <modal :open="showOptions" title="Instance options" :sub-title="instanceName" @closed="showOptions = false">
+      <div class="action-categories">
+        <div class="category" v-for="category in instanceActions">
+          <div class="title">{{category.title}}</div>
+          <div class="actions">
+            <template v-for="action in category.actions">
+              <ftb-button
+                class="transition ease-in-out duration-200 button"
+                :class="{[action.color ?? '']: action.color, 'looks-like-button': action.looksLikeButton}"
+                v-if="!action.condition || (instance && action.condition({instance, instanceFolders}))"
+                @click="runAction(action)"
+              >
+                <font-awesome-icon :icon="action.icon" class="mr-2" />
+                {{ action.title }}
+              </ftb-button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </modal>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModpackState } from '@/modules/modpacks/types';
+import {Instance, ModpackState} from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
@@ -184,7 +211,95 @@ import { AuthState } from '@/modules/auth/types';
 import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
 import { emitter } from '@/utils/event-bus';
 import { RouterNames } from '@/router';
-import {wsTimeoutWrapper, yeetError} from '@/utils';
+import {wsTimeoutWrapper, wsTimeoutWrapperTyped, yeetError} from '@/utils';
+import Router from 'vue-router';
+
+type InstanceActionCategory = {
+  title: string;
+  actions: InstanceAction[];
+}
+
+type InstanceAction = {
+  title: string;
+  icon: string;
+  action: (instance: Instance, router: Router) => void;
+  condition?: (context: ConditionContext) => boolean;
+  color?: string;
+  looksLikeButton?: boolean;
+}
+
+type ConditionContext = {
+  instance: Instance;
+  instanceFolders: string[];
+}
+
+function folderExists(path: string, folders: string[]) {
+  if (path === '' || !folders.length) {
+    return false;
+  }
+
+  return folders.findIndex((e) => e === path) !== -1;
+}
+
+function openFolderAction(name: string, path: string): InstanceAction {
+  return {
+    title: `${name}`,
+    icon: "folder-open",
+    condition: ({instanceFolders}) => folderExists(path, instanceFolders),
+    action: (instance: Instance) => {
+      wsTimeoutWrapper({
+        type: 'instanceBrowse',
+        uuid: instance.uuid,
+        folder: path,
+      });
+    }
+  } 
+}
+
+const instanceActions: InstanceActionCategory[] = [
+  {
+    title: "Folders",
+    actions: [
+      {
+        title: "Instance folder",
+        icon: "folder-open",
+        action: (instance: Instance) => {
+          wsTimeoutWrapper({
+            type: 'instanceBrowse',
+            uuid: instance.uuid,
+          });
+        }
+      },
+      openFolderAction("Logs", "logs"),
+      openFolderAction("Crash Reports", "crash-reports"),
+      openFolderAction("Backups", "backups"),
+      openFolderAction("Worlds", "saves"),
+      openFolderAction("Configs", "config"),
+      openFolderAction("Mods", "mods"),
+      openFolderAction("Resource packs", "resourcepacks"),
+      openFolderAction("Shaders", "shaderpacks"),
+      openFolderAction("Scripts", "scripts"),
+      openFolderAction("KubeJS", "kubejs"),
+    ]
+  },
+  {
+    title: "Actions",
+    actions: [
+      {
+        title: "Kill instance",
+        icon: "skull-crossbones",
+        color: "danger",
+        action: (instance: Instance) => {
+          wsTimeoutWrapper({
+            type: 'instance.kill',
+            uuid: instance.uuid,
+          });
+        },
+        looksLikeButton: true
+      }
+    ]
+  }
+] 
 
 export interface Bar {
   title: string;
@@ -216,6 +331,9 @@ export default class LaunchingPage extends Vue {
   preLaunch = true;
   platform = platform;
 
+  instanceActions = instanceActions
+  instanceFolders: string[] = [];
+  
   hasCrashed = false;
 
   darkMode = true;
@@ -236,6 +354,8 @@ export default class LaunchingPage extends Vue {
   messages: { t: string; m: string }[] = [];
   launchProgress: Bar[] | null | undefined = null;
 
+  showOptions = false;
+  
   private showMsgBox = false;
   private msgBox: MsgBox = {
     title: '',
@@ -284,6 +404,10 @@ export default class LaunchingPage extends Vue {
     }
 
     await this.launch();
+
+    wsTimeoutWrapperTyped<any, { folders: string[] }>({ type: 'getInstanceFolders', uuid: this.instance.uuid })
+      .then((e) => (this.instanceFolders = e.folders))
+      .catch(console.log);
   }
 
   onLaunchProgressUpdate(data: any) {
@@ -352,7 +476,7 @@ export default class LaunchingPage extends Vue {
     
     // Make an educated guess that when this shows, we're likely good to assume it's loaded
     for (const message of messages) {
-      if (message.includes("Created: 512x256x0 minecraft:textures/atlas")) {
+      if (message.includes("Created:") && message.includes("minecraft:textures/atlas") && message.includes("TextureAtlas")) {
         this.finishedLoading = true;
       }
     }
@@ -501,6 +625,9 @@ export default class LaunchingPage extends Vue {
     "WARN": "text-orange-200",
     "INFO": "text-blue-200",
     "ERROR": "text-red-200",
+    "WARN-LIGHT": "text-orange-700",
+    "INFO-LIGHT": "text-blue-700",
+    "ERROR-LIGHT": "text-red-700",
   };
   
   lastType = "INFO";
@@ -518,6 +645,11 @@ export default class LaunchingPage extends Vue {
     };
   }
 
+  runAction(action: InstanceAction) {
+    action.action(this.instance!, this.$router);
+    this.showOptions = false;
+  }
+  
   get artSquare() {
     if (!this.currentModpack?.art) {
       return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
@@ -541,7 +673,7 @@ export default class LaunchingPage extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .pack-loading {
   display: flex;
   flex-direction: column;
@@ -550,18 +682,18 @@ export default class LaunchingPage extends Vue {
   max-height: 100%;
   z-index: 1;
   transition: 0.25s ease-in-out background-color;
-  background-color: white;
+  background-color: #ececec;
 
   *::-webkit-scrollbar-corner {
-    background-color: white;
+    background-color: #ececec;
     transition: 0.25s ease-in-out background-color;
   }
 
   &.dark-mode {
-    background-color: black;
+    background-color: #1c1c1c;
 
     *::-webkit-scrollbar-corner {
-      background-color: black;
+      background-color: #1c1c1c;
     }
   }
 
@@ -601,7 +733,7 @@ export default class LaunchingPage extends Vue {
 
   .logs {
     padding: 1rem;
-    background-color: black;
+    background-color: #1c1c1c;
 
     header {
       padding: 1rem 1rem 0 1rem;
@@ -609,7 +741,7 @@ export default class LaunchingPage extends Vue {
   }
 
   > .buttons {
-    background-color: black;
+    background-color: #1c1c1c;
     justify-content: flex-end;
     padding: 1rem 1rem 0 1rem;
   }
@@ -651,11 +783,63 @@ export default class LaunchingPage extends Vue {
   .logs,
   .log-contents {
     transition: 0.25s ease-in-out background-color, color 0.25s ease-in-out;
-    background-color: white;
+    background-color: #ececec;
     color: #24292e;
     &.dark-mode {
-      background-color: black;
+      background-color: #1c1c1c;
       color: white;
+    }
+  }
+  
+  &:not(.dark-mode) {
+    .log-contents {
+      font-weight: 600;
+    }
+  }
+}
+
+.action-categories {
+  .category {
+    .title {
+      font-weight: bold;
+      margin-bottom: .5rem;
+    }
+    
+    &:not(:last-child) {
+      margin-bottom: 1rem;
+    }
+    
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: .5rem 0;
+      
+      .button {
+        width: calc(50% - .5rem);
+      }
+      
+      .button {
+        padding: .2rem 0;
+        
+        &.looks-like-button {
+          padding: .4rem 1rem;
+          background-color: pink;
+          
+          &.danger {
+            background-color: var(--color-danger-button);
+          }
+
+          &.warning {
+            background-color: var(--color-warning-button);
+          }
+        }
+        
+        &:not(.looks-like-button):hover {
+          transform: translateX(5px);
+          color: #2ca2ff;
+        }
+      }
     }
   }
 }

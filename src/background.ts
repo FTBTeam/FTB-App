@@ -12,8 +12,19 @@ import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 
 const protocolSpace = 'ftb';
 
+function getAppHome() {
+  if (os.platform() === "darwin") {
+    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+  } else {
+    return path.join(os.homedir(), '.ftba');
+  }
+}
+
+log.transports.file.resolvePath = (vars, message) => path.join(getAppHome(), 'logs', 'ftb-app-electron.log');
+
 Object.assign(console, log.functions);
 (app as any).console = log;
+
 const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.indexOf('--dev') !== -1;
 
 log.transports.file.resolvePath = (variables, message): string => {
@@ -153,7 +164,7 @@ ipcMain.on('user', (event, data) => {
       friendsWindow.webContents.send('hereAuthData', userData);
     }
     log.info('Checking if linked Minecraft Account');
-    if (userData.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
+    if (userData?.accounts?.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
       log.info('Linked Minecraft account, connecting to IRC');
     }
   }

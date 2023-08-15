@@ -124,10 +124,11 @@ export default class PackCard extends Vue {
     );
   }
 
-  public install(version: number, versionName: string): void {
+  public install(name: string, version: number, versionName: string) {
     this.showInstall = false;
     this.installModpack({
       pack: {
+        name,
         id: this.instance.id,
         version: version,
         packType: this.instance.packType,
@@ -138,59 +139,6 @@ export default class PackCard extends Vue {
         art: getPackArt(this.instance?.art),
       },
     });
-    // this.$router.replace({
-    //   name: 'installingpage',
-    //   query: {
-    //     modpackid: this.instance.id.toString(),
-    //     versionID: version.toString(),
-    //     type: this.instance.packType.toString(),
-    //   },
-    // });
-    // this.updateInstall({ modpackID: this.$props.packID, progress: 0 });
-    // this.sendMessage({
-    //   payload: { type: 'installInstance', id: this.$props.packID, version },
-    //   callback: (data: any) => {
-    //     if (this.showInstall) {
-    //       this.showInstall = false;
-    //     }
-    //     if (data.status === 'success') {
-    //       this.sendMessage({
-    //         payload: { type: 'installedInstances' },
-    //         callback: (data: any) => {
-    //           this.storePacks(data);
-    //           this.finishInstall({ modpackID: this.$props.packID, messageID: data.requestId });
-    //         },
-    //       });
-    //     } else if (data.status === 'error') {
-    //       this.updateInstall({
-    //         modpackID: this.$props.packID,
-    //         messageID: data.requestId,
-    //         error: true,
-    //         errorMessage: data.message,
-    //         instanceID: data.uuid,
-    //       });
-    //     } else if (data.currentStage === 'POSTINSTALL') {
-    //       // We don't care about this, keep progress bar showing.
-    //     } else if (data.status === 'init') {
-    //       this.updateInstall({
-    //         modpackID: this.$props.packID,
-    //         messageID: data.requestId,
-    //         stage: 'INIT',
-    //         message: data.message,
-    //       });
-    //     } else if (data.overallPercentage <= 100) {
-    //       this.updateInstall({
-    //         modpackID: this.$props.packID,
-    //         messageID: data.requestId,
-    //         progress: data.overallPercentage,
-    //         downloadSpeed: data.speed,
-    //         downloadedBytes: data.currentBytes,
-    //         totalBytes: data.overallBytes,
-    //         stage: data.currentStage,
-    //       });
-    //     }
-    //   },
-    // });
   }
 
   public goToInstance(): void {

@@ -29,7 +29,51 @@ async function blah() {
       console.log(output);
     }
   });
+  
+  // Has the user ignored the warning?
+  let hasIgnoredWarning = localStorage.getItem("hasIgnoredAdminWarning");
+  
+  // Check if running as admin
+  let isRunningAsAdmin = plugin.get().IsRunningAsAdministrator();
+  if (isRunningAsAdmin && !hasIgnoredWarning) {
+    console.warn("APP IS RUNNING AS ADMIN!")
+    
+    // Show error and on confirm close the app
+    const windowRet = await p(overwolf.windows.getCurrentWindow);
+    const windowId = windowRet.window.id;
 
+    const result = await p(overwolf.windows.displayMessageBox, {
+      message_title: "Running as Admin!",
+      message_body: "We do not recommend running this app as admin, please close the app and run it normally. If you continue, you may experience issues with the app.",
+      confirm_button_text: "Continue regardless",
+      cancel_button_text: "Close app!",
+      message_box_icon:  overwolf.windows.enums.MessagePromptIcon.ExclamationMark
+    })
+
+    if (!result || result.success === false) {
+      console.error("Failed to display message box");
+      return;
+    }
+    
+    if (!result.confirmed) {
+      await p(overwolf.windows.close, windowId);
+    } else {
+      localStorage.setItem("hasIgnoredAdminWarning", "true");
+    }
+  } else {
+    console.log("App is not running as admin");
+    console.log(`User has ignored warning: ${hasIgnoredWarning === "true" ? "yes" : "no"}`);
+  }
+  
+  // If the background process is already running, close it
+  let backgroundProcess = plugin.get().IsJavaStillRunning();
+  if (backgroundProcess) {
+    console.log('Yeeting old java process');
+    plugin.get().YeetOldJavaProcess();
+  } else {
+    console.log('No old java process');
+  }
+  
   let javaResp = await p(plugin.get().LaunchJava, version, dev);
 
   console.log(JSON.stringify(javaResp));

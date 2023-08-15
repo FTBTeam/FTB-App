@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.BindException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -63,13 +64,17 @@ public class Instance {
     private long startTime;
 
     // Brand-new instance.
-    public Instance(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+    public Instance(@Nullable String name, ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
         props = new InstanceJson(modpack, versionManifest, isPrivate, packType);
+        if (name != null) {
+            props.name = name;
+        }
+        
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         FileUtils.createDirectories(path);
 
         this.versionManifest = versionManifest;
-
+        
         ModpackManifest.Art art = modpack.getFirstArt("square");
         if (art != null) {
             Path tempFile = null;
@@ -366,7 +371,12 @@ public class Instance {
         Path realJson = path.resolve("instance.json");
         Path backupJson = path.resolve("instance.json.bak");
         Path newJson = path.resolve("instance.json__tmp");
-        InstanceJson.save(newJson, props);
+        try {
+            InstanceJson.save(newJson, props);
+        } catch (AccessDeniedException ex) {
+            LOGGER.warn("Failed to write file, access denied. ACL: {}", FileUtils.getAcl(path));
+            throw ex;
+        }
         if (Files.exists(realJson)) {
             Files.move(realJson, backupJson, StandardCopyOption.REPLACE_EXISTING);
         }

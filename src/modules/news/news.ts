@@ -3,6 +3,11 @@ import { RootState } from '@/types';
 import { NewsItem, NewsMutations, NewsState } from '@/modules/news/news.types';
 import * as process from 'process';
 
+let metaApi = process.env.VUE_APP_META_API;
+if (!metaApi || metaApi === '' || !metaApi.startsWith("https")) {
+  metaApi = "https://meta.feed-the-beast.com";
+}
+
 /**
  * Vuex store for the news section of the app.
  */
@@ -30,7 +35,7 @@ export const news: Module<NewsState, RootState> = {
       commit(NewsMutations.NEWS_LOADING);
 
       try {
-        const data = await fetch(`${process.env.VUE_APP_META_API}/v1/news`);
+        const data = await fetch(`${metaApi}/v1/news`);
         
         // Update the news state
         commit(NewsMutations.NEWS_LOADED, await data.json());

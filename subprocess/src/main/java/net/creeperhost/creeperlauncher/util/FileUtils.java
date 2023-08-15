@@ -1,22 +1,26 @@
 package net.creeperhost.creeperlauncher.util;
 
 import net.covers1624.quack.util.SneakyUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.nio.file.FileSystem;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.*;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static net.covers1624.quack.util.SneakyUtils.*;
+import static net.covers1624.quack.util.SneakyUtils.sneak;
 
 public class FileUtils
 {
@@ -70,7 +74,7 @@ public class FileUtils
 
     public static void deletePath(Path path) {
         if (Files.notExists(path)) return;
-        
+
         if (Files.isDirectory(path)) {
             deleteDirectory(path);
         } else {
@@ -79,7 +83,7 @@ public class FileUtils
             } catch (IOException ignored) {}
         }
     }
-    
+
     public static void deleteDirectory(Path file) {
         if (Files.notExists(file)) return;
 
@@ -387,5 +391,28 @@ public class FileUtils
             }
         }
         return result.toString();
+    }
+
+    public static String getAcl(Path path) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("ACL info for: ").append(path).append("\n");
+            AclFileAttributeView view = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            for (AclEntry entry : view.getAcl()) {
+                sb.append(entry.principal().getName()).append("\n");
+                sb.append(" === flags ===").append("\n");
+                for (AclEntryFlag flags : entry.flags()) {
+                    sb.append("  ").append(flags.name()).append("\n");
+                }
+
+                sb.append(" === permissions ===").append("\n");
+                for (AclEntryPermission permission : entry.permissions()) {
+                    sb.append("  ").append(permission.name()).append("\n");
+                }
+            }
+            return sb.toString();
+        } catch (Throwable ex) {
+            return "Failed to get ACL.\n" + ExceptionUtils.getMessage(ex);
+        }
     }
 }

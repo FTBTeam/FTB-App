@@ -22,6 +22,7 @@
           :inheritedSelection="resolutionList.find((e) => e.text === `${localInstance.width ? localInstance.width.toString() : ''} x ${localInstance.height ? localInstance.height.toString() : ''}px`)"
           :style="{width: '240px'}"
           :options="resolutionList"
+          :allow-deselect="false"
         />
       </div>
       <div class="flex items-center mb-2">
@@ -71,7 +72,7 @@
 
       <ftb-input
         label="Java runtime arguments"
-        placeholder="-Xmx1G"
+        placeholder="-TestArgument=120"
         v-model="localInstance.jvmArgs"
         @blur="saveSettings"
         class="flex-1"

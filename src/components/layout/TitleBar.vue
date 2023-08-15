@@ -1,5 +1,5 @@
 <template>
-  <div class="titlebar" :class="{ isMac, 'is-dev': isDev }" @mousedown="startDragging">
+  <div class="titlebar" :class="{ isMac, 'is-dev': isDev }" @mousedown="startDragging" @dblclick="minMax">
     <div class="debug-items" v-if="inDevMode">
       <span>Dev tools</span>
       <router-link class="item" :to="{ name: 'home' }">
@@ -67,11 +67,7 @@ export default class TitleBar extends Vue {
   inDevMode = process.env.NODE_ENV === 'development';
 
   public mounted() {
-    if (os.type() === 'Darwin') {
-      this.isMac = true;
-    } else {
-      this.isMac = false;
-    }
+    this.isMac = os.type() === 'Darwin';
 
     platform.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
   }
@@ -88,6 +84,10 @@ export default class TitleBar extends Vue {
     });
   }
 
+  minMax() {
+    platform.get.frame.max(this.windowId);
+  }
+  
   public minimise(): void {
     platform.get.frame.min(this.windowId);
   }
@@ -130,8 +130,6 @@ export default class TitleBar extends Vue {
       font-weight: 800;
       width: 100%;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-        'Helvetica Neue', sans-serif;
 
       img {
         margin-left: 1rem;

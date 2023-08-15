@@ -33,6 +33,7 @@ export const actions: ActionTree<SocketState, RootState> = {
       platform.isElectron() ? payload.payload : JSON.stringify(payload.payload),
     ); // TODO: This conditional logic might be wrong
     commit('ADD_CALLBACK', { id: requestId, callback: payload.callback });
+    return requestId;
   },
   disconnect() {
     Vue.prototype.$socket.close();
