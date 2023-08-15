@@ -171,14 +171,14 @@ public final class CloudSaveManager {
     }
 
     public CompletableFuture<Void> pollCloudInstances() {
-        if (isCloudPollInProgress()) return pollFuture;
+        if (pollFuture != null && !pollFuture.isDone()) return pollFuture;
 
         if (!isConfigured()) {
             LOGGER.info("Skipping loading cloud saves. Not configured.");
             return CompletableFuture.failedFuture(new Throwable("Cloud saves not configured."));
         }
 
-        return CompletableFuture.runAsync(() -> {
+        return pollFuture = CompletableFuture.runAsync(() -> {
             // TODO poke UI we are polling for cloud saves.
             Set<String> keys = new HashSet<>();
             List<S3Object> index;
