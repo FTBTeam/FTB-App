@@ -218,7 +218,7 @@ public final class CloudSaveManager {
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(instanceDir)) {
                     if (stream.iterator().hasNext()) {
                         // TODO UI warning for this.
-                        LOGGER.warn("Error loading cloud save list, {} exist and is not empty. THis could save cannot be loaded.", instanceDir);
+                        LOGGER.warn("Error loading cloud save list, {} exist and is not empty. This could save cannot be loaded.", instanceDir);
                         continue;
                     }
                 } catch (IOException ex) {

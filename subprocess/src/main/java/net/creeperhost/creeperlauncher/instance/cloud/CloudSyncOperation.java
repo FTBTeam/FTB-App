@@ -47,7 +47,7 @@ public class CloudSyncOperation {
     private static final Gson GSON = new Gson();
 
     private final CloudSaveManager saveManager;
-    private final Instance instance;
+    public final Instance instance;
 
     private SyncDirection direction = SyncDirection.UP_TO_DATE;
     private List<FileOperation> deleteOperations = List.of();

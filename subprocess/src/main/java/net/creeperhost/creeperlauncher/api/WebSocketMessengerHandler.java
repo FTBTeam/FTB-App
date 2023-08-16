@@ -64,7 +64,7 @@ public class WebSocketMessengerHandler {
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
         register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
         register("storeAuthDetails", StoreAuthDetailsData.class, new StoreAuthDetailsHandler());
-        register("syncInstance", SyncInstanceData.class, new SyncInstanceHandler());
+        register("syncInstance", SyncCloudInstanceData.class, new SyncCloudInstanceHandler());
         register("ircConnect", IRCConnectData.class, new IRCConnectHandler());
         register("ircSendMessage", IRCSendMessageData.class, new IRCSendMessageHandler());
         register("ircQuitRequest", IRCQuitRequestData.class, new IRCQuitRequestHandler());
