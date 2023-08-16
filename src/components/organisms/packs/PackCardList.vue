@@ -415,7 +415,7 @@ export default class PackCardList extends Vue {
     if (artP === undefined) {
       return '';
     }
-    return artP.url;
+    return encodeURI(artP.url);
   }
 
   public cardClicked() {

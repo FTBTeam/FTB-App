@@ -467,7 +467,7 @@ export default class InstancePage extends Vue {
     }
 
     const splashArt = this.packInstance.art?.filter((art) => art.type === 'splash');
-    return splashArt?.length > 0 ? splashArt[0].url : PackConst.defaultPackSplashArt;
+    return splashArt?.length > 0 ? encodeURI(splashArt[0].url) : PackConst.defaultPackSplashArt;
   }
 
   get isForgePack() {
