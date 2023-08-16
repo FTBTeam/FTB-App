@@ -7,7 +7,7 @@
           v-bind:style="{
             'background-image': `url(${
               modpack.art.filter(art => art.type === 'splash').length > 0
-                ? modpack.art.filter(art => art.type === 'splash')[0].url
+                ? encodeURI(modpack.art.filter(art => art.type === 'splash')[0].url)
                 : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png'
             })`,
           }"

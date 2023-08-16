@@ -49,7 +49,12 @@ export default class SearchResultPackCard extends Vue {
   }
 
   get splash() {
-    return this.pack.art.find((e) => e.type === 'splash')?.url;
+    const splash = this.pack.art.find((e) => e.type === 'splash');
+    if (splash) {
+      return encodeURI(splash.url);
+    }
+    
+    return undefined;
   }
 
   get tags() {
