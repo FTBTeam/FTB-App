@@ -225,6 +225,10 @@ public class CreeperLauncher {
 
         updateJavaVersions();
 
+        if (Boolean.getBoolean("Debugger.onStartup")) {
+            openDebugTools();
+        }
+
         //Hang indefinitely until this lock is interrupted.
         try {
             synchronized (DIE_LOCK) {
