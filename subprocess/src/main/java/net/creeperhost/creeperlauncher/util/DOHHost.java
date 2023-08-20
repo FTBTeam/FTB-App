@@ -18,7 +18,7 @@ public enum DOHHost {
     // Just a transparent proxy in front of cloudflare with an IP ssl cert.
     // This is used as the last fallback to get around ISPs being braindead and
     // wanting to un-secure the internet, and completely blocking 1.1.1.1 and 8.8.8.8.
-    CREEPERHOST("https://84.54.54.131/dns-query", "84.54.54.131");
+    CREEPERHOST("https://185.57.191.120/dns-query", "185.57.191.120");
 
     /**
      * The url to query.
