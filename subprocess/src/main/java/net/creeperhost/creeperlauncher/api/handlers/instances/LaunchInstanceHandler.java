@@ -54,6 +54,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
 
         instance.prepareToken = new CancellationToken();
         instance.prepareFuture = CompletableFuture.runAsync(() -> {
+            LOGGER.info("Preparing instance for launch...");
             try {
                 instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.offlineUsername : null);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
