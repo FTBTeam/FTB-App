@@ -16,6 +16,8 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.DataResult;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 
@@ -23,6 +25,9 @@ import javax.annotation.Nullable;
  * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
  */
 public class RefreshAuthenticationProfileHandler implements IMessageHandler<RefreshAuthenticationProfileHandler.Data> {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Override
     public void handle(Data data) {
         if (data.profileUuid == null) {
@@ -53,12 +58,27 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             Settings.webSocketAPI.sendMessage(new Reply(data, false, "Missing essential information...", false));
         }
 
-        Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
-            data.liveAccessToken, data.liveRefreshToken, data.liveExpires
-        ));
+        Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh = null;
+        int tries = 0;
+        while (refresh == null || (refresh.isErr() && tries++ < 5)) {
+            LOGGER.info("Trying to refresh {}/5", tries);
+            if (tries > 0) {
+                try {
+                    Thread.sleep(tries * 1000L);
+                } catch (InterruptedException ignored) { }
+            }
+            refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
+                    data.liveAccessToken, data.liveRefreshToken, data.liveExpires
+            ));
+            if (refresh.isErr()) {
+                MicrosoftOAuth.DanceCodedError danceCodedError = refresh.unwrapErr();
+                LOGGER.warn("Refresh error: {} {}", danceCodedError.code(), danceCodedError.networkError());
+            }
+        }
 
         if (refresh.isErr()) {
             MicrosoftOAuth.DanceCodedError danceCodedError = refresh.unwrapErr();
+            LOGGER.warn("Did not get valid token. :( {} {}", danceCodedError.code(), danceCodedError.networkError());
             Settings.webSocketAPI.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
             return;
         }
