@@ -60,7 +60,7 @@ public class OperationProgressTracker {
         sendUpdate(true);
     }
 
-    public void stepFinished() {
+    public synchronized void stepFinished() {
         completedSteps++;
     }
 
