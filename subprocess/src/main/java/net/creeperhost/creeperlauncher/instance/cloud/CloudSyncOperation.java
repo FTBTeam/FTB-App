@@ -11,8 +11,8 @@ import net.covers1624.quack.util.LazyValue;
 import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.creeperlauncher.install.tasks.ParallelTaskHelper;
-import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
@@ -48,6 +48,7 @@ public class CloudSyncOperation {
 
     private final CloudSaveManager saveManager;
     public final Instance instance;
+    private final OperationProgressTracker progressTracker;
 
     private SyncDirection direction = SyncDirection.UP_TO_DATE;
     private List<FileOperation> deleteOperations = List.of();
@@ -57,10 +58,12 @@ public class CloudSyncOperation {
     public CloudSyncOperation(CloudSaveManager saveManager, Instance instance) {
         this.saveManager = saveManager;
         this.instance = instance;
+        progressTracker = new OperationProgressTracker("sync", Map.of("instance", instance.getUuid().toString()));
     }
 
     // TODO throw something other than IOException to capture S3 errors too.
     public void prepare() throws IOException {
+        progressTracker.nextStage(SyncStage.PREPARE);
         Map<String, S3Object> s3ObjectIndex = saveManager.listInstance(instance);
 
         LOGGER.info("Checking for remote manifests..");
@@ -104,9 +107,12 @@ public class CloudSyncOperation {
 
         LOGGER.info("Detected sync direction: {}", direction);
 
+        progressTracker.nextStage(SyncStage.INDEXING_LOCAL);
         Map<String, LocalFile> instanceFiles = indexInstance();
+        progressTracker.nextStage(SyncStage.INDEXING_REMOTE); // TODO, we can update the step progress!
         Map<String, RemoteFile> cloudFiles = indexCloud(s3ObjectIndex);
 
+        progressTracker.nextStage(SyncStage.COMPUTING_CHANGES);
         Set<String> missingRemote = ImmutableSet.copyOf(Sets.difference(instanceFiles.keySet(), cloudFiles.keySet()));
         LOGGER.info("Missing remote files: {}", missingRemote);
         Set<String> missingLocal = ImmutableSet.copyOf(Sets.difference(cloudFiles.keySet(), instanceFiles.keySet()));
@@ -175,148 +181,188 @@ public class CloudSyncOperation {
     }
 
     public void operate() throws IOException {
-        if (requiresConflictResolution()) {
-            LOGGER.error("Requires conflict resolution, cant sync.");
-            return;
-        }
-        if (isInSync()) {
-            LOGGER.info("Already up-to-date.");
-            return;
-        }
-
-        LOGGER.info("Processing sync..");
-
-        LOGGER.info("Updating sync manifest..");
-        SyncManifest manifest = new SyncManifest();
-        Path syncManifestFile = instance.getDir().resolve("sync_manifest.json");
-        manifest.state = SyncManifest.State.SYNCING;
-        manifest.lastSync = System.currentTimeMillis();
+        progressTracker.nextStage(SyncStage.BEGIN_SYNC);
         try {
-            JsonUtils.write(GSON, syncManifestFile, manifest);
-        } catch (IOException ex) {
-            LOGGER.error("Failed to update local sync manifest before sync", ex);
-            throw ex;
-        }
-        Throwable syncError = null;
-        try {
-            saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json");
-        } catch (Throwable ex) {
-            LOGGER.error("Failed to update remote sync manifest before sync.");
-            syncError = ex;
-        }
-
-        if (syncError == null) {
-            try {
-                List<Task<Void>> tasks = new LinkedList<>();
-                tasks.add((cancelToken, listener) -> {
-                    // Delete all local files.
-                    for (FileOperation op : deleteOperations) {
-                        if (op.local != null) {
-                            LOGGER.info("Deleting local file {}", op.local.path);
-                            Files.delete(op.local.path);
-                        }
-                    }
-                    // Delete all remote files.
-                    saveManager.deleteObjects(FastStream.of(deleteOperations)
-                            .filter(e -> e.remote != null)
-                            .map(e -> e.remote.s3Object).toList()
-                    );
-                });
-                for (FileOperation op : uploadOperations) {
-                    tasks.add((cancelToken, listener) -> {
-                        assert op.local != null;
-                        LOGGER.info("Uploading file to S3: {}", op.local.path);
-                        if (op.remote != null) {
-                            saveManager.uploadFile(op.local.path, op.remote.s3Object.key());
-                        } else {
-                            String key = instance.getUuid() + "/" + instance.getDir().relativize(op.local.path);
-                            saveManager.uploadFile(op.local.path, key);
-                        }
-                    });
-                }
-                for (FileOperation op : downloadOperations) {
-                    tasks.add((cancelToken, listener) -> {
-                        assert op.remote != null;
-                        LOGGER.info("Downloading file from S3: {}", op.remote.path);
-                        if (op.local != null) {
-                            saveManager.downloadFile(op.local.path, op.remote.s3Object);
-                        } else {
-                            Path path = instance.getDir().resolve(op.remote.path);
-                            saveManager.downloadFile(path, op.remote.s3Object);
-                        }
-                    });
-                }
-                ParallelTaskHelper.executeInParallel(null, Task.TASK_POOL, tasks, null);
-            } catch (Throwable ex) {
-                LOGGER.error("Failed to process sync, instance may be in an invalid state.", ex);
-                syncError = ex;
+            if (requiresConflictResolution()) {
+                LOGGER.error("Requires conflict resolution, cant sync.");
+                return;
             }
-        }
-        boolean jsonUpdated = false;
-        try {
+            if (isInSync()) {
+                LOGGER.info("Already up-to-date.");
+                return;
+            }
+
+            LOGGER.info("Processing sync..");
+
+            LOGGER.info("Updating sync manifest..");
+            SyncManifest manifest = new SyncManifest();
+            Path syncManifestFile = instance.getDir().resolve("sync_manifest.json");
+            manifest.state = SyncManifest.State.SYNCING;
             manifest.lastSync = System.currentTimeMillis();
-            manifest.state = syncError == null ? SyncManifest.State.SYNCED : direction == SyncDirection.UPLOAD ? SyncManifest.State.UNFINISHED_UP : UNFINISHED_DOWN;
-            JsonUtils.write(GSON, syncManifestFile, manifest);
-            jsonUpdated = true;
-        } catch (IOException ex) {
-            LOGGER.error("Failed to update local sync_manifest after sync.", ex);
-            if (syncError != null) {
-                syncError.addSuppressed(ex);
-            } else {
-                syncError = ex;
+            try {
+                JsonUtils.write(GSON, syncManifestFile, manifest);
+            } catch (IOException ex) {
+                LOGGER.error("Failed to update local sync manifest before sync", ex);
+                throw ex;
             }
-        }
-
-        if (jsonUpdated) {
+            Throwable syncError = null;
             try {
                 saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json");
             } catch (Throwable ex) {
-                LOGGER.error("Failed to upload sync manifest after sync.", ex);
+                LOGGER.error("Failed to update remote sync manifest before sync.");
+                syncError = ex;
+            }
+
+            if (syncError == null) {
+                try {
+                    long totalSize = 0;
+                    List<Task<Void>> tasks = new LinkedList<>();
+                    if (direction == SyncDirection.UPLOAD) {
+                        assert downloadOperations.isEmpty();
+                        progressTracker.nextStage(SyncStage.CLEAN);
+                        // Delete all remote files.
+                        saveManager.deleteObjects(FastStream.of(deleteOperations)
+                                .map(e -> {
+                                    assert e.remote != null;
+                                    return e.remote.s3Object;
+                                })
+                                .toList()
+                        );
+
+                        progressTracker.nextStage(SyncStage.SYNC_UP, uploadOperations.size());
+                        for (FileOperation op : uploadOperations) {
+                            assert op.local != null;
+
+                            totalSize += op.local.size();
+
+                            tasks.add((cancelToken, listener) -> {
+                                try {
+                                    LOGGER.info("Uploading file to S3: {}", op.local.path);
+                                    if (op.remote != null) {
+                                        saveManager.uploadFile(op.local.path, op.remote.s3Object.key());
+                                    } else {
+                                        String key = instance.getUuid() + "/" + instance.getDir().relativize(op.local.path);
+                                        saveManager.uploadFile(op.local.path, key);
+                                    }
+                                } finally {
+                                    progressTracker.stepFinished();
+                                }
+                            });
+                        }
+                    } else {
+                        assert direction == SyncDirection.DOWNLOAD;
+                        assert uploadOperations.isEmpty();
+                        progressTracker.nextStage(SyncStage.CLEAN, deleteOperations.size());
+
+                        // Delete all local files.
+                        for (FileOperation op : deleteOperations) {
+                            assert op.local != null;
+                            LOGGER.info("Deleting local file {}", op.local.path);
+                            Files.delete(op.local.path);
+                            progressTracker.stepFinished();
+                        }
+
+                        progressTracker.nextStage(SyncStage.SYNC_DOWN, downloadOperations.size());
+                        for (FileOperation op : downloadOperations) {
+                            assert op.remote != null;
+
+                            totalSize += op.remote.size();
+
+                            tasks.add((cancelToken, listener) -> {
+                                try {
+                                    LOGGER.info("Downloading file from S3: {}", op.remote.path);
+                                    if (op.local != null) {
+                                        saveManager.downloadFile(op.local.path, op.remote.s3Object);
+                                    } else {
+                                        Path path = instance.getDir().resolve(op.remote.path);
+                                        saveManager.downloadFile(path, op.remote.s3Object);
+                                    }
+                                } finally {
+                                    progressTracker.stepFinished();
+                                }
+                            });
+                        }
+                    }
+
+                    TaskProgressListener listener = progressTracker.listenerForStage();
+                    listener.start(totalSize);
+                    TaskProgressAggregator aggregator = new ParallelTaskProgressAggregator(listener);
+                    ParallelTaskHelper.executeInParallel(null, Task.TASK_POOL, tasks, aggregator);
+                } catch (Throwable ex) {
+                    LOGGER.error("Failed to process sync, instance may be in an invalid state.", ex);
+                    syncError = ex;
+                }
+            }
+            progressTracker.nextStage(SyncStage.POST_UPDATE);
+            boolean jsonUpdated = false;
+            try {
+                manifest.lastSync = System.currentTimeMillis();
+                manifest.state = syncError == null ? SyncManifest.State.SYNCED : direction == SyncDirection.UPLOAD ? SyncManifest.State.UNFINISHED_UP : UNFINISHED_DOWN;
+                JsonUtils.write(GSON, syncManifestFile, manifest);
+                jsonUpdated = true;
+            } catch (IOException ex) {
+                LOGGER.error("Failed to update local sync_manifest after sync.", ex);
                 if (syncError != null) {
                     syncError.addSuppressed(ex);
                 } else {
                     syncError = ex;
                 }
             }
-        }
-        if (syncError != null) {
-            LOGGER.error("Sync failed with error: ", syncError);
-            SneakyUtils.throwUnchecked(syncError);
-        }
 
-        if (direction == SyncDirection.DOWNLOAD) {
-            instance.reloadProperties();
-
-            LOGGER.info("Validating ModLoader installation..");
-            ModpackVersionManifest.Target gameTarget = instance.versionManifest.findTarget("game");
-            if (gameTarget != null) {
-                ModpackVersionManifest.Target modloaderTarget = instance.versionManifest.findTarget("modloader");
-                if (modloaderTarget != null) {
-                    ModLoaderInstallTask modLoaderInstallTask;
-                    try {
-                        modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
-                                instance,
-                                gameTarget.getVersion(),
-                                modloaderTarget.getName(),
-                                modloaderTarget.getVersion()
-                        );
-                    } catch (Throwable ex) {
-                        LOGGER.error("Failed to prepare ModLoader install task.", ex);
-                        throw ex;
-                    }
-                    try {
-                        modLoaderInstallTask.execute(null, null);
-                    } catch (Throwable ex) {
-                        LOGGER.error("Failed to execute ModLoader install task.", ex);
-                        SneakyUtils.throwUnchecked(ex);
+            if (jsonUpdated) {
+                try {
+                    saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json");
+                } catch (Throwable ex) {
+                    LOGGER.error("Failed to upload sync manifest after sync.", ex);
+                    if (syncError != null) {
+                        syncError.addSuppressed(ex);
+                    } else {
+                        syncError = ex;
                     }
                 }
-            } else {
-                LOGGER.error("Game target missing from version manifest?");
             }
-        }
+            if (syncError != null) {
+                LOGGER.error("Sync failed with error: ", syncError);
+                SneakyUtils.throwUnchecked(syncError);
+            }
 
-        LOGGER.info("Cloud sync finished!");
+            if (direction == SyncDirection.DOWNLOAD) {
+                progressTracker.nextStage(SyncStage.POST_RUN);
+                instance.syncFinished();
+
+                LOGGER.info("Validating ModLoader installation..");
+                ModpackVersionManifest.Target gameTarget = instance.versionManifest.findTarget("game");
+                if (gameTarget != null) {
+                    ModpackVersionManifest.Target modloaderTarget = instance.versionManifest.findTarget("modloader");
+                    if (modloaderTarget != null) {
+                        ModLoaderInstallTask modLoaderInstallTask;
+                        try {
+                            modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
+                                    instance,
+                                    gameTarget.getVersion(),
+                                    modloaderTarget.getName(),
+                                    modloaderTarget.getVersion()
+                            );
+                        } catch (Throwable ex) {
+                            LOGGER.error("Failed to prepare ModLoader install task.", ex);
+                            throw ex;
+                        }
+                        try {
+                            modLoaderInstallTask.execute(null, null);
+                        } catch (Throwable ex) {
+                            LOGGER.error("Failed to execute ModLoader install task.", ex);
+                            SneakyUtils.throwUnchecked(ex);
+                        }
+                    }
+                } else {
+                    LOGGER.error("Game target missing from version manifest?");
+                }
+            }
+
+            LOGGER.info("Cloud sync finished!");
+        } finally {
+            progressTracker.finished();
+        }
     }
 
     private Map<String, LocalFile> indexInstance() throws IOException {
@@ -402,6 +448,19 @@ public class CloudSyncOperation {
         DELETE,
         UPLOAD,
         DOWNLOAD,
+    }
+
+    public enum SyncStage implements OperationProgressTracker.Stage {
+        PREPARE,
+        INDEXING_LOCAL,
+        INDEXING_REMOTE,
+        COMPUTING_CHANGES,
+        BEGIN_SYNC,
+        CLEAN,
+        SYNC_UP,
+        SYNC_DOWN,
+        POST_UPDATE,
+        POST_RUN,
     }
 
     private abstract static class IndexedFile {

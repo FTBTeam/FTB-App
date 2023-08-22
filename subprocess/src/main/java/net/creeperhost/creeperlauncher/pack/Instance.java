@@ -124,7 +124,7 @@ public class Instance {
         pendingCloudInstance = true;
     }
 
-    public void reloadProperties() throws IOException {
+    public void syncFinished() throws IOException {
         props = InstanceJson.load(getDir().resolve("instance.json"));
         loadVersionManifest();
     }
