@@ -482,6 +482,7 @@ public class Instance {
     public String getMcVersion() { return props.mcVersion; }
     public UUID getUuid() { return props.uuid; }
     @Deprecated public String getModLoader() { return props.modLoader; }
+    public boolean isPendingCloudInstance() { return pendingCloudInstance; }
     // @formatter:on
 
     private record CurseProps(long curseProject, long curseFile) { }

@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
@@ -20,9 +20,9 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
             Instances.refreshInstances();
         }
 
-        List<InstanceJson> instanceJsons = StreamableIterable.of(Instances.allInstances())
-                .<InstanceJson>map(e -> new SugaredInstanceJson(e.props, e.path))
-                .toLinkedList();
+        List<InstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
+                .<InstanceJson>map(e -> new SugaredInstanceJson(e.props, e.path, e.isPendingCloudInstance()))
+                .toList();
         InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, List.of());
         Settings.webSocketAPI.sendMessage(reply);
     }
@@ -31,10 +31,12 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
 
         @JsonAdapter (PathTypeAdapter.class)
         public final Path path;
+        public final boolean pendingCloudInstance;
 
-        public SugaredInstanceJson(InstanceJson other, Path path) {
+        public SugaredInstanceJson(InstanceJson other, Path path, boolean pendingCloudInstance) {
             super(other);
             this.path = path;
+            this.pendingCloudInstance = pendingCloudInstance;
         }
     }
 }

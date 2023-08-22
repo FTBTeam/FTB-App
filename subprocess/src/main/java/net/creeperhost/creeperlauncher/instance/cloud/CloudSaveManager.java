@@ -255,7 +255,7 @@ public final class CloudSaveManager {
                 }
                 if (!newInstances.isEmpty()) {
                     List<InstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
-                            .map(e -> new InstalledInstancesHandler.SugaredInstanceJson(e.props, e.path))
+                            .map(e -> new InstalledInstancesHandler.SugaredInstanceJson(e.props, e.path, true))
                             .toLinkedList(FastStream.infer());
                     Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, List.of()));
                 }
