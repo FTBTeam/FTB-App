@@ -16,7 +16,7 @@
       </label>
       <input id='switcher-socks5' type='radio' name='type' value='socks5' v-model='proxyType' />
       <label for='switcher-socks5' class='item'>
-        SOCK5
+        SOCKS5
       </label>
     </div>
     
