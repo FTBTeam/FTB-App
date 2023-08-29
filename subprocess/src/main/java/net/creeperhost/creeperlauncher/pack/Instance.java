@@ -184,9 +184,12 @@ public class Instance implements IPack {
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
+        LOGGER.info("Resetting launcher..");
         launcher.reset();
+        LOGGER.info("Polling version manifest.");
         pollVersionManifest();
 
+        LOGGER.info("Scanning instance.");
         InstanceScanner scanner = new InstanceScanner(path, versionManifest);
         scanner.scan();
         if (scanner.isPotentiallyInvalid()) {
@@ -196,6 +199,7 @@ public class Instance implements IPack {
             }
         }
 
+        LOGGER.info("Adding start/shutdown tasks..");
         launcher.withStartTask(ctx -> {
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
@@ -299,6 +303,7 @@ public class Instance implements IPack {
             props.totalPlayTime += endTime - startTime;
             saveJson();
         });
+        LOGGER.info("Handing off to launcher..");
         launcher.launch(token, offlineUsername);
     }
 

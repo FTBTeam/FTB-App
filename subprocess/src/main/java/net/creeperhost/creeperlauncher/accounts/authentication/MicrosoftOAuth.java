@@ -260,11 +260,8 @@ public class MicrosoftOAuth {
             // Try and parse 
             TResult jsonResponse = JsonUtils.parse(new Gson(), stringBody, responseClass);
             return Result.ok(jsonResponse);
-        } catch (IOException | JsonParseException e) {
-            if (e instanceof JsonParseException) {
-                LOGGER.error("Request to [{}] due to the response body being invalid", requestInput.url().toString(), e);
-            }
-      
+        } catch (IOException | JsonParseException ex) {
+            LOGGER.error("Request to [{}] failed.", requestInput.url(), ex);
             return Result.err(RequestError.create(null, "", null));
         }
     }

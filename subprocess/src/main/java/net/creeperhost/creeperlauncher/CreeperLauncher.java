@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 import com.install4j.api.launcher.ApplicationLauncher;
 import com.install4j.api.update.UpdateChecker;
@@ -96,6 +97,8 @@ public class CreeperLauncher {
 
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
+
+    public static ExecutorService INSTANCE_LAUNCHER_POOL = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Instance Launcher %d").setDaemon(true).build());
 
     public static LocalCache localCache;
 
