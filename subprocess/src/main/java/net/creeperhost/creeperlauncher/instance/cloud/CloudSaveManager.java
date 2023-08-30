@@ -14,10 +14,12 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesReloadedData;
+import net.creeperhost.creeperlauncher.api.data.instances.InstanceCloudSyncConflictData;
 import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSyncOperation.SyncDirection;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.s3.OkHTTPS3HttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -83,7 +85,7 @@ public final class CloudSaveManager {
     @Nullable
     private S3Client s3Client;
 
-    private final List<SyncEntry> syncOperations = new ArrayList<>();
+    private final Map<UUID, SyncEntry> syncOperations = new HashMap<>();
 
     @Nullable
     private CompletableFuture<Void> pollFuture;
@@ -149,23 +151,41 @@ public final class CloudSaveManager {
         }
     }
 
-    public void requestInstanceSync(Instance instance) {
+    public CompletableFuture<SyncResult> requestInstanceSync(Instance instance) {
+        if (syncOperations.containsKey(instance.getUuid())) {
+            throw new IllegalStateException("Sync already requested.");
+        }
+
         synchronized (syncOperations) {
             SyncEntry entry = new SyncEntry(new CloudSyncOperation(this, instance));
-            syncOperations.add(entry);
-            entry.future = EXECUTOR.submit(() -> {
-                try {
-                    entry.operation.prepare();
-                    entry.operation.operate();
-                } catch (Throwable ex) {
-                    // TODO better error to UI.
-                    LOGGER.error("Cloud sync failed!", ex);
-                } finally {
-                    synchronized (syncOperations) {
-                        syncOperations.remove(entry);
-                    }
-                }
-            });
+            syncOperations.put(instance.getUuid(), entry);
+            return submitSync(entry);
+        }
+    }
+
+    public void resolveConflict(UUID instance, SyncDirection resolution) {
+        SyncEntry entry = syncOperations.get(instance);
+        if (entry == null) throw new IllegalStateException("Instance is not pending sync.");
+        if (entry.conflict != null) throw new IllegalStateException("Instance sync is not in conflict?");
+        entry.resolution = resolution;
+        submitSync(entry);
+    }
+
+    private CompletableFuture<SyncResult> submitSync(SyncEntry entry) {
+        CompletableFuture<SyncResult> future = CompletableFuture.supplyAsync(() -> {
+            SyncResult result = entry.run();
+            onSyncFinished(entry.operation.instance, result);
+            return result;
+        }, EXECUTOR);
+        entry.future = future;
+        return future;
+    }
+
+    private void onSyncFinished(Instance instance, SyncResult result) {
+        if (result.type != SyncResult.ResultType.CONFLICT) {
+            synchronized (syncOperations) {
+                syncOperations.remove(instance.getUuid());
+            }
         }
     }
 
@@ -265,10 +285,8 @@ public final class CloudSaveManager {
         }, EXECUTOR);
     }
 
-    public List<SyncEntry> getSyncOperations() {
-        synchronized (syncOperations) {
-            return new ArrayList<>(syncOperations);
-        }
+    public boolean isSyncing(UUID uuid) {
+        return syncOperations.containsKey(uuid);
     }
 
     public boolean isConfigured() {
@@ -437,6 +455,15 @@ public final class CloudSaveManager {
         }
     }
 
+    public record SyncResult(ResultType type, String reason) {
+
+        public enum ResultType {
+            CONFLICT,
+            SUCCESS,
+            FAILED,
+        }
+    }
+
     public static final class SyncEntry {
 
         public final UUID uuid;
@@ -444,10 +471,36 @@ public final class CloudSaveManager {
         @Nullable
         public Future<?> future;
 
+        public @Nullable CloudSyncOperation.ConflictException conflict;
+        public @Nullable SyncDirection resolution;
+        public boolean complete = false;
+
         public SyncEntry(CloudSyncOperation operation) {
             this.uuid = operation.instance.getUuid();
             this.operation = operation;
         }
 
+        public SyncResult run() {
+            try {
+                operation.prepare(resolution);
+            } catch (IOException ex) {
+                LOGGER.error("Fatal error preparing instance for sync.", ex);
+                complete = true;
+                return new SyncResult(SyncResult.ResultType.FAILED, "Failed to prepare instance for sync. See logs.");
+            } catch (CloudSyncOperation.ConflictException ex) {
+                conflict = ex;
+                Settings.webSocketAPI.sendMessage(new InstanceCloudSyncConflictData(uuid, ex.code, ex.message));
+                return new SyncResult(SyncResult.ResultType.CONFLICT, "Sync conflict. Requires resolution.");
+            }
+
+            try {
+                operation.operate();
+                return new SyncResult(SyncResult.ResultType.SUCCESS, "Synced!");
+            } catch (IOException ex) {
+                LOGGER.error("Failed to sync instance.", ex);
+                complete = true;
+                return new SyncResult(SyncResult.ResultType.FAILED, "Sync failed. See logs.");
+            }
+        }
     }
 }

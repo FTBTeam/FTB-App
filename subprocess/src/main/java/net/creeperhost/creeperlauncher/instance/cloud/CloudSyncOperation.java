@@ -62,7 +62,7 @@ public class CloudSyncOperation {
     }
 
     // TODO throw something other than IOException to capture S3 errors too.
-    public void prepare() throws IOException {
+    public void prepare(@Nullable SyncDirection conflictResolution) throws IOException, ConflictException {
         progressTracker.nextStage(SyncStage.PREPARE);
         Map<String, S3Object> s3ObjectIndex = saveManager.listInstance(instance);
 
@@ -94,10 +94,15 @@ public class CloudSyncOperation {
             }
         }
 
-        direction = determineDirection(remoteManifest, remoteInstance, localManifest, localInstance);
-        if (direction == SyncDirection.REQUIRES_CONFLICT_RESOLUTION) {
-            LOGGER.error("Sync requires conflict resolution. TODO, Not implemented.");
-            return;
+        if (conflictResolution == null) {
+            try {
+                direction = determineDirection(remoteManifest, remoteInstance, localManifest, localInstance);
+            } catch (ConflictException ex) {
+                progressTracker.nextStage(SyncStage.CONFLICT);
+                throw ex;
+            }
+        } else {
+            direction = conflictResolution;
         }
         // TODO perhaps we should pick a default direction (UPLOAD?) and still do a files check?
         if (direction == SyncDirection.UP_TO_DATE) {
@@ -172,10 +177,6 @@ public class CloudSyncOperation {
         }
     }
 
-    public boolean requiresConflictResolution() {
-        return direction == SyncDirection.REQUIRES_CONFLICT_RESOLUTION;
-    }
-
     public boolean isInSync() {
         return direction == SyncDirection.UP_TO_DATE;
     }
@@ -183,10 +184,6 @@ public class CloudSyncOperation {
     public void operate() throws IOException {
         progressTracker.nextStage(SyncStage.BEGIN_SYNC);
         try {
-            if (requiresConflictResolution()) {
-                LOGGER.error("Requires conflict resolution, cant sync.");
-                return;
-            }
             if (isInSync()) {
                 LOGGER.info("Already up-to-date.");
                 return;
@@ -398,29 +395,41 @@ public class CloudSyncOperation {
     }
 
     // TODO, Do we really need a sync state for UNFINISHED_DOWNLOAD? Should be safe to just do whatever?
-    private static SyncDirection determineDirection(@Nullable SyncManifest remoteManifest, @Nullable InstanceJson remoteInstance, @Nullable SyncManifest localManifest, InstanceJson localInstance) {
+    private static SyncDirection determineDirection(@Nullable SyncManifest remoteManifest, @Nullable InstanceJson remoteInstance, @Nullable SyncManifest localManifest, InstanceJson localInstance) throws ConflictException {
         if (remoteManifest == null) return SyncDirection.UPLOAD; // Sync manifest does not exist on remote, must be UPLOAD.
         if (localManifest == null) return SyncDirection.DOWNLOAD; // We have never tried syncing this instance, and remote manifest exists. Must be DOWNLOAD.
 
-        if (remoteManifest.state == SYNCING) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO Throw exception that another sync is in progress? We need to check the timestamp?
+        if (remoteManifest.state == SYNCING) {
+            throw new ConflictException("another_sync", "Another FTBApp instance is already syncing this instance."); // TODO We need to check the timestamp?
+        }
         if (localManifest.state == UNFINISHED_UP) {
-            if (remoteManifest.state != UNFINISHED_UP) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO, Can't sync, requires conflict resolution. Local thought it was unfinished, but someone has already 'resolved'. So perhaps just DOWNLOAD?
+            if (remoteManifest.state != UNFINISHED_UP) {
+                // TODO perhaps we just download?
+                throw new ConflictException("another_resolved_up", "This FTBApp instance thought it still had files to upload, but the remote does not. Another FTBApp instance has already resolved this error.");
+            }
             // Resume the upload
             // TODO check timestamp? if it does not match ours then another FTBA failed to sync up?
             return SyncDirection.UPLOAD;
         }
         if (localManifest.state == UNFINISHED_DOWN) {
-            if (remoteManifest.state != UNFINISHED_DOWN) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO Can't sync, requires conflict resolution. Local thought it was unfinished, but someone has already 'resolved'. So perhaps just DOWNLOAD?
+            if (remoteManifest.state != UNFINISHED_DOWN) {
+                // TODO, perhaps we just download?
+                throw new ConflictException("another_resolved_down", "This FTBApp instance thought it still had files to download, but the remote does not. Another FTBApp instance has already resolved this error.");
+            }
             // Resume the download.
             // TODO Check timestamp? if it does not match ours then another FTBA failed to download? Do we care?
             return SyncDirection.DOWNLOAD;
         }
-        if (remoteManifest.state == UNFINISHED_UP) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO, Requires conflict resolution, someone failed to sync up?
-        if (remoteManifest.state == UNFINISHED_DOWN) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // TODO, Requires conflict resolution, someone failed to sync down? Do we care about this state??
+        if (remoteManifest.state == UNFINISHED_UP) {
+            throw new ConflictException("another_unfinished_up", "Another FTBApp instance has failed to finish uploading changes.");
+        }
+        if (remoteManifest.state == UNFINISHED_DOWN) {
+            throw new ConflictException("another_unfinished_down", "Another FTBApp instance has failed to finish downloading changes.");
+        }
 
         // These can probably be asserts.
-        if (localManifest.state != SYNCED) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // What?
-        if (remoteManifest.state != SYNCED) return SyncDirection.REQUIRES_CONFLICT_RESOLUTION; // What?
+        if (localManifest.state != SYNCED) throw new ConflictException("unknown_state_local", "The FTBApp found an unexpected local state.");
+        if (remoteManifest.state != SYNCED) throw new ConflictException("unknown_state_remote", "The FTBApp found an unexpected remote state.");
 
         // In theory this branch should never be hit, only if upload fails partway and the json is not synced.
         if (remoteInstance == null) return SyncDirection.UPLOAD;
@@ -437,8 +446,7 @@ public class CloudSyncOperation {
     public enum SyncDirection {
         UP_TO_DATE,
         DOWNLOAD,
-        UPLOAD,
-        REQUIRES_CONFLICT_RESOLUTION // TODO this should be removed and replaced with exceptions?
+        UPLOAD
     }
 
     public record FileOperation(OperationKind kind, @Nullable LocalFile local, @Nullable RemoteFile remote) {
@@ -452,6 +460,7 @@ public class CloudSyncOperation {
 
     public enum SyncStage implements OperationProgressTracker.Stage {
         PREPARE,
+        CONFLICT,
         INDEXING_LOCAL,
         INDEXING_REMOTE,
         COMPUTING_CHANGES,
@@ -461,6 +470,16 @@ public class CloudSyncOperation {
         SYNC_DOWN,
         POST_UPDATE,
         POST_RUN,
+    }
+
+    public static class ConflictException extends Exception {
+        public final String code;
+        public final String message;
+
+        public ConflictException(String code, String message) {
+            this.code = code;
+            this.message = message;
+        }
     }
 
     private abstract static class IndexedFile {

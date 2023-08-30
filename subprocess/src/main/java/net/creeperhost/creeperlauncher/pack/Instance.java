@@ -13,6 +13,7 @@ import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.util.*;
 import org.apache.commons.lang3.NotImplementedException;
@@ -38,6 +39,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -238,10 +240,19 @@ public class Instance {
         if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured() && props.cloudSaves) {
             launcher.withStartTask(ctx -> {
                 LOGGER.info("Attempting start cloud sync..");
-                CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this);
+                try {
+                    CloudSaveManager.SyncResult result = CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this)
+                            .get();
+                    if (result.type() != CloudSaveManager.SyncResult.ResultType.SUCCESS) {
+                        throw new InstanceLaunchException("Pre-start cloud sync failed! " + result.type() + " " + result.reason());
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    throw new InstanceLaunchException("Failed to wait for start cloud sync.", ex);
+                }
             });
             launcher.withExitTask(() -> {
                 LOGGER.info("Attempting close cloud sync..");
+                // Don't wait on future here, just let it happen in the background.
                 CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this);
             });
         }

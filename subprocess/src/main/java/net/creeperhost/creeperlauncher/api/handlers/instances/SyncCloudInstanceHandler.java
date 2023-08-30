@@ -1,6 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import net.covers1624.quack.collection.ColUtils;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
@@ -31,7 +30,7 @@ public class SyncCloudInstanceHandler implements IMessageHandler<SyncCloudInstan
             return;
         }
 
-        if (ColUtils.anyMatch(CreeperLauncher.CLOUD_SAVE_MANAGER.getSyncOperations(), e -> e.operation.instance == instance)) {
+        if (CreeperLauncher.CLOUD_SAVE_MANAGER.isSyncing(instance.getUuid())) {
             Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance is already syncing."));
             return;
         }
