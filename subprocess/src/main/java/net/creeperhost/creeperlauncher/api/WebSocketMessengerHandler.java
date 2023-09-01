@@ -88,6 +88,7 @@ public class WebSocketMessengerHandler {
         register("instanceDeleteBackup", InstanceDeleteBackupHandler.Request.class, new InstanceDeleteBackupHandler());
 
         register("pollCloudInstances", PollCloudInstancesData.class, new PollCloudInstancesHandler());
+        register("resolveSyncConflict", InstanceCloudSyncResolveConflictData.class, new InstanceCloudSyncResolveConflictHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());
