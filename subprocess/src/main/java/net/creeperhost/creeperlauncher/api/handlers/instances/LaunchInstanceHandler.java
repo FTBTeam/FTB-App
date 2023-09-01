@@ -1,25 +1,22 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import io.sentry.Sentry;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.pack.InstanceLaunchException;
 import net.creeperhost.creeperlauncher.pack.InstanceLauncher;
-import net.creeperhost.creeperlauncher.pack.Instance;
-import net.creeperhost.creeperlauncher.util.Log4jMarkers;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.Objects.requireNonNull;
 import static net.creeperhost.creeperlauncher.util.Log4jMarkers.NO_SENTRY;
 import static net.creeperhost.creeperlauncher.util.Log4jMarkers.SENTRY_ONLY;
 
@@ -54,6 +51,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
 
         instance.prepareToken = new CancellationToken();
         instance.prepareFuture = CompletableFuture.runAsync(() -> {
+            LOGGER.info("Preparing instance for launch...");
             try {
                 instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.offlineUsername : null);
                 Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
@@ -79,6 +77,6 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
             }
             instance.prepareToken = null;
             instance.prepareFuture = null;
-        });
+        }, CreeperLauncher.INSTANCE_LAUNCHER_POOL);
     }
 }

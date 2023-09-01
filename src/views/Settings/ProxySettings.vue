@@ -14,9 +14,9 @@
       <label for='switcher-http' class='item'>
         HTTP
       </label>
-      <input id='switcher-sock5' type='radio' name='type' value='sock5' v-model='proxyType' />
-      <label for='switcher-sock5' class='item'>
-        SOCK5
+      <input id='switcher-socks5' type='radio' name='type' value='socks5' v-model='proxyType' />
+      <label for='switcher-socks5' class='item'>
+        SOCKS5
       </label>
     </div>
     

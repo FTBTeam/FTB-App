@@ -25,7 +25,6 @@ import { BrowserTracing } from '@sentry/tracing';
 import * as Sentry from '@sentry/vue';
 import ModalFooter from '@/components/atoms/modal/ModalFooter.vue';
 import ModalBody from '@/components/atoms/modal/ModalBody.vue';
-
 const path = require('path');
 
 // Use the relative time module from dayjs

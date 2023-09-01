@@ -103,6 +103,9 @@ export const wsTimeoutWrapper = (payload: any, timeout: number = 20_000): Promis
   });
 };
 
+/**
+ * @deprecated don't use this one, poor implementation
+ */
 export const wsTimeoutWrapperTyped = <T, R>(payload: T, timeout: number = 10_000): Promise<R> => {
   return new Promise(async (resolve, reject) => {
     const timer = setTimeout(() => {

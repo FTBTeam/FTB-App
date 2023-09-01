@@ -393,7 +393,9 @@ async function createWindow() {
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
     
     if (process.env.NODE_ENV !== "production") {
-      win.webContents.openDevTools();
+      win.webContents.openDevTools({
+        mode: 'detach',
+      });
     }
 
     win.blur();
