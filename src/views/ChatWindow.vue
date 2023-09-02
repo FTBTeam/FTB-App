@@ -15,6 +15,7 @@
         :getFriends="getFriends"
         :loading="loadingFriends"
       ></friends-list>
+      
       <div class="bg-navbar flex-1">
         <AddFriend v-if="currentPage === 'addFriend'"></AddFriend>
         <FriendChat

@@ -64,15 +64,15 @@ import { Action, State } from 'vuex-class';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
+import {Art, Authors, ModPack, ModpackState, ModPackTag, Versions} from '@/modules/modpacks/types';
 import { Route } from 'vue-router';
 import { AuthState } from '@/modules/auth/types';
 import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
-import { ListPackSearchResults, PackSearchEntries } from '@/typings/modpackch';
 import SearchResultPackCard from '@/components/molecules/SearchResultPackCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import { InstallerState } from '@/modules/app/appStore.types';
+import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
 
 const namespace: string = 'modpacks';
 
@@ -98,7 +98,7 @@ export default class BrowseModpacks extends Vue {
   currentTab: string = 'ftbsearch';
 
   currentSearch: AbortableRequest | null = null;
-  searchResults: PackSearchEntries.Packs[] = [];
+  searchResults: SearchResultPack[] = [];
 
   loading = false;
   searchStarted = false;
@@ -106,7 +106,7 @@ export default class BrowseModpacks extends Vue {
   // Installing
   showInstallModal = false;
   installModalData: {
-    pack: PackSearchEntries.Packs;
+    pack: SearchResultPack;
     versions: Versions[];
   } | null = null;
   installerLoading = false;
@@ -191,7 +191,7 @@ export default class BrowseModpacks extends Vue {
     }
   }
 
-  async displayInstallModpack(pack: PackSearchEntries.Packs) {
+  async displayInstallModpack(pack: SearchResultPack) {
     this.showInstallModal = true;
     this.installerLoading = true;
 
@@ -239,7 +239,7 @@ export default class BrowseModpacks extends Vue {
     this.installerLoading = false;
   }
 
-  get results(): PackSearchEntries.Packs[] {
+  get results(): SearchResultPack[] {
     // Transform the 'in state' packs to a search result for displaying all packs
     if (this.searchValue === '' && typeof this.modpacks?.all !== 'undefined') {
       return this.modpacks?.all.map(
@@ -247,13 +247,13 @@ export default class BrowseModpacks extends Vue {
           ({
             platform: 'modpacksch',
             name: e.name,
-            art: e.art as unknown as PackSearchEntries.Art[],
-            authors: e.authors as PackSearchEntries.Authors[],
-            tags: e.tags as PackSearchEntries.Tags[],
+            art: e.art as unknown as Art[],
+            authors: e.authors as Authors[],
+            tags: e.tags as ModPackTag[],
             synopsis: e.synopsis,
             id: e.id,
             updated: e.updated,
-          } as PackSearchEntries.Packs),
+          } as SearchResultPack),
       );
     }
 

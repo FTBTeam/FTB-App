@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-01 17:07:38.
+// Generated using typescript-generator version 3.2.1263 on 2023-09-01 21:54:02.
 
 export interface InstanceJson {
     uuid: string;

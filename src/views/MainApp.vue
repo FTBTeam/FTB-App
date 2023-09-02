@@ -40,17 +40,19 @@
 <script lang="ts">
 import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import {Component, Vue, Watch} from 'vue-property-decorator';
 import {Action, Getter, State} from 'vuex-class';
-import { SocketState } from '@/modules/websocket/types';
+import {SocketState} from '@/modules/websocket/types';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import { SettingsState } from '@/modules/settings/types';
+import {SettingsState} from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
-import { RouterNames } from '@/router';
+import {RouterNames} from '@/router';
 import {AuthState} from '@/modules/auth/types';
+import {AppStoreModules, ns} from '@/core/state/appState';
+import {AsyncFunction} from '@/core/@types/commonTypes';
 
 @Component({
   components: {
@@ -79,7 +81,9 @@ export default class MainApp extends Vue {
   @Action('registerExitCallback') private registerExitCallback: any;
   @Action('registerPingCallback') private registerPingCallback: any;
 
-  @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: any;
+  @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: AsyncFunction;
+  @Action('loadInstances', ns(AppStoreModules.instances)) private loadInstances!: AsyncFunction;
+  
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
 
   private platfrom = platfrom;
@@ -87,6 +91,33 @@ export default class MainApp extends Vue {
 
   stage = 'Setting up...';
   hasInitialized = false;
+  
+  startupJobs = [
+    {
+      "name": "Settings",
+      "done": false,
+      "action": () => this.loadSettings()
+    },
+    {
+      "name": "Profiles",
+      "done": false,
+      "action": () => this.loadProfiles()
+    },
+    {
+      "name": "MineTogether",
+      "done": false,
+      "action": () => {}
+    },
+    {
+      "name": "Loading Installed Instances",
+      "done": false,
+      "action": () => this.loadInstances()
+    },
+  ]
+  
+  allJobsDone() {
+    return this.startupJobs.every(job => job.done)
+  }
 
   public mounted() {
     this.registerPingCallback((data: any) => {
@@ -129,18 +160,12 @@ export default class MainApp extends Vue {
     this.platfrom.get.actions.onAppReady();
   }
 
-  public fetchStartData() {
-    return new Promise(async (resolve, reject) => {
-      await this.loadSettings();
-      this.loadProfiles();
-      this.sendMessage({
-        payload: { type: 'installedInstances' },
-        callback: (data: any) => {
-          this.storePacks(data);
-          resolve(null);
-        },
-      });
-    });
+  public async fetchStartData() {
+    for (const job of this.startupJobs) {
+      await job.action();
+      console.log(`Finished ${job.name}`)
+      job.done = true;
+    }
   }
 
   get showSidebar() {

@@ -162,3 +162,13 @@ body {
     border-radius: 5px;
   }
 }
+
+.page-spacing {
+  padding: 1rem 1.5rem;
+}
+
+.pack-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.5rem;
+}

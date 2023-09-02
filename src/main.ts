@@ -25,7 +25,8 @@ import { BrowserTracing } from '@sentry/tracing';
 import * as Sentry from '@sentry/vue';
 import ModalFooter from '@/components/atoms/modal/ModalFooter.vue';
 import ModalBody from '@/components/atoms/modal/ModalBody.vue';
-const path = require('path');
+import {localiseNumber, toTitleCase} from '@/utils/helpers/stringHelpers';
+import {standardDate, standardDateTime, timeFromNow} from '@/utils/helpers/dateHelpers';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -91,19 +92,11 @@ const appSetup = async () => {
     },
   });
 
-  Vue.filter('dayjs', (value: any) => (value ? dayjs.unix(value).format('DD MMMM YYYY') : ''));
-  Vue.filter('dayjsFull', (value: any) => (value ? dayjs.unix(value).format('DD MMMM YYYY, HH:mm') : ''));
-  Vue.filter('dayjsFromNow', (value: any) => {
-    if (!value) return 'Never';
-
-    if (typeof value === 'number') {
-      return dayjs.unix(value).fromNow(true) + ' ago';
-    }
-
-    return value ? dayjs().from(dayjs(value), true) + ' ago' : 'Never';
-  });
-  Vue.filter('formatNumber', (value: number) => (value ? value.toLocaleString() : '0'));
-  Vue.filter('title', (value: string) => (!value ? '' : value[0].toUpperCase() + value.slice(1)));
+  Vue.filter('dayjs', standardDate);
+  Vue.filter('dayjsFull', standardDateTime);
+  Vue.filter('dayjsFromNow', timeFromNow);
+  Vue.filter('formatNumber', localiseNumber);
+  Vue.filter('title', toTitleCase);
 
   const vm = new Vue({
     router,

@@ -11,6 +11,7 @@ import { servers } from './servers';
 import { core } from '@/modules/core/core';
 import { news } from '@/modules/news/news';
 import { appStore } from '@/modules/app/appStore';
+import {AppState, appStateStore} from '@/core/state/appState';
 
 Vue.use(Vuex);
 
@@ -48,6 +49,14 @@ const wsLoggerPlugin = (store: Store<RootState>) => {
   });
 };
 
+const storev2: StoreOptions<AppState> = {
+  state: {
+  },
+  modules: {
+    
+  }
+}
+
 const store: StoreOptions<RootState> = {
   state: {
     version: '1.0.0',
@@ -83,6 +92,7 @@ const store: StoreOptions<RootState> = {
     servers,
     core,
     app: appStore,
+    "v2": appStateStore
   },
 };
 

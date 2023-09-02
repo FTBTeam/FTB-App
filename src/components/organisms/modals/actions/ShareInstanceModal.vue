@@ -40,11 +40,10 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { wsTimeoutWrapperTyped } from '@/utils';
-import { ShareInstance, ShareInstanceReply } from '@/typings/subprocess';
 import Loading from '@/components/atoms/Loading.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 @Component({
   components: { ProgressBar, Loading },
@@ -70,14 +69,10 @@ export default class ShareInstanceModal extends Vue {
       return;
     }
 
-    const shareRequest = await wsTimeoutWrapperTyped<ShareInstance, ShareInstanceReply>(
-      {
-        type: 'shareInstance',
-        uuid: this.uuid,
-      },
-      1_800_000, // 30 minutes, if this isn't long enough, they need better internet...
-    ).finally(() => (this.loading = false));
-
+    const shareRequest = await sendMessage("shareInstance", {
+      uuid: this.uuid,
+    }, 1_800_000);  // 30 minutes, if this isn't long enough, they need better internet...
+    
     if (shareRequest.status === 'error') {
       this.error = shareRequest.message;
       console.log(this.error);

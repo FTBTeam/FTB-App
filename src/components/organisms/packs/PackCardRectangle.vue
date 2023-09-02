@@ -1,68 +1,69 @@
 <template>
-  <div class="w-1/3 md:w-1/3 lg:w-1/11 xl:w-1/11 m-2 card">
-    <div v-if="!fake" style="height: 100%">
-      <article class="overflow-hidden shadow-lg" style="height: 100%">
-        <img
-          class="w-full pack-image"
-          :src="art.length > 0 ? art : '../../assets/placeholder_art.png'"
-          alt="placeholder"
-          :class="installing ? 'blur' : ''"
-        />
-        <div class="content" :class="installing ? 'hide' : ''">
-          <div class="name-box">{{ name }} (v{{ version }})</div>
-        </div>
-        <div class="hoverContent" v-if="!installing">
-          <div class="row mb-2">
-            <p class="font-bold text-text-color lg:text-2xl text-center">{{ name }}</p>
-          </div>
-          <div class="row">
-            <div class="buttons" v-if="installed">
-              <font-awesome-icon
-                :icon="'ellipsis-h'"
-                size="3x"
-                class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"
-                @click="goToInstance"
-              />
-            </div>
-            <div class="buttons" v-if="!installed">
-              <font-awesome-icon
-                @click="openInstall"
-                :icon="'download'"
-                size="3x"
-                class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"
-              />
-              <div class="divider"></div>
-              <font-awesome-icon
-                :icon="'info-circle'"
-                size="3x"
-                class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"
-                @click="openInfo"
-              />
-            </div>
-          </div>
-          <div class="row mt-2">
-            <p class="font-bold text-text-color sm:text-sm lg:text-lg">v{{ version }}</p>
-          </div>
-        </div>
-        <div class="hoverContent show" v-else>
-          <div class="row mb-2">
-            <p class="font-bold text-text-color lg:text-2xl text-center">Installing {{ name }}</p>
-          </div>
-          <div class="row">
-            <font-awesome-icon
-              :icon="'spinner'"
-              size="5x"
-              class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"
-              spin
-            />
-          </div>
-        </div>
-      </article>
-    </div>
-    <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">
-      <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />
-    </FTBModal>
-  </div>
+  <div><code>PackCardRectangle.vue</code> is deprecated, stop using it</div>
+<!--  <div class="w-1/3 md:w-1/3 lg:w-1/11 xl:w-1/11 m-2 card">-->
+<!--    <div v-if="!fake" style="height: 100%">-->
+<!--      <article class="overflow-hidden shadow-lg" style="height: 100%">-->
+<!--        <img-->
+<!--          class="w-full pack-image"-->
+<!--          :src="art.length > 0 ? art : '../../assets/placeholder_art.png'"-->
+<!--          alt="placeholder"-->
+<!--          :class="installing ? 'blur' : ''"-->
+<!--        />-->
+<!--        <div class="content" :class="installing ? 'hide' : ''">-->
+<!--          <div class="name-box">{{ name }} (v{{ version }})</div>-->
+<!--        </div>-->
+<!--        <div class="hoverContent" v-if="!installing">-->
+<!--          <div class="row mb-2">-->
+<!--            <p class="font-bold text-text-color lg:text-2xl text-center">{{ name }}</p>-->
+<!--          </div>-->
+<!--          <div class="row">-->
+<!--            <div class="buttons" v-if="installed">-->
+<!--              <font-awesome-icon-->
+<!--                :icon="'ellipsis-h'"-->
+<!--                size="3x"-->
+<!--                class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"-->
+<!--                @click="goToInstance"-->
+<!--              />-->
+<!--            </div>-->
+<!--            <div class="buttons" v-if="!installed">-->
+<!--              <font-awesome-icon-->
+<!--                @click="openInstall"-->
+<!--                :icon="'download'"-->
+<!--                size="3x"-->
+<!--                class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"-->
+<!--              />-->
+<!--              <div class="divider"></div>-->
+<!--              <font-awesome-icon-->
+<!--                :icon="'info-circle'"-->
+<!--                size="3x"-->
+<!--                class="cursor-pointer button hover-scale lg:text-5xl sm:text-base button-shadow"-->
+<!--                @click="openInfo"-->
+<!--              />-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="row mt-2">-->
+<!--            <p class="font-bold text-text-color sm:text-sm lg:text-lg">v{{ version }}</p>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="hoverContent show" v-else>-->
+<!--          <div class="row mb-2">-->
+<!--            <p class="font-bold text-text-color lg:text-2xl text-center">Installing {{ name }}</p>-->
+<!--          </div>-->
+<!--          <div class="row">-->
+<!--            <font-awesome-icon-->
+<!--              :icon="'spinner'"-->
+<!--              size="5x"-->
+<!--              class="cursor-pointer button hover-scale lg:text-5xl sm:text-base"-->
+<!--              spin-->
+<!--            />-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </article>-->
+<!--    </div>-->
+<!--    <FTBModal :visible="showInstall" @dismiss-modal="hideInstall">-->
+<!--      <InstallModal :pack-name="name" :doInstall="install" :pack-description="description" :versions="versions" />-->
+<!--    </FTBModal>-->
+<!--  </div>-->
 </template>
 
 <script lang="ts">

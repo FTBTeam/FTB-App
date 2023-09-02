@@ -245,10 +245,8 @@ export default class ServerLandingPage extends Vue {
     if (this.modpack === null) {
       return;
     }
-    this.$router.replace({
-      name: 'installingpage',
-      query: { modpackid: this.$props.packID, versionID: version.toString() },
-    });
+
+    // TODO: FIX INSTALLING
   }
 
   public preLaunch(instance: Instance) {

@@ -82,6 +82,13 @@ export interface Versions {
   updated: number;
   mtgID?: string;
   private?: boolean;
+  targets: {
+    version: string;
+    id: number;
+    name: string;
+    type: string;
+    updated: number;
+  }[]
 }
 
 export interface VersionSpecs {

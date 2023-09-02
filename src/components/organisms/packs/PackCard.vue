@@ -1,43 +1,44 @@
 <template>
-  <div v-if="settingsState !== undefined">
-    <div class="pack-card" v-if="currentModpack !== undefined || instance !== undefined || isDemo">
-      <div class="art" @click.prevent="cardClicked">
-        <span
-          v-if="versionType !== 'release'"
-          class="beta-tag"
-          :style="{ backgroundColor: getColorForReleaseType(versionType) }"
-          :class="versionType"
-          >{{ versionType }}</span
-        >
-        <div class="has-update" v-if="instance && !isLatestVersion && kind === 'instance'">Update Available</div>
-        <img
-          class="w-full"
-          :src="getLogo(art)"
-          alt="pack art"
-          :class="[installing ? 'blur' : '', kind === 'cloudInstance' ? 'cloud-pack-image' : '']"
-        />
-      </div>
-      <div class="meta">
-        <div class="title">{{ name }}</div>
-        <div class="version">{{ version }}</div>
-        <div class="play-button" :class="{ 'opacity-50': starting }">
-          <div class="clickable-play" :class="{ disabled: loading, loading }" @click="checkMemoryThenLaunch">
-            <span>Play</span>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div><code>PackCard.vue</code> is deprecated, stop using it</div>
+<!--  <div v-if="settingsState !== undefined">-->
+<!--    <div class="pack-card" v-if="currentModpack !== undefined || instance !== undefined || isDemo">-->
+<!--      <div class="art" @click.prevent="cardClicked">-->
+<!--        <span-->
+<!--          v-if="versionType !== 'release'"-->
+<!--          class="beta-tag"-->
+<!--          :style="{ backgroundColor: getColorForReleaseType(versionType) }"-->
+<!--          :class="versionType"-->
+<!--          >{{ versionType }}</span-->
+<!--        >-->
+<!--        <div class="has-update" v-if="instance && !isLatestVersion && kind === 'instance'">Update Available</div>-->
+<!--        <img-->
+<!--          class="w-full"-->
+<!--          :src="getLogo(art)"-->
+<!--          alt="pack art"-->
+<!--          :class="[installing ? 'blur' : '', kind === 'cloudInstance' ? 'cloud-pack-image' : '']"-->
+<!--        />-->
+<!--      </div>-->
+<!--      <div class="meta">-->
+<!--        <div class="title">{{ name }}</div>-->
+<!--        <div class="version">{{ version }}</div>-->
+<!--        <div class="play-button" :class="{ 'opacity-50': starting }">-->
+<!--          <div class="clickable-play" :class="{ disabled: loading, loading }" @click="checkMemoryThenLaunch">-->
+<!--            <span>Play</span>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
 
-    <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox" :dismissable="true">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-      />
-    </FTBModal>
-  </div>
+<!--    <FTBModal :visible="showMsgBox" @dismiss-modal="hideMsgBox" :dismissable="true">-->
+<!--      <message-modal-->
+<!--        :title="msgBox.title"-->
+<!--        :content="msgBox.content"-->
+<!--        :ok-action="msgBox.okAction"-->
+<!--        :cancel-action="msgBox.cancelAction"-->
+<!--        :type="msgBox.type"-->
+<!--      />-->
+<!--    </FTBModal>-->
+<!--  </div>-->
 </template>
 
 <script lang="ts">

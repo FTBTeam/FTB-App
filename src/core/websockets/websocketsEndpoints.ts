@@ -88,6 +88,7 @@ import {
   UploadLogsDataReply, WebRequestData, WebRequestDataResponse,
   YeetLauncherData
 } from '@/core/@types/javaApi';
+import {Nullable} from '@/core/websockets/websocketsApi';
 
 export type MessageType =
   "installedInstances" |
@@ -353,7 +354,7 @@ export type MessagePayload = {
     output: StorageGetAllHandlerReply
   }
   "webRequest": {
-    input: WebRequestData,
+    input: Nullable<WebRequestData, "body">,
     output: WebRequestDataResponse
   }
   "openDebugTools": {

@@ -181,6 +181,8 @@ import { Action, Getter, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import { prettyByteFormat, wsTimeoutWrapper, wsTimeoutWrapperTyped } from '@/utils';
 import { InstallerState } from '@/modules/app/appStore.types';
+import {AppStoreModules, ns} from '@/core/state/appState';
+import {InstanceJson} from '@/core/@types/javaApi';
 
 @Component({
   components: {
@@ -189,6 +191,7 @@ import { InstallerState } from '@/modules/app/appStore.types';
   },
 })
 export default class Library extends Vue {
+  @Getter('instances', ns(AppStoreModules.instances)) public instances!: InstanceJson[];
   @State('settings') public settings!: SettingsState;
   @State('modpacks') public modpacks!: ModpackState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;

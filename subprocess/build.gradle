@@ -224,7 +224,6 @@ def sharedSettings = [
 ]
 
 tasks.named("generateTypeScript", GenerateTask) {
-    
     jsonLibrary = "gson"
     outputKind = "module"
     outputFile = project.file("../src/core/@types/javaApi.d.ts")
@@ -256,6 +255,7 @@ tasks.named("generateTypeScript", GenerateTask) {
 tasks.register("generateTypeScriptExtras", GenerateTask) {
     jsonLibrary = "gson"
     outputKind = "module"
+    nullableAnnotations = ["org.jetbrains.annotations.Nullable"]
     outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
     excludeClasses = sharedSettings.excludeClasses
     customTypeMappings = sharedSettings.customTypeMappings

@@ -145,10 +145,12 @@ import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
 import { InstallerState } from '@/modules/app/appStore.types';
-import { abortableFetch, AbortableRequest, createModpackchUrl, getPackArt, wsTimeoutWrapperTyped } from '@/utils';
+import { abortableFetch, AbortableRequest, createModpackchUrl, getPackArt } from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
-import { InstanceBackup, InstanceBackupsReply, InstanceBackupsRequest } from '@/typings/subprocess/instanceBackups';
 import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';
+import {AppStoreModules, ns} from '@/core/state/appState';
+import {Backup, InstanceJson} from '@/core/@types/javaApi';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -178,6 +180,8 @@ export enum ModpackPageTabs {
   },
 })
 export default class InstancePage extends Vue {
+  @Getter('instances', ns(AppStoreModules.instances)) public instances!: InstanceJson[];
+  
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
@@ -223,7 +227,7 @@ export default class InstancePage extends Vue {
   offlineUserName = '';
   offlineAllowed = false;
 
-  instanceBackups: InstanceBackup[] = [];
+  instanceBackups: Backup[] = [];
   requestHolder: AbortableRequest[] = [];
 
   borkedVersionNotification: string | null = null;
@@ -407,10 +411,9 @@ export default class InstancePage extends Vue {
   }
 
   public async loadBackups() {
-    const backups = await wsTimeoutWrapperTyped<InstanceBackupsRequest, InstanceBackupsReply>({
-      type: 'instanceGetBackups',
+    const backups = await sendMessage("instanceGetBackups", {
       uuid: this.instance?.uuid ?? '',
-    });
+    })
 
     this.instanceBackups = backups.backups.sort((a, b) => b.createTime - a.createTime);
   }
@@ -455,10 +458,7 @@ export default class InstancePage extends Vue {
   }
 
   get instance() {
-    if (this.modpacks == null) {
-      return null;
-    }
-    return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
+    return this.instances.find(e => e.uuid === this.$route.params.uuid) ?? null;
   }
 
   get packSplashArt() {

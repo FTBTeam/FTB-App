@@ -13,9 +13,7 @@ export enum RouterNames {
   ROOT_NEWS = 'news',
   ROOT_LOCAL_PACK = 'instancepage',
   ROOT_PREVIEW_PACK = 'modpackpage',
-  ROOT_INSTALL_PACK = 'installingpage',
   ROOT_LAUNCH_PACK = 'launchingpage',
-  ROOT_THIRDPARTY = 'thirdparty',
   ROOT_DISCOVER = 'discover',
   ROOT_SERVER = 'server',
   SETTINGS_INSTANCE = 'instance-settings',
@@ -115,20 +113,11 @@ export default new Router({
           component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
         },
         {
-          path: '/installing',
-          name: RouterNames.ROOT_INSTALL_PACK,
-          component: () => import(/* webpackChunkName: "installingpage" */ './views/InstallingPage.vue'),
-        },
-        {
           path: '/launching',
           name: RouterNames.ROOT_LAUNCH_PACK,
           component: () => import(/* webpackChunkName: "launchingpage" */ './views/LaunchingPage.vue'),
         },
-        {
-          path: '/thirdparty',
-          name: RouterNames.ROOT_THIRDPARTY,
-          component: () => import(/* webpackChunkName: "thirdparty" */ './views/ComingSoon.vue'),
-        },
+
         {
           path: '/discover',
           name: RouterNames.ROOT_DISCOVER,

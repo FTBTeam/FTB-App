@@ -1,6 +1,7 @@
 <template>
-  <pack-card v-if="listMode === undefined || listMode === 'false' || listMode === false" v-bind="$props"></pack-card>
-  <pack-card-list v-else v-bind="$props"></pack-card-list>
+  <div><code>PackCardWrapper.vue</code> is deprecated, stop using it</div>
+<!--  <pack-card v-if="listMode === undefined || listMode === 'false' || listMode === false" v-bind="$props"></pack-card>-->
+<!--  <pack-card-list v-else v-bind="$props"></pack-card-list>-->
 </template>
 
 <script lang="ts">

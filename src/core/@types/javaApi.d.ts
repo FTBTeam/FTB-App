@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-01 17:07:38.
+// Generated using typescript-generator version 3.2.1263 on 2023-09-01 21:54:02.
 
 export interface BaseData {
     type: string;
@@ -131,6 +131,16 @@ export interface InstalledInstancesDataReply extends BaseData {
 export interface InstanceCloudSyncConflictData extends BaseData {
     uuid: string;
     code: string;
+    message: string;
+}
+
+export interface InstanceCloudSyncResolveConflictData extends BaseData {
+    uuid: string;
+    resolution: SyncDirection;
+}
+
+export interface InstanceCloudSyncResolveConflictDataReply extends BaseData {
+    status: string;
     message: string;
 }
 
@@ -780,3 +790,5 @@ export interface Dependency {
 }
 
 export type InstallStage = "INIT" | "PREPARE" | "MODLOADER" | "DOWNLOADS" | "FINISHED";
+
+export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";

@@ -5,7 +5,6 @@ import os from 'os';
 import fs from 'fs';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
-import Client from './ircshim';
 import { FriendListResponse } from './types';
 import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
@@ -51,7 +50,6 @@ for (let i = 0; i < process.argv.length; i++) {
   }
 }
 
-let mtIRCCLient: Client | undefined;
 declare const __static: string;
 
 let wsPort: number;
@@ -112,16 +110,6 @@ let authData: any;
 let sessionString: string;
 const seenModpacks: MTModpacks = {};
 const friends: FriendListResponse = { online: [], offline: [], pending: [] };
-
-ipcMain.on('websocketReceived', (event, message) => {
-  if (!mtIRCCLient) {
-    return;
-  }
-  if (message.type === 'ircEvent') {
-    message.type = message.jsEvent;
-    mtIRCCLient.messageReceived(message);
-  }
-});
 
 ipcMain.on('sendMeSecret', (event) => {
   event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
@@ -284,10 +272,6 @@ ipcMain.on('quit_app', (event, data) => {
 ipcMain.on('logout', (event, data) => {
   if (friendsWindow) {
     friendsWindow.close();
-  }
-  if (mtIRCCLient) {
-    mtIRCCLient.quit();
-    mtIRCCLient = undefined;
   }
   userData = undefined;
 });

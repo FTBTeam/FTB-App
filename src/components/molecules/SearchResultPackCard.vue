@@ -22,14 +22,14 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import { PackSearchEntries } from '@/typings/modpackch';
 import { Emit, Prop } from 'vue-property-decorator';
 import { getPackArt } from '@/utils';
 import { RouterNames } from '@/router';
+import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 
 @Component
 export default class SearchResultPackCard extends Vue {
-  @Prop() pack!: PackSearchEntries.Packs;
+  @Prop() pack!: SearchResultPack;
   @Prop() type!: number; // 0 == FTB, 1 == Curseforge
 
   @Emit()
