@@ -1,12 +1,13 @@
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 import {Action} from 'vuex-class';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {ModPack} from '@/modules/modpacks/types';
+import {ns} from '@/core/state/appState';
 
 @Component
 export default class PackCardCommon extends Vue {
-  @Action("getModpack", { namespace: 'v2/modpacks' }) getModpack!: GetModpack;
+  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   
   loading = false;
   apiModpack: ModPack | null = null;
@@ -18,6 +19,10 @@ export default class PackCardCommon extends Vue {
       this.apiModpack = result;
     }
     this.loading = false;
+  }
+  
+  get isInstalling() {
+    return false;
   }
 }
 </script>

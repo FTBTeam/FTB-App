@@ -2,6 +2,7 @@ import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {AppState} from '@/core/state/appState';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {InstanceJson} from '@/core/@types/javaApi';
+import {RootState} from '@/types';
 
 export type InstanceState = typeof state;
 
@@ -14,7 +15,7 @@ const state = {
   }
 }
 
-const actions: ActionTree<InstanceState, AppState> = {
+const actions: ActionTree<InstanceState, RootState> = {
   async loadInstances({state, commit}) {
     if (state.state.loadingInstances) {
       return;
@@ -34,13 +35,13 @@ const mutations: MutationTree<InstanceState> = {
   SET_INSTANCES_INITIALIZED: (state: InstanceState, initialized: boolean) => state.state.instancesInitialized = initialized,
 }
 
-const getters: GetterTree<InstanceState, AppState> = {
+const getters: GetterTree<InstanceState, RootState> = {
   isLoadingInstances: (state: InstanceState) => state.state.loadingInstances,
   instancesInitialized: (state: InstanceState) => state.state.instancesInitialized,
   instances: (state: InstanceState) => state.instances,
 }
 
-export const instanceStateModule: Module<InstanceState, AppState> = {
+export const instanceStateModule: Module<InstanceState, RootState> = {
   namespaced: true,
   state,
   actions,

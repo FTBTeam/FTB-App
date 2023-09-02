@@ -5,7 +5,7 @@
     </div>
     <div class="card-body">
       <div class="name">{{ instance.name }}</div>
-      <div class="version">{{ modLoader }} - {{ instance.version }}</div>
+      <div class="version text-sm opacity-75">{{ instance.version }} ({{ modLoader | title }})</div>
       
       {{ updateAvailable ? "Update Available" : "" }}
     </div>
@@ -69,6 +69,11 @@ export default class PackCard2 extends PackCardCommon {
   background-color: #ffffff12;
   border-radius: 5px;
   padding: .75rem;
+  cursor: pointer;
+  
+  &:hover {
+    
+  }
   
   .artwork-container {
     margin-bottom: .75rem;

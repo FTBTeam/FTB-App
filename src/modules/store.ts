@@ -49,14 +49,6 @@ const wsLoggerPlugin = (store: Store<RootState>) => {
   });
 };
 
-const storev2: StoreOptions<AppState> = {
-  state: {
-  },
-  modules: {
-    
-  }
-}
-
 const store: StoreOptions<RootState> = {
   state: {
     version: '1.0.0',

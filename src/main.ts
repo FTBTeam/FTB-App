@@ -15,6 +15,7 @@ import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 import 'wysiwyg.css/wysiwyg.css';
 
+import '@/core/controllers/InstanceInstallController';
 import store from './modules/store';
 import FTBButton from '@/components/atoms/input/FTBButton.vue';
 import FTBInput from '@/components/atoms/input/FTBInput.vue';

@@ -191,7 +191,9 @@ import {InstanceJson} from '@/core/@types/javaApi';
   },
 })
 export default class Library extends Vue {
-  @Getter('instances', ns(AppStoreModules.instances)) public instances!: InstanceJson[];
+  @Getter('instances', ns("v2/instances")) public instances!: InstanceJson[];
+  
+  
   @State('settings') public settings!: SettingsState;
   @State('modpacks') public modpacks!: ModpackState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;

@@ -180,7 +180,7 @@ export enum ModpackPageTabs {
   },
 })
 export default class InstancePage extends Vue {
-  @Getter('instances', ns(AppStoreModules.instances)) public instances!: InstanceJson[];
+  @Getter('instances', ns("v2/instances")) public instances!: InstanceJson[];
   
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @State('settings') public settingsState!: SettingsState;

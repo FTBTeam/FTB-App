@@ -6,6 +6,9 @@
       <pack-card2 v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
     </div>
     
+    <div class="featured-packs">
+      <pack-preview v-for="packId in featuredPacksIds" :key="packId" :packId="packId" />
+    </div>
   </div>
 <!--  <div class="px-6 py-4" v-if="isLoaded">-->
 <!--    <div class="flex flex-col" v-if="recentlyPlayed.length >= 1" key="recentlyPlayed">-->
@@ -63,18 +66,15 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
 import PackCard from '@/components/organisms/packs/PackCard.vue';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import ServerCard from '@/components/organisms/ServerCard.vue';
-import { Action, State, Getter } from 'vuex-class';
-import { ModPack, ModpackState } from '@/modules/modpacks/types';
-import { SettingsState } from '@/modules/settings/types';
-import { ServersState } from '@/modules/servers/types';
+import {Action, Getter} from 'vuex-class';
 import FtbButton from '@/components/atoms/input/FTBButton.vue';
 import Loading from '@/components/atoms/Loading.vue';
-import Loading2 from "@/components/atoms/Loading2.vue";
+import Loading2 from '@/components/atoms/Loading2.vue';
 import {AppStoreModules, ns} from '@/core/state/appState';
 import {InstanceJson} from '@/core/@types/javaApi';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
@@ -96,7 +96,23 @@ const namespace: string = 'modpacks';
   },
 })
 export default class Home extends Vue {
-  @Getter('instances', ns(AppStoreModules.instances)) public instances!: InstanceJson[];
+  @Getter('instances', ns("v2/instances")) instances!: InstanceJson[];
+  
+  @Getter("featuredPacks", ns("v2/modpacks")) featuredPacksIds!: number[];
+  @Action("getFeaturedPacks", ns("v2/modpacks")) getFeaturedPacks!: () => Promise<number[]>;
+  
+  loadingFeatured = false;
+  
+  mounted() {
+    this.loadFeaturedPacks();
+  }
+  
+  async loadFeaturedPacks() {
+    this.loadingFeatured = true;
+    await this.getFeaturedPacks();
+    this.loadingFeatured = false;
+  }
+  
   // @State('settings') public settingsState!: SettingsState;
   // @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   // @State('modpacks') public modpacks: ModpackState | undefined = undefined;

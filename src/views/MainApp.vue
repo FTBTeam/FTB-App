@@ -82,7 +82,7 @@ export default class MainApp extends Vue {
   @Action('registerPingCallback') private registerPingCallback: any;
 
   @Action('loadProfiles', { namespace: 'core' }) private loadProfiles!: AsyncFunction;
-  @Action('loadInstances', ns(AppStoreModules.instances)) private loadInstances!: AsyncFunction;
+  @Action('loadInstances', ns("v2/instances")) private loadInstances!: AsyncFunction;
   
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
 
