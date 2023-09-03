@@ -106,11 +106,19 @@ public class OperationProgressTracker {
                 stage,
                 completedSteps,
                 steps,
-                ((double) currentBytes / overallBytes) * 100D,
+                computeProgress(currentBytes, overallBytes),
                 speed,
                 currentBytes,
                 overallBytes
         ));
+    }
+    
+    private double computeProgress(long currentBytes, long overallBytes) {
+        if (overallBytes == 0) {
+            return 0;
+        }
+        
+        return (double) currentBytes / (double) overallBytes * 100.0D;
     }
 
     /**
