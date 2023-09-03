@@ -140,7 +140,7 @@ public final class CloudSaveManager {
 
         try {
             S3ClientBuilder builder = S3Client.builder()
-                    .endpointOverride(URI.create("http://%s:8080".formatted(s3Host)))
+                    .endpointOverride(URI.create(s3Host))
                     .region(Region.US_WEST_1)
                     .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(s3Key, s3Secret)))
                     .httpClient(new OkHTTPS3HttpClient(Constants::httpClient));
