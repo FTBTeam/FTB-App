@@ -309,7 +309,6 @@ public final class CloudSaveManager {
                 .key(destKey)
                 .contentLength(len)
                 .contentType(Files.probeContentType(file))
-                .checksumSHA256(sha256)
                 .metadata(metadata);
 
         s3Client.putObject(builder.build(), RequestBody.fromFile(file));
