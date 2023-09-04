@@ -497,7 +497,7 @@ public final class CloudSaveManager {
             try {
                 operation.operate();
                 return new SyncResult(SyncResult.ResultType.SUCCESS, "Synced!");
-            } catch (IOException ex) {
+            } catch (Throwable ex) {
                 LOGGER.error("Failed to sync instance.", ex);
                 complete = true;
                 return new SyncResult(SyncResult.ResultType.FAILED, "Sync failed. See logs.");
