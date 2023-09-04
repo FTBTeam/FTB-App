@@ -8,6 +8,11 @@
       <div class="version text-sm opacity-75">{{ instance.version }} ({{ modLoader | title }})</div>
       
       {{ updateAvailable ? "Update Available" : "" }}
+      <div class="update" v-if="!isUpdating" @click.stop="updateInstance">
+        Update instance
+      </div>
+      
+      {{ isUpdating ? "Updating" : "" }}
     </div>
   </div>
 </template>
@@ -20,6 +25,7 @@ import {isValidVersion, resolveArtwork, resolveModloader} from '@/utils/helpers/
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {emitter} from '@/utils';
 import {RouterNames} from '@/router';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 
 @Component
 export default class PackCard2 extends PackCardCommon {
@@ -28,21 +34,6 @@ export default class PackCard2 extends PackCardCommon {
   async mounted() {
     // Always fetch the modpack from the API so we can see if updates are available
     await this.fetchModpack(this.instance.id);
-  }
-  
-  get updateAvailable() {
-    if (!this.apiModpack) {
-      return false;
-    }
-    
-    const versions = this.apiModpack.versions
-      .filter(e => isValidVersion(e.type))
-      .sort((a, b) => b.id - a.id);
-    
-    const instanceVersion = this.instance.versionId;
-    const latestVersion = versions[0].id;
-    
-    return latestVersion > instanceVersion;
   }
 
   openInstancePage() {
@@ -53,6 +44,28 @@ export default class PackCard2 extends PackCardCommon {
       }
     })
   }
+
+  getLatestVersion() {
+    if (!this.apiModpack) {
+      return null;
+    }
+    
+    const versions = this.apiModpack.versions
+      .filter(e => isValidVersion(e.type))
+      .sort((a, b) => b.id - a.id);
+    
+    return versions[0];
+  }
+  
+  updateInstance() {
+    const latestVersion = this.getLatestVersion();
+    if (this.isUpdating || !latestVersion) {
+      return;
+    }
+    
+    console.log("update instance", this.instance, latestVersion)
+    instanceInstallController.requestUpdate(this.instance, latestVersion);
+  }
   
   get modLoader() {
     return resolveModloader(this.instance);
@@ -60,6 +73,24 @@ export default class PackCard2 extends PackCardCommon {
   
   get packLogo() {
     return resolveArtwork(this.instance, "square", this.apiModpack)
+  }
+
+  get updateAvailable() {
+    const latestVersion = this.getLatestVersion();
+    if (!latestVersion) {
+      return false;
+    }
+    
+    console.log(this.apiModpack?.name, latestVersion.id, latestVersion.name, this.instance.versionId, this.instance.version)
+    return latestVersion.id > this.instance.versionId;
+  }
+  
+  get isInstalling() {
+    return false;
+  }
+  
+  get isUpdating() {
+    return this.currentInstall?.request.updatingInstanceUuid === this.instance.uuid;
   }
 }
 </script>

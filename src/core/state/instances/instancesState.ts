@@ -26,6 +26,28 @@ const actions: ActionTree<InstanceState, RootState> = {
     commit('SET_INSTANCES', instances.instances);
     commit('SET_INSTANCES_INITIALIZED', true);
     commit('SET_LOADING_INSTANCES', false);
+  },
+  
+  async addInstance({state, commit}, instance: InstanceJson) {
+    commit('ADD_INSTANCE', instance);
+  },
+  
+  async updateInstance({state, commit}, instance: InstanceJson) {
+    const index = state.instances.findIndex(i => i.uuid === instance.uuid);
+    if (index === -1) {
+      return;
+    }
+    
+    commit('UPDATE_INSTANCE', {index, instance});
+  },
+  
+  async removeInstance({state, commit}, instance: InstanceJson) {
+    const index = state.instances.findIndex(i => i.uuid === instance.uuid);
+    if (index === -1) {
+      return;
+    }
+    
+    commit('REMOVE_INSTANCE', index);
   }
 }
 
@@ -33,6 +55,9 @@ const mutations: MutationTree<InstanceState> = {
   SET_LOADING_INSTANCES: (state: InstanceState, loading: boolean) => state.state.loadingInstances = loading,
   SET_INSTANCES: (state: InstanceState, instances: InstanceJson[]) => state.instances = instances,
   SET_INSTANCES_INITIALIZED: (state: InstanceState, initialized: boolean) => state.state.instancesInitialized = initialized,
+  ADD_INSTANCE: (state: InstanceState, instance: InstanceJson) => state.instances.push(instance),
+  UPDATE_INSTANCE: (state: InstanceState, {index, instance}: {index: number, instance: InstanceJson}) => state.instances.splice(index, 1, instance),
+  REMOVE_INSTANCE: (state: InstanceState, index: number) => state.instances.splice(index, 1),
 }
 
 const getters: GetterTree<InstanceState, RootState> = {

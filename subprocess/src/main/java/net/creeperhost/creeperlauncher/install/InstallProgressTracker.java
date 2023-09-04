@@ -45,7 +45,7 @@ public class InstallProgressTracker {
 
     public void submitFiles(List<DlFile> files) {
         // TODO this is disgusting.
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "files", GSON.toJson(files), ""));
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "files", GSON.toJson(files)));
     }
 
     public void fileFinished(long id) {

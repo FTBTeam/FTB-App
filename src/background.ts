@@ -273,8 +273,10 @@ ipcMain.on('logout', (event, data) => {
   if (friendsWindow) {
     friendsWindow.close();
   }
+  
   userData = undefined;
 });
+
 
 ipcMain.on('openLink', (event, data) => {
   shell.openExternal(data);

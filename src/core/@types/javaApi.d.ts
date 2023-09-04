@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-01 21:54:02.
+// Generated using typescript-generator version 3.2.1263 on 2023-09-03 16:42:25.
 
 export interface BaseData {
     type: string;
@@ -115,7 +115,6 @@ export interface InstallInstanceDataProgress extends BaseData {
 export interface InstallInstanceDataReply extends BaseData {
     status: string;
     message: string;
-    uuid: string;
     instanceData: InstanceJson;
 }
 

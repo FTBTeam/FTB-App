@@ -20,21 +20,27 @@ import {ns} from '@/core/state/appState';
 export default class PackPreview extends PackCardCommon {
   @Prop() packId!: number;
   
-  @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallState | null;
-  
   mounted() {
     this.fetchModpack(this.packId);
   }
 
   install() {
+    const apiPack = this.apiModpack!;
     instanceInstallController.requestInstall({
-      id: 0,
-      version: 0,
-      name: "hello",
+      id: apiPack.id,
+      version: apiPack.versions[0].id,
+      name: "hello" + Math.random() * 100,
       versionName: "hello2",
       logo: "",
-      updatingInstanceUuid: "hi"
     })
+  }
+
+  /**
+   * This is mostly a visual thing so people don't install a modpack multiple times
+   * because they think it's not installing.
+   */
+  get isInstalling() {
+    return this.currentInstall?.request.id === this.apiModpack?.id;
   }
 }
 </script>

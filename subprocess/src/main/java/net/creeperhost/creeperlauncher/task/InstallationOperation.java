@@ -52,12 +52,12 @@ public class InstallationOperation extends LongRunningOperation {
     protected void onOperationException(Throwable ex) {
         if (ex instanceof PrepareException pex) {
             LOGGER.error("Fatal exception whilst preparing modpack installation.", pex);
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation.", ""));
+            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation."));
             return;
         }
 
         LOGGER.error("Fatal exception whilst installing modpack.", ex);
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack."));
     }
 
     @Override
@@ -67,7 +67,7 @@ public class InstallationOperation extends LongRunningOperation {
                 Instances.addInstance(instance);
                 Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.props));
             }
-            case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", ""));
+            case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", instance.props));
         }
     }
 

@@ -150,14 +150,14 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private static void beginInstallTask(InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance.getUuid().toString()));
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance.props));
 
         InstallationOperation op = new InstallationOperation(CreeperLauncher.LONG_TASK_MANAGER, data, instance, manifest);
         op.submit();
     }
 
     private static void abort(InstallInstanceData data, String reason) {
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason, ""));
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason));
     }
 
     @Nullable

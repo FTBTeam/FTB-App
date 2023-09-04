@@ -23,24 +23,18 @@ public class InstallInstanceData extends BaseData {
 
         public final String status;
         public final String message;
-        public final String uuid;
         @Nullable
         public final InstanceJson instanceData;
 
-        public Reply(InstallInstanceData data, String status, String message, String uuid) {
-            this(data, status, message, uuid, null);
+        public Reply(InstallInstanceData data, String status, String message) {
+            this(data, status, message, null);
         }
-
+        
         public Reply(InstallInstanceData data, String status, String message, InstanceJson props) {
-            this(data, status, message, props.uuid.toString(), props);
-        }
-
-        public Reply(InstallInstanceData data, String status, String message, String uuid, InstanceJson props) {
             type = "installInstanceDataReply";
             requestId = data.requestId;
             this.status = status;
             this.message = message;
-            this.uuid = uuid;
             this.instanceData = props;
         }
     }

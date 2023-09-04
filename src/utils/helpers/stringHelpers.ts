@@ -17,9 +17,22 @@ export const toSentenceCase = (str: string) => {
 /**
  * Creates a localised number string
  */
-
 export const localiseNumber = (num: number) => {
   if (!num) return '0';
   
   return num.toLocaleString();
+}
+
+/**
+ * String equals ignoring case
+ */
+export const equalsIgnoreCase = (a: string, b: string) => {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+/**
+ * String contains ignoring case
+ */
+export const containsIgnoreCase = (a: string, b: string) => {
+  return a.toLowerCase().includes(b.toLowerCase());
 }

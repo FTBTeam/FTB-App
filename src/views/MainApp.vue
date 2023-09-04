@@ -53,6 +53,7 @@ import {RouterNames} from '@/router';
 import {AuthState} from '@/modules/auth/types';
 import {AppStoreModules, ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 @Component({
   components: {
@@ -119,6 +120,8 @@ export default class MainApp extends Vue {
     return this.startupJobs.every(job => job.done)
   }
 
+  private pollRef: number | null = null;
+  
   public mounted() {
     this.registerPingCallback((data: any) => {
       if (data.type === 'ping') {
@@ -137,8 +140,22 @@ export default class MainApp extends Vue {
         });
       }
     });
+
+    // this.pollRef = setInterval(() => {
+    //   //Poll cloud saves
+    //   console.log("pollCloudInstances")
+    //   sendMessage("pollCloudInstances", {})
+    //     .then(e => console.log("pollCloudInstances", e))
+    //     .catch(e => console.error("pollCloudInstances", e))
+    // }, 5000) as any
   }
 
+  destroyed() {
+    if (this.pollRef) {
+      clearInterval(this.pollRef);
+    }
+  }
+  
   @Watch('websockets', { deep: true })
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (newVal.socket.isConnected && this.loading) {
