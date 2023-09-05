@@ -34,6 +34,7 @@ import software.amazon.awssdk.http.Header;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.ByteArrayInputStream;
@@ -142,6 +143,7 @@ public final class CloudSaveManager {
             S3ClientBuilder builder = S3Client.builder()
                     .endpointOverride(URI.create(s3Host))
                     .region(Region.US_WEST_1)
+                    .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()) // Enable path-style addressing
                     .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(s3Key, s3Secret)))
                     .httpClient(new OkHTTPS3HttpClient(Constants::httpClient));
             s3Client = builder.build();
@@ -307,7 +309,6 @@ public final class CloudSaveManager {
                 .key(destKey)
                 .contentLength(len)
                 .contentType(Files.probeContentType(file))
-                .checksumSHA256(sha256)
                 .metadata(metadata);
 
         s3Client.putObject(builder.build(), RequestBody.fromFile(file));
@@ -496,7 +497,7 @@ public final class CloudSaveManager {
             try {
                 operation.operate();
                 return new SyncResult(SyncResult.ResultType.SUCCESS, "Synced!");
-            } catch (IOException ex) {
+            } catch (Throwable ex) {
                 LOGGER.error("Failed to sync instance.", ex);
                 complete = true;
                 return new SyncResult(SyncResult.ResultType.FAILED, "Sync failed. See logs.");
