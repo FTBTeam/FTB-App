@@ -12,6 +12,7 @@ import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
+import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
@@ -59,6 +60,7 @@ public class Instance implements IPack {
 
     public final Path path;
     public final InstanceJson props;
+    private @Nullable InstanceModifications modifications;
 
     private final InstanceLauncher launcher = new InstanceLauncher(this);
     @Nullable
@@ -126,6 +128,10 @@ public class Instance implements IPack {
                 versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, versionJson, ModpackVersionManifest.class);
             } else {
                 versionManifest = ModpackVersionManifest.makeInvalid();
+            }
+            Path modificationsJson = path.resolve("modifications.json");
+            if (Files.exists(modificationsJson)) {
+                modifications = InstanceModifications.load(modificationsJson);
             }
         }
     }
@@ -355,6 +361,24 @@ public class Instance implements IPack {
             Files.move(realJson, backupJson, StandardCopyOption.REPLACE_EXISTING);
         }
         Files.move(newJson, realJson);
+    }
+
+    public @Nullable InstanceModifications getModifications() {
+        return modifications;
+    }
+
+    public InstanceModifications getOrCreateModifications() {
+        if (modifications == null) {
+            modifications = new InstanceModifications();
+        }
+        return modifications;
+    }
+
+    public void saveModifications() throws IOException {
+        if (modifications != null) {
+            Path modificationsJson = path.resolve("modifications.json");
+            InstanceModifications.save(modificationsJson, modifications);
+        }
     }
 
     @Nullable

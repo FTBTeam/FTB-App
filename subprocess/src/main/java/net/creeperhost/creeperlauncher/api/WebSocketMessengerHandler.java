@@ -56,6 +56,7 @@ public class WebSocketMessengerHandler {
         register("uninstallInstance", UninstallInstanceData.class, new UninstallInstanceHandler());
         register("instanceConfigure", InstanceConfigureData.class, new InstanceConfigureHandler());
         register("instanceModToggle", InstanceModToggleData.class, new InstanceModToggleHandler());
+        register("instanceOverrideModLoader", InstanceOverrideModLoaderData.class, new InstanceOverrideModLoaderHandler());
         register("instanceBrowse", BrowseInstanceData.class, new BrowseInstanceHandler());
         register("getInstanceFolders", GetInstanceFoldersHandler.Request.class, new GetInstanceFoldersHandler());
         register("duplicateInstance", DuplicateInstanceHandler.Request.class, new DuplicateInstanceHandler());
