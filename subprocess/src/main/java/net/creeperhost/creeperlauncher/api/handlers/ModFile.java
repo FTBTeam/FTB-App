@@ -110,7 +110,7 @@ public class ModFile {
 
     public long getCurseProject() {
         if (this.curseProject > 0) return this.curseProject;
-        String url = Constants.CREEPERHOST_MODPACK + "/public/mod/lookup/" + this.getSha1();
+        String url = Constants.getModpacksApi() + "/public/mod/lookup/" + this.getSha1();
         LogManager.getLogger().info("Querying: {}", url);
         String resp = WebUtils.getAPIResponse(url);
         JsonElement jElement = new JsonParser().parse(resp);
@@ -131,7 +131,7 @@ public class ModFile {
 
     public long getCurseFile() {
         if (this.curseFile > 0) return this.curseFile;
-        String url = Constants.CREEPERHOST_MODPACK + "/public/mod/lookup/" + this.getSha1();
+        String url = Constants.getModpacksApi() + "/public/mod/lookup/" + this.getSha1();
         LogManager.getLogger().info("Querying: {}", url);
         String resp = WebUtils.getAPIResponse(url);
         JsonElement jElement = new JsonParser().parse(resp);

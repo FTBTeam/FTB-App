@@ -661,7 +661,7 @@ public class Instance implements IPack {
         Map<Long, ModpackVersionManifest.ModpackFile> idLookup = StreamableIterable.of(versionManifest.getFiles())
                 .filter(e -> e.getSha1OrNull() != null)
                 .toImmutableMap(ModpackVersionManifest.ModpackFile::getId, e -> e);
-        String url = Constants.getCreeperhostModpackPrefix(props._private, props.packType) + props.id + "/" + props.versionId + "/mods";
+        String url = Constants.getModpacksEndpoint(props._private, props.packType) + props.id + "/" + props.versionId + "/mods";
         LOGGER.info("Querying: {}", url);
         String resp = WebUtils.getAPIResponse(url);
         JsonElement jElement = JsonUtils.parseRaw(resp);

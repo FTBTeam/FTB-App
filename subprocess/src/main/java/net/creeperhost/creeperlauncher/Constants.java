@@ -21,6 +21,8 @@ public class Constants {
     // Don't put a Logger in this class, it is called before log4j can be initialized.
     // Adding a logger will break sentry!
 
+    static boolean IS_DEV_MODE = false;
+
     //CWD
     public static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
     private static final String INNER_DATA_DIR = ".ftba";
@@ -38,9 +40,8 @@ public class Constants {
     public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
     //API
-    public static final String CREEPERHOST_MODPACK = CreeperLauncher.isDevMode ? "https://modpack-api.ch.tools" : "https://api.modpacks.ch";
-    public static final String CREEPERHOST_MODPACK_SEARCH2 = CREEPERHOST_MODPACK + "/public/modpack/";
-    public static final String MOD_API = CREEPERHOST_MODPACK + "/public/mod/";
+    private static final String CREEPERHOST_MODPACK = "https://api.modpacks.ch";
+    private static final String CREEPERHOST_MODPACK_STAGING = "https://staging.api.modpacks.ch";
     public static final String JSON_PROXY = "https://api.modpacks.ch/public/meta/proxy/";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
@@ -173,7 +174,15 @@ public class Constants {
         return JDK_INSTALL_MANAGER;
     }
 
-    public static String getCreeperhostModpackPrefix(boolean isPrivate, byte packType) {
+    public static String getModpacksApi() {
+        return IS_DEV_MODE ? CREEPERHOST_MODPACK_STAGING : CREEPERHOST_MODPACK;
+    }
+
+    public static String getModEndpoint() {
+        return getModpacksApi() + "/public/mod/";
+    }
+
+    public static String getModpacksEndpoint(boolean isPrivate, byte packType) {
         String key = "public";
         String typeSlug = switch (packType) {
             case 1 -> "curseforge";
@@ -188,7 +197,7 @@ public class Constants {
         if (!Constants.KEY.isEmpty() && isPrivate) {
             key = Constants.KEY;
         }
-        return Constants.CREEPERHOST_MODPACK + "/" + key + "/" + typeSlug + "/";
+        return getModpacksApi() + "/" + key + "/" + typeSlug + "/";
     }
 
     public static Path getDataDir() {

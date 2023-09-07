@@ -49,7 +49,7 @@ public class ModpackManifest {
 
     @Nullable
     public static ModpackManifest queryManifest(long packId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        String url = Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId;
+        String url = Constants.getModpacksEndpoint(isPrivate, packType) + packId;
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()

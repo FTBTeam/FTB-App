@@ -141,6 +141,7 @@ public class CreeperLauncher {
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
 
         isDevMode = Args.containsKey("dev");
+        Constants.IS_DEV_MODE = isDevMode;
 
         boolean isOverwolf = Args.containsKey("overwolf");
         boolean startProcess = !isDevMode;

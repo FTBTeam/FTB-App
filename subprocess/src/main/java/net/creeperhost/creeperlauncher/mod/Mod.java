@@ -126,7 +126,7 @@ public class Mod {
     }
 
     public static Mod getFromAPI(int id) {
-        String resp = WebUtils.getAPIResponse(Constants.MOD_API + id);
+        String resp = WebUtils.getAPIResponse(Constants.getModEndpoint() + id);
         try {
             Mod mod = GsonUtils.GSON.fromJson(resp, Mod.class);
             if (mod.status.equals("error")) {

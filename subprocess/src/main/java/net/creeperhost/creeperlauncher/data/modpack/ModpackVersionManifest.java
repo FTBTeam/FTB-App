@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static net.creeperhost.creeperlauncher.Constants.CREEPERHOST_MODPACK;
 
 /**
  * Models the <code>modpacks.ch</code> api.
@@ -134,7 +133,7 @@ public class ModpackVersionManifest {
 
     @Nullable
     public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        return queryManifest(Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId);
+        return queryManifest(Constants.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
     }
 
     @Nullable
@@ -162,7 +161,7 @@ public class ModpackVersionManifest {
         LOGGER.info("Converting pack '{}'.", manifest);
 
         Request.Builder builder = new Request.Builder()
-                .url(CREEPERHOST_MODPACK + "/public/curseforge/import")
+                .url(Constants.getModpacksApi() + "/public/curseforge/import")
                 .put(new PathRequestBody(manifest));
         try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
