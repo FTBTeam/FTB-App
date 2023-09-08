@@ -13,7 +13,10 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
   constructor() {
     super("modpack");
   }
-  
+
+  /**
+   * @deprecated I don't recommend using this.
+   */
   async getModpacks() {
     return this.fetchPrivate<StatusResult<PackIdList>>("GET", "modpacks");
   }
@@ -24,5 +27,9 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
   
   async getFeaturedPacks(limit = 5) {
     return this.fetchPublic<PackIdList>("GET", `featured/${limit}`)
+  }
+  
+  async getLatestPacks(limit = 5) {
+    return this.fetchPublic<PackIdList>("GET", `updated/${limit}`)
   }
 }

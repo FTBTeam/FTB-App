@@ -1,5 +1,4 @@
-import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
-import {AppState} from '@/core/state/appState';
+import {ActionTree, ActionContext, GetterTree, Module, MutationTree} from 'vuex';
 import {ModPack} from '@/modules/modpacks/types';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {RootState} from '@/types';
@@ -12,6 +11,36 @@ const state = {
   // To is primarily used for searching.
   shortHoldModpacks: new Map<number, ModPack>(), // TODO: Maybe remove
   featuredPackIds: [] as number[],
+  latestPackIds: [] as number[],
+}
+
+async function getModpackIds(type: "featured" | "latest", {state, commit}: ActionContext<ModpackState, RootState>, limit = 5): Promise<number[]> {
+  const endpoints = {
+    featured: {
+      endpoint: () => modpackApi.modpacks.getFeaturedPacks(limit),
+      store: "SET_FEATURED_PACKS",
+      existing: "featuredPackIds"
+    },
+    latest: {
+      endpoint: () => modpackApi.modpacks.getLatestPacks(limit),
+      store: "SET_LATEST_PACKS",
+      existing: "latestPackIds"
+    }
+  }
+  
+  const endpoint = endpoints[type];
+  if ((state as any)[endpoint.existing].length > 0) {
+    return (state as any)[endpoint.existing];
+  }
+  
+  const req = await endpoint.endpoint();
+  if (!req) {
+    return [];
+  }
+
+  const featuredPacks = req.packs.sort((a, b) => b - a)
+  commit(endpoint.store, featuredPacks);
+  return featuredPacks;
 }
 
 const actions: ActionTree<ModpackState, RootState> = {
@@ -36,29 +65,25 @@ const actions: ActionTree<ModpackState, RootState> = {
     return modpack;
   },
   
-  async getFeaturedPacks({state, commit}) {
-    if (state.featuredPackIds.length > 0) {
-      return state.featuredPackIds;
-    }
-    
-    const req = await modpackApi.modpacks.getFeaturedPacks();
-    if (!req) {
-      return [];
-    }
-    
-    const featuredPacks = req.packs.sort((a, b) => b - a)
-    commit('SET_FEATURED_PACKS', featuredPacks);
-    return featuredPacks;
+  async getFeaturedPacks(context) {
+    return getModpackIds("featured", context);
+  },
+  
+  async getLatestModpacks(context) {
+    return getModpackIds("latest", context, 10);
   }
 }
 
 const mutations: MutationTree<ModpackState> = {
   SET_MODPACK: (state: ModpackState, modpack: ModPack) => state.modpacks.set(modpack.id, modpack),
-  SET_FEATURED_PACKS: (state: ModpackState, packs: number[]) => state.featuredPackIds = packs
+  SET_FEATURED_PACKS: (state: ModpackState, packs: number[]) => state.featuredPackIds = packs,
+  SET_LATEST_PACKS: (state: ModpackState, packs: number[]) => state.latestPackIds = packs,
 }
 
 const getters: GetterTree<ModpackState, RootState> = {
   featuredPacks: (state: ModpackState) => state.featuredPackIds,
+  latestPacks: (state: ModpackState) => state.latestPackIds,
+  getApiPack: (state: ModpackState) => (id: number) => state.modpacks.get(id),
 }
 
 export type GetModpack = (id: number) => Promise<ModPack | null>;

@@ -11,17 +11,19 @@ export const yeetError = async <T>(promise: () => Promise<T>) => {
 };
 
 export function debounce(func: () => void, wait: number): () => void {
-  let timeout: number | undefined;
+  let timeout: NodeJS.Timeout | undefined;
   return function () {
     clearTimeout(timeout);
-    // @ts-ignore
+
     timeout = setTimeout(() => {
-      // @ts-ignore
-      func.apply(this, arguments);
+      func();
     }, wait);
   };
 }
 
+/**
+ * @deprecated makes no sense
+ */
 export async function asyncForEach(items: any[], callback: (item: any) => Promise<any>): Promise<any> {
   for (let i = 0; i < items.length; i++) {
     await callback(items[i]);
@@ -47,22 +49,7 @@ export function shortenHash(longHash: string): string {
   return `MT${longHash.substring(0, 28).toUpperCase()}`;
 }
 
-export function shuffle(array: any[]) {
-  let i = array.length;
-  let j;
-  let temp;
-  if (i === 0) {
-    return array;
-  }
-  while (--i) {
-    j = Math.floor(Math.random() * (i + 1));
-    temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-  return array;
-}
-
+// TODO: We should just use an api for this. It's simpler. 
 export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
   return new Promise((resolve, reject) => {
     if (serverInfo.includes(':')) {
@@ -91,25 +78,4 @@ export function queryServer(serverInfo: string): Promise<MCProtocol | undefined>
       });
     }
   });
-}
-
-export function prettyNumber(num: number): string {
-  return Intl.NumberFormat("en", {notation: "compact"}).format(num);
-}
-
-// Chunk array into smaller arrays
-export function chunkArray<T>(array: T[], size: number): T[][] {
-  const results = [];
-  while (array.length) {
-    results.push(array.splice(0, size));
-  }
-  return results;
-}
-
-export function removeTailingSlash(uri: string): string {
-  if (uri.endsWith('/')) {
-    return uri.slice(0, -1);
-  }
-
-  return uri;
 }

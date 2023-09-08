@@ -1,10 +1,9 @@
-// jacked from: https://github.com/sindresorhus/pretty-bytes
-// Jank = rushmead
 import store from '@/modules/store';
 import MarkdownIt from 'markdown-it';
 
 const markdownParser = new MarkdownIt();
 
+// TODO: Rewrite, this isn't a great implementation.
 export const prettyByteFormat = (bytes: number) => {
   if (isNaN(bytes)) {
     throw new TypeError('Expected a number');
@@ -31,10 +30,9 @@ export const prettyByteFormat = (bytes: number) => {
   return (neg ? '-' : '') + bytes + ' ' + unit;
 };
 
-export const addHyphensToUuid = (uuid: string) => {
-  return uuid?.replace(/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/, '$1-$2-$3-$4-$5') ?? '';
-};
-
+/**
+ * @deprecated use the new version instead.
+ */
 export const getPackArt = (packArt: any) => {
   if (typeof packArt === 'string') return packArt;
   if (!packArt) {
@@ -52,6 +50,8 @@ export const getPackArt = (packArt: any) => {
  *
  * @param url the remainder of the url (Automatically removes the `/` at the start of a string)
  * @param forcePublic forces the request to be public
+ * 
+ * @deprecated use the new version instead.
  */
 export const createModpackchUrl = (url: string, forcePublic = false): string => {
   const key = store.state.auth?.token?.attributes.modpackschkey;

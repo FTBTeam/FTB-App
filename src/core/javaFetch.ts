@@ -4,7 +4,6 @@ import {HttpMethod} from '@/core/@types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
 import {WebRequestData} from '@/core/@types/javaApi';
 
-
 interface FetchResponseRaw {
   status: string;
   statusMessage: string;

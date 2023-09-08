@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-03 16:42:25.
+// Generated using typescript-generator version 3.2.1263 on 2023-09-06 18:23:40.
 
 export interface BaseData {
     type: string;
@@ -123,7 +123,7 @@ export interface InstalledInstancesData extends BaseData {
 }
 
 export interface InstalledInstancesDataReply extends BaseData {
-    instances: InstanceJson[];
+    instances: SugaredInstanceJson[];
     cloudInstances: any[];
 }
 
@@ -474,6 +474,11 @@ export interface GetInstanceFoldersHandlerReply extends GetInstanceFoldersHandle
 
 export interface GetInstanceFoldersHandlerRequest extends BaseData {
     uuid: string;
+}
+
+export interface SugaredInstanceJson extends InstanceJson {
+    path: string;
+    pendingCloudInstance: boolean;
 }
 
 export interface InstanceDeleteBackupHandlerReply extends InstanceDeleteBackupHandlerRequest {

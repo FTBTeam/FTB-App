@@ -80,26 +80,26 @@ export const actions: ActionTree<ServersState, RootState> = {
         console.error(err);
       });
   },
-  fetchFeaturedServers({ rootState, commit, dispatch, state }): Promise<void> {
-    commit('setLoading', true);
-    return axios
-      .get<ServerListResponse>('https://api.creeper.host/minetogether/list', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      .then((response: AxiosResponse<ServerListResponse>) => {
-        const servers = response.data.servers;
-        servers.forEach(async server => {
-          server.protoResponse = await queryServer(server.ip);
-          commit('updateServer', { id: 'featured', server });
-        });
-        commit('loadServers', { id: 'featured', servers });
-        commit('setLoading', false);
-      })
-      .catch(err => {
-        commit('setLoading', false);
-        console.error(err);
-      });
-  },
+  // fetchFeaturedServers({ rootState, commit, dispatch, state }): Promise<void> {
+  //   commit('setLoading', true);
+  //   return axios
+  //     .get<ServerListResponse>('https://api.creeper.host/minetogether/list', {
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //     })
+  //     .then((response: AxiosResponse<ServerListResponse>) => {
+  //       const servers = response.data.servers;
+  //       servers.forEach(async server => {
+  //         server.protoResponse = await queryServer(server.ip);
+  //         commit('updateServer', { id: 'featured', server });
+  //       });
+  //       commit('loadServers', { id: 'featured', servers });
+  //       commit('setLoading', false);
+  //     })
+  //     .catch(err => {
+  //       commit('setLoading', false);
+  //       console.error(err);
+  //     });
+  // },
 };

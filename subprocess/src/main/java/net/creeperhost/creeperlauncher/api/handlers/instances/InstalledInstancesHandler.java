@@ -20,9 +20,10 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
             Instances.refreshInstances();
         }
 
-        List<InstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
-                .<InstanceJson>map(e -> new SugaredInstanceJson(e.props, e.path, e.isPendingCloudInstance()))
+        List<SugaredInstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
+                .map(e -> new SugaredInstanceJson(e.props, e.path, e.isPendingCloudInstance()))
                 .toList();
+        
         InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, List.of());
         Settings.webSocketAPI.sendMessage(reply);
     }

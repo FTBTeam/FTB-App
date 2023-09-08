@@ -22,7 +22,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import {NewsItem} from '@/modules/news/news.types';
-import {prettyNumber} from '@/utils';
+import {prettyNumber} from '@/utils/helpers/stringHelpers';
 
 @Component({
   methods: {prettyNumber}

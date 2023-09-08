@@ -206,8 +206,6 @@ export default class ServerLandingPage extends Vue {
   public updateInstall!: any;
   @Action('finishInstall', { namespace: 'modpacks' })
   public finishInstall!: any;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' })
-  public storePacks!: any;
   @Action('sendMessage') public sendMessage!: any;
 
   private server: any = null;

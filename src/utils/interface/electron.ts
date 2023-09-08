@@ -384,6 +384,7 @@ const Electron: ElectronOverwolfInterface = {
       }
       store.dispatch('settings/saveSettings', settings, { root: true });
     });
+    // TODO: Yeet me
     ipcRenderer.on('openModpack', (event, data) => {
       const { name, id } = data;
       getAPIRequest(store.state, `modpack/search/8?term=${name}`)

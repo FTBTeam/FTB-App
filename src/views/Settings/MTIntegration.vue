@@ -33,15 +33,17 @@
         class="mb-8"
         small="When enabled, the MineTogether friends list will automatically open in a new window on startup. Currently disabled."
       />
-      <!--      <ftb-toggle-->
-      <!--        label="Enable cloud save uploads "-->
-      <!--        :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves === 'true'"-->
-      <!--        @change="toggleCloudSaves"-->
-      <!--        :disabled="auth.token.activePlan === null"-->
-      <!--        onColor="bg-primary"-->
-      <!--        class="mb-8"-->
-      <!--        small="Stores your worlds, configs and more in the cloud and syncs them across systems."-->
-      <!--      />-->
+      
+      <ftb-toggle
+        label="Enable cloud save uploads "
+        :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves === 'true'"
+        @change="toggleCloudSaves"
+        :disabled="auth.token?.activePlan === null"
+        onColor="bg-primary"
+        class="mb-8"
+        small="Stores your worlds, configs and more in the cloud and syncs them across systems."
+      />
+      
       <ftb-toggle
         label="Show adverts"
         :value="settings.settings.showAdverts === true || settings.settings.showAdverts === 'true'"

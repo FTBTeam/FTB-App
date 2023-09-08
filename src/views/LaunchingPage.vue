@@ -1,7 +1,7 @@
 <template>
   <div class="pack-loading" :class="{ 'dark-mode': darkMode }">
     <header class="flex">
-      <img :src="artSquare" class="art rounded-2xl shadow mr-8" width="135" alt="" />
+      <img v-if="artLogo" :src="artLogo" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">
@@ -196,8 +196,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import {Instance, ModpackState} from '@/modules/modpacks/types';
-import { Action, State } from 'vuex-class';
+import {Instance, ModPack, ModpackState} from '@/modules/modpacks/types';
+import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
@@ -213,6 +213,10 @@ import { emitter } from '@/utils/event-bus';
 import { RouterNames } from '@/router';
 import {wsTimeoutWrapper, wsTimeoutWrapperTyped, yeetError} from '@/utils';
 import Router from 'vue-router';
+import {ns} from '@/core/state/appState';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import {resolveArtwork} from '@/utils/helpers/packHelpers';
+import {GetModpack} from '@/core/state/modpacks/modpacksState';
 
 type InstanceActionCategory = {
   title: string;
@@ -222,14 +226,14 @@ type InstanceActionCategory = {
 type InstanceAction = {
   title: string;
   icon: string;
-  action: (instance: Instance, router: Router) => void;
+  action: (instance: SugaredInstanceJson, router: Router) => void;
   condition?: (context: ConditionContext) => boolean;
   color?: string;
   looksLikeButton?: boolean;
 }
 
 type ConditionContext = {
-  instance: Instance;
+  instance: SugaredInstanceJson;
   instanceFolders: string[];
 }
 
@@ -246,7 +250,7 @@ function openFolderAction(name: string, path: string): InstanceAction {
     title: `${name}`,
     icon: "folder-open",
     condition: ({instanceFolders}) => folderExists(path, instanceFolders),
-    action: (instance: Instance) => {
+    action: (instance) => {
       wsTimeoutWrapper({
         type: 'instanceBrowse',
         uuid: instance.uuid,
@@ -263,7 +267,7 @@ const instanceActions: InstanceActionCategory[] = [
       {
         title: "Instance folder",
         icon: "folder-open",
-        action: (instance: Instance) => {
+        action: (instance) => {
           wsTimeoutWrapper({
             type: 'instanceBrowse',
             uuid: instance.uuid,
@@ -289,7 +293,7 @@ const instanceActions: InstanceActionCategory[] = [
         title: "Kill instance",
         icon: "skull-crossbones",
         color: "danger",
-        action: (instance: Instance) => {
+        action: (instance) => {
           wsTimeoutWrapper({
             type: 'instance.kill',
             uuid: instance.uuid,
@@ -320,8 +324,13 @@ export interface Bar {
   },
 })
 export default class LaunchingPage extends Vue {
-  @State('modpacks') public modpacks!: ModpackState;
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
+  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
+  @Getter('getInstance', ns("v2/instances")) getInstance!: (uuid: string) => SugaredInstanceJson | undefined;
+  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
+  
+  @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
+  
+  @Action('fetchModpack', { namespace: 'modpacks' }) fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
   @State('settings') public settingsState!: SettingsState;
@@ -397,12 +406,7 @@ export default class LaunchingPage extends Vue {
     }
 
     emitter.on('ws.message', this.onLaunchProgressUpdate);
-
-    await this.fetchModpack(this.instance?.id);
-    if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
-      this.loading = false;
-    }
-
+    await this.getModpack(this.instance.id);
     await this.launch();
 
     wsTimeoutWrapperTyped<any, { folders: string[] }>({ type: 'getInstanceFolders', uuid: this.instance.uuid })
@@ -587,11 +591,7 @@ export default class LaunchingPage extends Vue {
   }
 
   get instance() {
-    if (this.modpacks === null) {
-      return null;
-    }
-
-    return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
+    return this.getInstance(this.$route.query.uuid as string) ?? null;
   }
 
   get bars() {
@@ -611,14 +611,15 @@ export default class LaunchingPage extends Vue {
   }
 
   get currentModpack() {
-    if (this.instance == null) {
-      return null;
-    }
-    const id: number = this.instance.id;
-    if (this.modpacks.packsCache[id] === undefined) {
-      return null;
-    }
-    return this.modpacks.packsCache[id];
+    return this.instance;
+    // if (this.instance == null) {
+    //   return null;
+    // }
+    // const id: number = this.instance.id;
+    // if (this.modpacks.packsCache[id] === undefined) {
+    //   return null;
+    // }
+    // return this.modpacks.packsCache[id];
   }
 
   messageTypes = {
@@ -646,18 +647,22 @@ export default class LaunchingPage extends Vue {
   }
 
   runAction(action: InstanceAction) {
-    action.action(this.instance!, this.$router);
+    if (!this.instance) {
+      return;
+    }
+    
+    action.action(this.instance, this.$router);
     this.showOptions = false;
   }
   
-  get artSquare() {
-    if (!this.currentModpack?.art) {
-      return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
-    }
-
-    const arts = this.currentModpack.art.filter((art) => art.type === 'square');
-    return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
-  }
+  // get artSquare() {
+  //   if (!this.currentModpack?.art) {
+  //     return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+  //   }
+  //
+  //   const arts = this.currentModpack.art.filter((art) => art.type === 'square');
+  //   return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+  // }
     
   get launchStatus() {
     if (this.hasCrashed) {
@@ -669,6 +674,14 @@ export default class LaunchingPage extends Vue {
     }
 
     return 'Running %s';
+  }
+  
+  get artLogo() {
+    if (!this.instance) {
+      return null;
+    }
+    
+    return resolveArtwork(this.instance, "square", this.getApiPack(this.instance!.id) ?? null)
   }
 }
 </script>

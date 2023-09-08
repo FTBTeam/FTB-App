@@ -72,7 +72,7 @@ import { ModPack, Versions } from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import { createModpackchUrl, getPackArt, shuffle } from '../utils';
+import { createModpackchUrl, getPackArt } from '../utils';
 import { SettingsState } from '../modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import ServerCard from '@/components/organisms/ServerCard.vue';
@@ -114,7 +114,6 @@ export default class ModpackPage extends Vue {
   @State('auth') public auth!: AuthState;
   @State('settings') public settings!: SettingsState;
   @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
   @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall!: any;
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall!: any;
   @Action('sendMessage') public sendMessage!: any;
@@ -219,14 +218,7 @@ export default class ModpackPage extends Vue {
     }
     return null;
   }
-
-  get shuffledServers() {
-    if (this.currentVersionObject !== null && this.currentVersionObject.mtgID !== undefined) {
-      return shuffle(this.serverListState.servers[this.currentVersionObject.mtgID]);
-    }
-    return [];
-  }
-
+  
   get latestRelease() {
     if (this.currentModpack !== undefined) {
       const version = this.currentModpack?.versions.find((f: Versions) => f.type.toLowerCase() === 'release');

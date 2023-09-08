@@ -1,8 +1,8 @@
-import {InstanceJson} from '@/core/@types/javaDataTypes';
 import {ModPack} from '@/modules/modpacks/types';
 
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.png';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.png';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all";
@@ -21,7 +21,7 @@ export const defaultArtwork: Record<ArtworkTypes, string> = {
  * 
  * TODO: Support the new artwork system in the future
  */
-export function resolveArtwork(packOrInstance: InstanceJson | ModPack | null, artworkType: ArtworkTypes = "square", fallback?: ModPack | null) {
+export function resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | ModPack | null, artworkType: ArtworkTypes = "square", fallback?: ModPack | null) {
   if (!packOrInstance) {
     return defaultArtwork[artworkType];
   }
@@ -29,7 +29,7 @@ export function resolveArtwork(packOrInstance: InstanceJson | ModPack | null, ar
   // Splash is not stored locally for modpacks
   if ("uuid" in packOrInstance) {
     // It's an instance
-    const instance = packOrInstance as InstanceJson;
+    const instance = packOrInstance as SugaredInstanceJson;
     const fallbackArt = fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
     if (instance.art === "") {
       return fallbackArt;
@@ -50,13 +50,13 @@ const knownModloaders = [
   "neoforge"
 ]
 
-export function resolveModloader(packOrInstance: InstanceJson | ModPack | null) {
+export function resolveModloader(packOrInstance: SugaredInstanceJson | ModPack | null) {
   if (!packOrInstance) {
     return "Forge";
   }
   
   if ("uuid" in packOrInstance) {
-    const instance = packOrInstance as InstanceJson;
+    const instance = packOrInstance as SugaredInstanceJson;
     if (!instance.modLoader) {
       return "Forge";
     }

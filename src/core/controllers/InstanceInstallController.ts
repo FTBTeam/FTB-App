@@ -1,6 +1,11 @@
 import {emitter} from '@/utils';
 import store from '@/modules/store';
-import {FilesEvent, InstallInstanceDataProgress, InstallInstanceDataReply, InstanceJson} from '@/core/@types/javaApi';
+import {
+  FilesEvent,
+  InstallInstanceDataProgress,
+  InstallInstanceDataReply,
+  SugaredInstanceJson
+} from '@/core/@types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {Versions} from '@/modules/modpacks/types';
@@ -25,7 +30,7 @@ export type InstallStatus = {
 
 type InstallResult = {
   success: boolean;
-  instance?: InstanceJson;
+  instance?: SugaredInstanceJson;
 }
 
 /**
@@ -54,7 +59,7 @@ class InstanceInstallController {
     await this.checkQueue();
   }
 
-  public async requestUpdate(instance: InstanceJson, version: Versions) {
+  public async requestUpdate(instance: SugaredInstanceJson, version: Versions) {
     this.queue.push({
       uuid: crypto.randomUUID(),
       id: instance.id,
@@ -67,6 +72,10 @@ class InstanceInstallController {
     
     // Trigger a check queue
     await this.checkQueue();
+  }
+  
+  public async requestImport() {
+    
   }
   
   private async checkQueue() {
@@ -137,7 +146,6 @@ class InstanceInstallController {
       });
       
       const instanceInstaller = (data: InstallInstanceDataReply | InstallInstanceDataProgress | FilesEvent) => {
-        // console.log(data);
         if (data.type === "installInstanceDataReply") {
           // TODO: If the status is init, we should update the instance store to reflect the instance being installed
           //       but we should ensure you can't do anything with it until it's done.
@@ -164,7 +172,7 @@ class InstanceInstallController {
             
             return finish({
               success: true,
-              instance: typedData.instanceData,
+              instance: typedData.instanceData as SugaredInstanceJson, // It's not really but it's fine
             });
           } else if (typedData.status === "files") {
             // No Op for now...
@@ -172,7 +180,6 @@ class InstanceInstallController {
           }
         } else if (data.type === "installInstanceProgress") {
           const typedData = data as InstallInstanceDataProgress;
-          console.log(typedData)
           this.updateInstallStatus({
             request,
             stage: toTitleCase(typedData.currentStage),

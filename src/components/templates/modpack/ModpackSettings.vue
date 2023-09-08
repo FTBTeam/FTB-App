@@ -257,6 +257,7 @@ export default class ModpackSettings extends Vue {
   // I'm not sure this works, at best, it's VueX state mutation which is bad hmm kay...
   public toggleCloudSaves() {
     this.localInstance.cloudSaves = !this.localInstance.cloudSaves;
+    this.saveSettings();
   }
   
   selectResolution(id: number) {

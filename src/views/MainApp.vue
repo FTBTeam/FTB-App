@@ -70,7 +70,6 @@ export default class MainApp extends Vue {
   @State('settings') public settings!: SettingsState;
   @Action('sendMessage') public sendMessage: any;
   @State('auth') public auth!: AuthState;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks: any;
   @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall: any;
   @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;

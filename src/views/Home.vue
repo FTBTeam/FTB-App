@@ -75,12 +75,10 @@ import {Action, Getter} from 'vuex-class';
 import FtbButton from '@/components/atoms/input/FTBButton.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import Loading2 from '@/components/atoms/Loading2.vue';
-import {AppStoreModules, ns} from '@/core/state/appState';
-import {InstanceJson} from '@/core/@types/javaApi';
+import {ns} from '@/core/state/appState';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
-
-const namespace: string = 'modpacks';
 
 @Component({
   components: {
@@ -96,7 +94,7 @@ const namespace: string = 'modpacks';
   },
 })
 export default class Home extends Vue {
-  @Getter('instances', ns("v2/instances")) instances!: InstanceJson[];
+  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
   
   @Getter("featuredPacks", ns("v2/modpacks")) featuredPacksIds!: number[];
   @Action("getFeaturedPacks", ns("v2/modpacks")) getFeaturedPacks!: () => Promise<number[]>;
@@ -112,68 +110,6 @@ export default class Home extends Vue {
     await this.getFeaturedPacks();
     this.loadingFeatured = false;
   }
-  
-  // @State('settings') public settingsState!: SettingsState;
-  // @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  // @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-  // @Action('loadFeaturedPacks', { namespace }) public loadFeaturedPacks: any;
-  // @Action('loadAllPacks', { namespace }) public loadAllPacks: any;
-  // @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (id: number) => Promise<ModPack>;
-  // @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: (id: number) => Promise<ModPack>;
-  // @State('servers') public serverListState!: ServersState;
-  // @Action('fetchFeaturedServers', { namespace: 'servers' }) public fetchFeaturedServers!: any;
-  //
-  // public currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
-  // private cardsToShow = 10;
-  // private isLoaded: boolean = false;
-  //
-  // @Watch('modpacks', { deep: true })
-  // public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
-  //   if (JSON.stringify(newVal.installedPacks) !== JSON.stringify(oldVal.installedPacks)) {
-  //     this.isLoaded = false;
-  //     try {
-  //       await Promise.all(
-  //         newVal.installedPacks.map(async (instance) => {
-  //           const pack =
-  //             instance.packType == 0 ? await this.fetchModpack(instance.id) : await this.fetchCursepack(instance.id);
-  //           return pack;
-  //         }),
-  //       );
-  //       this.isLoaded = true;
-  //     } catch (err) {
-  //       this.isLoaded = true;
-  //     }
-  //   }
-  // }
-  //
-  // public getModpack(id: number): ModPack | undefined {
-  //   return this.modpacks?.packsCache[id];
-  // }
-  //
-  // async mounted() {
-  //   // this.fetchFeaturedServers();
-  //   this.currentTab = this.recentlyPlayed.length >= 1 ? 'recentlyPlayed' : 'featuredPacks';
-  //   if (this.modpacks == null || this.modpacks.featuredPacks.length <= 0) {
-  //     await this.loadAllPacks();
-  //     await this.loadFeaturedPacks();
-  //   }
-  //   if (this.modpacks) {
-  //     this.isLoaded = false;
-  //     try {
-  //       await Promise.all(
-  //         this.modpacks.installedPacks.map(async (instance) => {
-  //           const pack =
-  //             instance.packType == 0 ? await this.fetchModpack(instance.id) : await this.fetchCursepack(instance.id);
-  //           return pack;
-  //         }),
-  //       );
-  //       this.isLoaded = true;
-  //     } catch (err) {
-  //       this.isLoaded = true;
-  //     }
-  //   }
-  // }
-  //
   
   get recentInstances() {
     return this.instances

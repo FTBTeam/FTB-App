@@ -1,7 +1,7 @@
 import { ActionTree } from 'vuex';
 import { Changelog, InstallProgress, Instance, ModPack, ModpackState } from './types';
 import { RootState } from '@/types';
-import {asyncForEach, chunkArray, getLogger, Logger, logVerbose, removeTailingSlash} from '@/utils';
+import {asyncForEach, getLogger, Logger, logVerbose} from '@/utils';
 import semver from 'semver';
 import {AuthState} from '@/modules/auth/types';
 
@@ -11,6 +11,9 @@ const packIdBlacklist = [
   116
 ];
 
+/**
+ * @deprecated DO NOT USE!
+ */
 export function getAPIRequest(rootState: RootState, url: string): Promise<Response> {
   if (rootState.auth === null) {
     return fetch(`${process.env.VUE_APP_MODPACK_API}/public/${url}`);
@@ -26,240 +29,79 @@ export function getAPIRequest(rootState: RootState, url: string): Promise<Respon
   });
 }
 
-// Apparently this module loads to late?
-const logger = (): Logger => {
-  return getLogger('modpacks-vuex');
-};
-
 export const actions: ActionTree<ModpackState, RootState> = {
-  doSearch({ commit, rootState, dispatch }: any, searchTerm): any {
-    if (searchTerm.trim().length < 3) {
-      return;
-    }
-    commit('setLoading', true);
-    commit('curseLoading', true);
-    commit('setSearch', searchTerm);
-    return getAPIRequest(rootState, `modpack/search/8?term=${searchTerm}`)
-      .then((response) => response.json())
-      .then(async (data) => {
-        if (data.status === 'error') {
-          commit('searchError', data.message);
-          commit('setLoading', false);
-          return;
-        }
-        const packIDs = data.packs;
-        const cursePackIDs = data.curseforge;
-        if (packIDs == null && cursePackIDs == null) {
-          return;
-        }
-        const packs: ModPack[] = [];
-        const cursePacks: ModPack[] = [];
-        await asyncForEach(packIDs, async (packID: number) => {
-          const pack = await dispatch('fetchModpack', packID);
-          packs.push(pack);
-        });
-        commit('searchLoaded', packs);
-        commit('setLoading', false);
-        await asyncForEach(cursePackIDs, async (packID: number) => {
-          const pack = await dispatch('fetchCursepack', packID);
-          cursePacks.push(pack);
-        });
-        commit('searchCurseLoaded', cursePacks);
-        commit('curseLoading', false);
-      })
-      .catch((err) => {
-        commit('searchError', err);
-        commit('setLoading', false);
-        console.error(err);
-      });
-  },
-  getPopularInstalls({ commit, rootState, dispatch }: any): any {
-    commit('setLoading', true);
-    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/installs/20`)
-      .then((response) => response.json())
-      .then(async (data) => {
-        const packIDs = data.packs;
-        if (packIDs == null) {
-          return;
-        }
-        const packs: ModPack[] = [];
-        await asyncForEach(packIDs, async (packID: number) => {
-          const pack = await dispatch('fetchModpack', packID);
-          if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
-            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
-            return;
-          }
-          packs.push(pack);
-        });
-        commit('popularInstalls', packs);
-        commit('setLoading', false);
-      })
-      .catch((err) => {
-        commit('popularInstallsError', err);
-        commit('setLoading', false);
-        console.error(err);
-      });
-  },
-  getPopularPlays({ commit, rootState, dispatch }: any): any {
-    commit('setLoading', true);
-    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/popular/plays/20`)
-      .then((response) => response.json())
-      .then(async (data) => {
-        const packIDs = data.packs;
-        if (packIDs == null) {
-          return;
-        }
-        const packs: ModPack[] = [];
-        await asyncForEach(packIDs, async (packID: number) => {
-          const pack = await dispatch('fetchModpack', packID);
-          if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
-            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
-            return;
-          }
-          packs.push(pack);
-        });
-        commit('popularPlays', packs);
-        commit('setLoading', false);
-      })
-      .catch((err) => {
-        commit('popularPlaysError', err);
-        commit('setLoading', false);
-        console.error(err);
-      });
-  },
-  getPrivatePacks({ commit, rootState, dispatch }: any): any {
-    commit('setLoading', true);
-    return getAPIRequest(rootState, `modpack/private/20`)
-      .then((response) => response.json())
-      .then(async (data) => {
-        const packIDs = data.packs;
-        if (packIDs == null) {
-          return;
-        }
-        const packs: ModPack[] = [];
-        await asyncForEach(packIDs, async (packID: number) => {
-          const pack = await dispatch('fetchModpack', packID);
-          if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
-            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
-            return;
-          }
-          packs.push(pack);
-        });
-        commit('privatePacks', packs);
-        commit('setLoading', false);
-      })
-      .catch((err) => {
-        commit('privatePacksError', err);
-        commit('setLoading', false);
-        console.error(err);
-      });
-  },
-  clearSearch({ commit }): any {
-    const packs: ModPack[] = [];
-    commit('searchLoaded', packs);
-    commit('setSearch', '');
-    commit('searchCurseLoaded', packs);
-    commit('setLoading', false);
-  },
-  loadFeaturedPacks({ commit, rootState, dispatch }: any): any {
-    commit('setLoading', true);
-    return fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/featured/20`)
-      .then((response) => response.json())
-      .then(async (data) => {
-        const packIDs = data.packs;
-        if (packIDs == null) {
-          return;
-        }
-        const packs: ModPack[] = [];
-        for await (const packID of packIDs) {
-          const pack = await dispatch('fetchModpack', packID);
-          if ((pack.status !== undefined && pack.status === 'error') || pack.versions.length <= 0) {
-            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
-            return;
-          }
-          packs.push(pack);
-        }
-        commit('featuredPacksLoaded', packs);
-        commit('setLoading', false);
-      })
-      .catch((err) => {
-        commit('featuredPacksError', err);
-        commit('setLoading', false);
-        console.error(err);
-      });
-  },
-  async loadAllPacks({ commit, rootState, dispatch, state }): Promise<any> {
-    if (state.isPullingPacks) {
-      return;
-    }
-    
-    // Eww
-    const cleanUp = (loading: boolean = false) => {
-      commit('setLoading', loading);
-      commit('setPacksToLoad', 0)
-      commit('setPacksLoaded', 0)
-      commit('setIsPullingPacks', loading);
-    }
-    
-    logger().info('Loading all modpacks from the api');
-    cleanUp(true);
-    
-    try {
-      const allPacks = await fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`);
-      let {packs}: {packs: number[]} = await allPacks.json();
-      
-      if (packs == null || packs.length <= 0) {
-        cleanUp();
-        return;
-      }
-      
-      packs = packs.filter(packId => packIdBlacklist.indexOf(packId) === -1);
-      commit('setPacksToLoad', packs.length);
-      logger().info(`Received ${packs.length} from the api`);
-
-      const packChunks = chunkArray(packs,5);
-      const loadedPackChunks = await Promise.all(packChunks.map(async (chunk) => {
-        let loadedPacksHolder = [];
-        for (const packID of chunk) {
-          logger().info(`Loading ${packID}`);
-          
-          const loadedPack = await dispatch('fetchModpack', packID);
-          if (!loadedPack || (loadedPack.status !== undefined && loadedPack.status === 'error') || loadedPack.versions.length <= 0) {
-            logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
-            continue;
-          }
-          
-          loadedPacksHolder.push(loadedPack)
-          commit('updatePacksLoaded')
-        }
-        
-        return loadedPacksHolder as ModPack[];
-      }))
-      
-      const loadedPacks = loadedPackChunks.flat();
-      const sortedPacks = loadedPacks.sort((a, b) => {
-        if (a.featured !== null && a.featured) {
-          if (b.featured !== null && b.featured) {
-            return 0;
-          } else {
-            return -1;
-          }
-        } else {
-          return 0;
-        }
-      });
-
-      commit('allPacksLoaded', sortedPacks);
-      commit('setLoading', false);
-      commit('setIsPullingPacks', false);
-    } catch (error) {
-      cleanUp()
-      commit('allPacksError', error);
-      commit('setLoading', false);
-    } finally {
-      cleanUp()
-    }
-  },
+  // async loadAllPacks({ commit, rootState, dispatch, state }): Promise<any> {
+  //   if (state.isPullingPacks) {
+  //     return;
+  //   }
+  //  
+  //   // Eww
+  //   const cleanUp = (loading: boolean = false) => {
+  //     commit('setLoading', loading);
+  //     commit('setPacksToLoad', 0)
+  //     commit('setPacksLoaded', 0)
+  //     commit('setIsPullingPacks', loading);
+  //   }
+  //  
+  //   logger().info('Loading all modpacks from the api');
+  //   cleanUp(true);
+  //  
+  //   try {
+  //     const allPacks = await fetch(`${process.env.VUE_APP_MODPACK_API}/public/modpack/all`);
+  //     let {packs}: {packs: number[]} = await allPacks.json();
+  //    
+  //     if (packs == null || packs.length <= 0) {
+  //       cleanUp();
+  //       return;
+  //     }
+  //    
+  //     packs = packs.filter(packId => packIdBlacklist.indexOf(packId) === -1);
+  //     commit('setPacksToLoad', packs.length);
+  //     logger().info(`Received ${packs.length} from the api`);
+  //
+  //     const packChunks = chunkArray(packs,5);
+  //     const loadedPackChunks = await Promise.all(packChunks.map(async (chunk) => {
+  //       let loadedPacksHolder = [];
+  //       for (const packID of chunk) {
+  //         logger().info(`Loading ${packID}`);
+  //        
+  //         const loadedPack = await dispatch('fetchModpack', packID);
+  //         if (!loadedPack || (loadedPack.status !== undefined && loadedPack.status === 'error') || loadedPack.versions.length <= 0) {
+  //           logVerbose(rootState, `ERR: Modpack ID ${packID} has no versions`);
+  //           continue;
+  //         }
+  //        
+  //         loadedPacksHolder.push(loadedPack)
+  //         commit('updatePacksLoaded')
+  //       }
+  //      
+  //       return loadedPacksHolder as ModPack[];
+  //     }))
+  //    
+  //     const loadedPacks = loadedPackChunks.flat();
+  //     const sortedPacks = loadedPacks.sort((a, b) => {
+  //       if (a.featured !== null && a.featured) {
+  //         if (b.featured !== null && b.featured) {
+  //           return 0;
+  //         } else {
+  //           return -1;
+  //         }
+  //       } else {
+  //         return 0;
+  //       }
+  //     });
+  //
+  //     commit('allPacksLoaded', sortedPacks);
+  //     commit('setLoading', false);
+  //     commit('setIsPullingPacks', false);
+  //   } catch (error) {
+  //     cleanUp()
+  //     commit('allPacksError', error);
+  //     commit('setLoading', false);
+  //   } finally {
+  //     cleanUp()
+  //   }
+  // },
   storeInstalledPacks({ commit }, packsPayload): any {
     const packs: Instance[] = [];
     asyncForEach(Object.keys(packsPayload.instances), async (index) => {
@@ -273,12 +115,6 @@ export const actions: ActionTree<ModpackState, RootState> = {
       packs.push(instance);
     });
     commit('storeInstalledPacks', packs);
-  },
-  storeInstalledPack({ commit, state }, packPayload: { pack: Instance; type: 'instance' | 'cloudInstance' }): any {
-    packPayload.pack.kind = packPayload.type;
-
-    const existing = state.installedPacks.find((e) => e.uuid === packPayload.pack.uuid);
-    commit('pushToInstalledPack', { pack: packPayload.pack, existing: !!existing });
   },
   updatePackInStore({ commit }, payload: Instance): any {
     commit('updatePackInStore', payload);
@@ -463,9 +299,5 @@ export const actions: ActionTree<ModpackState, RootState> = {
         return await dispatch('fetchModpack', id);
       }),
     );
-    await dispatch('loadFeaturedPacks');
-    await dispatch('loadAllPacks');
-    await dispatch('getPopularPlays');
-    await dispatch('getPopularInstalls');
   },
 };

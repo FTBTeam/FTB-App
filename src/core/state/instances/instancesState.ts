@@ -64,6 +64,7 @@ const getters: GetterTree<InstanceState, RootState> = {
   isLoadingInstances: (state: InstanceState) => state.state.loadingInstances,
   instancesInitialized: (state: InstanceState) => state.state.instancesInitialized,
   instances: (state: InstanceState) => state.instances,
+  getInstance: (state: InstanceState) => (uuid: string) => state.instances.find(i => i.uuid === uuid),
 }
 
 export const instanceStateModule: Module<InstanceState, RootState> = {

@@ -228,12 +228,13 @@ tasks.named("generateTypeScript", GenerateTask) {
     outputKind = "module"
     outputFile = project.file("../src/core/@types/javaApi.d.ts")
     classPatterns = [
+        "net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler\$SugaredInstanceJson",
         "net.creeperhost.creeperlauncher.api.data.*",
         "net.creeperhost.creeperlauncher.api.data.**.*",
         "net.creeperhost.creeperlauncher.api.data.**.*\$*",
         "net.creeperhost.creeperlauncher.api.handlers.**.*\$Request",
         "net.creeperhost.creeperlauncher.api.handlers.**.*\$Reply",
-        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Data"
+        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Data",
     ]
     excludeClasses = sharedSettings.excludeClasses
     customTypeMappings = sharedSettings.customTypeMappings
@@ -252,16 +253,16 @@ tasks.named("generateTypeScript", GenerateTask) {
 """
 }
 
-tasks.register("generateTypeScriptExtras", GenerateTask) {
-    jsonLibrary = "gson"
-    outputKind = "module"
-    nullableAnnotations = ["org.jetbrains.annotations.Nullable"]
-    outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
-    excludeClasses = sharedSettings.excludeClasses
-    customTypeMappings = sharedSettings.customTypeMappings
-    classes = [
-            "net.creeperhost.creeperlauncher.data.InstanceJson",
-    ]
-}
+//tasks.register("generateTypeScriptExtras", GenerateTask) {
+//    jsonLibrary = "gson"
+//    outputKind = "module"
+//    nullableAnnotations = ["org.jetbrains.annotations.Nullable"]
+//    outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
+//    excludeClasses = sharedSettings.excludeClasses
+//    customTypeMappings = sharedSettings.customTypeMappings
+//    classes = [
+//            "net.creeperhost.creeperlauncher.data.InstanceJson",
+//    ]
+//}
 
-generateTypeScript.finalizedBy(generateTypeScriptExtras)
+//generateTypeScript.finalizedBy(generateTypeScriptExtras)

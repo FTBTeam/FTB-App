@@ -149,7 +149,7 @@ import { abortableFetch, AbortableRequest, createModpackchUrl, getPackArt } from
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';
 import {AppStoreModules, ns} from '@/core/state/appState';
-import {Backup, InstanceJson} from '@/core/@types/javaApi';
+import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import { sendMessage } from '@/core/websockets/websocketsApi';
 
 export enum ModpackPageTabs {
@@ -180,7 +180,7 @@ export enum ModpackPageTabs {
   },
 })
 export default class InstancePage extends Vue {
-  @Getter('instances', ns("v2/instances")) public instances!: InstanceJson[];
+  @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
   
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @State('settings') public settingsState!: SettingsState;

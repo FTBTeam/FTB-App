@@ -20,16 +20,14 @@
 <script lang="ts">
 import {Prop, Component} from 'vue-property-decorator';
 import PackCardCommon from '@/components/core/modpack/PackCardCommon.vue';
-import {InstanceJson} from '@/core/@types/javaDataTypes';
 import {isValidVersion, resolveArtwork, resolveModloader} from '@/utils/helpers/packHelpers';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {emitter} from '@/utils';
 import {RouterNames} from '@/router';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
 
 @Component
 export default class PackCard2 extends PackCardCommon {
-  @Prop() instance!: InstanceJson;
+  @Prop() instance!: SugaredInstanceJson;
   
   async mounted() {
     // Always fetch the modpack from the API so we can see if updates are available

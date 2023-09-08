@@ -36,3 +36,24 @@ export const equalsIgnoreCase = (a: string, b: string) => {
 export const containsIgnoreCase = (a: string, b: string) => {
   return a.toLowerCase().includes(b.toLowerCase());
 }
+
+/**
+ * Removes any trailing slashes from a uri
+ * 
+ * @param uri The uri to remove the trailing slash from
+ */
+export function removeTailingSlash(uri: string): string {
+  if (uri.endsWith('/')) {
+    return uri.slice(0, -1);
+  }
+
+  return uri;
+}
+
+/**
+ * Creates a clean looking, shortened number format.
+ * Aka: 1000 -> 1k, 1000000 -> 1m, 1000000000 -> 1b
+ */
+export function prettyNumber(num: number): string {
+  return Intl.NumberFormat("en", {notation: "compact"}).format(num);
+}

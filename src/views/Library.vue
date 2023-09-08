@@ -194,7 +194,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { prettyByteFormat, wsTimeoutWrapper, wsTimeoutWrapperTyped } from '@/utils';
 import { InstallerState } from '@/modules/app/appStore.types';
 import {AppStoreModules, ns} from '@/core/state/appState';
-import {InstanceJson} from '@/core/@types/javaApi';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 
@@ -206,7 +206,7 @@ import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
   },
 })
 export default class Library extends Vue {
-  @Getter('instances', ns("v2/instances")) public instances!: InstanceJson[];
+  @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
   @Getter("instancesInitialized", ns("v2/instances")) instancesInitialized!: boolean;
   
   get filteredInstance(): string[] | null {

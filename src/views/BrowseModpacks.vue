@@ -26,13 +26,17 @@
       />
     </div>
 
-    <message icon="warning" type="danger" class="m-6" v-if="error">
+    <message icon="warning" type="danger" class="my-6" v-if="error">
       {{ error }}
     </message>
 
-    <Loading class="mt-20" v-if="searchStarted || loading || (modpacks.loading && searchValue === '')" />
+    <message icon="info" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
+      No results found for '{{ searchValue }}'
+    </message>
 
-    <div class="result-cards" v-else>
+    <loading2 class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
+
+    <div class="result-cards" v-if="!error && results.length > 0">
       <search-result-pack-card
         v-for="(pack, index) in results"
         :pack="pack"
@@ -40,6 +44,14 @@
         :type="currentTab === 'ftbsearch' ? 0 : 1"
         @install="displayInstallModpack"
       />
+    </div>
+    
+    <div class="latest-packs" v-if="searchValue === '' && !loading">
+      <h1 class="text-2xl font-bold mb-4">Latest Modpacks</h1>
+      <div class="result-cards">
+        <pack-preview v-for="(packId, index) in latestPacks" :pack-id="packId" :key="index" />
+      </div>
+      <loading2 class="mt-20" v-if="loadingInitialPacks" />
     </div>
 
     <FTBModal :visible="showInstallModal" @dismiss-modal="clearInstallModal" size="large-dynamic">
@@ -60,7 +72,7 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
+import { Action, Getter, State } from 'vuex-class';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
@@ -73,11 +85,15 @@ import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import { InstallerState } from '@/modules/app/appStore.types';
 import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
-
-const namespace: string = 'modpacks';
+import {ns} from '@/core/state/appState';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import Loading2 from '@/components/atoms/Loading2.vue';
+import PackPreview from '@/components/core/modpack/PackPreview.vue';
 
 @Component({
   components: {
+    PackPreview,
+    Loading2,
     SearchResultPackCard,
     PackCardList,
     FTBSearchBar,
@@ -87,11 +103,11 @@ const namespace: string = 'modpacks';
   },
 })
 export default class BrowseModpacks extends Vue {
+  @Getter("latestPacks", ns("v2/modpacks")) latestPacks!: number[];
+  @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>; // TODO: better signature
+  
   @State('auth') public authState!: AuthState;
   @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-  @Action('loadAllPacks', { namespace }) public loadAllPacks: any;
-  @Action('getPopularPlays', { namespace }) public getPopularPlays: any;
-  @Action('getPrivatePacks', { namespace }) public getPrivatePacks: any;
   @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   searchValue: string = '';
@@ -101,7 +117,6 @@ export default class BrowseModpacks extends Vue {
   searchResults: SearchResultPack[] = [];
 
   loading = false;
-  searchStarted = false;
 
   // Installing
   showInstallModal = false;
@@ -111,19 +126,18 @@ export default class BrowseModpacks extends Vue {
   } | null = null;
   installerLoading = false;
   error = '';
+  
+  loadingInitialPacks = false;
 
   async mounted() {
     if (this.$route.params.search) {
       this.searchValue = this.$route.params.search;
       await this.searchPacks();
+      return;
     }
 
-    if (this.modpacks === undefined || this.modpacks.all === undefined || this.modpacks.all.length <= 0) {
-      await this.loadAllPacks();
-      if (this.authState.token !== null) {
-        await this.getPrivatePacks();
-      }
-    }
+    await toggleBeforeAndAfter(this.getLatestPacks, (state) => this.loadingInitialPacks = state);
+    console.log(this.latestPacks)
   }
 
   @Watch('$route')
@@ -136,7 +150,7 @@ export default class BrowseModpacks extends Vue {
 
   private debounceSearch = debounce(() => {
     this.searchPacks();
-  }, 1000);
+  }, 500);
 
   private async changeTab(tab: string) {
     this.currentTab = tab;
@@ -146,14 +160,15 @@ export default class BrowseModpacks extends Vue {
 
   @Watch('searchValue')
   private onSearch() {
+    this.loading = true;
+    this.searchResults = [];
+    
     if (this.searchValue === '') {
-      this.searchStarted = false;
       this.loading = false;
       return;
     }
 
     this.error = '';
-    this.searchStarted = true;
     this.debounceSearch();
   }
 
@@ -161,7 +176,7 @@ export default class BrowseModpacks extends Vue {
     if (this.searchValue.length < 2) {
       return;
     }
-
+    
     if (this.currentSearch) {
       this.currentSearch.abort();
     }
@@ -187,7 +202,6 @@ export default class BrowseModpacks extends Vue {
     } catch {
     } finally {
       this.loading = false;
-      this.searchStarted = false;
     }
   }
 
@@ -240,23 +254,6 @@ export default class BrowseModpacks extends Vue {
   }
 
   get results(): SearchResultPack[] {
-    // Transform the 'in state' packs to a search result for displaying all packs
-    if (this.searchValue === '' && typeof this.modpacks?.all !== 'undefined') {
-      return this.modpacks?.all.map(
-        (e) =>
-          ({
-            platform: 'modpacksch',
-            name: e.name,
-            art: e.art as unknown as Art[],
-            authors: e.authors as Authors[],
-            tags: e.tags as ModPackTag[],
-            synopsis: e.synopsis,
-            id: e.id,
-            updated: e.updated,
-          } as SearchResultPack),
-      );
-    }
-
     return this.searchResults;
   }
 }
