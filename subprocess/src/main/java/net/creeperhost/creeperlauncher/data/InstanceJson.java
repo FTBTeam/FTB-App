@@ -38,6 +38,8 @@ public class InstanceJson {
     public int recMemory = 4096;
     public int memory = Integer.parseInt(Settings.settings.getOrDefault("memory", "2048"));
 
+    public String shellArgs = Settings.settings.getOrDefault("shellArgs", "");
+    public String envArgs = Settings.settings.getOrDefault("envArgs", "");
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
     public String shellArgs = Settings.settings.getOrDefault("shellArgs", "");
     public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
@@ -62,6 +64,9 @@ public class InstanceJson {
     public byte packType;
     // TODO migrate this to `isPrivate`
     public boolean _private;
+    
+    // When locked the instance can not have mods changed
+    public boolean isLocked = true;
 
     /**
      * The current play time in millis.
@@ -108,6 +113,45 @@ public class InstanceJson {
         releaseChannel = other.releaseChannel;
         locked = other.locked;
         shellArgs = other.shellArgs;
+    }
+    
+    public static InstanceJson create(
+            long id, long versionId, String name, String version, String mcVersion, int minMemory, int recMemory, 
+            int memory, String jvmArgs, boolean embeddedJre, Path jrePath, int width, int height, String modLoader,
+            boolean isModified, boolean isImport, boolean cloudSaves, boolean hasInstMods, boolean installComplete,
+            byte packType, boolean _private, long totalPlayTime, long lastPlayed, String art,
+            String shellArgs, String envArgs, boolean isLocked
+    ) {
+        InstanceJson instanceJson = new InstanceJson();
+        instanceJson.uuid = UUID.randomUUID();
+        instanceJson.id = id;
+        instanceJson.versionId = versionId;
+        instanceJson.name = name;
+        instanceJson.version = version;
+        instanceJson.mcVersion = mcVersion;
+        instanceJson.minMemory = minMemory;
+        instanceJson.recMemory = recMemory;
+        instanceJson.memory = memory;
+        instanceJson.jvmArgs = jvmArgs;
+        instanceJson.embeddedJre = embeddedJre;
+        instanceJson.jrePath = jrePath;
+        instanceJson.width = width;
+        instanceJson.height = height;
+        instanceJson.modLoader = modLoader;
+        instanceJson.isModified = isModified;
+        instanceJson.isImport = isImport;
+        instanceJson.cloudSaves = cloudSaves;
+        instanceJson.hasInstMods = hasInstMods;
+        instanceJson.installComplete = installComplete;
+        instanceJson.packType = packType;
+        instanceJson._private = _private;
+        instanceJson.totalPlayTime = totalPlayTime;
+        instanceJson.lastPlayed = lastPlayed;
+        instanceJson.art = art;
+        instanceJson.shellArgs = shellArgs;
+        instanceJson.envArgs = envArgs;
+        instanceJson.isLocked = isLocked;
+        return instanceJson;
     }
 
     // Copy instance.
