@@ -7,7 +7,7 @@
     </div>
     
     <div class="featured-packs">
-      <pack-preview v-for="packId in featuredPacksIds" :key="packId" :packId="packId" />
+      <pack-preview v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
     </div>
   </div>
 <!--  <div class="px-6 py-4" v-if="isLoaded">-->

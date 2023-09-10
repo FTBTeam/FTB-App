@@ -3,15 +3,15 @@
     <div class="search-and-switcher mb-4">
       <div class="switcher shadow">
         <div
-          @click="changeTab('ftbsearch')"
+          @click="changeTab('modpacksch')"
           class="btn-icon bg-navbar ftb"
-          :class="{ active: currentTab === 'ftbsearch' }"
+          :class="{ active: currentTab === 'modpacksch' }"
         >
           <img src="@/assets/images/ftb-logo.svg" alt="" />
         </div>
 
         <div
-          @click="changeTab('cursesearch')"
+          @click="changeTab('curseforge')"
           class="btn-icon bg-navbar eww-orange"
           :class="{ active: currentTab === 'cursesearch' }"
         >
@@ -21,7 +21,7 @@
       <FTBSearchBar
         v-model="searchValue"
         class="w-full"
-        :placeholder="`Search ${currentTab === 'ftbsearch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
+        :placeholder="`Search ${currentTab === 'modpacksch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
         :min="3"
       />
     </div>
@@ -37,13 +37,7 @@
     <loading2 class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
 
     <div class="result-cards" v-if="!error && results.length > 0">
-      <search-result-pack-card
-        v-for="(pack, index) in results"
-        :pack="pack"
-        :key="index"
-        :type="currentTab === 'ftbsearch' ? 0 : 1"
-        @install="displayInstallModpack"
-      />
+      <pack-preview v-for="(pack, index) in results" :partial-pack="pack" :key="index" :provider="currentTab" />
     </div>
     
     <div class="latest-packs" v-if="searchValue === '' && !loading">
@@ -76,7 +70,7 @@ import { Action, Getter, State } from 'vuex-class';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import {Art, Authors, ModPack, ModpackState, ModPackTag, Versions} from '@/modules/modpacks/types';
+import {Art, Authors, ModPack, ModpackState, ModPackTag, PackProviders, Versions} from '@/modules/modpacks/types';
 import { Route } from 'vue-router';
 import { AuthState } from '@/modules/auth/types';
 import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
@@ -111,7 +105,7 @@ export default class BrowseModpacks extends Vue {
   @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   searchValue: string = '';
-  currentTab: string = 'ftbsearch';
+  currentTab: PackProviders = 'modpacksch';
 
   currentSearch: AbortableRequest | null = null;
   searchResults: SearchResultPack[] = [];
@@ -137,7 +131,6 @@ export default class BrowseModpacks extends Vue {
     }
 
     await toggleBeforeAndAfter(this.getLatestPacks, (state) => this.loadingInitialPacks = state);
-    console.log(this.latestPacks)
   }
 
   @Watch('$route')
@@ -152,14 +145,14 @@ export default class BrowseModpacks extends Vue {
     this.searchPacks();
   }, 500);
 
-  private async changeTab(tab: string) {
+  async changeTab(tab: PackProviders) {
     this.currentTab = tab;
     this.searchResults = [];
     await this.searchPacks();
   }
 
   @Watch('searchValue')
-  private onSearch() {
+  onSearch() {
     this.loading = true;
     this.searchResults = [];
     
@@ -185,9 +178,7 @@ export default class BrowseModpacks extends Vue {
 
     this.currentSearch = abortableFetch(
       createModpackchUrl(
-        `/modpack/search/20/detailed?term=${this.searchValue}&platform=${
-          this.currentTab !== 'ftbsearch' ? 'curseforge' : 'modpacksch'
-        }`,
+        `/modpack/search/20/detailed?term=${this.searchValue}&platform=${this.currentTab}`,
       ),
     );
 

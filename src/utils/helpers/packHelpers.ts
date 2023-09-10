@@ -3,6 +3,7 @@ import {ModPack} from '@/modules/modpacks/types';
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.png';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.png';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all";
@@ -21,7 +22,7 @@ export const defaultArtwork: Record<ArtworkTypes, string> = {
  * 
  * TODO: Support the new artwork system in the future
  */
-export function resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | ModPack | null, artworkType: ArtworkTypes = "square", fallback?: ModPack | null) {
+export function resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | ModPack | SearchResultPack | null, artworkType: ArtworkTypes = "square", fallback?: ModPack | null) {
   if (!packOrInstance) {
     return defaultArtwork[artworkType];
   }
@@ -39,7 +40,7 @@ export function resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJso
   }
   
   // It's a modpack
-  const pack = packOrInstance as ModPack;
+  const pack = packOrInstance as ModPack | SearchResultPack;
   return pack.art.find(e => e.type === artworkType)?.url ?? fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
 }
 

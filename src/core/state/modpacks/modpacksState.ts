@@ -5,6 +5,12 @@ import {RootState} from '@/types';
 
 export type ModpackState = typeof state;
 
+const packBlacklist = [
+  104, // Forge
+  105, // Fabric
+  116  // NeoForge
+]
+
 const state = {
   modpacks: new Map<number, ModPack>(),
   // Shorthold modpacks store is intended for modpacks that we have no need to keep in memory for a long period of time.
@@ -14,7 +20,7 @@ const state = {
   latestPackIds: [] as number[],
 }
 
-async function getModpackIds(type: "featured" | "latest", {state, commit}: ActionContext<ModpackState, RootState>, limit = 5): Promise<number[]> {
+async function getModpackIds(type: "featured" | "latest", {state, commit}: ActionContext<ModpackState, RootState>, limit = 5, ignoreBlacklist = false): Promise<number[]> {
   const endpoints = {
     featured: {
       endpoint: () => modpackApi.modpacks.getFeaturedPacks(limit),
@@ -38,7 +44,11 @@ async function getModpackIds(type: "featured" | "latest", {state, commit}: Actio
     return [];
   }
 
-  const featuredPacks = req.packs.sort((a, b) => b - a)
+  let featuredPacks = req.packs.sort((a, b) => b - a)
+  if (!ignoreBlacklist) {
+    featuredPacks = featuredPacks.filter(e => !packBlacklist.includes(e));
+  }
+  
   commit(endpoint.store, featuredPacks);
   return featuredPacks;
 }
@@ -70,7 +80,7 @@ const actions: ActionTree<ModpackState, RootState> = {
   },
   
   async getLatestModpacks(context) {
-    return getModpackIds("latest", context, 10);
+    return getModpackIds("latest", context, 15);
   }
 }
 

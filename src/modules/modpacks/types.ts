@@ -20,6 +20,8 @@ export interface ModPack {
   private?: boolean;
 }
 
+export type PackProviders = "modpacksch" | "curseforge"
+
 export interface ModPackLink {
   id: number;
   name: string;

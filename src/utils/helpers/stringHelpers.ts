@@ -57,3 +57,22 @@ export function removeTailingSlash(uri: string): string {
 export function prettyNumber(num: number): string {
   return Intl.NumberFormat("en", {notation: "compact"}).format(num);
 }
+
+/**
+ * Create trimmed string
+ */
+export function trimString(str: string, maxLength: number): string {
+  if (str.length > maxLength) {
+    return str.substring(0, maxLength) + '...';
+  }
+
+  return str;
+}
+
+export function stringIsEmpty(str: string | undefined | null) {
+  return !str || str.trim() === '';
+}
+
+export function stringOrDefault(str: string | undefined | null, defaultStr: string) {
+  return stringIsEmpty(str) ? defaultStr : str;
+}

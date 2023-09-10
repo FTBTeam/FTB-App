@@ -28,6 +28,9 @@ import { RouterNames } from '@/router';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 
 @Component
+/**
+ * @deprecated
+ */
 export default class SearchResultPackCard extends Vue {
   @Prop() pack!: SearchResultPack;
   @Prop() type!: number; // 0 == FTB, 1 == Curseforge
