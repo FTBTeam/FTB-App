@@ -4,7 +4,6 @@ import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.instance.importer.meta.CurseForgeMeta;
 import net.creeperhost.creeperlauncher.instance.importer.meta.MetaFinal;
 
-import java.util.UUID;
 
 public class CurseForgeTransformer implements MetaTransformer<CurseForgeMeta> {
     @Override
@@ -14,17 +13,17 @@ public class CurseForgeTransformer implements MetaTransformer<CurseForgeMeta> {
         
         // TODO: Lookup project
         
-        InstanceJson instance = InstanceJson.create(
-            lookupId,
-            lookupVersionId,
-            original.name(),
-            original.manifest() != null ? original.manifest().version() : "",
-            original.gameVersion(),
-            4096,
-            6144,
-            original.isMemoryOverride() ? original.allocatedMemory().intValue() : 0, // TODO, set correctly
-            
-        );
+//        InstanceJson instance = InstanceJson.create(
+//            lookupId,
+//            lookupVersionId,
+//            original.name(),
+//            original.manifest() != null ? original.manifest().version() : "",
+//            original.gameVersion(),
+//            4096,
+//            6144,
+//            original.isMemoryOverride() ? original.allocatedMemory().intValue() : 0 // TODO, set correctly
+//            
+//        );
         
         return null;
     }

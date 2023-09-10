@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.function.Function;
 
 // TODO move away from global GSON instance, instead have specialized instances.
 public class GsonUtils {
@@ -70,6 +72,40 @@ public class GsonUtils {
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             GSON.toJson(thing, type, writer);
         }
+    }
+
+    public static <T> Optional<T> getProperty(String keyList, JsonElement jsonElm, Function<JsonElement, T> getter) {
+        // If it's a single key, just return it.
+        if (!keyList.contains(".")) {
+            if (!jsonElm.isJsonObject()) {
+                throw new IllegalArgumentException("Expected object");
+            }
+            
+            return Optional.of(getter.apply(jsonElm.getAsJsonObject().get(keyList)));
+        }
+        
+        // If it's a list of keys, we need to traverse the tree.
+        if (!jsonElm.isJsonObject()) {
+            throw new IllegalArgumentException("Expected object");
+        }
+
+        JsonObject current = jsonElm.getAsJsonObject();
+
+        String[] keys = keyList.split("\\.");
+        for (int i = 0; i < keys.length - 1; i++) {
+            String key = keys[i];
+            if (!current.has(key) || !current.get(key).isJsonObject()) {
+                return Optional.empty();
+            }
+            current = current.getAsJsonObject(key);
+        }
+
+        String lastKey = keys[keys.length - 1];
+        if (!current.has(lastKey)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(getter.apply(current.get(lastKey)));
     }
 
     /**

@@ -1,4 +1,4 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
-public class PrismLikeProvider {
+public abstract class PrismLikeProvider implements InstanceProvider {
 }
