@@ -484,14 +484,14 @@ public final class CloudSaveManager {
         public SyncResult run() {
             try {
                 operation.prepare(resolution);
-            } catch (IOException ex) {
-                LOGGER.error("Fatal error preparing instance for sync.", ex);
-                complete = true;
-                return new SyncResult(SyncResult.ResultType.FAILED, "Failed to prepare instance for sync. See logs.");
             } catch (CloudSyncOperation.ConflictException ex) {
                 conflict = ex;
                 Settings.webSocketAPI.sendMessage(new InstanceCloudSyncConflictData(uuid, ex.code, ex.message));
                 return new SyncResult(SyncResult.ResultType.CONFLICT, "Sync conflict. Requires resolution.");
+            } catch (Throwable ex) {
+                LOGGER.error("Fatal error preparing instance for sync.", ex);
+                complete = true;
+                return new SyncResult(SyncResult.ResultType.FAILED, "Failed to prepare instance for sync. See logs.");
             }
 
             try {
