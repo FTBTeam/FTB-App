@@ -83,7 +83,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         ArrayList<DownloadTask> downloadTasks = new ArrayList<>();
 
         for(Mod.Version ver: filesToDownload) {
-            DownloadableFile downloadableFile = ver.getDownloadableFile(instance);
+            DownloadableFile downloadableFile = ver.getDownloadableFile(instance.getDir());
             DownloadTask downloadTask = new DownloadTask(downloadableFile, downloadableFile.getPath(), new ProgressTracker(downloadableFile));
             fileTracker.put(downloadableFile, (ProgressTracker) downloadTask.getWatcher());
             downloadTasks.add(downloadTask);

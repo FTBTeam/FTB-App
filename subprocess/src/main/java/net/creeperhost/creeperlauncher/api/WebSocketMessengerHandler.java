@@ -65,7 +65,7 @@ public class WebSocketMessengerHandler {
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
         register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
         register("storeAuthDetails", StoreAuthDetailsData.class, new StoreAuthDetailsHandler());
-        register("syncInstance", SyncInstanceData.class, new SyncInstanceHandler());
+        register("syncInstance", SyncCloudInstanceData.class, new SyncCloudInstanceHandler());
         register("ircConnect", IRCConnectData.class, new IRCConnectHandler());
         register("ircSendMessage", IRCSendMessageData.class, new IRCSendMessageHandler());
         register("ircQuitRequest", IRCQuitRequestData.class, new IRCQuitRequestHandler());
@@ -87,6 +87,9 @@ public class WebSocketMessengerHandler {
         register("instanceGetBackups", InstanceGetBackupsHandler.Request.class, new InstanceGetBackupsHandler());
         register("instanceRestoreBackup", InstanceRestoreBackupHandler.Request.class, new InstanceRestoreBackupHandler());
         register("instanceDeleteBackup", InstanceDeleteBackupHandler.Request.class, new InstanceDeleteBackupHandler());
+
+        register("pollCloudInstances", PollCloudInstancesData.class, new PollCloudInstancesHandler());
+        register("resolveSyncConflict", InstanceCloudSyncResolveConflictData.class, new InstanceCloudSyncResolveConflictHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());

@@ -12,6 +12,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
 import java.awt.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -127,6 +128,10 @@ public class InstanceJson {
 
     public static InstanceJson load(Path path) throws IOException {
         return JsonUtils.parse(GSON, path, InstanceJson.class);
+    }
+
+    public static InstanceJson load(byte[] bytes) throws IOException {
+        return JsonUtils.parse(GSON, new ByteArrayInputStream(bytes), InstanceJson.class);
     }
 
     public static void save(Path path, InstanceJson properties) throws IOException {

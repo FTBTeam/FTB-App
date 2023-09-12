@@ -16,21 +16,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
+@Deprecated
 public class DownloadTask implements IInstallTask<Void>
 {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    public static AtomicLong overallBytes = new AtomicLong(0);
+    public static AtomicLong currentBytes = new AtomicLong(0);
 
     private final Path destination;
     public static final Executor threadPool = new ThreadPoolExecutor(Settings.getThreadLimit(), Settings.getThreadLimit(), 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     private int tries = 0;
     private final DownloadableFile file;
     private final IProgressUpdater watcher;
-    private static final IProgressUpdater OLD_PROGRESS_UPDATER = (downloaded, delta, total, done) -> FTBModPackInstallerTask.currentBytes.addAndGet(delta);
-
-    public DownloadTask(DownloadableFile file, Path destination) {
-        this(file, destination, OLD_PROGRESS_UPDATER);
-    }
 
     public DownloadTask(DownloadableFile file, Path destination, IProgressUpdater watcher)
     {
@@ -45,7 +45,6 @@ public class DownloadTask implements IInstallTask<Void>
         return CompletableFuture.runAsync(() ->
         {
             boolean complete = false;
-            FTBModPackInstallerTask.batchedFiles.put(file.getId(), "downloaded");
             while (!complete && tries < 3)
             {
                 try
@@ -79,7 +78,6 @@ public class DownloadTask implements IInstallTask<Void>
                                         FileUtils.createDirectories(destination.toAbsolutePath().getParent());
                                         Files.copy(cachePath, destination);
                                         watcher.update(0, Files.size(cachePath), 0, true);
-                                        FTBModPackInstallerTask.batchedFiles.put(file.getId(), "downloaded");
                                         complete = true;
                                         break;
                                     } catch (IOException e) {
@@ -105,7 +103,6 @@ public class DownloadTask implements IInstallTask<Void>
                         {
                             LOGGER.error("Error whilst adding to cache: ", err);
                         }
-                        FTBModPackInstallerTask.batchedFiles.put(file.getId(), "downloaded");
                         complete = true;
                     } catch (Throwable e)
                     {
@@ -135,8 +132,8 @@ public class DownloadTask implements IInstallTask<Void>
     @Override
     public Double getProgress()
     {
-        if (FTBModPackInstallerTask.currentBytes.get() == 0 || FTBModPackInstallerTask.overallBytes.get() == 0) return 0.00d;
-        double initPercent = FTBModPackInstallerTask.currentBytes.get() / (double) FTBModPackInstallerTask.overallBytes.get();
+        if (currentBytes.get() == 0 || overallBytes.get() == 0) return 0.00d;
+        double initPercent = currentBytes.get() / (double) overallBytes.get();
         double returnVal = Math.round((initPercent * 100d) * 100d) / 100d;
         return Math.min(returnVal, 100.00d);
     }
