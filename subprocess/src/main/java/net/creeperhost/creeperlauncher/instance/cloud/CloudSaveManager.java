@@ -383,34 +383,18 @@ public final class CloudSaveManager {
             LOGGER.info("Listing entire bucket with prefix: {}", prefix);
         }
 
-        // TODO, this can in theory use v2, but for some reason the S3 server we poke is on meth and refuses
-        //       to give us continuation tokens, thus, we must use v1 object listing.
-
         ImmutableList.Builder<S3Object> objects = ImmutableList.builder();
-        ListObjectsResponse response = null;
-        do {
-            if (response != null) {
-                if (response.nextMarker() == null) {
-                    LOGGER.fatal("Received truncated response without a continuation marker.");
-                    break;
-                }
-                if (DEBUG) {
-                    LOGGER.info(" Got continuation token..");
-                }
-            }
-            ListObjectsRequest request = ListObjectsRequest.builder()
-                    .prefix(prefix)
-                    .bucket(s3Bucket)
-                    .marker(response != null ? response.nextMarker() : null)
-                    .build();
-            response = s3Client.listObjects(request);
+        ListObjectsV2Request request = ListObjectsV2Request.builder()
+                .prefix(prefix)
+                .bucket(s3Bucket)
+                .build();
+        for (ListObjectsV2Response response : s3Client.listObjectsV2Paginator(request)) {
             List<S3Object> toAdd = response.contents();
             if (DEBUG) {
                 LOGGER.info(" Adding {} objects to list.", toAdd.size());
             }
             objects.addAll(toAdd);
         }
-        while (response.isTruncated());
 
         List<S3Object> built = objects.build();
         if (DEBUG) {
