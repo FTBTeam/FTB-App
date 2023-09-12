@@ -74,6 +74,8 @@ public class WebSocketMessengerHandler {
         register("blockFriend", BlockFriendData.class, new BlockFriendHandler());
         register("addFriend", AddFriendData.class, new AddFriendHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
+        register("instanceEnableCloudSaves", InstanceEnableCloudSavesData.class, new InstanceEnableCloudSavesHandler());
+        register("instanceDisableCloudSaves", InstanceDisableCloudSavesData.class, new InstanceDisableCloudSavesHandler());
         register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("ping", PingLauncherData.class);

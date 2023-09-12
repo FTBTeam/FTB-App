@@ -257,7 +257,7 @@ public class CloudSyncOperation {
 
                             tasks.add((cancelToken, listener) -> {
                                 try {
-                                    LOGGER.info("Uploading file to S3: {}", op.local.path);
+                                    LOGGER.info("Uploading file to S3: {}", op.local.path());
                                     if (op.remote != null) {
                                         saveManager.uploadFile(op.local.path, op.remote.s3Object.key());
                                     } else {

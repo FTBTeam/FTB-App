@@ -71,12 +71,12 @@ public class Instance {
         if (name != null) {
             props.name = name;
         }
-        
+
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         FileUtils.createDirectories(path);
 
         this.versionManifest = versionManifest;
-        
+
         ModpackManifest.Art art = modpack.getFirstArt("square");
         if (art != null) {
             Path tempFile = null;
@@ -247,6 +247,11 @@ public class Instance {
                 try {
                     CloudSaveManager.SyncResult result = CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this)
                             .get();
+
+                    // Don't error if initial sync is still running, just do nothing.
+                    if (result.type() == CloudSaveManager.SyncResult.ResultType.INITIAL_STILL_RUNNING) {
+                        return;
+                    }
                     if (result.type() != CloudSaveManager.SyncResult.ResultType.SUCCESS) {
                         throw new InstanceLaunchException("Pre-start cloud sync failed! " + result.type() + " " + result.reason());
                     }

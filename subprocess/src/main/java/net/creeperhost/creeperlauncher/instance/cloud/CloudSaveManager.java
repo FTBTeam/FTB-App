@@ -19,6 +19,7 @@ import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstances
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager.SyncResult.ResultType;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSyncOperation.SyncDirection;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.s3.OkHTTPS3HttpClient;
@@ -87,6 +88,7 @@ public final class CloudSaveManager {
     private S3Client s3Client;
 
     private final Map<UUID, SyncEntry> syncOperations = new HashMap<>();
+    private final Map<UUID, CompletableFuture<Void>> removeOperations = new HashMap<>();
 
     @Nullable
     private CompletableFuture<Void> pollFuture;
@@ -154,14 +156,56 @@ public final class CloudSaveManager {
     }
 
     public CompletableFuture<SyncResult> requestInstanceSync(Instance instance) {
-        if (syncOperations.containsKey(instance.getUuid())) {
+        return _requestInstanceSync(instance, false);
+    }
+
+    public CompletableFuture<SyncResult> requestInitialSync(Instance instance) {
+        return _requestInstanceSync(instance, true);
+    }
+
+    private CompletableFuture<SyncResult> _requestInstanceSync(Instance instance, boolean initialSync) {
+        SyncEntry entry = syncOperations.get(instance.getUuid());
+
+        if (entry != null) {
+            if (entry.isInitialSync) return CompletableFuture.completedFuture(new SyncResult(ResultType.INITIAL_STILL_RUNNING, "Initial sync is still running."));
             throw new IllegalStateException("Sync already requested.");
         }
 
         synchronized (syncOperations) {
-            SyncEntry entry = new SyncEntry(new CloudSyncOperation(this, instance));
+            entry = new SyncEntry(new CloudSyncOperation(this, instance), initialSync);
             syncOperations.put(instance.getUuid(), entry);
             return submitSync(entry);
+        }
+    }
+
+    public @Nullable CompletableFuture<Void> requestDisableSync(Instance instance) {
+        LOGGER.info("Requesting disabling sync for {}({})", instance.getName(), instance.getUuid());
+        SyncEntry entry = syncOperations.get(instance.getUuid());
+        if (entry != null) {
+            return null;
+        }
+        synchronized (removeOperations) {
+            CompletableFuture<Void> future = removeOperations.get(instance.getUuid());
+            if (future != null && !future.isDone()) {
+                // TODO, this will only ever be hit if the user presses the disable button multiple times without
+                //       any locks on the UI side.
+                //       It would be more correct to return the existing future, but ehh.
+                return null;
+            }
+            future = CompletableFuture.runAsync(() -> {
+                Map<String, S3Object> files = listInstance(instance);
+                LOGGER.info(" Deleting {} files.", files.size());
+                deleteObjects(files.values());
+            }, EXECUTOR);
+
+            future = future.thenRunAsync(() -> {
+                synchronized (removeOperations) {
+                    removeOperations.remove(instance.getUuid());
+                }
+                LOGGER.info("Sync disabled! {}({})", instance.getName(), instance.getUuid());
+            });
+            removeOperations.put(instance.getUuid(), future);
+            return future;
         }
     }
 
@@ -184,7 +228,7 @@ public final class CloudSaveManager {
     }
 
     private void onSyncFinished(Instance instance, SyncResult result) {
-        if (result.type != SyncResult.ResultType.CONFLICT) {
+        if (result.type != ResultType.CONFLICT) {
             synchronized (syncOperations) {
                 syncOperations.remove(instance.getUuid());
             }
@@ -403,7 +447,7 @@ public final class CloudSaveManager {
         return built;
     }
 
-    public void deleteObjects(List<S3Object> objects) {
+    public void deleteObjects(Collection<S3Object> objects) {
         assert s3Client != null;
         if (objects.isEmpty()) return;
 
@@ -446,6 +490,7 @@ public final class CloudSaveManager {
             CONFLICT,
             SUCCESS,
             FAILED,
+            INITIAL_STILL_RUNNING,
         }
     }
 
@@ -453,6 +498,7 @@ public final class CloudSaveManager {
 
         public final UUID uuid;
         public final CloudSyncOperation operation;
+        public final boolean isInitialSync;
         @Nullable
         public Future<?> future;
 
@@ -460,9 +506,10 @@ public final class CloudSaveManager {
         public @Nullable SyncDirection resolution;
         public boolean complete = false;
 
-        public SyncEntry(CloudSyncOperation operation) {
+        public SyncEntry(CloudSyncOperation operation, boolean isInitialSync) {
             this.uuid = operation.instance.getUuid();
             this.operation = operation;
+            this.isInitialSync = isInitialSync;
         }
 
         public SyncResult run() {
@@ -471,20 +518,20 @@ public final class CloudSaveManager {
             } catch (CloudSyncOperation.ConflictException ex) {
                 conflict = ex;
                 Settings.webSocketAPI.sendMessage(new InstanceCloudSyncConflictData(uuid, ex.code, ex.message));
-                return new SyncResult(SyncResult.ResultType.CONFLICT, "Sync conflict. Requires resolution.");
+                return new SyncResult(ResultType.CONFLICT, "Sync conflict. Requires resolution.");
             } catch (Throwable ex) {
                 LOGGER.error("Fatal error preparing instance for sync.", ex);
                 complete = true;
-                return new SyncResult(SyncResult.ResultType.FAILED, "Failed to prepare instance for sync. See logs.");
+                return new SyncResult(ResultType.FAILED, "Failed to prepare instance for sync. See logs.");
             }
 
             try {
                 operation.operate();
-                return new SyncResult(SyncResult.ResultType.SUCCESS, "Synced!");
+                return new SyncResult(ResultType.SUCCESS, "Synced!");
             } catch (Throwable ex) {
                 LOGGER.error("Failed to sync instance.", ex);
                 complete = true;
-                return new SyncResult(SyncResult.ResultType.FAILED, "Sync failed. See logs.");
+                return new SyncResult(ResultType.FAILED, "Sync failed. See logs.");
             }
         }
     }
