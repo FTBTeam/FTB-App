@@ -314,6 +314,12 @@ public class InstanceInstaller extends InstanceOperation {
                 filesToRemove.add(instance.getDir().resolve(oldFilePath));
             }
         }
+
+        // Ensure the mods lookup cache for the previous version gets nuked on upgrade.
+        Path meta = instance.getDir().resolve(".ftba/version_mods.json");
+        if (Files.exists(meta)) {
+            filesToRemove.add(meta);
+        }
     }
 
     private void locateUntrackedFiles() {

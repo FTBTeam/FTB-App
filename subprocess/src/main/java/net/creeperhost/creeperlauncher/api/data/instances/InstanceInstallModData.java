@@ -1,45 +1,35 @@
 package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
-import net.creeperhost.creeperlauncher.mod.Mod;
 
 import java.util.List;
+import java.util.UUID;
 
 public class InstanceInstallModData extends BaseData {
-    public String uuid;
+
+    public UUID uuid;
     public int modId;
     public int versionId;
 
-    public static class Reply extends BaseData
-    {
-        final String status;
-        final String message;
-        final List<Mod.Version> dependencyList;
+    public static class Reply extends BaseData {
 
-        public Reply(InstanceInstallModData data, String status, String message, List<Mod.Version> dependencies)
-        {
+        public final String status;
+        public final String message;
+        public final List<PendingInstall> dependencies;
+
+        public Reply(InstanceInstallModData data, String status, String message) {
+            this(data, status, message, List.of());
+        }
+
+        public Reply(InstanceInstallModData data, String status, String message, List<PendingInstall> dependencies) {
             type = "instanceInstallModReply";
             requestId = data.requestId;
             this.status = status;
             this.message = message;
-            this.dependencyList = dependencies;
+            this.dependencies = dependencies;
         }
     }
 
-    public static class Progress extends BaseData {
-        final Double overallPercentage;
-        final long speed;
-        final long currentBytes;
-        final long overallBytes;
-
-        public Progress(InstanceInstallModData data, Double overallPercentage, long speed, long currentBytes, long overallBytes) {
-            this.requestId = data.requestId;
-            type = "instanceInstallModProgress";
-            this.overallPercentage = overallPercentage;
-            this.speed = speed;
-            this.currentBytes = currentBytes;
-            this.overallBytes = overallBytes;
-        }
-
+    public record PendingInstall(long modId, long versionId) {
     }
 }

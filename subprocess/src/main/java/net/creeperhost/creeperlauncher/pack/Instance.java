@@ -1,25 +1,30 @@
 package net.creeperhost.creeperlauncher.pack;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
-import net.creeperhost.creeperlauncher.*;
-import net.creeperhost.creeperlauncher.api.handlers.ModFile;
+import net.creeperhost.creeperlauncher.Analytics;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.Instances;
+import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
 import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
+import net.creeperhost.creeperlauncher.data.mod.ModInfo;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
-import net.creeperhost.creeperlauncher.util.*;
+import net.creeperhost.creeperlauncher.util.DialogUtil;
+import net.creeperhost.creeperlauncher.util.FileUtils;
+import net.creeperhost.creeperlauncher.util.ImageUtils;
+import net.creeperhost.creeperlauncher.util.MiscUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -42,10 +47,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static net.covers1624.quack.util.SneakyUtils.sneak;
 
 public class Instance {
 
@@ -73,12 +74,12 @@ public class Instance {
         if (name != null) {
             props.name = name;
         }
-        
+
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         FileUtils.createDirectories(path);
 
         this.versionManifest = versionManifest;
-        
+
         ModpackManifest.Art art = modpack.getFirstArt("square");
         if (art != null) {
             Path tempFile = null;
@@ -147,6 +148,9 @@ public class Instance {
             }
             Path modificationsJson = path.resolve("modifications.json");
             if (Files.exists(modificationsJson)) {
+                // TODO we need to validate the state of mod modifications.
+                //      Dynamically add/remove them as manual modifications are always possible.
+                //      We should do this any time the Mods list is queried. I.e the frontend or installer requests it.
                 modifications = InstanceModifications.load(modificationsJson);
             }
         }
@@ -190,13 +194,35 @@ public class Instance {
         }
     }
 
+    // TODO, In theory this meta should be getting added to the regular version manifest.
+    //       When that happens we can nuke this.
+    public @Nullable ModpackVersionModsManifest getModsManifest() {
+        ModpackVersionModsManifest manifest = null;
+        Path file = path.resolve(".ftba/version_mods.json");
+        try {
+            manifest = ModpackVersionModsManifest.load(file);
+        } catch (IOException | JsonParseException ex) {
+            LOGGER.warn("Failed to parse version mods manifest.", ex);
+        }
+
+        if (manifest != null) return manifest;
+
+        try {
+            manifest = ModpackVersionModsManifest.query(props.id, props.versionId, props._private, props.packType);
+            ModpackVersionModsManifest.save(file, manifest);
+            return manifest;
+        } catch (IOException | JsonParseException ex) {
+            LOGGER.warn("Failed to query version mods manifest.", ex);
+            return null;
+        }
+    }
+
     /**
      * Force stops the instance.
      * <p>
      * Does not block until the instance has stopped.
      */
     public void forceStop() {
-        if (launcher == null) return;
         launcher.forceStop();
     }
 
@@ -217,6 +243,7 @@ public class Instance {
         }
         LOGGER.info("Resetting launcher..");
         launcher.reset();
+        // TODO, why do we need to do this? Can anything in here change that affects launching? Only the Java versions perhaps?
         LOGGER.info("Polling version manifest.");
         pollVersionManifest();
 
@@ -417,10 +444,14 @@ public class Instance {
         return modifications;
     }
 
-    public void saveModifications() throws IOException {
-        if (modifications != null) {
-            Path modificationsJson = path.resolve("modifications.json");
-            InstanceModifications.save(modificationsJson, modifications);
+    public void saveModifications() {
+        try {
+            if (modifications != null) {
+                Path modificationsJson = path.resolve("modifications.json");
+                InstanceModifications.save(modificationsJson, modifications);
+            }
+        } catch (IOException ex) {
+            LOGGER.error("Failed to save instance modifications.", ex);
         }
     }
 
@@ -443,63 +474,144 @@ public class Instance {
         return new Instance(newDir, newJson);
     }
 
-    public List<ModFile> getMods(boolean rich) {
-        if (pendingCloudInstance) return List.of();
-        try {
-            Map<String, CurseProps> lookup = rich ? getHashLookup() : Map.of();
-            try (Stream<Path> files = Files.walk(path.resolve("mods"))) {
-                return files.filter(Files::isRegularFile)
-                        .filter(file -> ModFile.isPotentialMod(file.toString()))
-                        .map(sneak(path -> {
-                            String sha1 = rich ? FileUtils.getHash(path, "SHA-1") : "";
-                            CurseProps curseProps = lookup.get(sha1);
-                            ModFile modFile = new ModFile(path.getFileName().toString(), "", Files.size(path), sha1).setPath(path);
-                            if (curseProps != null) {
-                                modFile.setCurseProject(curseProps.curseProject());
-                                modFile.setCurseFile(curseProps.curseFile());
-                            }
+    public List<ModInfo> getMods() {
+        LOGGER.info("Building instance mods list..");
+        List<ModInfo> mods = new ArrayList<>();
 
-                            return modFile;
-                        }))
-                        .collect(Collectors.toList());
+        ModpackVersionModsManifest modsManifest = getModsManifest();
+        InstanceModifications modifications = getModifications();
+
+        // Populate all mods from the regular version manifest.
+        for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
+            if (file.getPath().startsWith("./mods") || isMod(file.getName())) {
+                String sha1 = Objects.toString(file.getSha1OrNull(), null);
+
+                InstanceModifications.ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
+                ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
+
+                boolean fileExists = Files.exists(file.toPath(path));
+
+                // File is in its default state.
+                if (override != null && fileExists) {
+                    assert override.getState() == ModOverrideState.ENABLED || override.getState() == ModOverrideState.DISABLED;
+                    LOGGER.info("Cleaning up redundant override: {}", override);
+                    modifications.getOverrides().remove(override);
+                    override = null;
+                }
+
+                // Enabled if override says it is, OR the file exists AND does not have .disabled
+                boolean enabled = (override != null && override.getState().enabled) || (fileExists && !file.getName().endsWith(".disabled"));
+
+                mods.add(new ModInfo(
+                        file.getId(),
+                        file.getName(),
+                        file.getVersion(),
+                        enabled,
+                        file.getSize(),
+                        sha1,
+                        mod != null ? mod.getCurseProject() : -1,
+                        mod != null ? mod.getCurseFile() : -1
+                ));
             }
-        } catch (IOException error) {
-            LOGGER.log(Level.DEBUG, "Error occurred whilst listing mods on disk", error);
         }
 
-        return new ArrayList<>();
+        // Mods added manually or via CurseForge integ.
+        if (modifications != null) {
+            for (InstanceModifications.ModOverride override : modifications.getOverrides()) {
+                // -1 is for non-pack overrides.
+                if (!override.getState().added) continue;
+
+                Path file = this.path.resolve("mods").resolve(override.getFileName());
+                mods.add(new ModInfo(
+                        -1,
+                        override.getFileName(),
+                        null,
+                        override.getState().enabled,
+                        tryGetSize(file),
+                        override.getSha1(),
+                        override.getCurseProject(),
+                        override.getCurseFile()
+                ));
+            }
+        }
+
+        // TODO scan mods folder and dynamically adjust everything?
+
+        LOGGER.info("List built {} mods.", mods.size());
+        return mods;
     }
 
-    private Map<String, CurseProps> getHashLookup() throws IOException {
-        // This hurts my soul, this system is pending a rewrite tho and this is a 'temporary' fix... Supposedly... Hopefully...
-        Map<Long, ModpackVersionManifest.ModpackFile> idLookup = FastStream.of(versionManifest.getFiles())
-                .filter(e -> e.getSha1OrNull() != null)
-                .toImmutableMap(ModpackVersionManifest.ModpackFile::getId, e -> e);
-        String url = Constants.getModpacksEndpoint(props._private, props.packType) + props.id + "/" + props.versionId + "/mods";
-        LOGGER.info("Querying: {}", url);
-        String resp = WebUtils.getAPIResponse(url);
-        JsonElement jElement = JsonUtils.parseRaw(resp);
-        if (!jElement.isJsonObject()) return Map.of();
+    /**
+     * Toggle a mod with the given fileId OR fileName.
+     * <p>
+     * If the mod is from the modpack distribution, the mod MUST be toggled with the fileId.
+     *
+     * @param fileId   The modpack distribution fileId. -1 if the mod is not from the pack.
+     * @param fileName The mod file name inside the mods folder. Always required.
+     */
+    public void toggleMod(long fileId, String fileName) {
+        InstanceModifications modifications = getOrCreateModifications();
+        InstanceModifications.ModOverride override = modifications.findOverride(fileName);
 
-        JsonObject obj = jElement.getAsJsonObject();
-        if (JsonUtils.getString(obj, "status", "error").equalsIgnoreCase("error")) return Map.of();
-
-        if (!obj.has("mods")) return Map.of();
-        JsonArray mods = obj.getAsJsonArray("mods");
-
-        Map<String, CurseProps> ret = new HashMap<>();
-        for (JsonElement mod : mods) {
-            if (!mod.isJsonObject()) continue;
-            JsonObject modObject = mod.getAsJsonObject();
-            long fileId = JsonUtils.getInt(modObject, "fileId", -1);
-            long curseProject = JsonUtils.getInt(modObject, "curseProject", -1);
-            long curseFile = JsonUtils.getInt(modObject, "curseFile", -1);
-            ModpackVersionManifest.ModpackFile modpackFile = idLookup.get(fileId);
-            if (modpackFile != null) {
-                ret.put(modpackFile.getSha1().toString(), new CurseProps(curseProject, curseFile));
-            }
+        Path pathEnabled;
+        Path pathDisabled;
+        // .disabled in this context can only come from distribution disabled mods.
+        if (fileName.endsWith(".disabled")) {
+            pathEnabled = path.resolve("mods").resolve(fileName.substring(0, fileName.indexOf(".disabled")));
+            pathDisabled = path.resolve("mods").resolve(fileName);
+        } else {
+            pathEnabled = path.resolve("mods").resolve(fileName);
+            pathDisabled = path.resolve("mods").resolve(fileName + ".disabled");
         }
-        return ret;
+
+        // Override is null, this is a distributed mod, generate override for current state.
+        if (override == null) {
+            // Could indicate a bug with listing instance mods. But, likely just broken call.
+            if (fileId == -1) throw new IllegalArgumentException("Did not find an existing ModOverride for the given name. File ID required.");
+            ModpackVersionManifest.ModpackFile file = FastStream.of(versionManifest.getFiles())
+                    .filter(e -> e.getId() == fileId)
+                    .firstOrDefault();
+            if (file == null) throw new IllegalArgumentException("Did not find any files with the given fileId.");
+
+            boolean isEnabled = !fileName.endsWith(".disabled");
+            ModOverrideState state = isEnabled ? ModOverrideState.ENABLED : ModOverrideState.DISABLED;
+            override = new InstanceModifications.ModOverride(state, fileName, fileId);
+            modifications.getOverrides().add(override);
+        }
+
+        try {
+            switch (override.getState()) {
+                // TODO, remove override if returning mod back to its original state?
+                case ENABLED, UPDATED_ENABLED, ADDED_ENABLED -> {
+                    Files.move(pathEnabled, pathDisabled);
+                }
+                case DISABLED, UPDATED_DISABLED, ADDED_DISABLED -> {
+                    Files.move(pathDisabled, pathEnabled);
+                }
+                // We should probably provide a 'restore' endpoint for this.
+                case REMOVED -> throw new IllegalArgumentException("Unable to toggle removed mod.");
+            }
+            override.setState(override.getState().toggle());
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to toggle mod.", ex);
+        }
+        saveModifications();
+    }
+
+    private static boolean isMod(String fName) {
+        int disabledIdx = fName.indexOf(".disabled");
+        if (disabledIdx != -1) {
+            fName = fName.substring(0, disabledIdx);
+        }
+        return fName.endsWith(".jar") || fName.endsWith(".zip");
+    }
+
+    private static long tryGetSize(Path file) {
+        try {
+            return Files.size(file);
+        } catch (IOException ex) {
+            return -1;
+        }
     }
 
     public InstanceSnapshot withSnapshot(Consumer<Instance> action) {
@@ -524,6 +636,4 @@ public class Instance {
     @Deprecated public String getModLoader() { return props.modLoader; }
     public boolean isPendingCloudInstance() { return pendingCloudInstance; }
     // @formatter:on
-
-    private record CurseProps(long curseProject, long curseFile) { }
 }

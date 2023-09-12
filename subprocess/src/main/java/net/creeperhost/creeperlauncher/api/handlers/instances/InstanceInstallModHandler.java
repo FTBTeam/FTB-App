@@ -1,177 +1,72 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
+import net.covers1624.quack.collection.FastStream;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
-import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceInstallModData;
+import net.creeperhost.creeperlauncher.api.data.instances.InstanceInstallModData.PendingInstall;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.http.IProgressUpdater;
-import net.creeperhost.creeperlauncher.minecraft.McUtils;
-import net.creeperhost.creeperlauncher.mod.Mod;
+import net.creeperhost.creeperlauncher.data.InstanceModifications;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import net.creeperhost.creeperlauncher.install.ModInstaller;
 import net.creeperhost.creeperlauncher.pack.Instance;
-import net.creeperhost.creeperlauncher.util.LoaderTarget;
-import net.creeperhost.creeperlauncher.util.MiscUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.List;
 
-public class InstanceInstallModHandler implements IMessageHandler<InstanceInstallModData> 
-{
-  private static final Logger LOGGER = LogManager.getLogger();
+public class InstanceInstallModHandler implements IMessageHandler<InstanceInstallModData> {
 
-  @Override
+    private static final Logger LOGGER = LogManager.getLogger();
+
+    @Override
     public void handle(InstanceInstallModData data) {
-        String _uuid = data.uuid;
-        UUID uuid = UUID.fromString(_uuid);
-        Instance instance = Instances.getInstance(uuid);
-        Mod mod = Mod.getFromAPI(data.modId);
-        if (mod == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Cannot find version "  + data.versionId, new ArrayList<>()));
+        Instance instance = Instances.getInstance(data.uuid);
+        if (instance == null) {
+            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not exist."));
             return;
         }
 
-        Mod.Version version = mod.getVersion(data.versionId);
-        if (version == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Cannot find version " + data.versionId, new ArrayList<>()));
+        String mcVersion = instance.versionManifest.getTargetVersion("game");
+        if (mcVersion == null) {
+            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a game version??"));
             return;
         }
 
-        ArrayList<Mod.Version> filesToDownload = new ArrayList<>();
-        filesToDownload.add(version);
-
-        List<LoaderTarget> targets = McUtils.getTargets(instance.getDir());
-
-        Optional<LoaderTarget> loaderTarget = targets.stream().filter(tar -> tar.getType().equals("modloader")).findFirst();
-        Optional<LoaderTarget> minecraftTarget = targets.stream().filter(tar -> tar.getType().equals("game")).findFirst();
-
-        List<Mod.Version> dependencies = new ArrayList<>();
-
-        if (loaderTarget.isPresent() && minecraftTarget.isPresent()) {
-            dependencies = version.getDependencies(
-                    instance.getMods(true),
-                    dependencies,
-                    loaderTarget.get(),
-                    minecraftTarget.get()
-            );
-
-            if (!dependencies.isEmpty()) {
-                StringBuilder dependString = new StringBuilder();
-                for (Mod.Version dependency: dependencies) {
-                    if(!dependency.existsOnDisk) {
-                        dependString.append("<ul><b>").append(dependency.getParentMod().getName()).append(":</b> ").append(dependency.getName()).append("</ul>");
-                    }
-                }
-                /*boolean confirm = DialogUtil.confirmDialog(
-                    "Dependencies Required",
-                    "Would you also like to install:<br><ul>" +
-                    dependString +
-                    "</ul><br>"
-                );*/ boolean confirm = true;
-
-                if (confirm) {
-                    filesToDownload.addAll(dependencies.stream().filter((ver) -> !ver.existsOnDisk).collect(Collectors.toList()));
-                }
-            }
+        InstanceModifications modifications = instance.getModifications();
+        ModpackVersionManifest.Target modLoader = modifications != null ? modifications.getModLoaderOverride() : null;
+        if (modLoader == null) {
+            modLoader = instance.versionManifest.findTarget("modloader");
         }
 
-        HashMap<DownloadableFile, ProgressTracker> fileTracker = new HashMap<>();
-        ArrayList<DownloadTask> downloadTasks = new ArrayList<>();
-
-        for(Mod.Version ver: filesToDownload) {
-            DownloadableFile downloadableFile = ver.getDownloadableFile(instance.getDir());
-            DownloadTask downloadTask = new DownloadTask(downloadableFile, downloadableFile.getPath(), new ProgressTracker(downloadableFile));
-            fileTracker.put(downloadableFile, (ProgressTracker) downloadTask.getWatcher());
-            downloadTasks.add(downloadTask);
+        if (modLoader == null) {
+            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a ModLoader installed."));
+            return;
         }
 
-        List<Mod.Version> finalDependencies = dependencies;
+        ModInstaller modInstaller = new ModInstaller(instance, mcVersion, modLoader.getName());
 
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        long startTime = System.currentTimeMillis();
-        long lastTime = System.currentTimeMillis() / 1000L;
-        long lastSpeed = 0;
-        long lastBytes = 0;
-        final long[] lastAverage = {0};
-        ScheduledFuture<?> progressTask = executor.scheduleAtFixedRate(() -> {
-            long curBytes = 0;
-            long totalBytes = 0;
-            for(ProgressTracker progress: fileTracker.values()) {
-                curBytes = progress.downloadedBytes.get();
-                totalBytes = progress.file.getSize();
-                
-            }
-
-            long time = System.currentTimeMillis() / 1000L;
-            long speed = 0;
-            long averageSpeed = 0;
-            if ((curBytes > 0) && ((time - lastTime) > 0))
-            {
-                speed = ((curBytes - lastBytes) / (time - lastTime)) * 8;
-                long runtime = MiscUtils.unixtime() - startTime;
-                averageSpeed = (curBytes / runtime) * 8;
-                if (averageSpeed == 0) averageSpeed = lastAverage[0];
-                if (speed == 0) speed = lastSpeed;
-                lastAverage[0] = averageSpeed;
-            } else
-            {
-                speed = lastSpeed;
-            }
-            
-            Settings.webSocketAPI.sendMessage(
-              new InstanceInstallModData.Progress(
-                            data,
-                            (double) ((curBytes / totalBytes) * 100),
-                            speed,
-                            curBytes,
-                            totalBytes
-                    )
-            );
-        }, 0, 500, TimeUnit.MILLISECONDS);
-
-        CompletableFuture.allOf(downloadTasks.stream().map(DownloadTask::execute).collect(Collectors.toList()).toArray(new CompletableFuture[downloadTasks.size()])).thenRunAsync(() ->
-          {
-              progressTask.cancel(false);
-              executor.shutdown();
-              try {
-                  instance.setModified(true);
-                  instance.saveJson();
-              } catch(Exception ignored) {
-                  LOGGER.error("Failed to update instance json for {}", instance.getName());
-              }
-              Settings.webSocketAPI.sendMessage(
-                      new InstanceInstallModData.Reply(
-                              data,
-                              "success",
-                              "Downloaded successfully",
-                              finalDependencies
-                      )
-              );
-          }
-      );
-    }
-
-    class ProgressTracker implements IProgressUpdater {
-
-        final DownloadableFile file;
-
-        public ProgressTracker(DownloadableFile file) {
-            this.file = file;
+        try {
+            modInstaller.resolve(data.modId, data.versionId);
+        } catch (ModInstaller.ModInstallerException ex) {
+            LOGGER.warn("Error whilst preparing Mod install.", ex);
+            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
+            return;
         }
 
-        volatile AtomicLong downloadedBytes = new AtomicLong(0);
+        // TODO, ModInstaller actually has the unavailable/unsatisifable dependency list available. We should tell the user this.
 
-        @Override
-        public void update(long currentBytes, long delta, long totalBytes, boolean done) {
-            downloadedBytes.addAndGet(delta);
-        }
+        List<PendingInstall> pending = FastStream.of(modInstaller.getToInstall())
+                .map(e -> new PendingInstall(e.getKey().getId(), e.getValue().getId()))
+                .toList();
+        Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "processing", "Processing install.", pending));
 
-        public double getProgress() {
-            return Math.max(((double)downloadedBytes.get() / (double)file.getSize()) * 100, 100);
+        try {
+            modInstaller.install();
+            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "success", "Install successful."));
+        } catch (ModInstaller.ModInstallerException ex) {
+            LOGGER.warn("Error whilst installing mods.", ex);
+            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
         }
     }
 }
