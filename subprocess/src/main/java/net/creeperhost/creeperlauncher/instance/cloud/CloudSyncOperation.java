@@ -50,6 +50,22 @@ public class CloudSyncOperation {
             "backups/"            // Backups are just massive. Lets just not..
     );
 
+    // Prioritize specific files. These will always be first in this order.
+    public static final List<String> FILE_PRIORITIES = List.of(
+            "saves/",
+            "local/",
+            "config/",
+            "scripts/",
+            "kubejs/"
+            // Then everything else
+    );
+
+    // These files will always upload/download last.
+    public static final List<String> FILE_UN_PRIORITIES = List.of(
+            "mods/",
+            "mods2/" // Why does this exist in ATM7?
+    );
+
     private final CloudSaveManager saveManager;
     public final Instance instance;
     private final OperationProgressTracker progressTracker;
@@ -131,9 +147,9 @@ public class CloudSyncOperation {
                 .toSet();
         LOGGER.info("Non-matching files: {}", nonMatching);
 
-        ImmutableList.Builder<FileOperation> deletes = ImmutableList.builder();
-        ImmutableList.Builder<FileOperation> uploads = ImmutableList.builder();
-        ImmutableList.Builder<FileOperation> downloads = ImmutableList.builder();
+        List<FileOperation> deletes = new ArrayList<>();
+        List<FileOperation> uploads = new ArrayList<>();
+        List<FileOperation> downloads = new ArrayList<>();
         if (direction == SyncDirection.UPLOAD) {
             for (String s : missingRemote) {
                 uploads.add(new FileOperation(OperationKind.UPLOAD, instanceFiles.get(s), null));
@@ -155,15 +171,18 @@ public class CloudSyncOperation {
                 downloads.add(new FileOperation(OperationKind.DOWNLOAD, instanceFiles.get(s), cloudFiles.get(s)));
             }
         }
-        deleteOperations = deletes.build();
-        uploadOperations = uploads.build();
-        downloadOperations = downloads.build();
+
+        Collections.sort(uploads);
+        Collections.sort(downloads);
+
+        deleteOperations = ImmutableList.copyOf(deletes);
+        uploadOperations = ImmutableList.copyOf(uploads);
+        downloadOperations = ImmutableList.copyOf(downloads);
 
         LOGGER.info("Operations:");
         for (FileOperation fileOperation : Iterables.concat(deleteOperations, uploadOperations, downloadOperations)) {
-            LOGGER.info(" {}", fileOperation.kind);
             if (fileOperation.local != null) {
-                LOGGER.info("  {}", fileOperation.local.path);
+                LOGGER.info("  {} {}", fileOperation.kind, fileOperation.local.path());
                 if (fileOperation.remote != null) {
                     LOGGER.info("   Len   : {}", fileOperation.local.size());
                     LOGGER.info("   Mod   : {}", fileOperation.local.lastModified());
@@ -171,7 +190,7 @@ public class CloudSyncOperation {
                 }
             }
             if (fileOperation.remote != null) {
-                LOGGER.info("  {}", fileOperation.remote.s3Object);
+                LOGGER.info("  {} {}", fileOperation.kind, fileOperation.remote.path());
                 if (fileOperation.local != null) {
                     LOGGER.info("   Len   : {}", fileOperation.remote.size());
                     LOGGER.info("   Mod   : {}", fileOperation.remote.lastModified());
@@ -456,13 +475,48 @@ public class CloudSyncOperation {
         return SyncDirection.UP_TO_DATE;
     }
 
+    private static int getPathPriority(String path) {
+        // Normalize
+        path = path.replace('\\', '/').toLowerCase(Locale.ROOT);
+        for (int i = 0; i < FILE_PRIORITIES.size(); i++) {
+            String prio = FILE_PRIORITIES.get(i);
+            if (path.startsWith(prio)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isUnPrioritized(String path) {
+        path = path.replace('\\', '/').toLowerCase(Locale.ROOT);
+        for (String prio : FILE_UN_PRIORITIES) {
+            if (path.startsWith(prio)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public enum SyncDirection {
         UP_TO_DATE,
         DOWNLOAD,
         UPLOAD
     }
 
-    public record FileOperation(OperationKind kind, @Nullable LocalFile local, @Nullable RemoteFile remote) {
+    public record FileOperation(OperationKind kind, @Nullable LocalFile local, @Nullable RemoteFile remote) implements Comparable<FileOperation> {
+
+        @Override
+        public int compareTo(FileOperation o) {
+            if (local != null) {
+                return local.compareTo(o.local);
+            }
+            if (remote != null) {
+                return remote.compareTo(o.remote);
+            }
+
+            assert kind == OperationKind.DELETE;
+            throw new UnsupportedOperationException("Unable to sort Deletes");
+        }
     }
 
     public enum OperationKind {
@@ -524,7 +578,7 @@ public class CloudSyncOperation {
     }
 
     @SuppressWarnings ("UnstableApiUsage")
-    private class LocalFile extends IndexedFile {
+    private class LocalFile extends IndexedFile implements Comparable<LocalFile> {
 
         private final Path path;
         private final String pathStr;
@@ -563,9 +617,26 @@ public class CloudSyncOperation {
         public HashCode hash() {
             return hash.get();
         }
+
+        @Override
+        public int compareTo(LocalFile o) {
+            int pA = getPathPriority(pathStr);
+            int pB = getPathPriority(o.pathStr);
+
+            if (pA != -1 && pB == -1) return -1; // We come first.
+            if (pB != -1 && pA == -1) return 1; // We come later.
+            if (pA != pB) return Integer.compare(pA, pB);
+
+            boolean unA = isUnPrioritized(pathStr);
+            boolean unB = isUnPrioritized(o.pathStr);
+            if (unA && !unB) return 1;
+            if (!unA && unB) return -1;
+
+            return pathStr.compareTo(o.pathStr);
+        }
     }
 
-    private class RemoteFile extends IndexedFile {
+    private class RemoteFile extends IndexedFile implements Comparable<RemoteFile> {
 
         private final S3Object s3Object;
         private final String path;
@@ -614,6 +685,23 @@ public class CloudSyncOperation {
             if (hash == null) return null;
 
             return HashCode.fromString(hash);
+        }
+
+        @Override
+        public int compareTo(RemoteFile o) {
+            int pA = getPathPriority(path);
+            int pB = getPathPriority(o.path);
+
+            if (pA != -1 && pB == -1) return -1; // We come first.
+            if (pB != -1 && pA == -1) return 1; // We come later.
+            if (pA != pB) return Integer.compare(pA, pB);
+
+            boolean unA = isUnPrioritized(path);
+            boolean unB = isUnPrioritized(o.path);
+            if (unA && !unB) return 1;
+            if (!unA && unB) return -1;
+
+            return path.compareTo(o.path);
         }
     }
 }
