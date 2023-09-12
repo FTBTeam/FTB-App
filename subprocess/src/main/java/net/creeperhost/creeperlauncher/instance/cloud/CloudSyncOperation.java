@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -45,6 +42,13 @@ public class CloudSyncOperation {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new Gson();
+
+    private static final List<String> IGNORED_FILES = List.of(
+            "sync_manifest.json", // This is an internal file and managed manually.
+
+            "logs/",              // Can get very large if mods spam logs.
+            "backups/"            // Backups are just massive. Lets just not..
+    );
 
     private final CloudSaveManager saveManager;
     public final Instance instance;
@@ -369,15 +373,24 @@ public class CloudSyncOperation {
             stream.forEach(e -> {
                 if (!Files.isDirectory(e)) {
                     LocalFile path = new LocalFile(e);
-                    // Don't index sync_manifest.json
-                    if (path.path().equals("sync_manifest.json")) return;
+                    // Skip ignored files.
+                    if (shouldSkipFile(path.path().replace('\\', '/'))) return;
 
                     builder.put(path.path(), path);
                 }
             });
         }
         return builder.build();
+    }
 
+    private static boolean shouldSkipFile(String relpath) {
+        relpath = relpath.toLowerCase(Locale.ROOT);
+        for (String ignore : IGNORED_FILES) {
+            if (relpath.startsWith(ignore)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Map<String, RemoteFile> indexCloud(Map<String, S3Object> s3ObjectIndex) {
@@ -473,6 +486,7 @@ public class CloudSyncOperation {
     }
 
     public static class ConflictException extends Exception {
+
         public final String code;
         public final String message;
 
