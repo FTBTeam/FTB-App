@@ -488,7 +488,7 @@ public class Instance {
 
         // Populate all mods from the regular version manifest.
         for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
-            if (file.getPath().startsWith("./mods") || isMod(file.getName())) {
+            if (file.getPath().startsWith("./mods") && isMod(file.getName())) {
                 String sha1 = Objects.toString(file.getSha1OrNull(), null);
 
                 InstanceModifications.ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
