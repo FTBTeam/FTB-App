@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.instance.cloud;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -451,23 +452,32 @@ public final class CloudSaveManager {
         assert s3Client != null;
         if (objects.isEmpty()) return;
 
-        if (DEBUG) {
-            LOGGER.info("Deleting objects: ");
-            for (S3Object object : objects) {
-                LOGGER.info(" " + object.key());
-            }
-        }
+        List<ObjectIdentifier> files = FastStream.of(objects)
+                .map(e -> ObjectIdentifier.builder().key(e.key()).build())
+                .toList();
 
-        DeleteObjectsResponse response = s3Client.deleteObjects(request -> {
-            request.bucket(s3Bucket);
-            request.delete(del -> {
-                del.objects(FastStream.of(objects)
-                        .map(e -> ObjectIdentifier.builder().key(e.key()).build())
-                        .toList()
-                );
+        // S3 docs say that only 1000 objects can be deleted at a time.
+        List<List<ObjectIdentifier>> partitions = Lists.partition(files, 1000);
+
+        LOGGER.info("Deleting {} objects in {} parts", objects.size(), partitions.size());
+
+        for (List<ObjectIdentifier> partitioned : partitions) {
+            if (DEBUG) {
+                LOGGER.info("Deleting: ");
+                for (ObjectIdentifier object : partitioned) {
+                    LOGGER.info(" " + object.key());
+                }
+            }
+            s3Client.deleteObjects(request -> {
+                request.bucket(s3Bucket);
+                request.delete(del -> {
+                    del.objects(partitioned);
+                });
             });
-        });
-        LOGGER.info(response);
+
+            LOGGER.info("Deleted part.");
+        }
+        LOGGER.info("Finished deleting.");
     }
 
     public Map<String, String> getMetadata(S3Object s3Object) {
