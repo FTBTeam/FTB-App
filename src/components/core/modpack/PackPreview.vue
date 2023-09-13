@@ -132,22 +132,36 @@ export default class PackPreview extends PackCardCommon {
     transform: translateY(-0.3rem);
 
     .splash-art {
-      background-size: 105%;
+      transform: scale(1.15);
+      filter: blur(0px);
+      
+      &::after {
+        opacity: .95;
+        transform: translateX(-10%);
+      }
     }
   }
 
   .splash-art {
     position: absolute;
     z-index: -1;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    filter: blur(5px) brightness(60%);
-    background-position: top center;
-    background-size: 100%;
-    transition: background-size 0.25s ease-in-out;
-    transform: scale(1.2);
+    inset: 0;
+    filter: blur(3px);
+    background-position: center top;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition: transform 0.25s ease-in-out, filter 0.25s ease-in-out;
+    transform: scale(1.1);
+    
+    &::after {
+      position: absolute;
+      content: "";
+      inset: 0;
+      left: 0;
+      width: calc(100% + 10%);
+      transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+      background: linear-gradient(36deg, rgba(49,49,49,1) 50%, rgba(49,49,49,0) 100%);
+    }
   }
 
   .logo {

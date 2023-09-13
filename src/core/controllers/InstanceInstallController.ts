@@ -40,6 +40,12 @@ class InstanceInstallController {
   private installLock = false;
   
   constructor() {
+    emitter.on("ws.message", (data: any) => {
+      if (data.type === "cloudInstancesReloaded") {
+        console.log("cunt", data)
+      }
+    });
+    
     this.checkQueue()
       .catch(err => console.error(err));
     

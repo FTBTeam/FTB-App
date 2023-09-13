@@ -8,7 +8,7 @@
       <div class="version text-sm opacity-75">{{ instance.version }} ({{ modLoader | title }})</div>
       
       {{ updateAvailable ? "Update Available" : "" }}
-      <div class="update" v-if="!isUpdating" @click.stop="updateInstance">
+      <div class="update" v-if="!isUpdating && updateAvailable" @click.stop="updateInstance">
         Update instance
       </div>
       
@@ -106,6 +106,7 @@ export default class PackCard2 extends PackCardCommon {
   
   .artwork-container {
     margin-bottom: .75rem;
+    width: 100%;
     
     > img {
       border-radius: 3px;

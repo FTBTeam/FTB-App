@@ -1,12 +1,13 @@
 <template>
   <div class="home page-spacing">
-    Hello
+    <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
     
-    <div class="recently-played pack-card-grid">
-      <pack-card2 v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
+    <div class="recently-played mb-5">
+      <pack-card2 class="pack-card" v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
     </div>
     
     <div class="featured-packs">
+      <h2 class="text-lg font-bold text-white mb-4">Featured packs</h2>
       <pack-preview v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
     </div>
   </div>
@@ -122,42 +123,15 @@ export default class Home extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.mod-pack-grid {
+.recently-played {
+  display: flex;
   overflow-x: auto;
-  display: flex;
-  justify-content: flex-start;
+  gap: 1rem;
   padding-bottom: 1rem;
-
-  .pack-card-item {
-    // Packcard needs rewriting, it's being restricted by something :/
-    min-width: 150px;
-    max-width: 150px;
-    width: 150px;
-
-    &:not(:last-child) {
-      margin-right: 1rem;
-    }
-  }
-}
-
-.loading-screen {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
   
-  .packs-to-load {
-    background: black;
-    box-shadow: 0 0 15px rgba(black, .15);
-    padding: .4rem 1rem;
-    border-radius: 3px;
-    
-    span {
-      font-weight: bold;
-      margin-right: 1rem;
-    }
+  .pack-card {
+    min-width: 170px;
+    width: 170px;
   }
 }
 </style>
