@@ -285,22 +285,23 @@ public final class CloudSaveManager {
                 Path instancesDir = Settings.getInstancesDir();
                 for (String key : keys) {
                     Path instanceDir = instancesDir.resolve(key);
-                    if (Files.notExists(instanceDir)) continue;
-                    if (!Files.isDirectory(instanceDir)) {
-                        // TODO UI warning for this.
-                        LOGGER.warn("Error loading cloud save list, {} exists, but is not a directory. This cloud save cannot be loaded.", instanceDir);
-                        continue;
-                    }
-                    try (DirectoryStream<Path> stream = Files.newDirectoryStream(instanceDir)) {
-                        if (stream.iterator().hasNext()) {
+                    if (Files.exists(instanceDir)) {
+                        if (!Files.isDirectory(instanceDir)) {
                             // TODO UI warning for this.
-                            LOGGER.warn("Error loading cloud save list, {} exist and is not empty. This could save cannot be loaded.", instanceDir);
+                            LOGGER.warn("Error loading cloud save list, {} exists, but is not a directory. This cloud save cannot be loaded.", instanceDir);
                             continue;
                         }
-                    } catch (IOException ex) {
-                        // TODO UI warning for this.
-                        LOGGER.warn("Error loading cloud save list. Unable to iterate directory {}. This cloud save cannot be loaded.", instanceDir);
-                        continue;
+                        try (DirectoryStream<Path> stream = Files.newDirectoryStream(instanceDir)) {
+                            if (stream.iterator().hasNext()) {
+                                // TODO UI warning for this.
+                                LOGGER.warn("Error loading cloud save list, {} exist and is not empty. This could save cannot be loaded.", instanceDir);
+                                continue;
+                            }
+                        } catch (IOException ex) {
+                            // TODO UI warning for this.
+                            LOGGER.warn("Error loading cloud save list. Unable to iterate directory {}. This cloud save cannot be loaded.", instanceDir);
+                            continue;
+                        }
                     }
 
                     Map<String, S3Object> objects = FastStream.of(index)
