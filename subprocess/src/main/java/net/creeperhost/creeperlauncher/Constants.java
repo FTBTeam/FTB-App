@@ -91,6 +91,8 @@ public class Constants {
             new DNSChain.SystemDNSStep()
     );
 
+    public static final CurseMetadataCache CURSE_METADATA_CACHE = new CurseMetadataCache(getDataDir().resolve(".curse_meta.json"));
+
     @Nullable
     private static OkHttpClient OK_HTTP_CLIENT;
     @Nullable

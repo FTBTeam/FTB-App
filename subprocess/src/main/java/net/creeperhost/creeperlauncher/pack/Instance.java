@@ -4,10 +4,7 @@ import com.google.gson.JsonParseException;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
-import net.creeperhost.creeperlauncher.Analytics;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
@@ -19,6 +16,7 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
+import net.creeperhost.creeperlauncher.util.CurseMetadataCache.FileMetadata;
 import net.creeperhost.creeperlauncher.util.DialogUtil;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.ImageUtils;
@@ -507,6 +505,20 @@ public class Instance {
                 // Enabled if override says it is, OR the file exists AND does not have .disabled
                 boolean enabled = (override != null && override.getState().enabled) || (fileExists && !file.getName().endsWith(".disabled"));
 
+                long curseProject = -1;
+                long curseFile = -1;
+                if (mod != null) {
+                    curseProject = mod.getCurseProject();
+                    curseFile = mod.getCurseFile();
+                }
+                if (curseProject == -1 || curseFile == -1) {
+                    FileMetadata metadata = Constants.CURSE_METADATA_CACHE.queryMetadata(sha1);
+                    if (metadata != null) {
+                        curseProject = metadata.curseProject();
+                        curseFile = metadata.curseFile();
+                    }
+                }
+
                 mods.add(new ModInfo(
                         file.getId(),
                         file.getName(),
@@ -514,8 +526,8 @@ public class Instance {
                         enabled,
                         file.getSize(),
                         sha1,
-                        mod != null ? mod.getCurseProject() : -1,
-                        mod != null ? mod.getCurseFile() : -1
+                        curseProject,
+                        curseFile
                 ));
             }
         }
