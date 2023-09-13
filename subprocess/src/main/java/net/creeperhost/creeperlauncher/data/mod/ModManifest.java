@@ -46,7 +46,7 @@ public class ModManifest {
     private final List<Author> authors = new LinkedList<>();
     private final List<Version> versions = new LinkedList<>();
 
-    public static @Nullable ModManifest tryQuery(int id) {
+    public static @Nullable ModManifest tryQuery(long id) {
         try {
             return queryManifest(id);
         } catch (IOException | JsonParseException ex) {
@@ -55,7 +55,7 @@ public class ModManifest {
         }
     }
 
-    public static ModManifest queryManifest(int id) throws IOException, JsonParseException {
+    public static ModManifest queryManifest(long id) throws IOException, JsonParseException {
         return queryManifest(String.valueOf(id));
     }
 
@@ -70,7 +70,7 @@ public class ModManifest {
         return JsonUtils.parse(GSON, sw.toString(), ModManifest.class);
     }
 
-    public @Nullable Version findVersion(int versionId) {
+    public @Nullable Version findVersion(long versionId) {
         return FastStream.of(versions)
                 .filter(e -> e.id == versionId)
                 .firstOrDefault();
@@ -250,11 +250,11 @@ public class ModManifest {
 
     public static class Dependency {
 
-        private int id;
+        private long id;
         private boolean required;
 
         // @formatter:off
-        public int getId() { return id; }
+        public long getId() { return id; }
         public boolean isRequired() { return required; }
         // @formatter:on
 

@@ -48,7 +48,7 @@ public class ModInstaller implements ModCollector {
         );
     }
 
-    public void resolve(int modId, int versionId) throws ModInstallerException {
+    public void resolve(long modId, long versionId) throws ModInstallerException {
         LOGGER.info("Resolving install of mod {} version {}", modId, versionId);
 
         tracker.nextStage(InstallStage.RESOLVE);

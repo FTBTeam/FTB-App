@@ -8,8 +8,8 @@ import java.util.UUID;
 public class InstanceInstallModData extends BaseData {
 
     public UUID uuid;
-    public int modId;
-    public int versionId;
+    public long modId;
+    public long versionId;
 
     public static class Reply extends BaseData {
 
