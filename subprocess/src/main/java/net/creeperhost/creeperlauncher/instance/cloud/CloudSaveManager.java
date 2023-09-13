@@ -197,6 +197,11 @@ public final class CloudSaveManager {
                 Map<String, S3Object> files = listInstance(instance);
                 LOGGER.info(" Deleting {} files.", files.size());
                 deleteObjects(files.values());
+                try {
+                    Files.deleteIfExists(instance.path.resolve("sync_manifest.json"));
+                } catch (IOException ex) {
+                    LOGGER.error("Failed to delete sync_manifest.json", ex);
+                }
             }, EXECUTOR);
 
             future = future.thenRunAsync(() -> {
@@ -266,6 +271,11 @@ public final class CloudSaveManager {
                     LOGGER.warn("Failed to list bucket.", ex);
                     return;
                 }
+                List<UUID> removedPending = FastStream.of(Instances.allInstances())
+                        .filter(Instance::isPendingCloudInstance)
+                        .map(Instance::getUuid)
+                        .filterNot(e -> keys.contains(e.toString()))
+                        .toList();
                 for (Instance instance : Instances.allInstances()) {
                     // Remove any synced instances.
                     keys.remove(instance.getUuid().toString());
@@ -320,11 +330,29 @@ public final class CloudSaveManager {
                         LOGGER.warn("Failed to load pending cloud instance {}.", key, ex);
                     }
                 }
+                List<InstanceJson> instanceJsons = new ArrayList<>();
                 if (!newInstances.isEmpty()) {
-                    List<InstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
-                            .map(e -> new InstalledInstancesHandler.SugaredInstanceJson(e.props, e.path, true))
-                            .toLinkedList(FastStream.infer());
-                    Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, List.of()));
+                    for (Instance instance : newInstances) {
+                        instanceJsons.add(new InstalledInstancesHandler.SugaredInstanceJson(instance.props, instance.path, true));
+                    }
+                }
+                for (Instance instance : Instances.allInstances()) {
+                    // The instance did have cloud-saves enabled, but its files don't exist in the S3 bucket anymore
+                    // this likely means that the user has disabled cloud saves on another machine. We need to disable
+                    // it here as well.
+                    if (instance.props.cloudSaves && !keys.contains(instance.getUuid().toString())) {
+                        try {
+                            instance.props.cloudSaves = false;
+                            instance.saveJson();
+                            Files.deleteIfExists(instance.path.resolve("sync_manifest.json"));
+                        } catch (IOException ex) {
+                            LOGGER.error("Failed to disable cloud saves for instance which has had its remote files deleted.", ex);
+                        }
+                        instanceJsons.add(new InstalledInstancesHandler.SugaredInstanceJson(instance.props, instance.path, false));
+                    }
+                }
+                if (!instanceJsons.isEmpty() || !removedPending.isEmpty()) {
+                    Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, removedPending));
                 }
             } finally {
                 tracker.finished();
