@@ -280,6 +280,11 @@ public class Instance {
                 try {
                     CloudSaveManager.SyncResult result = CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this)
                             .get();
+
+                    // Don't error if initial sync is still running, just do nothing.
+                    if (result.type() == CloudSaveManager.SyncResult.ResultType.INITIAL_STILL_RUNNING) {
+                        return;
+                    }
                     if (result.type() != CloudSaveManager.SyncResult.ResultType.SUCCESS) {
                         throw new InstanceLaunchException("Pre-start cloud sync failed! " + result.type() + " " + result.reason());
                     }

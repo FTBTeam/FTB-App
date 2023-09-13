@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.instance.cloud;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -19,6 +20,7 @@ import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstances
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager.SyncResult.ResultType;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSyncOperation.SyncDirection;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.s3.OkHTTPS3HttpClient;
@@ -87,6 +89,7 @@ public final class CloudSaveManager {
     private S3Client s3Client;
 
     private final Map<UUID, SyncEntry> syncOperations = new HashMap<>();
+    private final Map<UUID, CompletableFuture<Void>> removeOperations = new HashMap<>();
 
     @Nullable
     private CompletableFuture<Void> pollFuture;
@@ -154,14 +157,61 @@ public final class CloudSaveManager {
     }
 
     public CompletableFuture<SyncResult> requestInstanceSync(Instance instance) {
-        if (syncOperations.containsKey(instance.getUuid())) {
+        return _requestInstanceSync(instance, false);
+    }
+
+    public CompletableFuture<SyncResult> requestInitialSync(Instance instance) {
+        return _requestInstanceSync(instance, true);
+    }
+
+    private CompletableFuture<SyncResult> _requestInstanceSync(Instance instance, boolean initialSync) {
+        SyncEntry entry = syncOperations.get(instance.getUuid());
+
+        if (entry != null) {
+            if (entry.isInitialSync) return CompletableFuture.completedFuture(new SyncResult(ResultType.INITIAL_STILL_RUNNING, "Initial sync is still running."));
             throw new IllegalStateException("Sync already requested.");
         }
 
         synchronized (syncOperations) {
-            SyncEntry entry = new SyncEntry(new CloudSyncOperation(this, instance));
+            entry = new SyncEntry(new CloudSyncOperation(this, instance), initialSync);
             syncOperations.put(instance.getUuid(), entry);
             return submitSync(entry);
+        }
+    }
+
+    public @Nullable CompletableFuture<Void> requestDisableSync(Instance instance) {
+        LOGGER.info("Requesting disabling sync for {}({})", instance.getName(), instance.getUuid());
+        SyncEntry entry = syncOperations.get(instance.getUuid());
+        if (entry != null) {
+            return null;
+        }
+        synchronized (removeOperations) {
+            CompletableFuture<Void> future = removeOperations.get(instance.getUuid());
+            if (future != null && !future.isDone()) {
+                // TODO, this will only ever be hit if the user presses the disable button multiple times without
+                //       any locks on the UI side.
+                //       It would be more correct to return the existing future, but ehh.
+                return null;
+            }
+            future = CompletableFuture.runAsync(() -> {
+                Map<String, S3Object> files = listInstance(instance);
+                LOGGER.info(" Deleting {} files.", files.size());
+                deleteObjects(files.values());
+                try {
+                    Files.deleteIfExists(instance.path.resolve("sync_manifest.json"));
+                } catch (IOException ex) {
+                    LOGGER.error("Failed to delete sync_manifest.json", ex);
+                }
+            }, EXECUTOR);
+
+            future = future.thenRunAsync(() -> {
+                synchronized (removeOperations) {
+                    removeOperations.remove(instance.getUuid());
+                }
+                LOGGER.info("Sync disabled! {}({})", instance.getName(), instance.getUuid());
+            });
+            removeOperations.put(instance.getUuid(), future);
+            return future;
         }
     }
 
@@ -184,7 +234,7 @@ public final class CloudSaveManager {
     }
 
     private void onSyncFinished(Instance instance, SyncResult result) {
-        if (result.type != SyncResult.ResultType.CONFLICT) {
+        if (result.type != ResultType.CONFLICT) {
             synchronized (syncOperations) {
                 syncOperations.remove(instance.getUuid());
             }
@@ -221,6 +271,11 @@ public final class CloudSaveManager {
                     LOGGER.warn("Failed to list bucket.", ex);
                     return;
                 }
+                List<UUID> removedPending = FastStream.of(Instances.allInstances())
+                        .filter(Instance::isPendingCloudInstance)
+                        .map(Instance::getUuid)
+                        .filterNot(e -> keys.contains(e.toString()))
+                        .toList();
                 for (Instance instance : Instances.allInstances()) {
                     // Remove any synced instances.
                     keys.remove(instance.getUuid().toString());
@@ -275,11 +330,29 @@ public final class CloudSaveManager {
                         LOGGER.warn("Failed to load pending cloud instance {}.", key, ex);
                     }
                 }
+                List<InstanceJson> instanceJsons = new ArrayList<>();
                 if (!newInstances.isEmpty()) {
-                    List<InstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
-                            .map(e -> new InstalledInstancesHandler.SugaredInstanceJson(e.props, e.path, true))
-                            .toLinkedList(FastStream.infer());
-                    Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, List.of()));
+                    for (Instance instance : newInstances) {
+                        instanceJsons.add(new InstalledInstancesHandler.SugaredInstanceJson(instance.props, instance.path, true));
+                    }
+                }
+                for (Instance instance : Instances.allInstances()) {
+                    // The instance did have cloud-saves enabled, but its files don't exist in the S3 bucket anymore
+                    // this likely means that the user has disabled cloud saves on another machine. We need to disable
+                    // it here as well.
+                    if (instance.props.cloudSaves && !keys.contains(instance.getUuid().toString())) {
+                        try {
+                            instance.props.cloudSaves = false;
+                            instance.saveJson();
+                            Files.deleteIfExists(instance.path.resolve("sync_manifest.json"));
+                        } catch (IOException ex) {
+                            LOGGER.error("Failed to disable cloud saves for instance which has had its remote files deleted.", ex);
+                        }
+                        instanceJsons.add(new InstalledInstancesHandler.SugaredInstanceJson(instance.props, instance.path, false));
+                    }
+                }
+                if (!instanceJsons.isEmpty() || !removedPending.isEmpty()) {
+                    Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, removedPending));
                 }
             } finally {
                 tracker.finished();
@@ -383,34 +456,18 @@ public final class CloudSaveManager {
             LOGGER.info("Listing entire bucket with prefix: {}", prefix);
         }
 
-        // TODO, this can in theory use v2, but for some reason the S3 server we poke is on meth and refuses
-        //       to give us continuation tokens, thus, we must use v1 object listing.
-
         ImmutableList.Builder<S3Object> objects = ImmutableList.builder();
-        ListObjectsResponse response = null;
-        do {
-            if (response != null) {
-                if (response.nextMarker() == null) {
-                    LOGGER.fatal("Received truncated response without a continuation marker.");
-                    break;
-                }
-                if (DEBUG) {
-                    LOGGER.info(" Got continuation token..");
-                }
-            }
-            ListObjectsRequest request = ListObjectsRequest.builder()
-                    .prefix(prefix)
-                    .bucket(s3Bucket)
-                    .marker(response != null ? response.nextMarker() : null)
-                    .build();
-            response = s3Client.listObjects(request);
+        ListObjectsV2Request request = ListObjectsV2Request.builder()
+                .prefix(prefix)
+                .bucket(s3Bucket)
+                .build();
+        for (ListObjectsV2Response response : s3Client.listObjectsV2Paginator(request)) {
             List<S3Object> toAdd = response.contents();
             if (DEBUG) {
                 LOGGER.info(" Adding {} objects to list.", toAdd.size());
             }
             objects.addAll(toAdd);
         }
-        while (response.isTruncated());
 
         List<S3Object> built = objects.build();
         if (DEBUG) {
@@ -419,27 +476,36 @@ public final class CloudSaveManager {
         return built;
     }
 
-    public void deleteObjects(List<S3Object> objects) {
+    public void deleteObjects(Collection<S3Object> objects) {
         assert s3Client != null;
         if (objects.isEmpty()) return;
 
-        if (DEBUG) {
-            LOGGER.info("Deleting objects: ");
-            for (S3Object object : objects) {
-                LOGGER.info(" " + object.key());
-            }
-        }
+        List<ObjectIdentifier> files = FastStream.of(objects)
+                .map(e -> ObjectIdentifier.builder().key(e.key()).build())
+                .toList();
 
-        DeleteObjectsResponse response = s3Client.deleteObjects(request -> {
-            request.bucket(s3Bucket);
-            request.delete(del -> {
-                del.objects(FastStream.of(objects)
-                        .map(e -> ObjectIdentifier.builder().key(e.key()).build())
-                        .toList()
-                );
+        // S3 docs say that only 1000 objects can be deleted at a time.
+        List<List<ObjectIdentifier>> partitions = Lists.partition(files, 1000);
+
+        LOGGER.info("Deleting {} objects in {} parts", objects.size(), partitions.size());
+
+        for (List<ObjectIdentifier> partitioned : partitions) {
+            if (DEBUG) {
+                LOGGER.info("Deleting: ");
+                for (ObjectIdentifier object : partitioned) {
+                    LOGGER.info(" " + object.key());
+                }
+            }
+            s3Client.deleteObjects(request -> {
+                request.bucket(s3Bucket);
+                request.delete(del -> {
+                    del.objects(partitioned);
+                });
             });
-        });
-        LOGGER.info(response);
+
+            LOGGER.info("Deleted part.");
+        }
+        LOGGER.info("Finished deleting.");
     }
 
     public Map<String, String> getMetadata(S3Object s3Object) {
@@ -462,6 +528,7 @@ public final class CloudSaveManager {
             CONFLICT,
             SUCCESS,
             FAILED,
+            INITIAL_STILL_RUNNING,
         }
     }
 
@@ -469,6 +536,7 @@ public final class CloudSaveManager {
 
         public final UUID uuid;
         public final CloudSyncOperation operation;
+        public final boolean isInitialSync;
         @Nullable
         public Future<?> future;
 
@@ -476,31 +544,32 @@ public final class CloudSaveManager {
         public @Nullable SyncDirection resolution;
         public boolean complete = false;
 
-        public SyncEntry(CloudSyncOperation operation) {
+        public SyncEntry(CloudSyncOperation operation, boolean isInitialSync) {
             this.uuid = operation.instance.getUuid();
             this.operation = operation;
+            this.isInitialSync = isInitialSync;
         }
 
         public SyncResult run() {
             try {
                 operation.prepare(resolution);
-            } catch (IOException ex) {
-                LOGGER.error("Fatal error preparing instance for sync.", ex);
-                complete = true;
-                return new SyncResult(SyncResult.ResultType.FAILED, "Failed to prepare instance for sync. See logs.");
             } catch (CloudSyncOperation.ConflictException ex) {
                 conflict = ex;
                 Settings.webSocketAPI.sendMessage(new InstanceCloudSyncConflictData(uuid, ex.code, ex.message));
-                return new SyncResult(SyncResult.ResultType.CONFLICT, "Sync conflict. Requires resolution.");
+                return new SyncResult(ResultType.CONFLICT, "Sync conflict. Requires resolution.");
+            } catch (Throwable ex) {
+                LOGGER.error("Fatal error preparing instance for sync.", ex);
+                complete = true;
+                return new SyncResult(ResultType.FAILED, "Failed to prepare instance for sync. See logs.");
             }
 
             try {
                 operation.operate();
-                return new SyncResult(SyncResult.ResultType.SUCCESS, "Synced!");
+                return new SyncResult(ResultType.SUCCESS, "Synced!");
             } catch (Throwable ex) {
                 LOGGER.error("Failed to sync instance.", ex);
                 complete = true;
-                return new SyncResult(SyncResult.ResultType.FAILED, "Sync failed. See logs.");
+                return new SyncResult(ResultType.FAILED, "Sync failed. See logs.");
             }
         }
     }

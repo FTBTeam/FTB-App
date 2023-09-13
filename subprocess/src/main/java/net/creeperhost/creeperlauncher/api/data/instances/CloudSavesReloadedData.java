@@ -11,12 +11,12 @@ import java.util.UUID;
  */
 public class CloudSavesReloadedData extends BaseData {
 
-    public final List<InstanceJson> newInstances;
+    public final List<InstanceJson> changedInstances;
     public final List<UUID> removedInstances;
 
-    public CloudSavesReloadedData(List<InstanceJson> newInstances, List<UUID> removedInstances) {
-        this.removedInstances = removedInstances;
+    public CloudSavesReloadedData(List<InstanceJson> changedInstances, List<UUID> removedInstances) {
         type = "cloudInstancesReloaded";
-        this.newInstances = newInstances;
+        this.changedInstances = changedInstances;
+        this.removedInstances = removedInstances;
     }
 }
