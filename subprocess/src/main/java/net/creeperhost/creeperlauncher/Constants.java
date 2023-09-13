@@ -28,15 +28,9 @@ public class Constants {
     private static final String INNER_DATA_DIR = ".ftba";
     private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), INNER_DATA_DIR);
 
-    //Launcher titles
-    public static final String windowTitle = "FTBApp";
-
     //Mojang
-    public static final String MC_VERSION_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     public static final String MC_RESOURCES = "https://resources.download.minecraft.net/";
     public static final String MC_RESOURCES_MIRROR = "https://azuresucks.modpacks.ch/";
-    public static final String MC_LIBS = "https://libraries.minecraft.net/";
-    public static final String MC_LAUNCHER = "https://launcher.mojang.com/download/Minecraft.";
     public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
     //API
@@ -49,12 +43,6 @@ public class Constants {
 
     public static final String UPLOAD_TRANSFER_HOST = "http://upload.share.modpacks.ch/";
     public static final String TRANSFER_HOST = "https://share.modpacks.ch/get/";
-
-    //Forge
-    public static final String FORGE_XML = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/maven-metadata.xml";
-    public static final String FORGE_MAVEN = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/";
-    public static final String FORGE_RECOMMENDED = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/promotions_slim.json";
-    public static final String FORGE_CH = "https://maven.creeperhost.net/net/minecraftforge/forge/";
 
     //Paths
     public static final Path BIN_LOCATION_OURS = WORKING_DIR.resolve("bin");
@@ -112,15 +100,12 @@ public class Constants {
             "-XX:G1HeapRegionSize=32M"
     };
 
-    public static final String LOG4JPATCHER_URL = "https://github.com/CreeperHost/Log4jPatcher/releases/download/v1.0.1/Log4jPatcher-1.0.1.jar";
-
     //Auth
     public static String KEY = "";
     public static String SECRET = "";
 
     //MT Identifiers
     public static String MT_HASH = "";
-    public static Path MTCONNECT_DIR = getDataDir().resolve("MTConnect");
 
     public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
