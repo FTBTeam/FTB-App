@@ -155,6 +155,8 @@ public class ModInstaller implements ModCollector {
 
             LOGGER.info("Finished downloading, Saving metadata changes.");
 
+            instance.setModified(true);
+            instance.saveJson();
             modifications.getOverrides().addAll(newOverrides);
             instance.saveModifications();
 
