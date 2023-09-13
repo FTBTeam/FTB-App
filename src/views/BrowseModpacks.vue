@@ -202,7 +202,7 @@ export default class BrowseModpacks extends Vue {
 
     try {
       const request = await fetch(
-        createModpackchUrl(`/${this.currentTab === 'ftbsearch' ? 'modpack' : 'curseforge'}/${pack.id}`),
+        createModpackchUrl(`/${this.currentTab === 'modpacksch' ? 'modpack' : 'curseforge'}/${pack.id}`),
       );
       const response: ModPack = await request.json();
 
@@ -227,7 +227,7 @@ export default class BrowseModpacks extends Vue {
         name,
         id: this.installModalData?.pack.id,
         version: version,
-        packType: this.currentTab === 'ftbsearch' ? 0 : 1,
+        packType: this.currentTab === 'modpacksch' ? 0 : 1,
         private: this.installModalData?.pack.private ?? false,
       },
       meta: {
