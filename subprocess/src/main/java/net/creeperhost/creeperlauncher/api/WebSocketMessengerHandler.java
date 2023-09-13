@@ -56,6 +56,7 @@ public class WebSocketMessengerHandler {
         register("uninstallInstance", UninstallInstanceData.class, new UninstallInstanceHandler());
         register("instanceConfigure", InstanceConfigureData.class, new InstanceConfigureHandler());
         register("instanceModToggle", InstanceModToggleData.class, new InstanceModToggleHandler());
+        register("instanceOverrideModLoader", InstanceOverrideModLoaderData.class, new InstanceOverrideModLoaderHandler());
         register("instanceBrowse", BrowseInstanceData.class, new BrowseInstanceHandler());
         register("getInstanceFolders", GetInstanceFoldersHandler.Request.class, new GetInstanceFoldersHandler());
         register("duplicateInstance", DuplicateInstanceHandler.Request.class, new DuplicateInstanceHandler());
@@ -74,6 +75,8 @@ public class WebSocketMessengerHandler {
         register("blockFriend", BlockFriendData.class, new BlockFriendHandler());
         register("addFriend", AddFriendData.class, new AddFriendHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
+        register("instanceEnableCloudSaves", InstanceEnableCloudSavesData.class, new InstanceEnableCloudSavesHandler());
+        register("instanceDisableCloudSaves", InstanceDisableCloudSavesData.class, new InstanceDisableCloudSavesHandler());
         register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("ping", PingLauncherData.class);

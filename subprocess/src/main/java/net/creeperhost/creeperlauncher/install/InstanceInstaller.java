@@ -7,6 +7,7 @@ import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.DlFile;
@@ -313,6 +314,12 @@ public class InstanceInstaller extends InstanceOperation {
                 filesToRemove.add(instance.getDir().resolve(oldFilePath));
             }
         }
+
+        // Ensure the mods lookup cache for the previous version gets nuked on upgrade.
+        Path meta = instance.getDir().resolve(".ftba/version_mods.json");
+        if (Files.exists(meta)) {
+            filesToRemove.add(meta);
+        }
     }
 
     private void locateUntrackedFiles() {
@@ -348,7 +355,14 @@ public class InstanceInstaller extends InstanceOperation {
         assert gameTarget != null;
         assert gameTarget.getName().equals("minecraft");
 
-        Target modLoaderTarget = manifest.findTarget("modloader");
+        InstanceModifications modifications = instance.getModifications();
+
+        Target modLoaderTarget;
+        if (modifications != null && modifications.getModLoaderOverride() != null) {
+            modLoaderTarget = modifications.getModLoaderOverride();
+        } else {
+            modLoaderTarget = manifest.findTarget("modloader");
+        }
         if (modLoaderTarget != null) {
             try {
                 modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(

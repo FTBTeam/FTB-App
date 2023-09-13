@@ -143,6 +143,7 @@ public class CreeperLauncher {
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
 
         isDevMode = Args.containsKey("dev");
+        Constants.IS_DEV_MODE = isDevMode;
 
         boolean isOverwolf = Args.containsKey("overwolf");
         boolean startProcess = !isDevMode;
@@ -602,7 +603,7 @@ public class CreeperLauncher {
         System.exit(0);
     }
 
-    public static void openDebugTools() {
+    public static synchronized void openDebugTools() {
         if (!DebugTools.IS_AVAILABLE || DEBUG_TOOLS != DebugTools.NONE) return;
         LOGGER.info("Trying to open Debug Tools.");
         DEBUG_TOOLS = DebugTools.load();

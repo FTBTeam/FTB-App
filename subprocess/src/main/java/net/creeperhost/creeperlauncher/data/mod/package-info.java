@@ -1,7 +1,7 @@
 @FieldsAreNonnullByDefault
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-package net.creeperhost.creeperlauncher.install.tasks.http;
+package net.creeperhost.creeperlauncher.data.mod;
 
 import net.covers1624.quack.annotation.FieldsAreNonnullByDefault;
 import net.covers1624.quack.annotation.MethodsReturnNonnullByDefault;

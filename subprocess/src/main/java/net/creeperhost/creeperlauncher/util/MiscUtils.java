@@ -54,10 +54,6 @@ public class MiscUtils {
         return args;
     }
 
-    public static long unixtime() {
-        return System.currentTimeMillis() / 1000L;
-    }
-
     /**
      * For some reason Minecraft like to give us UUID's without the hyphens...
      *

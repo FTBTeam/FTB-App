@@ -65,7 +65,7 @@ dependencies {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
     }
     implementation 'com.github.pircbotx:pircbotx:2.2'
-    implementation 'net.covers1624:Quack:0.4.6.69'
+    implementation 'net.covers1624:Quack:0.4.9.76'
     implementation 'net.covers1624:JdkUtils:0.4.0.14'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
