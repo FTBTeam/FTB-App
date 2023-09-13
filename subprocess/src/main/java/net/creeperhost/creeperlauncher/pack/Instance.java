@@ -1,12 +1,17 @@
 package net.creeperhost.creeperlauncher.pack;
 
+import com.google.common.hash.Hashing;
 import com.google.gson.JsonParseException;
+import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.hashing.Murmur2HashFunction;
 import net.covers1624.quack.platform.OperatingSystem;
+import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
 import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
 import net.creeperhost.creeperlauncher.data.mod.ModInfo;
@@ -22,6 +27,7 @@ import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.ImageUtils;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -484,12 +490,14 @@ public class Instance {
         ModpackVersionModsManifest modsManifest = getModsManifest();
         InstanceModifications modifications = getModifications();
 
+        Path modsDir = path.resolve("mods");
+
         // Populate all mods from the regular version manifest.
         for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
             if (file.getPath().startsWith("./mods") && isMod(file.getName())) {
                 String sha1 = Objects.toString(file.getSha1OrNull(), null);
 
-                InstanceModifications.ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
+                ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
                 ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
 
                 boolean fileExists = Files.exists(file.toPath(path));
@@ -534,11 +542,11 @@ public class Instance {
 
         // Mods added manually or via CurseForge integ.
         if (modifications != null) {
-            for (InstanceModifications.ModOverride override : modifications.getOverrides()) {
+            for (ModOverride override : modifications.getOverrides()) {
                 // -1 is for non-pack overrides.
                 if (!override.getState().added) continue;
 
-                Path file = this.path.resolve("mods").resolve(override.getFileName());
+                Path file = modsDir.resolve(override.getFileName());
                 mods.add(new ModInfo(
                         -1,
                         override.getFileName(),
@@ -552,7 +560,56 @@ public class Instance {
             }
         }
 
-        // TODO scan mods folder and dynamically adjust everything?
+        for (Path path : FileUtils.listDir(modsDir)) {
+            if (!Files.isRegularFile(path)) continue;
+
+            String fName = path.getFileName().toString();
+            String fName2 = StringUtils.stripEnd(fName, ".disabled");
+            // Do we already know about the mod?
+            if (ColUtils.anyMatch(mods, e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
+                continue;
+            }
+            LOGGER.info("Found unknown mod in Mods folder. {}", fName);
+            // We don't know about the mod! We need to add it and create a Modification for it.
+
+            String sha1;
+            long size;
+            try {
+                size = Files.size(path);
+                sha1 = HashUtils.hash(Hashing.sha1(), path).toString();
+                LOGGER.info(HashUtils.hash(new Murmur2HashFunction(true), path));
+            } catch (IOException ex) {
+                LOGGER.error("Error reading file. Unable to process this whilst generating mods list.", ex);
+                continue;
+            }
+
+            long curseProject = -1;
+            long curseFile = -1;
+            FileMetadata metadata = Constants.CURSE_METADATA_CACHE.queryMetadata(sha1);
+            if (metadata != null) {
+                LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
+                curseProject = metadata.curseProject();
+                curseFile = metadata.curseFile();
+            } else {
+                LOGGER.info(" Could not identify mod with hash lookup.");
+            }
+
+            ModOverrideState state = fName.endsWith(".disabled") ? ModOverrideState.ADDED_DISABLED : ModOverrideState.ADDED_ENABLED;
+
+            mods.add(new ModInfo(
+                    -1,
+                    fName2,
+                    null,
+                    state.enabled,
+                    size,
+                    sha1,
+                    curseProject,
+                    curseFile
+            ));
+
+            getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, curseProject, curseFile));
+            saveModifications();
+        }
 
         LOGGER.info("List built {} mods.", mods.size());
         return mods;
@@ -568,13 +625,13 @@ public class Instance {
      */
     public void toggleMod(long fileId, String fileName) {
         InstanceModifications modifications = getOrCreateModifications();
-        InstanceModifications.ModOverride override = modifications.findOverride(fileName);
+        ModOverride override = modifications.findOverride(fileName);
 
         Path pathEnabled;
         Path pathDisabled;
         // .disabled in this context can only come from distribution disabled mods.
         if (fileName.endsWith(".disabled")) {
-            pathEnabled = path.resolve("mods").resolve(fileName.substring(0, fileName.indexOf(".disabled")));
+            pathEnabled = path.resolve("mods").resolve(StringUtils.removeEnd(fileName, ".disabled"));
             pathDisabled = path.resolve("mods").resolve(fileName);
         } else {
             pathEnabled = path.resolve("mods").resolve(fileName);
@@ -592,7 +649,7 @@ public class Instance {
 
             boolean isEnabled = !fileName.endsWith(".disabled");
             ModOverrideState state = isEnabled ? ModOverrideState.ENABLED : ModOverrideState.DISABLED;
-            override = new InstanceModifications.ModOverride(state, fileName, fileId);
+            override = new ModOverride(state, fileName, fileId);
             modifications.getOverrides().add(override);
         }
 
@@ -616,10 +673,7 @@ public class Instance {
     }
 
     private static boolean isMod(String fName) {
-        int disabledIdx = fName.indexOf(".disabled");
-        if (disabledIdx != -1) {
-            fName = fName.substring(0, disabledIdx);
-        }
+        fName = StringUtils.removeEnd(fName, ".disabled");
         return fName.endsWith(".jar") || fName.endsWith(".zip");
     }
 

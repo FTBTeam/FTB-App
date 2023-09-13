@@ -126,7 +126,7 @@ public class CurseMetadataCache {
     // Only the useful things from /public/mod/lookup/<hash>
     public record FileMetadata(
             long fileId,
-//            String name,
+            String name,
 //            String synopsis,
 //            String icon,
             String curseSlug,
