@@ -306,7 +306,7 @@ public final class CloudSaveManager {
 
                     Map<String, S3Object> objects = FastStream.of(index)
                             .filter(e -> e.key().startsWith(key))
-                            .toMap(e -> StringUtils.stripStart(key + "/", e.key()), e -> e);
+                            .toMap(e -> StringUtils.stripStart(e.key(), key + "/"), e -> e);
 
                     S3Object manifest = objects.get("instance.json");
                     if (manifest == null) {
