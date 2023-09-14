@@ -1,9 +1,10 @@
 import {emitter} from '@/utils';
 import store from '@/modules/store';
 import {
+  CloudSavesReloadedData,
   FilesEvent,
   InstallInstanceDataProgress,
-  InstallInstanceDataReply,
+  InstallInstanceDataReply, InstanceJson,
   SugaredInstanceJson
 } from '@/core/@types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -40,9 +41,26 @@ class InstanceInstallController {
   private installLock = false;
   
   constructor() {
-    emitter.on("ws.message", (data: any) => {
+    emitter.on("ws.message", async (data: any) => {
       if (data.type === "cloudInstancesReloaded") {
-        console.log("cunt", data)
+        const payload = data as CloudSavesReloadedData;
+        console.log("Cloud instances reloaded", payload)
+        if (payload.changedInstances.length) {
+          for (const pack of payload.changedInstances) {
+            if ((store.state as any).v2["v2/instances"].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
+              console.log("Adding new instance", pack)
+              await store.dispatch("v2/instances/addInstance", pack, {root: true});
+            } else {
+              console.log("Updating instance", pack)
+              await store.dispatch("v2/instances/updateInstance", pack, {root: true});
+            }
+            
+            console.log((store.state as any).v2["v2/instances"].instances.map((i: InstanceJson) => ({
+              uuid: i.uuid,
+              name: i.name,
+            })))
+          }
+        }
       }
     });
     
