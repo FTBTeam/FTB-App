@@ -530,7 +530,7 @@ public class Instance {
                 mods.add(new ModInfo(
                         file.getId(),
                         file.getName(),
-                        file.getVersion(),
+                        file.getVersionOrNull(),
                         enabled,
                         file.getSize(),
                         sha1,
