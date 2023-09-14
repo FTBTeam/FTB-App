@@ -43,11 +43,17 @@ public class CloudSyncOperation {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new Gson();
 
+    // All files here need to be lower-case.
     private static final List<String> IGNORED_FILES = List.of(
             "sync_manifest.json", // This is an internal file and managed manually.
 
             "logs/",              // Can get very large if mods spam logs.
-            "backups/"            // Backups are just massive. Lets just not..
+            "backups/",           // Backups are just massive. Lets just not..
+
+            // Potentially sensitive information we should avoid syncing.
+            // Add more here when discovered!
+            ".reauth.cfg",
+            ".mtsession/"
     );
 
     // Prioritize specific files. These will always be first in this order.
