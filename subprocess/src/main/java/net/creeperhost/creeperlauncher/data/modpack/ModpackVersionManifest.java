@@ -394,6 +394,7 @@ public class ModpackVersionManifest {
         // @formatter:off
         public long getId() { return id; }
         public String getVersion() { return requireNonNull(version); }
+        public @Nullable String getVersionOrNull() { return version; }
         public String getPath() { return requireNonNull(path); }
         public String getName() { return requireNonNull(name); }
         public String getUrl() { return requireNonNull(url); }

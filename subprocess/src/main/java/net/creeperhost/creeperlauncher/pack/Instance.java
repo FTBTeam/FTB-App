@@ -530,7 +530,7 @@ public class Instance {
                 mods.add(new ModInfo(
                         file.getId(),
                         file.getName(),
-                        file.getVersion(),
+                        file.getVersionOrNull(),
                         enabled,
                         file.getSize(),
                         sha1,
@@ -577,7 +577,6 @@ public class Instance {
             try {
                 size = Files.size(path);
                 sha1 = HashUtils.hash(Hashing.sha1(), path).toString();
-                LOGGER.info(HashUtils.hash(new Murmur2HashFunction(true), path));
             } catch (IOException ex) {
                 LOGGER.error("Error reading file. Unable to process this whilst generating mods list.", ex);
                 continue;
