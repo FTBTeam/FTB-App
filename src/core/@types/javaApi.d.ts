@@ -85,8 +85,8 @@ export interface CheckShareCodeDataReply extends CheckShareCodeData {
 }
 
 export interface CloudSavesReloadedData extends BaseData {
-    newInstances: InstanceJson[];
-    removedInstances: string[];
+  changedInstances: InstanceJson[];
+  removedInstances: string[];
 }
 
 export interface InstallInstanceData extends BaseData {

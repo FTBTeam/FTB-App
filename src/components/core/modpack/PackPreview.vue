@@ -1,5 +1,8 @@
 <template>
-  <div class="pack-preview" v-if="packData" @click="install">
+  <div class="pack-preview" v-if="packData" @click="$router.push({
+    name: RouteNames.ROOT_PREVIEW_PACK,
+    query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
+  })">
     <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
     <div class="logo">
       <img :src="logo" :alt="`Pack art for ${packData.name}`" />
@@ -7,7 +10,7 @@
     <div class="pack-main">
       <div class="name">{{ packData.name }} <span>by</span> {{ packData.authors.map((e) => e.name).join(', ') }}</div>
       <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
-        {{ trimString(packData.synopsis, 116) }}
+        {{ packData.synopsis }}
       </div>
       <div class="tags">
         <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
@@ -30,6 +33,7 @@ import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {PackProviders} from '@/modules/modpacks/types';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {stringIsEmpty, stringOrDefault, trimString} from '@/utils/helpers/stringHelpers';
+import {RouterNames} from '@/router';
 
 @Component({
   methods: {
@@ -41,6 +45,8 @@ export default class PackPreview extends PackCardCommon {
   @Prop() packId?: number;
   @Prop() partialPack?: SearchResultPack;
   @Prop() provider!: PackProviders;
+  
+  RouteNames = RouterNames;
   
   mounted() {
     if (!this.partialPack && !this.packId) {
@@ -57,8 +63,8 @@ export default class PackPreview extends PackCardCommon {
     instanceInstallController.requestInstall({
       id: apiPack.id,
       version: apiPack.versions[0].id,
-      name: "hello" + Math.random() * 100,
-      versionName: "hello2",
+      name: apiPack.name,
+      versionName: apiPack.versions[0].name,
       logo: "",
     })
   }

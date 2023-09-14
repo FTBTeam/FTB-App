@@ -2,7 +2,7 @@
   <div class="home page-spacing">
     <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
     
-    <div class="recently-played mb-5">
+    <div class="recently-played pack-card-grid mb-5">
       <pack-card2 class="pack-card" v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
     </div>
     
@@ -124,14 +124,18 @@ export default class Home extends Vue {
 
 <style lang="scss" scoped>
 .recently-played {
-  display: flex;
-  overflow-x: auto;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  
   .pack-card {
-    min-width: 170px;
-    width: 170px;
+    @media (max-width: 1288px) {
+      &:nth-child(5) {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 1458px) {
+        &:nth-child(6) {
+          display: none;
+        }
+    }
   }
 }
 </style>
