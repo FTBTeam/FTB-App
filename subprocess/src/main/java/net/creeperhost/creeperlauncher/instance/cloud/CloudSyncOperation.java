@@ -43,11 +43,17 @@ public class CloudSyncOperation {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new Gson();
 
+    // All files here need to be lower-case.
     private static final List<String> IGNORED_FILES = List.of(
             "sync_manifest.json", // This is an internal file and managed manually.
 
             "logs/",              // Can get very large if mods spam logs.
-            "backups/"            // Backups are just massive. Lets just not..
+            "backups/",           // Backups are just massive. Lets just not..
+
+            // Potentially sensitive information we should avoid syncing.
+            // Add more here when discovered!
+            ".reauth.cfg",
+            ".mtsession/"
     );
 
     // Prioritize specific files. These will always be first in this order.
@@ -227,7 +233,7 @@ public class CloudSyncOperation {
             }
             Throwable syncError = null;
             try {
-                saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json");
+                saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json", null);
             } catch (Throwable ex) {
                 LOGGER.error("Failed to update remote sync manifest before sync.");
                 syncError = ex;
@@ -259,10 +265,10 @@ public class CloudSyncOperation {
                                 try {
                                     LOGGER.info("Uploading file to S3: {}", op.local.path());
                                     if (op.remote != null) {
-                                        saveManager.uploadFile(op.local.path, op.remote.s3Object.key());
+                                        saveManager.uploadFile(op.local.path, op.remote.s3Object.key(), listener);
                                     } else {
                                         String key = instance.getUuid() + "/" + instance.getDir().relativize(op.local.path);
-                                        saveManager.uploadFile(op.local.path, key);
+                                        saveManager.uploadFile(op.local.path, key, listener);
                                     }
                                 } finally {
                                     progressTracker.stepFinished();
@@ -292,10 +298,10 @@ public class CloudSyncOperation {
                                 try {
                                     LOGGER.info("Downloading file from S3: {}", op.remote.path);
                                     if (op.local != null) {
-                                        saveManager.downloadFile(op.local.path, op.remote.s3Object);
+                                        saveManager.downloadFile(op.local.path, op.remote.s3Object, listener);
                                     } else {
                                         Path path = instance.getDir().resolve(op.remote.path);
-                                        saveManager.downloadFile(path, op.remote.s3Object);
+                                        saveManager.downloadFile(path, op.remote.s3Object, listener);
                                     }
                                 } finally {
                                     progressTracker.stepFinished();
@@ -331,7 +337,7 @@ public class CloudSyncOperation {
 
             if (jsonUpdated) {
                 try {
-                    saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json");
+                    saveManager.uploadFile(syncManifestFile, instance.getUuid() + "/sync_manifest.json", null);
                 } catch (Throwable ex) {
                     LOGGER.error("Failed to upload sync manifest after sync.", ex);
                     if (syncError != null) {

@@ -10,7 +10,9 @@ import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.io.ProgressInputStream;
 import net.covers1624.quack.util.HashUtils;
+import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
@@ -20,9 +22,11 @@ import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstances
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager.SyncResult.ResultType;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSyncOperation.SyncDirection;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.s3.OkHTTPS3HttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.internal.util.Mimetype;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.Header;
 import software.amazon.awssdk.regions.Region;
@@ -369,7 +374,7 @@ public final class CloudSaveManager {
         return s3Client != null;
     }
 
-    public void uploadFile(Path file, String destKey) throws IOException {
+    public void uploadFile(Path file, String destKey, @Nullable TaskProgressListener listener) throws IOException {
         assert s3Client != null;
         Map<String, String> metadata = new HashMap<>();
         long len = Files.size(file);
@@ -385,21 +390,57 @@ public final class CloudSaveManager {
                 .contentType(Files.probeContentType(file))
                 .metadata(metadata);
 
-        s3Client.putObject(builder.build(), RequestBody.fromFile(file));
+        RequestBody body;
+        if (listener != null) {
+            body = RequestBody.fromContentProvider(
+                    () -> {
+                        try {
+                            listener.start(len);
+                            return new ProgressInputStream(
+                                    Files.newInputStream(file),
+                                    new QuackProgressAdapter(listener)
+                            );
+                        } catch (IOException ex) {
+                            SneakyUtils.throwUnchecked(ex);
+                            return null;
+                        }
+                    },
+                    len,
+                    Mimetype.getInstance().getMimetype(file)
+            );
+        } else {
+            body = RequestBody.fromFile(file);
+        }
+
+        s3Client.putObject(builder.build(), body);
     }
 
-    public void downloadFile(Path file, S3Object s3Object) throws IOException {
+    public void downloadFile(Path file, S3Object s3Object, @Nullable TaskProgressListener listener) throws IOException {
         assert s3Client != null;
 
         Path tempFile = file.getParent().resolveSibling("__tmp_" + file.getFileName());
         try (ResponseInputStream<GetObjectResponse> is = s3Client.getObject(e -> e.bucket(s3Bucket).key(s3Object.key()))) {
             GetObjectResponse response = is.response();
-            try (OutputStream os = Files.newOutputStream(tempFile)) {
-                IOUtils.copy(is, os);
+            if (listener != null) {
+                listener.start(response.contentLength());
             }
-            long actualLen = Files.size(tempFile);
-            if (response.contentLength() != actualLen) {
-                throw new IOException("File failed length validation. Expected: " + response.contentLength() + " Actual: " + actualLen);
+            long transferred = 0;
+            try (OutputStream os = Files.newOutputStream(tempFile)) {
+                byte[] buffer = IOUtils.getCachedBuffer();
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    transferred += len;
+                    if (listener != null) {
+                        listener.update(transferred);
+                    }
+                    os.write(buffer, 0, len);
+                }
+            }
+            if (listener != null) {
+                listener.finish(transferred);
+            }
+            if (response.contentLength() != transferred) {
+                throw new IOException("File failed length validation. Expected: " + response.contentLength() + " Actual: " + transferred);
             }
 
             String expectedHash = null;
