@@ -691,9 +691,12 @@ public class Instance {
         );
     }
 
+    /**
+     * Creates a safe pack name from the instance name, then seeds it with the instance UUID.
+     */
     private static String folderNameFor(InstanceJson props) {
-        // TODO, generate folder name from instance name.
-        return props.uuid.toString();
+        return props.name
+            .replaceAll("[^a-zA-Z0-9\\s-]", "") + " (" + props.uuid.toString().split("-")[0] + ")";
     }
 
     // @formatter:off
