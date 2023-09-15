@@ -328,6 +328,16 @@ export default class InstancePage extends Vue {
     if (this.instance == null) {
       return;
     }
+    
+    if (this.instance.pendingCloudInstance) {
+      const result = await sendMessage("syncInstance", {
+        uuid: this.instance.uuid
+      })
+      
+      console.log(result)
+      
+      return;
+    }
 
     if (this.instance.memory < this.instance.minMemory) {
       this.msgBox.type = 'okCancel';

@@ -4,8 +4,8 @@
       <div class="action-heading">
         <div class="play">
           <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
-            <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
-            {{ isInstalled ? 'Play' : 'Install' }}
+            <font-awesome-icon :icon="isInstalled ? (requiresSync ? 'download' : 'play') : 'download'" class="mr-4" />
+            {{ isInstalled ? (requiresSync ? 'Sync' : 'Play') : 'Install' }}
           </ftb-button>
 
           <pack-actions
@@ -203,7 +203,7 @@ import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
 import Platform from '@/utils/interface/electron-overwolf';
-import {Backup} from '@/core/@types/javaApi';
+import {Backup, InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 
 @Component({
   name: 'pack-body',
@@ -221,7 +221,7 @@ export default class PackBody extends Vue {
   @Action('sendMessage') public sendMessage!: any;
 
   // The stored instance for an installed pack
-  @Prop({ default: null }) instance!: Instance;
+  @Prop({ default: null }) instance!: SugaredInstanceJson;
   @Prop({ default: false }) packLoading!: boolean;
   // Pack Instance is the modpack api response
   @Prop() packInstance!: ModPack;
@@ -281,6 +281,10 @@ export default class PackBody extends Vue {
       }
     }
     return null;
+  }
+  
+  get requiresSync() {
+    return this.instance?.pendingCloudInstance ?? false;
   }
 
   get packSlug() {

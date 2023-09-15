@@ -1,6 +1,7 @@
 import {ApiEndpoint} from '@/core/pack-api/endpoints/apiEndpoint';
 import {StatusResult} from '@/core/pack-api/modpackApi';
 import {ModPack} from '@/modules/modpacks/types';
+import {localiseNumber} from '@/utils/helpers/stringHelpers';
 
 type PackIdList = {
   packs: number[];
@@ -21,8 +22,8 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
     return this.fetchPrivate<StatusResult<PackIdList>>("GET", "modpacks");
   }
   
-  async getModpack(id: number) {
-    return this.fetchPrivate<StatusResult<ModPack>>("GET", id.toString());
+  async getModpack(id: number | string) {
+    return this.fetchPrivate<StatusResult<ModPack>>("GET", "" + id);
   }
   
   async getFeaturedPacks(limit = 5) {

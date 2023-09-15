@@ -11,7 +11,7 @@ public class SyncCloudInstanceHandler implements IMessageHandler<SyncCloudInstan
 
     @Override
     public void handle(SyncCloudInstanceData data) {
-        if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured()) {
+        if (!CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured()) {
             Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Cloud saves not configured."));
             return;
         }

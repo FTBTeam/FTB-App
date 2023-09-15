@@ -1,27 +1,37 @@
 <template>
-  <div class="pack-preview" v-if="packData" @click="$router.push({
-    name: RouteNames.ROOT_PREVIEW_PACK,
-    query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
-  })">
-    <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
-    <div class="logo">
-      <img :src="logo" :alt="`Pack art for ${packData.name}`" />
-    </div>
-    <div class="pack-main">
-      <div class="name">{{ packData.name }} <span>by</span> {{ packData.authors.map((e) => e.name).join(', ') }}</div>
-      <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
-        {{ packData.synopsis }}
+  <div class="pack-preview-container">
+    <div class="pack-preview" v-if="packData" @click="$router.push({
+      name: RouteNames.ROOT_PREVIEW_PACK,
+      query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
+    })">
+      <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
+      <div class="logo">
+        <img :src="logo" :alt="`Pack art for ${packData.name}`" />
       </div>
-      <div class="tags">
-        <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
-      </div>
+      <template v-if="!isInstalling">
+        <div class="pack-main">
+          <div class="name">{{ packData.name }} <span>by</span> {{ packData.authors.map((e) => e.name).join(', ') }}</div>
+          <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
+            {{ packData.synopsis }}
+          </div>
+          <div class="tags">
+            <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
+          </div>
+        </div>
+        <div class="install-btn" @click.stop="showInstall = true">
+          <font-awesome-icon icon="download" />
+        </div>
+      </template>
+      <template v-else>
+        <div class="installing">
+          <font-awesome-icon icon="spinner" spin />
+        </div>
+      </template>
     </div>
-    <div class="install-btn" @click.stop="install">
-      <font-awesome-icon icon="download" />
+    <div v-else>
+      Loading...
     </div>
-  </div>
-  <div v-else>
-    Loading...
+    <modpack-install-modal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :api-modpack="apiModpack ? apiModpack : undefined" />
   </div>
 </template>
 
@@ -34,10 +44,11 @@ import {PackProviders} from '@/modules/modpacks/types';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {stringIsEmpty, stringOrDefault, trimString} from '@/utils/helpers/stringHelpers';
 import {RouterNames} from '@/router';
+import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
 
 @Component({
+  components: {ModpackInstallModal},
   methods: {
-    trimString,
     stringOrDefault
   }
 })
@@ -47,6 +58,7 @@ export default class PackPreview extends PackCardCommon {
   @Prop() provider!: PackProviders;
   
   RouteNames = RouterNames;
+  showInstall = false;
   
   mounted() {
     if (!this.partialPack && !this.packId) {

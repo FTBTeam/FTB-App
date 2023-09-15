@@ -25,6 +25,8 @@
         </div>
       </div>
     </div>
+    
+    <modpack-install-modal :pack-id="instance.id" :instance="instance" />
   </div>
 </template>
 
@@ -36,9 +38,11 @@ import {RouterNames} from '@/router';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import Popover from '@/components/atoms/Popover.vue';
+import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
 
 @Component({
   components: {
+    ModpackInstallModal,
     Popover
   }
 })

@@ -346,19 +346,24 @@ export default class Library extends Vue {
   }
 
   get packs(): Instance[] {
-    return this.modpacks == null
-      ? []
-      : this.searchTerm.length > 0
-      ? this.modpacks.installedPacks.filter((pack) => {
-          return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
-        })
-      : this.modpacks.installedPacks.sort((a, b) => {
-          if (!a.lastPlayed || !b.lastPlayed) {
-            return a.name.localeCompare(b.name);
-          }
+    let installedModpacks = this.modpacks.installedPacks;
+    
+    // Failsafe
+    if (this.modpacks === null) {
+      return [];
+    }
+    
+    if (this.searchTerm.length > 0) {
+      installedModpacks = installedModpacks.filter((pack) => pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1);
+    }
 
-          return b.lastPlayed - a.lastPlayed;
-        });
+    return installedModpacks.sort((a, b) => {
+      if (!a.lastPlayed || !b.lastPlayed) {
+        return a.name.localeCompare(b.name);
+      }
+
+      return b.lastPlayed - a.lastPlayed;
+    });
   }
 
   public getModpack(id: number): ModPack | null {

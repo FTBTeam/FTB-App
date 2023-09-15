@@ -158,6 +158,10 @@ class InstanceInstallController {
       return;
     }
     
+    if (installResponse.instanceData) {
+      store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+    }
+    
     console.log("Install request sent", installResponse)
     
     const installRequest: InstallResult = await new Promise((resolve, reject) => {
@@ -238,6 +242,11 @@ class InstanceInstallController {
     
     this.installLock = false;
     await this.checkQueue(); // Force a queue check again 
+  }
+  
+  private sendFailure(request: InstallRequest) {
+    const isUpdate = request.updatingInstanceUuid != null;
+    
   }
   
   private updateInstallStatus(status: InstallStatus | null) {

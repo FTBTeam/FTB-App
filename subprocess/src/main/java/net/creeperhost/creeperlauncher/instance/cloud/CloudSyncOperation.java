@@ -15,6 +15,7 @@ import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -226,6 +227,9 @@ public class CloudSyncOperation {
             manifest.state = SyncManifest.State.SYNCING;
             manifest.lastSync = System.currentTimeMillis();
             try {
+                if (Files.notExists(syncManifestFile.getParent())) {
+                    Files.createDirectories(syncManifestFile.getParent());
+                }
                 JsonUtils.write(GSON, syncManifestFile, manifest);
             } catch (IOException ex) {
                 LOGGER.error("Failed to update local sync manifest before sync", ex);
@@ -394,6 +398,9 @@ public class CloudSyncOperation {
     private Map<String, LocalFile> indexInstance() throws IOException {
         ImmutableMap.Builder<String, LocalFile> builder = ImmutableMap.builder();
         Path rootDir = instance.getDir();
+        if (Files.notExists(rootDir)) {
+            return builder.build();
+        }
         try (Stream<Path> stream = Files.walk(rootDir)) {
             stream.forEach(e -> {
                 if (!Files.isDirectory(e)) {

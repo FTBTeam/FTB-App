@@ -418,14 +418,14 @@ public final class CloudSaveManager {
     public void downloadFile(Path file, S3Object s3Object, @Nullable TaskProgressListener listener) throws IOException {
         assert s3Client != null;
 
-        Path tempFile = file.getParent().resolveSibling("__tmp_" + file.getFileName());
+        Path tempFile = file.resolveSibling("__tmp_" + file.getFileName());
         try (ResponseInputStream<GetObjectResponse> is = s3Client.getObject(e -> e.bucket(s3Bucket).key(s3Object.key()))) {
             GetObjectResponse response = is.response();
             if (listener != null) {
                 listener.start(response.contentLength());
             }
             long transferred = 0;
-            try (OutputStream os = Files.newOutputStream(tempFile)) {
+            try (OutputStream os = Files.newOutputStream(IOUtils.makeParents(tempFile))) {
                 byte[] buffer = IOUtils.getCachedBuffer();
                 int len;
                 while ((len = is.read(buffer)) != -1) {
@@ -455,7 +455,7 @@ public final class CloudSaveManager {
                     throw new IOException("File failed SHA1 validation. Expected: " + expectedHash + " Actual: " + actualHash);
                 }
             }
-            Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(tempFile, IOUtils.makeParents(file), StandardCopyOption.REPLACE_EXISTING);
 
             if (lastModified != null) {
                 try {

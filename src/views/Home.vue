@@ -1,10 +1,12 @@
 <template>
   <div class="home page-spacing">
-    <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
-    
-    <div class="recently-played pack-card-grid mb-5">
-      <pack-card2 class="pack-card" v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
-    </div>
+    <template v-if="recentInstances.length">
+      <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
+      
+      <div class="recently-played pack-card-grid mb-5">
+        <pack-card2 class="pack-card" v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
+      </div>
+    </template>
     
     <div class="featured-packs">
       <h2 class="text-lg font-bold text-white mb-4">Featured packs</h2>
