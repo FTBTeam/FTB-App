@@ -8,6 +8,8 @@ import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.install.InstallProgressTracker.DlFile;
@@ -18,6 +20,7 @@ import net.creeperhost.creeperlauncher.instance.InstanceOperation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.PathFixingCopyingFileVisitor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static net.covers1624.quack.util.SneakyUtils.nullCons;
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.GSON;
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.Target;
 
@@ -92,6 +97,7 @@ public class InstanceInstaller extends InstanceOperation {
      * Any files the Update/Validation operations have determined to be removed.
      */
     private final List<Path> filesToRemove = new LinkedList<>();
+    private final List<ModOverride> overridesToRemove = new LinkedList<>();
 
     /**
      * Any files that will be downloaded.
@@ -213,6 +219,13 @@ public class InstanceInstaller extends InstanceOperation {
                 }
             }
 
+            InstanceModifications modifications = instance.getModifications();
+            if (modifications != null) {
+                LOGGER.info("Removing dead overrides..");
+                overridesToRemove.forEach(modifications.getOverrides()::remove);
+                instance.saveModifications();
+            }
+
             tracker.nextStage(InstallStage.MODLOADER);
             if (modLoaderInstallTask != null) {
                 LOGGER.info("Installing ModLoader..");
@@ -278,8 +291,12 @@ public class InstanceInstaller extends InstanceOperation {
     private void validateFiles() {
         Map<String, IndexedFile> knownFiles = getKnownFiles();
         for (Map.Entry<String, IndexedFile> entry : knownFiles.entrySet()) {
-            Path file = instance.getDir().resolve(entry.getKey());
             IndexedFile modpackFile = entry.getValue();
+            Path file = remapFileFromOverride(
+                    modpackFile,
+                    instance.getDir().resolve(entry.getKey()),
+                    nullCons()
+            );
             if (Files.notExists(file)) {
                 invalidFiles.add(new InvalidFile(file, modpackFile.sha1(), null, modpackFile.length(), -1));
             } else {
@@ -307,11 +324,18 @@ public class InstanceInstaller extends InstanceOperation {
     private void processUpgrade() {
         assert oldManifest != null;
 
+        // Figure out which file paths just don't exist anymore.
         Map<String, IndexedFile> newFiles = getKnownFiles();
         Map<String, IndexedFile> oldFiles = computeKnownFiles(oldManifest);
         for (String oldFilePath : oldFiles.keySet()) {
             if (!newFiles.containsKey(oldFilePath)) {
-                filesToRemove.add(instance.getDir().resolve(oldFilePath));
+                IndexedFile file = oldFiles.get(oldFilePath);
+                Path path = remapFileFromOverride(
+                        file,
+                        instance.getDir().resolve(oldFilePath),
+                        overridesToRemove::add
+                );
+                filesToRemove.add(path);
             }
         }
 
@@ -399,6 +423,31 @@ public class InstanceInstaller extends InstanceOperation {
             }
         }
         tracker.submitFiles(dlFiles);
+    }
+
+    private Path remapFileFromOverride(IndexedFile file, Path path, Consumer<ModOverride> cons) {
+        ModOverride override = findModOverride(file.fileName());
+        if (override != null) {
+            LOGGER.info("File {} has override!", path);
+            if (override.getState() == ModOverrideState.DISABLED) {
+                path = path.resolveSibling(path.getFileName() + ".disabled");
+            } else if (override.getState() == ModOverrideState.ENABLED) {
+                path = path.resolveSibling(StringUtils.stripEnd(path.getFileName().toString(), ".disabled"));
+            } else {
+                LOGGER.warn("Unknown override state for known file! {}", override.getState());
+                return path;
+            }
+            cons.accept(override);
+            LOGGER.info("Remapped file path to {} for state {}.", path, override.getState());
+        }
+        return path;
+    }
+
+    private @Nullable ModOverride findModOverride(String fName) {
+        InstanceModifications modifications = instance.getModifications();
+        if (modifications == null) return null;
+
+        return modifications.findOverride(fName);
     }
 
     /**
