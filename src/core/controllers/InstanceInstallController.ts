@@ -17,7 +17,7 @@ export type InstallRequest = {
   version: string | number;
   name: string;
   versionName: string;
-  logo: string;
+  logo: string | null;
   updatingInstanceUuid?: string;
 }
 
@@ -150,6 +150,7 @@ class InstanceInstallController {
       shareCode: "",
       importFrom: null,
       name: request.name,
+      artPath: request.logo,
     });
     
     if (installResponse.status === "error" || installResponse.status === "prepare_error") {

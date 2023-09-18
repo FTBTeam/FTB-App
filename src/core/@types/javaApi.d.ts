@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-06 18:23:40.
+// Generated using typescript-generator version 3.2.1263 on 2023-09-18 11:06:07.
 
 export interface BaseData {
     type: string;
@@ -85,8 +85,8 @@ export interface CheckShareCodeDataReply extends CheckShareCodeData {
 }
 
 export interface CloudSavesReloadedData extends BaseData {
-  changedInstances: InstanceJson[];
-  removedInstances: string[];
+    changedInstances: InstanceJson[];
+    removedInstances: string[];
 }
 
 export interface InstallInstanceData extends BaseData {
@@ -98,6 +98,7 @@ export interface InstallInstanceData extends BaseData {
     shareCode: string;
     importFrom: string;
     name: string;
+    artPath: string;
 }
 
 export interface FilesEvent extends BaseData {
@@ -154,28 +155,44 @@ export interface InstanceConfigureDataReply extends BaseData {
     status: string;
 }
 
+export interface InstanceDisableCloudSavesData extends BaseData {
+    instance: string;
+}
+
+export interface InstanceDisableCloudSavesDataReply extends BaseData {
+    status: string;
+    message: string;
+}
+
+export interface InstanceEnableCloudSavesData extends BaseData {
+    instance: string;
+}
+
+export interface InstanceEnableCloudSavesDataReply extends BaseData {
+    status: string;
+    message: string;
+}
+
 export interface InstanceInstallModData extends BaseData {
     uuid: string;
     modId: number;
     versionId: number;
 }
 
-export interface InstanceInstallModDataProgress extends BaseData {
-    overallPercentage: number;
-    speed: number;
-    currentBytes: number;
-    overallBytes: number;
+export interface PendingInstall {
+    modId: number;
+    versionId: number;
 }
 
 export interface InstanceInstallModDataReply extends BaseData {
     status: string;
     message: string;
-    dependencyList: Version[];
+    dependencies: PendingInstall[];
 }
 
 export interface InstanceModToggleData extends BaseData {
     uuid: string;
-    state: boolean;
+    fileId: number;
     fileName: string;
 }
 
@@ -189,7 +206,18 @@ export interface InstanceModsData extends BaseData {
 }
 
 export interface InstanceModsDataReply extends InstanceModsData {
-    files: ModFile[];
+    files: ModInfo[];
+}
+
+export interface InstanceOverrideModLoaderData extends BaseData {
+    uuid: string;
+    modLoaderId: number;
+    modLoaderVersion: number;
+}
+
+export interface InstanceOverrideModLoaderDataReply extends BaseData {
+    status: string;
+    message: string;
 }
 
 export interface InstanceVersionInfoData extends BaseData {
@@ -689,30 +717,13 @@ export interface AccountProfile {
     skins: AccountSkin[];
 }
 
-export interface Version {
+export interface ModInfo {
+    fileId: number;
+    fileName: string;
     version: string;
-    path: string;
-    name: string;
-    url: string;
-    sha1: string;
-    updated: string;
-    size: number;
-    clientOnly: boolean;
-    id: number;
-    type: string;
-    targets: LoaderTarget[];
-    dependencies: Dependency[];
-}
-
-export interface ModFile {
-    name: string;
-    version: string;
-    size: number;
-    sha1: string;
-    expected: boolean;
-    exists: boolean;
     enabled: boolean;
-    realPath: string;
+    size: number;
+    sha1: string;
     curseProject: number;
     curseFile: number;
 }
@@ -779,18 +790,6 @@ export interface AccountSkin {
     url: string;
     variant: string;
     alias: string;
-}
-
-export interface LoaderTarget {
-    name: string;
-    id: number;
-    type: string;
-    version: string;
-}
-
-export interface Dependency {
-    id: number;
-    required: boolean;
 }
 
 export type InstallStage = "INIT" | "PREPARE" | "MODLOADER" | "DOWNLOADS" | "FINISHED";

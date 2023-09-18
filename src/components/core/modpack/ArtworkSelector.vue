@@ -1,6 +1,11 @@
 <template>
-  <div class="artwork-selector flex items-center gap-6">
-    <p v-if="isDraggingOver"> I'm ready daddy </p>
+  <div class="artwork-selector flex items-center gap-6" :class="{'is-hovering': hovering}">
+    <div class="drop-indicator" v-if="hovering">
+      <div class="text flex flex-col gap-4">
+        <font-awesome-icon icon="upload" size="lg" />
+        <b>Drop artwork here</b>
+      </div>
+    </div>
     <img width="120" :src="getArtwork" alt="" />
     <div class="actions flex flex-col items-start">
       <label>
@@ -97,14 +102,43 @@ export default class ArtworkSelector extends Vue {
       this.$emit('input', firstValidFile);
     }
   }
+  
+  get hovering() {
+    return this.isDraggingOver
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 .artwork-selector {
+  position: relative;
   img {
     border-radius: 8px;
     border: 1px solid rgba(white, .1);
   }
+  
+  .actions, > img {
+    transition: .25s ease-in-out opacity;
+  }
+  
+  &.is-hovering {
+    img, .actions {
+      opacity: 0;
+    }
+  }
+}
+
+.drop-indicator {
+  position: absolute;
+  inset: 0;
+  background: rgba(white, .1);
+  border-radius: 8px;
+  border: 1px dashed rgba(white, .2);
+  z-index: 1;
+  pointer-events: none;
+  animation: pulse 1.2s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

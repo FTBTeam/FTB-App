@@ -141,7 +141,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private static void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
-        Instance instance = new Instance(data.name, modpackManifest, versionManifest, isPrivate, packType);
+        Instance instance = new Instance(data.name, data.artPath, modpackManifest, versionManifest, isPrivate, packType);
         instance.props.isImport = isImport;
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
             Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);

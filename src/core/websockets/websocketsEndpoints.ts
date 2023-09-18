@@ -161,7 +161,7 @@ export type MessagePayload = {
     output: KillInstanceDataReply
   }
   "installInstance": {
-    input: Nullable<InstallInstanceData, "importFrom" | "name">,
+    input: Nullable<InstallInstanceData, "importFrom" | "name" | "artPath">,
     output: InstallInstanceDataReply
   }
   "cancelInstallInstance": {

@@ -73,7 +73,7 @@ public class Instance {
     private long startTime;
 
     // Brand-new instance.
-    public Instance(@Nullable String name, ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+    public Instance(@Nullable String name, @Nullable String artPath, ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
         props = new InstanceJson(modpack, versionManifest, isPrivate, packType);
         if (name != null) {
             props.name = name;
@@ -83,33 +83,7 @@ public class Instance {
         FileUtils.createDirectories(path);
 
         this.versionManifest = versionManifest;
-
-        ModpackManifest.Art art = modpack.getFirstArt("square");
-        if (art != null) {
-            Path tempFile = null;
-            try {
-                tempFile = Files.createTempFile("art", "");
-                Files.delete(tempFile);
-                NewDownloadTask task = NewDownloadTask.builder()
-                        .url(art.getUrl())
-                        .dest(tempFile)
-                        .build();
-                task.execute(null, null);
-                try (InputStream is = Files.newInputStream(tempFile)) {
-                    doImportArt(is);
-                }
-            } catch (IOException ex) {
-                LOGGER.error("Failed to download art.", ex);
-            } finally {
-                if (tempFile != null) {
-                    try {
-                        Files.deleteIfExists(tempFile);
-                    } catch (IOException ex) {
-                        LOGGER.error("Failed to cleanup temp file from art.", ex);
-                    }
-                }
-            }
-        }
+        this.processArt(modpack, artPath);
 
         try {
             saveJson();
@@ -133,6 +107,48 @@ public class Instance {
         pendingCloudInstance = true;
     }
 
+    private void processArt(ModpackManifest modpack, @Nullable String artPath) {
+        if (artPath != null) {
+            var pathForArt = Path.of(artPath);
+            // TODO: Support webp?
+            if (Files.exists(pathForArt) && (artPath.endsWith(".png") || artPath.endsWith(".jpg") || artPath.endsWith(".jpeg"))) {
+                try (InputStream is = Files.newInputStream(pathForArt)) {
+                    doImportArt(is);
+                    return;
+                } catch (IOException ex) {
+                    LOGGER.error("Failed to import art.", ex);
+                }
+            }
+        }
+        
+        ModpackManifest.Art art = modpack.getFirstArt("square");
+        if (art != null) {
+            Path tempFile = null;
+            try {
+                tempFile = Files.createTempFile("art", "");
+                Files.delete(tempFile);
+                NewDownloadTask task = NewDownloadTask.builder()
+                    .url(art.getUrl())
+                    .dest(tempFile)
+                    .build();
+                task.execute(null, null);
+                try (InputStream is = Files.newInputStream(tempFile)) {
+                    doImportArt(is);
+                }
+            } catch (IOException ex) {
+                LOGGER.error("Failed to download art.", ex);
+            } finally {
+                if (tempFile != null) {
+                    try {
+                        Files.deleteIfExists(tempFile);
+                    } catch (IOException ex) {
+                        LOGGER.error("Failed to cleanup temp file from art.", ex);
+                    }
+                }
+            }
+        }
+    }
+    
     public void syncFinished() throws IOException {
         pendingCloudInstance = false;
         props = InstanceJson.load(getDir().resolve("instance.json"));
