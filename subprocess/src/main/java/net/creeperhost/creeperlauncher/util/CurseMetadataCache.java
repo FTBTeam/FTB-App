@@ -7,6 +7,7 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,23 @@ public class CurseMetadataCache {
         }
 
         this.metadata = metadata;
+    }
+
+    public CurseIds getCurseIds(@Nullable ModpackVersionModsManifest.Mod mod, String sha1) {
+        long projectId = -1;
+        long fileId = -1;
+        if (mod != null) {
+            projectId = mod.getCurseProject();
+            fileId = mod.getFileId();
+        }
+        if (projectId == -1 || fileId == -1) {
+            FileMetadata metadata = queryMetadata(sha1);
+            if (metadata != null) {
+                projectId = metadata.curseProject();
+                fileId = metadata.curseFile();
+            }
+        }
+        return new CurseIds(projectId, fileId);
     }
 
     /**
@@ -122,6 +140,8 @@ public class CurseMetadataCache {
             return null;
         }
     }
+
+    public record CurseIds(long curseProject, long curseFile) { }
 
     // Only the useful things from /public/mod/lookup/<hash>
     public record FileMetadata(
