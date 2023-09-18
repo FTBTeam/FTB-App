@@ -1,7 +1,5 @@
 <template>
   <div class="global-components">
-    <installer />
-
     <!-- Modals -->
     <FTBModal
       v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
@@ -52,11 +50,9 @@ import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, Getter } from 'vuex-class';
 import Authentication from '@/components/templates/authentication/Authentication.vue';
 import Changelog from '@/components/templates/changelogs/Changelog.vue';
-import Installer from '@/components/templates/installer/Installer.vue';
 
 @Component({
   components: {
-    Installer,
     Changelog,
     Authentication,
     FTBModal,

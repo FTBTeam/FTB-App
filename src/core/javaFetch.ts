@@ -74,7 +74,7 @@ export class JavaFetch {
   private _contentType = "application/json"
   private _timeout = 60_000; 
   
-  constructor(url: string) {
+  private constructor(url: string) {
     this._url = url;
   }
   

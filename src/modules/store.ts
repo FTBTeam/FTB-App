@@ -6,7 +6,7 @@ import { modpacks } from './modpacks';
 import { websocket } from './websocket';
 import { settings } from './settings';
 import { auth } from './auth';
-import { discovery } from './discovery';
+// import { discovery } from './discovery';
 import { servers } from './servers';
 import { core } from '@/modules/core/core';
 import { news } from '@/modules/news/news';
@@ -80,7 +80,7 @@ const store: StoreOptions<RootState> = {
     websocket,
     settings,
     auth,
-    discovery,
+    // discovery,
     servers,
     core,
     app: appStore,

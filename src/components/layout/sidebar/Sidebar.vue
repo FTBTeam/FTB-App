@@ -18,15 +18,15 @@
     </div>
 
     <div class="nav-items">
-      <a
-        v-if="auth.token !== null"
-        class="nav-item capitalize"
-        :class="{ 'item-disabled': disableNav }"
-        @click="openFriends"
-      >
-        <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>
-        <span class="whitespace-no-wrap">Friends List</span>
-      </a>
+<!--      <a-->
+<!--        v-if="auth.token !== null"-->
+<!--        class="nav-item capitalize"-->
+<!--        :class="{ 'item-disabled': disableNav }"-->
+<!--        @click="openFriends"-->
+<!--      >-->
+<!--        <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>-->
+<!--        <span class="whitespace-no-wrap">Friends List</span>-->
+<!--      </a>-->
 
       <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
     </div>
@@ -87,11 +87,11 @@ export default class Sidebar extends Vue {
       to: RouterNames.ROOT_BROWSE_PACKS,
       icon: 'search',
     },
-    {
-      name: 'Discover',
-      to: RouterNames.ROOT_DISCOVER,
-      icon: 'globe-europe',
-    },
+    // {
+    //   name: 'Discover',
+    //   to: RouterNames.ROOT_DISCOVER,
+    //   icon: 'globe-europe',
+    // },
     {
       name: 'News',
       to: RouterNames.ROOT_NEWS,

@@ -117,12 +117,11 @@ export default new Router({
           name: RouterNames.ROOT_LAUNCH_PACK,
           component: () => import(/* webpackChunkName: "launchingpage" */ './views/LaunchingPage.vue'),
         },
-
-        {
-          path: '/discover',
-          name: RouterNames.ROOT_DISCOVER,
-          component: () => import(/* webpackChunkName: "discovery" */ './views/DiscoverPage.vue'),
-        },
+        // {
+        //   path: '/discover',
+        //   name: RouterNames.ROOT_DISCOVER,
+        //   component: () => import(/* webpackChunkName: "discovery" */ './views/DiscoverPage.vue'),
+        // },
         {
           path: '/server',
           name: RouterNames.ROOT_SERVER,
@@ -146,10 +145,10 @@ export default new Router({
         },
       ],
     },
-    {
-      path: '/chat',
-      name: RouterNames.CHAT,
-      component: ChatWindow,
-    },
+    // {
+    //   path: '/chat',
+    //   name: RouterNames.CHAT,
+    //   component: ChatWindow,
+    // },
   ],
 });

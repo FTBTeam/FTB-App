@@ -35,7 +35,7 @@ export const news: Module<NewsState, RootState> = {
       commit(NewsMutations.NEWS_LOADING);
 
       try {
-        const data = await fetch(`${metaApi}/v1/news`);
+        const data = await fetch(`${metaApi}/v1/blog/posts`);
         
         // Update the news state
         commit(NewsMutations.NEWS_LOADED, await data.json());

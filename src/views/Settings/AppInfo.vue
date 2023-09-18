@@ -10,7 +10,7 @@
               <font-awesome-icon
                 @click="copyToClipboard(webVersion)"
                 class="ml-2 cursor-pointer"
-                :icon="['fas', 'copy']"
+                icon="copy"
                 size="1x"
               />
             </div>
@@ -28,7 +28,7 @@
               <font-awesome-icon
                 @click="copyToClipboard(appVersion)"
                 class="ml-2 cursor-pointer"
-                :icon="['fas', 'copy']"
+                icon="copy"
                 size="1x"
               />
             </div>
