@@ -1,7 +1,7 @@
 import {ModPack} from '@/modules/modpacks/types';
 
-import missingArtSquare from '@/assets/images/ftb-missing-pack-art.png';
-import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.png';
+import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
+import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 

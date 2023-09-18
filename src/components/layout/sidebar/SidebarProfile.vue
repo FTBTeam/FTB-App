@@ -37,7 +37,7 @@
               <div class="avatar">
                 <img :src="`https://api.mymcuu.id/head/${item.uuid}`" alt="Profile" class="rounded" />
                 <div class="ms-identifier" v-if="item.type === 'microsoft'">
-                  <img src="@/assets/images/branding/microsoft-squares.png" alt="Microsoft account" />
+                  <img src="@/assets/images/branding/microsoft-squares.webp" alt="Microsoft account" />
                 </div>
               </div>
               <div class="name selectable">
@@ -65,7 +65,7 @@
           <div class="mt-area">
             <div class="headings">
               <div class="main">
-                <img src="@/assets/mtg-tiny-desat.png" alt="MineTogether Logo" />
+                <img src="@/assets/mtg-tiny-desat.webp" alt="MineTogether Logo" />
                 MineTogether
               </div>
               <router-link :to="{ name: 'integrations' }">

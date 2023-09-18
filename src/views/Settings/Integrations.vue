@@ -7,7 +7,7 @@
       </p>
 
       <div class="card" v-else>
-        <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
+        <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
         <div class="main" v-if="!auth.loggingIn">
           <div class="name font-bold mb-2 flex items-center">
             <div class="avatar mr-2">
@@ -44,7 +44,7 @@
     <h3 class="text-xl font-bold mb-4" v-if="auth.token === null">Available integrations</h3>
     <div class="integrations" v-if="auth.token === null">
       <div class="card" :class="{ disabled: auth.loggingIn }">
-        <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
+        <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
         <div class="main">
           <div class="name font-bold mb-1">MineTogether</div>
           <div class="desc opacity-75">Integrate with MineTogether to use cloudsaves and private packs.</div>

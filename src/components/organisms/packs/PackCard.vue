@@ -51,7 +51,7 @@ import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, State } from 'vuex-class';
 import { Instance, ModpackState } from '@/modules/modpacks/types';
 // @ts-ignore
-import placeholderImage from '@/assets/placeholder_art.png';
+import placeholderImage from '@/assets/placeholder_art.webp';
 import semver from 'semver';
 import { SettingsState } from '@/modules/settings/types';
 import { logVerbose } from '@/utils';

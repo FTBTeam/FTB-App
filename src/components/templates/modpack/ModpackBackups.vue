@@ -185,7 +185,7 @@ export default class ModpackBackups extends Vue {
 
     .preview {
       border-radius: 5px;
-      background: black url('../../../assets/images/backup-preview-background.png') repeat;
+      background: black url('../../../assets/images/backup-preview-background.webp') repeat;
       background-size: 8px;
 
       img {

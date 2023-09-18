@@ -196,7 +196,7 @@ export default class DiscoverPage extends Vue {
   opacity: 0;
 }
 .placeholder {
-  background-image: url('../assets/images/ftb-no-pack-splash-normal.png');
+  background-image: url('../assets/images/ftb-no-pack-splash-normal.webp');
   background-size: cover;
   opacity: 0.2;
   background-position: center;

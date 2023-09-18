@@ -5,7 +5,7 @@
 <!--      <article class="overflow-hidden shadow-lg" style="height: 100%">-->
 <!--        <img-->
 <!--          class="w-full pack-image"-->
-<!--          :src="art.length > 0 ? art : '../../assets/placeholder_art.png'"-->
+<!--          :src="art.length > 0 ? art : '../../assets/placeholder_art.webp'"-->
 <!--          alt="placeholder"-->
 <!--          :class="installing ? 'blur' : ''"-->
 <!--        />-->

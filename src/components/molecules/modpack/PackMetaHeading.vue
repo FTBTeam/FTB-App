@@ -32,7 +32,7 @@
         <img src="@/assets/images/forge.svg" alt="" />
       </div>
       <div class="modloader icon" v-else data-balloon-pos="left" aria-label="Fabric Modloader">
-        <img src="@/assets/images/fabric.png" alt="" />
+        <img src="@/assets/images/fabric.webp" alt="" />
       </div>
 
       <ftb-button

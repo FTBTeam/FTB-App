@@ -279,7 +279,7 @@ export default class MainChat extends Vue {
 
 <style>
 .minimtg {
-  background-image: url('../../../assets/mtg-tiny-desat.png');
+  background-image: url('../../../assets/mtg-tiny-desat.webp');
   width: 300px;
   height: 100%;
   position: absolute;

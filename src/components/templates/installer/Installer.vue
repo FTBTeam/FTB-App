@@ -57,7 +57,7 @@ import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import { emitter } from '@/utils/event-bus';
 import { Action, Getter } from 'vuex-class';
 import { InstallerState } from '@/modules/app/appStore.types';
-import placeholderArt from '@/assets/placeholder_art.png';
+import placeholderArt from '@/assets/placeholder_art.webp';
 import { wsTimeoutWrapper } from '@/utils';
 import { Instance } from '@/modules/modpacks/types';
 import dayjs from 'dayjs';

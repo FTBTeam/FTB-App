@@ -64,7 +64,7 @@
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import FTBButton from '@/components/atoms/input/FTBButton.vue';
 // @ts-ignore
-import placeholderImage from '@/assets/placeholder_art.png';
+import placeholderImage from '@/assets/placeholder_art.webp';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';

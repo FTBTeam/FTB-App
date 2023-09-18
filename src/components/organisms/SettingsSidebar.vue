@@ -32,7 +32,7 @@
       <nav v-if="auth.token !== null">
         <div class="heading">Integrations</div>
         <router-link :to="{ name: RouterNames.SETTINGS_MT_INTEGRATION }" class="item app-info-item">
-          <img src="@/assets/images/mt-logo.png" alt="" />
+          <img src="@/assets/images/mt-logo.webp" alt="" />
           <span>MineTogether</span>
         </router-link>
       </nav>
