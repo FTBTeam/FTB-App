@@ -2,7 +2,6 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import Home from '@/views/Home.vue';
 import MainApp from './views/MainApp.vue';
-import ChatWindow from './views/ChatWindow.vue';
 
 Vue.use(Router);
 
@@ -10,7 +9,7 @@ export enum RouterNames {
   HOME = 'home',
   ROOT_LIBRARY = 'modpacks',
   ROOT_BROWSE_PACKS = 'browseModpacks',
-  ROOT_NEWS = 'news',
+  ROOT_BLOG = 'blog',
   ROOT_LOCAL_PACK = 'instancepage',
   ROOT_PREVIEW_PACK = 'modpackpage',
   ROOT_LAUNCH_PACK = 'launchingpage',
@@ -52,9 +51,9 @@ export default new Router({
           component: () => import(/* webpackChunkName: "modpacks" */ './views/BrowseModpacks.vue'),
         },
         {
-          path: '/news',
-          name: RouterNames.ROOT_NEWS,
-          component: () => import(/* webpackChunkName: "news" */ './views/News.vue'),
+          path: '/blog',
+          name: RouterNames.ROOT_BLOG,
+          component: () => import(/* webpackChunkName: "blog" */ './views/Blog.vue'),
         },
         {
           path: '/settings',
