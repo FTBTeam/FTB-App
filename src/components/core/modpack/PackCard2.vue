@@ -99,7 +99,6 @@ export default class PackCard2 extends PackCardCommon {
       return false;
     }
     
-    console.log(this.apiModpack?.name, latestVersion.id, latestVersion.name, this.instance.versionId, this.instance.version)
     return latestVersion.id > this.instance.versionId;
   }
   

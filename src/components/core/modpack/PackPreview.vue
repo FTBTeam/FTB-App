@@ -123,7 +123,7 @@ export default class PackPreview extends PackCardCommon {
    * because they think it's not installing.
    */
   get isInstalling() {
-    return this.currentInstall?.request.id === this.apiModpack?.id;
+    return this.currentInstall?.request.id === this.apiModpack?.id && !this.currentInstall?.request.updatingInstanceUuid;
   }
 }
 </script>

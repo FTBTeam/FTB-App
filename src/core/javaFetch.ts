@@ -145,8 +145,7 @@ export class JavaFetch {
         bytes: this._body instanceof Buffer ? this._body : Buffer.from(this._body as string),
       }
     }
-
-    this.logger.info(`Making ${this._method} request to ${this._url}`)
+    
     try {
       const request = await sendMessage("webRequest", payload);
       return FetchResponse.of(request);
