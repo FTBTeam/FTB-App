@@ -3,7 +3,20 @@
     <modal-body>
       <template v-if="apiModpack">
         <artwork-selector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
-        <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-6" />
+        <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
+        <div class="category-or-create mb-6">
+          <div class="selection flex gap-2 items-end" v-if="!manualCategoryCreate">
+            <selection2 label="Category" :options="(categories ?? []).map(e => ({value: e, label: e}))" v-model="selectedCategory" class="flex-1" />
+            <ftb-button color="info" class="px-4 py-3" @click="manualCategoryCreate = true"><font-awesome-icon class="mr-2" icon="plus" />Create new</ftb-button>
+          </div>
+          <div class="selection flex gap-2 items-end" v-else>
+            <ftb-input label="Category name" v-model="selectedCategory" placeholder="My category" class="flex-1 mb-0" />
+            <ftb-button color="warning" class="px-4 py-3" @click="() => {
+              selectedCategory = 'Default';
+              manualCategoryCreate = false;
+            }"><font-awesome-icon icon="times" /></ftb-button>
+          </div>
+        </div>
         <f-t-b-toggle label="Show advanced options" :value="useAdvanced" @change="v => useAdvanced = v" />
         <selection2 v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4" />
         <f-t-b-toggle v-if="useAdvanced && hasUnstableVersions" label="Show pre-release builds (Stable by default)" :value="allowPreRelease" @change="v => allowPreRelease = v"  />
@@ -43,6 +56,7 @@ import platform from '@/utils/interface/electron-overwolf'
 })
 export default class ModpackInstallModal extends Vue {
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
+  @Getter("categories", ns("v2/instances")) categories!: string[];
   
   @Prop() open!: boolean;
   @Emit("close") close() {}
@@ -52,6 +66,8 @@ export default class ModpackInstallModal extends Vue {
   
   apiModpack: ModPack | null = null;
   selectedVersionId = "";
+  selectedCategory = "Default";
+  manualCategoryCreate = false;
 
   allowPreRelease = false;
   useAdvanced = false;
@@ -79,6 +95,7 @@ export default class ModpackInstallModal extends Vue {
   install() {
     instanceInstallController.requestInstall({
       id: this.packId,
+      category: this.selectedCategory,
       version: parseInt(this.selectedVersionId ?? this.sortedApiVersions[0].id),
       // Name fallback but it's not really needed
       name: this.userPackName ?? this.apiModpack?.name ?? "failed-to-name-the-modpack-somehow-" + platform.get.utils.crypto.randomUUID().split("-")[0],

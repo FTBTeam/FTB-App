@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstances
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 
 import java.util.List;
+import java.util.Set;
 
 public class InstalledInstancesData extends BaseData {
 
@@ -15,12 +16,14 @@ public class InstalledInstancesData extends BaseData {
 
         List<InstalledInstancesHandler.SugaredInstanceJson> instances;
         List<JsonObject> cloudInstances;
+        Set<String> availableCategories;
 
-        public Reply(String requestId, List<InstalledInstancesHandler.SugaredInstanceJson> instances, List<JsonObject> cloudInstances) {
+        public Reply(String requestId, List<InstalledInstancesHandler.SugaredInstanceJson> instances, List<JsonObject> cloudInstances, Set<String> availableCategories) {
             this.instances = instances;
             this.type = "installedInstancesReply";
             this.requestId = requestId;
             this.cloudInstances = cloudInstances;
+            this.availableCategories = availableCategories;
         }
     }
 }

@@ -11,6 +11,8 @@ import net.creeperhost.creeperlauncher.data.InstanceJson;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class InstalledInstancesHandler implements IMessageHandler<InstalledInstancesData> {
 
@@ -23,8 +25,10 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
         List<SugaredInstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
                 .map(e -> new SugaredInstanceJson(e.props, e.path, e.isPendingCloudInstance()))
                 .toList();
+
+        Set<String> availableCategories = instanceJsons.stream().map(e -> e.category).collect(Collectors.toSet());
         
-        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, List.of());
+        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, List.of(), availableCategories);
         Settings.webSocketAPI.sendMessage(reply);
     }
 

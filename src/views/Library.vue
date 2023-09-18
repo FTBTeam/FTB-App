@@ -2,14 +2,19 @@
   <div class="mod-packs page-spacing h-full" v-if="instancesInitialized">
     <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mr-4 flex-1" />
     
-    <div class="pack-card-grid">
-      <template v-for="instance in instances">
-        <pack-card2
-          v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
-          :key="instance.uuid"
-          :instance="instance"
-        />
-      </template>
+    <div class="categories">
+      <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`">
+        <h2>{{ index }}</h2>
+        <div class="pack-card-grid">
+          <template v-for="instance in category">
+            <pack-card2
+              v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
+              :key="instance.uuid"
+              :instance="instance"
+            />
+          </template>
+        </div>
+      </div>
     </div>
     
 <!--    &lt;!&ndash; My Modpacks Stuff &ndash;&gt;-->
@@ -194,7 +199,7 @@ import { SettingsState } from '@/modules/settings/types';
 import { prettyByteFormat, wsTimeoutWrapper, wsTimeoutWrapperTyped } from '@/utils';
 import { InstallerState } from '@/modules/app/appStore.types';
 import {AppStoreModules, ns} from '@/core/state/appState';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 
@@ -217,7 +222,18 @@ export default class Library extends Vue {
     return this.instances
       .filter(e => containsIgnoreCase(e.name, this.searchTerm))
       .map(e => e.uuid);
-  }  
+  }
+
+  get groupedPacks(): Record<string, SugaredInstanceJson[]> {
+    const grouped: Record<string, SugaredInstanceJson[]> = {};
+    for (const instance of this.instances) {
+      if (!grouped[instance.category]) {
+        grouped[instance.category] = [];
+      }
+      grouped[instance.category].push(instance);
+    }
+    return grouped;
+  }
   
   @State('settings') public settings!: SettingsState;
   @State('modpacks') public modpacks!: ModpackState;

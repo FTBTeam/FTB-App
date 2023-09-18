@@ -51,7 +51,8 @@ public class InstanceJson {
     public boolean cloudSaves;
     public boolean hasInstMods;
     public boolean installComplete;
-
+    public String category = "Default";
+    
     public byte packType;
     // TODO migrate this to `isPrivate`
     public boolean _private;
@@ -96,6 +97,7 @@ public class InstanceJson {
         totalPlayTime = other.totalPlayTime;
         lastPlayed = other.lastPlayed;
         art = other.art;
+        category = other.category;
     }
 
     // Copy instance.

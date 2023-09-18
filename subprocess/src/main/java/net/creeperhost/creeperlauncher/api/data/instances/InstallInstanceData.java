@@ -19,6 +19,7 @@ public class InstallInstanceData extends BaseData {
     public String importFrom;
     @Nullable public String name;
     @Nullable public String artPath;
+    @Nullable public String category;
 
     public static class Reply extends BaseData {
 

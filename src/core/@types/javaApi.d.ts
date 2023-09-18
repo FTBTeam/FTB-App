@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-18 11:06:07.
+// Generated using typescript-generator version 3.2.1263 on 2023-09-18 11:45:07.
 
 export interface BaseData {
     type: string;
@@ -99,6 +99,7 @@ export interface InstallInstanceData extends BaseData {
     importFrom: string;
     name: string;
     artPath: string;
+    category: string;
 }
 
 export interface FilesEvent extends BaseData {
@@ -126,6 +127,7 @@ export interface InstalledInstancesData extends BaseData {
 export interface InstalledInstancesDataReply extends BaseData {
     instances: SugaredInstanceJson[];
     cloudInstances: any[];
+    availableCategories: string[];
 }
 
 export interface InstanceCloudSyncConflictData extends BaseData {
@@ -673,6 +675,7 @@ export interface InstanceJson {
     cloudSaves: boolean;
     hasInstMods: boolean;
     installComplete: boolean;
+    category: string;
     packType: number;
     _private: boolean;
     totalPlayTime: number;

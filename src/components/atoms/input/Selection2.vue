@@ -83,6 +83,9 @@ export default class Selection extends Vue {
       if (this.allowDeselect) {
         this.$emit('input', null)
       }
+      this.open = false;
+      // Forcefully deselect the dropdown
+      (this.$refs['selection'] as any).blur();
       return;
     }
 

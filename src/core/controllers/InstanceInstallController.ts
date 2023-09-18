@@ -19,6 +19,7 @@ export type InstallRequest = {
   versionName: string;
   logo: string | null;
   updatingInstanceUuid?: string;
+  category?: string;
 }
 
 export type InstallStatus = {
@@ -151,6 +152,7 @@ class InstanceInstallController {
       importFrom: null,
       name: request.name,
       artPath: request.logo,
+      category: request.category ?? "default",
     });
     
     if (installResponse.status === "error" || installResponse.status === "prepare_error") {
