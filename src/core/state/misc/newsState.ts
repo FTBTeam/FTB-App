@@ -1,11 +1,12 @@
 import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
 import {JavaFetch} from '@/core/javaFetch';
+import {BlogPost} from '@/core/@types/external/metaApi.types';
 
 export type NewsState = typeof state;
 
 const state = {
-  news: [] as string[],
+  news: [] as BlogPost[],
   state: {
     loading: false,
   }
@@ -26,9 +27,7 @@ const actions: ActionTree<NewsState, RootState> = {
       return false;
     }
     
-    const news = (await newsReq.json() as any);
-    console.log(news.posts);
-    
+    const news = newsReq.json<{posts: BlogPost[]}>();
     commit('SET_NEWS', news.posts);
     commit('SET_LOADING', false);
     return true;
@@ -37,11 +36,11 @@ const actions: ActionTree<NewsState, RootState> = {
 
 const mutations: MutationTree<NewsState> = {
   SET_LOADING: (state: NewsState, loading: boolean) => state.state.loading = loading,
-  SET_NEWS: (state: NewsState, news: string[]) => state.news = news,
+  SET_NEWS: (state: NewsState, news: BlogPost[]) => state.news = news,
 }
 
 const getters: GetterTree<NewsState, RootState> = {
-  news: (state: NewsState): string[] => state.news,
+  news: (state: NewsState): BlogPost[] => state.news,
   loading: (state: NewsState): boolean => state.state.loading,
 }
 

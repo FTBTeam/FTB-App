@@ -83,7 +83,13 @@ const appSetup = async () => {
     methods: {
       openExternal(event: any) {
         event.preventDefault();
-        platform.get.utils.openUrl(event.target.href);
+        let urlTarget = event.target;
+        if (event.target.tagName !== 'A') {
+          // Get the closest parent link
+          urlTarget = event.target.closest('a');
+        }
+        
+        platform.get.utils.openUrl(urlTarget.href);
       },
       copyToClipboard(text: string) {
         platform.get.cb.copy(text);

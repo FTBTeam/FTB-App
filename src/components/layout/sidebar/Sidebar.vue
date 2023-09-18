@@ -93,9 +93,9 @@ export default class Sidebar extends Vue {
     //   icon: 'globe-europe',
     // },
     {
-      name: 'News',
-      to: RouterNames.ROOT_NEWS,
-      icon: 'newspaper',
+      name: 'Blog',
+      to: RouterNames.ROOT_BLOG,
+      icon: 'rss',
     },
     {
       name: 'Support',
