@@ -44,27 +44,12 @@ class InstanceInstallController {
   constructor() {
     emitter.on("ws.message", async (data: any) => {
       if (data.type === "cloudInstancesReloaded") {
-        const payload = data as CloudSavesReloadedData;
-        console.log("Cloud instances reloaded", payload)
-        if (payload.changedInstances.length) {
-          for (const pack of payload.changedInstances) {
-            if ((store.state as any).v2["v2/instances"].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
-              console.log("Adding new instance", pack)
-              await store.dispatch("v2/instances/addInstance", pack, {root: true});
-            } else {
-              console.log("Updating instance", pack)
-              await store.dispatch("v2/instances/updateInstance", pack, {root: true});
-            }
-            
-            console.log((store.state as any).v2["v2/instances"].instances.map((i: InstanceJson) => ({
-              uuid: i.uuid,
-              name: i.name,
-            })))
-          }
-        }
+        this.addCloudInstances(data as CloudSavesReloadedData)
+          .catch(err => console.error(err));
       }
     });
     
+    // Force the queue to be checked on startup
     this.checkQueue()
       .catch(err => console.error(err));
     
@@ -86,19 +71,21 @@ class InstanceInstallController {
 
   public async requestUpdate(instance: SugaredInstanceJson, version: Versions) {
     this.queue.push({
-      uuid: crypto.randomUUID(),
+      uuid: crypto.randomUUID(), // Not the same as the instance uuid
       id: instance.id,
       version: version.id,
       name: instance.name,
       versionName: version.name,
       logo: instance.art,
       updatingInstanceUuid: instance.uuid,
+      category: instance.category,
     })
     
     // Trigger a check queue
     await this.checkQueue();
   }
   
+  // TODO: Implement this
   public async requestImport() {
     
   }
@@ -140,10 +127,12 @@ class InstanceInstallController {
     }
     
     this.installLock = true;
+    const isUpdate = request.updatingInstanceUuid != null;
 
-    // Make the install request!
+
+    // Make the installation request!
     const installResponse = await sendMessage("installInstance", {
-      uuid: request.updatingInstanceUuid ?? "",
+      uuid: request.updatingInstanceUuid ?? "", // This flag is what tells the API to update an instance
       id: parseInt(request.id as string, 10),
       version: parseInt(request.version as string, 10),
       _private: false,
@@ -161,8 +150,11 @@ class InstanceInstallController {
       return;
     }
     
-    if (installResponse.instanceData) {
+    let knownInstanceUuid = null;
+    if (installResponse.instanceData && !isUpdate) {
+      // Don't add if it's an update otherwise we'll have two instances
       store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+      knownInstanceUuid = installResponse.instanceData.uuid;
     }
     
     console.log("Install request sent", installResponse)
@@ -178,8 +170,6 @@ class InstanceInstallController {
       
       const instanceInstaller = (data: InstallInstanceDataReply | InstallInstanceDataProgress | FilesEvent) => {
         if (data.type === "installInstanceDataReply") {
-          // TODO: If the status is init, we should update the instance store to reflect the instance being installed
-          //       but we should ensure you can't do anything with it until it's done.
           const typedData = data as InstallInstanceDataReply;
           if (typedData.status === "error") {
             this.updateInstallStatus({
@@ -225,9 +215,6 @@ class InstanceInstallController {
       
       const finish = (result: InstallResult) => {
         emitter.off("ws.message", instanceInstaller as any);
-        // TODO: Do something with an error
-        // TODO: If failed, remove the instance from the store as it's not installed
-        // TODO: If successful, update the instance store correctly
         this.updateInstallStatus(null)
         resolve(result);
       }
@@ -235,21 +222,20 @@ class InstanceInstallController {
       emitter.on("ws.message", instanceInstaller  as any);
     });
     
-    if (installRequest.success) {
-      // Success!
-      store.dispatch(`v2/instances/${request.updatingInstanceUuid ? 'updateInstance' : 'addInstance'}`, installRequest.instance, {root: true});
+    if (installRequest.success && installRequest.instance) {
+      // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
+      store.dispatch(`v2/instances/updateInstance`, installRequest.instance, {root: true});
+      // TODO: Toast for success
     } else {
       // Failed!
-      // Do something with the error
+      // TODO: Toast for error
+      if (knownInstanceUuid) {
+        store.dispatch(`v2/instances/removeInstance`, knownInstanceUuid, {root: true});
+      }
     }
     
     this.installLock = false;
     await this.checkQueue(); // Force a queue check again 
-  }
-  
-  private sendFailure(request: InstallRequest) {
-    const isUpdate = request.updatingInstanceUuid != null;
-    
   }
   
   private updateInstallStatus(status: InstallStatus | null) {
@@ -258,6 +244,27 @@ class InstanceInstallController {
   
   private get queue() {
     return store.state.v2["v2/install"].installQueue;
+  }
+
+  /**
+   * Appends a cloud instance to the store if it doesn't already exist as these are loaded later in the lifecycle
+   */
+  private async addCloudInstances(payload: CloudSavesReloadedData) {
+    console.log("Cloud instances reloaded", payload)
+    if (!payload.changedInstances.length) {
+      return;
+    }
+    
+    for (const pack of payload.changedInstances) {
+      // We shouldn't already have it but we might so keep it in sync regardless
+      if ((store.state as any).v2['v2/instances'].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
+        console.log('Adding new instance', pack);
+        await store.dispatch('v2/instances/addInstance', pack, {root: true});
+      } else {
+        console.log('Updating instance', pack);
+        await store.dispatch('v2/instances/updateInstance', pack, {root: true});
+      }
+    }
   }
 }
 

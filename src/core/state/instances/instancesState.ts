@@ -43,8 +43,8 @@ const actions: ActionTree<InstanceState, RootState> = {
     commit('UPDATE_INSTANCE', {index, instance});
   },
   
-  async removeInstance({state, commit}, instance: InstanceJson) {
-    const index = state.instances.findIndex(i => i.uuid === instance.uuid);
+  async removeInstance({state, commit}, uuid: string) {
+    const index = state.instances.findIndex(i => i.uuid === uuid);
     if (index === -1) {
       return;
     }
