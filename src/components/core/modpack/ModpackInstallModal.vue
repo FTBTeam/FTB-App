@@ -6,7 +6,7 @@
         <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-6" />
         <f-t-b-toggle label="Show advanced options" :value="useAdvanced" @change="v => useAdvanced = v" />
         <selection2 v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4" />
-        <f-t-b-toggle v-if="useAdvanced" label="Use pre-release builds (Latest by default)" :value="allowPreRelease" @change="v => allowPreRelease = v"  />
+        <f-t-b-toggle v-if="useAdvanced && hasUnstableVersions" label="Show pre-release builds (Stable by default)" :value="allowPreRelease" @change="v => allowPreRelease = v"  />
       </template>
     </modal-body>
     <modal-footer class="flex justify-end">
@@ -30,7 +30,7 @@ import {timeFromNow} from '@/utils/helpers/dateHelpers';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
-import {resolveArtwork} from '@/utils/helpers/packHelpers';
+import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
 import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import platform from '@/utils/interface/electron-overwolf'
@@ -64,15 +64,22 @@ export default class ModpackInstallModal extends Vue {
     if (this.open && !this.apiModpack) {
       // TODO: Catch errors
       this.apiModpack = await this.getModpack(this.packId);
-      this.selectedVersionId = this.apiModpack?.versions[0].id.toString() ?? "";
       this.userPackName = this.apiModpack?.name ?? "";
+      
+      // No stable versions, default to pre-release
+      if (!this.hasStableVersion) {
+        this.allowPreRelease = true;
+        this.useAdvanced = true;
+      }
+
+      this.selectedVersionId = this.restrictedVersions[0].id.toString() ?? "";
     }
   }
 
   install() {
     instanceInstallController.requestInstall({
       id: this.packId,
-      version: parseInt(this.selectedVersionId),
+      version: parseInt(this.selectedVersionId ?? this.sortedApiVersions[0].id),
       // Name fallback but it's not really needed
       name: this.userPackName ?? this.apiModpack?.name ?? "failed-to-name-the-modpack-somehow-" + platform.get.utils.crypto.randomUUID().split("-")[0],
       versionName: this.versions.find(e => e.value === this.selectedVersionId)?.label ?? "",
@@ -88,7 +95,9 @@ export default class ModpackInstallModal extends Vue {
   }
   
   get versions() {
-    return (this.apiModpack?.versions ?? [])
+    let versions = this.restrictedVersions
+    
+    return versions
       .sort((a, b) => b.id - a.id)
       .map(e => ({
         value: e.id.toString(),
@@ -99,6 +108,31 @@ export default class ModpackInstallModal extends Vue {
           text: toTitleCase(e.type)
         }
       }))
+  }
+  
+  get restrictedVersions() {
+    let versions = this.sortedApiVersions;
+    if (this.allowPreRelease) {
+      versions = versions.filter(e => isValidVersion(e.type, "all"))
+    } else {
+      versions = versions.filter(e => isValidVersion(e.type, "release"))
+    }
+
+    return versions
+  }
+  
+  get sortedApiVersions() {
+    return this.apiModpack?.versions.sort((a, b) => b.id - a.id) ?? [];
+  }
+  
+  get hasStableVersion() {
+    return this.apiModpack?.versions
+      .some(e => isValidVersion(e.type, "release"))
+  }
+  
+  get hasUnstableVersions() {
+    return this.apiModpack?.versions
+      .some(e => isValidVersion(e.type, "alpha") || isValidVersion(e.type, "beta") || isValidVersion(e.type, "hotfix"))
   }
 }
 </script>

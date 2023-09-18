@@ -16,7 +16,7 @@
         </ftb-button>
       </label>
       <ftb-button color="danger" class="px-4 py-1 mt-4" v-if="value" @click="$emit('input', null)">
-        <font-awesome-icon icon="upload" class="mr-2" />
+        <font-awesome-icon icon="trash" class="mr-2" />
         <span>Remove</span>
       </ftb-button>
     </div>

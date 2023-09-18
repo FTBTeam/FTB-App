@@ -6,7 +6,7 @@ import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 
 export type ArtworkTypes = "square" | "splash";
-export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all";
+export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all" | "hotfix";
 
 export const defaultArtwork: Record<ArtworkTypes, string> = {
   "square": missingArtSquare,
