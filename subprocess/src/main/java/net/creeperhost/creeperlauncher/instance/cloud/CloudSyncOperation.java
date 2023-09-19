@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.LazyValue;
 import net.covers1624.quack.util.SneakyUtils;
@@ -227,10 +228,7 @@ public class CloudSyncOperation {
             manifest.state = SyncManifest.State.SYNCING;
             manifest.lastSync = System.currentTimeMillis();
             try {
-                if (Files.notExists(syncManifestFile.getParent())) {
-                    Files.createDirectories(syncManifestFile.getParent());
-                }
-                JsonUtils.write(GSON, syncManifestFile, manifest);
+                JsonUtils.write(GSON, IOUtils.makeParents(syncManifestFile), manifest);
             } catch (IOException ex) {
                 LOGGER.error("Failed to update local sync manifest before sync", ex);
                 throw ex;
