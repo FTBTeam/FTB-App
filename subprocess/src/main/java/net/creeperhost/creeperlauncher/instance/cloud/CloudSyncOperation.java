@@ -10,13 +10,13 @@ import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.LazyValue;
 import net.covers1624.quack.util.SneakyUtils;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.pack.Instance;
-import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -299,12 +301,21 @@ public class CloudSyncOperation {
                             tasks.add((cancelToken, listener) -> {
                                 try {
                                     LOGGER.info("Downloading file from S3: {}", op.remote.path);
-                                    if (op.local != null) {
-                                        saveManager.downloadFile(op.local.path, op.remote.s3Object, listener);
-                                    } else {
-                                        Path path = instance.getDir().resolve(op.remote.path);
-                                        saveManager.downloadFile(path, op.remote.s3Object, listener);
+                                    Path path = op.local != null ? op.local.path : instance.getDir().resolve(op.remote.path);
+                                    HashCode hash = op.remote.hash();
+                                    // Try and find compatible file in local cache.
+                                    if (hash != null) {
+                                        Path cacheFile = CreeperLauncher.localCache.get(hash);
+                                        if (cacheFile != null) {
+                                            Files.copy(cacheFile, IOUtils.makeParents(path), StandardCopyOption.REPLACE_EXISTING);
+                                            Instant lastModified = op.remote.lastModified();
+                                            if (lastModified != null) {
+                                                Files.setLastModifiedTime(path, FileTime.from(lastModified));
+                                            }
+                                            return;
+                                        }
                                     }
+                                    saveManager.downloadFile(path, op.remote.s3Object, listener);
                                 } finally {
                                     progressTracker.stepFinished();
                                 }
