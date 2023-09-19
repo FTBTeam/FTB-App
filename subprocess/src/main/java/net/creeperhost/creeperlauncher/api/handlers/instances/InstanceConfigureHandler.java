@@ -6,12 +6,17 @@ import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Paths;
 import java.util.Map;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData>
 {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Override
     public void handle(InstanceConfigureData data)
     {
@@ -25,6 +30,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             }
             for (Map.Entry<String, String> setting : data.instanceInfo.entrySet())
             {
+                LOGGER.debug("Frontend set {} to {} for instance {}.", setting.getKey(), setting.getValue(), instance.getUuid());
                 switch (setting.getKey().toLowerCase())
                 {
                     case "memory":

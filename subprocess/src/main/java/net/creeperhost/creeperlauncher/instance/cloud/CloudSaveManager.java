@@ -347,6 +347,7 @@ public final class CloudSaveManager {
                     // this likely means that the user has disabled cloud saves on another machine. We need to disable
                     // it here as well.
                     if (instance.props.cloudSaves && !keys.contains(instance.getUuid().toString())) {
+                        LOGGER.info("Disabling CloudSaves on instance. S3 files have gone missing.");
                         try {
                             instance.props.cloudSaves = false;
                             instance.saveJson();
