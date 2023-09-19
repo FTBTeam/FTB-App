@@ -9,7 +9,7 @@ import {
 } from '@/core/@types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {Versions} from '@/modules/modpacks/types';
+import {PackProviders, Versions} from '@/modules/modpacks/types';
 
 export type InstallRequest = {
   uuid: string;
@@ -20,6 +20,8 @@ export type InstallRequest = {
   logo: string | null;
   updatingInstanceUuid?: string;
   category?: string;
+  provider?: PackProviders;
+  private: boolean
 }
 
 export type InstallStatus = {
@@ -69,7 +71,7 @@ class InstanceInstallController {
     await this.checkQueue();
   }
 
-  public async requestUpdate(instance: SugaredInstanceJson, version: Versions) {
+  public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions, provider: PackProviders = "modpacksch") {
     this.queue.push({
       uuid: crypto.randomUUID(), // Not the same as the instance uuid
       id: instance.id,
@@ -79,6 +81,8 @@ class InstanceInstallController {
       logo: instance.art,
       updatingInstanceUuid: instance.uuid,
       category: instance.category,
+      provider,
+      private: instance._private,
     })
     
     // Trigger a check queue
@@ -135,10 +139,10 @@ class InstanceInstallController {
       uuid: request.updatingInstanceUuid ?? "", // This flag is what tells the API to update an instance
       id: parseInt(request.id as string, 10),
       version: parseInt(request.version as string, 10),
-      _private: false,
-      packType: 0,
-      shareCode: "",
-      importFrom: null,
+      _private: request.private,
+      packType: request.provider === "modpacksch" ? 0 : 1, // TODO: Support other providers
+      shareCode: "", // TODO: Support share codes
+      importFrom: null, // TODO: Support imports
       name: request.name,
       artPath: request.logo,
       category: request.category ?? "default",

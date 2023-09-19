@@ -13,7 +13,7 @@
         <div
           @click="changeTab('curseforge')"
           class="btn-icon bg-navbar eww-orange"
-          :class="{ active: currentTab === 'cursesearch' }"
+          :class="{ active: currentTab === 'curseforge' }"
         >
           <img src="@/assets/curse-logo.svg" alt="" />
         </div>

@@ -41,7 +41,7 @@ import PackCardCommon from '@/components/core/modpack/PackCardCommon.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {PackProviders} from '@/modules/modpacks/types';
-import {resolveArtwork} from '@/utils/helpers/packHelpers';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {stringIsEmpty, stringOrDefault, trimString} from '@/utils/helpers/stringHelpers';
 import {RouterNames} from '@/router';
 import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
@@ -55,7 +55,7 @@ import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.v
 export default class PackPreview extends PackCardCommon {
   @Prop() packId?: number;
   @Prop() partialPack?: SearchResultPack;
-  @Prop() provider!: PackProviders;
+  @Prop({default: "modpacksch" as PackProviders}) provider!: PackProviders;
   
   RouteNames = RouterNames;
   showInstall = false;
@@ -66,7 +66,7 @@ export default class PackPreview extends PackCardCommon {
     }
     
     if (!this.partialPack && this.packId) {
-      this.fetchModpack(this.packId);
+      this.fetchModpack(this.packId, this.provider);
     }
   }
 
@@ -78,6 +78,8 @@ export default class PackPreview extends PackCardCommon {
       name: apiPack.name,
       versionName: apiPack.versions[0].name,
       logo: "",
+      private: apiPack.private ?? false,
+      provider: this.provider
     })
   }
   
@@ -123,6 +125,10 @@ export default class PackPreview extends PackCardCommon {
    * because they think it's not installing.
    */
   get isInstalling() {
+    if (!this.currentInstall) {
+      return false;
+    }
+    
     return this.currentInstall?.request.id === this.apiModpack?.id && !this.currentInstall?.request.updatingInstanceUuid;
   }
 }

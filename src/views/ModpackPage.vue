@@ -53,31 +53,23 @@
         />
       </closable-panel>
     </div>
-    <ftb-modal :visible="showInstallBox" v-if="currentModpack" size="large-dynamic" @dismiss-modal="hideInstall">
-      <InstallModal
-        :pack-name="currentModpack.name"
-        :doInstall="install"
-        :pack-description="currentModpack.synopsis"
-        :versions="currentModpack.versions"
-        :selectedVersion="installSelectedVersion"
-      />
-    </ftb-modal>
+    
+    <modpack-install-modal v-if="currentModpack" :pack-id="currentModpack.id" :provider="packType" :open="showInstallBox" @close="showInstallBox = false" />
   </div>
   <loading class="mt-20" v-else />
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, Versions } from '@/modules/modpacks/types';
+import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
 import { Action, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import { createModpackchUrl, getPackArt } from '../utils';
-import { SettingsState } from '../modules/settings/types';
+import { createModpackchUrl, getPackArt } from '@/utils';
+import { SettingsState } from '@/modules/settings/types';
 import { ServersState } from '@/modules/servers/types';
 import ServerCard from '@/components/organisms/ServerCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
-import { PackConst } from '@/utils/contants';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
@@ -87,14 +79,18 @@ import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { InstallerState } from '@/modules/app/appStore.types';
 import Loading from '@/components/atoms/Loading.vue';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
-
-interface Changelogs {
-  [id: number]: string;
-}
+import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {RouterNames} from '@/router';
+import {ModInfo} from '@/core/@types/javaApi';
+import {ns} from '@/core/state/appState';
+import {GetModpack, GetModpackVersion} from '@/core/state/modpacks/modpacksState';
 
 @Component({
   name: 'ModpackPage',
   components: {
+    ModpackInstallModal,
     ClosablePanel,
     Loading,
     ModpackVersions,
@@ -108,67 +104,61 @@ interface Changelogs {
   },
 })
 export default class ModpackPage extends Vue {
+  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
+  @Action("getVersion", ns("v2/modpacks")) getVersion!: GetModpackVersion;
+  
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
   showVersions = false;
 
   @State('auth') public auth!: AuthState;
   @State('settings') public settings!: SettingsState;
-  @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
-  @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall!: any;
-  @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall!: any;
-  @Action('sendMessage') public sendMessage!: any;
-  @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
   @State('servers') public serverListState!: ServersState;
   @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
   @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
-  private showInstallBox: boolean = false;
-  private installSelectedVersion: number | null = null;
-  private loading = true;
-  private packType: number = 0;
-
-  private activeChangelog: number | undefined = -1;
-  private changelogs: Changelogs = [];
+  showInstallBox: boolean = false;
+  loading = true;
+  packTypeId: number = 0;
 
   mods: { version: string; size: string; name: string }[] = [];
 
   currentModpack: ModPack | null = null;
   error = '';
 
-  public hideInstall(): void {
-    this.showInstallBox = false;
-  }
-
   public install(name: string, version: number, versionName: string): void {
-    this.installModpack({
-      pack: {
-        name,
-        id: this.$route.query.modpackid as string,
-        version: version,
-        packType: this.$route.query.type as string,
-        private: this.currentModpack?.private ?? false,
-      },
-      meta: {
-        name: this.currentModpack?.name ?? '',
-        version: versionName,
-        art: getPackArt(this.currentModpack?.art),
-      },
-    });
+    instanceInstallController.requestInstall({
+      id: this.currentModpack?.id ?? 0,
+      version: version,
+      name: name,
+      versionName: versionName,
+      logo: resolveArtwork(this.currentModpack ?? null, 'square'),
+      private: this.currentModpack?.private ?? false,
+    })
+
+    this.$router.push({
+      name: RouterNames.ROOT_LIBRARY
+    })
   }
 
   async mounted() {
     const packID: number = parseInt(this.$route.query.modpackid as string, 10);
-    this.packType = parseInt(this.$route.query.type as string, 10);
+    this.packTypeId = parseInt(this.$route.query.type as string, 10);
 
     let pack: ModPack;
     try {
-      const packReq = await fetch(createModpackchUrl(`/${this.packType === 0 ? 'modpack' : 'curseforge'}/${packID}`));
+      const modpack = await this.getModpack({
+        id: packID,
+        provider: typeIdToProvider(this.packTypeId)
+      })
+      
+      if (modpack) {
+        const copyModpack = Object.assign({}, modpack);
 
-      pack = await packReq.json();
-      if (pack.versions) {
-        pack.versions = pack.versions.sort((a, b) => b.id - a.id)
+        if (copyModpack.versions) {
+          copyModpack.versions = copyModpack.versions.sort((a, b) => b.id - a.id)
+        }
+        this.currentModpack = copyModpack;
       }
-      this.currentModpack = pack;
     } catch (error) {
       console.error(error);
       this.loading = false;
@@ -178,30 +168,27 @@ export default class ModpackPage extends Vue {
     }
 
     if (this.$route.query.showInstall === 'true') {
-      if (this.$route.query.version !== undefined) {
-        this.installSelectedVersion = parseInt(this.$route.query.version as string, 10);
-      }
       this.showInstallBox = true;
     }
 
-    const res = await fetch(
-      createModpackchUrl(
-        `/${this.packType === 0 ? 'modpack' : 'curseforge'}/${packID}/${pack.versions[0].id}`,
-        !pack.private && !pack.versions[0].private,
-      ),
-    );
+    const version = await this.getVersion({
+      id: packID,
+      versionId: this.currentModpack?.versions[0].id ?? 0,
+      provider: typeIdToProvider(this.packTypeId)
+    })
 
     this.loading = false;
-
-    const modsRaw = await res.json();
-    this.mods = modsRaw.files
-      ?.filter((e: any) => e.type === 'mod')
-      .map((e: any) => ({ name: e.name, size: e.size, version: e.version }))
-      .sort((a: any, b: any) =>
-        a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0,
-      );
-
-    this.toggleChangelog(this.currentModpack?.versions[0].id);
+    
+    if (version) {
+      console.log(version.files.filter(e => !e.name))
+      this.mods = version.files
+        ?.filter((e: any) => e.type === 'mod')
+        .map((e: any) => ({name: e.name, size: e.size, version: e.version}))
+        .sort((a: any, b: any) =>
+          a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0,
+        );
+    }
+    
     if (this.currentVersionObject !== null) {
       if (this.currentVersionObject?.mtgID) {
         this.fetchServers(this.currentVersionObject?.mtgID ?? '');
@@ -230,25 +217,6 @@ export default class ModpackPage extends Vue {
     return null;
   }
 
-  private async toggleChangelog(id: number | undefined) {
-    if (typeof id === 'undefined') {
-      return;
-    }
-    if (this.activeChangelog === id) {
-      this.activeChangelog = -1;
-      return;
-    }
-    if (!this.changelogs[id]) {
-      const changelog = await this.getChangelog({
-        packID: this.currentModpack?.id,
-        versionID: id,
-        type: this.packType,
-      });
-      this.changelogs[id] = changelog.content;
-    }
-    this.activeChangelog = id;
-  }
-
   get isForgePack() {
     const latestRelease = this.latestRelease ?? this.currentModpack?.versions[0]?.id ?? null;
     return (
@@ -259,12 +227,11 @@ export default class ModpackPage extends Vue {
   }
 
   get packSplashArt() {
-    if (this.currentModpack === null) {
-      return PackConst.defaultPackSplashArt;
-    }
-
-    const splashArt = this.currentModpack.art?.filter((art) => art.type === 'splash');
-    return splashArt?.length > 0 ? encodeURI(splashArt[0].url) : PackConst.defaultPackSplashArt;
+    return resolveArtwork(this.currentModpack, 'splash');
+  }
+  
+  get packType(): PackProviders {
+    return typeIdToProvider(this.packTypeId)
   }
 }
 </script>

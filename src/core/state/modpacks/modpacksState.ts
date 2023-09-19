@@ -1,5 +1,5 @@
 import {ActionTree, ActionContext, GetterTree, Module, MutationTree} from 'vuex';
-import {ModPack} from '@/modules/modpacks/types';
+import {ModPack, ModpackVersion, PackProviders, Versions} from '@/modules/modpacks/types';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {RootState} from '@/types';
 
@@ -13,6 +13,7 @@ const packBlacklist = [
 
 const state = {
   modpacks: new Map<number, ModPack>(),
+  modpackVersions: new Map<number, Versions>(),
   // Shorthold modpacks store is intended for modpacks that we have no need to keep in memory for a long period of time.
   // To is primarily used for searching.
   shortHoldModpacks: new Map<number, ModPack>(), // TODO: Maybe remove
@@ -57,12 +58,17 @@ const actions: ActionTree<ModpackState, RootState> = {
   /**
    * Get a modpack from the API or from the store if it already exists.
    */
-  async getModpack({state, commit}, id: number) {
+  async getModpack({state, commit}, payload: {
+    id: number,
+    provider?: PackProviders
+  }) {
+    const {id, provider} = payload;
+    
     if (state.modpacks.has(id)) {
       return state.modpacks.get(id)!;
     }
     
-    const req = await modpackApi.modpacks.getModpack(id);
+    const req = await modpackApi.modpacks.getModpack(id, provider ?? "modpacksch");
     if (req == null || req.status !== "success") {
       return null;
     }
@@ -73,6 +79,30 @@ const actions: ActionTree<ModpackState, RootState> = {
     }
     
     return modpack;
+  },
+  
+  async getVersion({state, commit}, payload: {
+    id: number,
+    versionId: number,
+    provider?: PackProviders
+  }) {
+    const {id, versionId, provider} = payload;
+
+    if (state.modpackVersions.has(versionId)) {
+      return state.modpackVersions.get(versionId)!;
+    }
+
+    const req = await modpackApi.modpacks.getModpackVersion(id, versionId, provider ?? "modpacksch");
+    if (req == null || req.status !== "success") {
+      return null;
+    }
+
+    const modpackVersion = req
+    if (modpackVersion) {
+      commit('SET_MODPACK_VERSION', modpackVersion);
+    }
+
+    return modpackVersion;
   },
   
   async getFeaturedPacks(context) {
@@ -88,6 +118,7 @@ const mutations: MutationTree<ModpackState> = {
   SET_MODPACK: (state: ModpackState, modpack: ModPack) => state.modpacks.set(modpack.id, modpack),
   SET_FEATURED_PACKS: (state: ModpackState, packs: number[]) => state.featuredPackIds = packs,
   SET_LATEST_PACKS: (state: ModpackState, packs: number[]) => state.latestPackIds = packs,
+  SET_MODPACK_VERSION: (state: ModpackState, version: Versions) => state.modpackVersions.set(version.id, version),
 }
 
 const getters: GetterTree<ModpackState, RootState> = {
@@ -96,7 +127,15 @@ const getters: GetterTree<ModpackState, RootState> = {
   getApiPack: (state: ModpackState) => (id: number) => state.modpacks.get(id),
 }
 
-export type GetModpack = (id: number) => Promise<ModPack | null>;
+export type GetModpack = (payload: {
+  id: number, provider?: PackProviders
+}) => Promise<ModPack | null>;
+
+export type GetModpackVersion = (payload: {
+  id: number,
+  versionId: number,
+  provider?: PackProviders
+}) => Promise<ModpackVersion | null>;
 
 export const modpackStateModule: Module<ModpackState, RootState> = {
   namespaced: true,

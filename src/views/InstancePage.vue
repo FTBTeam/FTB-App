@@ -1,6 +1,6 @@
 <template>
   <div class="pack-page">
-    <div class="pack-page-contents" v-if="instance && packInstance">
+    <div class="pack-page-contents" v-if="instance && apiPack">
       <div
         class="background"
         :style="{
@@ -18,7 +18,7 @@
 
         <pack-title-header
           v-if="!hidePackDetails"
-          :pack-instance="packInstance"
+          :pack-instance="apiPack"
           :instance="instance"
           :isInstalled="true"
           :pack-name="instance.name"
@@ -39,7 +39,7 @@
           :isInstalled="true"
           :instance="instance"
           :mods="modlist"
-          :pack-instance="packInstance"
+          :pack-instance="apiPack"
           :updating-mod-list="updatingModlist"
           :backups="instanceBackups"
           :allow-offline="offlineAllowed"
@@ -49,8 +49,8 @@
 
       <closable-panel :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
         <modpack-versions
-          :versions="packInstance.versions"
-          :pack-instance="packInstance"
+          :versions="apiPack.versions"
+          :pack-instance="apiPack"
           :instance="instance"
           :current="instance.versionId"
           @close="showVersions = false"
@@ -113,7 +113,7 @@
     <closable-panel
       :open="searchingForMods"
       @close="searchingForMods = false"
-      :title="`Add mods to ${packInstance ? packInstance.name : ''}`"
+      :title="`Add mods to ${apiPack ? apiPack.name : ''}`"
       subtitle="You can find mods for this pack using the search area below"
     >
       <find-mods :instance="instance" @modInstalled="getModList" />
@@ -151,6 +151,9 @@ import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedMod
 import {AppStoreModules, ns} from '@/core/state/appState';
 import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import { sendMessage } from '@/core/websockets/websocketsApi';
+import {GetModpack} from '@/core/state/modpacks/modpacksState';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -181,14 +184,12 @@ export enum ModpackPageTabs {
 })
 export default class InstancePage extends Vue {
   @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
+  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   
-  @State('modpacks') public modpacks: ModpackState | undefined = undefined;
   @State('settings') public settingsState!: SettingsState;
   @State('servers') public serverListState!: ServersState;
   @State('auth') public auth!: AuthState;
-
-  @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
+  
   @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
 
@@ -206,7 +207,7 @@ export default class InstancePage extends Vue {
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
 
-  private packInstance: ModPack | null = null;
+  private apiPack: ModPack | null = null;
   deleting: boolean = false;
 
   private showMsgBox: boolean = false;
@@ -239,16 +240,13 @@ export default class InstancePage extends Vue {
       await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
     }
-    try {
-      this.packInstance =
-        this.instance.packType == 0
-          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
-          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
-    } catch (e) {
-      console.log('Error getting instance modpack');
-    }
-    this.$forceUpdate();
-
+    
+    // TODO: Allow to work without this.
+    this.apiPack = await this.getModpack({
+      id: this.instance.id,
+      provider: typeIdToProvider(this.instance.packType)
+    });
+    
     if (this.$route.query.shouldPlay === 'true') {
       this.confirmLaunch();
     }
@@ -277,11 +275,11 @@ export default class InstancePage extends Vue {
    * if the held version is set to `archived`
    */
   private async checkForBorkedVersion() {
-    if (!this.instance?.versionId || !this.packInstance) {
+    if (!this.instance?.versionId || !this.apiPack) {
       return;
     }
 
-    const currentVersion = this.packInstance.versions.find((e) => e.id === this.instance?.versionId);
+    const currentVersion = this.apiPack.versions.find((e) => e.id === this.instance?.versionId);
     if (!currentVersion || currentVersion.type.toLowerCase() !== 'archived') {
       return;
     }
@@ -300,7 +298,7 @@ export default class InstancePage extends Vue {
     }
 
     // Find a downgrade / upgrade version
-    const nextAvailableVersion = this.packInstance.versions.find((e) => e.type !== 'archived');
+    const nextAvailableVersion = this.apiPack.versions.find((e) => e.type !== 'archived');
     if (nextAvailableVersion) {
       this.borkedVersionDowngradeId = nextAvailableVersion.id;
       if (nextAvailableVersion.id < this.instance.versionId) {
@@ -378,7 +376,7 @@ export default class InstancePage extends Vue {
   }
 
   public update(version: Versions | null = null): void {
-    const targetVersion = version ?? this.packInstance?.versions.sort((a, b) => b.id - a.id)[0];
+    const targetVersion = version ?? this.apiPack?.versions.sort((a, b) => b.id - a.id)[0];
     if (!targetVersion) {
       // How?
       return;
@@ -390,7 +388,7 @@ export default class InstancePage extends Vue {
         id: this.instance?.id,
         version: targetVersion.id,
         packType: this.instance?.packType,
-        private: this.packInstance?.private ?? targetVersion.private ?? false,
+        private: this.apiPack?.private ?? targetVersion.private ?? false,
       },
       meta: {
         name: this.instance?.name ?? '',
@@ -401,7 +399,7 @@ export default class InstancePage extends Vue {
   }
 
   public updateOrDowngrade(versionId: number) {
-    const pack = this.packInstance?.versions.find((e) => e.id === versionId);
+    const pack = this.apiPack?.versions.find((e) => e.id === versionId);
     if (!pack) {
       this.showAlert({
         title: 'Unable to recover',
@@ -428,31 +426,21 @@ export default class InstancePage extends Vue {
     this.instanceBackups = backups.backups.sort((a, b) => b.createTime - a.createTime);
   }
 
-  private getModList(showAlert = false) {
-    try {
-      this.updatingModlist = true;
-      this.sendMessage({
-        payload: {
-          type: 'instanceMods',
-          uuid: this.instance?.uuid,
-        },
-        callback: (data: any) => {
-          this.modlist = data.files;
-          this.updatingModlist = false;
+  private async getModList(showAlert = false) {
+    const mods = await toggleBeforeAndAfter(() => sendMessage("instanceMods", {
+      uuid: this.instance?.uuid ?? "",
+      _private: false, // TODO: WHY DOES THIS CARE?
+    }), state => this.updatingModlist = state)
 
-          if (showAlert) {
-            this.showAlert({
-              title: 'Updated!',
-              message: 'The mods list has been updated',
-              type: 'primary',
-            });
-          }
-        },
+    // TODO: Catch errors
+    this.modlist = mods.files;
+    
+    if (showAlert) {
+      this.showAlert({
+        title: 'Updated!',
+        message: 'The mods list has been updated',
+        type: 'primary',
       });
-      // I don't think we can catch this... Blame rush.
-    } catch (e) {
-      console.log(e);
-      console.log('Error getting instance modlist');
     }
   }
 
@@ -472,11 +460,11 @@ export default class InstancePage extends Vue {
   }
 
   get packSplashArt() {
-    if (this.packInstance === null) {
+    if (this.apiPack === null) {
       return PackConst.defaultPackSplashArt;
     }
 
-    const splashArt = this.packInstance.art?.filter((art) => art.type === 'splash');
+    const splashArt = this.apiPack.art?.filter((art) => art.type === 'splash');
     return splashArt?.length > 0 ? encodeURI(splashArt[0].url) : PackConst.defaultPackSplashArt;
   }
 
@@ -492,7 +480,7 @@ export default class InstancePage extends Vue {
   }
 
   get versionType() {
-    return this.packInstance?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
+    return this.apiPack?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
   }
 }
 </script>

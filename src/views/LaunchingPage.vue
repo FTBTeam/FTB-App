@@ -215,7 +215,7 @@ import {wsTimeoutWrapper, wsTimeoutWrapperTyped, yeetError} from '@/utils';
 import Router from 'vue-router';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import {resolveArtwork} from '@/utils/helpers/packHelpers';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 
 type InstanceActionCategory = {
@@ -406,7 +406,10 @@ export default class LaunchingPage extends Vue {
     }
 
     emitter.on('ws.message', this.onLaunchProgressUpdate);
-    await this.getModpack(this.instance.id);
+    await this.getModpack({
+      id: this.instance.id,
+      provider: typeIdToProvider(this.instance.packType)
+    });
     await this.launch();
 
     wsTimeoutWrapperTyped<any, { folders: string[] }>({ type: 'getInstanceFolders', uuid: this.instance.uuid })

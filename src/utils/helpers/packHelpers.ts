@@ -1,4 +1,4 @@
-import {ModPack} from '@/modules/modpacks/types';
+import {ModPack, PackProviders} from '@/modules/modpacks/types';
 
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
@@ -86,4 +86,15 @@ export function isValidVersion(version: string, type: VersionTypes = "all") {
   }
   
   return safeVersion === type;
+}
+
+/**
+ * Converts a number type to a string provider type
+ */
+export function typeIdToProvider(id: number): PackProviders {
+  switch (id) {
+    case 0: return "modpacksch";
+    case 1: return "curseforge";
+    default: return "modpacksch"
+  }
 }

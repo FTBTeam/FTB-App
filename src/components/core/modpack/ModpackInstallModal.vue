@@ -34,7 +34,7 @@
 <script lang="ts">
 import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import {ModPack} from '@/modules/modpacks/types';
+import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {ns} from '@/core/state/appState';
 import {Action, Getter } from 'vuex-class';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
@@ -47,6 +47,7 @@ import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
 import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import platform from '@/utils/interface/electron-overwolf'
+import {RouterNames} from '@/router';
 
 @Component({
   components: {ArtworkSelector, FTBToggle, Selection2},
@@ -63,6 +64,7 @@ export default class ModpackInstallModal extends Vue {
   
   @Prop() packId!: number;
   @Prop() uuid?: string;
+  @Prop({default: "modpacksch" as PackProviders}) provider!: PackProviders; 
   
   apiModpack: ModPack | null = null;
   selectedVersionId = "";
@@ -79,7 +81,11 @@ export default class ModpackInstallModal extends Vue {
   async onOpenChanged() {
     if (this.open && !this.apiModpack) {
       // TODO: Catch errors
-      this.apiModpack = await this.getModpack(this.packId);
+      this.apiModpack = await this.getModpack({
+        id: this.packId, 
+        provider: this.provider
+      });
+      
       this.userPackName = this.apiModpack?.name ?? "";
       
       // No stable versions, default to pre-release
@@ -87,7 +93,7 @@ export default class ModpackInstallModal extends Vue {
         this.allowPreRelease = true;
         this.useAdvanced = true;
       }
-
+      
       this.selectedVersionId = this.restrictedVersions[0].id.toString() ?? "";
     }
   }
@@ -101,10 +107,16 @@ export default class ModpackInstallModal extends Vue {
       name: this.userPackName ?? this.apiModpack?.name ?? "failed-to-name-the-modpack-somehow-" + platform.get.utils.crypto.randomUUID().split("-")[0],
       versionName: this.versions.find(e => e.value === this.selectedVersionId)?.label ?? "",
       logo: this.userSelectedArtwork?.path ?? null, // The backend will default for us.
+      private: this.apiModpack?.private ?? false,
     })
     
     // TODO: Toast notification
     this.close();
+    if (this.$route.name !== RouterNames.ROOT_LIBRARY) {
+      this.$router.push({
+        name: RouterNames.ROOT_LIBRARY
+      })
+    }
   }
   
   get packName() {
@@ -144,7 +156,7 @@ export default class ModpackInstallModal extends Vue {
   
   get hasStableVersion() {
     return this.apiModpack?.versions
-      .some(e => isValidVersion(e.type, "release"))
+      .some(e => isValidVersion(e.type, "release")) ?? false
   }
   
   get hasUnstableVersions() {

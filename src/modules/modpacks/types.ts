@@ -20,6 +20,50 @@ export interface ModPack {
   private?: boolean;
 }
 
+export interface ModpackVersion {
+  files: VersionFiles[];
+  specs: VersionSpecs;
+  targets: Targets[];
+  installs: number;
+  plays: number;
+  refreshed: number;
+  changelog: string;
+  parent: number;
+  notification: string;
+  links: any[];
+  status: string;
+  id: number;
+  name: string;
+  type: string;
+  updated: number;
+  private: boolean;
+}
+
+export interface VersionFiles {
+  version: string;
+  path: string;
+  url: string;
+  mirrors: any[];
+  sha1: string;
+  size: number;
+  tags: any[];
+  clientonly: boolean;
+  serveronly: boolean;
+  optional: boolean;
+  id: number;
+  name: string;
+  type: string;
+  updated: number;
+}
+
+export interface Targets {
+  version: string;
+  id: number;
+  name: string;
+  type: string;
+  updated: number;
+}
+
 export type PackProviders = "modpacksch" | "curseforge"
 
 export interface ModPackLink {
@@ -84,13 +128,7 @@ export interface Versions {
   updated: number;
   mtgID?: string;
   private?: boolean;
-  targets: {
-    version: string;
-    id: number;
-    name: string;
-    type: string;
-    updated: number;
-  }[]
+  targets: Targets[]
 }
 
 export interface VersionSpecs {

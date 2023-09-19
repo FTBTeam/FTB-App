@@ -8,7 +8,7 @@
         @selected="(version) => loadChanges(version)"
       />
     </div>
-    <div class="main flex pb-8 flex-col" :key="activeLog">
+    <div class="main flex pb-8 flex-col" :key="activeLog" v-if="!isCursePack">
       <div class="heading flex items-center mb-4" v-if="currentVersion">
         <div class="content flex-1 mr-4">
           <p class="opacity-50">Changelog for</p>
@@ -60,30 +60,33 @@
         <div class="wysiwyg" v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''" v-html="parseMarkdown(changelogs[activeLog])" />
       </div>
     </div>
+    <div v-else>
+      <message type="info">Changelogs are not yet supported for non-FTB modpacks.</message>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
-import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
-import { Action } from 'vuex-class';
+import { ModPack, Versions } from '@/modules/modpacks/types';
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { InstallerState } from '@/modules/app/appStore.types';
-import {getColorForReleaseType, getPackArt, parseMarkdown} from '@/utils';
-import MarkdownIt from 'markdown-it';
+import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import Selection from '@/components/atoms/input/Selection.vue';
 import dayjs from 'dayjs';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {InstanceJson} from '@/core/@types/javaApi';
+import {RouterNames} from '@/router';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 
 @Component({
   components: {Selection}
 })
 export default class ModpackVersions extends Vue {
-  @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
-
   @Prop() versions!: Versions[];
   @Prop() packInstance!: ModPack;
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson;
   @Prop() current!: number;
 
   platform = platform;
@@ -98,6 +101,11 @@ export default class ModpackVersions extends Vue {
   mounted() {
     const lcurrent = this.current ?? this.versions[0].id;
 
+    // TODO: Fix this once the api has been updated to support a `provider` field
+    if (this.isCursePack) {
+      return;
+    }
+    
     // get the first log
     this.fetchLog(lcurrent)
       .then((data) => {
@@ -106,8 +114,16 @@ export default class ModpackVersions extends Vue {
       })
       .catch(console.error);
   }
+  
+  destoryed() {
+    this.changelogs = {};
+  }
 
   async loadChanges(versionId: number) {
+    if (this.isCursePack) {
+      return;
+    }
+    
     if (this.changelogs['' + versionId]) {
       this.setActive(versionId);
       return;
@@ -123,15 +139,15 @@ export default class ModpackVersions extends Vue {
   }
 
   async fetchLog(versionId: number) {
-    this.loading = true;
-    const changelog = await this.getChangelog({
-      packID: this.packInstance.id,
-      versionID: versionId,
-      type: this.packInstance?.type?.toLowerCase() === 'curseforge' ? 1 : 0,
-    });
+    // TODO: 
+    const changelog = await toggleBeforeAndAfter(
+      () => modpackApi.modpacks.getChangelog(this.packInstance.id, versionId, this.isCursePack ? "curseforge" : "modpacksch"),
+      state => this.loading = state
+    )
 
-    this.loading = false;
-    return changelog.content ?? `No changelog available for this version`;
+    // TODO: Handle errors
+    
+    return changelog?.content ?? `No changelog available for this version`;
   }
 
   public isOlderVersion(version: number) {
@@ -139,20 +155,15 @@ export default class ModpackVersions extends Vue {
   }
 
   public update(): void {
-    this.installModpack({
-      pack: {
-        id: this.instance.id,
-        uuid: this.instance.uuid,
-        version: this.currentVersion?.id,
-        packType: this.instance.packType,
-        private: this.packInstance.private ?? false,
-      },
-      meta: {
-        name: this.instance.name,
-        version: this.currentVersion?.name ?? '',
-        art: getPackArt(this.instance?.art),
-      },
-    });
+    if (!this.instance || !this.currentVersion) {
+      // Non-instances can't be updated
+      return;
+    }
+    
+    instanceInstallController.requestUpdate(this.instance, this.currentVersion, typeIdToProvider(this.instance.packType));
+    this.$router.push({
+      name: RouterNames.ROOT_LIBRARY
+    })
   }
   
   get packVersions() {
@@ -162,6 +173,13 @@ export default class ModpackVersions extends Vue {
       meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"), 
       badge: {color: getColorForReleaseType(e.type), text: e.type} 
     }))
+  }
+  
+  get isCursePack() {
+    // TODO: Fix this once the api has been updated to support a `provider` field
+    // TODO: > 1000 isn't a great option here but it's the only way to ensure this still works once the
+    //       provider field is added and the type is set correctly
+    return this.packInstance.type.toLowerCase() == "curseforge" || this.packInstance.id > 1000;
   }
 }
 </script>

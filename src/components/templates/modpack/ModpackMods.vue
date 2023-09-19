@@ -19,22 +19,22 @@
         </div>
       </div>
     </div>
-    <div v-for="(file, index) in filteredModList" :key="index" v-if="packInstalled ? file.enabled : true">
-      <div class="flex flex-row my-4 items-center">
+    <div v-for="(file, index) in modlist" :key="index">
+      <div class="flex flex-row my-4 items-center" v-show="!filteredModShas.includes(file.sha1)">
         <p
           :class="{ 'opacity-50': packInstalled ? !file.enabled : false }"
           class="duration-150 transition-opacity"
           :title="`Version ${file.version}`"
         >
-          {{ file.name.replace('.jar', '') }}
+          {{ file.fileName.replace('.jar', '') }}
         </p>
         <div class="ml-auto flex items-center">
           <span
             :class="{ 'opacity-50': packInstalled ? !file.enabled : false }"
             class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 clean-font"
-            >{{ prettyBytes(parseInt(file.size)) }}</span
+            >{{ prettyBytes(file.size) }}</span
           >
-          <ftb-toggle v-if="false" :value="file.enabled" @change="() => toggleMod(file)" />
+          <ftb-toggle :value="file.enabled" :disabled="togglingShas.includes(file.sha1)" @change="() => toggleMod(file)" />
 
           <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
           <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
@@ -57,6 +57,9 @@ import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Instance } from '@/modules/modpacks/types';
+import { sendMessage } from '@/core/websockets/websocketsApi';
+import {ModInfo} from '@/core/@types/javaApi';
+import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 
 @Component({
   components: {
@@ -69,54 +72,56 @@ export default class ModpackMods extends Vue {
   @Action('showAlert') public showAlert: any;
   @Action('sendMessage') public sendMessage!: any;
 
-  @Prop() modlist!: any[];
+  @Prop() modlist!: ModInfo[];
   @Prop() updatingModlist!: boolean;
   @Prop() packInstalled!: boolean;
   @Prop() instance!: Instance;
+  
+  togglingShas: string[] = [];
 
-  filteredModList: any[] = [];
+  filteredModList: string[] = [];
   search = '';
 
   prettyBytes = prettyByteFormat;
-
-  mounted() {
-    this.filteredModList = this.modlist;
-  }
-
-  @Watch('modlist')
-  onModListChange() {
-    this.filteredModList = this.modlist;
-  }
-
-  toggleMod(file: any) {
-    this.sendMessage({
-      payload: {
-        type: 'instanceModToggle',
+  
+  async toggleMod(file: ModInfo) {
+    this.togglingShas.push(file.sha1)
+    try {
+      // TODO: Error check
+      const toggleQuery = await sendMessage("instanceModToggle", {
         uuid: this.instance.uuid,
-        state: !file.enabled,
-        fileName: file.name,
-      },
-      callback: (data: any) => {
-        if (data.successful) {
-          file.enabled = !file.enabled;
-        } else {
-          this.showAlert({
-            title: 'Error',
-            message: `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.name}`,
-            type: 'warning',
-          });
-        }
-      },
-    });
+        fileName: file.fileName,
+        fileId: file.fileId
+      });
+      
+      file.enabled = !file.enabled;
+    } catch (e) {
+      // TODO: Show error
+
+      // this.showAlert({
+      //   title: 'Error',
+      //   message: `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.name}`,
+      //   type: 'warning',
+      // });
+    } finally {
+      this.togglingShas.splice(this.togglingShas.indexOf(file.sha1), 1);
+    }
   }
 
   onSearch(value: string) {
     if (value === '') {
-      this.filteredModList = this.modlist;
+      this.filteredModList = [];
       return;
     }
 
-    this.filteredModList = this.modlist.filter((e) => e.name.toLowerCase().includes(value.toLowerCase()));
+    this.filteredModList = this.modlist
+      .filter((e) => !containsIgnoreCase(e.fileName, value))
+      .map((e) => e.sha1);
+
+  }
+  
+  get filteredModShas() {
+    return this.filteredModList;
   }
 }
 </script>

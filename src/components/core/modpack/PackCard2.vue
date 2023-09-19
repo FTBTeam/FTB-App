@@ -33,7 +33,7 @@
 <script lang="ts">
 import {Prop, Component} from 'vue-property-decorator';
 import PackCardCommon from '@/components/core/modpack/PackCardCommon.vue';
-import {isValidVersion, resolveArtwork, resolveModloader} from '@/utils/helpers/packHelpers';
+import {isValidVersion, resolveArtwork, resolveModloader, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {RouterNames} from '@/router';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
@@ -51,7 +51,7 @@ export default class PackCard2 extends PackCardCommon {
   
   async mounted() {
     // Always fetch the modpack from the API so we can see if updates are available
-    await this.fetchModpack(this.instance.id);
+    await this.fetchModpack(this.instance.id, typeIdToProvider(this.instance.packType));
   }
 
   openInstancePage() {
