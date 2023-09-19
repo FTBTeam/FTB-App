@@ -10,6 +10,7 @@ import { servers } from './servers';
 import { core } from '@/modules/core/core';
 import { appStore } from '@/modules/app/appStore';
 import {appStateStore} from '@/core/state/appState';
+import {modpacks} from '@/modules/modpacks';
 
 Vue.use(Vuex);
 
@@ -73,7 +74,7 @@ const store: StoreOptions<RootState> = {
   },
   mutations,
   modules: {
-    // modpacks,
+    modpacks,
     websocket,
     settings,
     auth,

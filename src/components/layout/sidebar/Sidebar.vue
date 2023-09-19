@@ -33,7 +33,6 @@
     <popover text="Setup a server with CreeperHost" class="w-full">
       <img
         @click="openPromo"
-        @mousedown="onMouseDown"
         src="../../../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
@@ -119,22 +118,15 @@ export default class Sidebar extends Vue {
   }
 
   public openPromo(event: any): void {
-    platform.get.utils.openUrl('https://go.ftb.team/creeperhost');
+    platform.get.utils.openUrl('https://go.ftb.team/ch-app');
   }
 
-  // Developer page
-  public onMouseDown(event: any): void {
-    if (event.button === 2 && event.ctrlKey && event.altKey && event.shiftKey) {
-      yeetError(() => this.$router.push(RouterNames.DEVELOPER));
-    }
-  }
-
-  public openFriends() {
-    if (this.disableNav) {
-      return;
-    }
-    platform.get.actions.openFriends();
-  }
+  // public openFriends() {
+  //   if (this.disableNav) {
+  //     return;
+  //   }
+  //   platform.get.actions.openFriends();
+  // }
 }
 </script>
 

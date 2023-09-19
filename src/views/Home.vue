@@ -1,5 +1,5 @@
 <template>
-  <div class="home page-spacing">
+  <div class="home page-spacing">    
     <template v-if="recentInstances.length">
       <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
       
@@ -13,59 +13,6 @@
       <pack-preview v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
     </div>
   </div>
-<!--  <div class="px-6 py-4" v-if="isLoaded">-->
-<!--    <div class="flex flex-col" v-if="recentlyPlayed.length >= 1" key="recentlyPlayed">-->
-<!--      <h1 class="text-2xl mb-2">Recently Played</h1>-->
-<!--      <div class="mod-pack-grid mb-4">-->
-<!--        <pack-card-->
-<!--          v-for="modpack in recentlyPlayed"-->
-<!--          class="pack-card-item"-->
-<!--          :key="modpack.uuid"-->
-<!--          :versions="modpack.versions"-->
-<!--          :art="modpack.art"-->
-<!--          :installed="true"-->
-<!--          :version="modpack.version"-->
-<!--          :name="modpack.name"-->
-<!--          :authors="modpack.authors"-->
-<!--          :instance="modpack"-->
-<!--          :instanceID="modpack.uuid"-->
-<!--          :description="-->
-<!--            getModpack(modpack.id) !== undefined ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'-->
-<!--          "-->
-<!--          :tags="getModpack(modpack.id) !== undefined ? getModpack(modpack.id).tags : []"-->
-<!--          :kind="modpack.kind"-->
-<!--        />-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    <div class="flex flex-col" key="featuredPacks">-->
-<!--      <h1 class="text-2xl mb-4 mt-2">Featured Modpacks</h1>-->
-<!--      <div class="flex pt-1 flex-wrap overflow-x-auto flex-grow items-stretch">-->
-<!--        <pack-card-list-->
-<!--          v-for="modpack in modpacks.featuredPacks.slice(0, cardsToShow)"-->
-<!--          :key="modpack.id"-->
-<!--          :packID="modpack.id"-->
-<!--          :versions="modpack.versions"-->
-<!--          :art="modpack.art"-->
-<!--          :installed="false"-->
-<!--          :minecraft="'1.7.10'"-->
-<!--          :version="modpack.versions.length > 0 ? modpack.versions[0].name : 'unknown'"-->
-<!--          :versionID="modpack.versions[0].id"-->
-<!--          :name="modpack.name"-->
-<!--          :authors="modpack.authors"-->
-<!--          :description="modpack.synopsis"-->
-<!--          :tags="modpack.tags"-->
-<!--          :kind="modpack.kind"-->
-<!--          >{{ modpack.id }}</pack-card-list-->
-<!--        >-->
-<!--      </div>-->
-<!--    </div>-->
-<!--  </div>-->
-<!--  <div class="loading-screen" v-else>-->
-<!--    <Loading2 />-->
-<!--    <div class="packs-to-load" v-if="modpacks.packsLoaded">-->
-<!--      <span>{{ modpacks.packsLoaded }} / {{ modpacks.packsToLoad }}</span> Modpacks Loaded-->
-<!--    </div>-->
-<!--  </div>-->
 </template>
 
 <script lang="ts">

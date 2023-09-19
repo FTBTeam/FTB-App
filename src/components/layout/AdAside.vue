@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <div class="ad-container ads-electron electron cursor-pointer" v-else key="adside-ad-type" @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')">
+    <div class="ad-container ads-electron electron cursor-pointer" v-else key="adside-ad-type" @click="platform.get.utils.openUrl('https://go.ftb.team/ch-app')">
       <div class="flex flex-col items-center mb-6">
         <img src="@/assets/ch-logo.svg" class="mb-4" width="30" alt="CreeperHost Logo">
         <p class="font-sans font-bold">Get your own server at CreeperHost</p>

@@ -121,16 +121,11 @@ export default new Router({
         //   name: RouterNames.ROOT_DISCOVER,
         //   component: () => import(/* webpackChunkName: "discovery" */ './views/DiscoverPage.vue'),
         // },
-        {
-          path: '/server',
-          name: RouterNames.ROOT_SERVER,
-          component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
-        },
-        {
-          path: '/dev',
-          name: RouterNames.DEVELOPER,
-          component: () => import(/* webpackChunkName: "nothingtoseehere" */ './views/DeveloperPage.vue'),
-        },
+        // {
+        //   path: '/server',
+        //   name: RouterNames.ROOT_SERVER,
+        //   component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
+        // },
         {
           path: '/support',
           component: () => import(/* webpackChunkName: "support" */ './views/Support/SupportBase.vue'),
