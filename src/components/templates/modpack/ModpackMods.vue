@@ -26,7 +26,7 @@
           class="duration-150 transition-opacity"
           :title="`Version ${file.version}`"
         >
-          {{ file.fileName.replace('.jar', '') }}
+          {{ (file.fileName ? file.fileName : file.name).replace('.jar', '') }}
         </p>
         <div class="ml-auto flex items-center">
           <span
@@ -34,7 +34,7 @@
             class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 clean-font"
             >{{ prettyBytes(file.size) }}</span
           >
-          <ftb-toggle :value="file.enabled" :disabled="togglingShas.includes(file.sha1)" @change="() => toggleMod(file)" />
+          <ftb-toggle v-if="packInstalled" :value="file.enabled" :disabled="togglingShas.includes(file.sha1)" @change="() => toggleMod(file)" />
 
           <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
           <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->

@@ -11,8 +11,7 @@ const state = {
   categories: [] as string[],
   state: {
     loadingInstances: false,
-    instancesInitialized: false,
-  }
+   }
 }
 
 const actions: ActionTree<InstanceState, RootState> = {
@@ -26,7 +25,6 @@ const actions: ActionTree<InstanceState, RootState> = {
     const instances = await sendMessage('installedInstances', {refresh: true});
     commit('SET_INSTANCES', instances.instances);
     commit('SET_CATEGORIES', instances.availableCategories);
-    commit('SET_INSTANCES_INITIALIZED', true);
     commit('SET_LOADING_INSTANCES', false);
   },
   
@@ -56,7 +54,6 @@ const actions: ActionTree<InstanceState, RootState> = {
 const mutations: MutationTree<InstanceState> = {
   SET_LOADING_INSTANCES: (state: InstanceState, loading: boolean) => state.state.loadingInstances = loading,
   SET_INSTANCES: (state: InstanceState, instances: InstanceJson[]) => state.instances = instances,
-  SET_INSTANCES_INITIALIZED: (state: InstanceState, initialized: boolean) => state.state.instancesInitialized = initialized,
   ADD_INSTANCE: (state: InstanceState, instance: InstanceJson) => state.instances.push(instance),
   UPDATE_INSTANCE: (state: InstanceState, {index, instance}: {index: number, instance: InstanceJson}) => state.instances.splice(index, 1, instance),
   REMOVE_INSTANCE: (state: InstanceState, index: number) => state.instances.splice(index, 1),
@@ -66,7 +63,6 @@ const mutations: MutationTree<InstanceState> = {
 
 const getters: GetterTree<InstanceState, RootState> = {
   isLoadingInstances: (state: InstanceState) => state.state.loadingInstances,
-  instancesInitialized: (state: InstanceState) => state.state.instancesInitialized,
   instances: (state: InstanceState) => state.instances,
   getInstance: (state: InstanceState) => (uuid: string) => state.instances.find(i => i.uuid === uuid),
   categories: (state: InstanceState) => state.categories,

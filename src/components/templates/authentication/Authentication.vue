@@ -9,7 +9,7 @@
         <font-awesome-icon icon="times" />
       </div>
       <div class="main" v-if="loading">
-        <Loading />
+        <loading2 />
       </div>
 
       <div class="main text-center" v-else-if="error.length > 0">
@@ -101,14 +101,14 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
-import Loading from '@/components/atoms/Loading.vue';
 import { Action } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 import { Prop } from 'vue-property-decorator';
 import { RouterNames } from '@/router';
+import Loading2 from '@/components/atoms/Loading2.vue';
 
 @Component({
-  components: { MicrosoftAuth, YggdrasilAuthForm, Loading },
+  components: {Loading2, MicrosoftAuth, YggdrasilAuthForm},
 })
 export default class Authentication extends Vue {
   @Action('sendMessage') public sendMessage: any;

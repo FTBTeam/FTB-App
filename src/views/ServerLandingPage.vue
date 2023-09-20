@@ -171,16 +171,6 @@
 //  color: black;
 //}
 //
-//.frosted-glass {
-//  backdrop-filter: blur(8px);
-//  background: linear-gradient(
-//    to top,
-//    rgba(36, 40, 47, 0) 0%,
-//    rgba(43, 57, 66, 0.2) calc(100% - 2px),
-//    rgba(193, 202, 207, 0.1) calc(100% - 1px),
-//    rgba(29, 29, 29, 0.3) 100%
-//  );
-//}
 </style>
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';

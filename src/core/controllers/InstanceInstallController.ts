@@ -145,7 +145,7 @@ class InstanceInstallController {
       importFrom: null, // TODO: Support imports
       name: request.name,
       artPath: request.logo,
-      category: request.category ?? "default",
+      category: request.category ?? "Default",
     });
     
     if (installResponse.status === "error" || installResponse.status === "prepare_error") {

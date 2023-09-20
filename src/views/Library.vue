@@ -1,18 +1,42 @@
 <template>
-  <div class="mod-packs page-spacing h-full" v-if="instancesInitialized">
-    <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mr-4 flex-1" />
+  <div class="mod-packs page-spacing h-full">
+    <template v-if="!loading && instances.length > 0">
+      <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mr-4 flex-1" />
+
+      <div class="categories">
+        <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`">
+          <h2>{{ index }}</h2>
+          <div class="pack-card-grid">
+            <template v-for="instance in category">
+              <pack-card2
+                v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
+                :key="instance.uuid"
+                :instance="instance"
+              />
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
     
-    <div class="categories">
-      <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`">
-        <h2>{{ index }}</h2>
-        <div class="pack-card-grid">
-          <template v-for="instance in category">
-            <pack-card2
-              v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
-              :key="instance.uuid"
-              :instance="instance"
-            />
-          </template>
+    <loading2 v-else-if="loading" />
+
+    <div class="flex flex-1 flex-wrap justify-center flex-col items-center no-packs" v-else>
+      <div class="message flex flex-1 flex-wrap items-center flex-col mt-32">
+        <font-awesome-icon icon="heart-broken" size="6x" />
+        <h1 class="text-5xl">Oh no!</h1>
+        <span class="mb-4 w-3/4 text-center">
+          Would you look at that! Looks like you've got no modpacks installed yet... If you know what you want, click
+          Browse and search through our collection and all of CurseForge modpacks, otherwise, use Discover we've got
+          some great recommended packs.</span
+        >
+        <div class="flex flex-row justify-between my-2">
+          <router-link to="/browseModpacks">
+            <ftb-button color="primary" class="py-2 px-10 mx-2">Browse</ftb-button>
+          </router-link>
+          <router-link to="/discover">
+            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>
+          </router-link>
         </div>
       </div>
     </div>
@@ -190,30 +214,28 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { Component, Vue } from 'vue-property-decorator';
 import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
-import { Action, Getter, State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
-import { prettyByteFormat, wsTimeoutWrapper, wsTimeoutWrapperTyped } from '@/utils';
-import { InstallerState } from '@/modules/app/appStore.types';
-import {AppStoreModules, ns} from '@/core/state/appState';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import { Getter } from 'vuex-class';
+import {ns} from '@/core/state/appState';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
+import Loading2 from '@/components/atoms/Loading2.vue';
 
 @Component({
   components: {
+    Loading2,
     PackCard2,
     PackCardWrapper,
     FTBSearchBar,
   },
 })
 export default class Library extends Vue {
-  @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
-  @Getter("instancesInitialized", ns("v2/instances")) instancesInitialized!: boolean;
-  
+  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
+  @Getter('isLoadingInstances', ns("v2/instances")) loading!: boolean;
+
   get filteredInstance(): string[] | null {
     if (this.searchTerm === '') {
       return null;
@@ -234,169 +256,96 @@ export default class Library extends Vue {
     }
     return grouped;
   }
-  
-  @State('settings') public settings!: SettingsState;
-  @State('modpacks') public modpacks!: ModpackState;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Getter('packsCache', { namespace: 'modpacks' }) public packsCache!: ModPack[];
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (id: number) => Promise<ModPack>;
-  @Action('sendMessage') public sendMessage!: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   private searchTerm: string = '';
-  private isLoaded: boolean = false;
-  isGrid: boolean = false;
 
-  showImport = false;
-  modalType = null;
-  fileError = '';
-  activeFile: any = null;
-  shareCode: string = '';
-  shareCodeError = '';
-
-  PrettyBytes = prettyByteFormat;
-
-  @Watch('modpacks', { deep: true })
-  public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
-    if (JSON.stringify(newVal.installedPacks) !== JSON.stringify(oldVal.installedPacks)) {
-      this.isLoaded = false;
-      try {
-        await Promise.all(
-          this.modpacks.installedPacks.map(async (instance) => {
-            const pack = await this.fetchModpack(instance.id);
-            return pack;
-          }),
-        );
-        this.isLoaded = true;
-      } catch (err) {
-        this.isLoaded = true;
-      }
-    }
-  }
-
-  public async mounted() {
-    if (this.modpacks) {
-      this.isLoaded = false;
-      try {
-        await Promise.all(this.modpacks.installedPacks.map(async (instance) => await this.fetchModpack(instance.id)));
-        this.isLoaded = true;
-      } catch (err) {
-        this.isLoaded = true;
-      }
-    }
-  }
-
-  async checkAndInstall() {
-    if (this.shareCode === '') {
-      return;
-    }
-
-    const checkCode = await wsTimeoutWrapperTyped<any, { success: boolean }>({
-      type: 'checkShareCode',
-      shareCode: this.shareCode,
-    });
-
-    if (!checkCode.success) {
-      this.shareCodeError = `Unable to find a valid pack with the code of ${this.shareCode} `;
-      return;
-    }
-
-    this.showImport = false;
-    this.modalType = null;
-
-    this.installModpack({
-      pack: {
-        shareCode: this.shareCode,
-      },
-      meta: {
-        name: 'Shared pack',
-        version: this.shareCode,
-      },
-    });
-
-    this.shareCode = '';
-  }
-
-  fileAttach(event: any) {
-    const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
-    if (file == null || !file.name.endsWith('.zip')) {
-      return;
-    }
-
-    this.activeFile = {
-      name: file.name,
-      size: file.size,
-      path: file.path,
-    };
-  }
-
-  async installZip() {
-    this.fileError = '';
-    if (!this.activeFile) {
-      return;
-    }
-
-    const res = await wsTimeoutWrapper({
-      type: 'checkCurseZip',
-      path: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-    });
-
-    if (!res?.success) {
-      this.activeFile = null;
-      this.fileError = res.message ?? "We're unable to detect a CurseForge pack in this zip file.";
-    } else {
-      this.modalType = null;
-      this.showImport = false;
-
-      this.installModpack({
-        pack: {
-          importFrom: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-        },
-        meta: {
-          name: 'Curse imported modpack',
-          version: this.activeFile.name,
-        },
-      });
-      this.activeFile = null;
-    }
-  }
-
-  get packs(): Instance[] {
-    let installedModpacks = this.modpacks.installedPacks;
-    
-    // Failsafe
-    if (this.modpacks === null) {
-      return [];
-    }
-    
-    if (this.searchTerm.length > 0) {
-      installedModpacks = installedModpacks.filter((pack) => pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1);
-    }
-
-    return installedModpacks.sort((a, b) => {
-      if (!a.lastPlayed || !b.lastPlayed) {
-        return a.name.localeCompare(b.name);
-      }
-
-      return b.lastPlayed - a.lastPlayed;
-    });
-  }
-
-  public getModpack(id: number): ModPack | null {
-    return this.packsCache[id] ? this.packsCache[id] : null;
-  }
+  // showImport = false;
+  // modalType = null;
+  // fileError = '';
+  // activeFile: any = null;
+  // shareCode: string = '';
+  // shareCodeError = '';
+  //
+  // PrettyBytes = prettyByteFormat;
+  
+  // async checkAndInstall() {
+  //   if (this.shareCode === '') {
+  //     return;
+  //   }
+  //
+  //   const checkCode = await wsTimeoutWrapperTyped<any, { success: boolean }>({
+  //     type: 'checkShareCode',
+  //     shareCode: this.shareCode,
+  //   });
+  //
+  //   if (!checkCode.success) {
+  //     this.shareCodeError = `Unable to find a valid pack with the code of ${this.shareCode} `;
+  //     return;
+  //   }
+  //
+  //   this.showImport = false;
+  //   this.modalType = null;
+  //
+  //   this.installModpack({
+  //     pack: {
+  //       shareCode: this.shareCode,
+  //     },
+  //     meta: {
+  //       name: 'Shared pack',
+  //       version: this.shareCode,
+  //     },
+  //   });
+  //
+  //   this.shareCode = '';
+  // }
+  //
+  // fileAttach(event: any) {
+  //   const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
+  //   if (file == null || !file.name.endsWith('.zip')) {
+  //     return;
+  //   }
+  //
+  //   this.activeFile = {
+  //     name: file.name,
+  //     size: file.size,
+  //     path: file.path,
+  //   };
+  // }
+  //
+  // async installZip() {
+  //   this.fileError = '';
+  //   if (!this.activeFile) {
+  //     return;
+  //   }
+  //
+  //   const res = await wsTimeoutWrapper({
+  //     type: 'checkCurseZip',
+  //     path: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
+  //   });
+  //
+  //   if (!res?.success) {
+  //     this.activeFile = null;
+  //     this.fileError = res.message ?? "We're unable to detect a CurseForge pack in this zip file.";
+  //   } else {
+  //     this.modalType = null;
+  //     this.showImport = false;
+  //
+  //     this.installModpack({
+  //       pack: {
+  //         importFrom: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
+  //       },
+  //       meta: {
+  //         name: 'Curse imported modpack',
+  //         version: this.activeFile.name,
+  //       },
+  //     });
+  //     this.activeFile = null;
+  //   }
+  // }
 }
 </script>
 
 <style lang="scss" scoped>
-.pack-card-list {
-  &.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 148px);
-    gap: 1rem;
-  }
-}
-
 .drop-area {
   margin-top: 1rem;
   padding: 2.5rem 2rem;

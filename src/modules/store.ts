@@ -6,7 +6,7 @@ import { websocket } from './websocket';
 import { settings } from './settings';
 import { auth } from './auth';
 // import { discovery } from './discovery';
-import { servers } from './servers';
+// import { servers } from './servers';
 import { core } from '@/modules/core/core';
 import { appStore } from '@/modules/app/appStore';
 import {appStateStore} from '@/core/state/appState';
@@ -79,7 +79,7 @@ const store: StoreOptions<RootState> = {
     settings,
     auth,
     // discovery,
-    servers,
+    // servers,
     core,
     app: appStore,
     "v2": appStateStore

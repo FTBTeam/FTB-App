@@ -54,14 +54,14 @@
         >
           World Backups
         </div>
-        <div
-          v-if="isInstalled && currentVersionObject"
-          class="tab"
-          :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
-          @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"
-        >
-          Public servers
-        </div>
+<!--        <div-->
+<!--          v-if="isInstalled && currentVersionObject"-->
+<!--          class="tab"-->
+<!--          :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"-->
+<!--          @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"-->
+<!--        >-->
+<!--          Public servers-->
+<!--        </div>-->
         <a class="cta" @click.prevent="Platform.get.utils.openUrl(`https://www.creeperhost.net/modpack/${packSlug}`)">
           <img class="ch-logo" src="@/assets/ch-logo.svg" alt="" />
           Order a server
@@ -164,13 +164,13 @@
       <modpack-settings :instance="instance" v-if="instance && isInstalled && activeTab === tabs.SETTINGS" />
 
       <!-- v-show to allow servers to load in the background -->
-      <modpack-public-servers
-        v-if="isInstalled && currentVersionObject"
-        v-show="activeTab === tabs.PUBLIC_SERVERS && currentVersionObject.mtgID"
-        :instance="instance"
-        :current-version="currentVersionObject.mtgID"
-        :pack-instance="packInstance"
-      />
+<!--      <modpack-public-servers-->
+<!--        v-if="isInstalled && currentVersionObject"-->
+<!--        v-show="activeTab === tabs.PUBLIC_SERVERS && currentVersionObject.mtgID"-->
+<!--        :instance="instance"-->
+<!--        :current-version="currentVersionObject.mtgID"-->
+<!--        :pack-instance="packInstance"-->
+<!--      />-->
 
       <modpack-backups
         @backupsChanged="$emit('backupsChanged')"
@@ -182,7 +182,7 @@
   </div>
   <div class="loading pt-12" v-else>
     <!-- This should literally never happen -->
-    <loading />
+    <loading2 />
   </div>
 </template>
 
@@ -190,27 +190,24 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
+import { ModPack } from '@/modules/modpacks/types';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
-import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import { getColorForChar } from '@/utils/colors';
-import { Action } from 'vuex-class';
-import Loading from '@/components/atoms/Loading.vue';
 import MarkdownIt from 'markdown-it';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
 import Platform from '@/utils/interface/electron-overwolf';
-import {Backup, InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
+import Loading2 from '@/components/atoms/Loading2.vue';
 
 @Component({
   name: 'pack-body',
   components: {
+    Loading2,
     PackUpdateButton,
-    Loading,
-    ModpackPublicServers,
     ModpackSettings,
     ModpackMods,
     PackActions,
@@ -218,8 +215,6 @@ import {Backup, InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
   },
 })
 export default class PackBody extends Vue {
-  @Action('sendMessage') public sendMessage!: any;
-
   // The stored instance for an installed pack
   @Prop({ default: null }) instance!: SugaredInstanceJson;
   @Prop({ default: false }) packLoading!: boolean;
@@ -266,22 +261,22 @@ export default class PackBody extends Vue {
     };
   }
 
-  get currentVersionObject(): Versions | null {
-    if (this.instance === null) {
-      return null;
-    }
-
-    if (this.packInstance !== null) {
-      if (this.packInstance.versions === undefined) {
-        return null;
-      }
-      const version = this.packInstance.versions.find((f: Versions) => f.id === this.instance?.versionId);
-      if (version !== undefined) {
-        return version;
-      }
-    }
-    return null;
-  }
+  // get currentVersionObject(): Versions | null {
+  //   if (this.instance === null) {
+  //     return null;
+  //   }
+  //
+  //   if (this.packInstance !== null) {
+  //     if (this.packInstance.versions === undefined) {
+  //       return null;
+  //     }
+  //     const version = this.packInstance.versions.find((f: Versions) => f.id === this.instance?.versionId);
+  //     if (version !== undefined) {
+  //       return version;
+  //     }
+  //   }
+  //   return null;
+  // }
   
   get requiresSync() {
     return this.instance?.pendingCloudInstance ?? false;

@@ -47,20 +47,6 @@
       </div>
       <loading2 class="mt-20" v-if="loadingInitialPacks" />
     </div>
-
-    <FTBModal :visible="showInstallModal" @dismiss-modal="clearInstallModal" size="large-dynamic">
-      <install-modal
-        v-if="!installerLoading && installModalData"
-        :pack-name="installModalData.pack.name"
-        :pack-description="installModalData.pack.synopsis"
-        :versions="installModalData.versions"
-        :do-install="runInstaller"
-      />
-      <div v-else class="py-6">
-        <p class="font-bold text-center mt-2">Loading Modpack Versions</p>
-        <Loading :size="`5`" class="mt-8" />
-      </div>
-    </FTBModal>
   </div>
 </template>
 
@@ -70,12 +56,10 @@ import { Action, Getter, State } from 'vuex-class';
 import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import {Art, Authors, ModPack, ModpackState, ModPackTag, PackProviders, Versions} from '@/modules/modpacks/types';
+import {ModpackState, PackProviders} from '@/modules/modpacks/types';
 import { Route } from 'vue-router';
 import { AuthState } from '@/modules/auth/types';
 import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
-import SearchResultPackCard from '@/components/molecules/SearchResultPackCard.vue';
-import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import { InstallerState } from '@/modules/app/appStore.types';
 import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
@@ -88,11 +72,9 @@ import PackPreview from '@/components/core/modpack/PackPreview.vue';
   components: {
     PackPreview,
     Loading2,
-    SearchResultPackCard,
     PackCardList,
     FTBSearchBar,
     Loading,
-    InstallModal,
     FTBModal,
   },
 })
@@ -111,14 +93,7 @@ export default class BrowseModpacks extends Vue {
   searchResults: SearchResultPack[] = [];
 
   loading = false;
-
-  // Installing
-  showInstallModal = false;
-  installModalData: {
-    pack: SearchResultPack;
-    versions: Versions[];
-  } | null = null;
-  installerLoading = false;
+  
   error = '';
   
   loadingInitialPacks = false;
@@ -194,54 +169,6 @@ export default class BrowseModpacks extends Vue {
     } finally {
       this.loading = false;
     }
-  }
-
-  async displayInstallModpack(pack: SearchResultPack) {
-    this.showInstallModal = true;
-    this.installerLoading = true;
-
-    try {
-      const request = await fetch(
-        createModpackchUrl(`/${this.currentTab === 'modpacksch' ? 'modpack' : 'curseforge'}/${pack.id}`),
-      );
-      const response: ModPack = await request.json();
-
-      this.installModalData = {
-        pack,
-        versions: response.versions.sort((a, b) => b.id - a.id),
-      };
-    } catch (error) {
-      this.error = 'Failed to find pack version information, please try again in a minute...';
-      this.clearInstallModal();
-      console.error(error);
-      return;
-    } finally {
-      this.installerLoading = false;
-    }
-  }
-
-  runInstaller(name: string, version: number, versionName: string) {
-    this.showInstallModal = false;
-    this.installModpack({
-      pack: {
-        name,
-        id: this.installModalData?.pack.id,
-        version: version,
-        packType: this.currentTab === 'modpacksch' ? 0 : 1,
-        private: this.installModalData?.pack.private ?? false,
-      },
-      meta: {
-        name: this.installModalData?.pack.name ?? '',
-        version: versionName,
-        art: PackCardList.getLogo(this.installModalData?.pack.art),
-      },
-    });
-  }
-
-  clearInstallModal() {
-    this.showInstallModal = false;
-    this.installModalData = null;
-    this.installerLoading = false;
   }
 
   get results(): SearchResultPack[] {

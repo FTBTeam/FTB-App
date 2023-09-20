@@ -56,50 +56,40 @@
     
     <modpack-install-modal v-if="currentModpack" :pack-id="currentModpack.id" :provider="packType" :open="showInstallBox" @close="showInstallBox = false" />
   </div>
-  <loading class="mt-20" v-else />
+  <loading2 class="mt-20" v-else />
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
-import { Action, State } from 'vuex-class';
+import { Action } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import { createModpackchUrl, getPackArt } from '@/utils';
-import { SettingsState } from '@/modules/settings/types';
-import { ServersState } from '@/modules/servers/types';
-import ServerCard from '@/components/organisms/ServerCard.vue';
-import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
-import { AuthState } from '@/modules/auth/types';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
-import { InstallerState } from '@/modules/app/appStore.types';
-import Loading from '@/components/atoms/Loading.vue';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {RouterNames} from '@/router';
-import {ModInfo} from '@/core/@types/javaApi';
 import {ns} from '@/core/state/appState';
 import {GetModpack, GetModpackVersion} from '@/core/state/modpacks/modpacksState';
+import Loading2 from '@/components/atoms/Loading2.vue';
 
 @Component({
   name: 'ModpackPage',
   components: {
     ModpackInstallModal,
     ClosablePanel,
-    Loading,
+    Loading2,
     ModpackVersions,
     PackTitleHeader,
     PackMetaHeading,
     'ftb-toggle': FTBToggle,
-    InstallModal,
     'ftb-modal': FTBModal,
-    ServerCard,
     PackBody,
   },
 })
@@ -109,12 +99,6 @@ export default class ModpackPage extends Vue {
   
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
   showVersions = false;
-
-  @State('auth') public auth!: AuthState;
-  @State('settings') public settings!: SettingsState;
-  @State('servers') public serverListState!: ServersState;
-  @Action('fetchServers', { namespace: 'servers' }) public fetchServers!: (projectid: string) => void;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   showInstallBox: boolean = false;
   loading = true;
@@ -189,22 +173,22 @@ export default class ModpackPage extends Vue {
         );
     }
     
-    if (this.currentVersionObject !== null) {
-      if (this.currentVersionObject?.mtgID) {
-        this.fetchServers(this.currentVersionObject?.mtgID ?? '');
-      }
-    }
+    // if (this.currentVersionObject !== null) {
+    //   if (this.currentVersionObject?.mtgID) {
+    //     this.fetchServers(this.currentVersionObject?.mtgID ?? '');
+    //   }
+    // }
   }
 
-  get currentVersionObject(): Versions | null {
-    if (this.currentModpack !== null) {
-      const version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
-      if (version !== undefined) {
-        return version;
-      }
-    }
-    return null;
-  }
+  // get currentVersionObject(): Versions | null {
+  //   if (this.currentModpack !== null) {
+  //     const version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
+  //     if (version !== undefined) {
+  //       return version;
+  //     }
+  //   }
+  //   return null;
+  // }
   
   get latestRelease() {
     if (this.currentModpack !== undefined) {
@@ -235,79 +219,3 @@ export default class ModpackPage extends Vue {
   }
 }
 </script>
-
-<style lang="scss">
-.header-image {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 200px;
-  transition: all 0.2s ease-in-out;
-}
-
-.tab-pane {
-  top: 0;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.changelog-seperator {
-  border: 1px solid var(--color-sidebar-item);
-}
-
-.short {
-  width: 75%;
-}
-
-.instance-name {
-  margin-top: auto;
-  height: 45px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-info {
-  bottom: 50px;
-  text-align: left;
-  font-weight: 400;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-buttons {
-  background: rgba(0, 0, 0, 0.7);
-  width: 100%;
-  height: 50px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-}
-
-.instance-button {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
-}
-
-.update-bar {
-  background: rgba(255, 193, 7, 0.9);
-  width: 100%;
-  height: 25px;
-  text-align: left;
-  font-weight: 700;
-  padding: 2px 2px 2px 6px;
-  color: black;
-}
-
-.frosted-glass {
-  backdrop-filter: blur(8px);
-  background: linear-gradient(
-    to top,
-    rgba(36, 40, 47, 0) 0%,
-    rgba(43, 57, 66, 0.2) calc(100% - 2px),
-    rgba(193, 202, 207, 0.1) calc(100% - 1px),
-    rgba(29, 29, 29, 0.3) 100%
-  );
-}
-</style>

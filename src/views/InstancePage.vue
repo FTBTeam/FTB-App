@@ -123,20 +123,16 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
+import { ModPack, Versions } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import ServerCard from '@/components/organisms/ServerCard.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import { SettingsState } from '@/modules/settings/types';
-import { ServersState } from '@/modules/servers/types';
 import { AuthState } from '@/modules/auth/types';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
-import { PackConst } from '@/utils/contants';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
-import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
@@ -145,20 +141,20 @@ import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
 import { InstallerState } from '@/modules/app/appStore.types';
-import { abortableFetch, AbortableRequest, createModpackchUrl, getPackArt } from '@/utils';
+import { abortableFetch, AbortableRequest, createModpackchUrl } from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';
-import {AppStoreModules, ns} from '@/core/state/appState';
+import {ns} from '@/core/state/appState';
 import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import { sendMessage } from '@/core/websockets/websocketsApi';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 
 export enum ModpackPageTabs {
   OVERVIEW,
   MODS,
-  PUBLIC_SERVERS,
   SETTINGS,
   BACKUPS,
 }
@@ -178,7 +174,6 @@ export enum ModpackPageTabs {
     ModpackVersions,
     MessageModal,
     FindMods,
-    ModpackPublicServers,
     PackBody,
   },
 })
@@ -186,11 +181,8 @@ export default class InstancePage extends Vue {
   @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   
-  @State('settings') public settingsState!: SettingsState;
-  @State('servers') public serverListState!: ServersState;
   @State('auth') public auth!: AuthState;
   
-  @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
@@ -377,25 +369,12 @@ export default class InstancePage extends Vue {
 
   public update(version: Versions | null = null): void {
     const targetVersion = version ?? this.apiPack?.versions.sort((a, b) => b.id - a.id)[0];
-    if (!targetVersion) {
+    if (!targetVersion || !this.instance) {
       // How?
       return;
     }
     
-    this.installModpack({
-      pack: {
-        uuid: this.instance?.uuid,
-        id: this.instance?.id,
-        version: targetVersion.id,
-        packType: this.instance?.packType,
-        private: this.apiPack?.private ?? targetVersion.private ?? false,
-      },
-      meta: {
-        name: this.instance?.name ?? '',
-        version: targetVersion.name ?? '',
-        art: getPackArt(this.instance?.art),
-      },
-    });
+    instanceInstallController.requestUpdate(this.instance, targetVersion, typeIdToProvider(this.instance.packType))
   }
 
   public updateOrDowngrade(versionId: number) {
@@ -460,12 +439,7 @@ export default class InstancePage extends Vue {
   }
 
   get packSplashArt() {
-    if (this.apiPack === null) {
-      return PackConst.defaultPackSplashArt;
-    }
-
-    const splashArt = this.apiPack.art?.filter((art) => art.type === 'splash');
-    return splashArt?.length > 0 ? encodeURI(splashArt[0].url) : PackConst.defaultPackSplashArt;
+    return resolveArtwork(this.apiPack, 'splash');
   }
 
   get isForgePack() {
