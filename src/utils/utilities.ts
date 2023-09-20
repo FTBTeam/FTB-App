@@ -1,8 +1,7 @@
 import { SettingsState } from '@/modules/settings/types';
 import { RootState } from '@/types';
-import { MCProtocol } from '@/modules/servers/types';
-// @ts-ignore
-import mcQuery from 'mcping-js';
+// import { MCProtocol } from '@/modules/servers/types';
+// import mcQuery from 'mcping-js';
 
 export const yeetError = async <T>(promise: () => Promise<T>) => {
   try {
@@ -50,32 +49,32 @@ export function shortenHash(longHash: string): string {
 }
 
 // TODO: We should just use an api for this. It's simpler. 
-export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
-  return new Promise((resolve, reject) => {
-    if (serverInfo.includes(':')) {
-      const address = serverInfo.split(':');
-      const serverIP = address[0];
-      const serverPort = address[1];
-
-      const query = new mcQuery.MinecraftServer(serverIP, serverPort);
-
-      query.ping(5000, (err: any, res: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve(res);
-      });
-    } else {
-      const query = new mcQuery.MinecraftServer(serverInfo);
-      query.ping(5000, 5, (err: any, res: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(res);
-      });
-    }
-  });
-}
+// export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
+//   return new Promise((resolve, reject) => {
+//     if (serverInfo.includes(':')) {
+//       const address = serverInfo.split(':');
+//       const serverIP = address[0];
+//       const serverPort = address[1];
+//
+//       const query = new mcQuery.MinecraftServer(serverIP, serverPort);
+//
+//       query.ping(5000, (err: any, res: any) => {
+//         if (err) {
+//           reject(err);
+//           return;
+//         }
+//
+//         resolve(res);
+//       });
+//     } else {
+//       const query = new mcQuery.MinecraftServer(serverInfo);
+//       query.ping(5000, 5, (err: any, res: any) => {
+//         if (err) {
+//           reject(err);
+//           return;
+//         }
+//         resolve(res);
+//       });
+//     }
+//   });
+// }

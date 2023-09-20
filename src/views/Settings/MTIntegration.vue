@@ -59,7 +59,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
@@ -69,7 +68,6 @@ import platform from '@/utils/interface/electron-overwolf';
 @Component({
   components: {
     'ftb-toggle': FTBToggle,
-    PackCardWrapper,
   },
 })
 export default class MTIntegration extends Vue {

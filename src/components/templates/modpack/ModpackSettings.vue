@@ -167,6 +167,7 @@ import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
 import Selection from '@/components/atoms/input/Selection.vue';
+import {App} from '@/types';
 
 interface MsgBox {
   title: string;
@@ -210,7 +211,7 @@ export default class ModpackSettings extends Vue {
 
   deleting = false;
   showMsgBox = false;
-  msgBox: MsgBox = {
+  msgBox: App.MsgBox = {
     title: '',
     content: '',
     type: '',
@@ -340,7 +341,7 @@ export default class ModpackSettings extends Vue {
     this.showMsgBox = false;
   }
 
-  private openMessageBox(payload: MsgBox) {
+  private openMessageBox(payload: App.MsgBox) {
     this.msgBox = { ...this.msgBox, ...payload };
     this.showMsgBox = true;
   }

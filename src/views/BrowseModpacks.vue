@@ -53,7 +53,6 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, Getter, State } from 'vuex-class';
-import PackCardList from '@/components/organisms/packs/PackCardList.vue';
 import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import {ModpackState, PackProviders} from '@/modules/modpacks/types';
@@ -72,7 +71,6 @@ import PackPreview from '@/components/core/modpack/PackPreview.vue';
   components: {
     PackPreview,
     Loading2,
-    PackCardList,
     FTBSearchBar,
     Loading,
     FTBModal,

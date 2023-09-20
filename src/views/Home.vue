@@ -17,10 +17,6 @@
 
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
-import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
-import PackCard from '@/components/organisms/packs/PackCard.vue';
-import PackCardList from '@/components/organisms/packs/PackCardList.vue';
-import ServerCard from '@/components/organisms/ServerCard.vue';
 import {Action, Getter} from 'vuex-class';
 import FtbButton from '@/components/atoms/input/FTBButton.vue';
 import Loading from '@/components/atoms/Loading.vue';
@@ -37,10 +33,6 @@ import PackCard2 from '@/components/core/modpack/PackCard2.vue';
     Loading2,
     Loading,
     FtbButton,
-    PackCardWrapper,
-    ServerCard,
-    PackCard,
-    PackCardList,
   },
 })
 export default class Home extends Vue {

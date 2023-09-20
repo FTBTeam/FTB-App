@@ -9,8 +9,11 @@ import { auth } from './auth';
 // import { servers } from './servers';
 import { core } from '@/modules/core/core';
 import { appStore } from '@/modules/app/appStore';
-import {appStateStore} from '@/core/state/appState';
-import {modpacks} from '@/modules/modpacks';
+import {ModpackState, modpackStateModule} from '@/core/state/modpacks/modpacksState';
+import {InstanceState, instanceStateModule} from '@/core/state/instances/instancesState';
+import {InstallState, installStateModule} from '@/core/state/instances/installState';
+import {NewsState, newsStateModule} from '@/core/state/misc/newsState';
+// import {modpacks} from '@/modules/modpacks';
 
 Vue.use(Vuex);
 
@@ -74,7 +77,7 @@ const store: StoreOptions<RootState> = {
   },
   mutations,
   modules: {
-    modpacks,
+    // modpacks,
     websocket,
     settings,
     auth,
@@ -82,7 +85,10 @@ const store: StoreOptions<RootState> = {
     // servers,
     core,
     app: appStore,
-    "v2": appStateStore
+    "v2/modpacks": modpackStateModule,
+    "v2/instances": instanceStateModule,
+    "v2/install": installStateModule,
+    "v2/news": newsStateModule,
   },
 };
 

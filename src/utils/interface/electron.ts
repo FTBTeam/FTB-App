@@ -5,9 +5,6 @@ import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
 import store from '@/modules/store';
-import { getAPIRequest } from '@/modules/modpacks/actions';
-import { ModPack } from '@/modules/modpacks/types';
-import router from '@/router';
 import Vue from 'vue';
 import EventEmitter from 'events';
 import http from 'http';
@@ -384,38 +381,38 @@ const Electron: ElectronOverwolfInterface = {
       }
       store.dispatch('settings/saveSettings', settings, { root: true });
     });
-    // TODO: Yeet me
-    ipcRenderer.on('openModpack', (event, data) => {
-      const { name, id } = data;
-      getAPIRequest(store.state, `modpack/search/8?term=${name}`)
-        .then((response) => response.json())
-        .then(async (data) => {
-          if (data.status === 'error') {
-            return;
-          }
-          const packIDs = data.packs;
-          if (packIDs == null) {
-            return;
-          }
-          if (packIDs.length === 0) {
-            return;
-          }
-          for (let i = 0; i < packIDs.length; i++) {
-            const packID = packIDs[i];
-            const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
-            if (pack !== undefined) {
-              const foundVersion = pack.versions.find((v) => v.mtgID === id);
-              if (foundVersion !== undefined) {
-                router.push({ name: 'modpackpage', query: { modpackid: packID } });
-                return;
-              }
-            }
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    });
+    // // TODO: Yeet me @MIKEY DO THIS
+    // ipcRenderer.on('openModpack', (event, data) => {
+    //   const { name, id } = data;
+    //   getAPIRequest(store.state, `modpack/search/8?term=${name}`)
+    //     .then((response) => response.json())
+    //     .then(async (data) => {
+    //       if (data.status === 'error') {
+    //         return;
+    //       }
+    //       const packIDs = data.packs;
+    //       if (packIDs == null) {
+    //         return;
+    //       }
+    //       if (packIDs.length === 0) {
+    //         return;
+    //       }
+    //       for (let i = 0; i < packIDs.length; i++) {
+    //         const packID = packIDs[i];
+    //         const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
+    //         if (pack !== undefined) {
+    //           const foundVersion = pack.versions.find((v) => v.mtgID === id);
+    //           if (foundVersion !== undefined) {
+    //             router.push({ name: 'modpackpage', query: { modpackid: packID } });
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     })
+    //     .catch((err) => {
+    //       console.error(err);
+    //     });
+    // });
 
     // TODO: this entire thing needs a registry + handler wrapper
     ipcRenderer.on('parseProtocolURL', (event, data) => {

@@ -159,26 +159,26 @@ export interface InstallProgress {
 }
 
 export interface ModpackState {
-  searchCurse: ModPack[];
-  curseLoading: boolean;
-  installedPacks: Instance[];
-  search: ModPack[];
-  popularInstalls: ModPack[];
-  popularPlays: ModPack[];
-  featuredPacks: ModPack[];
-  recentPacks: ModPack[];
-  privatePacks: ModPack[];
-  all: ModPack[];
-  error: boolean;
-  errorMsg: string;
-  loading: boolean;
-  installing: InstallProgress | null;
-  currentModpack: ModPack | null;
-  packsCache: ModPacks;
-  searchString: string;
-  packsToLoad: number,
-  packsLoaded: number;
-  isPullingPacks: boolean;
+  // searchCurse: ModPack[];
+  // curseLoading: boolean;
+  // installedPacks: Instance[];
+  // search: ModPack[];
+  // popularInstalls: ModPack[];
+  // popularPlays: ModPack[];
+  // featuredPacks: ModPack[];
+  // recentPacks: ModPack[];
+  // privatePacks: ModPack[];
+  // all: ModPack[];
+  // error: boolean;
+  // errorMsg: string;
+  // loading: boolean;
+  // installing: InstallProgress | null;
+  // currentModpack: ModPack | null;
+  // packsCache: ModPacks;
+  // searchString: string;
+  // packsToLoad: number,
+  // packsLoaded: number;
+  // isPullingPacks: boolean;
 }
 
 export interface ModPacks {

@@ -196,19 +196,17 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import {Instance, ModPack, ModpackState} from '@/modules/modpacks/types';
+import {ModPack} from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import ServerCard from '@/components/organisms/ServerCard.vue';
 import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
 import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
-import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
 import { emitter } from '@/utils/event-bus';
 import { RouterNames } from '@/router';
 import {wsTimeoutWrapper, wsTimeoutWrapperTyped, yeetError} from '@/utils';
@@ -217,6 +215,7 @@ import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
+import {App} from '@/types';
 
 type InstanceActionCategory = {
   title: string;
@@ -319,7 +318,6 @@ export interface Bar {
     InstallModal,
     FTBModal,
     'message-modal': MessageModal,
-    ServerCard,
     ProgressBar,
   },
 })
@@ -330,7 +328,6 @@ export default class LaunchingPage extends Vue {
   
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
   
-  @Action('fetchModpack', { namespace: 'modpacks' }) fetchModpack!: any;
   @Action('sendMessage') public sendMessage!: any;
   @Action('showAlert') public showAlert: any;
   @State('settings') public settingsState!: SettingsState;
@@ -366,7 +363,7 @@ export default class LaunchingPage extends Vue {
   showOptions = false;
   
   private showMsgBox = false;
-  private msgBox: MsgBox = {
+  private msgBox: App.MsgBox = {
     title: '',
     content: '',
     type: '',

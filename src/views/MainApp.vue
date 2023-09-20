@@ -54,6 +54,7 @@ import {AuthState} from '@/modules/auth/types';
 import {AppStoreModules, ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
 import { sendMessage } from '@/core/websockets/websocketsApi';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
 
 @Component({
   components: {
@@ -68,15 +69,11 @@ import { sendMessage } from '@/core/websockets/websocketsApi';
 export default class MainApp extends Vue {
   @State('websocket') public websockets!: SocketState;
   @State('settings') public settings!: SettingsState;
-  @Action('sendMessage') public sendMessage: any;
   @State('auth') public auth!: AuthState;
-  @Action('updateInstall', { namespace: 'modpacks' }) public updateInstall: any;
-  @Action('finishInstall', { namespace: 'modpacks' }) public finishInstall: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
   @Action('disconnect') public disconnect: any;
   private loading: boolean = true;
-  private hasLoaded: boolean = false;
 
   @Action('registerExitCallback') private registerExitCallback: any;
   @Action('registerPingCallback') private registerPingCallback: any;
@@ -124,7 +121,7 @@ export default class MainApp extends Vue {
   public mounted() {
     this.registerPingCallback((data: any) => {
       if (data.type === 'ping') {
-        this.sendMessage({ payload: { type: 'pong' } });
+        gobbleError(() => sendMessage("pong", {}, 500))
       }
     });
 

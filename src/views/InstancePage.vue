@@ -128,7 +128,6 @@ import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import ServerCard from '@/components/organisms/ServerCard.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { AuthState } from '@/modules/auth/types';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
@@ -167,7 +166,6 @@ export enum ModpackPageTabs {
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
-    ServerCard,
     'ftb-modal': FTBModal,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,

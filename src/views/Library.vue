@@ -215,7 +215,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import { Getter } from 'vuex-class';
 import {ns} from '@/core/state/appState';
@@ -228,7 +227,6 @@ import Loading2 from '@/components/atoms/Loading2.vue';
   components: {
     Loading2,
     PackCard2,
-    PackCardWrapper,
     FTBSearchBar,
   },
 })

@@ -1,5 +1,4 @@
 import { SettingsState } from './modules/settings/types';
-import { ModpackState } from './modules/modpacks/types';
 import { AuthState, Friend } from './modules/auth/types';
 import {AppState} from '@/core/state/appState';
 
@@ -13,16 +12,15 @@ export namespace App {
   }
 }
 
-export interface RootState {
+export type RootState = {
   version: string;
   alerts: Alert[];
   wsPort: number;
   wsSecret: string;
-  modpacks: ModpackState | null;
+  // modpacks: ModpackState | null;
   settings: SettingsState | null;
   auth: AuthState | null;
-  v2: AppState;
-}
+} & AppState
 
 export interface Alert {
   type: string;

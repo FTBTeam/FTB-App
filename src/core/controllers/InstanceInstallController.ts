@@ -247,7 +247,7 @@ class InstanceInstallController {
   }
   
   private get queue() {
-    return store.state.v2["v2/install"].installQueue;
+    return store.state["v2/install"].installQueue;
   }
 
   /**
@@ -261,7 +261,7 @@ class InstanceInstallController {
     
     for (const pack of payload.changedInstances) {
       // We shouldn't already have it but we might so keep it in sync regardless
-      if ((store.state as any).v2['v2/instances'].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
+      if ((store.state as any)['v2/instances'].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
         console.log('Adding new instance', pack);
         await store.dispatch('v2/instances/addInstance', pack, {root: true});
       } else {
