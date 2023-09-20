@@ -133,14 +133,14 @@ class InstanceInstallController {
     this.installLock = true;
     const isUpdate = request.updatingInstanceUuid != null;
 
-
+    
     // Make the installation request!
     const installResponse = await sendMessage("installInstance", {
       uuid: request.updatingInstanceUuid ?? "", // This flag is what tells the API to update an instance
       id: parseInt(request.id as string, 10),
       version: parseInt(request.version as string, 10),
       _private: request.private,
-      packType: request.provider === "modpacksch" ? 0 : 1, // TODO: Support other providers
+      packType: !request.provider ? 0 : (request.provider === "modpacksch" ? 0 : 1), // TODO: Support other providers
       shareCode: "", // TODO: Support share codes
       importFrom: null, // TODO: Support imports
       name: request.name,

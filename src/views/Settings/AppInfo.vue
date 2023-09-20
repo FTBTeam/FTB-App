@@ -93,6 +93,7 @@ import { Action, State } from 'vuex-class';
 import { Settings, SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import {ns} from '@/core/state/appState';
 
 @Component({
   components: {
@@ -105,8 +106,9 @@ export default class AppInfo extends Vue {
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @Action('showAlert') public showAlert: any;
   @Action('sendMessage') public sendMessage: any;
-  @Action('refreshCache', { namespace: 'modpacks' }) public refreshCache!: any;
-
+  
+  @Action('clearModpacks', ns("v2/modpacks")) clearModpack!: Function;
+  
   platform = platform;
   localSettings: Settings = {} as Settings;
 
@@ -138,7 +140,7 @@ export default class AppInfo extends Vue {
   }
 
   public refreshCachePlz() {
-    this.refreshCache();
+    this.clearModpack();
     this.showAlert({
       title: 'Cache refreshed!',
       message: 'Your cache has been flushed and reset',

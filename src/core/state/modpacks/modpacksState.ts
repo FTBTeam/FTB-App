@@ -111,11 +111,18 @@ const actions: ActionTree<ModpackState, RootState> = {
   
   async getLatestModpacks(context) {
     return getModpackIds("latest", context, 15);
+  },
+  
+  clearModpacks({state, commit}) {
+    commit('CLEAR_MODPACKS');
+    commit('CLEAR_VERSIONS');
   }
 }
 
 const mutations: MutationTree<ModpackState> = {
   SET_MODPACK: (state: ModpackState, modpack: ModPack) => state.modpacks.set(modpack.id, modpack),
+  CLEAR_MODPACKS: (state: ModpackState) => state.modpacks.clear(),
+  CLEAR_VERSIONS: (state: ModpackState) => state.modpackVersions.clear(),
   SET_FEATURED_PACKS: (state: ModpackState, packs: number[]) => state.featuredPackIds = packs,
   SET_LATEST_PACKS: (state: ModpackState, packs: number[]) => state.latestPackIds = packs,
   SET_MODPACK_VERSION: (state: ModpackState, version: Versions) => state.modpackVersions.set(version.id, version),
