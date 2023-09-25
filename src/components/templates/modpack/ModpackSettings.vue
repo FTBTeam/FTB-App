@@ -29,6 +29,11 @@
         Share
       </ftb-button>
 
+      <ftb-button class="py-2 px-3 text-sm" @click="showDuplicate = true" color="info">
+        <font-awesome-icon icon="copy" class="mr-2" size="1x" />
+        Duplicate
+      </ftb-button>
+      
       <ftb-button class="py-2 px-3 text-sm" color="danger" css-class="text-center text-l" @click="confirmDelete()">
         <font-awesome-icon icon="trash" class="mr-2" size="1x" />
         Delete instance
@@ -140,8 +145,21 @@
         class="flex-1"
       />
     </div>
-    
 
+    <modal
+      :open="showDuplicate"
+      :externalContents="true"
+      @closed="showDuplicate = false"
+      title="Duplicate Instance"
+      subTitle="Are you sure?!"
+    >
+      <duplicate-instance-modal
+        @finished="showDuplicate = false"
+        :uuid="instance.uuid"
+        :instanceName="instance.name"
+      />
+    </modal>
+    
     <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
@@ -163,9 +181,11 @@ import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
+import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
 
 @Component({
   components: {
+    DuplicateInstanceModal,
     Selection,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
@@ -182,7 +202,8 @@ export default class ModpackSettings extends Vue {
   
   instanceSettings: SaveJson = {} as any;
   previousSettings: SaveJson = {} as any;
-  
+
+  showDuplicate = false;
   shareConfirm = false;
   jreSelection = '';
   javaVersions: JavaVersion[] = [];
