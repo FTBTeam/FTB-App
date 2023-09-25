@@ -19,19 +19,20 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {Action, Getter} from 'vuex-class';
 import FtbButton from '@/components/atoms/input/FTBButton.vue';
-import Loading from '@/components/atoms/Loading.vue';
 import Loading2 from '@/components/atoms/Loading2.vue';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
+import {alertController} from '@/core/controllers/alertController';
+import {dialogsController} from '@/core/controllers/dialogsController';
+import {Dialog} from '@/core/state/misc/dialogsState';
 
 @Component({
   components: {
     PackCard2,
     PackPreview,
     Loading2,
-    Loading,
     FtbButton,
   },
 })

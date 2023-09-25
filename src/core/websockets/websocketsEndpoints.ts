@@ -185,7 +185,7 @@ export type MessagePayload = {
     output: InstanceModToggleDataReply
   }
   "instanceBrowse": {
-    input: BrowseInstanceData,
+    input: Nullable<BrowseInstanceData, "folder">,
     output: BrowseInstanceDataReply
   }
   "getInstanceFolders": {

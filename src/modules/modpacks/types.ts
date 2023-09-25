@@ -142,54 +142,6 @@ export interface File {
   downloaded: boolean;
 }
 
-export interface InstallProgress {
-  modpackID: number;
-  messageID: number;
-  instanceID?: string;
-  progress: number;
-  pack?: ModPack;
-  error?: boolean;
-  errorMessage?: string;
-  downloadSpeed: number;
-  stage: string;
-  downloadedBytes: number;
-  message: string;
-  totalBytes: number;
-  files: File[];
-}
-
-export interface ModpackState {
-  // searchCurse: ModPack[];
-  // curseLoading: boolean;
-  // installedPacks: Instance[];
-  // search: ModPack[];
-  // popularInstalls: ModPack[];
-  // popularPlays: ModPack[];
-  // featuredPacks: ModPack[];
-  // recentPacks: ModPack[];
-  // privatePacks: ModPack[];
-  // all: ModPack[];
-  // error: boolean;
-  // errorMsg: string;
-  // loading: boolean;
-  // installing: InstallProgress | null;
-  // currentModpack: ModPack | null;
-  // packsCache: ModPacks;
-  // searchString: string;
-  // packsToLoad: number,
-  // packsLoaded: number;
-  // isPullingPacks: boolean;
-}
-
-export interface ModPacks {
-  [index: number]: ModPack;
-}
-export interface Changelog {
-  content: string;
-  updated: number;
-  status: string;
-}
-
 export interface ModPackTag {
   id: number;
   name: string;

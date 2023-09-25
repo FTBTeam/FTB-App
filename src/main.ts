@@ -13,6 +13,7 @@ import '@/assets/fonts.scss';
 import '@/assets/global.scss';
 import '@/assets/tailwind.scss';
 import 'wysiwyg.css/wysiwyg.css';
+import '@/assets/liboverrides.scss'
 
 import '@/core/controllers/InstanceInstallController';
 import store from './modules/store';

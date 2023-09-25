@@ -1,11 +1,58 @@
 <template>
   <div class="pack-settings">
     <ftb-input
-      label="Name"
-      :value="localInstance.name"
-      v-model="localInstance.name"
+      label="Instance Name"
+      v-model="instanceSettings.name"
       @blur="saveSettings"
+      class="mb-6"
+    />
+
+    <div class="buttons flex gap-4 mb-8">
+      <ftb-button class="py-2 px-3 text-sm" color="info" css-class="text-center text-l" @click="browseInstance()">
+        <font-awesome-icon icon="folder" class="mr-2" size="1x" />
+        Open Folder
+      </ftb-button>
+
+      <ftb-button
+        :disabled="!getActiveMcProfile"
+        :title="
+          !getActiveMcProfile
+            ? 'You need to be logged in to your Minecraft account to share packs'
+            : 'Share your modpack with friends'
+        "
+        class="py-2 px-3 text-sm"
+        color="info"
+        css-class="text-center text-l"
+        @click="shareConfirm = true"
+      >
+        <font-awesome-icon icon="share" class="mr-2" size="1x" />
+        Share
+      </ftb-button>
+
+      <ftb-button class="py-2 px-3 text-sm" color="danger" css-class="text-center text-l" @click="confirmDelete()">
+        <font-awesome-icon icon="trash" class="mr-2" size="1x" />
+        Delete instance
+      </ftb-button>
+    </div>
+
+    <ftb-slider
+      label="Instance Memory"
+      v-model="instanceSettings.memory"
+      :currentValue="instanceSettings.memory"
+      minValue="512"
+      :maxValue="settingsState.hardware.totalMemory"
+      @blur="saveSettings"
+      @change="saveSettings"
+      step="64"
+      unit="MB"
+      css-class="memory"
+      :dark="true"
       class="mb-8"
+      :raw-style="`background: linear-gradient(to right, #8e0c25 ${
+        (this.instance.minMemory / settingsState.hardware.totalMemory) * 100 - 5
+      }%, #a55805 ${(this.instance.minMemory / settingsState.hardware.totalMemory) * 100}%, #a55805 ${
+        (this.instance.recMemory / settingsState.hardware.totalMemory) * 100 - 5
+      }%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`"
     />
     
     <h3 class="font-bold text-lg mb-4">Minecraft window size</h3>
@@ -17,9 +64,9 @@
         </div>
         
         <selection
-          v-if="resolutionList.length && localInstance"
+          v-if="resolutionList.length"
           @selected="(e) => e && selectResolution(e)"
-          :inheritedSelection="resolutionList.find((e) => e.text === `${localInstance.width ? localInstance.width.toString() : ''} x ${localInstance.height ? localInstance.height.toString() : ''}px`)"
+          :inheritedSelection="resolutionList.find((e) => e.text === `${instanceSettings.width ? instanceSettings.width.toString() : ''} x ${instanceSettings.height ? instanceSettings.height.toString() : ''}px`)"
           :style="{width: '240px'}"
           :options="resolutionList"
           :allow-deselect="false"
@@ -30,18 +77,33 @@
           <b>Width</b>
           <p class="text-muted text-sm">The Minecraft windows screen width</p>
         </div>
-        <ftb-input class="mb-0" v-model="localInstance.width" :value="localInstance.width" @blur="saveSettings" />
+        <ftb-input class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
       </div>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
           <b>Height</b>
           <p class="text-muted text-sm">The Minecraft windows screen height</p>
         </div>
-        <ftb-input class="mb-0" v-model="localInstance.height" :value="localInstance.height" @blur="saveSettings" />
+        <ftb-input class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
       </div>
     </div>
 
-    <h3 class="font-bold text-lg mb-4">Java Runtime</h3>
+    <ftb-toggle
+      label="Enable cloud save uploads"
+      :disabled="canUseCloudSaves"
+      onColor="bg-primary"
+      :value="instanceSettings.cloudSaves"
+      @change="toggleCloudSaves"
+      small="You can only use Cloud Saves if you have an active paid plan on MineTogether."
+      class="mb-8"
+    />
+
+    <h2 class="text-lg mb-4 font-bold text-warning">
+      <font-awesome-icon icon="warning" class="mr-2" />
+      Advanced
+    </h2>
+    
+    <h3 class="font-bold text-lg mb-2">Java Runtime</h3>
     <div class="flex items-center mb-8">
       <div class="w-1/2 mr-8 flex items-end justify-between">
         <section class="mr-4 flex-1">
@@ -52,7 +114,7 @@
             @change="updateJrePath"
           >
             <option value="-1" v-if="jreSelection === '-1'" disabled>
-              Custom selection ({{ localInstance.jrePath }})
+              Custom selection ({{ instanceSettings.jrePath }})
             </option>
             <option
               v-for="index in Object.keys(javaVersions)"
@@ -73,117 +135,40 @@
       <ftb-input
         label="Java runtime arguments"
         placeholder="-TestArgument=120"
-        v-model="localInstance.jvmArgs"
+        v-model="instanceSettings.jvmArgs"
         @blur="saveSettings"
         class="flex-1"
       />
     </div>
-
-    <ftb-slider
-      label="Instance Memory"
-      v-model="localInstance.memory"
-      :currentValue="localInstance.memory"
-      minValue="512"
-      :maxValue="settingsState.hardware.totalMemory"
-      @blur="saveSettings"
-      @change="saveSettings"
-      step="64"
-      unit="MB"
-      css-class="memory"
-      :dark="true"
-      class="mb-8"
-      :raw-style="`background: linear-gradient(to right, #8e0c25 ${
-        (this.localInstance.minMemory / settingsState.hardware.totalMemory) * 100 - 5
-      }%, #a55805 ${(this.localInstance.minMemory / settingsState.hardware.totalMemory) * 100}%, #a55805 ${
-        (this.localInstance.recMemory / settingsState.hardware.totalMemory) * 100 - 5
-      }%, #005540 ${(this.localInstance.recMemory / settingsState.hardware.totalMemory) * 100}%);`"
-    />
-
-    <ftb-toggle
-      label="Enable cloud save uploads"
-      :disabled="canUseCloudSaves"
-      onColor="bg-primary"
-      :value="localInstance.cloudSaves"
-      @change="toggleCloudSaves"
-      small="You can only use Cloud Saves if you have an active paid plan on MineTogether."
-      class="mb-4"
-    />
-
-    <p class="text-lg font-bold mb-4">Actions</p>
-
-    <div class="buttons flex flex-1">
-      <ftb-button class="py-2 mr-4 px-4" color="warning" css-class="text-center text-l" @click="browseInstance()">
-        <font-awesome-icon icon="folder" class="mr-2" size="1x" />
-        Open Folder
-      </ftb-button>
-
-      <ftb-button
-        :disabled="!getActiveMcProfile"
-        :title="
-          !getActiveMcProfile
-            ? 'You need to be logged in to your Minecraft account to share packs'
-            : 'Share your modpack with friends'
-        "
-        class="py-2 mr-4 px-4"
-        color="info"
-        css-class="text-center text-l"
-        @click="shareConfirm = true"
-      >
-        <font-awesome-icon icon="upload" class="mr-2" size="1x" />
-        Share modpack
-      </ftb-button>
-
-      <ftb-button class="py-2 px-4" color="danger" css-class="text-center text-l" @click="confirmDelete()">
-        <font-awesome-icon icon="trash" class="mr-2" size="1x" />
-        Delete
-      </ftb-button>
-    </div>
-
-    <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-        :loading="deleting"
-      />
-    </ftb-modal>
+    
 
     <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
 
 <script lang="ts">
-import { Instance } from '@/modules/modpacks/types';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { Action, Getter, State } from 'vuex-class';
+import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Getter, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { JavaVersion, SettingsState } from '@/modules/settings/types';
-import FTBModal from '@/components/atoms/FTBModal.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
-import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
 import Selection from '@/components/atoms/input/Selection.vue';
-import {App} from '@/types';
-
-interface MsgBox {
-  title: string;
-  content: string;
-  type: string;
-  okAction: () => void;
-  cancelAction: () => void;
-}
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {RouterNames} from '@/router';
+import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component({
   components: {
     Selection,
-    'ftb-modal': FTBModal,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
-    MessageModal,
     ShareInstanceModal,
   },
 })
@@ -191,73 +176,52 @@ export default class ModpackSettings extends Vue {
   // Vuex
   @State('auth') public auth!: AuthState;
   @State('settings') public settingsState!: SettingsState;
-
   @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
-  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
-  @Action('sendMessage') public sendMessage!: any;
-  @Action('saveInstance', { namespace: 'modpacks' }) public saveInstance: any;
-  @Action('showAlert') public showAlert: any;
-
-  @Prop() instance!: Instance;
-
-  localInstance: Instance = {} as Instance;
-  resSelectedValue = '0';
-
+  @Prop() instance!: InstanceJson | SugaredInstanceJson;
+  
+  instanceSettings: SaveJson = {} as any;
+  previousSettings: SaveJson = {} as any;
+  
   shareConfirm = false;
-
   jreSelection = '';
   javaVersions: JavaVersion[] = [];
-
   deleting = false;
-  showMsgBox = false;
-  msgBox: App.MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
 
   mounted() {
-    this.localInstance = { ...this.instance }; // copy, don't reference
-    if (this.localInstance.jrePath) {
-      this.jreSelection = this.localInstance.jrePath;
+    this.instanceSettings = {
+      name: this.instance.name,
+      jvmArgs: this.instance.jvmArgs,
+      jrePath: this.instance.jrePath,
+      memory: this.instance.memory,
+      width: this.instance.width,
+      height: this.instance.height,
+      cloudSaves: this.instance.cloudSaves, // TODO: Stop using
     }
-
-    this.sendMessage({
-      payload: { type: 'getJavas' },
-      callback: (data: { javas: JavaVersion[] }) => {
+    
+    this.previousSettings = {
+      ...this.instanceSettings
+    }
+    
+    sendMessage("getJavas", {})
+      .then(data => {
         this.javaVersions = data.javas;
-
-        // If it's embedded we don't need to do anything special
-        if (this.localInstance.embeddedJre) {
+        
+        if (this.instance.embeddedJre) {
           return;
         }
-
+        
         // Java version not in our list, thus it must be custom so flag it as custom
-        if (!data.javas.find((e) => e.path === this.localInstance.jrePath)) {
+        if (!data.javas.find((e) => e.path === this.instanceSettings.jrePath)) {
           this.jreSelection = '-1';
         }
-      },
-    });
-  }
-
-  /**
-   * When we save our instance, it's possible the prop will also be mutated so we
-   * keep our local instance in sync by checking if anything changed. Yes, this
-   * really is one of the best way of checking nested objects.
-   */
-  @Watch('instance')
-  onInstancePropChange(newVal: Instance, oldVal: Instance) {
-    if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
-      this.localInstance = { ...newVal }; // copy, don't reference
-    }
+      })
+      .catch(console.error)
   }
 
   // I'm not sure this works, at best, it's VueX state mutation which is bad hmm kay...
   public toggleCloudSaves() {
-    this.localInstance.cloudSaves = !this.localInstance.cloudSaves;
+    this.instanceSettings.cloudSaves = !this.instanceSettings.cloudSaves;
     this.saveSettings();
   }
   
@@ -267,20 +231,15 @@ export default class ModpackSettings extends Vue {
       return;
     }
 
-    this.localInstance.width = this.settingsState.hardware.supportedResolutions[id].width;
-    this.localInstance.height = this.settingsState.hardware.supportedResolutions[id].height;
+    this.instanceSettings.width = this.settingsState.hardware.supportedResolutions[id].width;
+    this.instanceSettings.height = this.settingsState.hardware.supportedResolutions[id].height;
     this.saveSettings();
   }
 
   browseForJava() {
     Platform.get.io.selectFileDialog((path) => {
       if (typeof path !== 'undefined' && path == null) {
-        this.showAlert({
-          title: 'Error',
-          message: 'Unable to set Java location as the path was not found',
-          type: 'danger',
-        });
-
+        alertController.error('Unable to set Java location as the path was not found')
         return;
       } else if (!path) {
         return;
@@ -289,77 +248,71 @@ export default class ModpackSettings extends Vue {
       const javaVersion = this.javaVersions.find((e) => e.path === path);
       this.jreSelection = !javaVersion ? '-1' : javaVersion.path;
 
-      this.localInstance.jrePath = path;
+      this.instanceSettings.jrePath = path;
       this.saveSettings();
     });
   }
 
   updateJrePath(value: any) {
-    this.localInstance.jrePath = value.target.value;
+    this.instanceSettings.jrePath = value.target.value;
     this.saveSettings();
   }
 
   public async saveSettings() {
-    if (JSON.stringify(this.localInstance) === JSON.stringify(this.instance)) {
+    // Compare the previous settings to the current settings
+    // Yes... this is really how we do it...
+    if (JSON.stringify(this.previousSettings) === JSON.stringify(this.instanceSettings)) {
       return;
     }
+    
+    const result = await InstanceController.from(this.instance)
+      .updateInstance(this.instanceSettings);
 
-    const response = await this.saveInstance(this.localInstance);
-    if (response.status === 'error') {
-      this.showAlert({
-        title: 'Error',
-        message: response.errorMessage,
-        type: 'danger',
-      });
+    if (result) {
+      alertController.success("Settings saved!")
+      
+      // Update the previous settings
+      this.previousSettings = {
+        ...this.instanceSettings
+      }
     } else {
-      this.showAlert({
-        title: 'Saved!',
-        message: 'The settings for this instance have been saved',
-        type: 'primary',
-      });
+      alertController.error("Failed to save settings")
     }
   }
 
-  public browseInstance(): void {
-    this.sendMessage({
-      payload: { type: 'instanceBrowse', uuid: this.instance?.uuid },
-      callback: (data: any) => {},
-    });
+  async browseInstance() {
+    await sendMessage("instanceBrowse", {
+      uuid: this.instance?.uuid ?? "",
+      folder: null
+    })
   }
 
   public confirmDelete() {
-    this.openMessageBox({
-      type: 'okCancel',
-      title: 'Are you sure?',
-      okAction: this.deleteInstace,
-      cancelAction: this.hideMsgBox,
-      content: `Are you sure you want to delete ${this.instance?.name}?`,
-    });
+    const dialogRef = dialogsController.createDialog(
+      dialog("Are you sure?")
+        .withContent(`Are you absolutely sure you want to delete \`${this.instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
+        .withType("warning")
+        .withButton(button("Delete")
+          .withAction(async () => {
+            dialogRef.setWorking(true)
+            await this.deleteInstance()
+            dialogRef.close();
+          })
+          .withIcon("trash")
+          .withType("error")
+          .build())
+        .build()
+    )
   }
-
-  public hideMsgBox(): void {
-    this.showMsgBox = false;
-  }
-
-  private openMessageBox(payload: App.MsgBox) {
-    this.msgBox = { ...this.msgBox, ...payload };
-    this.showMsgBox = true;
-  }
-
-  public deleteInstace(): void {
+  
+  public async deleteInstance() {
     this.deleting = true;
-    this.sendMessage({
-      payload: { type: 'uninstallInstance', uuid: this.instance?.uuid },
-      callback: (data: any) => {
-        this.sendMessage({
-          payload: { type: 'installedInstances', refresh: true },
-          callback: (data: any) => {
-            this.storePacks(data);
-            this.$router.push({ name: 'modpacks' });
-          },
-        });
-      },
-    });
+    
+    const controller = InstanceController.from(this.instance);
+    await toggleBeforeAndAfter(() => controller.deleteInstance(), state => this.deleting = state);
+    await gobbleError(() => this.$router.push({
+      name: RouterNames.ROOT_LIBRARY
+    }));
   }
 
   get resolutionList() {

@@ -27,7 +27,6 @@ import Vue from 'vue';
 import Component from 'vue-class-component';
 import {Action, State} from 'vuex-class';
 import {parseMarkdown, wsTimeoutWrapper} from '@/utils/helpers';
-import FTBModal from '@/components/atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import {SocketState} from '@/modules/websocket/types';
 
@@ -50,11 +49,7 @@ export type ChangelogEntry = {
   };
 };
 
-@Component({
-  components: {
-    'ftb-modal': FTBModal,
-  },
-})
+@Component
 export default class Changelog extends Vue {
   @State('websocket') public websockets!: SocketState;
   @Action('sendMessage') public sendMessage: any;

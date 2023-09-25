@@ -94,6 +94,7 @@ import { Settings, SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {ns} from '@/core/state/appState';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component({
   components: {
@@ -104,7 +105,6 @@ export default class AppInfo extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('showAlert') public showAlert: any;
   @Action('sendMessage') public sendMessage: any;
   
   @Action('clearModpacks', ns("v2/modpacks")) clearModpack!: Function;
@@ -129,11 +129,7 @@ export default class AppInfo extends Vue {
         if (!data.error) {
           const url = `https://pste.ch/${data.code}`;
           platform.get.cb.copy(url);
-          this.showAlert({
-            title: 'Uploaded!',
-            message: 'The URL has been copied to your clipboard',
-            type: 'primary',
-          });
+          alertController.success('The URL has been copied to your clipboard')
         }
       },
     });
@@ -141,11 +137,7 @@ export default class AppInfo extends Vue {
 
   public refreshCachePlz() {
     this.clearModpack();
-    this.showAlert({
-      title: 'Cache refreshed!',
-      message: 'Your cache has been flushed and reset',
-      type: 'info',
-    });
+    alertController.success('Your cache has been flushed and reset')
   }
 
   public enableVerbose(value: boolean): void {

@@ -8,6 +8,7 @@ import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstalledInstancesData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
+import net.creeperhost.creeperlauncher.pack.Instance;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -23,7 +24,7 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
         }
 
         List<SugaredInstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
-                .map(e -> new SugaredInstanceJson(e.props, e.path, e.isPendingCloudInstance()))
+                .map(SugaredInstanceJson::new)
                 .toList();
 
         Set<String> availableCategories = instanceJsons.stream().map(e -> e.category).collect(Collectors.toSet());
@@ -42,6 +43,10 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
             super(other);
             this.path = path;
             this.pendingCloudInstance = pendingCloudInstance;
+        }
+        
+        public SugaredInstanceJson(Instance instance) {
+            this(instance.props, instance.path, instance.isPendingCloudInstance());
         }
     }
 }

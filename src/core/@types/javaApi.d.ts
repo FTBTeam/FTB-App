@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-18 11:45:07.
+// Generated using typescript-generator version 3.2.1263 on 2023-09-25 13:40:58.
 
 export interface BaseData {
     type: string;
@@ -148,13 +148,13 @@ export interface InstanceCloudSyncResolveConflictDataReply extends BaseData {
 
 export interface InstanceConfigureData extends BaseData {
     uuid: string;
-    instanceInfo: { [index: string]: string };
+    instanceJson: string;
 }
 
 export interface InstanceConfigureDataReply extends BaseData {
     errorMessage: string;
-    uuid: string;
     status: string;
+    instanceJson: SugaredInstanceJson;
 }
 
 export interface InstanceDisableCloudSavesData extends BaseData {
@@ -490,6 +490,7 @@ export interface YeetLauncherData extends BaseData {
 export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerRequest {
     message: string;
     success: boolean;
+    instance: SugaredInstanceJson;
 }
 
 export interface DuplicateInstanceHandlerRequest extends BaseData {

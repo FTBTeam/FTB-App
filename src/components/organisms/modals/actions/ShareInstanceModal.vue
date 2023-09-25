@@ -40,13 +40,12 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import Loading from '@/components/atoms/Loading.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 
 @Component({
-  components: { ProgressBar, Loading },
+  components: { ProgressBar },
 })
 export default class ShareInstanceModal extends Vue {
   @Prop() uuid!: string;

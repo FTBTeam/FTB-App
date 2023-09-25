@@ -71,11 +71,9 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
-import Loading from '@/components/atoms/Loading.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
 import {loginWithMicrosoft} from '@/utils/auth/authentication';
-import store from '@/modules/store';
 import {emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 
@@ -89,12 +87,11 @@ function createStep(name: string) {
 }
 
 @Component({
-  components: { YggdrasilAuthForm, Loading },
+  components: { YggdrasilAuthForm },
 })
 export default class MicrosoftAuth extends Vue {
   @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
-  @Action('showAlert') public showAlert: any;
   
   steps: Record<string, ReturnType<typeof createStep>> = {
     START_DANCE: createStep('Credentials Received'),

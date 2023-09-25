@@ -1,19 +1,17 @@
 import { logVerbose } from '@/utils';
 import Vue from 'vue';
 import Vuex, { MutationTree, Store, StoreOptions } from 'vuex';
-import { Alert, AlertWithId, ModalBox, RootState } from '@/types';
+import { ModalBox, RootState } from '@/types';
 import { websocket } from './websocket';
 import { settings } from './settings';
 import { auth } from './auth';
-// import { discovery } from './discovery';
-// import { servers } from './servers';
 import { core } from '@/modules/core/core';
 import { appStore } from '@/modules/app/appStore';
-import {ModpackState, modpackStateModule} from '@/core/state/modpacks/modpacksState';
-import {InstanceState, instanceStateModule} from '@/core/state/instances/instancesState';
-import {InstallState, installStateModule} from '@/core/state/instances/installState';
-import {NewsState, newsStateModule} from '@/core/state/misc/newsState';
-// import {modpacks} from '@/modules/modpacks';
+import { modpackStateModule } from '@/core/state/modpacks/modpacksState';
+import { instanceStateModule } from '@/core/state/instances/instancesState';
+import { installStateModule } from '@/core/state/instances/installState';
+import { newsStateModule } from '@/core/state/misc/newsState';
+import { dialogsState } from '@/core/state/misc/dialogsState';
 
 Vue.use(Vuex);
 
@@ -23,15 +21,6 @@ interface SecretMessage {
 }
 
 export const mutations: MutationTree<RootState> = {
-  SHOW_ALERT(state: any, alert: AlertWithId) {
-    state.alerts.push(alert);
-  },
-  POP_ALERT(state: any) {
-    state.alerts.shift();
-  },
-  CLEAR_ALERT(state: any, alertId: string) {
-    state.alerts = state.alerts.filter((e: AlertWithId) => e.id !== alertId);
-  },
   STORE_WS(state: any, data: SecretMessage) {
     state.wsPort = data.port;
     state.wsSecret = data.secret;
@@ -54,30 +43,17 @@ const wsLoggerPlugin = (store: Store<RootState>) => {
 const store: StoreOptions<RootState> = {
   state: {
     version: '1.0.0',
-    alerts: [],
     wsPort: 0,
     wsSecret: '',
   } as any,
   plugins: [wsLoggerPlugin],
   actions: {
-    showAlert: ({ commit, rootState }: any, alert: Alert) => {
-      const timeout = setTimeout(() => {
-        commit('POP_ALERT');
-      }, 5000);
-
-      commit('SHOW_ALERT', { id: 'alert' + Math.random() * 400, timeout, ...alert });
-    },
-    hideAlert: ({ commit, rootState }: any, alert: AlertWithId) => {
-      clearTimeout(alert.timeout);
-      commit('CLEAR_ALERT', alert.id);
-    },
     hideModal: ({ commit }: any) => {
       commit('HIDE_MODAL');
     },
   },
   mutations,
   modules: {
-    // modpacks,
     websocket,
     settings,
     auth,
@@ -89,6 +65,7 @@ const store: StoreOptions<RootState> = {
     "v2/instances": instanceStateModule,
     "v2/install": installStateModule,
     "v2/news": newsStateModule,
+    "v2/dialogs": dialogsState
   },
 };
 

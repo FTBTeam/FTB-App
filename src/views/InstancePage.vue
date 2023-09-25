@@ -57,6 +57,7 @@
         />
       </closable-panel>
     </div>
+    <p v-else>No modpack found...</p>
 
     <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
       <message-modal
@@ -125,8 +126,6 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, Versions } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { AuthState } from '@/modules/auth/types';
@@ -150,6 +149,7 @@ import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {alertController} from '@/core/controllers/alertController';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -167,8 +167,6 @@ export enum ModpackPageTabs {
     PackMetaHeading,
     ModpackSettings,
     'ftb-modal': FTBModal,
-    'ftb-toggle': FTBToggle,
-    'ftb-slider': FTBSlider,
     ModpackVersions,
     MessageModal,
     FindMods,
@@ -180,8 +178,6 @@ export default class InstancePage extends Vue {
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   
   @State('auth') public auth!: AuthState;
-  
-  @Action('showAlert') public showAlert: any;
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
@@ -189,7 +185,6 @@ export default class InstancePage extends Vue {
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   packLoading = false;
 
@@ -209,7 +204,7 @@ export default class InstancePage extends Vue {
     cancelAction: Function,
   };
 
-  private modlist: any = [];
+  modlist: any = [];
 
   searchingForMods = false;
   updatingModlist = false;
@@ -378,11 +373,7 @@ export default class InstancePage extends Vue {
   public updateOrDowngrade(versionId: number) {
     const pack = this.apiPack?.versions.find((e) => e.id === versionId);
     if (!pack) {
-      this.showAlert({
-        title: 'Unable to recover',
-        message: 'The selected recovery pack version id was not available...',
-        type: 'danger',
-      });
+      alertController.error('The selected recovery pack version id was not available...')
       return;
     }
 
@@ -413,11 +404,7 @@ export default class InstancePage extends Vue {
     this.modlist = mods.files;
     
     if (showAlert) {
-      this.showAlert({
-        title: 'Updated!',
-        message: 'The mods list has been updated',
-        type: 'primary',
-      });
+      alertController.success('The mods list has been updated')
     }
   }
 

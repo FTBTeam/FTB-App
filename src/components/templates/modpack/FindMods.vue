@@ -106,6 +106,7 @@ import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
 import ModCard from '../../molecules/modpack/ModCard.vue';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component({
   components: {
@@ -114,8 +115,6 @@ import ModCard from '../../molecules/modpack/ModCard.vue';
   },
 })
 export default class FindMods extends Vue {
-  // vuex
-  @Action('showAlert') public showAlert: any;
   @State('auth') public auth!: AuthState;
 
   // Normal
@@ -312,12 +311,7 @@ export default class FindMods extends Vue {
     }
 
     if (!packData || !packData.versionManifest) {
-      this.showAlert({
-        title: 'Failed!',
-        message: 'Could not find instance version data',
-        type: 'warning',
-      });
-
+      alertController.warning('Could not find instance version data')
       return;
     }
 

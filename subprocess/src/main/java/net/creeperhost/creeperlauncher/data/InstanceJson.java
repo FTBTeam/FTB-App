@@ -40,6 +40,7 @@ public class InstanceJson {
 
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
     public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
+    @Nullable
     @JsonAdapter (PathTypeAdapter.class)
     public Path jrePath = Settings.getPathOpt("jrePath", null);
     public int width = Integer.parseInt(Settings.settings.getOrDefault("width", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2)));

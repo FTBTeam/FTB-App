@@ -15,7 +15,7 @@ const state = {
 }
 
 const actions: ActionTree<InstanceState, RootState> = {
-  async loadInstances({state, commit}) {
+  async loadInstances({state, commit}, payload: {refresh?: boolean} = {}) {
     if (state.state.loadingInstances) {
       return;
     }
@@ -67,6 +67,9 @@ const getters: GetterTree<InstanceState, RootState> = {
   getInstance: (state: InstanceState) => (uuid: string) => state.instances.find(i => i.uuid === uuid),
   categories: (state: InstanceState) => state.categories,
 }
+
+export type LoadInstancesFunction = (payload?: {refresh?: boolean}) => Promise<void>;
+export type AddInstanceFunction = (instance: InstanceJson) => Promise<void>;
 
 export const instanceStateModule: Module<InstanceState, RootState> = {
   namespaced: true,

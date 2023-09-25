@@ -92,7 +92,6 @@ export default class InstanceSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('showAlert') public showAlert: any;
   localSettings: Settings = {} as Settings;
 
   loadedSettings = false;

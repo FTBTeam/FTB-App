@@ -70,20 +70,15 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
+import {alertController} from '@/core/controllers/alertController';
 
-@Component({
-  components: {
-    'ftb-toggle': FTBToggle,
-  },
-})
+@Component
 export default class MTIntegration extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @State('settings') private settings!: SettingsState;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('showAlert') public showAlert: any;
   
   proxyType: string = "none";
   proxyHost: string = "";
@@ -120,11 +115,7 @@ export default class MTIntegration extends Vue {
   
   save(remove = false) {
     if (this.isInvalid() && !remove) {
-      this.showAlert({
-        type: 'danger',
-        title: 'Error',
-        message: 'Missing Hostname or Port',
-      });
+      alertController.error("Missing Hostname or Port")
       return;
     }
     
@@ -137,11 +128,7 @@ export default class MTIntegration extends Vue {
       proxyType: remove ? "none" : this.proxyType,
     })
 
-    this.showAlert({
-      type: 'primary',
-      title: 'Saved!',
-      message: 'Proxy Settings updated',
-    });
+    alertController.success("Proxy Settings updated")
   }
 }
 </script>

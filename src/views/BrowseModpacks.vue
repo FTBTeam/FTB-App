@@ -53,14 +53,12 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, Getter, State } from 'vuex-class';
-import Loading from '@/components/atoms/Loading.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import {ModpackState, PackProviders} from '@/modules/modpacks/types';
+import {PackProviders} from '@/modules/modpacks/types';
 import { Route } from 'vue-router';
 import { AuthState } from '@/modules/auth/types';
 import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import { InstallerState } from '@/modules/app/appStore.types';
 import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
@@ -72,7 +70,6 @@ import PackPreview from '@/components/core/modpack/PackPreview.vue';
     PackPreview,
     Loading2,
     FTBSearchBar,
-    Loading,
     FTBModal,
   },
 })
@@ -81,8 +78,6 @@ export default class BrowseModpacks extends Vue {
   @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>; // TODO: better signature
   
   @State('auth') public authState!: AuthState;
-  @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   searchValue: string = '';
   currentTab: PackProviders = 'modpacksch';

@@ -63,8 +63,6 @@
 import { Component, Vue } from 'vue-property-decorator';
 import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
 import { Action } from 'vuex-class';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import FTBModal from '@/components/atoms/FTBModal.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
 import { ModpackPageTabs } from '@/views/InstancePage.vue';
@@ -88,8 +86,6 @@ import Loading2 from '@/components/atoms/Loading2.vue';
     ModpackVersions,
     PackTitleHeader,
     PackMetaHeading,
-    'ftb-toggle': FTBToggle,
-    'ftb-modal': FTBModal,
     PackBody,
   },
 })

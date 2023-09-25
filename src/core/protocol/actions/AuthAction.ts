@@ -1,6 +1,7 @@
 import { Action, ActionContext, ActionType } from '../protocolActions';
 import store from '@/modules/store';
 import platform from '@/utils/interface/electron-overwolf';
+import {alertController} from '@/core/controllers/alertController';
 
 export class AuthAction implements Action {
   namespace: ActionType = 'auth';
@@ -10,18 +11,14 @@ export class AuthAction implements Action {
     const credentials = context.query.get('credentials');
     
     if (credentials == null) {
-      await store.dispatch('showAlert', {
-        type: 'danger',
-        title: 'Unable to login',
-        message: `Failed to login due to missing credentials...`,
-      });
+      alertController.error('Failed to login due to missing credentials...')
       
       // Failed
-      await platform.get.actions.emitAuthenticationUpdate();
+      platform.get.actions.emitAuthenticationUpdate();
       return;
     }
 
     // Send the credentials!
-    await platform.get.actions.emitAuthenticationUpdate(credentials);
+    platform.get.actions.emitAuthenticationUpdate(credentials);
   }
 }

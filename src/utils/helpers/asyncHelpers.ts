@@ -4,10 +4,9 @@
  */
 export async function gobbleError<T>(call: () => T, defaultValue?: T) {
   try {
-    return call()
+    return await call();
   } catch (e) {
-    return defaultValue ?? null;
-    // Ignored
+    return defaultValue;
   }
 }
 

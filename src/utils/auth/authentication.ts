@@ -3,6 +3,7 @@ import store from '@/modules/store';
 import {wsTimeoutWrapper, wsTimeoutWrapperTyped} from '@/utils';
 import dayjs from 'dayjs';
 import { createError } from '@/core/errors/errorCodes';
+import {alertController} from '@/core/controllers/alertController';
 
 type RefreshResponse = {
   ok: boolean;
@@ -177,11 +178,8 @@ const attemptToRemoveMojangAccounts = async (
       'debug',
       `Found profile ${removedProfile.username} with uuid ${removedProfile.uuid} which is using Mojang auth. Removing...`,
     );
-    await store.dispatch('showAlert', {
-      type: 'warning',
-      title: 'Profile removed',
-      message: `We've automatically removed ${removedProfile.username} as it was added using the old authentication system.`,
-    });
+    
+    alertController.warning(`We've automatically removed ${removedProfile.username} as it was added using the old authentication system.`)
   }
 
   if (removedOurProfile) {
@@ -196,11 +194,7 @@ const attemptToRemoveMojangAccounts = async (
       profile = remainingProfile;
 
       // Alert the user
-      await store.dispatch('showAlert', {
-        type: 'primary',
-        title: 'Using Microsoft account instead',
-        message: `We've automatically switched your active account to ${profile?.username}`,
-      });
+      alertController.success(`We've automatically switched your active account to ${profile?.username}`)
 
       // Set the active profile to the remaining profile
       try {
@@ -339,18 +333,9 @@ export const validateAuthenticationOrSignIn = async (instanceId?: string): Promi
   }
 
   if (!validationResult.quite) {
-    await store.dispatch(
-      'showAlert',
-      {
-        title: 'Error!',
-        message:
-          validationResult.requiresSignIn 
-            ? "We've been unable to refresh your account details, please sign back in"
-            : 'Profile validation failed, please login again. If this keeps happening, ask for support in our Discord',
-        type: 'danger',
-      },
-      { root: true },
-    );
+    alertController.error(validationResult.requiresSignIn
+      ? "We've been unable to refresh your account details, please sign back in"
+      : 'Profile validation failed, please login again. If this keeps happening, ask for support in our Discord',)
   }
 
   if (validationResult.requiresSignIn && !validationResult.allowOffline) {

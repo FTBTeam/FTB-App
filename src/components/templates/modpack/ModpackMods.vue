@@ -60,6 +60,7 @@ import { Instance } from '@/modules/modpacks/types';
 import { sendMessage } from '@/core/websockets/websocketsApi';
 import {ModInfo} from '@/core/@types/javaApi';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component({
   components: {
@@ -69,7 +70,6 @@ import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
   },
 })
 export default class ModpackMods extends Vue {
-  @Action('showAlert') public showAlert: any;
   @Action('sendMessage') public sendMessage!: any;
 
   @Prop() modlist!: ModInfo[];
@@ -97,12 +97,7 @@ export default class ModpackMods extends Vue {
       file.enabled = !file.enabled;
     } catch (e) {
       // TODO: Show error
-
-      // this.showAlert({
-      //   title: 'Error',
-      //   message: `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.name}`,
-      //   type: 'warning',
-      // });
+      alertController.warning( `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.fileName ?? (file as any).name}`)
     } finally {
       this.togglingShas.splice(this.togglingShas.indexOf(file.sha1), 1);
     }

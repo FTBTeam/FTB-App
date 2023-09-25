@@ -216,6 +216,9 @@ import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {App} from '@/types';
+import {alertController} from '@/core/controllers/alertController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 type InstanceActionCategory = {
   title: string;
@@ -329,7 +332,6 @@ export default class LaunchingPage extends Vue {
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
   
   @Action('sendMessage') public sendMessage!: any;
-  @Action('showAlert') public showAlert: any;
   @State('settings') public settingsState!: SettingsState;
   @State('auth') public auth!: AuthState;
 
@@ -392,13 +394,8 @@ export default class LaunchingPage extends Vue {
 
   public async mounted() {
     if (this.instance == null) {
-      this.showAlert({
-        title: 'Error',
-        message: 'Instance not found',
-        type: 'danger',
-      });
-
-      await this.$router.push(RouterNames.ROOT_LIBRARY);
+      alertController.error('Instance not found')
+      await gobbleError(() => this.$router.push(RouterNames.ROOT_LIBRARY));
       return;
     }
 
@@ -409,7 +406,9 @@ export default class LaunchingPage extends Vue {
     });
     await this.launch();
 
-    wsTimeoutWrapperTyped<any, { folders: string[] }>({ type: 'getInstanceFolders', uuid: this.instance.uuid })
+    sendMessage("getInstanceFolders", {
+      uuid: this.instance.uuid
+    })
       .then((e) => (this.instanceFolders = e.folders))
       .catch(console.log);
   }
@@ -433,14 +432,10 @@ export default class LaunchingPage extends Vue {
     ) {
       // Lets assume we've crashed
       if (data.status === 'errored' || data.status === 'error') {
-        this.showAlert({
-          title: 'Instance failure',
-          message:
-            data.status === 'error'
-              ? 'Unable to start pack... please see the instance logs...'
-              : 'The instance has crashed or has been externally closed.',
-          type: 'danger',
-        });
+        alertController.error(data.status === 'error'
+          ? 'Unable to start pack... please see the instance logs...'
+          : 'The instance has crashed or has been externally closed.'
+        )
 
         this.hasCrashed = true;
         return; // block the redirection

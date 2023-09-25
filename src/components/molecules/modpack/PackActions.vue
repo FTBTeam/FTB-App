@@ -39,7 +39,7 @@
           <span><font-awesome-icon icon="share" /></span>Share instance
         </li>
         <li class="title">Danger</li>
-        <li @click="deleteConfirm = true">
+        <li @click="deleteInstance">
           <span><font-awesome-icon icon="trash" /></span>Delete instance
         </li>
       </ul>
@@ -60,57 +60,47 @@
         :instanceName="instance.name"
       />
     </modal>
-
-    <modal
-      :open="deleteConfirm"
-      :externalContents="true"
-      @closed="deleteConfirm = false"
-      title="Delete Instance"
-      subTitle="Are you sure?!"
-    >
-      <delete-instance-modal :uuid="instance.uuid" :instanceName="instance.name" />
-    </modal>
   </div>
 </template>
 
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import { wsTimeoutWrapperTyped } from '@/utils';
 import { Prop } from 'vue-property-decorator';
-import { Instance } from '@/modules/modpacks/types';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
-import DeleteInstanceModal from '@/components/organisms/modals/actions/DeleteInstanceModal.vue';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
+import {InstanceController} from '@/core/controllers/InstanceController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {RouterNames} from '@/router';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 
 @Component({
   components: {
     ShareInstanceModal,
-    DeleteInstanceModal,
     DuplicateInstanceModal,
   },
 })
 export default class PackActions extends Vue {
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Prop({ default: false }) allowOffline!: boolean;
 
   instanceFolders: string[] = [];
   shareConfirm = false;
   duplicateConfirm = false;
-  deleteConfirm = false;
 
   mounted() {
-    wsTimeoutWrapperTyped<any, { folders: string[] }>({ type: 'getInstanceFolders', uuid: this.instance.uuid })
+    sendMessage('getInstanceFolders', { uuid: this.instance.uuid })
       .then((e) => (this.instanceFolders = e.folders))
       .catch(console.log);
   }
 
   async openInstanceFolder(folder: string) {
-    await wsTimeoutWrapperTyped<any, null>({
-      type: 'instanceBrowse',
+    await sendMessage('instanceBrowse', {
       uuid: this.instance.uuid,
       folder,
-    });
+    })
   }
 
   folderExists(path: string) {
@@ -119,6 +109,28 @@ export default class PackActions extends Vue {
     }
 
     return this.instanceFolders.findIndex((e) => e === path) !== -1;
+  }
+
+  public deleteInstance() {
+    const dialogRef = dialogsController.createDialog(
+      dialog("Are you sure?")
+        .withContent(`Are you absolutely sure you want to delete \`${this.instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
+        .withType("warning")
+        .withButton(button("Delete")
+          .withAction(async () => {
+            dialogRef.setWorking(true)
+            const controller = InstanceController.from(this.instance);
+            await controller.deleteInstance();
+            await gobbleError(() => this.$router.push({
+              name: RouterNames.ROOT_LIBRARY
+            }));
+            dialogRef.close();
+          })
+          .withIcon("trash")
+          .withType("error")
+          .build())
+        .build()
+    )
   }
 }
 </script>

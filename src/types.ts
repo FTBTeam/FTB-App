@@ -14,24 +14,12 @@ export namespace App {
 
 export type RootState = {
   version: string;
-  alerts: Alert[];
   wsPort: number;
   wsSecret: string;
-  // modpacks: ModpackState | null;
   settings: SettingsState | null;
   auth: AuthState | null;
 } & AppState
 
-export interface Alert {
-  type: string;
-  title: string;
-  message: string;
-}
-
-export interface AlertWithId extends Alert {
-  id: string;
-  timeout: any;
-}
 
 export interface ModalBox {
   title: string;

@@ -80,11 +80,10 @@ import { Action } from 'vuex-class';
 import { Instance } from '@/modules/modpacks/types';
 import {Backup} from '@/core/@types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component
 export default class ModpackBackups extends Vue {
-  @Action('showAlert') public showAlert: any;
-
   @Prop() instance!: Instance;
   @Prop({ default: () => [] }) backups!: Backup[];
 
@@ -126,17 +125,9 @@ export default class ModpackBackups extends Vue {
     this.actionRunning = false;
 
     if (!restoreRequest.success) {
-      this.showAlert({
-        title: 'Unable to restore backup',
-        message: restoreRequest.message,
-        type: 'danger',
-      });
+      alertController.error('Unable to restore backup')
     } else {
-      this.showAlert({
-        title: 'Success',
-        message: 'Successfully restored backup',
-        type: 'primary',
-      });
+      alertController.success('Successfully restored backup')
     }
 
     this.modalClose();
@@ -156,18 +147,9 @@ export default class ModpackBackups extends Vue {
     this.actionRunning = false;
 
     if (!deleteRequest.success) {
-      this.showAlert({
-        title: 'Unable to delete backup',
-        message: deleteRequest.message,
-        type: 'danger',
-      });
+      alertController.error('Unable to delete backup')
     } else {
-      this.showAlert({
-        title: 'Success',
-        message: 'Successfully deleted backup',
-        type: 'primary',
-      });
-
+      alertController.success('Successfully deleted backup')
       this.$emit('backupsChanged');
     }
 

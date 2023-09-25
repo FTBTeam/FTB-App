@@ -15,19 +15,7 @@
         :modalID="$store.state.websocket.modal.id"
       />
     </FTBModal>
-
-    <!-- Alerts -->
-    <div class="alerts" v-if="$store.state.alerts">
-      <div class="alert" v-for="(alert, index) of $store.state.alerts" :key="index" :class="`bg-${alert.type}`">
-        <div class="message">
-          <span class="font-bold">{{ alert.title }}</span>
-          <div class="message">{{ alert.message }}</div>
-        </div>
-
-        <div class="close" @click="() => hideAlert(alert)"><font-awesome-icon icon="times" /></div>
-      </div>
-    </div>
-
+    
     <!-- Authentication -->
     <authentication
       v-if="getSignInOpened.open"
@@ -39,6 +27,8 @@
 
     <!-- Only checks for an update once during startup -->
     <changelog />
+    <dialogs />
+    <alerts />
   </div>
 </template>
 
@@ -50,9 +40,13 @@ import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { Action, Getter } from 'vuex-class';
 import Authentication from '@/components/templates/authentication/Authentication.vue';
 import Changelog from '@/components/templates/changelogs/Changelog.vue';
+import Dialogs from '@/components/core/global/Dialogs.vue';
+import Alerts from '@/components/core/global/Alerts.vue';
 
 @Component({
   components: {
+    Alerts,
+    Dialogs,
     Changelog,
     Authentication,
     FTBModal,
@@ -61,7 +55,6 @@ import Changelog from '@/components/templates/changelogs/Changelog.vue';
 })
 export default class GlobalComponents extends Vue {
   @Action('hideModal') public hideModal: any;
-  @Action('hideAlert') public hideAlert: any;
 
   @Getter('getSignInOpened', { namespace: 'core' }) public getSignInOpened: any;
   @Action('closeSignIn', { namespace: 'core' }) public closeSignIn: any;
