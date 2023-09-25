@@ -144,5 +144,10 @@ export default new Router({
     //   name: RouterNames.CHAT,
     //   component: ChatWindow,
     // },
+    // Fallback route for 404
+    {
+      path: '*',
+      redirect: '/',
+    }
   ],
 });

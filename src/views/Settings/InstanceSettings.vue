@@ -32,17 +32,6 @@
       </div>
     </div>
     
-    <!--    <ftb-toggle-->
-    <!--      label="Keep launcher open when game starts"-->
-    <!--      :value="localSettings.keepLauncherOpen"-->
-    <!--      @change="keepLauncherOpen"-->
-    <!--      onColor="bg-primary"-->
-    <!--    />-->
-
-    <!--    <small class="text-muted block mb-8 max-w-xl">-->
-    <!--      Keeps your launcher-->
-    <!--    </small>-->
-
     <!--          <ftb-slider label="Default Memory" v-model="localSettings.memory" :currentValue="localSettings.memory" minValue="512" :maxValue="settingsState.hardware.totalMemory" @change="doSave"-->
     <!--                      unit="MB" @blur="doSave" step="128"/>-->
 
@@ -92,7 +81,9 @@ export default class InstanceSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
+  
   localSettings: Settings = {} as Settings;
+  lastSettings: Settings = {} as Settings;
 
   loadedSettings = false;
 
@@ -102,6 +93,7 @@ export default class InstanceSettings extends Vue {
 
     // Make a copy of the settings so we don't mutate the vuex state
     this.localSettings = { ...this.settingsState.settings };
+    this.lastSettings = { ...this.localSettings };
   }
 
   keepLauncherOpen(value: boolean): void {
@@ -110,7 +102,13 @@ export default class InstanceSettings extends Vue {
   }
 
   saveMutated() {
+    // Compare the last settings to the current settings, if they are the same, don't save
+    if (JSON.stringify(this.lastSettings) === JSON.stringify(this.localSettings)) {
+      return;
+    }
+    
     this.saveSettings(this.localSettings);
+    this.lastSettings = { ...this.localSettings };
   }
 
   browseForFolder() {

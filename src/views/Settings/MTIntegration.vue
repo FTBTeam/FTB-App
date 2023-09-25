@@ -24,15 +24,15 @@
     </div>
 
     <div class="">
-      <ftb-toggle
-        label="Automatically open friends list"
-        :value="settings.settings.autoOpenChat === true || settings.settings.autoOpenChat === 'true'"
-        onColor="bg-primary"
-        @change="toggleAutoOpenChat"
-        :disabled="true"
-        class="mb-8"
-        small="When enabled, the MineTogether friends list will automatically open in a new window on startup. Currently disabled."
-      />
+<!--      <ftb-toggle-->
+<!--        label="Automatically open friends list"-->
+<!--        :value="settings.settings.autoOpenChat === true || settings.settings.autoOpenChat === 'true'"-->
+<!--        onColor="bg-primary"-->
+<!--        @change="toggleAutoOpenChat"-->
+<!--        :disabled="true"-->
+<!--        class="mb-8"-->
+<!--        small="When enabled, the MineTogether friends list will automatically open in a new window on startup. Currently disabled."-->
+<!--      />-->
       
       <ftb-toggle
         label="Enable cloud save uploads "

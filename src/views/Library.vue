@@ -1,6 +1,6 @@
 <template>
-  <div class="mod-packs page-spacing h-full">
-    <template v-if="!loading && instances.length > 0">
+  <div class="mod-packs h-full">
+    <div class="page-spacing" v-if="!loading && instances.length > 0">
       <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mr-4 flex-1" />
 
       <div class="categories">
@@ -17,7 +17,7 @@
           </div>
         </div>
       </div>
-    </template>
+    </div>
     
     <loading2 v-else-if="loading" />
 
@@ -32,11 +32,20 @@
         >
         <div class="flex flex-row justify-between my-2">
           <router-link to="/browseModpacks">
-            <ftb-button color="primary" class="py-2 px-10 mx-2">Browse</ftb-button>
+            <ftb-button color="info" class="py-2 px-8 mx-2">
+              <font-awesome-icon icon="search" class="mr-2" />
+              Browse
+            </ftb-button>
           </router-link>
-          <router-link to="/discover">
-            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>
+          <router-link to="/browseModpacks">
+            <ftb-button color="info" class="py-2 px-8 mx-2">
+              <font-awesome-icon icon="download" class="mr-2" />
+              Import
+            </ftb-button>
           </router-link>
+<!--          <router-link to="/discover">-->
+<!--            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>-->
+<!--          </router-link>-->
         </div>
       </div>
     </div>
@@ -377,6 +386,9 @@ export default class Library extends Vue {
 .no-packs {
   position: relative;
   height: 100%;
+  
+  border-left: 1px solid rgba(white, 0.1);
+  border-right: 1px solid rgba(white, 0.1);
 
   &::before {
     content: '';
