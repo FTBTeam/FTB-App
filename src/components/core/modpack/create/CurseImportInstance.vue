@@ -4,7 +4,7 @@
       <div
         class="drop-area"
         :class="{'has-file': activeFile}"
-        @click.self="$refs.fileInputRef.click()"
+        @click="$refs.fileInputRef.click()"
         @dragenter.prevent
         @dragleave.prevent
         @dragover.prevent
@@ -12,11 +12,6 @@
       >
         <font-awesome-icon icon="upload" class="mr-2" size="2x" />
         <p>Drag & Drop a file or select a file</p>
-        <hr />
-        <ftb-button color="primary" class="py-2 px-6 mt-2 font-bold" @click="$refs.fileInputRef.click()">
-          <font-awesome-icon icon="download" class="mr-2" size="1x" />
-          Select a file
-        </ftb-button>
         <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />
       </div>
 
@@ -25,11 +20,11 @@
       </transition>
       
       <transition name="fade" duration="250">
-        <div class="file flex items-center p-4" v-if="activeFile">
-          <font-awesome-icon icon="file-zipper" size="2x" class="mr-4" />
-          <div class="text">
+        <div class="file flex items-center p-4 pl-6" v-if="activeFile">
+          <font-awesome-icon icon="file-zipper" size="2x" class="mr-6" />
+          <div class="text flex-1">
             <div class="name font-bold">{{ activeFile.name }}</div>
-            <div class="size">
+            <div class="size opacity-75">
               {{ prettyByteFormat(activeFile.size) }}
             </div>
           </div>
@@ -41,7 +36,7 @@
     </modal-body>
     
     <modal-footer>
-      <ui-button type="primary" icon="upload">
+      <ui-button :disabled="!activeFile" type="primary" icon="upload" @click="installZip">
         Install
       </ui-button>
     </modal-footer>
@@ -56,6 +51,9 @@ import {prettyByteFormat} from '@/utils';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {alertController} from '@/core/controllers/alertController';
 import { sendMessage } from '@/core/websockets/websocketsApi';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {RouterNames} from '@/router';
 
 @Component({
   components: {UiButton, Modal, ModalBody},
@@ -92,29 +90,21 @@ export default class CurseImportInstance extends Vue {
 
   async installZip() {
     if (!this.activeFile) {
+      console.log('no file selected')
       return;
     }
 
-    // const res = await wsTimeoutWrapper({
-    //   type: 'checkCurseZip',
-    //   path: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-    // });
-
-    // if (!res?.success) {
-      this.activeFile = null;
-      // this.fileError = res.message ?? "We're unable to detect a CurseForge pack in this zip file.";
-    // } else {
-      // this.installModpack({
-      //   pack: {
-      //     importFrom: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-      //   },
-      //   meta: {
-      //     name: 'Curse imported modpack',
-      //     version: this.activeFile.name,
-      //   },
-      // });
-      // this.activeFile = null;
-    // }
+    await instanceInstallController.requestImport(this.activeFile.path)
+    console.log(this.activeFile.path)
+    this.activeFile = null;
+    
+    await gobbleError(() => {
+      this.$router.push({
+        name: RouterNames.ROOT_LIBRARY
+      })
+    })
+    
+    this.close();
   }
 }
 </script>
@@ -122,14 +112,13 @@ export default class CurseImportInstance extends Vue {
 <style lang="scss" scoped>
 .drop-area {
   margin-top: 1rem;
-  padding: 3rem 2rem;
+  padding: 5rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border: 2px dashed rgba(white, 0.2);
   border-radius: 5px;
-  transition: padding .25s ease-in-out;
   
   hr {
     margin: 1rem 0;
@@ -148,6 +137,11 @@ export default class CurseImportInstance extends Vue {
     .name {
       word-wrap: break-word;
     }
+  }
+  
+  .delete {
+    padding: .5rem;
+    cursor: pointer;
   }
 }
 

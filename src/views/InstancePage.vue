@@ -1,6 +1,6 @@
 <template>
   <div class="pack-page">
-    <div class="pack-page-contents" v-if="instance && apiPack">
+    <div class="pack-page-contents" v-if="instance">
       <div
         class="background"
         :style="{
@@ -49,6 +49,7 @@
 
       <closable-panel :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
         <modpack-versions
+          v-if="apiPack"
           :versions="apiPack.versions"
           :pack-instance="apiPack"
           :instance="instance"
@@ -231,6 +232,10 @@ export default class InstancePage extends Vue {
       provider: typeIdToProvider(this.instance.packType)
     });
     
+    if (!this.apiPack) {
+      this.activeTab = ModpackPageTabs.MODS;
+    }
+    
     if (this.$route.query.shouldPlay === 'true') {
       this.confirmLaunch();
     }
@@ -302,7 +307,7 @@ export default class InstancePage extends Vue {
       this.$router.push({ name: RouterNames.ROOT_LIBRARY });
     } else {
       this.searchingForMods = false;
-      this.activeTab = ModpackPageTabs.OVERVIEW;
+      this.activeTab = this.apiPack ? ModpackPageTabs.OVERVIEW : ModpackPageTabs.MODS;
     }
   }
 

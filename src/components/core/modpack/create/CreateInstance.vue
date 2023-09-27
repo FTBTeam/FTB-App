@@ -25,22 +25,19 @@
       </div>
       
       <div class="settings" v-show="step === 2">
-        Settings
-        Screensize?
+        <f-t-b-toggle label="Fullscreen" />
+        <selection2 :options="[]" label="Screen resolution" ></selection2>
         
-        Fullscreen?
-        
-        Ram (but allow default)
-        
-        Advanced
-        Java version
+        <f-t-b-slider label="Ram" />
       </div>
     </modal-body>
     
     <modal-footer>
       <div class="flex content-end">
         <ui-button v-if="step === 1" :disabled="stringIsEmpty(userPackName) || userVanillaVersion === -1" icon="arrow-right">Skip</ui-button>
-        <ui-button :disabled="stringIsEmpty(userPackName) || userVanillaVersion === -1" icon="arrow-right">Next</ui-button>
+        <ui-button :disabled="stringIsEmpty(userPackName) || userVanillaVersion === -1" icon="arrow-right">
+          Next
+        </ui-button>
       </div>
     </modal-footer>
   </modal>
@@ -58,9 +55,10 @@ import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {JavaFetch} from '@/core/javaFetch';
+import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 
 @Component({
-  components: {UiButton, FTBToggle, Selection2, ArtworkSelector},
+  components: {FTBSlider, UiButton, FTBToggle, Selection2, ArtworkSelector},
   methods: {
     stringIsEmpty
   }

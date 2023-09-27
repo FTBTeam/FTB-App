@@ -10,6 +10,7 @@ import {
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {PackProviders, Versions} from '@/modules/modpacks/types';
+import {alertController} from '@/core/controllers/alertController';
 
 export type InstallRequest = {
   uuid: string;
@@ -19,6 +20,7 @@ export type InstallRequest = {
   versionName: string;
   logo: string | null;
   updatingInstanceUuid?: string;
+  importFrom?: string;
   category?: string;
   provider?: PackProviders;
   private: boolean
@@ -91,8 +93,22 @@ class InstanceInstallController {
   }
   
   // TODO: Implement this
-  public async requestImport() {
+  public async requestImport(path: string) {
+    this.queue.push({
+      uuid: crypto.randomUUID(),
+      id: -1,
+      version: -1,
+      name: "Import",
+      versionName: "Import",
+      logo: null,
+      category: "Default",
+      private: false,
+      provider: "modpacksch",
+      importFrom: path,
+    })
     
+    // Trigger a check queue
+    await this.checkQueue();
   }
   
   private async checkQueue() {
@@ -134,23 +150,34 @@ class InstanceInstallController {
     this.installLock = true;
     const isUpdate = request.updatingInstanceUuid != null;
 
+    let payload: any = {};
+    
+    if (!request.importFrom) {
+      payload = {
+        uuid: request.updatingInstanceUuid ?? "", // This flag is what tells the API to update an instance
+        id: parseInt(request.id as string, 10),
+        version: parseInt(request.version as string, 10),
+        _private: request.private,
+        packType: !request.provider ? 0 : (request.provider === "modpacksch" ? 0 : 1), // TODO: Support other providers
+        shareCode: "", // TODO: Support share codes
+        importFrom: null, // TODO: Support imports
+        name: request.name,
+        artPath: request.logo,
+        category: request.category ?? "Default",
+      }
+    } else {
+      payload = {
+        importFrom: request.importFrom
+      }
+    }
+    
     
     // Make the installation request!
-    const installResponse = await sendMessage("installInstance", {
-      uuid: request.updatingInstanceUuid ?? "", // This flag is what tells the API to update an instance
-      id: parseInt(request.id as string, 10),
-      version: parseInt(request.version as string, 10),
-      _private: request.private,
-      packType: !request.provider ? 0 : (request.provider === "modpacksch" ? 0 : 1), // TODO: Support other providers
-      shareCode: "", // TODO: Support share codes
-      importFrom: null, // TODO: Support imports
-      name: request.name,
-      artPath: request.logo,
-      category: request.category ?? "Default",
-    });
+    const installResponse = await sendMessage("installInstance", payload);
     
     if (installResponse.status === "error" || installResponse.status === "prepare_error") {
       console.error("Failed to send install request", installResponse);
+      alertController.error(`Failed to start installation due to ${installResponse.message ?? "an unknown error"}`);
       this.installLock = false;
       return;
     }
@@ -233,10 +260,9 @@ class InstanceInstallController {
     if (installRequest.success && installRequest.instance) {
       // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
       store.dispatch(`v2/instances/updateInstance`, installRequest.instance, {root: true});
-      // TODO: Toast for success
+      alertController.success(`Successfully installed ${request.name}`);
     } else {
-      // Failed!
-      // TODO: Toast for error
+      alertController.error(`Failed to install ${request.name} due to an unknown error`)
       if (knownInstanceUuid) {
         store.dispatch(`v2/instances/removeInstance`, knownInstanceUuid, {root: true});
       }

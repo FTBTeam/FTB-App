@@ -24,7 +24,7 @@
             :localInstance="instance"
             @update="$emit('update')"
           />
-          <div class="option" @click="() => $emit('showVersion')">
+          <div class="option" v-if="packInstance" @click="() => $emit('showVersion')">
             Versions
             <font-awesome-icon icon="code-branch" class="ml-2" />
           </div>
@@ -37,6 +37,7 @@
 
       <div class="tabs">
         <div
+          v-if="packInstance"
           class="tab"
           :class="{ active: activeTab === tabs.OVERVIEW }"
           @click="() => $emit('tabChange', tabs.OVERVIEW)"
@@ -62,7 +63,7 @@
 <!--        >-->
 <!--          Public servers-->
 <!--        </div>-->
-        <a class="cta" @click.prevent="Platform.get.utils.openUrl(`https://www.creeperhost.net/modpack/${packSlug}`)">
+        <a class="cta" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-app' : `https://www.creeperhost.net/modpack/${packSlug}`)">
           <img class="ch-logo" src="@/assets/ch-logo.svg" alt="" />
           Order a server
         </a>
@@ -70,7 +71,7 @@
     </div>
 
     <div class="body-contents">
-      <div class="alert py-2 px-4 mb-4 bg-warning rounded" v-if="packInstance.notification">
+      <div class="alert py-2 px-4 mb-4 bg-warning rounded" v-if="packInstance && packInstance.notification">
         <font-awesome-icon icon="info" class="mr-2" />
         {{ packInstance.notification }}
       </div>
@@ -95,7 +96,7 @@
               <div class="value">{{ instance.version }}</div>
             </div>
           </template>
-          <template v-else>
+          <template v-else-if="packInstance">
             <div class="stat">
               <div class="name">Installs</div>
               <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
@@ -140,7 +141,7 @@
         </div>
         <div
           class="wysiwyg"
-          v-if="packInstance.description !== undefined"
+          v-if="packInstance && packInstance.description !== undefined"
           v-html="parseMarkdown(packInstance.description)"
         />
         <div v-else>
@@ -202,6 +203,7 @@ import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vu
 import Platform from '@/utils/interface/electron-overwolf';
 import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
+import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 
 @Component({
   name: 'pack-body',
@@ -213,13 +215,16 @@ import Loader from '@/components/atoms/Loader.vue';
     PackActions,
     ModpackBackups,
   },
+  methods: {
+    stringIsEmpty
+  }
 })
 export default class PackBody extends Vue {
   // The stored instance for an installed pack
   @Prop({ default: null }) instance!: SugaredInstanceJson;
   @Prop({ default: false }) packLoading!: boolean;
   // Pack Instance is the modpack api response
-  @Prop() packInstance!: ModPack;
+  @Prop() packInstance?: ModPack;
   @Prop() isInstalled!: boolean;
   @Prop() activeTab!: ModpackPageTabs;
   @Prop() mods!: any[];
@@ -234,6 +239,8 @@ export default class PackBody extends Vue {
   getColorForChar = getColorForChar;
 
   get tags() {
+    if (!this.packInstance) return [];
+    
     if (this.packInstance.tags === undefined) return [];
     return this.packInstance.tags.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) ?? [];
   }
@@ -283,6 +290,7 @@ export default class PackBody extends Vue {
   }
 
   get packSlug() {
+    if (!this.packInstance) return '';
     return `${this.packInstance.id}_${this.packInstance.name.replaceAll(' ', '-').replaceAll(/[^\w|-]+/g, '')}`;
   }
 }

@@ -20,8 +20,7 @@
 <!--        <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>-->
 <!--        <span class="whitespace-no-wrap">Friends List</span>-->
 <!--      </a>-->
-
-      <installing-progress />
+      
       <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
     </div>
     <popover text="Setup a server with CreeperHost" class="w-full">
@@ -45,13 +44,12 @@ import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import { RouterNames } from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
-import InstallingProgress from '@/components/layout/sidebar/InstallingProgress.vue';
 
 @Component({
-  components: {InstallingProgress, SidebarCreate, SidebarProfile },
+  components: {SidebarCreate, SidebarProfile },
 })
 export default class Sidebar extends Vue {
-  @State('auth') private auth!: AuthState;
+  @State('auth') auth!: AuthState;
   @Prop({ default: false }) isTransparent!: boolean;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;

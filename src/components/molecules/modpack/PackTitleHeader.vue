@@ -4,7 +4,7 @@
       <div class="name">{{ packName }}</div>
       <div class="desc" v-if="(!instance || !instance.isImport) && !isInstalled">
         {{ packInstance.name }}
-        <template v-if="packInstance.authors && packInstance.authors.length"
+        <template v-if="packInstance && packInstance.authors && packInstance.authors.length"
           >by <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span></template
         >
         -
@@ -18,15 +18,16 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack } from '@/modules/modpacks/types';
+import { ModPack } from '@/modules/modpacks/types';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 
 @Component
 export default class PackTitleHeader extends Vue {
-  @Prop() packInstance!: ModPack;
+  @Prop() packInstance?: ModPack | null;
   @Prop() packName!: string;
   @Prop({ default: false }) isInstalled!: boolean;
 
-  @Prop() instance!: Instance;
+  @Prop() instance!: SugaredInstanceJson | InstanceJson;
 }
 </script>
 
