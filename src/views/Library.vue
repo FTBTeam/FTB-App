@@ -19,7 +19,7 @@
       </div>
     </div>
     
-    <loading2 v-else-if="loading" />
+    <loader v-else-if="loading" />
 
     <div class="flex flex-1 flex-wrap justify-center flex-col items-center no-packs" v-else>
       <div class="message flex flex-1 flex-wrap items-center flex-col mt-32">
@@ -175,11 +175,11 @@ import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
-import Loading2 from '@/components/atoms/Loading2.vue';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   components: {
-    Loading2,
+    Loader,
     PackCard2,
     FTBSearchBar,
   },

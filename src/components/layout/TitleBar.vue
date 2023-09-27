@@ -1,5 +1,5 @@
 <template>
-  <div class="titlebar" :class="{ isMac, 'is-dev': isDev }" @mousedown="startDragging" @dblclick="minMax">
+  <div class="titlebar" :class="{ isMac }" @mousedown="startDragging" @dblclick="minMax">
     <div class="debug-items" v-if="inDevMode">
       <span>Dev tools</span>
       <router-link class="item" :to="{ name: 'home' }">
@@ -59,9 +59,7 @@ export default class TitleBar extends Vue {
   @State('settings') private settings!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
   @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
-
-  @Prop({ default: false }) isDev!: boolean;
-
+  
   public isMac: boolean = false;
   private windowId: string | null = null;
 
@@ -114,10 +112,6 @@ export default class TitleBar extends Vue {
   z-index: 50000;
   position: relative;
   transition: background-color 0.3s ease-in-out;
-
-  &.is-dev {
-    background-color: #0c0d0f;
-  }
 
   &.isMac {
     height: 1.8em;

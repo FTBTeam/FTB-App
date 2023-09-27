@@ -1,5 +1,5 @@
 <template>
-  <div class="ad-aside" :class="{ 'is-dev': isDev, 'electron': isElectron }">
+  <div class="ad-aside" :class="{ 'electron': isElectron }">
     <!--    <div class="ftb-ad-frame" v-if="!isDevEnv">-->
     <!--      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>-->
     <!--    </div>-->
@@ -69,7 +69,6 @@ import { getLogger } from '@/utils';
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
   @State('auth') public auth!: AuthState;
-  @Prop({ default: false }) public isDev!: boolean;
 
   private logger = getLogger('ad-aside-vue');
 

@@ -56,7 +56,7 @@
     
     <modpack-install-modal v-if="currentModpack" :pack-id="currentModpack.id" :provider="packType" :open="showInstallBox" @close="showInstallBox = false" />
   </div>
-  <loading2 class="mt-20" v-else />
+  <loader class="mt-20" v-else />
 </template>
 
 <script lang="ts">
@@ -75,14 +75,14 @@ import {instanceInstallController} from '@/core/controllers/InstanceInstallContr
 import {RouterNames} from '@/router';
 import {ns} from '@/core/state/appState';
 import {GetModpack, GetModpackVersion} from '@/core/state/modpacks/modpacksState';
-import Loading2 from '@/components/atoms/Loading2.vue';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   name: 'ModpackPage',
   components: {
+    Loader,
     ModpackInstallModal,
     ClosablePanel,
-    Loading2,
     ModpackVersions,
     PackTitleHeader,
     PackMetaHeading,

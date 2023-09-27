@@ -64,7 +64,7 @@ export default class ClosablePanel extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .closable-panel {
   position: fixed;
   height: calc(100% - 1.8rem);

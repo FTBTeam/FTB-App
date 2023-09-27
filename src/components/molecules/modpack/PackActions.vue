@@ -135,7 +135,7 @@ export default class PackActions extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .pack-actions-holder {
   display: flex;
 }

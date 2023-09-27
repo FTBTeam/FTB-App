@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar small" :class="{ 'is-transparent': isTransparent, 'is-dev': isDev }">
+  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
     <sidebar-create />
     
     <div class="nav-items nav-main mt-2">      
@@ -21,7 +21,7 @@
 <!--        <span class="whitespace-no-wrap">Friends List</span>-->
 <!--      </a>-->
 
-      
+      <installing-progress />
       <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
     </div>
     <popover text="Setup a server with CreeperHost" class="w-full">
@@ -45,14 +45,14 @@ import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import { RouterNames } from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
+import InstallingProgress from '@/components/layout/sidebar/InstallingProgress.vue';
 
 @Component({
-  components: {SidebarCreate, SidebarProfile },
+  components: {InstallingProgress, SidebarCreate, SidebarProfile },
 })
 export default class Sidebar extends Vue {
   @State('auth') private auth!: AuthState;
   @Prop({ default: false }) isTransparent!: boolean;
-  @Prop({ default: false }) isDev!: boolean;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
 
@@ -133,10 +133,6 @@ export default class Sidebar extends Vue {
   justify-content: space-between;
   flex-direction: column;
   transition: background-color 0.3s ease-in-out;
-
-  &.is-dev {
-    background-color: #171c1f;
-  }
 
   .item-disabled {
     opacity: 0.1;

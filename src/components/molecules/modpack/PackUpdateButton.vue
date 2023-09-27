@@ -20,7 +20,7 @@
           </p>
         </message>
 
-        <loading2 key="changes-loading" v-if="loadingChanges" title="Fetching Changelog" />
+        <loader key="changes-loading" v-if="loadingChanges" title="Fetching Changelog" />
         <div key="changes-loading" v-else>
           <p>
             This version comes with the following changes, if you are sure you want to update, click confirm, otherwise
@@ -50,12 +50,12 @@ import Vue from 'vue';
 import { Prop } from 'vue-property-decorator';
 import { Instance, ModPack } from '@/modules/modpacks/types';
 import Component from 'vue-class-component';
-import Loading2 from '@/components/atoms/Loading2.vue';
+import Loader from '@/components/atoms/Loader.vue';
 import {createModpackchUrl, parseMarkdown} from '@/utils';
 
 @Component({
   methods: {parseMarkdown},
-  components: { Loading2 },
+  components: { Loader },
 })
 export default class PackUpdateButton extends Vue {
   @Prop() instance!: ModPack;

@@ -15,7 +15,7 @@ import Component from 'vue-class-component';
 import { Prop, Vue } from 'vue-property-decorator';
 
 @Component
-export default class Loading2 extends Vue {
+export default class Loader extends Vue {
   @Prop({ default: 'Loading' }) title!: string;
   @Prop({ default: "Shouldn't be a moment" }) subTitle!: string | null;
 }

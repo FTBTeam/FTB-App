@@ -1,18 +1,16 @@
 <template>
-  <div class="alerts-container" v-if="alerts.length">
-    <transition-group name="jump-in" duration="150" class="alerts-container" tag="div">
-      <div class="alert"
-           v-for="(alert, index) in alerts"
-           :key="alert.uuid"
-           :class="[alert.type]"
-           :style="{zIndex: 5000 - index}"
-           @click="removeAlert(alert)"
-      >
-        <font-awesome-icon :icon="typeIcons[alert.type]"/>
-        {{ alert.message }}
-      </div>
-    </transition-group>
-  </div>
+  <transition-group name="jump-in" duration="150" class="alerts-container" :class="{'no-sidebar': hiddenSidebar}" v-if="alerts.length" tag="div">
+    <div class="alert"
+         v-for="(alert, index) in alerts"
+         :key="alert.uuid"
+         :class="[alert.type]"
+         :style="{zIndex: 5000 - index}"
+         @click="removeAlert(alert)"
+    >
+      <font-awesome-icon :icon="typeIcons[alert.type]"/>
+      {{ alert.message }}
+    </div>
+  </transition-group>
 </template>
 
 <script lang="ts">
@@ -71,19 +69,27 @@ export default class Alerts extends Vue {
       this.createAlert();
     }, 5000)
   }
+
+  get hiddenSidebar() {
+    return this.$route.path.startsWith('/settings');
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 .alerts-container {
   position: absolute;
-  bottom: .5rem;
-  left: 44px;
+  bottom: 1rem;
+  left: 86px;
   z-index: 1000;
   display: flex;
   align-items: flex-start;
   flex-direction: column;
   gap: .75rem;
+  
+  &.no-sidebar {
+    left: 1rem;
+  }
 
   .alert {
     position: relative;

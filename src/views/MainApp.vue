@@ -1,13 +1,13 @@
 <template>
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
-    <title-bar :is-dev="isDev" />
+    <title-bar />
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
-        <sidebar :is-dev="isDev" v-if="showSidebar" />
+        <sidebar v-if="showSidebar" />
         <div class="app-content relative">
           <router-view />
         </div>
-        <ad-aside v-show="advertsEnabled" :is-dev="isDev" />
+        <ad-aside v-show="advertsEnabled" />
       </main>
     </div>
     <div class="app-container centered" v-else>
@@ -190,10 +190,6 @@ export default class MainApp extends Vue {
     return !this.$route.path.startsWith('/settings');
   }
 
-  get isDev() {
-    return this.$route.name === RouterNames.DEVELOPER;
-  }
-
   get advertsEnabled(): boolean {
     if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
       return false
@@ -210,47 +206,6 @@ export default class MainApp extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.progress {
-  margin-top: 4rem;
-  width: 350px;
-  height: 10px;
-  background: rgba(gray, 0.2);
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-
-  .bar {
-    width: 100%;
-    height: 100%;
-    background: var(--color-primary-button);
-    position: absolute;
-    left: -100%;
-
-    animation: leftToRight 1.5s ease-in-out infinite;
-
-    @keyframes leftToRight {
-      0% {
-        left: -100%;
-      }
-      50% {
-        left: 0;
-      }
-      100% {
-        left: 100%;
-      }
-    }
-  }
-}
-
-.bottom-area {
-  position: absolute;
-  width: 100%;
-  left: 0;
-  bottom: 0;
-}
-</style>
-
-<style lang="scss">
 .app-container {
   height: calc(100% - 2rem);
   position: relative;
@@ -286,22 +241,6 @@ main.main {
   overflow-y: auto;
 }
 
-.progress-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  bottom: 0;
-  z-index: 4;
-  width: 100%;
-  background-color: var(--color-navbar);
-  height: 40px;
-  max-height: 40px;
-}
-.alert-close {
-  position: fixed;
-  stroke: #fff;
-  right: 10px;
-}
 .slide-down-up-enter-active {
   transition: all 0.5s ease;
 }
@@ -309,7 +248,7 @@ main.main {
   transition: all 0.5s ease;
 }
 .slide-down-up-enter, .slide-leave-to
-/* .slide-fade-leave-active below version 2.1.8 */ {
+  /* .slide-fade-leave-active below version 2.1.8 */ {
   max-height: 0;
 }
 .loader-logo-animation {
@@ -324,6 +263,38 @@ main.main {
   }
   to {
     filter: saturate(1);
+  }
+}
+
+.progress {
+  margin-top: 4rem;
+  width: 350px;
+  height: 10px;
+  background: rgba(gray, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+
+  .bar {
+    width: 100%;
+    height: 100%;
+    background: var(--color-primary-button);
+    position: absolute;
+    left: -100%;
+
+    animation: leftToRight 1.5s ease-in-out infinite;
+
+    @keyframes leftToRight {
+      0% {
+        left: -100%;
+      }
+      50% {
+        left: 0;
+      }
+      100% {
+        left: 100%;
+      }
+    }
   }
 }
 </style>

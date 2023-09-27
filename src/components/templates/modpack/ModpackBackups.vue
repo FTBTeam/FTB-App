@@ -158,7 +158,7 @@ export default class ModpackBackups extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .modpack-backsup-tab {
   .backup {
     display: flex;

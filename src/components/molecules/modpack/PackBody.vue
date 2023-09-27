@@ -182,7 +182,7 @@
   </div>
   <div class="loading pt-12" v-else>
     <!-- This should literally never happen -->
-    <loading2 />
+    <loader />
   </div>
 </template>
 
@@ -201,12 +201,12 @@ import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
 import Platform from '@/utils/interface/electron-overwolf';
 import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
-import Loading2 from '@/components/atoms/Loading2.vue';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   name: 'pack-body',
   components: {
-    Loading2,
+    Loader,
     PackUpdateButton,
     ModpackSettings,
     ModpackMods,

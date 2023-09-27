@@ -92,7 +92,3 @@ export default class Selection extends Vue {
   }
 }
 </script>
-
-<style lang="scss">
-
-</style>

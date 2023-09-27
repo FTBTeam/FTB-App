@@ -70,6 +70,7 @@ import { Settings, SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import Selection from '@/components/atoms/input/Selection.vue';
+import { alertController } from '@/core/controllers/alertController';
 
 @Component({
   components: {
@@ -107,6 +108,7 @@ export default class InstanceSettings extends Vue {
       return;
     }
     
+    alertController.success("Settings saved")
     this.saveSettings(this.localSettings);
     this.lastSettings = { ...this.localSettings };
   }

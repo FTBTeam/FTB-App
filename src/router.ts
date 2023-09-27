@@ -13,8 +13,8 @@ export enum RouterNames {
   ROOT_LOCAL_PACK = 'instancepage',
   ROOT_PREVIEW_PACK = 'modpackpage',
   ROOT_LAUNCH_PACK = 'launchingpage',
-  ROOT_DISCOVER = 'discover',
-  ROOT_SERVER = 'server',
+  // ROOT_DISCOVER = 'discover',
+  // ROOT_SERVER = 'server',
   SETTINGS_INSTANCE = 'instance-settings',
   SETTINGS_DOWNLOAD = 'download-settings',
   SETTINGS_APP = 'app-settings',
@@ -23,8 +23,7 @@ export enum RouterNames {
   SETTINGS_APP_LICENSE = 'license',
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
-  CHAT = 'chat',
-  DEVELOPER = 'dev',
+  // CHAT = 'chat',
   SUPPORT = 'support-index',
 }
 

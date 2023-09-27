@@ -34,14 +34,14 @@
     </div>
   </div>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
-    <loading2 />
+    <loader />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, Getter } from 'vuex-class';
-import Loading2 from '@/components/atoms/Loading2.vue';
+import Loader from '@/components/atoms/Loader.vue';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
 import {BlogPost} from '@/core/@types/external/metaApi.types';
@@ -50,7 +50,7 @@ import {standardDateTime} from '@/utils/helpers/dateHelpers';
 
 @Component({
   components: {
-    Loading2,
+    Loader,
   },
   methods: {
     dayjs,

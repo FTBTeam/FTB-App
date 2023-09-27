@@ -19,7 +19,7 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {Action, Getter} from 'vuex-class';
 import FtbButton from '@/components/atoms/input/FTBButton.vue';
-import Loading2 from '@/components/atoms/Loading2.vue';
+import Loader from '@/components/atoms/Loader.vue';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
@@ -32,7 +32,7 @@ import {Dialog} from '@/core/state/misc/dialogsState';
   components: {
     PackCard2,
     PackPreview,
-    Loading2,
+    Loader,
     FtbButton,
   },
 })

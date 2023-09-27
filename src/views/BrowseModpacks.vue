@@ -34,7 +34,7 @@
       No results found for '{{ searchValue }}'
     </message>
 
-    <loading2 class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
+    <loader class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
 
     <div class="result-cards" v-if="!error && results.length > 0">
       <pack-preview v-for="(pack, index) in results" :partial-pack="pack" :key="index" :provider="currentTab" />
@@ -45,7 +45,7 @@
       <div class="result-cards">
         <pack-preview v-for="(packId, index) in latestPacks" :pack-id="packId" :key="index" />
       </div>
-      <loading2 class="mt-20" v-if="loadingInitialPacks" />
+      <loader class="mt-20" v-if="loadingInitialPacks" />
     </div>
   </div>
 </template>
@@ -62,13 +62,13 @@ import FTBModal from '@/components/atoms/FTBModal.vue';
 import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import Loading2 from '@/components/atoms/Loading2.vue';
+import Loader from '@/components/atoms/Loader.vue';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 
 @Component({
   components: {
     PackPreview,
-    Loading2,
+    Loader,
     FTBSearchBar,
     FTBModal,
   },
@@ -170,11 +170,7 @@ export default class BrowseModpacks extends Vue {
 }
 </script>
 
-<style lang="scss">
-h1 {
-  text-transform: capitalize;
-}
-
+<style scoped lang="scss">
 .result-cards {
   position: relative;
   z-index: 1;
@@ -226,29 +222,5 @@ h1 {
       }
     }
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.05s ease;
-}
-.slide-enter,
-.slide-leave-to {
-  transform: translateX(-10px);
-}
-.display-mode-switcher {
-  display: flex;
-  flex-direction: row-reverse;
-  background-color: #313131;
 }
 </style>
