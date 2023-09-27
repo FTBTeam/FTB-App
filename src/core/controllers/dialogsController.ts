@@ -3,27 +3,54 @@ import {Dialog, DialogButton} from '@/core/state/misc/dialogsState';
 import {emitter} from '@/utils';
 
 class DialogHolder {
-  private readonly dialog: Dialog;
+  private readonly _dialog: Dialog;
   
   constructor(dialog: Dialog) {
-    this.dialog = dialog;
+    this._dialog = dialog;
   }
   
   setWorking(working: boolean) {
-    this.dialog.working = working;
-    store.dispatch('v2/dialogs/updateDialog', this.dialog);
+    this._dialog.working = working;
+    store.dispatch('v2/dialogs/updateDialog', this._dialog);
   }
   
   close() {
-    store.dispatch('v2/dialogs/closeDialog', this.dialog);
+    store.dispatch('v2/dialogs/closeDialog', this._dialog);
+  }
+  
+  get dialog() {
+    return this._dialog;
   }
 }
 
 class DialogsController {
-  createConfirmationDialog(message: string, callback: (result: boolean) => void) {
-    store.dispatch('v2/dialogs/openDialog', {
-      
-    } as Dialog);
+  async createConfirmationDialog(title: string, message: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const holder = new DialogHolder(dialog(title)
+        .withContent(message)
+        .withCloseAction(() => {
+          resolve(false);
+        })
+        .withType("warning")
+        .withButton(button("Cancel")
+          .withType("error")
+          .withIcon("times")
+          .withAction(() => {
+            holder.close();
+          })
+          .build())
+        .withButton(button("Confirm")
+          .withType("success")
+          .withIcon("check")
+          .withAction(() => {
+            resolve(true);
+            holder.close(); // The close action will also do this but this will just make sure
+          })
+          .build())
+        .build());
+
+      store.dispatch('v2/dialogs/openDialog', holder.dialog);
+    })
   }
   
   createDialog(dialog: Dialog) {
@@ -43,7 +70,8 @@ export class DialogBuilder {
   private type?: "error" | "warning" | "info" | "success";
   private content?: string;
   
-  private buttons?: DialogButton[]
+  private buttons?: DialogButton[];
+  private onClose?: () => void;
   
   private constructor(
     private title: string,
@@ -74,6 +102,11 @@ export class DialogBuilder {
     return this;
   }
   
+  withCloseAction(onClose: () => void) {
+    this.onClose = onClose;
+    return this;
+  }
+  
   build() {
     return {
       title: this.title,
@@ -81,6 +114,7 @@ export class DialogBuilder {
       type: this.type,
       content: this.content,
       buttons: this.buttons,
+      onClose: this.onClose,
     } as Dialog
   }
 }

@@ -8,6 +8,7 @@ export type Dialog = {
   content: string; // Markdown?
   buttons?: DialogButton[],
   working?: boolean;
+  onClose?: () => void;
 }
 
 export type DialogButton = {
@@ -38,7 +39,10 @@ const actions: ActionTree<DialogsState, RootState> = {
 
 const mutations: MutationTree<DialogsState> = {
   OPEN_DIALOG: (state: DialogsState, dialog: Dialog) => state.dialogs.push(dialog),
-  CLOSE_DIALOG: (state: DialogsState, dialog: Dialog) => state.dialogs.splice(state.dialogs.indexOf(dialog), 1),
+  CLOSE_DIALOG: (state: DialogsState, dialog: Dialog) => {
+    if (dialog.onClose) dialog.onClose();
+    state.dialogs.splice(state.dialogs.indexOf(dialog), 1)
+  },
   UPDATE_DIALOG: (state: DialogsState, dialog: Dialog) => state.dialogs.splice(state.dialogs.indexOf(dialog), 1, dialog),
 }
 

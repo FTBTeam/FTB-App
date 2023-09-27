@@ -1,5 +1,5 @@
 <template>
-  <div class="pack-card-v2" @click="openInstancePage">
+  <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="openInstancePage">
     <div class="artwork-container">
       <img :src="packLogo" alt="Modpack Artwork">
       <div class="notifiers">
@@ -11,9 +11,12 @@
     <div class="card-body">
       <div class="info">
         <div class="name">{{ instance.name }}</div>
-        <div class="version text-sm opacity-75">{{ instance.version }} ({{ modLoader | title }})</div>
+        <div class="version text-sm opacity-75">
+          <template v-if="!isInstalling">{{ instance.version }} ({{ modLoader | title }})</template>
+          <template v-else><font-awesome-icon icon="circle-notch" spin class="mr-2" /> Installing</template>
+        </div>
       </div>
-      <div class="action-buttons">
+      <div class="action-buttons" v-if="!isInstalling">
         <div class="button" :class="{disabled: isUpdating}" v-if="needsSyncing" @click.stop="updateInstance">
           <font-awesome-icon icon="cloud" />
         </div>
@@ -55,6 +58,10 @@ export default class PackCard2 extends PackCardCommon {
   }
 
   openInstancePage() {
+    if (this.isInstalling) {
+      return;
+    }
+    
     this.$router.push({
       name: RouterNames.ROOT_LOCAL_PACK,
       params: {
@@ -101,9 +108,13 @@ export default class PackCard2 extends PackCardCommon {
     
     return latestVersion.id > this.instance.versionId;
   }
-  
+
   get isInstalling() {
-    return false;
+    if (!this.currentInstall) {
+      return false;
+    }
+
+    return this.currentInstall?.forInstanceUuid === this.instance.uuid
   }
   
   get isUpdating() {
@@ -118,12 +129,9 @@ export default class PackCard2 extends PackCardCommon {
 
 <style lang="scss" scoped>
 .pack-card-v2 {
-  //background-color: #ffffff12;
-  //border-radius: 5px;
-  //padding: .75rem;
   cursor: pointer;
   
-  &:hover {
+  &:not(.installing):hover {
     .action-buttons {
       opacity: 1;
       visibility: visible;

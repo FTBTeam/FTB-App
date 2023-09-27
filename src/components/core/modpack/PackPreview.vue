@@ -8,28 +8,28 @@
       <div class="logo">
         <img :src="logo" :alt="`Pack art for ${packData.name}`" />
       </div>
-      <template v-if="!isInstalling">
-        <div class="pack-main">
-          <div class="name">{{ packData.name }} <span>by</span> {{ packData.authors.map((e) => e.name).join(', ') }}</div>
-          <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
-            {{ packData.synopsis }}
-          </div>
-          <div class="tags">
-            <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
-          </div>
+      <div class="pack-main">
+        <div class="name">{{ packData.name }} <span>by</span> {{ packData.authors.map((e) => e.name).join(', ') }}</div>
+        <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
+          {{ packData.synopsis }}
         </div>
-        <div class="install-btn" @click.stop="showInstall = true">
-          <font-awesome-icon icon="download" />
+        <div class="tags">
+          <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
         </div>
-      </template>
-      <template v-else>
-        <div class="installing">
-          <font-awesome-icon icon="spinner" spin />
-        </div>
-      </template>
+      </div>
+      <div class="install-btn" @click.stop="install">
+        <font-awesome-icon icon="download" />
+      </div>
     </div>
-    <div v-else>
-      Loading...
+    <div class="pack-preview preview-shadow" v-else>
+      <div class="logo-shadow shadow square" />
+      <div class="main">
+        <div class="shadow text shadow-small"></div>
+        <div class="shadow text shadow-large"></div>
+        <div class="tags-shadow">
+          <div class="shadow text tag-shadow" v-for="i in 5" :key="i"></div>
+        </div>
+      </div>
     </div>
     <modpack-install-modal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :api-modpack="apiModpack ? apiModpack : undefined" />
   </div>
@@ -45,6 +45,7 @@ import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {stringIsEmpty, stringOrDefault, trimString} from '@/utils/helpers/stringHelpers';
 import {RouterNames} from '@/router';
 import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
+import { dialogsController } from '@/core/controllers/dialogsController';
 
 @Component({
   components: {ModpackInstallModal},
@@ -70,17 +71,14 @@ export default class PackPreview extends PackCardCommon {
     }
   }
 
-  install() {
-    const apiPack = this.apiModpack!;
-    instanceInstallController.requestInstall({
-      id: apiPack.id,
-      version: apiPack.versions[0].id,
-      name: apiPack.name,
-      versionName: apiPack.versions[0].name,
-      logo: "",
-      private: apiPack.private ?? false,
-      provider: this.provider
-    })
+  async install() {
+    if (this.isInstalling) {
+      if (!(await dialogsController.createConfirmationDialog("Are you sure?", "This modpack is already installing, are you sure you want to install another one?"))) {
+        return;
+      }
+    }
+    
+    this.showInstall = true;
   }
   
   get artwork() {
@@ -254,6 +252,66 @@ export default class PackPreview extends PackCardCommon {
 
     &:hover {
       background-color: #39d05f;
+    }
+  }
+}
+
+.pack-preview.preview-shadow {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+
+  &:hover {
+    box-shadow: initial;
+    transform: inherit;
+  }
+  
+  .logo-shadow {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .tags-shadow {
+    display: flex;
+    gap: .5rem;
+    margin-top: .4rem;
+    
+    > div {
+      width: 60px;
+    }
+  }
+  
+  .shadow {
+    border-radius: 8px;
+    background-color: rgba(white, .1);
+    animation: skeleton-loading 1s ease-in-out infinite alternate;
+
+    @keyframes skeleton-loading {
+      0% {
+        opacity: .4;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    
+    &.text {
+      height: 1.4em;
+    }
+    
+    &.shadow-large {
+      width: 80%;
+    }
+    
+    &.shadow-small {
+      width: 40%;
     }
   }
 }

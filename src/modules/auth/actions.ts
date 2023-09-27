@@ -5,6 +5,7 @@ import { RootState } from '@/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
 
 export interface FriendRequestResponse {
   status: string;
@@ -108,7 +109,7 @@ export const actions: ActionTree<AuthState, RootState> = {
     payload.friendCode = '';
     commit('storeAuthDetails', payload);
     if (payload === null) {
-      await sendMessage("storeAuthDetails", {
+      await gobbleError(() => sendMessage("storeAuthDetails", {
         mpKey: '',
         mpSecret: '',
         s3Bucket: '',
@@ -116,7 +117,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         s3Key: '',
         s3Secret: '',
         mtHash: '',
-      })
+      }, 100))
     } else {
       let s3Bucket = '';
       let s3Host = '';
@@ -137,9 +138,11 @@ export const actions: ActionTree<AuthState, RootState> = {
       if (payload.mc !== undefined && payload.mc.hash !== undefined && payload.mc.hash.long !== undefined) {
         mtHash = payload.mc.hash.long;
       }
-      await sendMessage("storeAuthDetails", {
+      
+      // No response expected 
+      await gobbleError(() => sendMessage("storeAuthDetails", {
         mpKey, mpSecret: '', s3Bucket, s3Host, s3Key, s3Secret, mtHash
-      })
+      }, 100))
       
       // Refresh instances
       dispatch('v2/instances/loadInstances')

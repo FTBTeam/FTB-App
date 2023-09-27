@@ -30,6 +30,7 @@ export type InstallStatus = {
   stage: string;
   progress: string;
   error?: string;
+  forInstanceUuid: string;
 }
 
 type InstallResult = {
@@ -154,11 +155,10 @@ class InstanceInstallController {
       return;
     }
     
-    let knownInstanceUuid = null;
+    let knownInstanceUuid = installResponse.instanceData.uuid;
     if (installResponse.instanceData && !isUpdate) {
       // Don't add if it's an update otherwise we'll have two instances
       store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
-      knownInstanceUuid = installResponse.instanceData.uuid;
     }
     
     console.log("Install request sent", installResponse)
@@ -169,7 +169,8 @@ class InstanceInstallController {
         request,
         status: "installing",
         progress: "0",
-        stage: "Starting install"
+        stage: "Starting install",
+        forInstanceUuid: knownInstanceUuid
       });
       
       const instanceInstaller = (data: InstallInstanceDataReply | InstallInstanceDataProgress | FilesEvent) => {
@@ -181,7 +182,8 @@ class InstanceInstallController {
               status: "failed",
               stage: "Failed to install",
               progress: "0",
-              error: typedData.message
+              error: typedData.message,
+              forInstanceUuid: knownInstanceUuid
             });
             
             return finish({
@@ -193,6 +195,7 @@ class InstanceInstallController {
               stage: "Installed",
               status: "success",
               progress: "100",
+              forInstanceUuid: knownInstanceUuid
             });
             
             return finish({
@@ -210,6 +213,7 @@ class InstanceInstallController {
             stage: toTitleCase(typedData.currentStage),
             status: "installing",
             progress: typedData.overallPercentage.toFixed(1),
+            forInstanceUuid: knownInstanceUuid
           })
         } else if (data.type === "install.filesEvent") {
           const typedData = data as FilesEvent;
