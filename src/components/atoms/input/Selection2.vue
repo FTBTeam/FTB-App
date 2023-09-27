@@ -52,10 +52,10 @@ export type SelectionOption = {
 
 // TODO: Migrate everything to this one.
 @Component
-export default class Selection extends Vue {
+export default class Selection2 extends Vue {
   @Prop() label!: string;
   @Prop({ default: 'Select option' }) placeholder!: string;
-  @Prop({ default: [] }) options!: SelectionOptions;
+  @Prop({ default: () => [] }) options!: SelectionOptions;
   
   @Prop({ default: false }) badgeEnd!: boolean;
   @Prop({default: false}) allowDeselect!: boolean;

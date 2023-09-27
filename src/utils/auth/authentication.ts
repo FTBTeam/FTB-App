@@ -1,9 +1,9 @@
 import { AuthProfile } from '@/modules/core/core.types';
 import store from '@/modules/store';
-import {wsTimeoutWrapper, wsTimeoutWrapperTyped} from '@/utils';
 import dayjs from 'dayjs';
 import { createError } from '@/core/errors/errorCodes';
 import {alertController} from '@/core/controllers/alertController';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 type RefreshResponse = {
   ok: boolean;
@@ -32,15 +32,10 @@ export async function loginWithMicrosoft(payload: string | {key: string; iv: str
       networkError: false,
     };
   }
-
-  const res = await wsTimeoutWrapperTyped<any, { 
-    code?: string,
-    networkError?: boolean, // Not important here as we can't do anything about it.
-    success: boolean
-  }>({
-    type: 'profiles.ms.authenticate',
-    ...response,
-  });
+    
+  const res = await sendMessage("profiles.ms.authenticate", {
+    ...response
+  })
 
   return {
     success: res.success ?? false,
@@ -88,11 +83,10 @@ const msAuthenticator: Authenticator = {
         logAuth('debug', `Sending retrieve request to decrypt the authentication data`);
         const data = (await res.json()).data;
 
-        const authenticator = await wsTimeoutWrapper({
-          type: 'profiles.refresh',
+        const authenticator = await sendMessage("profiles.refresh", {
           profileUuid: profile.uuid,
           ...data,
-        });
+        })
 
         if (authenticator?.success) {
           logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
@@ -122,19 +116,21 @@ const msAuthenticator: Authenticator = {
 };
 
 const mcAuthenticator: Authenticator = {
-  async refresh(profile: AuthProfile): Promise<RefreshResponse> {
-    const authenticator = await wsTimeoutWrapper({
-      type: 'profiles.refresh',
+  async refresh(profile: AuthProfile): Promise<RefreshResponse> {    
+    const authenticator = await sendMessage("profiles.refresh", {
       profileUuid: profile.uuid,
+      liveAccessToken: null,
+      liveRefreshToken: null,
+      liveExpires: null,
     });
 
-    if (authenticator?.response === 'updated') {
+    if (authenticator?.code === 'updated') {
       logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
       return { ok: true };
     } else {
       logAuth(
         'warn',
-        `Failed to refresh the token for ${profile.username} due to ${authenticator?.response ?? 'unknown'}`,
+        `Failed to refresh the token for ${profile.username} due to ${authenticator?.code ?? 'unknown'}`,
       );
       return { ok: false };
     }
@@ -148,10 +144,9 @@ const purgeMinecraftProfiles = async (profiles: AuthProfile[]) => {
 
   for (let minecraftProfile of minecraftProfiles) {
     try {
-      await wsTimeoutWrapper({
-        type: 'profiles.remove',
+      await sendMessage("profiles.remove", {
         uuid: minecraftProfile.uuid,
-      });
+      })
     } catch {
       console.log('Failed to remove profile');
     }
@@ -163,66 +158,6 @@ const purgeMinecraftProfiles = async (profiles: AuthProfile[]) => {
   return minecraftProfiles;
 };
 
-const attemptToRemoveMojangAccounts = async (
-  profiles: AuthProfile[],
-  profile: AuthProfile,
-  signInAgain: () => void,
-) => {
-  logAuth('debug', 'triggered catch all for accounts past the 10/03/2022');
-  // Use this chance to purge all old profiles
-  const removedProfiles = await purgeMinecraftProfiles(profiles);
-  const removedOurProfile = removedProfiles.find((p: AuthProfile) => p.uuid === profile?.uuid);
-
-  for (let removedProfile of removedProfiles) {
-    logAuth(
-      'debug',
-      `Found profile ${removedProfile.username} with uuid ${removedProfile.uuid} which is using Mojang auth. Removing...`,
-    );
-    
-    alertController.warning(`We've automatically removed ${removedProfile.username} as it was added using the old authentication system.`)
-  }
-
-  if (removedOurProfile) {
-    logAuth('debug', `The active profile was removed, attempting to fall back`);
-    // Show remaining profiles
-    const remainingProfile = profiles.length > 0 ? profiles[0] : null;
-    if (remainingProfile) {
-      logAuth(
-        'debug',
-        `Successfully found a fallback profile ${remainingProfile.username} with uuid ${remainingProfile.uuid}`,
-      );
-      profile = remainingProfile;
-
-      // Alert the user
-      alertController.success(`We've automatically switched your active account to ${profile?.username}`)
-
-      // Set the active profile to the remaining profile
-      try {
-        const data = await wsTimeoutWrapper({
-          type: 'profiles.setActiveProfile',
-          uuid: remainingProfile.uuid,
-        });
-
-        if (data.success) {
-          await store.dispatch('core/loadProfiles');
-          logAuth(
-            'debug',
-            `Successfully set active profile to ${remainingProfile.username} with uuid ${remainingProfile.uuid}`,
-          );
-        } else {
-          logAuth('error', `Failed to set active profile`);
-        }
-      } catch {
-        logAuth('error', `Failed to set active profile`);
-        console.log('Failed to set active profile');
-      }
-    } else {
-      logAuth('debug', `No remaining profiles found, prompting user to sign in`);
-      await signInAgain();
-      return false;
-    }
-  }
-};
 
 export type LaunchCheckResult = {
   ok: boolean;
@@ -238,8 +173,7 @@ export type LaunchCheckResult = {
 export const removeActiveProfile = async (): Promise<boolean> => {
   const { 'core/getActiveProfile': activeProfile } = store.getters;
   if (activeProfile) {
-    await wsTimeoutWrapper({
-      type: 'profiles.remove',
+    await sendMessage("profiles.remove", {
       uuid: activeProfile.uuid,
     });
   }
@@ -271,12 +205,6 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
     };
   }
 
-  // TODO: remove in April 2022
-  // if (dayjs().isAfter('2022-03-10')) {
-  //   await attemptToRemoveMojangAccounts(profiles, profile, signInAgain);
-  // }
-  // TODO: end of remove in April 2022
-
   const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
 
   logAuth(
@@ -286,8 +214,7 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
     }`,
   );
 
-  const isValid = await wsTimeoutWrapper({
-    type: 'profiles.is-valid',
+  const isValid = await sendMessage("profiles.is-valid", {
     profileUuid: profile.uuid,
   });
 

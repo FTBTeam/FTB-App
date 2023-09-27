@@ -62,11 +62,9 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { Action } from 'vuex-class';
 
 @Component
 export default class ReportForm extends Vue {
-  @Action('sendMessage') public sendMessage: any;
 
   @Prop() loadingFailed!: boolean;
   @Prop() websocketsFailed!: boolean;
@@ -120,17 +118,17 @@ export default class ReportForm extends Vue {
 
   public uploadLogData(): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.sendMessage({
-        payload: { type: 'uploadLogs', uiVersion: this.uiVersion },
-        callback: async (data: any) => {
-          if (!data.error) {
-            const url = `https://pste.ch/${data.code}`;
-            resolve(url);
-          } else {
-            reject(data.error);
-          }
-        },
-      });
+      // this.sendMessage({
+      //   payload: { type: 'uploadLogs', uiVersion: this.uiVersion },
+      //   callback: async (data: any) => {
+      //     if (!data.error) {
+      //       const url = `https://pste.ch/${data.code}`;
+      //       resolve(url);
+      //     } else {
+      //       reject(data.error);
+      //     }
+      //   },
+      // });
     });
   }
 

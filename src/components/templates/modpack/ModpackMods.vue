@@ -51,8 +51,7 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { prettyByteFormat } from '@/utils/helpers';
-import { Action } from 'vuex-class';
-import { Prop, Watch } from 'vue-property-decorator';
+import { Prop } from 'vue-property-decorator';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
@@ -70,8 +69,6 @@ import {alertController} from '@/core/controllers/alertController';
   },
 })
 export default class ModpackMods extends Vue {
-  @Action('sendMessage') public sendMessage!: any;
-
   @Prop() modlist!: ModInfo[];
   @Prop() updatingModlist!: boolean;
   @Prop() packInstalled!: boolean;

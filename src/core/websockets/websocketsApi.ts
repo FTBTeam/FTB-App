@@ -13,20 +13,21 @@ export function sendMessage<T extends MessageType>(
   messageType: T, 
   payload: MessageRaw<MessagePayload[T]["input"]>, 
   timeout = 30_000
-): Promise<MessagePayload[T]["output"]> {
+): Promise<MessagePayload[T]["output"] & { messageId: string }> {
   return new Promise(async (resolve, reject) => {
     const timer = setTimeout(() => {
       reject(`Failed to resolve response from [type: ${messageType}]`);
     }, timeout);
 
-    await store.dispatch('sendMessage', {
+    // This should be the only type this dispatch is ever used
+    const messageId = await store.dispatch('sendMessage', {
       payload: {
         type: messageType,
         ...payload,
       },
       callback: (data: MessagePayload[T]["output"]) => {
         clearTimeout(timer);
-        resolve(data);
+        resolve({...data, messageId: messageId ?? "unknown"});
       },
     });
   });

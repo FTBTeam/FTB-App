@@ -64,6 +64,8 @@ import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import { SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
+import { gobbleError } from '@/utils/helpers/asyncHelpers';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 @Component({
   components: {
@@ -72,7 +74,6 @@ import platform from '@/utils/interface/electron-overwolf';
 })
 export default class MTIntegration extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('sendMessage') public sendMessage: any;
   @State('auth') private auth!: AuthState;
   @State('settings') private settings!: SettingsState;
   @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
@@ -110,11 +111,9 @@ export default class MTIntegration extends Vue {
   public logout() {
     this.logoutAction();
     // get instances and store
-    this.sendMessage({
-      payload: {
-        type: 'ircQuitRequest',
-      },
-    });
+    gobbleError(() => {
+      sendMessage("ircQuitRequest", {})
+    })
 
     platform.get.actions.logoutFromMinetogether();
 

@@ -42,11 +42,11 @@ import Component from 'vue-class-component';
 import Vue from 'vue';
 import { Action } from 'vuex-class';
 import { Prop } from 'vue-property-decorator';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 // TODO: remove this after April 2022
 @Component({ props: { uuid: String } })
 export default class YggdrasilAuthForm extends Vue {
-  @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
 
   @Prop()
@@ -65,29 +65,25 @@ export default class YggdrasilAuthForm extends Vue {
       return;
     }
 
-    this.sendMessage({
-      payload: {
-        type: 'profiles.mc.authenticate',
-        username: this.username,
-        password: this.password,
-      },
-      callback: async (data: any) => {
-        if (!data || !data.success) {
-          if (data.response && data.response.includes('errorMessage')) {
-            const response = JSON.parse(data.response);
-            this.error = response.errorMessage;
-            return;
-          }
+    const result = await sendMessage("profiles.mc.authenticate", {
+      username: this.username,
+      password: this.password,
+    })
+    
+    if (!result || !result.success) {
+      if (result.response && result.response.includes('errorMessage')) {
+        const response = JSON.parse(result.response);
+        this.error = response.errorMessage;
+        return;
+      }
 
-          this.error = data.response || 'An unknown error occurred.';
-          return;
-        }
+      this.error = result.response || 'An unknown error occurred.';
+      return;
+    }
 
-        // No error
-        await this.loadProfiles();
-        this.$emit('authenticated');
-      },
-    });
+    // No error
+    await this.loadProfiles();
+    this.$emit('authenticated');
   }
 }
 </script>

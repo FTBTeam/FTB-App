@@ -1,0 +1,164 @@
+<template>
+  <modal :open="open" @closed="close" :external-contents="true" title="Import from CurseForge" sub-title="Import instances from a CurseForge .zip export file">
+    <modal-body>
+      <div
+        class="drop-area"
+        :class="{'has-file': activeFile}"
+        @click.self="$refs.fileInputRef.click()"
+        @dragenter.prevent
+        @dragleave.prevent
+        @dragover.prevent
+        @drop.prevent="fileAttach($event)"
+      >
+        <font-awesome-icon icon="upload" class="mr-2" size="2x" />
+        <p>Drag & Drop a file or select a file</p>
+        <hr />
+        <ftb-button color="primary" class="py-2 px-6 mt-2 font-bold" @click="$refs.fileInputRef.click()">
+          <font-awesome-icon icon="download" class="mr-2" size="1x" />
+          Select a file
+        </ftb-button>
+        <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />
+      </div>
+
+      <transition name="fade" duration="250">
+        <p v-if="activeFile" class="font-bold mt-4 text-base mb-2">Selected file</p>
+      </transition>
+      
+      <transition name="fade" duration="250">
+        <div class="file flex items-center p-4" v-if="activeFile">
+          <font-awesome-icon icon="file-zipper" size="2x" class="mr-4" />
+          <div class="text">
+            <div class="name font-bold">{{ activeFile.name }}</div>
+            <div class="size">
+              {{ prettyByteFormat(activeFile.size) }}
+            </div>
+          </div>
+          <div class="delete" @click="activeFile = null">
+            <font-awesome-icon icon="trash" />
+          </div>
+        </div>
+      </transition>
+    </modal-body>
+    
+    <modal-footer>
+      <ui-button type="primary" icon="upload">
+        Install
+      </ui-button>
+    </modal-footer>
+  </modal>
+</template>
+
+<script lang="ts">
+import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
+import ModalBody from '@/components/atoms/modal/ModalBody.vue';
+import Modal from '@/components/atoms/modal/Modal.vue';
+import {prettyByteFormat} from '@/utils';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import {alertController} from '@/core/controllers/alertController';
+import { sendMessage } from '@/core/websockets/websocketsApi';
+
+@Component({
+  components: {UiButton, Modal, ModalBody},
+  methods: {prettyByteFormat}
+})
+export default class CurseImportInstance extends Vue {
+  @Prop() open!: boolean;
+  @Emit() close() {}
+  
+  activeFile: any = null;
+  
+  async fileAttach(event: any) {
+    const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
+    if (file == null || !file.name.endsWith('.zip')) {
+      alertController.warning('Please select a valid .zip file.')
+      return;
+    }
+
+    const res = await sendMessage('checkCurseZip', {
+      path: file.path ?? 'invalid-path-name-to-break-the-java-size-by-default'
+    });
+    
+    if (!res.success) {
+      alertController.error(res.message ?? "We're unable to detect a CurseForge pack in this zip file.")
+      return;
+    }
+    
+    this.activeFile = {
+      name: file.name,
+      size: file.size,
+      path: file.path,
+    };
+  }
+
+  async installZip() {
+    if (!this.activeFile) {
+      return;
+    }
+
+    // const res = await wsTimeoutWrapper({
+    //   type: 'checkCurseZip',
+    //   path: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
+    // });
+
+    // if (!res?.success) {
+      this.activeFile = null;
+      // this.fileError = res.message ?? "We're unable to detect a CurseForge pack in this zip file.";
+    // } else {
+      // this.installModpack({
+      //   pack: {
+      //     importFrom: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
+      //   },
+      //   meta: {
+      //     name: 'Curse imported modpack',
+      //     version: this.activeFile.name,
+      //   },
+      // });
+      // this.activeFile = null;
+    // }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.drop-area {
+  margin-top: 1rem;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(white, 0.2);
+  border-radius: 5px;
+  transition: padding .25s ease-in-out;
+  
+  hr {
+    margin: 1rem 0;
+  }
+
+  > svg {
+    margin-bottom: 1rem;
+  }
+}
+
+.file {
+  background-color: rgba(white, 0.1);
+  border-radius: 5px;
+
+  .text {
+    .name {
+      word-wrap: break-word;
+    }
+  }
+}
+
+// TODO: Stop duplicating this
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.4s;
+}
+
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

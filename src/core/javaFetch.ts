@@ -53,7 +53,7 @@ class FetchResponse implements FetchResponseRaw {
   
   public json<T>() {
     if (!this.body.contentType.includes("json")) {
-      throw new Error(`Unable to extract json data from content type of ${this.body.contentType}`)
+      throw new Error(`Unable to extract json data from content type of ${this.body.contentType}... Expected application/json\n\nFull response: ${this.text()}`)
     }
     
     return JSON.parse(Buffer.from(this.body.bytes as Uint8Array).toString("utf-8")) as T

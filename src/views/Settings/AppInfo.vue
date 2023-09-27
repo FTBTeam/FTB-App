@@ -95,6 +95,7 @@ import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {ns} from '@/core/state/appState';
 import {alertController} from '@/core/controllers/alertController';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 @Component({
   components: {
@@ -105,7 +106,6 @@ export default class AppInfo extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('sendMessage') public sendMessage: any;
   
   @Action('clearModpacks', ns("v2/modpacks")) clearModpack!: Function;
   
@@ -123,16 +123,15 @@ export default class AppInfo extends Vue {
   }
 
   public async uploadLogData(): Promise<void> {
-    this.sendMessage({
-      payload: { type: 'uploadLogs', uiVersion: this.webVersion },
-      callback: async (data: any) => {
-        if (!data.error) {
-          const url = `https://pste.ch/${data.code}`;
-          platform.get.cb.copy(url);
-          alertController.success('The URL has been copied to your clipboard')
-        }
-      },
-    });
+    const result = await sendMessage("uploadLogs", {
+      uiVersion: this.webVersion
+    })
+
+    if (!result.error) {
+      const url = `https://pste.ch/${result.code}`;
+      platform.get.cb.copy(url);
+      alertController.success('The URL has been copied to your clipboard')
+    }
   }
 
   public refreshCachePlz() {

@@ -57,7 +57,7 @@ export default new Router({
         },
         {
           path: '/settings',
-          component: () => import(/* webpackChunkName: "settings" */ './views/Settings.vue'),
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Settings.vue'),
           children: [
             {
               path: '',

@@ -138,7 +138,6 @@ import PackBody from '@/components/molecules/modpack/PackBody.vue';
 import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
-import { InstallerState } from '@/modules/app/appStore.types';
 import { abortableFetch, AbortableRequest, createModpackchUrl } from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';

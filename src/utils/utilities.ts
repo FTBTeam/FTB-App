@@ -3,12 +3,6 @@ import { RootState } from '@/types';
 // import { MCProtocol } from '@/modules/servers/types';
 // import mcQuery from 'mcping-js';
 
-export const yeetError = async <T>(promise: () => Promise<T>) => {
-  try {
-    await promise();
-  } catch {}
-};
-
 export function debounce(func: () => void, wait: number): () => void {
   let timeout: NodeJS.Timeout | undefined;
   return function () {
@@ -18,15 +12,6 @@ export function debounce(func: () => void, wait: number): () => void {
       func();
     }, wait);
   };
-}
-
-/**
- * @deprecated makes no sense
- */
-export async function asyncForEach(items: any[], callback: (item: any) => Promise<any>): Promise<any> {
-  for (let i = 0; i < items.length; i++) {
-    await callback(items[i]);
-  }
 }
 
 export function logVerbose(state: RootState | SettingsState, ...message: any[]) {

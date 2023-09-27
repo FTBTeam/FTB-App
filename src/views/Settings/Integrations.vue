@@ -63,12 +63,12 @@ import { Action, State } from 'vuex-class';
 import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
 import { SettingsState } from '@/modules/settings/types';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 @Component
 export default class AppInfo extends Vue {
   @State('auth') private auth!: AuthState;
   @State('settings') private settings!: SettingsState;
-  @Action('sendMessage') public sendMessage: any;
   @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
@@ -100,11 +100,7 @@ export default class AppInfo extends Vue {
   public logout() {
     this.logoutAction();
     // get instances and store
-    this.sendMessage({
-      payload: {
-        type: 'ircQuitRequest',
-      },
-    });
+    sendMessage("ircQuitRequest", {})
 
     platform.get.actions.logoutFromMinetogether();
 

@@ -1,15 +1,8 @@
 <template>
   <div class="sidebar small" :class="{ 'is-transparent': isTransparent, 'is-dev': isDev }">
-    <router-link to="/" :class="{ 'item-disabled': disableNav }">
-      <img
-        src="../../../assets/images/ftb-logo.svg"
-        width="60"
-        alt="FTB Logo"
-        class="cursor-pointer logo-hover logo"
-        draggable="false"
-      />
-    </router-link>
-    <div class="nav-items nav-main mt-5">
+    <sidebar-create />
+    
+    <div class="nav-items nav-main mt-2">      
       <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
         <router-link :to="{ name: item.to }" class="nav-item" :class="{ 'item-disabled': disableNav }">
           <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
@@ -28,6 +21,7 @@
 <!--        <span class="whitespace-no-wrap">Friends List</span>-->
 <!--      </a>-->
 
+      
       <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
     </div>
     <popover text="Setup a server with CreeperHost" class="w-full">
@@ -47,18 +41,16 @@
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { AuthState } from '@/modules/auth/types';
 import { Action, State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import { RouterNames } from '@/router';
-import { yeetError } from '@/utils';
+import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
 
 @Component({
-  components: { SidebarProfile },
+  components: {SidebarCreate, SidebarProfile },
 })
 export default class Sidebar extends Vue {
   @State('auth') private auth!: AuthState;
-  @State('settings') private settings!: SettingsState;
   @Prop({ default: false }) isTransparent!: boolean;
   @Prop({ default: false }) isDev!: boolean;
 

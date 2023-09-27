@@ -90,7 +90,6 @@ function createStep(name: string) {
   components: { YggdrasilAuthForm },
 })
 export default class MicrosoftAuth extends Vue {
-  @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
   
   steps: Record<string, ReturnType<typeof createStep>> = {

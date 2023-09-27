@@ -31,21 +31,6 @@ export const prettyByteFormat = (bytes: number) => {
 };
 
 /**
- * @deprecated use the new version instead.
- */
-export const getPackArt = (packArt: any) => {
-  if (typeof packArt === 'string') return packArt;
-  if (!packArt) {
-    return null;
-  }
-  let artP = packArt.filter((art: any) => art.type === 'square' || art.type === 'logo')[0];
-  if (artP === undefined) {
-    return null;
-  }
-  return artP.url;
-};
-
-/**
  * Creates a modpackch api url with the ability to inject an authentication key by default to the url
  *
  * @param url the remainder of the url (Automatically removes the `/` at the start of a string)
@@ -79,47 +64,6 @@ export const abortableFetch = (request: RequestInfo, opts?: RequestInit): Aborta
     abort: () => controller.abort(),
     ready: fetch(request, { ...opts, signal }),
   };
-};
-
-/**
- * Wraps the websocket send message in a timeout-able promise
- *
- * @deprecated use the typed version
- */
-export const wsTimeoutWrapper = (payload: any, timeout: number = 20_000): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
-    let requestId = "";
-    const timer = setTimeout(() => {
-      reject(`[Websocket Timeout] Failed to resolve response from [type: ${payload.type}] with id ${requestId}`);
-    }, timeout);
-
-    requestId = await store.dispatch('sendMessage', {
-      payload,
-      callback: (data: any) => {
-        clearTimeout(timer);
-        resolve(data);
-      },
-    });
-  });
-};
-
-/**
- * @deprecated don't use this one, poor implementation
- */
-export const wsTimeoutWrapperTyped = <T, R>(payload: T, timeout: number = 10_000): Promise<R> => {
-  return new Promise(async (resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(`Failed to resolve response from [type: ${(payload as any).type}]`);
-    }, timeout);
-
-    await store.dispatch('sendMessage', {
-      payload,
-      callback: (data: R) => {
-        clearTimeout(timer);
-        resolve(data);
-      },
-    });
-  });
 };
 
 export const parseMarkdown = (input: string) => markdownParser.render(input); 

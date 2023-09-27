@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="theme-dark">
+  <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar :is-dev="isDev" />
     <div class="app-container" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
@@ -55,6 +55,7 @@ import {AppStoreModules, ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
 import { sendMessage } from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import os from 'os';
 
 @Component({
   components: {
@@ -88,6 +89,8 @@ export default class MainApp extends Vue {
 
   stage = 'Setting up...';
   hasInitialized = false;
+
+  public isMac: boolean = false;
   
   startupJobs = [
     {
@@ -119,6 +122,8 @@ export default class MainApp extends Vue {
   private pollRef: number | null = null;
   
   public mounted() {
+    this.isMac = os.type() === 'Darwin';
+    
     this.registerPingCallback((data: any) => {
       if (data.type === 'ping') {
         gobbleError(() => sendMessage("pong", {}, 500))
@@ -258,6 +263,13 @@ export default class MainApp extends Vue {
     .pushed-content {
       margin-top: -5rem;
     }
+  }
+}
+
+#app.macos {
+  .app-container {
+    // Title bar on macos is 1.8rem not 2rem
+    height: calc(100% - 1.8rem);
   }
 }
 

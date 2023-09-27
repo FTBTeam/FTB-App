@@ -119,6 +119,7 @@ import MessageModal from '../../organisms/modals/MessageModal.vue';
 import { emitter } from '@/utils/event-bus';
 import { prettyByteFormat } from '@/utils/helpers';
 import { getColorForReleaseType } from '@/utils/colors';
+import { sendMessage } from '@/core/websockets/websocketsApi';
 
 type InstallProgress = {
   percentage: number;
@@ -142,8 +143,6 @@ export default class ModCard extends Vue {
     total: 0,
   };
 
-  @Action('sendMessage') public sendMessage!: any;
-
   @Prop() mod!: Mod;
   @Prop() instance!: Instance;
   @Prop() target!: string;
@@ -155,7 +154,7 @@ export default class ModCard extends Vue {
   installing = false;
   finishedInstalling = false;
   installProgress: InstallProgress = ModCard.emptyProgress;
-  wsReqId = -1;
+  wsReqId = "";
 
   getColorForReleaseType = getColorForReleaseType;
   prettyBytes = prettyByteFormat;
@@ -175,7 +174,7 @@ export default class ModCard extends Vue {
   }
 
   onInstallMessage(data: any) {
-    if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
+    if (!this.installing || this.wsReqId !== data.requestId) {
       return;
     }
 
@@ -191,7 +190,7 @@ export default class ModCard extends Vue {
 
     // Handle completion
     if (data.type === 'instanceInstallModReply') {
-      this.wsReqId = -1;
+      this.wsReqId = "";
       this.installing = false;
       this.installProgress = ModCard.emptyProgress;
       this.finishedInstalling = true;
@@ -204,24 +203,19 @@ export default class ModCard extends Vue {
     emitter.off('ws.message', this.onInstallMessage);
   }
 
-  installMod() {
+  async installMod() {
     if (!this.selectedVersion) {
       return;
     }
 
     this.installing = true;
-    this.sendMessage({
-      payload: {
-        type: 'instanceInstallMod',
-        uuid: this.instance?.uuid,
-        modId: this.mod.id,
-        versionId: this.selectedVersion,
-      },
-      callback: (_: any, wsMessageId: number) => {
-        this.wsReqId = wsMessageId;
-      },
-    });
-
+    const result = await sendMessage("instanceInstallMod", {
+      uuid: this.instance?.uuid,
+      modId: this.mod.id,
+      versionId: parseInt(this.selectedVersion, 10),
+    })
+    
+    this.wsReqId = result.messageId;
     this.selectedVersion = null;
   }
 

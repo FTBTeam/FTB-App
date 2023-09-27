@@ -153,7 +153,7 @@ export type MessagePayload = {
     output: InstalledInstancesDataReply
   },
   "launchInstance": {
-    input: LaunchInstanceData,
+    input: Nullable<LaunchInstanceData, "cancelLaunch">,
     output: LaunchInstanceDataReply
   }
   "instance.kill": {
@@ -334,7 +334,7 @@ export type MessagePayload = {
     output: AuthenticateMsProfileHandlerReply
   }
   "profiles.refresh": {
-    input: RefreshAuthenticationProfileHandlerData,
+    input: Nullable<RefreshAuthenticationProfileHandlerData, "liveExpires" | "liveAccessToken" | "liveRefreshToken">,
     output: RefreshAuthenticationProfileHandlerReply
   }
   "profiles.is-valid": {

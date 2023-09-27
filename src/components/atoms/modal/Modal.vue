@@ -92,11 +92,13 @@ export default class Modal extends Vue {
   z-index: 49999; // just under of the title bar
   background: rgba(black, 0.85);
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 2px);
   top: 0;
   left: 0;
   display: grid;
   place-items: center;
+  backdrop-filter: blur(5px);
+  border-right: 1px solid rgba(white, .15);
   
   &.ads {
     width: calc(100vw - (300px + 2.5rem));
@@ -109,11 +111,20 @@ export default class Modal extends Vue {
 
 .fade-and-grow-enter-active,
 .fade-and-grow-leave-active {
-  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out;
+
+  .modal-contents {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
 }
 
 .fade-and-grow-enter,
 .fade-and-grow-leave-to {
   opacity: 0;
+  
+  .modal-contents {
+    opacity: 0;
+    transform: scale(.97) translateY(50px);
+  }
 }
 </style>

@@ -16,7 +16,9 @@ import SettingsSidebar from '@/components/organisms/SettingsSidebar.vue';
     SettingsSidebar,
   },
 })
-export default class SettingsPage extends Vue {}
+export default class SettingsPage extends Vue {
+  
+}
 </script>
 
 <style scoped lang="scss">
@@ -26,10 +28,11 @@ export default class SettingsPage extends Vue {}
 
   > main {
     flex: 1;
-    padding: 2rem 3rem;
+    padding: 1.5rem;
     height: 100%;
     overflow-y: auto;
     background-color: var(--color-navbar);
+    font-size: 14px;
   }
 }
 </style>

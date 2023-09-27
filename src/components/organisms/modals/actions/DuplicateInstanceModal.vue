@@ -35,9 +35,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { wsTimeoutWrapperTyped } from '@/utils';
 import { Action } from 'vuex-class';
-import { Instance } from '@/modules/modpacks/types';
 import { RouterNames } from '@/router';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';

@@ -3,6 +3,8 @@ import { AuthState } from './types';
 import axios from 'axios';
 import { RootState } from '@/types';
 import platfrom from '@/utils/interface/electron-overwolf';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 
 export interface FriendRequestResponse {
   status: string;
@@ -102,26 +104,19 @@ export const actions: ActionTree<AuthState, RootState> = {
     platfrom.get.actions.sendSession(response.headers['app-token']);
     commit('loggedIn');
   },
-  storeAuthDetails({ rootState, commit, dispatch }, payload: any): void {
+  async storeAuthDetails({ rootState, commit, dispatch }, payload: any) {
     payload.friendCode = '';
     commit('storeAuthDetails', payload);
     if (payload === null) {
-      dispatch(
-        'sendMessage',
-        {
-          payload: {
-            type: 'storeAuthDetails',
-            mpKey: '',
-            mpSecret: '',
-            s3Bucket: '',
-            s3Host: '',
-            s3Key: '',
-            s3Secret: '',
-            mtHash: '',
-          },
-        },
-        { root: true },
-      );
+      await sendMessage("storeAuthDetails", {
+        mpKey: '',
+        mpSecret: '',
+        s3Bucket: '',
+        s3Host: '',
+        s3Key: '',
+        s3Secret: '',
+        mtHash: '',
+      })
     } else {
       let s3Bucket = '';
       let s3Host = '';
@@ -142,21 +137,13 @@ export const actions: ActionTree<AuthState, RootState> = {
       if (payload.mc !== undefined && payload.mc.hash !== undefined && payload.mc.hash.long !== undefined) {
         mtHash = payload.mc.hash.long;
       }
-      dispatch(
-        'sendMessage',
-        { payload: { type: 'storeAuthDetails', mpKey, mpSecret: '', s3Bucket, s3Host, s3Key, s3Secret, mtHash } },
-        { root: true },
-      );
-      dispatch(
-        'sendMessage',
-        {
-          payload: { type: 'installedInstances', refresh: true },
-          callback(data: any) {
-            dispatch('modpacks/storeInstalledPacks', data, { root: true });
-          },
-        },
-        { root: true },
-      );
+      await sendMessage("storeAuthDetails", {
+        mpKey, mpSecret: '', s3Bucket, s3Host, s3Key, s3Secret, mtHash
+      })
+      
+      // Refresh instances
+      dispatch('v2/instances/loadInstances')
+
       // TODO: Add back in some way
       // dispatch('modpacks/getPrivatePacks', {}, { root: true });
       if (rootState.settings?.settings.enableChat) {
@@ -271,18 +258,11 @@ export const actions: ActionTree<AuthState, RootState> = {
       return;
     }
     const server = response.data;
-    dispatch(
-      'sendMessage',
-      {
-        payload: {
-          type: 'ircConnect',
-          host: server.server.address,
-          port: server.server.port,
-          nick: state.token?.mc.chat.hash.medium,
-          realname: JSON.stringify({ p: '' }),
-        },
-      },
-      { root: true },
-    );
+    await sendMessage("ircConnect", {
+      host: server.server.address,
+      port: server.server.port,
+      nick: state.token?.mc.chat.hash.medium ?? "",
+      realname: JSON.stringify({ p: '' }),
+    })
   },
 };

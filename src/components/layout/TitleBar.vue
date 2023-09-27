@@ -50,10 +50,11 @@ import {Action, Mutation, State} from 'vuex-class';
 import os from 'os';
 import platform from '@/utils/interface/electron-overwolf';
 import { SettingsState } from '@/modules/settings/types';
+import { sendMessage } from '@/core/websockets/websocketsApi';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
 
 @Component
 export default class TitleBar extends Vue {
-  @Action('sendMessage') public sendMessage: any;
   @Action('disconnect') public disconnect: any;
   @State('settings') private settings!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
@@ -97,11 +98,7 @@ export default class TitleBar extends Vue {
   }
 
   openDebugger() {
-    this.sendMessage({
-      payload: {
-        type:"openDebugTools"
-      }
-    })
+    gobbleError(() => sendMessage("openDebugTools", {}))
   }
 }
 </script>

@@ -3,7 +3,6 @@ import { SocketState } from './types';
 import { RootState } from '@/types';
 import Vue from 'vue';
 import { logVerbose } from '@/utils';
-import axios from 'axios';
 import platform from '@/utils/interface/electron-overwolf';
 
 export interface MessageData {
@@ -51,15 +50,15 @@ export const actions: ActionTree<SocketState, RootState> = {
     { commit, rootState }: ActionContext<SocketState, RootState>,
     data: { html: string; object: string },
   ) {
-    try {
-      const response = await axios.post(`https://minetogether.io/api/reportAd`, data, {
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-    } catch (err) {
-      console.log(err);
-      return;
-    }
+    // try {
+    //   const response = await axios.post(`https://minetogether.io/api/reportAd`, data, {
+    //     headers: {
+    //       Accept: 'application/json',
+    //     },
+    //   });
+    // } catch (err) {
+    //   console.log(err);
+    //   return;
+    // }
   },
 };

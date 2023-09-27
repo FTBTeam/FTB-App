@@ -111,7 +111,6 @@ import Loading2 from '@/components/atoms/Loading2.vue';
   components: {Loading2, MicrosoftAuth, YggdrasilAuthForm},
 })
 export default class Authentication extends Vue {
-  @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
 
   @Prop() public jump!: string;

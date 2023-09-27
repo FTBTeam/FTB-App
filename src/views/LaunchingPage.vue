@@ -201,7 +201,6 @@ import { Action, Getter, State } from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
-import InstallModal from '@/components/organisms/modals/InstallModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
@@ -209,7 +208,6 @@ import { SettingsState } from '@/modules/settings/types';
 import { AuthState } from '@/modules/auth/types';
 import { emitter } from '@/utils/event-bus';
 import { RouterNames } from '@/router';
-import {wsTimeoutWrapper, wsTimeoutWrapperTyped, yeetError} from '@/utils';
 import Router from 'vue-router';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
@@ -253,11 +251,10 @@ function openFolderAction(name: string, path: string): InstanceAction {
     icon: "folder-open",
     condition: ({instanceFolders}) => folderExists(path, instanceFolders),
     action: (instance) => {
-      wsTimeoutWrapper({
-        type: 'instanceBrowse',
+      sendMessage("instanceBrowse", {
         uuid: instance.uuid,
         folder: path,
-      });
+      })
     }
   } 
 }
@@ -270,10 +267,10 @@ const instanceActions: InstanceActionCategory[] = [
         title: "Instance folder",
         icon: "folder-open",
         action: (instance) => {
-          wsTimeoutWrapper({
-            type: 'instanceBrowse',
+          sendMessage("instanceBrowse", {
             uuid: instance.uuid,
-          });
+            folder: null
+          })
         }
       },
       openFolderAction("Logs", "logs"),
@@ -296,10 +293,11 @@ const instanceActions: InstanceActionCategory[] = [
         icon: "skull-crossbones",
         color: "danger",
         action: (instance) => {
-          wsTimeoutWrapper({
-            type: 'instance.kill',
-            uuid: instance.uuid,
-          });
+          gobbleError(() => {
+            sendMessage("instance.kill", {
+              uuid: instance.uuid
+            })
+          })
         },
         looksLikeButton: true
       }
@@ -318,7 +316,6 @@ export interface Bar {
   name: 'LaunchingPage',
   components: {
     'ftb-toggle': FTBToggle,
-    InstallModal,
     FTBModal,
     'message-modal': MessageModal,
     ProgressBar,
@@ -331,7 +328,6 @@ export default class LaunchingPage extends Vue {
   
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
   
-  @Action('sendMessage') public sendMessage!: any;
   @State('settings') public settingsState!: SettingsState;
   @State('auth') public auth!: AuthState;
 
@@ -374,22 +370,11 @@ export default class LaunchingPage extends Vue {
   };
 
   public cancelLoading() {
-    this.sendMessage({
-      payload: {
-        type: 'instance.kill',
-        uuid: this.instance?.uuid,
-      },
-    });
-  }
-
-  public restoreLoading() {
-    this.sendMessage({
-      payload: {
-        type: 'messageClient',
-        uuid: this.instance?.uuid,
-        message: 'show',
-      },
-    });
+    gobbleError(() => {
+      sendMessage("instance.kill", {
+        uuid: this.instance?.uuid ?? ""
+      })
+    })
   }
 
   public async mounted() {
@@ -454,12 +439,11 @@ export default class LaunchingPage extends Vue {
   }
 
   async showInstance() {
-    await yeetError(async () => {
-      await wsTimeoutWrapper({
-        type: 'messageClient',
-        uuid: this.instance?.uuid,
+    await gobbleError(async () => {
+      await sendMessage('messageClient', {
+        uuid: this.instance?.uuid ?? "",
         message: 'show',
-      });
+      })
     })
   }
 
@@ -482,7 +466,7 @@ export default class LaunchingPage extends Vue {
   }
 
   handleLogMessages(data: any) {
-    yeetError(() => this.lazyLogChecker(data.messages));
+    gobbleError(() => this.lazyLogChecker(data.messages));
     for (const e of data.messages) {
       this.messages.push(this.formatMessage(e));
     }
@@ -553,36 +537,35 @@ export default class LaunchingPage extends Vue {
     const disableChat = this.settingsState.settings.enableChat;
     this.preLaunch = true;
 
-    this.sendMessage({
-      payload: {
-        type: 'launchInstance',
-        uuid: this.instance?.uuid,
-        extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
-        offline: this.$route.query.offline,
-        offlineUsername: this.$route.query.username ?? 'FTB Player',
-      },
-      callback: (data: any) => {
-        // TODO: Replace with something much better!
-        if (data.status === 'error') {
-          this.preLaunch = false;
-          // An instance is already running
-          this.msgBox.type = 'okOnly';
-          this.msgBox.title = 'An error occurred whilst launching';
-          this.msgBox.okAction = () => (this.showMsgBox = false);
-          this.msgBox.content = data.message;
-          this.showMsgBox = true;
-        } else if (data.status === 'success') {
-          this.preLaunch = false;
-        }
-      },
-    });
+    const result = await sendMessage("launchInstance", {
+      uuid: this.instance?.uuid ?? "",
+      extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
+      offline: this.$route.query.offline === "true",
+      offlineUsername: this.$route.query.username as string ?? 'FTB Player',
+      cancelLaunch: null
+    })
+   
+    // TODO: Replace with something much better!
+    if (result.status === 'error') {
+      this.preLaunch = false;
+      // An instance is already running
+      this.msgBox.type = 'okOnly';
+      this.msgBox.title = 'An error occurred whilst launching';
+      this.msgBox.okAction = () => (this.showMsgBox = false);
+      this.msgBox.content = result.message;
+      this.showMsgBox = true;
+    } else if (result.status === 'success') {
+      this.preLaunch = false;
+    }
   }
 
   openFolder() {
-    this.sendMessage({
-      payload: { type: 'instanceBrowse', uuid: this.instance?.uuid },
-      callback: (data: any) => {},
-    });
+    gobbleError(() => {
+      sendMessage("instanceBrowse", {
+        uuid: this.instance?.uuid ?? "",
+        folder: null
+      })
+    })
   }
 
   get instance() {
