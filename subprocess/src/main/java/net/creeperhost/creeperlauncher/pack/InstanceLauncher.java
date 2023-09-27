@@ -470,6 +470,9 @@ public class InstanceLauncher {
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
+            if (instance.props.fullscreen) {
+                command.add("--fullscreen");
+            }
             ProcessBuilder builder = new ProcessBuilder()
                     .directory(gameDir.toFile())
                     .command(command);

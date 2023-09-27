@@ -45,6 +45,7 @@ public class InstanceJson {
     public Path jrePath = Settings.getPathOpt("jrePath", null);
     public int width = Integer.parseInt(Settings.settings.getOrDefault("width", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2)));
     public int height = Integer.parseInt(Settings.settings.getOrDefault("height", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2)));
+    public boolean fullscreen = false;
     public String modLoader = "";
 
     public boolean isModified;
