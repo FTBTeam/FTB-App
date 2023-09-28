@@ -501,7 +501,7 @@ public class Instance {
         return new Instance(newDir, newJson);
     }
 
-    public List<ModInfo> getMods() {
+    public synchronized List<ModInfo> getMods() {
         LOGGER.info("Building instance mods list..");
         List<ModInfo> mods = new ArrayList<>();
 
