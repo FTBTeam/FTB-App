@@ -19,7 +19,7 @@
             @input="$emit('input', $event.target.value)"
             @blur="$emit('blur')"
           />
-          <transition name="fade">
+          <transition name="transition-fade">
             <div
               class="copy-btn bg-blue-700 hover:bg-blue-500 rounded px-3 py-1 text-sm cursor-pointer"
               v-show="value.length > 0"
@@ -108,15 +108,6 @@ label {
     top: 50%;
     right: 0.5rem;
     transform: translateY(-50%);
-
-    &.fade-enter-active,
-    &.fade-leave-active {
-      transition: opacity 0.5s;
-    }
-    &.fade-enter,
-    &.fade-leave-to {
-      opacity: 0;
-    }
   }
 
   input[disabled] {

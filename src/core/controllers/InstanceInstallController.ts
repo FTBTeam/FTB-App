@@ -4,7 +4,7 @@ import {
   CloudSavesReloadedData,
   FilesEvent,
   InstallInstanceDataProgress,
-  InstallInstanceDataReply, InstanceJson,
+  InstallInstanceDataReply, InstallStage, InstanceJson,
   SugaredInstanceJson
 } from '@/core/@types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -21,6 +21,7 @@ export type InstallRequest = {
   logo: string | null;
   updatingInstanceUuid?: string;
   importFrom?: string;
+  shareCode?: string;
   category?: string;
   provider?: PackProviders;
   private: boolean
@@ -28,17 +29,28 @@ export type InstallRequest = {
 
 export type InstallStatus = {
   request: InstallRequest,
-  status: "installing" | "failed" | "success";
   stage: string;
   progress: string;
-  error?: string;
   forInstanceUuid: string;
+  files?: {
+    total: number;
+    downloaded: number;
+  }
 }
 
 type InstallResult = {
   success: boolean;
+  message?: string;
   instance?: SugaredInstanceJson;
 }
+
+const betterStageNames: Map<InstallStage, string> = new Map([
+  ["INIT", "Initializing"],
+  ["PREPARE", "Preparing"],
+  ["MODLOADER", "Mod Loader"],
+  ["DOWNLOADS", "Downloading"],
+  ["FINISHED", "Done!"]
+])
 
 /**
  * Instance install controller backed by a vuex store queue
@@ -92,7 +104,6 @@ class InstanceInstallController {
     await this.checkQueue();
   }
   
-  // TODO: Implement this
   public async requestImport(path: string) {
     this.queue.push({
       uuid: crypto.randomUUID(),
@@ -107,6 +118,24 @@ class InstanceInstallController {
       importFrom: path,
     })
     
+    // Trigger a check queue
+    await this.checkQueue();
+  }
+  
+  public async requestShareImport(shareCode: string) {
+    this.queue.push({
+      uuid: crypto.randomUUID(),
+      id: -1,
+      version: -1,
+      name: "Import",
+      versionName: "Import",
+      logo: null,
+      category: "Default",
+      private: false,
+      provider: "modpacksch",
+      shareCode: shareCode,
+    })
+
     // Trigger a check queue
     await this.checkQueue();
   }
@@ -152,22 +181,26 @@ class InstanceInstallController {
 
     let payload: any = {};
     
-    if (!request.importFrom) {
+    if (!request.importFrom && !request.shareCode) {
       payload = {
         uuid: request.updatingInstanceUuid ?? "", // This flag is what tells the API to update an instance
         id: parseInt(request.id as string, 10),
         version: parseInt(request.version as string, 10),
         _private: request.private,
         packType: !request.provider ? 0 : (request.provider === "modpacksch" ? 0 : 1), // TODO: Support other providers
-        shareCode: "", // TODO: Support share codes
-        importFrom: null, // TODO: Support imports
+        shareCode: "",
+        importFrom: null,
         name: request.name,
         artPath: request.logo,
         category: request.category ?? "Default",
       }
-    } else {
+    } else if (request.importFrom) {
       payload = {
         importFrom: request.importFrom
+      }
+    } else if (request.shareCode) {
+      payload = {
+        shareCode: request.shareCode
       }
     }
     
@@ -188,63 +221,75 @@ class InstanceInstallController {
       store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
     }
     
-    console.log("Install request sent", installResponse)
-    
     const installRequest: InstallResult = await new Promise((resolve, reject) => {
       
       this.updateInstallStatus({
         request,
-        status: "installing",
         progress: "0",
         stage: "Starting install",
         forInstanceUuid: knownInstanceUuid
       });
       
+      let knownFiles: { id: number, name: string}[] = [];
+      let knownFilesTotal = 0;
+      
+      let lastKnownProgress: string | undefined = undefined;
+      let lastKnownStage: string | undefined = undefined;
+      let lastKnownFiles: { total: number; downloaded: number } | null = null;
       const instanceInstaller = (data: InstallInstanceDataReply | InstallInstanceDataProgress | FilesEvent) => {
+        
         if (data.type === "installInstanceDataReply") {
           const typedData = data as InstallInstanceDataReply;
-          if (typedData.status === "error") {
-            this.updateInstallStatus({
-              request,
-              status: "failed",
-              stage: "Failed to install",
-              progress: "0",
-              error: typedData.message,
-              forInstanceUuid: knownInstanceUuid
-            });
-            
+          if (typedData.status === "error") {            
             return finish({
               success: false,
+              message: typedData.message,
             });
           } else if (typedData.status === "success") {
-            this.updateInstallStatus({
-              request,
-              stage: "Installed",
-              status: "success",
-              progress: "100",
-              forInstanceUuid: knownInstanceUuid
-            });
-            
             return finish({
               success: true,
               instance: typedData.instanceData as SugaredInstanceJson, // It's not really but it's fine
             });
           } else if (typedData.status === "files") {
-            // No Op for now...
-            // TODO: Figure this one out.
+            try {
+              knownFiles = JSON.parse(typedData.message);
+              if (knownFiles && knownFiles.length > 0) {
+                knownFilesTotal = knownFiles.length;
+                lastKnownFiles = {
+                  total: knownFilesTotal,
+                  downloaded: 0,
+                }
+              }
+            } catch {}
+          } else if (typedData.status === "init") {
+            lastKnownStage = "Initializing";
+            lastKnownProgress = "0";
           }
         } else if (data.type === "installInstanceProgress") {
           const typedData = data as InstallInstanceDataProgress;
-          this.updateInstallStatus({
-            request,
-            stage: toTitleCase(typedData.currentStage),
-            status: "installing",
-            progress: typedData.overallPercentage.toFixed(1),
-            forInstanceUuid: knownInstanceUuid
-          })
+          lastKnownStage = betterStageNames.get(typedData.currentStage) ?? toTitleCase(typedData.currentStage);
+          lastKnownProgress = typedData.overallPercentage.toFixed(1);
         } else if (data.type === "install.filesEvent") {
           const typedData = data as FilesEvent;
-          // NO OP for now
+          const files = typedData.files;
+          const downloadedFileIds = Object.keys(files)
+            .filter(e => files[e] === "downloaded")
+          
+          knownFiles = knownFiles.filter(f => !downloadedFileIds.includes(f.id.toString()));
+          lastKnownFiles = {
+            total: knownFilesTotal,
+            downloaded: knownFilesTotal - knownFiles.length,
+          }
+        }
+        
+        if (data.type === "installInstanceProgress" || data.type === "installInstanceDataReply" || data.type === "install.filesEvent") {
+          this.updateInstallStatus({
+            request,
+            stage: lastKnownStage ?? "",
+            progress: lastKnownProgress ?? "",
+            files: lastKnownFiles ?? undefined,
+            forInstanceUuid: knownInstanceUuid
+          });
         }
       }
       
@@ -284,7 +329,6 @@ class InstanceInstallController {
    * Appends a cloud instance to the store if it doesn't already exist as these are loaded later in the lifecycle
    */
   private async addCloudInstances(payload: CloudSavesReloadedData) {
-    console.log("Cloud instances reloaded", payload)
     if (!payload.changedInstances.length) {
       return;
     }
@@ -292,10 +336,8 @@ class InstanceInstallController {
     for (const pack of payload.changedInstances) {
       // We shouldn't already have it but we might so keep it in sync regardless
       if ((store.state as any)['v2/instances'].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
-        console.log('Adding new instance', pack);
         await store.dispatch('v2/instances/addInstance', pack, {root: true});
       } else {
-        console.log('Updating instance', pack);
         await store.dispatch('v2/instances/updateInstance', pack, {root: true});
       }
     }

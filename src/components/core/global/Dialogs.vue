@@ -1,7 +1,7 @@
 <template>
-  <transition name="fade" duration="250">
-    <div class="dialog-container" v-if="dialogs.length" @click.self="closeTopDialog">
-      <transition-group class="stacker" tag="div" name="push-in" duration="250">
+  <transition name="transition-fade" duration="250">
+    <div class="dialog-container" :class="{'overwolf': appPlatform.isOverwolf()}" v-if="dialogs.length" @click.self="closeTopDialog">
+      <transition-group class="stacker" tag="div" name="transition-fade" duration="250">
         <div
           v-for="(dialog, index) in dialogs"
           :key="`dialog-${index}`"
@@ -24,7 +24,7 @@
             </div>
             
             <div class="modal-body wysiwyg" v-html="parseMarkdown(dialog.content)" />
-            
+              
             <div class="modal-footer">
               <div class="buttons">
                 <ftb-button v-for="(button, index) in dialog.buttons"
@@ -80,6 +80,10 @@ export default class Dialogs extends Vue {
   height: 100%;
   overflow: hidden;
   background: rgba(black, 0.75);
+  
+  &.overwolf {
+    width: calc(100% - 400px);
+  }
 
   .stacker {
     position: relative;
@@ -92,16 +96,9 @@ export default class Dialogs extends Vue {
   }
   
   .dialog {
-    position: relative;
-    //width: 400px;
-    //min-height: 300px;
-    //box-shadow: 0 5px 18px rgba(black, .3);
     transition: opacity .25s ease-in-out;
     opacity: 1;
-    
-    //&:not(:last-child) {
-      position: absolute;
-    //}
+    position: absolute;
     
     .modal-contents {
       transform-origin: left center;
@@ -115,17 +112,5 @@ export default class Dialogs extends Vue {
       flex-wrap: wrap;
     }
   }
-}
-
-.push-in-enter-to, .push-in-leave-to {
-  opacity: 0;
-}
-
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .25s ease-in-out, backdrop-filter .25s ease-in-out;
-}
-
-.fade-enter, .fade-leave-to {
-  opacity: 0;
 }
 </style>

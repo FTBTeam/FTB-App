@@ -1,6 +1,9 @@
 :root {
   --curse-color-hsl: 15 87% 58%;
   --curse-color: hsl(var(--curse-color-hsl));
+  
+  // Standard animation timing
+  --transition-duration: 0.25s;
 }
 
 html,
@@ -22,6 +25,7 @@ body {
 }
 
 @import "modals";
+@import "animations";
 
 .pack-page {
   position: relative;

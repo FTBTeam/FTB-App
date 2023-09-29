@@ -1,5 +1,4 @@
 import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
-import {AppState} from '@/core/state/appState';
 import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
 import {RootState} from '@/types';
 

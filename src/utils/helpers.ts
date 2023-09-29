@@ -1,7 +1,20 @@
 import store from '@/modules/store';
 import MarkdownIt from 'markdown-it';
+import Router, {RouterNames} from '@/router';
 
 const markdownParser = new MarkdownIt();
+
+export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
+  if (Router.currentRoute.name === name) {
+    return;
+  }
+  
+  try {
+    Router.push({name, params, query});
+  } catch (e) {
+    // Ignore
+  }
+}
 
 // TODO: Rewrite, this isn't a great implementation.
 export const prettyByteFormat = (bytes: number) => {

@@ -28,6 +28,7 @@ import ModalFooter from '@/components/atoms/modal/ModalFooter.vue';
 import ModalBody from '@/components/atoms/modal/ModalBody.vue';
 import {localiseNumber, toTitleCase} from '@/utils/helpers/stringHelpers';
 import {standardDate, standardDateTime, timeFromNow} from '@/utils/helpers/dateHelpers';
+import VueMixins from '@/core/vueMixins.vue';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -80,23 +81,7 @@ const appSetup = async () => {
   Vue.config.productionTip = false;
   Vue.config.devtools = true;
 
-  Vue.mixin({
-    methods: {
-      openExternal(event: any) {
-        event.preventDefault();
-        let urlTarget = event.target;
-        if (event.target.tagName !== 'A') {
-          // Get the closest parent link
-          urlTarget = event.target.closest('a');
-        }
-        
-        platform.get.utils.openUrl(urlTarget.href);
-      },
-      copyToClipboard(text: string) {
-        platform.get.cb.copy(text);
-      },
-    },
-  });
+  Vue.mixin(VueMixins);
 
   Vue.filter('dayjs', standardDate);
   Vue.filter('dayjsFull', standardDateTime);
@@ -109,7 +94,7 @@ const appSetup = async () => {
     store,
     render: (h: any) => h(App),
   }).$mount('#app');
-
+  
   platform.get.setupApp(vm);
 };
 

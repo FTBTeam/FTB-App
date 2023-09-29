@@ -127,7 +127,7 @@ export default class PackPreview extends PackCardCommon {
       return false;
     }
     
-    return this.currentInstall?.request.id === this.apiModpack?.id && !this.currentInstall?.request.updatingInstanceUuid;
+    return this.currentInstall?.request.id === this.apiModpack?.id && !this.currentInstall?.request?.updatingInstanceUuid;
   }
 }
 </script>

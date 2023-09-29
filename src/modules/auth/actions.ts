@@ -145,7 +145,9 @@ export const actions: ActionTree<AuthState, RootState> = {
       }, 100))
       
       // Refresh instances
-      dispatch('v2/instances/loadInstances')
+      dispatch('v2/instances/loadInstances', undefined, {
+        root: true
+      })
 
       // TODO: Add back in some way
       // dispatch('modpacks/getPrivatePacks', {}, { root: true });
@@ -261,11 +263,11 @@ export const actions: ActionTree<AuthState, RootState> = {
       return;
     }
     const server = response.data;
-    await sendMessage("ircConnect", {
+    await gobbleError(() => sendMessage("ircConnect", {
       host: server.server.address,
       port: server.server.port,
       nick: state.token?.mc.chat.hash.medium ?? "",
       realname: JSON.stringify({ p: '' }),
-    })
+    }, 1_000))
   },
 };

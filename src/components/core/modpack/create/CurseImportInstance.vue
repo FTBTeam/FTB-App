@@ -15,11 +15,11 @@
         <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />
       </div>
 
-      <transition name="fade" duration="250">
+      <transition name="transition-fade" duration="250">
         <p v-if="activeFile" class="font-bold mt-4 text-base mb-2">Selected file</p>
       </transition>
       
-      <transition name="fade" duration="250">
+      <transition name="transition-fade" duration="250">
         <div class="file flex items-center p-4 pl-6" v-if="activeFile">
           <font-awesome-icon icon="file-zipper" size="2x" class="mr-6" />
           <div class="text flex-1">
@@ -143,16 +143,5 @@ export default class CurseImportInstance extends Vue {
     padding: .5rem;
     cursor: pointer;
   }
-}
-
-// TODO: Stop duplicating this
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.4s;
-}
-
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

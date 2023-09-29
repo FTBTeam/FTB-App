@@ -7,6 +7,19 @@
           <font-awesome-icon icon="cloud" />
         </div>
       </div>
+      
+      <transition name="transition-fade" duration="250">
+        <div class="install-progress" v-if="isInstalling && currentInstall">
+          <div class="percent">{{currentInstall.progress}}<span>%</span></div>
+          <b>{{currentInstall.stage ?? "??"}}</b>
+          <transition name="transition-fade" duration="250">
+            <div class="files" v-if="currentInstall.files">
+              <font-awesome-icon icon="download" class="mr-2" /><b>{{ currentInstall.files.downloaded }}</b> / <span class="opacity-75">{{currentInstall.files.total}}</span>
+            </div>
+          </transition>
+          <progress-bar class="progress" :progress="parseFloat(currentInstall?.progress ?? '0') / 100" />
+        </div>
+      </transition>
     </div>
     <div class="card-body">
       <div class="info">
@@ -42,9 +55,11 @@ import {instanceInstallController} from '@/core/controllers/InstanceInstallContr
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import Popover from '@/components/atoms/Popover.vue';
 import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
+import ProgressBar from '@/components/atoms/ProgressBar.vue';
 
 @Component({
   components: {
+    ProgressBar,
     ModpackInstallModal,
     Popover
   }
@@ -88,7 +103,6 @@ export default class PackCard2 extends PackCardCommon {
       return;
     }
     
-    console.log("update instance", this.instance, latestVersion)
     instanceInstallController.requestUpdate(this.instance, latestVersion);
   }
   
@@ -118,7 +132,7 @@ export default class PackCard2 extends PackCardCommon {
   }
   
   get isUpdating() {
-    return this.currentInstall?.request.updatingInstanceUuid === this.instance.uuid;
+    return this.currentInstall?.request?.updatingInstanceUuid === this.instance.uuid;
   }
   
   get needsSyncing() {
@@ -150,7 +164,6 @@ export default class PackCard2 extends PackCardCommon {
     
     > img {
       border-radius: 8px;
-      border: 1px solid rgba(black, 0.5);
       box-shadow: 0 2px 10px rgba(black, 0.2);
     }
     
@@ -213,6 +226,41 @@ export default class PackCard2 extends PackCardCommon {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+  }
+  
+  .install-progress {
+    position: absolute;
+    inset: 0;
+    padding: .5rem;
+    background-color: rgba(black, .5);
+    backdrop-filter: blur(3px);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    .percent {
+      font-size: 1.8rem;
+      font-weight: bold;
+      
+      span {
+        font-size: 1.25rem;
+        font-weight: normal;
+        margin-left: .5rem;
+      }
+    }
+    
+    b {
+      margin-bottom: .5rem;
+    }
+    
+    .progress {
+      position: absolute;
+      bottom: 0;
+      height: 12px !important;
+      border-radius: 0 0 8px 8px;
     }
   }
 }

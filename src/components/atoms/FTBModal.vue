@@ -1,5 +1,5 @@
 <template>
-  <Transition name="fade">
+  <Transition name="transition-fade">
     <div
       v-if="visible"
       class="left-0 top-0 flex items-center justify-center bg-transparent-black h-screen ftb-modal"
@@ -79,15 +79,6 @@ export default class FTBModal extends Vue {
       width: calc(100vw - 400px);
     }
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.4s;
-}
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
 }
 
 .ftb-modal-contents {
