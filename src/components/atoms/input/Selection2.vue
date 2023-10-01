@@ -19,7 +19,7 @@
         <font-awesome-icon class="arrow" icon="chevron-down" />
       </div>
 
-      <div class="dropdown open-up">
+      <div class="dropdown" :class="{'open-up': openUp}">
         <div class="item list-item" v-for="(option, index) in options" :key="index" @click="() => select(option)">
           <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
             {{ option.badge.text }}
@@ -59,6 +59,8 @@ export default class Selection2 extends Vue {
   
   @Prop({ default: false }) badgeEnd!: boolean;
   @Prop({default: false}) allowDeselect!: boolean;
+  
+  @Prop({default: false}) openUp!: boolean;
   
   @Prop({default: null}) value!: any;
   @Emit() change(value: any) {
