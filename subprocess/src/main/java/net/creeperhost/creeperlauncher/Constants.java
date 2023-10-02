@@ -80,6 +80,7 @@ public class Constants {
     );
 
     public static final CurseMetadataCache CURSE_METADATA_CACHE = new CurseMetadataCache(getDataDir().resolve(".curse_meta.json"));
+    public static final ModVersionCache MOD_VERSION_CACHE = new ModVersionCache(getDataDir().resolve(".mod_meta.json"));
 
     @Nullable
     private static OkHttpClient OK_HTTP_CLIENT;
