@@ -5,6 +5,7 @@ import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
+import net.creeperhost.creeperlauncher.data.mod.CurseMetadata;
 import net.creeperhost.creeperlauncher.data.mod.ModInfo;
 import net.creeperhost.creeperlauncher.data.mod.ModManifest;
 import net.creeperhost.creeperlauncher.install.tasks.*;
@@ -76,8 +77,11 @@ public class ModInstaller implements ModCollector {
             ModManifest manifest = pair.getKey();
             ModManifest.Version version = pair.getValue();
             for (ModInfo existingMod : existingMods) {
+                CurseMetadata curse = existingMod.curse();
+                if (curse == null) continue;
+
                 // TODO, What if the version is different, should we update instead?
-                if (manifest.getId() == existingMod.curseProject()) {
+                if (manifest.getId() == curse.curseProject()) {
                     LOGGER.info("Removing already satisfied dependency: {}({}) ({}){}", manifest.getName(), manifest.getId(), version.getId(), version.getName());
                     return true;
                 }

@@ -178,7 +178,6 @@ public class ModVersionCache {
     }
 
     private record CacheEntry(long ts, CachedMod mod) {
-
     }
 
     public record CachedMod(String name, String synopsis, String description, ModManifest.Version version) {

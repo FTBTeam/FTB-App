@@ -7,6 +7,7 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.data.mod.CurseMetadata;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,21 +57,21 @@ public class CurseMetadataCache {
         this.metadata = metadata;
     }
 
-    public CurseIds getCurseIds(@Nullable ModpackVersionModsManifest.Mod mod, String sha1) {
-        long projectId = -1;
-        long fileId = -1;
+    public @Nullable CurseMetadata getCurseIds(@Nullable ModpackVersionModsManifest.Mod mod, String sha1) {
         if (mod != null) {
-            projectId = mod.getCurseProject();
-            fileId = mod.getFileId();
+            long projectId = mod.getCurseProject();
+            long fileId = mod.getCurseFile();
+            String name = mod.getName();
+            String synopsis = mod.getSynopsis();
+            String icon = mod.getIcon();
+            return new CurseMetadata(projectId, fileId, name, synopsis, icon);
         }
-        if (projectId == -1 || fileId == -1) {
-            FileMetadata metadata = queryMetadata(sha1);
-            if (metadata != null) {
-                projectId = metadata.curseProject();
-                fileId = metadata.curseFile();
-            }
+
+        FileMetadata metadata = queryMetadata(sha1);
+        if (metadata != null) {
+            return metadata.toCurseInfo();
         }
-        return new CurseIds(projectId, fileId);
+        return null;
     }
 
     /**
@@ -141,20 +142,23 @@ public class CurseMetadataCache {
         }
     }
 
-    public record CurseIds(long curseProject, long curseFile) { }
-
     // Only the useful things from /public/mod/lookup/<hash>
     public record FileMetadata(
             long fileId,
             String name,
-//            String synopsis,
-//            String icon,
+            String synopsis,
+            String icon,
             String curseSlug,
             long curseProject,
             long curseFile,
 //            long stored,
             String filename
-    ) { }
+    ) {
+
+        public CurseMetadata toCurseInfo() {
+            return new CurseMetadata(curseProject, curseFile, name, synopsis, icon);
+        }
+    }
 
     public record FileLookupResponse(String status, FileMetadata meta) {
     }

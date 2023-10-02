@@ -13,6 +13,7 @@ import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
 import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
+import net.creeperhost.creeperlauncher.data.mod.CurseMetadata;
 import net.creeperhost.creeperlauncher.data.mod.ModInfo;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
@@ -20,7 +21,6 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
-import net.creeperhost.creeperlauncher.util.CurseMetadataCache.CurseIds;
 import net.creeperhost.creeperlauncher.util.CurseMetadataCache.FileMetadata;
 import net.creeperhost.creeperlauncher.util.DialogUtil;
 import net.creeperhost.creeperlauncher.util.FileUtils;
@@ -122,7 +122,7 @@ public class Instance {
                 }
             }
         }
-        
+
         ModpackManifest.Art art = modpack.getFirstArt("square");
         if (art != null) {
             Path tempFile = null;
@@ -130,9 +130,9 @@ public class Instance {
                 tempFile = Files.createTempFile("art", "");
                 Files.delete(tempFile);
                 NewDownloadTask task = NewDownloadTask.builder()
-                    .url(art.getUrl())
-                    .dest(tempFile)
-                    .build();
+                        .url(art.getUrl())
+                        .dest(tempFile)
+                        .build();
                 task.execute(null, null);
                 try (InputStream is = Files.newInputStream(tempFile)) {
                     doImportArt(is);
@@ -150,7 +150,7 @@ public class Instance {
             }
         }
     }
-    
+
     public void syncFinished() throws IOException {
         pendingCloudInstance = false;
         props = InstanceJson.load(getDir().resolve("instance.json"));
@@ -512,37 +512,36 @@ public class Instance {
 
         // Populate all mods from the regular version manifest.
         for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
-            if (file.getPath().startsWith("./mods") && isMod(file.getName())) {
-                String sha1 = Objects.toString(file.getSha1OrNull(), null);
+            if (!file.getPath().startsWith("./mods") || !isMod(file.getName())) continue;
 
-                ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
-                ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
+            String sha1 = Objects.toString(file.getSha1OrNull(), null);
 
-                boolean fileExists = Files.exists(file.toPath(path));
+            ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
+            ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
 
-                // File is in its default state.
-                if (override != null && fileExists) {
-                    assert override.getState() == ModOverrideState.ENABLED || override.getState() == ModOverrideState.DISABLED;
-                    LOGGER.info("Cleaning up redundant override: {}", override);
-                    modifications.getOverrides().remove(override);
-                    override = null;
-                }
+            boolean fileExists = Files.exists(file.toPath(path));
 
-                // Enabled if override says it is, OR the file exists AND does not have .disabled
-                boolean enabled = (override != null && override.getState().enabled) || (fileExists && !file.getName().endsWith(".disabled"));
-
-                CurseIds ids = Constants.CURSE_METADATA_CACHE.getCurseIds(mod, sha1);
-                mods.add(new ModInfo(
-                        file.getId(),
-                        file.getName(),
-                        file.getVersionOrNull(),
-                        enabled,
-                        file.getSize(),
-                        sha1,
-                        ids.curseProject(),
-                        ids.curseFile()
-                ));
+            // File is in its default state.
+            if (override != null && fileExists) {
+                assert override.getState() == ModOverrideState.ENABLED || override.getState() == ModOverrideState.DISABLED;
+                LOGGER.info("Cleaning up redundant override: {}", override);
+                modifications.getOverrides().remove(override);
+                override = null;
             }
+
+            // Enabled if override says it is, OR the file exists AND does not have .disabled
+            boolean enabled = (override != null && override.getState().enabled) || (fileExists && !file.getName().endsWith(".disabled"));
+
+            CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseIds(mod, sha1);
+            mods.add(new ModInfo(
+                    file.getId(),
+                    file.getName(),
+                    file.getVersionOrNull(),
+                    enabled,
+                    file.getSize(),
+                    sha1,
+                    ids
+            ));
         }
 
         // Mods added manually or via CurseForge integ.
@@ -559,8 +558,13 @@ public class Instance {
                         override.getState().enabled,
                         tryGetSize(file),
                         override.getSha1(),
-                        override.getCurseProject(),
-                        override.getCurseFile()
+                        new CurseMetadata(
+                                override.getCurseProject(),
+                                override.getCurseFile(),
+                                null,
+                                null,
+                                null
+                        )
                 ));
             }
         }
@@ -607,8 +611,7 @@ public class Instance {
                     state.enabled,
                     size,
                     sha1,
-                    curseProject,
-                    curseFile
+                    metadata != null ? metadata.toCurseInfo() : null
             ));
 
             getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, curseProject, curseFile));
