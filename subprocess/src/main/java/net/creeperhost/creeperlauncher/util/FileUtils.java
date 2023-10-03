@@ -140,6 +140,8 @@ public class FileUtils
     }
 
     public static List<Path> listDir(Path dir) {
+        if (Files.notExists(dir)) return Collections.emptyList();
+
         try (Stream<Path> stream = Files.walk(dir, 1)) {
             return stream.filter(e -> !e.equals(dir))
                     .collect(Collectors.toList());
