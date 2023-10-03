@@ -36,6 +36,7 @@ dayjs.extend(relativeTime);
 const appSetup = async () => {
   try {
     await platform.setup();
+    (window as any).platform = platform;
   } catch (e) {
     console.log('Platform failed resolve deps', e);
   }

@@ -3,6 +3,10 @@ import MarkdownIt from 'markdown-it';
 import Router, {RouterNames} from '@/router';
 
 const markdownParser = new MarkdownIt();
+markdownParser.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.platform.get.utils.openUrl(this.href);');
+  return self.renderToken(tokens, idx, options);
+}
 
 export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
   if (Router.currentRoute.name === name) {

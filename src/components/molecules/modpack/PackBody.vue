@@ -196,7 +196,6 @@ import { ModpackPageTabs } from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import { getColorForChar } from '@/utils/colors';
-import MarkdownIt from 'markdown-it';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
@@ -204,6 +203,7 @@ import Platform from '@/utils/interface/electron-overwolf';
 import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
+import { parseMarkdown } from '@/utils';
 
 @Component({
   name: 'pack-body',
@@ -250,7 +250,7 @@ export default class PackBody extends Vue {
       return '';
     }
 
-    return new MarkdownIt().render(input);
+    return parseMarkdown(input);
   }
 
   computeTime(second: number) {
