@@ -60,6 +60,7 @@ import { sendMessage } from '@/core/websockets/websocketsApi';
 import {ModInfo} from '@/core/@types/javaApi';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import {alertController} from '@/core/controllers/alertController';
+import {JavaFetch} from '@/core/javaFetch';
 
 @Component({
   components: {
@@ -81,6 +82,9 @@ export default class ModpackMods extends Vue {
 
   prettyBytes = prettyByteFormat;
   
+  async mounted() {
+  }
+  
   async toggleMod(file: ModInfo) {
     this.togglingShas.push(file.sha1)
     try {
@@ -93,7 +97,6 @@ export default class ModpackMods extends Vue {
       
       file.enabled = !file.enabled;
     } catch (e) {
-      // TODO: Show error
       alertController.warning( `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.fileName ?? (file as any).name}`)
     } finally {
       this.togglingShas.splice(this.togglingShas.indexOf(file.sha1), 1);

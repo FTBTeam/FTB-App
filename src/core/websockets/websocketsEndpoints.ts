@@ -27,13 +27,18 @@ import {
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
   GetJavasDataReply,
-  GetProfilesHandlerReply, InstalledInstancesData, InstalledInstancesDataReply,
+  GetProfilesHandlerReply,
+  InstalledInstancesData,
+  InstalledInstancesDataReply,
   InstallInstanceData,
   InstallInstanceDataReply,
   InstanceConfigureData,
   InstanceConfigureDataReply,
   InstanceDeleteBackupHandlerReply,
   InstanceDeleteBackupHandlerRequest,
+  InstanceDisableCloudSavesData, InstanceDisableCloudSavesDataReply,
+  InstanceEnableCloudSavesData,
+  InstanceEnableCloudSavesDataReply,
   InstanceGetBackupsHandlerReply,
   InstanceGetBackupsHandlerRequest,
   InstanceInstallModData,
@@ -85,7 +90,9 @@ import {
   UninstallInstanceDataReply,
   UpdateInstanceData,
   UploadLogsData,
-  UploadLogsDataReply, WebRequestData, WebRequestDataResponse,
+  UploadLogsDataReply,
+  WebRequestData,
+  WebRequestDataResponse,
   YeetLauncherData
 } from '@/core/@types/javaApi';
 import {Nullable} from '@/core/websockets/websocketsApi';
@@ -137,6 +144,8 @@ export type MessageType =
   "profiles.setActiveProfile" |
   "profiles.mc.authenticate" |
   "profiles.ms.authenticate" |
+  "instanceEnableCloudSaves" |
+  "instanceDisableCloudSaves" |
   "profiles.refresh" |
   "profiles.is-valid" |
   "storage.put" |
@@ -360,5 +369,13 @@ export type MessagePayload = {
   "openDebugTools": {
     input: BaseData,
     output: EmptyMessageResponse
+  },
+  "instanceEnableCloudSaves": {
+    input: InstanceEnableCloudSavesData,
+    output: InstanceEnableCloudSavesDataReply
+  },
+  "instanceDisableCloudSaves": {
+    input: InstanceDisableCloudSavesData,
+    output: InstanceDisableCloudSavesDataReply
   }
 }

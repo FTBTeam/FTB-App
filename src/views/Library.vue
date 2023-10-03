@@ -1,11 +1,16 @@
 <template>
   <div class="mod-packs h-full">
     <div class="page-spacing" v-if="!loading && instances.length > 0">
-      <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mr-4 flex-1" />
+      <header class="flex gap-4 mb-6 items-end">
+        <FTBSearchBar v-model="searchTerm" placeholder="Search" class="flex-1" />
+        <selection2 label="Group by" />
+        <selection2 label="Filter" />
+        <selection2 label="Sort by" />
+      </header>
 
       <div class="categories">
         <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`">
-          <h2 v-if="groupedPacks.size > 1">{{ index }}</h2>
+          <h2 v-if="Object.keys(groupedPacks).length > 1">{{ index }}</h2>
           <div class="pack-card-grid">
             <template v-for="instance in category">
               <pack-card2
@@ -49,121 +54,6 @@
         </div>
       </div>
     </div>
-    
-    
-<!--    <modal-->
-<!--      :open="showImport"-->
-<!--      :title="`${-->
-<!--        modalType === null-->
-<!--          ? 'Import a modpack'-->
-<!--          : modalType === 'share'-->
-<!--          ? 'Use a share code'-->
-<!--          : 'CurseForge Modpack import'-->
-<!--      }`"-->
-<!--      :subTitle="`${-->
-<!--        modalType === null-->
-<!--          ? 'You can import a modpack from a CurseForge zip file or use a share code'-->
-<!--          : modalType === 'share'-->
-<!--          ? 'A share code is a code you can use to install new packs'-->
-<!--          : 'Use a Curseforge Modpack zip file to import a modpack'-->
-<!--      }`"-->
-<!--      @closed="-->
-<!--        () => {-->
-<!--          showImport = false;-->
-<!--          modalType = null;-->
-<!--        }-->
-<!--      "-->
-<!--    >-->
-<!--      <div class="pt-4" v-if="modalType == null">-->
-<!--        <h4 class="text-lg font-bold mb-2"><font-awesome-icon icon="code" class="mr-2" size="1x" /> Share code</h4>-->
-<!--        <p class="mb-4">-->
-<!--          You can share modpacks using share codes from within the app. If you've been given one of these codes. You can-->
-<!--          import the modpack using the button below.-->
-<!--        </p>-->
-<!--        <ftb-button-->
-<!--          color="primary"-->
-<!--          class="py-2 px-6 mt-2 mb-6 text-center font-bold text-md"-->
-<!--          @click="modalType = 'share'"-->
-<!--        >-->
-<!--          <font-awesome-icon icon="code" class="mr-2" size="1x" />-->
-<!--          Use a share code-->
-<!--        </ftb-button>-->
-
-<!--        <hr class="border-white opacity-25 mb-4" />-->
-
-<!--        <h4 class="text-lg font-bold mb-2">-->
-<!--          <font-awesome-icon icon="download" class="mr-2" size="1x" /> CurseForge imports-->
-<!--        </h4>-->
-<!--        <p class="mb-4">You can import CurseForge Modpacks using the button below</p>-->
-<!--        <ftb-button color="primary" class="py-2 px-6 mt-2 text-center font-bold text-md" @click="modalType = 'curse'">-->
-<!--          <font-awesome-icon icon="download" class="mr-2" size="1x" />-->
-<!--          Import a CurseForge modpack zip-->
-<!--        </ftb-button>-->
-<!--      </div>-->
-<!--      <template v-if="modalType === 'curse'">-->
-<!--        <message type="danger" v-if="fileError" class="mb-4">-->
-<!--          {{ fileError }}-->
-<!--        </message>-->
-
-<!--        <div-->
-<!--          class="drop-area"-->
-<!--          @click.self="$refs.fileInputRef.click()"-->
-<!--          @dragenter.prevent-->
-<!--          @dragleave.prevent-->
-<!--          @dragover.prevent-->
-<!--          @drop.prevent="fileAttach($event)"-->
-<!--        >-->
-<!--          <font-awesome-icon icon="upload" class="mr-2" size="2x" />-->
-<!--          <p>Drag & Drop a file or select a file</p>-->
-<!--          <hr />-->
-<!--          <ftb-button color="primary" class="py-2 px-6 mt-2 font-bold" @click="$refs.fileInputRef.click()">-->
-<!--            <font-awesome-icon icon="download" class="mr-2" size="1x" />-->
-<!--            Select a file-->
-<!--          </ftb-button>-->
-<!--          <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />-->
-<!--        </div>-->
-
-<!--        <p v-if="activeFile" class="font-bold mt-4 text-base mb-2">Selected file</p>-->
-<!--        <div class="file flex items-center p-4" v-if="activeFile">-->
-<!--          <font-awesome-icon icon="file-zipper" size="2x" class="mr-4" />-->
-<!--          <div class="text">-->
-<!--            <div class="name font-bold">{{ activeFile.name }}</div>-->
-<!--            <div class="size">-->
-<!--              {{ PrettyBytes(activeFile.size) }}-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-
-<!--        <ftb-button-->
-<!--          color="primary"-->
-<!--          :disabled="!activeFile"-->
-<!--          class="py-2 px-6 mt-6 w-full block text-center font-bold"-->
-<!--          @click="installZip"-->
-<!--        >-->
-<!--          <font-awesome-icon icon="download" class="mr-2" size="1x" />-->
-<!--          Install {{ activeFile ? activeFile.name : '' }}-->
-<!--        </ftb-button>-->
-<!--      </template>-->
-<!--      <template v-if="modalType === 'share'">-->
-<!--        <message type="danger" v-if="shareCodeError" class="mb-4">-->
-<!--          {{ shareCodeError }}-->
-<!--        </message>-->
-
-<!--        <ftb-input-->
-<!--          placeholder="share code"-->
-<!--          label="Share code"-->
-<!--          v-model="shareCode"-->
-<!--          class="mb-4 text-base"-->
-<!--          :copyable="true"-->
-<!--        />-->
-<!--        <div class="flex justify-end">-->
-<!--          <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="checkAndInstall">-->
-<!--            <font-awesome-icon icon="download" class="mr-2" size="1x" />-->
-<!--            Install-->
-<!--          </ftb-button>-->
-<!--        </div>-->
-<!--      </template>-->
-<!--    </modal>-->
   </div>
 </template>
 
@@ -176,9 +66,11 @@ import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import Loader from '@/components/atoms/Loader.vue';
+import Selection2 from '@/components/atoms/input/Selection2.vue';
 
 @Component({
   components: {
+    Selection2,
     Loader,
     PackCard2,
     FTBSearchBar,
@@ -188,6 +80,8 @@ export default class Library extends Vue {
   @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
   @Getter('isLoadingInstances', ns("v2/instances")) loading!: boolean;
 
+  searchTerm: string = '';
+  
   get filteredInstance(): string[] | null {
     if (this.searchTerm === '') {
       return null;
@@ -208,92 +102,6 @@ export default class Library extends Vue {
     }
     return grouped;
   }
-
-  private searchTerm: string = '';
-
-  // showImport = false;
-  // modalType = null;
-  // fileError = '';
-  // activeFile: any = null;
-  // shareCode: string = '';
-  // shareCodeError = '';
-  //
-  // PrettyBytes = prettyByteFormat;
-  
-  // async checkAndInstall() {
-  //   if (this.shareCode === '') {
-  //     return;
-  //   }
-  //
-  //   const checkCode = await wsTimeoutWrapperTyped<any, { success: boolean }>({
-  //     type: 'checkShareCode',
-  //     shareCode: this.shareCode,
-  //   });
-  //
-  //   if (!checkCode.success) {
-  //     this.shareCodeError = `Unable to find a valid pack with the code of ${this.shareCode} `;
-  //     return;
-  //   }
-  //
-  //   this.showImport = false;
-  //   this.modalType = null;
-  //
-  //   this.installModpack({
-  //     pack: {
-  //       shareCode: this.shareCode,
-  //     },
-  //     meta: {
-  //       name: 'Shared pack',
-  //       version: this.shareCode,
-  //     },
-  //   });
-  //
-  //   this.shareCode = '';
-  // }
-  //
-  // fileAttach(event: any) {
-  //   const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
-  //   if (file == null || !file.name.endsWith('.zip')) {
-  //     return;
-  //   }
-  //
-  //   this.activeFile = {
-  //     name: file.name,
-  //     size: file.size,
-  //     path: file.path,
-  //   };
-  // }
-  //
-  // async installZip() {
-  //   this.fileError = '';
-  //   if (!this.activeFile) {
-  //     return;
-  //   }
-  //
-  //   const res = await wsTimeoutWrapper({
-  //     type: 'checkCurseZip',
-  //     path: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-  //   });
-  //
-  //   if (!res?.success) {
-  //     this.activeFile = null;
-  //     this.fileError = res.message ?? "We're unable to detect a CurseForge pack in this zip file.";
-  //   } else {
-  //     this.modalType = null;
-  //     this.showImport = false;
-  //
-  //     this.installModpack({
-  //       pack: {
-  //         importFrom: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-  //       },
-  //       meta: {
-  //         name: 'Curse imported modpack',
-  //         version: this.activeFile.name,
-  //       },
-  //     });
-  //     this.activeFile = null;
-  //   }
-  // }
 }
 </script>
 

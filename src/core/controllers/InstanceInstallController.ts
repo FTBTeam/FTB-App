@@ -2,9 +2,7 @@ import {emitter} from '@/utils';
 import store from '@/modules/store';
 import {
   CloudSavesReloadedData,
-  FilesEvent,
-  InstallInstanceDataProgress,
-  InstallInstanceDataReply, InstallStage, InstanceJson,
+  InstallInstanceDataReply, InstanceJson, OperationProgressUpdateData, Stage,
   SugaredInstanceJson
 } from '@/core/@types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -23,6 +21,7 @@ export type InstallRequest = {
   importFrom?: string;
   shareCode?: string;
   category?: string;
+  syncUuid?: string;
   provider?: PackProviders;
   private: boolean
 }
@@ -32,10 +31,7 @@ export type InstallStatus = {
   stage: string;
   progress: string;
   forInstanceUuid: string;
-  files?: {
-    total: number;
-    downloaded: number;
-  }
+  speed?: number
 }
 
 type InstallResult = {
@@ -44,12 +40,22 @@ type InstallResult = {
   instance?: SugaredInstanceJson;
 }
 
-const betterStageNames: Map<InstallStage, string> = new Map([
-  ["INIT", "Initializing"],
+const betterStageNames: Map<Stage, string> = new Map([
+  ["NOT_STARTED", "Not started"],
   ["PREPARE", "Preparing"],
-  ["MODLOADER", "Mod Loader"],
-  ["DOWNLOADS", "Downloading"],
-  ["FINISHED", "Done!"]
+  ["MOD_LOADER", "Mod loader"],
+  ["FILES", "Downloading"],
+  ["FINISHED", "Finishing"],
+  ["POST_UPDATE", "Checking"],
+  ["SYNC_DOWN", "Syncing"],
+  ["SYNC_UP", "Syncing"],
+  ["CLEAN", "Cleaning"],
+  ["INDEXING_LOCAL", "Indexing"],
+  ["INDEXING_REMOTE", "Indexing"],
+  ["COMPUTING_CHANGES", "Checking"],
+  ["BEGIN_SYNC", "Syncing"],
+  ["POST_UPDATE", "Validating"],
+  ["POST_RUN", "Validating"],
 ])
 
 /**
@@ -140,6 +146,24 @@ class InstanceInstallController {
     await this.checkQueue();
   }
   
+  public async requestSync(instance: InstanceJson | SugaredInstanceJson) {
+    this.queue.push({
+      uuid: crypto.randomUUID(),
+      id: -1,
+      version: -1,
+      name: instance.name,
+      versionName: instance.version,
+      logo: null,
+      category: "Default",
+      private: false,
+      provider: "modpacksch",
+      syncUuid: instance.uuid,
+    })
+    
+    // Trigger a check queue
+    await this.checkQueue();
+  }
+  
   private async checkQueue() {
     if (this.queue.length === 0 || this.installLock) {
       return;
@@ -181,7 +205,7 @@ class InstanceInstallController {
 
     let payload: any = {};
     
-    if (!request.importFrom && !request.shareCode) {
+    if (!request.importFrom && !request.shareCode && !request.syncUuid) {
       payload = {
         uuid: request.updatingInstanceUuid ?? "", // This flag is what tells the API to update an instance
         id: parseInt(request.id as string, 10),
@@ -204,21 +228,37 @@ class InstanceInstallController {
       }
     }
     
-    
-    // Make the installation request!
-    const installResponse = await sendMessage("installInstance", payload);
-    
-    if (installResponse.status === "error" || installResponse.status === "prepare_error") {
-      console.error("Failed to send install request", installResponse);
-      alertController.error(`Failed to start installation due to ${installResponse.message ?? "an unknown error"}`);
-      this.installLock = false;
-      return;
-    }
-    
-    let knownInstanceUuid = installResponse.instanceData.uuid;
-    if (installResponse.instanceData && !isUpdate) {
-      // Don't add if it's an update otherwise we'll have two instances
-      store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+    let knownInstanceUuid: string;
+    if (!request.syncUuid) {
+      // Make the installation request!
+      const installResponse = await sendMessage("installInstance", payload);
+
+      if (installResponse.status === "error" || installResponse.status === "prepare_error") {
+        console.error("Failed to send install request", installResponse);
+        alertController.error(`Failed to start installation due to ${installResponse.message ?? "an unknown error"}`);
+        this.installLock = false;
+        return;
+      }
+
+      if (installResponse.instanceData && !isUpdate) {
+        // Don't add if it's an update otherwise we'll have two instances
+        store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+      }
+      
+      knownInstanceUuid = installResponse.instanceData.uuid;;
+    } else {
+      const installResponse = await sendMessage("syncInstance", {
+        uuid: request.syncUuid
+      });
+      
+      if (installResponse.status !== "success") {
+        console.error("Failed to send sync request", installResponse);
+        alertController.error(`Failed to start sync due to ${installResponse.message ?? "an unknown error"}`);
+        this.installLock = false;
+        return;
+      }
+      
+      knownInstanceUuid = request.syncUuid;
     }
     
     const installRequest: InstallResult = await new Promise((resolve, reject) => {
@@ -230,14 +270,11 @@ class InstanceInstallController {
         forInstanceUuid: knownInstanceUuid
       });
       
-      let knownFiles: { id: number, name: string}[] = [];
-      let knownFilesTotal = 0;
-      
       let lastKnownProgress: string | undefined = undefined;
       let lastKnownStage: string | undefined = undefined;
-      let lastKnownFiles: { total: number; downloaded: number } | null = null;
-      const instanceInstaller = (data: InstallInstanceDataReply | InstallInstanceDataProgress | FilesEvent) => {
-        
+      let lastKnownSpeed: number = 0;
+      
+      const instanceInstaller = (data: InstallInstanceDataReply | OperationProgressUpdateData) => {
         if (data.type === "installInstanceDataReply") {
           const typedData = data as InstallInstanceDataReply;
           if (typedData.status === "error") {            
@@ -250,45 +287,34 @@ class InstanceInstallController {
               success: true,
               instance: typedData.instanceData as SugaredInstanceJson, // It's not really but it's fine
             });
-          } else if (typedData.status === "files") {
-            try {
-              knownFiles = JSON.parse(typedData.message);
-              if (knownFiles && knownFiles.length > 0) {
-                knownFilesTotal = knownFiles.length;
-                lastKnownFiles = {
-                  total: knownFilesTotal,
-                  downloaded: 0,
-                }
-              }
-            } catch {}
           } else if (typedData.status === "init") {
             lastKnownStage = "Initializing";
             lastKnownProgress = "0";
           }
-        } else if (data.type === "installInstanceProgress") {
-          const typedData = data as InstallInstanceDataProgress;
-          lastKnownStage = betterStageNames.get(typedData.currentStage) ?? toTitleCase(typedData.currentStage);
-          lastKnownProgress = typedData.overallPercentage.toFixed(1);
-        } else if (data.type === "install.filesEvent") {
-          const typedData = data as FilesEvent;
-          const files = typedData.files;
-          const downloadedFileIds = Object.keys(files)
-            .filter(e => files[e] === "downloaded")
-          
-          knownFiles = knownFiles.filter(f => !downloadedFileIds.includes(f.id.toString()));
-          lastKnownFiles = {
-            total: knownFilesTotal,
-            downloaded: knownFilesTotal - knownFiles.length,
+        } else if (data.type === "operationUpdate") {
+          const typedData = data as OperationProgressUpdateData;
+          if (typedData.metadata.instance !== knownInstanceUuid) {
+            return;
           }
+          
+          if (typedData.stage === "FINISHED" && request.syncUuid) {
+            return finish({
+              success: true
+            })
+          }
+
+          lastKnownStage = betterStageNames.get(typedData.stage) ?? toTitleCase(typedData.stage as string);
+          lastKnownProgress = typedData.percent.toFixed(1);
+          lastKnownSpeed = typedData.speed;
         }
         
-        if (data.type === "installInstanceProgress" || data.type === "installInstanceDataReply" || data.type === "install.filesEvent") {
+        if (data.type === "installInstanceDataReply" || data.type === "operationUpdate") {
           this.updateInstallStatus({
             request,
             stage: lastKnownStage ?? "",
             progress: lastKnownProgress ?? "",
-            files: lastKnownFiles ?? undefined,
-            forInstanceUuid: knownInstanceUuid
+            forInstanceUuid: knownInstanceUuid,
+            speed: lastKnownSpeed
           });
         }
       }
@@ -306,6 +332,11 @@ class InstanceInstallController {
       // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
       store.dispatch(`v2/instances/updateInstance`, installRequest.instance, {root: true});
       alertController.success(`Successfully installed ${request.name}`);
+    } else if (installRequest.success && !installRequest.instance && request.syncUuid) {
+      alertController.success(`Successfully synced ${request.name}`);
+      store.dispatch('v2/instances/loadInstances', undefined, {
+        root: true
+      })
     } else {
       alertController.error(`Failed to install ${request.name} due to an unknown error`)
       if (knownInstanceUuid) {

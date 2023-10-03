@@ -312,6 +312,15 @@ export interface Bar {
   message: string;
 }
 
+const cleanAuthIds = {
+  "START_DANCE": "Starting authentication flow",
+  "AUTH_XBOX": "Contacting Xbox Live",
+  "AUTH_XSTS": "Authenticating with Xbox Services",
+  "LOGIN_XBOX": "Logging in with Xbox Live",
+  "GET_PROFILE": "Getting Minecraft Profile",
+  "CHECK_ENTITLEMENTS": "Verifying ownership"
+}
+
 @Component({
   name: 'LaunchingPage',
   components: {
@@ -409,6 +418,10 @@ export default class LaunchingPage extends Vue {
 
     if (data.type === 'clientLaunchData') {
       this.handleClientLaunch(data);
+    }
+    
+    if (data.type === "authenticationStepUpdate") {
+      this.messages.push({t: "INFO", m: `[FTB APP][INFO] Auth ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.success ? 'successfully' : 'unsuccessfully') : ''}`})
     }
 
     if (

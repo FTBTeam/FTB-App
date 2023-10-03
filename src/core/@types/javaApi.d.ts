@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-25 13:40:58.
+// Generated using typescript-generator version 3.2.1263 on 2023-10-03 15:24:19.
 
 export interface BaseData {
     type: string;
@@ -95,23 +95,12 @@ export interface InstallInstanceData extends BaseData {
     version: number;
     _private: boolean;
     packType: number;
+    mcVersion: string;
     shareCode: string;
     importFrom: string;
     name: string;
     artPath: string;
     category: string;
-}
-
-export interface FilesEvent extends BaseData {
-    files: { [index: string]: string };
-}
-
-export interface InstallInstanceDataProgress extends BaseData {
-    overallPercentage: number;
-    speed: number;
-    currentBytes: number;
-    overallBytes: number;
-    currentStage: InstallStage;
 }
 
 export interface InstallInstanceDataReply extends BaseData {
@@ -670,6 +659,7 @@ export interface InstanceJson {
     jrePath: string;
     width: number;
     height: number;
+    fullscreen: boolean;
     modLoader: string;
     isModified: boolean;
     isImport: boolean;
@@ -728,8 +718,7 @@ export interface ModInfo {
     enabled: boolean;
     size: number;
     sha1: string;
-    curseProject: number;
-    curseFile: number;
+    curse: CurseMetadata;
 }
 
 export interface Specs {
@@ -761,6 +750,14 @@ export interface MSAuthStore {
 export interface YggdrasilAuthStore {
     clientToken: string;
     accessToken: string;
+}
+
+export interface CurseMetadata {
+    curseProject: number;
+    curseFile: number;
+    name: string;
+    synopsis: string;
+    icon: string;
 }
 
 export interface Target {
@@ -795,7 +792,5 @@ export interface AccountSkin {
     variant: string;
     alias: string;
 }
-
-export type InstallStage = "INIT" | "PREPARE" | "MODLOADER" | "DOWNLOADS" | "FINISHED";
 
 export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";

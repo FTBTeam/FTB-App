@@ -95,7 +95,7 @@
 
     <ftb-toggle
       label="Enable cloud save uploads"
-      :disabled="canUseCloudSaves"
+      :disabled="canUseCloudSaves || toggleSavesWorking"
       onColor="bg-primary"
       :value="instanceSettings.cloudSaves"
       @change="toggleCloudSaves"
@@ -208,6 +208,8 @@ export default class ModpackSettings extends Vue {
   jreSelection = '';
   javaVersions: JavaVersion[] = [];
   deleting = false;
+  
+  toggleSavesWorking = false;
 
   mounted() {
     this.instanceSettings = {
@@ -239,11 +241,31 @@ export default class ModpackSettings extends Vue {
       })
       .catch(console.error)
   }
-
-  // I'm not sure this works, at best, it's VueX state mutation which is bad hmm kay...
-  public toggleCloudSaves() {
-    this.instanceSettings.cloudSaves = !this.instanceSettings.cloudSaves;
-    this.saveSettings();
+  
+  async toggleCloudSaves() {
+    this.toggleSavesWorking = true;
+    const newState = !this.instanceSettings.cloudSaves;
+    
+    if (!newState) {
+      if (!(await dialogsController.createConfirmationDialog("Are you sure", "Disabling Cloudsaves will delete all of your cloudsave data, please make sure you have a backup of this instance if you plan to remove it from your system."))) {
+        this.toggleSavesWorking = false;
+        return;
+      }
+    }
+    
+    const reply = await sendMessage((newState ? "instanceEnableCloudSaves" : "instanceDisableCloudSaves"), {
+      instance: this.instance.uuid,
+    });
+    
+    if (!reply || reply.status !== "success") {
+      alertController.error("Failed to toggle cloud saves");
+      this.toggleSavesWorking = false;
+      return;
+    }
+    
+    this.instanceSettings.cloudSaves = newState;
+    await this.saveSettings();
+    this.toggleSavesWorking = false;
   }
   
   selectResolution(id: number) {

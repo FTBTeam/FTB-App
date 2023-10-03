@@ -13,8 +13,8 @@
           <div class="percent">{{currentInstall.progress}}<span>%</span></div>
           <b>{{currentInstall.stage ?? "??"}}</b>
           <transition name="transition-fade" duration="250">
-            <div class="files" v-if="currentInstall.files">
-              <font-awesome-icon icon="download" class="mr-2" /><b>{{ currentInstall.files.downloaded }}</b> / <span class="opacity-75">{{currentInstall.files.total}}</span>
+            <div class="files text-sm" v-if="currentInstall.speed">
+              <font-awesome-icon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
             </div>
           </transition>
           <progress-bar class="progress" :progress="parseFloat(currentInstall?.progress ?? '0') / 100" />
@@ -30,13 +30,13 @@
         </div>
       </div>
       <div class="action-buttons" v-if="!isInstalling">
-        <div class="button" :class="{disabled: isUpdating}" v-if="needsSyncing" @click.stop="updateInstance">
+        <div class="button flex-1" aria-label="Download from cloud saves" data-balloon-pos="down" :class="{disabled: isUpdating}" v-if="needsSyncing" @click.stop="syncInstance">
           <font-awesome-icon icon="cloud" />
         </div>
-        <div class="button" :class="{disabled: isUpdating}" v-if="updateAvailable && !needsSyncing" @click.stop="updateInstance">
+        <div class="button" aria-label="Update available!" data-balloon-pos="down" :class="{disabled: isUpdating}" v-if="updateAvailable && !needsSyncing" @click.stop="updateInstance">
           <font-awesome-icon icon="download" />
         </div>
-        <div class="play-button button" :class="{disabled: isUpdating || needsSyncing}">
+        <div class="play-button button" aria-label="Play" data-balloon-pos="down" v-if="!needsSyncing" :class="{disabled: isUpdating}" @click.stop="play">
           <font-awesome-icon icon="play" />
         </div>
       </div>
@@ -71,9 +71,16 @@ export default class PackCard2 extends PackCardCommon {
     // Always fetch the modpack from the API so we can see if updates are available
     await this.fetchModpack(this.instance.id, typeIdToProvider(this.instance.packType));
   }
+  
+  play() {
+    this.$router.push({
+      name: RouterNames.ROOT_LAUNCH_PACK,
+      query: { uuid: this.instance.uuid },
+    })
+  }
 
   openInstancePage() {
-    if (this.isInstalling) {
+    if (this.isInstalling || this.needsSyncing) {
       return;
     }
     
@@ -104,6 +111,10 @@ export default class PackCard2 extends PackCardCommon {
     }
     
     instanceInstallController.requestUpdate(this.instance, latestVersion);
+  }
+
+  syncInstance() {
+    instanceInstallController.requestSync(this.instance);
   }
   
   get modLoader() {
