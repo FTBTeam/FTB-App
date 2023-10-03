@@ -5,6 +5,7 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
@@ -219,6 +220,18 @@ public class ModpackVersionManifest {
         Target target = findTarget(type);
 
         return target != null ? target.getVersion() : null;
+    }
+
+    /**
+     * Count the number of targets which share this type.
+     *
+     * @param type The types.
+     * @return The count.
+     */
+    public int getTargetCount(String type) {
+        return FastStream.of(getTargets())
+                .filter(e -> type.equals(e.getType()))
+                .count();
     }
 
     public ModpackVersionManifest copy() {

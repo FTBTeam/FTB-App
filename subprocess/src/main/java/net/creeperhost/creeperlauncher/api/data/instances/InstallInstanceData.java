@@ -14,6 +14,7 @@ public class InstallInstanceData extends BaseData {
     public long version;
     public boolean _private = false;
     public byte packType = 0;
+    public @Nullable String mcVersion;
     public String shareCode;
     @Nullable
     public String importFrom;

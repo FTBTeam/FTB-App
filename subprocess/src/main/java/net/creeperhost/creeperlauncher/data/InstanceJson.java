@@ -110,7 +110,7 @@ public class InstanceJson {
     }
 
     // New instance.
-    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
         uuid = UUID.randomUUID();
 
         versionId = versionManifest.getId();
@@ -119,7 +119,7 @@ public class InstanceJson {
         name = modpack.getName();
 
         version = versionManifest.getName();
-        mcVersion = versionManifest.getTargetVersion("game");
+        this.mcVersion = mcVersion;
 
         minMemory = versionManifest.getMinimumSpec();
         recMemory = versionManifest.getRecommendedSpec();

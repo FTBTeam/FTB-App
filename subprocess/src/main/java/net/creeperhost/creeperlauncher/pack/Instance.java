@@ -73,8 +73,8 @@ public class Instance {
     private long startTime;
 
     // Brand-new instance.
-    public Instance(@Nullable String name, @Nullable String artPath, @Nullable String category, ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
-        props = new InstanceJson(modpack, versionManifest, isPrivate, packType);
+    public Instance(@Nullable String name, @Nullable String artPath, @Nullable String category, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+        props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType);
         if (name != null) {
             props.name = name;
         }

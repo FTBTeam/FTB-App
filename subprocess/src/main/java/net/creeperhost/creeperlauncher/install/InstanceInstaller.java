@@ -418,10 +418,6 @@ public class InstanceInstaller extends InstanceOperation {
     }
 
     private void prepareModLoader() {
-        Target gameTarget = manifest.findTarget("game");
-        assert gameTarget != null;
-        assert gameTarget.getName().equals("minecraft");
-
         InstanceModifications modifications = instance.getModifications();
 
         Target modLoaderTarget;
@@ -434,7 +430,7 @@ public class InstanceInstaller extends InstanceOperation {
             try {
                 modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
                         instance,
-                        gameTarget.getVersion(),
+                        instance.getMcVersion(),
                         modLoaderTarget.getName(),
                         modLoaderTarget.getVersion()
                 );

@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.io.IOUtils;
 import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
@@ -141,7 +142,17 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private static void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
-        Instance instance = new Instance(data.name, data.artPath, data.category, modpackManifest, versionManifest, isPrivate, packType);
+        String mcVersion;
+        if (versionManifest.getTargetCount("game") == 1) {
+            mcVersion = versionManifest.getTargetVersion("game");
+        } else {
+            if (data.mcVersion == null) {
+                abort(data, "Version manifest does not contain game version information. Must be manually specified.");
+                return;
+            }
+            mcVersion = data.mcVersion;
+        }
+        Instance instance = new Instance(data.name, data.artPath, data.category, modpackManifest, versionManifest, mcVersion, isPrivate, packType);
         instance.props.isImport = isImport;
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
             Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);
