@@ -4,6 +4,10 @@ import store from '@/modules/store';
 import MarkdownIt from 'markdown-it';
 
 const markdownParser = new MarkdownIt();
+markdownParser.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.platform.get.utils.openUrl(this.href);');
+  return self.renderToken(tokens, idx, options);
+}
 
 export const prettyByteFormat = (bytes: number) => {
   if (isNaN(bytes)) {
