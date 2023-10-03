@@ -78,9 +78,9 @@ public class ModpackVersionModsManifest {
 
         // @formatter:off
         public long getFileId() { return fileId; }
-        public String getName() { return Objects.requireNonNull(name); }
-        public String getSynopsis() { return Objects.requireNonNull(synopsis); }
-        public String getIcon() { return Objects.requireNonNull(icon); }
+        public @Nullable String getName() { return name; }
+        public @Nullable String getSynopsis() { return synopsis; }
+        public @Nullable String getIcon() { return icon; }
         public String getCurseSlug() { return Objects.requireNonNull(curseSlug); }
         public long getCurseProject() { return curseProject; }
         public long getCurseFile() { return curseFile; }
