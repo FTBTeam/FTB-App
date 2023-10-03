@@ -4,13 +4,14 @@ import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Created by covers1624 on 3/6/22.
@@ -29,7 +30,7 @@ public class InstallationOperation extends LongRunningOperation {
         this.data = data;
         this.instance = instance;
         this.manifest = manifest;
-        InstallProgressTracker tracker = new InstallProgressTracker(data);
+        OperationProgressTracker tracker = new OperationProgressTracker("install", Map.of("instance", instance.getUuid().toString()));
         installer = new InstanceInstaller(instance, manifest, cancelToken, tracker);
     }
 

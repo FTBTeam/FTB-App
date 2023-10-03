@@ -13,8 +13,7 @@ import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideSta
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker.DlFile;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker.DefaultStages;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.instance.InstanceOperation;
@@ -57,7 +56,7 @@ public class InstanceInstaller extends InstanceOperation {
             "scripts"
     );
 
-    private final InstallProgressTracker tracker;
+    private final OperationProgressTracker tracker;
     private final CancellationToken cancelToken;
 
     @Nullable
@@ -123,7 +122,7 @@ public class InstanceInstaller extends InstanceOperation {
     @Nullable
     private Map<String, IndexedFile> knownFiles;
 
-    public InstanceInstaller(Instance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, InstallProgressTracker tracker) throws IOException {
+    public InstanceInstaller(Instance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, OperationProgressTracker tracker) throws IOException {
         super(instance, manifest);
         this.cancelToken = cancelToken;
         this.tracker = tracker;
@@ -247,7 +246,7 @@ public class InstanceInstaller extends InstanceOperation {
                 instance.saveModifications();
             }
 
-            tracker.nextStage(InstallStage.MODLOADER);
+            tracker.nextStage(InstallStage.MOD_LOADER);
             if (modLoaderInstallTask != null) {
                 LOGGER.info("Installing ModLoader..");
                 modLoaderInstallTask.execute(cancelToken, null);
@@ -260,7 +259,7 @@ public class InstanceInstaller extends InstanceOperation {
             cancelToken.throwIfCancelled();
 
             LOGGER.info("Downloading new files.");
-            tracker.nextStage(InstallStage.DOWNLOADS);
+            tracker.nextStage(InstallStage.FILES, tasks.size());
             long totalSize = tasks.stream()
                     .mapToLong(e -> e.size)
                     .sum();
@@ -302,7 +301,7 @@ public class InstanceInstaller extends InstanceOperation {
             } catch (IOException ex) {
                 throw new InstallationFailureException("Failed to save instance json.", ex);
             }
-            tracker.nextStage(InstallStage.FINISHED);
+            tracker.nextStage(DefaultStages.FINISHED);
             LOGGER.info("Install finished!");
         } catch (InstallationFailureException | CancellationToken.Cancellation ex) {
             throw ex;
@@ -441,7 +440,6 @@ public class InstanceInstaller extends InstanceOperation {
     }
 
     private void prepareFileDownloads() {
-        List<DlFile> dlFiles = new LinkedList<>();
         for (ModpackFile file : manifest.getFiles()) {
             if (file.getType().equals("cf-extract")) continue;
             Path filePath = file.toPath(instance.getDir());
@@ -470,11 +468,9 @@ public class InstanceInstaller extends InstanceOperation {
                     size = NewDownloadTask.getContentLength(file.getUrl());
                 }
                 filesToDownload.add(task.getDest());
-                tasks.add(new DlTask(file.getId(), size, task));
-                dlFiles.add(new DlFile(file.getId(), file.getName()));
+                tasks.add(new DlTask(size, task));
             }
         }
-        tracker.submitFiles(dlFiles);
     }
 
     private Path remapFileFromOverride(IndexedFile file, Path path, Consumer<ModOverride> cons) {
@@ -528,6 +524,12 @@ public class InstanceInstaller extends InstanceOperation {
         VALIDATE,
     }
 
+    public enum InstallStage implements OperationProgressTracker.Stage {
+        PREPARE,
+        MOD_LOADER,
+        FILES,
+    }
+
     public static record InvalidFile(
             Path path,
             @Nullable HashCode expectedHash,
@@ -549,12 +551,10 @@ public class InstanceInstaller extends InstanceOperation {
 
     private class DlTask implements Task<Object> {
 
-        private final long id;
         private final long size;
         private final Task<?> task;
 
-        private DlTask(long id, long size, Task<?> task) {
-            this.id = id;
+        private DlTask(long size, Task<?> task) {
             this.size = size;
             this.task = task;
         }
@@ -562,7 +562,7 @@ public class InstanceInstaller extends InstanceOperation {
         @Override
         public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
             task.execute(cancelToken, listener);
-            tracker.fileFinished(id);
+            tracker.stepFinished();
         }
 
         @Override
