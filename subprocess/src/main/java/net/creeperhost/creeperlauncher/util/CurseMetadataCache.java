@@ -37,7 +37,7 @@ public class CurseMetadataCache {
     private final Map<String, FileMetadata> metadata;
 
     // Cache per-run of failed requests to make things a tiny bit snappier.
-    private final Set<String> failedCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<String> failedCache = ConcurrentHashMap.newKeySet();
 
     public CurseMetadataCache(Path file) {
         this.file = file;
@@ -57,7 +57,7 @@ public class CurseMetadataCache {
         this.metadata = metadata;
     }
 
-    public @Nullable CurseMetadata getCurseIds(@Nullable ModpackVersionModsManifest.Mod mod, String sha1) {
+    public @Nullable CurseMetadata getCurseMeta(@Nullable ModpackVersionModsManifest.Mod mod, String sha1) {
         if (mod != null) {
             long projectId = mod.getCurseProject();
             long fileId = mod.getCurseFile();

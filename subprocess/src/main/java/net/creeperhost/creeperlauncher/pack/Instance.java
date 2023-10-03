@@ -532,7 +532,7 @@ public class Instance {
             // Enabled if override says it is, OR the file exists AND does not have .disabled
             boolean enabled = (override != null && override.getState().enabled) || (fileExists && !file.getName().endsWith(".disabled"));
 
-            CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseIds(mod, sha1);
+            CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, sha1);
             mods.add(new ModInfo(
                     file.getId(),
                     file.getName(),
