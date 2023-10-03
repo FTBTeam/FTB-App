@@ -198,12 +198,12 @@ import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicSe
 import { getColorForChar } from '@/utils/colors';
 import { Action } from 'vuex-class';
 import Loading from '@/components/atoms/Loading.vue';
-import MarkdownIt from 'markdown-it';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import { InstanceBackup } from '@/typings/subprocess/instanceBackups';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
 import Platform from '@/utils/interface/electron-overwolf';
+import { parseMarkdown } from '@/utils';
 
 @Component({
   name: 'pack-body',
@@ -248,7 +248,7 @@ export default class PackBody extends Vue {
       return '';
     }
 
-    return new MarkdownIt().render(input);
+    return parseMarkdown(input);
   }
 
   computeTime(second: number) {

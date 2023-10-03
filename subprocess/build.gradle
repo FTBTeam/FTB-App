@@ -1,3 +1,4 @@
+import cz.habarta.typescript.generator.gradle.GenerateTask
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -11,6 +12,7 @@ plugins {
     id "com.github.hierynomus.license" version "0.16.1" apply false
     id "com.dorongold.task-tree" version "2.1.0"
     id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.3"
+    id 'cz.habarta.typescript-generator' version "3.2.+"
 }
 
 apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
@@ -64,7 +66,7 @@ dependencies {
     }
     implementation 'com.github.pircbotx:pircbotx:2.2'
     implementation 'net.covers1624:Quack:0.4.3.59'
-    implementation 'net.covers1624:JdkUtils:0.4.0.14'
+    implementation 'net.covers1624:JdkUtils:0.5.0.15'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
 
@@ -197,3 +199,64 @@ idea.project.settings {
         }
     }
 }
+
+def sharedSettings = [
+    excludeClasses: [
+            "java.lang.Iterable",
+            "java.lang.Comparable",
+            "java.lang.Cloneable",
+            "java.nio.Watchable",
+            "java.io.Serializable",
+            "com.google.common.hash.HashCode",
+            "com.google.gson.JsonElement",
+            "com.google.gson.JsonArray",
+            "com.google.gson.JsonObject",
+            "java.awt.geom.Dimension2D"
+    ],
+    customTypeMappings: [
+            "java.nio.file.Path:string"
+    ]
+]
+
+tasks.named("generateTypeScript", GenerateTask) {
+    
+    jsonLibrary = "gson"
+    outputKind = "module"
+    outputFile = project.file("../src/core/@types/javaApi.d.ts")
+    classPatterns = [
+        "net.creeperhost.creeperlauncher.api.data.*",
+        "net.creeperhost.creeperlauncher.api.data.**.*",
+        "net.creeperhost.creeperlauncher.api.data.**.*\$*",
+        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Request",
+        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Reply",
+        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Data"
+    ]
+    excludeClasses = sharedSettings.excludeClasses
+    customTypeMappings = sharedSettings.customTypeMappings
+    customTypeNamingFunction = """
+(name, simpleName) => {
+    const prefixTargets = ["Reply", "Progress", "Request", "Data"]
+    if (prefixTargets.includes(simpleName)) {
+        const targetEnding = prefixTargets[prefixTargets.indexOf(simpleName)];
+        const reply = name.split(".").slice(-1)[0];
+        const replyClassContainer = reply.split("\$")[0];
+        return replyClassContainer + targetEnding;
+    } 
+
+    return simpleName;
+}
+"""
+}
+
+tasks.register("generateTypeScriptExtras", GenerateTask) {
+    jsonLibrary = "gson"
+    outputKind = "module"
+    outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
+    excludeClasses = sharedSettings.excludeClasses
+    customTypeMappings = sharedSettings.customTypeMappings
+    classes = [
+            "net.creeperhost.creeperlauncher.data.InstanceJson",
+    ]
+}
+
+generateTypeScript.finalizedBy(generateTypeScriptExtras)

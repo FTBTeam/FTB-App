@@ -70,7 +70,6 @@ import { Action } from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import { InstallerState } from '@/modules/app/appStore.types';
 import {getColorForReleaseType, getPackArt, parseMarkdown} from '@/utils';
-import MarkdownIt from 'markdown-it';
 import Selection from '@/components/atoms/input/Selection.vue';
 import dayjs from 'dayjs';
 
