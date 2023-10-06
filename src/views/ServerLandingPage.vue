@@ -232,9 +232,7 @@ export default class ServerLandingPage extends Vue {
   // public install(version: number): void {
   //   if (this.modpack === null) {
   //     return;
-  //   }
-  //
-  //   // TODO: FIX INSTALLING
+  //   
   // }
   //
   // public preLaunch(instance: Instance) {

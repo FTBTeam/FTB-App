@@ -350,15 +350,15 @@ export default class InstancePage extends Vue {
     this.showMsgBox = true;
   }
 
-  public async launch() {
-    await this.$router.push({
+  public launch() {
+    this.$router.push({
       name: RouterNames.ROOT_LAUNCH_PACK,
       query: { uuid: this.instance?.uuid },
     });
   }
 
-  public async playOffline() {
-    await this.$router.push({
+  public playOffline() {
+    this.$router.push({
       name: RouterNames.ROOT_LAUNCH_PACK,
       query: { uuid: this.instance?.uuid, offline: 'true', username: this.offlineUserName },
     });
@@ -401,7 +401,7 @@ export default class InstancePage extends Vue {
   private async getModList(showAlert = false) {
     const mods = await toggleBeforeAndAfter(() => sendMessage("instanceMods", {
       uuid: this.instance?.uuid ?? "",
-      _private: false, // TODO: WHY DOES THIS CARE?
+      _private: this.instance?._private ?? false,
     }), state => this.updatingModlist = state)
 
     // TODO: Catch errors

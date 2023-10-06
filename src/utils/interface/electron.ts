@@ -413,10 +413,10 @@ const Electron: ElectronOverwolfInterface = {
     //       console.error(err);
     //     });
     // });
-
-    // TODO: this entire thing needs a registry + handler wrapper
+    
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       handleAction(data);
+      // TODO: Reimplement missing protocol systems
       // let protocolURL = data;
       // if (protocolURL === undefined) {
       //   return;

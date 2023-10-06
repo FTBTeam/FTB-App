@@ -23,10 +23,15 @@ export const defaultArtwork: Record<ArtworkTypes, string> = {
  * TODO: Support the new artwork system in the future
  */
 export function resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | ModPack | SearchResultPack | null, artworkType: ArtworkTypes = "square", fallback?: ModPack | null) {
+  const artwork = _resolveArtwork(packOrInstance, artworkType, fallback);
+  return artwork.startsWith("http") ? encodeURI(artwork) : artwork;
+}
+
+function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | ModPack | SearchResultPack | null, artworkType: ArtworkTypes = "square", fallback?: ModPack | null) {
   if (!packOrInstance) {
     return defaultArtwork[artworkType];
   }
-  
+
   // Splash is not stored locally for modpacks
   if ("uuid" in packOrInstance) {
     // It's an instance
@@ -36,9 +41,9 @@ export function resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJso
       return fallbackArt;
     }
 
-    return instance.art ?? fallbackArt;  
+    return instance.art ?? fallbackArt;
   }
-  
+
   // It's a modpack
   const pack = packOrInstance as ModPack | SearchResultPack;
   return pack.art.find(e => e.type === artworkType)?.url ?? fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];

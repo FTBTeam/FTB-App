@@ -17,99 +17,15 @@ export const appStore: Module<AppStoreState, RootState> = {
     getRunningPack: (state: AppStoreState): string | null => {
       return state.pack.currentlyRunning;
     },
-
-    /**
-     * Installer
-     */
-    installer(state: AppStoreState): InstallerState | null {
-      return state.installer;
-    },
   },
   actions: {
     setRunningPack({ commit }): void {
       commit(AppStoreMutations.SET_RUNNING_PACK);
     },
-
-    // FIXME: This is messy as all hell, tidy this up to be less mismatched, ensure validity and
-    //        ensure the correct payload at the source.
-    // TODO: Remove me
-    async installModpack({ commit, dispatch }, request: InstallerState) {
-      // const pack = request.pack;
-      //
-      // // Prepare the request, we're either updating, using a share code or installing fresh
-      // let payload: any = {};
-      // if (pack.shareCode) {
-      //   payload = {
-      //     shareCode: pack.shareCode,
-      //   };
-      // } else if (pack.importFrom) {
-      //   payload = {
-      //     importFrom: pack.importFrom,
-      //   };
-      // } else if (pack.uuid && pack.version) {
-      //   payload = {
-      //     uuid: pack.uuid,
-      //     version: pack.version,
-      //     id: pack.id,
-      //   };
-      // } else {
-      //   payload = {
-      //     id: pack.id,
-      //     version: pack.version,
-      //   };
-      // }
-      //
-      // if (pack.name) {
-      //   payload["name"] = pack.name;
-      // }
-      //
-      // if (pack.packType) {
-      //   payload['packType'] = pack.packType;
-      // }
-      //
-      // if (pack.private) {
-      //   payload['_private'] = true;
-      // }
-      //
-      // if (pack.uuid && pack.version) {
-      //   request = { ...request, meta: { ...request.meta, isUpdate: true } };
-      // }
-      //
-      // commit(AppStoreMutations.INSTALL_PACK, request);
-      //
-      // // This event brings back lots of request, so instead we just assume the first one is either a
-      // // success or error
-      // const rest = await wsTimeoutWrapper({
-      //   type: pack.uuid && pack.version ? 'updateInstance' : 'installInstance',
-      //   ...payload,
-      // });
-      //
-      // if (rest.status === 'error' || rest.status === 'prepare_error') {
-      //   dispatch(
-      //     'showAlert',
-      //     {
-      //       type: 'danger',
-      //       title: 'Error installing modpack',
-      //       message: rest.message,
-      //     },
-      //     { root: true },
-      //   );
-      //
-      //   commit(AppStoreMutations.INSTALL_PACK, null);
-      // }
-    },
-
-    clearInstaller({ commit }) {
-      commit(AppStoreMutations.INSTALL_PACK, null);
-    },
   },
   mutations: {
     setRunningPack(state, payload: string | null): void {
       state.pack.currentlyRunning = payload;
-    },
-
-    installPack(state, payload): void {
-      state.installer = payload;
     },
   },
 };

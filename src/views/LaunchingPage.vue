@@ -421,7 +421,8 @@ export default class LaunchingPage extends Vue {
     }
     
     if (data.type === "authenticationStepUpdate") {
-      this.messages.push({t: "INFO", m: `[FTB APP][INFO] Auth ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.success ? 'successfully' : 'unsuccessfully') : ''}`})
+      console.log(data.success)
+      this.messages.push({t: "INFO", m: `[AUTH][INFO] ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.success ? 'successfully' : 'unsuccessfully') : ''}`})
     }
 
     if (

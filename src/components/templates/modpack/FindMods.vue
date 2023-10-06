@@ -200,8 +200,7 @@ export default class FindMods extends Vue {
     await this.loadResultsProgressively();
 
     this.begunSearching = false;
-
-    // TODO: remove later on, kinda helpful right now
+    
     this.timeTaken = new Date().getTime() - start;
     this.initialTimeTaken = this.timeTaken;
   }

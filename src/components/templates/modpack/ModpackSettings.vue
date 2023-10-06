@@ -219,7 +219,7 @@ export default class ModpackSettings extends Vue {
       memory: this.instance.memory,
       width: this.instance.width,
       height: this.instance.height,
-      cloudSaves: this.instance.cloudSaves, // TODO: Stop using
+      cloudSaves: this.instance.cloudSaves,
     }
     
     this.previousSettings = {

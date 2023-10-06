@@ -75,7 +75,7 @@ import PackPreview from '@/components/core/modpack/PackPreview.vue';
 })
 export default class BrowseModpacks extends Vue {
   @Getter("latestPacks", ns("v2/modpacks")) latestPacks!: number[];
-  @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>; // TODO: better signature
+  @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>;
   
   @State('auth') public authState!: AuthState;
 

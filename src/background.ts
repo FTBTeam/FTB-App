@@ -448,15 +448,6 @@ if (!gotTheLock) {
   });
 
   app.on('ready', async () => {
-    // TODO: come back to this :D
-    // var template = [
-    //   ...Menu.getApplicationMenu()?.items as any,
-    //   {label: 'View Sexy', submenu: [
-    //       {label: 'HTML/Markdown', click: () => console.log("hello")}
-    //     ]}
-    // ];
-    // Menu.setApplicationMenu(Menu.buildFromTemplate(template as any));
-    //
     createWindow();
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {

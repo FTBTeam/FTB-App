@@ -88,14 +88,17 @@ export default class ModpackMods extends Vue {
   async toggleMod(file: ModInfo) {
     this.togglingShas.push(file.sha1)
     try {
-      // TODO: Error check
       const toggleQuery = await sendMessage("instanceModToggle", {
         uuid: this.instance.uuid,
         fileName: file.fileName,
         fileId: file.fileId
       });
       
-      file.enabled = !file.enabled;
+      if (toggleQuery.successful) {
+        file.enabled = !file.enabled;
+      } else {
+        alertController.warning( `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.fileName ?? (file as any).name}`)
+      }
     } catch (e) {
       alertController.warning( `Failed to ${!file.enabled ? 'enable' : 'disable'} ${file.fileName ?? (file as any).name}`)
     } finally {

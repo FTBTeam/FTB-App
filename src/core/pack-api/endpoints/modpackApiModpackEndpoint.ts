@@ -27,7 +27,6 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
     }
     
     // Use curseforge for other providers
-    // TODO: Define full list of providers
     return this.fetchPrivate<StatusResult<ModPack>>("GET", "" + id, "curseforge");
   }
   

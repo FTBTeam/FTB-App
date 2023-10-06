@@ -48,6 +48,7 @@ import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import platform from '@/utils/interface/electron-overwolf'
 import {RouterNames} from '@/router';
+import { alertController } from '@/core/controllers/alertController';
 
 @Component({
   components: {ArtworkSelector, FTBToggle, Selection2},
@@ -110,7 +111,7 @@ export default class ModpackInstallModal extends Vue {
       private: this.apiModpack?.private ?? false,
     })
     
-    // TODO: Toast notification
+    alertController.info("Install started")
     this.close();
     if (this.$route.name !== RouterNames.ROOT_LIBRARY) {
       this.$router.push({

@@ -14,9 +14,6 @@ const packBlacklist = [
 const state = {
   modpacks: new Map<number, ModPack>(),
   modpackVersions: new Map<number, Versions>(),
-  // Shorthold modpacks store is intended for modpacks that we have no need to keep in memory for a long period of time.
-  // To is primarily used for searching.
-  shortHoldModpacks: new Map<number, ModPack>(), // TODO: Maybe remove
   featuredPackIds: [] as number[],
   latestPackIds: [] as number[],
 }

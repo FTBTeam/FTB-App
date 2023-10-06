@@ -20,7 +20,6 @@ export async function safeNavigate(name: RouterNames, params?: any, query?: any)
   }
 }
 
-// TODO: Rewrite, this isn't a great implementation.
 export const prettyByteFormat = (bytes: number) => {
   if (isNaN(bytes)) {
     throw new TypeError('Expected a number');
