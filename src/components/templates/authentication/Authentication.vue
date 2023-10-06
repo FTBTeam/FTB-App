@@ -42,39 +42,12 @@
           @click="
             () => {
               onMsAuth = true;
-              onMcAuth = false;
               onMainView = false;
             }
           "
         >
           <img src="@/assets/images/branding/microsoft.svg" alt="Microsoft Login" />
         </button>
-
-        <template v-if="mojangAuthAllowed">
-          <div class="or">
-            <span>or</span>
-          </div>
-          
-          <div class="login-with-legacy" @click="
-              () => {
-                onMcAuth = true;
-                onMsAuth = false;
-                onMainView = false;
-              }">
-            Login with Mojang Account (Legacy)
-          </div>
-
-          <small class="text-red-400 mt-4 block text-center"
-            >Mojang accounts must be migrated before March 10th, see this
-            <a
-              class="text-gray-400 hover:text-white"
-              href="https://www.minecraft.net/en-us/article/last-call-voluntarily-migrate-java-accounts"
-              @click.prevent="openExternal"
-              >official blog</a
-            >
-            post for more information</small
-          >
-        </template>
       </div>
 
       <div class="logged-in text-center" v-else-if="loggedIn">
@@ -90,8 +63,7 @@
       </div>
 
       <div class="auth-views" v-else>
-        <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="onError" />
-        <yggdrasil-auth-form v-if="onMcAuth" :uuid="uuid" @authenticated="authenticated()" />
+        <microsoft-auth @authenticated="authenticated()" @error="onError" />
       </div>
     </div>
   </div>
@@ -100,7 +72,6 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
 import { Action } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 import { Prop } from 'vue-property-decorator';
@@ -108,12 +79,11 @@ import { RouterNames } from '@/router';
 import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
-  components: {Loader, MicrosoftAuth, YggdrasilAuthForm},
+  components: {Loader, MicrosoftAuth},
 })
 export default class Authentication extends Vue {
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
-
-  @Prop() public jump!: string;
+  
   @Prop() public uuid!: string;
   @Prop() public tryAgainInstanceUuid!: any;
 
@@ -122,23 +92,16 @@ export default class Authentication extends Vue {
   error = '';
   loading = false;
 
-  onMcAuth = false;
   onMsAuth = false;
 
   fatalAccountError = false;
 
   public mounted() {
-    if (this.jump === 'mc') {
-      this.onMainView = false;
-      this.onMcAuth = true;
-      this.onMsAuth = false;
-    } 
   }
 
   back() {
     this.onMainView = true;
     this.onMsAuth = false;
-    this.onMcAuth = false;
     this.error = '';
     this.fatalAccountError = false;
   }
@@ -161,10 +124,6 @@ export default class Authentication extends Vue {
     if (type && type === 'final') {
       this.fatalAccountError = true;
     }
-  }
-
-  get mojangAuthAllowed() {
-    return true; // !dayjs().isAfter('2022-03-10');
   }
 }
 </script>

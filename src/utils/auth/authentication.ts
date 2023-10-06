@@ -44,8 +44,6 @@ export async function loginWithMicrosoft(payload: string | {key: string; iv: str
   }
 }
 
-// Todo: reduce logging in the future
-
 export const logAuth = (level: 'debug' | 'warn' | 'error', message: any) =>
   console.log(`[${dayjs().format('DD/MM/YY hh:mm:ss')}] [${level}] [auth] ${message}`);
 
@@ -115,50 +113,6 @@ const msAuthenticator: Authenticator = {
   },
 };
 
-const mcAuthenticator: Authenticator = {
-  async refresh(profile: AuthProfile): Promise<RefreshResponse> {    
-    const authenticator = await sendMessage("profiles.refresh", {
-      profileUuid: profile.uuid,
-      liveAccessToken: null,
-      liveRefreshToken: null,
-      liveExpires: null,
-    });
-
-    if (authenticator?.code === 'updated') {
-      logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
-      return { ok: true };
-    } else {
-      logAuth(
-        'warn',
-        `Failed to refresh the token for ${profile.username} due to ${authenticator?.code ?? 'unknown'}`,
-      );
-      return { ok: false };
-    }
-  },
-};
-
-const purgeMinecraftProfiles = async (profiles: AuthProfile[]) => {
-  const minecraftProfiles = profiles.filter((profile) => profile.type !== 'microsoft');
-
-  logAuth('debug', `Pruning ${minecraftProfiles.length} Minecraft profiles`);
-
-  for (let minecraftProfile of minecraftProfiles) {
-    try {
-      await sendMessage("profiles.remove", {
-        uuid: minecraftProfile.uuid,
-      })
-    } catch {
-      console.log('Failed to remove profile');
-    }
-  }
-
-  logAuth('debug', `Loading profiles again`);
-  await store.dispatch('core/loadProfiles');
-
-  return minecraftProfiles;
-};
-
-
 export type LaunchCheckResult = {
   ok: boolean;
   requiresSignIn: boolean;
@@ -205,13 +159,18 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
     };
   }
 
-  const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
+  if (profile.type === "microsoft") {
+    return {
+      ok: false,
+      requiresSignIn: true,
+      quite: true,
+      error: createError('ftb-auth#1003'),
+    };
+  }
 
   logAuth(
     'debug',
-    `Validating profile ${profile.username} with uuid ${profile.uuid} against ${
-      profile.type === 'microsoft' ? 'Microsoft' : 'Mojang'
-    }`,
+    `Validating profile ${profile.username} with uuid ${profile.uuid} against Microsoft`,
   );
 
   const isValid = await sendMessage("profiles.is-valid", {
@@ -221,7 +180,7 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
   logAuth('debug', `The users token is ${isValid.success ? 'valid' : 'invalid'}`);
   if (!isValid?.success) {
     logAuth('debug', `Found a profile that no longer can be validated. Trying to refresh`);
-    const refresh = await validator.refresh(profile);
+    const refresh = await msAuthenticator.refresh(profile);
 
     // Update the profiles
     await store.dispatch('core/loadProfiles');

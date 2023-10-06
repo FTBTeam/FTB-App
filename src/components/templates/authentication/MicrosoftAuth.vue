@@ -70,7 +70,6 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import { Action } from 'vuex-class';
 import {loginWithMicrosoft} from '@/utils/auth/authentication';
@@ -86,9 +85,7 @@ function createStep(name: string) {
   }
 }
 
-@Component({
-  components: { YggdrasilAuthForm },
-})
+@Component
 export default class MicrosoftAuth extends Vue {
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
   
