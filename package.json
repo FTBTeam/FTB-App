@@ -1,6 +1,6 @@
 {
   "name": "ftb-app",
-  "version": "1.5.14",
+  "version": "1.5.15",
   "private": true,
   "main": "background.js",
   "author": "Feed The Beast",
