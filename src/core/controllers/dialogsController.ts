@@ -69,6 +69,7 @@ export class DialogBuilder {
   private subTitle?: string;
   private type?: "error" | "warning" | "info" | "success";
   private content?: string;
+  private form?: DialogForm;
   
   private buttons?: DialogButton[];
   private onClose?: () => void;
@@ -102,6 +103,11 @@ export class DialogBuilder {
     return this;
   }
   
+  withForm(form: DialogForm) {
+    this.form = form;
+    return this;
+  }
+  
   withCloseAction(onClose: () => void) {
     this.onClose = onClose;
     return this;
@@ -115,7 +121,79 @@ export class DialogBuilder {
       content: this.content,
       buttons: this.buttons,
       onClose: this.onClose,
+      form: this.form,
     } as Dialog
+  }
+}
+
+export type DialogForm = {
+  fields: FormField[];
+  validator: FormValidator;
+}
+
+export type FormField = {
+  name: string;
+  label: string;
+  type: SupportedFieldTypes;
+  initialValue?: string;
+  required?: boolean;
+}
+
+export type SupportedFieldTypes = "input" | "select" | "password" | "textarea"
+export type FormValidator = (context: Record<string, any>) => [boolean, string[]];
+
+export class FormBuilder {
+  private required = true;
+  private fields: FormField[] = [];
+  
+  private constructor(
+    private readonly validator: FormValidator
+  ) {}
+  
+  static create(
+    validator: FormValidator,
+  ) {
+    return new FormBuilder(validator);
+  }
+
+  public input(name: string, label: string, initialValue?: string, required?: boolean) {
+    return this._field("input", name, label, initialValue, required);
+  }
+  
+  public select(name: string, label: string, initialValue?: string, required?: boolean) {
+    return this._field("select", name, label, initialValue, required)
+  }
+  
+  public password(name: string, label: string, initialValue?: string, required?: boolean) {
+    return this._field("password", name, label, initialValue, required)
+  }
+  
+  public textarea(name: string, label: string, initialValue?: string, required?: boolean) {
+    return this._field("textarea", name, label, initialValue, required)
+  }
+  
+  private _field(type: SupportedFieldTypes, name: string, label: string, initialValue?: string, required?: boolean) {
+    this.fields.push({
+      name,
+      label,
+      type,
+      initialValue: initialValue ?? "",
+      required: required ?? this.required,
+    });
+    
+    return this;
+  }
+  
+  public optional() {
+    this.required = false;
+    return this;
+  }
+  
+  public build(): DialogForm {
+    return {
+      fields: this.fields,
+      validator: this.validator,
+    }
   }
 }
 

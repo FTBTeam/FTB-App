@@ -36,10 +36,9 @@
         </div>
       </modal-body>
       <modal-footer class="flex justify-end">
-        <ftb-button class="py-2 px-8" color="primary" css-class="text-center text-l" @click="update(true)">
-          <font-awesome-icon icon="check" class="mr-2" size="1x" />
+        <ui-button :wider="true" icon="check" @click="update(true)" type="success">
           Confirm
-        </ftb-button>
+        </ui-button>
       </modal-footer>
     </modal>
   </div>
@@ -52,14 +51,20 @@ import { Instance, ModPack } from '@/modules/modpacks/types';
 import Component from 'vue-class-component';
 import Loader from '@/components/atoms/Loader.vue';
 import {createModpackchUrl, parseMarkdown} from '@/utils';
+import {JavaFetch} from '@/core/javaFetch';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
   methods: {parseMarkdown},
-  components: { Loader },
+  components: {UiButton, Loader },
 })
 export default class PackUpdateButton extends Vue {
   @Prop() instance!: ModPack;
-  @Prop() localInstance!: Instance;
+  @Prop() localInstance!: InstanceJson | SugaredInstanceJson;
 
   isUnstable = false;
   showConfirm = false;
@@ -88,19 +93,18 @@ export default class PackUpdateButton extends Vue {
   }
 
   async loadChanges() {
+    if (typeIdToProvider(this.localInstance.packType) !== "modpacksch") {
+      return;
+    }
+    
     if (!this.latestVersion) {
       return; // how?
     }
+    
+    const packReq = await modpackApi.modpacks.getChangelog(this.localInstance.id, this.latestVersion.id, "modpacksch") // TODO: Support CF Packs
 
-    const packReq = await fetch(
-      createModpackchUrl(
-        `/${this.localInstance.packType === 0 ? 'modpack' : 'curseforge'}/${this.instance.id}/${
-          this.latestVersion?.id
-        }/changelog`,
-      ),
-    );
-
-    this.changes = (await packReq.json()).content;
+    // TODO: Error handling
+    this.changes = packReq?.content ?? ""
   }
 
   closeModal() {

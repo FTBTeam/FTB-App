@@ -24,18 +24,20 @@
             A Mod Loader will allow you to load mods into Minecraft. Each Mod Loader will have different mods available so we recommend looking at <a>CurseForge</a> to see what's available.
           </message>
 
-          <div class="loaders">
-            <div class="loader" v-for="(_, index) in availableLoaders" :key="index" @click="userLoaderProvider = index">
-              {{ index }}
+          <b class="mb-4 block">Select a Mod Loader</b>
+          
+          <div class="loaders mb-6">
+            <div class="loader" :class="{active: userLoaderProvider === index}" v-for="(_, index) in availableLoaders" :key="index" @click="userLoaderProvider = index">
+              {{ index | title }}
             </div>
           </div>
 
-          <f-t-b-toggle v-if="!stringIsEmpty(userLoaderProvider)" :value="userUseLatestLoader" @change="v => userUseLatestLoader = v" label="Use latest" />
+          <f-t-b-toggle v-if="!stringIsEmpty(userLoaderProvider)" :value="userUseLatestLoader" @change="v => userUseLatestLoader = v" label="Use latest Mod Loader version (recommended)" />
           
           <selection2
             v-if="!userUseLatestLoader && loaderVersions.length > 0"
             :open-up="true" 
-            label="Minecraft version" 
+            label="Version"
             class="mb-4" 
             :options="loaderVersions" 
             v-model="userModLoader" 
@@ -67,10 +69,13 @@
     
     <modal-footer>
       <div class="flex justify-end">
-        <ui-button v-if="step < 2" :disabled="!canProceed()" icon="arrow-right" @click="step ++">
+        <ui-button v-if="step > 0" icon="arrow-left" class="mr-2" @click="step --">
+          Back
+        </ui-button>
+        <ui-button :wider="true" type="success" v-if="step < 2" :disabled="!canProceed()" icon="arrow-right" @click="step ++">
           Next
         </ui-button>
-        <ui-button v-if="step === 2" icon="arrow-right" @click="createInstance">
+        <ui-button :wider="true" type="success" v-if="step === 2" icon="arrow-right" @click="createInstance">
           Create
         </ui-button>
       </div>
@@ -88,7 +93,7 @@ import { Action, State } from 'vuex-class';
 import {ModPack} from '@/modules/modpacks/types';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
-import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
+import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
@@ -101,6 +106,7 @@ import {ModLoader, ModLoadersResponse } from '@/core/@types/modpacks/modloaders'
 @Component({
   components: {Loader, FTBSlider, UiButton, FTBToggle, Selection2, ArtworkSelector},
   methods: {
+    toTitleCase,
     stringIsEmpty
   }
 })
@@ -204,7 +210,7 @@ export default class CreateInstance extends Vue {
         continue;
       }
       
-      foundLoadersForVersion[loader] = loaderData.loaders;
+      foundLoadersForVersion[loader] = loaderData.loaders.sort((a, b) => b.id - a.id);
     }
     
     this.availableLoaders = foundLoadersForVersion;
@@ -354,6 +360,40 @@ export default class CreateInstance extends Vue {
       height: 2px;
       background: rgba(white, .2);
       border-radius: 2px;
+    }
+  }
+}
+
+.loaders {
+  display: flex;
+  
+  .loader {
+    cursor: pointer;
+    flex: 1;
+    padding: 1rem 0;
+    text-align: center;
+    background-color: var(--color-navbar);
+    transition: background-color .25s ease-in-out;
+    font-weight: bold;
+    
+    &:hover {
+      background-color: var(--color-light-primary-button);
+    }
+    
+    &.active {
+      background-color: var(--color-primary-button);
+    }
+    
+    &:first-child {
+      border-radius: 8px 0 0 8px;
+    }
+
+    &:last-child {
+      border-radius: 0 8px 8px 0;
+    }
+    
+    &:not(:last-child) {
+      border-right: 1px solid rgba(white, .05);
     }
   }
 }

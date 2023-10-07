@@ -1,11 +1,13 @@
 import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
+import {DialogForm} from '@/core/controllers/dialogsController';
 
 export type Dialog = {
   title: string;
   subTitle?: string;
   type?: "error" | "warning" | "info" | "success";
   content: string; // Markdown?
+  form?: DialogForm;
   buttons?: DialogButton[],
   working?: boolean;
   onClose?: () => void;

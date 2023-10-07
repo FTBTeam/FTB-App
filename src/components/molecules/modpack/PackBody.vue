@@ -44,7 +44,7 @@
         >
           Overview
         </div>
-        <div class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
+        <div v-if="!isVanilla" class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
           Mods
         </div>
         <div
@@ -151,7 +151,7 @@
 
       <!-- Tab views, we're not using the router because it's a pain-->
       <modpack-mods
-        v-if="activeTab === tabs.MODS"
+        v-if="activeTab === tabs.MODS && !isVanilla"
         :modlist="mods"
         :pack-installed="isInstalled"
         :updatingModlist="updatingModlist"
@@ -266,6 +266,10 @@ export default class PackBody extends Vue {
       minutes: minutes > 0 ? minutes + 'm' : '',
       seconds: seconds > 0 ? seconds + 's' : '',
     };
+  }
+
+  get isVanilla() {
+    return this.instance?.id === 81;
   }
 
   // get currentVersionObject(): Versions | null {

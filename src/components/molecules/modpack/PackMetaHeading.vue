@@ -18,20 +18,21 @@
         class="origin icon ftb"
         v-if="
           (!instance.packType ? (instance.type || '').toLowerCase() !== 'curseforge' : instance.packType === 0) &&
-          !instance.isImport
+          !instance.isImport && 
+          modloader !== 'vanilla'
         "
         data-balloon-pos="left"
         aria-label="FTB Modpack"
       >
         <img src="@/assets/images/ftb-logo.svg" alt="" />
       </div>
-      <div class="origin icon" v-else-if="!instance.isImport" data-balloon-pos="left" aria-label="Curseforge Modpack">
+      <div class="origin icon" v-else-if="!instance.isImport && modloader !== 'vanilla'" data-balloon-pos="left" aria-label="Curseforge Modpack">
         <img src="@/assets/curse-logo.svg" alt="" />
       </div>
-      <div class="modloader icon" v-if="isForgePack" data-balloon-pos="left" aria-label="Forge Modloader">
+      <div class="modloader icon" v-if="modloader === 'forge' || modloader === 'neoforge'" data-balloon-pos="left" aria-label="Forge Modloader">
         <img src="@/assets/images/forge.svg" alt="" />
       </div>
-      <div class="modloader icon" v-else data-balloon-pos="left" aria-label="Fabric Modloader">
+      <div class="modloader icon" v-if="modloader === 'fabric'" data-balloon-pos="left" aria-label="Fabric Modloader">
         <img src="@/assets/images/fabric.webp" alt="" />
       </div>
 
@@ -71,13 +72,24 @@ export default class PackMetaHeading extends Vue {
   @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
   @Prop() hidePackDetails!: boolean;
-  @Prop() isForgePack!: boolean;
   @Prop() versionType!: string;
   @Prop() instance!: any;
 
   getColorForReleaseType = getColorForReleaseType;
 
   shareConfirm = false;
+  
+  get modloader() {
+    if (this.instance?.modLoader.includes('forge') && !this.instance?.modLoader.includes('neoforge')) {
+      return 'forge'
+    } else if (this.instance?.modLoader.includes('fabric')) {
+      return 'fabric'
+    } else if (this.instance?.modLoader.includes('neoforge')) {
+      return 'neoforge'
+    } else {
+      return 'vanilla'
+    }
+  }
 }
 </script>
 

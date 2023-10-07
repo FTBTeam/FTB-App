@@ -13,7 +13,6 @@
           :hidePackDetails="hidePackDetails"
           :versionType="versionType"
           :instance="instance"
-          :isForgePack="isForgePack"
         />
 
         <pack-title-header
@@ -53,24 +52,12 @@
           :versions="apiPack.versions"
           :pack-instance="apiPack"
           :instance="instance"
-          :current="instance.versionId"
           @close="showVersions = false"
         />
       </closable-panel>
     </div>
     <p v-else>No modpack found...</p>
-
-    <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-        :loading="deleting"
-      />
-    </ftb-modal>
-
+    
     <modal
       :open="offlineMessageOpen"
       :title="$route.query.presentOffline ? 'Unable to update your profile' : 'Play offline'"
@@ -127,7 +114,6 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { ModPack, Versions } from '@/modules/modpacks/types';
 import { Action, Getter, State } from 'vuex-class';
-import FTBModal from '@/components/atoms/FTBModal.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import { AuthState } from '@/modules/auth/types';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
@@ -136,7 +122,6 @@ import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue'
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
-import { App } from '@/types';
 import { AuthProfile } from '@/modules/core/core.types';
 import { RouterNames } from '@/router';
 import { abortableFetch, AbortableRequest, createModpackchUrl } from '@/utils';
@@ -150,6 +135,7 @@ import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {alertController} from '@/core/controllers/alertController';
+import {dialogsController} from '@/core/controllers/dialogsController';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -166,7 +152,6 @@ export enum ModpackPageTabs {
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
-    'ftb-modal': FTBModal,
     ModpackVersions,
     MessageModal,
     FindMods,
@@ -194,15 +179,6 @@ export default class InstancePage extends Vue {
 
   private apiPack: ModPack | null = null;
   deleting: boolean = false;
-
-  private showMsgBox: boolean = false;
-  private msgBox: App.MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
 
   modlist: any = [];
 
@@ -234,10 +210,6 @@ export default class InstancePage extends Vue {
     
     if (!this.apiPack) {
       this.activeTab = ModpackPageTabs.MODS;
-    }
-    
-    if (this.$route.query.shouldPlay === 'true') {
-      this.confirmLaunch();
     }
 
     this.getModList();
@@ -312,7 +284,7 @@ export default class InstancePage extends Vue {
   }
 
   public async launchModPack() {
-    if (this.instance == null) {
+    if (this.instance === null) {
       return;
     }
     
@@ -321,33 +293,23 @@ export default class InstancePage extends Vue {
         uuid: this.instance.uuid
       })
       
+      // TODO: ([ipc]#1) Handle errors
       console.log(result)
       
       return;
     }
 
     if (this.instance.memory < this.instance.minMemory) {
-      this.msgBox.type = 'okCancel';
-      this.msgBox.title = 'Low Memory';
-      this.msgBox.okAction = this.launch;
-      this.msgBox.cancelAction = this.hideMsgBox;
-      this.msgBox.content =
+      const result = await dialogsController.createConfirmationDialog("Low memory",
         `You are trying to launch the modpack with memory settings that are below the` +
         `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
-        `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
-      this.showMsgBox = true;
-    } else {
-      await this.launch();
+        `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`
+      )
+      
+      if (result) {
+        this.launch();
+      }
     }
-  }
-
-  public confirmLaunch() {
-    this.msgBox.type = 'okCancel';
-    this.msgBox.title = 'Do you want to launch this modpack?';
-    this.msgBox.okAction = this.launch;
-    this.msgBox.cancelAction = this.hideMsgBox;
-    this.msgBox.content = `We've been asked to launch ${this.instance?.name}, do you want to do this?`;
-    this.showMsgBox = true;
   }
 
   public launch() {
@@ -386,10 +348,6 @@ export default class InstancePage extends Vue {
     this.closeBorked();
   }
 
-  public hideMsgBox(): void {
-    this.showMsgBox = false;
-  }
-
   public async loadBackups() {
     const backups = await sendMessage("instanceGetBackups", {
       uuid: this.instance?.uuid ?? '',
@@ -422,17 +380,13 @@ export default class InstancePage extends Vue {
   destroyed() {
     this.requestHolder.forEach((e) => e.abort());
   }
-
+  
   get instance() {
     return this.instances.find(e => e.uuid === this.$route.params.uuid) ?? null;
   }
 
   get packSplashArt() {
     return resolveArtwork(this.apiPack, 'splash');
-  }
-
-  get isForgePack() {
-    return this.instance?.modLoader.includes('forge') ?? 'fabric';
   }
 
   /**

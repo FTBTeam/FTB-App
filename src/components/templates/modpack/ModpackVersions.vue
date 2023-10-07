@@ -1,11 +1,10 @@
 <template>
   <div class="pack-versions">
     <div class="aside mb-6">
-      <selection
+      <selection2
         :badge-end="true"
         :options="packVersions"
-        :inheritedSelection="packVersions[0]"
-        @selected="(version) => loadChanges(version)"
+        v-model="version"
       />
     </div>
     <div class="main flex pb-8 flex-col" :key="activeLog" v-if="!isCursePack">
@@ -16,7 +15,7 @@
         </div>
         <div class="buttons flex text-sm">
           <ftb-button
-            @click="() => platform.get.utils.openUrl(`https://feed-the-beast.com/modpacks/server-files`)"
+            @click="() => platform.get.utils.openUrl(`https://go.ftb.team/serverfiles`)"
             class="py-2 px-4 ml-auto mr-1"
             color="info"
             css-class="text-center text-l"
@@ -68,7 +67,7 @@
 
 <script lang="ts">
 import { ModPack, Versions } from '@/modules/modpacks/types';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import Selection from '@/components/atoms/input/Selection.vue';
@@ -79,15 +78,15 @@ import {InstanceJson} from '@/core/@types/javaApi';
 import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
 
 @Component({
-  components: {Selection}
+  components: {Selection2, Selection}
 })
 export default class ModpackVersions extends Vue {
   @Prop() versions!: Versions[];
   @Prop() packInstance!: ModPack;
   @Prop() instance!: InstanceJson;
-  @Prop() current!: number;
 
   platform = platform;
 
@@ -96,10 +95,14 @@ export default class ModpackVersions extends Vue {
   activeLog: number = -1;
   loading = true;
 
+  version: number | string = -1;
+  
   parseMarkdown = parseMarkdown;
 
   mounted() {
-    const lcurrent = this.current ?? this.versions[0].id;
+    const currentId = this.instance.versionId;
+    const lcurrent = this.sortedVersions.find(e => e.id === currentId)?.id ?? this.sortedVersions[0].id;
+    this.version = lcurrent;
 
     // TODO: Fix this once the api has been updated to support a `provider` field
     if (this.isCursePack) {
@@ -119,6 +122,7 @@ export default class ModpackVersions extends Vue {
     this.changelogs = {};
   }
 
+  @Watch('version')
   async loadChanges(versionId: number) {
     if (this.isCursePack) {
       return;
@@ -128,7 +132,7 @@ export default class ModpackVersions extends Vue {
       this.setActive(versionId);
       return;
     }
-
+    
     this.changelogs['' + versionId] = await this.fetchLog(versionId);
     this.setActive(versionId);
   }
@@ -139,7 +143,10 @@ export default class ModpackVersions extends Vue {
   }
 
   async fetchLog(versionId: number) {
-    // TODO: 
+    if (this.isCursePack) {
+      return "";
+    }
+    
     const changelog = await toggleBeforeAndAfter(
       () => modpackApi.modpacks.getChangelog(this.packInstance.id, versionId, this.isCursePack ? "curseforge" : "modpacksch"),
       state => this.loading = state
@@ -166,13 +173,17 @@ export default class ModpackVersions extends Vue {
     })
   }
   
-  get packVersions() {
-    return this.versions.map(e => ({
+  get packVersions(): SelectionOptions {
+    return this.sortedVersions.map(e => ({
       value: e.id, 
-      text: e.name + (this.instance?.versionId === e.id ? ' (Current)' : ''), 
+      label: e.name + (this.instance?.versionId === e.id ? ' (Current)' : ''), 
       meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"), 
       badge: {color: getColorForReleaseType(e.type), text: e.type} 
-    }))
+    })) ?? []
+  }
+  
+  get sortedVersions() {
+    return this.versions.sort((a, b) => b.id - a.id);
   }
   
   get isCursePack() {

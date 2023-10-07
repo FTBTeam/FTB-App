@@ -58,7 +58,6 @@ import {PackProviders} from '@/modules/modpacks/types';
 import { Route } from 'vue-router';
 import { AuthState } from '@/modules/auth/types';
 import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
-import FTBModal from '@/components/atoms/FTBModal.vue';
 import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
@@ -69,8 +68,7 @@ import PackPreview from '@/components/core/modpack/PackPreview.vue';
   components: {
     PackPreview,
     Loader,
-    FTBSearchBar,
-    FTBModal,
+    FTBSearchBar
   },
 })
 export default class BrowseModpacks extends Vue {

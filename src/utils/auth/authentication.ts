@@ -159,7 +159,7 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
     };
   }
 
-  if (profile.type === "microsoft") {
+  if (profile.type !== "microsoft") {
     return {
       ok: false,
       requiresSignIn: true,

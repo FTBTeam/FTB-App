@@ -43,15 +43,13 @@ import TitleBar from '@/components/layout/TitleBar.vue';
 import {Component, Vue, Watch} from 'vue-property-decorator';
 import {Action, Getter, State} from 'vuex-class';
 import {SocketState} from '@/modules/websocket/types';
-import FTBModal from '@/components/atoms/FTBModal.vue';
 import {SettingsState} from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
-import {RouterNames} from '@/router';
 import {AuthState} from '@/modules/auth/types';
-import {AppStoreModules, ns} from '@/core/state/appState';
+import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
 import { sendMessage } from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
@@ -62,7 +60,6 @@ import os from 'os';
     GlobalComponents,
     Sidebar,
     TitleBar,
-    FTBModal,
     ReportForm,
     AdAside,
   },
