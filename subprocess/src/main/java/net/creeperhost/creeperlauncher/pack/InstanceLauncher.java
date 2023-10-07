@@ -4,11 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
-import net.covers1624.jdkutils.JdkInstallationManager;
-import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
-import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.DataUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
@@ -32,9 +29,6 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
-import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
-import org.apache.maven.artifact.versioning.VersionRange;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -67,8 +61,6 @@ public class InstanceLauncher {
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
     private static final List<String> TELEMETRY_ARGS = List.of("clientid", "auth_xuid"); // Tracking & XBox related
-
-    private static final VersionRange MC_AARCH64_MAC_SUPPORTED = createRange("[1.19,)");
     
     private final Instance instance;
     private Phase phase = Phase.NOT_STARTED;
@@ -325,21 +317,24 @@ public class InstanceLauncher {
             Path javaExecutable;
             if (instance.props.embeddedJre) {
                 String javaTarget = instance.versionManifest.getTargetVersion("runtime");
-                String mcVersion = instance.getMcVersion();
-
-                OperatingSystem os = OperatingSystem.current();
-                boolean useAArch64MacVM = !os.isMacos() || (mcVersion != null && MC_AARCH64_MAC_SUPPORTED.containsVersion(new DefaultArtifactVersion(mcVersion)));
-
-                ProvisionRequest.Builder request = new ProvisionRequest.Builder()
-                        .preferJRE(true)
-                        .ignoreMacosAArch64(!useAArch64MacVM);
-                if (javaTarget != null) {
-                    request.withSemver(javaTarget);
-                } else {
+                Path javaHome;
+                if (javaTarget == null) {
                     LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
-                    request.forVersion(getJavaVersion());
+                    JavaVersion version = getJavaVersion();
+                    javaHome = Constants.getJdkManager().provisionJdk(
+                            version,
+                            null,
+                            true,
+                            new QuackProgressAdapter(progressTracker.listenerForStep(true))
+                    );
+                } else {
+                    javaHome = Constants.getJdkManager().provisionJdk(
+                            javaTarget,
+                            true,
+                            new QuackProgressAdapter(progressTracker.listenerForStep(true))
+                    );
                 }
-                javaExecutable = JavaInstall.getJavaExecutable(Constants.getJdkManager().provisionJdk(request.build()), true);
+                javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
                 javaExecutable = instance.props.jrePath;
             }
@@ -687,14 +682,6 @@ public class InstanceLauncher {
             }
         }
         return manifests.get(manifests.size() - 1).id;
-    }
-
-    private static VersionRange createRange(String spec) {
-        try {
-            return VersionRange.createFromVersionSpec(spec);
-        } catch (InvalidVersionSpecificationException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static class LaunchContext {
