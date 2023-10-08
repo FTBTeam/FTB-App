@@ -54,6 +54,7 @@ public class InstanceJson {
     public boolean hasInstMods;
     public boolean installComplete;
     public String category = "Default";
+    public String releaseChannel = "unset";
     
     public byte packType;
     // TODO migrate this to `isPrivate`
@@ -100,6 +101,7 @@ public class InstanceJson {
         lastPlayed = other.lastPlayed;
         art = other.art;
         category = other.category;
+        releaseChannel = other.releaseChannel;
     }
 
     // Copy instance.

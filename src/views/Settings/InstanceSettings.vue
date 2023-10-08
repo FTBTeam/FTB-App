@@ -1,37 +1,67 @@
 <template>
   <div class="instance-settings">
-    <p class="block uppercase text-white-700 font-bold mb-4">Window Size</p>
-    <div class="mb-4">
-      <div class="flex items-center mb-2">
-        <div class="block flex-1 mr-2">
-          <b>Size presets</b>
-          <p class="text-muted text-sm">Select a preset based on your system</p>
-        </div>
-        
-        <selection
-          v-if="loadedSettings"
-          @selected="(e) => e && selectResolution(e)"
-          :inheritedSelection="resolutionList.find((e) => e.text === `${localSettings.width} x ${localSettings.height}px`)"
-          :style="{width: '240px'}"
-          :options="resolutionList" 
-        />
+    <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
+    <div class="flex items-center mb-6">
+      <div class="block flex-1 mr-2">
+        <b>Release Channel</b>
+        <small class="block text-muted mr-6 mt-2">
+          The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
       </div>
-      <div class="flex items-center mb-2">
-        <div class="block flex-1 mr-2">
-          <b>Width</b>
-          <p class="text-muted text-sm">The Minecraft windows screen width</p>
+
+      <selection2
+        v-if="loadedSettings"
+        :options="channelOptions"
+        v-model="localSettings.updateChannel"
+        :style="{width: '192px'}"
+        @change="v => saveMutated()"
+      />
+    </div>
+    <p class="block text-white-700 text-lg font-bold mb-4">Window Size</p>
+    <div class="mb-6">
+      <ftb-toggle
+        label="Fullscreen"
+        :value="localSettings.fullScreen"
+        @change="v => {
+          localSettings.fullScreen = v;
+          saveMutated();
+        }"
+        class="mb-4"
+        small="Always open Minecraft in Fullscreen mode"
+      />
+      
+      <div :class="{'cursor-not-allowed opacity-50 pointer-events-none': localSettings.fullScreen}">
+        <div class="flex items-center mb-4">
+          <div class="block flex-1 mr-2">
+            <b>Size presets</b>
+            <small class="text-muted block mt-2">Select a preset based on your system</small>
+          </div>
+          
+          <selection
+            v-if="loadedSettings"
+            @selected="(e) => e && selectResolution(e)"
+            :inheritedSelection="resolutionList.find((e) => e.text === `${localSettings.width} x ${localSettings.height}px`)"
+            :style="{width: '192px'}"
+            :options="resolutionList" 
+          />
         </div>
-        <ftb-input class="mb-0" v-model="localSettings.width" :value="localSettings.width" @blur="saveMutated" />  
-      </div>
-      <div class="flex items-center">
-        <div class="block flex-1 mr-2">
-          <b>Height</b>
-          <p class="text-muted text-sm">The Minecraft windows screen height</p>
+        <div class="flex items-center mb-4">
+          <div class="block flex-1 mr-2">
+            <b>Width</b>
+            <small class="text-muted block mt-2">The Minecraft windows screen width</small>
+          </div>
+          <ftb-input class="mb-0" v-model="localSettings.width" :value="localSettings.width" @blur="saveMutated" />  
         </div>
-        <ftb-input class="mb-0" v-model="localSettings.height" :value="localSettings.height" @blur="saveMutated" />
+        <div class="flex items-center">
+          <div class="block flex-1 mr-2">
+            <b>Height</b>
+            <small class="text-muted block mt-2">The Minecraft windows screen height</small>
+          </div>
+          <ftb-input class="mb-0" v-model="localSettings.height" :value="localSettings.height" @blur="saveMutated" />
+        </div>
       </div>
     </div>
-    
+
+    <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
     <!--          <ftb-slider label="Default Memory" v-model="localSettings.memory" :currentValue="localSettings.memory" minValue="512" :maxValue="settingsState.hardware.totalMemory" @change="doSave"-->
     <!--                      unit="MB" @blur="doSave" step="128"/>-->
 
@@ -45,6 +75,7 @@
       These arguments are appended to your instances upon start, they are normal java arguments.
     </small>
 
+    <p class="block text-white-700 text-lg font-bold mb-4">Misc</p>
     <ftb-input
       label="Instance Location"
       :value="localSettings.instanceLocation"
@@ -71,11 +102,13 @@ import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import Selection from '@/components/atoms/input/Selection.vue';
 import { alertController } from '@/core/controllers/alertController';
+import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
 
 @Component({
   components: {
     Selection,
     'ftb-toggle': FTBToggle,
+    Selection2
   },
 })
 export default class InstanceSettings extends Vue {
@@ -144,6 +177,26 @@ export default class InstanceSettings extends Vue {
       })
     }
     return resList;
+  }
+  
+  get channelOptions(): SelectionOptions {
+    return [
+      {
+        value: 'release',
+        label: 'Release',
+        meta: '⭐️',
+      },
+      {
+        value: 'beta',
+        label: 'Beta',
+        meta: 'β',
+      },
+      {
+        value: 'alpha',
+        label: 'Alpha',
+        meta: '⚠️',
+      },
+    ];
   }
 }
 </script>

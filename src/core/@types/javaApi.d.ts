@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-10-03 15:24:19.
+// Generated using typescript-generator version 3.2.1263 on 2023-10-08 11:38:20.
 
 export interface BaseData {
     type: string;
@@ -667,6 +667,7 @@ export interface InstanceJson {
     hasInstMods: boolean;
     installComplete: boolean;
     category: string;
+    releaseChannel: string;
     packType: number;
     _private: boolean;
     totalPlayTime: number;

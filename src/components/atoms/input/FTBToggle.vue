@@ -1,5 +1,5 @@
 <template>
-  <div :class="`flex flex-${inline ? 'row' : 'col'} ${inline ? 'items-center' : ''} my-2 ftb-toggle-area`">
+  <div :class="`flex flex-${inline ? 'row' : 'col'} ${inline ? 'items-center' : ''} my-2 ftb-toggle-area`" @click="toggle">
     <template v-if="!inline">
       <div class="w-full flex ftb-toggle">
         <div class="main flex-1 mr-8">
@@ -12,7 +12,6 @@
           class="toggle border border-input flex items-center rounded bg-black"
           style="width: 56px"
           :class="`${toggleClasses.join(' ')} ${disabled ? 'opacity-25' : ''}`"
-          @click="toggle"
         >
           <span
             class="w-6 h-6 shadow-inner cursor-pointer rounded-sm bg-white"
@@ -26,7 +25,6 @@
         class="toggle border border-input flex items-center rounded"
         style="width: 56px"
         :class="toggleClasses"
-        @click="toggle"
       >
         <span
           class="w-6 h-6 shadow-inner bg-input rounded-sm bg-gray-400"

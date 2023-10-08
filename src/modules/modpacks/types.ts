@@ -18,6 +18,7 @@ export interface ModPack {
   notification: string;
   links: ModPackLink[];
   private?: boolean;
+  provider: 'modpacks.ch' | 'curseforge'
 }
 
 export interface ModpackVersion {

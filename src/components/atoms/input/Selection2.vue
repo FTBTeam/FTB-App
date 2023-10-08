@@ -84,6 +84,7 @@ export default class Selection2 extends Vue {
     if (option.value === this.value) {
       if (this.allowDeselect) {
         this.$emit('input', null)
+        this.$emit('change', null)
       }
       this.open = false;
       // Forcefully deselect the dropdown
@@ -92,6 +93,7 @@ export default class Selection2 extends Vue {
     }
 
     this.$emit('input', option.value)
+    this.$emit('change', option.value)
     this.open = false;
     // Forcefully deselect the dropdown
     (this.$refs['selection'] as any).blur();
