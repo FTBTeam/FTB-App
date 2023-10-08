@@ -11,6 +11,8 @@ export type SaveJson = {
   width: number;
   height: number;
   cloudSaves: boolean;
+  fullScreen: boolean;
+  releaseChannel: string;
 }
 
 /**

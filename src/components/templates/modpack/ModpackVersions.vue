@@ -100,7 +100,7 @@ export default class ModpackVersions extends Vue {
   parseMarkdown = parseMarkdown;
 
   mounted() {
-    const currentId = this.instance.versionId;
+    const currentId = this.instance?.versionId ?? this.packInstance?.versions[0]?.id ?? -1;
     const lcurrent = this.sortedVersions.find(e => e.id === currentId)?.id ?? this.sortedVersions[0].id;
     this.version = lcurrent;
 

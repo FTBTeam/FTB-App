@@ -102,7 +102,8 @@ import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import Selection from '@/components/atoms/input/Selection.vue';
 import { alertController } from '@/core/controllers/alertController';
-import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
+import Selection2 from '@/components/atoms/input/Selection2.vue';
+import {ReleaseChannelOptions} from '@/utils/commonOptions';
 
 @Component({
   components: {
@@ -179,24 +180,8 @@ export default class InstanceSettings extends Vue {
     return resList;
   }
   
-  get channelOptions(): SelectionOptions {
-    return [
-      {
-        value: 'release',
-        label: 'Release',
-        meta: '⭐️',
-      },
-      {
-        value: 'beta',
-        label: 'Beta',
-        meta: 'β',
-      },
-      {
-        value: 'alpha',
-        label: 'Alpha',
-        meta: '⚠️',
-      },
-    ];
+  get channelOptions() {
+    return ReleaseChannelOptions();
   }
 }
 </script>

@@ -109,9 +109,9 @@ export default class ModpackInstallModal extends Vue {
       versionName: this.versions.find(e => e.value === this.selectedVersionId)?.label ?? "",
       logo: this.userSelectedArtwork?.path ?? null, // The backend will default for us.
       private: this.apiModpack?.private ?? false,
+      provider: this.provider,
     })
     
-    alertController.info("Install started")
     this.close();
     if (this.$route.name !== RouterNames.ROOT_LIBRARY) {
       this.$router.push({

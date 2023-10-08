@@ -5,7 +5,7 @@ import {RootState} from '@/types';
 
 export type ModpackState = typeof state;
 
-const packBlacklist = [
+export const packBlacklist = [
   104, // Forge
   105, // Fabric
   116  // NeoForge

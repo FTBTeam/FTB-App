@@ -61,7 +61,34 @@
     />
     
     <h3 class="font-bold text-lg mb-4">Minecraft window size</h3>
-    <div class="mb-6">
+    
+    <div class="flex items-center mb-6">
+      <div class="block flex-1 mr-2">
+        <b>Release Channel</b>
+        <small class="block text-muted mr-6 mt-2">
+          The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
+      </div>
+      
+      <selection2
+        :options="channelOptions"
+        v-model="instanceSettings.releaseChannel"
+        :style="{width: '192px'}"
+        @change="v => saveSettings()"
+      />
+    </div>
+
+    <ftb-toggle
+      label="Fullscreen"
+      :value="instanceSettings.fullScreen"
+      @change="v => {
+          instanceSettings.fullScreen = v;
+          saveSettings();
+      }"
+      class="mb-4"
+      small="Always open Minecraft in Fullscreen mode"
+    />
+    
+    <div class="mb-6" :class="{'cursor-not-allowed opacity-50 pointer-events-none': instanceSettings.fullScreen}">
       <div class="flex items-center mb-2">
         <div class="block flex-1 mr-2">
           <b>Size presets</b>
@@ -72,7 +99,7 @@
           v-if="resolutionList.length"
           @selected="(e) => e && selectResolution(e)"
           :inheritedSelection="resolutionList.find((e) => e.text === `${instanceSettings.width ? instanceSettings.width.toString() : ''} x ${instanceSettings.height ? instanceSettings.height.toString() : ''}px`)"
-          :style="{width: '240px'}"
+          :style="{width: '192px'}"
           :options="resolutionList"
           :allow-deselect="false"
         />
@@ -182,9 +209,12 @@ import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
+import {ReleaseChannelOptions} from '@/utils/commonOptions';
+import Selection2 from '@/components/atoms/input/Selection2.vue';
 
 @Component({
   components: {
+    Selection2,
     DuplicateInstanceModal,
     Selection,
     'ftb-toggle': FTBToggle,
@@ -220,6 +250,8 @@ export default class ModpackSettings extends Vue {
       width: this.instance.width,
       height: this.instance.height,
       cloudSaves: this.instance.cloudSaves,
+      fullScreen: this.instance.fullscreen,
+      releaseChannel: this.instance.releaseChannel,
     }
     
     this.previousSettings = {
@@ -375,6 +407,10 @@ export default class ModpackSettings extends Vue {
       !this.settingsState.settings.cloudSaves &&
       (this.settingsState.settings.cloudSaves as boolean | 'true' | 'false') !== 'true'
     );
+  }
+
+  get channelOptions() {
+    return ReleaseChannelOptions(true);
   }
 }
 </script>

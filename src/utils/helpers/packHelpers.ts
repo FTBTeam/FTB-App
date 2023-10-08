@@ -1,9 +1,11 @@
-import {ModPack, PackProviders} from '@/modules/modpacks/types';
+import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
 
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
+import store from '@/modules/store';
+import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all" | "hotfix";
@@ -102,4 +104,46 @@ export function typeIdToProvider(id: number): PackProviders {
     case 1: return "curseforge";
     default: return "modpacksch"
   }
+}
+
+/**
+ * Checks if an instance has an update available based on the users update channel. If the instance does not have its
+ * own release channel set, it will use the apps default channel. If that channel is not available, it will use release.
+ * 
+ * Also, if we're a vanilla pack (81) or a modloader pack, or a custom pack (-1) don't offer updates.
+ */
+export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJson | null, apiPack?: ModPack | null): Versions | undefined {
+  if (!instance || !apiPack || !instance.versionId) {
+    return undefined;
+  }
+  
+  if (instance.id === -1 || instance.id === 81 || packBlacklist.includes(instance.id)) {
+    return undefined;
+  }
+  
+  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (store.state.settings?.settings.updateChannel ?? "release");
+  const allowedTypes: VersionTypes[] = channel === "release" ? ["release"] : (channel === "beta" ? ["release", "beta"] : ["release", "beta", "alpha"]);
+  
+  const packVersions = apiPack.versions.sort((a, b) => b.id - a.id);
+  
+  let versions = packVersions.filter(e => allowedTypes.includes(e.type.toLowerCase() as VersionTypes));
+  if (versions.length === 0 && channel === "alpha") {
+    return undefined;
+  }
+  
+  // Relax the version type requirements if the user selected channel is not available
+  if (versions.length === 0) {
+    versions = packVersions;
+  }
+  
+  const latestVersion = versions[0];
+  if (!latestVersion) {
+    return undefined;
+  }
+  
+  if (latestVersion.id > instance.versionId) {
+    return latestVersion;
+  }
+  
+  return undefined;
 }

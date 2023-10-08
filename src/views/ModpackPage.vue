@@ -18,8 +18,7 @@
             @back="$router.back()"
             :hidePackDetails="false"
             versionType="release"
-            :instance="currentModpack"
-            :isForgePack="isForgePack"
+            :api-pack="currentModpack"
           />
 
           <pack-title-header :pack-instance="currentModpack" :pack-name="currentModpack.name" />
@@ -105,21 +104,6 @@ export default class ModpackPage extends Vue {
   currentModpack: ModPack | null = null;
   error = '';
 
-  public install(name: string, version: number, versionName: string): void {
-    instanceInstallController.requestInstall({
-      id: this.currentModpack?.id ?? 0,
-      version: version,
-      name: name,
-      versionName: versionName,
-      logo: resolveArtwork(this.currentModpack ?? null, 'square'),
-      private: this.currentModpack?.private ?? false,
-    })
-
-    this.$router.push({
-      name: RouterNames.ROOT_LIBRARY
-    })
-  }
-
   async mounted() {
     const packID: number = parseInt(this.$route.query.modpackid as string, 10);
     this.packTypeId = parseInt(this.$route.query.type as string, 10);
@@ -160,7 +144,6 @@ export default class ModpackPage extends Vue {
     this.loading = false;
     
     if (version) {
-      console.log(version.files.filter(e => !e.name))
       this.mods = version.files
         ?.filter((e: any) => e.type === 'mod')
         .map((e: any) => ({name: e.name, size: e.size, version: e.version}))
@@ -168,43 +151,8 @@ export default class ModpackPage extends Vue {
           a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0,
         );
     }
-    
-    // if (this.currentVersionObject !== null) {
-    //   if (this.currentVersionObject?.mtgID) {
-    //     this.fetchServers(this.currentVersionObject?.mtgID ?? '');
-    //   }
-    // }
   }
-
-  // get currentVersionObject(): Versions | null {
-  //   if (this.currentModpack !== null) {
-  //     const version = this.currentModpack?.versions.find((f: Versions) => f.id === this.latestRelease);
-  //     if (version !== undefined) {
-  //       return version;
-  //     }
-  //   }
-  //   return null;
-  // }
   
-  get latestRelease() {
-    if (this.currentModpack !== undefined) {
-      const version = this.currentModpack?.versions.find((f: Versions) => f.type.toLowerCase() === 'release');
-      if (version !== undefined) {
-        return version.id;
-      }
-      return null;
-    }
-    return null;
-  }
-
-  get isForgePack() {
-    const latestRelease = this.latestRelease ?? this.currentModpack?.versions[0]?.id ?? null;
-    return (
-      (this.currentModpack?.versions?.find((e) => e.id === latestRelease) as any)?.targets.find(
-        (e: any) => e.type === 'modloader',
-      )?.name === 'forge'
-    );
-  }
 
   get packSplashArt() {
     return resolveArtwork(this.currentModpack, 'splash');

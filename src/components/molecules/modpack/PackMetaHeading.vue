@@ -12,32 +12,28 @@
     >
       Running {{ versionType }} version
     </div>
-
-    <div class="meta" v-if="!instance.name || instance.name.toLowerCase() !== 'vanilla'">
+    
+    <div class="meta" v-if="packInfo && packInfo.id !== 81">
       <div
         class="origin icon ftb"
-        v-if="
-          (!instance.packType ? (instance.type || '').toLowerCase() !== 'curseforge' : instance.packType === 0) &&
-          !instance.isImport && 
-          modloader !== 'vanilla'
-        "
+        v-if="!packInfo.isImport && packInfo.provider === 'modpacksch'"
         data-balloon-pos="left"
         aria-label="FTB Modpack"
       >
         <img src="@/assets/images/ftb-logo.svg" alt="" />
       </div>
-      <div class="origin icon" v-else-if="!instance.isImport && modloader !== 'vanilla'" data-balloon-pos="left" aria-label="Curseforge Modpack">
+      <div class="origin icon" v-else-if="packInfo.provider !== 'modpacksch'" data-balloon-pos="left" aria-label="Curseforge Modpack">
         <img src="@/assets/curse-logo.svg" alt="" />
       </div>
-      <div class="modloader icon" v-if="modloader === 'forge' || modloader === 'neoforge'" data-balloon-pos="left" aria-label="Forge Modloader">
+      <div class="modloader icon" v-if="packInfo.modloader === 'forge' || packInfo.modloader === 'neoforge'" data-balloon-pos="left" aria-label="Forge Modloader">
         <img src="@/assets/images/forge.svg" alt="" />
       </div>
-      <div class="modloader icon" v-if="modloader === 'fabric'" data-balloon-pos="left" aria-label="Fabric Modloader">
+      <div class="modloader icon" v-if="packInfo.modloader === 'fabric'" data-balloon-pos="left" aria-label="Fabric Modloader">
         <img src="@/assets/images/fabric.webp" alt="" />
       </div>
 
       <ftb-button
-        v-if="instance.uuid && instance.isModified"
+        v-if="instance && instance.uuid && instance.isModified"
         :disabled="!getActiveMcProfile"
         :title="
           !getActiveMcProfile
@@ -53,7 +49,7 @@
       </ftb-button>
     </div>
 
-    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
+    <share-instance-modal v-if="instance" :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
 
@@ -64,6 +60,17 @@ import { Prop } from 'vue-property-decorator';
 import { getColorForReleaseType } from '@/utils/colors';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import { Getter } from 'vuex-class';
+import {ModPack, PackProviders} from '@/modules/modpacks/types';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import store from '@/modules/store';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+
+type PackInfo = {
+  id: number;
+  modloader: string;
+  provider: PackProviders;
+  isImport: boolean;
+}
 
 @Component({
   components: { ShareInstanceModal },
@@ -73,13 +80,45 @@ export default class PackMetaHeading extends Vue {
 
   @Prop() hidePackDetails!: boolean;
   @Prop() versionType!: string;
-  @Prop() instance!: any;
+  @Prop() apiPack?: ModPack;
+  @Prop() instance?: SugaredInstanceJson | InstanceJson
 
   getColorForReleaseType = getColorForReleaseType;
 
   shareConfirm = false;
   
+  get packInfo() {
+    if (this.instance) return this.getInstanceInfo(this.instance);
+    if (this.apiPack) return this.getApiPackInfo(this.apiPack);
+    
+    return null;
+  }
+
+  getInstanceInfo(instance: SugaredInstanceJson | InstanceJson): PackInfo {
+    return {
+      id: instance.id,
+      modloader: this.modloader,
+      provider: typeIdToProvider(instance.packType ?? 0),
+      isImport: instance.isImport ?? false,
+    }
+  }
+
+  getApiPackInfo(apiPack: ModPack): PackInfo {
+    return {
+      id: apiPack.id,
+      modloader: this.modloader,
+      provider: apiPack.provider as PackProviders,
+      isImport: false,
+    }
+  }
+  
   get modloader() {
+    if (this.instance) return this.loaderFromInstance();
+    if (this.apiPack) return this.loaderFromApiPack();
+    return 'vanilla';
+  }
+  
+  loaderFromInstance() {
     if (this.instance?.modLoader.includes('forge') && !this.instance?.modLoader.includes('neoforge')) {
       return 'forge'
     } else if (this.instance?.modLoader.includes('fabric')) {
@@ -89,6 +128,21 @@ export default class PackMetaHeading extends Vue {
     } else {
       return 'vanilla'
     }
+  }
+
+  loaderFromApiPack() {
+    if (!this.apiPack) {
+      return 'vanilla';
+    }
+    
+    const releaseChannel = store.state.settings?.settings.updateChannel ?? 'release';
+    const sortedVersions = this.apiPack.versions
+      .sort((a, b) => b.id - a.id);
+    
+    const latest = sortedVersions
+      .find((v) => v.type.toLowerCase() === releaseChannel);
+    
+    return (latest ?? sortedVersions[0])?.targets.find(e => e.type === "modloader")?.name ?? 'vanilla';
   }
 }
 </script>

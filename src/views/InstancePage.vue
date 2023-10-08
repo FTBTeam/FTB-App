@@ -12,6 +12,7 @@
           @back="goBack"
           :hidePackDetails="hidePackDetails"
           :versionType="versionType"
+          :api-pack="apiPack ? apiPack : undefined"
           :instance="instance"
         />
 

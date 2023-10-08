@@ -90,6 +90,7 @@ class InstanceInstallController {
     
     // Trigger a check queue
     await this.checkQueue();
+    alertController.info(`Install requested for ${request.name}`);
   }
 
   public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions, provider: PackProviders = "modpacksch") {
@@ -108,6 +109,7 @@ class InstanceInstallController {
     
     // Trigger a check queue
     await this.checkQueue();
+    alertController.info(`Update requested for ${instance.name}`);
   }
   
   public async requestImport(path: string) {
@@ -126,6 +128,7 @@ class InstanceInstallController {
     
     // Trigger a check queue
     await this.checkQueue();
+    alertController.info(`Import requested for ${path.split("/").pop()}`)
   }
   
   public async requestShareImport(shareCode: string) {
@@ -144,6 +147,7 @@ class InstanceInstallController {
 
     // Trigger a check queue
     await this.checkQueue();
+    alertController.info(`Import requested for ${shareCode}`);
   }
   
   public async requestSync(instance: InstanceJson | SugaredInstanceJson) {
@@ -162,6 +166,7 @@ class InstanceInstallController {
     
     // Trigger a check queue
     await this.checkQueue();
+    alertController.info(`Sync requested for ${instance.name}`);
   }
   
   private async checkQueue() {
