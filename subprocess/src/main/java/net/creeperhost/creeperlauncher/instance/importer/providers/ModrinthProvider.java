@@ -7,8 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
-public abstract class PrismLikeProvider implements InstanceProvider {
+public class ModrinthProvider implements InstanceProvider {
     @Override
     public Result<Boolean, String> importInstance(String identifier) {
         return Result.err("Not implemented");

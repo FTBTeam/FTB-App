@@ -18,6 +18,8 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.AddFriendHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.BlockFriendHandler;
 import net.creeperhost.creeperlauncher.api.handlers.friends.GetFriendsHandler;
+import net.creeperhost.creeperlauncher.api.handlers.importer.ImportProviderImportHandler;
+import net.creeperhost.creeperlauncher.api.handlers.importer.ImportProviderInstancesHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.*;
 import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceDeleteBackupHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceGetBackupsHandler;
@@ -113,6 +115,10 @@ public class WebSocketMessengerHandler {
         register("videoCache", VideoCacheHandler.Data.class, new VideoCacheHandler());
 
         register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
+        
+        // Importing
+        register("import.providerInstances", ImportProviderInstancesHandler.Data.class, new ImportProviderInstancesHandler());
+        register("import.providerImport", ImportProviderImportHandler.Data.class, new ImportProviderImportHandler());
     }
 
     public static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {

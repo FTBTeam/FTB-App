@@ -7,6 +7,7 @@ import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,11 +22,6 @@ import java.util.*;
  */
 public class CurseForgeProvider implements InstanceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(CurseForgeProvider.class);
-
-    public static void main(String[] args) {
-        CurseForgeProvider provider = new CurseForgeProvider();
-        provider.getAllInstances().forEach(System.out::println);
-    }
     
     @Override
     public List<SimpleInstanceInfo> getAllInstances() {
@@ -39,9 +35,9 @@ public class CurseForgeProvider implements InstanceProvider {
             var modpacks = files
                 .filter(Files::isDirectory)
                 .filter(path -> Files.exists(path.resolve("minecraftinstance.json")))
-                .map(e -> Pair.of(e, this.getDataFile(e, JsonObject.class)))
-                .filter(e -> e.getRight().isPresent())
-                .map(e -> Pair.of(e.getLeft(), e.getRight().get()))
+                .map(e -> Pair.of(e, this.getDataFile(e)))
+                .filter(e -> e.getRight() != null)
+                .map(e -> Pair.of(e.getLeft(), e.getRight().getAsJsonObject()))
                 .toList();
             
             var simpleInstances = modpacks
@@ -61,8 +57,9 @@ public class CurseForgeProvider implements InstanceProvider {
     }
 
     @Override
-    public void getInstance(String instanceName) {
-
+    @Nullable
+    public SimpleInstanceInfo getInstance(String instanceName) {
+        return null;
     }
     
     public Optional<Path> getModdedDir() {
@@ -95,17 +92,18 @@ public class CurseForgeProvider implements InstanceProvider {
     }
     
     @Override
-    public <T> Optional<T> getDataFile(Path path, Class<T> type) {
+    @Nullable
+    public JsonElement getDataFile(Path path) {
         Path dataLocation = getDataLocation();
         Path instancePath = dataLocation.resolve(path);
         Path metaFile = instancePath.resolve("minecraftinstance.json");
         try {
-            return Optional.of(GsonUtils.loadJson(metaFile, type));
+            return GsonUtils.loadJson(metaFile, JsonElement.class);
         } catch (Exception e) {
             LOGGER.error("Failed to load instance meta file", e);
         }
         
-        return Optional.empty();
+        return null;
     }
     
     private Optional<JsonElement> loadJson(Path path) {
@@ -119,7 +117,7 @@ public class CurseForgeProvider implements InstanceProvider {
     }
 
     @Override
-    public Result<Boolean, String> importInstance() {
+    public Result<Boolean, String> importInstance(String identifier) {
 //        List<String> allInstances = getAllInstances();
 //        for (String instance : allInstances) {
 //            var

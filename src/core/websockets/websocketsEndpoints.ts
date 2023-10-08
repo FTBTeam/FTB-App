@@ -28,6 +28,9 @@ import {
   GetJavasData,
   GetJavasDataReply,
   GetProfilesHandlerReply,
+  ImportProviderImportHandlerData, ImportProviderImportHandlerReply,
+  ImportProviderInstancesHandlerData,
+  ImportProviderInstancesHandlerReply,
   InstalledInstancesData,
   InstalledInstancesDataReply,
   InstallInstanceData,
@@ -161,6 +164,8 @@ export type MessageType =
   "storage.get-all" |
   "webRequest" |
   "openDebugTools" |
+  "import.providerInstances" |
+  "import.providerImport" |
   "videoCache" |
   "moveInstances"
 
@@ -399,5 +404,13 @@ export type MessagePayload = {
   "moveInstances": {
     input: MoveInstancesHandlerData
     output: MoveInstancesHandlerReply
+  },
+  "import.providerInstances": {
+    input: ImportProviderInstancesHandlerData,
+    output: ImportProviderInstancesHandlerReply
+  },
+  "import.providerImport": {
+    input: ImportProviderImportHandlerData,
+    output: ImportProviderImportHandlerReply
   }
 }

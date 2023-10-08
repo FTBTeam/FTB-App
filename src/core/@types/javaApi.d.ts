@@ -496,6 +496,23 @@ export interface WebRequestDataResponse extends BaseData {
 export interface YeetLauncherData extends BaseData {
 }
 
+export interface ImportProviderImportHandlerData extends BaseData {
+    provider: Providers;
+    instanceUuids: string[];
+}
+
+export interface ImportProviderImportHandlerReply extends ImportProviderInstancesHandlerData {
+    success: boolean;
+}
+
+export interface ImportProviderInstancesHandlerData extends BaseData {
+    provider: Providers;
+}
+
+export interface ImportProviderInstancesHandlerReply extends ImportProviderInstancesHandlerData {
+    instances: SimpleInstanceInfo[];
+}
+
 export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerRequest {
     message: string;
     success: boolean;
@@ -693,6 +710,8 @@ export interface InstanceJson {
      */
     recMemory: number;
     memory: number;
+    shellArgs: string;
+    envArgs: string;
     jvmArgs: string;
     shellArgs: string;
     embeddedJre: boolean;
@@ -711,6 +730,7 @@ export interface InstanceJson {
     locked: boolean;
     packType: number;
     _private: boolean;
+    isLocked: boolean;
     totalPlayTime: number;
     lastPlayed: number;
     /**
@@ -778,6 +798,13 @@ export interface Specs {
     recommended: number;
 }
 
+export interface SimpleInstanceInfo {
+    name: string;
+    dataLocation: string;
+    minecraftVersion: string;
+    javaVersion: string;
+}
+
 export interface Backup {
     worldName: string;
     createTime: number;
@@ -839,3 +866,5 @@ export interface AccountSkin {
 export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";
 
 export type Type = "BASIC" | "FULL";
+
+export type Providers = "PRISM" | "MULTIMC" | "ATLAUNCHER" | "GDLAUNCHER" | "CURSEFORGE" | "MODRINTH";
