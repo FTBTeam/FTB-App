@@ -2,7 +2,7 @@
   <div class="minetogether-profile">
     <div class="avatar sm:flex items-center mb-16">
       <div class="account-info flex items-center">
-        <img :src="`https://api.mymcuu.id/head/${avatarName}`" width="80" height="80" class="rounded-full mr-6" />
+        <img alt="Profile avatar" :src="getMinecraftHead(avatarName)" width="80" height="80" class="rounded-full mr-6" />
         <div class="name">
           <p class="text-lg bold">{{ auth.token.mc !== undefined ? auth.token.mc.display : auth.token.username }}</p>
           <p class="opacity-75">
@@ -66,8 +66,10 @@ import { SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import { gobbleError } from '@/utils/helpers/asyncHelpers';
 import { sendMessage } from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 
 @Component({
+  methods: {getMinecraftHead},
   components: {
     'ftb-toggle': FTBToggle,
   },

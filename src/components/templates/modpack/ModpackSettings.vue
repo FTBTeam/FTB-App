@@ -1,5 +1,7 @@
 <template>
   <div class="pack-settings">
+    <artwork-selector :pack="instance" class="mb-4" />
+    
     <ftb-input
       label="Instance Name"
       v-model="instanceSettings.name"
@@ -211,9 +213,11 @@ import {alertController} from '@/core/controllers/alertController';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import Selection2 from '@/components/atoms/input/Selection2.vue';
+import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
 
 @Component({
   components: {
+    ArtworkSelector,
     Selection2,
     DuplicateInstanceModal,
     Selection,

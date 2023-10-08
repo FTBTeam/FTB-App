@@ -12,7 +12,7 @@
           <div class="name font-bold mb-2 flex items-center">
             <div class="avatar mr-2">
               <img
-                :src="`https://api.mymcuu.id/head/${avatarName}`"
+                :src="getMinecraftHead(avatarName)"
                 style="margin-right: 0.75em; width: 40px; height: 40px"
                 class="rounded-full"
               />
@@ -64,8 +64,11 @@ import { AuthState } from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
 import { SettingsState } from '@/modules/settings/types';
 import { sendMessage } from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 
-@Component
+@Component({
+  methods: {getMinecraftHead}
+})
 export default class AppInfo extends Vue {
   @State('auth') private auth!: AuthState;
   @State('settings') private settings!: SettingsState;

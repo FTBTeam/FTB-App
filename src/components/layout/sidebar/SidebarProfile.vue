@@ -4,7 +4,7 @@
       <div class="avatar">
         <img
           v-if="getActiveProfile ? getActiveProfile.uuid : mtAvatar"
-          :src="`https://api.mymcuu.id/head/${getActiveProfile ? getActiveProfile.uuid : mtAvatar}`"
+          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : mtAvatar)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -35,7 +35,7 @@
               @click="() => setActiveProfile(item)"
             >
               <div class="avatar">
-                <img :src="`https://api.mymcuu.id/head/${item.uuid}`" alt="Profile" class="rounded" />
+                <img :src="getMinecraftHead(item.uuid)" alt="Profile" class="rounded" />
                 <div class="ms-identifier" v-if="item.type === 'microsoft'">
                   <img src="@/assets/images/branding/microsoft-squares.webp" alt="Microsoft account" />
                 </div>
@@ -74,7 +74,7 @@
             </div>
             <div class="account" v-if="auth.token">
               <div class="avatar">
-                <img :src="`https://api.mymcuu.id/head/${avatarName}`" alt="Profile" class="rounded" />
+                <img :src="getMinecraftHead(avatarName)" alt="Profile" class="rounded" />
               </div>
               <div class="meta">
                 <div class="name selectable">
@@ -112,8 +112,11 @@ import { AuthProfile } from '@/modules/core/core.types';
 import { AuthState } from '@/modules/auth/types';
 import { Prop } from 'vue-property-decorator';
 import { sendMessage } from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 
-@Component
+@Component({
+  methods: {getMinecraftHead}
+})
 export default class SidebarProfile extends Vue {
   @Prop({ default: false }) disable!: boolean;
 
