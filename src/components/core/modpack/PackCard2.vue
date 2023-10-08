@@ -26,7 +26,7 @@
         <div class="info">
           <div class="name">{{ instance.name }}</div>
           <div class="version text-sm opacity-75">
-            <template v-if="!isInstalling">{{ instance.version }} ({{ modLoader | title }})</template>
+            <template v-if="!isInstalling">{{ versionName }}</template>
             <template v-else><font-awesome-icon icon="circle-notch" spin class="mr-2" /> Installing</template>
           </div>
         </div>
@@ -64,6 +64,7 @@ import Popover from '@/components/atoms/Popover.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {Versions} from '@/modules/modpacks/types';
 import UpdateConfirmModal from '@/components/core/modpack/UpdateConfirmModal.vue';
+import {toTitleCase} from '@/utils/helpers/stringHelpers';
 
 @Component({
   components: {
@@ -141,6 +142,37 @@ export default class PackCard2 extends PackCardCommon {
   
   get needsSyncing() {
     return this.instance.pendingCloudInstance;
+  }
+  
+  get versionName() {
+    return `${this._versionName().trim()} (${toTitleCase(this.modLoader)})`;
+  }
+  
+  _versionName() {
+    let version = this.instance.version;
+    
+    // 20.20.20 = 8 chars
+    if (version.length > 8) {
+      // Test to see if we have a v1.0.0 like version in the string
+      const semverLike = /v[\d.]+/i;
+      if (semverLike.test(version)) {
+        // Remove the v1.0.0 like version from the string
+        version = semverLike.exec(version)![0] ?? version;
+      }
+      
+      const packName = this.instance.name.split(' ');
+      if (packName.some(name => version.toLowerCase().includes(name.toLowerCase()))) {
+        const splitPackName = packName[0].split('-')[0];
+        version = version.replace(new RegExp(splitPackName, 'i'), '');
+      }
+      
+      if (version.length > 10) {
+        // Return the last 10 characters
+        return "..." + version.substring(version.length - 10);
+      }
+    }
+    
+    return version;
   }
 }
 </script>
