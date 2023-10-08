@@ -39,16 +39,14 @@ public class CurseForgeProvider implements InstanceProvider {
                 .filter(e -> e.getRight() != null)
                 .map(e -> Pair.of(e.getLeft(), e.getRight().getAsJsonObject()))
                 .toList();
-            
-            var simpleInstances = modpacks
+
+            return modpacks
                 .stream().map(pack -> new SimpleInstanceInfo(
                     pack.getValue().get("name").getAsString(),
                     pack.getKey(),
                     pack.getValue().get("gameVersion").getAsString(),
                     pack.getValue().get("installDate").getAsString() // No java data provided...
                 )).toList();
-
-            System.out.println(simpleInstances);
         } catch (Exception e) {
             LOGGER.error("Failed to list instances", e);
         }
