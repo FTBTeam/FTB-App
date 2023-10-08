@@ -422,6 +422,23 @@ export interface WebRequestDataResponse extends BaseData {
     body: Body;
 }
 
+export interface ImportProviderImportHandlerData extends BaseData {
+    provider: Providers;
+    instanceUuids: string[];
+}
+
+export interface ImportProviderImportHandlerReply extends ImportProviderInstancesHandlerData {
+    success: boolean;
+}
+
+export interface ImportProviderInstancesHandlerData extends BaseData {
+    provider: Providers;
+}
+
+export interface ImportProviderInstancesHandlerReply extends ImportProviderInstancesHandlerData {
+    instances: SimpleInstanceInfo[];
+}
+
 export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerRequest {
     message: string;
     success: boolean;
@@ -634,6 +651,8 @@ export interface InstanceJson {
      */
     recMemory: number;
     memory: number;
+    shellArgs: string;
+    envArgs: string;
     jvmArgs: string;
     shellArgs: string;
     embeddedJre: boolean;
@@ -653,6 +672,7 @@ export interface InstanceJson {
     pinned: boolean;
     packType: number;
     _private: boolean;
+    isLocked: boolean;
     totalPlayTime: number;
     lastPlayed: number;
     /**
@@ -776,6 +796,13 @@ export interface Specs {
     id: number;
     minimum: number;
     recommended: number;
+}
+
+export interface SimpleInstanceInfo {
+    name: string;
+    dataLocation: string;
+    minecraftVersion: string;
+    javaVersion: string;
 }
 
 export interface Backup {
@@ -911,3 +938,5 @@ export interface Customfield {
 export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";
 
 export type Type = "BASIC" | "FULL";
+
+export type Providers = "PRISM" | "MULTIMC" | "ATLAUNCHER" | "GDLAUNCHER" | "CURSEFORGE" | "MODRINTH";

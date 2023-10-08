@@ -11,6 +11,8 @@ import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
 import net.creeperhost.creeperlauncher.api.data.other.*;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.api.handlers.importer.ImportProviderImportHandler;
+import net.creeperhost.creeperlauncher.api.handlers.importer.ImportProviderInstancesHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.*;
 import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceDeleteBackupHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceGetBackupsHandler;
@@ -102,6 +104,10 @@ public class WebSocketHandler {
         register("videoCache", VideoCacheHandler.Data.class, new VideoCacheHandler());
 
         register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
+        
+        // Importing
+        register("import.providerInstances", ImportProviderInstancesHandler.Data.class, new ImportProviderInstancesHandler());
+        register("import.providerImport", ImportProviderImportHandler.Data.class, new ImportProviderImportHandler());
     }
 
     private static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {

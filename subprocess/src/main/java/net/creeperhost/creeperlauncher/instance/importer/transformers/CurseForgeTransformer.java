@@ -1,15 +1,13 @@
 package net.creeperhost.creeperlauncher.instance.importer.transformers;
 
-import net.creeperhost.creeperlauncher.data.InstanceJson;
-import net.creeperhost.creeperlauncher.instance.importer.meta.CurseForgeMeta;
+import com.google.gson.JsonElement;
 import net.creeperhost.creeperlauncher.instance.importer.meta.MetaFinal;
 
-
-public class CurseForgeTransformer implements MetaTransformer<CurseForgeMeta> {
+public class CurseForgeTransformer implements MetaTransformer {
     @Override
-    public MetaFinal transform(CurseForgeMeta original) {
-        var lookupId = original.projectId() == null ? -1 : original.projectId();
-        var lookupVersionId = original.fileId() == null ? -1 : original.fileId();
+    public MetaFinal transform(JsonElement original) {
+//        var lookupId = original.projectId() == null ? -1 : original.projectId();
+//        var lookupVersionId = original.fileId() == null ? -1 : original.fileId();
         
         // TODO: Lookup project
         
