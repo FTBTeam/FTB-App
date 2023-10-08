@@ -307,10 +307,12 @@ export default class InstancePage extends Vue {
         `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`
       )
       
-      if (result) {
-        this.launch();
+      if (!result) {
+        return
       }
     }
+    
+    this.launch();
   }
 
   public launch() {

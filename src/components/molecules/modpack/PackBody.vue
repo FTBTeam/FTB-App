@@ -162,7 +162,7 @@
       />
 
       <!-- If the pack page grows more, we will have to use the router to clean this up. -->
-      <modpack-settings :instance="instance" v-if="instance && isInstalled && activeTab === tabs.SETTINGS" />
+      <modpack-settings @back="$emit('tabChange', tabs.OVERVIEW)" :instance="instance" v-if="instance && isInstalled && activeTab === tabs.SETTINGS" />
 
       <!-- v-show to allow servers to load in the background -->
 <!--      <modpack-public-servers-->

@@ -1,6 +1,9 @@
 <template>
   <div class="pack-settings">
-    <artwork-selector :pack="instance" class="mb-4" />
+    <artwork-selector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" @change="(v) => {
+      this.instanceSettings.instanceImage = v ? v.path : null;
+      saveSettings();
+    }" />
     
     <ftb-input
       label="Instance Name"
@@ -10,36 +13,35 @@
     />
 
     <div class="buttons flex gap-4 mb-8">
-      <ftb-button class="py-2 px-3 text-sm" color="info" css-class="text-center text-l" @click="browseInstance()">
-        <font-awesome-icon icon="folder" class="mr-2" size="1x" />
+      <ui-button size="small" type="info" icon="folder" @click="browseInstance()">
         Open Folder
-      </ftb-button>
+      </ui-button>
 
-      <ftb-button
+      <ui-button size="small"
         :disabled="!getActiveMcProfile"
-        :title="
+        :aria-label="
           !getActiveMcProfile
             ? 'You need to be logged in to your Minecraft account to share packs'
             : 'Share your modpack with friends'
         "
-        class="py-2 px-3 text-sm"
-        color="info"
-        css-class="text-center text-l"
         @click="shareConfirm = true"
+        type="info"
+        icon="share"
       >
-        <font-awesome-icon icon="share" class="mr-2" size="1x" />
         Share
-      </ftb-button>
+      </ui-button>
 
-      <ftb-button class="py-2 px-3 text-sm" @click="showDuplicate = true" color="info">
-        <font-awesome-icon icon="copy" class="mr-2" size="1x" />
+      <ui-button size="small" icon="copy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
-      </ftb-button>
+      </ui-button>
       
-      <ftb-button class="py-2 px-3 text-sm" color="danger" css-class="text-center text-l" @click="confirmDelete()">
-        <font-awesome-icon icon="trash" class="mr-2" size="1x" />
+      <ui-button v-if="instance.id != -1" size="small" icon="wrench" type="warning" aria-label="Something not looking right? This might help!" @click="repairInstance">
+        Repair
+      </ui-button>
+      
+      <ui-button size="small" type="danger" icon="trash" @click="confirmDelete">
         Delete instance
-      </ftb-button>
+      </ui-button>
     </div>
 
     <ftb-slider
@@ -61,8 +63,6 @@
         (this.instance.recMemory / settingsState.hardware.totalMemory) * 100 - 5
       }%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`"
     />
-    
-    <h3 class="font-bold text-lg mb-4">Minecraft window size</h3>
     
     <div class="flex items-center mb-6">
       <div class="block flex-1 mr-2">
@@ -91,10 +91,10 @@
     />
     
     <div class="mb-6" :class="{'cursor-not-allowed opacity-50 pointer-events-none': instanceSettings.fullScreen}">
-      <div class="flex items-center mb-2">
+      <div class="flex items-center mb-4">
         <div class="block flex-1 mr-2">
           <b>Size presets</b>
-          <p class="text-muted text-sm">Select a preset based on your system</p>
+          <small class="text-muted block mt-2">Select a preset based on your system</small>
         </div>
         
         <selection
@@ -106,17 +106,17 @@
           :allow-deselect="false"
         />
       </div>
-      <div class="flex items-center mb-2">
+      <div class="flex items-center mb-4">
         <div class="block flex-1 mr-2">
           <b>Width</b>
-          <p class="text-muted text-sm">The Minecraft windows screen width</p>
+          <small class="text-muted block mt-2">The Minecraft windows screen width</small>
         </div>
         <ftb-input class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
       </div>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
           <b>Height</b>
-          <p class="text-muted text-sm">The Minecraft windows screen height</p>
+          <small class="text-muted block mt-2">The Minecraft windows screen height</small>
         </div>
         <ftb-input class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
       </div>
@@ -137,13 +137,12 @@
       Advanced
     </h2>
     
-    <h3 class="font-bold text-lg mb-2">Java Runtime</h3>
-    <div class="flex items-center mb-8">
-      <div class="w-1/2 mr-8 flex items-end justify-between">
-        <section class="mr-4 flex-1">
-          <label class="block uppercase tracking-wide text-white-700 text-xs font-bold mb-2"> Java Version </label>
+    <div class="mb-8">
+      <section class="flex-1 mb-4">
+        <label class="block tracking-wide text-white-700 mb-2">Java Version</label>
+        <div class="flex items-center gap-4">
           <select
-            class="appearance-none block w-full bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
+            class="appearance-none block flex-1 bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
             v-model="jreSelection"
             @change="updateJrePath"
           >
@@ -158,13 +157,10 @@
               {{ javaVersions[index].name }}
             </option>
           </select>
-        </section>
 
-        <ftb-button color="primary" class="py-2 px-4 mb-1" @click="browseForJava">
-          <font-awesome-icon icon="folder" size="1x" class="cursor-pointer" />
-          <span class="ml-4">Browse</span>
-        </ftb-button>
-      </div>
+          <ui-button type="primary" icon="folder" @click="browseForJava">Browse</ui-button>
+        </div>
+      </section>
 
       <ftb-input
         label="Java runtime arguments"
@@ -173,6 +169,8 @@
         @blur="saveSettings"
         class="flex-1"
       />
+      
+      
     </div>
 
     <modal
@@ -214,9 +212,13 @@ import DuplicateInstanceModal from '@/components/organisms/modals/actions/Duplic
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import Selection2 from '@/components/atoms/input/Selection2.vue';
 import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 
 @Component({
   components: {
+    UiButton,
     ArtworkSelector,
     Selection2,
     DuplicateInstanceModal,
@@ -244,6 +246,8 @@ export default class ModpackSettings extends Vue {
   deleting = false;
   
   toggleSavesWorking = false;
+  
+  imageFile: File | null = null;
 
   mounted() {
     this.instanceSettings = {
@@ -337,6 +341,15 @@ export default class ModpackSettings extends Vue {
     this.saveSettings();
   }
 
+  async repairInstance() {
+    if (!(await dialogsController.createConfirmationDialog("Are you sure?", "We will attempt to repair this instance by reinstalling the modpack around your existing files. Even though this shouldn't remove any of your data, we recommend you make a backup of this instance before continuing."))) {
+      return;
+    }
+
+    await instanceInstallController.requestUpdate(this.instance, this.instance.versionId, typeIdToProvider(this.instance.packType));
+    this.$emit("back")
+  }
+
   public async saveSettings() {
     // Compare the previous settings to the current settings
     // Yes... this is really how we do it...
@@ -419,4 +432,8 @@ export default class ModpackSettings extends Vue {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.pack-settings {
+  font-size: 14px;
+}
+</style>

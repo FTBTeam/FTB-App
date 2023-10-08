@@ -15,7 +15,6 @@ export type InstallRequest = {
   id: string | number;
   version: string | number;
   name: string;
-  versionName: string;
   logo: string | null;
   updatingInstanceUuid?: string;
   importFrom?: string;
@@ -93,13 +92,12 @@ class InstanceInstallController {
     alertController.info(`Install requested for ${request.name}`);
   }
 
-  public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions, provider: PackProviders = "modpacksch") {
+  public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions | string | number, provider: PackProviders = "modpacksch") {
     this.queue.push({
       uuid: crypto.randomUUID(), // Not the same as the instance uuid
       id: instance.id,
-      version: version.id,
+      version: typeof version === "object" ? version.id : version,
       name: instance.name,
-      versionName: version.name,
       logo: instance.art,
       updatingInstanceUuid: instance.uuid,
       category: instance.category,
@@ -118,7 +116,6 @@ class InstanceInstallController {
       id: -1,
       version: -1,
       name: "Import",
-      versionName: "Import",
       logo: null,
       category: "Default",
       private: false,
@@ -137,7 +134,6 @@ class InstanceInstallController {
       id: -1,
       version: -1,
       name: "Import",
-      versionName: "Import",
       logo: null,
       category: "Default",
       private: false,
@@ -156,7 +152,6 @@ class InstanceInstallController {
       id: -1,
       version: -1,
       name: instance.name,
-      versionName: instance.version,
       logo: null,
       category: "Default",
       private: false,

@@ -13,6 +13,7 @@ export type SaveJson = {
   cloudSaves: boolean;
   fullScreen: boolean;
   releaseChannel: string;
+  instanceImage?: string;
 }
 
 /**
@@ -23,7 +24,6 @@ export class InstanceController {
     if (this.instance === null || this.instance === undefined) {
       throw new Error('Instance cannot be null or undefined');
     }
-    console.log(this.instance)
   }
   
   static from(instance: SugaredInstanceJson | InstanceJson) {

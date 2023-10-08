@@ -106,7 +106,6 @@ export default class ModpackInstallModal extends Vue {
       version: parseInt(this.selectedVersionId ?? this.sortedApiVersions[0].id),
       // Name fallback but it's not really needed
       name: this.userPackName ?? this.apiModpack?.name ?? "failed-to-name-the-modpack-somehow-" + platform.get.utils.crypto.randomUUID().split("-")[0],
-      versionName: this.versions.find(e => e.value === this.selectedVersionId)?.label ?? "",
       logo: this.userSelectedArtwork?.path ?? null, // The backend will default for us.
       private: this.apiModpack?.private ?? false,
       provider: this.provider,

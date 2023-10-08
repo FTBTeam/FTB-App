@@ -1,5 +1,10 @@
 <template>
-  <div :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]" @click="click">
+  <div 
+    :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]" 
+    @click="click"
+    :aria-label="ariaLabel ? ariaLabel : undefined"
+    :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined"
+  >
     <span :class="{'opacity-0': working}">
       <font-awesome-icon v-if="icon" :icon="icon" class="mr-2" />
       <slot />
@@ -18,6 +23,7 @@ import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 
 type ButtonType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
 type ButtonSize = 'small' | 'normal' | 'large';
+type AriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
 
 @Component
 export default class UiButton extends Vue {
@@ -29,6 +35,9 @@ export default class UiButton extends Vue {
   
   @Prop({ default: false }) fullWidth!: boolean;
   @Prop({ default: false }) wider!: boolean;
+  
+  @Prop({ default: "" }) ariaLabel!: string;
+  @Prop({ default: "down" as AriaDirection }) ariaLabelPos!: AriaDirection;
   
   @Emit() click(event: MouseEvent) {
     if (this.disabled || this.working) {

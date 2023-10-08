@@ -107,7 +107,7 @@ const msAuthenticator: Authenticator = {
       }
     } catch (e) {
       logAuth('error', `Request errored with the response of ${(e as any).message}`);
-      console.log(e);
+      console.error(e);
       return { ok: false, networkError: true };
     }
   },

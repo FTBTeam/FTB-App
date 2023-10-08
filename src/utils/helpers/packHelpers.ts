@@ -52,6 +52,7 @@ function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | Mo
 }
 
 const knownModloaders = [
+  "vanilla",
   "forge",
   "fabric",
   "quilt",
@@ -69,7 +70,18 @@ export function resolveModloader(packOrInstance: SugaredInstanceJson | ModPack |
       return "Forge";
     }
     
-    return knownModloaders.find(e => instance.modLoader.toLowerCase().includes(e)) ?? "Forge";
+    // The modloader contains other information so we have to parse it for a known modloader
+    const foundLoader = knownModloaders.find(e => instance.modLoader.toLowerCase().includes(e));
+    if (foundLoader) {
+      return foundLoader;
+    }
+    
+    // For some reason the modloader will be set to the mc version so we have to support that
+    if (instance.modLoader.includes(".")) {
+      return "Vanilla";
+    }
+    
+    return "Forge";
   }
   
   const pack = packOrInstance as ModPack;

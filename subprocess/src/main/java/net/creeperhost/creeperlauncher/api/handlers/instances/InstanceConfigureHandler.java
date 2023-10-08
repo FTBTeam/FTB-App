@@ -49,6 +49,15 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.releaseChannel = getOrDefault(updateJson, "releaseChannel", JsonElement::getAsString, instance.props.releaseChannel);
             instance.props.cloudSaves = getOrDefault(updateJson, "cloudSaves", JsonElement::getAsBoolean, instance.props.cloudSaves);
             instance.props.embeddedJre = jreRealPath == null;
+            
+            var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
+            if (instanceImage != null) {
+                try {
+                    instance.importArt(Path.of(instanceImage));
+                } catch (IOException e) {
+                    LOGGER.error("Failed to import instance image.", e);
+                }
+            }
 
             if (jreRealPath != null) {
                 if (JavaLocator.parseInstall(jreRealPath) == null) {
@@ -67,7 +76,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
     }
 
     private <T> T getOrDefault(JsonObject object, String key, Function<JsonElement, T> reader, T defaultValue) {
-        if (object.has(key)) {
+        if (object.has(key) && !object.get(key).isJsonNull()) {
             return reader.apply(object.get(key));
         } else {
             return defaultValue;

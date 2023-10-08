@@ -10,15 +10,16 @@
     <div class="actions flex flex-col items-start">
       <label>
         <input hidden="hidden" type="file" :accept="allowedFileTypes.join(',')"  @change="processFileList($event.target.files)" />
-        <ftb-button color="info" class="px-6 py-2">
-          <font-awesome-icon icon="upload" class="mr-4" />
-          <span>Upload your own</span>
-        </ftb-button>
+        <ui-button type="info" icon="upload">
+          Upload image
+        </ui-button>
       </label>
-      <ftb-button color="danger" class="px-4 py-1 mt-4" v-if="value" @click="$emit('input', null)">
-        <font-awesome-icon icon="trash" class="mr-2" />
-        <span>Remove</span>
-      </ftb-button>
+      <ui-button icon="trash" size="small" class="mt-3" type="warning" v-if="value && allowRemove" @click="() => {
+        $emit('input', null);
+        $emit('change', null);
+      }">
+        Remove
+      </ui-button>
     </div>
   </div>
 </template>
@@ -28,13 +29,18 @@ import {Component, Vue, Prop} from 'vue-property-decorator';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {InstanceJson} from '@/core/@types/javaApi';
 import {ModPack} from '@/modules/modpacks/types';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
+// TODO: Make this look a lot nicer
 @Component({
+  components: {UiButton},
   methods: {resolveArtwork}
 })
 export default class ArtworkSelector extends Vue {
   @Prop() value!: File | null;
   @Prop() pack?: InstanceJson | ModPack;
+
+  @Prop({default: true}) allowRemove!: boolean;
   
   isDraggingOver = false;
   private allowedFileTypes = [
@@ -100,6 +106,7 @@ export default class ArtworkSelector extends Vue {
 
     if (firstValidFile) {
       this.$emit('input', firstValidFile);
+      this.$emit('change', firstValidFile);
     }
   }
   

@@ -27,17 +27,14 @@
               
             <div class="modal-footer">
               <div class="buttons">
-                <ftb-button v-for="(button, index) in dialog.buttons"
-                            :disabled="dialog.working"
+                <ui-button v-for="(button, index) in dialog.buttons"
+                            :working="dialog.working"
                             :key="index"
-                            :color="button.type === 'error' ? 'danger' : button.type"
-                            class="px-4 py-2"
+                            :type="button.type === 'error' ? 'danger' : button.type"
+                            :icon="button.icon"
                             @click="button.action">
-                  <div class="btn-content flex items-center gap-4">
-                    <font-awesome-icon v-if="button.icon" :icon="button.icon"/>
                     {{ button.text }}
-                  </div>
-                </ftb-button>
+                </ui-button>
               </div>
             </div>
           </div>
@@ -53,8 +50,11 @@ import {Dialog} from '@/core/state/misc/dialogsState';
 import {ns} from '@/core/state/appState';
 import {Action, Getter } from 'vuex-class';
 import {parseMarkdown} from '@/utils';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
-@Component
+@Component({
+  components: {UiButton}
+})
 export default class Dialogs extends Vue {
   @Getter("dialogs", ns("v2/dialogs")) dialogs!: Dialog[];
   @Action("closeDialog", ns("v2/dialogs")) closeDialog!: (dialog: Dialog) => void;
