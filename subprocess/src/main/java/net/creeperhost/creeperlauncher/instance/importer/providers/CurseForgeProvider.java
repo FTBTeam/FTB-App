@@ -80,12 +80,13 @@ public class CurseForgeProvider implements InstanceProvider {
     }
 
     @Override
+    @Nullable
     public Path getDataLocation() {
         return switch (OperatingSystem.current()) {
             case WINDOWS -> Path.of(System.getenv("APPDATA"), "CurseForge");
             case LINUX, SOLARIS, FREEBSD -> Path.of(System.getProperty("user.home"), ".config", "CurseForge");
             case MACOS -> Path.of(System.getProperty("user.home"), "Library", "Application Support", "CurseForge");
-            default -> Path.of("");
+            default -> null;
         };
     }
     

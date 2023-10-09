@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.instance.importer.transformers.MetaTransf
 import net.creeperhost.creeperlauncher.util.Result;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +18,7 @@ public interface InstanceProvider {
 
     @Nullable SimpleInstanceInfo getInstance(String instanceName);
 
-    Path getDataLocation();
+    @Nullable Path getDataLocation();
     
     @Nullable JsonElement getDataFile(Path path);
 }
