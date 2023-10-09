@@ -4,39 +4,27 @@
       <template v-if="apiModpack">
         <artwork-selector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
         <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
-        <div class="category-or-create mb-6">
-          <div class="selection flex gap-2 items-end" v-if="!manualCategoryCreate">
-            <selection2 :open-up="true" label="Category" :options="(categories ?? []).map(e => ({value: e, label: e}))" v-model="selectedCategory" class="flex-1" />
-            <ftb-button color="info" class="px-4 py-3" @click="manualCategoryCreate = true"><font-awesome-icon class="mr-2" icon="plus" />Create new</ftb-button>
-          </div>
-          <div class="selection flex gap-2 items-end" v-else>
-            <ftb-input label="Category name" v-model="selectedCategory" placeholder="My category" class="flex-1 mb-0" />
-            <ftb-button color="warning" class="px-4 py-3" @click="() => {
-              selectedCategory = 'Default';
-              manualCategoryCreate = false;
-            }"><font-awesome-icon icon="times" /></ftb-button>
-          </div>
-        </div>
-        <f-t-b-toggle label="Show advanced options" :value="useAdvanced" @change="v => useAdvanced = v" />
-        <selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4" />
-        <f-t-b-toggle v-if="useAdvanced && hasUnstableVersions" label="Show pre-release builds (Stable by default)" :value="allowPreRelease" @change="v => allowPreRelease = v"  />
+        
+        <category-selector v-model="selectedCategory" />
+
+        <f-t-b-toggle label="Show advanced options" small="Select a specific Modpack version" :value="useAdvanced" @change="v => useAdvanced = v" />
+        <selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4 mt-6" />
+        <f-t-b-toggle v-if="useAdvanced && hasUnstableVersions" label="Show pre-release builds (Stable by default)" :value="allowPreRelease" @change="v => allowPreRelease = v" small="Feeling risky? Enable pre-release builds to get access to Alpha and Beta versions of the Modpack" />
       </template>
     </modal-body>
     <modal-footer class="flex justify-end">
-      <ftb-button color="primary" class="px-8 py-2" @click="install">
-        <font-awesome-icon icon="download" class="mr-4" />
-        <span>Install</span>
-      </ftb-button>
+      <ui-button :wider="true" type="success" icon="download" @click="install">
+        Install
+      </ui-button>
     </modal-footer>
   </modal>
 </template>
 
 <script lang="ts">
 import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {ns} from '@/core/state/appState';
-import {Action, Getter } from 'vuex-class';
+import {Action, Getter} from 'vuex-class';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import Selection2 from '@/components/atoms/input/Selection2.vue';
 import {timeFromNow} from '@/utils/helpers/dateHelpers';
@@ -46,12 +34,13 @@ import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
 import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import platform from '@/utils/interface/electron-overwolf'
+import platform from '@/utils/interface/electron-overwolf';
 import {RouterNames} from '@/router';
-import { alertController } from '@/core/controllers/alertController';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 
 @Component({
-  components: {ArtworkSelector, FTBToggle, Selection2},
+  components: {CategorySelector, UiButton, ArtworkSelector, FTBToggle, Selection2},
   methods: {
     resolveArtwork
   }
