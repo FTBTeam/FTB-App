@@ -1,12 +1,12 @@
 'use strict';
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell, Menu } from 'electron';
+import {app, BrowserWindow, dialog, ipcMain, protocol, session, shell} from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
-import { FriendListResponse } from './types';
-import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import {FriendListResponse} from './types';
+import install, {VUEJS_DEVTOOLS} from 'electron-devtools-installer';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 
 const protocolSpace = 'ftb';
@@ -229,7 +229,7 @@ ipcMain.handle('selectFile', async (event) => {
     filters: [
       {
         name: 'Java',
-        extensions: ['.*'],
+        extensions: ['*'],
       },
     ],
   });

@@ -13,7 +13,8 @@
           <artwork-selector class="mb-6" v-model="userSelectedArtwork" />
           <ftb-input label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
           <selection2 :open-up="true" label="Minecraft version" class="mb-4" :options="vanillaVersions" v-model="userVanillaVersion" />
-          <f-t-b-toggle :value="showVanillaSnapshots" @change="v => showVanillaSnapshots = v" label="Show snapshots" />
+          <f-t-b-toggle :value="showVanillaSnapshots" @change="v => showVanillaSnapshots = v" label="Show snapshots" class="mb-4" />
+          <category-selector v-model="userCategory" />
         </template>
         <Loader v-else />
       </div>
@@ -89,7 +90,7 @@ import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
 import Selection2, {SelectionOption} from '@/components/atoms/input/Selection2.vue';
 import {ns} from '@/core/state/appState';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import { Action, State } from 'vuex-class';
+import {Action, State} from 'vuex-class';
 import {ModPack} from '@/modules/modpacks/types';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
@@ -101,10 +102,11 @@ import {SettingsState} from '@/modules/settings/types';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import Loader from '@/components/atoms/Loader.vue';
-import {ModLoader, ModLoadersResponse } from '@/core/@types/modpacks/modloaders';
+import {ModLoader, ModLoadersResponse} from '@/core/@types/modpacks/modloaders';
+import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 
 @Component({
-  components: {Loader, FTBSlider, UiButton, FTBToggle, Selection2, ArtworkSelector},
+  components: {CategorySelector, Loader, FTBSlider, UiButton, FTBToggle, Selection2, ArtworkSelector},
   methods: {
     toTitleCase,
     stringIsEmpty
@@ -131,6 +133,7 @@ export default class CreateInstance extends Vue {
   userModLoader = ""
   userLoaderProvider = "";
   userUseLatestLoader = true;
+  userCategory = "Default";
   
   vanillaPack: ModPack | null = null;
   showVanillaSnapshots = false;
@@ -255,7 +258,8 @@ export default class CreateInstance extends Vue {
       name: this.userPackName,
       logo: this.userSelectedArtwork?.path ?? "",
       versionName: "",
-      private: false
+      private: false,
+      category: this.userCategory,
     }
     
     // Magic

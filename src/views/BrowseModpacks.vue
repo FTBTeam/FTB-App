@@ -36,13 +36,13 @@
 
     <loader class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
 
-    <div class="result-cards" v-if="!error && results.length > 0">
+    <div class="result-cards pb-2" v-if="!error && results.length > 0">
       <pack-preview v-for="(pack, index) in results" :partial-pack="pack" :key="index" :provider="currentTab" />
     </div>
     
     <div class="latest-packs" v-if="searchValue === '' && !loading">
       <h1 class="text-2xl font-bold mb-4">Latest Modpacks</h1>
-      <div class="result-cards">
+      <div class="result-cards pb-2">
         <pack-preview v-for="(packId, index) in latestPacks" :pack-id="packId" :key="index" />
       </div>
       <loader class="mt-20" v-if="loadingInitialPacks" />
@@ -51,13 +51,13 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Action, Getter, State } from 'vuex-class';
+import {Component, Vue, Watch} from 'vue-property-decorator';
+import {Action, Getter, State} from 'vuex-class';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import {PackProviders} from '@/modules/modpacks/types';
-import { Route } from 'vue-router';
-import { AuthState } from '@/modules/auth/types';
-import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
+import {Route} from 'vue-router';
+import {AuthState} from '@/modules/auth/types';
+import {abortableFetch, AbortableRequest, createModpackchUrl, debounce} from '@/utils';
 import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';

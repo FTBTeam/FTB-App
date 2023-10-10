@@ -2,7 +2,7 @@
   <Transition name="fade-and-grow">
     <div v-if="open" class="modal-container" :class="{ow: isOverwolf, ads: advertsEnabled}" @mousedown.self="() => close(true)">
       <div class="modal-contents" :class="`${size}`">
-        <div class="modal-header">
+        <div class="modal-header" :class="{'no-subtitle': !subTitle}">
           <div class="modal-heading">
             <div class="title">{{ title }}</div>
             <div class="subtitle" v-if="subTitle">{{ subTitle }}</div>
@@ -26,8 +26,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import Platform from "../../../utils/interface/electron-overwolf";
+import {Component, Prop, Vue} from 'vue-property-decorator';
+import Platform from '../../../utils/interface/electron-overwolf';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {AuthState} from '@/modules/auth/types';

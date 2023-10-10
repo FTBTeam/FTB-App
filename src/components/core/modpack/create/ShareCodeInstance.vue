@@ -6,13 +6,17 @@
         placeholder="share code"
         label="Share code"
         v-model="shareCode"
-        class="mb-4 text-base"
+        class="mb-4"
       />
+      
+      <category-selector label="Import to category" v-model="category" />
     </modal-body>
     <modal-footer>
-      <ui-button icon="download" type="primary" @click="checkAndInstall">
-        Install
-      </ui-button>
+      <div class="flex justify-end">
+        <ui-button :wider="true" icon="download" type="success" @click="checkAndInstall">
+          Install
+        </ui-button>
+      </div>
     </modal-footer>
   </modal>
 </template>
@@ -26,18 +30,19 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
 import {safeNavigate} from '@/utils';
+import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 
 @Component({
-  components: {UiButton, Modal, ModalBody}
+  components: {CategorySelector, UiButton, Modal, ModalBody}
 })
 export default class ShareCodeInstance extends Vue {
   @Prop() open!: boolean;
   @Emit() close() {}
 
   shareCode = ""
+  category = "Default"
 
   async checkAndInstall() {
     if (this.shareCode === '') {
@@ -51,7 +56,7 @@ export default class ShareCodeInstance extends Vue {
       return;
     }
     
-    await instanceInstallController.requestShareImport(this.shareCode);
+    await instanceInstallController.requestShareImport(this.shareCode, this.category);
     this.shareCode = "";
 
     await safeNavigate(RouterNames.ROOT_LIBRARY)

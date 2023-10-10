@@ -48,6 +48,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.fullscreen = getOrDefault(updateJson, "fullscreen", JsonElement::getAsBoolean, instance.props.fullscreen);
             instance.props.releaseChannel = getOrDefault(updateJson, "releaseChannel", JsonElement::getAsString, instance.props.releaseChannel);
             instance.props.cloudSaves = getOrDefault(updateJson, "cloudSaves", JsonElement::getAsBoolean, instance.props.cloudSaves);
+            instance.props.category = getOrDefault(updateJson, "category", JsonElement::getAsString, instance.props.category);
             instance.props.embeddedJre = jreRealPath == null;
             
             var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);

@@ -20,7 +20,7 @@
       </div>
 
       <div class="dropdown" :class="{'open-up': openUp}">
-        <div class="item list-item" v-for="(option, index) in options" :key="index" @click="() => select(option)">
+        <div class="item list-item" :class="{'no-badge': !option.badge}" v-for="(option, index) in options" :key="index" @click="() => select(option)">
           <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
             {{ option.badge.text }}
           </div>
@@ -37,7 +37,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Emit, Prop, Vue } from 'vue-property-decorator';
+import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 
 export type SelectionOptions = SelectionOption[];
 export type SelectionOption = {

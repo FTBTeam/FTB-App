@@ -5,7 +5,7 @@
         <artwork-selector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
         <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
         
-        <category-selector v-model="selectedCategory" />
+        <category-selector class="mb-6" v-model="selectedCategory" />
 
         <f-t-b-toggle label="Show advanced options" small="Select a specific Modpack version" :value="useAdvanced" @change="v => useAdvanced = v" />
         <selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4 mt-6" />

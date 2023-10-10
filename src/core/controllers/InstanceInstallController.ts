@@ -2,7 +2,10 @@ import {emitter} from '@/utils';
 import store from '@/modules/store';
 import {
   CloudSavesReloadedData,
-  InstallInstanceDataReply, InstanceJson, OperationProgressUpdateData, Stage,
+  InstallInstanceDataReply,
+  InstanceJson,
+  OperationProgressUpdateData,
+  Stage,
   SugaredInstanceJson
 } from '@/core/@types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -110,14 +113,14 @@ class InstanceInstallController {
     alertController.info(`Update requested for ${instance.name}`);
   }
   
-  public async requestImport(path: string) {
+  public async requestImport(path: string, category: string) {
     this.queue.push({
       uuid: crypto.randomUUID(),
       id: -1,
       version: -1,
       name: "Import",
       logo: null,
-      category: "Default",
+      category: category,
       private: false,
       provider: "modpacksch",
       importFrom: path,
@@ -128,14 +131,14 @@ class InstanceInstallController {
     alertController.info(`Import requested for ${path.split("/").pop()}`)
   }
   
-  public async requestShareImport(shareCode: string) {
+  public async requestShareImport(shareCode: string, category: string) {
     this.queue.push({
       uuid: crypto.randomUUID(),
       id: -1,
       version: -1,
       name: "Import",
       logo: null,
-      category: "Default",
+      category: category,
       private: false,
       provider: "modpacksch",
       shareCode: shareCode,
@@ -220,11 +223,13 @@ class InstanceInstallController {
       }
     } else if (request.importFrom) {
       payload = {
-        importFrom: request.importFrom
+        importFrom: request.importFrom,
+        category: request.category ?? "Default",
       }
     } else if (request.shareCode) {
       payload = {
-        shareCode: request.shareCode
+        shareCode: request.shareCode,
+        category: request.category ?? "Default",
       }
     }
     

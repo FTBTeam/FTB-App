@@ -282,6 +282,10 @@ body {
           opacity: 1;
         }
       }
+      
+      &.no-badge {
+        padding: 0.1rem 0;
+      }
 
       .badge {
         padding: 0.1rem 0.5rem;

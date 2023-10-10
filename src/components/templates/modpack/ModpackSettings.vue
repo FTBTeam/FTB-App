@@ -192,10 +192,10 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Getter, State } from 'vuex-class';
-import { AuthState } from '@/modules/auth/types';
-import { JavaVersion, SettingsState } from '@/modules/settings/types';
+import {Component, Prop, Vue} from 'vue-property-decorator';
+import {Getter, State} from 'vuex-class';
+import {AuthState} from '@/modules/auth/types';
+import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
@@ -260,6 +260,7 @@ export default class ModpackSettings extends Vue {
       cloudSaves: this.instance.cloudSaves,
       fullScreen: this.instance.fullscreen,
       releaseChannel: this.instance.releaseChannel,
+      category: this.instance.category,
     }
     
     this.previousSettings = {

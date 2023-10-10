@@ -1,47 +1,77 @@
 <template>
- <div class="categorySelector">
-   <div class="category-or-create mb-6">
-     <div class="selection flex gap-2 items-end" v-if="!manualCategoryCreate">
-       <selection2 :open-up="true" label="Category" :options="(categories ?? []).map(e => ({value: e, label: e}))" :value="internalValue" @input="v => emitInput(v)" class="flex-1" />
-       <ftb-button color="info" class="px-4 py-3" @click="manualCategoryCreate = true"><font-awesome-icon class="mr-2" icon="plus" />Create new</ftb-button>
-     </div>
-     <div class="selection flex gap-2 items-end" v-else>
-       <ftb-input label="Category name" :value="internalValue" @input="v => emitInput(v)" placeholder="My category" class="flex-1 mb-0" />
-       <ftb-button color="warning" class="px-4 py-3" @click="() => {
-              emitInput('Default')
-              manualCategoryCreate = false;
-            }"><font-awesome-icon icon="times" /></ftb-button>
-     </div>
-   </div>
- </div>
+  <div>
+    <selection2 :open-up="true" :label="label ?? 'Category'" :options="_options"
+                :value="value" @input="v => valueChanged(v)" class="flex-1"/>
+    
+    <modal :open="showCreate" title="New category" @closed="showCreate = false">
+      <ftb-input v-model="extraCategory" placeholder="FTB Packs" label="Category name" />
+      <template #footer>
+        <div class="flex justify-end">
+          <ui-button @click="addCategory" type="success" icon="plus">Create</ui-button>
+        </div>
+      </template>
+    </modal>
+  </div>
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
+import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 import {ns} from '@/core/state/appState';
 import {Getter} from 'vuex-class';
-import Selection2 from '@/components/atoms/input/Selection2.vue';
+import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
-  components: {Selection2}
+  components: {UiButton, Selection2}
 })
 export default class CategorySelector extends Vue {
-  @Getter("categories", ns("v2/instances")) categories!: string[];
+  @Getter('categories', ns('v2/instances')) categories!: string[];
 
+  @Prop() label!: string;
   @Prop() value!: string;
-  @Emit("input") emitInput(value: string) {
-    this.internalValue = value;
+
+  @Emit('input') emitInput(value: string) {
     return value;
   }
   
-  manualCategoryCreate = false;
-  internalValue = this.value;
-  
-  @Watch("value", {immediate: true})
-  onValueChange(value: string) {
-    if (value === this.internalValue) return;
+  extraCategory = "";
+  showCreate = false;
+
+  valueChanged(value: string) {
+    if (value === "_") {
+      this.showCreate = true;
+      return;
+    }
     
-    this.internalValue = value;
+    this.emitInput(value);
+  }
+  
+  addCategory() {
+    this.showCreate = false;
+    if (this.extraCategory === "") return;
+    
+    this.emitInput(this.extraCategory)
+  }
+  
+  get _options() {
+    const categories: SelectionOptions = (this.categories ?? []).map(e => ({value: e, label: e}));
+    if (this.extraCategory !== "") {
+      categories.push({value: this.extraCategory, label: this.extraCategory});
+      categories.push({
+        value: "_", label: `Edit ${this.extraCategory}`, badge: {
+          color: "#b46f2a",
+          text: "+ Edit"
+        }
+      });
+    } else {
+      categories.push({
+        value: "_", label: "Add new", badge: {
+          color: "#2ab46e",
+          text: "+ New"
+        }
+      });
+    }
+    return categories;
   }
 }
 </script>

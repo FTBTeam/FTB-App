@@ -1,7 +1,6 @@
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import store from '@/modules/store';
-import {alertController} from '@/core/controllers/alertController';
 
 export type SaveJson = {
   name: string;
@@ -14,6 +13,7 @@ export type SaveJson = {
   fullScreen: boolean;
   releaseChannel: string;
   instanceImage?: string;
+  category: string;
 }
 
 /**

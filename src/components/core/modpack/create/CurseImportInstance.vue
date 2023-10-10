@@ -33,12 +33,16 @@
           </div>
         </div>
       </transition>
+
+      <category-selector class="mt-4" label="Import to category" v-model="category" />
     </modal-body>
     
     <modal-footer>
-      <ui-button :disabled="!activeFile" type="primary" icon="upload" @click="installZip">
-        Install
-      </ui-button>
+      <div class="flex justify-end">
+        <ui-button :wider="true" :disabled="!activeFile" type="success" icon="upload" @click="installZip">
+          Install
+        </ui-button>
+      </div>
     </modal-footer>
   </modal>
 </template>
@@ -50,13 +54,14 @@ import Modal from '@/components/atoms/modal/Modal.vue';
 import {prettyByteFormat} from '@/utils';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {alertController} from '@/core/controllers/alertController';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
+import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 
 @Component({
-  components: {UiButton, Modal, ModalBody},
+  components: {CategorySelector, UiButton, Modal, ModalBody},
   methods: {prettyByteFormat}
 })
 export default class CurseImportInstance extends Vue {
@@ -64,6 +69,7 @@ export default class CurseImportInstance extends Vue {
   @Emit() close() {}
   
   activeFile: any = null;
+  category = "Default"
   
   async fileAttach(event: any) {
     const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
@@ -94,7 +100,7 @@ export default class CurseImportInstance extends Vue {
       return;
     }
 
-    await instanceInstallController.requestImport(this.activeFile.path)
+    await instanceInstallController.requestImport(this.activeFile.path, this.category)
     console.log(this.activeFile.path)
     this.activeFile = null;
     
