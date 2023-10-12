@@ -154,6 +154,7 @@ public class Instance {
     public void syncFinished() throws IOException {
         pendingCloudInstance = false;
         props = InstanceJson.load(getDir().resolve("instance.json"));
+        props.cloudSaves = true;
         loadVersionManifest();
     }
 
