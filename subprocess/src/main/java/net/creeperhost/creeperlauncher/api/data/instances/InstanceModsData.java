@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.data.mod.CurseMetadata;
 import net.creeperhost.creeperlauncher.data.mod.ModInfo;
 
 import java.util.List;
@@ -20,6 +21,19 @@ public class InstanceModsData extends BaseData {
             uuid = data.uuid;
             requestId = data.requestId;
             this.files = files;
+        }
+    }
+
+    public static class UpdateAvailable extends InstanceModsData {
+
+        public final ModInfo file;
+        public final CurseMetadata update;
+
+        public UpdateAvailable(InstanceModsData data, ModInfo file, CurseMetadata update) {
+            type = "instanceModUpdate";
+            this.requestId = data.requestId;
+            this.file = file;
+            this.update = update;
         }
     }
 }

@@ -81,22 +81,26 @@ public class ModManifest {
         version.visitDependencies(this, collector);
     }
 
-    public void visitCompatibleVersion(ModManifest requestedBy, ModCollector collector) {
-        Version version = FastStream.of(versions)
+    public @Nullable Version findLatestCompatibleVersion(String modLoader, String mcVersion) {
+        return FastStream.of(versions)
                 .filter(e -> {
                     Target gameTarget = e.getTarget("game");
-                    if (gameTarget == null || !gameTarget.getVersion().equals(collector.mcVersion())) return false;
+                    if (gameTarget == null || !gameTarget.getVersion().equals(mcVersion)) return false;
 
                     Target loaderTarget = e.getTarget("modloader");
                     if (loaderTarget == null) {
                         // Lots of mods don't have a Forge requirement, as ModLoader selection was introduced after they were added.
                         // By default, we just assume its Forge compatible. If this turns out to be an issue we can perhaps refine it.
-                        return collector.modLoader().equals("forge");
+                        return modLoader.equals("forge");
                     }
-                    return loaderTarget.getName().equals(collector.modLoader());
+                    return loaderTarget.getName().equals(modLoader);
                 })
                 .sorted(Comparator.comparingLong(e -> e.id))
                 .firstOrDefault();
+    }
+
+    public void visitCompatibleVersion(ModManifest requestedBy, ModCollector collector) {
+        Version version = findLatestCompatibleVersion(collector.modLoader(), collector.mcVersion());
         if (version == null) {
             collector.unsatisfiableDependency(requestedBy, this);
             return;
