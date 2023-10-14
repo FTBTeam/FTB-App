@@ -150,7 +150,8 @@ public class Constants {
                     new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
                             .setClient(httpClient())
                             .addTag(Throttler.class, Constants.getGlobalThrottler())
-                    )
+                    ),
+                    true
             );
         }
         return JDK_INSTALL_MANAGER;

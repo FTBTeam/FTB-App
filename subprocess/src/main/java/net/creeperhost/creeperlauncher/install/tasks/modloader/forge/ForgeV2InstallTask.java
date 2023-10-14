@@ -12,8 +12,6 @@ import joptsimple.OptionSpec;
 import joptsimple.util.PathConverter;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
-import net.covers1624.jdkutils.JdkInstallationManager;
-import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
@@ -109,9 +107,9 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         String javaTarget = instance.versionManifest.getTargetVersion("runtime");
         Path javaHome;
         if (javaTarget == null) {
-            javaHome = Constants.getJdkManager().provisionJdk(new ProvisionRequest.Builder().forVersion(JavaVersion.JAVA_1_8).preferJRE(true).build());
+            javaHome = Constants.getJdkManager().provisionJdk(vanillaManifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8), null, true, null);
         } else {
-            javaHome = Constants.getJdkManager().provisionJdk(new ProvisionRequest.Builder().withSemver(javaTarget).preferJRE(true).build());
+            javaHome = Constants.getJdkManager().provisionJdk(javaTarget, true, null);
         }
         Path javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
 
