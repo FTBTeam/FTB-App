@@ -1,8 +1,8 @@
-import { ActionContext, ActionTree } from 'vuex';
-import { SocketState } from './types';
-import { RootState } from '@/types';
+import {ActionContext, ActionTree} from 'vuex';
+import {SocketState} from './types';
+import {RootState} from '@/types';
 import Vue from 'vue';
-import { logVerbose } from '@/utils';
+import {logVerbose} from '@/utils';
 import platform from '@/utils/interface/electron-overwolf';
 
 export interface MessageData {
@@ -45,20 +45,5 @@ export const actions: ActionTree<SocketState, RootState> = {
   },
   registerExitCallback({ commit }: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
     commit('ADD_EXIT_CALLBACK', callback);
-  },
-  async reportAdvert(
-    { commit, rootState }: ActionContext<SocketState, RootState>,
-    data: { html: string; object: string },
-  ) {
-    // try {
-    //   const response = await axios.post(`https://minetogether.io/api/reportAd`, data, {
-    //     headers: {
-    //       Accept: 'application/json',
-    //     },
-    //   });
-    // } catch (err) {
-    //   console.log(err);
-    //   return;
-    // }
   },
 };

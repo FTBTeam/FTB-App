@@ -43,28 +43,6 @@ export const prettyByteFormat = (bytes: number) => {
   unit = units[exponent];
 
   return (neg ? '-' : '') + bytes + ' ' + unit;
-};
-
-
-export type AbortableRequest = {
-  abort: () => void;
-  ready: Promise<Response>;
-};
-
-/**
- * A fetch that you can abort, automatically attaching a method that can be aborted
- *
- * @param request the normal fetch request args
- * @param opts    fetch request init
- */
-export const abortableFetch = (request: RequestInfo, opts?: RequestInit): AbortableRequest => {
-  const controller = new AbortController();
-  const signal = controller.signal;
-
-  return {
-    abort: () => controller.abort(),
-    ready: fetch(request, { ...opts, signal }),
-  };
-};
+}
 
 export const parseMarkdown = (input: string) => markdownParser.render(input); 

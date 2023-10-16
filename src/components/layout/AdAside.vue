@@ -59,11 +59,11 @@
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import Component from 'vue-class-component';
-import { State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
-import { AuthState } from '@/modules/auth/types';
-import { Prop } from 'vue-property-decorator';
-import { getLogger } from '@/utils';
+import {State} from 'vuex-class';
+import {SettingsState} from '@/modules/settings/types';
+import {AuthState} from '@/modules/auth/types';
+import {getLogger} from '@/utils';
+import {JavaFetch} from '@/core/javaFetch';
 
 @Component
 export default class AdAside extends Vue {
@@ -153,7 +153,9 @@ export default class AdAside extends Vue {
     this.ads[id].addEventListener('display_ad_loaded', () => {
       emitPlaceholderUpdate(false);
       this.logger.info(`[AD: ${id}] Display ad loaded and ready`);
-      fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
+      JavaFetch.modpacksCh("analytics/ads/static")
+        .execute()
+        .catch(e => console.error(e))
     });
     this.ads[id].addEventListener('play', () => {
       emitPlaceholderUpdate(false);
@@ -163,7 +165,9 @@ export default class AdAside extends Vue {
       this.logger.info(`[AD: ${id}] Video ad finished playing`);
     });
     this.ads[id].addEventListener('impression', () => {
-      fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
+      JavaFetch.modpacksCh("analytics/ads/video")
+        .execute()
+        .catch(e => console.error(e))
     });
   }
 

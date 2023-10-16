@@ -1,17 +1,17 @@
-import { logVerbose } from '@/utils';
+import {logVerbose} from '@/utils';
 import Vue from 'vue';
-import Vuex, { MutationTree, Store, StoreOptions } from 'vuex';
-import { ModalBox, RootState } from '@/types';
-import { websocket } from './websocket';
-import { settings } from './settings';
-import { auth } from './auth';
-import { core } from '@/modules/core/core';
-import { appStore } from '@/modules/app/appStore';
-import { modpackStateModule } from '@/core/state/modpacks/modpacksState';
-import { instanceStateModule } from '@/core/state/instances/instancesState';
-import { installStateModule } from '@/core/state/instances/installState';
-import { newsStateModule } from '@/core/state/misc/newsState';
-import { dialogsState } from '@/core/state/misc/dialogsState';
+import Vuex, {MutationTree, Store, StoreOptions} from 'vuex';
+import {RootState} from '@/types';
+import {websocket} from './websocket';
+import {settings} from './settings';
+import {auth} from './auth';
+import {core} from '@/modules/core/core';
+import {appStore} from '@/modules/app/appStore';
+import {modpackStateModule} from '@/core/state/modpacks/modpacksState';
+import {instanceStateModule} from '@/core/state/instances/instancesState';
+import {installStateModule} from '@/core/state/instances/installState';
+import {newsStateModule} from '@/core/state/misc/newsState';
+import {dialogsState} from '@/core/state/misc/dialogsState';
 
 Vue.use(Vuex);
 
@@ -25,13 +25,11 @@ export const mutations: MutationTree<RootState> = {
     state.wsPort = data.port;
     state.wsSecret = data.secret;
   },
-  SHOW_MODAL(state: any, modal: ModalBox) {
-    state.websocket.modal = modal;
-  },
   HIDE_MODAL(state: any) {
     state.websocket.modal = null;
   },
 };
+
 const wsLoggerPlugin = (store: Store<RootState>) => {
   store.subscribe((mutation, state) => {
     if (mutation.type === 'SOCKET_ONMESSAGE') {

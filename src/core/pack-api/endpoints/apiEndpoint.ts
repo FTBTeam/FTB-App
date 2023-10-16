@@ -1,5 +1,6 @@
 import {HttpMethod} from '@/core/@types/commonTypes';
 import {JavaFetch} from '@/core/javaFetch';
+import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 
 export class ApiEndpoint {
   constructor(
@@ -16,7 +17,9 @@ export class ApiEndpoint {
       endpoint = endpoint.substring(1);
     }
     
-    const url = `${baseEndpointOverride ?? this.base}/${endpoint}`;
+    const base = stringIsEmpty(baseEndpointOverride) && stringIsEmpty(this.base) ? '' : `${baseEndpointOverride ?? this.base}/`;    
+    const url = `${base}${endpoint}`;
+
     const req = await fetcher(url)
       .method(method)
       .execute();

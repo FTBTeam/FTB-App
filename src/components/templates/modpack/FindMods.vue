@@ -101,13 +101,14 @@
 import {AuthState} from '@/modules/auth/types';
 import {Instance} from '@/modules/modpacks/types';
 import {Mod} from '@/types';
-import {abortableFetch, debounce} from '@/utils';
+import {debounce} from '@/utils';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import {State} from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
 import ModCard from '../../molecules/modpack/ModCard.vue';
 import {alertController} from '@/core/controllers/alertController';
 import {sendMessage} from '@/core/websockets/websocketsApi';
+import {modpackApi} from '@/core/pack-api/modpackApi';
 
 @Component({
   components: {
@@ -148,8 +149,6 @@ export default class FindMods extends Vue {
   searchDebounce: any;
   begunSearching = false;
 
-  fetchRequests: { abort: () => void; ready: Promise<Response> }[] = [];
-
   /**
    * If no instance is set, everything is wrong. The instance in this case is being
    * pulled from the instance page vue.
@@ -175,21 +174,13 @@ export default class FindMods extends Vue {
   private async searchForMod() {
     // Clean up all data, we have a new request
     this.resetSearch();
-    this.fetchRequests.forEach((e) => e.abort());
 
     this.loadingTerm = true;
     this.visualLoadingFull = true;
     const start = new Date().getTime();
 
-    const results = abortableFetch(
-      `${process.env.VUE_APP_MODPACK_API}/public/mod/search/${this.target || 'all'}/${this.modLoader}/50?term=${
-        this.search
-      }`,
-    );
-
-    this.fetchRequests.push(results);
-    const searchResults = await (await results.ready).json();
-
+    const searchResults = await modpackApi.search.modSearch(this.search, this.target, this.modLoader as any);
+    
     this.loadingTerm = false;
     if (!searchResults || searchResults?.total === 0) {
       this.visualLoadingFull = false;
@@ -319,13 +310,7 @@ export default class FindMods extends Vue {
   }
 
   private async getModFromId(modId: number): Promise<Mod | null> {
-    try {
-      const req = abortableFetch(`${process.env.VUE_APP_MODPACK_API}/public/mod/${modId}`);
-      this.fetchRequests.push(req);
-      return await (await req.ready).json();
-    } catch {
-      return null;
-    }
+    return modpackApi.search.modFetch(modId)
   }
 
   get hasResults() {
