@@ -115,7 +115,6 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {ModPack, Versions} from '@/modules/modpacks/types';
 import {Action, Getter, State} from 'vuex-class';
-import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import {AuthState} from '@/modules/auth/types';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
@@ -154,7 +153,6 @@ export enum ModpackPageTabs {
     PackMetaHeading,
     ModpackSettings,
     ModpackVersions,
-    MessageModal,
     FindMods,
     PackBody,
   },

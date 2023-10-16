@@ -1,5 +1,5 @@
-import { SettingsState } from './modules/settings/types';
-import { AuthState, Friend } from './modules/auth/types';
+import {SettingsState} from './modules/settings/types';
+import {AuthState, Friend} from './modules/auth/types';
 import {AppState} from '@/core/state/appState';
 
 export namespace App {
@@ -22,10 +22,10 @@ export type RootState = {
 
 
 export interface ModalBox {
+  id: string;
   title: string;
   message: string;
   buttons: Button[];
-  dismissable: boolean;
 }
 
 export interface FriendListResponse {

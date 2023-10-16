@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-10-08 11:38:20.
+// Generated using typescript-generator version 3.2.1263 on 2023-10-16 19:50:51.
 
 export interface BaseData {
     type: string;
@@ -200,6 +200,11 @@ export interface InstanceModsDataReply extends InstanceModsData {
     files: ModInfo[];
 }
 
+export interface UpdateAvailable extends InstanceModsData {
+    file: ModInfo;
+    update: CurseMetadata;
+}
+
 export interface InstanceOverrideModLoaderData extends BaseData {
     uuid: string;
     modLoaderId: number;
@@ -391,7 +396,6 @@ export interface GetJavasDataReply extends BaseData {
 export interface OpenModalData extends BaseData {
     title: string;
     message: string;
-    dismissable: boolean;
     buttons: ModalButton[];
     id: string;
 }
@@ -399,7 +403,7 @@ export interface OpenModalData extends BaseData {
 export interface ModalButton {
     message: string;
     name: string;
-    colour: string;
+    type: string;
 }
 
 export interface ModalCallbackData extends BaseData {
@@ -678,6 +682,24 @@ export interface InstanceJson {
     art: string;
 }
 
+export interface ModInfo {
+    fileId: number;
+    fileName: string;
+    version: string;
+    enabled: boolean;
+    size: number;
+    sha1: string;
+    curse: CurseMetadata;
+}
+
+export interface CurseMetadata {
+    curseProject: number;
+    curseFile: number;
+    name: string;
+    synopsis: string;
+    icon: string;
+}
+
 export interface ModpackVersionManifest {
     status: string;
     message: string;
@@ -712,16 +734,6 @@ export interface AccountProfile {
     skins: AccountSkin[];
 }
 
-export interface ModInfo {
-    fileId: number;
-    fileName: string;
-    version: string;
-    enabled: boolean;
-    size: number;
-    sha1: string;
-    curse: CurseMetadata;
-}
-
 export interface Specs {
     id: number;
     minimum: number;
@@ -751,14 +763,6 @@ export interface MSAuthStore {
 export interface YggdrasilAuthStore {
     clientToken: string;
     accessToken: string;
-}
-
-export interface CurseMetadata {
-    curseProject: number;
-    curseFile: number;
-    name: string;
-    synopsis: string;
-    icon: string;
 }
 
 export interface Target {

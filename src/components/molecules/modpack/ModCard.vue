@@ -108,18 +108,16 @@
 </template>
 
 <script lang="ts">
-import { Mod, ModVersion } from '@/types';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import {Mod, ModVersion} from '@/types';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { Instance } from '@/modules/modpacks/types';
-import { Action } from 'vuex-class';
+import {Instance} from '@/modules/modpacks/types';
 import Selection from '@/components/atoms/input/Selection.vue';
 import FTBModal from '../../atoms/FTBModal.vue';
-import MessageModal from '../../organisms/modals/MessageModal.vue';
-import { emitter } from '@/utils/event-bus';
-import { prettyByteFormat } from '@/utils/helpers';
-import { getColorForReleaseType } from '@/utils/colors';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {emitter} from '@/utils/event-bus';
+import {prettyByteFormat} from '@/utils/helpers';
+import {getColorForReleaseType} from '@/utils/colors';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 type InstallProgress = {
   percentage: number;
@@ -131,7 +129,6 @@ type InstallProgress = {
 @Component({
   components: {
     'ftb-modal': FTBModal,
-    MessageModal,
     Selection,
   },
 })

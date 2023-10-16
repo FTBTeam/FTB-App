@@ -159,16 +159,6 @@
     <recycle-scroller id="log-container" :items="logMessages" list-class="allow-overflow-x" key-field="i" :item-size="20" class="select-text scroller log-contents" :class="{ 'dark-mode': darkMode }" v-slot="{ item }">
       <div class="log-item" :class="messageTypes[item.t] + (!darkMode ? '-LIGHT': '')" :key="item.i">{{item.v}}</div>
     </recycle-scroller>
-
-    <FTBModal :visible="showMsgBox" @dismiss-modal="showMsgBox = false" :dismissable="true">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-      />
-    </FTBModal>
     
     <modal :open="showOptions" title="Instance options" :sub-title="instanceName" @closed="showOptions = false">
       <div class="action-categories">
@@ -199,7 +189,6 @@ import {ModPack} from '@/modules/modpacks/types';
 import {Action, Getter, State} from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import FTBModal from '@/components/atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
@@ -212,7 +201,6 @@ import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import {App} from '@/types';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -325,7 +313,6 @@ const cleanAuthIds = {
   name: 'LaunchingPage',
   components: {
     'ftb-toggle': FTBToggle,
-    FTBModal,
     'message-modal': MessageModal,
     ProgressBar,
   },
@@ -369,15 +356,6 @@ export default class LaunchingPage extends Vue {
 
   showOptions = false;
   lastIndex = 0;
-  
-  private showMsgBox = false;
-  private msgBox: App.MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
 
   public cancelLoading() {
     gobbleError(() => {
@@ -567,16 +545,10 @@ export default class LaunchingPage extends Vue {
       offlineUsername: this.$route.query.username as string ?? 'FTB Player',
       cancelLaunch: null
     })
-
-    // TODO: Replace with something much better!
+    
     if (result.status === 'error') {
-      this.preLaunch = false;
-      // An instance is already running
-      this.msgBox.type = 'okOnly';
-      this.msgBox.title = 'An error occurred whilst launching';
-      this.msgBox.okAction = () => (this.showMsgBox = false);
-      this.msgBox.content = result.message;
-      this.showMsgBox = true;
+      this.$router.back();
+      alertController.warning(result.message);
     } else if (result.status === 'success') {
       this.preLaunch = false;
     }
