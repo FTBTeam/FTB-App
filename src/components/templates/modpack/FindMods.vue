@@ -98,16 +98,16 @@
 </template>
 
 <script lang="ts">
-import { AuthState } from '@/modules/auth/types';
-import { Instance } from '@/modules/modpacks/types';
-import { Mod } from '@/types';
-import { abortableFetch, debounce } from '@/utils';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
+import {AuthState} from '@/modules/auth/types';
+import {Instance} from '@/modules/modpacks/types';
+import {Mod} from '@/types';
+import {abortableFetch, debounce} from '@/utils';
+import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
+import {State} from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
 import ModCard from '../../molecules/modpack/ModCard.vue';
 import {alertController} from '@/core/controllers/alertController';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 @Component({
   components: {

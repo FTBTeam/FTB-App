@@ -1,4 +1,5 @@
 import {ModpackApiModpackEndpoint} from '@/core/pack-api/endpoints/modpackApiModpackEndpoint';
+import {ModpacksApiSearchEndpoint} from '@/core/pack-api/endpoints/modpacksApiSearchEndpoint';
 
 export type StatusResult<T> = {
   status: "success" | "error" | "failure";
@@ -8,7 +9,8 @@ export type StatusResult<T> = {
 class ModpackApi {
   private endpoints = {
     modpacks: new ModpackApiModpackEndpoint(),
-    mods: ''
+    mods: '',
+    search: new ModpacksApiSearchEndpoint()
   }
   
   get modpacks() {
@@ -17,6 +19,10 @@ class ModpackApi {
   
   get mods() {
     return this.endpoints.mods;
+  }
+  
+  get search() {
+    return this.endpoints.search;
   }
 }
 

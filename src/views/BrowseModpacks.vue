@@ -57,12 +57,13 @@ import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import {PackProviders} from '@/modules/modpacks/types';
 import {Route} from 'vue-router';
 import {AuthState} from '@/modules/auth/types';
-import {abortableFetch, AbortableRequest, createModpackchUrl, debounce} from '@/utils';
-import {ListPackSearchResults, SearchResultPack} from '@/core/@types/modpacks/packSearch';
+import {debounce} from '@/utils';
+import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import Loader from '@/components/atoms/Loader.vue';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
+import {modpackApi} from '@/core/pack-api/modpackApi';
 
 @Component({
   components: {
@@ -80,7 +81,6 @@ export default class BrowseModpacks extends Vue {
   searchValue: string = '';
   currentTab: PackProviders = 'modpacksch';
 
-  currentSearch: AbortableRequest | null = null;
   searchResults: SearchResultPack[] = [];
 
   loading = false;
@@ -135,31 +135,11 @@ export default class BrowseModpacks extends Vue {
     if (this.searchValue.length < 2) {
       return;
     }
-    
-    if (this.currentSearch) {
-      this.currentSearch.abort();
-    }
 
     this.loading = true;
-
-    this.currentSearch = abortableFetch(
-      createModpackchUrl(
-        `/modpack/search/20/detailed?term=${this.searchValue}&platform=${this.currentTab}`,
-      ),
-    );
-
-    // Caught as this request will be aborted if it's slow and a new search term comes in
-    try {
-      const fetch = await this.currentSearch.ready;
-      const data = await fetch.json();
-
-      if (data.status !== 'error') {
-        this.searchResults = (data as ListPackSearchResults).packs;
-      }
-    } catch {
-    } finally {
-      this.loading = false;
-    }
+    
+    const results = await toggleBeforeAndAfter(() => modpackApi.search.search(this.searchValue, this.currentTab), v => this.loading = v);
+    this.searchResults = results?.packs ?? [];
   }
 
   get results(): SearchResultPack[] {

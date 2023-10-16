@@ -1,4 +1,3 @@
-import store from '@/modules/store';
 import MarkdownIt from 'markdown-it';
 import Router, {RouterNames} from '@/router';
 
@@ -46,20 +45,6 @@ export const prettyByteFormat = (bytes: number) => {
   return (neg ? '-' : '') + bytes + ' ' + unit;
 };
 
-/**
- * Creates a modpackch api url with the ability to inject an authentication key by default to the url
- *
- * @param url the remainder of the url (Automatically removes the `/` at the start of a string)
- * @param forcePublic forces the request to be public
- * 
- * @deprecated use the new version instead.
- */
-export const createModpackchUrl = (url: string, forcePublic = false): string => {
-  const key = store.state.auth?.token?.attributes.modpackschkey;
-  return `${process.env.VUE_APP_MODPACK_API}/${key && !forcePublic ? key : 'public'}/${
-    url.startsWith('/') ? url.slice(1) : url
-  }`;
-};
 
 export type AbortableRequest = {
   abort: () => void;

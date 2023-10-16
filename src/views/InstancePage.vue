@@ -112,31 +112,31 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, Versions } from '@/modules/modpacks/types';
-import { Action, Getter, State } from 'vuex-class';
+import {Component, Vue} from 'vue-property-decorator';
+import {ModPack, Versions} from '@/modules/modpacks/types';
+import {Action, Getter, State} from 'vuex-class';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import { AuthState } from '@/modules/auth/types';
+import {AuthState} from '@/modules/auth/types';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
-import { AuthProfile } from '@/modules/core/core.types';
-import { RouterNames } from '@/router';
-import { abortableFetch, AbortableRequest, createModpackchUrl } from '@/utils';
+import {AuthProfile} from '@/modules/core/core.types';
+import {RouterNames} from '@/router';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';
 import {ns} from '@/core/state/appState';
 import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
+import {modpackApi} from '@/core/pack-api/modpackApi';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -191,7 +191,6 @@ export default class InstancePage extends Vue {
   offlineAllowed = false;
 
   instanceBackups: Backup[] = [];
-  requestHolder: AbortableRequest[] = [];
 
   borkedVersionNotification: string | null = null;
   borkedVersionDowngradeId: number | null = null;
@@ -246,15 +245,11 @@ export default class InstancePage extends Vue {
       return;
     }
 
-    const currentVersionApiReq = await abortableFetch(
-      createModpackchUrl(
-        `/${this.instance.packType === 0 ? 'modpack' : 'curseforge'}/${this.instance.id}/${this.instance.versionId}`,
-      ),
-    );
-
-    this.requestHolder.push(currentVersionApiReq);
-    const apiData = await (await currentVersionApiReq.ready).json();
-    this.requestHolder = this.requestHolder.filter((e) => e === currentVersionApiReq); // Remove from the request holder
+    const apiData = await modpackApi.modpacks.getModpackVersion(this.instance.id, this.instance.versionId, typeIdToProvider(this.instance.packType))
+    if (!apiData) {
+      return;
+    }
+    
     if (apiData.notification) {
       this.borkedVersionNotification = apiData.notification;
     }
@@ -378,10 +373,6 @@ export default class InstancePage extends Vue {
     if (this.$route.query.presentOffline) {
       this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
     }
-  }
-
-  destroyed() {
-    this.requestHolder.forEach((e) => e.abort());
   }
   
   get instance() {
