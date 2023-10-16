@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { Prop, Watch } from 'vue-property-decorator';
+import {Prop, Watch} from 'vue-property-decorator';
 import {ModPack, Versions} from '@/modules/modpacks/types';
 import Component from 'vue-class-component';
 import Loader from '@/components/atoms/Loader.vue';
@@ -19,7 +19,7 @@ import {parseMarkdown} from '@/utils';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {packUpdateAvailable} from '@/utils/helpers/packHelpers';
 import UiButton from '@/components/core/ui/UiButton.vue';
-import UpdateConfirmModal from '@/components/core/modpack/UpdateConfirmModal.vue';
+import UpdateConfirmModal from '@/components/core/modpack/modals/UpdateConfirmModal.vue';
 
 @Component({
   methods: {parseMarkdown},

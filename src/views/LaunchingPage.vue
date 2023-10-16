@@ -117,10 +117,11 @@
         <!--        </ftb-button>-->
         <div
           class="color cursor-pointer ml-4"
-          :aria-label="wrapText ? 'Unwrap text' : 'Wrap text'"
+          :aria-label="disableFollow ? 'Enable auto-scroll' : 'Disable auto-scroll'"
           data-balloon-pos="down"
+          @click="disableFollow = !disableFollow"
         >
-          <font-awesome-icon @click="wrapText = !wrapText" :icon="!wrapText ? 'left-right' : 'right-long'" />
+          <font-awesome-icon icon="arrow-down" />
         </div>
         <div
           class="color cursor-pointer ml-4"
@@ -154,12 +155,10 @@
         </ftb-button>
       </div>
     </div>
-
-    <div class="log-contents text-sm select-text" :class="{ 'dark-mode': darkMode, wrap: wrapText }">
-      <div v-for="i in messages.length" :key="i" class="log-item" :class="messageTypes[messages[messages.length - i].t + (!darkMode ? '-LIGHT': '')]">
-        {{ messages[messages.length - i].m }}
-      </div>
-    </div>
+    
+    <recycle-scroller id="log-container" :items="logMessages" list-class="allow-overflow-x" key-field="i" :item-size="20" class="select-text scroller log-contents" :class="{ 'dark-mode': darkMode }" v-slot="{ item }">
+      <div class="log-item" :class="messageTypes[item.t] + (!darkMode ? '-LIGHT': '')" :key="item.i">{{item.v}}</div>
+    </recycle-scroller>
 
     <FTBModal :visible="showMsgBox" @dismiss-modal="showMsgBox = false" :dismissable="true">
       <message-modal
@@ -195,19 +194,19 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 import {ModPack} from '@/modules/modpacks/types';
-import { Action, Getter, State } from 'vuex-class';
+import {Action, Getter, State} from 'vuex-class';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import FTBModal from '@/components/atoms/FTBModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
-import { SettingsState } from '@/modules/settings/types';
-import { AuthState } from '@/modules/auth/types';
-import { emitter } from '@/utils/event-bus';
-import { RouterNames } from '@/router';
+import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
+import {SettingsState} from '@/modules/settings/types';
+import {AuthState} from '@/modules/auth/types';
+import {emitter} from '@/utils/event-bus';
+import {RouterNames} from '@/router';
 import Router from 'vue-router';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
@@ -216,7 +215,8 @@ import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {App} from '@/types';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {FixedSizeArray} from '@/utils/std/fixedSizeArray';
 
 type InstanceActionCategory = {
   title: string;
@@ -350,7 +350,7 @@ export default class LaunchingPage extends Vue {
   hasCrashed = false;
 
   darkMode = true;
-  wrapText = true;
+  disableFollow = false;
 
   currentStep = {
     stepDesc: '',
@@ -364,10 +364,11 @@ export default class LaunchingPage extends Vue {
   finishedLoading = false;
   preInitMessages: Set<string> = new Set();
 
-  messages: { t: string; m: string }[] = [];
+  messages: FixedSizeArray<{ i: number, t: string, v: string }> = new FixedSizeArray<{ i: number, t: string, v: string }>(20_000);
   launchProgress: Bar[] | null | undefined = null;
 
   showOptions = false;
+  lastIndex = 0;
   
   private showMsgBox = false;
   private msgBox: App.MsgBox = {
@@ -421,8 +422,7 @@ export default class LaunchingPage extends Vue {
     }
     
     if (data.type === "authenticationStepUpdate") {
-      console.log(data.success)
-      this.messages.push({t: "INFO", m: `[AUTH][INFO] ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.success ? 'successfully' : 'unsuccessfully') : ''}`})
+      this.messages.push({i: ++this.lastIndex, t: "I", v: `[AUTH][INFO] ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.success ? 'successfully' : 'unsuccessfully') : ''}`})
     }
 
     if (
@@ -441,6 +441,19 @@ export default class LaunchingPage extends Vue {
       }
 
       this.leavePage();
+    }
+    
+    setInterval(this.scrollToBottom, 100);
+  }
+  
+  scrollToBottom() {
+    if (this.disableFollow) {
+      return;
+    }
+    
+    const elm = document.getElementById('log-container');
+    if (elm) {
+      elm.scrollTop = elm.scrollHeight;
     }
   }
 
@@ -464,6 +477,7 @@ export default class LaunchingPage extends Vue {
   destroyed() {
     // Stop listening to events!
     emitter.off('ws.message', this.onLaunchProgressUpdate);
+    clearInterval(this.scrollToBottom as any)
   }
   
   async lazyLogChecker(messages: string[]) {
@@ -481,14 +495,9 @@ export default class LaunchingPage extends Vue {
 
   handleLogMessages(data: any) {
     gobbleError(() => this.lazyLogChecker(data.messages));
+    
     for (const e of data.messages) {
       this.messages.push(this.formatMessage(e));
-    }
-
-    if (this.messages.length > 500) {
-      // Remove the first 400 items of the array so there isn't a huge jump in the UI
-      this.messages.splice(0, 400);
-      this.messages.push({t: "INFO", m: `[FTB APP][INFO] Cleaning up last 500 messages...`});
     }
   }
 
@@ -501,7 +510,7 @@ export default class LaunchingPage extends Vue {
 
     if (!this.preInitMessages.has(data.stepDesc)) {
       this.preInitMessages.add(data.stepDesc);
-      this.messages.push({t: "INFO", m: '[FTB APP][INFO] ' + data.stepDesc});
+      this.messages.push({i: ++this.lastIndex, t: "I", v: '[FTB APP][INFO] ' + data.stepDesc});
     }
   }
 
@@ -526,9 +535,9 @@ export default class LaunchingPage extends Vue {
     this.currentStep = this.emptyCurrentStep;
     this.finishedLoading = false;
     this.preInitMessages = new Set();
-    this.messages = [];
+    this.messages = new FixedSizeArray<{ i: number, t: string, v: string }>(20_000);
     this.launchProgress = null;
-
+    
     if (!this.$route.query.offline) {
       const refreshResponse = await validateAuthenticationOrSignIn(this.instance?.uuid);
       if (!refreshResponse.ok && !refreshResponse.networkError) {
@@ -558,7 +567,7 @@ export default class LaunchingPage extends Vue {
       offlineUsername: this.$route.query.username as string ?? 'FTB Player',
       cancelLaunch: null
     })
-   
+
     // TODO: Replace with something much better!
     if (result.status === 'error') {
       this.preLaunch = false;
@@ -615,27 +624,30 @@ export default class LaunchingPage extends Vue {
   }
 
   messageTypes = {
-    "WARN": "text-orange-200",
-    "INFO": "text-blue-200",
-    "ERROR": "text-red-200",
-    "WARN-LIGHT": "text-orange-700",
-    "INFO-LIGHT": "text-blue-700",
-    "ERROR-LIGHT": "text-red-700",
+    "W": "text-orange-200",
+    "I": "text-blue-200",
+    "E": "text-red-200",
+    "W-LIGHT": "text-orange-700",
+    "I-LIGHT": "text-blue-700",
+    "E-LIGHT": "text-red-700",
   };
   
-  lastType = "INFO";
-  formatMessage(message: string) {
-    let type = this.lastType ?? "INFO";
+  typeMap = new Map([
+    ["WARN", "W"],
+    ["INFO", "I"],
+    ["ERROR", "E"]
+  ])
+  
+  lastType = "I";
+  formatMessage(message: string): { i: number, t: string, v: string } {
+    let type = this.lastType ?? "I";
     const result = /^\[[^\/]+\/([^\]]+)]/.exec(message);
     if (result !== null && result[1]) {
-      type = result[1];
+      type = this.typeMap.get(result[1]) ?? "I";
       this.lastType = type;
     }
     
-    return {
-      t: type,
-      m: message
-    };
+    return {i: ++this.lastIndex, t: type, v: message};
   }
 
   runAction(action: InstanceAction) {
@@ -675,10 +687,15 @@ export default class LaunchingPage extends Vue {
     
     return resolveArtwork(this.instance, "square", this.getApiPack(this.instance!.id) ?? null)
   }
+  
+  get logMessages() {
+    return this.messages.getItems();
+  }
 }
 </script>
 
 <style lang="scss" scoped>
+
 .pack-loading {
   display: flex;
   flex-direction: column;
@@ -754,11 +771,12 @@ export default class LaunchingPage extends Vue {
   .log-contents {
     flex: 1;
     display: flex;
-    flex-direction: column-reverse;
-    padding: 1rem 1rem 1rem 0;
+    //flex-direction: column-reverse;
+    padding: 1rem 1rem 0 0;
     overflow: auto;
     font-family: 'Consolas', 'Courier New', Courier, monospace;
     margin: 0 0.1rem 0.5rem 1rem;
+    font-size: 12px;
 
     &::-webkit-scrollbar-track {
       background: transparent;

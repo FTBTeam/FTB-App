@@ -9,8 +9,10 @@
       label="Instance Name"
       v-model="instanceSettings.name"
       @blur="saveSettings"
-      class="mb-6"
+      class="mb-4"
     />
+    
+    <category-selector :open-down="true" class="mb-6" v-model="instanceSettings.category" @input="() => saveSettings()" />
 
     <div class="buttons flex gap-4 mb-8">
       <ui-button size="small" type="info" icon="folder" @click="browseInstance()">
@@ -64,21 +66,6 @@
       }%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`"
     />
     
-    <div class="flex items-center mb-6">
-      <div class="block flex-1 mr-2">
-        <b>Release Channel</b>
-        <small class="block text-muted mr-6 mt-2">
-          The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
-      </div>
-      
-      <selection2
-        :options="channelOptions"
-        v-model="instanceSettings.releaseChannel"
-        :style="{width: '192px'}"
-        @change="v => saveSettings()"
-      />
-    </div>
-
     <ftb-toggle
       label="Fullscreen"
       :value="instanceSettings.fullScreen"
@@ -138,6 +125,21 @@
     </h2>
     
     <div class="mb-8">
+      <div class="flex items-center mb-6">
+        <div class="block flex-1 mr-2">
+          <b>Release Channel</b>
+          <small class="block text-muted mr-6 mt-2">
+            The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
+        </div>
+
+        <selection2
+          :options="channelOptions"
+          v-model="instanceSettings.releaseChannel"
+          :style="{width: '192px'}"
+          @change="v => saveSettings()"
+        />
+      </div>
+      
       <section class="flex-1 mb-4">
         <label class="block tracking-wide text-white-700 mb-2">Java Version</label>
         <div class="flex items-center gap-4">
@@ -211,13 +213,15 @@ import {alertController} from '@/core/controllers/alertController';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import Selection2 from '@/components/atoms/input/Selection2.vue';
-import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
+import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelector.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 
 @Component({
   components: {
+    CategorySelector,
     UiButton,
     ArtworkSelector,
     Selection2,

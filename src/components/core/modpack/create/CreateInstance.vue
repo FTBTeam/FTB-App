@@ -20,38 +20,21 @@
       </div>
       
       <div class="modloader" v-show="step === 1">
-        <template v-if="!loadingModloaders && Object.keys(availableLoaders).length > 0">
+<!--        <template v-if="!loadingModloaders && Object.keys(availableLoaders).length > 0">-->
           <message header="Optional" icon="info" type="info" class="mb-4">
             A Mod Loader will allow you to load mods into Minecraft. Each Mod Loader will have different mods available so we recommend looking at <a>CurseForge</a> to see what's available.
           </message>
 
-          <b class="mb-4 block">Select a Mod Loader</b>
-          
-          <div class="loaders mb-6">
-            <div class="loader" :class="{active: userLoaderProvider === index}" v-for="(_, index) in availableLoaders" :key="index" @click="userLoaderProvider = index">
-              {{ index | title }}
-            </div>
-          </div>
-
-          <f-t-b-toggle v-if="!stringIsEmpty(userLoaderProvider)" :value="userUseLatestLoader" @change="v => userUseLatestLoader = v" label="Use latest Mod Loader version (recommended)" />
-          
-          <selection2
-            v-if="!userUseLatestLoader && loaderVersions.length > 0"
-            :open-up="true" 
-            label="Version"
-            class="mb-4" 
-            :options="loaderVersions" 
-            v-model="userModLoader" 
-          />
-        </template>
-        <Loader v-else-if="loadingModloaders" />
-        <div v-else>
-          <message header="No loaders" icon="exclamation" type="warning" class="mb-4">
-            Sadly we were not able to find any mod loaders for Minecraft {{ selectedMcVersion }}. This is likely due to there being no mod loaders available just yet.
-            <br><br>
-            You can continue to create an instance without a mod loader and set one up later once one is available.
-          </message>
-        </div>        
+          <modloader-select :mc-version="selectedMcVersion" />
+<!--        </template>-->
+<!--        <Loader v-else-if="loadingModloaders" />-->
+<!--        <div v-else>-->
+<!--          <message header="No loaders" icon="exclamation" type="warning" class="mb-4">-->
+<!--            Sadly we were not able to find any mod loaders for Minecraft {{ selectedMcVersion }}. This is likely due to there being no mod loaders available just yet.-->
+<!--            <br><br>-->
+<!--            You can continue to create an instance without a mod loader and set one up later once one is available.-->
+<!--          </message>-->
+<!--        </div>        -->
       </div>
       
       <div class="settings" v-show="step === 2">
@@ -86,7 +69,7 @@
 
 <script lang="ts">
 import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
-import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
+import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelector.vue';
 import Selection2, {SelectionOption} from '@/components/atoms/input/Selection2.vue';
 import {ns} from '@/core/state/appState';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
@@ -95,18 +78,18 @@ import {ModPack} from '@/modules/modpacks/types';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';
-import {JavaFetch} from '@/core/javaFetch';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SettingsState} from '@/modules/settings/types';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import Loader from '@/components/atoms/Loader.vue';
-import {ModLoader, ModLoadersResponse} from '@/core/@types/modpacks/modloaders';
+import {ModLoader} from '@/core/@types/modpacks/modloaders';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
+import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 
 @Component({
-  components: {CategorySelector, Loader, FTBSlider, UiButton, FTBToggle, Selection2, ArtworkSelector},
+  components: {ModloaderSelect, CategorySelector, Loader, FTBSlider, UiButton, FTBToggle, Selection2, ArtworkSelector},
   methods: {
     toTitleCase,
     stringIsEmpty
@@ -132,7 +115,6 @@ export default class CreateInstance extends Vue {
   userVanillaVersion = -1;
   userModLoader = ""
   userLoaderProvider = "";
-  userUseLatestLoader = true;
   userCategory = "Default";
   
   vanillaPack: ModPack | null = null;
@@ -194,39 +176,6 @@ export default class CreateInstance extends Vue {
     if (this.userPackName === `Minecraft ${lastVersion?.name}`) {
       this.userPackName = `Minecraft ${version.name}`;
     }
-    
-    await toggleBeforeAndAfter(() => this.loadAvailableLoaders(version.name), state => this.loadingModloaders = state);
-  }
-  
-  async loadAvailableLoaders(mcVersion: string) {
-    const knownLoaders = ["forge", "neoforge", "fabric"];
-    const foundLoadersForVersion = {} as Record<string, ModLoader[]>;
-    
-    for (const loader of knownLoaders) {
-      const request = await JavaFetch.modpacksCh(`loaders/${mcVersion}/${loader}`).execute()
-      if (request?.status !== "success") {
-        continue;
-      }
-      
-      const loaderData = request.json<ModLoadersResponse>();
-      if (loaderData.total === 0) {
-        continue;
-      }
-      
-      foundLoadersForVersion[loader] = loaderData.loaders.sort((a, b) => b.id - a.id);
-    }
-    
-    this.availableLoaders = foundLoadersForVersion;
-  }
-  
-  // Set the user loader to the first one available
-  @Watch("userLoaderProvider")
-  async onLoaderProviderChange(newVal: string, oldVal: string) {
-    if (newVal === oldVal) {
-      return;
-    }
-    
-    this.userModLoader = this.loaderVersions[0].value;
   }
   
   // This may be more complex in the future
@@ -313,18 +262,6 @@ export default class CreateInstance extends Vue {
       })) as SelectionOption[]
   }
   
-  get loaderVersions() {
-    if (this.userLoaderProvider === "" || !this.availableLoaders[this.userLoaderProvider]) {
-      return []
-    }
-    
-    return this.availableLoaders[this.userLoaderProvider].map((e: any) => ({
-      label: e.version,
-      value: e.version,
-      meta: e.type
-    })) as SelectionOption[]
-  }
-  
   get screenResolutions() {
     return this.settings.hardware.supportedResolutions.map(e => ({
       label: `${e.width}x${e.height}`,
@@ -364,40 +301,6 @@ export default class CreateInstance extends Vue {
       height: 2px;
       background: rgba(white, .2);
       border-radius: 2px;
-    }
-  }
-}
-
-.loaders {
-  display: flex;
-  
-  .loader {
-    cursor: pointer;
-    flex: 1;
-    padding: 1rem 0;
-    text-align: center;
-    background-color: var(--color-navbar);
-    transition: background-color .25s ease-in-out;
-    font-weight: bold;
-    
-    &:hover {
-      background-color: var(--color-light-primary-button);
-    }
-    
-    &.active {
-      background-color: var(--color-primary-button);
-    }
-    
-    &:first-child {
-      border-radius: 8px 0 0 8px;
-    }
-
-    &:last-child {
-      border-radius: 0 8px 8px 0;
-    }
-    
-    &:not(:last-child) {
-      border-right: 1px solid rgba(white, .05);
     }
   }
 }

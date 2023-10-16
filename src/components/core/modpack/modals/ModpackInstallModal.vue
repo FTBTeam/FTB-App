@@ -32,7 +32,7 @@ import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
-import ArtworkSelector from '@/components/core/modpack/ArtworkSelector.vue';
+import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelector.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import platform from '@/utils/interface/electron-overwolf';
 import {RouterNames} from '@/router';

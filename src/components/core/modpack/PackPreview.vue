@@ -36,16 +36,15 @@
 </template>
 
 <script lang="ts">
-import {Prop, Component} from 'vue-property-decorator';
+import {Component, Prop} from 'vue-property-decorator';
 import PackCardCommon from '@/components/core/modpack/PackCardCommon.vue';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {PackProviders} from '@/modules/modpacks/types';
-import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {stringIsEmpty, stringOrDefault, trimString} from '@/utils/helpers/stringHelpers';
+import {resolveArtwork} from '@/utils/helpers/packHelpers';
+import {stringOrDefault} from '@/utils/helpers/stringHelpers';
 import {RouterNames} from '@/router';
-import ModpackInstallModal from '@/components/core/modpack/ModpackInstallModal.vue';
-import { dialogsController } from '@/core/controllers/dialogsController';
+import ModpackInstallModal from '@/components/core/modpack/modals/ModpackInstallModal.vue';
+import {dialogsController} from '@/core/controllers/dialogsController';
 
 @Component({
   components: {ModpackInstallModal},

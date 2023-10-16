@@ -1,6 +1,6 @@
 <template>
   <div>
-    <selection2 :open-up="true" :label="label ?? 'Category'" :options="_options"
+    <selection2 :open-up="!openDown" :label="label ?? 'Category'" :options="_options"
                 :value="value" @input="v => valueChanged(v)" class="flex-1"/>
     
     <modal :open="showCreate" title="New category" @closed="showCreate = false">
@@ -29,6 +29,7 @@ export default class CategorySelector extends Vue {
 
   @Prop() label!: string;
   @Prop() value!: string;
+  @Prop() openDown!: boolean;
 
   @Emit('input') emitInput(value: string) {
     return value;
@@ -71,6 +72,16 @@ export default class CategorySelector extends Vue {
         }
       });
     }
+
+    // Always sort the Default option to the top and the add new at the bottom, then the rest alphabetically
+    categories.sort((a, b) => {
+      if (a.value === "Default") return -1;
+      if (b.value === "Default") return 1;
+      if (a.value === "_") return 1;
+      if (b.value === "_") return -1;
+      return a.value.localeCompare(b.value);
+    });
+    
     return categories;
   }
 }

@@ -49,21 +49,16 @@
 </template>
 
 <script lang="ts">
-import {Prop, Component, Watch} from 'vue-property-decorator';
+import {Component, Prop, Watch} from 'vue-property-decorator';
 import PackCardCommon from '@/components/core/modpack/PackCardCommon.vue';
-import {
-  packUpdateAvailable,
-  resolveArtwork,
-  resolveModloader,
-  typeIdToProvider
-} from '@/utils/helpers/packHelpers';
+import {packUpdateAvailable, resolveArtwork, resolveModloader, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {RouterNames} from '@/router';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import Popover from '@/components/atoms/Popover.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {Versions} from '@/modules/modpacks/types';
-import UpdateConfirmModal from '@/components/core/modpack/UpdateConfirmModal.vue';
+import UpdateConfirmModal from '@/components/core/modpack/modals/UpdateConfirmModal.vue';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 
 @Component({

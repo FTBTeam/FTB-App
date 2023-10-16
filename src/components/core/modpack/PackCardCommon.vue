@@ -15,6 +15,10 @@ export default class PackCardCommon extends Vue {
   apiModpack: ModPack | null = null;
   
   async fetchModpack(packId: number, provider: PackProviders = "modpacksch") {
+    if (packId === -1) {
+      return;
+    }
+    
     this.loading = true;
     const result = await this.getModpack({
       id: packId,
@@ -25,6 +29,10 @@ export default class PackCardCommon extends Vue {
       this.apiModpack = result;
     }
     this.loading = false;
+  }
+  
+  render() {
+    return undefined;
   }
 }
 </script>
