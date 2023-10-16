@@ -11,7 +11,7 @@
         <div class="break-all overflow-auto" v-html="modal.message" />
       </modal-body>
       <modal-footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-end gap-4">
           <ui-button v-for="(button, index) in modal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type">
             {{ button.name }}            
           </ui-button>

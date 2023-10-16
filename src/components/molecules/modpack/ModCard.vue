@@ -1,109 +1,111 @@
 <template>
-  <div class="mod-card" :class="{ 'modal-open': showInstall }">
-    <div class="art">
-      <img :src="art" alt="Mod artwork" />
-    </div>
-
-    <div class="main" :style="{ backgroundImage: art }">
-      <div class="content">
-        <div class="about">
-          <div class="name">{{ mod.name }}</div>
-          <div class="desc pr-10 mb-3">{{ mod.synopsis }}</div>
-        </div>
-        <div class="get">
-          <ftb-button color="primary" class="px-6 py-2" @click="showInstall = true">Install</ftb-button>
-        </div>
+  <div class="mod-card-wrapper">
+    <div class="mod-card">
+      <div class="art">
+        <img :src="art" alt="Mod artwork" />
       </div>
 
-      <div class="numbers">
-        <div class="stat">
-          <div class="text">Downloads</div>
-          <div class="value is-value">{{ mod.installs.toLocaleString() }}</div>
-        </div>
-        <div class="stat">
-          <div class="text">Latest</div>
-          <div class="value">
-            {{ latest.length > 20 ? latest.substr(0, 20) + '...' : latest }}
+      <div class="main" :style="{ backgroundImage: art }">
+        <div class="content">
+          <div class="about">
+            <div class="name">{{ mod.name }}</div>
+            <div class="desc pr-10 mb-3">{{ mod.synopsis }}</div>
+          </div>
+          <div class="get">
+            <ftb-button color="primary" class="px-6 py-2" @click="showInstall = true">Install</ftb-button>
           </div>
         </div>
-        <div class="stat">
-          <div class="text">Author{{ mod.authors.length > 1 ? 's' : '' }}</div>
-          <div class="value authors">
-            {{ mod.authors.map((e) => e.name).join(', ') }}
-          </div>
-        </div>
-        <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
-          <img src="@/assets/curse-logo.svg" alt="" />
-        </div>
-      </div>
-    </div>
 
-    <ftb-modal :visible="showInstall" size="medium" @dismiss-modal="closeModal" :dismissable="!installing">
-      <h2 class="text-3xl mb-2">{{ mod.name }}</h2>
-      <p
-        :style="{
-          opacity: !installing && !finishedInstalling ? 1 : 0,
-          height: !installing && !finishedInstalling ? 'auto' : '0 !important',
-        }"
-      >
-        Select the version of '{{ mod.name }}' that you'd like to install to your pack.
-      </p>
-
-      <template v-if="!installing && !finishedInstalling">
-        <selection
-          class="my-6"
-          label="Selection mod version"
-          @selected="(e) => (selectedVersion = e)"
-          v-if="versions"
-          :options="
-            versions.map((e) => ({
-              value: e.id,
-              text: e.name,
-              badge: {
-                text: e.type,
-                color: getColorForReleaseType(e.type),
-              },
-              meta: prettyBytes(e.size),
-            }))
-          "
-        />
-
-        <ftb-button
-          color="secondary"
-          class="py-2 px-8 mb-4 text-center"
-          :disabled="!selectedVersion"
-          @click="installMod"
-          >Install</ftb-button
-        >
-      </template>
-
-      <div class="installing mt-6 mb-4" v-else-if="!finishedInstalling">
-        <div class="progress font-bold"><font-awesome-icon icon="spinner" spin class="mr-2" /> Installing</div>
-        <div class="stats">
+        <div class="numbers">
           <div class="stat">
-            <div class="text">Progress</div>
-            <div class="value">{{ installProgress.percentage }}%</div>
+            <div class="text">Downloads</div>
+            <div class="value is-value">{{ mod.installs.toLocaleString() }}</div>
           </div>
           <div class="stat">
-            <div class="text">Speed</div>
-            <div class="value">{{ prettyBytes(installProgress.speed) }}/s</div>
-          </div>
-
-          <div class="stat">
-            <div class="text">Downloaded</div>
+            <div class="text">Latest</div>
             <div class="value">
-              {{ prettyBytes(installProgress.current) }} / {{ prettyBytes(installProgress.total) }}
+              {{ latest.length > 20 ? latest.substring(0, 20) + '...' : latest }}
+            </div>
+          </div>
+          <div class="stat">
+            <div class="text">Author{{ mod.authors.length > 1 ? 's' : '' }}</div>
+            <div class="value authors">
+              {{ mod.authors.map((e) => e.name).join(', ') }}
+            </div>
+          </div>
+          <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
+            <img src="@/assets/curse-logo.svg" alt="" />
+          </div>
+        </div>
+      </div>  
+    </div>
+  
+    <modal :open="showInstall" @closed="closeModal" :close-on-background-click="!installing"
+      :title="mod ? mod.name : 'Loading...'" :external-contents="true"
+    >
+      <modal-body>
+        <p
+          :style="{
+            opacity: !installing && !finishedInstalling ? 1 : 0,
+            height: !installing && !finishedInstalling ? 'auto' : '0 !important',
+          }"
+        >
+          Select the version of '{{ mod.name }}' that you'd like to install to your pack.
+        </p>
+
+        <template v-if="!installing && !finishedInstalling">
+          <selection
+            class="my-6"
+            label="Selection mod version"
+            @selected="(e) => (selectedVersion = e)"
+            v-if="versions"
+            :options="
+              versions.map((e) => ({
+                value: e.id,
+                text: e.name,
+                badge: {
+                  text: e.type,
+                  color: getColorForReleaseType(e.type),
+                },
+                meta: prettyBytes(e.size),
+              }))
+            "
+          />
+        </template>
+
+        <div class="installing mt-6 mb-4" v-else-if="!finishedInstalling">
+          <div class="progress font-bold"><font-awesome-icon icon="spinner" spin class="mr-2" /> Installing</div>
+          <div class="stats">
+            <div class="stat">
+              <div class="text">Progress</div>
+              <div class="value">{{ installProgress.percentage }}%</div>
+            </div>
+            <div class="stat">
+              <div class="text">Speed</div>
+              <div class="value">{{ prettyBytes(installProgress.speed) }}/s</div>
+            </div>
+
+            <div class="stat">
+              <div class="text">Downloaded</div>
+              <div class="value">
+                {{ prettyBytes(installProgress.current) }} / {{ prettyBytes(installProgress.total) }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="done" v-else>
-        <span class="block">{{ mod.name }} has been installed!</span>
-
-        <ftb-button color="primary" class="py-2 px-6 inline-block mt-6 mb-3" @click="closeModal">Close</ftb-button>
-      </div>
-    </ftb-modal>
+        
+        <p v-else>
+          <span class="block">{{ mod.name }} has been installed!</span>
+        </p>
+      </modal-body>
+      
+      <modal-footer>
+        <div class="flex justify-end gap-4" v-if="!installing && !finishedInstalling">
+          <ui-button type="success" icon="download" :disabled="!selectedVersion" @click="installMod">Install</ui-button>
+          <ui-button type="primary" @click="closeModal" icon="check" v-if="finishedInstalling">Close</ui-button>
+        </div>
+      </modal-footer>
+    </modal>
   </div>
 </template>
 
@@ -113,11 +115,11 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {Instance} from '@/modules/modpacks/types';
 import Selection from '@/components/atoms/input/Selection.vue';
-import FTBModal from '../../atoms/FTBModal.vue';
 import {emitter} from '@/utils/event-bus';
 import {prettyByteFormat} from '@/utils/helpers';
 import {getColorForReleaseType} from '@/utils/colors';
 import {sendMessage} from '@/core/websockets/websocketsApi';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 type InstallProgress = {
   percentage: number;
@@ -128,7 +130,7 @@ type InstallProgress = {
 
 @Component({
   components: {
-    'ftb-modal': FTBModal,
+    UiButton,
     Selection,
   },
 })

@@ -9,8 +9,8 @@
 
       <div class="categories">
         <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`" :class="{'collapsed': collapsedGroups.includes(index)}">
-          <header>
-            <h2 v-if="Object.keys(groupedPacks).length > 1">{{ index }}</h2>
+          <header v-if="Object.keys(groupedPacks).length > 1">
+            <h2>{{ index }}</h2>
             <span />
             <div class="collapse" @click="collapseGroup(index)">
               <font-awesome-icon icon="chevron-down" />
