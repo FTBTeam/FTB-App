@@ -197,7 +197,6 @@ idea.project.settings {
             jvmArgs += '-DInstanceInstaller.debug=true '                 // Enable debug logging for InstanceInstaller.
             jvmArgs += '-DInstanceLauncher.minecraft=ACCEPT '            // Allow Minecraft logging Marker in Log4j.
             jvmArgs += '-DInstanceShareUploader.debug=true '             // Enable debug logging for InstanceShareUploader
-            jvmArgs += '-DDNSChain.debug=true '                          // Enable debug logging for DNSChain
             jvmArgs += '-DCloudSaveManager.debug=true '                  // Enable debug logging for CloudSaveManager
             programParameters = '--dev'
         }
