@@ -156,6 +156,7 @@ public final class CloudSaveManager {
                     .httpClient(new OkHTTPS3HttpClient(Constants::httpClient));
             s3Client = builder.build();
             LOGGER.info("Cloud saves configured!");
+            pollCloudInstances();
         } catch (Throwable ex) {
             LOGGER.error("Failed to configure Cloud saves.", ex);
         }
