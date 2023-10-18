@@ -74,7 +74,6 @@ dependencies {
 
     implementation 'org.apache.httpcomponents:httpmime:4.5.13'
 
-    implementation 'software.amazon.awssdk:apache-client:2.20.4'
     implementation('software.amazon.awssdk:s3:2.20.4') {
         exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
     }
