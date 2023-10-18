@@ -261,7 +261,7 @@ public final class CloudSaveManager {
         return pollFuture = CompletableFuture.runAsync(() -> {
             OperationProgressTracker tracker = new OperationProgressTracker("cloud_poll", Map.of());
             try {
-                Set<String> keys = new HashSet<>();
+                Set<String> instancesOnS3 = new HashSet<>();
                 List<S3Object> index;
                 try {
                     Matcher matcher = INSTANCE_UUID_REGEX.matcher("");
@@ -270,7 +270,7 @@ public final class CloudSaveManager {
                         matcher.reset(s3Object.key());
                         if (!matcher.find()) continue;
                         String uuid = matcher.group(1);
-                        keys.add(uuid);
+                        instancesOnS3.add(uuid);
                     }
                 } catch (Throwable ex) {
                     LOGGER.warn("Failed to list bucket.", ex);
@@ -279,16 +279,17 @@ public final class CloudSaveManager {
                 List<UUID> removedPending = FastStream.of(Instances.allInstances())
                         .filter(Instance::isPendingCloudInstance)
                         .map(Instance::getUuid)
-                        .filterNot(e -> keys.contains(e.toString()))
+                        .filterNot(e -> instancesOnS3.contains(e.toString()))
                         .toList();
+                Set<String> missingInstances = new HashSet<>(instancesOnS3);
                 for (Instance instance : Instances.allInstances()) {
                     // Remove any synced instances.
-                    keys.remove(instance.getUuid().toString());
+                    missingInstances.remove(instance.getUuid().toString());
                 }
                 List<Instance> newInstances = new ArrayList<>();
                 // Make sure the directories the un synced cloud instances would use, don't exist, or are empty.
                 Path instancesDir = Settings.getInstancesDir();
-                for (String key : keys) {
+                for (String key : missingInstances) {
                     Path instanceDir = instancesDir.resolve(key);
                     if (Files.exists(instanceDir)) {
                         if (!Files.isDirectory(instanceDir)) {
@@ -346,7 +347,7 @@ public final class CloudSaveManager {
                     // The instance did have cloud-saves enabled, but its files don't exist in the S3 bucket anymore
                     // this likely means that the user has disabled cloud saves on another machine. We need to disable
                     // it here as well.
-                    if (instance.props.cloudSaves && !keys.contains(instance.getUuid().toString())) {
+                    if (instance.props.cloudSaves && !instancesOnS3.contains(instance.getUuid().toString())) {
                         LOGGER.info("Disabling CloudSaves on instance. S3 files have gone missing.");
                         try {
                             instance.props.cloudSaves = false;
