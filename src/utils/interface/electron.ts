@@ -1,6 +1,6 @@
 // @ts-ignore no typescript package available
 import VueNativeSock from 'vue-native-websocket';
-import { clipboard, ipcRenderer } from 'electron';
+import {clipboard, ipcRenderer} from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
@@ -205,7 +205,7 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      // TODO: Fix soon plz
+      // TODO: (legacy) Fix soon plz
       platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=http://localhost:7755")
       
       const mini = new MiniWebServer();
@@ -381,7 +381,7 @@ const Electron: ElectronOverwolfInterface = {
       }
       store.dispatch('settings/saveSettings', settings, { root: true });
     });
-    // // TODO: Yeet me @MIKEY DO THIS
+    // // TODO: (M#01) Yeet me
     // ipcRenderer.on('openModpack', (event, data) => {
     //   const { name, id } = data;
     //   getAPIRequest(store.state, `modpack/search/8?term=${name}`)
@@ -416,7 +416,7 @@ const Electron: ElectronOverwolfInterface = {
     
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       handleAction(data);
-      // TODO: Reimplement missing protocol systems
+      // TODO: (M#01) Reimplement missing protocol systems
       // let protocolURL = data;
       // if (protocolURL === undefined) {
       //   return;

@@ -285,7 +285,7 @@
 <!--      //       return;-->
 <!--      //     }-->
 <!--      //     const profile = data.profile;-->
-<!--      //     // TODO: Figure out what this needs-->
+<!--      //     // TODO: (legacy) Figure out what this needs-->
 <!--      //     // requests.push({ profile, name: profile.display, accepted: false });-->
 <!--      //     Vue.set(this.friends, 'requests', requests);-->
 <!--      //   }-->

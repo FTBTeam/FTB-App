@@ -112,9 +112,9 @@ export default class UpdateConfirmModal extends Vue {
       return; // how?
     }
 
-    const packReq = await modpackApi.modpacks.getChangelog(this.localInstance.id, this.latestVersion.id, "modpacksch") // TODO: Support CF Packs
+    const packReq = await modpackApi.modpacks.getChangelog(this.localInstance.id, this.latestVersion.id, "modpacksch") // TODO: (M#01) Support CF Packs
 
-    // TODO: Error handling
+    // TODO: (M#01) Error handling
     this.changes = packReq?.content ?? ""
   }
 }

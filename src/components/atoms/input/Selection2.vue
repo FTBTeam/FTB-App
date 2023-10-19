@@ -50,7 +50,7 @@ export type SelectionOption = {
   meta?: any;
 };
 
-// TODO: Migrate everything to this one.
+// TODO: (M#01) Migrate everything to this one.
 @Component
 export default class Selection2 extends Vue {
   @Prop() label!: string;

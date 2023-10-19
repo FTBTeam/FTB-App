@@ -200,7 +200,7 @@ export default class InstancePage extends Vue {
       return;
     }
     
-    // TODO: Allow to work without this.
+    // TODO: (M#01) Allow to work without this.
     this.apiPack = await this.getModpack({
       id: this.instance.id,
       provider: typeIdToProvider(this.instance.packType)
@@ -287,7 +287,7 @@ export default class InstancePage extends Vue {
         uuid: this.instance.uuid
       })
       
-      // TODO: ([ipc]#1) Handle errors
+      // TODO: (M#01) Handle errors
       console.log(result)
       
       return;
@@ -358,7 +358,7 @@ export default class InstancePage extends Vue {
       _private: this.instance?._private ?? false,
     }), state => this.updatingModlist = state)
 
-    // TODO: Catch errors
+    // TODO: (M#01) Catch errors
     this.modlist = mods.files;
     
     if (showAlert) {

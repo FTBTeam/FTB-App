@@ -288,7 +288,7 @@ export default class FindMods extends Vue {
   private async loadInstanceVersion() {
     this.loading = true;
 
-    // TODO: prevent this by fixing the instance construction to contain the mc version and more version data.
+    // TODO: (M#01) prevent this by fixing the instance construction to contain the mc version and more version data.
     let packData;
     try {
       packData = await sendMessage("instanceVersionInfo", {

@@ -161,7 +161,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         root: true
       })
 
-      // TODO: Add back in some way
+      // TODO: (M#01) Add back in some way
       // dispatch('modpacks/getPrivatePacks', {}, { root: true });
       // if (rootState.settings?.settings.enableChat) {
       //   dispatch('connectToIRC');

@@ -59,7 +59,6 @@ export default class ModpackInstallModal extends Vue {
   apiModpack: ModPack | null = null;
   selectedVersionId = "";
   selectedCategory = "Default";
-  manualCategoryCreate = false;
 
   allowPreRelease = false;
   useAdvanced = false;
@@ -70,7 +69,7 @@ export default class ModpackInstallModal extends Vue {
   @Watch("open")
   async onOpenChanged() {
     if (this.open && !this.apiModpack) {
-      // TODO: Catch errors
+      // TODO: (M#01) Catch errors
       this.apiModpack = await this.getModpack({
         id: this.packId, 
         provider: this.provider

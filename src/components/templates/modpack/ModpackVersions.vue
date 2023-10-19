@@ -66,8 +66,8 @@
 </template>
 
 <script lang="ts">
-import { ModPack, Versions } from '@/modules/modpacks/types';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import {ModPack, Versions} from '@/modules/modpacks/types';
+import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import Selection from '@/components/atoms/input/Selection.vue';
@@ -104,7 +104,7 @@ export default class ModpackVersions extends Vue {
     const lcurrent = this.sortedVersions.find(e => e.id === currentId)?.id ?? this.sortedVersions[0].id;
     this.version = lcurrent;
 
-    // TODO: Fix this once the api has been updated to support a `provider` field
+    // TODO: (M#01) Fix this once the api has been updated to support a `provider` field
     if (this.isCursePack) {
       return;
     }
@@ -152,7 +152,7 @@ export default class ModpackVersions extends Vue {
       state => this.loading = state
     )
 
-    // TODO: Handle errors
+    // TODO: (M#01) Handle errors
     
     return changelog?.content ?? `No changelog available for this version`;
   }
@@ -187,8 +187,8 @@ export default class ModpackVersions extends Vue {
   }
   
   get isCursePack() {
-    // TODO: Fix this once the api has been updated to support a `provider` field
-    // TODO: > 1000 isn't a great option here but it's the only way to ensure this still works once the
+    // TODO: (M#01) Fix this once the api has been updated to support a `provider` field
+    // TODO: (M#01) > 1000 isn't a great option here but it's the only way to ensure this still works once the
     //       provider field is added and the type is set correctly
     return this.packInstance.type.toLowerCase() == "curseforge" || this.packInstance.id > 1000;
   }

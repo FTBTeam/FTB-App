@@ -195,7 +195,7 @@
 <!--      friendCode = await this.getFriendCodeFromHash(hash);-->
 <!--    }-->
 
-<!--    // TODO: Review and see if arrow function can remove this mess-->
+<!--    // TODO: (legacy) Review and see if arrow function can remove this mess-->
 <!--    // FIXME: Rewrite thie entire system into a singleton-->
 <!--    let self = this;-->
 <!--    this.sendMessage({-->

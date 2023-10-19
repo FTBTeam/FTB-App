@@ -29,7 +29,7 @@ import {State} from 'vuex-class';
 import {parseMarkdown} from '@/utils/helpers';
 import platform from '@/utils/interface/electron-overwolf';
 import {SocketState} from '@/modules/websocket/types';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 export type ChangelogEntry = {
   version: string;
@@ -79,7 +79,7 @@ export default class Changelog extends Vue {
   checkIntervalRef: number | null = null;
   
   mounted() {
-    // TODO: All of this should be part of an initial handshake with the backend
+    // TODO: (legacy) All of this should be part of an initial handshake with the backend
     // Check if the websockets is connected each second. If it is, get the changelog
     this.checkIntervalRef = setInterval(() => {
       if (this.websockets.socket.isConnected) {

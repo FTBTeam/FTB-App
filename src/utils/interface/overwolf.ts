@@ -4,7 +4,7 @@ import {emitter, getLogger, logVerbose} from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
-import {handleAction} from "@/core/protocol/protocolActions";
+import {handleAction} from '@/core/protocol/protocolActions';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 
 declare global {
@@ -114,7 +114,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     yeetLauncher(windowId, cb) {
-      // TODO: if exitOverwolf is enabled, ensure Overwolf exists
+      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
       //@ts-ignore
       if (window.isChat === undefined || window.isChat === false) {
@@ -149,7 +149,7 @@ const Overwolf: ElectronOverwolfInterface = {
   // Frame / Chrome / Window / What ever you want to call it
   frame: {
     close(windowId: any, onClose: () => void) {
-      // TODO: if exitOverwolf is enabled, ensure Overwolf exists
+      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
 
       // @ts-ignore we don't know what the window is.

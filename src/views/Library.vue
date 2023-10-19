@@ -141,7 +141,7 @@ export default class Library extends Vue {
       this.collapsedGroups.push(group);
     }
     
-    // TODO: Support more data
+    // TODO: (M#01) Support more data
     localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups}));
   }
   

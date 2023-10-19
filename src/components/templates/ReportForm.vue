@@ -60,7 +60,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 
 @Component
@@ -72,7 +72,7 @@ export default class ReportForm extends Vue {
   @Prop() websockets!: any;
   @Prop() maxTries!: number;
 
-  // TODO: enable once the report form is working again
+  // TODO: (legacy) enable once the report form is working again
   disabled = true;
 
   static emailRegex =
@@ -104,7 +104,7 @@ export default class ReportForm extends Vue {
         return;
       }
     });
-    // TODO: Replace this with an actual endpoint :D
+    // TODO: (legacy) Replace this with an actual endpoint :D
     // Send request
     // await axios.put(`${process.env.VUE_APP_FTB_API}report/create`, {
     //   email: this.errorEmail,

@@ -30,7 +30,7 @@ export const actions: ActionTree<SocketState, RootState> = {
     }
     Vue.prototype.$socket[platform.isElectron() ? 'sendObj' : 'send'](
       platform.isElectron() ? payload.payload : JSON.stringify(payload.payload),
-    ); // TODO: This conditional logic might be wrong
+    );
     commit('ADD_CALLBACK', { id: requestId, callback: payload.callback });
     return requestId;
   },

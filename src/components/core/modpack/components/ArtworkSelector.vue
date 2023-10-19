@@ -31,7 +31,6 @@ import {InstanceJson} from '@/core/@types/javaApi';
 import {ModPack} from '@/modules/modpacks/types';
 import UiButton from '@/components/core/ui/UiButton.vue';
 
-// TODO: Make this look a lot nicer
 @Component({
   components: {UiButton},
   methods: {resolveArtwork}
