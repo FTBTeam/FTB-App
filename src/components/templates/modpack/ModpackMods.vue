@@ -1,22 +1,11 @@
 <template>
   <div class="modpack-mods">
-    <div class="flex mb-8 items-center">
+    <div class="flex mb-8 gap-4 items-center">
       <f-t-b-search-bar :alpha="true" placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
-      <div class="actions flex ml-6" v-if="packInstalled">
-        <ftb-button color="primary" class="py-3 px-4 whitespace-no-wrap" @click="() => $emit('searchForMods')">
-          <font-awesome-icon icon="plus" class="mr-2" />
-        </ftb-button>
-        <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
-          <ftb-button
-            @click="() => $emit('getModList', true)"
-            class="py-3 px-4"
-            color="info"
-            :disabled="updatingModlist"
-          >
-            <font-awesome-icon icon="sync" />
-          </ftb-button>
-        </div>
-      </div>
+      <template v-if="packInstalled">
+        <ui-button type="success" @click="() => $emit('searchForMods')" icon="plus" ariaLabel="Add more mods" />
+        <ui-button type="info" icon="sync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="() => $emit('getModList', true)"/>
+      </template>
     </div>
     <div v-for="(file, index) in modlist" :key="index">
       <div class="flex flex-row my-4 items-center" v-show="!filteredModShas.includes(file.sha1)">
@@ -30,7 +19,7 @@
         <div class="ml-auto flex items-center">
           <span
             :class="{ 'opacity-50': packInstalled ? !file.enabled : false }"
-            class="duration-150 transition-opacity rounded text-sm bg-gray-600 py-1 px-2 clean-font"
+            class="duration-150 transition-opacity rounded text-xs bg-gray-600 py-1 px-2 clean-font"
             >{{ prettyBytes(file.size) }}</span
           >
           <ftb-toggle v-if="packInstalled" :value="file.enabled" :disabled="togglingShas.includes(file.sha1)" @change="() => toggleMod(file)" />
@@ -59,9 +48,11 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {ModInfo} from '@/core/@types/javaApi';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import {alertController} from '@/core/controllers/alertController';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
   components: {
+    UiButton,
     FTBSearchBar,
     FindMods,
     'ftb-toggle': FTBToggle,

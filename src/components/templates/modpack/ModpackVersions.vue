@@ -78,6 +78,7 @@ import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
 import dayjs from 'dayjs';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component({
   components: {Selection2}
@@ -148,14 +149,18 @@ export default class ModpackVersions extends Vue {
       return "";
     }
     
-    const changelog = await toggleBeforeAndAfter(
-      () => modpackApi.modpacks.getChangelog(this.packInstance.id, versionId, this.isCursePack ? "curseforge" : "modpacksch"),
-      state => this.loading = state
-    )
+    try {
+      const changelog = await toggleBeforeAndAfter(
+        () => modpackApi.modpacks.getChangelog(this.packInstance.id, versionId, this.isCursePack ? "curseforge" : "modpacksch"),
+        state => this.loading = state
+      )
 
-    // TODO: (M#01) Handle errors
-    
-    return changelog?.content ?? `No changelog available for this version`;
+      return changelog?.content ?? `No changelog available for this version`;
+    } catch (e) {
+      console.error(e);
+      alertController.warning("Unable to load changelog")
+      return "Unable to locate changelog for this version";
+    }
   }
 
   public isOlderVersion(version: number) {

@@ -21,7 +21,6 @@ const actions: ActionTree<InstanceState, RootState> = {
     }
     
     commit('SET_LOADING_INSTANCES', true);
-    // TODO: (M#01) We might not always want to refresh
     const instances = await sendMessage('installedInstances', {refresh: true});
     commit('SET_INSTANCES', instances.instances);
     commit('SET_CATEGORIES', instances.availableCategories);

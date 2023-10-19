@@ -6,7 +6,7 @@
     :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined"
   >
     <span :class="{'opacity-0': working}">
-      <font-awesome-icon v-if="icon" :icon="icon" class="mr-2" />
+      <font-awesome-icon v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
       <slot />
     </span>
     <transition name="fade">
@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts">
-import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
 import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 
 type ButtonType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';

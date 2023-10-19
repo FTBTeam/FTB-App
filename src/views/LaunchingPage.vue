@@ -400,7 +400,7 @@ export default class LaunchingPage extends Vue {
     }
     
     if (data.type === "authenticationStepUpdate") {
-      this.messages.push({i: ++this.lastIndex, t: "I", v: `[AUTH][INFO] ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.success ? 'successfully' : 'unsuccessfully') : ''}`})
+      this.messages.push({i: ++this.lastIndex, t: "I", v: `[AUTH][INFO] ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.successful ? 'successfully' : 'unsuccessfully') : ''}`})
     }
 
     if (

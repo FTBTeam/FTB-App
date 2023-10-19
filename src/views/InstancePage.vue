@@ -288,6 +288,7 @@ export default class InstancePage extends Vue {
       })
       
       // TODO: (M#01) Handle errors
+      // TODO: (M#01) Handle some kinda visual state
       console.log(result)
       
       return;
@@ -353,13 +354,16 @@ export default class InstancePage extends Vue {
   }
 
   private async getModList(showAlert = false) {
-    const mods = await toggleBeforeAndAfter(() => sendMessage("instanceMods", {
-      uuid: this.instance?.uuid ?? "",
-      _private: this.instance?._private ?? false,
-    }), state => this.updatingModlist = state)
-
-    // TODO: (M#01) Catch errors
-    this.modlist = mods.files;
+    try {
+      const mods = await toggleBeforeAndAfter(() => sendMessage("instanceMods", {
+        uuid: this.instance?.uuid ?? "",
+        _private: this.instance?._private ?? false,
+      }), state => this.updatingModlist = state)
+      
+      this.modlist = mods.files;
+    } catch (e) {
+      alertController.error("Unable to load mods for this instance...")
+    }
     
     if (showAlert) {
       alertController.success('The mods list has been updated')

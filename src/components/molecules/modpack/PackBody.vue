@@ -63,7 +63,7 @@
 <!--        >-->
 <!--          Public servers-->
 <!--        </div>-->
-        <a class="cta" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-app' : `https://www.creeperhost.net/modpack/${packSlug}`)">
+        <a class="cta cursor-pointer" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-app' : `https://www.creeperhost.net/modpack/${packSlug}`)">
           <img class="ch-logo" src="@/assets/ch-logo.svg" alt="" />
           Order a server
         </a>
@@ -131,11 +131,7 @@
             v-for="(tag, i) in tags"
             :key="`tag-${i}`"
             :to="{ name: 'browseModpacks', params: { search: tag.name } }"
-            class="cursor-pointer tag rounded mr-2 lowercase"
-            :style="{
-              fontVariant: 'small-caps',
-              backgroundColor: `hsla(${getColorForChar(tag.name, 90, 70)}, .5)`,
-            }"
+            class="tag"
             >{{ tag.name }}</router-link
           >
         </div>
@@ -190,12 +186,12 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Prop } from 'vue-property-decorator';
-import { ModPack } from '@/modules/modpacks/types';
-import { ModpackPageTabs } from '@/views/InstancePage.vue';
+import {Prop} from 'vue-property-decorator';
+import {ModPack} from '@/modules/modpacks/types';
+import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
-import { getColorForChar } from '@/utils/colors';
+import {getColorForChar} from '@/utils/colors';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
@@ -203,7 +199,7 @@ import Platform from '@/utils/interface/electron-overwolf';
 import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
-import { parseMarkdown } from '@/utils';
+import {parseMarkdown} from '@/utils';
 
 @Component({
   name: 'pack-body',
@@ -409,11 +405,22 @@ export default class PackBody extends Vue {
   .tags {
     display: flex;
     flex-wrap: wrap;
+    gap: .5rem;
 
     .tag {
       margin-bottom: 0.5rem;
-      padding: 0.15rem 0.5rem;
-      font-weight: bold;
+      padding: 0.2rem 0.5rem;
+      font-size: 12px;
+      -webkit-user-drag: none;
+      
+      background-color: rgba(black, .4);
+      border-radius: 5px;
+      
+      transition: background-color .25s ease-in-out;
+      
+      &:hover {
+        background-color: var(--color-success-button);
+      }
     }
   }
 }
