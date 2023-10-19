@@ -191,7 +191,6 @@ import {ModPack} from '@/modules/modpacks/types';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
-import {getColorForChar} from '@/utils/colors';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
@@ -232,7 +231,6 @@ export default class PackBody extends Vue {
   Platform = Platform;
 
   tabs = ModpackPageTabs;
-  getColorForChar = getColorForChar;
 
   get tags() {
     if (!this.packInstance) return [];

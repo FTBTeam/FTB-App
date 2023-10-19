@@ -35,13 +35,13 @@
             <b>Size presets</b>
             <small class="text-muted block mt-2">Select a preset based on your system</small>
           </div>
-          
-          <selection
-            v-if="loadedSettings"
-            @selected="(e) => e && selectResolution(e)"
-            :inheritedSelection="resolutionList.find((e) => e.text === `${localSettings.width} x ${localSettings.height}px`)"
-            :style="{width: '192px'}"
-            :options="resolutionList" 
+
+          <selection2
+            v-if="resolutionList.length"
+            v-model="resolutionId"
+            @change="selectResolution"
+            :style="{width: '220px'}"
+            :options="resolutionList"
           />
         </div>
         <div class="flex items-center mb-4">
@@ -94,20 +94,19 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 
-import { Action, State } from 'vuex-class';
-import { Settings, SettingsState } from '@/modules/settings/types';
+import {Action, State} from 'vuex-class';
+import {Settings, SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import Selection from '@/components/atoms/input/Selection.vue';
-import { alertController } from '@/core/controllers/alertController';
-import Selection2 from '@/components/atoms/input/Selection2.vue';
+import {alertController} from '@/core/controllers/alertController';
+import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
+import {computeAspectRatio} from '@/utils';
 
 @Component({
   components: {
-    Selection,
     'ftb-toggle': FTBToggle,
     Selection2
   },
@@ -122,6 +121,8 @@ export default class InstanceSettings extends Vue {
 
   loadedSettings = false;
 
+  resolutionId = "";
+  
   async created() {
     await this.loadSettings();
     this.loadedSettings = true;
@@ -129,6 +130,10 @@ export default class InstanceSettings extends Vue {
     // Make a copy of the settings so we don't mutate the vuex state
     this.localSettings = { ...this.settingsState.settings };
     this.lastSettings = { ...this.localSettings };
+
+    this.resolutionId = this.resolutionList
+      .find((e) => e.value === `${this.localSettings.width ?? ''}|${this.localSettings.height ?? ''}`)
+      ?.value ?? "";
   }
 
   keepLauncherOpen(value: boolean): void {
@@ -158,8 +163,8 @@ export default class InstanceSettings extends Vue {
     });
   }
 
-  selectResolution(id: number) {
-    const selected = this.settingsState.hardware.supportedResolutions[id];
+  selectResolution(id: string) {
+    const selected = this.settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
     if (!selected) {
       return;
     }
@@ -171,12 +176,21 @@ export default class InstanceSettings extends Vue {
 
   get resolutionList() {
     const resList = [];
-    for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
+    resList.push({
+      value: "",
+      label: "Custom",
+      meta: "Custom"
+    });
+
+    for (const res of this.settingsState.hardware.supportedResolutions) {
       resList.push({
-        value: key,
-        text: `${res.width} x ${res.height}px`,
+        value: `${res.width}|${res.height}`,
+        label: `${res.width} x ${res.height}`,
+        // Calculate the aspect ratio in the form of a 16:9 for example
+        meta: computeAspectRatio(res.width, res.height)
       })
     }
+
     return resList;
   }
   

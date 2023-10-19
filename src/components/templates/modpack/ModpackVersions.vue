@@ -76,7 +76,7 @@ import {InstanceJson} from '@/core/@types/javaApi';
 import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
+import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
 

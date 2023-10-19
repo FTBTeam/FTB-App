@@ -18,7 +18,7 @@
 import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 import {ns} from '@/core/state/appState';
 import {Getter} from 'vuex-class';
-import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
+import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({

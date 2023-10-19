@@ -24,7 +24,7 @@
 
 <script lang="ts">
 import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
-import Selection2, {SelectionOption} from '@/components/atoms/input/Selection2.vue';
+import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {ModLoader, ModLoadersResponse} from '@/core/@types/modpacks/modloaders';

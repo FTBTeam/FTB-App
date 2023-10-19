@@ -26,7 +26,7 @@ import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {ns} from '@/core/state/appState';
 import {Action, Getter} from 'vuex-class';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import Selection2 from '@/components/atoms/input/Selection2.vue';
+import Selection2 from '@/components/core/ui/Selection2.vue';
 import {timeFromNow} from '@/utils/helpers/dateHelpers';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {getColorForReleaseType} from '@/utils';

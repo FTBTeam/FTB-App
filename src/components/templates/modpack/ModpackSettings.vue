@@ -201,7 +201,6 @@ import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
-import Selection from '@/components/atoms/input/Selection.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
@@ -211,7 +210,7 @@ import {button, dialog, dialogsController} from '@/core/controllers/dialogsContr
 import {alertController} from '@/core/controllers/alertController';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import Selection2 from '@/components/atoms/input/Selection2.vue';
+import Selection2 from '@/components/core/ui/Selection2.vue';
 import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelector.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
@@ -226,7 +225,6 @@ import {computeAspectRatio} from '@/utils';
     ArtworkSelector,
     Selection2,
     DuplicateInstanceModal,
-    Selection,
     'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
     ShareInstanceModal,

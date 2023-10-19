@@ -65,7 +65,7 @@ import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import Loader from '@/components/atoms/Loader.vue';
-import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
+import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
 
 const groupOptions = [

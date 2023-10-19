@@ -47,6 +47,7 @@ import {Versions} from '@/modules/modpacks/types';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component({
   methods: {parseMarkdown},
@@ -112,10 +113,12 @@ export default class UpdateConfirmModal extends Vue {
       return; // how?
     }
 
-    const packReq = await modpackApi.modpacks.getChangelog(this.localInstance.id, this.latestVersion.id, "modpacksch") // TODO: (M#01) Support CF Packs
-
-    // TODO: (M#01) Error handling
-    this.changes = packReq?.content ?? ""
+    try {
+      const packReq = await modpackApi.modpacks.getChangelog(this.localInstance.id, this.latestVersion.id, "modpacksch")
+      this.changes = packReq?.content ?? ""
+    } catch (e) {
+      alertController.error("Failed to load changelog...")
+    } // TODO: (M#01) (blocked by api) Support CF Packs
   }
 }
 </script>

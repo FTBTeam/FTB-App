@@ -49,14 +49,14 @@
             <font-awesome-icon icon="download" size="xl" />
             <b class="text-lg block">Install {{ mod.name }}</b>
           </div>
-          <selection
+          <selection2
             v-if="versions"
             label="Selection mod version"
-            @selected="(e) => (selectedVersion = e)"
+            v-model="selectedVersion"
             :options="
               versions.map((e) => ({
                 value: e.id,
-                text: e.name,
+                label: e.name,
                 badge: {
                   text: e.type,
                   color: getColorForReleaseType(e.type),
@@ -120,12 +120,12 @@ import {Mod, ModVersion} from '@/types';
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {Instance} from '@/modules/modpacks/types';
-import Selection from '@/components/atoms/input/Selection.vue';
 import {emitter} from '@/utils/event-bus';
 import {prettyByteFormat} from '@/utils/helpers';
 import {getColorForReleaseType} from '@/utils/colors';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import Selection2 from '@/components/core/ui/Selection2.vue';
 
 type InstallProgress = {
   percentage: number;
@@ -137,7 +137,7 @@ type InstallProgress = {
 @Component({
   components: {
     UiButton,
-    Selection,
+    Selection2,
   },
 })
 export default class ModCard extends Vue {

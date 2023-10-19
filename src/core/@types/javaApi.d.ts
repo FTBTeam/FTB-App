@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-10-19 23:52:45.
+// Generated using typescript-generator version 3.2.1263 on 2023-10-20 00:46:55.
 
 export interface BaseData {
     type: string;

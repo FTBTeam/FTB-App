@@ -70,7 +70,7 @@
 <script lang="ts">
 import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelector.vue';
-import Selection2, {SelectionOption} from '@/components/atoms/input/Selection2.vue';
+import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
 import {ns} from '@/core/state/appState';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {Action, State} from 'vuex-class';
