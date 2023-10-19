@@ -70,8 +70,6 @@ import {ModPack, Versions} from '@/modules/modpacks/types';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {getColorForReleaseType, parseMarkdown} from '@/utils';
-import Selection from '@/components/atoms/input/Selection.vue';
-import dayjs from 'dayjs';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {InstanceJson} from '@/core/@types/javaApi';
@@ -79,9 +77,10 @@ import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
+import dayjs from 'dayjs';
 
 @Component({
-  components: {Selection2, Selection}
+  components: {Selection2}
 })
 export default class ModpackVersions extends Vue {
   @Prop() versions!: Versions[];
@@ -100,8 +99,10 @@ export default class ModpackVersions extends Vue {
   parseMarkdown = parseMarkdown;
 
   mounted() {
+    const sortedVersion = this.versions.sort((a, b) => b.id - a.id);
+    
     const currentId = this.instance?.versionId ?? this.packInstance?.versions[0]?.id ?? -1;
-    const lcurrent = this.sortedVersions.find(e => e.id === currentId)?.id ?? this.sortedVersions[0].id;
+    const lcurrent = sortedVersion.find(e => e.id === currentId)?.id ?? sortedVersion[0].id;
     this.version = lcurrent;
 
     // TODO: (M#01) Fix this once the api has been updated to support a `provider` field
@@ -174,16 +175,12 @@ export default class ModpackVersions extends Vue {
   }
   
   get packVersions(): SelectionOptions {
-    return this.sortedVersions.map(e => ({
+    return [...this.versions].sort((a, b) => b.id - a.id).map(e => ({
       value: e.id, 
       label: e.name + (this.instance?.versionId === e.id ? ' (Current)' : ''), 
       meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"), 
       badge: {color: getColorForReleaseType(e.type), text: e.type} 
     })) ?? []
-  }
-  
-  get sortedVersions() {
-    return this.versions.sort((a, b) => b.id - a.id);
   }
   
   get isCursePack() {

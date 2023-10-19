@@ -4,8 +4,7 @@
       <f-t-b-search-bar :alpha="true" placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
       <div class="actions flex ml-6" v-if="packInstalled">
         <ftb-button color="primary" class="py-3 px-4 whitespace-no-wrap" @click="() => $emit('searchForMods')">
-          <font-awesome-icon icon="book" class="mr-2" />
-          Add more mods
+          <font-awesome-icon icon="plus" class="mr-2" />
         </ftb-button>
         <div class="refresh ml-4" aria-label="Refresh mod list" data-balloon-pos="down-right">
           <ftb-button
@@ -50,17 +49,16 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { prettyByteFormat } from '@/utils/helpers';
-import { Prop } from 'vue-property-decorator';
+import {prettyByteFormat} from '@/utils/helpers';
+import {Prop} from 'vue-property-decorator';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import { Instance } from '@/modules/modpacks/types';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {Instance} from '@/modules/modpacks/types';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 import {ModInfo} from '@/core/@types/javaApi';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import {alertController} from '@/core/controllers/alertController';
-import {JavaFetch} from '@/core/javaFetch';
 
 @Component({
   components: {
@@ -115,7 +113,6 @@ export default class ModpackMods extends Vue {
     this.filteredModList = this.modlist
       .filter((e) => !containsIgnoreCase(e.fileName, value))
       .map((e) => e.sha1);
-
   }
   
   get filteredModShas() {

@@ -19,14 +19,14 @@
         <font-awesome-icon class="arrow" icon="chevron-down" />
       </div>
       
-      <div class="main-icon">
+      <div class="main-icon" v-else>
         <font-awesome-icon :fixed-width="true" :icon="icon" />
       </div>
 
       <div class="dropdown" :class="{'open-up': openUp, [direction]: true}" :style="{width: (minWidth === 0 ? undefined : minWidth + 'px')}">
         <div class="item list-item" :class="{'no-badge': !option.badge}" v-for="(option, index) in options" :key="index" @click="() => select(option)">
           <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
-            <font-awesome-icon v-if="icon" :icon="option.badge.icon" class="mr-1" />
+            <font-awesome-icon v-if="option.badge.icon" :icon="option.badge.icon" class="mr-1" />
             {{ option.badge.text }}
           </div>
           <div class="text">{{ option.label }}</div>
@@ -60,7 +60,7 @@ export type SelectionOption = {
 @Component
 export default class Selection2 extends Vue {
   @Prop() label!: string;
-  @Prop({default: undefined}) icon: string | string[] | undefined;
+  @Prop({default: null}) icon!: string | string[] | null;
   @Prop({default: 'left'}) direction!: 'left' | 'right';
   @Prop({default: 0}) minWidth!: number;
   

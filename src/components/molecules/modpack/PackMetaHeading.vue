@@ -31,35 +31,17 @@
       <div class="modloader icon" v-if="packInfo.modloader === 'fabric'" data-balloon-pos="left" aria-label="Fabric Modloader">
         <img src="@/assets/images/fabric.webp" alt="" />
       </div>
-
-      <ftb-button
-        v-if="instance && instance.uuid && instance.isModified"
-        :disabled="!getActiveMcProfile"
-        :title="
-          !getActiveMcProfile
-            ? 'You need to be logged in to your Minecraft account to share packs'
-            : 'Share your modpack with friends'
-        "
-        class="py-1 ml-6 px-4"
-        color="info"
-        css-class="text-center text-l"
-        @click="shareConfirm = true"
-      >
-        <font-awesome-icon icon="share" class="" size="1x" />
-      </ftb-button>
     </div>
-
-    <share-instance-modal v-if="instance" :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Prop } from 'vue-property-decorator';
-import { getColorForReleaseType } from '@/utils/colors';
+import {Prop} from 'vue-property-decorator';
+import {getColorForReleaseType} from '@/utils/colors';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
-import { Getter } from 'vuex-class';
+import {Getter} from 'vuex-class';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import store from '@/modules/store';

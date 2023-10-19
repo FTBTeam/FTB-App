@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-10-16 19:50:51.
+// Generated using typescript-generator version 3.2.1263 on 2023-10-19 23:52:45.
 
 export interface BaseData {
     type: string;
@@ -87,6 +87,10 @@ export interface CheckShareCodeDataReply extends CheckShareCodeData {
 export interface CloudSavesReloadedData extends BaseData {
     changedInstances: InstanceJson[];
     removedInstances: string[];
+}
+
+export interface CloudSavesStatsData extends BaseData {
+    bucketSize: number;
 }
 
 export interface InstallInstanceData extends BaseData {
