@@ -45,4 +45,17 @@ export const prettyByteFormat = (bytes: number) => {
   return (neg ? '-' : '') + bytes + ' ' + unit;
 }
 
+export function computeAspectRatio(width: number, height: number) {
+  // Calculate the greatest common divisor of width and height using Euclid's algorithm
+  const gcd: any = (a: number, b: number) => (b === 0 ? a : gcd(b, a % b));
+  
+  const aspectRatioGCD = gcd(width, height);
+
+  // Simplify the aspect ratio
+  const simplifiedWidth = width / aspectRatioGCD;
+  const simplifiedHeight = height / aspectRatioGCD;
+  
+  return `${simplifiedWidth}:${simplifiedHeight}`;
+}
+
 export const parseMarkdown = (input: string) => markdownParser.render(input); 

@@ -39,10 +39,10 @@ export class InstanceController {
     if (result.status === "success") {
       // Update the store
       await store.dispatch('v2/instances/updateInstance', result.instanceJson);
-      return true;
+      return result;
     }
     
-    return false;
+    return null
   }
   
   async deleteInstance() {

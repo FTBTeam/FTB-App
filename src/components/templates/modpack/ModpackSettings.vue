@@ -84,13 +84,12 @@
           <small class="text-muted block mt-2">Select a preset based on your system</small>
         </div>
         
-        <selection
+        <selection2
           v-if="resolutionList.length"
-          @selected="(e) => e && selectResolution(e)"
-          :inheritedSelection="resolutionList.find((e) => e.text === `${instanceSettings.width ? instanceSettings.width.toString() : ''} x ${instanceSettings.height ? instanceSettings.height.toString() : ''}px`)"
-          :style="{width: '192px'}"
+          v-model="resolutionId"
+          @change="selectResolution"
+          :style="{width: '220px'}"
           :options="resolutionList"
-          :allow-deselect="false"
         />
       </div>
       <div class="flex items-center mb-4">
@@ -218,6 +217,7 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
+import {computeAspectRatio} from '@/utils';
 
 @Component({
   components: {
@@ -252,20 +252,10 @@ export default class ModpackSettings extends Vue {
   toggleSavesWorking = false;
   
   imageFile: File | null = null;
+  resolutionId = "";
 
   mounted() {
-    this.instanceSettings = {
-      name: this.instance.name,
-      jvmArgs: this.instance.jvmArgs,
-      jrePath: this.instance.jrePath,
-      memory: this.instance.memory,
-      width: this.instance.width,
-      height: this.instance.height,
-      cloudSaves: this.instance.cloudSaves,
-      fullScreen: this.instance.fullscreen,
-      releaseChannel: this.instance.releaseChannel,
-      category: this.instance.category,
-    }
+    this.instanceSettings = this.createInstanceSettingsFromInstance(this.instance)
     
     this.previousSettings = {
       ...this.instanceSettings
@@ -313,14 +303,14 @@ export default class ModpackSettings extends Vue {
     this.toggleSavesWorking = false;
   }
   
-  selectResolution(id: number) {
-    const selected = this.settingsState.hardware.supportedResolutions[id];
+  selectResolution(id: string) {
+    const selected = this.settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
     if (!selected) {
       return;
     }
 
-    this.instanceSettings.width = this.settingsState.hardware.supportedResolutions[id].width;
-    this.instanceSettings.height = this.settingsState.hardware.supportedResolutions[id].height;
+    this.instanceSettings.width = selected.width;
+    this.instanceSettings.height = selected.height;
     this.saveSettings();
   }
 
@@ -369,6 +359,7 @@ export default class ModpackSettings extends Vue {
       alertController.success("Settings saved!")
       
       // Update the previous settings
+      this.instanceSettings = this.createInstanceSettingsFromInstance(result.instanceJson)
       this.previousSettings = {
         ...this.instanceSettings
       }
@@ -402,6 +393,25 @@ export default class ModpackSettings extends Vue {
     )
   }
   
+  createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
+    this.resolutionId = this.resolutionList
+      .find((e) => e.value === `${instance.width ?? ''}|${instance.height ?? ''}`)
+      ?.value ?? "";
+    
+    return {
+      name: instance.name,
+      jvmArgs: instance.jvmArgs,
+      jrePath: instance.jrePath,
+      memory: instance.memory,
+      width: instance.width,
+      height: instance.height,
+      cloudSaves: instance.cloudSaves,
+      fullScreen: instance.fullscreen,
+      releaseChannel: instance.releaseChannel,
+      category: instance.category,
+    }
+  }
+  
   public async deleteInstance() {
     this.deleting = true;
     
@@ -414,12 +424,21 @@ export default class ModpackSettings extends Vue {
 
   get resolutionList() {
     const resList = [];
-    for (const [key, res] of Object.entries(this.settingsState.hardware.supportedResolutions)) {
+    resList.push({
+      value: "",
+      label: "Custom",
+      meta: "Custom"
+    });
+    
+    for (const res of this.settingsState.hardware.supportedResolutions) {
       resList.push({
-        value: key,
-        text: `${res.width} x ${res.height}px`,
+        value: `${res.width}|${res.height}`,
+        label: `${res.width} x ${res.height}`,
+        // Calculate the aspect ratio in the form of a 16:9 for example
+        meta: computeAspectRatio(res.width, res.height)
       })
     }
+    
     return resList;
   }
 
