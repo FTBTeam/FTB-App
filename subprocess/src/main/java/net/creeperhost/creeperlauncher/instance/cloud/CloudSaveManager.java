@@ -17,6 +17,7 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesReloadedData;
+import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesStatsData;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceCloudSyncConflictData;
 import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
@@ -261,6 +262,7 @@ public final class CloudSaveManager {
 
         return pollFuture = CompletableFuture.runAsync(() -> {
             OperationProgressTracker tracker = new OperationProgressTracker("cloud_poll", Map.of());
+            long bucketSize = -1;
             try {
                 Set<String> instancesOnS3 = new HashSet<>();
                 List<S3Object> index;
@@ -268,6 +270,7 @@ public final class CloudSaveManager {
                     Matcher matcher = INSTANCE_UUID_REGEX.matcher("");
                     index = listBucket("");
                     for (S3Object s3Object : index) {
+                        bucketSize += s3Object.size();
                         matcher.reset(s3Object.key());
                         if (!matcher.find()) continue;
                         String uuid = matcher.group(1);
@@ -363,6 +366,7 @@ public final class CloudSaveManager {
                 if (!instanceJsons.isEmpty() || !removedPending.isEmpty()) {
                     Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, removedPending));
                 }
+                Settings.webSocketAPI.sendMessage(new CloudSavesStatsData(bucketSize));
             } finally {
                 tracker.finished();
             }
