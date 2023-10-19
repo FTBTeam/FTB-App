@@ -1,10 +1,10 @@
 <template>
   <div class="mod-packs h-full">
     <div class="page-spacing" v-if="!loading && instances.length > 0">
-      <header class="flex gap-4 mb-6 items-end">
+      <header class="flex gap-4 mb-6 items-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="flex-1" />
-        <selection2 label="Group by" :options="groupByOptions" v-model="groupBy" />
-        <selection2 label="Sort by" :options="sortByOptions" v-model="sortBy" />
+        <selection2 v-if="Object.keys(groupedPacks).length > 1" icon="folder" direction="right" min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
+        <selection2 icon="sort" direction="right" min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
       </header>
 
       <div class="categories">
@@ -47,12 +47,6 @@
               Browse
             </ftb-button>
           </router-link>
-          <router-link to="/browseModpacks">
-            <ftb-button color="info" class="py-2 px-8 mx-2">
-              <font-awesome-icon icon="download" class="mr-2" />
-              Import
-            </ftb-button>
-          </router-link>
 <!--          <router-link to="/discover">-->
 <!--            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>-->
 <!--          </router-link>-->
@@ -63,7 +57,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
+import {Component, Vue, Watch} from 'vue-property-decorator';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import {Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
@@ -74,20 +68,11 @@ import Loader from '@/components/atoms/Loader.vue';
 import Selection2, {SelectionOptions} from '@/components/atoms/input/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
 
-const groupByOptions = [
-  {
-    label: 'Category',
-    value: 'category'
-  },
-  {
-    label: 'Mod Loader',
-    value: 'modloader'
-  },
-  {
-    label: 'Minecraft Version',
-    value: 'mcversion'
-  },
-] as SelectionOptions
+const groupOptions = [
+  ['Category', 'category'],
+  ['Mod Loader', 'modloader'],
+  ['Minecraft Version', 'mcversion'],
+]
 
 const sortOptions = [
   ['Name', 'name'],
@@ -95,12 +80,16 @@ const sortOptions = [
   ['Total Playtime', 'totalPlaytime'],
 ]
 
-const sortByOptions: SelectionOptions = sortOptions
-  .flatMap(([label, value]) => [
+function createOrderedOptions(options: string[][]): SelectionOptions {
+  return options.flatMap(([label, value]) => [
     [`${label}`, value, 'Asc'],
     [`${label}`, `-${value}`, 'Des']
   ])
-  .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir}}))
+  .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? "arrow-down-a-z" : "arrow-down-z-a"}}))
+}
+
+const sortByOptions = createOrderedOptions(sortOptions)
+const groupByOptions = createOrderedOptions(groupOptions)
 
 @Component({
   components: {
@@ -131,6 +120,14 @@ export default class Library extends Vue {
       if (parsed?.collapsedGroups) {
         this.collapsedGroups = parsed.collapsedGroups;
       }
+      
+      if (parsed?.sortBy) {
+        this.sortBy = parsed.sortBy;
+      }
+      
+      if (parsed?.groupBy) {
+        this.groupBy = parsed.groupBy;
+      }
     }
   }
 
@@ -141,8 +138,7 @@ export default class Library extends Vue {
       this.collapsedGroups.push(group);
     }
     
-    // TODO: (M#01) Support more data
-    localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups}));
+    localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups, sortBy: this.sortBy, groupBy: this.groupBy}));
   }
   
   get filteredInstance(): string[] | null {
@@ -157,10 +153,10 @@ export default class Library extends Vue {
 
   get groupedPacks(): Record<string, SugaredInstanceJson[]> {
     const grouped: Record<string, SugaredInstanceJson[]> = {};
-    
+
     for (const instance of this.sortedInstances) {
       let groupKey = '';
-      switch (this.groupBy) {
+      switch (this.groupBy.replace("-", "")) {
         case 'category':
           groupKey = instance.category;
           break;
@@ -173,15 +169,36 @@ export default class Library extends Vue {
         default:
           groupKey = instance.category;
           break;
-      } 
+      }
       
       if (!grouped[groupKey]) {
         grouped[groupKey] = [];
       }
+      
       grouped[groupKey].push(instance);
     }
     
-    return grouped;
+    const sortDirection = this.groupBy.includes("-") ? 'dec' : 'asc';
+    
+    // Modify the order of the group keys based on the sort direction
+    const groupKeys = Object.keys(grouped).sort((a, b) => {
+      if (a === b) {
+        return 0;
+      }
+      
+      if (a > b) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      
+      return sortDirection === 'asc' ? -1 : 1;
+    });
+    
+    const sorted: Record<string, SugaredInstanceJson[]> = {};
+    for (const key of groupKeys) {
+      sorted[key] = grouped[key];
+    }
+    
+    return sorted;
   }
   
   get sortedInstances() {
@@ -209,6 +226,12 @@ export default class Library extends Vue {
       case "totalPlaytime": return "totalPlayTime";
       default: return "name";
     }
+  }
+  
+  @Watch("sortBy")
+  @Watch("groupBy")
+  onSortChange() {
+    localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups, sortBy: this.sortBy, groupBy: this.groupBy}));
   }
 }
 </script>

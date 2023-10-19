@@ -1,8 +1,8 @@
 <template>
   <div class="select-box">
-    <div class="label" v-if="label">{{ label }}</div>
+    <div class="label" v-if="label && !icon">{{ label }}</div>
     <div class="selection" tabindex="0" @focus="open = true" @focusout="open = false" :class="{ open }" ref="selection">
-      <div class="main">
+      <div class="main" v-if="!icon">
         <div class="item with-empty" v-if="!selected">
           <div class="badge empty">_</div>
           {{ placeholder }}
@@ -18,10 +18,15 @@
 
         <font-awesome-icon class="arrow" icon="chevron-down" />
       </div>
+      
+      <div class="main-icon">
+        <font-awesome-icon :fixed-width="true" :icon="icon" />
+      </div>
 
-      <div class="dropdown" :class="{'open-up': openUp}">
+      <div class="dropdown" :class="{'open-up': openUp, [direction]: true}" :style="{width: (minWidth === 0 ? undefined : minWidth + 'px')}">
         <div class="item list-item" :class="{'no-badge': !option.badge}" v-for="(option, index) in options" :key="index" @click="() => select(option)">
           <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
+            <font-awesome-icon v-if="icon" :icon="option.badge.icon" class="mr-1" />
             {{ option.badge.text }}
           </div>
           <div class="text">{{ option.label }}</div>
@@ -46,6 +51,7 @@ export type SelectionOption = {
   badge?: {
     color?: string;
     text: string;
+    icon?: string | string[];
   };
   meta?: any;
 };
@@ -54,6 +60,10 @@ export type SelectionOption = {
 @Component
 export default class Selection2 extends Vue {
   @Prop() label!: string;
+  @Prop({default: undefined}) icon: string | string[] | undefined;
+  @Prop({default: 'left'}) direction!: 'left' | 'right';
+  @Prop({default: 0}) minWidth!: number;
+  
   @Prop({ default: 'Select option' }) placeholder!: string;
   @Prop({ default: () => [] }) options!: SelectionOptions;
   

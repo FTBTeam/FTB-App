@@ -247,6 +247,11 @@ body {
       opacity: 0;
 
       transition: visibility 0.25s ease-in-out, opacity 0.25s ease-in-out, top 0.25s ease-in-out;
+      
+      &.right {
+        right: 0;
+        left: unset;
+      }
 
       &.open-up {
         top: auto;
