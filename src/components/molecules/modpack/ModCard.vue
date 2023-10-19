@@ -41,24 +41,18 @@
     </div>
   
     <modal :open="showInstall" @closed="closeModal" :close-on-background-click="!installing"
-      :title="mod ? mod.name : 'Loading...'" :external-contents="true"
+      :title="mod ? mod.name : 'Loading...'" sub-title="Select the version you want to install" :external-contents="true"
     >
       <modal-body>
-        <p
-          :style="{
-            opacity: !installing && !finishedInstalling ? 1 : 0,
-            height: !installing && !finishedInstalling ? 'auto' : '0 !important',
-          }"
-        >
-          Select the version of '{{ mod.name }}' that you'd like to install to your pack.
-        </p>
-
-        <template v-if="!installing && !finishedInstalling">
+        <div class="py-6" v-if="!installing && !finishedInstalling">
+          <div class="flex gap-4 mb-4">
+            <font-awesome-icon icon="download" size="xl" />
+            <b class="text-lg block">Install {{ mod.name }}</b>
+          </div>
           <selection
-            class="my-6"
+            v-if="versions"
             label="Selection mod version"
             @selected="(e) => (selectedVersion = e)"
-            v-if="versions"
             :options="
               versions.map((e) => ({
                 value: e.id,
@@ -71,9 +65,21 @@
               }))
             "
           />
-        </template>
-
-        <div class="installing mt-6 mb-4" v-else-if="!finishedInstalling">
+        </div>
+        
+        <div v-if="!installing && !finishedInstalling" class="pt-8">
+          <div class="flex items-center gap-4 mb-6">
+            <img src="@/assets/curse-logo.svg" alt="CurseForge logo" width="40" />
+            <b class="text-lg block">About mod installs</b>
+          </div>
+          <hr class="curse-border block mb-4" />
+          <p class="text-muted mb-4">🎉 Each mod install from the FTB App directly supports the mod developers through the CurseForge reward system!</p>
+          <b class="block mb-2">Dependencies</b>
+          <p class="mb-2 text-muted">If the mod depends on other mods on the CurseForge platform, the app will try and resolve these dependencies for you and install them as well.</p>
+          <p class="text-muted">Sometimes this does not work and you'll have to install the dependencies manually.</p>
+        </div>
+        
+        <div class="installing mt-6 mb-4" v-if="!finishedInstalling && installing"> 
           <div class="progress font-bold"><font-awesome-icon icon="spinner" spin class="mr-2" /> Installing</div>
           <div class="stats">
             <div class="stat">
@@ -94,14 +100,14 @@
           </div>
         </div>
         
-        <p v-else>
+        <p v-if="!installing && finishedInstalling">
           <span class="block">{{ mod.name }} has been installed!</span>
         </p>
       </modal-body>
       
       <modal-footer>
-        <div class="flex justify-end gap-4" v-if="!installing && !finishedInstalling">
-          <ui-button type="success" icon="download" :disabled="!selectedVersion" @click="installMod">Install</ui-button>
+        <div class="flex justify-end gap-4" v-if="!installing || !finishedInstalling">
+          <ui-button type="success" icon="download" v-if="!installing && !finishedInstalling" :disabled="!selectedVersion" @click="installMod">Install</ui-button>
           <ui-button type="primary" @click="closeModal" icon="check" v-if="finishedInstalling">Close</ui-button>
         </div>
       </modal-footer>
@@ -238,6 +244,11 @@ export default class ModCard extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.curse-border {
+  border-color: var(--curse-color);
+  border-width: 2px;
+}
+
 .mod-card {
   display: flex;
   align-items: center;
