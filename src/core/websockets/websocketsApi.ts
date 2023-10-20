@@ -11,7 +11,7 @@ import {BaseData} from '@/core/@types/javaApi';
  */
 export function sendMessage<T extends MessageType>(
   messageType: T, 
-  payload: MessageRaw<MessagePayload[T]["input"]>, 
+  payload?: MessageRaw<MessagePayload[T]["input"]>, 
   timeout = 30_000
 ): Promise<MessagePayload[T]["output"] & { messageId: string }> {
   return new Promise(async (resolve, reject) => {

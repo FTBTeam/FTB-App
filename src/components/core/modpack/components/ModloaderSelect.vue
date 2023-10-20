@@ -29,7 +29,7 @@
      />
    </template>
 
-   <message v-else header="No loaders" icon="exclamation" type="warning" class="mb-4">
+   <message v-else header="No loaders" icon="exclamation" type="warning">
      Sadly we were not able to find any mod loaders for Minecraft {{ mcVersion }}. This is likely due to there being no mod loaders available just yet.
      <br><br>
      You can continue to create an instance without a mod loader and set one up later once one is available.

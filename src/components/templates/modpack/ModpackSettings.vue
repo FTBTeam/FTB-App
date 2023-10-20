@@ -138,7 +138,19 @@
           @change="v => saveSettings()"
         />
       </div>
-      
+
+      <div class="flex items-center mb-6">
+        <div class="block flex-1 mr-2">
+          <b>Modloader</b>
+          <small class="block text-muted mr-6 mt-2">Hi</small>
+          
+          <div class="buttons flex gap-2 mt-4">
+            <ui-button v-if="!hasModloader" size="small" type="info" icon="download" @click="userSelectModLoader = true">Install Modloader</ui-button>
+            <ui-button v-else size="small" type="info" icon="pen" @click="userSelectModLoader = true">Update Modloader</ui-button>
+          </div>
+        </div>
+      </div>
+
       <section class="flex-1 mb-4">
         <label class="block tracking-wide text-white-700 mb-2">Java Version</label>
         <div class="flex items-center gap-4">
@@ -170,8 +182,6 @@
         @blur="saveSettings"
         class="flex-1"
       />
-      
-      
     </div>
 
     <modal
@@ -189,6 +199,17 @@
     </modal>
     
     <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
+    
+    <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="userSelectModLoader = false">
+      <modloader-select v-model="userSelectedLoader" :mc-version="instance.mcVersion" />
+      
+      <template #footer>
+        <div class="flex justify-end gap-4">
+          <ui-button type="warning" icon="times" @click="userSelectModLoader = false">Close</ui-button>
+          <ui-button type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null">Install</ui-button>
+        </div>
+      </template>
+    </modal>
   </div>
 </template>
 
@@ -217,9 +238,12 @@ import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 import {computeAspectRatio} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
+import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
+import {ModLoader} from '@/core/@types/modpacks/modloaders';
 
 @Component({
   components: {
+    ModloaderSelect,
     UiToggle,
     CategorySelector,
     UiButton,
@@ -251,28 +275,30 @@ export default class ModpackSettings extends Vue {
   
   imageFile: File | null = null;
   resolutionId = "";
+  
+  userSelectModLoader = false;
+  userSelectedLoader: [string, ModLoader] | null = null;
 
-  mounted() {
-    this.instanceSettings = this.createInstanceSettingsFromInstance(this.instance)
+  async mounted() {
+    console.log(this.instance)
     
+    const javas = await sendMessage("getJavas");
+    this.javaVersions = javas.javas;
+    
+    if (!this.instance.embeddedJre) {
+      // Java version not in our list, thus it must be custom so flag it as custom
+      if (!javas.javas.find((e) =>  e.path === this.instance.jrePath)) {
+        this.jreSelection = '-1';
+      } else {
+        this.jreSelection = this.instance.jrePath;
+      }
+    }
+
     this.previousSettings = {
       ...this.instanceSettings
     }
     
-    sendMessage("getJavas", {})
-      .then(data => {
-        this.javaVersions = data.javas;
-        
-        if (this.instance.embeddedJre) {
-          return;
-        }
-        
-        // Java version not in our list, thus it must be custom so flag it as custom
-        if (!data.javas.find((e) => e.path === this.instanceSettings.jrePath)) {
-          this.jreSelection = '-1';
-        }
-      })
-      .catch(console.error)
+    this.instanceSettings = this.createInstanceSettingsFromInstance(this.instance)
   }
   
   async toggleCloudSaves() {
@@ -450,6 +476,10 @@ export default class ModpackSettings extends Vue {
 
   get channelOptions() {
     return ReleaseChannelOptions(true);
+  }
+  
+  get hasModloader() {
+    return this.instance?.modLoader !== this.instance.mcVersion;
   }
 }
 </script>
