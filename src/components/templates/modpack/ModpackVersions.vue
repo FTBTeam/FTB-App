@@ -13,31 +13,14 @@
           <p class="opacity-50">Changelog for</p>
           <div class="font-bold name text-xl">{{ currentVersion.name }}</div>
         </div>
-        <div class="buttons flex text-sm">
-          <ftb-button
-            @click="() => platform.get.utils.openUrl(`https://go.ftb.team/serverfiles`)"
-            class="py-2 px-4 ml-auto mr-1"
-            color="info"
-            css-class="text-center text-l"
-          >
-            <font-awesome-icon icon="server" class="mr-2" />
-            Server files
-          </ftb-button>
-          <ftb-button
-            v-if="
-              instance &&
-              currentVersion &&
-              instance.versionId !== activeLog &&
-              currentVersion.type.toLowerCase() !== 'archived'
-            "
-            class="py-2 px-4 ml-1"
-            color="warning"
-            css-class="text-center text-l"
-            @click="update"
-          >
-            <font-awesome-icon icon="download" class="mr-2" />
+        <div class="buttons flex text-sm gap-2">
+          <ui-button type="info" size="small" icon="server" @click="() => platform.get.utils.openUrl(`https://go.ftb.team/serverfiles`)">Server files</ui-button>
+          <ui-button
+            :wider="true"
+            v-if="instance && currentVersion && instance.versionId !== activeLog && currentVersion.type.toLowerCase() !== 'archived'" 
+            :type="isOlderVersion(currentVersion.id) ? 'warning' : 'success'" size="small" icon="download" @click="update">
             {{ isOlderVersion(currentVersion.id) ? 'Downgrade' : 'Update' }}
-          </ftb-button>
+          </ui-button>
         </div>
       </div>
       <!--      <div class="updated">{{ version.updated | momentFromNow }}</div>-->
@@ -79,9 +62,10 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
-  components: {Selection2}
+  components: {UiButton, Selection2}
 })
 export default class ModpackVersions extends Vue {
   @Prop() versions!: Versions[];
