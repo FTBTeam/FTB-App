@@ -45,7 +45,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.memory = getOrDefault(updateJson, "memory", JsonElement::getAsInt, instance.props.memory);
             instance.props.width = getOrDefault(updateJson, "width", JsonElement::getAsInt, instance.props.width);
             instance.props.height = getOrDefault(updateJson, "height", JsonElement::getAsInt, instance.props.height);
-            instance.props.fullscreen = getOrDefault(updateJson, "fullscreen", JsonElement::getAsBoolean, instance.props.fullscreen);
+            instance.props.fullscreen = getOrDefault(updateJson, "fullScreen", JsonElement::getAsBoolean, instance.props.fullscreen);
             instance.props.releaseChannel = getOrDefault(updateJson, "releaseChannel", JsonElement::getAsString, instance.props.releaseChannel);
             instance.props.cloudSaves = getOrDefault(updateJson, "cloudSaves", JsonElement::getAsBoolean, instance.props.cloudSaves);
             instance.props.category = getOrDefault(updateJson, "category", JsonElement::getAsString, instance.props.category);

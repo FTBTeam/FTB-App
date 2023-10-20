@@ -95,6 +95,7 @@ public class InstanceJson {
         cloudSaves = other.cloudSaves;
         hasInstMods = other.hasInstMods;
         installComplete = other.installComplete;
+        fullscreen = other.fullscreen;
         packType = other.packType;
         _private = other._private;
         totalPlayTime = other.totalPlayTime;
