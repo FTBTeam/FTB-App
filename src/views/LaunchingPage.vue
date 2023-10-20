@@ -187,8 +187,6 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {ModPack} from '@/modules/modpacks/types';
 import {Action, Getter, State} from 'vuex-class';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import MessageModal from '@/components/organisms/modals/MessageModal.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
@@ -312,8 +310,6 @@ const cleanAuthIds = {
 @Component({
   name: 'LaunchingPage',
   components: {
-    'ftb-toggle': FTBToggle,
-    'message-modal': MessageModal,
     ProgressBar,
   },
 })

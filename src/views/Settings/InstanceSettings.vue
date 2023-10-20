@@ -18,16 +18,9 @@
     </div>
     <p class="block text-white-700 text-lg font-bold mb-4">Window Size</p>
     <div class="mb-6">
-      <ftb-toggle
-        label="Fullscreen"
-        :value="localSettings.fullScreen"
-        @change="v => {
-          localSettings.fullScreen = v;
-          saveMutated();
-        }"
-        class="mb-4"
-        small="Always open Minecraft in Fullscreen mode"
-      />
+      <ui-toggle label="Fullscreen" desc="Always open Minecraft in Fullscreen mode" v-model="localSettings.fullScreen" class="mb-4" @input="() => {
+        saveMutated()
+      }" />
       
       <div :class="{'cursor-not-allowed opacity-50 pointer-events-none': localSettings.fullScreen}">
         <div class="flex items-center mb-4">
@@ -99,15 +92,15 @@ import {Component, Vue} from 'vue-property-decorator';
 import {Action, State} from 'vuex-class';
 import {Settings, SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {alertController} from '@/core/controllers/alertController';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import {computeAspectRatio} from '@/utils';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
   components: {
-    'ftb-toggle': FTBToggle,
+    UiToggle,
     Selection2
   },
 })

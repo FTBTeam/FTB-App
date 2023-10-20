@@ -65,12 +65,12 @@
       <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" icon="sync">Refresh Cache</ui-button>
     </div>
 
-    <ftb-toggle
+    <ui-toggle
       label="Verbose"
+      desc="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
       :value="localSettings.verbose"
-      @change="enableVerbose"
-      onColor="bg-primary"
-      small="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
+      @input="enableVerbose"
+      :align-right="true"
     />
   </div>
 </template>
@@ -80,16 +80,16 @@ import {Component, Vue} from 'vue-property-decorator';
 import {Action, State} from 'vuex-class';
 import {Settings, SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {ns} from '@/core/state/appState';
 import {alertController} from '@/core/controllers/alertController';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
   components: {
+    UiToggle,
     UiButton,
-    'ftb-toggle': FTBToggle,
   },
 })
 export default class AppInfo extends Vue {

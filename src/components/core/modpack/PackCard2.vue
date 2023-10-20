@@ -196,6 +196,7 @@ export default class PackCard2 extends PackCardCommon {
     > img {
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(black, 0.2);
+      -webkit-user-drag: none;
     }
     
     .notifiers {

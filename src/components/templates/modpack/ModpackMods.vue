@@ -24,8 +24,8 @@
       </template>
       <template v-if="packInstalled">
         <div class="complex-mod mod" v-for="(file, index) in packMods" :key="index">
-          <div class="flex gap-6 items-start mb-4">
-            <img v-if="file.curse.icon" :src="file.curse.icon" class="rounded mt-2" width="40" alt="">
+          <div class="flex gap-6 items-center mb-4">
+            <img v-if="file.curse.icon" :src="file.curse.icon" class="rounded" width="40" alt="">
             <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="file.fileName !== ''"></div>
             
             <div class="main flex-1 transition-opacity duration-200" :class="{'opacity-50': !file.enabled}">
@@ -33,9 +33,7 @@
               <p class="only-one-line">{{file.curse.synopsis ?? ""}}</p>
             </div>
             
-            <aside class="flex items-center self-center" v-if="file.fileName !== ''">
-              <ftb-toggle v-if="packInstalled" :value="file.enabled" :disabled="togglingShas.includes(file.sha1)" @change="() => toggleMod(file)" :aria-label="`${file.enabled ? `Disable ${file.fileName}` : `Enable ${file.fileName}`}`" data-balloon-pos="down-right" />
-            </aside>
+            <ui-toggle v-if="file.fileName !== ''" :value="file.enabled" @input="() => toggleMod(file)" :disabled="togglingShas.includes(file.sha1)" />
           </div>
         </div>
       </template>
@@ -50,7 +48,6 @@ import {prettyByteFormat} from '@/utils/helpers';
 import {Prop} from 'vue-property-decorator';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {Instance, ModPack} from '@/modules/modpacks/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {ModInfo} from '@/core/@types/javaApi';
@@ -60,6 +57,7 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import Loader from '@/components/atoms/Loader.vue';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 export type ApiMod = {
 	fileId: number;
@@ -76,11 +74,11 @@ export type ApiMod = {
 @Component({
   methods: {stringIsEmpty, containsIgnoreCase},
   components: {
+    UiToggle,
     Loader,
     UiButton,
     FTBSearchBar,
     FindMods,
-    'ftb-toggle': FTBToggle,
   },
 })
 export default class ModpackMods extends Vue {

@@ -5,11 +5,17 @@
         <artwork-selector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
         <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
         
-        <category-selector class="mb-6" v-model="selectedCategory" />
+        <category-selector class="mb-4" v-model="selectedCategory" />
 
-        <f-t-b-toggle label="Show advanced options" small="Select a specific Modpack version" :value="useAdvanced" @change="v => useAdvanced = v" />
+        <ui-toggle label="Show advanced options" v-model="useAdvanced" />
         <selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4 mt-6" />
-        <f-t-b-toggle v-if="useAdvanced && hasUnstableVersions" label="Show pre-release builds (Stable by default)" :value="allowPreRelease" @change="v => allowPreRelease = v" small="Feeling risky? Enable pre-release builds to get access to Alpha and Beta versions of the Modpack" />
+        
+        <ui-toggle
+          v-if="useAdvanced && hasUnstableVersions"
+          v-model="allowPreRelease"
+          label="Show pre-release builds (Stable by default)" 
+          desc="Feeling risky? Enable pre-release builds to get access to Alpha and Beta versions of the Modpack"
+        />
       </template>
     </modal-body>
     <modal-footer class="flex justify-end">
@@ -28,7 +34,6 @@ import {Action, Getter} from 'vuex-class';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {timeFromNow} from '@/utils/helpers/dateHelpers';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
@@ -38,9 +43,10 @@ import platform from '@/utils/interface/electron-overwolf';
 import {RouterNames} from '@/router';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
-  components: {CategorySelector, UiButton, ArtworkSelector, FTBToggle, Selection2},
+  components: {UiToggle, CategorySelector, UiButton, ArtworkSelector, Selection2},
   methods: {
     resolveArtwork
   }

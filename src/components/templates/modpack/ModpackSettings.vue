@@ -66,15 +66,15 @@
       }%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`"
     />
     
-    <ftb-toggle
+    <ui-toggle
       label="Fullscreen"
-      :value="instanceSettings.fullScreen"
-      @change="v => {
-          instanceSettings.fullScreen = v;
+      desc="Always open Minecraft in Fullscreen mode"
+      v-model="instanceSettings.fullScreen"
+      @input="() => {
           saveSettings();
       }"
       class="mb-4"
-      small="Always open Minecraft in Fullscreen mode"
+      :align-right="true"
     />
     
     <div class="mb-6" :class="{'cursor-not-allowed opacity-50 pointer-events-none': instanceSettings.fullScreen}">
@@ -108,16 +108,16 @@
       </div>
     </div>
 
-    <ftb-toggle
+    <ui-toggle
+      :align-right="true"
       label="Enable cloud save uploads"
+      desc="You can only use Cloud Saves if you have an active paid plan on MineTogether."
       :disabled="canUseCloudSaves || toggleSavesWorking"
-      onColor="bg-primary"
       :value="instanceSettings.cloudSaves"
-      @change="toggleCloudSaves"
-      small="You can only use Cloud Saves if you have an active paid plan on MineTogether."
+      @input="toggleCloudSaves"
       class="mb-8"
     />
-
+    
     <h2 class="text-lg mb-4 font-bold text-warning">
       <font-awesome-icon icon="warning" class="mr-2" />
       Advanced
@@ -159,7 +159,7 @@
             </option>
           </select>
 
-          <ui-button type="primary" icon="folder" @click="browseForJava">Browse</ui-button>
+          <ui-button type="success" icon="folder" @click="browseForJava">Browse</ui-button>
         </div>
       </section>
 
@@ -197,7 +197,6 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 import {Getter, State} from 'vuex-class';
 import {AuthState} from '@/modules/auth/types';
 import {JavaVersion, SettingsState} from '@/modules/settings/types';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
@@ -217,15 +216,16 @@ import {instanceInstallController} from '@/core/controllers/InstanceInstallContr
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 import {computeAspectRatio} from '@/utils';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
   components: {
+    UiToggle,
     CategorySelector,
     UiButton,
     ArtworkSelector,
     Selection2,
     DuplicateInstanceModal,
-    'ftb-toggle': FTBToggle,
     'ftb-slider': FTBSlider,
     ShareInstanceModal,
   },

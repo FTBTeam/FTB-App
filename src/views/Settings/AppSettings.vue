@@ -2,48 +2,47 @@
   <div class="app-settings">
     <!-- <ftb-toggle label="Enable Analytics: " :value="settingsCopy.enableAnalytics" @change="enableAnalytics"
                     onColor="bg-primary"/> -->
-    <ftb-toggle
+    <ui-toggle
       label="Use the beta channel"
+      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."
       :value="localSettings.enablePreview"
-      @change="enablePreview"
-      onColor="bg-primary"
+      @input="enablePreview"
       class="mb-8"
-      small="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."
     />
-    <ftb-toggle
+    
+    <ui-toggle
       v-if="!platform.isElectron()"
       label="Close Overwolf on Exit"
+      desc="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
       :value="localSettings.exitOverwolf"
-      @change="exitOverwolf"
-      onColor="bg-primary"
+      @input="exitOverwolf"
       class="mb-8"
-      small="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
     />
-    <!--      :disabled="auth.token === null ? 'true' : ''"-->
-    <!--      :value="localSettings.enableChat"-->
-    <ftb-toggle
+
+    <ui-toggle
       label="Enable MineTogether Chat"
+      desc="Enabled you to use the MineTogether chat from within the app. Currently disabled..."
       :value="false"
-      @change="enableChat"
-      onColor="bg-primary"
       :disabled="true"
       class="mb-8"
-      small="Enabled you to use the MineTogether chat from within the app. Currently disabled..."
     />
+    
+    <!--      :disabled="auth.token === null ? 'true' : ''"-->
+    <!--      :value="localSettings.enableChat"-->
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import { Settings, SettingsState } from '@/modules/settings/types';
-import { Action, State } from 'vuex-class';
+import {Component, Vue} from 'vue-property-decorator';
+import {Settings, SettingsState} from '@/modules/settings/types';
+import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import { AuthState } from '@/modules/auth/types';
+import {AuthState} from '@/modules/auth/types';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
   components: {
-    'ftb-toggle': FTBToggle,
+    UiToggle,
   },
 })
 export default class AppSettings extends Vue {

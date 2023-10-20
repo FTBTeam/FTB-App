@@ -1,50 +1,77 @@
 <template>
  <div class="modloaderSelect">
-   <b class="mb-4 block">Select a Mod Loader</b>
+   <message header="Optional" icon="info" type="info" class="mb-4" v-if="showOptional && hasAvailableLoaders">
+     A Mod Loader will allow you to load mods into Minecraft. Each Mod Loader will have different mods available so we recommend looking at <a>CurseForge</a> to see what's available.
+   </message>
+   
+   <Loader v-if="loadingModloaders" />
+   
+   <template v-else-if="hasAvailableLoaders">
+     <b class="mb-4 block">Select a Mod Loader</b>
 
-   <div class="loaders mb-6">
-     <div class="loader" :class="{active: userLoaderProvider === index}" v-for="(_, index) in availableLoaders" :key="index" @click="userLoaderProvider = index">
-       {{ index | title }}
+     <div class="loaders mb-6">
+       <div class="loader" :class="{active: userLoaderProvider === index}" v-for="(_, index) in availableLoaders" :key="index" @click="userLoaderProvider = index">
+         {{ index | title }}
+       </div>
+       <div class="loader" v-if="showNone" :class="{active: userLoaderProvider === ''}" @click="userLoaderProvider = ''">None</div>
      </div>
-   </div>
 
-   <f-t-b-toggle v-if="!stringIsEmpty(userLoaderProvider)" :value="userUseLatestLoader" @change="v => userUseLatestLoader = v" label="Use latest Mod Loader version (recommended)" />
+     <ui-toggle class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
 
-   <selection2
-     v-if="!userUseLatestLoader && loaderVersions.length > 0"
-     :open-up="true"
-     label="Version"
-     class="mb-4"
-     :options="loaderVersions"
-     :value="value"
-      @input="input"
-   />
+     <selection2
+       v-if="!userUseLatestLoader && loaderVersions.length > 0"
+       :open-up="true"
+       label="Version"
+       class="mb-4"
+       :options="loaderVersions"
+       v-model="userLoaderVersion"
+       @change="select(userLoaderProvider, userLoaderVersion)"
+     />
+   </template>
+
+   <message v-else header="No loaders" icon="exclamation" type="warning" class="mb-4">
+     Sadly we were not able to find any mod loaders for Minecraft {{ mcVersion }}. This is likely due to there being no mod loaders available just yet.
+     <br><br>
+     You can continue to create an instance without a mod loader and set one up later once one is available.
+   </message>
  </div>
 </template>
 
 <script lang="ts">
 import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {ModLoader, ModLoadersResponse} from '@/core/@types/modpacks/modloaders';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
+import Loader from '@/components/atoms/Loader.vue';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
   methods: {stringIsEmpty},
-  components: {FTBToggle, Selection2}
+  components: {UiToggle, Loader, Selection2}
 })
 export default class ModloaderSelect extends Vue {
   @Prop() mcVersion!: string;
-  @Prop() value!: string;
-  @Emit("input") input(value: string) {}
+  @Prop({default: true}) showNone!: boolean;
+  @Prop({default: false}) showOptional!: boolean;
+    
 
   availableLoaders: Record<string, ModLoader[]> = {};
   loadingModloaders = false;
   
   userLoaderProvider = "";
   userUseLatestLoader = true;
+  userLoaderVersion = "";
+  
+  @Emit() select(loader: string, version: string): ModLoader | undefined {
+    const loaderProvider = this.availableLoaders[loader];
+    if (!loaderProvider) {
+      return;
+    }
+    
+    return loaderProvider.find(e => e.version === version);
+  }
   
   async mounted() {
     await this.loadLoaders();
@@ -74,6 +101,7 @@ export default class ModloaderSelect extends Vue {
         continue;
       }
 
+      console.log(loaderData.loaders, `loaders/${mcVersion}/${loader}`)
       foundLoadersForVersion[loader] = loaderData.loaders.sort((a, b) => b.id - a.id);
     }
 
@@ -86,8 +114,14 @@ export default class ModloaderSelect extends Vue {
     if (newVal === oldVal) {
       return;
     }
-
-    this.input(this.loaderVersions[0].value);
+    
+    if (this.userLoaderProvider === "") {
+      this.userLoaderVersion = "";
+      return;
+    }
+    
+    this.userLoaderVersion = this.loaderVersions[0]?.value ?? "";
+    this.select(this.userLoaderProvider, this.userLoaderVersion)
   }
 
   get loaderVersions() {
@@ -101,6 +135,10 @@ export default class ModloaderSelect extends Vue {
       meta: e.type
     })) as SelectionOption[]
   }
+  
+  get hasAvailableLoaders() {
+    return Object.keys(this.availableLoaders).length > 0;
+  }
 }
 </script>
 
@@ -111,7 +149,7 @@ export default class ModloaderSelect extends Vue {
   .loader {
     cursor: pointer;
     flex: 1;
-    padding: 1rem 0;
+    padding: .8rem 0;
     text-align: center;
     background-color: var(--color-navbar);
     transition: background-color .25s ease-in-out;

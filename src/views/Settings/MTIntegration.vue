@@ -31,24 +31,20 @@
 <!--        small="When enabled, the MineTogether friends list will automatically open in a new window on startup. Currently disabled."-->
 <!--      />-->
       
-      <ftb-toggle
-        label="Enable cloud save uploads "
+      <ui-toggle 
+        label="Enable cloud save uploads" 
+        desc="Stores your worlds, configs and more in the cloud and syncs them across systems."
         :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves === 'true'"
-        @change="toggleCloudSaves"
-        :disabled="auth.token?.activePlan === null"
-        onColor="bg-primary"
+        @input="toggleCloudSaves"
         class="mb-8"
-        small="Stores your worlds, configs and more in the cloud and syncs them across systems."
       />
-      
-      <ftb-toggle
+
+      <ui-toggle
         label="Show adverts"
+        desc="Any paid plan can optionally disable ads throughout the app"
         :value="settings.settings.showAdverts === true || settings.settings.showAdverts === 'true'"
-        @change="toggleAdverts"
+        @input="toggleAdverts"
         :disabled="!auth?.token?.activePlan"
-        onColor="bg-primary"
-        class="mb-8"
-        small="Any paid plan can optionally disable ads throughout the app."
       />
     </div>
   </div>
@@ -56,7 +52,6 @@
 
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {Action, State} from 'vuex-class';
 import {AuthState} from '@/modules/auth/types';
 import {SettingsState} from '@/modules/settings/types';
@@ -65,12 +60,13 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
   methods: {getMinecraftHead},
   components: {
+    UiToggle,
     UiButton,
-    'ftb-toggle': FTBToggle,
   },
 })
 export default class MTIntegration extends Vue {

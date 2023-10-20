@@ -13,34 +13,22 @@
           <artwork-selector class="mb-6" v-model="userSelectedArtwork" />
           <ftb-input label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
           <selection2 :open-up="true" label="Minecraft version" class="mb-4" :options="vanillaVersions" v-model="userVanillaVersion" />
-          <f-t-b-toggle :value="showVanillaSnapshots" @change="v => showVanillaSnapshots = v" label="Show snapshots" class="mb-4" />
+          
+          <ui-toggle class="mb-4" label="Show snapshots" desc="Snapshot versions of Minecraft are typically unstable and no longer maintained" v-model="showVanillaSnapshots" />
+          
           <category-selector v-model="userCategory" />
         </template>
         <Loader v-else />
       </div>
       
       <div class="modloader" v-show="step === 1">
-<!--        <template v-if="!loadingModloaders && Object.keys(availableLoaders).length > 0">-->
-          <message header="Optional" icon="info" type="info" class="mb-4">
-            A Mod Loader will allow you to load mods into Minecraft. Each Mod Loader will have different mods available so we recommend looking at <a>CurseForge</a> to see what's available.
-          </message>
-
-          <modloader-select :mc-version="selectedMcVersion" />
-<!--        </template>-->
-<!--        <Loader v-else-if="loadingModloaders" />-->
-<!--        <div v-else>-->
-<!--          <message header="No loaders" icon="exclamation" type="warning" class="mb-4">-->
-<!--            Sadly we were not able to find any mod loaders for Minecraft {{ selectedMcVersion }}. This is likely due to there being no mod loaders available just yet.-->
-<!--            <br><br>-->
-<!--            You can continue to create an instance without a mod loader and set one up later once one is available.-->
-<!--          </message>-->
-<!--        </div>        -->
+          <modloader-select :mc-version="selectedMcVersion" @select="thing" :show-optional="true" />
       </div>
       
       <div class="settings" v-show="step === 2">
         <f-t-b-slider label="Ram" v-model="settingRam" />
         
-        <f-t-b-toggle label="Fullscreen" :value="settingFullscreen" @change="v => settingFullscreen = v" />
+        <ui-toggle label="Fullscreen" desc="Set Minecraft to fullscreen the game when possible" v-model="settingFullscreen" />
         <selection2 :open-up="true" :options="screenResolutions" label="Screen resolution" v-model="settingScreenResolution" />
         
         <pre>{{ {
@@ -75,7 +63,6 @@ import {ns} from '@/core/state/appState';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {Action, State} from 'vuex-class';
 import {ModPack} from '@/modules/modpacks/types';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
@@ -87,9 +74,12 @@ import Loader from '@/components/atoms/Loader.vue';
 import {ModLoader} from '@/core/@types/modpacks/modloaders';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
-  components: {ModloaderSelect, CategorySelector, Loader, FTBSlider, UiButton, FTBToggle, Selection2, ArtworkSelector},
+  components: {
+    UiToggle,
+    ModloaderSelect, CategorySelector, Loader, FTBSlider, UiButton, Selection2, ArtworkSelector},
   methods: {
     toTitleCase,
     stringIsEmpty
@@ -267,6 +257,14 @@ export default class CreateInstance extends Vue {
       label: `${e.width}x${e.height}`,
       value: `${e.width}x${e.height}`
     }))
+  }
+  
+  thing(loader: ModLoader | undefined, loaderProvider: string, version: string) {
+    console.log({
+      loader,
+      loaderProvider,
+      version
+    })
   }
 }
 </script>
