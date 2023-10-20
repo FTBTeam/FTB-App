@@ -7,30 +7,38 @@
         <ui-button type="info" icon="sync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="() => $emit('getModList', true)"/>
       </template>
     </div>
-    <div v-for="(file, index) in modlist" :key="index">
-      <div class="flex flex-row my-4 items-center" v-show="!filteredModShas.includes(file.sha1)">
-        <p
-          :class="{ 'opacity-50': packInstalled ? !file.enabled : false }"
-          class="duration-150 transition-opacity"
-          :title="`Version ${file.version}`"
-        >
-          {{ (file.fileName ? file.fileName : file.name).replace('.jar', '') }}
-        </p>
-        <div class="ml-auto flex items-center">
-          <span
-            :class="{ 'opacity-50': packInstalled ? !file.enabled : false }"
-            class="duration-150 transition-opacity rounded text-xs bg-gray-600 py-1 px-2 clean-font"
-            >{{ prettyBytes(file.size) }}</span
-          >
-          <ftb-toggle v-if="packInstalled" :value="file.enabled" :disabled="togglingShas.includes(file.sha1)" @change="() => toggleMod(file)" />
-
-          <!-- TODO: Add matching to sha1 hashes, this isn't valid. // color: isMatched ? 'green' : 'red' -->
-          <!-- TODO:Lfind where sha1 data is stored and provide it in a copy action -->
-          <!--          <span class="sha-check">-->
-          <!--            <font-awesome-icon icon="check-circle" color="lightgreen" class="ml-2 mr-1" /> SHA1-->
-          <!--          </span>-->
+    
+    <div class="mods">
+      <loader v-if="!packInstalled && modsLoading" />
+      <template v-if="!packInstalled">
+        <recycle-scroller :items="simpleMods" key-field="fileId" :item-size="70" class="select-text scroller" v-slot="{ item }">
+          <div class=" flex gap-6 items-start mb-4" :key="item.fileId">
+            <img v-if="item.icon" :src="item.icon" class="rounded mt-2" width="40" alt="">
+            <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>
+            <div class="main">
+              <b class="mb-1 block">{{item.name || item.filename}}</b>
+              <p class="only-one-line">{{item.synopsis}}</p>
+            </div>
+          </div>
+        </recycle-scroller>
+      </template>
+      <template v-if="packInstalled">
+        <div class="complex-mod mod" v-for="(file, index) in packMods" :key="index">
+          <div class="flex gap-6 items-start mb-4">
+            <img v-if="file.curse.icon" :src="file.curse.icon" class="rounded mt-2" width="40" alt="">
+            <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="file.fileName !== ''"></div>
+            
+            <div class="main flex-1 transition-opacity duration-200" :class="{'opacity-50': !file.enabled}">
+              <b class="mb-1 block">{{file.curse.name || file.fileName.replace(".jar", "")}}</b>
+              <p class="only-one-line">{{file.curse.synopsis ?? ""}}</p>
+            </div>
+            
+            <aside class="flex items-center self-center" v-if="file.fileName !== ''">
+              <ftb-toggle v-if="packInstalled" :value="file.enabled" :disabled="togglingShas.includes(file.sha1)" @change="() => toggleMod(file)" :aria-label="`${file.enabled ? `Disable ${file.fileName}` : `Enable ${file.fileName}`}`" data-balloon-pos="down-right" />
+            </aside>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -43,15 +51,32 @@ import {Prop} from 'vue-property-decorator';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import {Instance} from '@/modules/modpacks/types';
+import {Instance, ModPack} from '@/modules/modpacks/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {ModInfo} from '@/core/@types/javaApi';
-import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
+import {containsIgnoreCase, stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {JavaFetch} from '@/core/javaFetch';
+import Loader from '@/components/atoms/Loader.vue';
+
+export type ApiMod = {
+	fileId: number;
+	name: string;
+	synopsis: string;
+	icon: string;
+	curseSlug: string;
+	curseProject: number;
+	curseFile: number;
+	stored: number;
+	filename: string;
+}
 
 @Component({
+  methods: {stringIsEmpty, containsIgnoreCase},
   components: {
+    Loader,
     UiButton,
     FTBSearchBar,
     FindMods,
@@ -63,15 +88,33 @@ export default class ModpackMods extends Vue {
   @Prop() updatingModlist!: boolean;
   @Prop() packInstalled!: boolean;
   @Prop() instance!: Instance;
+  @Prop() apiPack!: ModPack;
   
   togglingShas: string[] = [];
 
-  filteredModList: string[] = [];
+  hiddenMods: string[] = [];
   search = '';
+  
+  modsLoading = false;
+  apiMods: ApiMod[] = [];
 
   prettyBytes = prettyByteFormat;
   
   async mounted() {
+    if (!this.packInstalled && this.apiPack) {
+      const latestVersion = this.apiPack.versions.sort((a, b) => b.id - a.id).find(e => !e.private);
+      if (!latestVersion) {
+        return;
+      }
+      
+      const mods = await toggleBeforeAndAfter(() => JavaFetch.modpacksCh(`modpack/${this.apiPack.id}/${latestVersion.id}/mods`).execute(), s => this.modsLoading = s)
+      const apiMods = mods?.json<{ mods: ApiMod[] }>()?.mods;
+      if (!apiMods) {
+        return;
+      }
+      
+      this.apiMods = apiMods.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)))
+    }
   }
   
   async toggleMod(file: ModInfo) {
@@ -96,18 +139,65 @@ export default class ModpackMods extends Vue {
   }
 
   onSearch(value: string) {
+    this.search = value;
     if (value === '') {
-      this.filteredModList = [];
+      this.hiddenMods = [];
       return;
     }
 
-    this.filteredModList = this.modlist
-      .filter((e) => !containsIgnoreCase(e.fileName, value))
-      .map((e) => e.sha1);
+    if (this.packMods) {
+      this.hiddenMods = this.packMods.filter((e) => containsIgnoreCase(e.fileName, value)).map((e) => e.fileName.toLowerCase());
+    }
+    
+    if (this.apiMods) {
+      this.hiddenMods = this.apiMods.filter((e) => containsIgnoreCase(e.name ?? e.filename, value)).map((e) => (e.name ?? e.filename).toLowerCase());
+    }
   }
   
-  get filteredModShas() {
-    return this.filteredModList;
+  get packMods(): ModInfo[] | null {
+    const results = this.modlist.filter(e => this.search === '' ? true : containsIgnoreCase(e.curse.name ?? e.fileName, this.search));
+    if (results.length === 0) {
+      return [{
+        fileId: -1,
+        fileName: 'No results found',
+        version: '',
+        enabled: true,
+        size: 0,
+        sha1: '',
+        curse: {} as any
+      }]
+    }
+    
+    return results.sort((a, b) => (a.curse.name ?? a.fileName).localeCompare((b.curse.name ?? b.fileName)));
   }
+  
+  get simpleMods() {
+    const results = this.apiMods.filter(e => this.search === '' ? true : containsIgnoreCase(e.name ?? e.filename, this.search));
+    if (results.length === 0) {
+      return [{
+          name: 'No results found',
+          synopsis: 'Try searching for something else',
+          icon: '',
+          fileId: -1,
+          curseSlug: '',
+          curseProject: -1,
+          curseFile: -1,
+          stored: -1,
+          filename: '',
+        }]
+    }
+    
+    return results.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)));
+  }
+  
 }
 </script>
+
+<style scoped lang="scss">
+.only-one-line {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

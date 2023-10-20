@@ -148,6 +148,7 @@
       <!-- Tab views, we're not using the router because it's a pain-->
       <modpack-mods
         v-if="activeTab === tabs.MODS && !isVanilla"
+        :api-pack="packInstance"
         :modlist="mods"
         :pack-installed="isInstalled"
         :updatingModlist="updatingModlist"
