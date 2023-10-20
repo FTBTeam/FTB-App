@@ -31,7 +31,7 @@
             </div>
           </div>
           <div class="setup inline-block mt-4 text-sm">
-            <ftb-button @click="logout" class="px-4 py-2" color="primary">Logout to disable</ftb-button>
+            <ui-button :wider="true" type="success" @click="logout" icon="sign-out">Logout</ui-button>
           </div>
         </div>
         <div class="main flex" v-else>
@@ -49,7 +49,7 @@
           <div class="name font-bold mb-1">MineTogether</div>
           <div class="desc opacity-75">Integrate with MineTogether to use cloudsaves and private packs.</div>
           <div class="setup inline-block mt-4 text-sm">
-            <ftb-button class="px-4 py-2" color="primary" @click="openLogin">Login to setup</ftb-button>
+            <ui-button :wider="true" type="success" @click="openLogin" icon="sign-in">Login to setup</ui-button>
           </div>
         </div>
       </div>
@@ -58,15 +58,17 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import { AuthState } from '@/modules/auth/types';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
+import {AuthState} from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
-import { SettingsState } from '@/modules/settings/types';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {SettingsState} from '@/modules/settings/types';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
+  components: {UiButton},
   methods: {getMinecraftHead}
 })
 export default class AppInfo extends Vue {

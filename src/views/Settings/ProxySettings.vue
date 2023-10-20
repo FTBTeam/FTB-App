@@ -62,9 +62,8 @@
     <message type='warning' class='mt-4 mb-8'>We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</message>
 
     <div class='action flex justify-end'>
-      <ftb-button :disabled='proxyType === "none" || isInvalid()' color="primary" @click='save' class="inline-block py-2 px-10">Test & Save</ftb-button>
+      <ui-button :wider="true" :disabled='proxyType === "none" || isInvalid()' type='success' icon='check' @click='() => save()'>Test & Save</ui-button>
     </div>
-    
   </div>
 </template>
 
@@ -73,8 +72,11 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
 import {alertController} from '@/core/controllers/alertController';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
-@Component
+@Component({
+  components: {UiButton}
+})
 export default class MTIntegration extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @State('settings') private settings!: SettingsState;

@@ -14,12 +14,9 @@
           </p>
         </div>
       </div>
-      <div class="ml-auto mt-10 sm:mt-0 flex items-center">
-        <ftb-button color="primary" class="text-center px-4 py-2 mr-2" title="Coming Soon" @click="openProfile">
-          Update account
-          <font-awesome-icon icon="external-link-square-alt" class="ml-2" />
-        </ftb-button>
-        <ftb-button color="warning" class="text-center px-4 py-2" @click="logout">Logout</ftb-button>
+      <div class="ml-auto mt-10 sm:mt-0 flex items-center gap-2">
+        <ui-button type="success" icon="external-link-square-alt" @click="openProfile">Update account</ui-button>
+        <ui-button type="warning" icon="sign-out" @click="logout">Logout</ui-button>
       </div>
     </div>
 
@@ -58,19 +55,21 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import { Action, State } from 'vuex-class';
-import { AuthState } from '@/modules/auth/types';
-import { SettingsState } from '@/modules/settings/types';
+import {Action, State} from 'vuex-class';
+import {AuthState} from '@/modules/auth/types';
+import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import { gobbleError } from '@/utils/helpers/asyncHelpers';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
   methods: {getMinecraftHead},
   components: {
+    UiButton,
     'ftb-toggle': FTBToggle,
   },
 })

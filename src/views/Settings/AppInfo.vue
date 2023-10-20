@@ -51,13 +51,7 @@
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ftb-button
-        class="py-2 px-4 my-2 w-2/7 mt-4 sm:mt-0 inline-block whitespace-no-wrap"
-        color="info"
-        css-class="text-center text-l"
-        @click="uploadLogData"
-        >Upload App Logs</ftb-button
-      >
+      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="upload">Upload App Logs</ui-button>
     </div>
 
     <div class="section cache mb-8 sm:flex items-center">
@@ -68,13 +62,7 @@
           the cache, it'll make sure you're running the latest version of all available data.
         </p>
       </div>
-      <ftb-button
-        class="py-2 px-4 mt-6 sm:mt-0 my-2 w-2/7 inline-block whitespace-no-wrap"
-        color="info"
-        css-class="text-center text-l"
-        @click="refreshCachePlz"
-        >Refresh Cache</ftb-button
-      >
+      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" icon="sync">Refresh Cache</ui-button>
     </div>
 
     <ftb-toggle
@@ -88,17 +76,19 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import { Settings, SettingsState } from '@/modules/settings/types';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
+import {Settings, SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import {ns} from '@/core/state/appState';
 import {alertController} from '@/core/controllers/alertController';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
   components: {
+    UiButton,
     'ftb-toggle': FTBToggle,
   },
 })

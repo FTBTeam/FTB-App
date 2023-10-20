@@ -42,10 +42,7 @@
         >
         <div class="flex flex-row justify-between my-2">
           <router-link to="/browseModpacks">
-            <ftb-button color="info" class="py-2 px-8 mx-2">
-              <font-awesome-icon icon="search" class="mr-2" />
-              Browse
-            </ftb-button>
+            <ui-button :wider="true" type="info" icon="search">Browse</ui-button>
           </router-link>
 <!--          <router-link to="/discover">-->
 <!--            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>-->
@@ -67,6 +64,7 @@ import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import Loader from '@/components/atoms/Loader.vue';
 import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 const groupOptions = [
   ['Category', 'category'],
@@ -93,6 +91,7 @@ const groupByOptions = createOrderedOptions(groupOptions)
 
 @Component({
   components: {
+    UiButton,
     Selection2,
     Loader,
     PackCard2,
