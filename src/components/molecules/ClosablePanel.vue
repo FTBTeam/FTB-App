@@ -23,13 +23,14 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import { Emit, Prop } from 'vue-property-decorator';
+import {Emit, Prop} from 'vue-property-decorator';
 import Platform from '@/utils/interface/electron-overwolf';
 import os from 'os';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {AuthState} from '@/modules/auth/types';
 
+// TODO: (M#02) Remove this component and replace it with a modal that support full screen
 @Component
 export default class ClosablePanel extends Vue {
   @Prop() open!: boolean;
@@ -179,7 +180,7 @@ export default class ClosablePanel extends Vue {
 .slide-in-out-enter,
 .slide-in-out-leave-to {
   .panel-container {
-    transform: translateX(-100%);
+    transform: translateY(30px);
   }
   
   opacity: 0;

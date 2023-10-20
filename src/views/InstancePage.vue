@@ -1,13 +1,13 @@
 <template>
   <div class="pack-page">
     <div class="pack-page-contents" v-if="instance">
-      <div
-        class="background"
-        :style="{
-          'background-image': `url(${packSplashArt})`,
-        }"
-      ></div>
       <header>
+        <div
+          class="background"
+          :style="{
+            'background-image': `url(${packSplashArt})`,
+          }"
+        ></div>
         <pack-meta-heading
           @back="goBack"
           :hidePackDetails="hidePackDetails"
@@ -176,9 +176,7 @@ export default class InstancePage extends Vue {
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
 
-  private apiPack: ModPack | null = null;
-  deleting: boolean = false;
-
+  apiPack: ModPack | null = null;
   modlist: any = [];
 
   searchingForMods = false;
@@ -210,14 +208,11 @@ export default class InstancePage extends Vue {
       this.activeTab = ModpackPageTabs.MODS;
     }
 
-    this.getModList();
+    this.getModList().catch(console.error)
     this.loadBackups().catch(console.error);
 
     // Throwaway error, don't block
     this.checkForBorkedVersion().catch(console.error);
-
-    this.getModList();
-    this.loadBackups().catch(console.error);
 
     if (this.getActiveProfile) {
       this.offlineAllowed = true;

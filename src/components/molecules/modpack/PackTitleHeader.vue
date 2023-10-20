@@ -17,8 +17,8 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Prop } from 'vue-property-decorator';
-import { ModPack } from '@/modules/modpacks/types';
+import {Prop} from 'vue-property-decorator';
+import {ModPack} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 
 @Component
@@ -38,7 +38,7 @@ export default class PackTitleHeader extends Vue {
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 0 5px rgba(black, 0.5);
+  text-shadow: 0 0 5px rgba(black, 0.6);
   background-color: rgba(black, 0.2);
 
   .info {

@@ -7,13 +7,14 @@
         </message>
       </div>
       <div class="pack-page-contents" v-if="currentModpack">
-        <div
-          class="background"
-          :style="{
+        <header>
+          <div
+            class="background"
+            :style="{
             'background-image': `url(${packSplashArt})`,
           }"
-        ></div>
-        <header>
+          ></div>
+          
           <pack-meta-heading
             @back="$router.back()"
             :hidePackDetails="false"

@@ -1,7 +1,7 @@
 <template>
   <div class="modpack-mods">
     <div class="flex mb-8 gap-4 items-center">
-      <f-t-b-search-bar :alpha="true" placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
+      <f-t-b-search-bar placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
       <template v-if="packInstalled">
         <ui-button type="success" @click="() => $emit('searchForMods')" icon="plus" ariaLabel="Add more mods" />
         <ui-button type="info" icon="sync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="() => $emit('getModList', true)"/>
