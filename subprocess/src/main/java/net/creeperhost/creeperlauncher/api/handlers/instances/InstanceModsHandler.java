@@ -46,7 +46,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                 var version = m.findLatestCompatibleVersion(modLoader.getName(), mcVersion);
                 if (version == null) return;
 
-                if (version.getId() > curseData.curseFile()) return;
+                if (version.getId() <= curseData.curseFile()) return;
                 Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateAvailable(
                         data,
                         mod,

@@ -95,7 +95,7 @@ public class ModManifest {
                     }
                     return loaderTarget.getName().equals(modLoader);
                 })
-                .sorted(Comparator.comparingLong(e -> e.id))
+                .sorted(Comparator.comparingLong(e -> -e.id))
                 .firstOrDefault();
     }
 
