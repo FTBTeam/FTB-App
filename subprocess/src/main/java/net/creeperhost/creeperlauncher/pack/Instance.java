@@ -552,6 +552,7 @@ public class Instance {
                 if (!override.getState().added) continue;
 
                 Path file = modsDir.resolve(override.getFileName());
+                CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile(), override.getSha1());
                 mods.add(new ModInfo(
                         -1,
                         override.getFileName(),
@@ -559,13 +560,7 @@ public class Instance {
                         override.getState().enabled,
                         tryGetSize(file),
                         override.getSha1(),
-                        new CurseMetadata(
-                                override.getCurseProject(),
-                                override.getCurseFile(),
-                                null,
-                                null,
-                                null
-                        )
+                        ids
                 ));
             }
         }

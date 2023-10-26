@@ -8,6 +8,7 @@ import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.mod.CurseMetadata;
+import net.creeperhost.creeperlauncher.data.mod.ModManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by covers1624 on 13/9/23.
@@ -72,6 +74,29 @@ public class CurseMetadataCache {
             return metadata.toCurseInfo();
         }
         return null;
+    }
+
+    public @Nullable CurseMetadata getCurseMeta(long curseProject, long curseFile, String sha1) {
+        ModManifest mod = null;
+        try {
+            mod = Constants.MOD_VERSION_CACHE.queryMod(curseProject).get();
+        } catch (InterruptedException | ExecutionException ex) {
+            LOGGER.warn("Failed to query mod version.", ex);
+        }
+        ModManifest.Version version = null;
+        if (mod != null) {
+            version = mod.findVersion(curseFile);
+        }
+
+        if (version == null) return new CurseMetadata(curseProject, curseFile, null, null, null);
+
+        return new CurseMetadata(
+                curseProject,
+                curseFile,
+                mod.getName(),
+                mod.getSynopsis(),
+                !mod.getArt().isEmpty() ? mod.getArt().get(0).getUrl() : null // TODO, this is so dumb.
+        );
     }
 
     /**
