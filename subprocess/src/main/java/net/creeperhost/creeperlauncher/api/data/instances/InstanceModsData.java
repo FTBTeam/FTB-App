@@ -36,4 +36,13 @@ public class InstanceModsData extends BaseData {
             this.update = update;
         }
     }
+
+    public static class UpdateCheckingFinished extends InstanceModsData {
+
+        public UpdateCheckingFinished(InstanceModsData data) {
+            type = "instanceModUpdateCheckingFinished";
+            uuid = data.uuid;
+            requestId = data.requestId;
+        }
+    }
 }
