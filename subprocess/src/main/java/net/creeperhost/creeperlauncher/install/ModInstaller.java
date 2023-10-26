@@ -31,27 +31,37 @@ public class ModInstaller implements ModCollector {
 
     private final String mcVersion;
     private final String modLoader;
+    
+    private final long modId;
+    private final long versionId;
+    
     private final OperationProgressTracker tracker;
 
     private final List<Pair<ModManifest, ModManifest.Dependency>> unavailable = new ArrayList<>();
     private final List<Pair<ModManifest, ModManifest>> unsatisfiable = new ArrayList<>();
     private final List<Pair<ModManifest, ModManifest.Version>> toInstall = new ArrayList<>();
 
-    public ModInstaller(Instance instance, String mcVersion, String modLoader) {
+    public ModInstaller(Instance instance, String mcVersion, String modLoader, long modId, long versionId) {
         this.instance = instance;
         this.mcVersion = mcVersion;
         this.modLoader = modLoader;
+        
+        this.modId = modId;
+        this.versionId = versionId;
+        
         tracker = new OperationProgressTracker(
                 "mod_install",
                 Map.of(
-                        "instance", instance.getUuid().toString()
+                        "instance", instance.getUuid().toString(),
+                        "mod_id", String.valueOf(modId),
+                        "version_id", String.valueOf(versionId)
                 )
         );
     }
 
-    public void resolve(long modId, long versionId) throws ModInstallerException {
+    public void resolve() throws ModInstallerException {
         LOGGER.info("Resolving install of mod {} version {}", modId, versionId);
-
+        
         tracker.nextStage(InstallStage.RESOLVE);
         try {
             ModManifest manifest;

@@ -30,8 +30,9 @@
             :key="index"
             :mod="mod"
             :instance="instance"
+            :installed-mods="installedMods"
             :target="target"
-            @modInstalled="$emit('modInstalled')"
+            @install="selectedMod = mod"
           />
         </template>
         <!-- This is so over the top -->
@@ -94,12 +95,21 @@
         </ftb-button>
       </div>
     </div>
+    
+    <install-mod-modal
+      :open="selectedMod !== null"
+      @close="selectedMod = null"
+      :mod="selectedMod ?? undefined"
+      :mc-version="target" 
+      :mod-loader="modLoader"
+      :instance="instance"
+      @installed="$emit('modInstalled')"
+    />
   </div>
 </template>
 
 <script lang="ts">
 import {AuthState} from '@/modules/auth/types';
-import {Instance} from '@/modules/modpacks/types';
 import {Mod} from '@/types';
 import {debounce} from '@/utils';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
@@ -109,9 +119,13 @@ import ModCard from '../../molecules/modpack/ModCard.vue';
 import {alertController} from '@/core/controllers/alertController';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {modpackApi} from '@/core/pack-api/modpackApi';
+import {InstanceJson} from '@/core/@types/javaApi';
+import InstallModModal from '@/components/core/mods/InstallModModal.vue';
+import {compatibleCrossLoaderPlatforms} from '@/utils/helpers/packHelpers';
 
 @Component({
   components: {
+    InstallModModal,
     'ftb-search': FTBSearchBar,
     ModCard,
   },
@@ -120,8 +134,11 @@ export default class FindMods extends Vue {
   @State('auth') public auth!: AuthState;
 
   // Normal
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson;
+  @Prop() installedMods!: [number, number][];
 
+  selectedMod: Mod | null = null;
+  
   private offset = 0;
 
   search = '';
@@ -179,15 +196,24 @@ export default class FindMods extends Vue {
     this.visualLoadingFull = true;
     const start = new Date().getTime();
 
-    const searchResults = await modpackApi.search.modSearch(this.search, this.target, this.modLoader as any);
+    let searchResults: number[] = [];
+    const targetLoaders = compatibleCrossLoaderPlatforms(this.target, this.modLoader);
+    if (targetLoaders.length > 1) {
+      for (const loader of targetLoaders) {
+        const mods = (await modpackApi.search.modSearch(this.search, this.target, loader as any))?.mods ?? [];
+        mods.forEach(e => searchResults.push(e))
+      }
+    } else {
+        searchResults = (await modpackApi.search.modSearch(this.search, this.target, this.modLoader as any))?.mods ?? []; 
+    }
     
     this.loadingTerm = false;
-    if (!searchResults || searchResults?.total === 0) {
+    if (!searchResults.length) {
       this.visualLoadingFull = false;
       return;
     }
 
-    this.resultingIds = searchResults?.mods || [];
+    this.resultingIds = searchResults || [];
     await this.loadResultsProgressively();
 
     this.begunSearching = false;

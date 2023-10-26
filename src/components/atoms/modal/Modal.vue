@@ -54,6 +54,22 @@ export default class Modal extends Vue {
   get isOverwolf() {
     return Platform.isOverwolf();
   }
+
+  mounted() {
+    document.addEventListener('keydown', this.onEsc)
+  }
+
+  destroyed() {
+    document.removeEventListener('keydown', this.onEsc)
+  }
+
+  onEsc(event: any) {
+    if (event.key !== 'Escape') {
+      return;
+    }
+
+    this.close(true);
+  }
   
   public close(background = false): void {
     if (!this.closeOnBackgroundClick && background) {

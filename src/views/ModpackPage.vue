@@ -29,15 +29,12 @@
           <pack-body
             @mainAction="showInstallBox = true"
             @update="() => {}"
-            @getModList="() => {}"
-            @searchForMods="() => {}"
             @tabChange="(e) => (activeTab = e)"
             @showVersion="showVersions = true"
             :searchingForMods="false"
             :active-tab="activeTab"
             :isInstalled="false"
             :instance="null"
-            :mods="mods"
             :pack-instance="currentModpack"
             :updating-mod-list="false"
           />
@@ -97,9 +94,7 @@ export default class ModpackPage extends Vue {
   showInstallBox: boolean = false;
   loading = true;
   packTypeId: number = 0;
-
-  mods: { version: string; size: string; name: string }[] = [];
-
+  
   currentModpack: ModPack | null = null;
   error = '';
 
@@ -134,22 +129,7 @@ export default class ModpackPage extends Vue {
       this.showInstallBox = true;
     }
 
-    const version = await this.getVersion({
-      id: packID,
-      versionId: this.currentModpack?.versions[0].id ?? 0,
-      provider: typeIdToProvider(this.packTypeId)
-    })
-
     this.loading = false;
-    
-    if (version) {
-      this.mods = version.files
-        ?.filter((e: any) => e.type === 'mod')
-        .map((e: any) => ({name: e.name, size: e.size, version: e.version}))
-        .sort((a: any, b: any) =>
-          a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0,
-        );
-    }
   }
   
 

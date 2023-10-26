@@ -120,6 +120,10 @@ public class OperationProgressTracker {
         
         return (double) currentBytes / (double) overallBytes * 100.0D;
     }
+    
+    public void addMeta(String key, String value) {
+        meta.put(key, value);
+    }
 
     /**
      * Represents a stage.

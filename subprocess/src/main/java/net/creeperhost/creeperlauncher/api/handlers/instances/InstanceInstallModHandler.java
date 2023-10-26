@@ -44,10 +44,10 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
             return;
         }
 
-        ModInstaller modInstaller = new ModInstaller(instance, mcVersion, modLoader.getName());
+        ModInstaller modInstaller = new ModInstaller(instance, mcVersion, modLoader.getName(), data.modId, data.versionId);
 
         try {
-            modInstaller.resolve(data.modId, data.versionId);
+            modInstaller.resolve();
         } catch (ModInstaller.ModInstallerException ex) {
             LOGGER.warn("Error whilst preparing Mod install.", ex);
             Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));

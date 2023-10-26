@@ -66,7 +66,7 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import { Prop } from 'vue-property-decorator';
+import {Prop} from 'vue-property-decorator';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -155,14 +155,14 @@ export default class PackActions extends Vue {
 
   .actions,
   .actions li ul {
-    font-size: 0.875rem;
+    font-size: 12px;
     position: absolute;
     white-space: nowrap;
-    top: 110%;
-    left: 10px;
-    background-color: black;
+    top: -7rem;
+    left: 140%;
+    background-color: var(--color-navbar);
     z-index: 500;
-    padding: 1rem 0.8rem;
+    padding: .7rem 0.5rem;
     border-radius: 5px;
     box-shadow: 0 4px 15px rgba(black, 0.2);
     border: 1px solid rgba(white, 0.1);
@@ -174,19 +174,19 @@ export default class PackActions extends Vue {
     &::after {
       content: '';
       position: absolute;
-      top: -8px;
-      left: 15px;
-      border-top: 8px solid black;
-      border-left: 8px solid black;
-      border-radius: 2px;
+      top: calc(7rem + 15px);
+      left: -8px;
+      border-top: 8px solid var(--color-navbar);
+      border-left: 8px solid var(--color-navbar);
+      border-radius: 4px;
       width: 15px;
       height: 15px;
-      transform: rotateZ(45deg);
-      box-shadow: 0 0 15px rgba(black, 0.2);
+      transform: rotateZ(-45deg);
     }
 
     li {
-      line-height: 2.2em;
+      position: relative;
+      line-height: 2.4em;
       display: flex;
       padding: 0 0.8rem;
       border-radius: 5px;
@@ -195,6 +195,7 @@ export default class PackActions extends Vue {
       &.title {
         background-color: transparent !important;
         cursor: default;
+        line-height: 1.2em;
       }
 
       &:hover {
@@ -223,8 +224,8 @@ export default class PackActions extends Vue {
   }
 
   .actions li ul {
-    left: 110%;
-    top: 0;
+    left: 100%;
+    top: calc(1rem - 22px);
 
     &::before {
       content: '';
@@ -237,7 +238,7 @@ export default class PackActions extends Vue {
 
     &::after {
       transform: rotateZ(-45deg);
-      top: 6.4rem;
+      top: 1rem;
       left: -8px;
     }
   }
@@ -246,14 +247,14 @@ export default class PackActions extends Vue {
     .actions {
       visibility: visible;
       opacity: 1;
-      left: 0;
+      left: 125%;
     }
   }
 
   .actions li:hover ul {
     visibility: visible;
     opacity: 1;
-    left: 102%;
+    left: 115%;
   }
 }
 </style>

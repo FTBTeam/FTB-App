@@ -7,7 +7,7 @@
           :style="{
             'background-image': `url(${packSplashArt})`,
           }"
-        ></div>
+        />
         <pack-meta-heading
           @back="goBack"
           :hidePackDetails="hidePackDetails"
@@ -31,16 +31,12 @@
           @update="update"
           @tabChange="(e) => (activeTab = e)"
           @showVersion="showVersions = true"
-          @searchForMods="searchingForMods = true"
-          @getModList="(e) => getModList(e)"
           @backupsChanged="loadBackups"
           :pack-loading="packLoading"
           :active-tab="activeTab"
           :isInstalled="true"
           :instance="instance"
-          :mods="modlist"
           :pack-instance="apiPack"
-          :updating-mod-list="updatingModlist"
           :backups="instanceBackups"
           :allow-offline="offlineAllowed"
           @playOffline="offlineMessageOpen = true"
@@ -62,25 +58,25 @@
     <modal
       :open="offlineMessageOpen"
       :title="$route.query.presentOffline ? 'Unable to update your profile' : 'Play offline'"
-      :subTitle="
-        $route.query.presentOffline
-          ? 'Would you like to play in Offline Mode?'
-          : 'Playing in offline mode will prevent you from being able to join servers.'
-      "
+      subTitle="Would you like to play in Offline Mode?"
       @closed="() => closeOfflineModel()"
     >
-      <p v-if="$route.query.presentOffline" class="mb-4">
-        Please be aware, running in offline mode will mean you can not play on servers.
-      </p>
+      <message type="warning" class="mb-6 wysiwyg">
+        <p>Please be aware, running in offline mode will mean you can not:</p>
+        <ul>
+          <li>Play on online servers</li>
+          <li>Have a custom skin</li>
+          <li>Have any profile specific content in-game</li>
+        </ul> 
+      </message>
 
-      <ftb-input placeholder="Steve" label="Username" v-model="offlineUserName" class="mb-4 text-base" />
+      <ftb-input placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
 
-      <div class="flex justify-end">
-        <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="playOffline">
-          <font-awesome-icon icon="play" class="mr-2" size="1x" />
-          Play offline
-        </ftb-button>
-      </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <ui-button icon="play" type="success" @click="playOffline">Play offline</ui-button>
+        </div>
+      </template>
     </modal>
 
     <modal
@@ -99,15 +95,6 @@
         :notification="borkedVersionNotification"
       />
     </modal>
-
-    <closable-panel
-      :open="searchingForMods"
-      @close="searchingForMods = false"
-      :title="`Add mods to ${apiPack ? apiPack.name : ''}`"
-      subtitle="You can find mods for this pack using the search area below"
-    >
-      <find-mods :instance="instance" @modInstalled="getModList" />
-    </closable-panel>
   </div>
 </template>
 
@@ -116,7 +103,6 @@ import {Component, Vue} from 'vue-property-decorator';
 import {ModPack, Versions} from '@/modules/modpacks/types';
 import {Action, Getter, State} from 'vuex-class';
 import {AuthState} from '@/modules/auth/types';
-import FindMods from '@/components/templates/modpack/FindMods.vue';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
@@ -131,11 +117,11 @@ import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -147,13 +133,13 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
+    UiButton,
     VersionsBorkedModal,
     ClosablePanel,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
     ModpackVersions,
-    FindMods,
     PackBody,
   },
 })
@@ -177,10 +163,7 @@ export default class InstancePage extends Vue {
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
 
   apiPack: ModPack | null = null;
-  modlist: any = [];
-
-  searchingForMods = false;
-  updatingModlist = false;
+  
   showVersions = false;
   offlineMessageOpen = false;
   offlineUserName = '';
@@ -208,7 +191,6 @@ export default class InstancePage extends Vue {
       this.activeTab = ModpackPageTabs.MODS;
     }
 
-    this.getModList().catch(console.error)
     this.loadBackups().catch(console.error);
 
     // Throwaway error, don't block
@@ -267,7 +249,6 @@ export default class InstancePage extends Vue {
     if (!this.hidePackDetails) {
       this.$router.push({ name: RouterNames.ROOT_LIBRARY });
     } else {
-      this.searchingForMods = false;
       this.activeTab = this.apiPack ? ModpackPageTabs.OVERVIEW : ModpackPageTabs.MODS;
     }
   }
@@ -346,23 +327,6 @@ export default class InstancePage extends Vue {
     })
 
     this.instanceBackups = backups.backups.sort((a, b) => b.createTime - a.createTime);
-  }
-
-  private async getModList(showAlert = false) {
-    try {
-      const mods = await toggleBeforeAndAfter(() => sendMessage("instanceMods", {
-        uuid: this.instance?.uuid ?? "",
-        _private: this.instance?._private ?? false,
-      }), state => this.updatingModlist = state)
-      
-      this.modlist = mods.files;
-    } catch (e) {
-      alertController.error("Unable to load mods for this instance...")
-    }
-    
-    if (showAlert) {
-      alertController.success('The mods list has been updated')
-    }
   }
 
   closeOfflineModel() {

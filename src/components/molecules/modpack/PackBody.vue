@@ -149,12 +149,9 @@
       <modpack-mods
         v-if="activeTab === tabs.MODS && !isVanilla"
         :api-pack="packInstance"
-        :modlist="mods"
         :pack-installed="isInstalled"
-        :updatingModlist="updatingModlist"
         :instance="instance"
         @showFind="() => $emit('searchForMods')"
-        @getModList="() => $emit('getModList', true)"
         @searchForMods="() => $emit('searchForMods')"
       />
 
@@ -223,8 +220,6 @@ export default class PackBody extends Vue {
   @Prop() packInstance?: ModPack;
   @Prop() isInstalled!: boolean;
   @Prop() activeTab!: ModpackPageTabs;
-  @Prop() mods!: any[];
-  @Prop() updatingModlist!: boolean;
   @Prop({ default: false }) allowOffline!: boolean;
 
   @Prop({ default: () => [] }) backups!: Backup[];

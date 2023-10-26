@@ -41,6 +41,22 @@ export default class ClosablePanel extends Vue {
   @Emit('close')
   close() {}
 
+  mounted() {
+    document.addEventListener('keydown', this.onEsc)
+  }
+  
+  destroyed() {
+    document.removeEventListener('keydown', this.onEsc)
+  }
+  
+  onEsc(event: any) {
+    if (event.key !== 'Escape') {
+      return;
+    }
+    
+    this.close();
+  }
+  
   platform = Platform;
   
   // Apparently OS is safe on overwolf?

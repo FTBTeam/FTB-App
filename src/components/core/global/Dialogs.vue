@@ -48,7 +48,7 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {Dialog} from '@/core/state/misc/dialogsState';
 import {ns} from '@/core/state/appState';
-import {Action, Getter } from 'vuex-class';
+import {Action, Getter} from 'vuex-class';
 import {parseMarkdown} from '@/utils';
 import UiButton from '@/components/core/ui/UiButton.vue';
 
@@ -60,6 +60,22 @@ export default class Dialogs extends Vue {
   @Action("closeDialog", ns("v2/dialogs")) closeDialog!: (dialog: Dialog) => void;
 
   parseMarkdown = parseMarkdown
+
+  mounted() {
+    document.addEventListener('keydown', this.onEsc)
+  }
+
+  destroyed() {
+    document.removeEventListener('keydown', this.onEsc)
+  }
+
+  onEsc(event: any) {
+    if (event.key !== 'Escape') {
+      return;
+    }
+
+    this.closeTopDialog();
+  }
   
   closeTopDialog() {
     if (this.dialogs.length) {

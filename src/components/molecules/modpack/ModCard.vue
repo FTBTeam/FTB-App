@@ -5,113 +5,34 @@
         <img :src="art" alt="Mod artwork" />
       </div>
 
-      <div class="main" :style="{ backgroundImage: art }">
+      <div class="main">
         <div class="content">
           <div class="about">
-            <div class="name">{{ mod.name }}</div>
+            <div class="name flex gap-4 items-center">{{ mod.name }} <ui-badge type="success" v-if="projectInstalled" icon="check" aria-label="This mod is already installed in your pack, installing again will cause the mod to update."> Installed</ui-badge></div>
             <div class="desc pr-10 mb-3">{{ mod.synopsis }}</div>
           </div>
-          <div class="get">
-            <ftb-button color="primary" class="px-6 py-2" @click="showInstall = true">Install</ftb-button>
-          </div>
+          <ui-button type="success" icon="download" @click="$emit('install')">Install</ui-button>
         </div>
 
         <div class="numbers">
-          <div class="stat">
-            <div class="text">Downloads</div>
-            <div class="value is-value">{{ mod.installs.toLocaleString() }}</div>
+          <div class="stat" :aria-label="mod.installs.toLocaleString() + ' Downloads'" data-balloon-pos="down">
+            <font-awesome-icon icon="download" />
+            <div class="value is-value">{{ prettyNumber(mod.installs) }}</div>
           </div>
-          <div class="stat">
-            <div class="text">Latest</div>
-            <div class="value">
-              {{ latest.length > 20 ? latest.substring(0, 20) + '...' : latest }}
-            </div>
-          </div>
-          <div class="stat">
-            <div class="text">Author{{ mod.authors.length > 1 ? 's' : '' }}</div>
+
+          <div class="stat" aria-label="Authors" data-balloon-pos="down">
+            <font-awesome-icon icon="users" />
             <div class="value authors">
-              {{ mod.authors.map((e) => e.name).join(', ') }}
+              {{ mod.authors.slice(0, 3).map((e) => e.name).join(', ') }}
             </div>
           </div>
+          
           <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
             <img src="@/assets/curse-logo.svg" alt="" />
           </div>
         </div>
       </div>  
     </div>
-  
-    <modal :open="showInstall" @closed="closeModal" :close-on-background-click="!installing"
-      :title="mod ? mod.name : 'Loading...'" sub-title="Select the version you want to install" :external-contents="true"
-    >
-      <modal-body>
-        <div class="py-6" v-if="!installing && !finishedInstalling">
-          <div class="flex gap-4 mb-4">
-            <font-awesome-icon icon="download" size="xl" />
-            <b class="text-lg block">Install {{ mod.name }}</b>
-          </div>
-          <selection2
-            v-if="versions"
-            label="Selection mod version"
-            v-model="selectedVersion"
-            :options="
-              versions.map((e) => ({
-                value: e.id,
-                label: e.name,
-                badge: {
-                  text: e.type,
-                  color: getColorForReleaseType(e.type),
-                },
-                meta: prettyBytes(e.size),
-              }))
-            "
-          />
-        </div>
-        
-        <div v-if="!installing && !finishedInstalling" class="pt-8">
-          <div class="flex items-center gap-4 mb-6">
-            <img src="@/assets/curse-logo.svg" alt="CurseForge logo" width="40" />
-            <b class="text-lg block">About mod installs</b>
-          </div>
-          <hr class="curse-border block mb-4" />
-          <p class="text-muted mb-4">🎉 Each mod install from the FTB App directly supports the mod developers through the CurseForge reward system!</p>
-          <b class="block mb-2">Dependencies</b>
-          <p class="mb-2 text-muted">If the mod depends on other mods on the CurseForge platform, the app will try and resolve these dependencies for you and install them as well.</p>
-          <p class="text-muted">Sometimes this does not work and you'll have to install the dependencies manually.</p>
-        </div>
-        
-        <div class="installing mt-6 mb-4" v-if="!finishedInstalling && installing"> 
-          <div class="progress font-bold"><font-awesome-icon icon="spinner" spin class="mr-2" /> Installing</div>
-          <div class="stats">
-            <div class="stat">
-              <div class="text">Progress</div>
-              <div class="value">{{ installProgress.percentage }}%</div>
-            </div>
-            <div class="stat">
-              <div class="text">Speed</div>
-              <div class="value">{{ prettyBytes(installProgress.speed) }}/s</div>
-            </div>
-
-            <div class="stat">
-              <div class="text">Downloaded</div>
-              <div class="value">
-                {{ prettyBytes(installProgress.current) }} / {{ prettyBytes(installProgress.total) }}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <p v-if="!installing && finishedInstalling">
-          <span class="block">{{ mod.name }} has been installed!</span>
-        </p>
-      </modal-body>
-      
-      <modal-footer>
-        <div class="flex justify-end gap-4" v-if="!installing || !finishedInstalling">
-          <ui-button type="success" icon="download" v-if="!installing && !finishedInstalling" :disabled="!selectedVersion" @click="installMod">Install</ui-button>
-          <ui-button type="primary" @click="closeModal" icon="check" v-if="finishedInstalling">Close</ui-button>
-        </div>
-      </modal-footer>
-    </modal>
   </div>
 </template>
 
@@ -119,116 +40,77 @@
 import {Mod, ModVersion} from '@/types';
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import {Instance} from '@/modules/modpacks/types';
-import {emitter} from '@/utils/event-bus';
-import {prettyByteFormat} from '@/utils/helpers';
-import {getColorForReleaseType} from '@/utils/colors';
-import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import Selection2 from '@/components/core/ui/Selection2.vue';
-
-type InstallProgress = {
-  percentage: number;
-  speed: number;
-  current: number;
-  total: number;
-};
+import {InstanceJson} from '@/core/@types/javaApi';
+import UiBadge from '@/components/core/ui/UiBadge.vue';
+import {prettyNumber} from '../../../utils/helpers/stringHelpers';
 
 @Component({
+  methods: {prettyNumber},
   components: {
+    UiBadge,
     UiButton,
     Selection2,
   },
 })
 export default class ModCard extends Vue {
-  static emptyProgress = {
-    percentage: 0,
-    speed: 0,
-    current: 0,
-    total: 0,
-  };
-
   @Prop() mod!: Mod;
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson;
   @Prop() target!: string;
 
+  @Prop() installedMods!: [number, number][];
+
   platform = platform;
-  showInstall = false;
-  selectedVersion: string | null = null;
 
-  installing = false;
-  finishedInstalling = false;
-  installProgress: InstallProgress = ModCard.emptyProgress;
-  wsReqId = "";
-
-  getColorForReleaseType = getColorForReleaseType;
-  prettyBytes = prettyByteFormat;
-
-  versions: ModVersion[] = [];
-
-  mounted() {
-    this.versions =
-      this.mod.versions
-        .filter(
-          (e) =>
-            e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
-        )
-        .sort((a, b) => b.id - a.id) ?? [];
-
-    emitter.on('ws.message', this.onInstallMessage);
-  }
-
-  onInstallMessage(data: any) {
-    if (!this.installing || this.wsReqId !== data.requestId) {
-      return;
-    }
-
-    // Handle progress
-    if (data.type === 'instanceInstallModProgress') {
-      this.installProgress = {
-        percentage: data.overallPrecentage,
-        speed: data.speed,
-        current: data.currentBytes,
-        total: data.overallBytes,
-      };
-    }
-
-    // Handle completion
-    if (data.type === 'instanceInstallModReply') {
-      this.wsReqId = "";
-      this.installing = false;
-      this.installProgress = ModCard.emptyProgress;
-      this.finishedInstalling = true;
-      this.$emit('modInstalled');
-    }
-  }
-
-  destroyed() {
-    // Stop listening to events!
-    emitter.off('ws.message', this.onInstallMessage);
-  }
-
-  async installMod() {
-    if (!this.selectedVersion) {
-      return;
-    }
-
-    this.installing = true;
-    const result = await sendMessage("instanceInstallMod", {
-      uuid: this.instance?.uuid,
-      modId: this.mod.id,
-      versionId: parseInt(this.selectedVersion, 10),
-    })
+  static fileName(modName: string, fileName: string, trim = -1, trimReverse = false) {
+    const cleanedModName = modName.split("-")[0].replaceAll(" ", "").replace(/[^a-z0-9]/gi, '_').toLowerCase();
     
-    this.wsReqId = result.messageId;
-    this.selectedVersion = null;
+    // Try and remove the modname from the file name
+    let replacedName = fileName.replace(new RegExp(cleanedModName, "gi"), "").replace(".jar", "").toLowerCase();
+    
+    if (replacedName.startsWith("-") || replacedName.startsWith("_")) {
+      replacedName = replacedName.substring(1);
+    }
+    
+    const variations = ["$1", "$1_", "$1-", "-$1", "_$1", "_$1_", "-$1-"].reverse();
+    const lookups  = ["forge", "fabric", "quilt", "neoforge", "mc", "minecraft", "release", "alpha", "beta"];
+    
+    // Soft search to save on performance
+    // Look over the lookups list and see if the name contains any of them
+    if (lookups.findIndex((e) => replacedName.includes(e)) !== -1) {
+      for (const variation of variations) {
+        for (const lookup of lookups) {
+          const regex = new RegExp(`(${variation.replace("$1", lookup)})`, "gi");
+          console.log(replacedName = replacedName.replace(regex, ""))
+          replacedName = replacedName.replace(regex, "");
+        }
+      }
+    }
+    
+    if (trim === -1 || replacedName.length <= trim) {
+      return replacedName;
+    }
+    
+    return !trimReverse ? ("..." + replacedName.substring(0, trim)) : (replacedName.substring(replacedName.length - trim) + "...")
   }
-
-  closeModal() {
-    this.showInstall = false;
-    this.finishedInstalling = false;
+  
+  static fileNameFromMod(mod: Mod, file: ModVersion) {
+    return ModCard.fileName(mod.name, file.name);
   }
-
+  
+  _fileName(fileName: string) {
+    return ModCard.fileName(this.mod.name, fileName, 20);
+  }
+  
+  get projectInstalled() {
+    return this.installedMods.findIndex((e) => e[0] === this.mod.id) !== -1;
+  }
+  
+  get projectFileInstalled() {
+    return this.installedMods.findIndex((e) => e[1] === this.versions[this.versions.length - 1].id) !== -1;
+  }
+  
   get art() {
     return this.mod.art[0]?.url ?? 'broken';
   }
@@ -239,6 +121,15 @@ export default class ModCard extends Vue {
 
   get curseLink() {
     return this.mod.links.find((e) => e.type === 'curseforge');
+  }
+  
+  get versions() {
+    return this.mod.versions
+        .filter(
+          (e) =>
+            e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
+        )
+        .sort((a, b) => b.id - a.id) ?? [];
   }
 }
 </script>
@@ -262,7 +153,7 @@ export default class ModCard extends Vue {
     min-width: 120px;
 
     img {
-      max-width: 120px;
+      max-width: 80px;
       border-radius: 5px;
       margin: 0 auto;
     }
@@ -274,6 +165,7 @@ export default class ModCard extends Vue {
     .content {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
 
       .name {
         font-size: 1.1rem;
@@ -283,17 +175,21 @@ export default class ModCard extends Vue {
 
       .about {
         user-select: text;
+        flex: 1;
       }
     }
 
     .numbers {
       display: flex;
       align-items: center;
+      gap: 1.5rem;
 
       .stat {
-        margin-right: 2rem;
+        display: flex;
+        align-items: center;
+        gap: .8rem;
 
-        .text {
+        svg {
           opacity: 0.7;
         }
 

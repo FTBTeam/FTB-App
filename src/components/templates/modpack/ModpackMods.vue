@@ -3,8 +3,8 @@
     <div class="flex mb-8 gap-4 items-center">
       <f-t-b-search-bar placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
       <template v-if="packInstalled">
-        <ui-button type="success" @click="() => $emit('searchForMods')" icon="plus" ariaLabel="Add more mods" />
-        <ui-button type="info" icon="sync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="() => $emit('getModList', true)"/>
+        <ui-button type="success" @click="searchingForMods = true" icon="plus" ariaLabel="Add more mods" />
+        <ui-button type="info" icon="sync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="getModList(true)"/>
       </template>
     </div>
     
@@ -33,24 +33,38 @@
               <p class="only-one-line">{{file.curse.synopsis ?? ""}}</p>
             </div>
             
-            <ui-toggle v-if="file.fileName !== ''" :value="file.enabled" @input="() => toggleMod(file)" :disabled="togglingShas.includes(file.sha1)" />
+            <div class="meta flex gap-4 items-center">
+              <div class="update" v-if="modUpdatesAvailableKeys.includes(file.sha1)" :aria-label="`Update available (${modUpdates[file.sha1][0].fileName} -> ${modUpdates[file.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(file.sha1)">
+                <font-awesome-icon icon="download" :fixed-width="true" />
+              </div>
+              <ui-toggle v-if="file.fileName !== ''" :value="file.enabled" @input="() => toggleMod(file)" :disabled="togglingShas.includes(file.sha1)" />
+            </div>
           </div>
         </div>
       </template>
     </div>
+
+    <closable-panel
+      v-if="packInstalled"
+      :open="searchingForMods"
+      @close="searchingForMods = false"
+      :title="`Add mods to ${apiPack ? apiPack.name : ''}`"
+      subtitle="You can find mods for this pack using the search area below"
+    >
+      <find-mods :instance="instance" :installed-mods="installedMods" @modInstalled="getModList" />
+    </closable-panel>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import {prettyByteFormat} from '@/utils/helpers';
 import {Prop} from 'vue-property-decorator';
 import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import {Instance, ModPack} from '@/modules/modpacks/types';
+import {ModPack} from '@/modules/modpacks/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {ModInfo} from '@/core/@types/javaApi';
+import {CurseMetadata, InstanceJson, ModInfo, UpdateAvailable} from '@/core/@types/javaApi';
 import {containsIgnoreCase, stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/core/ui/UiButton.vue';
@@ -58,6 +72,8 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import Loader from '@/components/atoms/Loader.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
+import {emitter} from '@/utils';
+import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 
 export type ApiMod = {
 	fileId: number;
@@ -74,6 +90,7 @@ export type ApiMod = {
 @Component({
   methods: {stringIsEmpty, containsIgnoreCase},
   components: {
+    ClosablePanel,
     UiToggle,
     Loader,
     UiButton,
@@ -82,12 +99,11 @@ export type ApiMod = {
   },
 })
 export default class ModpackMods extends Vue {
-  @Prop() modlist!: ModInfo[];
-  @Prop() updatingModlist!: boolean;
   @Prop() packInstalled!: boolean;
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson;
   @Prop() apiPack!: ModPack;
   
+  updatingModlist = false;
   togglingShas: string[] = [];
 
   hiddenMods: string[] = [];
@@ -95,10 +111,19 @@ export default class ModpackMods extends Vue {
   
   modsLoading = false;
   apiMods: ApiMod[] = [];
+  modlist: ModInfo[] = [];
 
-  prettyBytes = prettyByteFormat;
+  searchingForMods = false;
+  
+  // Sha1 => [ModInfo, CurseMetadata]
+  modUpdates: Record<string, [ModInfo, CurseMetadata]> = {};
+  modUpdatesAvailableKeys: string[] = [];
   
   async mounted() {
+    if (this.packInstalled) {
+      emitter.on('ws.message', this.onModUpdateEvent)
+    }
+    
     if (!this.packInstalled && this.apiPack) {
       const latestVersion = this.apiPack.versions.sort((a, b) => b.id - a.id).find(e => !e.private);
       if (!latestVersion) {
@@ -112,7 +137,57 @@ export default class ModpackMods extends Vue {
       }
       
       this.apiMods = apiMods.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)))
+    } else {
+      this.getModList().catch(console.error)
     }
+  }
+
+  private async getModList(showAlert = false) {
+    try {
+      const mods = await toggleBeforeAndAfter(() => sendMessage("instanceMods", {
+        uuid: this.instance?.uuid ?? "",
+        _private: this.instance?._private ?? false,
+      }), state => this.updatingModlist = state)
+
+      this.modlist = mods.files;
+    } catch (e) {
+      alertController.error("Unable to load mods for this instance...")
+    }
+
+    if (showAlert) {
+      alertController.success('The mods list has been updated')
+    }
+  }
+  
+  destroyed() {
+    if (this.packInstalled) {
+      emitter.off('ws.message', this.onModUpdateEvent)
+    }
+  }
+  
+  onModUpdateEvent(data: any) {
+    if (data.type !== "instanceModUpdate") {
+      return;
+    }
+    
+    const typedPayload = data as UpdateAvailable;
+    this.modUpdates[typedPayload.file.sha1] = [typedPayload.file, typedPayload.update];
+    this.modUpdatesAvailableKeys = Object.keys(this.modUpdates);
+  }
+  
+  async updateMod(key: string) {
+    if (!this.modUpdates[key]) {
+      return;
+    }
+    
+    const [mod, update] = this.modUpdates[key];
+    const result = await sendMessage("instanceInstallMod", {
+      uuid: this.instance?.uuid,
+      modId: update.curseProject,
+      versionId: update.curseFile
+    })
+
+    console.log(result)
   }
   
   async toggleMod(file: ModInfo) {
@@ -154,7 +229,7 @@ export default class ModpackMods extends Vue {
   
   get packMods(): ModInfo[] | null {
     const results = this.modlist.filter(e => this.search === '' ? true : containsIgnoreCase(e.curse.name ?? e.fileName, this.search));
-    if (results.length === 0) {
+    if (results.length === 0 && this.search !== '') {
       return [{
         fileId: -1,
         fileName: 'No results found',
@@ -171,7 +246,7 @@ export default class ModpackMods extends Vue {
   
   get simpleMods() {
     const results = this.apiMods.filter(e => this.search === '' ? true : containsIgnoreCase(e.name ?? e.filename, this.search));
-    if (results.length === 0) {
+    if (results.length === 0 && this.search !== '') {
       return [{
           name: 'No results found',
           synopsis: 'Try searching for something else',
@@ -187,7 +262,10 @@ export default class ModpackMods extends Vue {
     
     return results.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)));
   }
-  
+
+  get installedMods() {
+    return this.packMods?.map(e => [e.curse.curseProject, e.curse.curseFile])
+  }
 }
 </script>
 

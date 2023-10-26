@@ -22,7 +22,7 @@
       </div>
       
       <div class="modloader" v-show="step === 1">
-          <modloader-select :mc-version="selectedMcVersion" @select="thing" :show-optional="true" />
+          <modloader-select :mc-version="selectedMcVersion" @select="v => userModLoader = v ?? null" :show-optional="true" />
       </div>
       
       <div class="settings" v-show="step === 2">
@@ -66,7 +66,6 @@ import {ModPack} from '@/modules/modpacks/types';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SettingsState} from '@/modules/settings/types';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
@@ -75,6 +74,7 @@ import {ModLoader} from '@/core/@types/modpacks/modloaders';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 
 @Component({
   components: {
@@ -103,15 +103,12 @@ export default class CreateInstance extends Vue {
   userSelectedArtwork: File | null = null;
   userPackName = "";
   userVanillaVersion = -1;
-  userModLoader = ""
-  userLoaderProvider = "";
+  userModLoader: ModLoader | null = null
   userCategory = "Default";
   
   vanillaPack: ModPack | null = null;
   showVanillaSnapshots = false;
-
-  availableLoaders: Record<string, ModLoader[]> = {};
-  loadingModloaders = false;
+  
   loadingVanilla = false;
   
   fatalError = false;
@@ -202,26 +199,17 @@ export default class CreateInstance extends Vue {
     }
     
     // Magic
-    if (stringIsEmpty(this.userModLoader)) {
+    if (!this.userModLoader) {
       instanceInstallController.requestInstall({
         id: 81, // Vanilla pack id
         version: this.userVanillaVersion ?? 0,
         ...sharedData
       })
     } else {
-      // Get the modloader pack id
-      const modLoader = this.availableLoaders[this.userLoaderProvider]
-        .find((e: any) => e.version === this.userModLoader);
-      
-      if (!modLoader) {
-        alertController.error("Failed to find mod loader")
-        return;
-      }
-      
       // We're working with a modloader
       instanceInstallController.requestInstall({
-        id: modLoader.pack,
-        version: modLoader.id,
+        id: this.userModLoader.pack,
+        version: this.userModLoader.id,
         ...sharedData
       })
     }
