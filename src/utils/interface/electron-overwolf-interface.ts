@@ -15,6 +15,7 @@ export interface Util {
   crypto: {
     randomUUID(): string;
   }
+  openDevTools: () => void;
 }
 
 export interface Actions {

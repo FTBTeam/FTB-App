@@ -1,13 +1,5 @@
 <template>
   <div class="titlebar" :class="{ isMac }" @mousedown="startDragging" @dblclick="minMax">
-    <div class="debug-items" v-if="inDevMode">
-      <span>Dev tools</span>
-      <router-link class="item" :to="{ name: 'home' }">
-        <font-awesome-icon icon="home" />
-      </router-link>
-      <font-awesome-icon class="item ml-4" icon="fire" @click="openDebugger"/>
-      <font-awesome-icon class="bars ml-4" icon="bars" @click="toggleDebugDisableAdAside" />
-    </div>
     <div class="meta-title">FTB App</div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">
@@ -45,13 +37,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import {Action, Mutation, State} from 'vuex-class';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
 import os from 'os';
 import platform from '@/utils/interface/electron-overwolf';
-import { SettingsState } from '@/modules/settings/types';
-import { sendMessage } from '@/core/websockets/websocketsApi';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {SettingsState} from '@/modules/settings/types';
 
 @Component
 export default class TitleBar extends Vue {
@@ -62,9 +52,7 @@ export default class TitleBar extends Vue {
   
   public isMac: boolean = false;
   private windowId: string | null = null;
-
-  inDevMode = process.env.NODE_ENV === 'development';
-
+  
   public mounted() {
     this.isMac = os.type() === 'Darwin';
 
@@ -94,10 +82,6 @@ export default class TitleBar extends Vue {
   public max(): void {
     platform.get.frame.max(this.windowId);
   }
-
-  openDebugger() {
-    gobbleError(() => sendMessage("openDebugTools", {}))
-  }
 }
 </script>
 
@@ -125,35 +109,6 @@ export default class TitleBar extends Vue {
       img {
         margin-left: 1rem;
         margin-right: 0;
-      }
-    }
-  }
-
-  .debug-items {
-    position: fixed;
-    padding: 0.5rem 1rem;
-    bottom: 1rem;
-    background-color: black;
-    z-index: 1000;
-    border-radius: 5px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-
-    span {
-      margin-right: 1rem;
-      font-size: 0.8rem;
-      opacity: 0.5;
-    }
-
-    .item {
-      display: block;
-      transition: 0.2s ease-in-out transform;
-
-      &:hover {
-        transform: scale(1.1);
       }
     }
   }

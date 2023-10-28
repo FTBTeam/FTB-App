@@ -282,6 +282,18 @@ ipcMain.on('openLink', (event, data) => {
   shell.openExternal(data);
 });
 
+ipcMain.on('openDevTools', (event, data) => {
+  if (win) {
+    // If dev tools is already open, focus it
+    if (win.webContents.isDevToolsOpened()) {
+      win.webContents.closeDevTools();
+      win.webContents.openDevTools();
+    } else {
+      win.webContents.openDevTools();
+    }
+  }
+});
+
 function createFriendsWindow() {
   if (friendsWindow !== null && friendsWindow !== undefined) {
     friendsWindow.focus();

@@ -41,9 +41,12 @@
     </div>
     
     <div class="latest-packs" v-if="searchValue === '' && !loading">
-      <h1 class="text-2xl font-bold mb-4">Latest Modpacks</h1>
       <div class="result-cards pb-2">
-        <pack-preview v-for="(packId, index) in latestPacks" :pack-id="packId" :key="index" />
+        <pack-preview v-for="(packId, index) in visiblePacks" :pack-id="packId" :key="`${currentPage}:${index}`" />
+      </div>
+
+      <div class="flex justify-center pb-8">
+        <ui-pagination v-if="ourPackIds.length" v-model="currentPage" :total="ourPackIds.length" :per-page="10" @input="scrollToTop" />
       </div>
       <loader class="mt-20" v-if="loadingInitialPacks" />
     </div>
@@ -64,9 +67,11 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import Loader from '@/components/atoms/Loader.vue';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
+import UiPagination from '@/components/core/ui/UiPagination.vue';
 
 @Component({
   components: {
+    UiPagination,
     PackPreview,
     Loader,
     FTBSearchBar
@@ -88,6 +93,10 @@ export default class BrowseModpacks extends Vue {
   error = '';
   
   loadingInitialPacks = false;
+  
+  ourPackIds: number[] = [];
+  currentPage = 1;
+  visiblePacks: number[] = [];
 
   async mounted() {
     if (this.$route.params.search) {
@@ -96,9 +105,32 @@ export default class BrowseModpacks extends Vue {
       return;
     }
 
-    await toggleBeforeAndAfter(this.getLatestPacks, (state) => this.loadingInitialPacks = state);
+    await toggleBeforeAndAfter(async () => {
+      const data = await Promise.all([
+        await modpackApi.modpacks.getModpacks(),
+        await modpackApi.modpacks.getPrivatePacks()
+      ])
+      
+      const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
+      this.ourPackIds = [...allPackIds].sort((a, b) => b - a);
+      
+      this.visiblePacks = this.ourPackIds.slice(0, 10);
+    }, (state) => this.loadingInitialPacks = state);
   }
 
+  scrollToTop() {
+    // Smooth scroll to top
+    document.querySelector('.app-content')?.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
+  
+  @Watch('currentPage')
+  onPageChange() {
+    this.visiblePacks = this.ourPackIds.slice((this.currentPage - 1) * 10, ((this.currentPage - 1) * 10 + 10));
+  }
+  
   @Watch('$route')
   public async onPropertyChanged(value: Route, oldValue: Route) {
     if (value.params.search !== oldValue.params.search) {

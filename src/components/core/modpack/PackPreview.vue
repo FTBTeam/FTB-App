@@ -9,7 +9,7 @@
         <img :src="logo" :alt="`Pack art for ${packData.name}`" />
       </div>
       <div class="pack-main">
-        <div class="name">{{ packData.name }} <span>by</span> {{ packData.authors.map((e) => e.name).join(', ') }}</div>
+        <div class="name">{{ packData.name }} <span v-if="packData.authors.length">by</span> {{ provider === "modpacksch" && packTags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1 ? "FTB Team" : packData.authors.map((e) => e.name).join(', ') }}</div>
         <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
           {{ packData.synopsis }}
         </div>

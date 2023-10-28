@@ -163,7 +163,11 @@ const Electron: ElectronOverwolfInterface = {
       randomUUID(): string {
         return (crypto as any).randomUUID();
       }
-    }
+    },
+    
+    openDevTools() {
+      ipcRenderer.send('openDevTools');
+    },
   },
 
   // Actions

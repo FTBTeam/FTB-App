@@ -32,6 +32,8 @@
     <changelog />
     <dialogs />
     <alerts />
+    
+    <dev-tools-actions />
   </div>
 </template>
 
@@ -48,9 +50,11 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
+import DevToolsActions from '@/components/core/misc/DevToolsActions.vue';
 
 @Component({
   components: {
+    DevToolsActions,
     UiButton,
     Alerts,
     Dialogs,

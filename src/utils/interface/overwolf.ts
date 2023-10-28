@@ -57,6 +57,11 @@ const Overwolf: ElectronOverwolfInterface = {
       randomUUID(): string {
         return overwolf.windows.getMainWindow().randomUUID() as string;
       }
+    },
+
+    openDevTools() {
+      // TODO: (M#01) validate this works 
+      overwolf.windows.getMainWindow().openDevTools();
     }
   },
 
