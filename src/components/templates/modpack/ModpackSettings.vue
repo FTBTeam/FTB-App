@@ -112,7 +112,7 @@
       :align-right="true"
       label="Enable cloud save uploads"
       desc="You can only use Cloud Saves if you have an active paid plan on MineTogether."
-      :disabled="canUseCloudSaves || toggleSavesWorking"
+      :disabled="!canUseCloudSaves || toggleSavesWorking"
       :value="instanceSettings.cloudSaves"
       @input="toggleCloudSaves"
       class="mb-8"
@@ -467,11 +467,15 @@ export default class ModpackSettings extends Vue {
   }
 
   get canUseCloudSaves() {
-    return (
+    const result = (
       this.auth.token?.activePlan !== null &&
       !this.settingsState.settings.cloudSaves &&
       (this.settingsState.settings.cloudSaves as boolean | 'true' | 'false') !== 'true'
     );
+    
+    console.log(result)
+    console.log(this.toggleSavesWorking)
+    return result;
   }
 
   get channelOptions() {

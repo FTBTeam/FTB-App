@@ -106,14 +106,15 @@ export default class AppSettings extends Vue {
       case 'logs':
         toggleBeforeAndAfter(() => platform.get.io.openFinder(path.join(this.getAppHome(), 'logs')), state => this.working = state)
         break;
-        
+      default:
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => this.working = state)
+        break;
     }
   }
 
   getAppHome() {
-    if (os.platform() == "win32") {
-      // TODO: (M#01) Check if this is correct
-      return path.join(os.homedir(), 'AppData', 'local', '.ftba');
+    if (this.platform.isOverwolf()) {
+      return path.join(this.platform.get.io.getLocalAppData(), '.ftba');
     } else if (os.platform() === "darwin") {
       return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
     } else {

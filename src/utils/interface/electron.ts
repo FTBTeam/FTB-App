@@ -313,6 +313,10 @@ const Electron: ElectronOverwolfInterface = {
     
     openFinder(path: string): Promise<boolean> {
       return ipcRenderer.invoke('openFinder', path);
+    },
+    
+    getLocalAppData() {
+      return path.join(os.homedir(), "AppData", "Local"); 
     }
   },
 

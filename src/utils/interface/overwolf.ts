@@ -60,8 +60,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     openDevTools() {
-      // TODO: (M#01) validate this works 
-      overwolf.windows.getMainWindow().openDevTools();
+      // No way to do this on overwolf atm
     }
   },
 
@@ -238,6 +237,10 @@ const Overwolf: ElectronOverwolfInterface = {
           resolve(result.status === 'success');
         });
       });
+    },
+    
+    getLocalAppData() {
+      return overwolf.io.paths.localAppData;
     }
   },
 

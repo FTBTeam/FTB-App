@@ -69,6 +69,8 @@ export interface InputOutput {
   selectFileDialog: (cb: (selectedFile: string | null) => void) => void;
   
   openFinder(path: string): Promise<boolean>;
+  
+  getLocalAppData: () => string;
 }
 
 export interface Websocket {
