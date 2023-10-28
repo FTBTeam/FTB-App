@@ -310,6 +310,10 @@ const Electron: ElectronOverwolfInterface = {
         })
         .catch(() => cb(null));
     },
+    
+    openFinder(path: string): Promise<boolean> {
+      return ipcRenderer.invoke('openFinder', path);
+    }
   },
 
   // Websockets

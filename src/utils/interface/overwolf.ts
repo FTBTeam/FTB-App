@@ -231,6 +231,14 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+    
+    openFinder(path: string): Promise<boolean> {
+      return new Promise((resolve) => {
+        overwolf.utils.openWindowsExplorer(path, (result: any) => {
+          resolve(result.status === 'success');
+        });
+      });
+    }
   },
 
   // Websockets

@@ -219,6 +219,16 @@ ipcMain.handle('selectFolder', async (event, data) => {
   }
 });
 
+ipcMain.handle('openFinder', async (event, data) => {
+  try {
+    await shell.openPath(data);
+    return true;    
+  } catch (e) {
+    log.error(e);
+    return false;
+  }
+});
+
 ipcMain.handle('selectFile', async (event) => {
   if (win === null) {
     return null;

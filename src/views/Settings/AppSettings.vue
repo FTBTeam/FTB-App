@@ -26,6 +26,15 @@
       :disabled="true"
       class="mb-8"
     />
+
+    <p class="block text-white-700 text-lg font-bold mb-4">Actions</p>
+
+    <p class="block text-white-700 font-bold mb-4">Open paths</p>
+    <div class="flex items-center gap-4">
+      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('home')" :working="working">Home</ui-button>
+      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('instances')" :working="working">Instances</ui-button>
+      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('logs')" :working="working">Logs</ui-button>
+    </div>
     
     <!--      :disabled="auth.token === null ? 'true' : ''"-->
     <!--      :value="localSettings.enableChat"-->
@@ -39,20 +48,27 @@ import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import {AuthState} from '@/modules/auth/types';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import os from 'os';
+import path from 'path';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 
 @Component({
   components: {
+    UiButton,
     UiToggle,
   },
 })
 export default class AppSettings extends Vue {
-  @State('auth') private auth!: AuthState;
-  @State('settings') public settingsState!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
+  @State('auth') auth!: AuthState;
+  @State('settings') settingsState!: SettingsState;
+  @Action('saveSettings', { namespace: 'settings' }) saveSettings: any;
+  @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
 
   platform = platform;
   localSettings: Settings = {} as Settings;
+  
+  working = false;
 
   async created() {
     await this.loadSettings();
@@ -61,22 +77,48 @@ export default class AppSettings extends Vue {
     this.localSettings = { ...this.settingsState.settings };
   }
 
-  public enablePreview(value: boolean): void {
+  enablePreview(value: boolean): void {
     this.localSettings.enablePreview = value;
     this.saveSettings(this.localSettings);
   }
 
-  public enableChat(value: boolean): void {
+  enableChat(value: boolean): void {
     if (this.auth.token !== null) {
       this.localSettings.enableChat = value;
       this.saveSettings(this.localSettings);
     }
   }
 
-  public exitOverwolf(value: boolean): void {
+  exitOverwolf(value: boolean): void {
     this.localSettings.exitOverwolf = value;
     this.saveSettings(this.localSettings);
     platform.get.actions.changeExitOverwolfSetting(value);
+  }
+  
+  openFolder(location: string) {
+    switch (location) {
+      case 'home':
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(this.getAppHome()), state => this.working = state)
+        break;
+      case 'instances': 
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
+        break;
+      case 'logs':
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(path.join(this.getAppHome(), 'logs')), state => this.working = state)
+        break;
+        
+    }
+  }
+
+  getAppHome() {
+    if (os.platform() == "win32") {
+      // TODO: (M#01) Check if this is correct
+      return path.join(os.homedir(), 'AppData', 'local', '.ftba');
+    } else if (os.platform() === "darwin") {
+      return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+    } else {
+      return path.join(os.homedir(), '.ftba');
+    }
   }
 }
 </script>
