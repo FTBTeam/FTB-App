@@ -25,12 +25,12 @@
       <template v-if="packInstalled">
         <div class="complex-mod mod" v-for="(file, index) in packMods" :key="index">
           <div class="flex gap-6 items-center mb-4">
-            <img v-if="file.curse.icon" :src="file.curse.icon" class="rounded" width="40" alt="">
+            <img v-if="file.curse && file.curse.icon" :src="file.curse.icon" class="rounded" width="40" alt="">
             <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="file.fileName !== ''"></div>
             
             <div class="main flex-1 transition-opacity duration-200" :class="{'opacity-50': !file.enabled}">
-              <b class="mb-1 block">{{file.curse.name || file.fileName.replace(".jar", "")}}</b>
-              <p class="only-one-line">{{file.curse.synopsis ?? ""}}</p>
+              <b class="mb-1 block">{{file.curse?.name || file.fileName.replace(".jar", "")}}</b>
+              <p class="only-one-line">{{file.curse?.synopsis ?? ""}}</p>
             </div>
             
             <div class="meta flex gap-4 items-center">
@@ -187,6 +187,7 @@ export default class ModpackMods extends Vue {
       versionId: update.curseFile
     })
 
+    // TODO: (M#01) FINISH THIS ENDPOINT
     console.log(result)
   }
   
@@ -228,7 +229,7 @@ export default class ModpackMods extends Vue {
   }
   
   get packMods(): ModInfo[] | null {
-    const results = this.modlist.filter(e => this.search === '' ? true : containsIgnoreCase(e.curse.name ?? e.fileName, this.search));
+    const results = this.modlist.filter(e => this.search === '' ? true : containsIgnoreCase(e.curse?.name ?? e.fileName, this.search));
     if (results.length === 0 && this.search !== '') {
       return [{
         fileId: -1,
@@ -241,7 +242,7 @@ export default class ModpackMods extends Vue {
       }]
     }
     
-    return results.sort((a, b) => (a.curse.name ?? a.fileName).localeCompare((b.curse.name ?? b.fileName)));
+    return results.sort((a, b) => (a.curse?.name ?? a.fileName).localeCompare((b.curse?.name ?? b.fileName)));
   }
   
   get simpleMods() {
@@ -264,7 +265,7 @@ export default class ModpackMods extends Vue {
   }
 
   get installedMods() {
-    return this.packMods?.map(e => [e.curse.curseProject, e.curse.curseFile])
+    return this.packMods?.filter(e => e.curse).map(e => [e.curse.curseProject, e.curse.curseFile])
   }
 }
 </script>

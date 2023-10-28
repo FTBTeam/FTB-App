@@ -199,7 +199,6 @@ class InstanceInstallController {
    */
   private async installPack(request: InstallRequest) {
     if (this.installLock) {
-      console.log("Locking install queue")
       return;
     }
     

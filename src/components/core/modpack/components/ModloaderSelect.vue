@@ -100,8 +100,7 @@ export default class ModloaderSelect extends Vue {
       if (loaderData.total === 0) {
         continue;
       }
-
-      console.log(loaderData.loaders, `loaders/${mcVersion}/${loader}`)
+      
       foundLoadersForVersion[loader] = loaderData.loaders.sort((a, b) => b.id - a.id);
     }
 

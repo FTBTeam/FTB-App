@@ -351,7 +351,7 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
       ws.addEventListener('open', (event) => {
-        console.log('Connected to socket!');
+        console.log('Connected to socket!', mainWindow.getWebsocketData());
         if (mainWindow.getWebsocketData().dev || mainWindow.getWebsocketData().secret !== undefined) {
           console.log('Socket opened correctly and ready!');
           setTimeout(() => {

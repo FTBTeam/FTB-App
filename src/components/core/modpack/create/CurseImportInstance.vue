@@ -101,7 +101,6 @@ export default class CurseImportInstance extends Vue {
     }
 
     await instanceInstallController.requestImport(this.activeFile.path, this.category)
-    console.log(this.activeFile.path)
     this.activeFile = null;
     
     await gobbleError(() => {

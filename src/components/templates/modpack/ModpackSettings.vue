@@ -280,8 +280,6 @@ export default class ModpackSettings extends Vue {
   userSelectedLoader: [string, ModLoader] | null = null;
 
   async mounted() {
-    console.log(this.instance)
-    
     const javas = await sendMessage("getJavas");
     this.javaVersions = javas.javas;
     
@@ -473,6 +471,7 @@ export default class ModpackSettings extends Vue {
       (this.settingsState.settings.cloudSaves as boolean | 'true' | 'false') !== 'true'
     );
     
+    // TODO: (M#01) finish user response
     console.log(result)
     console.log(this.toggleSavesWorking)
     return result;

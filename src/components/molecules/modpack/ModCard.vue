@@ -82,7 +82,6 @@ export default class ModCard extends Vue {
       for (const variation of variations) {
         for (const lookup of lookups) {
           const regex = new RegExp(`(${variation.replace("$1", lookup)})`, "gi");
-          console.log(replacedName = replacedName.replace(regex, ""))
           replacedName = replacedName.replace(regex, "");
         }
       }

@@ -1,6 +1,6 @@
 <template>
   <transition name="transition-fade" duration="250">
-    <div class="dialog-container" :class="{'overwolf': appPlatform.isOverwolf()}" v-if="dialogs.length" @click.self="closeTopDialog">
+    <div class="dialog-container" :class="{'overwolf': appPlatform.isOverwolf(), ads: advertsEnabled}" v-if="dialogs.length" @click.self="closeTopDialog">
       <transition-group class="stacker" tag="div" name="transition-fade" duration="250">
         <div
           v-for="(dialog, index) in dialogs"
@@ -48,9 +48,11 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {Dialog} from '@/core/state/misc/dialogsState';
 import {ns} from '@/core/state/appState';
-import {Action, Getter} from 'vuex-class';
+import {Action, Getter, State} from 'vuex-class';
 import {parseMarkdown} from '@/utils';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import {SettingsState} from '@/modules/settings/types';
+import {AuthState} from '@/modules/auth/types';
 
 @Component({
   components: {UiButton}
@@ -82,6 +84,23 @@ export default class Dialogs extends Vue {
       this.closeDialog(this.dialogs[this.dialogs.length - 1]);
     }
   }
+
+  // Not ideal...
+  @State('settings') public settings!: SettingsState;
+  @State('auth') public auth!: AuthState;
+  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  get advertsEnabled(): boolean {
+    if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
+      return false
+    }
+
+    if (!this.auth?.token?.activePlan) {
+      return true;
+    }
+
+    // If this fails, show the ads
+    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+  }
 }
 </script>
 
@@ -92,14 +111,19 @@ export default class Dialogs extends Vue {
   backdrop-filter: blur(3px);
   top: 0;
   left: 0;
-  width: calc(100% - (300px + 2.5rem));
+  width: 100%;
   height: 100%;
   overflow: hidden;
   background: rgba(black, 0.75);
   
-  &.overwolf {
-    width: calc(100% - 400px);
+  &.ads {
+    width: calc(100% - (300px + 2.5rem));
+    
+    &.overwolf {
+      width: calc(100% - 400px);
+    }
   }
+  
 
   .stacker {
     position: relative;
