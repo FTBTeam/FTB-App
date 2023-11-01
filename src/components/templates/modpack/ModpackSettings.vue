@@ -390,9 +390,13 @@ export default class ModpackSettings extends Vue {
     console.log(result)
   }
 
-  toggleLock() {
-    this.instanceSettings.locked = !this.instanceSettings.locked;
-    this.saveSettings();
+  async toggleLock() {
+    const newState = !this.instanceSettings.locked;
+    if (!newState && !(await dialogsController.createConfirmationDialog("Are you sure?", "Unlocking this instance will allow you to add extra mods and modify the instance in other ways. This can allow for destructive actions!\n\nAre you sure you want to unlock this instance?"))) {
+      return;
+    }
+    this.instanceSettings.locked = newState;
+    await this.saveSettings();
   }
 
   public async saveSettings() {
