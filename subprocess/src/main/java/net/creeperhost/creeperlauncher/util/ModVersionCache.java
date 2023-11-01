@@ -50,7 +50,11 @@ public class ModVersionCache {
             .build(new CacheLoader<>() {
                 @Override
                 public ModManifest load(Long key) throws Exception {
-                    return ModManifest.queryManifest(key);
+                    try {
+                        return ModManifest.queryManifest(key);
+                    } catch (Throwable ex) {
+                        throw new IllegalStateException("Failed to query mod manifest for: " + key, ex);
+                    }
                 }
             });
 
