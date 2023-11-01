@@ -1,25 +1,25 @@
 <template>
-  <div 
-    :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]" 
-    @click="click"
-    :aria-label="ariaLabel ? ariaLabel : undefined"
-    :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined"
-  >
-    <span :class="{'opacity-0': working}">
-      <font-awesome-icon v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
-      <slot />
-    </span>
-    <transition name="fade">
-      <span v-if="working" class="absolute inset-0 flex items-center justify-center">
-        <font-awesome-icon icon="spinner" spin />
+  <div class="ui-button-holder" :aria-label="ariaLabel ? ariaLabel : undefined" :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined" :class="{'disabled': working || disabled}">
+    <div 
+      :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]" 
+      @click="click"
+    >
+      <span :class="{'opacity-0': working}">
+        <font-awesome-icon v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
+        <slot />
       </span>
-    </transition>
+      <transition name="fade">
+        <span v-if="working" class="absolute inset-0 flex items-center justify-center">
+          <font-awesome-icon icon="spinner" spin />
+        </span>
+      </transition>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 
 type ButtonType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
 type ButtonSize = 'small' | 'normal' | 'large';
@@ -39,29 +39,35 @@ export default class UiButton extends Vue {
   @Prop({ default: "" }) ariaLabel!: string;
   @Prop({ default: "down" as AriaDirection }) ariaLabelPos!: AriaDirection;
   
-  @Emit() click(event: MouseEvent) {
+  click(event: MouseEvent) {
     if (this.disabled || this.working) {
       return;
     }
     
-    return event;
+    this.$emit('click', event);
   }
   
   get colorFromType() {
     switch (this.type) {
-      case 'primary': return 'bg-indigo-600 hover:bg-indigo-500';
-      case 'secondary': return 'bg-green-600 hover:bg-green-500';
-      case 'success': return 'bg-primary hover:bg-light-primary';
-      case 'danger': return 'bg-danger hover:bg-light-danger';
-      case 'warning': return 'bg-warning hover:bg-light-warning';
-      case 'info': return 'bg-info hover:bg-light-info';
-      case 'normal': return 'bg-gray-600 hover:bg-gray-500';
+      case 'primary': return 'bg-indigo-600' + (!this.disabled && !this.working ? ' hover:bg-indigo-500' : '');
+      case 'secondary': return 'bg-green-600' + (!this.disabled && !this.working ? ' hover:bg-green-500' : '');
+      case 'success': return 'bg-primary' + (!this.disabled && !this.working ? ' hover:bg-light-primary' : '');
+      case 'danger': return 'bg-danger' + (!this.disabled && !this.working ? ' hover:bg-light-danger' : '');
+      case 'warning': return 'bg-warning' + (!this.disabled && !this.working ? ' hover:bg-light-warning' : '');
+      case 'info': return 'bg-info' + (!this.disabled && !this.working ? ' hover:bg-light-info' : '');
+      case 'normal': return 'bg-gray-600' + (!this.disabled && !this.working ? ' hover:bg-gray-500' : '');
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
+.ui-button-holder {
+  &.disabled {
+    cursor: not-allowed;
+  }
+}
+
 .ui-button {
   border-radius: 3px;
   position: relative;

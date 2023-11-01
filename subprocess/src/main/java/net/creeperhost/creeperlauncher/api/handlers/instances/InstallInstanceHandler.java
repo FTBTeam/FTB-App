@@ -1,6 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.io.IOUtils;
 import net.creeperhost.creeperlauncher.*;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
@@ -154,6 +153,19 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         }
         Instance instance = new Instance(data.name, data.artPath, data.category, modpackManifest, versionManifest, mcVersion, isPrivate, packType);
         instance.props.isImport = isImport;
+        
+        // If the instance is our own, we shouldn't lock it by default.
+        if (data.ourOwn) {
+            instance.props.locked = false;
+        }
+        
+        if (data.fullscreen) instance.props.fullscreen = true;
+        // TODO: (M#01) Validate that they can use it or do we not care? @covers
+        if (data.cloudSaves) instance.props.cloudSaves = true;
+        if (data.ram != -1) instance.props.memory = data.ram;
+        if (data.screenWidth != -1) instance.props.width = data.screenWidth;
+        if (data.screenHeight != -1) instance.props.height = data.screenHeight;
+        
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
             Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);
         }

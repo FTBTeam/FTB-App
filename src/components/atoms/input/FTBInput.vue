@@ -8,8 +8,8 @@
       <label class="block tracking-wide mb-2" v-if="label">
         {{ label }}
       </label>
-      <div class="flex flex-row items-center">
-        <div class="input-area block w-full">
+      <div class="flex flex-row w-full gap-4 items-center">
+        <div class="input-area block flex-1">
           <input
             class="appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded"
             :type="type"
@@ -33,13 +33,14 @@
         <ftb-button v-if="button" :color="buttonColor" @click="handleClick" class="py-2 px-4 rounded-l-none py-2">{{
           buttonText
         }}</ftb-button>
+        <slot name="extra"></slot>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 
 @Component

@@ -14,6 +14,7 @@ export type SaveJson = {
   releaseChannel: string;
   instanceImage?: string;
   category: string;
+  locked: boolean;
 }
 
 /**

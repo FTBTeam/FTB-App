@@ -26,6 +26,13 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /**
+ * Checks if a string array contains a string ignoring case
+ */
+export function stringListContainsIgnoreCase(array: string[], value: string): boolean {
+  return array.some(item => item.toLowerCase() === value.toLowerCase());
+}
+
+/**
  * Array sorter taking in T[] and returning T[], accepting a field finder method and a sort direction
  */
 export function sortBy<T>(array: T[], fieldFinder: (item: T) => any, direction: 'asc' | 'desc' = 'asc'): T[] {

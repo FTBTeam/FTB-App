@@ -103,7 +103,7 @@ export default class CreateInstance extends Vue {
   userSelectedArtwork: File | null = null;
   userPackName = "";
   userVanillaVersion = -1;
-  userModLoader: ModLoader | null = null
+  userModLoader: [string, ModLoader] | null = null
   userCategory = "Default";
   
   vanillaPack: ModPack | null = null;
@@ -208,8 +208,8 @@ export default class CreateInstance extends Vue {
     } else {
       // We're working with a modloader
       instanceInstallController.requestInstall({
-        id: this.userModLoader.pack,
-        version: this.userModLoader.id,
+        id: this.userModLoader[1].pack,
+        version: this.userModLoader[1].id,
         ...sharedData
       })
     }

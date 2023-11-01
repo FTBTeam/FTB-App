@@ -62,6 +62,7 @@ export interface Config {
   webVersion: string;
   dateCompiled: string;
   javaLicenses: object;
+  branch: string
 }
 
 export interface InputOutput {

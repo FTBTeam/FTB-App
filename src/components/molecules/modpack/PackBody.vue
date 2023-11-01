@@ -2,37 +2,54 @@
   <div class="tab-actions-body" v-if="instance || packInstance">
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
-        <div class="play">
-          <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
-            <font-awesome-icon :icon="isInstalled ? (requiresSync ? 'download' : 'play') : 'download'" class="mr-4" />
-            {{ isInstalled ? (requiresSync ? 'Sync' : 'Play') : 'Install' }}
-          </ftb-button>
+        <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': isInstalling && currentInstall}">
+          <div class="play">
+            <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
+              <font-awesome-icon :icon="isInstalled ? (requiresSync ? 'download' : 'play') : 'download'" class="mr-4" />
+              {{ isInstalled ? (requiresSync ? 'Sync' : 'Play') : 'Install' }}
+            </ftb-button>
 
-          <pack-actions
-            v-if="instance && isInstalled"
-            :instance="instance"
-            :allow-offline="allowOffline"
-            @openSettings="$emit('tabChange', tabs.SETTINGS)"
-            @playOffline="$emit('playOffline')"
-          />
+            <pack-actions
+              v-if="instance && isInstalled"
+              :instance="instance"
+              :allow-offline="allowOffline"
+              @openSettings="$emit('tabChange', tabs.SETTINGS)"
+              @playOffline="$emit('playOffline')"
+            />
+          </div>
+
+          <div class="options">
+            <PackUpdateButton
+              v-if="isInstalled"
+              :instance="packInstance"
+              :localInstance="instance"
+              @update="$emit('update')"
+            />
+            <div class="option" v-if="packInstance" @click="() => $emit('showVersion')">
+              Versions
+              <font-awesome-icon icon="code-branch" class="ml-2" />
+            </div>
+            <div class="option" @click="() => $emit('tabChange', tabs.SETTINGS)" v-if="isInstalled">
+              Settings
+              <font-awesome-icon icon="cogs" class="ml-2" />
+            </div>
+          </div>
         </div>
 
-        <div class="options">
-          <PackUpdateButton
-            v-if="isInstalled"
-            :instance="packInstance"
-            :localInstance="instance"
-            @update="$emit('update')"
-          />
-          <div class="option" v-if="packInstance" @click="() => $emit('showVersion')">
-            Versions
-            <font-awesome-icon icon="code-branch" class="ml-2" />
+        <transition name="transition-fade" duration="250">
+          <div class="install-progress" v-if="isInstalling && currentInstall">
+            <div class="status flex gap-4 mb-4">
+              <div class="percent">{{currentInstall.progress}}<span>%</span></div>
+              <b>{{currentInstall.stage ?? "??"}}</b>
+              <transition name="transition-fade" duration="250">
+                <div class="files text-sm" v-if="currentInstall.speed">
+                  <font-awesome-icon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
+                </div>
+              </transition>
+            </div>
+            <progress-bar class="progress" :progress="parseFloat(currentInstall?.progress ?? '0') / 100" />
           </div>
-          <div class="option" @click="() => $emit('tabChange', tabs.SETTINGS)" v-if="isInstalled">
-            Settings
-            <font-awesome-icon icon="cogs" class="ml-2" />
-          </div>
-        </div>
+        </transition>
       </div>
 
       <div class="tabs">
@@ -197,10 +214,15 @@ import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {parseMarkdown} from '@/utils';
+import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import {ns} from '@/core/state/appState';
+import {InstallStatus} from '@/core/controllers/InstanceInstallController';
+import {Getter} from 'vuex-class';
 
 @Component({
   name: 'pack-body',
   components: {
+    ProgressBar,
     Loader,
     PackUpdateButton,
     ModpackSettings,
@@ -224,6 +246,8 @@ export default class PackBody extends Vue {
 
   @Prop({ default: () => [] }) backups!: Backup[];
 
+  @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
+  
   Platform = Platform;
 
   tabs = ModpackPageTabs;
@@ -258,26 +282,20 @@ export default class PackBody extends Vue {
     };
   }
 
-  get isVanilla() {
-    return this.instance?.id === 81;
+  get isInstalling() {
+    if (!this.currentInstall) {
+      return false;
+    }
+
+    return this.currentInstall?.forInstanceUuid === this.instance.uuid
   }
 
-  // get currentVersionObject(): Versions | null {
-  //   if (this.instance === null) {
-  //     return null;
-  //   }
-  //
-  //   if (this.packInstance !== null) {
-  //     if (this.packInstance.versions === undefined) {
-  //       return null;
-  //     }
-  //     const version = this.packInstance.versions.find((f: Versions) => f.id === this.instance?.versionId);
-  //     if (version !== undefined) {
-  //       return version;
-  //     }
-  //   }
-  //   return null;
-  // }
+  get isVanilla() {
+    // This should likely be done a smarter way
+    return this.instance 
+      ? this.instance.modLoader === this.instance.mcVersion
+      : this.packInstance?.id === 81;
+  }
   
   get requiresSync() {
     return this.instance?.pendingCloudInstance ?? false;
@@ -293,10 +311,13 @@ export default class PackBody extends Vue {
 <style lang="scss" scoped>
 .action-heading {
   padding: 1rem 1.5rem 1.5rem;
-  display: flex;
-  align-items: center;
   background-color: rgba(black, 0.2);
+  position: relative;
 
+  .action-holder {
+    position: relative;
+  }
+  
   .play {
     margin-right: 2rem;
     position: relative;
@@ -323,6 +344,13 @@ export default class PackBody extends Vue {
         opacity: 1;
       }
     }
+  }
+  
+  .install-progress {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    padding: 1rem;
   }
 }
 

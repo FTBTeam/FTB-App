@@ -35,6 +35,7 @@ const Overwolf: ElectronOverwolfInterface = {
     webVersion: versionData.webVersion ?? 'Missing Version File',
     dateCompiled: versionData.timestampBuilt ?? 'Missing Version File',
     javaLicenses: versionData.javaLicense ?? {},
+    branch: versionData.branch ?? 'Release'
   },
 
   // Tools

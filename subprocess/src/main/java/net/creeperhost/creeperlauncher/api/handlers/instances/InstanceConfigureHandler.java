@@ -51,6 +51,9 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.category = getOrDefault(updateJson, "category", JsonElement::getAsString, instance.props.category);
             instance.props.embeddedJre = jreRealPath == null;
             
+            // Support for unlocking a modpack
+            instance.props.locked = getOrDefault(updateJson, "locked", JsonElement::getAsBoolean, instance.props.locked);
+            
             var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
             if (instanceImage != null) {
                 try {

@@ -1,6 +1,4 @@
-/* tslint:disable */
-/* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-10-20 00:46:55.
+// @ts-nocheck
 
 export interface BaseData {
     type: string;
@@ -105,6 +103,12 @@ export interface InstallInstanceData extends BaseData {
     name: string;
     artPath: string;
     category: string;
+    ourOwn: boolean;
+    ram: number;
+    fullscreen: boolean;
+    cloudSaves: boolean;
+    screenWidth: number;
+    screenHeight: number;
 }
 
 export interface InstallInstanceDataReply extends BaseData {
@@ -207,6 +211,9 @@ export interface InstanceModsDataReply extends InstanceModsData {
 export interface UpdateAvailable extends InstanceModsData {
     file: ModInfo;
     update: CurseMetadata;
+}
+
+export interface UpdateCheckingFinished extends InstanceModsData {
 }
 
 export interface InstanceOverrideModLoaderData extends BaseData {
@@ -676,6 +683,7 @@ export interface InstanceJson {
     installComplete: boolean;
     category: string;
     releaseChannel: string;
+    locked: boolean;
     packType: number;
     _private: boolean;
     totalPlayTime: number;

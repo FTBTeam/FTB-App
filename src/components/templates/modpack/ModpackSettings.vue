@@ -10,8 +10,14 @@
       v-model="instanceSettings.name"
       @blur="saveSettings"
       class="mb-4"
-    />
-    
+    >
+      <template #extra>
+        <ui-button :icon="instanceSettings.locked ? 'unlock' : 'lock'" @click="toggleLock">
+          {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
+        </ui-button>
+      </template>
+    </ftb-input>
+  
     <category-selector :open-down="true" class="mb-6" v-model="instanceSettings.category" @input="() => saveSettings()" />
 
     <div class="buttons flex gap-4 mb-8">
@@ -140,11 +146,12 @@
       </div>
 
       <div class="flex items-center mb-6">
-        <div class="block flex-1 mr-2">
+        <div class="block flex-1 mr-2" :class="{'opacity-75': instance.locked}">
           <b>Modloader</b>
-          <small class="block text-muted mr-6 mt-2">Hi</small>
+          <div v-if="instance.locked" class="mt-2 text-red-400">The instances Modloader can not be modified whilst the instance is locked.</div>
+          <small class="block text-muted mr-6 mt-2">At any point you can update / down grade your mod loader for any modpack. This can sometimes be a destructive action and we recommend only doing this when you know what you're doing.</small>
           
-          <div class="buttons flex gap-2 mt-4">
+          <div class="buttons flex gap-2 mt-4" v-if="!instance.locked">
             <ui-button v-if="!hasModloader" size="small" type="info" icon="download" @click="userSelectModLoader = true">Install Modloader</ui-button>
             <ui-button v-else size="small" type="info" icon="pen" @click="userSelectModLoader = true">Update Modloader</ui-button>
           </div>
@@ -201,12 +208,14 @@
     <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
     
     <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="userSelectModLoader = false">
-      <modloader-select v-model="userSelectedLoader" :mc-version="instance.mcVersion" />
+      <modloader-select @select="e => userSelectedLoader = e" :mc-version="instance.mcVersion" :provide-latest-option="false" :show-none="false" />
+      
+      {{userSelectedLoader}}
       
       <template #footer>
         <div class="flex justify-end gap-4">
           <ui-button type="warning" icon="times" @click="userSelectModLoader = false">Close</ui-button>
-          <ui-button type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null">Install</ui-button>
+          <ui-button type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null" @click="installModloader">Install</ui-button>
         </div>
       </template>
     </modal>
@@ -367,6 +376,25 @@ export default class ModpackSettings extends Vue {
     this.$emit("back")
   }
 
+  async installModloader() {
+    if (!this.userSelectedLoader) {
+      return;
+    }
+    
+    const result = await sendMessage("instanceOverrideModLoader", {
+      uuid: this.instance.uuid,
+      modLoaderId: this.userSelectedLoader[1].pack,
+      modLoaderVersion: this.userSelectedLoader[1].id
+    });
+    
+    console.log(result)
+  }
+
+  toggleLock() {
+    this.instanceSettings.locked = !this.instanceSettings.locked;
+    this.saveSettings();
+  }
+
   public async saveSettings() {
     // Compare the previous settings to the current settings
     // Yes... this is really how we do it...
@@ -431,6 +459,7 @@ export default class ModpackSettings extends Vue {
       fullScreen: instance.fullscreen,
       releaseChannel: instance.releaseChannel,
       category: instance.category,
+      locked: instance.locked
     }
   }
   
@@ -464,17 +493,22 @@ export default class ModpackSettings extends Vue {
     return resList;
   }
 
-  get canUseCloudSaves() {
-    const result = (
-      this.auth.token?.activePlan !== null &&
-      !this.settingsState.settings.cloudSaves &&
-      (this.settingsState.settings.cloudSaves as boolean | 'true' | 'false') !== 'true'
-    );
+  accountHasPlan() {
+    if (!this.auth || !this.auth.token || !this.auth.token?.activePlan) {
+      return false;
+    }
     
-    // TODO: (M#01) finish user response
-    console.log(result)
-    console.log(this.toggleSavesWorking)
-    return result;
+    const plan = this.auth.token.activePlan;
+    return plan.status === "Active";
+  }
+  
+  settingsCloudSavesEnabled() {
+    const cloudSaves = this.settingsState.settings.cloudSaves as boolean | 'true' | 'false';
+    return cloudSaves === 'true' || cloudSaves;
+  }
+  
+  get canUseCloudSaves() {
+    return this.settingsCloudSavesEnabled() && this.accountHasPlan();
   }
 
   get channelOptions() {

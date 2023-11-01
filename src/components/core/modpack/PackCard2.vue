@@ -7,6 +7,20 @@
           <div class="is-cloud" v-if="instance.cloudSaves">
             <font-awesome-icon icon="cloud" />
           </div>
+
+          <div class="modloader" v-if="modLoader === 'forge'">
+            <font-awesome-icon icon="bolt" />
+          </div>
+          <div class="modloader" v-if="modLoader === 'fabric'">
+            <font-awesome-icon icon="fabric" />
+          </div>
+          <div class="modloader" v-if="modLoader === 'neoforge'">
+            <font-awesome-icon icon="fabric" />
+          </div>
+          <div class="modloader" v-if="modLoader === 'quilt'">
+            <font-awesome-icon icon="fabric" />
+          </div>
+
         </div>
         
         <transition name="transition-fade" duration="250">
@@ -59,7 +73,6 @@ import Popover from '@/components/atoms/Popover.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {Versions} from '@/modules/modpacks/types';
 import UpdateConfirmModal from '@/components/core/modpack/modals/UpdateConfirmModal.vue';
-import {toTitleCase} from '@/utils/helpers/stringHelpers';
 
 @Component({
   components: {
@@ -140,14 +153,13 @@ export default class PackCard2 extends PackCardCommon {
   }
   
   get versionName() {
-    return `${this._versionName().trim()} (${toTitleCase(this.modLoader)})`;
+    return this._versionName().trim();
   }
   
   _versionName() {
     let version = this.instance.version;
     
-    // 20.20.20 = 8 chars
-    if (version.length > 8) {
+    if (version.length > 16) {
       // Test to see if we have a v1.0.0 like version in the string
       const semverLike = /v[\d.]+/i;
       if (semverLike.test(version)) {
@@ -161,9 +173,9 @@ export default class PackCard2 extends PackCardCommon {
         version = version.replace(new RegExp(splitPackName, 'i'), '');
       }
       
-      if (version.length > 10) {
+      if (version.length > 16) {
         // Return the last 10 characters
-        return "..." + version.substring(version.length - 10);
+        return "..." + version.substring(version.length - 16);
       }
     }
     

@@ -56,6 +56,8 @@ public class InstanceJson {
     public String category = "Default";
     public String releaseChannel = "unset";
     
+    public boolean locked = true;
+    
     public byte packType;
     // TODO migrate this to `isPrivate`
     public boolean _private;
@@ -103,6 +105,7 @@ public class InstanceJson {
         art = other.art;
         category = other.category;
         releaseChannel = other.releaseChannel;
+        locked = other.locked;
     }
 
     // Copy instance.

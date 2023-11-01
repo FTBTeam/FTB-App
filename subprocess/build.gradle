@@ -223,6 +223,10 @@ def sharedSettings = [
 
 tasks.named("generateTypeScript", GenerateTask) {
     jsonLibrary = "gson"
+    noFileComment = true
+    noTslintDisable = true
+    noEslintDisable = true
+    tsNoCheck = true
     outputKind = "module"
     outputFile = project.file("../src/core/@types/javaApi.d.ts")
     classPatterns = [

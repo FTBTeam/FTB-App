@@ -1,6 +1,12 @@
 <template>
   <div class="titlebar" :class="{ isMac }" @mousedown="startDragging" @dblclick="minMax">
-    <div class="meta-title">FTB App</div>
+    <div class="spacer" v-if="isMac"></div>
+    <div class="meta-title">
+      <span>FTB App</span>
+    </div>
+    <div class="branch-container">
+      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" data-balloon-pos="down-right">{{ branch }}</div>
+    </div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">
         <div class="title-action close" @click="close">
@@ -39,9 +45,11 @@
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 import {Action, State} from 'vuex-class';
-import os from 'os';
 import platform from '@/utils/interface/electron-overwolf';
 import {SettingsState} from '@/modules/settings/types';
+import os from 'os';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
 
 @Component
 export default class TitleBar extends Vue {
@@ -82,6 +90,14 @@ export default class TitleBar extends Vue {
   public max(): void {
     platform.get.frame.max(this.windowId);
   }
+  
+  get branch() {
+    return platform.get.config.branch
+  }
+
+  goToSettings() {
+    safeNavigate(RouterNames.SETTINGS_INFO)
+  }
 }
 </script>
 
@@ -89,7 +105,10 @@ export default class TitleBar extends Vue {
 .titlebar {
   height: 2rem;
   background-color: #1d1c1c;
-  display: flex;
+  display: grid;
+  grid-template: 'left center right';
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   -webkit-app-region: drag;
@@ -101,6 +120,11 @@ export default class TitleBar extends Vue {
     height: 1.8em;
     text-align: center;
 
+    .spacer {
+      grid-area: left;
+      width: 50px;
+    }
+    
     .meta-title {
       font-weight: 800;
       width: 100%;
@@ -111,14 +135,25 @@ export default class TitleBar extends Vue {
         margin-right: 0;
       }
     }
+    
+    .branch-container {
+      grid-area: right;
+      margin-right: .4rem;
+      margin-left: 0;
+      justify-content: flex-end;
+    }
   }
 
   .meta-title {
+    grid-area: center;
     padding: 0 0.5rem;
     font-size: 0.875rem;
-    opacity: 0.5;
+    color: rgba(white, .5);
     display: flex;
     font-weight: 500;
+    align-items: center;
+    gap: 1.5rem;
+    justify-content: center;
 
     img {
       height: 18px;
@@ -132,6 +167,25 @@ export default class TitleBar extends Vue {
   }
 
   user-select: none;
+}
+
+.branch {
+  font-size: 10px;
+  background-color: rgba(white, .2);
+  color: white;
+  border-radius: 4px;
+  font-weight: normal;
+  padding: .1rem .3rem;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.branch-container {
+  grid-area: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-left: .4rem;
 }
 
 .title-action {

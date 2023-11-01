@@ -16,10 +16,10 @@
        <div class="loader" v-if="showNone" :class="{active: userLoaderProvider === ''}" @click="userLoaderProvider = ''">None</div>
      </div>
 
-     <ui-toggle class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
+     <ui-toggle v-if="provideLatestOption" class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
 
      <selection2
-       v-if="!userUseLatestLoader && loaderVersions.length > 0"
+       v-if="(!userUseLatestLoader || !provideLatestOption) && loaderVersions.length > 0"
        :open-up="true"
        label="Version"
        class="mb-4"
@@ -55,7 +55,8 @@ export default class ModloaderSelect extends Vue {
   @Prop() mcVersion!: string;
   @Prop({default: true}) showNone!: boolean;
   @Prop({default: false}) showOptional!: boolean;
-    
+  
+  @Prop({default: true}) provideLatestOption!: boolean;
 
   availableLoaders: Record<string, ModLoader[]> = {};
   loadingModloaders = false;
@@ -64,13 +65,18 @@ export default class ModloaderSelect extends Vue {
   userUseLatestLoader = true;
   userLoaderVersion = "";
   
-  @Emit() select(loader: string, version: string): ModLoader | undefined {
+  @Emit() select(loader: string, version: string): [string, ModLoader] | null {
     const loaderProvider = this.availableLoaders[loader];
     if (!loaderProvider) {
-      return;
+      return null;
+    }
+
+    const modLoader = loaderProvider.find(e => e.version === version);
+    if (!modLoader) {
+      return null;
     }
     
-    return loaderProvider.find(e => e.version === version);
+    return [loader, modLoader];
   }
   
   async mounted() {

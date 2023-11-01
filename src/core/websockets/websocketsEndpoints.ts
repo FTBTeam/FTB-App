@@ -36,7 +36,8 @@ import {
   InstanceConfigureDataReply,
   InstanceDeleteBackupHandlerReply,
   InstanceDeleteBackupHandlerRequest,
-  InstanceDisableCloudSavesData, InstanceDisableCloudSavesDataReply,
+  InstanceDisableCloudSavesData,
+  InstanceDisableCloudSavesDataReply,
   InstanceEnableCloudSavesData,
   InstanceEnableCloudSavesDataReply,
   InstanceGetBackupsHandlerReply,
@@ -47,6 +48,8 @@ import {
   InstanceModsDataReply,
   InstanceModToggleData,
   InstanceModToggleDataReply,
+  InstanceOverrideModLoaderData,
+  InstanceOverrideModLoaderDataReply,
   InstanceRestoreBackupHandlerReply,
   InstanceRestoreBackupHandlerRequest,
   InstanceVersionInfoData,
@@ -102,6 +105,7 @@ export type MessageType =
   "launchInstance" |
   "instance.kill" |
   "installInstance" |
+  "instanceOverrideModLoader" |
   "cancelInstallInstance" |
   "updateInstance" |
   "uninstallInstance" |
@@ -377,5 +381,9 @@ export type MessagePayload = {
   "instanceDisableCloudSaves": {
     input: InstanceDisableCloudSavesData,
     output: InstanceDisableCloudSavesDataReply
+  },
+  "instanceOverrideModLoader": {
+    input: InstanceOverrideModLoaderData,
+    output: InstanceOverrideModLoaderDataReply
   }
 }

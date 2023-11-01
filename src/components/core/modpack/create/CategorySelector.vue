@@ -20,6 +20,8 @@ import {ns} from '@/core/state/appState';
 import {Getter} from 'vuex-class';
 import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import {alertController} from '@/core/controllers/alertController';
+import {stringListContainsIgnoreCase} from '@/utils/helpers/arrayHelpers';
 
 @Component({
   components: {UiButton, Selection2}
@@ -48,9 +50,13 @@ export default class CategorySelector extends Vue {
   }
   
   addCategory() {
-    this.showCreate = false;
     if (this.extraCategory === "") return;
-    
+    if (stringListContainsIgnoreCase(this.categories, this.extraCategory)) {
+      alertController.warning("A category with that name already exists.")
+      return;
+    }
+
+    this.showCreate = false;
     this.emitInput(this.extraCategory)
   }
   

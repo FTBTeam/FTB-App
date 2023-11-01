@@ -143,6 +143,7 @@ const Electron: ElectronOverwolfInterface = {
     webVersion: jsonContent?.webVersion ?? 'Missing Version File',
     dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',
     javaLicenses: jsonContent?.javaLicense ?? {},
+    branch: jsonContent.branch ?? 'Release'
   },
 
   // Tools
