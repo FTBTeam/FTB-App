@@ -4,21 +4,21 @@
       <div class="artwork-container">
         <img :src="packLogo" alt="Modpack Artwork">
         <div class="notifiers">
-          <div class="is-cloud" v-if="instance.cloudSaves">
+          <div class="notifier is-cloud" v-if="instance.cloudSaves" aria-label="Cloud sync enabled" data-balloon-pos="down">
             <font-awesome-icon icon="cloud" />
           </div>
-
-          <div class="modloader" v-if="modLoader === 'forge'">
-            <font-awesome-icon icon="bolt" />
+          
+          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down" v-if="modLoader === 'forge'">
+            <img width="30" src="@/assets/images/forge.svg" alt="" />
           </div>
-          <div class="modloader" v-if="modLoader === 'fabric'">
-            <font-awesome-icon icon="fabric" />
+          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down" v-if="modLoader === 'fabric'">
+            <img width="30" src="@/assets/images/fabric.webp" alt="" />
           </div>
-          <div class="modloader" v-if="modLoader === 'neoforge'">
-            <font-awesome-icon icon="fabric" />
+          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down" v-if="modLoader === 'neoforge'">
+            <img width="30" src="@/assets/images/neoforge.png" alt="" />
           </div>
-          <div class="modloader" v-if="modLoader === 'quilt'">
-            <font-awesome-icon icon="fabric" />
+          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down" v-if="modLoader === 'quilt'">
+            <img width="30" src="@/assets/images/quiltmc.svg" alt="" />
           </div>
 
         </div>
@@ -213,8 +213,27 @@ export default class PackCard2 extends PackCardCommon {
     
     .notifiers {
       position: absolute;
-      top: .85rem;
-      left: .85rem;
+      top: .25rem;
+      right: .25rem;
+      display: flex;
+      align-items: center;
+      flex-direction: row-reverse;
+      gap: .25rem;
+      
+      .notifier {
+        background-color: rgba(black, .8);
+        display: flex;
+        padding: .5rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        width: 30px;
+        height: 30px;
+        
+        svg {
+          font-size: 10px;
+        }
+      }
     }
   }
   
