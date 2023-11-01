@@ -569,6 +569,8 @@ public class Instance {
             if (!Files.isRegularFile(path)) continue;
 
             String fName = path.getFileName().toString();
+            if (!isMod(fName)) continue;
+
             String fName2 = StringUtils.stripEnd(fName, ".disabled");
             // Do we already know about the mod?
             if (ColUtils.anyMatch(mods, e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
