@@ -2,58 +2,73 @@
   <div class="app-settings">
     <!-- <ftb-toggle label="Enable Analytics: " :value="settingsCopy.enableAnalytics" @change="enableAnalytics"
                     onColor="bg-primary"/> -->
-    <ftb-toggle
+    <ui-toggle
       label="Use the beta channel"
+      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."
       :value="localSettings.enablePreview"
-      @change="enablePreview"
-      onColor="bg-primary"
+      @input="enablePreview"
       class="mb-8"
-      small="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."
     />
-    <ftb-toggle
+    
+    <ui-toggle
       v-if="!platform.isElectron()"
       label="Close Overwolf on Exit"
+      desc="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
       :value="localSettings.exitOverwolf"
-      @change="exitOverwolf"
-      onColor="bg-primary"
+      @input="exitOverwolf"
       class="mb-8"
-      small="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
     />
-    <!--      :disabled="auth.token === null ? 'true' : ''"-->
-    <!--      :value="localSettings.enableChat"-->
-    <ftb-toggle
+
+    <ui-toggle
       label="Enable MineTogether Chat"
+      desc="Enabled you to use the MineTogether chat from within the app. Currently disabled..."
       :value="false"
-      @change="enableChat"
-      onColor="bg-primary"
       :disabled="true"
       class="mb-8"
-      small="Enabled you to use the MineTogether chat from within the app. Currently disabled..."
     />
+
+    <p class="block text-white-700 text-lg font-bold mb-4">Actions</p>
+
+    <p class="block text-white-700 font-bold mb-4">Open paths</p>
+    <div class="flex items-center gap-4">
+      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('home')" :working="working">Home</ui-button>
+      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('instances')" :working="working">Instances</ui-button>
+      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('logs')" :working="working">Logs</ui-button>
+    </div>
+    
+    <!--      :disabled="auth.token === null ? 'true' : ''"-->
+    <!--      :value="localSettings.enableChat"-->
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import { Settings, SettingsState } from '@/modules/settings/types';
-import { Action, State } from 'vuex-class';
+import {Component, Vue} from 'vue-property-decorator';
+import {Settings, SettingsState} from '@/modules/settings/types';
+import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import { AuthState } from '@/modules/auth/types';
+import {AuthState} from '@/modules/auth/types';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import os from 'os';
+import path from 'path';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 
 @Component({
   components: {
-    'ftb-toggle': FTBToggle,
+    UiButton,
+    UiToggle,
   },
 })
 export default class AppSettings extends Vue {
-  @State('auth') private auth!: AuthState;
-  @State('settings') public settingsState!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
+  @State('auth') auth!: AuthState;
+  @State('settings') settingsState!: SettingsState;
+  @Action('saveSettings', { namespace: 'settings' }) saveSettings: any;
+  @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
 
   platform = platform;
   localSettings: Settings = {} as Settings;
+  
+  working = false;
 
   async created() {
     await this.loadSettings();
@@ -62,22 +77,49 @@ export default class AppSettings extends Vue {
     this.localSettings = { ...this.settingsState.settings };
   }
 
-  public enablePreview(value: boolean): void {
+  enablePreview(value: boolean): void {
     this.localSettings.enablePreview = value;
     this.saveSettings(this.localSettings);
   }
 
-  public enableChat(value: boolean): void {
+  enableChat(value: boolean): void {
     if (this.auth.token !== null) {
       this.localSettings.enableChat = value;
       this.saveSettings(this.localSettings);
     }
   }
 
-  public exitOverwolf(value: boolean): void {
+  exitOverwolf(value: boolean): void {
     this.localSettings.exitOverwolf = value;
     this.saveSettings(this.localSettings);
     platform.get.actions.changeExitOverwolfSetting(value);
+  }
+  
+  openFolder(location: string) {
+    switch (location) {
+      case 'home':
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(this.getAppHome()), state => this.working = state)
+        break;
+      case 'instances': 
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
+        break;
+      case 'logs':
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(path.join(this.getAppHome(), 'logs')), state => this.working = state)
+        break;
+      default:
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => this.working = state)
+        break;
+    }
+  }
+
+  getAppHome() {
+    if (this.platform.isOverwolf()) {
+      return path.join(this.platform.get.io.getLocalAppData(), '.ftba');
+    } else if (os.platform() === "darwin") {
+      return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+    } else {
+      return path.join(os.homedir(), '.ftba');
+    }
   }
 }
 </script>

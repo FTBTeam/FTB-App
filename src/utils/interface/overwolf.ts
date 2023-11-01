@@ -4,7 +4,7 @@ import {emitter, getLogger, logVerbose} from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
-import {handleAction} from "@/core/protocol/protocolActions";
+import {handleAction} from '@/core/protocol/protocolActions';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 
 declare global {
@@ -57,6 +57,10 @@ const Overwolf: ElectronOverwolfInterface = {
       randomUUID(): string {
         return overwolf.windows.getMainWindow().randomUUID() as string;
       }
+    },
+
+    openDevTools() {
+      // No way to do this on overwolf atm
     }
   },
 
@@ -114,7 +118,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     yeetLauncher(windowId, cb) {
-      // TODO: if exitOverwolf is enabled, ensure Overwolf exists
+      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
       //@ts-ignore
       if (window.isChat === undefined || window.isChat === false) {
@@ -149,7 +153,7 @@ const Overwolf: ElectronOverwolfInterface = {
   // Frame / Chrome / Window / What ever you want to call it
   frame: {
     close(windowId: any, onClose: () => void) {
-      // TODO: if exitOverwolf is enabled, ensure Overwolf exists
+      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
 
       // @ts-ignore we don't know what the window is.
@@ -226,6 +230,18 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+    
+    openFinder(path: string): Promise<boolean> {
+      return new Promise((resolve) => {
+        overwolf.utils.openWindowsExplorer(path, (result: any) => {
+          resolve(result.status === 'success');
+        });
+      });
+    },
+    
+    getLocalAppData() {
+      return overwolf.io.paths.localAppData;
+    }
   },
 
   // Websockets
@@ -335,7 +351,7 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
       ws.addEventListener('open', (event) => {
-        console.log('Connected to socket!');
+        console.log('Connected to socket!', mainWindow.getWebsocketData());
         if (mainWindow.getWebsocketData().dev || mainWindow.getWebsocketData().secret !== undefined) {
           console.log('Socket opened correctly and ready!');
           setTimeout(() => {

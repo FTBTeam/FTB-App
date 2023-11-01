@@ -15,6 +15,7 @@ export interface Util {
   crypto: {
     randomUUID(): string;
   }
+  openDevTools: () => void;
 }
 
 export interface Actions {
@@ -66,6 +67,10 @@ export interface Config {
 export interface InputOutput {
   selectFolderDialog: (startPath: string, cb: (selectedFile: string | null) => void) => void;
   selectFileDialog: (cb: (selectedFile: string | null) => void) => void;
+  
+  openFinder(path: string): Promise<boolean>;
+  
+  getLocalAppData: () => string;
 }
 
 export interface Websocket {

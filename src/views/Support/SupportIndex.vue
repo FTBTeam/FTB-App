@@ -69,7 +69,7 @@ import { DiscordWidget } from '@/types';
 import { getLogger } from '@/utils';
 
 import ChLogo from '@/assets/ch-logo.svg';
-import MineTogetherLogo from '@/assets/images/mt-logo.png';
+import MineTogetherLogo from '@/assets/images/mt-logo.webp';
 
 const endpoint = (goEndpoint: string) => `https://go.ftb.team/${goEndpoint}`;
 

@@ -48,9 +48,10 @@ dependencies {
 
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
 
-    implementation 'net.creeperhost.minetogether:minetogether-api:1.0.20'
+    implementation ('net.creeperhost.minetogether:minetogether-api:1.0.20') {
+        transitive false
+    }
 
-    implementation 'org.apache.tika:tika-core:1.22'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.java-websocket:Java-WebSocket:1.4.0'
     implementation 'com.github.oshi:oshi-core:5.7.0'
@@ -60,20 +61,22 @@ dependencies {
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'net.java.dev.jna:jna:5.5.0'
     implementation 'net.java.dev.jna:jna-platform:5.5.0'
-    implementation 'com.amazonaws:aws-java-sdk-s3:1.11.839'
     implementation('org.apache.maven:maven-artifact:3.8.4') {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
     }
     implementation 'com.github.pircbotx:pircbotx:2.2'
-    implementation 'net.covers1624:Quack:0.4.3.59'
+    implementation 'net.covers1624:Quack:0.4.9.77'
     implementation 'net.covers1624:JdkUtils:0.4.0.14'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
 
     implementation 'com.electronwill.night-config:toml:3.6.4'
 
-    implementation 'org.apache.ant:ant-commons-net:1.10.7'
     implementation 'org.apache.httpcomponents:httpmime:4.5.13'
+
+    implementation('software.amazon.awssdk:s3:2.20.4') {
+        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+    }
 
     compileOnly 'org.jetbrains:annotations:22.0.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
@@ -194,7 +197,7 @@ idea.project.settings {
             jvmArgs += '-DInstanceInstaller.debug=true '                 // Enable debug logging for InstanceInstaller.
             jvmArgs += '-DInstanceLauncher.minecraft=ACCEPT '            // Allow Minecraft logging Marker in Log4j.
             jvmArgs += '-DInstanceShareUploader.debug=true '             // Enable debug logging for InstanceShareUploader
-            jvmArgs += '-DDNSChain.debug=true '                          // Enable debug logging for DNSChain
+            jvmArgs += '-DCloudSaveManager.debug=true '                  // Enable debug logging for CloudSaveManager
             programParameters = '--dev'
         }
     }
@@ -219,17 +222,17 @@ def sharedSettings = [
 ]
 
 tasks.named("generateTypeScript", GenerateTask) {
-    
     jsonLibrary = "gson"
     outputKind = "module"
     outputFile = project.file("../src/core/@types/javaApi.d.ts")
     classPatterns = [
+        "net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler\$SugaredInstanceJson",
         "net.creeperhost.creeperlauncher.api.data.*",
         "net.creeperhost.creeperlauncher.api.data.**.*",
         "net.creeperhost.creeperlauncher.api.data.**.*\$*",
         "net.creeperhost.creeperlauncher.api.handlers.**.*\$Request",
         "net.creeperhost.creeperlauncher.api.handlers.**.*\$Reply",
-        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Data"
+        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Data",
     ]
     excludeClasses = sharedSettings.excludeClasses
     customTypeMappings = sharedSettings.customTypeMappings
@@ -248,15 +251,16 @@ tasks.named("generateTypeScript", GenerateTask) {
 """
 }
 
-tasks.register("generateTypeScriptExtras", GenerateTask) {
-    jsonLibrary = "gson"
-    outputKind = "module"
-    outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
-    excludeClasses = sharedSettings.excludeClasses
-    customTypeMappings = sharedSettings.customTypeMappings
-    classes = [
-            "net.creeperhost.creeperlauncher.data.InstanceJson",
-    ]
-}
+//tasks.register("generateTypeScriptExtras", GenerateTask) {
+//    jsonLibrary = "gson"
+//    outputKind = "module"
+//    nullableAnnotations = ["org.jetbrains.annotations.Nullable"]
+//    outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
+//    excludeClasses = sharedSettings.excludeClasses
+//    customTypeMappings = sharedSettings.customTypeMappings
+//    classes = [
+//            "net.creeperhost.creeperlauncher.data.InstanceJson",
+//    ]
+//}
 
-generateTypeScript.finalizedBy(generateTypeScriptExtras)
+//generateTypeScript.finalizedBy(generateTypeScriptExtras)

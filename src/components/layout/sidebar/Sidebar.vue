@@ -1,15 +1,8 @@
 <template>
-  <div class="sidebar small" :class="{ 'is-transparent': isTransparent, 'is-dev': isDev }">
-    <router-link to="/" :class="{ 'item-disabled': disableNav }">
-      <img
-        src="../../../assets/images/ftb-logo.svg"
-        width="60"
-        alt="FTB Logo"
-        class="cursor-pointer logo-hover logo"
-        draggable="false"
-      />
-    </router-link>
-    <div class="nav-items nav-main mt-5">
+  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
+    <sidebar-create />
+    
+    <div class="nav-items nav-main mt-2">      
       <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
         <router-link :to="{ name: item.to }" class="nav-item" :class="{ 'item-disabled': disableNav }">
           <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
@@ -18,22 +11,21 @@
     </div>
 
     <div class="nav-items">
-      <a
-        v-if="auth.token !== null"
-        class="nav-item capitalize"
-        :class="{ 'item-disabled': disableNav }"
-        @click="openFriends"
-      >
-        <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>
-        <span class="whitespace-no-wrap">Friends List</span>
-      </a>
-
+<!--      <a-->
+<!--        v-if="auth.token !== null"-->
+<!--        class="nav-item capitalize"-->
+<!--        :class="{ 'item-disabled': disableNav }"-->
+<!--        @click="openFriends"-->
+<!--      >-->
+<!--        <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>-->
+<!--        <span class="whitespace-no-wrap">Friends List</span>-->
+<!--      </a>-->
+      
       <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
     </div>
     <popover text="Setup a server with CreeperHost" class="w-full">
       <img
         @click="openPromo"
-        @mousedown="onMouseDown"
         src="../../../assets/ch-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
         style="height: 30px"
@@ -48,20 +40,17 @@
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { AuthState } from '@/modules/auth/types';
 import { Action, State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import { RouterNames } from '@/router';
-import { yeetError } from '@/utils';
+import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
 
 @Component({
-  components: { SidebarProfile },
+  components: {SidebarCreate, SidebarProfile },
 })
 export default class Sidebar extends Vue {
-  @State('auth') private auth!: AuthState;
-  @State('settings') private settings!: SettingsState;
+  @State('auth') auth!: AuthState;
   @Prop({ default: false }) isTransparent!: boolean;
-  @Prop({ default: false }) isDev!: boolean;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
 
@@ -87,15 +76,15 @@ export default class Sidebar extends Vue {
       to: RouterNames.ROOT_BROWSE_PACKS,
       icon: 'search',
     },
+    // {
+    //   name: 'Discover',
+    //   to: RouterNames.ROOT_DISCOVER,
+    //   icon: 'globe-europe',
+    // },
     {
-      name: 'Discover',
-      to: RouterNames.ROOT_DISCOVER,
-      icon: 'globe-europe',
-    },
-    {
-      name: 'News',
-      to: RouterNames.ROOT_NEWS,
-      icon: 'newspaper',
+      name: 'Blog',
+      to: RouterNames.ROOT_BLOG,
+      icon: 'rss',
     },
     {
       name: 'Support',
@@ -119,22 +108,15 @@ export default class Sidebar extends Vue {
   }
 
   public openPromo(event: any): void {
-    platform.get.utils.openUrl('https://go.ftb.team/creeperhost');
+    platform.get.utils.openUrl('https://go.ftb.team/ch-app');
   }
 
-  // Developer page
-  public onMouseDown(event: any): void {
-    if (event.button === 2 && event.ctrlKey && event.altKey && event.shiftKey) {
-      yeetError(() => this.$router.push(RouterNames.DEVELOPER));
-    }
-  }
-
-  public openFriends() {
-    if (this.disableNav) {
-      return;
-    }
-    platform.get.actions.openFriends();
-  }
+  // public openFriends() {
+  //   if (this.disableNav) {
+  //     return;
+  //   }
+  //   platform.get.actions.openFriends();
+  // }
 }
 </script>
 
@@ -149,10 +131,6 @@ export default class Sidebar extends Vue {
   justify-content: space-between;
   flex-direction: column;
   transition: background-color 0.3s ease-in-out;
-
-  &.is-dev {
-    background-color: #171c1f;
-  }
 
   .item-disabled {
     opacity: 0.1;

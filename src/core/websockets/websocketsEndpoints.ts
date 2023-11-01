@@ -27,13 +27,18 @@ import {
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
   GetJavasDataReply,
-  GetProfilesHandlerReply, InstalledInstancesData, InstalledInstancesDataReply,
+  GetProfilesHandlerReply,
+  InstalledInstancesData,
+  InstalledInstancesDataReply,
   InstallInstanceData,
   InstallInstanceDataReply,
   InstanceConfigureData,
   InstanceConfigureDataReply,
   InstanceDeleteBackupHandlerReply,
   InstanceDeleteBackupHandlerRequest,
+  InstanceDisableCloudSavesData, InstanceDisableCloudSavesDataReply,
+  InstanceEnableCloudSavesData,
+  InstanceEnableCloudSavesDataReply,
   InstanceGetBackupsHandlerReply,
   InstanceGetBackupsHandlerRequest,
   InstanceInstallModData,
@@ -85,9 +90,12 @@ import {
   UninstallInstanceDataReply,
   UpdateInstanceData,
   UploadLogsData,
-  UploadLogsDataReply, WebRequestData, WebRequestDataResponse,
+  UploadLogsDataReply,
+  WebRequestData,
+  WebRequestDataResponse,
   YeetLauncherData
 } from '@/core/@types/javaApi';
+import {Nullable} from '@/core/websockets/websocketsApi';
 
 export type MessageType =
   "installedInstances" |
@@ -136,6 +144,8 @@ export type MessageType =
   "profiles.setActiveProfile" |
   "profiles.mc.authenticate" |
   "profiles.ms.authenticate" |
+  "instanceEnableCloudSaves" |
+  "instanceDisableCloudSaves" |
   "profiles.refresh" |
   "profiles.is-valid" |
   "storage.put" |
@@ -152,7 +162,7 @@ export type MessagePayload = {
     output: InstalledInstancesDataReply
   },
   "launchInstance": {
-    input: LaunchInstanceData,
+    input: Nullable<LaunchInstanceData, "cancelLaunch">,
     output: LaunchInstanceDataReply
   }
   "instance.kill": {
@@ -160,7 +170,7 @@ export type MessagePayload = {
     output: KillInstanceDataReply
   }
   "installInstance": {
-    input: InstallInstanceData,
+    input: Nullable<InstallInstanceData, "importFrom" | "name" | "artPath">,
     output: InstallInstanceDataReply
   }
   "cancelInstallInstance": {
@@ -184,7 +194,7 @@ export type MessagePayload = {
     output: InstanceModToggleDataReply
   }
   "instanceBrowse": {
-    input: BrowseInstanceData,
+    input: Nullable<BrowseInstanceData, "folder">,
     output: BrowseInstanceDataReply
   }
   "getInstanceFolders": {
@@ -333,7 +343,7 @@ export type MessagePayload = {
     output: AuthenticateMsProfileHandlerReply
   }
   "profiles.refresh": {
-    input: RefreshAuthenticationProfileHandlerData,
+    input: Nullable<RefreshAuthenticationProfileHandlerData, "liveExpires" | "liveAccessToken" | "liveRefreshToken">,
     output: RefreshAuthenticationProfileHandlerReply
   }
   "profiles.is-valid": {
@@ -353,11 +363,19 @@ export type MessagePayload = {
     output: StorageGetAllHandlerReply
   }
   "webRequest": {
-    input: WebRequestData,
+    input: Nullable<WebRequestData, "body">,
     output: WebRequestDataResponse
   }
   "openDebugTools": {
     input: BaseData,
     output: EmptyMessageResponse
+  },
+  "instanceEnableCloudSaves": {
+    input: InstanceEnableCloudSavesData,
+    output: InstanceEnableCloudSavesDataReply
+  },
+  "instanceDisableCloudSaves": {
+    input: InstanceDisableCloudSavesData,
+    output: InstanceDisableCloudSavesDataReply
   }
 }

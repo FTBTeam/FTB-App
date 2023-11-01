@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col ">
     <router-link :to="{ name: 'app-info' }">
-      <ftb-button class="py-2 px-4 mb-2 w-15" color="primary" css-class="text-center text-l">Back</ftb-button>
+      <ui-button icon="arrow-left" type="success" :wider="true">Back</ui-button>
     </router-link>
     <div class="flex flex-col mt-4">
       <h1 class="text-xl mb-4">NodeJS Package Licenses</h1>
@@ -40,12 +40,15 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 
 import Licenses from '../../../licenses.json';
 import platform from '@/utils/interface/electron-overwolf';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
-@Component
+@Component({
+  components: {UiButton}
+})
 export default class LicensePage extends Vue {
   private licenses = Licenses;
   private config = {

@@ -35,6 +35,8 @@ export const state: SettingsState = {
     proxyHost: '',
     proxyPassword: '',
     proxyUser: '',
+    updateChannel: 'release',
+    fullScreen: false,
   },
   error: false,
   hardware: {

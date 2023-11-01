@@ -12,6 +12,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
 import java.awt.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -39,10 +40,12 @@ public class InstanceJson {
 
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
     public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
+    @Nullable
     @JsonAdapter (PathTypeAdapter.class)
     public Path jrePath = Settings.getPathOpt("jrePath", null);
     public int width = Integer.parseInt(Settings.settings.getOrDefault("width", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2)));
     public int height = Integer.parseInt(Settings.settings.getOrDefault("height", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2)));
+    public boolean fullscreen = false;
     public String modLoader = "";
 
     public boolean isModified;
@@ -50,7 +53,9 @@ public class InstanceJson {
     public boolean cloudSaves;
     public boolean hasInstMods;
     public boolean installComplete;
-
+    public String category = "Default";
+    public String releaseChannel = "unset";
+    
     public byte packType;
     // TODO migrate this to `isPrivate`
     public boolean _private;
@@ -90,11 +95,14 @@ public class InstanceJson {
         cloudSaves = other.cloudSaves;
         hasInstMods = other.hasInstMods;
         installComplete = other.installComplete;
+        fullscreen = other.fullscreen;
         packType = other.packType;
         _private = other._private;
         totalPlayTime = other.totalPlayTime;
         lastPlayed = other.lastPlayed;
         art = other.art;
+        category = other.category;
+        releaseChannel = other.releaseChannel;
     }
 
     // Copy instance.
@@ -105,7 +113,7 @@ public class InstanceJson {
     }
 
     // New instance.
-    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
+    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
         uuid = UUID.randomUUID();
 
         versionId = versionManifest.getId();
@@ -114,7 +122,7 @@ public class InstanceJson {
         name = modpack.getName();
 
         version = versionManifest.getName();
-        mcVersion = versionManifest.getTargetVersion("game");
+        this.mcVersion = mcVersion;
 
         minMemory = versionManifest.getMinimumSpec();
         recMemory = versionManifest.getRecommendedSpec();
@@ -127,6 +135,10 @@ public class InstanceJson {
 
     public static InstanceJson load(Path path) throws IOException {
         return JsonUtils.parse(GSON, path, InstanceJson.class);
+    }
+
+    public static InstanceJson load(byte[] bytes) throws IOException {
+        return JsonUtils.parse(GSON, new ByteArrayInputStream(bytes), InstanceJson.class);
     }
 
     public static void save(Path path, InstanceJson properties) throws IOException {

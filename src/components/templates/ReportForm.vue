@@ -60,13 +60,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { Action } from 'vuex-class';
 
 @Component
 export default class ReportForm extends Vue {
-  @Action('sendMessage') public sendMessage: any;
 
   @Prop() loadingFailed!: boolean;
   @Prop() websocketsFailed!: boolean;
@@ -74,7 +72,7 @@ export default class ReportForm extends Vue {
   @Prop() websockets!: any;
   @Prop() maxTries!: number;
 
-  // TODO: enable once the report form is working again
+  // TODO: (legacy) enable once the report form is working again
   disabled = true;
 
   static emailRegex =
@@ -106,7 +104,7 @@ export default class ReportForm extends Vue {
         return;
       }
     });
-    // TODO: Replace this with an actual endpoint :D
+    // TODO: (legacy) Replace this with an actual endpoint :D
     // Send request
     // await axios.put(`${process.env.VUE_APP_FTB_API}report/create`, {
     //   email: this.errorEmail,
@@ -120,17 +118,17 @@ export default class ReportForm extends Vue {
 
   public uploadLogData(): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.sendMessage({
-        payload: { type: 'uploadLogs', uiVersion: this.uiVersion },
-        callback: async (data: any) => {
-          if (!data.error) {
-            const url = `https://pste.ch/${data.code}`;
-            resolve(url);
-          } else {
-            reject(data.error);
-          }
-        },
-      });
+      // this.sendMessage({
+      //   payload: { type: 'uploadLogs', uiVersion: this.uiVersion },
+      //   callback: async (data: any) => {
+      //     if (!data.error) {
+      //       const url = `https://pste.ch/${data.code}`;
+      //       resolve(url);
+      //     } else {
+      //       reject(data.error);
+      //     }
+      //   },
+      // });
     });
   }
 

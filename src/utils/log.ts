@@ -1,5 +1,8 @@
 import dayjs from 'dayjs';
 
+/**
+ * @deprecated (M#01) poor implementation move to library
+ */
 export class Logger {
   private name: string;
 
@@ -18,13 +21,11 @@ export class Logger {
   warn(...data: any[]) {
     this.log('warn', data);
   }
-
-  // TODO: support errors
+  
   error(...data: any[]) {
     this.log('error', data);
   }
-
-  // TODO: support errors
+  
   fatal(...data: any[]) {
     this.log('fatal', data);
   }

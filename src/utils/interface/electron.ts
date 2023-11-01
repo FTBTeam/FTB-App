@@ -1,13 +1,10 @@
 // @ts-ignore no typescript package available
 import VueNativeSock from 'vue-native-websocket';
-import { clipboard, ipcRenderer } from 'electron';
+import {clipboard, ipcRenderer} from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
 import store from '@/modules/store';
-import { getAPIRequest } from '@/modules/modpacks/actions';
-import { ModPack } from '@/modules/modpacks/types';
-import router from '@/router';
 import Vue from 'vue';
 import EventEmitter from 'events';
 import http from 'http';
@@ -166,7 +163,11 @@ const Electron: ElectronOverwolfInterface = {
       randomUUID(): string {
         return (crypto as any).randomUUID();
       }
-    }
+    },
+    
+    openDevTools() {
+      ipcRenderer.send('openDevTools');
+    },
   },
 
   // Actions
@@ -208,7 +209,7 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      // TODO: Fix soon plz
+      // TODO: (legacy) Fix soon plz
       platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=http://localhost:7755")
       
       const mini = new MiniWebServer();
@@ -309,6 +310,14 @@ const Electron: ElectronOverwolfInterface = {
         })
         .catch(() => cb(null));
     },
+    
+    openFinder(path: string): Promise<boolean> {
+      return ipcRenderer.invoke('openFinder', path);
+    },
+    
+    getLocalAppData() {
+      return path.join(os.homedir(), "AppData", "Local"); 
+    }
   },
 
   // Websockets
@@ -384,41 +393,42 @@ const Electron: ElectronOverwolfInterface = {
       }
       store.dispatch('settings/saveSettings', settings, { root: true });
     });
-    ipcRenderer.on('openModpack', (event, data) => {
-      const { name, id } = data;
-      getAPIRequest(store.state, `modpack/search/8?term=${name}`)
-        .then((response) => response.json())
-        .then(async (data) => {
-          if (data.status === 'error') {
-            return;
-          }
-          const packIDs = data.packs;
-          if (packIDs == null) {
-            return;
-          }
-          if (packIDs.length === 0) {
-            return;
-          }
-          for (let i = 0; i < packIDs.length; i++) {
-            const packID = packIDs[i];
-            const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
-            if (pack !== undefined) {
-              const foundVersion = pack.versions.find((v) => v.mtgID === id);
-              if (foundVersion !== undefined) {
-                router.push({ name: 'modpackpage', query: { modpackid: packID } });
-                return;
-              }
-            }
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    });
-
-    // TODO: this entire thing needs a registry + handler wrapper
+    // // TODO: (M#01) Yeet me
+    // ipcRenderer.on('openModpack', (event, data) => {
+    //   const { name, id } = data;
+    //   getAPIRequest(store.state, `modpack/search/8?term=${name}`)
+    //     .then((response) => response.json())
+    //     .then(async (data) => {
+    //       if (data.status === 'error') {
+    //         return;
+    //       }
+    //       const packIDs = data.packs;
+    //       if (packIDs == null) {
+    //         return;
+    //       }
+    //       if (packIDs.length === 0) {
+    //         return;
+    //       }
+    //       for (let i = 0; i < packIDs.length; i++) {
+    //         const packID = packIDs[i];
+    //         const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
+    //         if (pack !== undefined) {
+    //           const foundVersion = pack.versions.find((v) => v.mtgID === id);
+    //           if (foundVersion !== undefined) {
+    //             router.push({ name: 'modpackpage', query: { modpackid: packID } });
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     })
+    //     .catch((err) => {
+    //       console.error(err);
+    //     });
+    // });
+    
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       handleAction(data);
+      // TODO: (M#01) Reimplement missing protocol systems
       // let protocolURL = data;
       // if (protocolURL === undefined) {
       //   return;

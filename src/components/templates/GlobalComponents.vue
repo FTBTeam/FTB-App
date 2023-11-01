@@ -1,35 +1,24 @@
 <template>
   <div class="global-components">
-    <installer />
-
-    <!-- Modals -->
-    <FTBModal
-      v-if="$store.state.websocket.modal !== undefined && $store.state.websocket.modal !== null"
-      :visible="$store.state.websocket.modal !== null"
-      @dismiss-modal="hideModal"
-      :dismissable="$store.state.websocket.modal.dismissable"
+    <modal 
+      v-if="modal" 
+      :open="!!modal"
+      @closed="hideModal" 
+      :external-contents="true"
+      :title="modal.title"
     >
-      <message-modal
-        :title="$store.state.websocket.modal.title"
-        :content="$store.state.websocket.modal.message"
-        type="custom"
-        :buttons="$store.state.websocket.modal.buttons"
-        :modalID="$store.state.websocket.modal.id"
-      />
-    </FTBModal>
-
-    <!-- Alerts -->
-    <div class="alerts" v-if="$store.state.alerts">
-      <div class="alert" v-for="(alert, index) of $store.state.alerts" :key="index" :class="`bg-${alert.type}`">
-        <div class="message">
-          <span class="font-bold">{{ alert.title }}</span>
-          <div class="message">{{ alert.message }}</div>
+      <modal-body>
+        <div class="break-all overflow-auto" v-html="modal.message" />
+      </modal-body>
+      <modal-footer>
+        <div class="flex justify-end gap-4">
+          <ui-button v-for="(button, index) in modal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type">
+            {{ button.name }}            
+          </ui-button>
         </div>
-
-        <div class="close" @click="() => hideAlert(alert)"><font-awesome-icon icon="times" /></div>
-      </div>
-    </div>
-
+      </modal-footer>
+    </modal>
+    
     <!-- Authentication -->
     <authentication
       v-if="getSignInOpened.open"
@@ -41,34 +30,56 @@
 
     <!-- Only checks for an update once during startup -->
     <changelog />
+    <dialogs />
+    <alerts />
+    
+    <dev-tools-actions />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import FTBModal from '@/components/atoms/FTBModal.vue';
-import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import { Action, Getter } from 'vuex-class';
+import {Action, Getter, State} from 'vuex-class';
 import Authentication from '@/components/templates/authentication/Authentication.vue';
 import Changelog from '@/components/templates/changelogs/Changelog.vue';
-import Installer from '@/components/templates/installer/Installer.vue';
+import Dialogs from '@/components/core/global/Dialogs.vue';
+import Alerts from '@/components/core/global/Alerts.vue';
+import {SocketState} from '@/modules/websocket/types';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
+import DevToolsActions from '@/components/core/misc/DevToolsActions.vue';
 
 @Component({
   components: {
-    Installer,
+    DevToolsActions,
+    UiButton,
+    Alerts,
+    Dialogs,
     Changelog,
     Authentication,
-    FTBModal,
-    MessageModal,
   },
 })
 export default class GlobalComponents extends Vue {
-  @Action('hideModal') public hideModal: any;
-  @Action('hideAlert') public hideAlert: any;
+  @Action('hideModal') hideModal: any;
 
-  @Getter('getSignInOpened', { namespace: 'core' }) public getSignInOpened: any;
-  @Action('closeSignIn', { namespace: 'core' }) public closeSignIn: any;
+  @Getter('getSignInOpened', { namespace: 'core' }) getSignInOpened: any;
+  @Action('closeSignIn', { namespace: 'core' }) closeSignIn: any;
+  
+  @State('websocket') websocket?: SocketState;
+  
+  get modal() {
+    return this.websocket?.modal as OpenModalData | null | undefined;
+  }
+
+  public modalFeedback(button: ModalButton) {
+    gobbleError(() => sendMessage("modalCallback", {
+      id: this.modal?.id ?? "",
+      message: button.message
+    }))
+  }
 }
 </script>
 
