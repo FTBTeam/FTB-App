@@ -73,13 +73,13 @@ build_overwolf:
         - |
             echo "Signing OPK.."
             pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
-            if [ "$CI_COMMIT_BRANCH" == 'preview' ]; then
+            if [ "$CI_COMMIT_BRANCH" == 'channel/beta' ]; then
                 echo "Uploading OPK to beta channel.."
                 pnpm ow opk upload -c 109 -w true overwolf/signed.opk | xargs pnpm ow opk release -p 100
-            elif [ "$CI_COMMIT_BRANCH" == 'unstable' ]; then
+            elif [ "$CI_COMMIT_BRANCH" == 'channel/unstable' ]; then
                 echo "Uploading OPK to unstable channel.."
                 pnpm ow opk upload -c 495 -w true overwolf/signed.opk | xargs pnpm ow opk release -p 100
-            elif [ "$CI_COMMIT_BRANCH" == 'dev-preview' ]; then
+            elif [ "$CI_COMMIT_BRANCH" == 'channel/preview' ]; then
                 echo "Uploading OPK to dev channel.."
                 pnpm ow opk upload -c 665 -w true overwolf/signed.opk | xargs pnpm ow opk release -p 100
             elif [ ! -z "$CI_COMMIT_TAG" ]; then
