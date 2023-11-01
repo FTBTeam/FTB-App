@@ -1,7 +1,7 @@
 <template>
   <div class="settings-sidebar">
     <router-link to="/" class="back">
-      <font-awesome-icon icon="chevron-left" class="mr-2" />
+      <font-awesome-icon icon="arrow-left" class="mr-2" />
       Back to app
     </router-link>
 
@@ -32,7 +32,7 @@
       <nav v-if="auth.token !== null">
         <div class="heading">Integrations</div>
         <router-link :to="{ name: RouterNames.SETTINGS_MT_INTEGRATION }" class="item app-info-item">
-          <img src="@/assets/images/mt-logo.png" alt="" />
+          <img src="@/assets/images/mt-logo.webp" alt="" />
           <span>MineTogether</span>
         </router-link>
       </nav>
@@ -108,14 +108,16 @@ export default class SettingsSidebar extends Vue {
 <style scoped lang="scss">
 .settings-sidebar {
   background-color: var(--color-background);
-  width: 280px;
-  padding: 2rem 1.5rem;
+  width: 220px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
+  font-size: 14px;
 
   .back {
     opacity: 0.8;
     transition: opacity 0.25s ease-in-out;
+    margin: 0 .5rem 1rem;
 
     &:hover {
       opacity: 1;
@@ -127,12 +129,12 @@ export default class SettingsSidebar extends Vue {
   }
 
   nav {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
 
     .heading {
       font-weight: bold;
       opacity: 0.5;
-      margin-bottom: 1rem;
+      margin: 0 .5rem .5rem;
       font-size: 0.875rem;
     }
 
@@ -156,9 +158,8 @@ export default class SettingsSidebar extends Vue {
 
       svg,
       img {
-        margin-right: 0.8rem;
-        width: 30px;
-        font-size: 18px;
+        margin-right: 1rem;
+        width: 20px;
       }
     }
   }
@@ -167,6 +168,7 @@ export default class SettingsSidebar extends Vue {
     display: flex;
     margin-top: 0.5rem;
     font-size: 0.875rem;
+    padding: 0 .5rem;
 
     span {
       margin-right: 0.8rem;

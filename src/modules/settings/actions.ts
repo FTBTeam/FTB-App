@@ -2,68 +2,58 @@ import { ActionTree } from 'vuex';
 import { Settings, SettingsState } from './types';
 import { RootState } from '@/types';
 import platform from '@/utils/interface/electron-overwolf';
-import {setExtra} from '@sentry/vue';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 export const actions: ActionTree<SettingsState, RootState> = {
-  loadSettings({ dispatch, commit }) {
-    return new Promise((resolve, reject) => {
-      dispatch(
-        'sendMessage',
-        {
-          payload: { type: 'getSettings' },
-          callback: (msg: any) => {
-            if (msg.settingsInfo.blockedUesrs !== undefined && !Array.isArray(msg.settingsInfo.blockedUesrs)) {
-              msg.settingsInfo.blockedUsers = JSON.parse(msg.settingsInfo.blockedUsers);
-            }
+  async loadSettings({ dispatch, commit }) {
+    const result = await sendMessage("getSettings", {});
 
-            const settings = msg.settingsInfo;
-            
-            let parsedSettings: Record<string, any> = {};
-            for (const key of Object.keys(settings)) {
-              const value = settings[key] as string;
-              
-              // Convert if it's a boolean
-              if (value === 'true' || value === 'false' || value === "True" || value === "False") {
-                parsedSettings[key] = value === 'true' || value === "True";
-              // Convert if it's a number based on a regex but don't parse int on anything over a 64 bit number
-              } else if (value === 'null') {
-                parsedSettings[key] = null;
-              } else if (value === "undefined") {
-                parsedSettings[key] = undefined;
-              } else if (value.startsWith("{") && value.endsWith("}") || value.startsWith("[") && value.endsWith("]")) {
-                // Convert if it's a json object
-                try {
-                  parsedSettings[key] = JSON.parse(value);
-                } catch (e) {
-                  parsedSettings[key] = value;
-                }                
-              } else if (!value.includes(".") && value.match(/^[0-9]{1,16}$/)) {
-                parsedSettings[key] = parseInt(value, 10);
-              // Convert if the value is a float 
-              } else if (value.includes(".") && value.match(/^[0-9]{1,16}\.[0-9]{1,16}$/)) {
-                parsedSettings[key] = parseFloat(value);
-              } else if (Number.isNaN(value) || value === "NaN") {
-                parsedSettings[key] = NaN;
-              } else if (value === "Infinity" || value === "+Infinity" || value === "-Infinity") {
-                parsedSettings[key] = value.startsWith("-") ? -Infinity : Infinity;
-              } else if (value.endsWith("n")) {
-                parsedSettings[key] = BigInt(value);
-              } else {
-                parsedSettings[key] = settings[key];
-              }
-            }
-            
-            commit('loadSettings', parsedSettings);
-            platform.get.actions.updateSettings(msg.settingsInfo);
-            commit('loadHardware', msg);
-            resolve(null);
-          },
-        },
-        { root: true },
-      );
-    });
+    if (result.settingsInfo.blockedUesrs !== undefined && !Array.isArray(result.settingsInfo.blockedUesrs)) {
+      result.settingsInfo.blockedUsers = JSON.parse(result.settingsInfo.blockedUsers);
+    }
+
+    const settings = result.settingsInfo;
+    
+    let parsedSettings: Record<string, any> = {};
+    for (const key of Object.keys(settings)) {
+      const value = settings[key] as string;
+      
+      // Convert if it's a boolean
+      if (value === 'true' || value === 'false' || value === "True" || value === "False") {
+        parsedSettings[key] = value === 'true' || value === "True";
+      // Convert if it's a number based on a regex but don't parse int on anything over a 64 bit number
+      } else if (value === 'null') {
+        parsedSettings[key] = null;
+      } else if (value === "undefined") {
+        parsedSettings[key] = undefined;
+      } else if (value.startsWith("{") && value.endsWith("}") || value.startsWith("[") && value.endsWith("]")) {
+        // Convert if it's a json object
+        try {
+          parsedSettings[key] = JSON.parse(value);
+        } catch (e) {
+          parsedSettings[key] = value;
+        }                
+      } else if (!value.includes(".") && value.match(/^[0-9]{1,16}$/)) {
+        parsedSettings[key] = parseInt(value, 10);
+      // Convert if the value is a float 
+      } else if (value.includes(".") && value.match(/^[0-9]{1,16}\.[0-9]{1,16}$/)) {
+        parsedSettings[key] = parseFloat(value);
+      } else if (Number.isNaN(value) || value === "NaN") {
+        parsedSettings[key] = NaN;
+      } else if (value === "Infinity" || value === "+Infinity" || value === "-Infinity") {
+        parsedSettings[key] = value.startsWith("-") ? -Infinity : Infinity;
+      } else if (value.endsWith("n")) {
+        parsedSettings[key] = BigInt(value);
+      } else {
+        parsedSettings[key] = settings[key];
+      }
+    }
+    
+    commit('loadSettings', parsedSettings);
+    platform.get.actions.updateSettings(result.settingsInfo);
+    commit('loadHardware', result);
   },
-  saveSettings({ dispatch, commit }, settings: Settings) {
+  async saveSettings({ dispatch, commit }, settings: Settings) {
     if (Array.isArray(settings.blockedUsers)) {
       settings.blockedUsers = JSON.stringify(settings.blockedUsers);
     }
@@ -92,15 +82,10 @@ export const actions: ActionTree<SettingsState, RootState> = {
       }
     }
 
-    dispatch(
-      'sendMessage',
-      {
-        payload: { type: 'saveSettings', settingsInfo: newSettings },
-        callback: () => {
-          dispatch('loadSettings');
-        },
-      },
-      { root: true },
-    );
+    await sendMessage('saveSettings', {
+      settingsInfo: newSettings
+    })
+    
+    dispatch('loadSettings');
   },
 };

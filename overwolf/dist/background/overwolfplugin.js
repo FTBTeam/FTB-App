@@ -16,6 +16,7 @@ function OverwolfPlugin(extraObjectNameInManifest, addNameToObject) {
     return _pluginInstance;
   };
 
+
   // privates
   function _initialize(callback) {
     var proxy = null;

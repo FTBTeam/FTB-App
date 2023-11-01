@@ -24,8 +24,6 @@ if (
         : ""
     }),
   );
-} else {
-  console.warn("Can't run Sentry source map uploader");
 }
 
 /**
@@ -71,6 +69,7 @@ module.exports = {
     process.env.TARGET_PLATFORM === 'overwolf'
       ? path.resolve(__dirname, './overwolf/dist/desktop')
       : path.resolve(__dirname, './dist'),
+  productionSourceMap: process.env.NODE_ENV !== 'production',
   pages: {
     index: {
       // entry for the page
@@ -79,8 +78,12 @@ module.exports = {
       filename: 'index.html',
       title: 'FTB App',
       chunks: ['chunk-vendors', 'chunk-common', 'index'],
+      sourceMap: false,
     },
-    chatPage: 'src/main.ts',
+    chatPage: {
+      entry: 'src/main.ts',
+      sourceMap: false,
+    }
   },
   pluginOptions: {
     electronBuilder: {

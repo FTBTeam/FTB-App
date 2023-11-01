@@ -26,4 +26,6 @@ class Platform {
   }
 }
 
+export type PlatformType = Platform;
+
 export default new Platform();

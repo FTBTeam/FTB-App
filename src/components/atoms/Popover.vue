@@ -1,7 +1,7 @@
 <template>
   <div class="popover-wrapper">
     <slot></slot>
-    <div class="popover" :class="position" :style="{ left: `${leftShift}%` }">
+    <div v-if="$slots.inner || text" class="popover" :class="position" :style="{ left: `${leftShift}%` }">
       <template v-if="$slots.inner">
         <slot name="inner"></slot>
       </template>

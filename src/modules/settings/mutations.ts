@@ -30,6 +30,8 @@ const defaultSettings: Settings = {
   proxyHost: '',
   proxyPassword: '',
   proxyUser: '',
+  updateChannel: 'release',
+  fullScreen: false,
 };
 
 export const mutations: MutationTree<SettingsState> = {

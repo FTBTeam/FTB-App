@@ -1,41 +1,12 @@
 package net.creeperhost.creeperlauncher.util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.net.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class MiscUtils {
-
-    private static final Logger LOGGER = LogManager.getLogger();
-    public static final DateFormat ISO_8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-
-    public static CompletableFuture<?> allFutures(ArrayList<CompletableFuture<?>> futures) {
-        CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(
-                futures.toArray(new CompletableFuture[0])).exceptionally((t) ->
-                {
-                    LOGGER.warn("Future failed.", t);
-                    return null;
-                }
-        );
-        futures.forEach((x) ->
-        {
-            x.exceptionally((t) ->
-            {
-                combinedFuture.completeExceptionally(t);
-                return null;
-            });
-        });
-        return combinedFuture;
-    }
 
     /**
      * Gets a random free Ephemeral port.
@@ -81,10 +52,6 @@ public class MiscUtils {
             args.add(builder.toString());
         }
         return args;
-    }
-
-    public static long unixtime() {
-        return System.currentTimeMillis() / 1000L;
     }
 
     /**

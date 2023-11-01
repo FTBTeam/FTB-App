@@ -1,8 +1,8 @@
-import {getLogger, wsTimeoutWrapperTyped} from '@/utils';
-import * as buffer from 'buffer';
+import {getLogger} from '@/utils';
 import store from '@/modules/store';
-
-type RequestMethod = "GET" | "POST" | "OPTION" | "PATCH" | "PUT" | "DELETE";
+import {HttpMethod} from '@/core/@types/commonTypes';
+import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
+import {WebRequestData} from '@/core/@types/javaApi';
 
 interface FetchResponseRaw {
   status: string;
@@ -53,7 +53,7 @@ class FetchResponse implements FetchResponseRaw {
   
   public json<T>() {
     if (!this.body.contentType.includes("json")) {
-      throw new Error(`Unable to extract json data from content type of ${this.body.contentType}`)
+      throw new Error(`Unable to extract json data from content type of ${this.body.contentType}... Expected application/json\n\nFull response: ${this.text()}`)
     }
     
     return JSON.parse(Buffer.from(this.body.bytes as Uint8Array).toString("utf-8")) as T
@@ -70,11 +70,11 @@ export class JavaFetch {
   private _url;
   private _headers: Record<string, string[]> = {};
   private _body: string | Buffer | null = null;
-  private _method: RequestMethod = "GET";
+  private _method: HttpMethod = "GET";
   private _contentType = "application/json"
   private _timeout = 60_000; 
   
-  constructor(url: string) {
+  private constructor(url: string) {
     this._url = url;
   }
   
@@ -84,11 +84,15 @@ export class JavaFetch {
   
   //#region helper methods
   public static modpacksCh(endpoint: string) {
+    return JavaFetch.create(`${process.env.VUE_APP_MODPACK_API}/public/${endpoint}`)
+  }
+  
+  public static modpacksChPrivate(endpoint: string) {
     return JavaFetch.create(`${process.env.VUE_APP_MODPACK_API}/${store.state.auth?.token?.attributes.modpackschkey ?? "public"}/${endpoint}`)
   }
   //#endregion
   
-  public method(method: RequestMethod) {
+  public method(method: HttpMethod) {
     this._method = method;
     return this;
   }
@@ -127,12 +131,12 @@ export class JavaFetch {
     return this;
   }
   
-  async execute<T>(): Promise<FetchResponse | null> {
-    const payload: Record<string, any> = {
-      type: "webRequest",
+  async execute(): Promise<FetchResponse | null> {
+    const payload: Nullable<MessageRaw<WebRequestData>, "body"> = {
       url: this._url,
       method: this._method,
       headers: this._headers,
+      body: null
     };
     
     if (this._body !== null) {
@@ -141,10 +145,9 @@ export class JavaFetch {
         bytes: this._body instanceof Buffer ? this._body : Buffer.from(this._body as string),
       }
     }
-
-    this.logger.info(`Making ${this._method} request to ${this._url}`)
+    
     try {
-      const request = await wsTimeoutWrapperTyped<typeof payload, FetchResponseRaw>(payload, this._timeout);
+      const request = await sendMessage("webRequest", payload);
       return FetchResponse.of(request);
     } catch(error) {
       this.logger.info(`Request to ${this._method}::${this._url} failed due to ${error}`)

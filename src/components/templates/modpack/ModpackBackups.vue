@@ -75,37 +75,32 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import {
-  InstanceBackup,
-  InstanceDeleteBackupRequest,
-  InstanceRestoreBackupReply,
-  InstanceRestoreBackupRequest,
-} from '@/typings/subprocess/instanceBackups';
-import { prettyByteFormat, wsTimeoutWrapperTyped } from '@/utils';
+import { prettyByteFormat } from '@/utils';
 import { Action } from 'vuex-class';
 import { Instance } from '@/modules/modpacks/types';
+import {Backup} from '@/core/@types/javaApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component
 export default class ModpackBackups extends Vue {
-  @Action('showAlert') public showAlert: any;
-
   @Prop() instance!: Instance;
-  @Prop({ default: () => [] }) backups!: InstanceBackup[];
+  @Prop({ default: () => [] }) backups!: Backup[];
 
   prettyBytes = prettyByteFormat;
 
   restoreModalShowing = false;
   deleteModalShowing = false;
 
-  actioningBackup: InstanceBackup | null = null;
+  actioningBackup: Backup | null = null;
   actionRunning = false;
 
-  showRestore(backup: InstanceBackup) {
+  showRestore(backup: Backup) {
     this.actioningBackup = backup;
     this.restoreModalShowing = true;
   }
 
-  showDelete(backup: InstanceBackup) {
+  showDelete(backup: Backup) {
     this.actioningBackup = backup;
     this.deleteModalShowing = true;
   }
@@ -122,26 +117,17 @@ export default class ModpackBackups extends Vue {
     }
 
     this.actionRunning = true;
-    const restoreRequest = await wsTimeoutWrapperTyped<InstanceRestoreBackupRequest, InstanceRestoreBackupReply>({
-      type: 'instanceRestoreBackup',
+    const restoreRequest = await sendMessage("instanceRestoreBackup", {
       uuid: this.instance.uuid,
-      backupLocation: this.actioningBackup?.backupLocation ?? '',
-    });
+      backupLocation: this.actioningBackup?.backupLocation ?? ''
+    })
 
     this.actionRunning = false;
 
     if (!restoreRequest.success) {
-      this.showAlert({
-        title: 'Unable to restore backup',
-        message: restoreRequest.message,
-        type: 'danger',
-      });
+      alertController.error('Unable to restore backup')
     } else {
-      this.showAlert({
-        title: 'Success',
-        message: 'Successfully restored backup',
-        type: 'primary',
-      });
+      alertController.success('Successfully restored backup')
     }
 
     this.modalClose();
@@ -154,26 +140,16 @@ export default class ModpackBackups extends Vue {
 
     this.actionRunning = true;
     // Restore reply is the same as delete
-    const deleteRequest = await wsTimeoutWrapperTyped<InstanceDeleteBackupRequest, InstanceRestoreBackupReply>({
-      type: 'instanceDeleteBackup',
-      backupLocation: this.actioningBackup?.backupLocation ?? '',
-    });
+    const deleteRequest = await sendMessage("instanceDeleteBackup", {
+      backupLocation: this.actioningBackup?.backupLocation ?? ''
+    })
 
     this.actionRunning = false;
 
     if (!deleteRequest.success) {
-      this.showAlert({
-        title: 'Unable to delete backup',
-        message: deleteRequest.message,
-        type: 'danger',
-      });
+      alertController.error('Unable to delete backup')
     } else {
-      this.showAlert({
-        title: 'Success',
-        message: 'Successfully deleted backup',
-        type: 'primary',
-      });
-
+      alertController.success('Successfully deleted backup')
       this.$emit('backupsChanged');
     }
 
@@ -182,7 +158,7 @@ export default class ModpackBackups extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .modpack-backsup-tab {
   .backup {
     display: flex;
@@ -191,7 +167,7 @@ export default class ModpackBackups extends Vue {
 
     .preview {
       border-radius: 5px;
-      background: black url('../../../assets/images/backup-preview-background.png') repeat;
+      background: black url('../../../assets/images/backup-preview-background.webp') repeat;
       background-size: 8px;
 
       img {

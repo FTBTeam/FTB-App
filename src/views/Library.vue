@@ -1,40 +1,35 @@
 <template>
-  <div class="mod-packs h-full" v-if="isLoaded">
-    <!-- My Modpacks Stuff -->
-    <div class="packs px-6 py-4" v-if="modpacks.installedPacks.length > 0">
-      <div class="flex items-center mb-4">
-        <FTBSearchBar v-model="searchTerm" placeholder="Search" class="mr-4 flex-1" />
-        <ftb-button
-          class="py-2 px-4 flex items-center border-2 border-blue-600 hover:border-blue-500"
-          color="info"
-          @click="showImport = true"
-        >
-          <font-awesome-icon icon="plus" class="mr-2" size="1x" />
-          <span>Import</span>
-        </ftb-button>
-      </div>
+  <div class="mod-packs h-full">
+    <div class="page-spacing" v-if="!loading && instances.length > 0">
+      <header class="flex gap-4 mb-6 items-center">
+        <FTBSearchBar v-model="searchTerm" placeholder="Search" class="flex-1" />
+        <selection2 v-if="Object.keys(groupedPacks).length > 1" icon="folder" direction="right" min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
+        <selection2 icon="sort" direction="right" min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
+      </header>
 
-      <div class="pack-card-list grid">
-        <pack-card-wrapper
-          v-for="modpack in packs"
-          :list-mode="false"
-          :key="modpack.uuid"
-          :art="modpack.art"
-          :installed="true"
-          :minecraft="'1.7.10'"
-          :version="modpack.version"
-          :description="getModpack(modpack.id) !== null ? getModpack(modpack.id).synopsis : 'Unable to load synopsis'"
-          :tags="getModpack(modpack.id) !== null ? getModpack(modpack.id).tags : []"
-          :versions="modpack.versions"
-          :name="modpack.name"
-          :authors="modpack.authors"
-          :instance="modpack"
-          :instanceID="modpack.uuid"
-          kind="instance"
-        >
-        </pack-card-wrapper>
+      <div class="categories">
+        <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`" :class="{'collapsed': collapsedGroups.includes(index)}">
+          <header v-if="Object.keys(groupedPacks).length > 1">
+            <h2>{{ index }}</h2>
+            <span />
+            <div class="collapse" @click="collapseGroup(index)">
+              <font-awesome-icon icon="chevron-down" />
+            </div>
+          </header>
+          <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
+            <template v-for="instance in category">
+              <pack-card2
+                v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
+                :key="instance.uuid"
+                :instance="instance"
+              />
+            </template>
+          </div>
+        </div>
       </div>
     </div>
+    
+    <loader v-else-if="loading" />
 
     <div class="flex flex-1 flex-wrap justify-center flex-col items-center no-packs" v-else>
       <div class="message flex flex-1 flex-wrap items-center flex-col mt-32">
@@ -47,302 +42,253 @@
         >
         <div class="flex flex-row justify-between my-2">
           <router-link to="/browseModpacks">
-            <ftb-button color="primary" class="py-2 px-10 mx-2">Browse</ftb-button>
+            <ui-button :wider="true" type="info" icon="search">Browse</ui-button>
           </router-link>
-          <router-link to="/discover">
-            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>
-          </router-link>
+<!--          <router-link to="/discover">-->
+<!--            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>-->
+<!--          </router-link>-->
         </div>
       </div>
     </div>
-
-    <modal
-      :open="showImport"
-      :title="`${
-        modalType === null
-          ? 'Import a modpack'
-          : modalType === 'share'
-          ? 'Use a share code'
-          : 'CurseForge Modpack import'
-      }`"
-      :subTitle="`${
-        modalType === null
-          ? 'You can import a modpack from a CurseForge zip file or use a share code'
-          : modalType === 'share'
-          ? 'A share code is a code you can use to install new packs'
-          : 'Use a Curseforge Modpack zip file to import a modpack'
-      }`"
-      @closed="
-        () => {
-          showImport = false;
-          modalType = null;
-        }
-      "
-    >
-      <div class="pt-4" v-if="modalType == null">
-        <h4 class="text-lg font-bold mb-2"><font-awesome-icon icon="code" class="mr-2" size="1x" /> Share code</h4>
-        <p class="mb-4">
-          You can share modpacks using share codes from within the app. If you've been given one of these codes. You can
-          import the modpack using the button below.
-        </p>
-        <ftb-button
-          color="primary"
-          class="py-2 px-6 mt-2 mb-6 text-center font-bold text-md"
-          @click="modalType = 'share'"
-        >
-          <font-awesome-icon icon="code" class="mr-2" size="1x" />
-          Use a share code
-        </ftb-button>
-
-        <hr class="border-white opacity-25 mb-4" />
-
-        <h4 class="text-lg font-bold mb-2">
-          <font-awesome-icon icon="download" class="mr-2" size="1x" /> CurseForge imports
-        </h4>
-        <p class="mb-4">You can import CurseForge Modpacks using the button below</p>
-        <ftb-button color="primary" class="py-2 px-6 mt-2 text-center font-bold text-md" @click="modalType = 'curse'">
-          <font-awesome-icon icon="download" class="mr-2" size="1x" />
-          Import a CurseForge modpack zip
-        </ftb-button>
-      </div>
-      <template v-if="modalType === 'curse'">
-        <message type="danger" v-if="fileError" class="mb-4">
-          {{ fileError }}
-        </message>
-
-        <div
-          class="drop-area"
-          @click.self="$refs.fileInputRef.click()"
-          @dragenter.prevent
-          @dragleave.prevent
-          @dragover.prevent
-          @drop.prevent="fileAttach($event)"
-        >
-          <font-awesome-icon icon="upload" class="mr-2" size="2x" />
-          <p>Drag & Drop a file or select a file</p>
-          <hr />
-          <ftb-button color="primary" class="py-2 px-6 mt-2 font-bold" @click="$refs.fileInputRef.click()">
-            <font-awesome-icon icon="download" class="mr-2" size="1x" />
-            Select a file
-          </ftb-button>
-          <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />
-        </div>
-
-        <p v-if="activeFile" class="font-bold mt-4 text-base mb-2">Selected file</p>
-        <div class="file flex items-center p-4" v-if="activeFile">
-          <font-awesome-icon icon="file-zipper" size="2x" class="mr-4" />
-          <div class="text">
-            <div class="name font-bold">{{ activeFile.name }}</div>
-            <div class="size">
-              {{ PrettyBytes(activeFile.size) }}
-            </div>
-          </div>
-        </div>
-
-        <ftb-button
-          color="primary"
-          :disabled="!activeFile"
-          class="py-2 px-6 mt-6 w-full block text-center font-bold"
-          @click="installZip"
-        >
-          <font-awesome-icon icon="download" class="mr-2" size="1x" />
-          Install {{ activeFile ? activeFile.name : '' }}
-        </ftb-button>
-      </template>
-      <template v-if="modalType === 'share'">
-        <message type="danger" v-if="shareCodeError" class="mb-4">
-          {{ shareCodeError }}
-        </message>
-
-        <ftb-input
-          placeholder="share code"
-          label="Share code"
-          v-model="shareCode"
-          class="mb-4 text-base"
-          :copyable="true"
-        />
-        <div class="flex justify-end">
-          <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="checkAndInstall">
-            <font-awesome-icon icon="download" class="mr-2" size="1x" />
-            Install
-          </ftb-button>
-        </div>
-      </template>
-    </modal>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
-import PackCardWrapper from '@/components/organisms/packs/PackCardWrapper.vue';
+import {Component, Vue, Watch} from 'vue-property-decorator';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import { Instance, ModPack, ModpackState } from '@/modules/modpacks/types';
-import { Action, Getter, State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
-import { prettyByteFormat, wsTimeoutWrapper, wsTimeoutWrapperTyped } from '@/utils';
-import { InstallerState } from '@/modules/app/appStore.types';
+import {Getter} from 'vuex-class';
+import {ns} from '@/core/state/appState';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import PackCard2 from '@/components/core/modpack/PackCard2.vue';
+import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
+import Loader from '@/components/atoms/Loader.vue';
+import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
+import {resolveModloader} from '@/utils/helpers/packHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
+
+const groupOptions = [
+  ['Category', 'category'],
+  ['Mod Loader', 'modloader'],
+  ['Minecraft Version', 'mcversion'],
+]
+
+const sortOptions = [
+  ['Name', 'name'],
+  ['Last Played', 'lastPlayed'],
+  ['Total Playtime', 'totalPlaytime'],
+]
+
+function createOrderedOptions(options: string[][]): SelectionOptions {
+  return options.flatMap(([label, value]) => [
+    [`${label}`, value, 'Asc'],
+    [`${label}`, `-${value}`, 'Des']
+  ])
+  .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? "arrow-down-a-z" : "arrow-down-z-a"}}))
+}
+
+const sortByOptions = createOrderedOptions(sortOptions)
+const groupByOptions = createOrderedOptions(groupOptions)
 
 @Component({
   components: {
-    PackCardWrapper,
+    UiButton,
+    Selection2,
+    Loader,
+    PackCard2,
     FTBSearchBar,
   },
 })
 export default class Library extends Vue {
-  @State('settings') public settings!: SettingsState;
-  @State('modpacks') public modpacks!: ModpackState;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Getter('packsCache', { namespace: 'modpacks' }) public packsCache!: ModPack[];
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: (id: number) => Promise<ModPack>;
-  @Action('sendMessage') public sendMessage!: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
+  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
+  @Getter('isLoadingInstances', ns("v2/instances")) loading!: boolean;
 
-  private searchTerm: string = '';
-  private isLoaded: boolean = false;
-  isGrid: boolean = false;
-
-  showImport = false;
-  modalType = null;
-  fileError = '';
-  activeFile: any = null;
-  shareCode: string = '';
-  shareCodeError = '';
-
-  PrettyBytes = prettyByteFormat;
-
-  @Watch('modpacks', { deep: true })
-  public async onModpacksChange(newVal: ModpackState, oldVal: ModpackState) {
-    if (JSON.stringify(newVal.installedPacks) !== JSON.stringify(oldVal.installedPacks)) {
-      this.isLoaded = false;
-      try {
-        await Promise.all(
-          this.modpacks.installedPacks.map(async (instance) => {
-            const pack = await this.fetchModpack(instance.id);
-            return pack;
-          }),
-        );
-        this.isLoaded = true;
-      } catch (err) {
-        this.isLoaded = true;
+  searchTerm: string = '';
+  
+  sortByOptions = sortByOptions;
+  groupByOptions = groupByOptions;
+  
+  groupBy = 'category';
+  sortBy = 'name';
+  
+  collapsedGroups: string[] = [];
+  
+  mounted() {
+    const libraryData = localStorage.getItem("library-data");
+    if (libraryData) {
+      const parsed = JSON.parse(libraryData);
+      if (parsed?.collapsedGroups) {
+        this.collapsedGroups = parsed.collapsedGroups;
+      }
+      
+      if (parsed?.sortBy) {
+        this.sortBy = parsed.sortBy;
+      }
+      
+      if (parsed?.groupBy) {
+        this.groupBy = parsed.groupBy;
       }
     }
   }
 
-  public async mounted() {
-    if (this.modpacks) {
-      this.isLoaded = false;
-      try {
-        await Promise.all(this.modpacks.installedPacks.map(async (instance) => await this.fetchModpack(instance.id)));
-        this.isLoaded = true;
-      } catch (err) {
-        this.isLoaded = true;
-      }
-    }
-  }
-
-  async checkAndInstall() {
-    if (this.shareCode === '') {
-      return;
-    }
-
-    const checkCode = await wsTimeoutWrapperTyped<any, { success: boolean }>({
-      type: 'checkShareCode',
-      shareCode: this.shareCode,
-    });
-
-    if (!checkCode.success) {
-      this.shareCodeError = `Unable to find a valid pack with the code of ${this.shareCode} `;
-      return;
-    }
-
-    this.showImport = false;
-    this.modalType = null;
-
-    this.installModpack({
-      pack: {
-        shareCode: this.shareCode,
-      },
-      meta: {
-        name: 'Shared pack',
-        version: this.shareCode,
-      },
-    });
-
-    this.shareCode = '';
-  }
-
-  fileAttach(event: any) {
-    const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
-    if (file == null || !file.name.endsWith('.zip')) {
-      return;
-    }
-
-    this.activeFile = {
-      name: file.name,
-      size: file.size,
-      path: file.path,
-    };
-  }
-
-  async installZip() {
-    this.fileError = '';
-    if (!this.activeFile) {
-      return;
-    }
-
-    const res = await wsTimeoutWrapper({
-      type: 'checkCurseZip',
-      path: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-    });
-
-    if (!res?.success) {
-      this.activeFile = null;
-      this.fileError = res.message ?? "We're unable to detect a CurseForge pack in this zip file.";
+  collapseGroup(group: string) {
+    if (this.collapsedGroups.includes(group)) {
+      this.collapsedGroups = this.collapsedGroups.filter(e => e !== group);
     } else {
-      this.modalType = null;
-      this.showImport = false;
+      this.collapsedGroups.push(group);
+    }
+    
+    localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups, sortBy: this.sortBy, groupBy: this.groupBy}));
+  }
+  
+  get filteredInstance(): string[] | null {
+    if (this.searchTerm === '') {
+      return null;
+    }
+    
+    return this.instances
+      .filter(e => containsIgnoreCase(e.name, this.searchTerm))
+      .map(e => e.uuid);
+  }
 
-      this.installModpack({
-        pack: {
-          importFrom: this.activeFile.path ?? 'invalid-path-name-to-break-the-java-size-by-default',
-        },
-        meta: {
-          name: 'Curse imported modpack',
-          version: this.activeFile.name,
-        },
-      });
-      this.activeFile = null;
+  get groupedPacks(): Record<string, SugaredInstanceJson[]> {
+    const grouped: Record<string, SugaredInstanceJson[]> = {};
+
+    for (const instance of this.sortedInstances) {
+      let groupKey = '';
+      switch (this.groupBy.replace("-", "")) {
+        case 'category':
+          groupKey = instance.category;
+          break;
+        case 'modloader':
+          groupKey = resolveModloader(instance)
+          break;
+        case 'mcversion':
+          groupKey = instance.mcVersion;
+          break;
+        default:
+          groupKey = instance.category;
+          break;
+      }
+      
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = [];
+      }
+      
+      grouped[groupKey].push(instance);
+    }
+    
+    const sortDirection = this.groupBy.includes("-") ? 'dec' : 'asc';
+    
+    // Modify the order of the group keys based on the sort direction
+    const groupKeys = Object.keys(grouped).sort((a, b) => {
+      if (a === b) {
+        return 0;
+      }
+      
+      if (a > b) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      
+      return sortDirection === 'asc' ? -1 : 1;
+    });
+    
+    const sorted: Record<string, SugaredInstanceJson[]> = {};
+    for (const key of groupKeys) {
+      sorted[key] = grouped[key];
+    }
+    
+    return sorted;
+  }
+  
+  get sortedInstances() {
+    const sortDirection = this.sortBy.includes("-") ? 'dec' : 'asc';
+    const sortByKey = this.sortBy.includes("-") ? this.sortBy.split('-')[1] : this.sortBy;
+    
+    const sortKey = this.instanceJsonKey(sortByKey);
+    
+    return this.instances.sort((a, b) => {
+      if (a[sortKey] === b[sortKey]) {
+        return 0;
+      }
+      
+      if (a[sortKey] > b[sortKey]) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      return sortDirection === 'asc' ? -1 : 1;
+    });
+  }
+  
+  instanceJsonKey(sortKey: String): Partial<keyof SugaredInstanceJson> {
+    switch (sortKey) {
+      case "name": return "name";
+      case "lastPlayed": return "lastPlayed";
+      case "totalPlaytime": return "totalPlayTime";
+      default: return "name";
     }
   }
-
-  get packs(): Instance[] {
-    return this.modpacks == null
-      ? []
-      : this.searchTerm.length > 0
-      ? this.modpacks.installedPacks.filter((pack) => {
-          return pack.name.search(new RegExp(this.searchTerm, 'gi')) !== -1;
-        })
-      : this.modpacks.installedPacks.sort((a, b) => {
-          if (!a.lastPlayed || !b.lastPlayed) {
-            return a.name.localeCompare(b.name);
-          }
-
-          return b.lastPlayed - a.lastPlayed;
-        });
-  }
-
-  public getModpack(id: number): ModPack | null {
-    return this.packsCache[id] ? this.packsCache[id] : null;
+  
+  @Watch("sortBy")
+  @Watch("groupBy")
+  onSortChange() {
+    localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups, sortBy: this.sortBy, groupBy: this.groupBy}));
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.pack-card-list {
-  &.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 148px);
-    gap: 1rem;
+.categories {
+  .category {
+    &:not(:last-child) {
+      margin-bottom: 2rem;
+    }
+    
+    &.collapsed {
+      header {
+        .collapse {
+          svg {
+            transform: rotateZ(180deg);
+          }
+        }
+      }
+    }
+    
+    header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 1rem;
+      
+      h2 {
+        font-size: 1.1275rem;
+        font-weight: bold;
+      }
+      
+      span {
+        display: block;
+        flex: 1;
+        height: 2px;
+        border-radius: 2px;
+        background-color: rgba(white, .2);
+      }
+      
+      .collapse {
+        cursor: pointer;
+        background-color: pink;
+        padding: .18rem 1rem;
+        border-radius: 3px;
+        background-color: rgba(white, .1);
+        transition: background-color .25s ease-in-out;
+        
+        &:hover {
+          background-color: rgba(white, .2);
+        }
+        
+        svg {
+          transition: transform .25s ease-in-out;
+          font-size: 12px;
+        }
+      }
+    }
   }
 }
 
@@ -379,6 +325,9 @@ export default class Library extends Vue {
 .no-packs {
   position: relative;
   height: 100%;
+  
+  border-left: 1px solid rgba(white, 0.1);
+  border-right: 1px solid rgba(white, 0.1);
 
   &::before {
     content: '';

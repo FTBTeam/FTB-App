@@ -4,7 +4,7 @@
       <div class="avatar">
         <img
           v-if="getActiveProfile ? getActiveProfile.uuid : mtAvatar"
-          :src="`https://api.mymcuu.id/head/${getActiveProfile ? getActiveProfile.uuid : mtAvatar}`"
+          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : mtAvatar)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -35,9 +35,9 @@
               @click="() => setActiveProfile(item)"
             >
               <div class="avatar">
-                <img :src="`https://api.mymcuu.id/head/${item.uuid}`" alt="Profile" class="rounded" />
+                <img :src="getMinecraftHead(item.uuid)" alt="Profile" class="rounded" />
                 <div class="ms-identifier" v-if="item.type === 'microsoft'">
-                  <img src="@/assets/images/branding/microsoft-squares.png" alt="Microsoft account" />
+                  <img src="@/assets/images/branding/microsoft-squares.webp" alt="Microsoft account" />
                 </div>
               </div>
               <div class="name selectable">
@@ -65,7 +65,7 @@
           <div class="mt-area">
             <div class="headings">
               <div class="main">
-                <img src="@/assets/mtg-tiny-desat.png" alt="MineTogether Logo" />
+                <img src="@/assets/mtg-tiny-desat.webp" alt="MineTogether Logo" />
                 MineTogether
               </div>
               <router-link :to="{ name: 'integrations' }">
@@ -74,7 +74,7 @@
             </div>
             <div class="account" v-if="auth.token">
               <div class="avatar">
-                <img :src="`https://api.mymcuu.id/head/${avatarName}`" alt="Profile" class="rounded" />
+                <img :src="getMinecraftHead(avatarName)" alt="Profile" class="rounded" />
               </div>
               <div class="meta">
                 <div class="name selectable">
@@ -110,21 +110,22 @@ import Component from 'vue-class-component';
 import { Action, Getter, State } from 'vuex-class';
 import { AuthProfile } from '@/modules/core/core.types';
 import { AuthState } from '@/modules/auth/types';
-import { wsTimeoutWrapper } from '@/utils/helpers';
 import { Prop } from 'vue-property-decorator';
+import { sendMessage } from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 
-@Component
+@Component({
+  methods: {getMinecraftHead}
+})
 export default class SidebarProfile extends Vue {
   @Prop({ default: false }) disable!: boolean;
 
-  @Getter('getProfiles', { namespace: 'core' }) private getProfiles!: AuthProfile[];
-  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: AuthProfile;
+  @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
+  @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
 
-  @State('auth') private auth!: AuthState;
-  @Action('openSignIn', { namespace: 'core' }) private openSignIn!: () => void;
-  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
-
-  @Action('sendMessage') private sendMessage!: any;
+  @State('auth') auth!: AuthState;
+  @Action('openSignIn', { namespace: 'core' }) openSignIn!: () => void;
+  @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
 
   editMode = false;
   loading = false;
@@ -138,10 +139,9 @@ export default class SidebarProfile extends Vue {
     this.loading = true;
 
     try {
-      const data = await wsTimeoutWrapper({
-        type: 'profiles.remove',
-        uuid: profile.uuid,
-      });
+      const data = await sendMessage("profiles.remove", {
+        uuid: profile.uuid
+      })
 
       if (data.success) {
         this.loadProfiles();
@@ -156,10 +156,9 @@ export default class SidebarProfile extends Vue {
   async setActiveProfile(profile: AuthProfile) {
     this.loading = true;
     try {
-      const data = await wsTimeoutWrapper({
-        type: 'profiles.setActiveProfile',
-        uuid: profile.uuid,
-      });
+      const data = await sendMessage("profiles.setActiveProfile", {
+        uuid: profile.uuid
+      })
 
       if (data.success) {
         this.loadProfiles();

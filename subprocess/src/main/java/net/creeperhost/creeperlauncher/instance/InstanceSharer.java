@@ -4,6 +4,7 @@ import com.google.common.hash.Hashing;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.ColUtils;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.DataUtils;
@@ -75,7 +76,7 @@ public class InstanceSharer extends InstanceOperation {
         if (DEBUG) {
             LOGGER.info("Actions: ");
             for (FileAction fileAction : actions) {
-                LOGGER.info("{}: {}", fileAction.action, fileAction.file.path());
+                LOGGER.info("{}: {}", fileAction.action, fileAction.file.relPath());
             }
         }
     }
@@ -90,7 +91,7 @@ public class InstanceSharer extends InstanceOperation {
                 case REMOVED -> {
                     Iterator<ModpackFile> itr = modpackFiles.iterator();
                     while (itr.hasNext()) {
-                        if (itr.next().instanceRelPath().equals(indexedFile.path())) {
+                        if (itr.next().instanceRelPath().equals(indexedFile.relPath())) {
                             itr.remove();
                             break;
                         }
@@ -99,8 +100,8 @@ public class InstanceSharer extends InstanceOperation {
                 case MODIFIED -> {
                     assert indexedFile.sha1() != null;
                     for (ModpackFile file : modpackFiles) {
-                        if (file.instanceRelPath().equals(indexedFile.path())) {
-                            file.setUrl(Constants.TRANSFER_HOST + "${token}/" + indexedFile.path().replace("/", "_"));
+                        if (file.instanceRelPath().equals(indexedFile.relPath())) {
+                            file.setUrl(Constants.TRANSFER_HOST + "${token}/" + indexedFile.relPath().replace("/", "_"));
                             file.setSize(indexedFile.length());
                             file.setSha1(indexedFile.sha1());
                             break;
@@ -111,9 +112,9 @@ public class InstanceSharer extends InstanceOperation {
                     assert indexedFile.sha1() != null;
                     modpackFiles.add(new ModpackFile(
                             -1,
-                            "./" + FilenameUtils.getFullPath(indexedFile.path()),
-                            FilenameUtils.getName(indexedFile.path()),
-                            Constants.TRANSFER_HOST + "${token}/" + indexedFile.path().replace("/", "_"),
+                            "./" + FilenameUtils.getFullPath(indexedFile.relPath()),
+                            FilenameUtils.getName(indexedFile.relPath()),
+                            Constants.TRANSFER_HOST + "${token}/" + indexedFile.relPath().replace("/", "_"),
                             indexedFile.sha1(),
                             indexedFile.length(),
                             "shared_file" // Not reasonable to reconstruct the correct type here.
@@ -164,7 +165,12 @@ public class InstanceSharer extends InstanceOperation {
                 if (shouldSkipFile(relPath.toLowerCase(Locale.ROOT))) continue; // Skip these files too.
                 if (knownFiles.containsKey(relPath)) continue; // File is known.
 
-                actions.add(new FileAction(Action.UNTRACKED, new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path))));
+                actions.add(new FileAction(Action.UNTRACKED, new IndexedFile(
+                        relPath,
+                        path.getFileName().toString(),
+                        HashUtils.hash(Hashing.sha1(), path),
+                        Files.size(path)
+                )));
             }
         } catch (IOException ex) {
             throw new IllegalStateException("An IO error occurred whilst locating untracked files.", ex);
@@ -197,7 +203,8 @@ public class InstanceSharer extends InstanceOperation {
                 MultiHasher.HashResult result = hasher.finish();
                 if (!validation.validate(file, result)) {
                     actions.add(new FileAction(Action.MODIFIED, new IndexedFile(
-                            modpackFile.path(),
+                            modpackFile.relPath(),
+                            modpackFile.fileName(),
                             result.get(MultiHasher.HashFunc.SHA1),
                             Files.size(file)
                     )));
@@ -219,11 +226,11 @@ public class InstanceSharer extends InstanceOperation {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", "manifest.json", bodyOf(manifestJson));
         long totalSize = 0;
-        for (IndexedFile file : StreamableIterable.of(actions).filter(e -> e.action != Action.REMOVED).map(FileAction::file)) {
+        for (IndexedFile file : FastStream.of(actions).filter(e -> e.action != Action.REMOVED).map(FileAction::file)) {
             assert file.sha1() != null;
 
-            Path filePath = instance.getDir().resolve(file.path());
-            postBody.addFormDataPart("file", file.path().replace('/', '_'), bodyOf(filePath));
+            Path filePath = instance.getDir().resolve(file.relPath());
+            postBody.addFormDataPart("file", file.relPath().replace('/', '_'), bodyOf(filePath));
             try {
                 totalSize += Files.size(filePath);
             } catch (IOException ex) {

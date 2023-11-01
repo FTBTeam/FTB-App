@@ -45,8 +45,9 @@
   </div>
 </template>
 <script lang="ts">
+import { sendMessage } from '@/core/websockets/websocketsApi';
+import { gobbleError } from '@/utils/helpers/asyncHelpers';
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Action } from 'vuex-class';
 
 @Component({
   name: 'MessageModal',
@@ -64,13 +65,14 @@ import { Action } from 'vuex-class';
   },
 })
 export default class MessageModal extends Vue {
-  @Action('sendMessage') public sendWSMessage: any;
   @Prop()
   private modalID!: string;
 
   public sendMessage(message: string) {
-    this.sendWSMessage({ payload: { type: 'modalCallback', id: this.modalID, message }, callback: () => {} });
+    gobbleError(() => sendMessage("modalCallback", {
+      id: this.modalID,
+      message
+    }))
   }
 }
 </script>
-<style></style>

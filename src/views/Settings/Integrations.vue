@@ -7,12 +7,12 @@
       </p>
 
       <div class="card" v-else>
-        <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
+        <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
         <div class="main" v-if="!auth.loggingIn">
           <div class="name font-bold mb-2 flex items-center">
             <div class="avatar mr-2">
               <img
-                :src="`https://api.mymcuu.id/head/${avatarName}`"
+                :src="getMinecraftHead(avatarName)"
                 style="margin-right: 0.75em; width: 40px; height: 40px"
                 class="rounded-full"
               />
@@ -31,7 +31,7 @@
             </div>
           </div>
           <div class="setup inline-block mt-4 text-sm">
-            <ftb-button @click="logout" class="px-4 py-2" color="primary">Logout to disable</ftb-button>
+            <ui-button :wider="true" type="success" @click="logout" icon="sign-out">Logout</ui-button>
           </div>
         </div>
         <div class="main flex" v-else>
@@ -44,12 +44,12 @@
     <h3 class="text-xl font-bold mb-4" v-if="auth.token === null">Available integrations</h3>
     <div class="integrations" v-if="auth.token === null">
       <div class="card" :class="{ disabled: auth.loggingIn }">
-        <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
+        <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
         <div class="main">
           <div class="name font-bold mb-1">MineTogether</div>
           <div class="desc opacity-75">Integrate with MineTogether to use cloudsaves and private packs.</div>
           <div class="setup inline-block mt-4 text-sm">
-            <ftb-button class="px-4 py-2" color="primary" @click="openLogin">Login to setup</ftb-button>
+            <ui-button :wider="true" type="success" @click="openLogin" icon="sign-in">Login to setup</ui-button>
           </div>
         </div>
       </div>
@@ -58,17 +58,22 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import { AuthState } from '@/modules/auth/types';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
+import {AuthState} from '@/modules/auth/types';
 import platform from '@/utils/interface/electron-overwolf';
-import { SettingsState } from '@/modules/settings/types';
+import {SettingsState} from '@/modules/settings/types';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
-@Component
+@Component({
+  components: {UiButton},
+  methods: {getMinecraftHead}
+})
 export default class AppInfo extends Vue {
   @State('auth') private auth!: AuthState;
   @State('settings') private settings!: SettingsState;
-  @Action('sendMessage') public sendMessage: any;
   @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
@@ -100,11 +105,7 @@ export default class AppInfo extends Vue {
   public logout() {
     this.logoutAction();
     // get instances and store
-    this.sendMessage({
-      payload: {
-        type: 'ircQuitRequest',
-      },
-    });
+    sendMessage("ircQuitRequest", {})
 
     platform.get.actions.logoutFromMinetogether();
 

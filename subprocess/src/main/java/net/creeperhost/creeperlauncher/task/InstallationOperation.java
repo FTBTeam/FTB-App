@@ -4,13 +4,14 @@ import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Created by covers1624 on 3/6/22.
@@ -29,7 +30,7 @@ public class InstallationOperation extends LongRunningOperation {
         this.data = data;
         this.instance = instance;
         this.manifest = manifest;
-        InstallProgressTracker tracker = new InstallProgressTracker(data);
+        OperationProgressTracker tracker = new OperationProgressTracker("install", Map.of("instance", instance.getUuid().toString()));
         installer = new InstanceInstaller(instance, manifest, cancelToken, tracker);
     }
 
@@ -52,12 +53,12 @@ public class InstallationOperation extends LongRunningOperation {
     protected void onOperationException(Throwable ex) {
         if (ex instanceof PrepareException pex) {
             LOGGER.error("Fatal exception whilst preparing modpack installation.", pex);
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation.", ""));
+            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation."));
             return;
         }
 
         LOGGER.error("Fatal exception whilst installing modpack.", ex);
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack."));
     }
 
     @Override
@@ -67,7 +68,7 @@ public class InstallationOperation extends LongRunningOperation {
                 Instances.addInstance(instance);
                 Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance.props));
             }
-            case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", ""));
+            case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", instance.props));
         }
     }
 

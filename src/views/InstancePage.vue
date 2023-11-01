@@ -1,24 +1,24 @@
 <template>
   <div class="pack-page">
-    <div class="pack-page-contents" v-if="instance && packInstance">
-      <div
-        class="background"
-        :style="{
-          'background-image': `url(${packSplashArt})`,
-        }"
-      ></div>
+    <div class="pack-page-contents" v-if="instance">
       <header>
+        <div
+          class="background"
+          :style="{
+            'background-image': `url(${packSplashArt})`,
+          }"
+        />
         <pack-meta-heading
           @back="goBack"
           :hidePackDetails="hidePackDetails"
           :versionType="versionType"
+          :api-pack="apiPack ? apiPack : undefined"
           :instance="instance"
-          :isForgePack="isForgePack"
         />
 
         <pack-title-header
           v-if="!hidePackDetails"
-          :pack-instance="packInstance"
+          :pack-instance="apiPack"
           :instance="instance"
           :isInstalled="true"
           :pack-name="instance.name"
@@ -31,16 +31,12 @@
           @update="update"
           @tabChange="(e) => (activeTab = e)"
           @showVersion="showVersions = true"
-          @searchForMods="searchingForMods = true"
-          @getModList="(e) => getModList(e)"
           @backupsChanged="loadBackups"
           :pack-loading="packLoading"
           :active-tab="activeTab"
           :isInstalled="true"
           :instance="instance"
-          :mods="modlist"
-          :pack-instance="packInstance"
-          :updating-mod-list="updatingModlist"
+          :pack-instance="apiPack"
           :backups="instanceBackups"
           :allow-offline="offlineAllowed"
           @playOffline="offlineMessageOpen = true"
@@ -49,48 +45,38 @@
 
       <closable-panel :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
         <modpack-versions
-          :versions="packInstance.versions"
-          :pack-instance="packInstance"
+          v-if="apiPack"
+          :versions="apiPack.versions"
+          :pack-instance="apiPack"
           :instance="instance"
-          :current="instance.versionId"
           @close="showVersions = false"
         />
       </closable-panel>
     </div>
-
-    <ftb-modal :visible="showMsgBox" @dismiss-modal="hideMsgBox">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-        :loading="deleting"
-      />
-    </ftb-modal>
-
+    <p v-else>No modpack found...</p>
+    
     <modal
       :open="offlineMessageOpen"
       :title="$route.query.presentOffline ? 'Unable to update your profile' : 'Play offline'"
-      :subTitle="
-        $route.query.presentOffline
-          ? 'Would you like to play in Offline Mode?'
-          : 'Playing in offline mode will prevent you from being able to join servers.'
-      "
+      subTitle="Would you like to play in Offline Mode?"
       @closed="() => closeOfflineModel()"
     >
-      <p v-if="$route.query.presentOffline" class="mb-4">
-        Please be aware, running in offline mode will mean you can not play on servers.
-      </p>
+      <message type="warning" class="mb-6 wysiwyg">
+        <p>Please be aware, running in offline mode will mean you can not:</p>
+        <ul>
+          <li>Play on online servers</li>
+          <li>Have a custom skin</li>
+          <li>Have any profile specific content in-game</li>
+        </ul> 
+      </message>
 
-      <ftb-input placeholder="Steve" label="Username" v-model="offlineUserName" class="mb-4 text-base" />
+      <ftb-input placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
 
-      <div class="flex justify-end">
-        <ftb-button color="primary" class="py-2 px-6 mt-2 inline-block" @click="playOffline">
-          <font-awesome-icon icon="play" class="mr-2" size="1x" />
-          Play offline
-        </ftb-button>
-      </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <ui-button icon="play" type="success" @click="playOffline">Play offline</ui-button>
+        </div>
+      </template>
     </modal>
 
     <modal
@@ -109,51 +95,37 @@
         :notification="borkedVersionNotification"
       />
     </modal>
-
-    <closable-panel
-      :open="searchingForMods"
-      @close="searchingForMods = false"
-      :title="`Add mods to ${packInstance ? packInstance.name : ''}`"
-      subtitle="You can find mods for this pack using the search area below"
-    >
-      <find-mods :instance="instance" @modInstalled="getModList" />
-    </closable-panel>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
-import { Action, Getter, State } from 'vuex-class';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
-import FTBModal from '@/components/atoms/FTBModal.vue';
-import ServerCard from '@/components/organisms/ServerCard.vue';
-import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import { SettingsState } from '@/modules/settings/types';
-import { ServersState } from '@/modules/servers/types';
-import { AuthState } from '@/modules/auth/types';
-import FindMods from '@/components/templates/modpack/FindMods.vue';
-import { PackConst } from '@/utils/contants';
+import {Component, Vue} from 'vue-property-decorator';
+import {ModPack, Versions} from '@/modules/modpacks/types';
+import {Action, Getter, State} from 'vuex-class';
+import {AuthState} from '@/modules/auth/types';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
-import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
 import PackBody from '@/components/molecules/modpack/PackBody.vue';
-import { App } from '@/types';
-import { AuthProfile } from '@/modules/core/core.types';
-import { RouterNames } from '@/router';
-import { InstallerState } from '@/modules/app/appStore.types';
-import { abortableFetch, AbortableRequest, createModpackchUrl, getPackArt, wsTimeoutWrapperTyped } from '@/utils';
+import {AuthProfile} from '@/modules/core/core.types';
+import {RouterNames} from '@/router';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
-import { InstanceBackup, InstanceBackupsReply, InstanceBackupsRequest } from '@/typings/subprocess/instanceBackups';
 import VersionsBorkedModal from '@/components/organisms/modals/VersionsBorkedModal.vue';
+import {ns} from '@/core/state/appState';
+import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {GetModpack} from '@/core/state/modpacks/modpacksState';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {alertController} from '@/core/controllers/alertController';
+import {dialogsController} from '@/core/controllers/dialogsController';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 export enum ModpackPageTabs {
   OVERVIEW,
   MODS,
-  PUBLIC_SERVERS,
   SETTINGS,
   BACKUPS,
 }
@@ -161,32 +133,21 @@ export enum ModpackPageTabs {
 @Component({
   name: 'InstancePage',
   components: {
+    UiButton,
     VersionsBorkedModal,
     ClosablePanel,
     PackTitleHeader,
     PackMetaHeading,
     ModpackSettings,
-    ServerCard,
-    'ftb-modal': FTBModal,
-    'ftb-toggle': FTBToggle,
-    'ftb-slider': FTBSlider,
     ModpackVersions,
-    MessageModal,
-    FindMods,
-    ModpackPublicServers,
     PackBody,
   },
 })
 export default class InstancePage extends Vue {
-  @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-  @State('settings') public settingsState!: SettingsState;
-  @State('servers') public serverListState!: ServersState;
+  @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
+  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
+  
   @State('auth') public auth!: AuthState;
-
-  @Action('fetchCursepack', { namespace: 'modpacks' }) public fetchCursepack!: any;
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
-  @Action('sendMessage') public sendMessage!: any;
-  @Action('showAlert') public showAlert: any;
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
@@ -194,7 +155,6 @@ export default class InstancePage extends Vue {
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   packLoading = false;
 
@@ -202,29 +162,14 @@ export default class InstancePage extends Vue {
   tabs = ModpackPageTabs;
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
 
-  private packInstance: ModPack | null = null;
-  deleting: boolean = false;
-
-  private showMsgBox: boolean = false;
-  private msgBox: App.MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
-
-  private modlist: any = [];
-
-  searchingForMods = false;
-  updatingModlist = false;
+  apiPack: ModPack | null = null;
+  
   showVersions = false;
   offlineMessageOpen = false;
   offlineUserName = '';
   offlineAllowed = false;
 
-  instanceBackups: InstanceBackup[] = [];
-  requestHolder: AbortableRequest[] = [];
+  instanceBackups: Backup[] = [];
 
   borkedVersionNotification: string | null = null;
   borkedVersionDowngradeId: number | null = null;
@@ -235,28 +180,21 @@ export default class InstancePage extends Vue {
       await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
     }
-    try {
-      this.packInstance =
-        this.instance.packType == 0
-          ? await this.fetchModpack(this.instance.id).catch(() => undefined)
-          : await this.fetchCursepack(this.instance.id).catch(() => undefined);
-    } catch (e) {
-      console.log('Error getting instance modpack');
-    }
-    this.$forceUpdate();
-
-    if (this.$route.query.shouldPlay === 'true') {
-      this.confirmLaunch();
+    
+    // TODO: (M#01) Allow to work without this.
+    this.apiPack = await this.getModpack({
+      id: this.instance.id,
+      provider: typeIdToProvider(this.instance.packType)
+    });
+    
+    if (!this.apiPack) {
+      this.activeTab = ModpackPageTabs.MODS;
     }
 
-    this.getModList();
     this.loadBackups().catch(console.error);
 
     // Throwaway error, don't block
     this.checkForBorkedVersion().catch(console.error);
-
-    this.getModList();
-    this.loadBackups().catch(console.error);
 
     if (this.getActiveProfile) {
       this.offlineAllowed = true;
@@ -273,30 +211,26 @@ export default class InstancePage extends Vue {
    * if the held version is set to `archived`
    */
   private async checkForBorkedVersion() {
-    if (!this.instance?.versionId || !this.packInstance) {
+    if (!this.instance?.versionId || !this.apiPack) {
       return;
     }
 
-    const currentVersion = this.packInstance.versions.find((e) => e.id === this.instance?.versionId);
+    const currentVersion = this.apiPack.versions.find((e) => e.id === this.instance?.versionId);
     if (!currentVersion || currentVersion.type.toLowerCase() !== 'archived') {
       return;
     }
 
-    const currentVersionApiReq = await abortableFetch(
-      createModpackchUrl(
-        `/${this.instance.packType === 0 ? 'modpack' : 'curseforge'}/${this.instance.id}/${this.instance.versionId}`,
-      ),
-    );
-
-    this.requestHolder.push(currentVersionApiReq);
-    const apiData = await (await currentVersionApiReq.ready).json();
-    this.requestHolder = this.requestHolder.filter((e) => e === currentVersionApiReq); // Remove from the request holder
+    const apiData = await modpackApi.modpacks.getModpackVersion(this.instance.id, this.instance.versionId, typeIdToProvider(this.instance.packType))
+    if (!apiData) {
+      return;
+    }
+    
     if (apiData.notification) {
       this.borkedVersionNotification = apiData.notification;
     }
 
     // Find a downgrade / upgrade version
-    const nextAvailableVersion = this.packInstance.versions.find((e) => e.type !== 'archived');
+    const nextAvailableVersion = this.apiPack.versions.find((e) => e.type !== 'archived');
     if (nextAvailableVersion) {
       this.borkedVersionDowngradeId = nextAvailableVersion.id;
       if (nextAvailableVersion.id < this.instance.versionId) {
@@ -315,85 +249,70 @@ export default class InstancePage extends Vue {
     if (!this.hidePackDetails) {
       this.$router.push({ name: RouterNames.ROOT_LIBRARY });
     } else {
-      this.searchingForMods = false;
-      this.activeTab = ModpackPageTabs.OVERVIEW;
+      this.activeTab = this.apiPack ? ModpackPageTabs.OVERVIEW : ModpackPageTabs.MODS;
     }
   }
 
   public async launchModPack() {
-    if (this.instance == null) {
+    if (this.instance === null) {
+      return;
+    }
+    
+    if (this.instance.pendingCloudInstance) {
+      const result = await sendMessage("syncInstance", {
+        uuid: this.instance.uuid
+      })
+      
+      // TODO: (M#01) Handle errors
+      // TODO: (M#01) Handle some kinda visual state
+      console.log(result)
+      
       return;
     }
 
     if (this.instance.memory < this.instance.minMemory) {
-      this.msgBox.type = 'okCancel';
-      this.msgBox.title = 'Low Memory';
-      this.msgBox.okAction = this.launch;
-      this.msgBox.cancelAction = this.hideMsgBox;
-      this.msgBox.content =
+      const result = await dialogsController.createConfirmationDialog("Low memory",
         `You are trying to launch the modpack with memory settings that are below the` +
         `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
-        `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`;
-      this.showMsgBox = true;
-    } else {
-      await this.launch();
+        `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`
+      )
+      
+      if (!result) {
+        return
+      }
     }
+    
+    this.launch();
   }
 
-  public confirmLaunch() {
-    this.msgBox.type = 'okCancel';
-    this.msgBox.title = 'Do you want to launch this modpack?';
-    this.msgBox.okAction = this.launch;
-    this.msgBox.cancelAction = this.hideMsgBox;
-    this.msgBox.content = `We've been asked to launch ${this.instance?.name}, do you want to do this?`;
-    this.showMsgBox = true;
-  }
-
-  public async launch() {
-    await this.$router.push({
+  public launch() {
+    this.$router.push({
       name: RouterNames.ROOT_LAUNCH_PACK,
       query: { uuid: this.instance?.uuid },
     });
   }
 
-  public async playOffline() {
-    await this.$router.push({
+  public playOffline() {
+    this.$router.push({
       name: RouterNames.ROOT_LAUNCH_PACK,
       query: { uuid: this.instance?.uuid, offline: 'true', username: this.offlineUserName },
     });
   }
 
   public update(version: Versions | null = null): void {
-    const targetVersion = version ?? this.packInstance?.versions.sort((a, b) => b.id - a.id)[0];
-    if (!targetVersion) {
+    const targetVersion = version ?? this.apiPack?.versions.sort((a, b) => b.id - a.id)[0];
+    if (!targetVersion || !this.instance) {
       // How?
       return;
     }
     
-    this.installModpack({
-      pack: {
-        uuid: this.instance?.uuid,
-        id: this.instance?.id,
-        version: targetVersion.id,
-        packType: this.instance?.packType,
-        private: this.packInstance?.private ?? targetVersion.private ?? false,
-      },
-      meta: {
-        name: this.instance?.name ?? '',
-        version: targetVersion.name ?? '',
-        art: getPackArt(this.instance?.art),
-      },
-    });
+    instanceInstallController.requestUpdate(this.instance, targetVersion, typeIdToProvider(this.instance.packType))
   }
 
   public updateOrDowngrade(versionId: number) {
-    const pack = this.packInstance?.versions.find((e) => e.id === versionId);
+    const pack = this.apiPack?.versions.find((e) => e.id === versionId);
     if (!pack) {
-      this.showAlert({
-        title: 'Unable to recover',
-        message: 'The selected recovery pack version id was not available...',
-        type: 'danger',
-      });
+      alertController.error('The selected recovery pack version id was not available...')
       return;
     }
 
@@ -402,45 +321,12 @@ export default class InstancePage extends Vue {
     this.closeBorked();
   }
 
-  public hideMsgBox(): void {
-    this.showMsgBox = false;
-  }
-
   public async loadBackups() {
-    const backups = await wsTimeoutWrapperTyped<InstanceBackupsRequest, InstanceBackupsReply>({
-      type: 'instanceGetBackups',
+    const backups = await sendMessage("instanceGetBackups", {
       uuid: this.instance?.uuid ?? '',
-    });
+    })
 
     this.instanceBackups = backups.backups.sort((a, b) => b.createTime - a.createTime);
-  }
-
-  private getModList(showAlert = false) {
-    try {
-      this.updatingModlist = true;
-      this.sendMessage({
-        payload: {
-          type: 'instanceMods',
-          uuid: this.instance?.uuid,
-        },
-        callback: (data: any) => {
-          this.modlist = data.files;
-          this.updatingModlist = false;
-
-          if (showAlert) {
-            this.showAlert({
-              title: 'Updated!',
-              message: 'The mods list has been updated',
-              type: 'primary',
-            });
-          }
-        },
-      });
-      // I don't think we can catch this... Blame rush.
-    } catch (e) {
-      console.log(e);
-      console.log('Error getting instance modlist');
-    }
   }
 
   closeOfflineModel() {
@@ -449,29 +335,13 @@ export default class InstancePage extends Vue {
       this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
     }
   }
-
-  destroyed() {
-    this.requestHolder.forEach((e) => e.abort());
-  }
-
+  
   get instance() {
-    if (this.modpacks == null) {
-      return null;
-    }
-    return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
+    return this.instances.find(e => e.uuid === this.$route.params.uuid) ?? null;
   }
 
   get packSplashArt() {
-    if (this.packInstance === null) {
-      return PackConst.defaultPackSplashArt;
-    }
-
-    const splashArt = this.packInstance.art?.filter((art) => art.type === 'splash');
-    return splashArt?.length > 0 ? encodeURI(splashArt[0].url) : PackConst.defaultPackSplashArt;
-  }
-
-  get isForgePack() {
-    return this.instance?.modLoader.includes('forge') ?? 'fabric';
+    return resolveArtwork(this.apiPack, 'splash');
   }
 
   /**
@@ -482,7 +352,7 @@ export default class InstancePage extends Vue {
   }
 
   get versionType() {
-    return this.packInstance?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
+    return this.apiPack?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
   }
 }
 </script>

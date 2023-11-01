@@ -1,72 +1,86 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.covers1624.jdkutils.JavaLocator;
-import net.creeperhost.creeperlauncher.Settings;
+import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.Instances;
+import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.function.Function;
 
-public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData>
-{
+public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData> {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Override
-    public void handle(InstanceConfigureData data)
-    {
-        try
-        {
+    public void handle(InstanceConfigureData data) {
+        try {
             Instance instance = Instances.getInstance(data.uuid);
             if (instance == null) {
-                // TODO, This message needs to be improved. We should tell the frontend _why_
                 Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));
                 return;
             }
-            for (Map.Entry<String, String> setting : data.instanceInfo.entrySet())
-            {
-                switch (setting.getKey().toLowerCase())
-                {
-                    case "memory":
-                        instance.props.memory = Integer.parseInt(setting.getValue());
-                        break;
-                    case "name":
-                        instance.props.name = setting.getValue();
-                        break;
-                    case "jvmargs":
-                        instance.props.jvmArgs = setting.getValue();
-                        break;
-                    case "width":
-                        instance.props.width = Integer.parseInt(setting.getValue());
-                        break;
-                    case "height":
-                        instance.props.height = Integer.parseInt(setting.getValue());
-                        break;
-                    case "cloudsaves":
-                        instance.props.cloudSaves = Boolean.parseBoolean(setting.getValue());
-                        break;
-                    case "jrepath":
-                        if(setting.getValue().length() == 0){
-                            instance.props.embeddedJre = true;
-                            instance.props.jrePath = null;
-                        } else {
-                            instance.props.embeddedJre = false;
-                            var jreLocation = Paths.get(setting.getValue());
-                            if (JavaLocator.parseInstall(jreLocation) == null) {
-                                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
-                                return;
-                            }
-                            instance.props.jrePath = jreLocation;
-                        }
-                        break;
+
+            JsonObject updateJson = JsonUtils.parseRaw(data.instanceJson).getAsJsonObject();
+
+            instance.props.name = getOrDefault(updateJson, "name", JsonElement::getAsString, instance.props.name);
+            instance.props.jvmArgs = getOrDefault(updateJson, "jvmArgs", JsonElement::getAsString, instance.props.jvmArgs);
+
+            Path jreRealPath = instance.props.jrePath;
+            if (updateJson.has("jrePath")) {
+                String jrePath = updateJson.get("jrePath").getAsString();
+                jreRealPath = Paths.get(jrePath);
+            }
+
+            instance.props.jrePath = jreRealPath;
+            instance.props.memory = getOrDefault(updateJson, "memory", JsonElement::getAsInt, instance.props.memory);
+            instance.props.width = getOrDefault(updateJson, "width", JsonElement::getAsInt, instance.props.width);
+            instance.props.height = getOrDefault(updateJson, "height", JsonElement::getAsInt, instance.props.height);
+            instance.props.fullscreen = getOrDefault(updateJson, "fullScreen", JsonElement::getAsBoolean, instance.props.fullscreen);
+            instance.props.releaseChannel = getOrDefault(updateJson, "releaseChannel", JsonElement::getAsString, instance.props.releaseChannel);
+            instance.props.cloudSaves = getOrDefault(updateJson, "cloudSaves", JsonElement::getAsBoolean, instance.props.cloudSaves);
+            instance.props.category = getOrDefault(updateJson, "category", JsonElement::getAsString, instance.props.category);
+            instance.props.embeddedJre = jreRealPath == null;
+            
+            var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
+            if (instanceImage != null) {
+                try {
+                    instance.importArt(Path.of(instanceImage));
+                } catch (IOException e) {
+                    LOGGER.error("Failed to import instance image.", e);
                 }
             }
+
+            if (jreRealPath != null) {
+                if (JavaLocator.parseInstall(jreRealPath) == null) {
+                    Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
+                    return;
+                }
+                instance.props.jrePath = jreRealPath;
+            }
+
             instance.saveJson();
-            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "success", ""));
-        } catch (Exception err)
-        {
+            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "success", "", new InstalledInstancesHandler.SugaredInstanceJson(instance)));
+        } catch (IOException ex) {
+            LOGGER.error("Failed to update instance settings.", ex);
             Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Fatal error on settings saving..."));
         }
+    }
 
+    private <T> T getOrDefault(JsonObject object, String key, Function<JsonElement, T> reader, T defaultValue) {
+        if (object.has(key) && !object.get(key).isJsonNull()) {
+            return reader.apply(object.get(key));
+        } else {
+            return defaultValue;
+        }
     }
 }

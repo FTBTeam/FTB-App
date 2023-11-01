@@ -35,18 +35,20 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { wsTimeoutWrapperTyped } from '@/utils';
 import { Action } from 'vuex-class';
-import { Instance } from '@/modules/modpacks/types';
 import { RouterNames } from '@/router';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {alertController} from '@/core/controllers/alertController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {ns} from '@/core/state/appState';
+import {AddInstanceFunction} from '@/core/state/instances/instancesState';
 
 @Component
 export default class DuplicateInstanceModal extends Vue {
   @Prop() uuid!: string;
   @Prop() instanceName!: string;
-  @Action('showAlert') public showAlert: any;
-  @Action('storeInstalledPacks', { namespace: 'modpacks' }) public storePacks!: any;
-
+  @Action('addInstance', ns("v2/instances")) addInstance!: AddInstanceFunction;
+  
   newName = '';
 
   working = false;
@@ -60,47 +62,29 @@ export default class DuplicateInstanceModal extends Vue {
 
     this.working = true;
     this.status = 'Starting duplication';
-
-    let result;
-    try {
-      result = await wsTimeoutWrapperTyped<any, { success: boolean; message: string; uuid: string }>({
-        type: 'duplicateInstance',
-        uuid: this.uuid,
-        newName: this.newName,
-      });
-    } catch {
-      this.showAlert({
-        type: 'danger',
-        title: 'Error',
-        message: 'Unable to duplicate as no response was found for the request...',
-      });
-
-      this.working = false;
-
-      return;
-    }
-
+    
+    const result = await sendMessage("duplicateInstance", {
+      uuid: this.uuid,
+      newName: this.newName,
+    })
+    
     if (!result.success) {
+      console.error(result.message)
       this.working = false;
-      this.showAlert({
-        type: 'danger',
-        title: 'Error',
-        message: result.message,
-      });
+      alertController.error(result.message)
       return;
     }
-
+    
     this.status = 'Refreshing modpacks';
-    const refreshResult = await wsTimeoutWrapperTyped<any, Instance[]>({ type: 'installedInstances' });
-    this.storePacks(refreshResult);
-
+    await this.addInstance(result.instance)
+    
     this.status = '';
     this.done = false;
     this.working = false;
     this.newName = '';
+    
+    await gobbleError(() => this.$router.push({ name: RouterNames.ROOT_LIBRARY }));
     this.$emit('finished');
-
-    this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: result.uuid } }).catch(() => {});
   }
 }
 </script>

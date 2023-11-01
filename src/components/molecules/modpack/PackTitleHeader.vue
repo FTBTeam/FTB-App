@@ -4,9 +4,11 @@
       <div class="name">{{ packName }}</div>
       <div class="desc" v-if="(!instance || !instance.isImport) && !isInstalled">
         {{ packInstance.name }}
-        <template v-if="packInstance.authors && packInstance.authors.length"
-          >by <span v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span></template
-        >
+        <template v-if="packInstance && packInstance.authors && packInstance.authors.length">
+          by 
+          <span v-if='provider === "modpacksch" && packInstance.tags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1'>FTB Team</span>
+          <span v-else v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span>
+        </template>
         -
         {{ packInstance.synopsis }}
       </div>
@@ -17,16 +19,22 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack } from '@/modules/modpacks/types';
+import {Prop} from 'vue-property-decorator';
+import {ModPack} from '@/modules/modpacks/types';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 
 @Component
 export default class PackTitleHeader extends Vue {
-  @Prop() packInstance!: ModPack;
+  @Prop() packInstance?: ModPack | null;
   @Prop() packName!: string;
   @Prop({ default: false }) isInstalled!: boolean;
 
-  @Prop() instance!: Instance;
+  @Prop() instance!: SugaredInstanceJson | InstanceJson;
+  
+  get provider() {
+    return typeIdToProvider(this.packInstance?.id ?? 0);
+  }
 }
 </script>
 
@@ -37,7 +45,7 @@ export default class PackTitleHeader extends Vue {
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 0 5px rgba(black, 0.5);
+  text-shadow: 0 0 5px rgba(black, 0.6);
   background-color: rgba(black, 0.2);
 
   .info {

@@ -4,8 +4,8 @@
       <div class="action-heading">
         <div class="play">
           <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
-            <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
-            {{ isInstalled ? 'Play' : 'Install' }}
+            <font-awesome-icon :icon="isInstalled ? (requiresSync ? 'download' : 'play') : 'download'" class="mr-4" />
+            {{ isInstalled ? (requiresSync ? 'Sync' : 'Play') : 'Install' }}
           </ftb-button>
 
           <pack-actions
@@ -24,7 +24,7 @@
             :localInstance="instance"
             @update="$emit('update')"
           />
-          <div class="option" @click="() => $emit('showVersion')">
+          <div class="option" v-if="packInstance" @click="() => $emit('showVersion')">
             Versions
             <font-awesome-icon icon="code-branch" class="ml-2" />
           </div>
@@ -37,13 +37,14 @@
 
       <div class="tabs">
         <div
+          v-if="packInstance"
           class="tab"
           :class="{ active: activeTab === tabs.OVERVIEW }"
           @click="() => $emit('tabChange', tabs.OVERVIEW)"
         >
           Overview
         </div>
-        <div class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
+        <div v-if="!isVanilla" class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
           Mods
         </div>
         <div
@@ -54,15 +55,15 @@
         >
           World Backups
         </div>
-        <div
-          v-if="isInstalled && currentVersionObject"
-          class="tab"
-          :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"
-          @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"
-        >
-          Public servers
-        </div>
-        <a class="cta" @click.prevent="Platform.get.utils.openUrl(`https://www.creeperhost.net/modpack/${packSlug}`)">
+<!--        <div-->
+<!--          v-if="isInstalled && currentVersionObject"-->
+<!--          class="tab"-->
+<!--          :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"-->
+<!--          @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"-->
+<!--        >-->
+<!--          Public servers-->
+<!--        </div>-->
+        <a class="cta cursor-pointer" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-app' : `https://www.creeperhost.net/modpack/${packSlug}`)">
           <img class="ch-logo" src="@/assets/ch-logo.svg" alt="" />
           Order a server
         </a>
@@ -70,7 +71,7 @@
     </div>
 
     <div class="body-contents">
-      <div class="alert py-2 px-4 mb-4 bg-warning rounded" v-if="packInstance.notification">
+      <div class="alert py-2 px-4 mb-4 bg-warning rounded" v-if="packInstance && packInstance.notification">
         <font-awesome-icon icon="info" class="mr-2" />
         {{ packInstance.notification }}
       </div>
@@ -95,7 +96,7 @@
               <div class="value">{{ instance.version }}</div>
             </div>
           </template>
-          <template v-else>
+          <template v-else-if="packInstance">
             <div class="stat">
               <div class="name">Installs</div>
               <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
@@ -130,17 +131,13 @@
             v-for="(tag, i) in tags"
             :key="`tag-${i}`"
             :to="{ name: 'browseModpacks', params: { search: tag.name } }"
-            class="cursor-pointer tag rounded mr-2 lowercase"
-            :style="{
-              fontVariant: 'small-caps',
-              backgroundColor: `hsla(${getColorForChar(tag.name, 90, 70)}, .5)`,
-            }"
+            class="tag"
             >{{ tag.name }}</router-link
           >
         </div>
         <div
           class="wysiwyg"
-          v-if="packInstance.description !== undefined"
+          v-if="packInstance && packInstance.description !== undefined"
           v-html="parseMarkdown(packInstance.description)"
         />
         <div v-else>
@@ -150,27 +147,25 @@
 
       <!-- Tab views, we're not using the router because it's a pain-->
       <modpack-mods
-        v-if="activeTab === tabs.MODS"
-        :modlist="mods"
+        v-if="activeTab === tabs.MODS && !isVanilla"
+        :api-pack="packInstance"
         :pack-installed="isInstalled"
-        :updatingModlist="updatingModlist"
         :instance="instance"
         @showFind="() => $emit('searchForMods')"
-        @getModList="() => $emit('getModList', true)"
         @searchForMods="() => $emit('searchForMods')"
       />
 
       <!-- If the pack page grows more, we will have to use the router to clean this up. -->
-      <modpack-settings :instance="instance" v-if="instance && isInstalled && activeTab === tabs.SETTINGS" />
+      <modpack-settings @back="$emit('tabChange', tabs.OVERVIEW)" :instance="instance" v-if="instance && isInstalled && activeTab === tabs.SETTINGS" />
 
       <!-- v-show to allow servers to load in the background -->
-      <modpack-public-servers
-        v-if="isInstalled && currentVersionObject"
-        v-show="activeTab === tabs.PUBLIC_SERVERS && currentVersionObject.mtgID"
-        :instance="instance"
-        :current-version="currentVersionObject.mtgID"
-        :pack-instance="packInstance"
-      />
+<!--      <modpack-public-servers-->
+<!--        v-if="isInstalled && currentVersionObject"-->
+<!--        v-show="activeTab === tabs.PUBLIC_SERVERS && currentVersionObject.mtgID"-->
+<!--        :instance="instance"-->
+<!--        :current-version="currentVersionObject.mtgID"-->
+<!--        :pack-instance="packInstance"-->
+<!--      />-->
 
       <modpack-backups
         @backupsChanged="$emit('backupsChanged')"
@@ -182,63 +177,60 @@
   </div>
   <div class="loading pt-12" v-else>
     <!-- This should literally never happen -->
-    <loading />
+    <loader />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
-import { ModpackPageTabs } from '@/views/InstancePage.vue';
+import {Prop} from 'vue-property-decorator';
+import {ModPack} from '@/modules/modpacks/types';
+import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/templates/modpack/ModpackMods.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
-import ModpackPublicServers from '@/components/templates/modpack/ModpackPublicServers.vue';
-import { getColorForChar } from '@/utils/colors';
-import { Action } from 'vuex-class';
-import Loading from '@/components/atoms/Loading.vue';
 import PackActions from '@/components/molecules/modpack/PackActions.vue';
-import { InstanceBackup } from '@/typings/subprocess/instanceBackups';
 import ModpackBackups from '@/components/templates/modpack/ModpackBackups.vue';
 import PackUpdateButton from '@/components/molecules/modpack/PackUpdateButton.vue';
 import Platform from '@/utils/interface/electron-overwolf';
-import { parseMarkdown } from '@/utils';
+import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
+import Loader from '@/components/atoms/Loader.vue';
+import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
+import {parseMarkdown} from '@/utils';
 
 @Component({
   name: 'pack-body',
   components: {
+    Loader,
     PackUpdateButton,
-    Loading,
-    ModpackPublicServers,
     ModpackSettings,
     ModpackMods,
     PackActions,
     ModpackBackups,
   },
+  methods: {
+    stringIsEmpty
+  }
 })
 export default class PackBody extends Vue {
-  @Action('sendMessage') public sendMessage!: any;
-
   // The stored instance for an installed pack
-  @Prop({ default: null }) instance!: Instance;
+  @Prop({ default: null }) instance!: SugaredInstanceJson;
   @Prop({ default: false }) packLoading!: boolean;
   // Pack Instance is the modpack api response
-  @Prop() packInstance!: ModPack;
+  @Prop() packInstance?: ModPack;
   @Prop() isInstalled!: boolean;
   @Prop() activeTab!: ModpackPageTabs;
-  @Prop() mods!: any[];
-  @Prop() updatingModlist!: boolean;
   @Prop({ default: false }) allowOffline!: boolean;
 
-  @Prop({ default: () => [] }) backups!: InstanceBackup[];
+  @Prop({ default: () => [] }) backups!: Backup[];
 
   Platform = Platform;
 
   tabs = ModpackPageTabs;
-  getColorForChar = getColorForChar;
 
   get tags() {
+    if (!this.packInstance) return [];
+    
     if (this.packInstance.tags === undefined) return [];
     return this.packInstance.tags.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) ?? [];
   }
@@ -266,24 +258,33 @@ export default class PackBody extends Vue {
     };
   }
 
-  get currentVersionObject(): Versions | null {
-    if (this.instance === null) {
-      return null;
-    }
+  get isVanilla() {
+    return this.instance?.id === 81;
+  }
 
-    if (this.packInstance !== null) {
-      if (this.packInstance.versions === undefined) {
-        return null;
-      }
-      const version = this.packInstance.versions.find((f: Versions) => f.id === this.instance?.versionId);
-      if (version !== undefined) {
-        return version;
-      }
-    }
-    return null;
+  // get currentVersionObject(): Versions | null {
+  //   if (this.instance === null) {
+  //     return null;
+  //   }
+  //
+  //   if (this.packInstance !== null) {
+  //     if (this.packInstance.versions === undefined) {
+  //       return null;
+  //     }
+  //     const version = this.packInstance.versions.find((f: Versions) => f.id === this.instance?.versionId);
+  //     if (version !== undefined) {
+  //       return version;
+  //     }
+  //   }
+  //   return null;
+  // }
+  
+  get requiresSync() {
+    return this.instance?.pendingCloudInstance ?? false;
   }
 
   get packSlug() {
+    if (!this.packInstance) return '';
     return `${this.packInstance.id}_${this.packInstance.name.replaceAll(' ', '-').replaceAll(/[^\w|-]+/g, '')}`;
   }
 }
@@ -398,11 +399,22 @@ export default class PackBody extends Vue {
   .tags {
     display: flex;
     flex-wrap: wrap;
+    gap: .5rem;
 
     .tag {
       margin-bottom: 0.5rem;
-      padding: 0.15rem 0.5rem;
-      font-weight: bold;
+      padding: 0.2rem 0.5rem;
+      font-size: 12px;
+      -webkit-user-drag: none;
+      
+      background-color: rgba(black, .4);
+      border-radius: 5px;
+      
+      transition: background-color .25s ease-in-out;
+      
+      &:hover {
+        background-color: var(--color-success-button);
+      }
     }
   }
 }

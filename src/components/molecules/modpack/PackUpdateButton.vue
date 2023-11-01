@@ -1,134 +1,45 @@
 <template>
-  <div class="update" v-if="instance && localInstance && !isLatestVersion">
-    <ftb-button color="warning" class="update-btn px-4 py-1" @click="update">
+  <div class="update" v-if="instance && localInstance && latestVersion">
+    <ftb-button color="warning" class="update-btn px-4 py-1" @click="showConfirm = true">
       <span class="hidden sm:inline-block">Update available</span>
       <font-awesome-icon icon="cloud-download-alt" class="sm:ml-2" />
     </ftb-button>
 
-    <modal
-      :open="showConfirm"
-      :title="`Update to ${latestVersion.name}`"
-      sub-title="Are you sure you want to update to the latest version of this pack?"
-      :externalContents="true"
-      @closed="closeModal"
-    >
-      <modal-body>
-        <message type="danger" class="mb-4" v-if="isUnstable">
-          <p>
-            <b class="font-bold">WARNING!</b> You're about to update to an unstable version of the pack. Bugs are
-            expected and likely.
-          </p>
-        </message>
-
-        <loading2 key="changes-loading" v-if="loadingChanges" title="Fetching Changelog" />
-        <div key="changes-loading" v-else>
-          <p>
-            This version comes with the following changes, if you are sure you want to update, click confirm, otherwise
-            close this message.
-          </p>
-
-          <message v-if="changes === null" key="changes-available" type="danger" class="mt-6">
-            Unable to find a changelog for {{ latestVersion.name }}... this doesn't seem right 🤔. You can still update
-            even if the changelog isn't loading.
-          </message>
-
-          <div v-else class="wysiwyg changes mt-6" v-html="parseMarkdown(changes)" />
-        </div>
-      </modal-body>
-      <modal-footer class="flex justify-end">
-        <ftb-button class="py-2 px-8" color="primary" css-class="text-center text-l" @click="update(true)">
-          <font-awesome-icon icon="check" class="mr-2" size="1x" />
-          Confirm
-        </ftb-button>
-      </modal-footer>
-    </modal>
+    <update-confirm-modal v-if="localInstance && instance" :local-instance="localInstance" :latest-version="latestVersion" :open="showConfirm" @close="showConfirm = false" />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { Prop } from 'vue-property-decorator';
-import { Instance, ModPack } from '@/modules/modpacks/types';
+import {Prop, Watch} from 'vue-property-decorator';
+import {ModPack, Versions} from '@/modules/modpacks/types';
 import Component from 'vue-class-component';
-import Loading from '@/components/atoms/Loading.vue';
-import Loading2 from '@/components/atoms/Loading2.vue';
-import {createModpackchUrl, parseMarkdown} from '@/utils';
+import Loader from '@/components/atoms/Loader.vue';
+import {parseMarkdown} from '@/utils';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {packUpdateAvailable} from '@/utils/helpers/packHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import UpdateConfirmModal from '@/components/core/modpack/modals/UpdateConfirmModal.vue';
 
 @Component({
   methods: {parseMarkdown},
-  components: { Loading2, Loading },
+  components: {UpdateConfirmModal, UiButton, Loader },
 })
 export default class PackUpdateButton extends Vue {
   @Prop() instance!: ModPack;
-  @Prop() localInstance!: Instance;
+  @Prop() localInstance!: InstanceJson | SugaredInstanceJson;
 
-  isUnstable = false;
   showConfirm = false;
-
-  loadingChanges = false;
-  changes: string | null = null;
-
-  update(force = false) {
-    if (!this.latestVersion) {
-      // How?
+  latestVersion = null as Versions | null;
+  
+  @Watch('instance')
+  @Watch('localInstance')
+  onInstanceChange() {
+    if (!this.instance || !this.localInstance) {
       return;
     }
 
-    if (!force) {
-      this.loadChanges()
-        .then(() => (this.loadingChanges = true))
-        .catch(console.error)
-        .finally(() => (this.loadingChanges = false));
-      this.isUnstable = this.latestVersion?.type.toLowerCase() !== 'release';
-      this.showConfirm = true;
-      return;
-    }
-
-    this.$emit('update');
-    this.closeModal();
-  }
-
-  async loadChanges() {
-    if (!this.latestVersion) {
-      return; // how?
-    }
-
-    const packReq = await fetch(
-      createModpackchUrl(
-        `/${this.localInstance.packType === 0 ? 'modpack' : 'curseforge'}/${this.instance.id}/${
-          this.latestVersion?.id
-        }/changelog`,
-      ),
-    );
-
-    this.changes = (await packReq.json()).content;
-  }
-
-  closeModal() {
-    this.isUnstable = false;
-    this.showConfirm = false;
-    this.changes = null;
-  }
-
-  get isLatestVersion() {
-    if (!this.instance?.versions.length) {
-      return true;
-    }
-
-    // Use the Id's to decide on latest
-    const newestVersion = this.latestVersion;
-    if (!newestVersion) {
-      return true;
-    }
-
-    // Again, using the ID to define if a version is newer. Should be fine?
-    return this.localInstance.versionId >= newestVersion.id;
-  }
-
-  get latestVersion() {
-    const versions = [...this.instance.versions];
-
-    return versions.sort((a, b) => b.id - a.id).find((e) => e.type.toLowerCase() !== 'archived');
+    this.latestVersion = packUpdateAvailable(this.localInstance, this.instance) ?? null;
   }
 }
 </script>
