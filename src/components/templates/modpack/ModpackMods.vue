@@ -35,7 +35,7 @@
             </div>
             
             <div class="meta flex gap-4 items-center">
-              <div class="update" v-if="modUpdatesAvailableKeys.includes(file.sha1)" :aria-label="`Update available (${modUpdates[file.sha1][0].fileName} -> ${modUpdates[file.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(file.sha1)">
+              <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(file.sha1)" :aria-label="`Update available (${modUpdates[file.sha1][0].fileName} -> ${modUpdates[file.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(file.sha1)">
                 <font-awesome-icon icon="download" :fixed-width="true" />
               </div>
               <ui-toggle v-if="file.fileName !== ''" :value="file.enabled" @input="() => toggleMod(file)" :disabled="togglingShas.includes(file.sha1)" />
@@ -181,7 +181,7 @@ export default class ModpackMods extends Vue {
   async updateMod(key: string) {
     if (!this.modUpdates[key]) {
       return;
-    }
+    } 
     
     const [mod, update] = this.modUpdates[key];
     const result = await sendMessage("instanceInstallMod", {
@@ -192,6 +192,10 @@ export default class ModpackMods extends Vue {
 
     // TODO: (M#01) FINISH THIS ENDPOINT
     console.log(result)
+  }
+
+  updateAll() {
+    
   }
   
   async toggleMod(file: ModInfo) {
