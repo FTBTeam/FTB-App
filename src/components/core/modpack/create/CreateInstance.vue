@@ -207,11 +207,17 @@ export default class CreateInstance extends Vue {
       })
     } else {
       // We're working with a modloader
-      instanceInstallController.requestInstall({
+      const request = {
         id: this.userModLoader[1].pack,
         version: this.userModLoader[1].id,
         ...sharedData
-      })
+      } as any;
+      
+      if (this.userModLoader[0] === "fabric") {
+        request["mcVersion"] = this.selectedMcVersion;
+      }
+      
+      instanceInstallController.requestInstall(request)
     }
     
     this.close()
