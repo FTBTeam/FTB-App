@@ -52,7 +52,10 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (var mod : mods) {
-            futures.add(checkMod(data, mod, modLoader, mcVersion));
+            CompletableFuture<Void> future = checkMod(data, mod, modLoader, mcVersion);
+            if (future != null) {
+                futures.add(future);
+            }
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
                 .thenRunAsync(() -> {
