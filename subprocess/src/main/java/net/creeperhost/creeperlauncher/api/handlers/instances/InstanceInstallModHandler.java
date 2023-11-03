@@ -27,7 +27,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
             return;
         }
 
-        String mcVersion = instance.versionManifest.getTargetVersion("game");
+        String mcVersion = instance.getMcVersion();
         if (mcVersion == null) {
             Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a game version??"));
             return;

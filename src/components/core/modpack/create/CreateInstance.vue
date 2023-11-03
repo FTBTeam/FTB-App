@@ -196,6 +196,7 @@ export default class CreateInstance extends Vue {
       versionName: "",
       private: false,
       category: this.userCategory,
+      ourOwn: true
     }
     
     // Magic

@@ -26,6 +26,7 @@ export type InstallRequest = {
   syncUuid?: string;
   provider?: PackProviders;
   private: boolean;
+  ourOwn?: boolean;
   mcVersion?: string;
   ram?: number;
   cloudInstance?: boolean;
@@ -225,6 +226,7 @@ class InstanceInstallController {
         artPath: request.logo,
         category: request.category ?? "Default",
         mcVersion: request.mcVersion ?? undefined,
+        ourOwn: request.ourOwn ?? false,
       }
     } else if (request.importFrom) {
       payload = {

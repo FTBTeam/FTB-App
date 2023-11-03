@@ -3,7 +3,6 @@
     <div class="header flex items-center mt-2">
       <ftb-search :alpha="true" class="w-full flex-1" placeholder="Search for a mod" min="3" v-model="search" />
     </div>
-
     <div class="body pt-6">
       <div class="stats-bar" v-if="resultingIds.length">
         <div class="stat">
@@ -42,7 +41,7 @@
         </div>
         <div
           class="no-results"
-          v-else-if="search !== '' && !begunSearching && !loadingTerm && !visualLoadingFull && !results.length"
+          v-else-if="search !== '' && !loadingTerm && !visualLoadingFull && !results.length"
         >
           <div
             class="fancy"
@@ -77,7 +76,7 @@
               <font-awesome-icon icon="search" class="primary" />
               <font-awesome-icon icon="search" class="secondary" />
             </div>
-            <p v-if="!begunSearching && !loadingExtra && !loading">Use the search box above to find new mods</p>
+            <p v-if="!loadingExtra && !loading">Use the search box above to find new mods</p>
             <p v-else>Searching...</p>
           </div>
         </div>
@@ -164,7 +163,6 @@ export default class FindMods extends Vue {
   resultsBuffer: Mod[] = [];
 
   searchDebounce: any;
-  begunSearching = false;
 
   /**
    * If no instance is set, everything is wrong. The instance in this case is being
@@ -184,7 +182,6 @@ export default class FindMods extends Vue {
 
   @Watch('search')
   onSearch() {
-    this.begunSearching = true;
     this.searchDebounce();
   }
 
@@ -215,8 +212,6 @@ export default class FindMods extends Vue {
 
     this.resultingIds = searchResults || [];
     await this.loadResultsProgressively();
-
-    this.begunSearching = false;
     
     this.timeTaken = new Date().getTime() - start;
     this.initialTimeTaken = this.timeTaken;
@@ -331,7 +326,7 @@ export default class FindMods extends Vue {
       return;
     }
 
-    this.target = packData.versionManifest.targets.find((e: any) => e.type === 'game')?.version ?? '';
+    this.target = this.instance.mcVersion ?? packData.versionManifest.targets.find((e: any) => e.type === 'game')?.version ?? '';
     this.modLoader = packData.versionManifest.targets.find((e: any) => e.type === 'modloader')?.name ?? 'forge'; // default to forge? Not super nice
   }
 
