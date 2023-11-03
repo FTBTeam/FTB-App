@@ -4,7 +4,7 @@
       <h2 class="text-lg font-bold mb-6">Get the latest news from FTB</h2>
       <div class="news-item mb-8" v-for="(newsItem, index) in news" :key="index">
         <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="openExternal" v-if="newsItem.feature_image" class="feature-image mb-4 block">
-          <img crossorigin="anonymous" class="rounded shadow-xl" :src="newsItem.feature_image.replace('http', 'https')" alt="Feature image">
+          <img crossorigin="anonymous" class="rounded shadow-xl" :src="proxyImage(newsItem.feature_image)" alt="Feature image">
         </a>
         
         <div class="about">
@@ -13,7 +13,7 @@
         </div>
         
         <div class="author-and-info flex items-center gap-4">
-          <img class="avatar rounded shadow-xl" crossorigin="anonymous" width="50" :src="newsItem.primary_author.profile_image" alt="Avatar">
+          <img class="avatar rounded shadow-xl" crossorigin="anonymous" width="50" :src="proxyImage(newsItem.primary_author.profile_image)" alt="Avatar">
           <div class="info">
             <b class="opacity-75">{{ newsItem.primary_author.name }}</b>
             <div class="info opacity-75 text-sm" :title="standardDateTime(newsItem.published_at)">
@@ -39,8 +39,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Action, Getter } from 'vuex-class';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, Getter} from 'vuex-class';
 import Loader from '@/components/atoms/Loader.vue';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
@@ -69,6 +69,14 @@ export default class Home extends Vue {
           console.error(err);
         });
     }
+  }
+  
+  proxyImage(image: string) {
+    // Yeet the domain
+    const imgPath = image.replace("http://", "https://").replace('https://ghost.ftb.team/content/images/', '');
+    const encodedPath = encodeURIComponent(imgPath);
+    
+    return `https://meta.feed-the-beast.com/v1/blog/image/${encodedPath}`
   }
   
   get domain() {
