@@ -34,7 +34,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
     }
 
     private static void checkForUpdates(InstanceModsData data, Instance instance, List<ModInfo> mods) {
-        var mcVersion = instance.versionManifest.getTargetVersion("game");
+        var mcVersion = instance.getMcVersion();
 
         InstanceModifications modifications = instance.getModifications();
         ModpackVersionManifest.Target ml = modifications != null ? modifications.getModLoaderOverride() : null;
