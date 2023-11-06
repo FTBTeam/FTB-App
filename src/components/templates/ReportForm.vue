@@ -62,6 +62,7 @@
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
+import {consoleBadButNoLogger} from '@/utils';
 
 @Component
 export default class ReportForm extends Vue {
@@ -90,7 +91,7 @@ export default class ReportForm extends Vue {
   public async submitError() {
     platform.get.actions.uploadClientLogs();
     if (!ReportForm.emailRegex.test(this.errorEmail)) {
-      console.log('Email regex not passing');
+      consoleBadButNoLogger("D", 'Email regex not passing');
       return;
     }
     if (this.errorDescription.length === 0) {

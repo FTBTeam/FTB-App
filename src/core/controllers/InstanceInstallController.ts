@@ -1,4 +1,4 @@
-import {emitter} from '@/utils';
+import {consoleBadButNoLogger, emitter} from '@/utils';
 import store from '@/modules/store';
 import {
   CloudSavesReloadedData,
@@ -29,9 +29,10 @@ export type InstallRequest = {
   ourOwn?: boolean;
   mcVersion?: string;
   ram?: number;
-  cloudInstance?: boolean;
+  cloudSaves?: boolean;
   width?: number;
   height?: number;
+  fullscreen?: boolean;
 }
 
 export type InstallStatus = {
@@ -76,17 +77,17 @@ class InstanceInstallController {
     emitter.on("ws.message", async (data: any) => {
       if (data.type === "cloudInstancesReloaded") {
         this.addCloudInstances(data as CloudSavesReloadedData)
-          .catch(err => console.error(err));
+          .catch(e => consoleBadButNoLogger("E", e))
       }
     });
     
     // Force the queue to be checked on startup
     this.checkQueue()
-      .catch(err => console.error(err));
+      .catch(e => consoleBadButNoLogger("E", e))
     
     setInterval(() => {
       this.checkQueue()
-        .catch(err => console.error(err));
+        .catch(e => consoleBadButNoLogger("E", e))
     }, 5000); // 5 seconds
   }
   
@@ -185,9 +186,7 @@ class InstanceInstallController {
     
     // Don't holt the queue while we install
     this.installPack(request)
-      .catch(err => {
-        console.error(err);
-      })
+      .catch(e => consoleBadButNoLogger("E", e))
   }
 
   /**
@@ -227,6 +226,11 @@ class InstanceInstallController {
         category: request.category ?? "Default",
         mcVersion: request.mcVersion ?? undefined,
         ourOwn: request.ourOwn ?? false,
+        cloudSaves: request.cloudSaves ?? false,
+        screenWidth: request.width ?? -1,
+        screenHeight: request.height ?? -1,
+        fullscreen: request.fullscreen ?? null,
+        ram: request.ram ?? -1,
       }
     } else if (request.importFrom) {
       payload = {
@@ -246,7 +250,7 @@ class InstanceInstallController {
       const installResponse = await sendMessage("installInstance", payload);
 
       if (installResponse.status === "error" || installResponse.status === "prepare_error") {
-        console.error("Failed to send install request", installResponse);
+        consoleBadButNoLogger("D", "Failed to send install request", installResponse);
         alertController.error(`Failed to start installation due to ${installResponse.message ?? "an unknown error"}`);
         this.installLock = false;
         return;
@@ -264,7 +268,7 @@ class InstanceInstallController {
       });
       
       if (installResponse.status !== "success") {
-        console.error("Failed to send sync request", installResponse);
+        consoleBadButNoLogger("E", "Failed to send sync request", installResponse);
         alertController.error(`Failed to start sync due to ${installResponse.message ?? "an unknown error"}`);
         this.installLock = false;
         return;

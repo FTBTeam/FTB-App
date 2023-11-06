@@ -159,9 +159,8 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             instance.props.locked = false;
         }
         
-        if (data.fullscreen) instance.props.fullscreen = true;
-        // TODO: (M#01) Validate that they can use it or do we not care? @covers
-        if (data.cloudSaves) instance.props.cloudSaves = true;
+        if (data.fullscreen != null && data.fullscreen) instance.props.fullscreen = true;
+        if (data.cloudSaves != null && data.cloudSaves) instance.props.cloudSaves = true;
         if (data.ram != -1) instance.props.memory = data.ram;
         if (data.screenWidth != -1) instance.props.width = data.screenWidth;
         if (data.screenHeight != -1) instance.props.height = data.screenHeight;

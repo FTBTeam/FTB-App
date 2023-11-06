@@ -173,4 +173,4 @@ export function compatibleCrossLoaderPlatforms(mcVersion: string, loader: string
   
   // Otherwise, default to the given input as there is no special handling
   return [loader];
-} 
+}

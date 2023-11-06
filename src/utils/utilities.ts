@@ -1,5 +1,6 @@
-import { SettingsState } from '@/modules/settings/types';
-import { RootState } from '@/types';
+import {SettingsState} from '@/modules/settings/types';
+import {RootState} from '@/types';
+import {consoleBadButNoLogger} from '@/utils/helpers';
 // import { MCProtocol } from '@/modules/servers/types';
 // import mcQuery from 'mcping-js';
 
@@ -19,12 +20,12 @@ export function logVerbose(state: RootState | SettingsState, ...message: any[]) 
   if (state.settings?.settings === undefined) {
     // @ts-ignore
     if (state.settings?.verbose === true || state.settings?.verbose === 'true') {
-      console.log('[DEBUG]', ...message);
+      consoleBadButNoLogger("D", '[DEBUG]', ...message);
     }
   } else {
     // @ts-ignore
     if (state.settings?.settings.verbose === true || state.settings?.settings.verbose === 'true') {
-      console.log('[DEBUG]', ...message);
+      consoleBadButNoLogger("D", '[DEBUG]', ...message);
     }
   }
 }

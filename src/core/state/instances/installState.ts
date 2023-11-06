@@ -26,6 +26,7 @@ const mutations: MutationTree<InstallState> = {
 
 const getters: GetterTree<InstallState, RootState> = {
   currentInstall: (state: InstallState) => state.currentInstall,
+  installQueue: (state: InstallState) => state.installQueue,
 }
 
 export const installStateModule: Module<InstallState, RootState> = {

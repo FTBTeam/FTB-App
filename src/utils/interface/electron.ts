@@ -11,7 +11,7 @@ import http from 'http';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
 import platform from '@/utils/interface/electron-overwolf';
-import {emitter} from '@/utils';
+import {consoleBadButNoLogger, emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import log from 'electron-log';
 
@@ -63,7 +63,7 @@ class MiniWebServer extends EventEmitter {
 
           const jsonResponse = JSON.parse(body);
           if (jsonResponse == null) {
-            console.log('Failed to parse json response');
+            consoleBadButNoLogger("I", 'Failed to parse json response');
             res.end();
             this.close();
             return;
@@ -80,7 +80,7 @@ class MiniWebServer extends EventEmitter {
 
           const { token, 'app-auth': appAuth } = jsonResponse;
           if (token == null || appAuth == null) {
-            console.log('Failed to parse token or appAuth');
+            consoleBadButNoLogger("E", 'Failed to parse token or appAuth');
             return;
           }
 
@@ -92,7 +92,7 @@ class MiniWebServer extends EventEmitter {
       });
 
       this.server.listen(7755, () => {
-        console.log('MiniWebServer listening on 7755');
+        consoleBadButNoLogger("D", 'MiniWebServer listening on 7755');
         this.emit('open');
       });
 
@@ -226,7 +226,7 @@ const Electron: ElectronOverwolfInterface = {
         });
       });
       
-      mini.close().catch(console.error);
+      mini.close().catch(e => consoleBadButNoLogger("E", e))
       cb(result);
     },
 
@@ -365,7 +365,7 @@ const Electron: ElectronOverwolfInterface = {
     ipcRenderer.on('auth-window-closed', (event, data) => {
       miniServers.forEach((server) => {
         server.close().then(() => {
-          console.log('Closed a mini server');
+          consoleBadButNoLogger("D", 'Closed a mini server');
         });
       });
 
@@ -484,7 +484,7 @@ const Electron: ElectronOverwolfInterface = {
       // }
     });
     ipcRenderer.on('sendWebsocket', (event, data) => {
-      console.log('Request received to send ', data);
+      consoleBadButNoLogger("D", 'Request received to send ', data);
       const messageID = Math.round(Math.random() * 1000);
       data.requestId = messageID;
       data.secret = store.state.wsSecret;

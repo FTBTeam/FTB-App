@@ -75,6 +75,7 @@ import {InstanceController} from '@/core/controllers/InstanceController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {consoleBadButNoLogger} from '@/utils';
 
 @Component({
   components: {
@@ -93,7 +94,7 @@ export default class PackActions extends Vue {
   mounted() {
     sendMessage('getInstanceFolders', { uuid: this.instance.uuid })
       .then((e) => (this.instanceFolders = e.folders))
-      .catch(console.log);
+      .catch(e => consoleBadButNoLogger("E", e));
   }
 
   async openInstanceFolder(folder: string) {

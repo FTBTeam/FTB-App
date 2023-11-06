@@ -1,9 +1,10 @@
-import { AuthProfile } from '@/modules/core/core.types';
+import {AuthProfile} from '@/modules/core/core.types';
 import store from '@/modules/store';
 import dayjs from 'dayjs';
-import { createError } from '@/core/errors/errorCodes';
+import {createError} from '@/core/errors/errorCodes';
 import {alertController} from '@/core/controllers/alertController';
 import {sendMessage} from '@/core/websockets/websocketsApi';
+import {consoleBadButNoLogger} from '@/utils';
 
 type RefreshResponse = {
   ok: boolean;
@@ -45,7 +46,7 @@ export async function loginWithMicrosoft(payload: string | {key: string; iv: str
 }
 
 export const logAuth = (level: 'debug' | 'warn' | 'error', message: any) =>
-  console.log(`[${dayjs().format('DD/MM/YY hh:mm:ss')}] [${level}] [auth] ${message}`);
+  consoleBadButNoLogger("D", `[${dayjs().format('DD/MM/YY hh:mm:ss')}] [${level}] [auth] ${message}`);
 
 const msAuthenticator: Authenticator = {
   async refresh(profile: AuthProfile): Promise<RefreshResponse> {
@@ -98,7 +99,7 @@ const msAuthenticator: Authenticator = {
         }
       } else {
         logAuth('error', `No encryption details, we can not proceed...`);
-        console.log('Unable to refresh token due to missing encryption details', response);
+        consoleBadButNoLogger("D", 'Unable to refresh token due to missing encryption details', response);
         if (response?.raw?.issue?.error === "invalid_grant") {
           return {ok: false, tryLoginAgain: true};
         }
@@ -107,7 +108,7 @@ const msAuthenticator: Authenticator = {
       }
     } catch (e) {
       logAuth('error', `Request errored with the response of ${(e as any).message}`);
-      console.error(e);
+      consoleBadButNoLogger("E", e)
       return { ok: false, networkError: true };
     }
   },

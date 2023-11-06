@@ -24,9 +24,6 @@ import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
-import {alertController} from '@/core/controllers/alertController';
-import {dialogsController} from '@/core/controllers/dialogsController';
-import {Dialog} from '@/core/state/misc/dialogsState';
 
 @Component({
   components: {

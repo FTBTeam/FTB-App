@@ -71,9 +71,9 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
-import { Action } from 'vuex-class';
+import {Action} from 'vuex-class';
 import {loginWithMicrosoft} from '@/utils/auth/authentication';
-import {emitter} from '@/utils';
+import {consoleBadButNoLogger, emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 
 function createStep(name: string) {
@@ -112,13 +112,13 @@ export default class MicrosoftAuth extends Vue {
     
     emitter.on("authentication.callback", this.onAuthenticationCallback as any)
     emitter.on('ws.message', this.onStepUpdate);
-    console.log("Listening for authentication callback")
+    consoleBadButNoLogger("I", "Listening for authentication callback")
   }
   
   destroyed() {
     emitter.off("authentication.callback", this.onAuthenticationCallback as any)
     emitter.off('ws.message', this.onStepUpdate);
-    console.log("Closing listener for authentication callback")
+    consoleBadButNoLogger("I", "Closing listener for authentication callback")
   }
   
   async onAuthenticationCallback(credentials?: AuthenticationCredentialsPayload) {

@@ -9,22 +9,24 @@
 
       <div class="categories">
         <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`" :class="{'collapsed': collapsedGroups.includes(index)}">
-          <header v-if="Object.keys(groupedPacks).length > 1">
-            <h2>{{ index }}</h2>
-            <span />
-            <div class="collapse" @click="collapseGroup(index)">
-              <font-awesome-icon icon="chevron-down" />
+          <template v-if="category.length">
+            <header v-if="Object.keys(groupedPacks).length > 1">
+              <h2>{{ index }}</h2>
+              <span />
+              <div class="collapse" @click="collapseGroup(index)">
+                <font-awesome-icon icon="chevron-down" />
+              </div>
+            </header>
+            <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
+              <template v-for="instance in category">
+                <pack-card2
+                  v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
+                  :key="instance.uuid"
+                  :instance="instance"
+                />
+              </template>
             </div>
-          </header>
-          <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
-            <template v-for="instance in category">
-              <pack-card2
-                v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
-                :key="instance.uuid"
-                :instance="instance"
-              />
-            </template>
-          </div>
+          </template>
         </div>
       </div>
     </div>
@@ -38,8 +40,8 @@
         <span class="mb-4 w-3/4 text-center">
           Would you look at that! Looks like you've got no modpacks installed yet... If you know what you want, click
           Browse and search through our collection and all of CurseForge modpacks, otherwise, use Discover we've got
-          some great recommended packs.</span
-        >
+          some great recommended packs.
+        </span>
         <div class="flex flex-row justify-between my-2">
           <router-link to="/browseModpacks">
             <ui-button :wider="true" type="info" icon="search">Browse</ui-button>
@@ -151,7 +153,9 @@ export default class Library extends Vue {
   }
 
   get groupedPacks(): Record<string, SugaredInstanceJson[]> {
-    const grouped: Record<string, SugaredInstanceJson[]> = {};
+    const grouped: Record<string, SugaredInstanceJson[]> = {
+      "Cloud Saves": [],
+    };
 
     for (const instance of this.sortedInstances) {
       let groupKey = '';
@@ -174,13 +178,26 @@ export default class Library extends Vue {
         grouped[groupKey] = [];
       }
       
+      if (instance.pendingCloudInstance) {
+        groupKey = "Cloud Saves";
+      }
+      
       grouped[groupKey].push(instance);
     }
     
     const sortDirection = this.groupBy.includes("-") ? 'dec' : 'asc';
-    
+        
     // Modify the order of the group keys based on the sort direction
+    // Always put cloudsaves at the bottom of the list and installing at the top
     const groupKeys = Object.keys(grouped).sort((a, b) => {
+      if (a === "Cloud Saves") {
+        return 1;
+      }
+      
+      if (b === "Cloud Saves") {
+        return -1;
+      }
+      
       if (a === b) {
         return 0;
       }
@@ -196,7 +213,7 @@ export default class Library extends Vue {
     for (const key of groupKeys) {
       sorted[key] = grouped[key];
     }
-    
+
     return sorted;
   }
   

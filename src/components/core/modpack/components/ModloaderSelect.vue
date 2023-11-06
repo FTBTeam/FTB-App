@@ -16,13 +16,14 @@
        <div class="loader" v-if="showNone" :class="{active: userLoaderProvider === ''}" @click="userLoaderProvider = ''">None</div>
      </div>
 
-     <ui-toggle v-if="provideLatestOption" class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
+     <ui-toggle v-if="provideLatestOption && userLoaderProvider !== ''" class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
 
      <selection2
-       v-if="(!userUseLatestLoader || !provideLatestOption) && loaderVersions.length > 0"
+       v-if="userLoaderProvider !== ''"
        :open-up="true"
        label="Version"
        class="mb-4"
+       :disabled="loaderVersions.length === 0 || userUseLatestLoader"
        :options="loaderVersions"
        v-model="userLoaderVersion"
        @change="select(userLoaderProvider, userLoaderVersion)"
@@ -103,7 +104,7 @@ export default class ModloaderSelect extends Vue {
       }
 
       const loaderData = request.json<ModLoadersResponse>();
-      if (loaderData.total === 0) {
+      if (loaderData.total === 0 || !loaderData.loaders) {
         continue;
       }
       

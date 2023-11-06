@@ -26,16 +26,57 @@
       </div>
       
       <div class="settings" v-show="step === 2">
-        <f-t-b-slider label="Ram" v-model="settingRam" />
+        <div class="mb-4 header flex items-center justify-between">
+          <h3 class="font-bold">Instance settings</h3>
+          <ui-toggle label="Override defaults" class="ui-toggle" :align-right="true" v-model="userOverrideInstanceDefaults" />  
+        </div>
         
-        <ui-toggle label="Fullscreen" desc="Set Minecraft to fullscreen the game when possible" v-model="settingFullscreen" />
-        <selection2 :open-up="true" :options="screenResolutions" label="Screen resolution" v-model="settingScreenResolution" />
+        <div :class="{'opacity-25 duration-200 transition-opacity pointer-events-none cursor-not-allowed': !userOverrideInstanceDefaults}">
+          <ram-slider v-model="settingRam" class="mb-4" />
+        </div>
+
+        <hr />
         
-        <pre>{{ {
-          fullscreen: settingFullscreen,
-          screenResolution: settingScreenResolution,
-          ram: settingRam
-        } }}</pre>
+        <div class="mb-4 header flex items-center justify-between">
+          <h3 class=" font-bold">Preferences</h3>
+          <ui-toggle label="Override defaults" class="ui-toggle" :align-right="true" v-model="userOverridePreferences" />
+        </div>
+        
+        <div :class="{'opacity-25 duration-200 transition-opacity pointer-events-none cursor-not-allowed': !userOverridePreferences}">
+          <ui-toggle label="Fullscreen" class="mb-4" desc="Set Minecraft to fullscreen the game when possible" v-model="settingFullscreen" />
+          
+          <div :class="{'opacity-25 duration-200 transition-opacity pointer-events-none cursor-not-allowed': settingFullscreen}">
+            <selection2 class="mb-4" :open-up="true" :options="screenResolutions" label="Screen resolution" v-model="settingScreenResolution" @input="onScreenResolutionChange" />
+
+            <div class="flex items-center mb-4">
+              <div class="block flex-1 mr-2">
+                <b>Width</b>
+                <small class="text-muted block mt-2">The Minecraft windows screen width</small>
+              </div>
+              <ftb-input class="mb-0" v-model="userWidth" />
+            </div>
+            <div class="flex items-center">
+              <div class="block flex-1 mr-2">
+                <b>Height</b>
+                <small class="text-muted block mt-2">The Minecraft windows screen height</small>
+              </div>
+              <ftb-input class="mb-0" v-model="userHeight" />
+            </div>
+          </div>
+        </div>
+        <hr />
+        
+        <h3 class="mb-4 font-bold">Cloud Sync</h3>
+
+        <ui-toggle
+          :align-right="true"
+          label="Enable cloud save uploads"
+          desc="You can only use Cloud Saves if you have an active paid plan on MineTogether."
+          :disabled="!accountHasPlan"
+          v-model="userCloudSaves"
+        />
+        
+        <p class="mt-4 text-light-warning" v-if="!accountHasPlan">Cloud syncing / Cloud saves are only available to Premium MineTogether users. Find out more on the <a class="text-blue-500 hover:text-blue-200" @click="openExternal" href="https://minetogether.io">MineTogether website</a>.</p>
       </div>
     </modal-body>
     
@@ -75,9 +116,12 @@ import CategorySelector from '@/components/core/modpack/create/CategorySelector.
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
+import {AuthState} from '@/modules/auth/types';
 
 @Component({
   components: {
+    RamSlider,
     UiToggle,
     ModloaderSelect, CategorySelector, Loader, FTBSlider, UiButton, Selection2, ArtworkSelector},
   methods: {
@@ -86,6 +130,9 @@ import {instanceInstallController} from '@/core/controllers/InstanceInstallContr
   }
 })
 export default class CreateInstance extends Vue {
+  @State('auth') public auth!: AuthState;
+  @State('settings') public settingsState!: SettingsState;
+  
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   @State('settings') private settings!: SettingsState;
   
@@ -113,12 +160,30 @@ export default class CreateInstance extends Vue {
   
   fatalError = false;
   
+  userOverrideInstanceDefaults = false;
+  userOverridePreferences = false;
+  
   settingFullscreen = false;
   settingScreenResolution = "";
   settingRam = 0;
+  userCloudSaves = false;
+  userHeight = 0;
+  userWidth = 0;
   
   async mounted() {
     await this.loadInitialState();
+    
+    this.settingFullscreen = this.settings.settings.fullScreen;
+    this.settingScreenResolution = this.settings.settings.width + "x" + this.settings.settings.height;
+    this.settingRam = this.settings.settings.memory;
+    this.userWidth = this.settings.settings.width;
+    this.userHeight = this.settings.settings.height;
+  }
+  
+  onScreenResolutionChange(newVal: string) {
+    const [width, height] = newVal.split("x");
+    this.userWidth = parseInt(width);
+    this.userHeight = parseInt(height);
   }
   
   @Watch("open")
@@ -196,7 +261,12 @@ export default class CreateInstance extends Vue {
       versionName: "",
       private: false,
       category: this.userCategory,
-      ourOwn: true
+      ourOwn: true,
+      ram: this.settingRam == this.settingsState.settings.memory ? -1 : this.settingRam,
+      fullscreen: this.settingFullscreen === this.settingsState.settings.fullScreen ? undefined : this.settingFullscreen,
+      width: this.userWidth == this.settingsState.settings.width ? undefined : this.userWidth,
+      height: this.userHeight == this.settingsState.settings.height ? undefined : this.userHeight,
+      cloudSaves: this.userCloudSaves === this.settingsState.settings.cloudSaves ? undefined : this.userCloudSaves,
     }
     
     // Magic
@@ -253,13 +323,14 @@ export default class CreateInstance extends Vue {
       value: `${e.width}x${e.height}`
     }))
   }
-  
-  thing(loader: ModLoader | undefined, loaderProvider: string, version: string) {
-    console.log({
-      loader,
-      loaderProvider,
-      version
-    })
+
+  get accountHasPlan() {
+    if (!this.auth || !this.auth.token || !this.auth.token?.activePlan) {
+      return false;
+    }
+
+    const plan = this.auth.token.activePlan;
+    return plan.status === "Active";
   }
 }
 </script>
@@ -295,6 +366,19 @@ export default class CreateInstance extends Vue {
       background: rgba(white, .2);
       border-radius: 2px;
     }
+  }
+}
+
+hr {
+  border: 0;
+  border-bottom: 1px solid rgba(white, .1);
+  margin: 1rem 0;
+}
+
+.header {
+  .ui-toggle {
+    transform-origin: right center;
+    transform: scale(.8);
   }
 }
 </style>

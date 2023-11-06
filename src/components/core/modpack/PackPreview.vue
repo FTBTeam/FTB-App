@@ -31,7 +31,7 @@
         </div>
       </div>
     </div>
-    <modpack-install-modal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :api-modpack="apiModpack ? apiModpack : undefined" :provider="provider" />
+    <modpack-install-modal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :provider="provider" />
   </div>
 </template>
 

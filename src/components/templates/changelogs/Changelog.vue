@@ -26,7 +26,7 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import {State} from 'vuex-class';
-import {parseMarkdown} from '@/utils/helpers';
+import {consoleBadButNoLogger, parseMarkdown} from '@/utils/helpers';
 import platform from '@/utils/interface/electron-overwolf';
 import {SocketState} from '@/modules/websocket/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -88,7 +88,7 @@ export default class Changelog extends Vue {
         }
         
         this.checkForUpdate().catch((e) => {
-          console.log('Unable to find any changelog data, maybe the servers down?', e);
+          consoleBadButNoLogger("E", 'Unable to find any changelog data, maybe the servers down?', e);
         });
       }
     }, 1_000) as unknown as number; // Once a second
@@ -120,7 +120,7 @@ export default class Changelog extends Vue {
           })
         }
       } catch (e) {
-        console.error('caught error', e);
+        consoleBadButNoLogger("E", 'caught error', e);
         // Stop here, don't do anything, something is wrong, we'll try again next launch.
         return;
       }

@@ -4,6 +4,7 @@ import {RootState} from '@/types';
 import platfrom from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {consoleBadButNoLogger} from '@/utils';
 
 export interface FriendRequestResponse {
   status: string;
@@ -40,7 +41,7 @@ export const actions: ActionTree<AuthState, RootState> = {
       
       response = await req.json();
     } catch (err) {
-      console.log(err);
+      consoleBadButNoLogger("E", err);
       commit('loggedIn');
       return;
     }
@@ -61,7 +62,7 @@ export const actions: ActionTree<AuthState, RootState> = {
         const profileData = await profileReq.json();
         user.mc = profileData.profileData[mc.userName];
       } catch (err) {
-        console.error(err);
+        consoleBadButNoLogger("E", err)
         commit('loggedIn');
       }
     }
@@ -101,10 +102,9 @@ export const actions: ActionTree<AuthState, RootState> = {
         })
 
         const profile = await profileRequest.json();
-        
         user.mc = profile.profileData[mc.userName];
       } catch (err) {
-        console.error(err);
+        consoleBadButNoLogger("E", err)
         commit('loggedIn');
       }
     }

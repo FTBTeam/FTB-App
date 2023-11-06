@@ -173,7 +173,7 @@
 //
 </style>
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 // import { Action, Getter, State } from 'vuex-class';
 // import { Instance, ModPack, ModpackState, Versions } from '../modules/modpacks/types';
 // import { getAPIRequest } from '../modules/modpacks/actions';
@@ -282,7 +282,6 @@ export default class ServerLandingPage extends Vue {
   //
   // public mounted() {
   //   this.serverID = parseInt(this.$route.query.serverid as string, 10);
-  //   console.log(this.serverID)
   //   fetch(`https://api.creeper.host/minetogether/server`, {
   //     method: 'PUT',
   //     body: JSON.stringify({ serverid: this.serverID }),

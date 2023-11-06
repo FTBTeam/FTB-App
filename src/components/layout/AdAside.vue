@@ -62,7 +62,7 @@ import Component from 'vue-class-component';
 import {State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {AuthState} from '@/modules/auth/types';
-import {getLogger} from '@/utils';
+import {consoleBadButNoLogger, getLogger} from '@/utils';
 import {JavaFetch} from '@/core/javaFetch';
 
 @Component
@@ -145,7 +145,6 @@ export default class AdAside extends Vue {
     this.ads[id].addEventListener('error', (error: any) => {
       emitPlaceholderUpdate(true);
       this.logger.info(`[AD: ${id}] Failed to load ad`);
-      console.log(`[AD: ${id}]`, error)
     });
     this.ads[id].addEventListener('player_loaded', () => {
       this.logger.info(`[AD: ${id}] Player loaded`);
@@ -155,7 +154,7 @@ export default class AdAside extends Vue {
       this.logger.info(`[AD: ${id}] Display ad loaded and ready`);
       JavaFetch.modpacksCh("analytics/ads/static")
         .execute()
-        .catch(e => console.error(e))
+        .catch(e => consoleBadButNoLogger("E", e))
     });
     this.ads[id].addEventListener('play', () => {
       emitPlaceholderUpdate(false);
@@ -167,7 +166,7 @@ export default class AdAside extends Vue {
     this.ads[id].addEventListener('impression', () => {
       JavaFetch.modpacksCh("analytics/ads/video")
         .execute()
-        .catch(e => console.error(e))
+        .catch(e => consoleBadButNoLogger("E", e))
     });
   }
 

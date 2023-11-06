@@ -2,7 +2,7 @@ import {ActionContext, ActionTree} from 'vuex';
 import {SocketState} from './types';
 import {RootState} from '@/types';
 import Vue from 'vue';
-import {logVerbose} from '@/utils';
+import {consoleBadButNoLogger, logVerbose} from '@/utils';
 import platform from '@/utils/interface/electron-overwolf';
 
 export interface MessageData {
@@ -13,7 +13,7 @@ export interface MessageData {
 export const actions: ActionTree<SocketState, RootState> = {
   sendMessage({ commit, rootState }: ActionContext<SocketState, RootState>, payload: MessageData) {
     if (Vue.prototype.$socket.readyState !== 1) {
-      console.log(
+      consoleBadButNoLogger("W", 
         'Tried to send message whilst not connected properly',
         Vue.prototype.$socket.readyState,
         Vue.prototype.$socket,

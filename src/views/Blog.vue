@@ -47,6 +47,7 @@ import {AsyncFunction} from '@/core/@types/commonTypes';
 import {BlogPost} from '@/core/@types/external/metaApi.types';
 import dayjs from 'dayjs';
 import {standardDateTime} from '@/utils/helpers/dateHelpers';
+import {consoleBadButNoLogger} from '@/utils';
 
 @Component({
   components: {
@@ -57,7 +58,7 @@ import {standardDateTime} from '@/utils/helpers/dateHelpers';
     standardDateTime
   }
 })
-export default class Home extends Vue {
+export default class Blog extends Vue {
   @Action('loadNews', ns("v2/news")) loadNews!: AsyncFunction;
   @Getter('news', ns("v2/news")) news!: BlogPost[];
   @Getter('loading', ns("v2/news")) loading!: boolean;
@@ -65,13 +66,13 @@ export default class Home extends Vue {
   public mounted() {
     if (this.news == null || this.news.length < 1) {
       this.loadNews()
-        .catch((err: any) => {
-          console.error(err);
-        });
+        .catch(e => consoleBadButNoLogger("E", e))
     }
   }
   
   proxyImage(image: string) {
+    if (!image) return '';
+    
     // Yeet the domain
     const imgPath = image.replace("http://", "https://").replace('https://ghost.ftb.team/content/images/', '');
     const encodedPath = encodeURIComponent(imgPath);

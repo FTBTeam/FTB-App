@@ -75,7 +75,7 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import Loader from '@/components/atoms/Loader.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
-import {emitter} from '@/utils';
+import {consoleBadButNoLogger, emitter} from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 
 export type ApiMod = {
@@ -141,7 +141,7 @@ export default class ModpackMods extends Vue {
       
       this.apiMods = apiMods.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)))
     } else {
-      this.getModList().catch(console.error)
+      this.getModList().catch(e => consoleBadButNoLogger("E", e))
     }
   }
 

@@ -110,7 +110,7 @@
 <script lang="ts">
 import {AuthState} from '@/modules/auth/types';
 import {Mod} from '@/types';
-import {debounce} from '@/utils';
+import {consoleBadButNoLogger, debounce} from '@/utils';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import {State} from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
@@ -316,7 +316,7 @@ export default class FindMods extends Vue {
         uuid: this.instance.uuid
       })
     } catch {
-      console.log('Failed to find pack version data...');
+      consoleBadButNoLogger("D", 'Failed to find pack version data...');
     } finally {
       this.loading = false;
     }

@@ -22,8 +22,8 @@ public class InstallInstanceData extends BaseData {
     // QOL stuff for own instances
     public boolean ourOwn = false; // Marker for when it's a custom instance creation
     public int ram = -1; // Default
-    public boolean fullscreen = false; // default
-    public boolean cloudSaves = false; // default
+    @Nullable public Boolean fullscreen = false; // default
+    @Nullable public Boolean cloudSaves = false; // default
     public int screenWidth = -1; // default
     public int screenHeight = -1; // default
 

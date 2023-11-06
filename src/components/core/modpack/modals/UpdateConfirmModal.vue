@@ -42,7 +42,7 @@ import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import Loader from '@/components/atoms/Loader.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {parseMarkdown} from '@/utils';
+import {consoleBadButNoLogger, parseMarkdown} from '@/utils';
 import {Versions} from '@/modules/modpacks/types';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {modpackApi} from '@/core/pack-api/modpackApi';
@@ -85,7 +85,7 @@ export default class UpdateConfirmModal extends Vue {
     
     this.loadChanges()
       .then(() => (this.loadingChanges = true))
-      .catch(console.error)
+      .catch(e => consoleBadButNoLogger("E", e))
       .finally(() => (this.loadingChanges = false));
   }
 

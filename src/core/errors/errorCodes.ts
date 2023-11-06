@@ -1,3 +1,5 @@
+import {consoleBadButNoLogger} from '@/utils';
+
 /**
  * Codes follow a simple schema, your prefix (always ftb start), the system
  * it relates to, then finally a code starting in the one thousand range
@@ -28,7 +30,7 @@ export type ErrorCode = {
 export const createError = (code: ErrorCodes): ErrorCode => {
   // This isn't really possible due to the type contracts here...
   if (!Codes[code]) {
-    console.log(`[error] Failed to find error code {${code}`);
+    consoleBadButNoLogger("E", `[error] Failed to find error code {${code}`);
 
     if (code !== 'ftb-errors#1000') {
       return createError('ftb-errors#1000');

@@ -52,25 +52,7 @@
       </ui-button>
     </div>
 
-    <ftb-slider
-      label="Instance Memory"
-      v-model="instanceSettings.memory"
-      :currentValue="instanceSettings.memory"
-      minValue="512"
-      :maxValue="settingsState.hardware.totalMemory"
-      @blur="saveSettings"
-      @change="saveSettings"
-      step="64"
-      unit="MB"
-      css-class="memory"
-      :dark="true"
-      class="mb-8"
-      :raw-style="`background: linear-gradient(to right, #8e0c25 ${
-        (this.instance.minMemory / settingsState.hardware.totalMemory) * 100 - 5
-      }%, #a55805 ${(this.instance.minMemory / settingsState.hardware.totalMemory) * 100}%, #a55805 ${
-        (this.instance.recMemory / settingsState.hardware.totalMemory) * 100 - 5
-      }%, #005540 ${(this.instance.recMemory / settingsState.hardware.totalMemory) * 100}%);`"
-    />
+    <ram-slider class="mb-6" v-model="instanceSettings.memory" @change="saveSettings" />
     
     <ui-toggle
       label="Fullscreen"
@@ -118,11 +100,14 @@
       :align-right="true"
       label="Enable cloud save uploads"
       desc="You can only use Cloud Saves if you have an active paid plan on MineTogether."
-      :disabled="!canUseCloudSaves || toggleSavesWorking"
+      :disabled="!accountHasPlan || toggleSavesWorking"
       :value="instanceSettings.cloudSaves"
       @input="toggleCloudSaves"
-      class="mb-8"
+      class="mb-2"
     />
+
+    <p class="mb-6 text-light-warning" v-if="!accountHasPlan">Cloud syncing / Cloud saves are only available to Premium MineTogether users. Find out more on the <a class="text-blue-500 hover:text-blue-200" @click="openExternal" href="https://minetogether.io">MineTogether website</a>.</p>
+    <span v-else class="block mb-6" />
     
     <h2 class="text-lg mb-4 font-bold text-warning">
       <font-awesome-icon icon="warning" class="mr-2" />
@@ -249,9 +234,11 @@ import {computeAspectRatio} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 import {ModLoader} from '@/core/@types/modpacks/modloaders';
+import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
 
 @Component({
   components: {
+    RamSlider,
     ModloaderSelect,
     UiToggle,
     CategorySelector,
@@ -497,22 +484,13 @@ export default class ModpackSettings extends Vue {
     return resList;
   }
 
-  accountHasPlan() {
+  get accountHasPlan() {
     if (!this.auth || !this.auth.token || !this.auth.token?.activePlan) {
       return false;
     }
     
     const plan = this.auth.token.activePlan;
     return plan.status === "Active";
-  }
-  
-  settingsCloudSavesEnabled() {
-    const cloudSaves = this.settingsState.settings.cloudSaves as boolean | 'true' | 'false';
-    return cloudSaves === 'true' || cloudSaves;
-  }
-  
-  get canUseCloudSaves() {
-    return this.settingsCloudSavesEnabled() && this.accountHasPlan();
   }
 
   get channelOptions() {

@@ -16,6 +16,8 @@
             :placeholder="placeholder"
             :value="value"
             :disabled="disabled"
+            :min="min"
+            :max="max"
             @input="$emit('input', $event.target.value)"
             @blur="$emit('blur')"
           />
@@ -54,6 +56,9 @@ export default class FTBInput extends Vue {
   @Prop({ default: 'Submit' }) buttonText!: string;
   @Prop() buttonColor!: string;
   @Prop() label!: string;
+  
+  @Prop() min!: number;
+  @Prop() max!: number;
 
   @Prop({ default: false }) copyable!: boolean;
 

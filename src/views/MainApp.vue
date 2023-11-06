@@ -51,7 +51,7 @@ import GlobalComponents from '@/components/templates/GlobalComponents.vue';
 import {AuthState} from '@/modules/auth/types';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import os from 'os';
 
@@ -138,14 +138,6 @@ export default class MainApp extends Vue {
         });
       }
     });
-
-    // this.pollRef = setInterval(() => {
-    //   //Poll cloud saves
-    //   console.log("pollCloudInstances")
-    //   sendMessage("pollCloudInstances", {})
-    //     .then(e => console.log("pollCloudInstances", e))
-    //     .catch(e => console.error("pollCloudInstances", e))
-    // }, 5000) as any
   }
 
   destroyed() {
@@ -178,6 +170,8 @@ export default class MainApp extends Vue {
   public async fetchStartData() {
     for (const job of this.startupJobs) {
       await job.action();
+      
+      // TODO: (M#01) FINISH THIS
       console.log(`Finished ${job.name}`)
       job.done = true;
     }

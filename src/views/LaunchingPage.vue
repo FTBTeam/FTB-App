@@ -203,6 +203,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {FixedSizeArray} from '@/utils/std/fixedSizeArray';
+import {consoleBadButNoLogger} from '@/utils';
 
 type InstanceActionCategory = {
   title: string;
@@ -379,7 +380,7 @@ export default class LaunchingPage extends Vue {
       uuid: this.instance.uuid
     })
       .then((e) => (this.instanceFolders = e.folders))
-      .catch(console.log);
+      .catch(e => consoleBadButNoLogger("E", e));
   }
 
   onLaunchProgressUpdate(data: any) {
@@ -489,7 +490,7 @@ export default class LaunchingPage extends Vue {
   }
 
   handleClientLaunch(data: any) {
-    console.log("Launch data", data);
+    consoleBadButNoLogger("I", "Launch data", data);
     if (data.messageType === 'message') {
       this.launchProgress = data.message === 'init' ? [] : undefined;
     } else if (data.messageType === 'progress') {

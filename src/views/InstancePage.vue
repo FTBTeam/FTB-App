@@ -122,6 +122,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import {consoleBadButNoLogger} from '@/utils';
 
 export enum ModpackPageTabs {
   OVERVIEW,
@@ -191,10 +192,10 @@ export default class InstancePage extends Vue {
       this.activeTab = ModpackPageTabs.MODS;
     }
 
-    this.loadBackups().catch(console.error);
+    this.loadBackups().catch(e => consoleBadButNoLogger("E", e))
 
     // Throwaway error, don't block
-    this.checkForBorkedVersion().catch(console.error);
+    this.checkForBorkedVersion().catch(e => consoleBadButNoLogger("E", e))
 
     if (this.getActiveProfile) {
       this.offlineAllowed = true;

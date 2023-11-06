@@ -3,6 +3,7 @@ import {SocketState} from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import {emitter} from '@/utils/event-bus';
+import {consoleBadButNoLogger} from '@/utils';
 
 export const mutations: MutationTree<SocketState> = {
   SOCKET_ONOPEN(state: any, event: any) {
@@ -26,7 +27,7 @@ export const mutations: MutationTree<SocketState> = {
     if (message.type !== 'ping' && message.type !== 'pong') {
       if (process.env.NODE_ENV === 'development') {
         const { requestId, type, ...rest } = message;
-        console.debug(
+        consoleBadButNoLogger("D",
           `[${message.requestId ? ('' + message.requestId).padStart(6, '0') : '......'}][id//${message.type}]`,
           rest,
         );
@@ -72,7 +73,7 @@ export const mutations: MutationTree<SocketState> = {
     platform.get.websocket.notifyWebhookReceived(message);
   },
   SOCKET_RECONNECT(state: any, count: number) {
-    console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
+    consoleBadButNoLogger("I", `Attempting to reconnect to java-backend, tries: ${count}`);
     state.reconnects = count;
   },
   SOCKET_RECONNECT_ERROR(state: any) {

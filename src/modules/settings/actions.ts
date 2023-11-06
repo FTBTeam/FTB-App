@@ -1,6 +1,6 @@
-import { ActionTree } from 'vuex';
-import { Settings, SettingsState } from './types';
-import { RootState } from '@/types';
+import {ActionTree} from 'vuex';
+import {Settings, SettingsState} from './types';
+import {RootState} from '@/types';
 import platform from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 
@@ -50,7 +50,7 @@ export const actions: ActionTree<SettingsState, RootState> = {
     }
     
     commit('loadSettings', parsedSettings);
-    platform.get.actions.updateSettings(result.settingsInfo);
+    platform.get.actions.updateSettings(parsedSettings);
     commit('loadHardware', result);
   },
   async saveSettings({ dispatch, commit }, settings: Settings) {

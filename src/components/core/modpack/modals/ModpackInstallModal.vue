@@ -145,7 +145,9 @@ export default class ModpackInstallModal extends Vue {
   }
   
   get sortedApiVersions() {
-    return this.apiModpack?.versions.sort((a, b) => b.id - a.id) ?? [];
+    return (this.apiModpack && this.apiModpack.versions) 
+      ? [...this.apiModpack.versions].sort((a, b) => b.id - a.id) 
+      : [];
   }
   
   get hasStableVersion() {

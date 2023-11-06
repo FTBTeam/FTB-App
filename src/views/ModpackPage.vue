@@ -118,7 +118,6 @@ export default class ModpackPage extends Vue {
         this.currentModpack = copyModpack;
       }
     } catch (error) {
-      console.error(error);
       this.loading = false;
       this.error =
         "Unable to find this modpack, it's possible something has failed to load. Try again in a few minutes...";

@@ -4,23 +4,22 @@
       <div class="artwork-container">
         <img :src="packLogo" alt="Modpack Artwork">
         <div class="notifiers">
-          <div class="notifier is-cloud" v-if="instance.cloudSaves" aria-label="Cloud sync enabled" data-balloon-pos="down">
+          <div class="notifier is-cloud" v-if="instance.cloudSaves" aria-label="Cloud sync enabled" data-balloon-pos="down-right">
             <font-awesome-icon icon="cloud" />
           </div>
           
-          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down" v-if="modLoader === 'forge'">
+          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-right" v-if="modLoader === 'forge'">
             <img width="30" src="@/assets/images/forge.svg" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down" v-if="modLoader === 'fabric'">
+          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down-right" v-if="modLoader === 'fabric'">
             <img width="30" src="@/assets/images/fabric.webp" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down" v-if="modLoader === 'neoforge'">
+          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-right" v-if="modLoader === 'neoforge'">
             <img width="30" src="@/assets/images/neoforge.png" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down" v-if="modLoader === 'quilt'">
+          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-right" v-if="modLoader === 'quilt'">
             <img width="30" src="@/assets/images/quiltmc.svg" alt="" />
           </div>
-
         </div>
         
         <transition name="transition-fade" duration="250">
@@ -212,6 +211,7 @@ export default class PackCard2 extends PackCardCommon {
     }
     
     .notifiers {
+      --balloon-font-size: 10px;
       position: absolute;
       top: .25rem;
       right: .25rem;

@@ -34,9 +34,9 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Action } from 'vuex-class';
-import { RouterNames } from '@/router';
+import {Component, Prop, Vue} from 'vue-property-decorator';
+import {Action} from 'vuex-class';
+import {RouterNames} from '@/router';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
@@ -69,7 +69,6 @@ export default class DuplicateInstanceModal extends Vue {
     })
     
     if (!result.success) {
-      console.error(result.message)
       this.working = false;
       alertController.error(result.message)
       return;

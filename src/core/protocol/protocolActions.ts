@@ -1,5 +1,6 @@
-import { ModpackInstallAction } from './actions/ModpackInstallAction';
-import { AuthAction } from '@/core/protocol/actions/AuthAction';
+import {ModpackInstallAction} from './actions/ModpackInstallAction';
+import {AuthAction} from '@/core/protocol/actions/AuthAction';
+import {consoleBadButNoLogger} from '@/utils';
 
 export type ActionType = 'modpack' | 'auth';
 
@@ -41,7 +42,7 @@ export const parseInput = (rawInput: string, log = true) => {
 
   if (inputParts.length < 2) {
     if (log) {
-      console.log('Unable to find at least a namespace and action from the url');
+      consoleBadButNoLogger("W", 'Unable to find at least a namespace and action from the url');
     }
 
     return null;
@@ -59,7 +60,7 @@ export const parseInput = (rawInput: string, log = true) => {
 export const handleAction = (rawInput: string) => {
   const input = parseInput(rawInput);
   if (input == null) {
-    console.log('Rejecting protocol as we could not parse the input', rawInput);
+    consoleBadButNoLogger("W", 'Rejecting protocol as we could not parse the input', rawInput);
     return;
   }
 

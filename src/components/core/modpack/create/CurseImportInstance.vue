@@ -96,7 +96,6 @@ export default class CurseImportInstance extends Vue {
 
   async installZip() {
     if (!this.activeFile) {
-      console.log('no file selected')
       return;
     }
 

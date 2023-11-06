@@ -33,6 +33,7 @@ import VueMixins from '@/core/vueMixins.vue';
 
 // @ts-ignore - no types
 import VueVirtualScroller from 'vue-virtual-scroller';
+import {consoleBadButNoLogger} from '@/utils';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -42,7 +43,7 @@ const appSetup = async () => {
     await platform.setup();
     (window as any).platform = platform;
   } catch (e) {
-    console.log('Platform failed resolve deps', e);
+    consoleBadButNoLogger("E", 'Platform failed resolve deps', e);
   }
 
   if (process.env.NODE_ENV === 'production') {
@@ -105,4 +106,4 @@ const appSetup = async () => {
   platform.get.setupApp(vm);
 };
 
-appSetup().catch((e) => console.error(e));
+appSetup().catch(e => consoleBadButNoLogger("E", e))

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import {consoleBadButNoLogger} from '@/utils/helpers';
 
 /**
  * @deprecated (M#01) poor implementation move to library
@@ -38,9 +39,9 @@ export class Logger {
 
     const messageData = `[${dayjs().format('HH:mm:ss')}] [${this.name.toUpperCase()}/${type.toUpperCase()}] ${message}`;
     if (!data.length) {
-      console.log(messageData);
+      consoleBadButNoLogger("L", messageData);
     } else {
-      console.log(messageData, data);
+      consoleBadButNoLogger("L", messageData, data);
     }
   }
 }

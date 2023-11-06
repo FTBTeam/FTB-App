@@ -52,7 +52,7 @@
 import {ModPack, Versions} from '@/modules/modpacks/types';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import {getColorForReleaseType, parseMarkdown} from '@/utils';
+import {consoleBadButNoLogger, getColorForReleaseType, parseMarkdown} from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {InstanceJson} from '@/core/@types/javaApi';
@@ -101,7 +101,7 @@ export default class ModpackVersions extends Vue {
         this.changelogs['' + lcurrent] = data;
         this.setActive(lcurrent);
       })
-      .catch(console.error);
+      .catch(e => consoleBadButNoLogger("E", e))
   }
   
   destoryed() {
@@ -141,7 +141,7 @@ export default class ModpackVersions extends Vue {
 
       return changelog?.content ?? `No changelog available for this version`;
     } catch (e) {
-      console.error(e);
+      consoleBadButNoLogger("E", e)
       alertController.warning("Unable to load changelog")
       return "Unable to locate changelog for this version";
     }

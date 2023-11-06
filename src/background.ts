@@ -55,24 +55,24 @@ declare const __static: string;
 let wsPort: number;
 let wsSecret: string;
 if (process.argv.indexOf('--ws') !== -1) {
-  console.log('We have a --ws');
+  log.info('We have a --ws');
   const wsArg = process.argv[process.argv.indexOf('--ws') + 1];
   const wsArgSplit = wsArg.split(':');
   wsPort = Number(wsArgSplit[0]);
   wsSecret = wsArgSplit[1];
 } else {
-  console.log('Setting default port and secret');
+  log.info('Setting default port and secret');
   wsPort = 13377;
   wsSecret = '';
 }
 
 if (process.argv.indexOf('--pid') === -1) {
-  console.log('No backend found, starting our own');
+  log.info('No backend found, starting our own');
   const ourPID = process.pid;
-  console.log('Our PID is', ourPID);
-  console.log('Exec path is', process.execPath);
+  log.info('Our PID is', ourPID);
+  log.info('Exec path is', process.execPath);
   const currentPath = process.execPath.substring(0, process.execPath.lastIndexOf(path.sep));
-  console.log('Current working directory is', currentPath);
+  log.info('Current working directory is', currentPath);
   let binaryFile = 'FTBApp';
   const operatingSystem = os.platform();
   if (operatingSystem === 'win32') {
@@ -80,24 +80,24 @@ if (process.argv.indexOf('--pid') === -1) {
   }
   binaryFile = path.join(currentPath, '..', binaryFile);
   if (fs.existsSync(binaryFile)) {
-    console.log('Starting process of backend', binaryFile);
+    log.info('Starting process of backend', binaryFile);
     const child = childProcess.execFile(binaryFile, ['--pid', ourPID.toString()]);
     child.on('exit', (code, signal) => {
-      console.log('child process exited with ' + `code ${code} and signal ${signal}`);
+      log.info('child process exited with ' + `code ${code} and signal ${signal}`);
     });
     child.on('error', (err) => {
-      console.error('Error starting binary', err);
+      log.error('Error starting binary', err);
     });
     // @ts-ignore
     child.stdout.on('data', (data) => {
-      console.log(`child stdout:\n${data}`);
+      log.info(`child stdout:\n${data}`);
     });
     // @ts-ignore
     child.stderr.on('data', (data) => {
-      console.error(`child stderr:\n${data}`);
+      log.error(`child stderr:\n${data}`);
     });
   } else {
-    console.log('Could not find the binary to launch backend', binaryFile);
+    log.info('Could not find the binary to launch backend', binaryFile);
   }
 }
 
@@ -452,7 +452,7 @@ if (!gotTheLock) {
   log.debug('Got the lock');
   app.on('second-instance', (event, commandLine, workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
-    // console.log(`Event: ${event.s}`)
+    // log.info(`Event: ${event.s}`)
     if (win) {
       if (win.isMinimized()) {
         win.restore();

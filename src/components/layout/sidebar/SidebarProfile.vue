@@ -107,12 +107,13 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Action, Getter, State } from 'vuex-class';
-import { AuthProfile } from '@/modules/core/core.types';
-import { AuthState } from '@/modules/auth/types';
-import { Prop } from 'vue-property-decorator';
-import { sendMessage } from '@/core/websockets/websocketsApi';
+import {Action, Getter, State} from 'vuex-class';
+import {AuthProfile} from '@/modules/core/core.types';
+import {AuthState} from '@/modules/auth/types';
+import {Prop} from 'vue-property-decorator';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import {consoleBadButNoLogger} from '@/utils';
 
 @Component({
   methods: {getMinecraftHead}
@@ -124,7 +125,7 @@ export default class SidebarProfile extends Vue {
   @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
 
   @State('auth') auth!: AuthState;
-  @Action('openSignIn', { namespace: 'core' }) openSignIn!: () => void;
+  @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
   @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
 
   editMode = false;
@@ -147,7 +148,7 @@ export default class SidebarProfile extends Vue {
         this.loadProfiles();
       }
     } catch {
-      console.log('Failed to remove profile');
+      consoleBadButNoLogger("D", 'Failed to remove profile');
     }
 
     this.loading = false;
@@ -164,7 +165,7 @@ export default class SidebarProfile extends Vue {
         this.loadProfiles();
       }
     } catch {
-      console.log('Failed to set active profile');
+      consoleBadButNoLogger("D", 'Failed to set active profile');
     }
 
     this.loading = false;
