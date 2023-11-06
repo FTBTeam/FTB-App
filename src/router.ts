@@ -149,4 +149,26 @@ export default new Router({
       redirect: '/',
     }
   ],
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return {
+        ...savedPosition,
+        behavior: 'smooth',
+      }
+    }
+    
+    if (to.hash) {
+      return {
+        selector: to.hash,
+        behavior: 'smooth',
+      }
+    }
+    
+    return {
+      selector: '.app-content',
+      behavior: 'smooth',
+      x: 0,
+      y: 0
+    }
+  }
 });

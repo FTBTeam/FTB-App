@@ -59,13 +59,13 @@ const knownModloaders = [
   "neoforge"
 ]
 
-export function resolveModloader(packOrInstance: SugaredInstanceJson | ModPack | null) {
+export function resolveModloader(packOrInstance: SugaredInstanceJson | InstanceJson | ModPack | null) {
   if (!packOrInstance) {
     return "Forge";
   }
   
   if ("uuid" in packOrInstance) {
-    const instance = packOrInstance as SugaredInstanceJson;
+    const instance = packOrInstance as SugaredInstanceJson | InstanceJson;
     if (!instance.modLoader) {
       return "Forge";
     }

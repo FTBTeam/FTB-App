@@ -30,23 +30,12 @@
 
        <div class="installing mt-6 mb-4" v-if="!finishedInstalling && installing">
          <div class="progress font-bold"><font-awesome-icon icon="spinner" spin class="mr-2" /> Installing</div>
-<!--         <div class="stats">-->
-<!--           <div class="stat">-->
-<!--             <div class="text">Progress</div>-->
-<!--             <div class="value">{{ installProgress.percentage }}%</div>-->
-<!--           </div>-->
-<!--           <div class="stat">-->
-<!--             <div class="text">Speed</div>-->
-<!--             <div class="value">{{ prettyBytes(installProgress.speed) }}/s</div>-->
-<!--           </div>-->
-
-<!--           <div class="stat">-->
-<!--             <div class="text">Downloaded</div>-->
-<!--             <div class="value">-->
-<!--               {{ prettyBytes(installProgress.current) }} / {{ prettyBytes(installProgress.total) }}-->
-<!--             </div>-->
-<!--           </div>-->
-<!--         </div>-->
+         <div class="stats">
+           <div class="stat">
+             <div class="text">Progress</div>
+             <div class="value">{{ installProgress.percentage }}%</div>
+           </div>
+         </div>
        </div>
 
        <p v-if="!installing && finishedInstalling">
@@ -70,7 +59,7 @@ import Selection2 from '@/components/core/ui/Selection2.vue';
 import {emitter, getColorForReleaseType, prettyByteFormat} from '@/utils';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {Mod} from '@/types';
-import {InstanceJson} from '@/core/@types/javaApi';
+import {BaseData, InstanceJson, OperationProgressUpdateData} from '@/core/@types/javaApi';
 import {compatibleCrossLoaderPlatforms} from '@/utils/helpers/packHelpers';
 
 // TODO: Remove
@@ -82,7 +71,8 @@ type InstallProgress = {
 };
 
 @Component({
-  components: {Selection2, UiButton}
+  components: {Selection2, UiButton},
+  methods: {prettyByteFormat},
 })
 export default class InstallModModal extends Vue {
   @Prop() mod!: Mod;
@@ -98,7 +88,13 @@ export default class InstallModModal extends Vue {
   };
   
   @Prop() open!: boolean;
-  @Emit() close() {}
+  @Emit() close() {
+    this.installProgress = InstallModModal.emptyProgress;
+    this.installing = false;
+    this.finishedInstalling = false;
+    this.selectedVersion = null;
+  }
+  
   @Emit() installed() {}
 
   installing = false;
@@ -117,28 +113,33 @@ export default class InstallModModal extends Vue {
     emitter.off('ws.message', this.onInstallMessage);
   }
   
-  onInstallMessage(data: any) {
-    if (!this.installing || this.wsReqId !== data.requestId) {
+  onInstallMessage(data: BaseData & any) {
+    if (data.type !== "operationUpdate" && data.type !== "instanceInstallModReply") {
       return;
     }
 
-    // Handle progress
-    if (data.type === 'instanceInstallModProgress') {
-      this.installProgress = {
-        percentage: data.overallPrecentage,
-        speed: data.speed,
-        current: data.currentBytes,
-        total: data.overallBytes,
-      };
-    }
-
-    // Handle completion
     if (data.type === 'instanceInstallModReply') {
       this.wsReqId = "";
       this.installing = false;
       this.installProgress = InstallModModal.emptyProgress;
       this.finishedInstalling = true;
       this.installed()
+      return;
+    }
+
+    // Handle progress
+    if (data.type === 'operationUpdate') {
+      const typedData = data as OperationProgressUpdateData;
+      if (typedData.metadata.instance !== this.instance.uuid) {
+        return;
+      }
+      
+      this.installProgress = {
+        percentage: typedData.percent,
+        speed: typedData.speed,
+        current: typedData.bytes,
+        total: typedData.totalBytes,
+      };
     }
   }
 

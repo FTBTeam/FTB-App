@@ -35,8 +35,11 @@
             </div>
             
             <div class="meta flex gap-4 items-center">
-              <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(file.sha1)" :aria-label="`Update available (${modUpdates[file.sha1][0].fileName} -> ${modUpdates[file.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(file.sha1)">
+              <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(file.sha1) && !updatingModShas.includes(file.sha1)" :aria-label="`Update available (${modUpdates[file.sha1][0].fileName} -> ${modUpdates[file.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(file.sha1)">
                 <font-awesome-icon icon="download" :fixed-width="true" />
+              </div>
+              <div class="updating" v-if="!instance.locked && updatingModShas.includes(file.sha1)">
+                <font-awesome-icon :spin="true" icon="circle-notch" :fixed-width="true" />
               </div>
               <ui-toggle v-if="file.fileName !== ''" :value="file.enabled" @input="() => toggleMod(file)" :disabled="togglingShas.includes(file.sha1)" />
             </div>
@@ -67,7 +70,7 @@ import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import {ModPack} from '@/modules/modpacks/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {CurseMetadata, InstanceJson, ModInfo, UpdateAvailable} from '@/core/@types/javaApi';
+import {BaseData, CurseMetadata, InstanceJson, ModInfo, UpdateAvailable} from '@/core/@types/javaApi';
 import {containsIgnoreCase, stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/core/ui/UiButton.vue';
@@ -122,6 +125,12 @@ export default class ModpackMods extends Vue {
   modUpdates: Record<string, [ModInfo, CurseMetadata]> = {};
   modUpdatesAvailableKeys: string[] = [];
   
+  updatingModShas: string[] = [];
+  
+  // We're forced to track the packets as we don't get the success response in the same packet as the request response
+  // We also do not get any file data in the response, so we have to track the sha1
+  updatingModPacketToShas: Record<string, string> = {};
+  
   async mounted() {
     if (this.packInstalled) {
       emitter.on('ws.message', this.onModUpdateEvent)
@@ -168,8 +177,21 @@ export default class ModpackMods extends Vue {
     }
   }
   
-  onModUpdateEvent(data: any) {
-    if (data.type !== "instanceModUpdate") {
+  onModUpdateEvent(data: BaseData & any) {
+    if (data.type !== "instanceModUpdate" && data.type !== "instanceInstallModReply") {
+      return;
+    }
+    
+    if (data.type === "instanceInstallModReply") {
+      if (data.status === "success") {
+        this.getModList(false)
+        if (this.updatingModPacketToShas[data.requestId]) {
+          const sha = this.updatingModPacketToShas[data.requestId];
+          this.updatingModShas.splice(this.updatingModShas.indexOf(sha), 1);
+          delete this.updatingModPacketToShas[data.requestId];
+        }
+      }
+      
       return;
     }
     
@@ -190,12 +212,20 @@ export default class ModpackMods extends Vue {
       versionId: update.curseFile
     })
 
-    // TODO: (M#01) FINISH THIS ENDPOINT
-    console.log(result)
+    if (result.status === "success" || result.status === "processing") {
+      if (result.status === "processing") {
+        this.updatingModPacketToShas[result.requestId] = mod.sha1;
+        this.updatingModShas.push(key);
+      } else {
+        this.getModList(false) // This isn't really something that happens
+      }
+    }
   }
 
   updateAll() {
-    
+    for (const key of this.modUpdatesAvailableKeys) {
+      this.updateMod(key).catch(e => consoleBadButNoLogger("E", e))
+    }
   }
   
   async toggleMod(file: ModInfo) {

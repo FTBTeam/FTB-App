@@ -23,7 +23,7 @@
        :open-up="true"
        label="Version"
        class="mb-4"
-       :disabled="loaderVersions.length === 0 || userUseLatestLoader"
+       :disabled="loaderVersions.length === 0 || (provideLatestOption && userUseLatestLoader)"
        :options="loaderVersions"
        v-model="userLoaderVersion"
        @change="select(userLoaderProvider, userLoaderVersion)"

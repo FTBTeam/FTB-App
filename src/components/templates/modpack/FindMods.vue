@@ -110,17 +110,15 @@
 <script lang="ts">
 import {AuthState} from '@/modules/auth/types';
 import {Mod} from '@/types';
-import {consoleBadButNoLogger, debounce} from '@/utils';
+import {debounce} from '@/utils';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import {State} from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
 import ModCard from '../../molecules/modpack/ModCard.vue';
-import {alertController} from '@/core/controllers/alertController';
-import {sendMessage} from '@/core/websockets/websocketsApi';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {InstanceJson} from '@/core/@types/javaApi';
 import InstallModModal from '@/components/core/mods/InstallModModal.vue';
-import {compatibleCrossLoaderPlatforms} from '@/utils/helpers/packHelpers';
+import {compatibleCrossLoaderPlatforms, resolveModloader} from '@/utils/helpers/packHelpers';
 
 @Component({
   components: {
@@ -308,26 +306,9 @@ export default class FindMods extends Vue {
    */
   private async loadInstanceVersion() {
     this.loading = true;
-
-    // TODO: (M#01) prevent this by fixing the instance construction to contain the mc version and more version data.
-    let packData;
-    try {
-      packData = await sendMessage("instanceVersionInfo", {
-        uuid: this.instance.uuid
-      })
-    } catch {
-      consoleBadButNoLogger("D", 'Failed to find pack version data...');
-    } finally {
-      this.loading = false;
-    }
-
-    if (!packData || !packData.versionManifest) {
-      alertController.warning('Could not find instance version data')
-      return;
-    }
-
-    this.target = this.instance.mcVersion ?? packData.versionManifest.targets.find((e: any) => e.type === 'game')?.version ?? '';
-    this.modLoader = packData.versionManifest.targets.find((e: any) => e.type === 'modloader')?.name ?? 'forge'; // default to forge? Not super nice
+        
+    this.target = this.instance.mcVersion;
+    this.modLoader = resolveModloader(this.instance)
   }
 
   private async getModFromId(modId: number): Promise<Mod | null> {

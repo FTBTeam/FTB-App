@@ -195,8 +195,6 @@
     <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="userSelectModLoader = false">
       <modloader-select @select="e => userSelectedLoader = e" :mc-version="instance.mcVersion" :provide-latest-option="false" :show-none="false" />
       
-      {{userSelectedLoader}}
-      
       <template #footer>
         <div class="flex justify-end gap-4">
           <ui-button type="warning" icon="times" @click="userSelectModLoader = false">Close</ui-button>
@@ -371,10 +369,15 @@ export default class ModpackSettings extends Vue {
     const result = await sendMessage("instanceOverrideModLoader", {
       uuid: this.instance.uuid,
       modLoaderId: this.userSelectedLoader[1].pack,
-      modLoaderVersion: this.userSelectedLoader[1].id
+      modLoaderVersion: this.userSelectedLoader[1].id,
     });
     
-    console.log(result)
+    if (result.status !== "failure") {
+      this.userSelectModLoader = false;
+      this.userSelectedLoader = null;
+      
+      this.$emit("back");
+    }
   }
 
   async toggleLock() {
