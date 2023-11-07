@@ -105,7 +105,7 @@ public class ModVersionCache {
      */
     public CompletableFuture<@Nullable ModManifest> queryMod(long modId) {
         // Nothing to do.
-        if (modId == -1) return completedFuture(null);
+        if (modId < 1) return completedFuture(null);
         // Slight optimization, to prevent hammering the API with unknown mods. Not sure if this can even happen, but sure.
         if (modNegativeCache.contains(modId)) return completedFuture(null);
 
@@ -137,7 +137,7 @@ public class ModVersionCache {
      */
     public CompletableFuture<CachedMod> queryVersion(long modId, long modVersion) {
         String key = modId + ":" + modVersion;
-        if (modId == -1 || modVersion == -1 || versionNegativeCache.contains(key)) return completedFuture(null);
+        if (modId < 1 || modVersion < 1 || versionNegativeCache.contains(key)) return completedFuture(null);
 
         CacheEntry e = modVersionCache.get(key);
         if (e != null) return completedFuture(e.mod);
