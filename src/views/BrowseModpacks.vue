@@ -68,6 +68,7 @@ import Loader from '@/components/atoms/Loader.vue';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import UiPagination from '@/components/core/ui/UiPagination.vue';
+import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 
 @Component({
   components: {
@@ -113,6 +114,9 @@ export default class BrowseModpacks extends Vue {
       
       const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
       this.ourPackIds = [...allPackIds].sort((a, b) => b - a);
+      
+      // remove the modloader packs
+      this.ourPackIds = this.ourPackIds.filter(e => !packBlacklist.includes(e));
       
       this.visiblePacks = this.ourPackIds.slice(0, 10);
     }, (state) => this.loadingInitialPacks = state);
