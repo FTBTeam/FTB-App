@@ -38,6 +38,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final MavenNotation FORGE_NOTATION = MavenNotation.parse("net.minecraftforge:forge");
     private static final MavenNotation NEO_FORGE_NOTATION = MavenNotation.parse("net.neoforged:forge");
+    private static final MavenNotation NEO_FORGE_1_20_2_PLUS_NOTATION = MavenNotation.parse("net.neoforged:neoforge");
 
     private static final VersionOverrides SPECIAL_VERSIONS = VersionOverrides.compute();
 
@@ -75,8 +76,13 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     }
 
     public static AbstractForgeInstallTask createNeoForgeInstallTask(Instance instance, String mcVersion, String neoForgeVersion) throws IOException {
-        MavenNotation notation = NEO_FORGE_NOTATION
-                .withVersion(mcVersion + "-" + neoForgeVersion)
+        MavenNotation versionSpecificNotation = NEO_FORGE_1_20_2_PLUS_NOTATION.withVersion(neoForgeVersion);
+        
+        if (mcVersion.equals("1.20.1")) {
+            versionSpecificNotation = NEO_FORGE_NOTATION.withVersion(mcVersion + "-" + neoForgeVersion);
+        }
+        
+        MavenNotation notation = versionSpecificNotation
                 .withClassifier("installer");
 
         // TODO, this is a common path with above.
