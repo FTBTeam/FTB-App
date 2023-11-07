@@ -98,8 +98,8 @@
 
     <ui-toggle
       :align-right="true"
-      label="Enable cloud save uploads"
-      desc="You can only use Cloud Saves if you have an active paid plan on MineTogether."
+      label="Enable cloud sync uploads"
+      desc="You can only use Cloud sync if you have an active paid plan on MineTogether."
       :disabled="!accountHasPlan || toggleSavesWorking"
       :value="instanceSettings.cloudSaves"
       @input="toggleCloudSaves"

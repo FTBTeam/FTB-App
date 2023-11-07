@@ -31,14 +31,6 @@
 <!--        small="When enabled, the MineTogether friends list will automatically open in a new window on startup. Currently disabled."-->
 <!--      />-->
       
-      <ui-toggle 
-        label="Enable cloud save uploads" 
-        desc="Stores your worlds, configs and more in the cloud and syncs them across systems."
-        :value="settings.settings.cloudSaves === true || settings.settings.cloudSaves === 'true'"
-        @input="toggleCloudSaves"
-        class="mb-8"
-      />
-
       <ui-toggle
         label="Show adverts"
         desc="Any paid plan can optionally disable ads throughout the app"
@@ -78,11 +70,6 @@ export default class MTIntegration extends Vue {
   get avatarName() {
     const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
     return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
-  }
-
-  public toggleCloudSaves(value: boolean) {
-    this.settings.settings.cloudSaves = value;
-    this.saveSettings(this.settings.settings);
   }
 
   public toggleAutoOpenChat(value: boolean) {
