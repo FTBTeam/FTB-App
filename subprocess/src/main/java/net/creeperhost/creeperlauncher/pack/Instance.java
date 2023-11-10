@@ -530,8 +530,15 @@ public class Instance {
                 override = null;
             }
 
+            if (override != null) {
+                // Skip entry, mod has been updated, let the override add the entry.
+                if (override.getState() == ModOverrideState.UPDATED_ENABLED || override.getState() == ModOverrideState.UPDATED_DISABLED) {
+                    continue;
+                }
+            }
+
             // Enabled if override says it is, OR the file exists AND does not have .disabled
-            boolean enabled = (override != null && override.getState().enabled) || (fileExists && !file.getName().endsWith(".disabled"));
+            boolean enabled = (override != null && override.getState().enabled()) || (fileExists && !file.getName().endsWith(".disabled"));
 
             CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, sha1);
             mods.add(new ModInfo(
@@ -549,7 +556,7 @@ public class Instance {
         if (modifications != null) {
             for (ModOverride override : modifications.getOverrides()) {
                 // -1 is for non-pack overrides.
-                if (!override.getState().added) continue;
+                if (!override.getState().added() && !override.getState().updated()) continue;
 
                 Path file = modsDir.resolve(override.getFileName());
                 CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile(), override.getSha1());
@@ -557,7 +564,7 @@ public class Instance {
                         -1,
                         override.getFileName(),
                         null,
-                        override.getState().enabled,
+                        override.getState().enabled(),
                         tryGetSize(file),
                         override.getSha1(),
                         ids
@@ -606,7 +613,7 @@ public class Instance {
                     -1,
                     fName2,
                     null,
-                    state.enabled,
+                    state.enabled(),
                     size,
                     sha1,
                     metadata != null ? metadata.toCurseInfo() : null

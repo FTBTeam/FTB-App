@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.install;
 
 import com.google.gson.JsonParseException;
+import net.covers1624.quack.collection.FastStream;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
@@ -10,15 +11,19 @@ import net.creeperhost.creeperlauncher.data.mod.ModInfo;
 import net.creeperhost.creeperlauncher.data.mod.ModManifest;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState.*;
 
 /**
  * Created by covers1624 on 12/9/23.
@@ -31,12 +36,13 @@ public class ModInstaller implements ModCollector {
 
     private final String mcVersion;
     private final String modLoader;
-    
+
     private final long modId;
     private final long versionId;
-    
+
     private final OperationProgressTracker tracker;
 
+    private final List<ModInfo> existingMods = new ArrayList<>();
     private final List<Pair<ModManifest, ModManifest.Dependency>> unavailable = new ArrayList<>();
     private final List<Pair<ModManifest, ModManifest>> unsatisfiable = new ArrayList<>();
     private final List<Pair<ModManifest, ModManifest.Version>> toInstall = new ArrayList<>();
@@ -45,10 +51,10 @@ public class ModInstaller implements ModCollector {
         this.instance = instance;
         this.mcVersion = mcVersion;
         this.modLoader = modLoader;
-        
+
         this.modId = modId;
         this.versionId = versionId;
-        
+
         tracker = new OperationProgressTracker(
                 "mod_install",
                 Map.of(
@@ -61,7 +67,7 @@ public class ModInstaller implements ModCollector {
 
     public void resolve() throws ModInstallerException {
         LOGGER.info("Resolving install of mod {} version {}", modId, versionId);
-        
+
         tracker.nextStage(InstallStage.RESOLVE);
         try {
             ModManifest manifest;
@@ -81,11 +87,13 @@ public class ModInstaller implements ModCollector {
             tracker.finished();
             throw ex;
         }
-        List<ModInfo> existingMods = instance.getMods();
+        existingMods.addAll(instance.getMods());
         LOGGER.info("Filtering found dependencies from existing mod list.");
         toInstall.removeIf(pair -> {
             ModManifest manifest = pair.getKey();
             ModManifest.Version version = pair.getValue();
+            if (manifest.getId() == modId) return false;
+
             for (ModInfo existingMod : existingMods) {
                 CurseMetadata curse = existingMod.curse();
                 if (curse == null) continue;
@@ -131,13 +139,19 @@ public class ModInstaller implements ModCollector {
 
             long totalSize = 0;
             List<Task<Void>> tasks = new ArrayList<>(toInstall.size());
+            List<ModOverride> allOverrides = modifications.getOverrides();
+            List<ModOverride> oldOverrides = new ArrayList<>();
             List<ModOverride> newOverrides = new ArrayList<>(toInstall.size());
             for (Pair<ModManifest, ModManifest.Version> toInstall : toInstall) {
                 ModManifest mod = toInstall.getKey();
                 ModManifest.Version version = toInstall.getValue();
+                ModInfo selfExisting = FastStream.of(existingMods)
+                        .filter(e -> e.curse() != null && e.curse().curseProject() == modId)
+                        .onlyOrDefault();
+                String suffix = selfExisting != null && !selfExisting.enabled() ? ".disabled" : "";
                 NewDownloadTask task = NewDownloadTask.builder()
                         .url(version.getUrl())
-                        .dest(instance.getDir().resolve(version.getPath()).resolve(version.getName()))
+                        .dest(instance.getDir().resolve(version.getPath()).resolve(version.getName() + suffix))
                         .withValidation(version.createValidation().asDownloadValidation())
                         .withFileLocator(CreeperLauncher.localCache)
                         .build();
@@ -150,13 +164,52 @@ public class ModInstaller implements ModCollector {
                     tasks.add((cancelToken, listener) -> {
                         try {
                             task.execute(cancelToken, listener);
+                            // Delete old file if we are updating.
+                            if (selfExisting != null) {
+                                String fName = selfExisting.fileName();
+                                if (!selfExisting.enabled()) {
+                                    fName += ".disabled";
+                                } else {
+                                    fName = StringUtils.removeEnd(fName, ".disabled");
+                                }
+                                Files.deleteIfExists(instance.getDir().resolve(version.getPath()).resolve(fName));
+                            }
                         } finally {
                             tracker.stepFinished();
                         }
                     });
                 }
 
-                newOverrides.add(new ModOverride(ModOverrideState.ADDED_ENABLED, version.getName(), version.getSha1(), mod.getId(), version.getId()));
+                if (selfExisting != null) {
+                    ModOverride existingOverride = FastStream.of(allOverrides)
+                            .filter(e -> e.getCurseProject() == modId || e.getId() == selfExisting.fileId())
+                            .firstOrDefault();
+                    if (existingOverride != null) {
+                        oldOverrides.add(existingOverride);
+                        ModOverrideState state = existingOverride.getState();
+                        ModOverrideState newState = switch(state) {
+                            case ENABLED -> UPDATED_ENABLED;
+                            case DISABLED -> UPDATED_DISABLED;
+                            default -> state;
+                        };
+                        newOverrides.add(new ModOverride(newState, version.getName(), selfExisting.fileId(), version.getSha1(), mod.getId(), version.getId()));
+                    } else {
+                        if (selfExisting.fileId() != -1) {
+                            newOverrides.add(new ModOverride(
+                                    selfExisting.enabled() ? UPDATED_ENABLED : UPDATED_DISABLED,
+                                    version.getName(),
+                                    selfExisting.fileId(),
+                                    version.getSha1(),
+                                    mod.getId(),
+                                    version.getId()
+                            ));
+                        } else {
+                            // What?
+                        }
+                    }
+                } else {
+                    newOverrides.add(new ModOverride(ADDED_ENABLED, version.getName(), version.getSha1(), mod.getId(), version.getId()));
+                }
             }
 
             LOGGER.info("Downloading mods..");
@@ -171,6 +224,7 @@ public class ModInstaller implements ModCollector {
 
             instance.setModified(true);
             instance.saveJson();
+            modifications.getOverrides().removeAll(oldOverrides);
             modifications.getOverrides().addAll(newOverrides);
             instance.saveModifications();
 

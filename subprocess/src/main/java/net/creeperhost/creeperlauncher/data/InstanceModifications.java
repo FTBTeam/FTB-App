@@ -60,7 +60,7 @@ public class InstanceModifications {
         private @Nullable String fileName;
 
         // For DISABLED, ENABLED, REMOVED, UPDATED
-        private long id;
+        private long id = -1;
 
         // For ADDED
         private @Nullable String sha1; // TODO is this useful?
@@ -85,6 +85,15 @@ public class InstanceModifications {
             this.curseFile = curseFile;
         }
 
+        public ModOverride(ModOverrideState state, String fileName, long id, String sha1, long curseProject, long curseFile) {
+            this.state = state;
+            this.fileName = fileName;
+            this.id = id;
+            this.sha1 = sha1;
+            this.curseProject = curseProject;
+            this.curseFile = curseFile;
+        }
+
         // @formatter:off
         public ModOverrideState getState() { return Objects.requireNonNull(state); }
         public String getFileName() { return Objects.requireNonNull(fileName); }
@@ -101,46 +110,34 @@ public class InstanceModifications {
         /**
          * Mod was distributed as Disabled, but is now enabled.
          */
-        ENABLED(true),
+        ENABLED,
         /**
          * Mod was distributed as Enabled, but is now disabled.
          */
-        DISABLED(false),
+        DISABLED,
         /**
          * Mod was distributed as Enabled, but is now deleted.
          * <p>
          * This _could_ be a mod which was updated, but not via the GUI.
          */
-        REMOVED(false),
+        REMOVED,
         /**
          * Mod was updated from the distribution and is enabled.
          */
-        UPDATED_ENABLED(true),
+        UPDATED_ENABLED,
         /**
          * Mod was updated from the distribution and is disabled.
          */
-        UPDATED_DISABLED(true),
+        UPDATED_DISABLED,
         /**
          * Mod was added after the fact and is enabled.
          */
-        ADDED_ENABLED(true, true),
+        ADDED_ENABLED,
         /**
          * Mod was added after the fact and is disabled.
          */
-        ADDED_DISABLED(false, true),
+        ADDED_DISABLED,
         ;
-
-        public final boolean enabled;
-        public final boolean added;
-
-        ModOverrideState(boolean enabled) {
-            this(enabled, false);
-        }
-
-        ModOverrideState(boolean enabled, boolean added) {
-            this.enabled = enabled;
-            this.added = added;
-        }
 
         public ModOverrideState toggle() {
             return switch (this) {
@@ -151,6 +148,27 @@ public class InstanceModifications {
                 case ADDED_ENABLED -> ADDED_DISABLED;
                 case ADDED_DISABLED -> ADDED_ENABLED;
                 case REMOVED -> throw new UnsupportedOperationException("Unable to toggle removed mods.");
+            };
+        }
+
+        public boolean enabled() {
+            return switch(this) {
+                case ENABLED, UPDATED_ENABLED, ADDED_ENABLED -> true;
+                default -> false;
+            };
+        }
+
+        public boolean added() {
+            return switch(this) {
+                case ADDED_ENABLED, ADDED_DISABLED -> true;
+                default -> false;
+            };
+        }
+
+        public boolean updated() {
+            return switch(this) {
+                case UPDATED_ENABLED, UPDATED_DISABLED -> true;
+                default -> false;
             };
         }
     }
