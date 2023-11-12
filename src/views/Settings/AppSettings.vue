@@ -2,14 +2,14 @@
   <div class="app-settings">
     <!-- <ftb-toggle label="Enable Analytics: " :value="settingsCopy.enableAnalytics" @change="enableAnalytics"
                     onColor="bg-primary"/> -->
-    <ui-toggle
-      label="Use the beta channel"
-      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."
-      :value="localSettings.enablePreview"
-      @input="enablePreview"
-      class="mb-8"
-    />
-    
+<!--    <ui-toggle-->
+<!--      label="Use the beta channel"-->
+<!--      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."-->
+<!--      :value="localSettings.enablePreview"-->
+<!--      @input="enablePreview"-->
+<!--      class="mb-8"-->
+<!--    />-->
+<!--    -->
     <ui-toggle
       v-if="!platform.isElectron()"
       label="Close Overwolf on Exit"
@@ -26,6 +26,18 @@
       :disabled="true"
       class="mb-8"
     />
+
+    <p class="block text-white-700 text-lg font-bold mb-4" v-if="platform.isElectron()">Appearance</p>
+
+    <ui-toggle
+      v-if="platform.isElectron()"
+      label="Use systems window style"
+      desc="Instead of using the apps internal Titlebar, we'll use the system's titlebar instead. This setting will restart the app!"
+      v-model="localSettings.useSystemWindowStyle"
+      @input="toggleSystemStyleWindow"
+      class="mb-8"
+    />
+
 
     <p class="block text-white-700 text-lg font-bold mb-4">Actions</p>
 
@@ -93,6 +105,13 @@ export default class AppSettings extends Vue {
     this.localSettings.exitOverwolf = value;
     this.saveSettings(this.localSettings);
     platform.get.actions.changeExitOverwolfSetting(value);
+  }
+  
+  toggleSystemStyleWindow(value: boolean): void {
+    this.localSettings.useSystemWindowStyle = value;
+    this.saveSettings(this.localSettings);
+    
+    platform.get.frame.setSystemWindowStyle(value);
   }
   
   openFolder(location: string) {

@@ -213,6 +213,7 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+    setSystemWindowStyle(enabled) {}
   },
 
   // IO

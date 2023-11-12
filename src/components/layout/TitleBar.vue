@@ -1,5 +1,5 @@
 <template>
-  <div class="titlebar" :class="{ isMac, blurred }" @mousedown="startDragging" @dblclick="minMax">
+  <div class="titlebar" :class="{ isMac }" @mousedown="startDragging" @dblclick="minMax" v-show="systemBarDisabled">
     <div class="spacer" v-if="isMac"></div>
     <div class="meta-title">
       <span>FTB App</span>
@@ -111,6 +111,10 @@ export default class TitleBar extends Vue {
 
   goToSettings() {
     safeNavigate(RouterNames.SETTINGS_INFO)
+  }
+  
+  get systemBarDisabled() {
+    return !this.settings.settings.useSystemWindowStyle ?? false;
   }
 }
 </script>

@@ -1,5 +1,5 @@
-import { MutationTree } from 'vuex';
-import { Resolution, Settings, SettingsState } from './types';
+import {MutationTree} from 'vuex';
+import {Resolution, Settings, SettingsState} from './types';
 
 const defaultSettings: Settings = {
   width: 1720,
@@ -32,6 +32,7 @@ const defaultSettings: Settings = {
   proxyUser: '',
   updateChannel: 'release',
   fullScreen: false,
+  useSystemWindowStyle: false,
 };
 
 export const mutations: MutationTree<SettingsState> = {

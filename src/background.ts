@@ -19,7 +19,23 @@ function getAppHome() {
   }
 }
 
-log.transports.file.resolvePath = (vars, message) => path.join(getAppHome(), 'logs', 'ftb-app-electron.log');
+function getAppSettings(appSettingsPath: string) {
+  if (!fs.existsSync(appSettingsPath)) {
+    return null;
+  }
+  
+  try {
+    return JSON.parse(fs.readFileSync(appSettingsPath, 'utf-8'));
+  } catch (e) {
+    return null;
+  }
+}
+
+const appHome = getAppHome();
+const appSettingsPath = path.join(appHome, 'bin', 'settings.json');
+let appSettings = getAppSettings(appSettingsPath);
+
+log.transports.file.resolvePath = (vars, message) => path.join(appHome, 'logs', 'ftb-app-electron.log');
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -219,6 +235,29 @@ ipcMain.handle('selectFolder', async (event, data) => {
   }
 });
 
+ipcMain.handle('setSystemWindowStyle', async (event, data) => {
+  const typedData = data as boolean;
+  
+  if (!win) {
+    return;
+  }
+  
+  // Reload the app settings
+  appSettings.useSystemWindowStyle = typedData.toString();
+
+  // Create a tmp window to keep the app alive
+  const tmpWindow = new BrowserWindow({
+    show: false,
+  });
+  
+  // Enable the windows frame
+  win.destroy()
+  await createWindow()
+  
+  // Close the tmp window
+  tmpWindow.close();
+});
+
 ipcMain.handle('openFinder', async (event, data) => {
   try {
     await shell.openPath(data);
@@ -359,6 +398,8 @@ function createFriendsWindow() {
 }
 
 async function createWindow() {
+  const useSystemFrame = appSettings?.useSystemWindowStyle === "true" ?? false;
+  
   win = new BrowserWindow({
     title: 'FTB App',
 
@@ -369,8 +410,8 @@ async function createWindow() {
     minHeight: 800,
     width: 1320,
     height: 800,
-    frame: false,
-    titleBarStyle: 'hidden',
+    frame: useSystemFrame,
+    titleBarStyle: useSystemFrame ? 'default' : 'hidden',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

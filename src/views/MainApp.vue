@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
-    <div class="app-container" v-if="websockets.socket.isConnected && !loading">
+    <div class="app-container" :class="{'no-system-bar': systemBarDisabled}" v-if="websockets.socket.isConnected && !loading">
       <main class="main">
         <sidebar v-if="showSidebar" />
         <div class="app-content relative">
@@ -193,13 +193,22 @@ export default class MainApp extends Vue {
     // If this fails, show the ads
     return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
   }
+
+  get systemBarDisabled() {
+    console.log(!this.settings.settings.useSystemWindowStyle)
+    return !this.settings.settings.useSystemWindowStyle ?? false;
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 .app-container {
-  height: calc(100% - 2rem);
+  height: 100%;
   position: relative;
+  
+  &.no-system-bar {
+    height: calc(100% - 2rem);
+  }
 
   &.centered {
     display: flex;
@@ -214,8 +223,12 @@ export default class MainApp extends Vue {
 
 #app.macos {
   .app-container {
-    // Title bar on macos is 1.8rem not 2rem
-    height: calc(100% - 1.8rem);
+    height: 100%;
+
+    &.no-system-bar {
+      // Title bar on macos is 1.8rem not 2rem
+      height: calc(100% - 2rem);
+    }
   }
 }
 

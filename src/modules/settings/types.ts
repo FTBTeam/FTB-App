@@ -26,6 +26,8 @@ export interface Settings {
   updateChannel: string;
   fullScreen: boolean;
 
+  useSystemWindowStyle: boolean;
+  
   // new ish
   proxyHost: string;
   proxyPort: number;

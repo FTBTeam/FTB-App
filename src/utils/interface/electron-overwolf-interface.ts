@@ -54,6 +54,7 @@ export interface Frame {
   // Overwolf specific
   handleDrag: (event: any, windowId: any) => void;
   setupTitleBar: (cb: (windowId: any) => void) => void;
+  setSystemWindowStyle(enabled: boolean): void;
 }
 
 export interface Config {

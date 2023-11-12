@@ -292,6 +292,9 @@ const Electron: ElectronOverwolfInterface = {
     // we don't need this on electron because it's not silly
     handleDrag() {},
     setupTitleBar() {},
+    setSystemWindowStyle(enabled) {
+      ipcRenderer.invoke('setSystemWindowStyle', enabled);
+    }
   },
 
   // IO
