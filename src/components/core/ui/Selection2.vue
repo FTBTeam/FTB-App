@@ -1,8 +1,8 @@
 <template>
   <div class="select-box" :class="{disabled}">
     <div class="label" v-if="label && !icon">{{ label }}</div>
-    <div class="selection" tabindex="0" @focus="open = true" @focusout="open = false" :class="{ open }" ref="selection">
-      <div class="main" v-if="!icon">
+    <div class="selection" :class="{ open }" ref="selection">
+      <div class="main" v-if="!icon" @click.stop="open = !open">
         <div class="item with-empty" v-if="!selected">
           <div class="badge empty">_</div>
           {{ placeholder }}
@@ -90,6 +90,21 @@ export default class Selection2 extends Vue {
         consoleBadButNoLogger("W", "Duplicate keys detected in selection options for: " + this.label ?? "unknown");
       }
     }
+    
+    document.addEventListener('click', this.handleDocumentClick);
+  }
+
+  handleDocumentClick(event: any) {
+    // Check if the click was inside the selection box
+    if (this.$el.contains(event.target)) {
+      return;
+    }
+    
+    this.open = false;
+  }
+  
+  destroyed() {
+    document.removeEventListener('click', this.handleDocumentClick);
   }
   
   select(option: SelectionOption) {

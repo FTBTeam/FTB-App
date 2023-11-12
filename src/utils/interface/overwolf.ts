@@ -113,9 +113,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     uploadClientLogs() {
-      // TODO: (M#01) Deal with the result
       overwolf.utils.uploadClientLogs((result: any) => {
-        console.log(result);
       });
     },
 

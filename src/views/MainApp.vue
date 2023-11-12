@@ -195,7 +195,6 @@ export default class MainApp extends Vue {
   }
 
   get systemBarDisabled() {
-    console.log(!this.settings.settings.useSystemWindowStyle)
     return !this.settings.settings.useSystemWindowStyle ?? false;
   }
 }
