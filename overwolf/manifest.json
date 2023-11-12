@@ -40,7 +40,6 @@
       "index": {
         "file": "dist/desktop/index.html",
         "native_window": true,
-        "transparent": true,
         "resizable": true,
         "desktop_only": true,
         "size": {

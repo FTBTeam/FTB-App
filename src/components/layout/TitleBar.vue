@@ -82,7 +82,7 @@ export default class TitleBar extends Vue {
   minMax() {
     platform.get.frame.max(this.windowId);
   }
-  
+
   public minimise(): void {
     platform.get.frame.min(this.windowId);
   }
@@ -111,12 +111,12 @@ export default class TitleBar extends Vue {
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  -webkit-app-region: drag;
   z-index: 50000;
   position: relative;
   transition: background-color 0.3s ease-in-out;
 
   &.isMac {
+    -webkit-app-region: drag;
     height: 1.8em;
     text-align: center;
 
