@@ -1,11 +1,11 @@
 <template>
-  <div class="titlebar" :class="{ isMac }" @mousedown="startDragging" @dblclick="minMax">
+  <div class="titlebar" :class="{ isMac, blurred }" @mousedown="startDragging" @dblclick="minMax">
     <div class="spacer" v-if="isMac"></div>
     <div class="meta-title">
       <span>FTB App</span>
     </div>
     <div class="branch-container">
-      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" data-balloon-pos="down-right">{{ branch }}</div>
+      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ branch }}</div>
     </div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">
@@ -60,11 +60,25 @@ export default class TitleBar extends Vue {
   
   public isMac: boolean = false;
   private windowId: string | null = null;
+
+  blurred = false;
   
-  public mounted() {
+  mounted() {
     this.isMac = os.type() === 'Darwin';
 
     platform.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
+    
+    window.addEventListener('blur', this.windowFocusChanged);
+    window.addEventListener('focus', this.windowFocusChanged);
+  }
+  
+  destroyed() {
+    window.removeEventListener('blur', this.windowFocusChanged);
+    window.removeEventListener('focus', this.windowFocusChanged);
+  }
+  
+  windowFocusChanged(event: any) {
+    this.blurred = event.type === 'blur';
   }
 
   public startDragging(event: any) {
@@ -114,6 +128,10 @@ export default class TitleBar extends Vue {
   z-index: 50000;
   position: relative;
   transition: background-color 0.3s ease-in-out;
+  
+  &.blurred {
+    background-color: var(--color-navbar);
+  }
 
   &.isMac {
     -webkit-app-region: drag;
