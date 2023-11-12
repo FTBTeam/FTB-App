@@ -109,6 +109,7 @@ public class WebSocketMessengerHandler {
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());
 
         register("webRequest", WebRequestData.class, new WebRequestHandler());
+        register("videoCache", VideoCacheHandler.Data.class, new VideoCacheHandler());
 
         register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
     }

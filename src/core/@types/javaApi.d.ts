@@ -543,6 +543,15 @@ export interface InstanceRestoreBackupHandlerRequest extends BaseData {
     backupLocation: string;
 }
 
+export interface VideoCacheHandlerData extends BaseData {
+    url: string;
+    fileName: string;
+}
+
+export interface VideoCacheHandlerReply extends VideoCacheHandlerData {
+    location: string;
+}
+
 export interface AccountIsValidHandlerData extends BaseData {
     profileUuid: string;
 }

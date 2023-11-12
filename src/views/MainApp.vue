@@ -54,6 +54,7 @@ import {AsyncFunction} from '@/core/@types/commonTypes';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import os from 'os';
+import {requiresWsControllers} from '@/core/controllerRegistry';
 
 @Component({
   components: {
@@ -154,6 +155,7 @@ export default class MainApp extends Vue {
     }
 
     if (!newVal.socket.isConnected && !this.loading) {
+      requiresWsControllers.forEach(e => e.onDisconnected());
       this.loading = true;
       this.stage = 'Attempting to reconnect to the apps agent...';
     }
@@ -165,6 +167,7 @@ export default class MainApp extends Vue {
       this.hasInitialized = true;
     }
     this.platfrom.get.actions.onAppReady();
+    requiresWsControllers.forEach(e => e.onConnected());
   }
 
   public async fetchStartData() {

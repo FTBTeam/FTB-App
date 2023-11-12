@@ -12,6 +12,7 @@ import {instanceStateModule} from '@/core/state/instances/instancesState';
 import {installStateModule} from '@/core/state/instances/installState';
 import {newsStateModule} from '@/core/state/misc/newsState';
 import {dialogsState} from '@/core/state/misc/dialogsState';
+import {adsStateModule} from '@/core/state/misc/adsState';
 
 Vue.use(Vuex);
 
@@ -63,7 +64,8 @@ const store: StoreOptions<RootState> = {
     "v2/instances": instanceStateModule,
     "v2/install": installStateModule,
     "v2/news": newsStateModule,
-    "v2/dialogs": dialogsState
+    "v2/dialogs": dialogsState,
+    "v2/ads": adsStateModule
   },
 };
 

@@ -94,6 +94,8 @@ import {
   UpdateInstanceData,
   UploadLogsData,
   UploadLogsDataReply,
+  VideoCacheHandlerData,
+  VideoCacheHandlerReply,
   WebRequestData,
   WebRequestDataResponse,
   YeetLauncherData
@@ -156,7 +158,8 @@ export type MessageType =
   "storage.get" |
   "storage.get-all" |
   "webRequest" |
-  "openDebugTools"
+  "openDebugTools" |
+  "videoCache"
 
 export type EmptyMessageResponse = {}
 
@@ -385,5 +388,9 @@ export type MessagePayload = {
   "instanceOverrideModLoader": {
     input: InstanceOverrideModLoaderData,
     output: InstanceOverrideModLoaderDataReply
+  },
+  "videoCache": {
+    input: VideoCacheHandlerData,
+    output: VideoCacheHandlerReply
   }
 }

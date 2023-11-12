@@ -33,24 +33,8 @@
       </div>
     </div>
 
-    <div class="ad-container ads-electron electron cursor-pointer" v-else key="adside-ad-type" @click="platform.get.utils.openUrl('https://go.ftb.team/ch-app')">
-      <div class="flex flex-col items-center mb-6">
-        <img src="@/assets/ch-logo.svg" class="mb-4" width="30" alt="CreeperHost Logo">
-        <p class="font-sans font-bold">Get your own server at CreeperHost</p>
-      </div>
-      
-      <video
-        class="cursor-pointer"
-        width="300"
-        height="250"
-        autoplay
-        muted
-        loop
-        style="margin: 0 auto"
-        v-if="isElectron && !isDevEnv && advertsEnabled"
-      >
-        <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
-      </video>
+    <div class="ad-container ads-electron electron" v-else key="adside-ad-type">
+      <ch-ads-area />
     </div>
   </div>
 </template>
@@ -64,8 +48,11 @@ import {SettingsState} from '@/modules/settings/types';
 import {AuthState} from '@/modules/auth/types';
 import {consoleBadButNoLogger, getLogger} from '@/utils';
 import {JavaFetch} from '@/core/javaFetch';
+import ChAdsArea from '@/components/core/misc/ChAdsArea.vue';
 
-@Component
+@Component({
+  components: {ChAdsArea}
+})
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
   @State('auth') public auth!: AuthState;
