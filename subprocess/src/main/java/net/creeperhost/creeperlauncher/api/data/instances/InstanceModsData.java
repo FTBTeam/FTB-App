@@ -24,6 +24,18 @@ public class InstanceModsData extends BaseData {
         }
     }
 
+    public static class RichModData extends InstanceModsData {
+        public final ModInfo file;
+        public final CurseMetadata richData;
+
+        public RichModData(InstanceModsData data, ModInfo file, CurseMetadata richData) {
+            type = "instanceModRichData";
+            this.requestId = data.requestId;
+            this.file = file;
+            this.richData = richData;
+        }
+    }
+
     public static class UpdateAvailable extends InstanceModsData {
 
         public final ModInfo file;

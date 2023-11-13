@@ -506,7 +506,6 @@ public class Instance {
         LOGGER.info("Building instance mods list..");
         List<ModInfo> mods = new ArrayList<>();
 
-        ModpackVersionModsManifest modsManifest = getModsManifest();
         InstanceModifications modifications = getModifications();
 
         Path modsDir = path.resolve("mods");
@@ -518,7 +517,6 @@ public class Instance {
             String sha1 = Objects.toString(file.getSha1OrNull(), null);
 
             ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
-            ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
 
             boolean fileExists = Files.exists(file.toPath(path));
 
@@ -540,7 +538,6 @@ public class Instance {
             // Enabled if override says it is, OR the file exists AND does not have .disabled
             boolean enabled = (override != null && override.getState().enabled()) || (fileExists && !file.getName().endsWith(".disabled"));
 
-            CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, sha1);
             mods.add(new ModInfo(
                     file.getId(),
                     file.getName(),
@@ -548,7 +545,7 @@ public class Instance {
                     enabled,
                     file.getSize(),
                     sha1,
-                    ids
+                    null
             ));
         }
 
@@ -559,7 +556,6 @@ public class Instance {
                 if (!override.getState().added() && !override.getState().updated()) continue;
 
                 Path file = modsDir.resolve(override.getFileName());
-                CurseMetadata ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile(), override.getSha1());
                 mods.add(new ModInfo(
                         -1,
                         override.getFileName(),
@@ -567,7 +563,7 @@ public class Instance {
                         override.getState().enabled(),
                         tryGetSize(file),
                         override.getSha1(),
-                        ids
+                        CurseMetadata.basic(override.getCurseProject(), override.getCurseFile())
                 ));
             }
         }

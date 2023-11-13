@@ -9,10 +9,13 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.mod.CurseMetadata;
 import net.creeperhost.creeperlauncher.data.mod.ModInfo;
+import net.creeperhost.creeperlauncher.data.mod.ModManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +33,10 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
         var mods = instance.getMods();
         Settings.webSocketAPI.sendMessage(new InstanceModsData.Reply(data, mods));
 
-        checkForUpdates(data, instance, mods);
+        pollModData(data, instance, mods);
     }
 
-    private static void checkForUpdates(InstanceModsData data, Instance instance, List<ModInfo> mods) {
+    private static void pollModData(InstanceModsData data, Instance instance, List<ModInfo> mods) {
         var mcVersion = instance.getMcVersion();
 
         InstanceModifications modifications = instance.getModifications();
@@ -42,49 +45,67 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
             ml = instance.versionManifest.findTarget("modloader");
         }
 
-        // Nothing to do, we don't know what mod loader or mc version this instance is.
-        if (ml == null || mcVersion == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateCheckingFinished(data));
-            return;
-        }
+        CompletableFuture<ModpackVersionModsManifest> modsManifestFuture = CompletableFuture.supplyAsync(instance::getModsManifest, CreeperLauncher.taskExeggutor);
 
         var modLoader = ml;
-
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (var mod : mods) {
-            CompletableFuture<Void> future = checkMod(data, mod, modLoader, mcVersion);
+            CompletableFuture<Void> future = pollMod(data, modsManifestFuture, mod, modLoader, mcVersion);
             if (future != null) {
                 futures.add(future);
             }
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-                .thenRunAsync(() -> {
-                    Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateCheckingFinished(data));
-                }, CreeperLauncher.taskExeggutor);
+                .thenRunAsync(() -> Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateCheckingFinished(data)), CreeperLauncher.taskExeggutor);
     }
 
-    private static CompletableFuture<Void> checkMod(InstanceModsData data, ModInfo mod, ModpackVersionManifest.Target modLoader, String mcVersion) {
-        var curseData = mod.curse();
-        if (curseData == null) return null;
+    private static CompletableFuture<Void> pollMod(InstanceModsData data, CompletableFuture<ModpackVersionModsManifest> modsManifestFuture, ModInfo mod, @Nullable ModpackVersionManifest.Target modLoader, @Nullable String mcVersion) {
+        // Start with whatever data we have
+        return CompletableFuture.completedFuture(mod.curse())
+                // Try and lookup rich data, updating the UI if we find any
+                .thenApplyAsync(curseData -> lookupCurseData(data, curseData, modsManifestFuture, mod), CreeperLauncher.taskExeggutor)
+                // Then try and check for updates.
+                .thenAccept(curseData -> {
+                    // We have no curse data or no ModLoader or no Game version, update checking is not possible.
+                    if (curseData == null || modLoader == null || mcVersion == null) return;
 
-        return Constants.MOD_VERSION_CACHE.queryMod(curseData.curseProject()).thenAcceptAsync(m -> {
-            if (m == null) return;
+                    ModManifest manifest = Constants.MOD_VERSION_CACHE.queryMod(curseData.curseProject()).join();
+                    if (manifest == null) return;
 
-            var version = m.findLatestCompatibleVersion(modLoader.getName(), mcVersion);
-            if (version == null) return;
+                    var version = manifest.findLatestCompatibleVersion(modLoader.getName(), mcVersion);
+                    if (version == null) return;
 
-            if (version.getId() <= curseData.curseFile()) return;
-            Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateAvailable(
-                    data,
-                    mod,
-                    new CurseMetadata(
-                            m.getId(),
-                            version.getId(),
-                            version.getName(),
-                            curseData.synopsis(),
-                            curseData.icon()
-                    )
-            ));
-        }, CreeperLauncher.taskExeggutor);
+                    if (version.getId() <= curseData.curseFile()) return;
+                    Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateAvailable(
+                            data,
+                            mod,
+                            CurseMetadata.full(
+                                    manifest.getId(),
+                                    version.getId(),
+                                    version.getName(),
+                                    curseData.synopsis(),
+                                    curseData.icon()
+                            )
+                    ));
+                });
+    }
+
+    private static @Nullable CurseMetadata lookupCurseData(InstanceModsData data, @Nullable CurseMetadata meta, CompletableFuture<ModpackVersionModsManifest> modsManifestFuture, ModInfo mod) {
+        if (meta != null && meta.type() == CurseMetadata.Type.FULL) return meta;
+
+        if (meta == null) {
+            if (mod.fileId() > 0) {
+                ModpackVersionModsManifest modsManifest = modsManifestFuture.join();
+                ModpackVersionModsManifest.Mod modManifest = modsManifest != null ? modsManifest.getMod(mod.fileId()) : null;
+                meta = Constants.CURSE_METADATA_CACHE.getCurseMeta(modManifest, mod.sha1());
+            } else {
+                // TODO: We could in theory lookup the sha1, but I don't think we can actually get into this state in normal operation.
+                return null;
+            }
+        } else {
+            meta = Constants.CURSE_METADATA_CACHE.getCurseMeta(meta.curseProject(), meta.curseFile(), mod.sha1());
+        }
+        Settings.webSocketAPI.sendMessage(new InstanceModsData.RichModData(data, mod, meta));
+        return meta;
     }
 }

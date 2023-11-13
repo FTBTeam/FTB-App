@@ -66,7 +66,7 @@ public class CurseMetadataCache {
             String name = mod.getName();
             String synopsis = mod.getSynopsis();
             String icon = mod.getIcon();
-            return new CurseMetadata(projectId, fileId, name, synopsis, icon);
+            return CurseMetadata.full(projectId, fileId, name, synopsis, icon);
         }
 
         FileMetadata metadata = queryMetadata(sha1);
@@ -88,9 +88,9 @@ public class CurseMetadataCache {
             version = mod.findVersion(curseFile);
         }
 
-        if (version == null) return new CurseMetadata(curseProject, curseFile, null, null, null);
+        if (version == null) return CurseMetadata.full(curseProject, curseFile, null, null, null);
 
-        return new CurseMetadata(
+        return CurseMetadata.full(
                 curseProject,
                 curseFile,
                 mod.getName(),
@@ -181,7 +181,7 @@ public class CurseMetadataCache {
     ) {
 
         public CurseMetadata toCurseInfo() {
-            return new CurseMetadata(curseProject, curseFile, name, synopsis, icon);
+            return CurseMetadata.full(curseProject, curseFile, name, synopsis, icon);
         }
     }
 
