@@ -208,6 +208,11 @@ export interface InstanceModsDataReply extends InstanceModsData {
     files: ModInfo[];
 }
 
+export interface RichModData extends InstanceModsData {
+    file: ModInfo;
+    richData: CurseMetadata;
+}
+
 export interface UpdateAvailable extends InstanceModsData {
     file: ModInfo;
     update: CurseMetadata;
@@ -714,6 +719,7 @@ export interface ModInfo {
 }
 
 export interface CurseMetadata {
+    type: Type;
     curseProject: number;
     curseFile: number;
     name: string;
@@ -820,3 +826,5 @@ export interface AccountSkin {
 }
 
 export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";
+
+export type Type = "BASIC" | "FULL";

@@ -1,8 +1,8 @@
 <template>
   <div class="select-box" :class="{disabled}">
     <div class="label" v-if="label && !icon">{{ label }}</div>
-    <div class="selection" :class="{ open }" ref="selection">
-      <div class="main" v-if="!icon" @click.stop="open = !open">
+    <div class="selection" :class="{ open }" ref="selection" :id="id" @click="open = !open">
+      <div class="main" v-if="!icon">
         <div class="item with-empty" v-if="!selected">
           <div class="badge empty">_</div>
           {{ placeholder }}
@@ -23,7 +23,7 @@
         <font-awesome-icon :fixed-width="true" :icon="icon" />
       </div>
 
-      <div class="dropdown" :class="{'open-up': openUp, [direction]: true}" :style="{width: (minWidth === 0 ? undefined : minWidth + 'px')}">
+      <div class="dropdown" @click.stop :class="{'open-up': openUp, [direction]: true}" :style="{width: (minWidth === 0 ? undefined : minWidth + 'px')}">
         <div class="item list-item" :class="{'no-badge': !option.badge}" v-for="(option, index) in options" :key="index" @click="() => select(option)">
           <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
             <font-awesome-icon v-if="option.badge.icon" :icon="option.badge.icon" class="mr-1" />
@@ -81,6 +81,8 @@ export default class Selection2 extends Vue {
   
   open = false;
   
+  id = Math.random().toString(36).substr(2, 9);
+  
   mounted() {
     if (this.options.length) {
       // Check for duplicate keys and warn
@@ -95,8 +97,9 @@ export default class Selection2 extends Vue {
   }
 
   handleDocumentClick(event: any) {
-    // Check if the click was inside the selection box
-    if (this.$el.contains(event.target)) {
+    // Check if the click was inside the selection box and that selection box has the same id as this one
+    const closest = event.target.closest('.selection');
+    if (closest && closest.id === this.id) {
       return;
     }
     

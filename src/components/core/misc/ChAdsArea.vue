@@ -1,5 +1,5 @@
 <template>
-  <div class="ch-ads-area flex flex-col gap-4 items-center">    
+  <div class="ch-ads-area flex flex-col gap-4 items-center" v-show="!isDevEnv">    
     <div class="ad relative" v-for="(ad, index) in ads" :key="`${index}-ch-ad`" :class="{[ad.type]: true}">
       <div class="hover-text" v-if="ad.hover">{{ad.hover}}</div>
       
@@ -51,12 +51,8 @@ export default class ChAdsArea extends Vue {
     return ad.value;
   }
   
-  get isElectron() {
-    return platform.isElectron();
-  }
-  
   get isDevEnv() {
-    return false; // process.env.NODE_ENV !== 'production';
+    return process.env.NODE_ENV !== 'production';
   }
 }
 </script>
