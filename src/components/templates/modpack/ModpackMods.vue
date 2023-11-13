@@ -178,7 +178,17 @@ export default class ModpackMods extends Vue {
   }
   
   onModUpdateEvent(data: BaseData & any) {
-    if (data.type !== "instanceModUpdate" && data.type !== "instanceInstallModReply") {
+    if (data.type !== "instanceModUpdate" && data.type !== "instanceInstallModReply" && data.type !== "instanceModRichData") {
+      return;
+    }
+    
+    if (data.type === "instanceModRichData") {
+      const mod = this.modlist.find(e => e.sha1 === data.file.sha1);
+      if (mod) {
+        // Set mod.curse but update the vue reactive data
+        Vue.set(mod, 'curse', data.richData);
+      }
+      
       return;
     }
     
