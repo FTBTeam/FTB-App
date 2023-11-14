@@ -502,10 +502,17 @@ public class Instance {
         return new Instance(newDir, newJson);
     }
 
-    public synchronized List<ModInfo> getMods() {
+    /**
+     * Get the mods list.
+     *
+     * @param rich If rich data is required up front.
+     * @return The mods.
+     */
+    public synchronized List<ModInfo> getMods(boolean rich) {
         LOGGER.info("Building instance mods list..");
         List<ModInfo> mods = new ArrayList<>();
 
+        ModpackVersionModsManifest modsManifest = rich ? getModsManifest() : null;
         InstanceModifications modifications = getModifications();
 
         Path modsDir = path.resolve("mods");
@@ -517,6 +524,7 @@ public class Instance {
             String sha1 = Objects.toString(file.getSha1OrNull(), null);
 
             ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
+            ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
 
             boolean fileExists = Files.exists(file.toPath(path));
 
@@ -545,7 +553,7 @@ public class Instance {
                     enabled,
                     file.getSize(),
                     sha1,
-                    null
+                    rich ? Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, sha1) : null
             ));
         }
 
@@ -556,6 +564,12 @@ public class Instance {
                 if (!override.getState().added() && !override.getState().updated()) continue;
 
                 Path file = modsDir.resolve(override.getFileName());
+                CurseMetadata ids;
+                if (rich) {
+                    ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile(), override.getSha1());
+                } else {
+                    ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile())
+                }
                 mods.add(new ModInfo(
                         -1,
                         override.getFileName(),
@@ -563,7 +577,7 @@ public class Instance {
                         override.getState().enabled(),
                         tryGetSize(file),
                         override.getSha1(),
-                        CurseMetadata.basic(override.getCurseProject(), override.getCurseFile())
+                        ids
                 ));
             }
         }

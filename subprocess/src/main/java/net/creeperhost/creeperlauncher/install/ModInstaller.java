@@ -87,7 +87,7 @@ public class ModInstaller implements ModCollector {
             tracker.finished();
             throw ex;
         }
-        existingMods.addAll(instance.getMods());
+        existingMods.addAll(instance.getMods(true));
         LOGGER.info("Filtering found dependencies from existing mod list.");
         toInstall.removeIf(pair -> {
             ModManifest manifest = pair.getKey();

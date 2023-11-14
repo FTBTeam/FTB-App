@@ -30,7 +30,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
         var instance = Instances.getInstance(data.uuid);
         if (instance == null) return;
 
-        var mods = instance.getMods();
+        var mods = instance.getMods(false);
         Settings.webSocketAPI.sendMessage(new InstanceModsData.Reply(data, mods));
 
         pollModData(data, instance, mods);
