@@ -568,7 +568,7 @@ public class Instance {
                 if (rich) {
                     ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile(), override.getSha1());
                 } else {
-                    ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile())
+                    ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
                 }
                 mods.add(new ModInfo(
                         -1,
