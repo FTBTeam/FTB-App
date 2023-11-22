@@ -1,4 +1,4 @@
-import {ActionTree, ActionContext, GetterTree, Module, MutationTree} from 'vuex';
+import {ActionContext, ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {ModPack, ModpackVersion, PackProviders, Versions} from '@/modules/modpacks/types';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {RootState} from '@/types';
@@ -6,6 +6,7 @@ import {RootState} from '@/types';
 export type ModpackState = typeof state;
 
 export const packBlacklist = [
+  81,  // Vanilla
   104, // Forge
   105, // Fabric
   116  // NeoForge

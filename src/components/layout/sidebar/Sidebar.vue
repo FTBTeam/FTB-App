@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
-    <sidebar-create />
+    <sidebar-create :disabled="disableNav" />
     
     <div class="nav-items nav-main mt-2">      
       <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
@@ -37,12 +37,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { AuthState } from '@/modules/auth/types';
-import { Action, State } from 'vuex-class';
+import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
+import {AuthState} from '@/modules/auth/types';
+import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
-import { RouterNames } from '@/router';
+import {RouterNames} from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
 
 @Component({

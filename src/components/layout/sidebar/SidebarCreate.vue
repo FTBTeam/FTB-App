@@ -1,7 +1,11 @@
 <template>
   <div class="create-instance-container">
     <popover :text="open ? '' : 'Create an instance'">
-      <div class="action-icon" @click="open = true">
+      <div class="action-icon" :class="{disabled}" @click="() => {
+        if (!disabled) {
+          open = true
+        }
+      }">
         <font-awesome-icon icon="plus" />
       </div>
     </popover>
@@ -14,6 +18,14 @@
           <div class="icon"><font-awesome-icon icon="circle-plus" /></div>
           <p>Create instance</p>
           <small>Build your own vanilla or modded experience</small>
+        </div>
+        <div class="option search" @click="() => {
+          safeNavigate(RouterNames.ROOT_BROWSE_PACKS)
+          open = false;
+        }">
+          <div class="icon"><font-awesome-icon icon="search" /></div>
+          <p>Search for Modpack</p>
+          <small>Search FTB Modpacks or CurseForge</small>
         </div>
         <div class="separator"></div>
 <!--        <div class="option import" @click="() => {-->
@@ -53,16 +65,26 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 import CreateInstance from '@/components/core/modpack/create/CreateInstance.vue';
 import CurseImportInstance from '@/components/core/modpack/create/CurseImportInstance.vue';
 import ImportInstance from '@/components/core/modpack/create/ImportInstance.vue';
 import ShareCodeInstance from '@/components/core/modpack/create/ShareCodeInstance.vue';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
 
 @Component({
+  computed: {
+    RouterNames() {
+      return RouterNames
+    }
+  },
+  methods: {safeNavigate},
   components: {ImportInstance, CurseImportInstance, CreateInstance, ShareCodeInstance}
 })
 export default class SidebarCreate extends Vue {
+  @Prop() disabled!: boolean
+  
   open = false
   
   createOpen = false;
@@ -98,6 +120,11 @@ export default class SidebarCreate extends Vue {
     cursor: pointer;
     
     transition: background-color .25s ease-in-out;
+    
+    &.disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
     
     &:hover {
       background-color: var(--color-success-button);
@@ -153,6 +180,7 @@ export default class SidebarCreate extends Vue {
         transition: background-color .25s ease-in-out;
 
         &.create:hover { background-color: hsl(190deg 73% 58% / 15%); }
+        &.search:hover { background-color: hsl(245deg 73% 58% / 15%); }
         &.import:hover { background-color: hsl(100deg 73% 58% / 15%); }
         &.share:hover { background-color: hsl(290deg 73% 58% / 15%); }
         &.curse:hover { background-color: hsl(var(--curse-color-hsl) / 15%); }
@@ -172,6 +200,7 @@ export default class SidebarCreate extends Vue {
         }
         
         &.create .icon { background-color: hsl(190deg 73% 58% / 35%); }
+        &.search .icon { background-color: hsl(245deg 73% 58% / 35%); }
         &.import .icon { background-color: hsl(100deg 73% 58% / 35%); }
         &.share .icon { background-color: hsl(290deg 73% 58% / 35%); }
         &.curse .icon { background-color: var(--curse-color); }
