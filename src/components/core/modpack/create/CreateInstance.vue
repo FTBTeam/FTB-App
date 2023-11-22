@@ -284,10 +284,6 @@ export default class CreateInstance extends Vue {
         ...sharedData,
       } as any;
       
-      if (!this.userSelectedArtwork && this.userModLoader[1].logo) {
-        request["logo"] = this.userModLoader[1].logo;
-      }
-      
       if (this.userModLoader[0] === "fabric") {
         request["mcVersion"] = this.selectedMcVersion;
       }

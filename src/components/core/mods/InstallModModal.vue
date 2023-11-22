@@ -160,8 +160,9 @@ export default class InstallModModal extends Vue {
   }
   
   get options() {
+    const crossLoaderPlatforms = compatibleCrossLoaderPlatforms(this.mcVersion, this.modLoader);
     return this.mod.versions
-        .filter(e => e.targets.findIndex(a => a.type === 'modloader' && compatibleCrossLoaderPlatforms(this.mcVersion, this.modLoader).includes(a.name)) !== -1)
+        .filter(e => e.targets.findIndex(a => a.type === 'modloader' && crossLoaderPlatforms.includes(a.name)) !== -1)
         .filter(e => e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === this.mcVersion) !== -1)
         .sort((a, b) => b.id - a.id)
         .map((e) => ({
