@@ -110,7 +110,7 @@ export default class ModloaderSelect extends Vue {
       
       foundLoadersForVersion[loader] = loaderData.loaders
         .sort((a, b) => b.id - a.id)
-        .map(e => ({...e, packId: loaderData.id, logo: loaderData.art.find(e => e.type === "square")?.url ?? undefined}));
+        .map(e => ({...e, packId: loaderData.id, logo: loaderData?.art?.find(e => e.type === "square")?.url ?? undefined}));
     }
     
     this.availableLoaders = foundLoadersForVersion;

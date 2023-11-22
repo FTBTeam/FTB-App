@@ -82,7 +82,7 @@ build_overwolf:
             elif [ "$CI_COMMIT_BRANCH" == 'channel/preview' ]; then
                 echo "Uploading OPK to dev channel.."
                 pnpm ow opk upload -c 665 -w true overwolf/signed.opk | xargs pnpm ow opk release -p 100
-            elif [ ! -z "$CI_COMMIT_TAG" ]; then
+            elif [ "$CI_COMMIT_BRANCH" == 'release' ]; then
                 echo "Uploading OPK to release channel.."
                 pnpm ow opk upload -w true overwolf/signed.opk
             fi
