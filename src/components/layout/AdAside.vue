@@ -1,5 +1,5 @@
 <template>
-  <div class="ad-aside" :class="{ 'is-dev': isDev, 'electron': isElectron }">
+  <div class="ad-aside" :class="{ 'electron': isElectron }">
     <!--    <div class="ftb-ad-frame" v-if="!isDevEnv">-->
     <!--      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>-->
     <!--    </div>-->
@@ -33,24 +33,8 @@
       </div>
     </div>
 
-    <div class="ad-container ads-electron electron cursor-pointer" v-else key="adside-ad-type" @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')">
-      <div class="flex flex-col items-center mb-6">
-        <img src="@/assets/ch-logo.svg" class="mb-4" width="30" alt="CreeperHost Logo">
-        <p class="font-sans font-bold">Get your own server at CreeperHost</p>
-      </div>
-      
-      <video
-        class="cursor-pointer"
-        width="300"
-        height="250"
-        autoplay
-        muted
-        loop
-        style="margin: 0 auto"
-        v-if="isElectron && !isDevEnv && advertsEnabled"
-      >
-        <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
-      </video>
+    <div class="ad-container ads-electron electron" v-else key="adside-ad-type">
+      <ch-ads-area />
     </div>
   </div>
 </template>
@@ -59,17 +43,19 @@
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import Component from 'vue-class-component';
-import { State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
-import { AuthState } from '@/modules/auth/types';
-import { Prop } from 'vue-property-decorator';
-import { getLogger } from '@/utils';
+import {State} from 'vuex-class';
+import {SettingsState} from '@/modules/settings/types';
+import {AuthState} from '@/modules/auth/types';
+import {consoleBadButNoLogger, getLogger} from '@/utils';
+import {JavaFetch} from '@/core/javaFetch';
+import ChAdsArea from '@/components/core/misc/ChAdsArea.vue';
 
-@Component
+@Component({
+  components: {ChAdsArea}
+})
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
   @State('auth') public auth!: AuthState;
-  @Prop({ default: false }) public isDev!: boolean;
 
   private logger = getLogger('ad-aside-vue');
 
@@ -146,7 +132,6 @@ export default class AdAside extends Vue {
     this.ads[id].addEventListener('error', (error: any) => {
       emitPlaceholderUpdate(true);
       this.logger.info(`[AD: ${id}] Failed to load ad`);
-      console.log(`[AD: ${id}]`, error)
     });
     this.ads[id].addEventListener('player_loaded', () => {
       this.logger.info(`[AD: ${id}] Player loaded`);
@@ -154,7 +139,9 @@ export default class AdAside extends Vue {
     this.ads[id].addEventListener('display_ad_loaded', () => {
       emitPlaceholderUpdate(false);
       this.logger.info(`[AD: ${id}] Display ad loaded and ready`);
-      fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
+      JavaFetch.modpacksCh("analytics/ads/static")
+        .execute()
+        .catch(e => consoleBadButNoLogger("E", e))
     });
     this.ads[id].addEventListener('play', () => {
       emitPlaceholderUpdate(false);
@@ -164,7 +151,9 @@ export default class AdAside extends Vue {
       this.logger.info(`[AD: ${id}] Video ad finished playing`);
     });
     this.ads[id].addEventListener('impression', () => {
-      fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
+      JavaFetch.modpacksCh("analytics/ads/video")
+        .execute()
+        .catch(e => consoleBadButNoLogger("E", e))
     });
   }
 

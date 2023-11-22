@@ -1,13 +1,12 @@
 'use strict';
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell, Menu } from 'electron';
+import {app, BrowserWindow, dialog, ipcMain, protocol, session, shell} from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import * as log from 'electron-log';
 import childProcess from 'child_process';
-import Client from './ircshim';
-import { FriendListResponse } from './types';
-import install, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import {FriendListResponse} from './types';
+import install, {VUEJS_DEVTOOLS} from 'electron-devtools-installer';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 
 const protocolSpace = 'ftb';
@@ -20,7 +19,23 @@ function getAppHome() {
   }
 }
 
-log.transports.file.resolvePath = (vars, message) => path.join(getAppHome(), 'logs', 'ftb-app-electron.log');
+function getAppSettings(appSettingsPath: string) {
+  if (!fs.existsSync(appSettingsPath)) {
+    return null;
+  }
+  
+  try {
+    return JSON.parse(fs.readFileSync(appSettingsPath, 'utf-8'));
+  } catch (e) {
+    return null;
+  }
+}
+
+const appHome = getAppHome();
+const appSettingsPath = path.join(appHome, 'bin', 'settings.json');
+let appSettings = getAppSettings(appSettingsPath);
+
+log.transports.file.resolvePath = (vars, message) => path.join(appHome, 'logs', 'ftb-app-electron.log');
 
 Object.assign(console, log.functions);
 (app as any).console = log;
@@ -51,30 +66,29 @@ for (let i = 0; i < process.argv.length; i++) {
   }
 }
 
-let mtIRCCLient: Client | undefined;
 declare const __static: string;
 
 let wsPort: number;
 let wsSecret: string;
 if (process.argv.indexOf('--ws') !== -1) {
-  console.log('We have a --ws');
+  log.info('We have a --ws');
   const wsArg = process.argv[process.argv.indexOf('--ws') + 1];
   const wsArgSplit = wsArg.split(':');
   wsPort = Number(wsArgSplit[0]);
   wsSecret = wsArgSplit[1];
 } else {
-  console.log('Setting default port and secret');
+  log.info('Setting default port and secret');
   wsPort = 13377;
   wsSecret = '';
 }
 
 if (process.argv.indexOf('--pid') === -1) {
-  console.log('No backend found, starting our own');
+  log.info('No backend found, starting our own');
   const ourPID = process.pid;
-  console.log('Our PID is', ourPID);
-  console.log('Exec path is', process.execPath);
+  log.info('Our PID is', ourPID);
+  log.info('Exec path is', process.execPath);
   const currentPath = process.execPath.substring(0, process.execPath.lastIndexOf(path.sep));
-  console.log('Current working directory is', currentPath);
+  log.info('Current working directory is', currentPath);
   let binaryFile = 'FTBApp';
   const operatingSystem = os.platform();
   if (operatingSystem === 'win32') {
@@ -82,24 +96,24 @@ if (process.argv.indexOf('--pid') === -1) {
   }
   binaryFile = path.join(currentPath, '..', binaryFile);
   if (fs.existsSync(binaryFile)) {
-    console.log('Starting process of backend', binaryFile);
+    log.info('Starting process of backend', binaryFile);
     const child = childProcess.execFile(binaryFile, ['--pid', ourPID.toString()]);
     child.on('exit', (code, signal) => {
-      console.log('child process exited with ' + `code ${code} and signal ${signal}`);
+      log.info('child process exited with ' + `code ${code} and signal ${signal}`);
     });
     child.on('error', (err) => {
-      console.error('Error starting binary', err);
+      log.error('Error starting binary', err);
     });
     // @ts-ignore
     child.stdout.on('data', (data) => {
-      console.log(`child stdout:\n${data}`);
+      log.info(`child stdout:\n${data}`);
     });
     // @ts-ignore
     child.stderr.on('data', (data) => {
-      console.error(`child stderr:\n${data}`);
+      log.error(`child stderr:\n${data}`);
     });
   } else {
-    console.log('Could not find the binary to launch backend', binaryFile);
+    log.info('Could not find the binary to launch backend', binaryFile);
   }
 }
 
@@ -112,16 +126,6 @@ let authData: any;
 let sessionString: string;
 const seenModpacks: MTModpacks = {};
 const friends: FriendListResponse = { online: [], offline: [], pending: [] };
-
-ipcMain.on('websocketReceived', (event, message) => {
-  if (!mtIRCCLient) {
-    return;
-  }
-  if (message.type === 'ircEvent') {
-    message.type = message.jsEvent;
-    mtIRCCLient.messageReceived(message);
-  }
-});
 
 ipcMain.on('sendMeSecret', (event) => {
   event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
@@ -231,6 +235,39 @@ ipcMain.handle('selectFolder', async (event, data) => {
   }
 });
 
+ipcMain.handle('setSystemWindowStyle', async (event, data) => {
+  const typedData = data as boolean;
+  
+  if (!win) {
+    return;
+  }
+  
+  // Reload the app settings
+  appSettings.useSystemWindowStyle = typedData.toString();
+
+  // Create a tmp window to keep the app alive
+  const tmpWindow = new BrowserWindow({
+    show: false,
+  });
+  
+  // Enable the windows frame
+  win.destroy()
+  await createWindow()
+  
+  // Close the tmp window
+  tmpWindow.close();
+});
+
+ipcMain.handle('openFinder', async (event, data) => {
+  try {
+    await shell.openPath(data);
+    return true;    
+  } catch (e) {
+    log.error(e);
+    return false;
+  }
+});
+
 ipcMain.handle('selectFile', async (event) => {
   if (win === null) {
     return null;
@@ -241,7 +278,7 @@ ipcMain.handle('selectFile', async (event) => {
     filters: [
       {
         name: 'Java',
-        extensions: ['.*'],
+        extensions: ['*'],
       },
     ],
   });
@@ -285,15 +322,25 @@ ipcMain.on('logout', (event, data) => {
   if (friendsWindow) {
     friendsWindow.close();
   }
-  if (mtIRCCLient) {
-    mtIRCCLient.quit();
-    mtIRCCLient = undefined;
-  }
+  
   userData = undefined;
 });
 
+
 ipcMain.on('openLink', (event, data) => {
   shell.openExternal(data);
+});
+
+ipcMain.on('openDevTools', (event, data) => {
+  if (win) {
+    // If dev tools is already open, focus it
+    if (win.webContents.isDevToolsOpened()) {
+      win.webContents.closeDevTools();
+      win.webContents.openDevTools();
+    } else {
+      win.webContents.openDevTools();
+    }
+  }
 });
 
 function createFriendsWindow() {
@@ -351,6 +398,8 @@ function createFriendsWindow() {
 }
 
 async function createWindow() {
+  const useSystemFrame = appSettings?.useSystemWindowStyle === "true" ?? false;
+  
   win = new BrowserWindow({
     title: 'FTB App',
 
@@ -361,8 +410,8 @@ async function createWindow() {
     minHeight: 800,
     width: 1320,
     height: 800,
-    frame: false,
-    titleBarStyle: 'hidden',
+    frame: useSystemFrame,
+    titleBarStyle: useSystemFrame ? 'default' : 'hidden',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -444,7 +493,7 @@ if (!gotTheLock) {
   log.debug('Got the lock');
   app.on('second-instance', (event, commandLine, workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
-    // console.log(`Event: ${event.s}`)
+    // log.info(`Event: ${event.s}`)
     if (win) {
       if (win.isMinimized()) {
         win.restore();
@@ -462,15 +511,6 @@ if (!gotTheLock) {
   });
 
   app.on('ready', async () => {
-    // TODO: come back to this :D
-    // var template = [
-    //   ...Menu.getApplicationMenu()?.items as any,
-    //   {label: 'View Sexy', submenu: [
-    //       {label: 'HTML/Markdown', click: () => console.log("hello")}
-    //     ]}
-    // ];
-    // Menu.setApplicationMenu(Menu.buildFromTemplate(template as any));
-    //
     createWindow();
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {

@@ -10,7 +10,7 @@
               <font-awesome-icon
                 @click="copyToClipboard(webVersion)"
                 class="ml-2 cursor-pointer"
-                :icon="['fas', 'copy']"
+                icon="copy"
                 size="1x"
               />
             </div>
@@ -28,7 +28,7 @@
               <font-awesome-icon
                 @click="copyToClipboard(appVersion)"
                 class="ml-2 cursor-pointer"
-                :icon="['fas', 'copy']"
+                icon="copy"
                 size="1x"
               />
             </div>
@@ -51,13 +51,7 @@
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ftb-button
-        class="py-2 px-4 my-2 w-2/7 mt-4 sm:mt-0 inline-block whitespace-no-wrap"
-        color="info"
-        css-class="text-center text-l"
-        @click="uploadLogData"
-        >Upload App Logs</ftb-button
-      >
+      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="upload">Upload App Logs</ui-button>
     </div>
 
     <div class="section cache mb-8 sm:flex items-center">
@@ -68,45 +62,43 @@
           the cache, it'll make sure you're running the latest version of all available data.
         </p>
       </div>
-      <ftb-button
-        class="py-2 px-4 mt-6 sm:mt-0 my-2 w-2/7 inline-block whitespace-no-wrap"
-        color="info"
-        css-class="text-center text-l"
-        @click="refreshCachePlz"
-        >Refresh Cache</ftb-button
-      >
+      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" icon="sync">Refresh Cache</ui-button>
     </div>
 
-    <ftb-toggle
+    <ui-toggle
       label="Verbose"
+      desc="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
       :value="localSettings.verbose"
-      @change="enableVerbose"
-      onColor="bg-primary"
-      small="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
+      @input="enableVerbose"
+      :align-right="true"
     />
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import { Settings, SettingsState } from '@/modules/settings/types';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
+import {Settings, SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
+import {ns} from '@/core/state/appState';
+import {alertController} from '@/core/controllers/alertController';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
   components: {
-    'ftb-toggle': FTBToggle,
+    UiToggle,
+    UiButton,
   },
 })
 export default class AppInfo extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('showAlert') public showAlert: any;
-  @Action('sendMessage') public sendMessage: any;
-  @Action('refreshCache', { namespace: 'modpacks' }) public refreshCache!: any;
-
+  
+  @Action('clearModpacks', ns("v2/modpacks")) clearModpack!: Function;
+  
   platform = platform;
   localSettings: Settings = {} as Settings;
 
@@ -121,29 +113,20 @@ export default class AppInfo extends Vue {
   }
 
   public async uploadLogData(): Promise<void> {
-    this.sendMessage({
-      payload: { type: 'uploadLogs', uiVersion: this.webVersion },
-      callback: async (data: any) => {
-        if (!data.error) {
-          const url = `https://pste.ch/${data.code}`;
-          platform.get.cb.copy(url);
-          this.showAlert({
-            title: 'Uploaded!',
-            message: 'The URL has been copied to your clipboard',
-            type: 'primary',
-          });
-        }
-      },
-    });
+    const result = await sendMessage("uploadLogs", {
+      uiVersion: this.webVersion
+    })
+
+    if (!result.error) {
+      const url = `https://pste.ch/${result.code}`;
+      platform.get.cb.copy(url);
+      alertController.success('The URL has been copied to your clipboard')
+    }
   }
 
   public refreshCachePlz() {
-    this.refreshCache();
-    this.showAlert({
-      title: 'Cache refreshed!',
-      message: 'Your cache has been flushed and reset',
-      type: 'info',
-    });
+    this.clearModpack();
+    alertController.success('Your cache has been flushed and reset')
   }
 
   public enableVerbose(value: boolean): void {

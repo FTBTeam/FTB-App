@@ -1,8 +1,9 @@
-import { MutationTree } from 'vuex';
-import { SocketState } from './types';
+import {MutationTree} from 'vuex';
+import {SocketState} from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
-import { emitter } from '@/utils/event-bus';
+import {emitter} from '@/utils/event-bus';
+import {consoleBadButNoLogger} from '@/utils';
 
 export const mutations: MutationTree<SocketState> = {
   SOCKET_ONOPEN(state: any, event: any) {
@@ -26,7 +27,7 @@ export const mutations: MutationTree<SocketState> = {
     if (message.type !== 'ping' && message.type !== 'pong') {
       if (process.env.NODE_ENV === 'development') {
         const { requestId, type, ...rest } = message;
-        console.debug(
+        consoleBadButNoLogger("D",
           `[${message.requestId ? ('' + message.requestId).padStart(6, '0') : '......'}][id//${message.type}]`,
           rest,
         );
@@ -45,9 +46,6 @@ export const mutations: MutationTree<SocketState> = {
           message.type !== 'launchInstance.status'
         ) {
           delete state.messages[message.requestId];
-        } else if (message.status === 'success') {
-          delete state.messages[message.requestId];
-          state.downloadedFiles = {};
         }
       }
     }
@@ -70,18 +68,12 @@ export const mutations: MutationTree<SocketState> = {
       if (state.ircEventCallback) {
         state.ircEventCallback(message);
       }
-    } else if (message.type === 'install.filesEvent') {
-      Object.keys(message.files).forEach((f: string) => {
-        const status = message.files[f];
-        Vue.set(state.downloadedFiles, f, status);
-      });
-      // Vue.set(state.downloadedFiles, message.fileName, message.status);
     }
     state.socket.message = message;
     platform.get.websocket.notifyWebhookReceived(message);
   },
   SOCKET_RECONNECT(state: any, count: number) {
-    console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
+    consoleBadButNoLogger("I", `Attempting to reconnect to java-backend, tries: ${count}`);
     state.reconnects = count;
   },
   SOCKET_RECONNECT_ERROR(state: any) {

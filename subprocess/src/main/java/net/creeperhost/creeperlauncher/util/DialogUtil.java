@@ -17,21 +17,21 @@ public class DialogUtil {
         AtomicBoolean result = new AtomicBoolean();
 
         OpenModalData.openModal(title, body, List.of(
-                new OpenModalData.ModalButton(confirmText, "primary", () -> {
+                new OpenModalData.ModalButton(confirmText, "success", () -> {
                     result.set(true);
                     synchronized (result) {
                         Settings.webSocketAPI.sendMessage(new CloseModalData());
                         result.notify();
                     }
                 }),
-                new OpenModalData.ModalButton(denyText, "red-600", () -> {
+                new OpenModalData.ModalButton(denyText, "danger", () -> {
                     result.set(false);
                     synchronized (result) {
                         Settings.webSocketAPI.sendMessage(new CloseModalData());
                         result.notify();
                     }
                 })
-        ), false);
+        ));
 
         try {
             synchronized (result) {
@@ -47,13 +47,13 @@ public class DialogUtil {
         Object lock = new Object();
 
         OpenModalData.openModal(title, body, List.of(
-                new OpenModalData.ModalButton("Ok", "green", () -> {
+                new OpenModalData.ModalButton("Ok", "success", () -> {
                     synchronized (lock) {
                         Settings.webSocketAPI.sendMessage(new CloseModalData());
                         lock.notify();
                     }
                 })
-        ), false);
+        ));
 
         try {
             synchronized (lock) {

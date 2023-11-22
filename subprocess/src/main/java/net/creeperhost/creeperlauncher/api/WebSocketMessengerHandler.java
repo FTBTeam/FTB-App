@@ -56,6 +56,7 @@ public class WebSocketMessengerHandler {
         register("uninstallInstance", UninstallInstanceData.class, new UninstallInstanceHandler());
         register("instanceConfigure", InstanceConfigureData.class, new InstanceConfigureHandler());
         register("instanceModToggle", InstanceModToggleData.class, new InstanceModToggleHandler());
+        register("instanceOverrideModLoader", InstanceOverrideModLoaderData.class, new InstanceOverrideModLoaderHandler());
         register("instanceBrowse", BrowseInstanceData.class, new BrowseInstanceHandler());
         register("getInstanceFolders", GetInstanceFoldersHandler.Request.class, new GetInstanceFoldersHandler());
         register("duplicateInstance", DuplicateInstanceHandler.Request.class, new DuplicateInstanceHandler());
@@ -64,7 +65,7 @@ public class WebSocketMessengerHandler {
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
         register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
         register("storeAuthDetails", StoreAuthDetailsData.class, new StoreAuthDetailsHandler());
-        register("syncInstance", SyncInstanceData.class, new SyncInstanceHandler());
+        register("syncInstance", SyncCloudInstanceData.class, new SyncCloudInstanceHandler());
         register("ircConnect", IRCConnectData.class, new IRCConnectHandler());
         register("ircSendMessage", IRCSendMessageData.class, new IRCSendMessageHandler());
         register("ircQuitRequest", IRCQuitRequestData.class, new IRCQuitRequestHandler());
@@ -74,6 +75,8 @@ public class WebSocketMessengerHandler {
         register("blockFriend", BlockFriendData.class, new BlockFriendHandler());
         register("addFriend", AddFriendData.class, new AddFriendHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
+        register("instanceEnableCloudSaves", InstanceEnableCloudSavesData.class, new InstanceEnableCloudSavesHandler());
+        register("instanceDisableCloudSaves", InstanceDisableCloudSavesData.class, new InstanceDisableCloudSavesHandler());
         register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("ping", PingLauncherData.class);
@@ -86,6 +89,9 @@ public class WebSocketMessengerHandler {
         register("instanceGetBackups", InstanceGetBackupsHandler.Request.class, new InstanceGetBackupsHandler());
         register("instanceRestoreBackup", InstanceRestoreBackupHandler.Request.class, new InstanceRestoreBackupHandler());
         register("instanceDeleteBackup", InstanceDeleteBackupHandler.Request.class, new InstanceDeleteBackupHandler());
+
+        register("pollCloudInstances", PollCloudInstancesData.class, new PollCloudInstancesHandler());
+        register("resolveSyncConflict", InstanceCloudSyncResolveConflictData.class, new InstanceCloudSyncResolveConflictHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());
@@ -103,6 +109,7 @@ public class WebSocketMessengerHandler {
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());
 
         register("webRequest", WebRequestData.class, new WebRequestHandler());
+        register("videoCache", VideoCacheHandler.Data.class, new VideoCacheHandler());
 
         register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
     }

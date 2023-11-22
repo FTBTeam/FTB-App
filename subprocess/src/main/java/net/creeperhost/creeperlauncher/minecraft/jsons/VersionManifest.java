@@ -96,9 +96,9 @@ public class VersionManifest {
     public String minecraftArguments;
     public int minimumLauncherVersion;
     @Nullable
-    public Date time;
+    public String time;
     @Nullable
-    public Date releaseTime;
+    public String releaseTime;
     @Nullable
     public String type;
     @Nullable

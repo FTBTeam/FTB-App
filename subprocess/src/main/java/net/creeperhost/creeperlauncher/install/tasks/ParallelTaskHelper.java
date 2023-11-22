@@ -1,11 +1,13 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -21,8 +23,8 @@ public class ParallelTaskHelper {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static <T extends Task<?>> void executeInParallel(@Nullable CancellationToken token, ExecutorService executor, List<T> tasks, @Nullable TaskProgressAggregator listener) throws Throwable {
-        List<Throwable> failures = new LinkedList<>();
+    public static <T extends Task<?>> void executeInParallel(@Nullable CancellationToken token, ExecutorService executor, List<T> tasks, @Nullable TaskProgressAggregator listener) {
+        List<Throwable> failures = Collections.synchronizedList(new LinkedList<>());
         List<CompletableFuture<?>> futures = new LinkedList<>();
         for (Task<?> task : tasks) {
             CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
@@ -51,12 +53,15 @@ public class ParallelTaskHelper {
         if (failures.isEmpty()) {
             return;
         }
-        throw StreamableIterable.of(failures)
-                .fold((a, b) -> {
-                    a.addSuppressed(b);
-                    return a;
-                })
-                .orElseThrow(notPossible());
+        // Throw the first failure with all others suppressed.
+        SneakyUtils.throwUnchecked(
+                FastStream.of(failures)
+                        .fold((a, b) -> {
+                            a.addSuppressed(b);
+                            return a;
+                        })
+                        .orElseThrow(notPossible())
+        );
     }
 
 }

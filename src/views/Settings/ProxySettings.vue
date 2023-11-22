@@ -62,28 +62,25 @@
     <message type='warning' class='mt-4 mb-8'>We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</message>
 
     <div class='action flex justify-end'>
-      <ftb-button :disabled='proxyType === "none" || isInvalid()' color="primary" @click='save' class="inline-block py-2 px-10">Test & Save</ftb-button>
+      <ui-button :wider="true" :disabled='proxyType === "none" || isInvalid()' type='success' icon='check' @click='() => save()'>Test & Save</ui-button>
     </div>
-    
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
 import { Action, State } from 'vuex-class';
 import { SettingsState } from '@/modules/settings/types';
+import {alertController} from '@/core/controllers/alertController';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
-  components: {
-    'ftb-toggle': FTBToggle,
-  },
+  components: {UiButton}
 })
 export default class MTIntegration extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @State('settings') private settings!: SettingsState;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  @Action('showAlert') public showAlert: any;
   
   proxyType: string = "none";
   proxyHost: string = "";
@@ -120,11 +117,7 @@ export default class MTIntegration extends Vue {
   
   save(remove = false) {
     if (this.isInvalid() && !remove) {
-      this.showAlert({
-        type: 'danger',
-        title: 'Error',
-        message: 'Missing Hostname or Port',
-      });
+      alertController.error("Missing Hostname or Port")
       return;
     }
     
@@ -137,11 +130,7 @@ export default class MTIntegration extends Vue {
       proxyType: remove ? "none" : this.proxyType,
     })
 
-    this.showAlert({
-      type: 'primary',
-      title: 'Saved!',
-      message: 'Proxy Settings updated',
-    });
+    alertController.success("Proxy Settings updated")
   }
 }
 </script>

@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -15,22 +16,22 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
     public void handle(Request data) {
         Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate instance", "-1"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate instance", null));
             return;
         }
 
         try {
             Instance newInstance = instance.duplicate(data.newName);
             if (newInstance == null) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to duplicate instance...", "-1"));
+                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to duplicate instance...", null));
                 return;
             }
 
             Instances.refreshInstances();
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Duplicated instance!", newInstance.getUuid().toString()));
+            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Duplicated instance!", new InstalledInstancesHandler.SugaredInstanceJson(newInstance)));
         } catch (IOException e) {
             WebSocketAPI.LOGGER.error("Unable to duplicate instance because of", e);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to duplicate instance...", "-1"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to duplicate instance...", null));
         }
     }
     
@@ -42,13 +43,15 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
     private static class Reply extends Request {
         public String message;
         public boolean success;
+        public @Nullable InstalledInstancesHandler.SugaredInstanceJson instance;
 
-        public Reply(Request data, boolean success, String message, String uuid) {
+        public Reply(Request data, boolean success, String message, @Nullable InstalledInstancesHandler.SugaredInstanceJson instance) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
-            this.uuid = uuid;
+            this.uuid = instance == null ? "-1" : instance.uuid.toString();
             this.message = message;
             this.success = success;
+            this.instance = instance;
         }
     } 
 }

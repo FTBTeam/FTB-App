@@ -8,7 +8,17 @@ export interface TokenData {
   mc: McData;
   autoopenchat: boolean;
   accounts: [{ identityProvider: string; userId?: string; userName?: string }];
-  activePlan: any;
+  activePlan?: {
+    id: number;
+    orderid: number;
+    pid: number;
+    name: string;
+    paymentMethod: string;
+    paymentMethodActual: string;
+    nextDueDate: string;
+    status: string;
+    customFields: any[]
+  } | null;
 }
 
 export interface HashData {

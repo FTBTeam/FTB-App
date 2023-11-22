@@ -1,31 +1,18 @@
-import { SettingsState } from '@/modules/settings/types';
-import { RootState } from '@/types';
-import { MCProtocol } from '@/modules/servers/types';
-// @ts-ignore
-import mcQuery from 'mcping-js';
-
-export const yeetError = async <T>(promise: () => Promise<T>) => {
-  try {
-    await promise();
-  } catch {}
-};
+import {SettingsState} from '@/modules/settings/types';
+import {RootState} from '@/types';
+import {consoleBadButNoLogger} from '@/utils/helpers';
+// import { MCProtocol } from '@/modules/servers/types';
+// import mcQuery from 'mcping-js';
 
 export function debounce(func: () => void, wait: number): () => void {
-  let timeout: number | undefined;
+  let timeout: NodeJS.Timeout | undefined;
   return function () {
     clearTimeout(timeout);
-    // @ts-ignore
+
     timeout = setTimeout(() => {
-      // @ts-ignore
-      func.apply(this, arguments);
+      func();
     }, wait);
   };
-}
-
-export async function asyncForEach(items: any[], callback: (item: any) => Promise<any>): Promise<any> {
-  for (let i = 0; i < items.length; i++) {
-    await callback(items[i]);
-  }
 }
 
 export function logVerbose(state: RootState | SettingsState, ...message: any[]) {
@@ -33,12 +20,12 @@ export function logVerbose(state: RootState | SettingsState, ...message: any[]) 
   if (state.settings?.settings === undefined) {
     // @ts-ignore
     if (state.settings?.verbose === true || state.settings?.verbose === 'true') {
-      console.log('[DEBUG]', ...message);
+      consoleBadButNoLogger("D", '[DEBUG]', ...message);
     }
   } else {
     // @ts-ignore
     if (state.settings?.settings.verbose === true || state.settings?.settings.verbose === 'true') {
-      console.log('[DEBUG]', ...message);
+      consoleBadButNoLogger("D", '[DEBUG]', ...message);
     }
   }
 }
@@ -47,69 +34,33 @@ export function shortenHash(longHash: string): string {
   return `MT${longHash.substring(0, 28).toUpperCase()}`;
 }
 
-export function shuffle(array: any[]) {
-  let i = array.length;
-  let j;
-  let temp;
-  if (i === 0) {
-    return array;
-  }
-  while (--i) {
-    j = Math.floor(Math.random() * (i + 1));
-    temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-  return array;
-}
-
-export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
-  return new Promise((resolve, reject) => {
-    if (serverInfo.includes(':')) {
-      const address = serverInfo.split(':');
-      const serverIP = address[0];
-      const serverPort = address[1];
-
-      const query = new mcQuery.MinecraftServer(serverIP, serverPort);
-
-      query.ping(5000, (err: any, res: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve(res);
-      });
-    } else {
-      const query = new mcQuery.MinecraftServer(serverInfo);
-      query.ping(5000, 5, (err: any, res: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(res);
-      });
-    }
-  });
-}
-
-export function prettyNumber(num: number): string {
-  return Intl.NumberFormat("en", {notation: "compact"}).format(num);
-}
-
-// Chunk array into smaller arrays
-export function chunkArray<T>(array: T[], size: number): T[][] {
-  const results = [];
-  while (array.length) {
-    results.push(array.splice(0, size));
-  }
-  return results;
-}
-
-export function removeTailingSlash(uri: string): string {
-  if (uri.endsWith('/')) {
-    return uri.slice(0, -1);
-  }
-
-  return uri;
-}
+// TODO: We should just use an api for this. It's simpler. 
+// export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
+//   return new Promise((resolve, reject) => {
+//     if (serverInfo.includes(':')) {
+//       const address = serverInfo.split(':');
+//       const serverIP = address[0];
+//       const serverPort = address[1];
+//
+//       const query = new mcQuery.MinecraftServer(serverIP, serverPort);
+//
+//       query.ping(5000, (err: any, res: any) => {
+//         if (err) {
+//           reject(err);
+//           return;
+//         }
+//
+//         resolve(res);
+//       });
+//     } else {
+//       const query = new mcQuery.MinecraftServer(serverInfo);
+//       query.ping(5000, 5, (err: any, res: any) => {
+//         if (err) {
+//           reject(err);
+//           return;
+//         }
+//         resolve(res);
+//       });
+//     }
+//   });
+// }

@@ -1,29 +1,34 @@
 package net.creeperhost.creeperlauncher.pack;
 
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import net.covers1624.quack.collection.StreamableIterable;
+import com.google.common.hash.Hashing;
+import com.google.gson.JsonParseException;
+import net.covers1624.quack.collection.ColUtils;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
+import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.*;
-import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
-import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
-import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
+import net.creeperhost.creeperlauncher.data.InstanceModifications;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
 import net.creeperhost.creeperlauncher.data.InstanceSupportMeta;
+import net.creeperhost.creeperlauncher.data.mod.CurseMetadata;
+import net.creeperhost.creeperlauncher.data.mod.ModInfo;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
-import net.creeperhost.creeperlauncher.util.*;
-import net.creeperhost.minetogether.lib.cloudsaves.CloudSaveManager;
-import net.creeperhost.minetogether.lib.cloudsaves.CloudSyncType;
+import net.creeperhost.creeperlauncher.util.CurseMetadataCache.FileMetadata;
+import net.creeperhost.creeperlauncher.util.DialogUtil;
+import net.creeperhost.creeperlauncher.util.FileUtils;
+import net.creeperhost.creeperlauncher.util.ImageUtils;
+import net.creeperhost.creeperlauncher.util.MiscUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -44,21 +49,16 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static net.covers1624.quack.util.SneakyUtils.sneak;
-import static net.creeperhost.creeperlauncher.util.MiscUtils.allFutures;
-
-public class Instance implements IPack {
+public class Instance {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     public final Path path;
-    public final InstanceJson props;
+    public InstanceJson props;
+    private @Nullable InstanceModifications modifications;
 
     private final InstanceLauncher launcher = new InstanceLauncher(this);
     @Nullable
@@ -68,20 +68,61 @@ public class Instance implements IPack {
     private int loadingModPort;
     public ModpackVersionManifest versionManifest;
 
+    private boolean pendingCloudInstance;
+
     private long startTime;
 
     // Brand-new instance.
-    public Instance(@Nullable String name, ModpackManifest modpack, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType) {
-        props = new InstanceJson(modpack, versionManifest, isPrivate, packType);
+    public Instance(@Nullable String name, @Nullable String artPath, @Nullable String category, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+        props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType);
         if (name != null) {
             props.name = name;
         }
-        
+
+        props.category = Objects.requireNonNullElse(category, "Default");
+
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         FileUtils.createDirectories(path);
 
         this.versionManifest = versionManifest;
-        
+        this.processArt(modpack, artPath);
+
+        try {
+            saveJson();
+        } catch (IOException ex) {
+            LOGGER.error("Failed to save instance.", ex);
+        }
+    }
+
+    // Loading an existing instance.
+    public Instance(Path path, Path json) throws IOException {
+        this.path = path;
+        props = InstanceJson.load(json);
+        loadVersionManifest();
+    }
+
+    // Pending cloud save instance.
+    public Instance(Path path, InstanceJson props, ModpackVersionManifest versionManifest) {
+        this.path = path;
+        this.props = props;
+        this.versionManifest = versionManifest;
+        pendingCloudInstance = true;
+    }
+
+    private void processArt(ModpackManifest modpack, @Nullable String artPath) {
+        if (artPath != null) {
+            var pathForArt = Path.of(artPath);
+            // TODO: Support webp?
+            if (Files.exists(pathForArt) && (artPath.endsWith(".png") || artPath.endsWith(".jpg") || artPath.endsWith(".jpeg"))) {
+                try (InputStream is = Files.newInputStream(pathForArt)) {
+                    doImportArt(is);
+                    return;
+                } catch (IOException ex) {
+                    LOGGER.error("Failed to import art.", ex);
+                }
+            }
+        }
+
         ModpackManifest.Art art = modpack.getFirstArt("square");
         if (art != null) {
             Path tempFile = null;
@@ -108,18 +149,19 @@ public class Instance implements IPack {
                 }
             }
         }
-
-        try {
-            saveJson();
-        } catch (IOException ex) {
-            LOGGER.error("Failed to save instance.", ex);
-        }
     }
 
-    // Loading an existing instance.
-    public Instance(Path path, Path json) throws IOException {
-        this.path = path;
-        props = InstanceJson.load(json);
+    public void syncFinished() throws IOException {
+        pendingCloudInstance = false;
+        props = InstanceJson.load(getDir().resolve("instance.json"));
+        props.cloudSaves = true;
+        loadVersionManifest();
+    }
+
+    private void loadVersionManifest() throws IOException {
+        // Do nothing for pending cloud saves.
+        if (pendingCloudInstance) return;
+
         if (props.installComplete) {
             Path versionJson = path.resolve("version.json");
             if (Files.exists(versionJson)) {
@@ -127,10 +169,21 @@ public class Instance implements IPack {
             } else {
                 versionManifest = ModpackVersionManifest.makeInvalid();
             }
+            Path modificationsJson = path.resolve("modifications.json");
+            if (Files.exists(modificationsJson)) {
+                // TODO we need to validate the state of mod modifications.
+                //      Dynamically add/remove them as manual modifications are always possible.
+                //      We should do this any time the Mods list is queried. I.e the frontend or installer requests it.
+                modifications = InstanceModifications.load(modificationsJson);
+            }
         }
     }
 
     public void importArt(Path file) throws IOException {
+        if (pendingCloudInstance) {
+            throw new UnsupportedOperationException("Can't import art for pending cloud instances.");
+        }
+
         try (InputStream is = Files.newInputStream(file)) {
             doImportArt(is);
             saveJson();
@@ -149,6 +202,7 @@ public class Instance implements IPack {
     }
 
     public synchronized void pollVersionManifest() {
+        if (pendingCloudInstance) return; // Do nothing for pending cloud save instances.
         if (props.isImport) return; // Can't update manifests for imports.
         try {
             Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(props.id, props.versionId, props._private, props.packType);
@@ -163,13 +217,35 @@ public class Instance implements IPack {
         }
     }
 
+    // TODO, In theory this meta should be getting added to the regular version manifest.
+    //       When that happens we can nuke this.
+    public @Nullable ModpackVersionModsManifest getModsManifest() {
+        ModpackVersionModsManifest manifest = null;
+        Path file = path.resolve(".ftba/version_mods.json");
+        try {
+            manifest = ModpackVersionModsManifest.load(file);
+        } catch (IOException | JsonParseException ex) {
+            LOGGER.warn("Failed to parse version mods manifest.", ex);
+        }
+
+        if (manifest != null) return manifest;
+
+        try {
+            manifest = ModpackVersionModsManifest.query(props.id, props.versionId, props._private, props.packType);
+            ModpackVersionModsManifest.save(file, manifest);
+            return manifest;
+        } catch (IOException | JsonParseException ex) {
+            LOGGER.warn("Failed to query version mods manifest.", ex);
+            return null;
+        }
+    }
+
     /**
      * Force stops the instance.
      * <p>
      * Does not block until the instance has stopped.
      */
     public void forceStop() {
-        if (launcher == null) return;
         launcher.forceStop();
     }
 
@@ -181,11 +257,16 @@ public class Instance implements IPack {
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
     public void play(CancellationToken token, String extraArgs, @Nullable String offlineUsername) throws InstanceLaunchException {
+        if (pendingCloudInstance) {
+            // Technically a UI bug, should display Install/Sync instead of Launch.
+            throw new InstanceLaunchException("Cloud instance needs to be installed before it can be launched.");
+        }
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
         LOGGER.info("Resetting launcher..");
         launcher.reset();
+        // TODO, why do we need to do this? Can anything in here change that affects launching? Only the Java versions perhaps?
         LOGGER.info("Polling version manifest.");
         pollVersionManifest();
 
@@ -216,14 +297,28 @@ public class Instance implements IPack {
             ctx.extraJVMArgs.addAll(jvmArgs);
         });
 
-        if (!Constants.S3_SECRET.isEmpty() && !Constants.S3_KEY.isEmpty() && !Constants.S3_HOST.isEmpty() && !Constants.S3_BUCKET.isEmpty()) {
+        if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured() && props.cloudSaves) {
             launcher.withStartTask(ctx -> {
                 LOGGER.info("Attempting start cloud sync..");
-                cloudSync(false);
+                try {
+                    CloudSaveManager.SyncResult result = CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this)
+                            .get();
+
+                    // Don't error if initial sync is still running, just do nothing.
+                    if (result.type() == CloudSaveManager.SyncResult.ResultType.INITIAL_STILL_RUNNING) {
+                        return;
+                    }
+                    if (result.type() != CloudSaveManager.SyncResult.ResultType.SUCCESS) {
+                        throw new InstanceLaunchException("Pre-start cloud sync failed! " + result.type() + " " + result.reason());
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    throw new InstanceLaunchException("Failed to wait for start cloud sync.", ex);
+                }
             });
             launcher.withExitTask(() -> {
                 LOGGER.info("Attempting close cloud sync..");
-                cloudSync(false);
+                // Don't wait on future here, just let it happen in the background.
+                CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(this);
             });
         }
 
@@ -312,6 +407,10 @@ public class Instance implements IPack {
     }
 
     public boolean uninstall() throws IOException {
+        if (pendingCloudInstance) {
+            // TODO should we wire this up to delete even when not synced?
+            throw new NotImplementedException("Unable to delete non-synced cloud instance.");
+        }
         FileUtils.deleteDirectory(path);
         Instances.refreshInstances();
         return true;
@@ -322,6 +421,8 @@ public class Instance implements IPack {
     }
 
     public boolean browse(String extraPath) throws IOException {
+        if (pendingCloudInstance) return false;
+
         if (Files.notExists(path.resolve(extraPath))) {
             return false;
         }
@@ -334,10 +435,13 @@ public class Instance implements IPack {
     }
 
     public void setModified(boolean state) {
+        if (pendingCloudInstance) throw new UnsupportedOperationException("Can't set un synced cloud instance as modified.");
         props.isModified = state;
     }
 
     public void saveJson() throws IOException {
+        if (pendingCloudInstance) return; // Do nothing for pending cloud save instances.
+
         // When saving the file we:
         // - write to .json__tmp
         // - move .json -> .json.bak
@@ -357,8 +461,32 @@ public class Instance implements IPack {
         Files.move(newJson, realJson);
     }
 
+    public @Nullable InstanceModifications getModifications() {
+        return modifications;
+    }
+
+    public InstanceModifications getOrCreateModifications() {
+        if (modifications == null) {
+            modifications = new InstanceModifications();
+        }
+        return modifications;
+    }
+
+    public void saveModifications() {
+        try {
+            if (modifications != null) {
+                Path modificationsJson = path.resolve("modifications.json");
+                InstanceModifications.save(modificationsJson, modifications);
+            }
+        } catch (IOException ex) {
+            LOGGER.error("Failed to save instance modifications.", ex);
+        }
+    }
+
     @Nullable
     public Instance duplicate(String instanceName) throws IOException {
+        if (pendingCloudInstance) throw new UnsupportedOperationException("Can't duplicate un synced cloud instances.");
+
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
@@ -374,294 +502,209 @@ public class Instance implements IPack {
         return new Instance(newDir, newJson);
     }
 
-    @Override
-    public long getId() {
-        return props.id;
-    }
+    /**
+     * Get the mods list.
+     *
+     * @param rich If rich data is required up front.
+     * @return The mods.
+     */
+    public synchronized List<ModInfo> getMods(boolean rich) {
+        LOGGER.info("Building instance mods list..");
+        List<ModInfo> mods = new ArrayList<>();
 
-    @Override
-    public String getName() {
-        return props.name;
-    }
+        ModpackVersionModsManifest modsManifest = rich ? getModsManifest() : null;
+        InstanceModifications modifications = getModifications();
 
-    @Override
-    public String getVersion() {
-        return props.version;
-    }
+        Path modsDir = path.resolve("mods");
 
-    @Override
-    public Path getDir() {
-        return path;
-    }
+        // Populate all mods from the regular version manifest.
+        for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
+            if (!file.getPath().startsWith("./mods") || !isMod(file.getName())) continue;
 
-    @Override
-    public List<String> getAuthors() {
-        return List.of();
-    }
+            String sha1 = Objects.toString(file.getSha1OrNull(), null);
 
-    @Override
-    public String getDescription() {
-        return "";
-    }
+            ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
+            ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
 
-    @Override
-    public String getMcVersion() {
-        return props.mcVersion;
-    }
+            boolean fileExists = Files.exists(file.toPath(path));
 
-    @Override
-    public String getUrl() {
-        return "";
-    }
+            // File is in its default state.
+            if (override != null && fileExists) {
+                assert override.getState() == ModOverrideState.ENABLED || override.getState() == ModOverrideState.DISABLED;
+                LOGGER.info("Cleaning up redundant override: {}", override);
+                modifications.getOverrides().remove(override);
+                override = null;
+            }
 
-    @Override
-    public String getArtURL() {
-        return "";
-    }
-
-    @Override
-    public int getMinMemory() {
-        return props.minMemory;
-    } // Not needed but oh well, may as well return a value.
-
-    @Override
-    public int getRecMemory() {
-        return props.recMemory;
-    }
-
-    public long getVersionId() {
-        return props.versionId;
-    }
-
-    public UUID getUuid() {
-        return props.uuid;
-    }
-
-    public String getModLoader() {
-        return props.modLoader;
-    }
-
-    public void cloudSync(boolean forceCloud) {
-        if (!props.cloudSaves || !Boolean.parseBoolean(Settings.settings.getOrDefault("cloudSaves", "false"))) return;
-        OpenModalData.openModal("Please wait", "Checking cloud save synchronization <br>", List.of());
-
-        if (launcher != null || CreeperLauncher.isSyncing.get()) return;
-
-        AtomicInteger progress = new AtomicInteger(0);
-
-        CreeperLauncher.isSyncing.set(true);
-
-        HashMap<String, S3ObjectSummary> s3ObjectSummaries = CloudSaveManager.listObjects(props.uuid.toString());
-        AtomicBoolean syncConflict = new AtomicBoolean(false);
-
-        for (S3ObjectSummary s3ObjectSummary : s3ObjectSummaries.values()) {
-            Path file = Settings.getInstancesDir().resolve(s3ObjectSummary.getKey());
-            LOGGER.debug("{} {}", s3ObjectSummary.getKey(), file.toAbsolutePath());
-
-            if (s3ObjectSummary.getKey().contains("/saves/")) {
-                try {
-                    CloudSaveManager.downloadFile(s3ObjectSummary.getKey(), file, true, s3ObjectSummary.getETag());
-                } catch (Exception e) {
-                    syncConflict.set(true);
-                    e.printStackTrace();
-                    break;
+            if (override != null) {
+                // Skip entry, mod has been updated, let the override add the entry.
+                if (override.getState() == ModOverrideState.UPDATED_ENABLED || override.getState() == ModOverrideState.UPDATED_DISABLED) {
+                    continue;
                 }
+            }
+
+            // Enabled if override says it is, OR the file exists AND does not have .disabled
+            boolean enabled = (override != null && override.getState().enabled()) || (fileExists && !file.getName().endsWith(".disabled"));
+
+            mods.add(new ModInfo(
+                    file.getId(),
+                    file.getName(),
+                    file.getVersionOrNull(),
+                    enabled,
+                    file.getSize(),
+                    sha1,
+                    rich ? Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, sha1) : null
+            ));
+        }
+
+        // Mods added manually or via CurseForge integ.
+        if (modifications != null) {
+            for (ModOverride override : modifications.getOverrides()) {
+                // -1 is for non-pack overrides.
+                if (!override.getState().added() && !override.getState().updated()) continue;
+
+                Path file = modsDir.resolve(override.getFileName());
+                CurseMetadata ids;
+                if (rich) {
+                    ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile(), override.getSha1());
+                } else {
+                    ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
+                }
+                mods.add(new ModInfo(
+                        -1,
+                        override.getFileName(),
+                        null,
+                        override.getState().enabled(),
+                        tryGetSize(file),
+                        override.getSha1(),
+                        ids
+                ));
+            }
+        }
+
+        for (Path path : FileUtils.listDir(modsDir)) {
+            if (!Files.isRegularFile(path)) continue;
+
+            String fName = path.getFileName().toString();
+            if (!isMod(fName)) continue;
+
+            String fName2 = StringUtils.stripEnd(fName, ".disabled");
+            // Do we already know about the mod?
+            if (ColUtils.anyMatch(mods, e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
+                continue;
+            }
+            LOGGER.info("Found unknown mod in Mods folder. {}", fName);
+            // We don't know about the mod! We need to add it and create a Modification for it.
+
+            String sha1;
+            long size;
+            try {
+                size = Files.size(path);
+                sha1 = HashUtils.hash(Hashing.sha1(), path).toString();
+            } catch (IOException ex) {
+                LOGGER.error("Error reading file. Unable to process this whilst generating mods list.", ex);
                 continue;
             }
 
-            if (Files.notExists(file)) {
-                syncConflict.set(true);
-                break;
-            }
-        }
-
-        Runnable fromCloud = () ->
-        {
-            OpenModalData.openModal("Please wait", "Synchronizing", List.of());
-
-            int localProgress = 0;
-            int localTotal = s3ObjectSummaries.size();
-
-            for (S3ObjectSummary s3ObjectSummary : s3ObjectSummaries.values()) {
-                localProgress++;
-
-                float percent = Math.round(((float) ((float) localProgress / (float) localTotal) * 100) * 100F) / 100F;
-
-                OpenModalData.openModal("Please wait", "Synchronizing <br>" + percent + "%", List.of());
-
-                if (s3ObjectSummary.getKey().contains(props.uuid.toString())) {
-                    Path file = Settings.getInstancesDir().resolve(s3ObjectSummary.getKey());
-                    if (Files.notExists(file)) {
-                        try {
-                            CloudSaveManager.downloadFile(s3ObjectSummary.getKey(), file, true, null);
-                        } catch (Exception e) { e.printStackTrace(); }
-                    }
-                }
-            }
-            cloudSyncLoop(this.path, false, CloudSyncType.SYNC_MANUAL_SERVER, s3ObjectSummaries);
-            syncConflict.set(false);
-            Settings.webSocketAPI.sendMessage(new CloseModalData());
-        };
-        if (forceCloud) {
-            fromCloud.run();
-        } else if (syncConflict.get()) {
-            //Open UI
-            OpenModalData.openModal("Cloud Sync Conflict", "We have detected a synchronization error between your saves, How would you like to resolve?", List.of
-                    (new OpenModalData.ModalButton("Use Cloud", "green", fromCloud), new OpenModalData.ModalButton("Use Local", "red", () ->
-                    {
-                        OpenModalData.openModal("Please wait", "Synchronizing", List.of());
-
-                        int localProgress = 0;
-                        int localTotal = s3ObjectSummaries.size();
-
-                        for (S3ObjectSummary s3ObjectSummary : s3ObjectSummaries.values()) {
-                            localProgress++;
-
-                            float percent = Math.round(((float) ((float) localProgress / (float) localTotal) * 100) * 100F) / 100F;
-
-                            OpenModalData.openModal("Please wait", "Synchronizing <br>" + percent + "%", List.of());
-
-                            Path file = Settings.getInstancesDir().resolve(s3ObjectSummary.getKey());
-                            if (Files.notExists(file)) {
-                                try {
-                                    CloudSaveManager.deleteFile(s3ObjectSummary.getKey());
-                                } catch (Exception e) { e.printStackTrace(); }
-                            }
-                        }
-                        cloudSyncLoop(this.path, false, CloudSyncType.SYNC_MANUAL_CLIENT, s3ObjectSummaries);
-                        syncConflict.set(false);
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
-                    }), new OpenModalData.ModalButton("Ignore", "orange", () ->
-                    {
-                        props.cloudSaves = false;
-                        try {
-                            this.saveJson();
-                        } catch (IOException e) { e.printStackTrace(); }
-                        syncConflict.set(false);
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
-                    })));
-            while (syncConflict.get()) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) { e.printStackTrace(); }
-            }
-        } else {
-            cloudSyncLoop(this.path, false, CloudSyncType.SYNC_NORMAL, s3ObjectSummaries);
-            Settings.webSocketAPI.sendMessage(new CloseModalData());
-        }
-        CreeperLauncher.isSyncing.set(false);
-    }
-
-    public void cloudSyncLoop(Path path, boolean ignoreInUse, CloudSyncType cloudSyncType, HashMap<String, S3ObjectSummary> existingObjects) {
-        final String host = Constants.S3_HOST;
-        final int port = 8080;
-        final String accessKeyId = Constants.S3_KEY;
-        final String secretAccessKey = Constants.S3_SECRET;
-        final String bucketName = Constants.S3_BUCKET;
-
-        Path baseInstancesPath = Settings.getInstancesDir();
-
-        CloudSaveManager.setup(host, port, accessKeyId, secretAccessKey, bucketName);
-        if (Files.isDirectory(path)) {
-            List<Path> dirContents = FileUtils.listDir(path);
-            if (!dirContents.isEmpty()) {
-                for (Path innerFile : dirContents) {
-                    cloudSyncLoop(innerFile, true, cloudSyncType, existingObjects);
-                }
+            long curseProject = -1;
+            long curseFile = -1;
+            FileMetadata metadata = Constants.CURSE_METADATA_CACHE.queryMetadata(sha1);
+            if (metadata != null) {
+                LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
+                curseProject = metadata.curseProject();
+                curseFile = metadata.curseFile();
             } else {
-                try {
-                    //Add a / to allow upload of empty directories
-                    CloudSaveManager.syncFile(path, StringUtils.appendIfMissing(CloudSaveManager.fileToLocation(path, baseInstancesPath), "/"), true, existingObjects);
-                } catch (Exception e) {
-                    LOGGER.error("Upload failed", e);
-                }
+                LOGGER.info(" Could not identify mod with hash lookup.");
             }
+
+            ModOverrideState state = fName.endsWith(".disabled") ? ModOverrideState.ADDED_DISABLED : ModOverrideState.ADDED_ENABLED;
+
+            mods.add(new ModInfo(
+                    -1,
+                    fName2,
+                    null,
+                    state.enabled(),
+                    size,
+                    sha1,
+                    metadata != null ? metadata.toCurseInfo() : null
+            ));
+
+            getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, curseProject, curseFile));
+            saveModifications();
+        }
+
+        LOGGER.info("List built {} mods.", mods.size());
+        return mods;
+    }
+
+    /**
+     * Toggle a mod with the given fileId OR fileName.
+     * <p>
+     * If the mod is from the modpack distribution, the mod MUST be toggled with the fileId.
+     *
+     * @param fileId   The modpack distribution fileId. -1 if the mod is not from the pack.
+     * @param fileName The mod file name inside the mods folder. Always required.
+     */
+    public void toggleMod(long fileId, String fileName) {
+        InstanceModifications modifications = getOrCreateModifications();
+        ModOverride override = modifications.findOverride(fileName);
+
+        Path pathEnabled;
+        Path pathDisabled;
+        // .disabled in this context can only come from distribution disabled mods.
+        if (fileName.endsWith(".disabled")) {
+            pathEnabled = path.resolve("mods").resolve(StringUtils.removeEnd(fileName, ".disabled"));
+            pathDisabled = path.resolve("mods").resolve(fileName);
         } else {
-            try {
-                LOGGER.debug("Uploading file {}", path.toAbsolutePath());
-                switch (cloudSyncType) {
-                    case SYNC_NORMAL:
-                        try {
-                            ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
-                            futures.add(CompletableFuture.runAsync(() ->
-                            {
-                                try {
-                                    CloudSaveManager.syncFile(path, CloudSaveManager.fileToLocation(path, baseInstancesPath), true, existingObjects);
-                                } catch (Exception e) { e.printStackTrace(); }
-                            }, DownloadTask.threadPool));
-
-                            allFutures(futures).join();
-                        } catch (Throwable t) {
-                            LOGGER.error(t);
-                        }
-                        break;
-                    case SYNC_MANUAL_CLIENT:
-                        CloudSaveManager.syncManual(path, CloudSaveManager.fileToLocation(path, Settings.getInstancesDir()), true, true, existingObjects);
-                        break;
-                    case SYNC_MANUAL_SERVER:
-                        CloudSaveManager.syncManual(path, CloudSaveManager.fileToLocation(path, Settings.getInstancesDir()), true, false, existingObjects);
-                        break;
-                }
-            } catch (Exception e) { e.printStackTrace(); }
+            pathEnabled = path.resolve("mods").resolve(fileName);
+            pathDisabled = path.resolve("mods").resolve(fileName + ".disabled");
         }
-    }
 
-    public List<ModFile> getMods(boolean rich) {
+        // Override is null, this is a distributed mod, generate override for current state.
+        if (override == null) {
+            // Could indicate a bug with listing instance mods. But, likely just broken call.
+            if (fileId == -1) throw new IllegalArgumentException("Did not find an existing ModOverride for the given name. File ID required.");
+            ModpackVersionManifest.ModpackFile file = FastStream.of(versionManifest.getFiles())
+                    .filter(e -> e.getId() == fileId)
+                    .firstOrDefault();
+            if (file == null) throw new IllegalArgumentException("Did not find any files with the given fileId.");
+
+            boolean isEnabled = !fileName.endsWith(".disabled");
+            ModOverrideState state = isEnabled ? ModOverrideState.ENABLED : ModOverrideState.DISABLED;
+            override = new ModOverride(state, fileName, fileId);
+            modifications.getOverrides().add(override);
+        }
+
         try {
-            Map<String, CurseProps> lookup = rich ? getHashLookup() : Map.of();
-            try (Stream<Path> files = Files.walk(path.resolve("mods"))) {
-                return files.filter(Files::isRegularFile)
-                        .filter(file -> ModFile.isPotentialMod(file.toString()))
-                        .map(sneak(path -> {
-                            String sha1 = rich ? FileUtils.getHash(path, "SHA-1") : "";
-                            CurseProps curseProps = lookup.get(sha1);
-                            ModFile modFile = new ModFile(path.getFileName().toString(), "", Files.size(path), sha1).setPath(path);
-                            if (curseProps != null) {
-                                modFile.setCurseProject(curseProps.curseProject());
-                                modFile.setCurseFile(curseProps.curseFile());
-                            }
-
-                            return modFile;
-                        }))
-                        .collect(Collectors.toList());
+            switch (override.getState()) {
+                // TODO, remove override if returning mod back to its original state?
+                case ENABLED, UPDATED_ENABLED, ADDED_ENABLED -> {
+                    Files.move(pathEnabled, pathDisabled);
+                }
+                case DISABLED, UPDATED_DISABLED, ADDED_DISABLED -> {
+                    Files.move(pathDisabled, pathEnabled);
+                }
+                // We should probably provide a 'restore' endpoint for this.
+                case REMOVED -> throw new IllegalArgumentException("Unable to toggle removed mod.");
             }
-        } catch (IOException error) {
-            LOGGER.log(Level.DEBUG, "Error occurred whilst listing mods on disk", error);
+            override.setState(override.getState().toggle());
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to toggle mod.", ex);
         }
-
-        return new ArrayList<>();
+        saveModifications();
     }
 
-    private Map<String, CurseProps> getHashLookup() throws IOException {
-        // This hurts my soul, this system is pending a rewrite tho and this is a 'temporary' fix... Supposedly... Hopefully...
-        Map<Long, ModpackVersionManifest.ModpackFile> idLookup = StreamableIterable.of(versionManifest.getFiles())
-                .filter(e -> e.getSha1OrNull() != null)
-                .toImmutableMap(ModpackVersionManifest.ModpackFile::getId, e -> e);
-        String url = Constants.getCreeperhostModpackPrefix(props._private, props.packType) + props.id + "/" + props.versionId + "/mods";
-        LOGGER.info("Querying: {}", url);
-        String resp = WebUtils.getAPIResponse(url);
-        JsonElement jElement = JsonUtils.parseRaw(resp);
-        if (!jElement.isJsonObject()) return Map.of();
+    public static boolean isMod(String fName) {
+        fName = StringUtils.removeEnd(fName, ".disabled");
+        return fName.endsWith(".jar") || fName.endsWith(".zip");
+    }
 
-        JsonObject obj = jElement.getAsJsonObject();
-        if (JsonUtils.getString(obj, "status", "error").equalsIgnoreCase("error")) return Map.of();
-
-        if (!obj.has("mods")) return Map.of();
-        JsonArray mods = obj.getAsJsonArray("mods");
-
-        Map<String, CurseProps> ret = new HashMap<>();
-        for (JsonElement mod : mods) {
-            if (!mod.isJsonObject()) continue;
-            JsonObject modObject = mod.getAsJsonObject();
-            long fileId = JsonUtils.getInt(modObject, "fileId", -1);
-            long curseProject = JsonUtils.getInt(modObject, "curseProject", -1);
-            long curseFile = JsonUtils.getInt(modObject, "curseFile", -1);
-            ModpackVersionManifest.ModpackFile modpackFile = idLookup.get(fileId);
-            if (modpackFile != null) {
-                ret.put(modpackFile.getSha1().toString(), new CurseProps(curseProject, curseFile));
-            }
+    private static long tryGetSize(Path file) {
+        try {
+            return Files.size(file);
+        } catch (IOException ex) {
+            return -1;
         }
-        return ret;
     }
 
     public InstanceSnapshot withSnapshot(Consumer<Instance> action) {
@@ -671,10 +714,24 @@ public class Instance implements IPack {
         );
     }
 
+    /**
+     * Creates a safe pack name from the instance name, then seeds it with the instance UUID.
+     */
     private static String folderNameFor(InstanceJson props) {
-        // TODO, generate folder name from instance name.
+        // TODO: Eval the issues cased by this.
+//        return props.name
+//            .replaceAll("[^a-zA-Z0-9\\s-]", "") + " (" + props.uuid.toString().split("-")[0] + ")";
         return props.uuid.toString();
     }
 
-    private record CurseProps(long curseProject, long curseFile) { }
+    // @formatter:off
+    public long getId() { return props.id; }
+    public long getVersionId() { return props.versionId; }
+    public String getName() { return props.name; }
+    public Path getDir() { return path; }
+    public String getMcVersion() { return props.mcVersion; }
+    public UUID getUuid() { return props.uuid; }
+    @Deprecated public String getModLoader() { return props.modLoader; }
+    public boolean isPendingCloudInstance() { return pendingCloudInstance; }
+    // @formatter:on
 }

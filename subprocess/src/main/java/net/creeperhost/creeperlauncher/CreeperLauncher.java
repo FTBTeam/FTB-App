@@ -19,6 +19,7 @@ import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
@@ -97,6 +98,7 @@ public class CreeperLauncher {
 
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
+    public static CloudSaveManager CLOUD_SAVE_MANAGER = new CloudSaveManager();
 
     public static ExecutorService INSTANCE_LAUNCHER_POOL = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Instance Launcher %d").setDaemon(true).build());
 
@@ -141,6 +143,7 @@ public class CreeperLauncher {
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
 
         isDevMode = Args.containsKey("dev");
+        Constants.IS_DEV_MODE = isDevMode;
 
         boolean isOverwolf = Args.containsKey("overwolf");
         boolean startProcess = !isDevMode;
@@ -198,7 +201,6 @@ public class CreeperLauncher {
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
         initSettingsAndCache();
-        Instances.refreshInstances();
 
         doUpdate(args);
 
@@ -218,14 +220,18 @@ public class CreeperLauncher {
 
         if (!Files.isWritable(Constants.getDataDir())) {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
-                new OpenModalData.ModalButton("Exit", "green", CreeperLauncher::exit),
-                new OpenModalData.ModalButton("Continue", "", () -> {
+                new OpenModalData.ModalButton("Exit", "success", CreeperLauncher::exit),
+                new OpenModalData.ModalButton("Continue", "danger", () -> {
                     Settings.webSocketAPI.sendMessage(new CloseModalData());
                 }))
             );
         }
 
         updateJavaVersions();
+
+        if (Boolean.getBoolean("Debugger.onStartup")) {
+            openDebugTools();
+        }
 
         //Hang indefinitely until this lock is interrupted.
         try {
@@ -270,14 +276,14 @@ public class CreeperLauncher {
     private static void registerSettingsListeners(String[] args) {
         SettingsChangeUtil.registerChangeHandler("instanceLocation", (key, value) -> {
             OpenModalData.openModal("Confirmation", "Are you sure you wish to move your instances to this location? <br tag='haha line break go brr'> All content in your current instance location will be moved, and if content exists with the same name in the destination it will be replaced.", List.of(
-                new OpenModalData.ModalButton("Yes", "green", () -> {
+                new OpenModalData.ModalButton("Yes", "success", () -> {
                     OpenModalData.openModal("Please wait", "Your instances are now moving", List.of());
                     Path currentInstanceLoc = Path.of(Settings.settings.getOrDefault(key, Constants.INSTANCES_FOLDER_LOC.toAbsolutePath().toString()));
                     List<Path> subFiles = FileUtils.listDir(currentInstanceLoc);
 
                     if (value == null || value.isEmpty()) {
                         OpenModalData.openModal("Failed", "Instance Location can not be blank", List.of(
-                            new OpenModalData.ModalButton("OK", "green", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
+                            new OpenModalData.ModalButton("OK", "success", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                         ));
                         return;
                     }
@@ -319,7 +325,7 @@ public class CreeperLauncher {
                             }
                         }
                         OpenModalData.openModal("Error", "Unable to move instances. Please ensure you have permission to create files and folders in this location.", List.of(
-                            new OpenModalData.ModalButton("Ok", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
+                            new OpenModalData.ModalButton("Ok", "danger", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                         ));
                     } else {
                         Path oldCache = Settings.getInstancesDir().resolve(".localCache");
@@ -330,11 +336,11 @@ public class CreeperLauncher {
                         Instances.refreshInstances();
                         localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
                         OpenModalData.openModal("Success", "Moved instance folder location successfully", List.of(
-                            new OpenModalData.ModalButton("Yay!", "green", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
+                            new OpenModalData.ModalButton("Yay!", "success", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                         ));
                     }
                 }),
-                new OpenModalData.ModalButton("No", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
+                new OpenModalData.ModalButton("No", "danger", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
             ));
             return false;
         });
@@ -344,10 +350,10 @@ public class CreeperLauncher {
             if (Settings.settings.getOrDefault("enablePreview", "").isEmpty() && value.equals("false")) return true;
             if (Constants.BRANCH.equals("release") || Constants.BRANCH.equals("preview")) {
                 OpenModalData.openModal("Update", "Do you wish to change to this branch now?", List.of(
-                    new OpenModalData.ModalButton("Yes", "green", () -> {
+                    new OpenModalData.ModalButton("Yes", "success", () -> {
                         doUpdate(args);
                     }),
-                    new OpenModalData.ModalButton("No", "red", () -> {
+                    new OpenModalData.ModalButton("No", "danger", () -> {
                         Settings.webSocketAPI.sendMessage(new CloseModalData());
                     })
                 ));
@@ -356,7 +362,7 @@ public class CreeperLauncher {
                 if (!warnedDevelop) {
                     warnedDevelop = true;
                     OpenModalData.openModal("Update", "Unable to switch from branch " + Constants.BRANCH + " via this toggle.", List.of(
-                        new OpenModalData.ModalButton("Ok", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
+                        new OpenModalData.ModalButton("Ok", "danger", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
                     ));
                 }
                 return false;
@@ -597,7 +603,7 @@ public class CreeperLauncher {
         System.exit(0);
     }
 
-    public static void openDebugTools() {
+    public static synchronized void openDebugTools() {
         if (!DebugTools.IS_AVAILABLE || DEBUG_TOOLS != DebugTools.NONE) return;
         LOGGER.info("Trying to open Debug Tools.");
         DEBUG_TOOLS = DebugTools.load();

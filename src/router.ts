@@ -2,7 +2,6 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import Home from '@/views/Home.vue';
 import MainApp from './views/MainApp.vue';
-import ChatWindow from './views/ChatWindow.vue';
 
 Vue.use(Router);
 
@@ -10,14 +9,12 @@ export enum RouterNames {
   HOME = 'home',
   ROOT_LIBRARY = 'modpacks',
   ROOT_BROWSE_PACKS = 'browseModpacks',
-  ROOT_NEWS = 'news',
+  ROOT_BLOG = 'blog',
   ROOT_LOCAL_PACK = 'instancepage',
   ROOT_PREVIEW_PACK = 'modpackpage',
-  ROOT_INSTALL_PACK = 'installingpage',
   ROOT_LAUNCH_PACK = 'launchingpage',
-  ROOT_THIRDPARTY = 'thirdparty',
-  ROOT_DISCOVER = 'discover',
-  ROOT_SERVER = 'server',
+  // ROOT_DISCOVER = 'discover',
+  // ROOT_SERVER = 'server',
   SETTINGS_INSTANCE = 'instance-settings',
   SETTINGS_DOWNLOAD = 'download-settings',
   SETTINGS_APP = 'app-settings',
@@ -26,8 +23,7 @@ export enum RouterNames {
   SETTINGS_APP_LICENSE = 'license',
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
-  CHAT = 'chat',
-  DEVELOPER = 'dev',
+  // CHAT = 'chat',
   SUPPORT = 'support-index',
 }
 
@@ -54,13 +50,13 @@ export default new Router({
           component: () => import(/* webpackChunkName: "modpacks" */ './views/BrowseModpacks.vue'),
         },
         {
-          path: '/news',
-          name: RouterNames.ROOT_NEWS,
-          component: () => import(/* webpackChunkName: "news" */ './views/News.vue'),
+          path: '/blog',
+          name: RouterNames.ROOT_BLOG,
+          component: () => import(/* webpackChunkName: "blog" */ './views/Blog.vue'),
         },
         {
           path: '/settings',
-          component: () => import(/* webpackChunkName: "settings" */ './views/Settings.vue'),
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Settings.vue'),
           children: [
             {
               path: '',
@@ -115,35 +111,20 @@ export default new Router({
           component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
         },
         {
-          path: '/installing',
-          name: RouterNames.ROOT_INSTALL_PACK,
-          component: () => import(/* webpackChunkName: "installingpage" */ './views/InstallingPage.vue'),
-        },
-        {
           path: '/launching',
           name: RouterNames.ROOT_LAUNCH_PACK,
           component: () => import(/* webpackChunkName: "launchingpage" */ './views/LaunchingPage.vue'),
         },
-        {
-          path: '/thirdparty',
-          name: RouterNames.ROOT_THIRDPARTY,
-          component: () => import(/* webpackChunkName: "thirdparty" */ './views/ComingSoon.vue'),
-        },
-        {
-          path: '/discover',
-          name: RouterNames.ROOT_DISCOVER,
-          component: () => import(/* webpackChunkName: "discovery" */ './views/DiscoverPage.vue'),
-        },
-        {
-          path: '/server',
-          name: RouterNames.ROOT_SERVER,
-          component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
-        },
-        {
-          path: '/dev',
-          name: RouterNames.DEVELOPER,
-          component: () => import(/* webpackChunkName: "nothingtoseehere" */ './views/DeveloperPage.vue'),
-        },
+        // {
+        //   path: '/discover',
+        //   name: RouterNames.ROOT_DISCOVER,
+        //   component: () => import(/* webpackChunkName: "discovery" */ './views/DiscoverPage.vue'),
+        // },
+        // {
+        //   path: '/server',
+        //   name: RouterNames.ROOT_SERVER,
+        //   component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
+        // },
         {
           path: '/support',
           component: () => import(/* webpackChunkName: "support" */ './views/Support/SupportBase.vue'),
@@ -157,10 +138,37 @@ export default new Router({
         },
       ],
     },
+    // {
+    //   path: '/chat',
+    //   name: RouterNames.CHAT,
+    //   component: ChatWindow,
+    // },
+    // Fallback route for 404
     {
-      path: '/chat',
-      name: RouterNames.CHAT,
-      component: ChatWindow,
-    },
+      path: '*',
+      redirect: '/',
+    }
   ],
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return {
+        ...savedPosition,
+        behavior: 'smooth',
+      }
+    }
+    
+    if (to.hash) {
+      return {
+        selector: to.hash,
+        behavior: 'smooth',
+      }
+    }
+    
+    return {
+      selector: '.app-content',
+      behavior: 'smooth',
+      x: 0,
+      y: 0
+    }
+  }
 });

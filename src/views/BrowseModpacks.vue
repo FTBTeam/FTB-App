@@ -3,17 +3,17 @@
     <div class="search-and-switcher mb-4">
       <div class="switcher shadow">
         <div
-          @click="changeTab('ftbsearch')"
+          @click="changeTab('modpacksch')"
           class="btn-icon bg-navbar ftb"
-          :class="{ active: currentTab === 'ftbsearch' }"
+          :class="{ active: currentTab === 'modpacksch' }"
         >
           <img src="@/assets/images/ftb-logo.svg" alt="" />
         </div>
 
         <div
-          @click="changeTab('cursesearch')"
+          @click="changeTab('curseforge')"
           class="btn-icon bg-navbar eww-orange"
-          :class="{ active: currentTab === 'cursesearch' }"
+          :class="{ active: currentTab === 'curseforge' }"
         >
           <img src="@/assets/curse-logo.svg" alt="" />
         </div>
@@ -21,111 +21,120 @@
       <FTBSearchBar
         v-model="searchValue"
         class="w-full"
-        :placeholder="`Search ${currentTab === 'ftbsearch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
+        :placeholder="`Search ${currentTab === 'modpacksch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
         :min="3"
       />
     </div>
 
-    <message icon="warning" type="danger" class="m-6" v-if="error">
+    <message icon="warning" type="danger" class="my-6" v-if="error">
       {{ error }}
     </message>
 
-    <Loading class="mt-20" v-if="searchStarted || loading || (modpacks.loading && searchValue === '')" />
+    <message icon="info" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
+      No results found for '{{ searchValue }}'
+    </message>
 
-    <div class="result-cards" v-else>
-      <search-result-pack-card
-        v-for="(pack, index) in results"
-        :pack="pack"
-        :key="index"
-        :type="currentTab === 'ftbsearch' ? 0 : 1"
-        @install="displayInstallModpack"
-      />
+    <loader class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
+
+    <div class="result-cards pb-2" v-if="!error && results.length > 0">
+      <pack-preview v-for="(pack, index) in results" :partial-pack="pack" :key="index" :provider="currentTab" />
     </div>
-
-    <FTBModal :visible="showInstallModal" @dismiss-modal="clearInstallModal" size="large-dynamic">
-      <install-modal
-        v-if="!installerLoading && installModalData"
-        :pack-name="installModalData.pack.name"
-        :pack-description="installModalData.pack.synopsis"
-        :versions="installModalData.versions"
-        :do-install="runInstaller"
-      />
-      <div v-else class="py-6">
-        <p class="font-bold text-center mt-2">Loading Modpack Versions</p>
-        <Loading :size="`5`" class="mt-8" />
+    
+    <div class="latest-packs" v-if="searchValue === '' && !loading">
+      <div class="result-cards pb-2">
+        <pack-preview v-for="(packId, index) in visiblePacks" :pack-id="packId" :key="`${currentPage}:${index}`" />
       </div>
-    </FTBModal>
+
+      <div class="flex justify-center pb-8">
+        <ui-pagination v-if="ourPackIds.length" v-model="currentPage" :total="ourPackIds.length" :per-page="10" @input="scrollToTop" />
+      </div>
+      <loader class="mt-20" v-if="loadingInitialPacks" />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import PackCardList from '@/components/organisms/packs/PackCardList.vue';
-import Loading from '@/components/atoms/Loading.vue';
+import {Component, Vue, Watch} from 'vue-property-decorator';
+import {Action, Getter, State} from 'vuex-class';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import { ModPack, ModpackState, Versions } from '@/modules/modpacks/types';
-import { Route } from 'vue-router';
-import { AuthState } from '@/modules/auth/types';
-import { abortableFetch, AbortableRequest, createModpackchUrl, debounce } from '@/utils';
-import { ListPackSearchResults, PackSearchEntries } from '@/typings/modpackch';
-import SearchResultPackCard from '@/components/molecules/SearchResultPackCard.vue';
-import InstallModal from '@/components/organisms/modals/InstallModal.vue';
-import FTBModal from '@/components/atoms/FTBModal.vue';
-import { InstallerState } from '@/modules/app/appStore.types';
-
-const namespace: string = 'modpacks';
+import {PackProviders} from '@/modules/modpacks/types';
+import {Route} from 'vue-router';
+import {AuthState} from '@/modules/auth/types';
+import {debounce} from '@/utils';
+import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
+import {ns} from '@/core/state/appState';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import Loader from '@/components/atoms/Loader.vue';
+import PackPreview from '@/components/core/modpack/PackPreview.vue';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import UiPagination from '@/components/core/ui/UiPagination.vue';
+import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 
 @Component({
   components: {
-    SearchResultPackCard,
-    PackCardList,
-    FTBSearchBar,
-    Loading,
-    InstallModal,
-    FTBModal,
+    UiPagination,
+    PackPreview,
+    Loader,
+    FTBSearchBar
   },
 })
 export default class BrowseModpacks extends Vue {
+  @Getter("latestPacks", ns("v2/modpacks")) latestPacks!: number[];
+  @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>;
+  
   @State('auth') public authState!: AuthState;
-  @State('modpacks') public modpacks: ModpackState | undefined = undefined;
-  @Action('loadAllPacks', { namespace }) public loadAllPacks: any;
-  @Action('getPopularPlays', { namespace }) public getPopularPlays: any;
-  @Action('getPrivatePacks', { namespace }) public getPrivatePacks: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
 
   searchValue: string = '';
-  currentTab: string = 'ftbsearch';
+  currentTab: PackProviders = 'modpacksch';
 
-  currentSearch: AbortableRequest | null = null;
-  searchResults: PackSearchEntries.Packs[] = [];
+  searchResults: SearchResultPack[] = [];
 
   loading = false;
-  searchStarted = false;
-
-  // Installing
-  showInstallModal = false;
-  installModalData: {
-    pack: PackSearchEntries.Packs;
-    versions: Versions[];
-  } | null = null;
-  installerLoading = false;
+  
   error = '';
+  
+  loadingInitialPacks = false;
+  
+  ourPackIds: number[] = [];
+  currentPage = 1;
+  visiblePacks: number[] = [];
 
   async mounted() {
     if (this.$route.params.search) {
       this.searchValue = this.$route.params.search;
       await this.searchPacks();
+      return;
     }
 
-    if (this.modpacks === undefined || this.modpacks.all === undefined || this.modpacks.all.length <= 0) {
-      await this.loadAllPacks();
-      if (this.authState.token !== null) {
-        await this.getPrivatePacks();
-      }
-    }
+    await toggleBeforeAndAfter(async () => {
+      const data = await Promise.all([
+        await modpackApi.modpacks.getModpacks(),
+        await modpackApi.modpacks.getPrivatePacks()
+      ])
+      
+      const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
+      this.ourPackIds = [...allPackIds].sort((a, b) => b - a);
+      
+      // remove the modloader packs
+      this.ourPackIds = this.ourPackIds.filter(e => !packBlacklist.includes(e));
+      
+      this.visiblePacks = this.ourPackIds.slice(0, 10);
+    }, (state) => this.loadingInitialPacks = state);
   }
 
+  scrollToTop() {
+    // Smooth scroll to top
+    document.querySelector('.app-content')?.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
+  
+  @Watch('currentPage')
+  onPageChange() {
+    this.visiblePacks = this.ourPackIds.slice((this.currentPage - 1) * 10, ((this.currentPage - 1) * 10 + 10));
+  }
+  
   @Watch('$route')
   public async onPropertyChanged(value: Route, oldValue: Route) {
     if (value.params.search !== oldValue.params.search) {
@@ -136,24 +145,25 @@ export default class BrowseModpacks extends Vue {
 
   private debounceSearch = debounce(() => {
     this.searchPacks();
-  }, 1000);
+  }, 500);
 
-  private async changeTab(tab: string) {
+  async changeTab(tab: PackProviders) {
     this.currentTab = tab;
     this.searchResults = [];
     await this.searchPacks();
   }
 
   @Watch('searchValue')
-  private onSearch() {
+  onSearch() {
+    this.loading = true;
+    this.searchResults = [];
+    
     if (this.searchValue === '') {
-      this.searchStarted = false;
       this.loading = false;
       return;
     }
 
     this.error = '';
-    this.searchStarted = true;
     this.debounceSearch();
   }
 
@@ -162,111 +172,19 @@ export default class BrowseModpacks extends Vue {
       return;
     }
 
-    if (this.currentSearch) {
-      this.currentSearch.abort();
-    }
-
     this.loading = true;
-
-    this.currentSearch = abortableFetch(
-      createModpackchUrl(
-        `/modpack/search/20/detailed?term=${this.searchValue}&platform=${
-          this.currentTab !== 'ftbsearch' ? 'curseforge' : 'modpacksch'
-        }`,
-      ),
-    );
-
-    // Caught as this request will be aborted if it's slow and a new search term comes in
-    try {
-      const fetch = await this.currentSearch.ready;
-      const data = await fetch.json();
-
-      if (data.status !== 'error') {
-        this.searchResults = (data as ListPackSearchResults).packs;
-      }
-    } catch {
-    } finally {
-      this.loading = false;
-      this.searchStarted = false;
-    }
+    
+    const results = await toggleBeforeAndAfter(() => modpackApi.search.search(this.searchValue, this.currentTab), v => this.loading = v);
+    this.searchResults = results?.packs ?? [];
   }
 
-  async displayInstallModpack(pack: PackSearchEntries.Packs) {
-    this.showInstallModal = true;
-    this.installerLoading = true;
-
-    try {
-      const request = await fetch(
-        createModpackchUrl(`/${this.currentTab === 'ftbsearch' ? 'modpack' : 'curseforge'}/${pack.id}`),
-      );
-      const response: ModPack = await request.json();
-
-      this.installModalData = {
-        pack,
-        versions: response.versions.sort((a, b) => b.id - a.id),
-      };
-    } catch (error) {
-      this.error = 'Failed to find pack version information, please try again in a minute...';
-      this.clearInstallModal();
-      console.error(error);
-      return;
-    } finally {
-      this.installerLoading = false;
-    }
-  }
-
-  runInstaller(name: string, version: number, versionName: string) {
-    this.showInstallModal = false;
-    this.installModpack({
-      pack: {
-        name,
-        id: this.installModalData?.pack.id,
-        version: version,
-        packType: this.currentTab === 'ftbsearch' ? 0 : 1,
-        private: this.installModalData?.pack.private ?? false,
-      },
-      meta: {
-        name: this.installModalData?.pack.name ?? '',
-        version: versionName,
-        art: PackCardList.getLogo(this.installModalData?.pack.art),
-      },
-    });
-  }
-
-  clearInstallModal() {
-    this.showInstallModal = false;
-    this.installModalData = null;
-    this.installerLoading = false;
-  }
-
-  get results(): PackSearchEntries.Packs[] {
-    // Transform the 'in state' packs to a search result for displaying all packs
-    if (this.searchValue === '' && typeof this.modpacks?.all !== 'undefined') {
-      return this.modpacks?.all.map(
-        (e) =>
-          ({
-            platform: 'modpacksch',
-            name: e.name,
-            art: e.art as unknown as PackSearchEntries.Art[],
-            authors: e.authors as PackSearchEntries.Authors[],
-            tags: e.tags as PackSearchEntries.Tags[],
-            synopsis: e.synopsis,
-            id: e.id,
-            updated: e.updated,
-          } as PackSearchEntries.Packs),
-      );
-    }
-
+  get results(): SearchResultPack[] {
     return this.searchResults;
   }
 }
 </script>
 
-<style lang="scss">
-h1 {
-  text-transform: capitalize;
-}
-
+<style scoped lang="scss">
 .result-cards {
   position: relative;
   z-index: 1;
@@ -318,29 +236,5 @@ h1 {
       }
     }
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.05s ease;
-}
-.slide-enter,
-.slide-leave-to {
-  transform: translateX(-10px);
-}
-.display-mode-switcher {
-  display: flex;
-  flex-direction: row-reverse;
-  background-color: #313131;
 }
 </style>

@@ -1,8 +1,10 @@
-import { ActionTree } from 'vuex';
-import { AuthState } from './types';
-import axios from 'axios';
-import { RootState } from '@/types';
+import {ActionTree} from 'vuex';
+import {AuthState} from './types';
+import {RootState} from '@/types';
 import platfrom from '@/utils/interface/electron-overwolf';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {consoleBadButNoLogger} from '@/utils';
 
 export interface FriendRequestResponse {
   status: string;
@@ -27,33 +29,40 @@ export const actions: ActionTree<AuthState, RootState> = {
   async setSessionID({ rootState, commit, dispatch }, payload: any): Promise<void> {
     commit('storeSession', payload);
     commit('startLoggingIn');
+    
     let response;
     try {
-      response = await axios.get(`https://minetogether.io/api/me`, {
+      const req = await fetch(`https://minetogether.io/api/me`, {
         headers: {
           'App-Sess-ID': payload,
           Accept: 'application/json',
-        },
-        withCredentials: false,
-      });
+        }
+      })
+      
+      response = await req.json();
     } catch (err) {
-      console.log(err);
+      consoleBadButNoLogger("E", err);
       commit('loggedIn');
       return;
     }
-    const user = response.data;
+    
+
+    const user = response;
     if (user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
       const mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
       try {
-        const response = await axios.post(
-          `https://api.creeper.host/minetogether/profile`,
-          { target: mc.userName },
-          { headers: { 'Content-Type': 'application/json' } },
-        );
-        const profileResponse = response.data;
-        user.mc = profileResponse.profileData[mc.userName];
+        const profileReq = await fetch(`https://api.creeper.host/minetogether/profile`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+          body: JSON.stringify({ target: mc.userName }),
+        })
+
+        const profileData = await profileReq.json();
+        user.mc = profileData.profileData[mc.userName];
       } catch (err) {
-        console.error(err);
+        consoleBadButNoLogger("E", err)
         commit('loggedIn');
       }
     }
@@ -66,62 +75,61 @@ export const actions: ActionTree<AuthState, RootState> = {
   async getNewSession({ rootState, commit, dispatch }, payload: any): Promise<void> {
     commit('startLoggingIn');
     let response;
+    let request;
     try {
-      response = await axios.get(`https://minetogether.io/api/me`, {
+      request = await fetch("https://minetogether.io/api/me", {
         headers: {
           'App-Auth': payload,
           Accept: 'application/json',
         },
       });
+      
+      response = await request.json();
     } catch (err) {
       commit('loggedIn');
       return;
     }
-    const user = response.data;
+    const user = response;
     if (user.accounts.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
       const mc = user.accounts.find((s: any) => s.identityProvider === 'mcauth');
       try {
-        const response = await axios.post(
-          `https://api.creeper.host/minetogether/profile`,
-          { target: mc.userName },
-          { headers: { 'Content-Type': 'application/json' } },
-        );
-        const profileResponse = response.data;
-        user.mc = profileResponse.profileData[mc.userName];
+        const profileRequest = await fetch(`https://api.creeper.host/minetogether/profile`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+          body: JSON.stringify({ target: mc.userName }),
+        })
+
+        const profile = await profileRequest.json();
+        user.mc = profile.profileData[mc.userName];
       } catch (err) {
-        console.error(err);
+        consoleBadButNoLogger("E", err)
         commit('loggedIn');
       }
     }
 
     platfrom.get.actions.setUser(
-      platfrom.isElectron() ? { user } : { token: response.headers['app-token'], 'app-auth': payload },
+      platfrom.isElectron() ? { user } : { token: request.headers.get('app-token'), 'app-auth': payload },
     );
     dispatch('storeAuthDetails', user);
-    commit('storeSession', response.headers['app-token']);
-    platfrom.get.actions.sendSession(response.headers['app-token']);
+    commit('storeSession', request.headers.get('app-token'));
+    platfrom.get.actions.sendSession(request.headers.get('app-token'));
     commit('loggedIn');
   },
-  storeAuthDetails({ rootState, commit, dispatch }, payload: any): void {
+  async storeAuthDetails({ rootState, commit, dispatch }, payload: any) {
     payload.friendCode = '';
     commit('storeAuthDetails', payload);
     if (payload === null) {
-      dispatch(
-        'sendMessage',
-        {
-          payload: {
-            type: 'storeAuthDetails',
-            mpKey: '',
-            mpSecret: '',
-            s3Bucket: '',
-            s3Host: '',
-            s3Key: '',
-            s3Secret: '',
-            mtHash: '',
-          },
-        },
-        { root: true },
-      );
+      await gobbleError(() => sendMessage("storeAuthDetails", {
+        mpKey: '',
+        mpSecret: '',
+        s3Bucket: '',
+        s3Host: '',
+        s3Key: '',
+        s3Secret: '',
+        mtHash: '',
+      }, 100))
     } else {
       let s3Bucket = '';
       let s3Host = '';
@@ -142,146 +150,136 @@ export const actions: ActionTree<AuthState, RootState> = {
       if (payload.mc !== undefined && payload.mc.hash !== undefined && payload.mc.hash.long !== undefined) {
         mtHash = payload.mc.hash.long;
       }
-      dispatch(
-        'sendMessage',
-        { payload: { type: 'storeAuthDetails', mpKey, mpSecret: '', s3Bucket, s3Host, s3Key, s3Secret, mtHash } },
-        { root: true },
-      );
-      dispatch(
-        'sendMessage',
-        {
-          payload: { type: 'installedInstances', refresh: true },
-          callback(data: any) {
-            dispatch('modpacks/storeInstalledPacks', data, { root: true });
-          },
-        },
-        { root: true },
-      );
-      dispatch('modpacks/getPrivatePacks', {}, { root: true });
-      if (rootState.settings?.settings.enableChat) {
-        dispatch('connectToIRC');
-      }
+      
+      // No response expected 
+      await gobbleError(() => sendMessage("storeAuthDetails", {
+        mpKey, mpSecret: '', s3Bucket, s3Host, s3Key, s3Secret, mtHash
+      }, 100))
+      
+      // Refresh instances
+      dispatch('v2/instances/loadInstances', undefined, {
+        root: true
+      })
+
+      // TODO: (M#01) Add back in some way
+      // dispatch('modpacks/getPrivatePacks', {}, { root: true });
+      // if (rootState.settings?.settings.enableChat) {
+      //   dispatch('connectToIRC');
+      // }
     }
   },
-  getFriends({ rootState, commit, dispatch, state }, payload: any): Promise<void> {
-    commit('setLoading', true);
-    return fetch(`https://api.creeper.host/minetogether/listfriend`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({ hash: state.token?.mc.hash.long }),
-    })
-      .then(response => response.json())
-      .then(async data => {
-        const friends = data.friends;
-        commit('loadFriends', friends);
-        commit('setLoading', false);
-      })
-      .catch(err => {
-        commit('setLoading', false);
-        console.error(err);
-      });
-  },
-  getFriendCode({ rootState, commit, dispatch, state }, payload: any): Promise<void> {
-    commit('setLoading', true);
-    return fetch(`https://api.creeper.host/minetogether/friendcode`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({ hash: state.token?.mc.hash.long }),
-    })
-      .then(response => response.json())
-      .then(async data => {
-        commit('setFriendCode', data.code);
-        commit('setLoading', false);
-      })
-      .catch(err => {
-        commit('setLoading', false);
-      });
-  },
-  submitFriendRequest(
-    { rootState, commit, dispatch, state },
-    payload: { friendCode: string; display: string },
-  ): Promise<FriendRequestResponse> {
-    commit('setLoading', true);
-    return fetch(`https://api.creeper.host/minetogether/requestfriend`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({ hash: state.token?.mc.hash.long, target: payload.friendCode, display: payload.display }),
-    })
-      .then(response => response.json())
-      .then(async data => {
-        commit('setLoading', false);
-        if (data.status === 'success') {
-          return {
-            status: data.status,
-            message: data.message,
-            hash: data.hash,
-          };
-        } else {
-          return {
-            status: data.status,
-            message: data.message,
-          };
-        }
-      })
-      .catch(err => {
-        commit('setLoading', false);
-        return {
-          status: 'error',
-          message: 'unable to send friend request',
-        };
-      });
-  },
-  removeFriend({ rootState, commit, dispatch, state }, payload: string): Promise<boolean | string> {
-    commit('setLoading', true);
-    return fetch(`https://api.creeper.host/minetogether/removeFriend`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({ hash: state.token?.mc.hash.long, target: payload }),
-    })
-      .then(response => response.json())
-      .then(async data => {
-        commit('setLoading', false);
-        if (data.status === 'success') {
-          return true;
-        } else {
-          return data.message;
-        }
-      })
-      .catch(err => {
-        commit('setLoading', false);
-        return 'Error sending request';
-      });
-  },
-  async connectToIRC({ state, commit, dispatch }) {
-    let response;
-    try {
-      response = await axios.get(`https://api.creeper.host/minetogether/chatserver`, {
-        headers: { Accept: 'application/json' },
-      });
-    } catch (err) {
-      return;
-    }
-    const server = response.data;
-    dispatch(
-      'sendMessage',
-      {
-        payload: {
-          type: 'ircConnect',
-          host: server.server.address,
-          port: server.server.port,
-          nick: state.token?.mc.chat.hash.medium,
-          realname: JSON.stringify({ p: '' }),
-        },
-      },
-      { root: true },
-    );
-  },
+  // getFriends({ rootState, commit, dispatch, state }, payload: any): Promise<void> {
+  //   commit('setLoading', true);
+  //   return fetch(`https://api.creeper.host/minetogether/listfriend`, {
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     method: 'POST',
+  //     body: JSON.stringify({ hash: state.token?.mc.hash.long }),
+  //   })
+  //     .then(response => response.json())
+  //     .then(async data => {
+  //       const friends = data.friends;
+  //       commit('loadFriends', friends);
+  //       commit('setLoading', false);
+  //     })
+  //     .catch(err => {
+  //       commit('setLoading', false);
+  //       console.error(err);
+  //     });
+  // },
+  // getFriendCode({ rootState, commit, dispatch, state }, payload: any): Promise<void> {
+  //   commit('setLoading', true);
+  //   return fetch(`https://api.creeper.host/minetogether/friendcode`, {
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     method: 'POST',
+  //     body: JSON.stringify({ hash: state.token?.mc.hash.long }),
+  //   })
+  //     .then(response => response.json())
+  //     .then(async data => {
+  //       commit('setFriendCode', data.code);
+  //       commit('setLoading', false);
+  //     })
+  //     .catch(err => {
+  //       commit('setLoading', false);
+  //     });
+  // },
+  // submitFriendRequest(
+  //   { rootState, commit, dispatch, state },
+  //   payload: { friendCode: string; display: string },
+  // ): Promise<FriendRequestResponse> {
+  //   commit('setLoading', true);
+  //   return fetch(`https://api.creeper.host/minetogether/requestfriend`, {
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     method: 'POST',
+  //     body: JSON.stringify({ hash: state.token?.mc.hash.long, target: payload.friendCode, display: payload.display }),
+  //   })
+  //     .then(response => response.json())
+  //     .then(async data => {
+  //       commit('setLoading', false);
+  //       if (data.status === 'success') {
+  //         return {
+  //           status: data.status,
+  //           message: data.message,
+  //           hash: data.hash,
+  //         };
+  //       } else {
+  //         return {
+  //           status: data.status,
+  //           message: data.message,
+  //         };
+  //       }
+  //     })
+  //     .catch(err => {
+  //       commit('setLoading', false);
+  //       return {
+  //         status: 'error',
+  //         message: 'unable to send friend request',
+  //       };
+  //     });
+  // },
+  // removeFriend({ rootState, commit, dispatch, state }, payload: string): Promise<boolean | string> {
+  //   commit('setLoading', true);
+  //   return fetch(`https://api.creeper.host/minetogether/removeFriend`, {
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     method: 'POST',
+  //     body: JSON.stringify({ hash: state.token?.mc.hash.long, target: payload }),
+  //   })
+  //     .then(response => response.json())
+  //     .then(async data => {
+  //       commit('setLoading', false);
+  //       if (data.status === 'success') {
+  //         return true;
+  //       } else {
+  //         return data.message;
+  //       }
+  //     })
+  //     .catch(err => {
+  //       commit('setLoading', false);
+  //       return 'Error sending request';
+  //     });
+  // },
+  // async connectToIRC({ state, commit, dispatch }) {
+  //   let response;
+  //   try {
+  //     response = await axios.get(`https://api.creeper.host/minetogether/chatserver`, {
+  //       headers: { Accept: 'application/json' },
+  //     });
+  //   } catch (err) {
+  //     return;
+  //   }
+  //   const server = response.data;
+  //   await gobbleError(() => sendMessage("ircConnect", {
+  //     host: server.server.address,
+  //     port: server.server.port,
+  //     nick: state.token?.mc.chat.hash.medium ?? "",
+  //     realname: JSON.stringify({ p: '' }),
+  //   }, 1_000))
+  // },
 };

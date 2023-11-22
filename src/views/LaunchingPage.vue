@@ -1,7 +1,7 @@
 <template>
   <div class="pack-loading" :class="{ 'dark-mode': darkMode }">
     <header class="flex">
-      <img :src="artSquare" class="art rounded-2xl shadow mr-8" width="135" alt="" />
+      <img v-if="artLogo" :src="artLogo" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">
@@ -117,10 +117,11 @@
         <!--        </ftb-button>-->
         <div
           class="color cursor-pointer ml-4"
-          :aria-label="wrapText ? 'Unwrap text' : 'Wrap text'"
+          :aria-label="disableFollow ? 'Enable auto-scroll' : 'Disable auto-scroll'"
           data-balloon-pos="down"
+          @click="disableFollow = !disableFollow"
         >
-          <font-awesome-icon @click="wrapText = !wrapText" :icon="!wrapText ? 'left-right' : 'right-long'" />
+          <font-awesome-icon icon="arrow-down" />
         </div>
         <div
           class="color cursor-pointer ml-4"
@@ -154,22 +155,10 @@
         </ftb-button>
       </div>
     </div>
-
-    <div class="log-contents text-sm select-text" :class="{ 'dark-mode': darkMode, wrap: wrapText }">
-      <div v-for="i in messages.length" :key="i" class="log-item" :class="messageTypes[messages[messages.length - i].t + (!darkMode ? '-LIGHT': '')]">
-        {{ messages[messages.length - i].m }}
-      </div>
-    </div>
-
-    <FTBModal :visible="showMsgBox" @dismiss-modal="showMsgBox = false" :dismissable="true">
-      <message-modal
-        :title="msgBox.title"
-        :content="msgBox.content"
-        :ok-action="msgBox.okAction"
-        :cancel-action="msgBox.cancelAction"
-        :type="msgBox.type"
-      />
-    </FTBModal>
+    
+    <recycle-scroller id="log-container" :items="logMessages" list-class="allow-overflow-x" key-field="i" :item-size="20" class="select-text scroller log-contents" :class="{ 'dark-mode': darkMode }" v-slot="{ item }">
+      <div class="log-item" :class="messageTypes[item.t] + (!darkMode ? '-LIGHT': '')" :key="item.i">{{item.v}}</div>
+    </recycle-scroller>
     
     <modal :open="showOptions" title="Instance options" :sub-title="instanceName" @closed="showOptions = false">
       <div class="action-categories">
@@ -195,24 +184,26 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import {Instance, ModpackState} from '@/modules/modpacks/types';
-import { Action, State } from 'vuex-class';
-import FTBToggle from '@/components/atoms/input/FTBToggle.vue';
-import MessageModal from '@/components/organisms/modals/MessageModal.vue';
-import FTBModal from '@/components/atoms/FTBModal.vue';
-import ServerCard from '@/components/organisms/ServerCard.vue';
-import InstallModal from '@/components/organisms/modals/InstallModal.vue';
+import {Component, Vue} from 'vue-property-decorator';
+import {ModPack} from '@/modules/modpacks/types';
+import {Action, Getter, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
-import { SettingsState } from '@/modules/settings/types';
-import { AuthState } from '@/modules/auth/types';
-import { MsgBox } from '@/components/organisms/packs/PackCard.vue';
-import { emitter } from '@/utils/event-bus';
-import { RouterNames } from '@/router';
-import {wsTimeoutWrapper, wsTimeoutWrapperTyped, yeetError} from '@/utils';
+import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
+import {SettingsState} from '@/modules/settings/types';
+import {AuthState} from '@/modules/auth/types';
+import {emitter} from '@/utils/event-bus';
+import {RouterNames} from '@/router';
 import Router from 'vue-router';
+import {ns} from '@/core/state/appState';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {GetModpack} from '@/core/state/modpacks/modpacksState';
+import {alertController} from '@/core/controllers/alertController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {FixedSizeArray} from '@/utils/std/fixedSizeArray';
+import {consoleBadButNoLogger} from '@/utils';
 
 type InstanceActionCategory = {
   title: string;
@@ -222,14 +213,14 @@ type InstanceActionCategory = {
 type InstanceAction = {
   title: string;
   icon: string;
-  action: (instance: Instance, router: Router) => void;
+  action: (instance: SugaredInstanceJson, router: Router) => void;
   condition?: (context: ConditionContext) => boolean;
   color?: string;
   looksLikeButton?: boolean;
 }
 
 type ConditionContext = {
-  instance: Instance;
+  instance: SugaredInstanceJson;
   instanceFolders: string[];
 }
 
@@ -246,12 +237,11 @@ function openFolderAction(name: string, path: string): InstanceAction {
     title: `${name}`,
     icon: "folder-open",
     condition: ({instanceFolders}) => folderExists(path, instanceFolders),
-    action: (instance: Instance) => {
-      wsTimeoutWrapper({
-        type: 'instanceBrowse',
+    action: (instance) => {
+      sendMessage("instanceBrowse", {
         uuid: instance.uuid,
         folder: path,
-      });
+      })
     }
   } 
 }
@@ -263,11 +253,11 @@ const instanceActions: InstanceActionCategory[] = [
       {
         title: "Instance folder",
         icon: "folder-open",
-        action: (instance: Instance) => {
-          wsTimeoutWrapper({
-            type: 'instanceBrowse',
+        action: (instance) => {
+          sendMessage("instanceBrowse", {
             uuid: instance.uuid,
-          });
+            folder: null
+          })
         }
       },
       openFolderAction("Logs", "logs"),
@@ -289,11 +279,12 @@ const instanceActions: InstanceActionCategory[] = [
         title: "Kill instance",
         icon: "skull-crossbones",
         color: "danger",
-        action: (instance: Instance) => {
-          wsTimeoutWrapper({
-            type: 'instance.kill',
-            uuid: instance.uuid,
-          });
+        action: (instance) => {
+          gobbleError(() => {
+            sendMessage("instance.kill", {
+              uuid: instance.uuid
+            })
+          })
         },
         looksLikeButton: true
       }
@@ -308,22 +299,28 @@ export interface Bar {
   message: string;
 }
 
+const cleanAuthIds = {
+  "START_DANCE": "Starting authentication flow",
+  "AUTH_XBOX": "Contacting Xbox Live",
+  "AUTH_XSTS": "Authenticating with Xbox Services",
+  "LOGIN_XBOX": "Logging in with Xbox Live",
+  "GET_PROFILE": "Getting Minecraft Profile",
+  "CHECK_ENTITLEMENTS": "Verifying ownership"
+}
+
 @Component({
   name: 'LaunchingPage',
   components: {
-    'ftb-toggle': FTBToggle,
-    InstallModal,
-    FTBModal,
-    'message-modal': MessageModal,
-    ServerCard,
     ProgressBar,
   },
 })
 export default class LaunchingPage extends Vue {
-  @State('modpacks') public modpacks!: ModpackState;
-  @Action('fetchModpack', { namespace: 'modpacks' }) public fetchModpack!: any;
-  @Action('sendMessage') public sendMessage!: any;
-  @Action('showAlert') public showAlert: any;
+  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
+  @Getter('getInstance', ns("v2/instances")) getInstance!: (uuid: string) => SugaredInstanceJson | undefined;
+  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
+  
+  @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
+  
   @State('settings') public settingsState!: SettingsState;
   @State('auth') public auth!: AuthState;
 
@@ -337,7 +334,7 @@ export default class LaunchingPage extends Vue {
   hasCrashed = false;
 
   darkMode = true;
-  wrapText = true;
+  disableFollow = false;
 
   currentStep = {
     stepDesc: '',
@@ -351,63 +348,39 @@ export default class LaunchingPage extends Vue {
   finishedLoading = false;
   preInitMessages: Set<string> = new Set();
 
-  messages: { t: string; m: string }[] = [];
+  messages: FixedSizeArray<{ i: number, t: string, v: string }> = new FixedSizeArray<{ i: number, t: string, v: string }>(20_000);
   launchProgress: Bar[] | null | undefined = null;
 
   showOptions = false;
-  
-  private showMsgBox = false;
-  private msgBox: MsgBox = {
-    title: '',
-    content: '',
-    type: '',
-    okAction: Function,
-    cancelAction: Function,
-  };
+  lastIndex = 0;
 
   public cancelLoading() {
-    this.sendMessage({
-      payload: {
-        type: 'instance.kill',
-        uuid: this.instance?.uuid,
-      },
-    });
-  }
-
-  public restoreLoading() {
-    this.sendMessage({
-      payload: {
-        type: 'messageClient',
-        uuid: this.instance?.uuid,
-        message: 'show',
-      },
-    });
+    gobbleError(() => {
+      sendMessage("instance.kill", {
+        uuid: this.instance?.uuid ?? ""
+      })
+    })
   }
 
   public async mounted() {
     if (this.instance == null) {
-      this.showAlert({
-        title: 'Error',
-        message: 'Instance not found',
-        type: 'danger',
-      });
-
-      await this.$router.push(RouterNames.ROOT_LIBRARY);
+      alertController.error('Instance not found')
+      await gobbleError(() => this.$router.push(RouterNames.ROOT_LIBRARY));
       return;
     }
 
     emitter.on('ws.message', this.onLaunchProgressUpdate);
-
-    await this.fetchModpack(this.instance?.id);
-    if (this.modpacks.packsCache[this.instance?.id] !== undefined) {
-      this.loading = false;
-    }
-
+    await this.getModpack({
+      id: this.instance.id,
+      provider: typeIdToProvider(this.instance.packType)
+    });
     await this.launch();
 
-    wsTimeoutWrapperTyped<any, { folders: string[] }>({ type: 'getInstanceFolders', uuid: this.instance.uuid })
+    sendMessage("getInstanceFolders", {
+      uuid: this.instance.uuid
+    })
       .then((e) => (this.instanceFolders = e.folders))
-      .catch(console.log);
+      .catch(e => consoleBadButNoLogger("E", e));
   }
 
   onLaunchProgressUpdate(data: any) {
@@ -422,6 +395,10 @@ export default class LaunchingPage extends Vue {
     if (data.type === 'clientLaunchData') {
       this.handleClientLaunch(data);
     }
+    
+    if (data.type === "authenticationStepUpdate") {
+      this.messages.push({i: ++this.lastIndex, t: "I", v: `[AUTH][INFO] ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.successful ? 'successfully' : 'unsuccessfully') : ''}`})
+    }
 
     if (
       data.type === 'launchInstance.stopped' ||
@@ -429,20 +406,29 @@ export default class LaunchingPage extends Vue {
     ) {
       // Lets assume we've crashed
       if (data.status === 'errored' || data.status === 'error') {
-        this.showAlert({
-          title: 'Instance failure',
-          message:
-            data.status === 'error'
-              ? 'Unable to start pack... please see the instance logs...'
-              : 'The instance has crashed or has been externally closed.',
-          type: 'danger',
-        });
+        alertController.error(data.status === 'error'
+          ? 'Unable to start pack... please see the instance logs...'
+          : 'The instance has crashed or has been externally closed.'
+        )
 
         this.hasCrashed = true;
         return; // block the redirection
       }
 
       this.leavePage();
+    }
+    
+    setInterval(this.scrollToBottom, 100);
+  }
+  
+  scrollToBottom() {
+    if (this.disableFollow) {
+      return;
+    }
+    
+    const elm = document.getElementById('log-container');
+    if (elm) {
+      elm.scrollTop = elm.scrollHeight;
     }
   }
 
@@ -455,18 +441,18 @@ export default class LaunchingPage extends Vue {
   }
 
   async showInstance() {
-    await yeetError(async () => {
-      await wsTimeoutWrapper({
-        type: 'messageClient',
-        uuid: this.instance?.uuid,
+    await gobbleError(async () => {
+      await sendMessage('messageClient', {
+        uuid: this.instance?.uuid ?? "",
         message: 'show',
-      });
+      })
     })
   }
 
   destroyed() {
     // Stop listening to events!
     emitter.off('ws.message', this.onLaunchProgressUpdate);
+    clearInterval(this.scrollToBottom as any)
   }
   
   async lazyLogChecker(messages: string[]) {
@@ -483,15 +469,10 @@ export default class LaunchingPage extends Vue {
   }
 
   handleLogMessages(data: any) {
-    yeetError(() => this.lazyLogChecker(data.messages));
+    gobbleError(() => this.lazyLogChecker(data.messages));
+    
     for (const e of data.messages) {
       this.messages.push(this.formatMessage(e));
-    }
-
-    if (this.messages.length > 500) {
-      // Remove the first 400 items of the array so there isn't a huge jump in the UI
-      this.messages.splice(0, 400);
-      this.messages.push({t: "INFO", m: `[FTB APP][INFO] Cleaning up last 500 messages...`});
     }
   }
 
@@ -504,12 +485,12 @@ export default class LaunchingPage extends Vue {
 
     if (!this.preInitMessages.has(data.stepDesc)) {
       this.preInitMessages.add(data.stepDesc);
-      this.messages.push({t: "INFO", m: '[FTB APP][INFO] ' + data.stepDesc});
+      this.messages.push({i: ++this.lastIndex, t: "I", v: '[FTB APP][INFO] ' + data.stepDesc});
     }
   }
 
   handleClientLaunch(data: any) {
-    console.log("Launch data", data);
+    consoleBadButNoLogger("I", "Launch data", data);
     if (data.messageType === 'message') {
       this.launchProgress = data.message === 'init' ? [] : undefined;
     } else if (data.messageType === 'progress') {
@@ -529,9 +510,9 @@ export default class LaunchingPage extends Vue {
     this.currentStep = this.emptyCurrentStep;
     this.finishedLoading = false;
     this.preInitMessages = new Set();
-    this.messages = [];
+    this.messages = new FixedSizeArray<{ i: number, t: string, v: string }>(20_000);
     this.launchProgress = null;
-
+    
     if (!this.$route.query.offline) {
       const refreshResponse = await validateAuthenticationOrSignIn(this.instance?.uuid);
       if (!refreshResponse.ok && !refreshResponse.networkError) {
@@ -554,44 +535,33 @@ export default class LaunchingPage extends Vue {
     const disableChat = this.settingsState.settings.enableChat;
     this.preLaunch = true;
 
-    this.sendMessage({
-      payload: {
-        type: 'launchInstance',
-        uuid: this.instance?.uuid,
-        extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
-        offline: this.$route.query.offline,
-        offlineUsername: this.$route.query.username ?? 'FTB Player',
-      },
-      callback: (data: any) => {
-        // TODO: Replace with something much better!
-        if (data.status === 'error') {
-          this.preLaunch = false;
-          // An instance is already running
-          this.msgBox.type = 'okOnly';
-          this.msgBox.title = 'An error occurred whilst launching';
-          this.msgBox.okAction = () => (this.showMsgBox = false);
-          this.msgBox.content = data.message;
-          this.showMsgBox = true;
-        } else if (data.status === 'success') {
-          this.preLaunch = false;
-        }
-      },
-    });
+    const result = await sendMessage("launchInstance", {
+      uuid: this.instance?.uuid ?? "",
+      extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
+      offline: this.$route.query.offline === "true",
+      offlineUsername: this.$route.query.username as string ?? 'FTB Player',
+      cancelLaunch: null
+    })
+    
+    if (result.status === 'error') {
+      this.$router.back();
+      alertController.warning(result.message);
+    } else if (result.status === 'success') {
+      this.preLaunch = false;
+    }
   }
 
   openFolder() {
-    this.sendMessage({
-      payload: { type: 'instanceBrowse', uuid: this.instance?.uuid },
-      callback: (data: any) => {},
-    });
+    gobbleError(() => {
+      sendMessage("instanceBrowse", {
+        uuid: this.instance?.uuid ?? "",
+        folder: null
+      })
+    })
   }
 
   get instance() {
-    if (this.modpacks === null) {
-      return null;
-    }
-
-    return this.modpacks.installedPacks.filter((pack) => pack.uuid === this.$route.query.uuid)[0];
+    return this.getInstance(this.$route.query.uuid as string) ?? null;
   }
 
   get bars() {
@@ -611,53 +581,61 @@ export default class LaunchingPage extends Vue {
   }
 
   get currentModpack() {
-    if (this.instance == null) {
-      return null;
-    }
-    const id: number = this.instance.id;
-    if (this.modpacks.packsCache[id] === undefined) {
-      return null;
-    }
-    return this.modpacks.packsCache[id];
+    return this.instance;
+    // if (this.instance == null) {
+    //   return null;
+    // }
+    // const id: number = this.instance.id;
+    // if (this.modpacks.packsCache[id] === undefined) {
+    //   return null;
+    // }
+    // return this.modpacks.packsCache[id];
   }
 
   messageTypes = {
-    "WARN": "text-orange-200",
-    "INFO": "text-blue-200",
-    "ERROR": "text-red-200",
-    "WARN-LIGHT": "text-orange-700",
-    "INFO-LIGHT": "text-blue-700",
-    "ERROR-LIGHT": "text-red-700",
+    "W": "text-orange-200",
+    "I": "text-blue-200",
+    "E": "text-red-200",
+    "W-LIGHT": "text-orange-700",
+    "I-LIGHT": "text-blue-700",
+    "E-LIGHT": "text-red-700",
   };
   
-  lastType = "INFO";
-  formatMessage(message: string) {
-    let type = this.lastType ?? "INFO";
+  typeMap = new Map([
+    ["WARN", "W"],
+    ["INFO", "I"],
+    ["ERROR", "E"]
+  ])
+  
+  lastType = "I";
+  formatMessage(message: string): { i: number, t: string, v: string } {
+    let type = this.lastType ?? "I";
     const result = /^\[[^\/]+\/([^\]]+)]/.exec(message);
     if (result !== null && result[1]) {
-      type = result[1];
+      type = this.typeMap.get(result[1]) ?? "I";
       this.lastType = type;
     }
     
-    return {
-      t: type,
-      m: message
-    };
+    return {i: ++this.lastIndex, t: type, v: message};
   }
 
   runAction(action: InstanceAction) {
-    action.action(this.instance!, this.$router);
+    if (!this.instance) {
+      return;
+    }
+    
+    action.action(this.instance, this.$router);
     this.showOptions = false;
   }
   
-  get artSquare() {
-    if (!this.currentModpack?.art) {
-      return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
-    }
-
-    const arts = this.currentModpack.art.filter((art) => art.type === 'square');
-    return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
-  }
+  // get artSquare() {
+  //   if (!this.currentModpack?.art) {
+  //     return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+  //   }
+  //
+  //   const arts = this.currentModpack.art.filter((art) => art.type === 'square');
+  //   return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
+  // }
     
   get launchStatus() {
     if (this.hasCrashed) {
@@ -670,10 +648,23 @@ export default class LaunchingPage extends Vue {
 
     return 'Running %s';
   }
+  
+  get artLogo() {
+    if (!this.instance) {
+      return null;
+    }
+    
+    return resolveArtwork(this.instance, "square", this.getApiPack(this.instance!.id) ?? null)
+  }
+  
+  get logMessages() {
+    return this.messages.getItems();
+  }
 }
 </script>
 
 <style lang="scss" scoped>
+
 .pack-loading {
   display: flex;
   flex-direction: column;
@@ -749,11 +740,12 @@ export default class LaunchingPage extends Vue {
   .log-contents {
     flex: 1;
     display: flex;
-    flex-direction: column-reverse;
-    padding: 1rem 1rem 1rem 0;
+    //flex-direction: column-reverse;
+    padding: 1rem 1rem 0 0;
     overflow: auto;
     font-family: 'Consolas', 'Courier New', Courier, monospace;
     margin: 0 0.1rem 0.5rem 1rem;
+    font-size: 12px;
 
     &::-webkit-scrollbar-track {
       background: transparent;

@@ -1,10 +1,10 @@
 import router from '@/router';
 import store from '@/modules/store';
-import {emitter, getLogger, logVerbose} from '@/utils';
+import {consoleBadButNoLogger, emitter, getLogger, logVerbose} from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
-import {handleAction} from "@/core/protocol/protocolActions";
+import {handleAction} from '@/core/protocol/protocolActions';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 
 declare global {
@@ -35,6 +35,7 @@ const Overwolf: ElectronOverwolfInterface = {
     webVersion: versionData.webVersion ?? 'Missing Version File',
     dateCompiled: versionData.timestampBuilt ?? 'Missing Version File',
     javaLicenses: versionData.javaLicense ?? {},
+    branch: versionData.branch ?? 'Release'
   },
 
   // Tools
@@ -57,6 +58,10 @@ const Overwolf: ElectronOverwolfInterface = {
       randomUUID(): string {
         return overwolf.windows.getMainWindow().randomUUID() as string;
       }
+    },
+
+    openDevTools() {
+      // No way to do this on overwolf atm
     }
   },
 
@@ -109,12 +114,11 @@ const Overwolf: ElectronOverwolfInterface = {
 
     uploadClientLogs() {
       overwolf.utils.uploadClientLogs((result: any) => {
-        console.log(result);
       });
     },
 
     yeetLauncher(windowId, cb) {
-      // TODO: if exitOverwolf is enabled, ensure Overwolf exists
+      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
       //@ts-ignore
       if (window.isChat === undefined || window.isChat === false) {
@@ -149,7 +153,7 @@ const Overwolf: ElectronOverwolfInterface = {
   // Frame / Chrome / Window / What ever you want to call it
   frame: {
     close(windowId: any, onClose: () => void) {
-      // TODO: if exitOverwolf is enabled, ensure Overwolf exists
+      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
 
       // @ts-ignore we don't know what the window is.
@@ -207,6 +211,7 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+    setSystemWindowStyle(enabled) {}
   },
 
   // IO
@@ -226,6 +231,18 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
+    
+    openFinder(path: string): Promise<boolean> {
+      return new Promise((resolve) => {
+        overwolf.utils.openWindowsExplorer(path, (result: any) => {
+          resolve(result.status === 'success');
+        });
+      });
+    },
+    
+    getLocalAppData() {
+      return overwolf.io.paths.localAppData;
+    }
   },
 
   // Websockets
@@ -249,18 +266,17 @@ const Overwolf: ElectronOverwolfInterface = {
 
         // Work out the smallest monitor and use that as the max height we can work within
         if (!result.displays) {
-          console.log("No displays found")
+          consoleBadButNoLogger("D", "No displays found")
           return;
         }
 
         let maxHeight = Infinity;
         result.displays.forEach((display: any) => {
           const windowHeight = Math.floor(display.height / scale);
-          console.log("Window height: ", windowHeight)
           maxHeight = Math.min(maxHeight, windowHeight);
         });
-        
-        console.log("Max height: ", maxHeight)
+
+        consoleBadButNoLogger("D", "Max height: ", maxHeight)
         
         resolve(maxHeight)
       });
@@ -269,7 +285,7 @@ const Overwolf: ElectronOverwolfInterface = {
       const indexWindow = manifestData.data.windows.index;
 
       if (height < 880) {
-        overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, console.log);
+        overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, (e: any) => consoleBadButNoLogger("D", e));
         if (!(window as any).ftbFlags) {
           (window as any).ftbFlags = {};
         }
@@ -335,9 +351,9 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
       ws.addEventListener('open', (event) => {
-        console.log('Connected to socket!');
+        consoleBadButNoLogger("I", 'Connected to socket!', mainWindow.getWebsocketData());
         if (mainWindow.getWebsocketData().dev || mainWindow.getWebsocketData().secret !== undefined) {
-          console.log('Socket opened correctly and ready!');
+          consoleBadButNoLogger("I", 'Socket opened correctly and ready!');
           setTimeout(() => {
             store.commit('SOCKET_ONOPEN');
             onConnect();
@@ -346,16 +362,16 @@ const Overwolf: ElectronOverwolfInterface = {
         reconnectCount = 0;
       });
       ws.addEventListener('error', (err) => {
-        console.log('Error!', err);
+        consoleBadButNoLogger("E", 'Error!', err);
         store.commit('SOCKET_ONERROR', err);
       });
       ws.addEventListener('close', (event) => {
         if (event.target !== ws) {
           return;
         }
-        console.log('Disconnected!', event, event.code, event.reason);
+        consoleBadButNoLogger("I", 'Disconnected!', event, event.code, event.reason);
         if (event.reason !== 'newport' || (port === 13377 && mainWindow.getWebsocketData().secret !== undefined)) {
-          console.log('Retrying connection');
+          consoleBadButNoLogger("I",'Retrying connection');
           setTimeout(() => setupWS(port), 1000);
           reconnectCount++;
           setTimeout(() => store.commit('SOCKET_RECONNECT', reconnectCount), 200);
@@ -419,7 +435,7 @@ const Overwolf: ElectronOverwolfInterface = {
     handleWSInfo(initialData.port, true, initialData.secret, initialData.dev);
 
     function handleWSInfo(port: Number, isFirstConnect: Boolean = false, secret?: String, dev?: Boolean) {
-      console.log('Handling WS INFO', port, secret, dev);
+      consoleBadButNoLogger("I", 'Handling WS INFO', port, secret, dev);
       setupWS(port);
       if (secret && !dev) {
         store.commit('STORE_WS', initialData);
@@ -459,10 +475,7 @@ const Overwolf: ElectronOverwolfInterface = {
           logger.warn("Unable to control ad as it's not set");
           return;
         }
-
-        console.log("Active ads: ", windowAd)
-        console.log(windowAd)
-
+        
         if (event.window_id === ourWindowID) {
           if (
             event.window_previous_state_ex === 'minimized' &&

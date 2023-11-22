@@ -1,5 +1,9 @@
 import dayjs from 'dayjs';
+import {consoleBadButNoLogger} from '@/utils/helpers';
 
+/**
+ * @deprecated (M#01) poor implementation move to library
+ */
 export class Logger {
   private name: string;
 
@@ -18,13 +22,11 @@ export class Logger {
   warn(...data: any[]) {
     this.log('warn', data);
   }
-
-  // TODO: support errors
+  
   error(...data: any[]) {
     this.log('error', data);
   }
-
-  // TODO: support errors
+  
   fatal(...data: any[]) {
     this.log('fatal', data);
   }
@@ -37,9 +39,9 @@ export class Logger {
 
     const messageData = `[${dayjs().format('HH:mm:ss')}] [${this.name.toUpperCase()}/${type.toUpperCase()}] ${message}`;
     if (!data.length) {
-      console.log(messageData);
+      consoleBadButNoLogger("L", messageData);
     } else {
-      console.log(messageData, data);
+      consoleBadButNoLogger("L", messageData, data);
     }
   }
 }

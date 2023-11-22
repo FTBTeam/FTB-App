@@ -1,6 +1,4 @@
-/* tslint:disable */
-/* eslint-disable */
-// Generated using typescript-generator version 3.2.1263 on 2023-09-01 17:07:38.
+// @ts-nocheck
 
 export interface BaseData {
     type: string;
@@ -85,8 +83,12 @@ export interface CheckShareCodeDataReply extends CheckShareCodeData {
 }
 
 export interface CloudSavesReloadedData extends BaseData {
-    newInstances: InstanceJson[];
+    changedInstances: InstanceJson[];
     removedInstances: string[];
+}
+
+export interface CloudSavesStatsData extends BaseData {
+    bucketSize: number;
 }
 
 export interface InstallInstanceData extends BaseData {
@@ -95,27 +97,23 @@ export interface InstallInstanceData extends BaseData {
     version: number;
     _private: boolean;
     packType: number;
+    mcVersion: string;
     shareCode: string;
     importFrom: string;
     name: string;
-}
-
-export interface FilesEvent extends BaseData {
-    files: { [index: string]: string };
-}
-
-export interface InstallInstanceDataProgress extends BaseData {
-    overallPercentage: number;
-    speed: number;
-    currentBytes: number;
-    overallBytes: number;
-    currentStage: InstallStage;
+    artPath: string;
+    category: string;
+    ourOwn: boolean;
+    ram: number;
+    fullscreen: boolean;
+    cloudSaves: boolean;
+    screenWidth: number;
+    screenHeight: number;
 }
 
 export interface InstallInstanceDataReply extends BaseData {
     status: string;
     message: string;
-    uuid: string;
     instanceData: InstanceJson;
 }
 
@@ -124,8 +122,9 @@ export interface InstalledInstancesData extends BaseData {
 }
 
 export interface InstalledInstancesDataReply extends BaseData {
-    instances: InstanceJson[];
+    instances: SugaredInstanceJson[];
     cloudInstances: any[];
+    availableCategories: string[];
 }
 
 export interface InstanceCloudSyncConflictData extends BaseData {
@@ -134,15 +133,43 @@ export interface InstanceCloudSyncConflictData extends BaseData {
     message: string;
 }
 
+export interface InstanceCloudSyncResolveConflictData extends BaseData {
+    uuid: string;
+    resolution: SyncDirection;
+}
+
+export interface InstanceCloudSyncResolveConflictDataReply extends BaseData {
+    status: string;
+    message: string;
+}
+
 export interface InstanceConfigureData extends BaseData {
     uuid: string;
-    instanceInfo: { [index: string]: string };
+    instanceJson: string;
 }
 
 export interface InstanceConfigureDataReply extends BaseData {
     errorMessage: string;
-    uuid: string;
     status: string;
+    instanceJson: SugaredInstanceJson;
+}
+
+export interface InstanceDisableCloudSavesData extends BaseData {
+    instance: string;
+}
+
+export interface InstanceDisableCloudSavesDataReply extends BaseData {
+    status: string;
+    message: string;
+}
+
+export interface InstanceEnableCloudSavesData extends BaseData {
+    instance: string;
+}
+
+export interface InstanceEnableCloudSavesDataReply extends BaseData {
+    status: string;
+    message: string;
 }
 
 export interface InstanceInstallModData extends BaseData {
@@ -151,22 +178,20 @@ export interface InstanceInstallModData extends BaseData {
     versionId: number;
 }
 
-export interface InstanceInstallModDataProgress extends BaseData {
-    overallPercentage: number;
-    speed: number;
-    currentBytes: number;
-    overallBytes: number;
+export interface PendingInstall {
+    modId: number;
+    versionId: number;
 }
 
 export interface InstanceInstallModDataReply extends BaseData {
     status: string;
     message: string;
-    dependencyList: Version[];
+    dependencies: PendingInstall[];
 }
 
 export interface InstanceModToggleData extends BaseData {
     uuid: string;
-    state: boolean;
+    fileId: number;
     fileName: string;
 }
 
@@ -180,7 +205,31 @@ export interface InstanceModsData extends BaseData {
 }
 
 export interface InstanceModsDataReply extends InstanceModsData {
-    files: ModFile[];
+    files: ModInfo[];
+}
+
+export interface RichModData extends InstanceModsData {
+    file: ModInfo;
+    richData: CurseMetadata;
+}
+
+export interface UpdateAvailable extends InstanceModsData {
+    file: ModInfo;
+    update: CurseMetadata;
+}
+
+export interface UpdateCheckingFinished extends InstanceModsData {
+}
+
+export interface InstanceOverrideModLoaderData extends BaseData {
+    uuid: string;
+    modLoaderId: number;
+    modLoaderVersion: number;
+}
+
+export interface InstanceOverrideModLoaderDataReply extends BaseData {
+    status: string;
+    message: string;
 }
 
 export interface InstanceVersionInfoData extends BaseData {
@@ -363,7 +412,6 @@ export interface GetJavasDataReply extends BaseData {
 export interface OpenModalData extends BaseData {
     title: string;
     message: string;
-    dismissable: boolean;
     buttons: ModalButton[];
     id: string;
 }
@@ -371,7 +419,7 @@ export interface OpenModalData extends BaseData {
 export interface ModalButton {
     message: string;
     name: string;
-    colour: string;
+    type: string;
 }
 
 export interface ModalCallbackData extends BaseData {
@@ -451,6 +499,7 @@ export interface YeetLauncherData extends BaseData {
 export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerRequest {
     message: string;
     success: boolean;
+    instance: SugaredInstanceJson;
 }
 
 export interface DuplicateInstanceHandlerRequest extends BaseData {
@@ -465,6 +514,11 @@ export interface GetInstanceFoldersHandlerReply extends GetInstanceFoldersHandle
 
 export interface GetInstanceFoldersHandlerRequest extends BaseData {
     uuid: string;
+}
+
+export interface SugaredInstanceJson extends InstanceJson {
+    path: string;
+    pendingCloudInstance: boolean;
 }
 
 export interface InstanceDeleteBackupHandlerReply extends InstanceDeleteBackupHandlerRequest {
@@ -492,6 +546,15 @@ export interface InstanceRestoreBackupHandlerReply extends InstanceRestoreBackup
 export interface InstanceRestoreBackupHandlerRequest extends BaseData {
     uuid: string;
     backupLocation: string;
+}
+
+export interface VideoCacheHandlerData extends BaseData {
+    url: string;
+    fileName: string;
+}
+
+export interface VideoCacheHandlerReply extends VideoCacheHandlerData {
+    location: string;
 }
 
 export interface AccountIsValidHandlerData extends BaseData {
@@ -625,12 +688,16 @@ export interface InstanceJson {
     jrePath: string;
     width: number;
     height: number;
+    fullscreen: boolean;
     modLoader: string;
     isModified: boolean;
     isImport: boolean;
     cloudSaves: boolean;
     hasInstMods: boolean;
     installComplete: boolean;
+    category: string;
+    releaseChannel: string;
+    locked: boolean;
     packType: number;
     _private: boolean;
     totalPlayTime: number;
@@ -639,6 +706,25 @@ export interface InstanceJson {
      * @deprecated
      */
     art: string;
+}
+
+export interface ModInfo {
+    fileId: number;
+    fileName: string;
+    version: string;
+    enabled: boolean;
+    size: number;
+    sha1: string;
+    curse: CurseMetadata;
+}
+
+export interface CurseMetadata {
+    type: Type;
+    curseProject: number;
+    curseFile: number;
+    name: string;
+    synopsis: string;
+    icon: string;
 }
 
 export interface ModpackVersionManifest {
@@ -673,34 +759,6 @@ export interface AccountProfile {
     msAuth: MSAuthStore;
     mcAuth: YggdrasilAuthStore;
     skins: AccountSkin[];
-}
-
-export interface Version {
-    version: string;
-    path: string;
-    name: string;
-    url: string;
-    sha1: string;
-    updated: string;
-    size: number;
-    clientOnly: boolean;
-    id: number;
-    type: string;
-    targets: LoaderTarget[];
-    dependencies: Dependency[];
-}
-
-export interface ModFile {
-    name: string;
-    version: string;
-    size: number;
-    sha1: string;
-    expected: boolean;
-    exists: boolean;
-    enabled: boolean;
-    realPath: string;
-    curseProject: number;
-    curseFile: number;
 }
 
 export interface Specs {
@@ -767,16 +825,6 @@ export interface AccountSkin {
     alias: string;
 }
 
-export interface LoaderTarget {
-    name: string;
-    id: number;
-    type: string;
-    version: string;
-}
+export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";
 
-export interface Dependency {
-    id: number;
-    required: boolean;
-}
-
-export type InstallStage = "INIT" | "PREPARE" | "MODLOADER" | "DOWNLOADS" | "FINISHED";
+export type Type = "BASIC" | "FULL";

@@ -1,3 +1,11 @@
+:root {
+  --curse-color-hsl: 15 87% 58%;
+  --curse-color: hsl(var(--curse-color-hsl));
+  
+  // Standard animation timing
+  --transition-duration: 0.25s;
+}
+
 html,
 body {
   height: 100%;
@@ -16,6 +24,9 @@ body {
   height: 100%;
 }
 
+@import "modals";
+@import "animations";
+
 .pack-page {
   position: relative;
   z-index: 1;
@@ -31,11 +42,12 @@ body {
       position: absolute;
       top: -10px;
       left: -10px;
-      width: calc(100% + 20px);
+      width: calc(100% + 10px);
       height: calc(100% + 10px);
       background-attachment: fixed;
+      background-size: 100%;
       z-index: -1;
-      filter: blur(5px);
+      filter: blur(3px);
     }
     
     > header {
@@ -161,4 +173,18 @@ body {
   img {
     border-radius: 5px;
   }
+}
+
+.page-spacing {
+  padding: 1rem 1.5rem;
+}
+
+.pack-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 1.5rem;
+}
+
+.allow-overflow-x {
+  overflow-x: auto !important;
 }

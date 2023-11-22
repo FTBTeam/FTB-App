@@ -71,14 +71,18 @@ build_overwolf:
         - pnpm vue:build:overwolf
         - node overwolf/packageOpk.js
         - |
-            if [ "$CI_COMMIT_BRANCH" == 'preview' ]; then
-                echo "Signing OPK.."
-                pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
+            echo "Signing OPK.."
+            pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
+            if [ "$CI_COMMIT_BRANCH" == 'channel/beta' ]; then
                 echo "Uploading OPK to beta channel.."
-                pnpm ow opk upload -c 109 -w true overwolf/signed.opk
+                pnpm ow opk upload -c 109 -w true overwolf/signed.opk | xargs pnpm ow opk release -p 100
+            elif [ "$CI_COMMIT_BRANCH" == 'channel/unstable' ]; then
+                echo "Uploading OPK to unstable channel.."
+                pnpm ow opk upload -c 495 -w true overwolf/signed.opk | xargs pnpm ow opk release -p 100
+            elif [ "$CI_COMMIT_BRANCH" == 'channel/preview' ]; then
+                echo "Uploading OPK to dev channel.."
+                pnpm ow opk upload -c 665 -w true overwolf/signed.opk | xargs pnpm ow opk release -p 100
             elif [ ! -z "$CI_COMMIT_TAG" ]; then
-                echo "Signing OPK.."
-                pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
                 echo "Uploading OPK to release channel.."
                 pnpm ow opk upload -w true overwolf/signed.opk
             fi

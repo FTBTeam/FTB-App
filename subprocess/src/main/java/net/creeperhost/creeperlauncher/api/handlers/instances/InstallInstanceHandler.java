@@ -141,8 +141,30 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private static void beginNewInstall(InstallInstanceData data, ModpackManifest modpackManifest, ModpackVersionManifest versionManifest, boolean isPrivate, byte packType, boolean isImport) throws IOException {
-        Instance instance = new Instance(data.name, modpackManifest, versionManifest, isPrivate, packType);
+        String mcVersion;
+        if (versionManifest.getTargetCount("game") == 1) {
+            mcVersion = versionManifest.getTargetVersion("game");
+        } else {
+            if (data.mcVersion == null) {
+                abort(data, "Version manifest does not contain game version information. Must be manually specified.");
+                return;
+            }
+            mcVersion = data.mcVersion;
+        }
+        Instance instance = new Instance(data.name, data.artPath, data.category, modpackManifest, versionManifest, mcVersion, isPrivate, packType);
         instance.props.isImport = isImport;
+        
+        // If the instance is our own, we shouldn't lock it by default.
+        if (data.ourOwn) {
+            instance.props.locked = false;
+        }
+        
+        if (data.fullscreen != null && data.fullscreen) instance.props.fullscreen = true;
+        if (data.cloudSaves != null && data.cloudSaves) instance.props.cloudSaves = true;
+        if (data.ram != -1) instance.props.memory = data.ram;
+        if (data.screenWidth != -1) instance.props.width = data.screenWidth;
+        if (data.screenHeight != -1) instance.props.height = data.screenHeight;
+        
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
             Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);
         }
@@ -150,14 +172,14 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private static void beginInstallTask(InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance.getUuid().toString()));
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance.props));
 
         InstallationOperation op = new InstallationOperation(CreeperLauncher.LONG_TASK_MANAGER, data, instance, manifest);
         op.submit();
     }
 
     private static void abort(InstallInstanceData data, String reason) {
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason, ""));
+        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason));
     }
 
     @Nullable

@@ -23,7 +23,11 @@ export interface Settings {
   automateMojang: boolean;
   showAdverts: boolean | string;
   exitOverwolf?: boolean;
+  updateChannel: string;
+  fullScreen: boolean;
 
+  useSystemWindowStyle: boolean;
+  
   // new ish
   proxyHost: string;
   proxyPort: number;

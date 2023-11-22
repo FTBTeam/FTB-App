@@ -1,9 +1,9 @@
-import { Module } from 'vuex';
-import { getters } from './getters';
-import { actions } from './actions';
-import { mutations } from './mutations';
-import { SettingsState } from './types';
-import { RootState } from '@/types';
+import {Module} from 'vuex';
+import {getters} from './getters';
+import {actions} from './actions';
+import {mutations} from './mutations';
+import {SettingsState} from './types';
+import {RootState} from '@/types';
 
 export const state: SettingsState = {
   settings: {
@@ -35,6 +35,9 @@ export const state: SettingsState = {
     proxyHost: '',
     proxyPassword: '',
     proxyUser: '',
+    updateChannel: 'release',
+    fullScreen: false,
+    useSystemWindowStyle: false,
   },
   error: false,
   hardware: {

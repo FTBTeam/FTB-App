@@ -1,16 +1,18 @@
-import { logVerbose } from '@/utils';
+import {logVerbose} from '@/utils';
 import Vue from 'vue';
-import Vuex, { MutationTree, Store, StoreOptions } from 'vuex';
-import { Alert, AlertWithId, ModalBox, RootState } from '@/types';
-import { modpacks } from './modpacks';
-import { websocket } from './websocket';
-import { settings } from './settings';
-import { auth } from './auth';
-import { discovery } from './discovery';
-import { servers } from './servers';
-import { core } from '@/modules/core/core';
-import { news } from '@/modules/news/news';
-import { appStore } from '@/modules/app/appStore';
+import Vuex, {MutationTree, Store, StoreOptions} from 'vuex';
+import {RootState} from '@/types';
+import {websocket} from './websocket';
+import {settings} from './settings';
+import {auth} from './auth';
+import {core} from '@/modules/core/core';
+import {appStore} from '@/modules/app/appStore';
+import {modpackStateModule} from '@/core/state/modpacks/modpacksState';
+import {instanceStateModule} from '@/core/state/instances/instancesState';
+import {installStateModule} from '@/core/state/instances/installState';
+import {newsStateModule} from '@/core/state/misc/newsState';
+import {dialogsState} from '@/core/state/misc/dialogsState';
+import {adsStateModule} from '@/core/state/misc/adsState';
 
 Vue.use(Vuex);
 
@@ -20,26 +22,15 @@ interface SecretMessage {
 }
 
 export const mutations: MutationTree<RootState> = {
-  SHOW_ALERT(state: any, alert: AlertWithId) {
-    state.alerts.push(alert);
-  },
-  POP_ALERT(state: any) {
-    state.alerts.shift();
-  },
-  CLEAR_ALERT(state: any, alertId: string) {
-    state.alerts = state.alerts.filter((e: AlertWithId) => e.id !== alertId);
-  },
   STORE_WS(state: any, data: SecretMessage) {
     state.wsPort = data.port;
     state.wsSecret = data.secret;
-  },
-  SHOW_MODAL(state: any, modal: ModalBox) {
-    state.websocket.modal = modal;
   },
   HIDE_MODAL(state: any) {
     state.websocket.modal = null;
   },
 };
+
 const wsLoggerPlugin = (store: Store<RootState>) => {
   store.subscribe((mutation, state) => {
     if (mutation.type === 'SOCKET_ONMESSAGE') {
@@ -51,38 +42,30 @@ const wsLoggerPlugin = (store: Store<RootState>) => {
 const store: StoreOptions<RootState> = {
   state: {
     version: '1.0.0',
-    alerts: [],
     wsPort: 0,
     wsSecret: '',
   } as any,
   plugins: [wsLoggerPlugin],
   actions: {
-    showAlert: ({ commit, rootState }: any, alert: Alert) => {
-      const timeout = setTimeout(() => {
-        commit('POP_ALERT');
-      }, 5000);
-
-      commit('SHOW_ALERT', { id: 'alert' + Math.random() * 400, timeout, ...alert });
-    },
-    hideAlert: ({ commit, rootState }: any, alert: AlertWithId) => {
-      clearTimeout(alert.timeout);
-      commit('CLEAR_ALERT', alert.id);
-    },
     hideModal: ({ commit }: any) => {
       commit('HIDE_MODAL');
     },
   },
   mutations,
   modules: {
-    news,
-    modpacks,
     websocket,
     settings,
     auth,
-    discovery,
-    servers,
+    // discovery,
+    // servers,
     core,
     app: appStore,
+    "v2/modpacks": modpackStateModule,
+    "v2/instances": instanceStateModule,
+    "v2/install": installStateModule,
+    "v2/news": newsStateModule,
+    "v2/dialogs": dialogsState,
+    "v2/ads": adsStateModule
   },
 };
 

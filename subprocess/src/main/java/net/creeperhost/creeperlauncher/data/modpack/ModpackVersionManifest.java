@@ -5,13 +5,13 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.PathRequestBody;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static net.creeperhost.creeperlauncher.Constants.CREEPERHOST_MODPACK;
 
 /**
  * Models the <code>modpacks.ch</code> api.
@@ -134,7 +133,7 @@ public class ModpackVersionManifest {
 
     @Nullable
     public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        return queryManifest(Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId);
+        return queryManifest(Constants.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
     }
 
     @Nullable
@@ -162,7 +161,7 @@ public class ModpackVersionManifest {
         LOGGER.info("Converting pack '{}'.", manifest);
 
         Request.Builder builder = new Request.Builder()
-                .url(CREEPERHOST_MODPACK + "/public/curseforge/import")
+                .url(Constants.getModpacksApi() + "/public/curseforge/import")
                 .put(new PathRequestBody(manifest));
         try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
@@ -223,6 +222,18 @@ public class ModpackVersionManifest {
         return target != null ? target.getVersion() : null;
     }
 
+    /**
+     * Count the number of targets which share this type.
+     *
+     * @param type The types.
+     * @return The count.
+     */
+    public int getTargetCount(String type) {
+        return FastStream.of(getTargets())
+                .filter(e -> type.equals(e.getType()))
+                .count();
+    }
+
     public ModpackVersionManifest copy() {
         return new ModpackVersionManifest(this);
     }
@@ -242,17 +253,6 @@ public class ModpackVersionManifest {
     public long getUpdated() { return updated; }
     public long getRefreshed() { return refreshed; }
     // @formatter:on
-
-    public List<ModFile> toLegacyFiles() {
-        List<ModFile> files = new LinkedList<>();
-        for (ModpackFile file : this.files) {
-            if (!file.getPath().startsWith("./mods") || !ModFile.isPotentialMod(file.getName())) continue;
-            String sha1 = file.getSha1OrNull() != null ? file.getSha1OrNull().toString() : "";
-            files.add(new ModFile(file.getName(), file.getVersion(), file.getSize(), sha1));
-        }
-        files.sort((e1, e2) -> e1.getRealName().compareToIgnoreCase(e2.getRealName()));
-        return files;
-    }
 
     public static class Specs {
 
@@ -372,7 +372,11 @@ public class ModpackVersionManifest {
         }
 
         public Path toPath(Path root) {
-            return root.resolve(getPath()).resolve(getName());
+            return toPath(root, "");
+        }
+
+        public Path toPath(Path root, String nameSuffix) {
+            return root.resolve(getPath()).resolve(getName() + nameSuffix);
         }
 
         public String instanceRelPath() {
@@ -403,6 +407,7 @@ public class ModpackVersionManifest {
         // @formatter:off
         public long getId() { return id; }
         public String getVersion() { return requireNonNull(version); }
+        public @Nullable String getVersionOrNull() { return version; }
         public String getPath() { return requireNonNull(path); }
         public String getName() { return requireNonNull(name); }
         public String getUrl() { return requireNonNull(url); }

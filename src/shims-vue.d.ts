@@ -5,6 +5,7 @@ declare module '*.vue' {
 }
 
 declare module '*.png';
+declare module '*.webp';
 
 declare module '*.svg' {
   const filePath: string;

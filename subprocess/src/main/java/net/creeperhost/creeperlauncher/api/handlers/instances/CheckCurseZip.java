@@ -34,11 +34,12 @@ public class CheckCurseZip implements IMessageHandler<CheckCurseZipData> {
         try {
             Pair<ModpackManifest, ModpackVersionManifest> manifests = prepareCurseImport(path);
             if (manifests == null) {
-                Settings.webSocketAPI.sendMessage(new CheckCurseZipData.Reply(data, false, "Failed to import curse pack."));
+                Settings.webSocketAPI.sendMessage(new CheckCurseZipData.Reply(data, false, "File is not a valid CurseForge modpack."));
                 return;
             }
         } catch (IOException e) {
-            Settings.webSocketAPI.sendMessage(new CheckCurseZipData.Reply(data, false, "Failed to import curse pack."));
+            Settings.webSocketAPI.sendMessage(new CheckCurseZipData.Reply(data, false, "File is not a valid CurseForge modpack."));
+            return;
         }
         
         Settings.webSocketAPI.sendMessage(new CheckCurseZipData.Reply(data, true, ""));

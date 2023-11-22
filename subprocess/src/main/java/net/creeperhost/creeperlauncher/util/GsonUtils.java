@@ -19,7 +19,6 @@ public class GsonUtils {
 
     public static Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
             .registerTypeAdapter(VersionManifest.OS.class, new VersionManifest.OsDeserializer())
-            .registerTypeAdapter(Artifact.class, new Artifact.Adapter())
             .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
             .create();
 

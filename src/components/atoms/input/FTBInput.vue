@@ -8,18 +8,20 @@
       <label class="block tracking-wide mb-2" v-if="label">
         {{ label }}
       </label>
-      <div class="flex flex-row items-center">
-        <div class="input-area block w-full">
+      <div class="flex flex-row w-full gap-4 items-center">
+        <div class="input-area block flex-1">
           <input
             class="appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded"
             :type="type"
             :placeholder="placeholder"
             :value="value"
             :disabled="disabled"
+            :min="min"
+            :max="max"
             @input="$emit('input', $event.target.value)"
             @blur="$emit('blur')"
           />
-          <transition name="fade">
+          <transition name="transition-fade">
             <div
               class="copy-btn bg-blue-700 hover:bg-blue-500 rounded px-3 py-1 text-sm cursor-pointer"
               v-show="value.length > 0"
@@ -33,13 +35,14 @@
         <ftb-button v-if="button" :color="buttonColor" @click="handleClick" class="py-2 px-4 rounded-l-none py-2">{{
           buttonText
         }}</ftb-button>
+        <slot name="extra"></slot>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 
 @Component
@@ -53,6 +56,9 @@ export default class FTBInput extends Vue {
   @Prop({ default: 'Submit' }) buttonText!: string;
   @Prop() buttonColor!: string;
   @Prop() label!: string;
+  
+  @Prop() min!: number;
+  @Prop() max!: number;
 
   @Prop({ default: false }) copyable!: boolean;
 
@@ -108,15 +114,6 @@ label {
     top: 50%;
     right: 0.5rem;
     transform: translateY(-50%);
-
-    &.fade-enter-active,
-    &.fade-leave-active {
-      transition: opacity 0.5s;
-    }
-    &.fade-enter,
-    &.fade-leave-to {
-      opacity: 0;
-    }
   }
 
   input[disabled] {

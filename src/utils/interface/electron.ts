@@ -1,20 +1,17 @@
 // @ts-ignore no typescript package available
 import VueNativeSock from 'vue-native-websocket';
-import { clipboard, ipcRenderer } from 'electron';
+import {clipboard, ipcRenderer} from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
 import store from '@/modules/store';
-import { getAPIRequest } from '@/modules/modpacks/actions';
-import { ModPack } from '@/modules/modpacks/types';
-import router from '@/router';
 import Vue from 'vue';
 import EventEmitter from 'events';
 import http from 'http';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
 import platform from '@/utils/interface/electron-overwolf';
-import {emitter} from '@/utils';
+import {consoleBadButNoLogger, emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import log from 'electron-log';
 
@@ -66,7 +63,7 @@ class MiniWebServer extends EventEmitter {
 
           const jsonResponse = JSON.parse(body);
           if (jsonResponse == null) {
-            console.log('Failed to parse json response');
+            consoleBadButNoLogger("I", 'Failed to parse json response');
             res.end();
             this.close();
             return;
@@ -83,7 +80,7 @@ class MiniWebServer extends EventEmitter {
 
           const { token, 'app-auth': appAuth } = jsonResponse;
           if (token == null || appAuth == null) {
-            console.log('Failed to parse token or appAuth');
+            consoleBadButNoLogger("E", 'Failed to parse token or appAuth');
             return;
           }
 
@@ -95,7 +92,7 @@ class MiniWebServer extends EventEmitter {
       });
 
       this.server.listen(7755, () => {
-        console.log('MiniWebServer listening on 7755');
+        consoleBadButNoLogger("D", 'MiniWebServer listening on 7755');
         this.emit('open');
       });
 
@@ -146,6 +143,7 @@ const Electron: ElectronOverwolfInterface = {
     webVersion: jsonContent?.webVersion ?? 'Missing Version File',
     dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',
     javaLicenses: jsonContent?.javaLicense ?? {},
+    branch: jsonContent.branch ?? 'Release'
   },
 
   // Tools
@@ -166,7 +164,11 @@ const Electron: ElectronOverwolfInterface = {
       randomUUID(): string {
         return (crypto as any).randomUUID();
       }
-    }
+    },
+    
+    openDevTools() {
+      ipcRenderer.send('openDevTools');
+    },
   },
 
   // Actions
@@ -208,7 +210,7 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      // TODO: Fix soon plz
+      // TODO: (legacy) Fix soon plz
       platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=http://localhost:7755")
       
       const mini = new MiniWebServer();
@@ -224,7 +226,7 @@ const Electron: ElectronOverwolfInterface = {
         });
       });
       
-      mini.close().catch(console.error);
+      mini.close().catch(e => consoleBadButNoLogger("E", e))
       cb(result);
     },
 
@@ -290,6 +292,9 @@ const Electron: ElectronOverwolfInterface = {
     // we don't need this on electron because it's not silly
     handleDrag() {},
     setupTitleBar() {},
+    setSystemWindowStyle(enabled) {
+      ipcRenderer.invoke('setSystemWindowStyle', enabled);
+    }
   },
 
   // IO
@@ -309,6 +314,14 @@ const Electron: ElectronOverwolfInterface = {
         })
         .catch(() => cb(null));
     },
+    
+    openFinder(path: string): Promise<boolean> {
+      return ipcRenderer.invoke('openFinder', path);
+    },
+    
+    getLocalAppData() {
+      return path.join(os.homedir(), "AppData", "Local"); 
+    }
   },
 
   // Websockets
@@ -355,7 +368,7 @@ const Electron: ElectronOverwolfInterface = {
     ipcRenderer.on('auth-window-closed', (event, data) => {
       miniServers.forEach((server) => {
         server.close().then(() => {
-          console.log('Closed a mini server');
+          consoleBadButNoLogger("D", 'Closed a mini server');
         });
       });
 
@@ -384,41 +397,42 @@ const Electron: ElectronOverwolfInterface = {
       }
       store.dispatch('settings/saveSettings', settings, { root: true });
     });
-    ipcRenderer.on('openModpack', (event, data) => {
-      const { name, id } = data;
-      getAPIRequest(store.state, `modpack/search/8?term=${name}`)
-        .then((response) => response.json())
-        .then(async (data) => {
-          if (data.status === 'error') {
-            return;
-          }
-          const packIDs = data.packs;
-          if (packIDs == null) {
-            return;
-          }
-          if (packIDs.length === 0) {
-            return;
-          }
-          for (let i = 0; i < packIDs.length; i++) {
-            const packID = packIDs[i];
-            const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
-            if (pack !== undefined) {
-              const foundVersion = pack.versions.find((v) => v.mtgID === id);
-              if (foundVersion !== undefined) {
-                router.push({ name: 'modpackpage', query: { modpackid: packID } });
-                return;
-              }
-            }
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    });
-
-    // TODO: this entire thing needs a registry + handler wrapper
+    // // TODO: (M#01) Yeet me
+    // ipcRenderer.on('openModpack', (event, data) => {
+    //   const { name, id } = data;
+    //   getAPIRequest(store.state, `modpack/search/8?term=${name}`)
+    //     .then((response) => response.json())
+    //     .then(async (data) => {
+    //       if (data.status === 'error') {
+    //         return;
+    //       }
+    //       const packIDs = data.packs;
+    //       if (packIDs == null) {
+    //         return;
+    //       }
+    //       if (packIDs.length === 0) {
+    //         return;
+    //       }
+    //       for (let i = 0; i < packIDs.length; i++) {
+    //         const packID = packIDs[i];
+    //         const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
+    //         if (pack !== undefined) {
+    //           const foundVersion = pack.versions.find((v) => v.mtgID === id);
+    //           if (foundVersion !== undefined) {
+    //             router.push({ name: 'modpackpage', query: { modpackid: packID } });
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     })
+    //     .catch((err) => {
+    //       console.error(err);
+    //     });
+    // });
+    
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       handleAction(data);
+      // TODO: (M#01) Reimplement missing protocol systems
       // let protocolURL = data;
       // if (protocolURL === undefined) {
       //   return;
@@ -473,7 +487,7 @@ const Electron: ElectronOverwolfInterface = {
       // }
     });
     ipcRenderer.on('sendWebsocket', (event, data) => {
-      console.log('Request received to send ', data);
+      consoleBadButNoLogger("D", 'Request received to send ', data);
       const messageID = Math.round(Math.random() * 1000);
       data.requestId = messageID;
       data.secret = store.state.wsSecret;

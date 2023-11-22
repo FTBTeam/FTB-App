@@ -15,6 +15,7 @@ export interface Util {
   crypto: {
     randomUUID(): string;
   }
+  openDevTools: () => void;
 }
 
 export interface Actions {
@@ -53,6 +54,7 @@ export interface Frame {
   // Overwolf specific
   handleDrag: (event: any, windowId: any) => void;
   setupTitleBar: (cb: (windowId: any) => void) => void;
+  setSystemWindowStyle(enabled: boolean): void;
 }
 
 export interface Config {
@@ -61,11 +63,16 @@ export interface Config {
   webVersion: string;
   dateCompiled: string;
   javaLicenses: object;
+  branch: string
 }
 
 export interface InputOutput {
   selectFolderDialog: (startPath: string, cb: (selectedFile: string | null) => void) => void;
   selectFileDialog: (cb: (selectedFile: string | null) => void) => void;
+  
+  openFinder(path: string): Promise<boolean>;
+  
+  getLocalAppData: () => string;
 }
 
 export interface Websocket {

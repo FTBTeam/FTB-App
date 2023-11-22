@@ -18,6 +18,10 @@ import net.creeperhost.creeperlauncher.util.Result;
 
 import java.time.Instant;
 
+/**
+ * @deprecated no longer needed 
+ */
+@Deprecated
 public class AuthenticateMcProfileHandler implements IMessageHandler<AuthenticateMcProfileHandler.Data> {
     @Override
     public void handle(Data data) {

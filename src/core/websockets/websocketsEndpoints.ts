@@ -27,13 +27,19 @@ import {
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
   GetJavasDataReply,
-  GetProfilesHandlerReply, InstalledInstancesData, InstalledInstancesDataReply,
+  GetProfilesHandlerReply,
+  InstalledInstancesData,
+  InstalledInstancesDataReply,
   InstallInstanceData,
   InstallInstanceDataReply,
   InstanceConfigureData,
   InstanceConfigureDataReply,
   InstanceDeleteBackupHandlerReply,
   InstanceDeleteBackupHandlerRequest,
+  InstanceDisableCloudSavesData,
+  InstanceDisableCloudSavesDataReply,
+  InstanceEnableCloudSavesData,
+  InstanceEnableCloudSavesDataReply,
   InstanceGetBackupsHandlerReply,
   InstanceGetBackupsHandlerRequest,
   InstanceInstallModData,
@@ -42,6 +48,8 @@ import {
   InstanceModsDataReply,
   InstanceModToggleData,
   InstanceModToggleDataReply,
+  InstanceOverrideModLoaderData,
+  InstanceOverrideModLoaderDataReply,
   InstanceRestoreBackupHandlerReply,
   InstanceRestoreBackupHandlerRequest,
   InstanceVersionInfoData,
@@ -85,15 +93,21 @@ import {
   UninstallInstanceDataReply,
   UpdateInstanceData,
   UploadLogsData,
-  UploadLogsDataReply, WebRequestData, WebRequestDataResponse,
+  UploadLogsDataReply,
+  VideoCacheHandlerData,
+  VideoCacheHandlerReply,
+  WebRequestData,
+  WebRequestDataResponse,
   YeetLauncherData
 } from '@/core/@types/javaApi';
+import {Nullable} from '@/core/websockets/websocketsApi';
 
 export type MessageType =
   "installedInstances" |
   "launchInstance" |
   "instance.kill" |
   "installInstance" |
+  "instanceOverrideModLoader" |
   "cancelInstallInstance" |
   "updateInstance" |
   "uninstallInstance" |
@@ -136,13 +150,16 @@ export type MessageType =
   "profiles.setActiveProfile" |
   "profiles.mc.authenticate" |
   "profiles.ms.authenticate" |
+  "instanceEnableCloudSaves" |
+  "instanceDisableCloudSaves" |
   "profiles.refresh" |
   "profiles.is-valid" |
   "storage.put" |
   "storage.get" |
   "storage.get-all" |
   "webRequest" |
-  "openDebugTools"
+  "openDebugTools" |
+  "videoCache"
 
 export type EmptyMessageResponse = {}
 
@@ -152,7 +169,7 @@ export type MessagePayload = {
     output: InstalledInstancesDataReply
   },
   "launchInstance": {
-    input: LaunchInstanceData,
+    input: Nullable<LaunchInstanceData, "cancelLaunch">,
     output: LaunchInstanceDataReply
   }
   "instance.kill": {
@@ -160,7 +177,7 @@ export type MessagePayload = {
     output: KillInstanceDataReply
   }
   "installInstance": {
-    input: InstallInstanceData,
+    input: Nullable<InstallInstanceData, "importFrom" | "name" | "artPath">,
     output: InstallInstanceDataReply
   }
   "cancelInstallInstance": {
@@ -184,7 +201,7 @@ export type MessagePayload = {
     output: InstanceModToggleDataReply
   }
   "instanceBrowse": {
-    input: BrowseInstanceData,
+    input: Nullable<BrowseInstanceData, "folder">,
     output: BrowseInstanceDataReply
   }
   "getInstanceFolders": {
@@ -333,7 +350,7 @@ export type MessagePayload = {
     output: AuthenticateMsProfileHandlerReply
   }
   "profiles.refresh": {
-    input: RefreshAuthenticationProfileHandlerData,
+    input: Nullable<RefreshAuthenticationProfileHandlerData, "liveExpires" | "liveAccessToken" | "liveRefreshToken">,
     output: RefreshAuthenticationProfileHandlerReply
   }
   "profiles.is-valid": {
@@ -353,11 +370,27 @@ export type MessagePayload = {
     output: StorageGetAllHandlerReply
   }
   "webRequest": {
-    input: WebRequestData,
+    input: Nullable<WebRequestData, "body">,
     output: WebRequestDataResponse
   }
   "openDebugTools": {
     input: BaseData,
     output: EmptyMessageResponse
+  },
+  "instanceEnableCloudSaves": {
+    input: InstanceEnableCloudSavesData,
+    output: InstanceEnableCloudSavesDataReply
+  },
+  "instanceDisableCloudSaves": {
+    input: InstanceDisableCloudSavesData,
+    output: InstanceDisableCloudSavesDataReply
+  },
+  "instanceOverrideModLoader": {
+    input: InstanceOverrideModLoaderData,
+    output: InstanceOverrideModLoaderDataReply
+  },
+  "videoCache": {
+    input: VideoCacheHandlerData,
+    output: VideoCacheHandlerReply
   }
 }

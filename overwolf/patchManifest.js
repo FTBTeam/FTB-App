@@ -14,13 +14,13 @@ version =
   '.' +
   parseInt(versionTime.substring(6));
 manifestData.meta.version = version;
-if (versionData.branch === 'release') {
+// if (versionData.branch === 'release') {
   manifestData.meta.name = 'FTB App';
   manifestData.meta.icon = 'icon_256.png';
   manifestData.meta.icon_gray = 'icon_256.png';
-} else {
-  manifestData.meta.name = 'FTB App Preview';
-  manifestData.meta.icon = 'icon_256_preview.png';
-  manifestData.meta.icon_gray = 'icon_256_preview.png';
-}
+// } else {
+//   manifestData.meta.name = 'FTB App Preview';
+//   manifestData.meta.icon = 'icon_256_preview.png';
+//   manifestData.meta.icon_gray = 'icon_256_preview.png';
+// }
 fs.writeFileSync('overwolf/manifest.json', JSON.stringify(manifestData));

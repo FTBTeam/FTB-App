@@ -39,7 +39,7 @@
           <span><font-awesome-icon icon="share" /></span>Share instance
         </li>
         <li class="title">Danger</li>
-        <li @click="deleteConfirm = true">
+        <li @click="deleteInstance">
           <span><font-awesome-icon icon="trash" /></span>Delete instance
         </li>
       </ul>
@@ -60,57 +60,48 @@
         :instanceName="instance.name"
       />
     </modal>
-
-    <modal
-      :open="deleteConfirm"
-      :externalContents="true"
-      @closed="deleteConfirm = false"
-      title="Delete Instance"
-      subTitle="Are you sure?!"
-    >
-      <delete-instance-modal :uuid="instance.uuid" :instanceName="instance.name" />
-    </modal>
   </div>
 </template>
 
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import { wsTimeoutWrapperTyped } from '@/utils';
-import { Prop } from 'vue-property-decorator';
-import { Instance } from '@/modules/modpacks/types';
+import {Prop} from 'vue-property-decorator';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
-import DeleteInstanceModal from '@/components/organisms/modals/actions/DeleteInstanceModal.vue';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
+import {InstanceController} from '@/core/controllers/InstanceController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {RouterNames} from '@/router';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {consoleBadButNoLogger} from '@/utils';
 
 @Component({
   components: {
     ShareInstanceModal,
-    DeleteInstanceModal,
     DuplicateInstanceModal,
   },
 })
 export default class PackActions extends Vue {
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Prop({ default: false }) allowOffline!: boolean;
 
   instanceFolders: string[] = [];
   shareConfirm = false;
   duplicateConfirm = false;
-  deleteConfirm = false;
 
   mounted() {
-    wsTimeoutWrapperTyped<any, { folders: string[] }>({ type: 'getInstanceFolders', uuid: this.instance.uuid })
+    sendMessage('getInstanceFolders', { uuid: this.instance.uuid })
       .then((e) => (this.instanceFolders = e.folders))
-      .catch(console.log);
+      .catch(e => consoleBadButNoLogger("E", e));
   }
 
   async openInstanceFolder(folder: string) {
-    await wsTimeoutWrapperTyped<any, null>({
-      type: 'instanceBrowse',
+    await sendMessage('instanceBrowse', {
       uuid: this.instance.uuid,
       folder,
-    });
+    })
   }
 
   folderExists(path: string) {
@@ -120,10 +111,32 @@ export default class PackActions extends Vue {
 
     return this.instanceFolders.findIndex((e) => e === path) !== -1;
   }
+
+  public deleteInstance() {
+    const dialogRef = dialogsController.createDialog(
+      dialog("Are you sure?")
+        .withContent(`Are you absolutely sure you want to delete \`${this.instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
+        .withType("warning")
+        .withButton(button("Delete")
+          .withAction(async () => {
+            dialogRef.setWorking(true)
+            const controller = InstanceController.from(this.instance);
+            await controller.deleteInstance();
+            await gobbleError(() => this.$router.push({
+              name: RouterNames.ROOT_LIBRARY
+            }));
+            dialogRef.close();
+          })
+          .withIcon("trash")
+          .withType("error")
+          .build())
+        .build()
+    )
+  }
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .pack-actions-holder {
   display: flex;
 }
@@ -143,14 +156,14 @@ export default class PackActions extends Vue {
 
   .actions,
   .actions li ul {
-    font-size: 0.875rem;
+    font-size: 12px;
     position: absolute;
     white-space: nowrap;
-    top: 110%;
-    left: 10px;
-    background-color: black;
+    top: -7rem;
+    left: 140%;
+    background-color: var(--color-navbar);
     z-index: 500;
-    padding: 1rem 0.8rem;
+    padding: .7rem 0.5rem;
     border-radius: 5px;
     box-shadow: 0 4px 15px rgba(black, 0.2);
     border: 1px solid rgba(white, 0.1);
@@ -162,19 +175,19 @@ export default class PackActions extends Vue {
     &::after {
       content: '';
       position: absolute;
-      top: -8px;
-      left: 15px;
-      border-top: 8px solid black;
-      border-left: 8px solid black;
-      border-radius: 2px;
+      top: calc(7rem + 15px);
+      left: -8px;
+      border-top: 8px solid var(--color-navbar);
+      border-left: 8px solid var(--color-navbar);
+      border-radius: 4px;
       width: 15px;
       height: 15px;
-      transform: rotateZ(45deg);
-      box-shadow: 0 0 15px rgba(black, 0.2);
+      transform: rotateZ(-45deg);
     }
 
     li {
-      line-height: 2.2em;
+      position: relative;
+      line-height: 2.4em;
       display: flex;
       padding: 0 0.8rem;
       border-radius: 5px;
@@ -183,6 +196,7 @@ export default class PackActions extends Vue {
       &.title {
         background-color: transparent !important;
         cursor: default;
+        line-height: 1.2em;
       }
 
       &:hover {
@@ -211,8 +225,8 @@ export default class PackActions extends Vue {
   }
 
   .actions li ul {
-    left: 110%;
-    top: 0;
+    left: 100%;
+    top: calc(1rem - 22px);
 
     &::before {
       content: '';
@@ -225,7 +239,7 @@ export default class PackActions extends Vue {
 
     &::after {
       transform: rotateZ(-45deg);
-      top: 6.4rem;
+      top: 1rem;
       left: -8px;
     }
   }
@@ -234,14 +248,14 @@ export default class PackActions extends Vue {
     .actions {
       visibility: visible;
       opacity: 1;
-      left: 0;
+      left: 125%;
     }
   }
 
   .actions li:hover ul {
     visibility: visible;
     opacity: 1;
-    left: 102%;
+    left: 115%;
   }
 }
 </style>

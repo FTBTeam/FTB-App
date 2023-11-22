@@ -5,6 +5,8 @@ async function blah() {
   let versionObj = await raw.json();
   versionData = versionObj;
   const version = versionObj.jarVersion;
+  
+  dev = versionObj.branch !== 'release';
   var plugin = new OverwolfPlugin('OverwolfShim', true);
   let status = await p(plugin.initialize).catch(e => console.log(e));
   if (status == false) {
@@ -184,7 +186,7 @@ async function openWebserver(authDataCallback) {
   }
 }
 
-const dev = false; // todo: get from overwolf, but only used for launch java currently anyway
+let dev = false; // todo: get from overwolf, but only used for launch java currently anyway
 let plugin = null; // TODO: all of this code is awful
 
 blah()

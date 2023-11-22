@@ -77,8 +77,8 @@ public class InstanceLauncher {
     private boolean forceStopped;
 
     private final ProgressTracker progressTracker = new ProgressTracker();
-    private final List<ThrowingConsumer<LaunchContext, IOException>> startTasks = new LinkedList<>();
-    private final List<ThrowingRunnable<IOException>> exitTasks = new LinkedList<>();
+    private final List<ThrowingConsumer<LaunchContext, Throwable>> startTasks = new LinkedList<>();
+    private final List<ThrowingRunnable<Throwable>> exitTasks = new LinkedList<>();
 
     private static final int NUM_STEPS = 5;
 
@@ -91,7 +91,7 @@ public class InstanceLauncher {
      *
      * @param task The task.
      */
-    public void withStartTask(ThrowingConsumer<LaunchContext, IOException> task) {
+    public void withStartTask(ThrowingConsumer<LaunchContext, Throwable> task) {
         startTasks.add(task);
     }
 
@@ -100,7 +100,7 @@ public class InstanceLauncher {
      *
      * @param task The task.
      */
-    public void withExitTask(ThrowingRunnable<IOException> task) {
+    public void withExitTask(ThrowingRunnable<Throwable> task) {
         exitTasks.add(task);
     }
 
@@ -276,10 +276,10 @@ public class InstanceLauncher {
     }
 
     private void onStopped() {
-        for (ThrowingRunnable<IOException> exitTask : exitTasks) {
+        for (ThrowingRunnable<Throwable> exitTask : exitTasks) {
             try {
                 exitTask.run();
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 LOGGER.error(NO_SENTRY, "Failed to execute exit task for instance {}({})", instance.getName(), instance.getUuid(), e);
                 LOGGER.error(SENTRY_ONLY, "Failed to execute instance exit tasks.", e);
             }
@@ -306,7 +306,7 @@ public class InstanceLauncher {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
             LaunchContext context = new LaunchContext();
-            for (ThrowingConsumer<LaunchContext, IOException> startTask : startTasks) {
+            for (ThrowingConsumer<LaunchContext, Throwable> startTask : startTasks) {
                 startTask.accept(context);
             }
             progressTracker.finishStep();
@@ -465,6 +465,9 @@ public class InstanceLauncher {
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
+            if (instance.props.fullscreen) {
+                command.add("--fullscreen");
+            }
             ProcessBuilder builder = new ProcessBuilder()
                     .directory(gameDir.toFile())
                     .command(command);
