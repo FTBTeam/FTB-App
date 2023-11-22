@@ -4,7 +4,7 @@ import {consoleBadButNoLogger} from '@/utils';
 import {JavaFetch} from '@/core/javaFetch';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import store from '@/modules/store';
-import * as process from 'process';
+import {constants} from '@/core/constants';
 
 type AdsEndpointResponse = {
   ads: Ad[];
@@ -18,7 +18,7 @@ type AdsEndpointResponse = {
  */
 class ChAdController extends RequiresWs {
   private static FALLBACK_AD = 'https://dist.creeper.host/FTB2/cdn/app/assets/ch-ad-app.webm';
-  private static API_ENDPOINT = `${process.env.VUE_APP_META_API}/v1/app/ads/all`;
+  private static API_ENDPOINT = `${constants.metaApi}/v1/app/ads/all`;
   
   private static VALID_VIDEO_EXTENSIONS = ['webm', 'mp4'];
 

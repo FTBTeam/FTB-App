@@ -1,4 +1,6 @@
-const minecraftHeadsApi = process.env.VUE_APP_MC_HEAD_API ?? 'https://api.mymcuu.id/head/{uuid}';
+import {constants} from '@/core/constants';
+
+const minecraftHeadsApi = constants.mcHeadApi;
 
 export function getMinecraftHead(uuid: string | null) {
   if (!uuid) {

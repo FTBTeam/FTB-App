@@ -2,6 +2,7 @@ import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
 import {JavaFetch} from '@/core/javaFetch';
 import {BlogPost} from '@/core/@types/external/metaApi.types';
+import {constants} from '@/core/constants';
 
 export type NewsState = typeof state;
 
@@ -19,7 +20,7 @@ const actions: ActionTree<NewsState, RootState> = {
     }
 
     commit('SET_LOADING', true);
-    const newsReq = await JavaFetch.create(`${process.env.VUE_APP_META_API}/v1/blog/posts`)
+    const newsReq = await JavaFetch.create(`${constants.metaApi}/v1/blog/posts`)
       .execute();
     
     if (!newsReq) {

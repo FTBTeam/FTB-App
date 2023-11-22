@@ -48,7 +48,7 @@ import {BlogPost} from '@/core/@types/external/metaApi.types';
 import dayjs from 'dayjs';
 import {standardDateTime} from '@/utils/helpers/dateHelpers';
 import {consoleBadButNoLogger} from '@/utils';
-import * as process from 'process';
+import {constants} from '@/core/constants';
 
 @Component({
   components: {
@@ -78,11 +78,11 @@ export default class Blog extends Vue {
     const imgPath = image.replace("http://", "https://").replace('https://ghost.ftb.team/content/images/', '');
     const encodedPath = encodeURIComponent(imgPath);
     
-    return `${process.env.VUE_APP_META_API}/v1/blog/image/${encodedPath}`
+    return `${constants.metaApi}/v1/blog/image/${encodedPath}`
   }
   
   get domain() {
-    return process.env.VUE_APP_FTB_DOMAIN;
+    return constants.ftbDomain
   }
 }
 </script>

@@ -30,6 +30,7 @@ import {consoleBadButNoLogger, parseMarkdown} from '@/utils/helpers';
 import platform from '@/utils/interface/electron-overwolf';
 import {SocketState} from '@/modules/websocket/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
+import {constants} from '@/core/constants';
 
 export type ChangelogEntry = {
   version: string;
@@ -103,12 +104,12 @@ export default class Changelog extends Vue {
     if (!data.response || data.response !== this.getCurrentVersion()) {
       // Get the available versions
       try {
-        const changelogsReq = await fetch(`${process.env.VUE_APP_META_API}/v1/changelogs/app`);
+        const changelogsReq = await fetch(`${constants.metaApi}/v1/changelogs/app`);
         const changelogs = await changelogsReq.json();
 
         if (changelogs?.versions?.includes(this.getCurrentVersion())) {
           const changelogReq = await fetch(
-            `${process.env.VUE_APP_META_API}/v1/changelogs/app/${this.getCurrentVersion()}`,
+            `${constants.metaApi}/v1/changelogs/app/${this.getCurrentVersion()}`,
           );
 
           this.changelogData = await changelogReq.json();

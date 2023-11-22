@@ -3,6 +3,7 @@ import store from '@/modules/store';
 import {HttpMethod} from '@/core/@types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
 import {WebRequestData} from '@/core/@types/javaApi';
+import {constants} from '@/core/constants';
 
 interface FetchResponseRaw {
   status: string;
@@ -84,11 +85,11 @@ export class JavaFetch {
   
   //#region helper methods
   public static modpacksCh(endpoint: string) {
-    return JavaFetch.create(`${process.env.VUE_APP_MODPACK_API}/public/${endpoint}`)
+    return JavaFetch.create(`${constants.modpacksApi}/public/${endpoint}`)
   }
   
   public static modpacksChPrivate(endpoint: string) {
-    return JavaFetch.create(`${process.env.VUE_APP_MODPACK_API}/${store.state.auth?.token?.attributes.modpackschkey ?? "public"}/${endpoint}`)
+    return JavaFetch.create(`${constants.modpacksApi}/${store.state.auth?.token?.attributes.modpackschkey ?? "public"}/${endpoint}`)
   }
   //#endregion
   
