@@ -10,7 +10,7 @@
          </div>
          
          <selection2
-           label="Selection mod version"
+           label="Select mod version"
            v-model="selectedVersion"
            :options="options"
          />
