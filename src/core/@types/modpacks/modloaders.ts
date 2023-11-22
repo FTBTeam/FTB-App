@@ -19,5 +19,4 @@ export type ModLoader = {
 
 export type ModLoaderWithPackId = ModLoader & {
   packId: string;
-  logo: string | undefined;
 }
