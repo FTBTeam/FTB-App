@@ -281,8 +281,12 @@ export default class CreateInstance extends Vue {
       const request = {
         id: this.userModLoader[1].packId,
         version: this.userModLoader[1].id,
-        ...sharedData
+        ...sharedData,
       } as any;
+      
+      if (!this.userSelectedArtwork && this.userModLoader[1].logo) {
+        request["logo"] = this.userModLoader[1].logo;
+      }
       
       if (this.userModLoader[0] === "fabric") {
         request["mcVersion"] = this.selectedMcVersion;
