@@ -2,7 +2,7 @@
   <div class="tab-actions-body" v-if="instance || packInstance">
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
-        <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': isInstalling && currentInstall}">
+        <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && currentInstall) || modloaderUpdating}">
           <div class="play">
             <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
               <font-awesome-icon :icon="isInstalled ? (requiresSync ? 'download' : 'play') : 'download'" class="mr-4" />
@@ -25,7 +25,7 @@
               :localInstance="instance"
               @update="$emit('update')"
             />
-            <div class="option" v-if="packInstance" @click="() => $emit('showVersion')">
+            <div class="option" v-if="packInstance && !isVanilla" @click="() => $emit('showVersion')">
               Versions
               <font-awesome-icon icon="code-branch" class="ml-2" />
             </div>
@@ -48,6 +48,18 @@
               </transition>
             </div>
             <progress-bar class="progress" :progress="parseFloat(currentInstall?.progress ?? '0') / 100" />
+          </div>
+        </transition>
+        
+        <transition name="transition-fade" duration="250">
+          <div class="install-progress" v-if="modloaderUpdating">
+            <div class="status flex gap-4 items-center">
+              <font-awesome-icon spin icon="circle-notch" class="mr-2" />
+              <div class="message">
+                <b class="block">Updating Modloader</b>
+                <small class="text-muted">This may take a moment</small>
+              </div>
+            </div>
           </div>
         </transition>
       </div>
@@ -218,6 +230,7 @@ import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {ns} from '@/core/state/appState';
 import {InstallStatus} from '@/core/controllers/InstanceInstallController';
 import {Getter} from 'vuex-class';
+import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 
 @Component({
   name: 'pack-body',
@@ -247,6 +260,7 @@ export default class PackBody extends Vue {
   @Prop({ default: () => [] }) backups!: Backup[];
 
   @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
+  @Getter("currentModloaderUpdate", ns("v2/install")) currentModloaderUpdate!: ModLoaderUpdateState[] | null;
   
   Platform = Platform;
 
@@ -304,6 +318,10 @@ export default class PackBody extends Vue {
   get packSlug() {
     if (!this.packInstance) return '';
     return `${this.packInstance.id}_${this.packInstance.name.replaceAll(' ', '-').replaceAll(/[^\w|-]+/g, '')}`;
+  }
+  
+  get modloaderUpdating() {
+    return this.currentModloaderUpdate?.some(e => e.instanceId === this.instance.uuid) ?? false;
   }
 }
 </script>

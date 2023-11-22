@@ -192,12 +192,26 @@
     
     <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
     
-    <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="userSelectModLoader = false">
+    <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="() => {
+      userSelectModLoader = false
+      userSelectedLoader = null
+    }">
+      <div class="current mb-6 grid grid-cols-2 gap-y-2 wysiwyg items-center">
+        <b>Current Modloader</b> <code>{{(hasModloader ? resolveModloader(instance) : 'Vanilla') | title}}</code>
+        <b>Current version</b> <code>{{resolveModLoaderVersion(instance)}}</code>
+      </div>
+      
+      <p class="mb-2">You can select a Modloader to install or switch to using the selection below. Please be aware that if you are currently running a modpack, switching Modloader version may break the modpack.</p>
+      <p class="mb-6">Switching between Modloader provider (aka: Forge -> Fabric) will <b>not</b> remove incompatible mods.</p>
+      
       <modloader-select @select="e => userSelectedLoader = e" :mc-version="instance.mcVersion" :provide-latest-option="false" :show-none="false" />
       
       <template #footer>
         <div class="flex justify-end gap-4">
-          <ui-button type="warning" icon="times" @click="userSelectModLoader = false">Close</ui-button>
+          <ui-button type="warning" icon="times" @click="() => {
+            userSelectModLoader = false
+            userSelectedLoader = null
+          }">Close</ui-button>
           <ui-button type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null" @click="installModloader">Install</ui-button>
         </div>
       </template>
@@ -207,7 +221,7 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
-import {Getter, State} from 'vuex-class';
+import {Action, Getter, State} from 'vuex-class';
 import {AuthState} from '@/modules/auth/types';
 import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
@@ -226,15 +240,18 @@ import Selection2 from '@/components/core/ui/Selection2.vue';
 import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelector.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {resolveModloader, resolveModLoaderVersion, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 import {computeAspectRatio} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
-import {ModLoader} from '@/core/@types/modpacks/modloaders';
+import {ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
+import {ns} from '@/core/state/appState';
+import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 
 @Component({
+  methods: {resolveModLoaderVersion, resolveModloader},
   components: {
     RamSlider,
     ModloaderSelect,
@@ -255,6 +272,7 @@ export default class ModpackSettings extends Vue {
   @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
+  @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
   
   instanceSettings: SaveJson = {} as any;
   previousSettings: SaveJson = {} as any;
@@ -271,7 +289,7 @@ export default class ModpackSettings extends Vue {
   resolutionId = "";
   
   userSelectModLoader = false;
-  userSelectedLoader: [string, ModLoader] | null = null;
+  userSelectedLoader: [string, ModLoaderWithPackId] | null = null;
 
   async mounted() {
     const javas = await sendMessage("getJavas");
@@ -368,13 +386,20 @@ export default class ModpackSettings extends Vue {
     
     const result = await sendMessage("instanceOverrideModLoader", {
       uuid: this.instance.uuid,
-      modLoaderId: this.userSelectedLoader[1].pack,
+      modLoaderId: parseInt(this.userSelectedLoader[1].packId, 10),
       modLoaderVersion: this.userSelectedLoader[1].id,
     });
     
-    if (result.status !== "failure") {
+    if (result.status !== "error") {
       this.userSelectModLoader = false;
       this.userSelectedLoader = null;
+      
+      if (result.status === "prepare") {
+        this.addModloaderUpdate({
+          instanceId: this.instance.uuid,
+          packetId: result.requestId
+        })
+      }
       
       this.$emit("back");
     }

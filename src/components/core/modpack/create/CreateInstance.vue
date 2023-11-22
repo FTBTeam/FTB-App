@@ -111,7 +111,7 @@ import {SettingsState} from '@/modules/settings/types';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import Loader from '@/components/atoms/Loader.vue';
-import {ModLoader} from '@/core/@types/modpacks/modloaders';
+import {ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
@@ -150,7 +150,7 @@ export default class CreateInstance extends Vue {
   userSelectedArtwork: File | null = null;
   userPackName = "";
   userVanillaVersion = -1;
-  userModLoader: [string, ModLoader] | null = null
+  userModLoader: [string, ModLoaderWithPackId] | null = null
   userCategory = "Default";
   
   vanillaPack: ModPack | null = null;
@@ -279,7 +279,7 @@ export default class CreateInstance extends Vue {
     } else {
       // We're working with a modloader
       const request = {
-        id: this.userModLoader[1].pack,
+        id: this.userModLoader[1].packId,
         version: this.userModLoader[1].id,
         ...sharedData
       } as any;

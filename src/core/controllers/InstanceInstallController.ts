@@ -4,6 +4,7 @@ import {
   CloudSavesReloadedData,
   InstallInstanceDataReply,
   InstanceJson,
+  InstanceOverrideModLoaderDataReply,
   OperationProgressUpdateData,
   Stage,
   SugaredInstanceJson
@@ -78,6 +79,11 @@ class InstanceInstallController {
       if (data.type === "cloudInstancesReloaded") {
         this.addCloudInstances(data as CloudSavesReloadedData)
           .catch(e => consoleBadButNoLogger("E", e))
+      }
+      
+      if (data.type === "instanceOverrideModLoaderReply") {
+        const typedData = data as InstanceOverrideModLoaderDataReply;
+        this.handleOverrideState(typedData);
       }
     });
     
@@ -386,6 +392,37 @@ class InstanceInstallController {
         await store.dispatch('v2/instances/addInstance', pack, {root: true});
       } else {
         await store.dispatch('v2/instances/updateInstance', pack, {root: true});
+      }
+    }
+  }
+
+  private handleOverrideState(typedData: InstanceOverrideModLoaderDataReply) {
+    const status = typedData.status;
+    if (status === "prepare") {
+      return;
+    }
+    
+    if (status === "error" || status === "success") {
+      const packetId = typedData.requestId;
+      
+      const updateFromPacketId = store.state["v2/install"].currentModloaderUpdate.find(e => e.packetId === packetId);
+      if (!updateFromPacketId) {
+        return;
+      }
+      
+      const instance = store.state["v2/instances"].instances.find(e => e.uuid === updateFromPacketId.instanceId);
+      
+      // Rmeove the modloader update
+      store.commit("v2/install/REMOVE_MODLOADER_UPDATE", packetId);
+      
+      if (status === "error") {
+        alertController.error(`Failed to update modloader due to ${typedData.message ?? "an unknown error"}`);
+      } else {
+        if (instance) {
+          alertController.success(`Successfully updated modloader for ${instance.name}`);
+        } else {
+          alertController.success(`Successfully updated modloader`);
+        }
       }
     }
   }

@@ -53,10 +53,10 @@ function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | Mo
 
 const knownModloaders = [
   "vanilla",
-  "forge",
+  "neoforge",
   "fabric",
   "quilt",
-  "neoforge"
+  "forge",
 ]
 
 export function resolveModloader(packOrInstance: SugaredInstanceJson | InstanceJson | ModPack | null) {
@@ -86,6 +86,26 @@ export function resolveModloader(packOrInstance: SugaredInstanceJson | InstanceJ
   
   const pack = packOrInstance as ModPack;
   return pack.versions.at(0)?.targets.find(e => e.type === "modloader")?.name ?? "Forge";
+}
+
+export function resolveModLoaderVersion(instance: SugaredInstanceJson | InstanceJson | null) {
+  if (!instance) {
+    return "???";
+  }
+  
+  const modloader = resolveModloader(instance).toLowerCase();
+  const loaderFullVersion = instance.modLoader; 
+  
+  if (modloader === "vanilla") {
+    return instance.mcVersion;
+  }
+  
+  if (modloader === "neoforge") {
+    const loaderParts = loaderFullVersion.split("-");
+    return loaderParts.slice(1, 2)[0] ?? "???";
+  }
+  
+  return loaderFullVersion.split("-").pop() ?? "???";
 }
 
 /**

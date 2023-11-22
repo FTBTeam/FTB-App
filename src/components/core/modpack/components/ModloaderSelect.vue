@@ -42,7 +42,7 @@
 import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
-import {ModLoader, ModLoadersResponse} from '@/core/@types/modpacks/modloaders';
+import {ModLoadersResponse, ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import Loader from '@/components/atoms/Loader.vue';
@@ -59,14 +59,14 @@ export default class ModloaderSelect extends Vue {
   
   @Prop({default: true}) provideLatestOption!: boolean;
 
-  availableLoaders: Record<string, ModLoader[]> = {};
+  availableLoaders: Record<string, ModLoaderWithPackId[]> = {};
   loadingModloaders = false;
   
   userLoaderProvider = "";
   userUseLatestLoader = true;
   userLoaderVersion = "";
   
-  @Emit() select(loader: string, version: string): [string, ModLoader] | null {
+  @Emit() select(loader: string, version: string): [string, ModLoaderWithPackId] | null {
     const loaderProvider = this.availableLoaders[loader];
     if (!loaderProvider) {
       return null;
@@ -95,7 +95,7 @@ export default class ModloaderSelect extends Vue {
   
   async loadAvailableLoaders(mcVersion: string) {
     const knownLoaders = ["forge", "neoforge", "fabric"];
-    const foundLoadersForVersion = {} as Record<string, ModLoader[]>;
+    const foundLoadersForVersion = {} as Record<string, ModLoaderWithPackId[]>;
 
     for (const loader of knownLoaders) {
       const request = await JavaFetch.modpacksCh(`loaders/${mcVersion}/${loader}`).execute()
@@ -108,9 +108,11 @@ export default class ModloaderSelect extends Vue {
         continue;
       }
       
-      foundLoadersForVersion[loader] = loaderData.loaders.sort((a, b) => b.id - a.id);
+      foundLoadersForVersion[loader] = loaderData.loaders
+        .sort((a, b) => b.id - a.id)
+        .map(e => ({...e, packId: loaderData.id}));
     }
-
+    
     this.availableLoaders = foundLoadersForVersion;
   }
 
