@@ -19,8 +19,8 @@ if (
       release: `${process.env.VERSION || process.env.VERSION_OVERRIDE}-${process.env.VUE_APP_PLATFORM}`,
       include: process.env.TARGET_PLATFORM === 'overwolf' ? './overwolf/dist/desktop/' : './dist_electron/bundled/',
       ignore: ['node_modules', 'webpack.config.js'],
-      urlPrefix: process.env.TARGET_PLATFORM === 'overwolf' 
-        ? `overwolf-extension://${process.env.CI_COMMIT_BRANCH === 'release' ? "cmogmmciplgmocnhikmphehmeecmpaggknkjlbag" : "nelapelmednbnaigieobbdgbinpgcgkfmmdjembg"}/dist/desktop/` 
+      urlPrefix: process.env.TARGET_PLATFORM === 'overwolf'
+        ? `overwolf-extension://${process.env.CI_COMMIT_BRANCH === 'release' ? "cmogmmciplgmocnhikmphehmeecmpaggknkjlbag" : "nelapelmednbnaigieobbdgbinpgcgkfmmdjembg"}/dist/desktop/`
         : ""
     }),
   );
@@ -36,14 +36,14 @@ const VersionDataPlugin = (options) => {
         if (!options.predicate(compilation)) {
           return callback();
         }
-        
+
         const { fileName, content } = options;
 
         compilation.assets[fileName] = {
           source: () => content,
           size: () => content.length
         }
-        
+
         callback();
       })
     }
@@ -90,9 +90,9 @@ module.exports = {
       nodeIntegration: true,
       customFileProtocol: `ftb://./`,
       builderOptions: {
-        productName: 'ftbapp',
+        productName: 'FTB App',
         appId: 'com.feedthebeast.Launcher',
-        
+
         mac: {
           // #TODO https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/
           identity: 'null',
