@@ -29,6 +29,10 @@ const actions: ActionTree<InstanceState, RootState> = {
   
   async addInstance({state, commit}, instance: InstanceJson) {
     commit('ADD_INSTANCE', instance);
+    
+    // Recalculate categories
+    const categories = state.instances.map(i => i.category);
+    commit('SET_CATEGORIES', Array.from(new Set(categories)));
   },
   
   async updateInstance({state, commit}, instance: InstanceJson) {
@@ -38,6 +42,10 @@ const actions: ActionTree<InstanceState, RootState> = {
     }
     
     commit('UPDATE_INSTANCE', {index, instance});
+    
+    // Recalculate categories
+    const categories = state.instances.map(i => i.category);
+    commit('SET_CATEGORIES', Array.from(new Set(categories)));
   },
   
   async removeInstance({state, commit}, uuid: string) {

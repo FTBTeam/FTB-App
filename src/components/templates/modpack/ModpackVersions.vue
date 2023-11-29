@@ -7,7 +7,7 @@
         v-model="version"
       />
     </div>
-    <div class="main flex pb-8 flex-col" :key="activeLog" v-if="!isCursePack">
+    <div class="main flex pb-8 flex-col" :key="activeLog">
       <div class="heading flex items-center mb-4" v-if="currentVersion">
         <div class="content flex-1 mr-4">
           <p class="opacity-50">Changelog for</p>
@@ -25,7 +25,7 @@
       </div>
       <!--      <div class="updated">{{ version.updated | momentFromNow }}</div>-->
       <div class="body-contents flex-1 select-text">
-        <div v-if="loading" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
+        <div v-if="loading && !isCursePack" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
         <div
           v-else-if="currentVersion && currentVersion.type.toLowerCase() !== 'archived'"
           class="bg-orange-400 text-orange-900 font-bold px-4 py-4 rounded mb-6"
@@ -40,10 +40,10 @@
         </message>
         
         <div class="wysiwyg" v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''" v-html="parseMarkdown(changelogs[activeLog])" />
+        <div v-if="isCursePack">
+          <message type="info">Changelogs are not yet supported for non-FTB modpacks.</message>
+        </div>
       </div>
-    </div>
-    <div v-else>
-      <message type="info">Changelogs are not yet supported for non-FTB modpacks.</message>
     </div>
   </div>
 </template>
@@ -110,16 +110,15 @@ export default class ModpackVersions extends Vue {
 
   @Watch('version')
   async loadChanges(versionId: number) {
-    if (this.isCursePack) {
-      return;
-    }
-    
     if (this.changelogs['' + versionId]) {
       this.setActive(versionId);
       return;
     }
     
-    this.changelogs['' + versionId] = await this.fetchLog(versionId);
+    if (!this.isCursePack) {
+      this.changelogs['' + versionId] = await this.fetchLog(versionId);
+    }
+    
     this.setActive(versionId);
   }
 
