@@ -459,7 +459,8 @@ public class InstanceInstaller extends InstanceOperation {
             }
             
             if (file.getUrl().equals(IGNORE_SNOWFLAKE_FILE_URL)) {
-                LOGGER.info("Ignoring zero byte file: {}", file);
+                filesToDownload.add(filePath);
+                tasks.add(new DlTask(0, new EmptyFileDlTask(filePath)));
                 continue;
             }
 
@@ -577,6 +578,25 @@ public class InstanceInstaller extends InstanceOperation {
         @Nullable
         public Object getResult() {
             return task.getResult();
+        }
+    }
+
+    private record EmptyFileDlTask(Path destination) implements Task<Path> {
+        @Override
+        public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+            LOGGER.info("Ignoring zero byte file: {}", this.destination);
+
+            // Just create an empty file.
+            try {
+                Files.createFile(IOUtils.makeParents(this.destination));
+            } catch (IOException e) {
+                LOGGER.error("Failed to create empty file: {}", this.destination, e);
+            }
+        }
+
+        @Override
+        public Path getResult() {
+            return this.destination;
         }
     }
 }
