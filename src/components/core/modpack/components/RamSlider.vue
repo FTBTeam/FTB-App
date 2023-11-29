@@ -63,7 +63,7 @@ export default class RamSlider extends Vue {
     }
   }
   
-  step = 64;
+  step = 16;
   allowDangerous = false;
   hidden = true;
   
@@ -97,7 +97,7 @@ export default class RamSlider extends Vue {
   }
   
   get valueAsByteReadable() {
-    return prettyByteFormat(parseInt(this.value.toString()) * 1000 * 1000);
+    return prettyByteFormat(Math.floor(parseInt(this.value.toString()) * 1024 * 1000));
   }
   
   get valueAsPercentage() {
