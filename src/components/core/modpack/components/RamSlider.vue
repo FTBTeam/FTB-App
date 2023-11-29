@@ -15,7 +15,10 @@
          @change="v => input(v.target.value)"
          @focus="hidden = false"
          @blur="hidden = true"
-         @mouseup="hidden = true"
+         @mouseup="() => {
+           hidden = true;
+           change(parseInt(value.toString()));
+         }"
          @mousedown="hidden = false"
          :min="min"
          :max="maxRam"
@@ -30,7 +33,7 @@
      </div>
      
      <div class="value-input gap-2 flex items-center">
-       <ftb-input type="number" style="width: 120px" :value="value.toString()" @input="v => updateValue(parseInt(v))" />
+       <ftb-input type="number" style="width: 120px" :value="value.toString()" @input="v => updateValue(parseInt(v))" @change="change(parseInt(value.toString()));" />
      </div>
    </div>
    
@@ -55,6 +58,7 @@ export default class RamSlider extends Vue {
   @Prop({default: 0}) min!: number;
   @Prop({default: 0}) value!: number | string;
   @Emit() input(value: number) {}
+  @Emit() change(value: number) {}
   
   mounted() {
     const maxRam = Math.min(1024 * 10, this.settingsState.hardware.totalMemory);

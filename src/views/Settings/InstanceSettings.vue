@@ -55,9 +55,8 @@
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
-    <!--          <ftb-slider label="Default Memory" v-model="localSettings.memory" :currentValue="localSettings.memory" minValue="512" :maxValue="settingsState.hardware.totalMemory" @change="doSave"-->
-    <!--                      unit="MB" @blur="doSave" step="128"/>-->
-
+    <ram-slider class="mb-6" v-model="localSettings.memory" @change="saveMutated" />
+    
     <ftb-input
       label="Custom Arguments"
       :value="localSettings.jvmargs"
@@ -97,9 +96,11 @@ import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import {computeAspectRatio} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
+import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
 
 @Component({
   components: {
+    RamSlider,
     UiToggle,
     Selection2
   },
