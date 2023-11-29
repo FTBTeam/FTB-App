@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
@@ -24,6 +25,27 @@ public class FileUtils
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
+    /**
+     * Allows the subprocess to open a desktop's finder / explorer / etc
+     *
+     * @param location the path to open                
+     * @return if the open action was successful
+     */
+    public static boolean openFolder(Path location) {
+        if (Files.notExists(location)) {
+            return false;
+        }
+
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().open(location.toFile());
+            } catch (IOException ignored) {}
+            return true;
+        }
+        return false;
+    }
+
+    
     public static void deletePath(Path path) {
         if (Files.notExists(path)) return;
 
