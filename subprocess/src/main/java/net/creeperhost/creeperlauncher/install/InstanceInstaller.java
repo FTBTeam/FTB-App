@@ -42,7 +42,10 @@ import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifes
  * Created by covers1624 on 3/2/22.
  */
 public class InstanceInstaller extends InstanceOperation {
-
+    // This is a lazy hack that covers will hate but this fixes the "failed to install due to missing file" error caused by zero length files.
+    // The api will always resolve these files to this url so we can just ignore them.
+    private static final String IGNORE_SNOWFLAKE_FILE_URL = "https://dist.modpacks.ch/modpacks/0/FTB Academy-1.0.0/config/brandon3055/ResourceCache/Cache";
+    
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("InstanceInstaller.debug");
 
@@ -453,6 +456,11 @@ public class InstanceInstaller extends InstanceOperation {
                         file.getId()
                 );
                 newOverrides.add(newOverride);
+            }
+            
+            if (file.getUrl().equals(IGNORE_SNOWFLAKE_FILE_URL)) {
+                LOGGER.info("Ignoring zero byte file: {}", file);
+                continue;
             }
 
             NewDownloadTask task = NewDownloadTask.builder()
