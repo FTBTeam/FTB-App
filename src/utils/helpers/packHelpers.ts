@@ -149,7 +149,7 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
     return undefined;
   }
   
-  if (instance.id === -1 || instance.id === 81 || packBlacklist.includes(instance.id)) {
+  if (instance.id === -1 || packBlacklist.includes(instance.id)) {
     return undefined;
   }
   

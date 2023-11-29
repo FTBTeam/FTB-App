@@ -125,10 +125,10 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {consoleBadButNoLogger} from '@/utils';
 
 export enum ModpackPageTabs {
-  OVERVIEW,
-  MODS,
-  SETTINGS,
-  BACKUPS,
+  OVERVIEW = "overview",
+  MODS = "mods",
+  SETTINGS = "settings",
+  BACKUPS = "backups",
 }
 
 @Component({
@@ -177,9 +177,22 @@ export default class InstancePage extends Vue {
   borkedVersionIsDowngrade = false;
 
   async mounted() {
+    // TODO: (M#02) Setup a system to wait for instances to be loaded before rejecting
     if (this.instance == null) {
+      consoleBadButNoLogger("E", "Instance not found")
       await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
+    }
+    
+    const quickNav = this.$route.query.quickNav;
+    if (quickNav) {
+      consoleBadButNoLogger("I", `Quick nav detected, navigating to ${quickNav}`)
+      // Ensure the tab is valid
+      if (Object.values(ModpackPageTabs).includes(quickNav as ModpackPageTabs)) {
+        this.activeTab = quickNav as ModpackPageTabs; 
+      } else {
+        consoleBadButNoLogger("E", "Invalid quick nav tab")
+      }
     }
     
     // TODO: (M#01) Allow to work without this.
@@ -338,6 +351,7 @@ export default class InstancePage extends Vue {
   }
   
   get instance() {
+    consoleBadButNoLogger("I", `Getting instance ${this.$route.params.uuid}`)
     return this.instances.find(e => e.uuid === this.$route.params.uuid) ?? null;
   }
 

@@ -143,6 +143,10 @@ ipcMain.on('appReady', async (event) => {
   }
 });
 
+ipcMain.on("restartApp", () => {
+  reloadMainWindow()
+});
+
 ipcMain.on('updateSettings', async (event, data) => {
   if (friendsWindow !== null && friendsWindow !== undefined) {
     friendsWindow.webContents.send('updateSettings', data);
@@ -235,6 +239,24 @@ ipcMain.handle('selectFolder', async (event, data) => {
   }
 });
 
+const reloadMainWindow = async () => {
+  if (!win) {
+    return;
+  }
+  
+  // Create a tmp window to keep the app alive
+  const tmpWindow = new BrowserWindow({
+    show: false,
+  });
+
+  // Enable the windows frame
+  win.destroy()
+  await createWindow()
+
+  // Close the tmp window
+  tmpWindow.close();
+}
+
 ipcMain.handle('setSystemWindowStyle', async (event, data) => {
   const typedData = data as boolean;
   
@@ -244,18 +266,7 @@ ipcMain.handle('setSystemWindowStyle', async (event, data) => {
   
   // Reload the app settings
   appSettings.useSystemWindowStyle = typedData.toString();
-
-  // Create a tmp window to keep the app alive
-  const tmpWindow = new BrowserWindow({
-    show: false,
-  });
-  
-  // Enable the windows frame
-  win.destroy()
-  await createWindow()
-  
-  // Close the tmp window
-  tmpWindow.close();
+  await reloadMainWindow();
 });
 
 ipcMain.handle('openFinder', async (event, data) => {

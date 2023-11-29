@@ -74,33 +74,6 @@ export interface ModPackLink {
   type: string;
 }
 
-export interface Instance {
-  kind: string;
-  id: number;
-  uuid: string;
-  name: string;
-  versionId: number;
-  version: string;
-  art: string;
-  path: string;
-  authors: string[];
-  lastPlayed: number;
-  isImport: boolean;
-  jvmArgs: string;
-  jrePath: string;
-  memory: number;
-  minMemory: number;
-  recMemory: number;
-  width: number;
-  height: number;
-  notification: string;
-  modpack: ModPack | undefined;
-  cloudSaves: boolean;
-  packType: number;
-  modLoader: string;
-  embeddedJre: boolean;
-  totalPlayTime: number;
-}
 
 export interface Art {
   width: number;

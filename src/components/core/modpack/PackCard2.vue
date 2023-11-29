@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="openInstancePage">
+    <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="openInstancePage" @click.right="openInstanceMenu">
       <div class="artwork-container">
         <img :src="packLogo" alt="Modpack Artwork">
         <div class="notifiers">
@@ -73,6 +73,9 @@ import Popover from '@/components/atoms/Popover.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {Versions} from '@/modules/modpacks/types';
 import UpdateConfirmModal from '@/components/core/modpack/modals/UpdateConfirmModal.vue';
+import {AppContextController} from '@/core/context/contextController';
+import {ContextMenus} from '@/core/context/contextMenus';
+import {InstanceActions} from '@/core/actions/instanceActions';
 
 @Component({
   components: {
@@ -105,10 +108,7 @@ export default class PackCard2 extends PackCardCommon {
   }
   
   play() {
-    this.$router.push({
-      name: RouterNames.ROOT_LAUNCH_PACK,
-      query: { uuid: this.instance.uuid },
-    })
+    InstanceActions.start(this.instance);
   }
 
   openInstancePage() {
@@ -126,6 +126,16 @@ export default class PackCard2 extends PackCardCommon {
   
   syncInstance() {
     instanceInstallController.requestSync(this.instance);
+  }
+  
+  openInstanceMenu(event: PointerEvent) {
+    if (this.needsSyncing || this.isInstalling || this.isUpdating) {
+      return;
+    }
+    
+    AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, {
+      instance: this.instance
+    });
   }
   
   get modLoader() {

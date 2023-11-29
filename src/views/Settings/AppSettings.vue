@@ -117,13 +117,13 @@ export default class AppSettings extends Vue {
   openFolder(location: string) {
     switch (location) {
       case 'home':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(this.getAppHome()), state => this.working = state)
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(AppSettings.getAppHome()), state => this.working = state)
         break;
       case 'instances': 
         toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
         break;
       case 'logs':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(path.join(this.getAppHome(), 'logs')), state => this.working = state)
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(path.join(AppSettings.getAppHome(), 'logs')), state => this.working = state)
         break;
       default:
         toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => this.working = state)
@@ -131,9 +131,9 @@ export default class AppSettings extends Vue {
     }
   }
 
-  getAppHome() {
-    if (this.platform.isOverwolf()) {
-      return path.join(this.platform.get.io.getLocalAppData(), '.ftba');
+  public static getAppHome() {
+    if (platform.isOverwolf()) {
+      return path.join(platform.get.io.getLocalAppData(), '.ftba');
     } else if (os.platform() === "darwin") {
       return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
     } else {

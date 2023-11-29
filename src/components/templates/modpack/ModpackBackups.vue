@@ -74,17 +74,15 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Prop } from 'vue-property-decorator';
-import { prettyByteFormat } from '@/utils';
-import { Action } from 'vuex-class';
-import { Instance } from '@/modules/modpacks/types';
-import {Backup} from '@/core/@types/javaApi';
+import {Prop} from 'vue-property-decorator';
+import {prettyByteFormat} from '@/utils';
+import {Backup, InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 
 @Component
 export default class ModpackBackups extends Vue {
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Prop({ default: () => [] }) backups!: Backup[];
 
   prettyBytes = prettyByteFormat;

@@ -80,11 +80,11 @@ import {Component, Vue} from 'vue-property-decorator';
 import {Action, State} from 'vuex-class';
 import {Settings, SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import {ns} from '@/core/state/appState';
 import {alertController} from '@/core/controllers/alertController';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
+import {InstanceActions} from '@/core/actions/instanceActions';
 
 @Component({
   components: {
@@ -96,8 +96,6 @@ export default class AppInfo extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  
-  @Action('clearModpacks', ns("v2/modpacks")) clearModpack!: Function;
   
   platform = platform;
   localSettings: Settings = {} as Settings;
@@ -125,8 +123,7 @@ export default class AppInfo extends Vue {
   }
 
   public refreshCachePlz() {
-    this.clearModpack();
-    alertController.success('Your cache has been flushed and reset')
+    InstanceActions.clearInstanceCache()
   }
 
   public enableVerbose(value: boolean): void {
