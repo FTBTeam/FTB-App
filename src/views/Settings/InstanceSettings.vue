@@ -56,16 +56,34 @@
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
     <ram-slider class="mb-6" v-model="localSettings.memory" @change="saveMutated" />
-    
+
     <ftb-input
       label="Custom Arguments"
       :value="localSettings.jvmargs"
       v-model="localSettings.jvmargs"
       @blur="saveMutated"
     />
-    <small class="text-muted block mb-8 max-w-xl">
+    <small class="text-muted block mb-6 max-w-xl">
       These arguments are appended to your instances upon start, they are normal java arguments.
     </small>
+
+    <ftb-input
+      label="Shell arguments"
+      :value="localSettings.shellArgs"
+      v-model="localSettings.shellArgs"
+      placeholder="/usr/local/application-wrapper"
+      @blur="saveMutated"
+    />
+    <small class="text-muted block mb-6 max-w-xl">
+      These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing.
+    </small>
+    
+    <p class="mb-2">Startup preview</p>
+    <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
+    
+    <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.memory">
+      {{localSettings.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.memory.toString()) * 1024 * 1000))}} {{localSettings.jvmargs}}
+    </code>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Misc</p>
     <ftb-input
@@ -94,11 +112,12 @@ import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import {computeAspectRatio} from '@/utils';
+import {computeAspectRatio, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
 
 @Component({
+  methods: {prettyByteFormat},
   components: {
     RamSlider,
     UiToggle,

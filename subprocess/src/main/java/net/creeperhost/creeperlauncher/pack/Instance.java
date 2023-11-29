@@ -280,6 +280,8 @@ public class Instance {
 
         LOGGER.info("Adding start/shutdown tasks..");
         launcher.withStartTask(ctx -> {
+            ctx.shellArgs.addAll(MiscUtils.splitCommand(props.shellArgs));
+            
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
 

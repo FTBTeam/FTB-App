@@ -15,6 +15,7 @@ export type SaveJson = {
   instanceImage?: string;
   category: string;
   locked: boolean;
+  shellArgs: string;
 }
 
 /**

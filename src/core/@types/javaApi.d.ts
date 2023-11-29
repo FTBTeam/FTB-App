@@ -685,6 +685,7 @@ export interface InstanceJson {
     recMemory: number;
     memory: number;
     jvmArgs: string;
+    shellArgs: string;
     embeddedJre: boolean;
     jrePath: string;
     width: number;

@@ -453,6 +453,7 @@ public class InstanceLauncher {
                     .collect(Collectors.toList());
 
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
+            command.addAll(context.shellArgs);
             command.add(javaExecutable.toAbsolutePath().toString());
             command.addAll(jvmArgs);
             command.addAll(context.extraJVMArgs);
@@ -688,9 +689,9 @@ public class InstanceLauncher {
     }
 
     public static class LaunchContext {
-
         public final List<String> extraJVMArgs = new ArrayList<>();
         public final List<String> extraProgramArgs = new ArrayList<>();
+        public final List<String> shellArgs = new ArrayList<>();
     }
 
     public enum Phase {

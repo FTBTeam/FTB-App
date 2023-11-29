@@ -174,6 +174,27 @@
         @blur="saveSettings"
         class="flex-1"
       />
+      <small class="text-muted block mb-6 max-w-xl">
+        These arguments are appended to your instances upon start, they are normal java arguments.
+      </small>
+      
+      <ftb-input
+        label="Shell arguments"
+        :value="instanceSettings.shellArgs"
+        v-model="instanceSettings.shellArgs"
+        placeholder="/usr/local/application-wrapper"
+        @blur="saveSettings"
+      />
+      <small class="text-muted block mb-6 max-w-xl">
+        These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing.
+      </small>
+
+      <p class="mb-2">Startup preview</p>
+      <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
+
+      <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto select-text" v-if="instanceSettings.memory">
+        {{instanceSettings.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * 1024 * 1000))}} {{instanceSettings.jvmArgs}}
+      </code>
     </div>
 
     <modal
@@ -242,7 +263,7 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {resolveModloader, resolveModLoaderVersion, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
-import {computeAspectRatio} from '@/utils';
+import {computeAspectRatio, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 import {ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
@@ -251,7 +272,7 @@ import {ns} from '@/core/state/appState';
 import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 
 @Component({
-  methods: {resolveModLoaderVersion, resolveModloader},
+  methods: {prettyByteFormat, resolveModLoaderVersion, resolveModloader},
   components: {
     RamSlider,
     ModloaderSelect,
@@ -478,7 +499,8 @@ export default class ModpackSettings extends Vue {
       fullScreen: instance.fullscreen,
       releaseChannel: instance.releaseChannel,
       category: instance.category,
-      locked: instance.locked
+      locked: instance.locked,
+      shellArgs: instance.shellArgs,
     }
   }
   

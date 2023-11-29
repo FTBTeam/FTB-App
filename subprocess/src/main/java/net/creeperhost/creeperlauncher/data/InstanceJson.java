@@ -39,6 +39,7 @@ public class InstanceJson {
     public int memory = Integer.parseInt(Settings.settings.getOrDefault("memory", "2048"));
 
     public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
+    public String shellArgs = Settings.settings.getOrDefault("shellArgs", "");
     public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
@@ -106,6 +107,7 @@ public class InstanceJson {
         category = other.category;
         releaseChannel = other.releaseChannel;
         locked = other.locked;
+        shellArgs = other.shellArgs;
     }
 
     // Copy instance.
