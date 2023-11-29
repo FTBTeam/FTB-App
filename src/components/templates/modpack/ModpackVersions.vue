@@ -23,7 +23,6 @@
           </ui-button>
         </div>
       </div>
-      <!--      <div class="updated">{{ version.updated | momentFromNow }}</div>-->
       <div class="body-contents flex-1 select-text">
         <div v-if="loading && !isCursePack" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
         <div

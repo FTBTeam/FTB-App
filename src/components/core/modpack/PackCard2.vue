@@ -26,6 +26,7 @@
           <div class="install-progress" v-if="isInstalling && currentInstall">
             <div class="percent">{{currentInstall.progress}}<span>%</span></div>
             <b>{{currentInstall.stage ?? "??"}}</b>
+            <small class="text-center opacity-75" v-if="currentInstall.stage === 'Mod loader'">This may take a minute</small>
             <transition name="transition-fade" duration="250">
               <div class="files text-sm" v-if="currentInstall.speed">
                 <font-awesome-icon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
