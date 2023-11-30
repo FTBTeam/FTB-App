@@ -99,6 +99,29 @@
       >Changing your instance location with instances installed will cause your instances to be moved to the new
       location automatically.</small
     >
+    
+    <modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
+      <template v-if="!instanceMoveModalComplete">
+        <div class="wysiwyg mb-6">
+          <p>This may take a while, please wait.</p>
+
+          <p>Moving <code>{{instanceMoveLocations.old}}</code><br/>To <code>{{instanceMoveLocations.new}}</code></p>
+
+          <p>Stage: <code>{{instanceMoveModalStage}}</code></p>
+        </div>
+
+        <progress-bar :infinite="true" />
+      </template>
+      <div class="wysiwyg" v-else>
+        <p>Instances moved successfully 🎉</p>
+      </div>
+      
+      <template #footer v-if="instanceMoveModalComplete">
+        <div class="flex justify-end">
+          <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
+        </div>
+      </template>
+    </modal>
   </div>
 </template>
 
@@ -111,15 +134,22 @@ import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import {computeAspectRatio, prettyByteFormat} from '@/utils';
+import {computeAspectRatio, emitter, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {dialogsController} from '@/core/controllers/dialogsController';
+import {MoveInstancesHandlerReply, OperationProgressUpdateData} from '@/core/@types/javaApi';
+import {toTitleCase} from '@/utils/helpers/stringHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import {InstanceActions} from '@/core/actions/instanceActions';
 
 @Component({
   methods: {prettyByteFormat},
   components: {
+    ProgressBar,
+    UiButton,
     RamSlider,
     UiToggle,
     Selection2
@@ -136,6 +166,11 @@ export default class InstanceSettings extends Vue {
   loadedSettings = false;
 
   resolutionId = "";
+  
+  instanceMoveModalShow = false;
+  instanceMoveModalStage = "Preparing";
+  instanceMoveModalComplete = false;
+  instanceMoveLocations = {old: "", new: ""};
   
   async created() {
     await this.loadSettings();
@@ -196,9 +231,58 @@ export default class InstanceSettings extends Vue {
       return;
     }
     
-    await sendMessage("moveInstances", {
+    const result = await sendMessage("moveInstances", {
       newLocation: location
     })
+    
+    if (result.state === "error") {
+      return alertController.error(result.error);
+    }
+    
+    if (result.state === "processing") {
+      this.instanceMoveModalShow = true;
+      this.instanceMoveModalStage = "Preparing";
+      this.instanceMoveModalComplete = false;
+      this.instanceMoveLocations = {
+        old: this.localSettings.instanceLocation,
+        new: location
+      }
+    }
+    
+    const migrationResult = await new Promise((res) => {
+      const onMoveProgress = (data: any) => {
+        if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
+        console.log("crap", data);
+        if (data.type === "operationUpdate") {
+          const typedData = data as OperationProgressUpdateData;
+          if (typedData.stage === "FINISHED") {
+            // It's done
+          } else {
+            this.instanceMoveModalStage = toTitleCase(typedData.stage.toString().replaceAll("_", " "));
+          }
+        } else {
+          const typedData = data as MoveInstancesHandlerReply;
+          if (typedData.state !== "success") {
+            // It's broken
+            this.instanceMoveModalShow = false;
+            alertController.error(typedData.error);
+            emitter.off("ws.message", onMoveProgress);
+            res(false);
+          } else {
+            this.instanceMoveModalComplete = true;
+            emitter.off("ws.message", onMoveProgress);
+            res(true);
+          }
+        }
+      }
+      
+      emitter.on("ws.message", onMoveProgress);
+    })
+    
+    if (migrationResult) {
+      this.localSettings.instanceLocation = location;
+      InstanceActions.clearInstanceCache(false)
+    }
   }
 
   get resolutionList() {

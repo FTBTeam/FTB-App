@@ -4,6 +4,7 @@ import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
@@ -36,45 +37,45 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
         // Very defensive checks
         if (newLocation == null) {
             LOGGER.warn("New location is null");
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "New location can not be unset"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location can not be unset"));
             return;
         }
         
         if (newLocation.equals(currentLocation)) {
             LOGGER.warn("New location is the same as the current location");
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "New location can not be the same as the current location"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location can not be the same as the current location"));
             return;
         }
         
         if (Files.notExists(newLocation)) {
             LOGGER.warn("New location {} does not exist", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "New location does not exist"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location does not exist"));
             return;
         }
         
         if (!Files.isDirectory(newLocation)) {
             LOGGER.warn("New location {} is not a directory", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "New location is not a directory"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is not a directory"));
             return;
         }
         
         // Ensure the new location is not a subdirectory of the current location
         if (newLocation.startsWith(currentLocation)) {
             LOGGER.warn("New location {} is a subdirectory of the current location {}", newLocation, currentLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "New location is a subdirectory of the current location"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is a subdirectory of the current location"));
             return;
         }
         
         // Also, don't allow the data folder
         if (newLocation.equals(Constants.getDataDir())) {
             LOGGER.warn("New location {} is the data folder", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "New location can not be the data folder"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location can not be the data folder"));
             return;
         }
         
         if (!Files.isWritable(newLocation)) {
             LOGGER.warn("New location {} is not writable", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "New location is not writable"));
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is not writable"));
             return;
         }
 
@@ -91,7 +92,11 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
      * TODO: markers should allow us to resume a move if the app crashes or something
      */
     private void moveInstances(Data data, Path currentLocation, Path newLocation) {
-        var tracker = new OperationProgressTracker("instance-move", Map.of());
+        var tracker = new OperationProgressTracker("instance-move", Map.of(
+            "currentLocation", currentLocation.toString(),
+            "newLocation", newLocation.toString()
+        ));
+        
         CompletableFuture.runAsync(() -> {
             LOGGER.info("Progressing: moving instances from {} to {}", currentLocation, newLocation);
             tracker.nextStage(MoveStage.COPYING);
@@ -181,22 +186,25 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             // Not really a fatal error, but we should probably let the user know
             if (!failedRemovals.isEmpty()) {
                 LOGGER.warn("Failed to remove some instance directories, please remove them manually. {}", failedRemovals);
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to remove some instance directories, please remove them manually. " + failedRemovals));
+                Settings.webSocketAPI.sendMessage(new Reply(data, "Failed to remove some instance directories, please remove them manually. " + failedRemovals));
             }
         }).whenComplete((aVoid, throwable) -> {
+            tracker.finished();
+            
             if (throwable != null) {
                 LOGGER.error("Failed to move instances from {} to {}", currentLocation, newLocation, throwable);
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, throwable.getMessage()));
+                Settings.webSocketAPI.sendMessage(new Reply(data, throwable.getMessage()));
             } else {
                 LOGGER.info("Successfully completed moving instances from {} to {}", currentLocation, newLocation);
                 
-                tracker.finished();
                 Settings.settings.remove("instanceLocation");
                 Settings.settings.put("instanceLocation", newLocation.toAbsolutePath().toString());
                 Settings.saveSettings();
                 CreeperLauncher.localCache = new LocalCache(newLocation.resolve(".localCache"));
+                Instances.refreshInstances();
                 Path oldCache = currentLocation.resolve(".localCache");
                 oldCache.toFile().deleteOnExit();
+                Settings.webSocketAPI.sendMessage(new Reply(data, "success", ""));
             }
         });
     }
@@ -214,18 +222,19 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
     
     public static class Reply extends Data {
         public String state;
-        public String error = "";
+        public String error;
         
         public Reply(Data data, String state, String error) {
             super();
+            this.type = "moveInstancesReply";
             this.requestId = data.requestId;
             this.newLocation = data.newLocation;
             this.state = state;
             this.error = error;
         }
 
-        public Reply(Data data, boolean success, String error) {
-            this(data, success ? "success" : "error", error);
+        public Reply(Data data, String error) {
+            this(data, "error", error);
         }
         
         public Reply(Data data) {
