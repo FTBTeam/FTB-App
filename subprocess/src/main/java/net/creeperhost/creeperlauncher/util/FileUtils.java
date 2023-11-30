@@ -354,4 +354,20 @@ public class FileUtils
             return "Failed to get ACL.\n" + ExceptionUtils.getMessage(ex);
         }
     }
+
+    /**
+     * Checks if a give path is writable by the current process (This app)
+     * 
+     * @param path The path to check
+     * @return If the path is writable by the current process.
+     */
+    public static boolean pathWritableByApp(Path path) {
+        try {
+            Files.createFile(path);
+            Files.delete(path);
+            return true;
+        } catch (Throwable ex) {
+            return false;
+        }
+    }
 }

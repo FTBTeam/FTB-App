@@ -78,6 +78,14 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             Settings.webSocketAPI.sendMessage(new Reply(data, "New location is not writable"));
             return;
         }
+        
+        // Finally ensure the app can write to the new location
+        // This is super overkill, but it's better to be safe than sorry
+        if (!net.creeperhost.creeperlauncher.util.FileUtils.pathWritableByApp(newLocation)) {
+            LOGGER.warn("New location {} is not writable by the app", newLocation);
+            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is not writable by the FTB App"));
+            return;
+        }
 
         LOGGER.info("New location {} is valid, move started", newLocation);
         
