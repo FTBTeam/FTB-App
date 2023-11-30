@@ -63,6 +63,8 @@ import {
   LaunchInstanceDataReply,
   MessageClientData,
   ModalCallbackData,
+  MoveInstancesHandlerData,
+  MoveInstancesHandlerReply,
   PingLauncherData,
   PollCloudInstancesData,
   PollCloudInstancesDataReply,
@@ -159,7 +161,8 @@ export type MessageType =
   "storage.get-all" |
   "webRequest" |
   "openDebugTools" |
-  "videoCache"
+  "videoCache" |
+  "moveInstances"
 
 export type EmptyMessageResponse = {}
 
@@ -392,5 +395,9 @@ export type MessagePayload = {
   "videoCache": {
     input: VideoCacheHandlerData,
     output: VideoCacheHandlerReply
+  },
+  "moveInstances": {
+    input: MoveInstancesHandlerData
+    output: MoveInstancesHandlerReply
   }
 }

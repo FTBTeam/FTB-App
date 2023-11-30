@@ -112,8 +112,6 @@ public class CreeperLauncher {
 
     private static boolean warnedDevelop = false;
 
-    public static boolean verbose = false;
-
     public static DebugTools DEBUG_TOOLS = DebugTools.NONE;
 
     public CreeperLauncher() {
@@ -274,78 +272,6 @@ public class CreeperLauncher {
     }
 
     private static void registerSettingsListeners(String[] args) {
-        SettingsChangeUtil.registerChangeHandler("instanceLocation", (key, value) -> {
-            OpenModalData.openModal("Confirmation", "Are you sure you wish to move your instances to this location? <br tag='haha line break go brr'> All content in your current instance location will be moved, and if content exists with the same name in the destination it will be replaced.", List.of(
-                new OpenModalData.ModalButton("Yes", "success", () -> {
-                    OpenModalData.openModal("Please wait", "Your instances are now moving", List.of());
-                    Path currentInstanceLoc = Path.of(Settings.settings.getOrDefault(key, Constants.INSTANCES_FOLDER_LOC.toAbsolutePath().toString()));
-                    List<Path> subFiles = FileUtils.listDir(currentInstanceLoc);
-
-                    if (value == null || value.isEmpty()) {
-                        OpenModalData.openModal("Failed", "Instance Location can not be blank", List.of(
-                            new OpenModalData.ModalButton("OK", "success", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-                        ));
-                        return;
-                    }
-
-                    Path newInstanceDir = Path.of(value);
-                    boolean failed = false;
-                    HashMap<Pair<Path, Path>, IOException> lastError = new HashMap<>();
-                    LOGGER.info("Moving instances from {} to {}", currentInstanceLoc, value);
-                    if (subFiles != null) {
-                        for (Path file : subFiles) {
-                            String fileName = file.getFileName().toString();
-                            if (fileName.length() == 36) {
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    UUID.fromString(fileName);
-                                } catch (Throwable ignored) {
-                                    continue;
-                                }
-                            } else if (!fileName.equals(".localCache")) {
-                                continue;
-                            }
-                            Path dstPath = newInstanceDir.resolve(fileName);
-                            lastError = FileUtils.move(file, dstPath, true, true);
-                            failed = !lastError.isEmpty() && !fileName.equals(".localCache");
-                            if (failed) break;
-                            LOGGER.info("Moved {} to {} successfully", file, dstPath);
-                        }
-                    }
-                    if (failed) {
-                        LOGGER.error("Error occurred whilst migrating instances to the new location. Errors follow.");
-                        lastError.forEach((moveKey, moveValue) -> {
-                            LOGGER.error("Moving {} to {} failed:", moveKey.getLeft(), moveKey.getRight(), moveValue);
-                        });
-                        LOGGER.error("Moving any successful instance moves back");
-                        List<Path> newInstanceDirFiles = FileUtils.listDir(newInstanceDir);
-                        if (newInstanceDirFiles != null) {
-                            for (Path file : newInstanceDirFiles) {
-                                FileUtils.move(file, currentInstanceLoc.resolve(file.getFileName()));
-                            }
-                        }
-                        OpenModalData.openModal("Error", "Unable to move instances. Please ensure you have permission to create files and folders in this location.", List.of(
-                            new OpenModalData.ModalButton("Ok", "danger", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-                        ));
-                    } else {
-                        Path oldCache = Settings.getInstancesDir().resolve(".localCache");
-                        oldCache.toFile().deleteOnExit();
-                        Settings.settings.remove("instanceLocation");
-                        Settings.settings.put("instanceLocation", value);
-                        Settings.saveSettings();
-                        Instances.refreshInstances();
-                        localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
-                        OpenModalData.openModal("Success", "Moved instance folder location successfully", List.of(
-                            new OpenModalData.ModalButton("Yay!", "success", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-                        ));
-                    }
-                }),
-                new OpenModalData.ModalButton("No", "danger", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-            ));
-            return false;
-        });
-
-
         SettingsChangeUtil.registerChangeHandler("enablePreview", (key, value) -> {
             if (Settings.settings.getOrDefault("enablePreview", "").isEmpty() && value.equals("false")) return true;
             if (Constants.BRANCH.equals("release") || Constants.BRANCH.equals("preview")) {
@@ -367,11 +293,6 @@ public class CreeperLauncher {
                 }
                 return false;
             }
-        });
-
-        SettingsChangeUtil.registerChangeHandler("verbose", (key, value) -> {
-            verbose = value.equals("true");
-            return true;
         });
 
         SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());

@@ -7,7 +7,7 @@
             <div class="title">{{ title }}</div>
             <div class="subtitle" v-if="subTitle">{{ subTitle }}</div>
           </div>
-          <div class="modal-closer" v-if="!permanent" @click="() => close(false)">
+          <div class="modal-closer" v-if="!permanent && hasCloser" @click="() => close(false)">
             <font-awesome-icon class="closer" icon="times" />
           </div>
         </div>

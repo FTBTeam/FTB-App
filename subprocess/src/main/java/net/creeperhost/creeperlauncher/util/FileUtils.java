@@ -292,7 +292,6 @@ public class FileUtils
 
     public static void move(Path from, Path to, boolean replaceExisting) throws IOException {
         if (Files.isDirectory(from)) {
-            System.out.println(to);
             if (!Files.isDirectory(to)) throw new IllegalArgumentException("Requested to move directory into file.");
             try (Stream<Path> children = Files.list(from)) {
                 children.filter(e -> e != from)

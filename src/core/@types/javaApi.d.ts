@@ -522,6 +522,15 @@ export interface SugaredInstanceJson extends InstanceJson {
     rootDirs: string[];
 }
 
+export interface MoveInstancesHandlerData extends BaseData {
+    newLocation: string;
+}
+
+export interface MoveInstancesHandlerReply extends MoveInstancesHandlerData {
+    state: string;
+    error: string;
+}
+
 export interface InstanceDeleteBackupHandlerReply extends InstanceDeleteBackupHandlerRequest {
     message: string;
     success: boolean;

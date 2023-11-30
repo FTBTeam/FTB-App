@@ -25,7 +25,7 @@ export class InstanceActions {
     await safeNavigate(RouterNames.ROOT_LOCAL_PACK, {uuid: instance.uuid}, {quickNav: ModpackPageTabs.SETTINGS})
   }
   
-  static clearInstanceCache() {
+  static clearInstanceCache(announce = true) {
     store.dispatch("v2/modpacks/clearModpacks", undefined, {
       root: true
     });
@@ -34,6 +34,8 @@ export class InstanceActions {
       root: true
     }); // Reload instances
     
-    alertController.success("Cache cleared");
+    if (announce) {
+      alertController.success("Cache cleared");
+    }
   }
 }
