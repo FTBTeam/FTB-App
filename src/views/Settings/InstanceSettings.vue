@@ -90,11 +90,10 @@
       label="Instance Location"
       :value="localSettings.instanceLocation"
       :disabled="true"
-      v-model="localSettings.instanceLocation"
       button="true"
       buttonText="Browse"
       buttonColor="primary"
-      :buttonClick="browseForFolder"
+      :buttonClick="moveInstances"
     />
     <small class="text-muted block max-w-xl"
       >Changing your instance location with instances installed will cause your instances to be moved to the new
@@ -115,6 +114,8 @@ import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import {computeAspectRatio, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {dialogsController} from '@/core/controllers/dialogsController';
 
 @Component({
   methods: {prettyByteFormat},
@@ -164,18 +165,7 @@ export default class InstanceSettings extends Vue {
     this.saveSettings(this.localSettings);
     this.lastSettings = { ...this.localSettings };
   }
-
-  browseForFolder() {
-    platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
-      if (path == null) {
-        return;
-      }
-
-      this.localSettings.instanceLocation = path;
-      this.saveSettings(this.localSettings);
-    });
-  }
-
+  
   selectResolution(id: string) {
     const selected = this.settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
     if (!selected) {
@@ -185,6 +175,30 @@ export default class InstanceSettings extends Vue {
     this.localSettings.width = selected.width;
     this.localSettings.height = selected.height;
     this.saveMutated();
+  }
+
+  async moveInstances() {
+    const location: string | null = await new Promise(resolve => {
+      platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
+        if (path == null) {
+          return;
+        }
+
+        resolve(path);
+      });
+    })
+
+    if (!location) {
+      return;
+    }
+    
+    if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
+      return;
+    }
+    
+    await sendMessage("moveInstances", {
+      newLocation: location
+    })
   }
 
   get resolutionList() {
