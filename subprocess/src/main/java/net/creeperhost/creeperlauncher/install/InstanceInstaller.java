@@ -458,7 +458,8 @@ public class InstanceInstaller extends InstanceOperation {
                 newOverrides.add(newOverride);
             }
             
-            if (file.getUrl().equals(IGNORE_SNOWFLAKE_FILE_URL)) {
+            // Last line of defense against zero byte files.
+            if (file.getUrl().equals(IGNORE_SNOWFLAKE_FILE_URL) || file.getSize() == 0) {
                 filesToDownload.add(filePath);
                 tasks.add(new DlTask(0, new EmptyFileDlTask(filePath)));
                 continue;
