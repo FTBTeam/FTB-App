@@ -106,52 +106,57 @@
       </div>
 
       <div class="pack-overview" v-if="activeTab === tabs.OVERVIEW">
-        <div class="stats">
-          <template v-if="isInstalled">
-            <div class="stat">
-              <div class="name">Last played</div>
-              <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
-            </div>
-            <div class="stat" v-if="instance.totalPlayTime !== 0">
-              <div class="name">Total Playtime</div>
-              <div class="value">
+        <div class="stats-and-links">
+          <div class="stats">
+            <template v-if="isInstalled">
+              <div class="stat" v-if="instance.lastPlayed !== 0">
+                <div class="name">Last played</div>
+                <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
+              </div>
+              <div class="stat" v-if="instance.totalPlayTime !== 0">
+                <div class="name">Total Playtime</div>
+                <div class="value">
                 <span v-for="(unit, index) in computeTime(instance.totalPlayTime)" :key="index">
                   <template v-if="unit !== ''"> {{ unit }} </template>
                 </span>
+                </div>
               </div>
-            </div>
-            <div class="stat">
-              <div class="name">Version</div>
-              <div class="value">{{ instance.version }}</div>
-            </div>
-          </template>
-          <template v-else-if="packInstance">
-            <div class="stat">
-              <div class="name">Installs</div>
-              <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
-            </div>
+            </template>
+            <template v-else-if="packInstance">
+              <div class="stat">
+                <div class="name">Installs</div>
+                <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
+              </div>
 
-            <div class="stat" v-if="packInstance.type !== 'Curseforge'">
-              <div class="name">Plays</div>
-              <div class="value font-sans">{{ packInstance.plays | formatNumber }}</div>
-            </div>
-          </template>
+              <div class="stat" v-if="packInstance.type !== 'Curseforge'">
+                <div class="name">Plays</div>
+                <div class="value font-sans">{{ packInstance.plays | formatNumber }}</div>
+              </div>
+            </template>
 
-          <div
-            class="stat"
-            v-if="packInstance && packInstance.released !== 'unknown'"
-            :title="(packInstance.released || packInstance.updated) | dayjsFull"
-          >
-            <div class="name">Released</div>
-            <div class="value font-sans">{{ (packInstance.released || packInstance.updated) | dayjsFromNow }}</div>
+            <div
+              class="stat"
+              v-if="(!isInstalled || (instance && !instance.lastPlayed)) && packInstance && packInstance.released !== 'unknown'"
+              :title="(packInstance.released || packInstance.updated) | dayjsFull"
+            >
+              <div class="name">Released</div>
+              <div class="value font-sans">{{ (packInstance.released || packInstance.updated) | dayjsFromNow }}</div>
+            </div>
+            <div
+              class="stat"
+              v-if="(!isInstalled || (instance && !instance.lastPlayed)) && packInstance && packInstance.versions && packInstance.versions[0]"
+              :title="packInstance.versions[0].updated | dayjsFull"
+            >
+              <div class="name">Updated</div>
+              <div class="value font-sans">{{ packInstance.versions[0].updated | dayjsFromNow }}</div>
+            </div>
           </div>
-          <div
-            class="stat"
-            v-if="packInstance && packInstance.versions && packInstance.versions[0]"
-            :title="packInstance.versions[0].updated | dayjsFull"
-          >
-            <div class="name">Updated</div>
-            <div class="value font-sans">{{ packInstance.versions[0].updated | dayjsFromNow }}</div>
+          
+          <div class="links" v-if="packInstance && instance && isInstalled">
+            <a :href="issueTracker" @click="openExternal" class="link" v-if="issueTracker">
+              <font-awesome-icon :icon="['fab', 'github']" />
+              Report issue
+            </a>
           </div>
         </div>
 
@@ -231,6 +236,7 @@ import {ns} from '@/core/state/appState';
 import {InstallStatus} from '@/core/controllers/InstanceInstallController';
 import {Getter} from 'vuex-class';
 import {ModLoaderUpdateState} from '@/core/@types/states/appState';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 
 @Component({
   name: 'pack-body',
@@ -322,6 +328,16 @@ export default class PackBody extends Vue {
   
   get modloaderUpdating() {
     return this.currentModloaderUpdate?.some(e => e.instanceId === this.instance.uuid) ?? false;
+  }
+  
+  get issueTracker() {
+    if (!this.instance) return '';
+    
+    if (typeIdToProvider(this.instance.packType) === "curseforge" && this.packInstance) {
+      return this.packInstance.links.find(e => e.type === "issues")?.link ?? '';
+    } 
+    
+    return "https://go.ftb.team/support-modpack"
   }
 }
 </script>
@@ -424,9 +440,32 @@ export default class PackBody extends Vue {
 }
 
 .pack-overview {
+  .stats-and-links {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .links {
+      .link {
+        display: flex;
+        align-items: center;
+        color: rgba(white, .7);
+        transition: color .25s ease-in-out;
+        
+        &:hover {
+          color: white;
+        }
+        
+        svg {
+          margin-right: .5rem;
+        }
+      }
+    }
+  }
+  
   .stats {
     display: flex;
-    margin-bottom: 1.5rem;
 
     .stat {
       margin-right: 2rem;

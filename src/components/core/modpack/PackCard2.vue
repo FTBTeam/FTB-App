@@ -182,6 +182,13 @@ export default class PackCard2 extends PackCardCommon {
         const splitPackName = packName[0].split('-')[0];
         version = version.replace(new RegExp(splitPackName, 'i'), '');
       }
+
+      version = version.replace(".zip", "").trim()
+      if (version.startsWith("-")) {
+        version = version.substring(1);
+      } else if (version.endsWith("-")) {
+        version = version.substring(0, version.length - 1);
+      }
       
       if (version.length > 16) {
         // Return the last 10 characters
