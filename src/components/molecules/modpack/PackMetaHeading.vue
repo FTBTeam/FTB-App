@@ -12,7 +12,7 @@
     >
       Running {{ versionType }} version
     </div>
-
+    
     <div class="meta" v-if="packInfo && !isVanilla">
       <div
         class="origin icon ftb"
@@ -48,7 +48,7 @@ import {Getter} from 'vuex-class';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import store from '@/modules/store';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {resolveModloader, sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 
 type PackInfo = {
@@ -56,6 +56,7 @@ type PackInfo = {
   modloader: string;
   provider: PackProviders;
   isImport: boolean;
+  source: 'remote' | 'local';
 }
 
 @Component({
@@ -86,6 +87,7 @@ export default class PackMetaHeading extends Vue {
       modloader: this.modloader,
       provider: typeIdToProvider(instance.packType ?? 0),
       isImport: instance.isImport ?? false,
+      source: 'local'
     }
   }
 
@@ -93,27 +95,14 @@ export default class PackMetaHeading extends Vue {
     return {
       id: apiPack.id,
       modloader: this.modloader,
-      provider: apiPack.provider as PackProviders,
+      provider: sourceProviderToProvider(apiPack.provider),
       isImport: false,
+      source: 'remote'
     }
   }
   
   get modloader() {
-    if (this.instance) return this.loaderFromInstance();
-    if (this.apiPack) return this.loaderFromApiPack();
-    return 'vanilla';
-  }
-  
-  loaderFromInstance() {
-    if (this.instance?.modLoader.includes('forge') && !this.instance?.modLoader.includes('neoforge')) {
-      return 'forge'
-    } else if (this.instance?.modLoader.includes('fabric')) {
-      return 'fabric'
-    } else if (this.instance?.modLoader.includes('neoforge')) {
-      return 'neoforge'
-    } else {
-      return 'vanilla'
-    }
+    return resolveModloader((this.instance || this.apiPack) ?? null).toLowerCase()
   }
 
   loaderFromApiPack() {

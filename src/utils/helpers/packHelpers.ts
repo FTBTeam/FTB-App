@@ -138,6 +138,14 @@ export function typeIdToProvider(id: number): PackProviders {
   }
 }
 
+export function sourceProviderToProvider(source: string): PackProviders {
+  switch (source) {
+    case "curseforge": return "curseforge";
+    case "modpacks.ch": return "modpacksch";
+    default: return "modpacksch";
+  }
+}
+
 /**
  * Checks if an instance has an update available based on the users update channel. If the instance does not have its
  * own release channel set, it will use the apps default channel. If that channel is not available, it will use release.

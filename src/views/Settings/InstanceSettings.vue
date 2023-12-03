@@ -59,7 +59,7 @@
 
     <ftb-input
       label="Custom Arguments"
-      :value="localSettings.jvmargs"
+      placeholder="-TestArgument=120"
       v-model="localSettings.jvmargs"
       @blur="saveMutated"
     />
