@@ -38,15 +38,11 @@
       </nav>
       <nav>
         <div class="heading">Info</div>
-        <router-link :to="{ name: RouterNames.SETTINGS_INFO }" class="item app-info-item">
-          <font-awesome-icon icon="info" />
-          <span>App info</span>
-        </router-link>
 
-        <!--        <div @click="changesHistoryOpen = true" class="item app-info-item">-->
-        <!--          <font-awesome-icon icon="info" />-->
-        <!--          <span>Changelogs</span>-->
-        <!--        </div>-->
+        <div @click="changesHistoryOpen = true" class="item app-info-item">
+          <font-awesome-icon icon="info" />
+          <span>Changelogs</span>
+        </div>
       </nav>
     </main>
 
@@ -82,12 +78,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { State } from 'vuex-class';
-import { AuthState } from '@/modules/auth/types';
+import {State} from 'vuex-class';
+import {AuthState} from '@/modules/auth/types';
 import ChangelogHistory from '@/components/templates/changelogs/ChangelogHistory.vue';
-import { RouterNames } from '@/router';
+import {RouterNames} from '@/router';
 
 @Component({
   components: { ChangelogHistory },

@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col ">
-    <router-link :to="{ name: 'app-info' }">
+    <router-link :to="{ name: 'app-settings' }">
       <ui-button icon="arrow-left" type="success" :wider="true">Back</ui-button>
     </router-link>
     <div class="flex flex-col mt-4">

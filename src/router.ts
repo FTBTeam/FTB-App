@@ -19,7 +19,6 @@ export enum RouterNames {
   SETTINGS_DOWNLOAD = 'download-settings',
   SETTINGS_APP = 'app-settings',
   SETTINGS_INTEGRATION = 'integrations',
-  SETTINGS_INFO = 'app-info',
   SETTINGS_APP_LICENSE = 'license',
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
@@ -77,11 +76,6 @@ export default new Router({
               path: 'integrations',
               name: RouterNames.SETTINGS_INTEGRATION,
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Integrations.vue'),
-            },
-            {
-              path: 'app-info',
-              name: RouterNames.SETTINGS_INFO,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppInfo.vue'),
             },
             {
               path: 'app-info/license',

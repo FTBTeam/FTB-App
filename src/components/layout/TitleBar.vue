@@ -110,7 +110,7 @@ export default class TitleBar extends Vue {
   }
 
   goToSettings() {
-    safeNavigate(RouterNames.SETTINGS_INFO)
+    safeNavigate(RouterNames.SETTINGS_APP)
   }
   
   get systemBarDisabled() {
