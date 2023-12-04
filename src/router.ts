@@ -22,6 +22,7 @@ export enum RouterNames {
   SETTINGS_APP_LICENSE = 'license',
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
+  SETTINGS_CHANGELOGS = 'changelogs',
   // CHAT = 'chat',
   SUPPORT = 'support-index',
 }
@@ -92,6 +93,11 @@ export default new Router({
               name: RouterNames.SETTINGS_PROXY,
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/ProxySettings.vue'),
             },
+            {
+              path: 'changelogs',
+              name: RouterNames.SETTINGS_CHANGELOGS,
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Changelogs.vue'),
+            }
           ],
         },
         {

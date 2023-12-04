@@ -92,10 +92,10 @@
       <ui-button size="small" type="info" icon="folder-open" @click="openFolder('logs')" :working="working">Logs</ui-button>
     </div>
 
-    <div class="section logs mb-8 sm:flex items-center">
+    <div class="section logs mb-6 sm:flex items-center">
       <div class="desc flex-1">
         <p class="font-bold mb-1">Create app logs</p>
-        <p class="text-muted mb-2 pr-10">
+        <p class="text-muted pr-10">
           If you're having an issue with the app, you can use this to upload the latest logs from the App. You can the
           provide these logs to our App team to investigate.
         </p>
@@ -103,7 +103,7 @@
       <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="upload">Upload App Logs</ui-button>
     </div>
 
-    <div class="section cache mb-8 sm:flex items-center">
+    <div class="section cache mb-6 sm:flex items-center">
       <div class="desc flex-1">
         <p class="font-bold mb-1">Manage cache</p>
         <p class="text-muted pr-10">

@@ -8,17 +8,10 @@
     class="wysiwyg select-text"
     @closed="changelogData = null"
   >
-    <img :src="headingImage" class="heading-image" alt="Heading image" v-if="headingImage" />
-    <div v-if="changelogData.header" v-html="parseMarkdown(changelogData.header)" />
-
-    <template v-for="(heading, key) in headings">
-      <template v-if="changelogData.changes[key]">
-        <h3 :style="{ color: heading.color, 'word-spacing': '.5rem' }">{{ heading.heading | title }}</h3>
-        <div v-html="parseMarkdown(changelogData.changes[key].map((e) => `- ${e}`).join('\n'))" />
-      </template>
-    </template>
-    
-    <p class="mt-4" v-if="changelogData.footer" v-html="parseMarkdown(changelogData.footer)" />
+    <changelog-entry v-if="changelogData" :changelog="changelogData" />
+    <message v-else type="danger">
+      Unable to find any changelog data... 
+    </message>
   </modal>
 </template>
 
@@ -26,13 +19,14 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import {State} from 'vuex-class';
-import {consoleBadButNoLogger, parseMarkdown} from '@/utils/helpers';
+import {consoleBadButNoLogger} from '@/utils/helpers';
 import platform from '@/utils/interface/electron-overwolf';
 import {SocketState} from '@/modules/websocket/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {constants} from '@/core/constants';
+import ChangelogEntry from '@/components/templates/changelogs/ChangelogEntry.vue';
 
-export type ChangelogEntry = {
+export type ChangelogData = {
   version: string;
   title: string;
   header: string;
@@ -51,32 +45,13 @@ export type ChangelogEntry = {
   };
 };
 
-@Component
+@Component({
+  components: {ChangelogEntry}
+})
 export default class Changelog extends Vue {
   @State('websocket') public websockets!: SocketState;
 
-  changelogData: ChangelogEntry | null = null;
-  parseMarkdown = parseMarkdown;
-
-  headings = {
-    added: {
-      heading: '🎉 Added',
-      color: '#53cb6a',
-    },
-    changed: {
-      heading: '🔧 Changed',
-      color: '#fcae21',
-    },
-    fixed: {
-      heading: '🐞 Fixed',
-      color: '#ff5e5e',
-    },
-    removed: {
-      heading: '🗑 Removed',
-      color: 'inherit',
-    },
-  };
-
+  changelogData: ChangelogData | null = null;
   checkIntervalRef: number | null = null;
   
   mounted() {
@@ -100,6 +75,8 @@ export default class Changelog extends Vue {
       key: 'lastVersion'
     })
 
+    const latestVersion = this.getCurrentVersion();
+    
     // No held last version meaning we should find a changelog
     if (!data.response || data.response !== this.getCurrentVersion()) {
       // Get the available versions
@@ -109,7 +86,7 @@ export default class Changelog extends Vue {
 
         if (changelogs?.versions?.includes(this.getCurrentVersion())) {
           const changelogReq = await fetch(
-            `${constants.metaApi}/v1/changelogs/app/${this.getCurrentVersion()}`,
+            `${constants.metaApi}/v1/changelogs/app/${latestVersion}`,
           );
 
           this.changelogData = await changelogReq.json();
@@ -117,7 +94,7 @@ export default class Changelog extends Vue {
           // Attempt to update the lastVersion to prevent the modal showing again
           await sendMessage("storage.put", {
             key: 'lastVersion',
-            value: this.getCurrentVersion(),
+            value: latestVersion,
           })
         }
       } catch (e) {
@@ -128,11 +105,6 @@ export default class Changelog extends Vue {
     }
   }
 
-  get headingImage() {
-    const image = this.changelogData?.media?.find((e) => e.heading && e.type === 'image');
-    return image ? image.source : null;
-  }
-
   // Some magic to get the current version
   getCurrentVersion() {
     return platform.get.config.publicVersion;
@@ -141,9 +113,5 @@ export default class Changelog extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.heading-image {
-  display: block;
-  margin-bottom: 1rem;
-  border-radius: 5px;
-}
+
 </style>

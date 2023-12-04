@@ -39,10 +39,10 @@
       <nav>
         <div class="heading">Info</div>
 
-        <div @click="changesHistoryOpen = true" class="item app-info-item">
+        <router-link :to="{ name: RouterNames.SETTINGS_CHANGELOGS }" class="item app-info-item">
           <font-awesome-icon icon="info" />
           <span>Changelogs</span>
-        </div>
+        </router-link>
       </nav>
     </main>
 
@@ -64,16 +64,6 @@
         </template>
       </popover>
     </div>
-
-    <!--    <modal-->
-    <!--      :open="changesHistoryOpen"-->
-    <!--      title="Changelogs"-->
-    <!--      subTitle="Checkout the changes we've been making!"-->
-    <!--      size="medium"-->
-    <!--      @closed="changesHistoryOpen = false"-->
-    <!--    >-->
-    <!--      <changelog-history v-if="changesHistoryOpen" />-->
-    <!--    </modal>-->
   </div>
 </template>
 
@@ -82,12 +72,9 @@ import {Component, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {State} from 'vuex-class';
 import {AuthState} from '@/modules/auth/types';
-import ChangelogHistory from '@/components/templates/changelogs/ChangelogHistory.vue';
 import {RouterNames} from '@/router';
 
-@Component({
-  components: { ChangelogHistory },
-})
+@Component
 export default class SettingsSidebar extends Vue {
   @State('auth') private auth!: AuthState;
 
