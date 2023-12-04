@@ -57,9 +57,9 @@ export default class ProgressBar extends Vue {
 
   &.infinite::after {
     background-color: var(--color-primary-button);
-    animation: leftToRight 3s ease-in-out infinite;
+    animation: leftToRight2 3s ease-in-out infinite;
 
-    @keyframes leftToRight {
+    @keyframes leftToRight2 {
       0% {
         opacity: .8;
         left: -100%;

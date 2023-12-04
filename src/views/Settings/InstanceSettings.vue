@@ -252,7 +252,6 @@ export default class InstanceSettings extends Vue {
     const migrationResult = await new Promise((res) => {
       const onMoveProgress = (data: any) => {
         if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
-        console.log("crap", data);
         if (data.type === "operationUpdate") {
           const typedData = data as OperationProgressUpdateData;
           if (typedData.stage === "FINISHED") {
