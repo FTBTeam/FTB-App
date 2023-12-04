@@ -1,5 +1,5 @@
 <template>
-  <div class="home page-spacing">    
+  <div class="home page-spacing">
     <template v-if="recentInstances.length">
       <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
       

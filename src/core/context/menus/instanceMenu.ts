@@ -29,7 +29,6 @@ let folderOptions: MenuItem<InstanceMenuContext>[] = []
 folderOptions.push({
   title: 'Instance folder',
   async action(context) {
-    console.log(context)
     await platform.get.io.openFinder(context.instance.path);
   },
 })
