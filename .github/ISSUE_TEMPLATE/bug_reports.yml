@@ -33,7 +33,7 @@ body:
       placeholder: FTB-DBGTEVOISQIRA
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: bugdesc
     attributes:
       label: Describe the bug

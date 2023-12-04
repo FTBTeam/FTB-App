@@ -19,10 +19,10 @@ export enum RouterNames {
   SETTINGS_DOWNLOAD = 'download-settings',
   SETTINGS_APP = 'app-settings',
   SETTINGS_INTEGRATION = 'integrations',
-  SETTINGS_INFO = 'app-info',
   SETTINGS_APP_LICENSE = 'license',
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
+  SETTINGS_CHANGELOGS = 'changelogs',
   // CHAT = 'chat',
   SUPPORT = 'support-index',
 }
@@ -79,11 +79,6 @@ export default new Router({
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Integrations.vue'),
             },
             {
-              path: 'app-info',
-              name: RouterNames.SETTINGS_INFO,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppInfo.vue'),
-            },
-            {
               path: 'app-info/license',
               name: RouterNames.SETTINGS_APP_LICENSE,
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/License.vue'),
@@ -98,6 +93,11 @@ export default new Router({
               name: RouterNames.SETTINGS_PROXY,
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/ProxySettings.vue'),
             },
+            {
+              path: 'changelogs',
+              name: RouterNames.SETTINGS_CHANGELOGS,
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Changelogs.vue'),
+            }
           ],
         },
         {

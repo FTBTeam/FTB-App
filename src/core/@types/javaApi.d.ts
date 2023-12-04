@@ -519,6 +519,16 @@ export interface GetInstanceFoldersHandlerRequest extends BaseData {
 export interface SugaredInstanceJson extends InstanceJson {
     path: string;
     pendingCloudInstance: boolean;
+    rootDirs: string[];
+}
+
+export interface MoveInstancesHandlerData extends BaseData {
+    newLocation: string;
+}
+
+export interface MoveInstancesHandlerReply extends MoveInstancesHandlerData {
+    state: string;
+    error: string;
 }
 
 export interface InstanceDeleteBackupHandlerReply extends InstanceDeleteBackupHandlerRequest {
@@ -684,6 +694,7 @@ export interface InstanceJson {
     recMemory: number;
     memory: number;
     jvmArgs: string;
+    shellArgs: string;
     embeddedJre: boolean;
     jrePath: string;
     width: number;

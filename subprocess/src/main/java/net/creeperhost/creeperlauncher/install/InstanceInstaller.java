@@ -42,7 +42,10 @@ import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifes
  * Created by covers1624 on 3/2/22.
  */
 public class InstanceInstaller extends InstanceOperation {
-
+    // This is a lazy hack that covers will hate but this fixes the "failed to install due to missing file" error caused by zero length files.
+    // The api will always resolve these files to this url so we can just ignore them.
+    private static final String IGNORE_SNOWFLAKE_FILE_URL = "https://dist.modpacks.ch/modpacks/0/FTB Academy-1.0.0/config/brandon3055/ResourceCache/Cache";
+    
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("InstanceInstaller.debug");
 
@@ -454,6 +457,13 @@ public class InstanceInstaller extends InstanceOperation {
                 );
                 newOverrides.add(newOverride);
             }
+            
+            // Last line of defense against zero byte files.
+            if (file.getUrl().equals(IGNORE_SNOWFLAKE_FILE_URL) || file.getSize() == 0) {
+                filesToDownload.add(filePath);
+                tasks.add(new DlTask(0, new EmptyFileDlTask(filePath)));
+                continue;
+            }
 
             NewDownloadTask task = NewDownloadTask.builder()
                     .url(file.getUrl())
@@ -569,6 +579,25 @@ public class InstanceInstaller extends InstanceOperation {
         @Nullable
         public Object getResult() {
             return task.getResult();
+        }
+    }
+
+    private record EmptyFileDlTask(Path destination) implements Task<Path> {
+        @Override
+        public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+            LOGGER.info("Ignoring zero byte file: {}", this.destination);
+
+            // Just create an empty file.
+            try {
+                Files.createFile(IOUtils.makeParents(this.destination));
+            } catch (IOException e) {
+                LOGGER.error("Failed to create empty file: {}", this.destination, e);
+            }
+        }
+
+        @Override
+        public Path getResult() {
+            return this.destination;
         }
     }
 }

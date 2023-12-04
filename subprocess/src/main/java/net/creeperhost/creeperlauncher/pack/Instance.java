@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.WillNotClose;
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,7 +45,6 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -282,6 +280,8 @@ public class Instance {
 
         LOGGER.info("Adding start/shutdown tasks..");
         launcher.withStartTask(ctx -> {
+            ctx.shellArgs.addAll(MiscUtils.splitCommand(props.shellArgs));
+            
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
 
@@ -416,22 +416,14 @@ public class Instance {
         return true;
     }
 
-    public boolean browse() throws IOException {
+    public boolean browse() {
         return browse("");
     }
-
-    public boolean browse(String extraPath) throws IOException {
+    
+    public boolean browse(String extraPath) {
         if (pendingCloudInstance) return false;
 
-        if (Files.notExists(path.resolve(extraPath))) {
-            return false;
-        }
-
-        if (Desktop.isDesktopSupported()) {
-            Desktop.getDesktop().open(path.resolve(extraPath).toFile());
-            return true;
-        }
-        return false;
+        return FileUtils.openFolder(path.resolve(extraPath));
     }
 
     public void setModified(boolean state) {

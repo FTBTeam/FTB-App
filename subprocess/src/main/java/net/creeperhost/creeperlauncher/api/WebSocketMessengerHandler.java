@@ -47,6 +47,7 @@ public class WebSocketMessengerHandler {
     static Gson gson = new Gson();
 
     static {
+        register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
         register("launchInstance", LaunchInstanceData.class, new LaunchInstanceHandler());
         register("instance.kill", KillInstanceData.class, new KillInstanceHandler());

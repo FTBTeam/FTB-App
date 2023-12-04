@@ -2,7 +2,7 @@
   <div class="px-6 py-4" v-if="!loading">
     <template v-if="news.length">
       <h2 class="text-lg font-bold mb-6">Get the latest news from FTB</h2>
-      <div class="news-item mb-8" v-for="(newsItem, index) in news" :key="index">
+      <div class="news-item mb-10" v-for="(newsItem, index) in news" :key="index">
         <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="openExternal" v-if="newsItem.feature_image" class="feature-image mb-4 block">
           <img crossorigin="anonymous" class="rounded shadow-xl" :src="proxyImage(newsItem.feature_image)" alt="Feature image">
         </a>

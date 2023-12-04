@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="openInstancePage">
+    <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="openInstancePage" @click.right="openInstanceMenu">
       <div class="artwork-container">
         <img :src="packLogo" alt="Modpack Artwork">
         <div class="notifiers">
@@ -26,6 +26,7 @@
           <div class="install-progress" v-if="isInstalling && currentInstall">
             <div class="percent">{{currentInstall.progress}}<span>%</span></div>
             <b>{{currentInstall.stage ?? "??"}}</b>
+            <small class="text-center opacity-75" v-if="currentInstall.stage === 'Mod loader'">This may take a minute</small>
             <transition name="transition-fade" duration="250">
               <div class="files text-sm" v-if="currentInstall.speed">
                 <font-awesome-icon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
@@ -72,6 +73,9 @@ import Popover from '@/components/atoms/Popover.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {Versions} from '@/modules/modpacks/types';
 import UpdateConfirmModal from '@/components/core/modpack/modals/UpdateConfirmModal.vue';
+import {AppContextController} from '@/core/context/contextController';
+import {ContextMenus} from '@/core/context/contextMenus';
+import {InstanceActions} from '@/core/actions/instanceActions';
 
 @Component({
   components: {
@@ -104,10 +108,7 @@ export default class PackCard2 extends PackCardCommon {
   }
   
   play() {
-    this.$router.push({
-      name: RouterNames.ROOT_LAUNCH_PACK,
-      query: { uuid: this.instance.uuid },
-    })
+    InstanceActions.start(this.instance);
   }
 
   openInstancePage() {
@@ -125,6 +126,16 @@ export default class PackCard2 extends PackCardCommon {
   
   syncInstance() {
     instanceInstallController.requestSync(this.instance);
+  }
+  
+  openInstanceMenu(event: PointerEvent) {
+    if (this.needsSyncing || this.isInstalling || this.isUpdating) {
+      return;
+    }
+    
+    AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, {
+      instance: this.instance
+    });
   }
   
   get modLoader() {
@@ -170,6 +181,13 @@ export default class PackCard2 extends PackCardCommon {
       if (packName.some(name => version.toLowerCase().includes(name.toLowerCase()))) {
         const splitPackName = packName[0].split('-')[0];
         version = version.replace(new RegExp(splitPackName, 'i'), '');
+      }
+
+      version = version.replace(".zip", "").trim()
+      if (version.startsWith("-")) {
+        version = version.substring(1);
+      } else if (version.endsWith("-")) {
+        version = version.substring(0, version.length - 1);
       }
       
       if (version.length > 16) {

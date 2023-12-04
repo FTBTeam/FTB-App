@@ -38,6 +38,7 @@ export const state: SettingsState = {
     updateChannel: 'release',
     fullScreen: false,
     useSystemWindowStyle: false,
+    shellArgs: '',
   },
   error: false,
   hardware: {

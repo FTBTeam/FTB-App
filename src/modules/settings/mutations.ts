@@ -33,6 +33,7 @@ const defaultSettings: Settings = {
   updateChannel: 'release',
   fullScreen: false,
   useSystemWindowStyle: false,
+  shellArgs: '',
 };
 
 export const mutations: MutationTree<SettingsState> = {

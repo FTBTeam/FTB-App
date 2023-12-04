@@ -1,5 +1,7 @@
 <template>
   <div class="global-components">
+    <content-menu-global />
+    
     <modal 
       v-if="modal" 
       :open="!!modal"
@@ -51,9 +53,11 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
 import DevToolsActions from '@/components/core/misc/DevToolsActions.vue';
+import ContentMenuGlobal from '@/components/core/global/contextMenu/ContentMenuGlobal.vue';
 
 @Component({
   components: {
+    ContentMenuGlobal,
     DevToolsActions,
     UiButton,
     Alerts,

@@ -208,7 +208,7 @@ const Electron: ElectronOverwolfInterface = {
     openFriends() {
       ipcRenderer.send('showFriends');
     },
-
+    
     async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
       // TODO: (legacy) Fix soon plz
       platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=http://localhost:7755")
@@ -254,6 +254,11 @@ const Electron: ElectronOverwolfInterface = {
 
     uploadClientLogs() {},
     yeetLauncher() {},
+
+    restartApp() {
+      // Restart the electron app
+      ipcRenderer.send('restartApp');
+    }
   },
 
   // Clipboard

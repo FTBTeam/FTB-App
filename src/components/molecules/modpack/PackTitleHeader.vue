@@ -1,8 +1,8 @@
 <template>
   <div class="pack-info">
     <div class="info">
-      <div class="name">{{ packName }}</div>
-      <div class="desc" v-if="(!instance || !instance.isImport) && !isInstalled">
+      <div class="name select-text">{{ packName }}</div>
+      <div class="desc select-text" v-if="(!instance || !instance.isImport) && !isInstalled">
         {{ packInstance.name }}
         <template v-if="packInstance && packInstance.authors && packInstance.authors.length">
           by 
@@ -11,6 +11,9 @@
         </template>
         -
         {{ packInstance.synopsis }}
+      </div>
+      <div class="select-text pack-version text-xs px-4 py-1 rounded bg-transparent-black inline-block" v-if="instance && !instance.isImport">
+        Version {{ instance.version }}
       </div>
     </div>
   </div>

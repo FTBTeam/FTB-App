@@ -218,7 +218,7 @@ export default class PackPreview extends PackCardCommon {
       margin-bottom: 0.35rem;
 
       span {
-        margin: 0 0.5rem;
+        margin: 0 0.25rem;
         font-weight: normal;
         font-style: italic;
       }

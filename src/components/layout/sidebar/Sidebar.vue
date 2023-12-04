@@ -4,8 +4,10 @@
     
     <div class="nav-items nav-main mt-2">      
       <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
-        <router-link :to="{ name: item.to }" class="nav-item" :class="{ 'item-disabled': disableNav }">
-          <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
+        <router-link :to="{ name: item.to }">
+          <div class="nav-item" :class="{ 'item-disabled': disableNav }" @click.right="e => navItemRightClick(e, item)">
+            <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
+          </div>
         </router-link>
       </popover>
     </div>
@@ -44,6 +46,8 @@ import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import {RouterNames} from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
+import {AppContextController} from '@/core/context/contextController';
+import {ContextMenus} from '@/core/context/contextMenus';
 
 @Component({
   components: {SidebarCreate, SidebarProfile },
@@ -109,6 +113,12 @@ export default class Sidebar extends Vue {
 
   public openPromo(event: any): void {
     platform.get.utils.openUrl('https://go.ftb.team/ch-app');
+  }
+
+  navItemRightClick(event: PointerEvent, item: typeof this.navigation[0]) {
+    if (item.to === RouterNames.SETTINGS_INSTANCE) {
+      AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, {});
+    }
   }
 
   // public openFriends() {

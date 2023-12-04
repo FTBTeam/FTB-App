@@ -4,6 +4,7 @@ export interface Settings {
   memory: number;
   keepLauncherOpen: boolean;
   jvmargs: string;
+  shellArgs: string;
   enableAnalytics: boolean;
   enableChat: boolean;
   enableBeta: boolean;
@@ -25,7 +26,7 @@ export interface Settings {
   exitOverwolf?: boolean;
   updateChannel: string;
   fullScreen: boolean;
-
+  
   useSystemWindowStyle: boolean;
   
   // new ish

@@ -116,7 +116,7 @@ const Overwolf: ElectronOverwolfInterface = {
       overwolf.utils.uploadClientLogs((result: any) => {
       });
     },
-
+    
     yeetLauncher(windowId, cb) {
       // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
@@ -132,6 +132,10 @@ const Overwolf: ElectronOverwolfInterface = {
     onAppReady() {},
     updateSettings() {},
     sendSession() {},
+    
+    restartApp() {
+      overwolf.windows.getMainWindow().restartApp();
+    }
   },
 
   // Clipboard

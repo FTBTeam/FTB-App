@@ -229,7 +229,7 @@ export default class MainApp extends Vue {
 
     &.no-system-bar {
       // Title bar on macos is 1.8rem not 2rem
-      height: calc(100% - 2rem);
+      height: calc(100% - 1.8rem);
     }
   }
 }

@@ -35,6 +35,8 @@ export interface Actions {
   sendSession: (payload: any) => void;
   yeetLauncher: (windowId: any, cb: () => void) => void;
   onAppReady: () => void;
+
+  restartApp(): void;
 }
 
 export interface CB {

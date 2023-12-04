@@ -55,34 +55,73 @@
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
-    <!--          <ftb-slider label="Default Memory" v-model="localSettings.memory" :currentValue="localSettings.memory" minValue="512" :maxValue="settingsState.hardware.totalMemory" @change="doSave"-->
-    <!--                      unit="MB" @blur="doSave" step="128"/>-->
+    <ram-slider class="mb-6" v-model="localSettings.memory" @change="saveMutated" />
 
     <ftb-input
       label="Custom Arguments"
-      :value="localSettings.jvmargs"
+      placeholder="-TestArgument=120"
       v-model="localSettings.jvmargs"
       @blur="saveMutated"
     />
-    <small class="text-muted block mb-8 max-w-xl">
+    <small class="text-muted block mb-6 max-w-xl">
       These arguments are appended to your instances upon start, they are normal java arguments.
     </small>
+
+    <ftb-input
+      label="Shell arguments"
+      :value="localSettings.shellArgs"
+      v-model="localSettings.shellArgs"
+      placeholder="/usr/local/application-wrapper"
+      @blur="saveMutated"
+    />
+    <small class="text-muted block mb-6 max-w-xl">
+      These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing.
+    </small>
+    
+    <p class="mb-2">Startup preview</p>
+    <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
+    
+    <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.memory">
+      {{localSettings.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.memory.toString()) * 1024 * 1000))}} {{localSettings.jvmargs}}
+    </code>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Misc</p>
     <ftb-input
       label="Instance Location"
       :value="localSettings.instanceLocation"
       :disabled="true"
-      v-model="localSettings.instanceLocation"
       button="true"
       buttonText="Browse"
       buttonColor="primary"
-      :buttonClick="browseForFolder"
+      :buttonClick="moveInstances"
     />
     <small class="text-muted block max-w-xl"
       >Changing your instance location with instances installed will cause your instances to be moved to the new
       location automatically.</small
     >
+    
+    <modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
+      <template v-if="!instanceMoveModalComplete">
+        <div class="wysiwyg mb-6">
+          <p>This may take a while, please wait.</p>
+
+          <p>Moving <code>{{instanceMoveLocations.old}}</code><br/>To <code>{{instanceMoveLocations.new}}</code></p>
+
+          <p>Stage: <code>{{instanceMoveModalStage}}</code></p>
+        </div>
+
+        <progress-bar :infinite="true" />
+      </template>
+      <div class="wysiwyg" v-else>
+        <p>Instances moved successfully 🎉</p>
+      </div>
+      
+      <template #footer v-if="instanceMoveModalComplete">
+        <div class="flex justify-end">
+          <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
+        </div>
+      </template>
+    </modal>
   </div>
 </template>
 
@@ -95,11 +134,23 @@ import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import {computeAspectRatio} from '@/utils';
+import {computeAspectRatio, emitter, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
+import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {dialogsController} from '@/core/controllers/dialogsController';
+import {MoveInstancesHandlerReply, OperationProgressUpdateData} from '@/core/@types/javaApi';
+import {toTitleCase} from '@/utils/helpers/stringHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import {InstanceActions} from '@/core/actions/instanceActions';
 
 @Component({
+  methods: {prettyByteFormat},
   components: {
+    ProgressBar,
+    UiButton,
+    RamSlider,
     UiToggle,
     Selection2
   },
@@ -115,6 +166,11 @@ export default class InstanceSettings extends Vue {
   loadedSettings = false;
 
   resolutionId = "";
+  
+  instanceMoveModalShow = false;
+  instanceMoveModalStage = "Preparing";
+  instanceMoveModalComplete = false;
+  instanceMoveLocations = {old: "", new: ""};
   
   async created() {
     await this.loadSettings();
@@ -144,18 +200,7 @@ export default class InstanceSettings extends Vue {
     this.saveSettings(this.localSettings);
     this.lastSettings = { ...this.localSettings };
   }
-
-  browseForFolder() {
-    platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
-      if (path == null) {
-        return;
-      }
-
-      this.localSettings.instanceLocation = path;
-      this.saveSettings(this.localSettings);
-    });
-  }
-
+  
   selectResolution(id: string) {
     const selected = this.settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
     if (!selected) {
@@ -165,6 +210,79 @@ export default class InstanceSettings extends Vue {
     this.localSettings.width = selected.width;
     this.localSettings.height = selected.height;
     this.saveMutated();
+  }
+
+  async moveInstances() {
+    const location: string | null = await new Promise(resolve => {
+      platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
+        if (path == null) {
+          return;
+        }
+
+        resolve(path);
+      });
+    })
+
+    if (!location) {
+      return;
+    }
+    
+    if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
+      return;
+    }
+    
+    const result = await sendMessage("moveInstances", {
+      newLocation: location
+    })
+    
+    if (result.state === "error") {
+      return alertController.error(result.error);
+    }
+    
+    if (result.state === "processing") {
+      this.instanceMoveModalShow = true;
+      this.instanceMoveModalStage = "Preparing";
+      this.instanceMoveModalComplete = false;
+      this.instanceMoveLocations = {
+        old: this.localSettings.instanceLocation,
+        new: location
+      }
+    }
+    
+    const migrationResult = await new Promise((res) => {
+      const onMoveProgress = (data: any) => {
+        if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
+        console.log("crap", data);
+        if (data.type === "operationUpdate") {
+          const typedData = data as OperationProgressUpdateData;
+          if (typedData.stage === "FINISHED") {
+            // It's done
+          } else {
+            this.instanceMoveModalStage = toTitleCase(typedData.stage.toString().replaceAll("_", " "));
+          }
+        } else {
+          const typedData = data as MoveInstancesHandlerReply;
+          if (typedData.state !== "success") {
+            // It's broken
+            this.instanceMoveModalShow = false;
+            alertController.error(typedData.error);
+            emitter.off("ws.message", onMoveProgress);
+            res(false);
+          } else {
+            this.instanceMoveModalComplete = true;
+            emitter.off("ws.message", onMoveProgress);
+            res(true);
+          }
+        }
+      }
+      
+      emitter.on("ws.message", onMoveProgress);
+    })
+    
+    if (migrationResult) {
+      this.localSettings.instanceLocation = location;
+      InstanceActions.clearInstanceCache(false)
+    }
   }
 
   get resolutionList() {

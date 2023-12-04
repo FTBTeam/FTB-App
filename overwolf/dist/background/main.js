@@ -141,6 +141,15 @@ function setAuthData(authdata) {
   authData = authdata;
 }
 
+async function restartApp() {
+  // Get the current index window and close it
+  const window = await p(overwolf.windows.obtainDeclaredWindow, 'index')
+  await p(overwolf.windows.close, window.window.id);
+  
+  let windowRet = await p(overwolf.windows.obtainDeclaredWindow, 'index');
+  await p(overwolf.windows.restore, windowRet.window.id);
+}
+
 function onRequest(info) {
   let data = JSON.parse(info.content);
   if ((data.token && data.token.length > 0) || (data.key && data.iv && data.password)) {

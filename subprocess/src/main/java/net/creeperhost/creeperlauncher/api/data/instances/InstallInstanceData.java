@@ -1,7 +1,9 @@
 package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.jetbrains.annotations.Nullable;
 
 public class InstallInstanceData extends BaseData {
@@ -38,12 +40,17 @@ public class InstallInstanceData extends BaseData {
             this(data, status, message, null);
         }
 
-        public Reply(InstallInstanceData data, String status, String message, InstanceJson props) {
+        public Reply(InstallInstanceData data, String status, String message, Instance props) {
             type = "installInstanceDataReply";
             requestId = data.requestId;
             this.status = status;
             this.message = message;
-            this.instanceData = props;
+            if (props.props.installComplete) {
+                // Send a sugared instance json to the frontend upon completion
+                this.instanceData = new InstalledInstancesHandler.SugaredInstanceJson(props);
+            } else {
+                this.instanceData = props.props;
+            }
         }
     }
 }

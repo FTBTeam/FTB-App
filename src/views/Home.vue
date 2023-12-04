@@ -54,6 +54,10 @@ export default class Home extends Vue {
   get recentInstances() {
     return this.instances
       .sort((a, b) => {
+        // If either lastPlayed is 0, put it at the end
+        if (!a.lastPlayed) return 1;
+        if (!b.lastPlayed) return -1;
+        
         return b.lastPlayed - a.lastPlayed;
       })
       .slice(0, 6)
