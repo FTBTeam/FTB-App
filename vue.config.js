@@ -90,7 +90,7 @@ module.exports = {
       nodeIntegration: true,
       customFileProtocol: `ftb://./`,
       builderOptions: {
-        productName: 'FTB App',
+        productName: 'FTBApp',
         appId: 'com.feedthebeast.Launcher',
         
         mac: {
