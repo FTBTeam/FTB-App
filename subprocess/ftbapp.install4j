@@ -41,13 +41,13 @@
       <mountPoint id="74" root="59" />
       <mountPoint id="224" root="61" />
       <mountPoint id="668" root="61" location="bin" />
-      <mountPoint id="669" root="61" location="bin/ftbapp.app" />
-      <mountPoint id="670" root="61" location="bin/ftbapp.app/Contents" />
-      <mountPoint id="671" root="61" location="bin/ftbapp.app/Contents/Frameworks" />
-      <mountPoint id="672" root="61" location="bin/ftbapp.app/Contents/Frameworks/Electron Framework.framework" />
-      <mountPoint id="673" root="61" location="bin/ftbapp.app/Contents/Frameworks/Squirrel.framework" />
-      <mountPoint id="674" root="61" location="bin/ftbapp.app/Contents/Frameworks/Mantle.framework" />
-      <mountPoint id="675" root="61" location="bin/ftbapp.app/Contents/Frameworks/ReactiveObjC.framework" />
+      <mountPoint id="669" root="61" location="bin/FTB App.app" />
+      <mountPoint id="670" root="61" location="bin/FTB App.app/Contents" />
+      <mountPoint id="671" root="61" location="bin/FTB App.app/Contents/Frameworks" />
+      <mountPoint id="672" root="61" location="bin/FTB App.app/Contents/Frameworks/Electron Framework.framework" />
+      <mountPoint id="673" root="61" location="bin/FTB App.app/Contents/Frameworks/Squirrel.framework" />
+      <mountPoint id="674" root="61" location="bin/FTB App.app/Contents/Frameworks/Mantle.framework" />
+      <mountPoint id="675" root="61" location="bin/FTB App.app/Contents/Frameworks/ReactiveObjC.framework" />
       <mountPoint id="225" root="64" />
     </mountPoints>
     <entries>
@@ -55,16 +55,16 @@
       <dirEntry mountPoint="74" file="../release/win-unpacked" entryMode="subdir" subDirectory="bin" />
       <dirEntry mountPoint="224" file="../release/mac" entryMode="subdir" subDirectory="bin">
         <exclude>
-          <entry location="ftbapp.app/Contents/Frameworks/Electron Framework.framework/Versions" />
-          <entry location="ftbapp.app/Contents/Frameworks/Squirrel.framework/Versions" />
-          <entry location="ftbapp.app/Contents/Frameworks/Mantle.framework/Versions" />
-          <entry location="ftbapp.app/Contents/Frameworks/ReactiveObjC.framework/Versions" />
+          <entry location="FTB App.app/Contents/Frameworks/Electron Framework.framework/Versions" />
+          <entry location="FTB App.app/Contents/Frameworks/Squirrel.framework/Versions" />
+          <entry location="FTB App.app/Contents/Frameworks/Mantle.framework/Versions" />
+          <entry location="FTB App.app/Contents/Frameworks/ReactiveObjC.framework/Versions" />
         </exclude>
       </dirEntry>
-      <dirEntry mountPoint="672" file="../release/mac/ftbapp.app/Contents/Frameworks/Electron Framework.framework/Versions/A" subDirectory="mac" />
-      <dirEntry mountPoint="673" file="../release/mac/ftbapp.app/Contents/Frameworks/Squirrel.framework/Versions/A" subDirectory="mac" />
-      <dirEntry mountPoint="674" file="../release/mac/ftbapp.app/Contents/Frameworks/Mantle.framework/Versions/A" subDirectory="mac" />
-      <dirEntry mountPoint="675" file="../release/mac/ftbapp.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="672" file="../release/mac/FTB App.app/Contents/Frameworks/Electron Framework.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="673" file="../release/mac/FTB App.app/Contents/Frameworks/Squirrel.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="674" file="../release/mac/FTB App.app/Contents/Frameworks/Mantle.framework/Versions/A" subDirectory="mac" />
+      <dirEntry mountPoint="675" file="../release/mac/FTB App.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A" subDirectory="mac" />
       <dirEntry mountPoint="225" file="../release/linux-unpacked" entryMode="subdir" subDirectory="bin" />
     </entries>
     <components>

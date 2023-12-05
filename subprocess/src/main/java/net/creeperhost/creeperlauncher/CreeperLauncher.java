@@ -450,8 +450,8 @@ public class CreeperLauncher {
 
         switch (OS.CURRENT) {
             case MAC:
-                electron = Constants.BIN_LOCATION_OURS.resolve("ftbapp.app");
-                args.add(0, electron.resolve("Contents/MacOS/ftbapp").toAbsolutePath().toString());
+                electron = Constants.BIN_LOCATION_OURS.resolve("FTB App.app");
+                args.add(0, electron.resolve("Contents/MacOS/FTB App").toAbsolutePath().toString());
                 break;
             case LINUX:
                 electron = Constants.BIN_LOCATION_OURS.resolve("ftb-app");
