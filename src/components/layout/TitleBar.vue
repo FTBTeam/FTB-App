@@ -1,5 +1,5 @@
 <template>
-  <div class="titlebar" :class="{ isMac }" @mousedown="startDragging" @dblclick="minMax" v-show="systemBarDisabled">
+  <div class="titlebar" :class="{ isMac, isUnix }" @mousedown="startDragging" @dblclick="minMax" v-show="systemBarDisabled">
     <div class="spacer" v-if="isMac"></div>
     <div class="meta-title">
       <span>FTB App</span>
@@ -116,6 +116,10 @@ export default class TitleBar extends Vue {
   get systemBarDisabled() {
     return !this.settings.settings.useSystemWindowStyle ?? false;
   }
+  
+  get isUnix() {
+    return !platform.isOverwolf()
+  }
 }
 </script>
 
@@ -137,8 +141,11 @@ export default class TitleBar extends Vue {
     background-color: var(--color-navbar);
   }
 
-  &.isMac {
+  &.isUnix {
     -webkit-app-region: drag;
+  }
+  
+  &.isMac {
     height: 1.8em;
     text-align: center;
 
