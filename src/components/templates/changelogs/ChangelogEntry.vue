@@ -1,5 +1,5 @@
 <template>
-  <div class="changelogEntry wysiwyg">
+  <div class="changelogEntry wysiwyg select-text">
     <h2 v-if="showVersion">{{ changelog.title ?? changelog.version }}</h2>
     <img :src="headingImage" class="heading-image" alt="Heading image" v-if="headingImage" />
     <div v-if="changelog.header" v-html="parseMarkdown(changelog.header)" />
