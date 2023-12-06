@@ -1,6 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
@@ -9,13 +8,12 @@ import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenti
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
 import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
-import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
+import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.DataResult;
 import net.creeperhost.creeperlauncher.util.Result;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -83,6 +81,10 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             return;
         }
 
+        // Update profile data as well as auth data
+        profile.username = refresh.unwrap().profile().name();
+        profile.skins = refresh.unwrap().profile().skins().toArray(new AccountSkin[0]);
+        
         profile.msAuth = refresh.unwrap().store();
         AccountManager.get().saveProfiles();
         Settings.webSocketAPI.sendMessage(new Reply(data, true, "", false));
