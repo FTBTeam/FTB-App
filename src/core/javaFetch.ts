@@ -148,7 +148,7 @@ export class JavaFetch {
     }
     
     try {
-      const request = await sendMessage("webRequest", payload);
+      const request = await sendMessage("webRequest", payload, this._timeout);
       return FetchResponse.of(request);
     } catch(error) {
       this.logger.info(`Request to ${this._method}::${this._url} failed due to ${error}`)

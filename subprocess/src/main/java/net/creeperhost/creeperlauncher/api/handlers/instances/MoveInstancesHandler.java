@@ -30,6 +30,11 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
     @Override
     public void handle(Data data) {
         var currentLocation = Path.of(Settings.settings.getOrDefault("instanceLocation", Constants.INSTANCES_FOLDER_LOC.toAbsolutePath().toString()));
+        if (currentLocation.toString().isEmpty()) {
+            // Something is borked, just assume the default location is the right one
+            currentLocation = Constants.INSTANCES_FOLDER_LOC;
+        }
+        
         var newLocation = data.newLocation;
         
         LOGGER.info("Preparing to move instances from {} to {}", currentLocation, newLocation);

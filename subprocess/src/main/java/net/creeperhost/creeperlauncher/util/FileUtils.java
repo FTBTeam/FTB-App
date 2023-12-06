@@ -363,10 +363,12 @@ public class FileUtils
      */
     public static boolean pathWritableByApp(Path path) {
         try {
-            Files.createFile(path);
-            Files.delete(path);
+            var testFile = path.resolve(".ftb-app-write-test-file");
+            Files.createFile(testFile);
+            Files.delete(testFile);
             return true;
         } catch (Throwable ex) {
+            LOGGER.error("Failed to check if path is writable by app.", ex);
             return false;
         }
     }

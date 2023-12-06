@@ -8,7 +8,7 @@
     class="wysiwyg select-text"
     @closed="changelogData = null"
   >
-    <changelog-entry v-if="changelogData" :changelog="changelogData" />
+    <changelog-entry v-if="changelogData" :use-extended="true" :changelog="changelogData" />
     <message v-else type="danger">
       Unable to find any changelog data... 
     </message>
@@ -43,6 +43,7 @@ export type ChangelogData = {
     fixed: string[];
     removed: string[];
   };
+  extends?: string[]
 };
 
 @Component({
@@ -75,18 +76,19 @@ export default class Changelog extends Vue {
       key: 'lastVersion'
     })
 
-    const latestVersion = this.getCurrentVersion();
+    const currentVersion = this.getCurrentVersion();
+    const lastVersion = data.response;
     
     // No held last version meaning we should find a changelog
-    if (!data.response || data.response !== this.getCurrentVersion()) {
+    if (!lastVersion || lastVersion !== currentVersion) {
       // Get the available versions
       try {
         const changelogsReq = await fetch(`${constants.metaApi}/v1/changelogs/app`);
         const changelogs = await changelogsReq.json();
 
-        if (changelogs?.versions?.includes(this.getCurrentVersion())) {
+        if (changelogs?.versions?.includes(currentVersion)) {
           const changelogReq = await fetch(
-            `${constants.metaApi}/v1/changelogs/app/${latestVersion}`,
+            `${constants.metaApi}/v1/changelogs/app/${currentVersion}`,
           );
 
           this.changelogData = await changelogReq.json();
@@ -94,7 +96,7 @@ export default class Changelog extends Vue {
           // Attempt to update the lastVersion to prevent the modal showing again
           await sendMessage("storage.put", {
             key: 'lastVersion',
-            value: latestVersion,
+            value: currentVersion,
           })
         }
       } catch (e) {
@@ -102,6 +104,8 @@ export default class Changelog extends Vue {
         // Stop here, don't do anything, something is wrong, we'll try again next launch.
         return;
       }
+    } else {
+      consoleBadButNoLogger("D", 'No changelog to show, already seen it')
     }
   }
 
