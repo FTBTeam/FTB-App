@@ -41,7 +41,8 @@ public class VideoCacheHandler implements IMessageHandler<VideoCacheHandler.Data
     public static class Reply extends Data {
         public String location;
         
-        public Reply(Data data, String location) {
+        public Reply(Data data, String location) { 
+            this.type = "videoCacheReply";
             this.requestId = data.requestId;
             this.url = data.url;
             this.location = location;
