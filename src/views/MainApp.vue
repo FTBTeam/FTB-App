@@ -10,7 +10,7 @@
         <ad-aside v-show="advertsEnabled" />
       </main>
     </div>
-    <div class="app-container centered" v-else>
+    <div class="app-container centered" :class="{'no-system-bar': !hasInitialized || (hasInitialized && systemBarDisabled)}" v-else>
       <div class="pushed-content">
         <report-form
           v-if="websockets.reconnects > 10 && this.loading"
