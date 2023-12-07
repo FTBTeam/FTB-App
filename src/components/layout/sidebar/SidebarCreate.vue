@@ -28,14 +28,14 @@
           <small>Search FTB Modpacks or CurseForge</small>
         </div>
         <div class="separator"></div>
-<!--        <div class="option import" @click="() => {-->
-<!--          open = false;-->
-<!--          importOpen = true;-->
-<!--        }">-->
-<!--          <div class="icon"><font-awesome-icon icon="file-import" /></div>-->
-<!--          <p>Import</p>-->
-<!--          <small>Import instances from other launchers</small>-->
-<!--        </div>-->
+        <div class="option import" @click="() => {
+          open = false;
+          importOpen = true;
+        }">
+          <div class="icon"><font-awesome-icon icon="file-import" /></div>
+          <p>Import</p>
+          <small>Import instances from other launchers</small>
+        </div>
         <div class="option share" @click="() => {
             open = false;
             shareOpen = true;
