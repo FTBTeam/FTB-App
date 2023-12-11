@@ -48,10 +48,6 @@ dependencies {
 
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
 
-    implementation ('net.creeperhost.minetogether:minetogether-api:1.0.20') {
-        transitive false
-    }
-
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.java-websocket:Java-WebSocket:1.4.0'
     implementation 'com.github.oshi:oshi-core:5.7.0'

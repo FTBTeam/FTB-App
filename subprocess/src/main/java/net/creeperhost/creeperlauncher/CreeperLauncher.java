@@ -134,7 +134,6 @@ public class CreeperLauncher {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
 
-        System.out.println(Constants.LIB_SIGNATURE);
         Settings.loadSettings();
         Instances.refreshInstances();
 

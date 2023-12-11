@@ -7,7 +7,6 @@ import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
-import net.creeperhost.minetogether.lib.util.SignatureUtil;
 import okhttp3.*;
 import okio.Throttler;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class Constants {
@@ -105,11 +103,6 @@ public class Constants {
     //Auth
     public static String KEY = "";
     public static String SECRET = "";
-
-    //MT Identifiers
-    public static String MT_HASH = "";
-
-    public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
     public static void refreshHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
