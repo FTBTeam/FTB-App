@@ -10,7 +10,6 @@ import net.covers1624.quack.util.DataUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
@@ -802,7 +801,6 @@ public class InstanceLauncher {
                 LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
             }
 
-            if (Settings.webSocketAPI == null) return;
             WebSocketHandler.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }

@@ -4,8 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebsocketServer.PortMode;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
 import net.creeperhost.creeperlauncher.api.data.other.*;
@@ -19,9 +20,11 @@ import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetAllHandler;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetHandler;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StoragePutHandler;
+import net.creeperhost.creeperlauncher.util.MiscUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +36,8 @@ public class WebSocketHandler {
     private static final Gson GSON = new Gson();
 
     private static final Map<String, Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>>> register = new HashMap<>();
+
+    private static @Nullable WebsocketServer server;
 
     static {
         register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
@@ -100,8 +105,35 @@ public class WebSocketHandler {
         register.put(name, Pair.of(clazz, handler));
     }
 
+    public static void startWebsocket(PortMode portMode) {
+        int port = switch (portMode) {
+            case DYNAMIC -> MiscUtils.getRandomEphemeralPort();
+            case STATIC, DYNAMIC_ON_CONNECT -> Constants.WEBSOCKET_PORT;
+        };
+        server = new NanoHttpdWebsocketServer(port, portMode);
+        server.startServer();
+    }
+
+    public static void restartOnPort(int newPort) {
+        assert server != null;
+        server.stopServer();
+        server = new NanoHttpdWebsocketServer(newPort, PortMode.STATIC);
+        server.startServer();
+    }
+
+    public static void stopWebsocket() {
+        if (server == null) return;
+        server.stopServer();
+    }
+
     public static void sendMessage(BaseData data) {
-        Settings.webSocketAPI.sendMessage(data);
+        if (server == null) return;
+        server.sendMessage(data);
+    }
+
+    public static int getPort() {
+        assert server != null : "Websocket not configured yet.";
+        return server.getPort();
     }
 
     public static void handleMessage(String data) {
@@ -121,7 +153,7 @@ public class WebSocketHandler {
 
         try {
             BaseData parsedData = GSON.fromJson(data, entry.getLeft());
-            if (CreeperLauncher.isDevMode || (parsedData.secret != null && parsedData.secret.equals(CreeperLauncher.websocketSecret))) {
+            if (CreeperLauncher.isDevMode || (parsedData.secret != null && parsedData.secret.equals(Constants.WEBSOCKET_SECRET))) {
                 CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), CreeperLauncher.taskExeggutor).exceptionally((t) -> {
                     LOGGER.error("Error handling message", t);
                     return null;
@@ -131,4 +163,5 @@ public class WebSocketHandler {
             LOGGER.error("Failed to parse message.", e);
         }
     }
+
 }
