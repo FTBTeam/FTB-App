@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
 import net.covers1624.quack.io.IOUtils;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.InstanceSnapshot;
@@ -26,13 +26,13 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
     public void handle(Request data) {
         Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate modpack for backup restore"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Unable to locate modpack for backup restore"));
             return;
         }
 
         Path backupLocation = Path.of(data.backupLocation);
         if (Files.notExists(backupLocation)) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate backup file"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Unable to locate backup file"));
             return;
         }
 
@@ -47,7 +47,7 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
                     .collect(Collectors.toSet());
             }
         } catch (IOException e) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to read backup file"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Unable to read backup file"));
             return;
         }
 
@@ -69,9 +69,9 @@ public class InstanceRestoreBackupHandler implements IMessageHandler<InstanceRes
         
         try {
             snapshotExecutor.run();
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Backup restored"));
+            WebSocketHandler.sendMessage(new Reply(data, true, "Backup restored"));
         } catch (Throwable e) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to restore backup file"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Unable to restore backup file"));
         }
     }
 

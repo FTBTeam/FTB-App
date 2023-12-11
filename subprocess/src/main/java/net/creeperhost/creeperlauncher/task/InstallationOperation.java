@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.task;
 
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
@@ -53,12 +53,12 @@ public class InstallationOperation extends LongRunningOperation {
     protected void onOperationException(Throwable ex) {
         if (ex instanceof PrepareException pex) {
             LOGGER.error("Fatal exception whilst preparing modpack installation.", pex);
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation."));
+            WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation."));
             return;
         }
 
         LOGGER.error("Fatal exception whilst installing modpack.", ex);
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack."));
+        WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack."));
     }
 
     @Override
@@ -66,9 +66,9 @@ public class InstallationOperation extends LongRunningOperation {
         switch (reason) {
             case NORMAL -> {
                 Instances.addInstance(instance);
-                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance));
+                WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance));
             }
-            case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", instance));
+            case CANCELED -> WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", instance));
         }
     }
 

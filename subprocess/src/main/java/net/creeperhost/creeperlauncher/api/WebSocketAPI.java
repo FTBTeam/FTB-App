@@ -82,7 +82,7 @@ public class WebSocketAPI extends WebSocketServer
     @Override
     public void onMessage(WebSocket conn, String message)
     {
-        WebSocketMessengerHandler.handleMessage(message);
+        WebSocketHandler.handleMessage(message);
     }
 
     @Override

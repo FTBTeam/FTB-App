@@ -1,6 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.ApiRecords;
@@ -10,6 +9,7 @@ import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticat
 import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.DataResult;
@@ -40,13 +40,13 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
                 Result<ApiRecords.Responses.Migration, MicrosoftOAuth.RequestError> migrationStatus = MicrosoftOAuth.checkMigrationStatus(store.accessToken);
                 // The user has to migrate, we should stop here.
                 if (migrationStatus.isOk() && migrationStatus.unwrap().rollout) {
-                    Settings.webSocketAPI.sendMessage(new Reply(data, false, "You must migrate your account to a Microsoft account to continue playing Minecraft."));
+                    WebSocketHandler.sendMessage(new Reply(data, false, "You must migrate your account to a Microsoft account to continue playing Minecraft."));
                     return;
                 }
             }
 
             if (minecraftAccount.isErr()) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to get Minecraft account info."));
+                WebSocketHandler.sendMessage(new Reply(data, false, "Failed to get Minecraft account info."));
                 return;
             }
             
@@ -55,7 +55,7 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
             // Pretty overkill here tbh 
             String userId = minecraftAccountData.id();
             if (userId == null || userId.isEmpty()) {
-                Settings.webSocketAPI.sendMessage(new Reply(data, false, "Failed to get Minecraft account info."));
+                WebSocketHandler.sendMessage(new Reply(data, false, "Failed to get Minecraft account info."));
                 return;
             }
 
@@ -75,10 +75,10 @@ public class AuthenticateMcProfileHandler implements IMessageHandler<Authenticat
 
             // Try and add the profile
             AccountManager.get().addProfile(profile);
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Success"));
+            WebSocketHandler.sendMessage(new Reply(data, true, "Success"));
         }, () -> {
             // Nope...
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, authenticate.error().map(ErrorWithCode::error).orElse("Fatal error for Microsoft auth")));
+            WebSocketHandler.sendMessage(new Reply(data, false, authenticate.error().map(ErrorWithCode::error).orElse("Fatal error for Microsoft auth")));
         });
     }
 

@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.data.instances.*;
 import net.creeperhost.creeperlauncher.api.data.other.*;
@@ -26,13 +27,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class WebSocketMessengerHandler {
+public class WebSocketHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = new Gson();
 
     private static final Map<String, Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>>> register = new HashMap<>();
-
-    static Gson gson = new Gson();
 
     static {
         register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
@@ -62,7 +62,6 @@ public class WebSocketMessengerHandler {
         register("instanceDisableCloudSaves", InstanceDisableCloudSavesData.class, new InstanceDisableCloudSavesHandler());
         register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
-        register("ping", PingLauncherData.class);
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
@@ -97,12 +96,12 @@ public class WebSocketMessengerHandler {
         register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
     }
 
-    public static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {
+    private static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {
         register.put(name, Pair.of(clazz, handler));
     }
 
-    public static void register(String name, Class<? extends BaseData> clazz) {
-        register.put(name, Pair.of(clazz, null));
+    public static void sendMessage(BaseData data) {
+        Settings.webSocketAPI.sendMessage(data);
     }
 
     public static void handleMessage(String data) {
@@ -121,7 +120,7 @@ public class WebSocketMessengerHandler {
         }
 
         try {
-            BaseData parsedData = gson.fromJson(data, entry.getLeft());
+            BaseData parsedData = GSON.fromJson(data, entry.getLeft());
             if (CreeperLauncher.isDevMode || (parsedData.secret != null && parsedData.secret.equals(CreeperLauncher.websocketSecret))) {
                 CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), CreeperLauncher.taskExeggutor).exceptionally((t) -> {
                     LOGGER.error("Error handling message", t);

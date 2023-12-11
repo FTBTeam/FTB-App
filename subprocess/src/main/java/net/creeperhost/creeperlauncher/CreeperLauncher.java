@@ -14,6 +14,7 @@ import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.covers1624.quack.platform.Architecture;
 import net.creeperhost.creeperlauncher.api.DebugTools;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
@@ -219,7 +220,7 @@ public class CreeperLauncher {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
                 new OpenModalData.ModalButton("Exit", "success", CreeperLauncher::exit),
                 new OpenModalData.ModalButton("Continue", "danger", () -> {
-                    Settings.webSocketAPI.sendMessage(new CloseModalData());
+                    WebSocketHandler.sendMessage(new CloseModalData());
                 }))
             );
         }
@@ -279,7 +280,7 @@ public class CreeperLauncher {
                         doUpdate(args);
                     }),
                     new OpenModalData.ModalButton("No", "danger", () -> {
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
+                        WebSocketHandler.sendMessage(new CloseModalData());
                     })
                 ));
                 return true;
@@ -287,7 +288,7 @@ public class CreeperLauncher {
                 if (!warnedDevelop) {
                     warnedDevelop = true;
                     OpenModalData.openModal("Update", "Unable to switch from branch " + Constants.BRANCH + " via this toggle.", List.of(
-                        new OpenModalData.ModalButton("Ok", "danger", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
+                        new OpenModalData.ModalButton("Ok", "danger", () -> WebSocketHandler.sendMessage(new CloseModalData()))
                     ));
                 }
                 return false;
@@ -324,7 +325,7 @@ public class CreeperLauncher {
             try {
                 PingLauncherData ping = new PingLauncherData();
                 CreeperLauncher.missedPings++;
-                Settings.webSocketAPI.sendMessage(ping);
+                WebSocketHandler.sendMessage(ping);
             } catch (Exception ignored) {
                 LOGGER.error("Failed to send ping");
             }
@@ -379,7 +380,7 @@ public class CreeperLauncher {
                         reply = new ClientLaunchData.Reply(lastInstance, type, message, data);
                         lastMessageTime = System.currentTimeMillis();
                         try {
-                            Settings.webSocketAPI.sendMessage(reply);
+                            WebSocketHandler.sendMessage(reply);
                         } catch (Throwable t) {
                             LOGGER.warn("Unable to send MC client loading update to frontend!", t);
                         }
@@ -393,7 +394,7 @@ public class CreeperLauncher {
         } catch (Throwable e) {
             if (lastInstance.length() > 0) {
                 reply = new ClientLaunchData.Reply(lastInstance, "clientDisconnect", new Object());
-                Settings.webSocketAPI.sendMessage(reply);
+                WebSocketHandler.sendMessage(reply);
             }
 
             closeSockets();

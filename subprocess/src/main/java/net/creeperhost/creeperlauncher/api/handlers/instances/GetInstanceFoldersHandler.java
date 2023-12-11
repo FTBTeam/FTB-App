@@ -1,8 +1,8 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.WebSocketAPI;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -19,7 +19,7 @@ public class GetInstanceFoldersHandler implements IMessageHandler<GetInstanceFol
     public void handle(Request data) {
         Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, Set.of()));
+            WebSocketHandler.sendMessage(new Reply(data, false, Set.of()));
             return;
         }
 
@@ -31,10 +31,10 @@ public class GetInstanceFoldersHandler implements IMessageHandler<GetInstanceFol
                 .map(e -> instanceDir.relativize(e).toString())
                 .collect(Collectors.toSet());
             
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, folders));
+            WebSocketHandler.sendMessage(new Reply(data, true, folders));
         } catch (IOException e) {
             WebSocketAPI.LOGGER.error("Unable to read paths from {}", instanceDir, e);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, Set.of()));
+            WebSocketHandler.sendMessage(new Reply(data, false, Set.of()));
         }
     }
     

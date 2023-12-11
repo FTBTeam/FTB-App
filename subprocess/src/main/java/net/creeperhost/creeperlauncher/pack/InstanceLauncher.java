@@ -13,6 +13,7 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
@@ -163,7 +164,7 @@ public class InstanceLauncher {
                 } catch (IOException e) {
                     LOGGER.error("Failed to start minecraft process!", e);
                     setPhase(Phase.ERRORED);
-                    Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
+                    WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
                     process = null;
                     processThread = null;
                     return;
@@ -208,7 +209,7 @@ public class InstanceLauncher {
                 int exit = process.exitValue();
                 LOGGER.info("Minecraft exited with status code: " + exit);
                 setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
-                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
                 forceStopped = false;
                 process = null;
                 processThread = null;
@@ -222,7 +223,7 @@ public class InstanceLauncher {
                 }
                 processThread = null;
                 setPhase(Phase.ERRORED);
-                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
             }
         });
         processThread.setName("Instance Thread [" + THREAD_COUNTER.getAndIncrement() + "]");
@@ -802,7 +803,7 @@ public class InstanceLauncher {
             }
 
             if (Settings.webSocketAPI == null) return;
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+            WebSocketHandler.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }
 
@@ -846,7 +847,7 @@ public class InstanceLauncher {
                             LOGGER.info("Flushing {} messages.", toSend.size());
                         }
 
-                        Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
+                        WebSocketHandler.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
                     }
                 }
                 try {
