@@ -76,7 +76,11 @@ public abstract class LongRunningOperation {
                 if (ex instanceof CancellationToken.Cancellation) {
                     reason = CompletionReason.CANCELED;
                 } else {
-                    onOperationException(ex);
+                    try {
+                        onOperationException(ex);
+                    } catch (Throwable ex2) {
+                        LOGGER.error("Exception thrown whilst completing operation exceptionally.", ex2);
+                    }
                     reason = CompletionReason.EXCEPTION;
                 }
             }
