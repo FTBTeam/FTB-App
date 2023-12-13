@@ -42,7 +42,7 @@ export const actions: ActionTree<SettingsState, RootState> = {
         parsedSettings[key] = NaN;
       } else if (value === "Infinity" || value === "+Infinity" || value === "-Infinity") {
         parsedSettings[key] = value.startsWith("-") ? -Infinity : Infinity;
-      } else if (value.endsWith("n")) {
+      } else if (value.endsWith("n") && value.match(/^[0-9]{1,16}n$/)) {
         parsedSettings[key] = BigInt(value);
       } else {
         parsedSettings[key] = settings[key];
