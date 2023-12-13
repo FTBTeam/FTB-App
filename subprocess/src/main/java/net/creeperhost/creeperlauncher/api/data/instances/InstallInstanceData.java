@@ -17,15 +17,20 @@ public class InstallInstanceData extends BaseData {
     public String shareCode;
     @Nullable
     public String importFrom;
-    @Nullable public String name;
-    @Nullable public String artPath;
-    @Nullable public String category;
-    
+    @Nullable
+    public String name;
+    @Nullable
+    public String artPath;
+    @Nullable
+    public String category;
+
     // QOL stuff for own instances
     public boolean ourOwn = false; // Marker for when it's a custom instance creation
     public int ram = -1; // Default
-    @Nullable public Boolean fullscreen = false; // default
-    @Nullable public Boolean cloudSaves = false; // default
+    @Nullable
+    public Boolean fullscreen = false; // default
+    @Nullable
+    public Boolean cloudSaves = false; // default
     public int screenWidth = -1; // default
     public int screenHeight = -1; // default
 
@@ -40,16 +45,19 @@ public class InstallInstanceData extends BaseData {
             this(data, status, message, null);
         }
 
-        public Reply(InstallInstanceData data, String status, String message, Instance props) {
+        public Reply(InstallInstanceData data, String status, String message, @Nullable Instance instance) {
             type = "installInstanceDataReply";
             requestId = data.requestId;
             this.status = status;
             this.message = message;
-            if (props.props.installComplete) {
+
+            if (instance == null) {
+                instanceData = null;
+            } else if (instance.props.installComplete) {
                 // Send a sugared instance json to the frontend upon completion
-                this.instanceData = new InstalledInstancesHandler.SugaredInstanceJson(props);
+                this.instanceData = new InstalledInstancesHandler.SugaredInstanceJson(instance);
             } else {
-                this.instanceData = props.props;
+                this.instanceData = instance.props;
             }
         }
     }
