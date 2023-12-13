@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.api;
 
 import com.google.gson.Gson;
 import fi.iki.elonen.NanoWSD;
+import net.covers1624.quack.reflect.PrivateLookups;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
@@ -10,6 +11,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -91,6 +95,20 @@ public class NanoHttpdWebsocketServer extends NanoWSD implements WebsocketServer
 
     private class Connection extends WebSocket {
 
+        private static final VarHandle state;
+        private static final MethodHandle doClose;
+
+        static {
+            try {
+                MethodHandles.Lookup lookup = PrivateLookups.getTrustedLookup();
+                state = lookup.unreflectVarHandle(WebSocket.class.getDeclaredField("state"));
+                doClose = lookup.unreflect(WebSocket.class.getDeclaredMethod("doClose", WebSocketFrame.CloseCode.class, String.class, boolean.class));
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to do reflection!", ex);
+                throw new RuntimeException("Failed to do reflection!", ex);
+            }
+        }
+
         public Connection(IHTTPSession handshakeRequest) {
             super(handshakeRequest);
         }
@@ -124,6 +142,22 @@ public class NanoHttpdWebsocketServer extends NanoWSD implements WebsocketServer
                 super.send(msg);
             } catch (IOException ex) {
                 throw new RuntimeException("Failed to send message.", ex);
+            }
+        }
+
+        @Override
+        public void close(WebSocketFrame.CloseCode code, String reason, boolean initiatedByRemote) throws IOException {
+            // TODO fixes bug in parent impl..
+            State oldState = (State) state.get(this);
+            state.set(this, State.CLOSING);
+            if (oldState == State.OPEN && !initiatedByRemote) {
+                sendFrame(new WebSocketFrame.CloseFrame(code, reason));
+            } else {
+                try {
+                    doClose.invoke(this, code, reason, initiatedByRemote);
+                } catch (Throwable ex) {
+                    throw new RuntimeException("Unable to do reflection invoke?", ex);
+                }
             }
         }
 
