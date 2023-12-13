@@ -201,6 +201,11 @@ public class InstanceInstaller extends InstanceOperation {
         tracker.nextStage(InstallStage.PREPARE);
         if (operationType == OperationType.VALIDATE) {
             validateFiles();
+            String gameVersion = manifest.getTargetVersion("game");
+            if (gameVersion != null && !instance.props.mcVersion.equals(gameVersion)) {
+                LOGGER.warn("Instance had invalid mcVersion attribute. Repairing..");
+                instance.props.mcVersion = gameVersion;
+            }
         } else if (operationType == OperationType.UPGRADE) {
             processUpgrade();
         }
