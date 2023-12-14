@@ -23,7 +23,6 @@ public class OperationProgressTracker {
     private int steps;
     private int completedSteps;
 
-    private double progress;
     private long speed;
     private long currentBytes;
     private long overallBytes;
@@ -112,17 +111,13 @@ public class OperationProgressTracker {
                 overallBytes
         ));
     }
-    
+
     private double computeProgress(long currentBytes, long overallBytes) {
         if (overallBytes == 0) {
             return 0;
         }
-        
+
         return (double) currentBytes / (double) overallBytes * 100.0D;
-    }
-    
-    public void addMeta(String key, String value) {
-        meta.put(key, value);
     }
 
     /**
