@@ -17,7 +17,7 @@ import java.nio.file.Path;
 /**
  * Created by covers1624 on 28/1/22.
  */
-public abstract class ModLoaderInstallTask implements Task<String> {
+public abstract class ModLoaderInstallTask implements Task {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -42,6 +42,8 @@ public abstract class ModLoaderInstallTask implements Task<String> {
 
     // The minecraft version range which denotes a 'jar mod' environment.
     public static final VersionRange FORGE_LEGACY_INSTALL = createRange("[1.2,1.5.2]");
+
+    public abstract String getModLoaderTarget();
 
     public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion) throws IOException {
         return switch (mlName) {

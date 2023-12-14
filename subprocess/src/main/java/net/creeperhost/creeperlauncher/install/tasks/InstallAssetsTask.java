@@ -21,7 +21,7 @@ import static net.creeperhost.creeperlauncher.Constants.MC_RESOURCES_MIRROR;
  * <p>
  * Created by covers1624 on 17/11/21.
  */
-public class InstallAssetsTask implements Task<AssetIndexManifest> {
+public class InstallAssetsTask implements Task {
 
     private final List<DownloadTask> subTasks;
     private final AssetIndexManifest manifest;
@@ -51,13 +51,10 @@ public class InstallAssetsTask implements Task<AssetIndexManifest> {
         }
     }
 
-    @Override
     public boolean isRedundant() {
         return subTasks.isEmpty();
     }
 
-    @Nullable
-    @Override
     public AssetIndexManifest getResult() {
         return manifest;
     }

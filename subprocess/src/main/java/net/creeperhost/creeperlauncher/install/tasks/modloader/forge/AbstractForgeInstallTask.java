@@ -24,6 +24,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -45,10 +46,9 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     @Nullable
     protected String versionName;
 
-    @Nullable
     @Override
-    public final String getResult() {
-        return versionName;
+    public final String getModLoaderTarget() {
+        return Objects.requireNonNull(versionName);
     }
 
     public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion) throws IOException {

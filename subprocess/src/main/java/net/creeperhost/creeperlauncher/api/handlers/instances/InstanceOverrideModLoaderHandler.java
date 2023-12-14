@@ -72,7 +72,7 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
                 );
 
                 task.execute(null, null);
-                instance.props.modLoader = task.getResult();
+                instance.props.modLoader = task.getModLoaderTarget();
             } else {
                 // Must be vanilla, set loader to game version.
                 instance.props.modLoader = instance.versionManifest.getTargetVersion("game");

@@ -138,7 +138,7 @@ public class ModInstaller implements ModCollector {
             LOGGER.info("Preparing download tasks..");
 
             long totalSize = 0;
-            List<Task<Void>> tasks = new ArrayList<>(toInstall.size());
+            List<Task> tasks = new ArrayList<>(toInstall.size());
             List<ModOverride> allOverrides = modifications.getOverrides();
             List<ModOverride> oldOverrides = new ArrayList<>();
             List<ModOverride> newOverrides = new ArrayList<>(toInstall.size());

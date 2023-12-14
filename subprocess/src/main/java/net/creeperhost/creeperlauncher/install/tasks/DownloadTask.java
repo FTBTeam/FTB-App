@@ -45,7 +45,7 @@ import static java.net.HttpURLConnection.HTTP_PARTIAL;
  * <p>
  * Created by covers1624 on 17/11/21.
  */
-public class DownloadTask implements Task<Path> {
+public class DownloadTask implements Task {
 
     private static final boolean DEBUG = Boolean.getBoolean("DownloadTask.debug");
     private static final Logger LOGGER = LogManager.getLogger();
@@ -380,7 +380,11 @@ public class DownloadTask implements Task<Path> {
         return hasher.finish();
     }
 
-    @Override
+    /**
+     * Checks if this {@link DownloadTask} would do anything if executed.
+     *
+     * @return If this {@link DownloadTask} is redundant.
+     */
     public boolean isRedundant() {
         try {
             if (!Files.exists(dest)) return false; // File doesn't exist, not redundant.
@@ -393,7 +397,6 @@ public class DownloadTask implements Task<Path> {
     }
 
     //@formatter:off
-    @Override public Path getResult() { return dest; }
     public String getUrl() { return urls.get(0); } // TODO REMOVE THIS
     public Path getDest() { return dest; }
     public DownloadValidation getValidation() { return validation; }

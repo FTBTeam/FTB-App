@@ -71,9 +71,8 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
         }
     }
 
-    @Nullable
     @Override
-    public String getResult() {
+    public String getModLoaderTarget() {
         return versionName;
     }
 
