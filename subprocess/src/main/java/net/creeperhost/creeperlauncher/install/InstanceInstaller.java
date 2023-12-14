@@ -470,7 +470,7 @@ public class InstanceInstaller extends InstanceOperation {
                 continue;
             }
 
-            NewDownloadTask task = NewDownloadTask.builder()
+            DownloadTask task = DownloadTask.builder()
                     .url(file.getUrl())
                     .withMirrors(file.getMirror())
                     .dest(filePath)
@@ -480,7 +480,7 @@ public class InstanceInstaller extends InstanceOperation {
             if (!task.isRedundant()) {
                 long size = file.getSize();
                 if (size <= 0) {
-                    size = NewDownloadTask.getContentLength(file.getUrl());
+                    size = DownloadTask.getContentLength(file.getUrl());
                 }
                 filesToDownload.add(task.getDest());
                 tasks.add(new DlTask(size, task));

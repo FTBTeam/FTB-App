@@ -15,7 +15,7 @@ import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
@@ -563,7 +563,7 @@ public class InstanceLauncher {
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest vanillaManifest = manifests.get(0);
-        NewDownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
+        DownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
         if (task != null) {
             LOGGER.info("Validating client download for {}", vanillaManifest.id);
             task.execute(token, progressTracker.listenerForStep(true));
@@ -572,9 +572,9 @@ public class InstanceLauncher {
 
     private void validateLibraries(CancellationToken token, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
         LOGGER.info("Validating minecraft libraries...");
-        List<NewDownloadTask> tasks = new LinkedList<>();
+        List<DownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            NewDownloadTask task = library.createDownloadTask(librariesDir, true);
+            DownloadTask task = library.createDownloadTask(librariesDir, true);
             if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }
@@ -584,7 +584,7 @@ public class InstanceLauncher {
                 .mapToLong(e -> {
                     if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
-                        return NewDownloadTask.getContentLength(e.getUrl());
+                        return DownloadTask.getContentLength(e.getUrl());
                     }
                     return e.getValidation().expectedSize;
                 })
@@ -595,7 +595,7 @@ public class InstanceLauncher {
         TaskProgressAggregator progressAggregator = new TaskProgressAggregator(rootListener);
         if (!tasks.isEmpty()) {
             LOGGER.info("{} dependencies failed to validate or were missing.", tasks.size());
-            for (NewDownloadTask task : tasks) {
+            for (DownloadTask task : tasks) {
                 token.throwIfCancelled();
                 LOGGER.info("Downloading {}", task.getUrl());
                 task.execute(token, progressAggregator);

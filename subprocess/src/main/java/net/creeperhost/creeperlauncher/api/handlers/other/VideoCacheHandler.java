@@ -5,7 +5,7 @@ import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 
 import java.nio.file.Path;
 
@@ -13,7 +13,7 @@ public class VideoCacheHandler implements IMessageHandler<VideoCacheHandler.Data
     @Override
     public void handle(Data data) {
         Path dest = Constants.BIN_LOCATION.resolve("media/" + data.fileName);
-        NewDownloadTask task = NewDownloadTask.builder()
+        DownloadTask task = DownloadTask.builder()
             .url(data.url)
             .dest(dest)
             .withFileLocator(CreeperLauncher.localCache)

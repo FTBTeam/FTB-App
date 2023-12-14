@@ -18,7 +18,7 @@ import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.installerv2.InstallManifest;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -350,7 +350,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             return false;
         }
 
-        NewDownloadTask task = vanillaManifest.getDownload(side + "_mappings", output);
+        DownloadTask task = vanillaManifest.getDownload(side + "_mappings", output);
         if (task == null) {
             LOGGER.warn("Failed to find {}_mappings download. Falling back to InstallerTools invoke.", side);
             return false;

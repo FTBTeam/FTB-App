@@ -7,7 +7,7 @@ import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.SneakyUtils;
 import net.covers1624.quack.util.TimeUtils;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTaskTests.EtagTestWebServer.BakedResponse;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.logging.Level;
 
 import static fi.iki.elonen.NanoHTTPD.Response.Status.OK;
 import static fi.iki.elonen.NanoHTTPD.Response.Status.PARTIAL_CONTENT;
@@ -42,7 +41,7 @@ public class NewDownloadTaskTests {
         Path tempDir = Files.createTempDirectory("dlTask");
         tempDir.toFile().deleteOnExit();
 
-        NewDownloadTask task = NewDownloadTask.builder()
+        DownloadTask task = DownloadTask.builder()
                 .url("https://repo1.maven.org/maven2/com/google/guava/guava/maven-metadata.xml")
                 .dest(tempDir.resolve("maven-metadata.xml"))
                 .tryCompanionHashes()
@@ -59,7 +58,7 @@ public class NewDownloadTaskTests {
             Files.delete(dest);
 
             String path = "/test/etag_change";
-            NewDownloadTask firstRequest = NewDownloadTask.builder()
+            DownloadTask firstRequest = DownloadTask.builder()
                     .url(testWebServer.getAddr() + path)
                     .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                     .dest(dest)
@@ -74,7 +73,7 @@ public class NewDownloadTaskTests {
             resp = testWebServer.generateResponseData(resp);
             testWebServer.responseMap.put(path, resp);
 
-            NewDownloadTask secondRequest = NewDownloadTask.builder()
+            DownloadTask secondRequest = DownloadTask.builder()
                     .url(testWebServer.getAddr() + path)
                     .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                     .dest(dest)
@@ -98,7 +97,7 @@ public class NewDownloadTaskTests {
             testWebServer.responseMap.put(pathA, new BakedResponse(null, "", -1));
             String pathB = "/test/notMissing";
 
-            NewDownloadTask firstRequest = NewDownloadTask.builder()
+            DownloadTask firstRequest = DownloadTask.builder()
                     .url(testWebServer.getAddr() + pathA)
                     .withMirror(testWebServer.getAddr() + pathB)
                     .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -121,7 +120,7 @@ public class NewDownloadTaskTests {
             testWebServer.responseMap.put(pathB, new BakedResponse(null, "", -1));
 
             Assertions.assertThrows(DownloadFailedException.class, () -> {
-                NewDownloadTask firstRequest = NewDownloadTask.builder()
+                DownloadTask firstRequest = DownloadTask.builder()
                         .url(testWebServer.getAddr() + pathA)
                         .withMirror(testWebServer.getAddr() + pathB)
                         .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -142,7 +141,7 @@ public class NewDownloadTaskTests {
             String path = "/test";
             ResumeTestWebServer.ExpectedResponse resp = server.prepareRequest(path);
 
-            NewDownloadTask task = NewDownloadTask.builder()
+            DownloadTask task = DownloadTask.builder()
                     .url(server.getAddr() + path)
                     .withValidation(DownloadValidation.of().withExpectedSize(resp.bytes.length).withHash(HashFunc.SHA256, resp.sha256))
                     .dest(dest)

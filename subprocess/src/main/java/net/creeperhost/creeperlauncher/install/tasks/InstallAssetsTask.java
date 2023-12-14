@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.install.tasks;
 
 import com.google.common.hash.Hashing;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -23,11 +23,11 @@ import static net.creeperhost.creeperlauncher.Constants.MC_RESOURCES_MIRROR;
  */
 public class InstallAssetsTask implements Task<AssetIndexManifest> {
 
-    private final List<NewDownloadTask> subTasks;
+    private final List<DownloadTask> subTasks;
     private final AssetIndexManifest manifest;
 
     public InstallAssetsTask(VersionManifest.AssetIndex assetIndex) throws IOException {
-        Pair<AssetIndexManifest, List<NewDownloadTask>> pair = buildTaskList(assetIndex);
+        Pair<AssetIndexManifest, List<DownloadTask>> pair = buildTaskList(assetIndex);
         subTasks = pair.getValue();
         manifest = pair.getKey();
     }
@@ -37,7 +37,7 @@ public class InstallAssetsTask implements Task<AssetIndexManifest> {
         TaskProgressAggregator progressAggregator = null;
         if (listener != null) {
             long totalSize = subTasks.stream()
-                    .map(NewDownloadTask::getValidation)
+                    .map(DownloadTask::getValidation)
                     .mapToLong(e -> e.expectedSize)
                     .sum();
             listener.start(totalSize);
@@ -68,14 +68,14 @@ public class InstallAssetsTask implements Task<AssetIndexManifest> {
      * @param assetIndex The asset index to download.
      * @return The list of tasks.
      */
-    private static Pair<AssetIndexManifest, List<NewDownloadTask>> buildTaskList(VersionManifest.AssetIndex assetIndex) throws IOException {
+    private static Pair<AssetIndexManifest, List<DownloadTask>> buildTaskList(VersionManifest.AssetIndex assetIndex) throws IOException {
         Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
         AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
 
         Path objectsDir = assetsDir.resolve("objects");
 
         Set<Path> seen = new HashSet<>();
-        List<NewDownloadTask> tasks = new LinkedList<>();
+        List<DownloadTask> tasks = new LinkedList<>();
         for (Map.Entry<String, AssetIndexManifest.AssetObject> entry : manifest.objects.entrySet()) {
             AssetIndexManifest.AssetObject object = entry.getValue();
 
@@ -86,7 +86,7 @@ public class InstallAssetsTask implements Task<AssetIndexManifest> {
             // this causes duplicate tasks to be added.
             if (!seen.add(dest)) continue;
 
-            NewDownloadTask task = NewDownloadTask.builder()
+            DownloadTask task = DownloadTask.builder()
                     .url(MC_RESOURCES + loc)
                     // TODO This is very temporary. We keep getting download failures on larger assets for no reason.
                     //      The plan is to replace our HTTP backend with something better (cURL) and hopefully this can

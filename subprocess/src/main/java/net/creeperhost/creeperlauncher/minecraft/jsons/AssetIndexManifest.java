@@ -1,13 +1,11 @@
 package net.creeperhost.creeperlauncher.minecraft.jsons;
 
 import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import net.covers1624.quack.gson.HashCodeAdapter;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,7 +46,7 @@ public class AssetIndexManifest {
         Path assetIndexFile = assetsDir.resolve("indexes/" + assetIndex.getId() + ".json");
         LOGGER.info("Updating AssetIndex Manifest for '{}' from '{}'.", assetIndex.getId(), assetIndex.getUrl());
 
-        NewDownloadTask downloadTask = NewDownloadTask.builder()
+        DownloadTask downloadTask = DownloadTask.builder()
                 .url(assetIndex.getUrl())
                 .withMirror(JSON_PROXY + assetIndex.getUrl())
                 .dest(assetIndexFile)

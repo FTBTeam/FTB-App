@@ -9,8 +9,8 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public class InstanceSupportMeta {
             }
         }
 
-        NewDownloadTask task = NewDownloadTask.builder()
+        DownloadTask task = DownloadTask.builder()
                 .url(URL)
                 .dest(metaFile)
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -146,8 +146,8 @@ public class InstanceSupportMeta {
             return validation;
         }
 
-        public NewDownloadTask createTask(Path destFolder) {
-            return NewDownloadTask.builder()
+        public DownloadTask createTask(Path destFolder) {
+            return DownloadTask.builder()
                     .url(getUrl())
                     .dest(destFolder.resolve(getName()))
                     .withValidation(makeValidation())

@@ -45,7 +45,7 @@ import static java.net.HttpURLConnection.HTTP_PARTIAL;
  * <p>
  * Created by covers1624 on 17/11/21.
  */
-public class NewDownloadTask implements Task<Path> {
+public class DownloadTask implements Task<Path> {
 
     private static final boolean DEBUG = Boolean.getBoolean("DownloadTask.debug");
     private static final Logger LOGGER = LogManager.getLogger();
@@ -62,7 +62,7 @@ public class NewDownloadTask implements Task<Path> {
     private final boolean tryCompanionHashes;
     private final boolean tryResumeDownload;
 
-    private NewDownloadTask(Builder builder) {
+    private DownloadTask(Builder builder) {
         if (builder.urls.isEmpty()) throw new IllegalStateException("URL not set.");
         if (builder.dest == null) throw new IllegalStateException("Dest not set.");
 
@@ -78,7 +78,7 @@ public class NewDownloadTask implements Task<Path> {
     }
 
     /**
-     * Creates a new {@link Builder} for building a {@link NewDownloadTask}.
+     * Creates a new {@link Builder} for building a {@link DownloadTask}.
      *
      * @return The {@link Builder}.
      */
@@ -420,7 +420,7 @@ public class NewDownloadTask implements Task<Path> {
     }
 
     /**
-     * Converts this {@link NewDownloadTask} back to {@link Builder}.
+     * Converts this {@link DownloadTask} back to {@link Builder}.
      *
      * @return The {@link Builder}.
      */
@@ -495,8 +495,8 @@ public class NewDownloadTask implements Task<Path> {
             return this;
         }
 
-        public NewDownloadTask build() {
-            return new NewDownloadTask(this);
+        public DownloadTask build() {
+            return new DownloadTask(this);
         }
     }
 
@@ -509,7 +509,7 @@ public class NewDownloadTask implements Task<Path> {
     }
 
     /**
-     * Validation properties for a {@link NewDownloadTask}.
+     * Validation properties for a {@link DownloadTask}.
      * Extension of {@link FileValidation}.
      */
     public static class DownloadValidation extends FileValidation {

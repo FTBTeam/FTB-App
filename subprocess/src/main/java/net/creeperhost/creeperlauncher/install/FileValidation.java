@@ -5,7 +5,7 @@ import com.google.common.hash.HashFunction;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 

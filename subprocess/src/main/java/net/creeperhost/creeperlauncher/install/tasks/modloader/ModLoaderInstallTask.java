@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.install.tasks.modloader;
 
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.forge.AbstractForgeInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
@@ -61,7 +61,7 @@ public abstract class ModLoaderInstallTask implements Task<String> {
             throw new IOException("No vanilla version manifest found for " + version);
         }
 
-        NewDownloadTask clientDownload = manifest.getClientDownload(versionsDir, manifest.id);
+        DownloadTask clientDownload = manifest.getClientDownload(versionsDir, manifest.id);
         if (clientDownload == null) {
             LOGGER.warn("Failed to find 'client' download for {}. Skipping..", version);
             return manifest;
