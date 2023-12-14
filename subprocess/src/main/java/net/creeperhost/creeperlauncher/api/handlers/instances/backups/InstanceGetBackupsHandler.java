@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
 import com.google.gson.JsonSyntaxException;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -22,7 +22,7 @@ public class InstanceGetBackupsHandler implements IMessageHandler<InstanceGetBac
     public void handle(Request data) {
         Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceBackupsErrorReply(data, "Unable to locate modpack for backups"));
+            WebSocketHandler.sendMessage(new InstanceBackupsErrorReply(data, "Unable to locate modpack for backups"));
             return;
         }
         
@@ -31,16 +31,16 @@ public class InstanceGetBackupsHandler implements IMessageHandler<InstanceGetBac
             
         var emptyReply = new Reply(data, List.of());
         if (!Files.exists(backupsJsonPath)) {
-            Settings.webSocketAPI.sendMessage(emptyReply);
+            WebSocketHandler.sendMessage(emptyReply);
             return;
         }
 
         try {
             BackupsJson backups = GsonUtils.loadJson(backupsJsonPath, BackupsJson.class);
-            Settings.webSocketAPI.sendMessage(new Reply(data, backups.backups));
+            WebSocketHandler.sendMessage(new Reply(data, backups.backups));
         } catch (IOException | JsonSyntaxException e) {
             LOGGER.warn("Unable to read backups json...", e);
-            Settings.webSocketAPI.sendMessage(emptyReply);
+            WebSocketHandler.sendMessage(emptyReply);
         }
     }
 

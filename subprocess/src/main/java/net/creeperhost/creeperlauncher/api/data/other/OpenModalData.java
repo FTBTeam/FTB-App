@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.api.data.other;
 
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class OpenModalData extends BaseData
 
     public static void openModal(String title, String message, List<ModalButton> modalButtons) {
         currentlyOpenModal = new OpenModalData(title, message, modalButtons);
-        Settings.webSocketAPI.sendMessage(currentlyOpenModal);
+        WebSocketHandler.sendMessage(currentlyOpenModal);
     }
 
     public static class ModalButton

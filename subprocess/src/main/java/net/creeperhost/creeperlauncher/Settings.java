@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.creeperhost.creeperlauncher.api.WebSocketAPI;
 import net.creeperhost.creeperlauncher.util.ProxyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -11,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,7 +23,6 @@ public class Settings
     private static final Type settingsToken = new TypeToken<HashMap<String, String>>(){}.getType();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     public static HashMap<String, String> settings = new HashMap<>();
-    public static WebSocketAPI webSocketAPI;
 
     public static void saveSettings()
     {

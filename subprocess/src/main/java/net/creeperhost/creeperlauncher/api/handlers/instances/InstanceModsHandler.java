@@ -4,6 +4,7 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceModsData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
@@ -31,7 +32,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
         if (instance == null) return;
 
         var mods = instance.getMods(false);
-        Settings.webSocketAPI.sendMessage(new InstanceModsData.Reply(data, mods));
+        WebSocketHandler.sendMessage(new InstanceModsData.Reply(data, mods));
 
         pollModData(data, instance, mods);
     }
@@ -56,7 +57,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
             }
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-                .thenRunAsync(() -> Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateCheckingFinished(data)), CreeperLauncher.taskExeggutor);
+                .thenRunAsync(() -> WebSocketHandler.sendMessage(new InstanceModsData.UpdateCheckingFinished(data)), CreeperLauncher.taskExeggutor);
     }
 
     private static CompletableFuture<Void> pollMod(InstanceModsData data, CompletableFuture<ModpackVersionModsManifest> modsManifestFuture, ModInfo mod, @Nullable ModpackVersionManifest.Target modLoader, @Nullable String mcVersion) {
@@ -76,7 +77,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                     if (version == null) return;
 
                     if (version.getId() <= curseData.curseFile()) return;
-                    Settings.webSocketAPI.sendMessage(new InstanceModsData.UpdateAvailable(
+                    WebSocketHandler.sendMessage(new InstanceModsData.UpdateAvailable(
                             data,
                             mod,
                             CurseMetadata.full(
@@ -105,7 +106,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
         } else {
             meta = Constants.CURSE_METADATA_CACHE.getCurseMeta(meta.curseProject(), meta.curseFile(), mod.sha1());
         }
-        Settings.webSocketAPI.sendMessage(new InstanceModsData.RichModData(data, mod, meta));
+        WebSocketHandler.sendMessage(new InstanceModsData.RichModData(data, mod, meta));
         return meta;
     }
 }

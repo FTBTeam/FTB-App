@@ -13,7 +13,8 @@ import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.covers1624.quack.platform.Architecture;
 import net.creeperhost.creeperlauncher.api.DebugTools;
-import net.creeperhost.creeperlauncher.api.WebSocketAPI;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
+import net.creeperhost.creeperlauncher.api.WebsocketServer;
 import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
@@ -32,8 +33,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -104,9 +103,6 @@ public class CreeperLauncher {
 
     public static LocalCache localCache;
 
-    public static boolean defaultWebsocketPort = false;
-    public static int websocketPort = WebSocketAPI.generateRandomPort();
-    public static final String websocketSecret = WebSocketAPI.generateSecret();
     public static boolean websocketDisconnect = false;
     public static AtomicBoolean isSyncing = new AtomicBoolean(false);
 
@@ -134,7 +130,6 @@ public class CreeperLauncher {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
 
-        System.out.println(Constants.LIB_SIGNATURE);
         Settings.loadSettings();
         Instances.refreshInstances();
 
@@ -148,7 +143,6 @@ public class CreeperLauncher {
 
         if (isDevMode || isOverwolf) {
             startProcess = false;
-            defaultWebsocketPort = true;
         }
 
         LOGGER.info((isOverwolf ? "Overwolf" : "Electron") + " integration mode");
@@ -159,7 +153,6 @@ public class CreeperLauncher {
                 Optional<ProcessHandle> electronProc = ProcessHandle.of(pid);
                 if (electronProc.isPresent()) {
                     startProcess = false;
-                    defaultWebsocketPort = true;
                     ProcessHandle handle = electronProc.get();
                     handle.onExit().thenRun(() ->
                     {
@@ -181,11 +174,16 @@ public class CreeperLauncher {
             LOGGER.info(isDevMode ? "Development mode" : "No PID args specified");
         }
 
-
         try {
-            Settings.webSocketAPI = new WebSocketAPI(new InetSocketAddress(InetAddress.getLoopbackAddress(), defaultWebsocketPort || isDevMode ? Constants.WEBSOCKET_PORT : websocketPort));
-            Settings.webSocketAPI.setConnectionLostTimeout(0);
-            Settings.webSocketAPI.start();
+            WebsocketServer.PortMode portMode;
+            if (isDevMode) {
+                portMode = WebsocketServer.PortMode.STATIC;
+            } else if (isOverwolf) {
+                portMode = WebsocketServer.PortMode.DYNAMIC_ON_CONNECT;
+            } else {
+                portMode = WebsocketServer.PortMode.DYNAMIC;
+            }
+            WebSocketHandler.startWebsocket(portMode);
             if (OS.CURRENT == OS.WIN) pingPong();
         } catch (Throwable t) {
             websocketDisconnect = true;
@@ -220,7 +218,7 @@ public class CreeperLauncher {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
                 new OpenModalData.ModalButton("Exit", "success", CreeperLauncher::exit),
                 new OpenModalData.ModalButton("Continue", "danger", () -> {
-                    Settings.webSocketAPI.sendMessage(new CloseModalData());
+                    WebSocketHandler.sendMessage(new CloseModalData());
                 }))
             );
         }
@@ -280,7 +278,7 @@ public class CreeperLauncher {
                         doUpdate(args);
                     }),
                     new OpenModalData.ModalButton("No", "danger", () -> {
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
+                        WebSocketHandler.sendMessage(new CloseModalData());
                     })
                 ));
                 return true;
@@ -288,7 +286,7 @@ public class CreeperLauncher {
                 if (!warnedDevelop) {
                     warnedDevelop = true;
                     OpenModalData.openModal("Update", "Unable to switch from branch " + Constants.BRANCH + " via this toggle.", List.of(
-                        new OpenModalData.ModalButton("Ok", "danger", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
+                        new OpenModalData.ModalButton("Ok", "danger", () -> WebSocketHandler.sendMessage(new CloseModalData()))
                     ));
                 }
                 return false;
@@ -325,7 +323,7 @@ public class CreeperLauncher {
             try {
                 PingLauncherData ping = new PingLauncherData();
                 CreeperLauncher.missedPings++;
-                Settings.webSocketAPI.sendMessage(ping);
+                WebSocketHandler.sendMessage(ping);
             } catch (Exception ignored) {
                 LOGGER.error("Failed to send ping");
             }
@@ -380,7 +378,7 @@ public class CreeperLauncher {
                         reply = new ClientLaunchData.Reply(lastInstance, type, message, data);
                         lastMessageTime = System.currentTimeMillis();
                         try {
-                            Settings.webSocketAPI.sendMessage(reply);
+                            WebSocketHandler.sendMessage(reply);
                         } catch (Throwable t) {
                             LOGGER.warn("Unable to send MC client loading update to frontend!", t);
                         }
@@ -394,7 +392,7 @@ public class CreeperLauncher {
         } catch (Throwable e) {
             if (lastInstance.length() > 0) {
                 reply = new ClientLaunchData.Reply(lastInstance, "clientDisconnect", new Object());
-                Settings.webSocketAPI.sendMessage(reply);
+                WebSocketHandler.sendMessage(reply);
             }
 
             closeSockets();
@@ -472,7 +470,7 @@ public class CreeperLauncher {
         }
 
         args.add("--ws");
-        args.add(websocketPort + ":" + websocketSecret);
+        args.add(WebSocketHandler.getPort() + ":" + Constants.WEBSOCKET_SECRET);
         args.add("--pid");
         args.add(String.valueOf(ProcessHandle.current().pid()));
 
@@ -506,15 +504,8 @@ public class CreeperLauncher {
 
     public static void cleanUpBeforeExit() {
         LOGGER.info("Cleaning up for shutdown");
-        try {
-            if (Settings.webSocketAPI != null) {
-                Settings.webSocketAPI.stop();
-            }
-
-            closeSockets();
-        } catch (IOException | InterruptedException e) {
-            LOGGER.error("Failed to close sockets...", e);
-        }
+        WebSocketHandler.stopWebsocket();
+        closeSockets();
 
         Settings.saveSettings();
     }

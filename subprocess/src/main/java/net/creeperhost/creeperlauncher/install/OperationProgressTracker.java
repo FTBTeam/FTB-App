@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.install;
 
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.OperationProgressUpdateData;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 
@@ -100,7 +100,7 @@ public class OperationProgressTracker {
             lastSpeedBytes = currentBytes;
         }
 
-        Settings.webSocketAPI.sendMessage(new OperationProgressUpdateData(
+        WebSocketHandler.sendMessage(new OperationProgressUpdateData(
                 type,
                 meta,
                 stage,
