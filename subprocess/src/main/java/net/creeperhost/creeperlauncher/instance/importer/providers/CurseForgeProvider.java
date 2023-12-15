@@ -1,128 +1,151 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.Result;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @implNote
  *  - Settings file always contains the modded folder
  *  - Instances folder is always called instances
+ *  - Curseforge instances do not set their own java version so we'll need to figure that bit out
  */
 public class CurseForgeProvider implements InstanceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(CurseForgeProvider.class);
-    
+
     @Override
-    public List<SimpleInstanceInfo> getAllInstances() {
-        var instancesPath = getModdedDir();
-        if (instancesPath.isEmpty()) {
-            LOGGER.error("Failed to get modded dir");
+    public List<SimpleInstanceInfo> instances(Path instancesPath) {
+        if (instancesPath == null) {
+            instancesPath = getModdedDir();
+        }
+        
+        if (instancesPath == null || Files.notExists(instancesPath)) {
             return List.of();
         }
         
-        try (var files = Files.list(instancesPath.get())) {
-            var modpacks = files
+        try (var files = Files.list(instancesPath)) {
+            return files
                 .filter(Files::isDirectory)
-                .filter(path -> Files.exists(path.resolve("minecraftinstance.json")))
-                .map(e -> Pair.of(e, this.getDataFile(e)))
-                .filter(e -> e.getRight() != null)
-                .map(e -> Pair.of(e.getLeft(), e.getRight().getAsJsonObject()))
+                .map(this::instance)
+                .filter(Objects::nonNull)
                 .toList();
-
-            return modpacks
-                .stream().map(pack -> new SimpleInstanceInfo(
-                    pack.getValue().get("name").getAsString(),
-                    pack.getKey(),
-                    pack.getValue().get("gameVersion").getAsString(),
-                    pack.getValue().get("installDate").getAsString() // No java data provided...
-                )).toList();
         } catch (Exception e) {
             LOGGER.error("Failed to list instances", e);
         }
-        
+
         return List.of();
     }
 
     @Override
     @Nullable
-    public SimpleInstanceInfo getInstance(String instanceName) {
-        return null;
+    public SimpleInstanceInfo instance(Path instancePath) {
+        if (!isValidInstance(instancePath)) {
+            return null;
+        }
+        
+        // Load the instance meta file
+        var metaFile = instancePath.resolve("minecraftinstance.json");
+        var metaJson = this.loadJson(metaFile);
+        
+        if (metaJson == null) {
+            return null;
+        }
+        
+        // TODO: Catch errors, any error for missing data will just be considered invalid
+        // We need the modloader
+        var name = GsonUtils.getNestedField("name", metaJson, JsonElement::getAsString);
+        var gameVersion = GsonUtils.getNestedField("gameVersion", metaJson, JsonElement::getAsString);
+        var installDate = GsonUtils.getNestedField("installDate", metaJson, JsonElement::getAsString);
+        var modloader = GsonUtils.getNestedField("baseModLoader.name", metaJson, JsonElement::getAsString); // LOADER-VERSION
+        
+        // Enrich the data
+        var lastPlayed = GsonUtils.getNestedField("lastPlayed", metaJson, JsonElement::getAsLong);
+        
+        // These will be 0 if they don't exist
+        var curseProject = GsonUtils.getNestedField("projectID", metaJson, JsonElement::getAsInt);
+        var curseFile = GsonUtils.getNestedField("fileID", metaJson, JsonElement::getAsInt);
+        
+        // Pull some nice to have info
+        var memory = GsonUtils.getNestedField("allocatedMemory", metaJson, JsonElement::getAsInt);
+        
+        return new SimpleInstanceInfo(name, instancePath, gameVersion, installDate);
+    }
+
+    @Override
+    public Result<Boolean, String> importInstance(Path identifier) {
+        // Load the instance again
+        var instance = instance(identifier);
+        if (instance == null) {
+            return Result.err("Failed to load instance");
+        }
+        
+        // Now import it I guess
+        // At the core of it all, we just need to copy a directory from one place to another
+
+        return Result.err("Not implemented");
     }
     
-    public Optional<Path> getModdedDir() {
-        var minecraftPath = this.loadJson(getDataLocation().resolve("settings.json"))
-            .flatMap(e -> GsonUtils.getProperty("minecraft.moddingFolder", e, JsonElement::getAsString))
-            .map(Path::of);
-
-        if (minecraftPath.isEmpty()) {
+    @Nullable
+    public Path getModdedDir() {
+        JsonElement settingJson = this.loadJson(this.sourceLocation().resolve("settings.json"));
+        if (settingJson == null) {
             LOGGER.error("Failed to load settings file");
-            return Optional.empty();
+            return null;
+        }
+        
+        String moddedDir = GsonUtils.getNestedField("minecraft.moddingFolder", settingJson, JsonElement::getAsString);
+        
+        if (moddedDir == null || moddedDir.isEmpty()) {
+            LOGGER.error("Failed to load settings file");
+            return null;
         }
 
-        Path instancesPath = minecraftPath.get().resolve("Instances");
+        Path instancesPath = Path.of(moddedDir).resolve("Instances");
         if (Files.notExists(instancesPath)) {
             LOGGER.error("Instances folder does not exist");
-            return Optional.empty();
+            return null;
         }
-        
-        return Optional.of(instancesPath);
+
+        return instancesPath;
     }
 
     @Override
-    @Nullable
-    public Path getDataLocation() {
-        return switch (OperatingSystem.current()) {
-            case WINDOWS -> Path.of(System.getenv("APPDATA"), "CurseForge");
-            case LINUX, SOLARIS, FREEBSD -> Path.of(System.getProperty("user.home"), ".config", "CurseForge");
-            case MACOS -> Path.of(System.getProperty("user.home"), "Library", "Application Support", "CurseForge");
-            default -> null;
-        };
-    }
-    
-    @Override
-    @Nullable
-    public JsonElement getDataFile(Path path) {
-        Path dataLocation = getDataLocation();
-        Path instancePath = dataLocation.resolve(path);
-        Path metaFile = instancePath.resolve("minecraftinstance.json");
-        try {
-            return GsonUtils.loadJson(metaFile, JsonElement.class);
-        } catch (Exception e) {
-            LOGGER.error("Failed to load instance meta file", e);
-        }
-        
-        return null;
-    }
-    
-    private Optional<JsonElement> loadJson(Path path) {
-        try {
-            return Optional.of(GsonUtils.loadJson(path, JsonElement.class));
-        } catch (Exception e) {
-            LOGGER.error("Failed to load json file", e);
-        }
-        
-        return Optional.empty();
+    public Path windowsSourceLocation() {
+        return Path.of(System.getenv("APPDATA"), "CurseForge");
     }
 
     @Override
-    public Result<Boolean, String> importInstance(String identifier) {
-//        List<String> allInstances = getAllInstances();
-//        for (String instance : allInstances) {
-//            var
-                
-//        }
-        
-        return Result.err("Not implemented");
+    public Path macosSourceLocation() {
+        return Path.of(System.getProperty("user.home"), "Library", "Application Support", "CurseForge");
+    }
+
+    @Override
+    public Path linuxSourceLocation() {
+        return Path.of(System.getProperty("user.home"), ".config", "CurseForge");
+    }
+    
+    @Override
+    public boolean isValidInstance(Path path) {
+        var metaFile = path.resolve("minecraftinstance.json");
+        return Files.exists(metaFile);
+    }
+
+    @Override
+    public boolean isValidInstanceProvider(Path path) {
+        return false;
+    }
+
+    @Override
+    public boolean isCurseCompatible() {
+        return true;
     }
 }

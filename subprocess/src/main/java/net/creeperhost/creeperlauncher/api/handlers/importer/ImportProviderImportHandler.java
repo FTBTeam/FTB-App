@@ -7,21 +7,25 @@ import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.instance.importer.Importer;
 import net.creeperhost.creeperlauncher.util.Result;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public class ImportProviderImportHandler implements IMessageHandler<ImportProviderImportHandler.Data> {
     @Override
     public void handle(Data data) {
         var importer = Importer.factory(data.provider);
-        for (var uuid : data.instanceUuids) {
-            Result<Boolean, String> instance = importer.importInstance(uuid);
+        for (var instanceLocation : data.locations) {
+            var instancePath = Path.of(instanceLocation);
+            Result<Boolean, String> instance = importer.importInstance(instancePath);
+            // TODO: handle result
             Settings.webSocketAPI.sendMessage(new Reply(data, true));
         }
     }
 
     public static class Data extends BaseData {
         public @JsonAdapter(Importer.ProviderAdapter.class) Importer.Providers provider;
-        public List<String> instanceUuids;
+        
+        public List<String> locations;
     }
 
     public static class Reply extends ImportProviderImportHandler.Data {
