@@ -1,89 +1,90 @@
-//package net.creeperhost.creeperlauncher.instance.importer.providers;
-//
-//import com.google.gson.JsonElement;
-//import com.google.gson.JsonObject;
-//import net.covers1624.quack.platform.OperatingSystem;
-//import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo;
-//import net.creeperhost.creeperlauncher.util.FileUtils;
-//import net.creeperhost.creeperlauncher.util.GsonUtils;
-//import net.creeperhost.creeperlauncher.util.Result;
-//import org.jetbrains.annotations.Nullable;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//
-//import java.io.IOException;
-//import java.nio.file.Files;
-//import java.nio.file.Path;
-//import java.util.LinkedList;
-//import java.util.List;
-//import java.util.Optional;
-//
-//public class AtLauncherProvider implements InstanceProvider {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(AtLauncherProvider.class);
-//    
-//    @Override
-//    public Result<Boolean, String> importInstance(String identifier) {
-//        return Result.err("Not implemented");
-//    }
-//
-//    @Override
-//    public List<SimpleInstanceInfo> getAllInstances() {
-//        var instancesPath = getDataLocation();
-//        if (instancesPath == null || !Files.exists(instancesPath)) {
-//            LOGGER.error("Failed to get instances dir");
-//            return List.of();
-//        }
-//        
-//        // Read the dir list 
-//        var instanceLocations = FileUtils.listDir(instancesPath)
-//            .stream()
-//            .filter(e -> Files.exists(e.resolve("instance.json")))
-//            .toList();
-//
-//        List<SimpleInstanceInfo> simpleData = new LinkedList<>();
-//        for (Path location : instanceLocations) {
-//            try {
-//                JsonElement instanceJson = GsonUtils.loadJson(location.resolve("instance.json"), JsonElement.class);
-//                var instance = instanceJson.getAsJsonObject();
-//                var launcher = instance.get("launcher").getAsJsonObject();
-//                if (launcher.isJsonNull()) {
-//                    LOGGER.error("Failed to read instance.json");
-//                    continue;
-//                }
-//                
-//                var name = launcher.get("name").getAsString();
-//                
-//                JsonObject java = instance.get("javaVersion").getAsJsonObject();
-//                int javaVersion = java.isJsonNull() ? 0 : java.get("majorVersion").getAsInt();
-//                
-//                simpleData.add(new SimpleInstanceInfo(name, location, instance.get("id").getAsString(), String.valueOf(javaVersion)));
-//            } catch (Exception e) {
-//                LOGGER.error("Failed to read instance.json", e);
-//            }
-//        }
-//        
-//        return simpleData;
-//    }
-//
-//    @Override
-//    public SimpleInstanceInfo getInstance(String instanceName) {
-//        return null;
-//    }
-//
-//    @Override
-//    @Nullable
-//    public Path getDataLocation() {
-//        return switch (OperatingSystem.current()) {
-//            case WINDOWS -> throw new RuntimeException("Not implemented");
-//            case LINUX, SOLARIS, FREEBSD -> throw new RuntimeException("Not implemented");
-//            case MACOS -> Path.of("/Applications/ATLauncher.app/Contents/Java/instances");
-//            default -> null;
-//        };
-//    }
-//
-//    @Override
-//    @Nullable
-//    public JsonElement getDataFile(Path path) {
-//        return null;
-//    }
-//}
+package net.creeperhost.creeperlauncher.instance.importer.providers;
+
+import com.google.gson.JsonElement;
+import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo;
+import net.creeperhost.creeperlauncher.util.FileUtils;
+import net.creeperhost.creeperlauncher.util.GsonUtils;
+import net.creeperhost.creeperlauncher.util.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+
+public class AtLauncherProvider implements InstanceProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AtLauncherProvider.class);
+
+    /**
+     * TODO I'm thinking this can be abstracted into two parts. A get source, and a loop over the provided dir for all the instances
+     */
+    @Override
+    public List<SimpleInstanceInfo> instances(Path instancesLocation) {
+        if (instancesLocation == null) {
+            // No magic here like curseforge, instances are always here (as far as I know)
+            instancesLocation = sourceLocation();
+        }
+        
+        if (!Files.exists(instancesLocation)) {
+            LOGGER.error("Failed to get instances dir");
+            return List.of();
+        }
+
+        // Read the dir list 
+        return FileUtils.listDir(instancesLocation)
+            .stream()
+            .map(this::instance)
+            .filter(Objects::nonNull)
+            .toList();
+    }
+
+    @Override
+    public SimpleInstanceInfo instance(Path instanceLocation) {
+        if (!isValidInstance(instanceLocation)) {
+            return null;
+        }
+        
+        var instanceData = this.loadJson(instanceLocation.resolve("instance.json"));
+        if (instanceData == null) {
+            return null;
+        }
+        
+        // Handle errors (basically just throw
+        var name = GsonUtils.getNestedField("launcher.name", instanceData, JsonElement::getAsString);
+        var javaVersion = GsonUtils.getNestedField("javaVersion.majorVersion", instanceData, JsonElement::getAsInt);
+        var mcVersion = GsonUtils.getNestedField("id", instanceData, JsonElement::getAsString); // This might be wrong
+        
+        return new SimpleInstanceInfo(name, instanceLocation, mcVersion, String.valueOf(javaVersion));
+    }
+
+    @Override
+    public Result<Boolean, String> importInstance(Path instanceLocation) {
+        return Result.err("Not implemented");
+    }
+
+    @Override
+    public Path windowsSourceLocation() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public Path macosSourceLocation() {
+        return Path.of("/Applications/ATLauncher.app/Contents/Java/instances");
+    }
+
+    @Override
+    public Path linuxSourceLocation() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public boolean isValidInstance(Path path) {
+        return Files.exists(path.resolve("instance.json"));
+    }
+
+    @Override
+    public boolean isValidInstanceProvider(Path path) {
+        return false;
+    }
+}

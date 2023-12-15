@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 public interface InstanceProvider {
-    Result<Boolean, String> importInstance(Path instancePath);
-
     /**
      * Retrieve all the instances that the provider holds
      * 
@@ -23,7 +21,9 @@ public interface InstanceProvider {
     List<SimpleInstanceInfo> instances(@Nullable Path instancesPath);
 
     @Nullable SimpleInstanceInfo instance(Path instancePath);
-    
+
+    Result<Boolean, String> importInstance(Path instancePath);
+
     default Path sourceLocation() {
         return sourceLocation(null);
     }
