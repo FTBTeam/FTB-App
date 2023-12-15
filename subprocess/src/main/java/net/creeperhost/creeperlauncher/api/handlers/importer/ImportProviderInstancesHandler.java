@@ -9,14 +9,22 @@ import net.creeperhost.creeperlauncher.instance.importer.Importer;
 import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
 public class ImportProviderInstancesHandler implements IMessageHandler<ImportProviderInstancesHandler.Data> {
     @Override
     public void handle(Data data) {
-        var instances = Importer.factory(data.provider).instances(data.location);
-        Settings.webSocketAPI.sendMessage(new Reply(data, instances));
+        try {
+            var provider = Importer.allInstances(data.provider, data.location);
+            Settings.webSocketAPI.sendMessage(new Reply(data, provider));
+        } catch (IOException e) {
+            // TODO: Real error
+            throw new RuntimeException(e);
+        }
+
+        Settings.webSocketAPI.sendMessage(new Reply(data, List.of()));
     }
     
     public static class Data extends BaseData {
