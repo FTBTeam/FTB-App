@@ -15,6 +15,6 @@ public class PrismProvider extends PrismLikeProvider {
 
     @Override
     public Path linuxSourceLocation() {
-        return throw new RuntimeException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 }
