@@ -11,7 +11,7 @@ public class MultiMcProvider extends PrismLikeProvider {
 
     @Override
     public Path macosSourceLocation() {
-        return Path.of("/Applications/MultiMC.app/Data/instances/")
+        return Path.of("/Applications/MultiMC.app/Data/instances/");
     }
 
     @Override
