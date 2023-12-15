@@ -4,6 +4,7 @@ import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,7 +12,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.function.Function;
 
 // TODO move away from global GSON instance, instead have specialized instances.
@@ -73,14 +73,15 @@ public class GsonUtils {
         }
     }
 
-    public static <T> Optional<T> getProperty(String keyList, JsonElement jsonElm, Function<JsonElement, T> getter) {
+    @Nullable
+    public static <T> T getNestedField(String keyList, JsonElement jsonElm, Function<JsonElement, T> getter) {
         // If it's a single key, just return it.
         if (!keyList.contains(".")) {
             if (!jsonElm.isJsonObject()) {
                 throw new IllegalArgumentException("Expected object");
             }
             
-            return Optional.of(getter.apply(jsonElm.getAsJsonObject().get(keyList)));
+            return getter.apply(jsonElm.getAsJsonObject().get(keyList));
         }
         
         // If it's a list of keys, we need to traverse the tree.
@@ -94,16 +95,16 @@ public class GsonUtils {
         for (int i = 0; i < keys.length - 1; i++) {
             String key = keys[i];
             if (!current.has(key) || !current.get(key).isJsonObject()) {
-                return Optional.empty();
+                return null;
             }
             current = current.getAsJsonObject(key);
         }
 
         String lastKey = keys[keys.length - 1];
         if (!current.has(lastKey)) {
-            return Optional.empty();
+            return null;
         }
 
-        return Optional.of(getter.apply(current.get(lastKey)));
+        return getter.apply(current.get(lastKey));
     }
 }
