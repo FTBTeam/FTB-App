@@ -2,7 +2,6 @@ package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
 import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo;
-import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -10,32 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 
 public abstract class PrismLikeProvider implements InstanceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrismLikeProvider.class);
-
-    @Override
-    public List<SimpleInstanceInfo> instances(Path instancesPath) {
-        if (instancesPath == null) {
-            instancesPath = sourceLocation();
-        }
-        
-        if (Files.notExists(instancesPath)) {
-            LOGGER.error("Failed to get instances dir {}", instancesPath);
-            return List.of();
-        }
-
-        // Read the dir list
-        return FileUtils.listDir(instancesPath)
-            .stream()
-            .map(this::instance)
-            .filter(Objects::nonNull)
-            .toList();
-    }
-
+    
     @Override
     @Nullable
     public SimpleInstanceInfo instance(Path instancePath) {

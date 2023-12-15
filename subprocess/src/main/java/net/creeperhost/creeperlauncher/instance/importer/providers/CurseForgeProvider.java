@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * @implNote
@@ -23,26 +21,8 @@ public class CurseForgeProvider implements InstanceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(CurseForgeProvider.class);
 
     @Override
-    public List<SimpleInstanceInfo> instances(Path instancesPath) {
-        if (instancesPath == null) {
-            instancesPath = getModdedDir();
-        }
-        
-        if (instancesPath == null || Files.notExists(instancesPath)) {
-            return List.of();
-        }
-        
-        try (var files = Files.list(instancesPath)) {
-            return files
-                .filter(Files::isDirectory)
-                .map(this::instance)
-                .filter(Objects::nonNull)
-                .toList();
-        } catch (Exception e) {
-            LOGGER.error("Failed to list instances", e);
-        }
-
-        return List.of();
+    public @Nullable Path extendedSourceLocation() {
+        return getModdedDir();
     }
 
     @Override

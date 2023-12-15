@@ -9,21 +9,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 
 public interface InstanceProvider {
-    /**
-     * Retrieve all the instances that the provider holds
-     * 
-     * @param instancesPath User defined instance path. Can be null. When null, we detect the system and use the default path. 
-     * @return list of instances within the providers instance path
-     */
-    List<SimpleInstanceInfo> instances(@Nullable Path instancesPath);
-
     @Nullable SimpleInstanceInfo instance(Path instancePath);
 
     Result<Boolean, String> importInstance(Path instancePath);
 
+    @Nullable
+    default Path extendedSourceLocation() {
+        return null;
+    }
+    
     default Path sourceLocation() {
         return sourceLocation(null);
     }
