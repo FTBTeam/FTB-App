@@ -29,7 +29,7 @@ class ChAdController extends RequiresWs {
       id: 'fallback',
       type: 'video',
       asset: ChAdController.FALLBACK_AD,
-      link: 'https://go.ftb.team/ch-app',
+      link: 'https://go.ftb.team/ch-a',
       priority: 3000
     }
   ];

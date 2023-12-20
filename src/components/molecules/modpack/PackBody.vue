@@ -92,7 +92,7 @@
 <!--        >-->
 <!--          Public servers-->
 <!--        </div>-->
-        <a class="cta cursor-pointer" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-app' : `https://www.creeperhost.net/modpack/${packSlug}`)">
+        <a class="cta cursor-pointer" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-a-p' : `https://go.ftb.team/ch-app-pack?url=https://www.creeperhost.net/modpack/${packSlug}`)">
           <img class="ch-logo" src="@/assets/ch-logo.svg" alt="" />
           Order a server
         </a>
