@@ -1,16 +1,16 @@
 package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
-import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
-import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.install.ProgressTracker;
+import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +21,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -40,13 +42,14 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
     private final Instance instance;
     private final Path installerJar;
 
-    public ForgeV1InstallTask(Instance instance, Path installerJar) {
+    public ForgeV1InstallTask(CancellationToken cancelToken, ProgressTracker tracker, Instance instance, Path installerJar) {
+        super(cancelToken, tracker);
         this.instance = instance;
         this.installerJar = installerJar;
     }
 
     @Override
-    public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+    public void execute() throws Throwable {
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
@@ -57,9 +60,10 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
             versionName = profile.install.target;
 
-            if (cancelToken != null) cancelToken.throwIfCancelled();
+            cancelToken.throwIfCancelled();
 
-            VersionManifest vanillaManifest = downloadVanilla(versionsDir, profile.install.minecraft);
+            tracker.setCustomStatus("Download vanilla Minecraft");
+            VersionManifest vanillaManifest = downloadVanilla(versionsDir, profile.install.minecraft, cancelToken, tracker.dynamicListener());
             if (profile.versionInfo.inheritsFrom == null || profile.versionInfo.jar == null) {
                 Path srcJar = versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar");
                 Path destJar = IOUtils.makeParents(versionsDir.resolve(versionName).resolve(versionName + ".jar"));
@@ -74,28 +78,28 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
                 }
             }
 
+            tracker.setCustomStatus("Download libraries");
+            long totalSize = 0;
+            List<Task> libraryTasks = new ArrayList<>();
             for (InstallProfile.Library library : profile.versionInfo.libraries) {
-                if (cancelToken != null) cancelToken.throwIfCancelled();
                 if (library.clientreq == null || !library.clientreq) continue; // Skip, mirrors forge logic.
-                Path libraryPath = processLibrary(cancelToken, installerRoot, librariesDir, library);
-
-                if (library.checksums.isEmpty()) continue;
-
-                String sha1 = HashUtils.hash(Hashing.sha1(), libraryPath).toString();
-
-                if (!library.checksums.contains(sha1)) {
-                    LOGGER.warn("Failed to validate checksums of library {}. Expected one of {}. Got: {}",
-                            library.name,
-                            library.checksums,
-                            sha1
-                    );
-                    // Some libraries in older v1 installers have changed. (scala iirc), just ignore these errors for now.
-                    LOGGER.warn("Continuing anyway..");
+                DownloadTask task = prepareDownloadTask(installerRoot, librariesDir, library);
+                if (!task.isRedundant()) {
+                    totalSize += task.getSizeEstimate();
+                    libraryTasks.add(task.wrapStepComplete(tracker));
                 }
             }
 
-            if (cancelToken != null) cancelToken.throwIfCancelled();
+            if (!libraryTasks.isEmpty()) {
+                tracker.setDynamicStepCount(libraryTasks.size());
+                TaskProgressAggregator.aggregate(tracker.dynamicListener(), totalSize, l -> {
+                    ParallelTaskHelper.executeInParallel(cancelToken, Task.TASK_POOL, libraryTasks, l);
+                });
+            }
 
+            cancelToken.throwIfCancelled();
+
+            tracker.setCustomStatus("Setup launch profile.");
             LOGGER.info("Extracting {} from installer jar.", profile.install.path);
             Path universalPath = profile.install.path.toPath(librariesDir);
             Files.copy(installerRoot.resolve(profile.install.filePath), IOUtils.makeParents(universalPath), StandardCopyOption.REPLACE_EXISTING);
@@ -105,7 +109,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
             JsonUtils.write(InstallProfile.GSON, IOUtils.makeParents(versionJson), profileJson.get("versionInfo"));
 
-            ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, instance, profile.install.minecraft);
+            ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, tracker, instance, profile.install.minecraft);
         }
     }
 

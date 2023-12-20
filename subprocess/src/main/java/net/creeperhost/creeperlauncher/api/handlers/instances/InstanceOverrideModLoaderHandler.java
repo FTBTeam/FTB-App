@@ -7,8 +7,10 @@ import net.creeperhost.creeperlauncher.api.data.instances.InstanceOverrideModLoa
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import net.creeperhost.creeperlauncher.install.ProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -65,13 +67,15 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
                 WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "prepare", "Preparing ModLoader install."));
 
                 ModLoaderInstallTask task = ModLoaderInstallTask.createInstallTask(
+                        CancellationToken.NOP,
+                        ProgressTracker.NOP,
                         instance,
                         instance.getMcVersion(),
                         target.getName(),
                         target.getVersion()
                 );
 
-                task.execute(null, null);
+                task.execute();
                 instance.props.modLoader = task.getModLoaderTarget();
             } else {
                 // Must be vanilla, set loader to game version.

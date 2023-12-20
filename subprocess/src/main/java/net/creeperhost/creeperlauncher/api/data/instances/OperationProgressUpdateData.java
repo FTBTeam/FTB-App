@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -32,6 +33,8 @@ public class OperationProgressUpdateData extends BaseData {
     public final int steps;
     public final int totalSteps;
 
+    public final @Nullable String customStatus;
+
     /**
      * Overall percentage of current stage as calculated by the amount of bytes transferred.
      */
@@ -50,7 +53,7 @@ public class OperationProgressUpdateData extends BaseData {
      */
     public final long totalBytes;
 
-    public OperationProgressUpdateData(String operation, Map<String, String> metadata, OperationProgressTracker.Stage stage, int steps, int totalSteps, double percent, long speed, long bytes, long totalBytes) {
+    public OperationProgressUpdateData(String operation, Map<String, String> metadata, OperationProgressTracker.Stage stage, int steps, int totalSteps, double percent, long speed, long bytes, long totalBytes, @Nullable String customStatus) {
         type = "operationUpdate";
         this.operation = operation;
         this.metadata = metadata;
@@ -61,5 +64,6 @@ public class OperationProgressUpdateData extends BaseData {
         this.speed = speed;
         this.bytes = bytes;
         this.totalBytes = totalBytes;
+        this.customStatus = customStatus;
     }
 }

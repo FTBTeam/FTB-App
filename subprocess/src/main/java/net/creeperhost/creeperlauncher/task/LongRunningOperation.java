@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.task;
 
 import net.covers1624.quack.util.SneakyUtils;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;

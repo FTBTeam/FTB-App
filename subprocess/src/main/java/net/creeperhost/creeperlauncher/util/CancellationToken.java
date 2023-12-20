@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.pack;
+package net.creeperhost.creeperlauncher.util;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -6,6 +6,8 @@ import java.util.concurrent.CompletableFuture;
  * Created by covers1624 on 27/12/21.
  */
 public class CancellationToken {
+
+    public static final CancellationToken NOP = new UnCancelable();
 
     private boolean isCanceled;
 
@@ -35,4 +37,14 @@ public class CancellationToken {
 
     public static class Cancellation extends RuntimeException {
     }
+
+    // @formatter:off
+    private static class UnCancelable extends CancellationToken {
+        @Override public boolean isCanceled() { return false; }
+        @Override public void cancel(CompletableFuture<?> future) { }
+        @Override public void cancel(Thread thread) { }
+        @Override public void cancel() { }
+        @Override public void throwIfCancelled() { }
+    }
+    // @formatter:on
 }

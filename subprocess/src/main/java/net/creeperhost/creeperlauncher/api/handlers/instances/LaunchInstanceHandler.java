@@ -6,7 +6,7 @@ import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.pack.InstanceLaunchException;
 import net.creeperhost.creeperlauncher.pack.InstanceLauncher;

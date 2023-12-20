@@ -3,13 +3,14 @@ package net.creeperhost.creeperlauncher.install;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.OperationProgressUpdateData;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 /**
  * Created by covers1624 on 18/8/23.
  */
-public class OperationProgressTracker {
+public class OperationProgressTracker implements ProgressTracker {
 
     /**
      * How often non-important updates will be sent to the UI.
@@ -18,7 +19,7 @@ public class OperationProgressTracker {
 
     private final String type;
     private final Map<String, String> meta;
-    private Stage stage = DefaultStages.NOT_STARTED;
+    private Stage stage = ProgressTracker.DefaultStages.NOT_STARTED;
 
     private int steps;
     private int completedSteps;
@@ -32,6 +33,8 @@ public class OperationProgressTracker {
     private long lastSpeedTime;
     private long lastSpeedBytes;
 
+    private @Nullable String customStatus;
+
     public OperationProgressTracker(String type, Map<String, String> meta) {
         this.type = type;
         this.meta = meta;
@@ -39,12 +42,9 @@ public class OperationProgressTracker {
         sendUpdate(true);
     }
 
-    public void nextStage(Stage stage) {
-        nextStage(stage, -1);
-    }
-
+    @Override
     public void nextStage(Stage stage, int steps) {
-        if (this.stage == DefaultStages.FINISHED) {
+        if (this.stage == ProgressTracker.DefaultStages.FINISHED) {
             throw new IllegalArgumentException("Already finished, can't do more do.");
         }
         this.stage = stage;
@@ -56,13 +56,45 @@ public class OperationProgressTracker {
         overallBytes = 0;
         lastSpeedTime = 0;
         lastSpeedBytes = 0;
+        customStatus = null;
         sendUpdate(true);
     }
 
-    public synchronized void stepFinished() {
-        completedSteps++;
+    @Override
+    public void setDynamicStepCount(int steps) {
+        this.steps = steps;
+        completedSteps = -1;
+        sendUpdate(true);
     }
 
+    @Override
+    public void setCustomStatus(String status) {
+        customStatus = status;
+        steps = -1;
+        completedSteps = -1;
+        currentBytes = 0;
+        overallBytes = 0;
+        lastSpeedTime = 0;
+        lastSpeedBytes = 0;
+        sendUpdate(true);
+    }
+
+    @Override
+    public synchronized void stepFinished() {
+        completedSteps++;
+        sendUpdate(false);
+    }
+
+    @Override
+    public TaskProgressListener dynamicListener() {
+        currentBytes = 0;
+        overallBytes = 0;
+        lastSpeedTime = 0;
+        lastSpeedBytes = 0;
+        return listenerForStage();
+    }
+
+    @Override
     public TaskProgressListener listenerForStage() {
         // @formatter:off
         return new TaskProgressListener() {
@@ -73,8 +105,9 @@ public class OperationProgressTracker {
         // @formatter:on
     }
 
+    @Override
     public void finished() {
-        nextStage(DefaultStages.FINISHED);
+        nextStage(ProgressTracker.DefaultStages.FINISHED);
         sendUpdate(true);
     }
 
@@ -108,7 +141,8 @@ public class OperationProgressTracker {
                 computeProgress(currentBytes, overallBytes),
                 speed,
                 currentBytes,
-                overallBytes
+                overallBytes,
+                customStatus
         ));
     }
 
@@ -118,20 +152,5 @@ public class OperationProgressTracker {
         }
 
         return (double) currentBytes / (double) overallBytes * 100.0D;
-    }
-
-    /**
-     * Represents a stage.
-     * <p>
-     * This should only ever be implemented on enum constants.
-     * <p>
-     * It will be serialized by Gson.
-     */
-    public interface Stage {
-    }
-
-    public enum DefaultStages implements Stage {
-        NOT_STARTED,
-        FINISHED,
     }
 }

@@ -2,11 +2,12 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import net.covers1624.quack.maven.MavenNotation;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.install.ProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
-import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,8 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
     private final String mcVersion;
     private final String forgeVersion;
 
-    public LegacyForgeInstallTask(Instance instance, String mcVersion, String forgeVersion) {
+    public LegacyForgeInstallTask(CancellationToken cancelToken, ProgressTracker tracker, Instance instance, String mcVersion, String forgeVersion) {
+        super(cancelToken, tracker);
         this.instance = instance;
         this.mcVersion = mcVersion;
         this.forgeVersion = forgeVersion;
@@ -36,7 +38,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
     }
 
     @Override
-    public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+    public void execute() throws Throwable {
         assert versionName != null;
 
         instance.props.hasInstMods = true;
@@ -45,18 +47,20 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
 
         instance.props.jvmArgs = instance.props.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath() + "\"";
 
-        if (cancelToken != null) cancelToken.throwIfCancelled();
+        cancelToken.throwIfCancelled();
 
+        tracker.setCustomStatus("Download Forge");
         MavenNotation universal = getForgeNotation(mcVersion, forgeVersion);
         DownloadTask dlForge = DownloadTask.builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, "/") + universal.toPath())
                 .dest(instMods.resolve(versionName + ".jar"))
                 .build();
         if (!dlForge.isRedundant()) {
-            dlForge.execute(cancelToken, null);
+            dlForge.execute(cancelToken, tracker.dynamicListener());
         }
 
-        VersionManifest vanillaManifest = downloadVanilla(versionsDir, mcVersion);
+        tracker.setCustomStatus("Download vanilla Minecraft");
+        VersionManifest vanillaManifest = downloadVanilla(versionsDir, mcVersion, cancelToken, tracker.dynamicListener());
 
         Files.copy(
                 versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar"),
@@ -64,6 +68,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
                 StandardCopyOption.REPLACE_EXISTING
         );
 
+        tracker.setCustomStatus("Download Forge manifest");
         DownloadTask dlForgeVersionJson = DownloadTask.builder()
                 .url(Constants.MC_JSONS + "forge-" + mcVersion + ".json")
                 .dest(versionsDir.resolve(versionName).resolve(versionName + ".json"))
@@ -73,8 +78,8 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
             dlForgeVersionJson.execute(cancelToken, null);
         }
 
-        if (cancelToken != null) cancelToken.throwIfCancelled();
+        cancelToken.throwIfCancelled();
 
-        ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, instance, mcVersion);
+        ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, tracker, instance, mcVersion);
     }
 }

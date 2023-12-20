@@ -17,6 +17,7 @@ import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -377,6 +378,8 @@ public class CloudSyncOperation {
                         ModLoaderInstallTask modLoaderInstallTask;
                         try {
                             modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
+                                    CancellationToken.NOP,
+                                    progressTracker,
                                     instance,
                                     gameTarget.getVersion(),
                                     modloaderTarget.getName(),
@@ -387,7 +390,7 @@ public class CloudSyncOperation {
                             throw ex;
                         }
                         try {
-                            modLoaderInstallTask.execute(null, null);
+                            modLoaderInstallTask.execute();
                         } catch (Throwable ex) {
                             LOGGER.error("Failed to execute ModLoader install task.", ex);
                             SneakyUtils.throwUnchecked(ex);

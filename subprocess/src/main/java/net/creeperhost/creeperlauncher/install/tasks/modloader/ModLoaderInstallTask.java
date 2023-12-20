@@ -1,15 +1,19 @@
 package net.creeperhost.creeperlauncher.install.tasks.modloader;
 
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.install.ProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.forge.AbstractForgeInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,7 +21,7 @@ import java.nio.file.Path;
 /**
  * Created by covers1624 on 28/1/22.
  */
-public abstract class ModLoaderInstallTask implements Task {
+public abstract class ModLoaderInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -43,19 +47,29 @@ public abstract class ModLoaderInstallTask implements Task {
     // The minecraft version range which denotes a 'jar mod' environment.
     public static final VersionRange FORGE_LEGACY_INSTALL = createRange("[1.2,1.5.2]");
 
+    protected final CancellationToken cancelToken;
+    protected final ProgressTracker tracker;
+
+    public ModLoaderInstallTask(CancellationToken cancelToken, ProgressTracker tracker) {
+        this.cancelToken = cancelToken;
+        this.tracker = tracker;
+    }
+
+    public abstract void execute() throws Throwable;
+
     public abstract String getModLoaderTarget();
 
-    public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion) throws IOException {
+    public static ModLoaderInstallTask createInstallTask(CancellationToken cancelToken, ProgressTracker tracker, Instance instance, String mcVersion, String mlName, String mlVersion) throws IOException {
         return switch (mlName) {
-            case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(instance, mcVersion, mlVersion);
-            case "forge" -> AbstractForgeInstallTask.createInstallTask(instance, mcVersion, mlVersion);
-            case "fabric" -> FabricInstallTask.fabric(mcVersion, mlVersion);
-            case "quilt" -> FabricInstallTask.quilt(mcVersion, mlVersion);
+            case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(cancelToken, tracker, instance, mcVersion, mlVersion);
+            case "forge" -> AbstractForgeInstallTask.createInstallTask(cancelToken, tracker, instance, mcVersion, mlVersion);
+            case "fabric" -> FabricInstallTask.fabric(cancelToken, tracker, mcVersion, mlVersion);
+            case "quilt" -> FabricInstallTask.quilt(cancelToken, tracker, mcVersion, mlVersion);
             default -> throw new IllegalArgumentException("Unknown ModLoader name: " + mlName);
         };
     }
 
-    protected static VersionManifest downloadVanilla(Path versionsDir, String version) throws IOException {
+    protected static VersionManifest downloadVanilla(Path versionsDir, String version, CancellationToken cancelToken, TaskProgressListener listener) throws IOException {
         VersionListManifest listManifest = VersionListManifest.update(versionsDir);
         VersionManifest manifest = listManifest.resolve(versionsDir, version);
         if (manifest == null) {
@@ -70,7 +84,7 @@ public abstract class ModLoaderInstallTask implements Task {
         }
 
         if (!clientDownload.isRedundant()) {
-            clientDownload.execute(null, null);
+            clientDownload.execute(cancelToken, listener);
         }
         return manifest;
     }

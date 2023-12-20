@@ -10,7 +10,7 @@ import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.covers1624.quack.util.TimeUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import net.creeperhost.creeperlauncher.util.SSLUtils;
 import net.creeperhost.creeperlauncher.util.X509Formatter;
 import okhttp3.OkHttpClient;
@@ -100,7 +100,7 @@ public class DownloadTask implements Task {
             if (localPath != null && Files.exists(localPath)) {
                 LOGGER.info(" File existed locally.");
                 Files.copy(localPath, IOUtils.makeParents(dest), StandardCopyOption.REPLACE_EXISTING);
-                if (progressListener != null) {
+                if (progressListener != null && progressListener != TaskProgressListener.NOP) {
                     long len = Files.size(dest);
                     progressListener.start(len);
                     progressListener.finish(len);
@@ -272,7 +272,7 @@ public class DownloadTask implements Task {
                     totalLen += existingSize;
                 }
 
-                if (progressListener != null) {
+                if (progressListener != null && progressListener != TaskProgressListener.NOP) {
                     progressListener.start(totalLen);
                 }
 
@@ -284,7 +284,7 @@ public class DownloadTask implements Task {
                 }
 
                 Source s = body.source();
-                if (progressListener != null) {
+                if (progressListener != null && progressListener != TaskProgressListener.NOP) {
                     s = new ProgressSource(s, progressListener);
                 }
 
@@ -420,6 +420,12 @@ public class DownloadTask implements Task {
             LOGGER.error("Could not perform a HEAD request to '{}'", url, ex);
         }
         return 0;
+    }
+
+    public long getSizeEstimate() {
+        long size = getValidation().expectedSize;
+        if (size <= 0) size = DownloadTask.getContentLength(getUrl());
+        return size;
     }
 
     /**

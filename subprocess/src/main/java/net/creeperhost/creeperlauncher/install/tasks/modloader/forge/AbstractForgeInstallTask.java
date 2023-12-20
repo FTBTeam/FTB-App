@@ -8,11 +8,12 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.VersionOverrides;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import net.creeperhost.creeperlauncher.install.ProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
@@ -46,14 +47,18 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     @Nullable
     protected String versionName;
 
+    public AbstractForgeInstallTask(CancellationToken cancelToken, ProgressTracker tracker) {
+        super(cancelToken, tracker);
+    }
+
     @Override
     public final String getModLoaderTarget() {
         return Objects.requireNonNull(versionName);
     }
 
-    public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion) throws IOException {
+    public static AbstractForgeInstallTask createInstallTask(CancellationToken cancelToken, ProgressTracker tracker, Instance instance, String mcVersion, String forgeVersion) throws IOException {
         if (FORGE_LEGACY_INSTALL.containsVersion(new DefaultArtifactVersion(mcVersion))) {
-            return new LegacyForgeInstallTask(instance, mcVersion, forgeVersion);
+            return new LegacyForgeInstallTask(cancelToken, tracker, instance, mcVersion, forgeVersion);
         }
         MavenNotation notation = getForgeNotation(mcVersion, forgeVersion);
         if (!"universal".equals(notation.classifier) && !"jar".equals(notation.extension)) {
@@ -71,17 +76,18 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
                 .tryCompanionHashes()
                 .build();
 
-        task.execute(null, null);
-        return detectInstallerVersion(instance, task.getDest());
+        tracker.setCustomStatus("Download Forge installer");
+        task.execute(cancelToken, tracker.dynamicListener());
+        return detectInstallerVersion(cancelToken, tracker, instance, task.getDest());
     }
 
-    public static AbstractForgeInstallTask createNeoForgeInstallTask(Instance instance, String mcVersion, String neoForgeVersion) throws IOException {
+    public static AbstractForgeInstallTask createNeoForgeInstallTask(CancellationToken cancelToken, ProgressTracker tracker, Instance instance, String mcVersion, String neoForgeVersion) throws IOException {
         MavenNotation versionSpecificNotation = NEO_FORGE_1_20_2_PLUS_NOTATION.withVersion(neoForgeVersion);
-        
+
         if (mcVersion.equals("1.20.1")) {
             versionSpecificNotation = NEO_FORGE_NOTATION.withVersion(mcVersion + "-" + neoForgeVersion);
         }
-        
+
         MavenNotation notation = versionSpecificNotation
                 .withClassifier("installer");
 
@@ -93,11 +99,12 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
                 .tryCompanionHashes()
                 .build();
 
-        task.execute(null, null);
-        return new ForgeV2InstallTask(instance, task.getDest());
+        tracker.setCustomStatus("Download NeoForge installer");
+        task.execute(cancelToken, tracker.dynamicListener());
+        return new ForgeV2InstallTask(cancelToken, tracker, instance, task.getDest());
     }
 
-    private static AbstractForgeInstallTask detectInstallerVersion(Instance instance, Path installer) throws IOException {
+    private static AbstractForgeInstallTask detectInstallerVersion(CancellationToken cancelToken, ProgressTracker tracker, Instance instance, Path installer) throws IOException {
         try (FileSystem fs = IOUtils.getJarFileSystem(installer, true)) {
             Path installProfile = fs.getPath("/install_profile.json");
 
@@ -106,9 +113,9 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
             JsonObject json = JsonUtils.parse(InstallProfile.GSON, installProfile, JsonObject.class);
             if (json.has("spec")) {
-                return new ForgeV2InstallTask(instance, installer);
+                return new ForgeV2InstallTask(cancelToken, tracker, instance, installer);
             }
-            return new ForgeV1InstallTask(instance, installer);
+            return new ForgeV1InstallTask(cancelToken, tracker, instance, installer);
         }
     }
 
@@ -150,21 +157,15 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return FORGE_NOTATION.withVersion(mcVersion + "-" + forgeVersion);
     }
 
-    protected static Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
+    protected static DownloadTask prepareDownloadTask(Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
         DownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
         if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
 
         Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
 
-        downloadTask = downloadTask.toBuilder()
+        return downloadTask.toBuilder()
                 .withFileLocator(new PackedJarLocator(installerMavenFile))
                 .build();
-
-        if (!downloadTask.isRedundant()) {
-            downloadTask.execute(token, null); // TODO progress
-        }
-        return downloadTask.getDest();
-
     }
 
     protected static String topAndTail(String s) {

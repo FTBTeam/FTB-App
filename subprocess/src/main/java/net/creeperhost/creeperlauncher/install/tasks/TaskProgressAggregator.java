@@ -1,5 +1,9 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
+
 /**
  * Created by covers1624 on 15/12/21.
  */
@@ -13,6 +17,18 @@ public class TaskProgressAggregator implements TaskProgressListener {
 
     public TaskProgressAggregator(TaskProgressListener parent) {
         this.parent = parent;
+    }
+
+    public static void aggregate(TaskProgressListener root, long estimatedSize, Consumer<TaskProgressListener> cons) {
+        if (root == NOP) {
+            cons.accept(NOP);
+            return;
+        }
+
+        root.start(estimatedSize);
+        TaskProgressAggregator aggregator = new TaskProgressAggregator(root);
+        cons.accept(aggregator);
+        root.finish(aggregator.getProcessed());
     }
 
     @Override

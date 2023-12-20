@@ -13,11 +13,10 @@ import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideSta
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
-import net.creeperhost.creeperlauncher.install.OperationProgressTracker.DefaultStages;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.instance.InstanceOperation;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.PathFixingCopyingFileVisitor;
 import org.apache.commons.lang3.StringUtils;
@@ -257,7 +256,7 @@ public class InstanceInstaller extends InstanceOperation {
             tracker.nextStage(InstallStage.MOD_LOADER);
             if (modLoaderInstallTask != null) {
                 LOGGER.info("Installing ModLoader..");
-                modLoaderInstallTask.execute(cancelToken, null);
+                modLoaderInstallTask.execute();
                 instance.props.modLoader = modLoaderInstallTask.getModLoaderTarget();
             } else {
                 // Mod loader doesn't exist. This must be vanilla
@@ -309,7 +308,7 @@ public class InstanceInstaller extends InstanceOperation {
             } catch (IOException ex) {
                 throw new InstallationFailureException("Failed to save instance json.", ex);
             }
-            tracker.nextStage(DefaultStages.FINISHED);
+            tracker.nextStage(ProgressTracker.DefaultStages.FINISHED);
             LOGGER.info("Install finished!");
         } catch (InstallationFailureException | CancellationToken.Cancellation ex) {
             throw ex;
@@ -436,6 +435,8 @@ public class InstanceInstaller extends InstanceOperation {
         if (modLoaderTarget != null) {
             try {
                 modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
+                        cancelToken,
+                        tracker,
                         instance,
                         instance.getMcVersion(),
                         modLoaderTarget.getName(),

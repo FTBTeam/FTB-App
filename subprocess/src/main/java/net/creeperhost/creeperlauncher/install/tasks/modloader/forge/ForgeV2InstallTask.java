@@ -12,16 +12,21 @@ import joptsimple.OptionSpec;
 import joptsimple.util.PathConverter;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.installerv2.InstallManifest;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.install.ProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
+import net.creeperhost.creeperlauncher.install.tasks.ParallelTaskHelper;
+import net.creeperhost.creeperlauncher.install.tasks.Task;
+import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
-import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.util.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.StringUtils;
@@ -52,13 +57,14 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
     private final Instance instance;
     private final Path installerJar;
 
-    public ForgeV2InstallTask(Instance instance, Path installerJar) {
+    public ForgeV2InstallTask(CancellationToken cancelToken, ProgressTracker tracker, Instance instance, Path installerJar) {
+        super(cancelToken, tracker);
         this.instance = instance;
         this.installerJar = installerJar;
     }
 
     @Override
-    public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+    public void execute() throws Throwable {
         Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
@@ -75,15 +81,29 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                     IOUtils.makeParents(versionsDir.resolve(instManifest.version).resolve(instManifest.version + ".json")),
                     StandardCopyOption.REPLACE_EXISTING
             );
-            VersionManifest vanillaManifest = downloadVanilla(versionsDir, instManifest.minecraft);
+            tracker.setCustomStatus("Download vanilla Minecraft");
+            VersionManifest vanillaManifest = downloadVanilla(versionsDir, instManifest.minecraft, cancelToken, tracker != null ? tracker.dynamicListener() : null);
 
             List<VersionManifest.Library> libraries = new LinkedList<>();
             libraries.addAll(forgeManifest.libraries);
             libraries.addAll(instManifest.libraries);
 
+            tracker.setCustomStatus("Download libraries");
+            long totalSize = 0;
+            List<Task> libraryTasks = new ArrayList<>();
             for (VersionManifest.Library library : libraries) {
-                if (cancelToken != null) cancelToken.throwIfCancelled();
-                processLibrary(cancelToken, installerRoot, librariesDir, library);
+                DownloadTask task = prepareDownloadTask(installerRoot, librariesDir, library);
+                if (!task.isRedundant()) {
+                    totalSize += task.getSizeEstimate();
+                    libraryTasks.add(task.wrapStepComplete(tracker));
+                }
+            }
+
+            if (!libraryTasks.isEmpty()) {
+                tracker.setDynamicStepCount(libraryTasks.size());
+                TaskProgressAggregator.aggregate(tracker.dynamicListener(), totalSize, l -> {
+                    ParallelTaskHelper.executeInParallel(cancelToken, Task.TASK_POOL, libraryTasks, l);
+                });
             }
 
             Map<String, String> dataCache = null;
@@ -95,15 +115,16 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                 dataCache = new HashMap<>();
             }
 
-            runProcessors(cancelToken, instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir, dataCache);
+            runProcessors(instManifest, vanillaManifest, installerRoot, librariesDir, versionsDir, dataCache);
 
             JsonUtils.write(GSON, IOUtils.makeParents(dataCacheFile), dataCache, STRING_MAP);
 
-            ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, instance, instManifest.minecraft);
+            ForgeLegacyLibraryHelper.installLegacyLibs(cancelToken, tracker, instance, instManifest.minecraft);
         }
     }
 
-    private void runProcessors(@Nullable CancellationToken cancelToken, InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir, Map<String, String> dataCache) throws IOException {
+    private void runProcessors(InstallManifest manifest, VersionManifest vanillaManifest, Path installerRoot, Path librariesDir, Path versionsDir, Map<String, String> dataCache) throws IOException {
+        tracker.setCustomStatus("Prepare Forge installer processors");
         String javaTarget = instance.versionManifest.getTargetVersion("runtime");
         Path javaHome;
         if (javaTarget == null) {
@@ -171,11 +192,15 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             }
         }
 
-        for (InstallManifest.Processor processor : manifest.processors) {
-            if (cancelToken != null) cancelToken.throwIfCancelled();
-            if (processor.sides.isEmpty() || processor.sides.contains("client")) {
-                runProcessor(cancelToken, vanillaManifest, processor, data, javaExecutable, librariesDir);
-            }
+        List<InstallManifest.Processor> processors = FastStream.of(manifest.processors)
+                .filter(e -> e.sides.isEmpty() || e.sides.contains("client"))
+                .toList();
+        tracker.setCustomStatus("Run Forge installer processors processors");
+        tracker.setDynamicStepCount(processors.size());
+        for (InstallManifest.Processor processor : processors) {
+            cancelToken.throwIfCancelled();
+            runProcessor(cancelToken, vanillaManifest, processor, data, javaExecutable, librariesDir);
+            tracker.stepFinished();
         }
 
         for (String key : fileKeys) {

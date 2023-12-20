@@ -7,6 +7,8 @@ package net.creeperhost.creeperlauncher.install.tasks;
  */
 public interface TaskProgressListener {
 
+    TaskProgressListener NOP = new Nop();
+
     /**
      * Called to indicate the task has started its operation.
      * <p>
@@ -29,4 +31,13 @@ public interface TaskProgressListener {
      * @param total The total amount of unit the task did.
      */
     void finish(long total);
+
+    // @formatter:off
+    final class Nop implements TaskProgressListener {
+        private Nop() { }
+        @Override public void start(long total) { }
+        @Override public void update(long processed) { }
+        @Override public void finish(long total) { }
+    }
+    // @formatter:on
 }
