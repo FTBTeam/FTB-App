@@ -13,6 +13,9 @@ import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {PackProviders, Versions} from '@/modules/modpacks/types';
 import {alertController} from '@/core/controllers/alertController';
+import platform from '@/utils/interface/electron-overwolf';
+
+const uuid = platform.get.utils.crypto.randomUUID
 
 export type InstallRequest = {
   uuid: string;
@@ -99,7 +102,7 @@ class InstanceInstallController {
   
   public async requestInstall(request: Omit<InstallRequest, "uuid">) {
     this.queue.push({
-      uuid: crypto.randomUUID(),
+      uuid: uuid(),
       ...request,
     });
     
@@ -110,7 +113,7 @@ class InstanceInstallController {
 
   public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions | string | number, provider: PackProviders = "modpacksch") {
     this.queue.push({
-      uuid: crypto.randomUUID(), // Not the same as the instance uuid
+      uuid: uuid(), // Not the same as the instance uuid
       id: instance.id,
       version: typeof version === "object" ? version.id : version,
       name: instance.name,
@@ -128,7 +131,7 @@ class InstanceInstallController {
   
   public async requestImport(path: string, category: string) {
     this.queue.push({
-      uuid: crypto.randomUUID(),
+      uuid: uuid(),
       id: -1,
       version: -1,
       name: "Import",
@@ -146,7 +149,7 @@ class InstanceInstallController {
   
   public async requestShareImport(shareCode: string, category: string) {
     this.queue.push({
-      uuid: crypto.randomUUID(),
+      uuid: uuid(),
       id: -1,
       version: -1,
       name: "Import",
@@ -164,7 +167,7 @@ class InstanceInstallController {
   
   public async requestSync(instance: InstanceJson | SugaredInstanceJson) {
     this.queue.push({
-      uuid: crypto.randomUUID(),
+      uuid: uuid(),
       id: -1,
       version: -1,
       name: instance.name,
