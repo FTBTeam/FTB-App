@@ -97,7 +97,7 @@ public class Constants {
     public static final String[] MOJANG_DEFAULT_ARGS = {
             "-Xmx${memory}M",
             "-XX:+UnlockExperimentalVMOptions",
-            "-XX:+UseG1GC",
+            //"-XX:+UseG1GC", // G1GC is default since Java 17. Fixes https://github.com/FTBTeam/FTB-App/issues/684
             "-XX:G1NewSizePercent=20",
             "-XX:G1ReservePercent=20",
             "-XX:MaxGCPauseMillis=50",
