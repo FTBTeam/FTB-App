@@ -55,8 +55,7 @@ export default class Changelog extends Vue  {
   private logger = createLogger(Changelog.name + ".vue")
   
   changelogData: ChangelogData | null = null;
-  checkIntervalRef: number | null = null;
-  
+
   async mounted() {
     await waitForWebsockets(this.websockets.socket)
 
@@ -72,6 +71,7 @@ export default class Changelog extends Vue  {
     })
 
     const currentVersion = this.getCurrentVersion();
+    this.logger.dd('currentVersion', currentVersion)
     const lastVersion = data.response;
     
     // No held last version meaning we should find a changelog

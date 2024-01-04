@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import * as process from 'process';
 
 enum LogLevel {
   SILLY = "silly",
@@ -6,6 +7,7 @@ enum LogLevel {
   INFO = "info",
   WARN = "warn",
   ERROR = "error",
+  DEV = "dev",
 }
 
 class Logger {
@@ -71,6 +73,14 @@ class Logger {
     console.log(`[${this.now()}][${this.typeToShort(LogLevel.SILLY)}][${this.name}]`, ...args)
   }
   
+  dd(...args: any[]) {
+    if (!this.shouldLog(LogLevel.DEV)) {
+      return
+    }
+    
+    console.log(`[${this.now()}][${this.typeToShort(LogLevel.DEV)}][${this.name}]`, ...args)
+  }
+  
   private now() {
     return dayjs().format('HH:mm:ss');
   }
@@ -87,6 +97,8 @@ class Logger {
         return "W"
       case LogLevel.ERROR:
         return "E"
+      case LogLevel.DEV:
+        return "DD"
     }
   }
   
@@ -102,6 +114,8 @@ class Logger {
         return true
       case LogLevel.ERROR:
         return true
+      case LogLevel.DEV:
+        return process.env.NODE_ENV === "development"
     }
   }
 }

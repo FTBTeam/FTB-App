@@ -13,7 +13,7 @@ export async function safeNavigate(name: RouterNames, params?: any, query?: any)
   }
   
   try {
-    Router.push({name, params, query});
+    await Router.push({name, params, query});
   } catch (e) {
     // Ignore
   }
