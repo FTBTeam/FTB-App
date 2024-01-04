@@ -18,7 +18,7 @@ import net.creeperhost.creeperlauncher.data.mod.ModInfo;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.util.CurseMetadataCache.FileMetadata;
@@ -127,7 +127,7 @@ public class Instance {
             try {
                 tempFile = Files.createTempFile("art", "");
                 Files.delete(tempFile);
-                NewDownloadTask task = NewDownloadTask.builder()
+                DownloadTask task = DownloadTask.builder()
                         .url(art.getUrl())
                         .dest(tempFile)
                         .build();

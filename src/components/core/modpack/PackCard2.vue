@@ -180,7 +180,7 @@ export default class PackCard2 extends PackCardCommon {
       const packName = this.instance.name.split(' ');
       if (packName.some(name => version.toLowerCase().includes(name.toLowerCase()))) {
         const splitPackName = packName[0].split('-')[0];
-        version = version.replace(new RegExp(splitPackName, 'i'), '');
+        version = version.toLowerCase().replace(splitPackName.toLowerCase(), "").trim();
       }
 
       version = version.replace(".zip", "").trim()

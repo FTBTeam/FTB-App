@@ -201,6 +201,11 @@ public class InstanceInstaller extends InstanceOperation {
         tracker.nextStage(InstallStage.PREPARE);
         if (operationType == OperationType.VALIDATE) {
             validateFiles();
+            String gameVersion = manifest.getTargetVersion("game");
+            if (gameVersion != null && !instance.props.mcVersion.equals(gameVersion)) {
+                LOGGER.warn("Instance had invalid mcVersion attribute. Repairing..");
+                instance.props.mcVersion = gameVersion;
+            }
         } else if (operationType == OperationType.UPGRADE) {
             processUpgrade();
         }
@@ -253,7 +258,7 @@ public class InstanceInstaller extends InstanceOperation {
             if (modLoaderInstallTask != null) {
                 LOGGER.info("Installing ModLoader..");
                 modLoaderInstallTask.execute(cancelToken, null);
-                instance.props.modLoader = modLoaderInstallTask.getResult();
+                instance.props.modLoader = modLoaderInstallTask.getModLoaderTarget();
             } else {
                 // Mod loader doesn't exist. This must be vanilla
                 instance.props.modLoader = manifest.getTargetVersion("game");
@@ -465,7 +470,7 @@ public class InstanceInstaller extends InstanceOperation {
                 continue;
             }
 
-            NewDownloadTask task = NewDownloadTask.builder()
+            DownloadTask task = DownloadTask.builder()
                     .url(file.getUrl())
                     .withMirrors(file.getMirror())
                     .dest(filePath)
@@ -475,7 +480,7 @@ public class InstanceInstaller extends InstanceOperation {
             if (!task.isRedundant()) {
                 long size = file.getSize();
                 if (size <= 0) {
-                    size = NewDownloadTask.getContentLength(file.getUrl());
+                    size = DownloadTask.getContentLength(file.getUrl());
                 }
                 filesToDownload.add(task.getDest());
                 tasks.add(new DlTask(size, task));
@@ -559,12 +564,12 @@ public class InstanceInstaller extends InstanceOperation {
         }
     }
 
-    private class DlTask implements Task<Object> {
+    private class DlTask implements Task {
 
         private final long size;
-        private final Task<?> task;
+        private final Task task;
 
-        private DlTask(long size, Task<?> task) {
+        private DlTask(long size, Task task) {
             this.size = size;
             this.task = task;
         }
@@ -574,15 +579,9 @@ public class InstanceInstaller extends InstanceOperation {
             task.execute(cancelToken, listener);
             tracker.stepFinished();
         }
-
-        @Override
-        @Nullable
-        public Object getResult() {
-            return task.getResult();
-        }
     }
 
-    private record EmptyFileDlTask(Path destination) implements Task<Path> {
+    private record EmptyFileDlTask(Path destination) implements Task {
         @Override
         public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
             LOGGER.info("Ignoring zero byte file: {}", this.destination);
@@ -593,11 +592,6 @@ public class InstanceInstaller extends InstanceOperation {
             } catch (IOException e) {
                 LOGGER.error("Failed to create empty file: {}", this.destination, e);
             }
-        }
-
-        @Override
-        public Path getResult() {
-            return this.destination;
         }
     }
 }

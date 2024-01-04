@@ -11,9 +11,10 @@ import http from 'http';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
 import platform from '@/utils/interface/electron-overwolf';
-import {consoleBadButNoLogger, emitter} from '@/utils';
+import {emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import log from 'electron-log';
+import {createLogger} from '@/core/logger';
 
 function getAppHome() {
   if (os.platform() === "darwin") {
@@ -23,8 +24,8 @@ function getAppHome() {
   }
 }
 
+const eLogger = createLogger("platform/electron.ts");
 log.transports.file.resolvePath = (vars, message) => path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
-
 
 Object.assign(console, log.functions);
 
@@ -34,12 +35,6 @@ const contents = fs.existsSync(path.join(__static, 'version.json'))
   ? fs.readFileSync(path.join(__static, 'version.json'), 'utf-8')
   : null;
 const jsonContent = contents ? JSON.parse(contents) : null;
-
-type msauthResponse = {
-  iv: string;
-  key: string;
-  password: string;
-};
 
 class MiniWebServer extends EventEmitter {
   server: http.Server | null = null;
@@ -63,7 +58,7 @@ class MiniWebServer extends EventEmitter {
 
           const jsonResponse = JSON.parse(body);
           if (jsonResponse == null) {
-            consoleBadButNoLogger("I", 'Failed to parse json response');
+            eLogger.debug('Failed to parse json response');
             res.end();
             this.close();
             return;
@@ -80,7 +75,7 @@ class MiniWebServer extends EventEmitter {
 
           const { token, 'app-auth': appAuth } = jsonResponse;
           if (token == null || appAuth == null) {
-            consoleBadButNoLogger("E", 'Failed to parse token or appAuth');
+            eLogger.error('Failed to parse token or appAuth');
             return;
           }
 
@@ -92,7 +87,7 @@ class MiniWebServer extends EventEmitter {
       });
 
       this.server.listen(7755, () => {
-        consoleBadButNoLogger("D", 'MiniWebServer listening on 7755');
+        eLogger.debug('MiniWebServer listening on 7755');
         this.emit('open');
       });
 
@@ -174,6 +169,7 @@ const Electron: ElectronOverwolfInterface = {
   // Actions
   actions: {
     async openMsAuth() {
+      eLogger.debug("Opening ms auth page and starting server")
       platform.get.utils.openUrl("https://msauth.feed-the-beast.com");
 
       const mini = new MiniWebServer();
@@ -181,14 +177,17 @@ const Electron: ElectronOverwolfInterface = {
       const result: any = await new Promise((resolve, reject) => {
         mini.open();
         mini.on('response', (data: { token: string; 'app-auth': string }) => {
+          eLogger.debug("Received response from mini web server")
           resolve(data);
         });
 
         mini.on('close', () => {
+          eLogger.debug("Closing mini web server")
           resolve(null);
         });
       });
 
+      eLogger.debug("Finished mini web server flow");
       emitter.emit("authentication.callback", result?.key ? result : undefined);
     },
     
@@ -226,29 +225,34 @@ const Electron: ElectronOverwolfInterface = {
         });
       });
       
-      mini.close().catch(e => consoleBadButNoLogger("E", e))
+      mini.close().catch(e => eLogger.error("Failed to close the miniserver", e))
       cb(result);
     },
 
     logoutFromMinetogether() {
+      eLogger.debug("Logging out from minetogether")
       ipcRenderer.send('logout');
     },
 
     // Obviously do nothing
     changeExitOverwolfSetting() {},
     updateSettings(msg) {
+      eLogger.debug("Updating settings", msg)
       ipcRenderer.send('updateSettings', msg);
     },
 
     setUser(payload) {
+      eLogger.debug("Setting MT user")
       ipcRenderer.send('user', payload.user);
     },
 
     sendSession(payload) {
+      eLogger.debug("Sending session (MT)")
       ipcRenderer.send('session', payload);
     },
 
     onAppReady() {
+      eLogger.debug("Interface has been told the app is ready")
       ipcRenderer.send('appReady');
     },
 
@@ -256,6 +260,7 @@ const Electron: ElectronOverwolfInterface = {
     yeetLauncher() {},
 
     restartApp() {
+      eLogger.debug("Restarting app")
       // Restart the electron app
       ipcRenderer.send('restartApp');
     }
@@ -308,7 +313,10 @@ const Electron: ElectronOverwolfInterface = {
       ipcRenderer
         .invoke('selectFolder', startPath)
         .then((dir) => cb(dir))
-        .catch(() => cb(null));
+        .catch((e) => {
+          eLogger.warn("Failed to select folder from the system", e)
+          cb(null)
+        });
     },
 
     selectFileDialog(cb) {
@@ -317,7 +325,10 @@ const Electron: ElectronOverwolfInterface = {
         .then((dir) => {
           cb(dir);
         })
-        .catch(() => cb(null));
+        .catch((e) => {
+          eLogger.warn("Failed to select file from the system", e)
+          cb(null)
+        });
     },
     
     openFinder(path: string): Promise<boolean> {
@@ -338,8 +349,10 @@ const Electron: ElectronOverwolfInterface = {
   },
 
   setupApp(vm) {
+    eLogger.debug("Setting up the app from the interface on electron")
     ipcRenderer.send('sendMeSecret');
     ipcRenderer.on('hereIsSecret', (event, data) => {
+      eLogger.debug("Received secret from main process", data)
       if (data.port === 13377 && !data.isDevMode) {
         Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {
           format: 'json',
@@ -359,12 +372,16 @@ const Electron: ElectronOverwolfInterface = {
           ipcRenderer.send('updateSecret', wsInfo);
         };
       } else {
+        eLogger.debug("Setting up websocket connection on port", data.port)
         store.commit('STORE_WS', data);
         Vue.use(VueNativeSock, 'ws://localhost:' + data.port, { store, format: 'json', reconnection: true });
       }
     });
+    
+    eLogger.debug("Requesting auth data")
     ipcRenderer.send('gimmeAuthData');
     ipcRenderer.on('hereAuthData', (event, data) => {
+      eLogger.debug("Received auth data from main process", data)
       store.commit('auth/storeAuthDetails', data, { root: true });
     });
     ipcRenderer.on('setFriendsWindow', (event, data) => {
@@ -373,13 +390,14 @@ const Electron: ElectronOverwolfInterface = {
     ipcRenderer.on('auth-window-closed', (event, data) => {
       miniServers.forEach((server) => {
         server.close().then(() => {
-          consoleBadButNoLogger("D", 'Closed a mini server');
+          eLogger.debug("Closing mini server")
         });
       });
 
       miniServers = [];
     });
     ipcRenderer.on('setSessionString', (event, data) => {
+      eLogger.debug("Received session string from main process")
       const settings = store.state.settings?.settings;
       if (settings !== undefined) {
         settings.sessionString = data;
@@ -387,9 +405,11 @@ const Electron: ElectronOverwolfInterface = {
       store.dispatch('settings/saveSettings', settings, { root: true });
     });
     ipcRenderer.on('getNewSession', (event, data) => {
+      eLogger.debug("Requesting new session from main process")
       store.dispatch('auth/getNewSession', data, { root: true });
     });
     ipcRenderer.on('setSessionID', (event, data) => {
+      eLogger.debug("Setting session ID from main process")
       store.dispatch('auth/setSessionID', data, { root: true });
     });
     ipcRenderer.on('blockFriend', (event, data) => {
@@ -490,13 +510,6 @@ const Electron: ElectronOverwolfInterface = {
       //   const serverID = args[0];
       //   router.push({ name: 'server', query: { serverid: serverID } });
       // }
-    });
-    ipcRenderer.on('sendWebsocket', (event, data) => {
-      consoleBadButNoLogger("D", 'Request received to send ', data);
-      const messageID = Math.round(Math.random() * 1000);
-      data.requestId = messageID;
-      data.secret = store.state.wsSecret;
-      vm.$socket.sendObj(data);
     });
   },
 };

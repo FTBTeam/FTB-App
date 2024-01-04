@@ -1,10 +1,10 @@
 import {Ad} from '@/core/@types/external/metaApi.types';
 import {RequiresWs} from '@/core/controllers/RequiresWs';
-import {consoleBadButNoLogger} from '@/utils';
 import {JavaFetch} from '@/core/javaFetch';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import store from '@/modules/store';
 import {constants} from '@/core/constants';
+import {createLogger} from '@/core/logger';
 
 type AdsEndpointResponse = {
   ads: Ad[];
@@ -22,6 +22,7 @@ class ChAdController extends RequiresWs {
   
   private static VALID_VIDEO_EXTENSIONS = ['webm', 'mp4'];
 
+  private logger = createLogger("controllers/chAdController.ts");
   private videoCache: any = {};
   
   private activeAds: Ad[] = [
@@ -29,7 +30,7 @@ class ChAdController extends RequiresWs {
       id: 'fallback',
       type: 'video',
       asset: ChAdController.FALLBACK_AD,
-      link: 'https://go.ftb.team/ch-app',
+      link: 'https://go.ftb.team/ch-a',
       priority: 3000
     }
   ];
@@ -41,7 +42,7 @@ class ChAdController extends RequiresWs {
   onConnected(): void {
     this.loadAds()
       .catch(e => {
-        consoleBadButNoLogger("E", e);
+        this.logger.error(e);
         this.syncToVuex()
       })
     
@@ -56,13 +57,13 @@ class ChAdController extends RequiresWs {
       .execute();
     
     if (!req) {
-      consoleBadButNoLogger("E", "Failed to fetch ads");
+      this.logger.error("Failed to fetch ads");
       return;
     }
     
     const data: AdsEndpointResponse = await req.json();
     if (!data.ads || !data.active) {
-      consoleBadButNoLogger("W", "Ads endpoint returned invalid data");
+      this.logger.warn("Ads endpoint returned invalid data");
       return;
     }
     
@@ -79,7 +80,7 @@ class ChAdController extends RequiresWs {
     const activeAds = ads.filter(ad => active.includes(ad.id));
     
     if (activeAds.length === 0) {
-      consoleBadButNoLogger("W", "No active ads found");
+      this.logger.warn("No active ads found");
       return;
     }
     
@@ -87,13 +88,13 @@ class ChAdController extends RequiresWs {
     for (const ad of activeAds) {
       if (ad.type !== 'video') continue;
       if (!ad.asset) {
-        consoleBadButNoLogger("W", "Video ad has no asset", ad);
+        this.logger.warn("Video ad has no asset", ad);
         continue;
       }
       
       const ext = ad.asset.split('.').pop();
       if (!ext || !ChAdController.VALID_VIDEO_EXTENSIONS.includes(ext)) {
-        consoleBadButNoLogger("W", "Video ad has invalid extension", ad);
+        this.logger.warn("Video ad has invalid extension", ad);
         continue;
       }
       
@@ -113,7 +114,7 @@ class ChAdController extends RequiresWs {
           this.videoCache[ad.id] = videoReq.location;
         }
       } catch (e) {
-        consoleBadButNoLogger("W", "Failed to cache video", ad);
+        this.logger.warn("Failed to cache video", ad);
       }
     }
 

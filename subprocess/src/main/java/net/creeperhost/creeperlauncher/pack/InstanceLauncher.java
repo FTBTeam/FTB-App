@@ -10,12 +10,12 @@ import net.covers1624.quack.util.DataUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
@@ -163,7 +163,7 @@ public class InstanceLauncher {
                 } catch (IOException e) {
                     LOGGER.error("Failed to start minecraft process!", e);
                     setPhase(Phase.ERRORED);
-                    Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
+                    WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
                     process = null;
                     processThread = null;
                     return;
@@ -208,7 +208,7 @@ public class InstanceLauncher {
                 int exit = process.exitValue();
                 LOGGER.info("Minecraft exited with status code: " + exit);
                 setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
-                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
                 forceStopped = false;
                 process = null;
                 processThread = null;
@@ -222,7 +222,7 @@ public class InstanceLauncher {
                 }
                 processThread = null;
                 setPhase(Phase.ERRORED);
-                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
             }
         });
         processThread.setName("Instance Thread [" + THREAD_COUNTER.getAndIncrement() + "]");
@@ -563,7 +563,7 @@ public class InstanceLauncher {
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest vanillaManifest = manifests.get(0);
-        NewDownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
+        DownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
         if (task != null) {
             LOGGER.info("Validating client download for {}", vanillaManifest.id);
             task.execute(token, progressTracker.listenerForStep(true));
@@ -572,9 +572,9 @@ public class InstanceLauncher {
 
     private void validateLibraries(CancellationToken token, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
         LOGGER.info("Validating minecraft libraries...");
-        List<NewDownloadTask> tasks = new LinkedList<>();
+        List<DownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            NewDownloadTask task = library.createDownloadTask(librariesDir, true);
+            DownloadTask task = library.createDownloadTask(librariesDir, true);
             if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }
@@ -584,7 +584,7 @@ public class InstanceLauncher {
                 .mapToLong(e -> {
                     if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
-                        return NewDownloadTask.getContentLength(e.getUrl());
+                        return DownloadTask.getContentLength(e.getUrl());
                     }
                     return e.getValidation().expectedSize;
                 })
@@ -595,7 +595,7 @@ public class InstanceLauncher {
         TaskProgressAggregator progressAggregator = new TaskProgressAggregator(rootListener);
         if (!tasks.isEmpty()) {
             LOGGER.info("{} dependencies failed to validate or were missing.", tasks.size());
-            for (NewDownloadTask task : tasks) {
+            for (DownloadTask task : tasks) {
                 token.throwIfCancelled();
                 LOGGER.info("Downloading {}", task.getUrl());
                 task.execute(token, progressAggregator);
@@ -801,8 +801,7 @@ public class InstanceLauncher {
                 LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
             }
 
-            if (Settings.webSocketAPI == null) return;
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+            WebSocketHandler.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }
 
@@ -846,7 +845,7 @@ public class InstanceLauncher {
                             LOGGER.info("Flushing {} messages.", toSend.size());
                         }
 
-                        Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
+                        WebSocketHandler.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
                     }
                 }
                 try {

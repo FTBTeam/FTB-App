@@ -1,8 +1,8 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
 import net.covers1624.quack.gson.JsonUtils;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.logging.log4j.LogManager;
@@ -78,7 +78,7 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<
     public Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh(AccountProfile profile, AuthRequest refreshData) {
         return MicrosoftOAuth.
             create(new MicrosoftOAuth.DanceContext(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt), step -> {
-                Settings.webSocketAPI.sendMessage(new StepProgressReply(step));
+                WebSocketHandler.sendMessage(new StepProgressReply(step));
             })
             .runOAuthDance();
     }
@@ -88,7 +88,7 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<
     public Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate(AuthRequest accessData) {
         return MicrosoftOAuth
             .create(new MicrosoftOAuth.DanceContext(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt), step -> {
-                Settings.webSocketAPI.sendMessage(new StepProgressReply(step));
+                WebSocketHandler.sendMessage(new StepProgressReply(step));
             })
             .runOAuthDance();
     }

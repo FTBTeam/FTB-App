@@ -43,7 +43,7 @@
 
 <script lang="ts">
 import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
-import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 export type SelectionOptions = SelectionOption[];
 export type SelectionOption = {
@@ -60,6 +60,8 @@ export type SelectionOption = {
 // TODO: (M#01) Migrate everything to this one.
 @Component
 export default class Selection2 extends Vue {
+  private logger = createLogger(`${Selection2.name}.vue`);
+  
   @Prop() label!: string;
   @Prop({default: null}) icon!: string | string[] | null;
   @Prop({default: 'left'}) direction!: 'left' | 'right';
@@ -89,7 +91,7 @@ export default class Selection2 extends Vue {
       const keys = this.options.map(o => o.value);
       const uniqueKeys = new Set(keys);
       if (keys.length !== uniqueKeys.size) {
-        consoleBadButNoLogger("W", "Duplicate keys detected in selection options for: " + this.label ?? "unknown");
+        this.logger.warn( "Duplicate keys detected in selection options for: " + this.label ?? "unknown");
       }
     }
     

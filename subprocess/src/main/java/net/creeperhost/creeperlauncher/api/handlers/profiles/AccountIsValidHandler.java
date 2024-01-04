@@ -1,8 +1,8 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 
@@ -10,17 +10,17 @@ public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHand
     @Override
     public void handle(Data data) {
         if (data.profileUuid == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
             return;
         }
 
         AccountProfile profile = AccountManager.get().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
             return;
         }
 
-        Settings.webSocketAPI.sendMessage(new Reply(data, profile.getValidator().isValid(profile), "is_valid"));
+        WebSocketHandler.sendMessage(new Reply(data, profile.getValidator().isValid(profile), "is_valid"));
     }
 
     private static class Reply extends Data {

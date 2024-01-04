@@ -68,8 +68,7 @@ export default class MTIntegration extends Vue {
   @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
+    return this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth')?.userId
   }
 
   public toggleAutoOpenChat(value: boolean) {

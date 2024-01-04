@@ -246,7 +246,7 @@ public class CloudSyncOperation {
             if (syncError == null) {
                 try {
                     long totalSize = 0;
-                    List<Task<Void>> tasks = new LinkedList<>();
+                    List<Task> tasks = new LinkedList<>();
                     if (direction == SyncDirection.UPLOAD) {
                         assert downloadOperations.isEmpty();
                         progressTracker.nextStage(SyncStage.CLEAN);

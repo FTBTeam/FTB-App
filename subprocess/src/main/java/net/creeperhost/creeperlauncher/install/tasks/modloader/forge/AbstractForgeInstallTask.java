@@ -8,7 +8,7 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.VersionOverrides;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -24,10 +24,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-import static net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.*;
+import static net.creeperhost.creeperlauncher.install.tasks.DownloadTask.*;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 
 /**
@@ -45,10 +46,9 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     @Nullable
     protected String versionName;
 
-    @Nullable
     @Override
-    public final String getResult() {
-        return versionName;
+    public final String getModLoaderTarget() {
+        return Objects.requireNonNull(versionName);
     }
 
     public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion) throws IOException {
@@ -64,7 +64,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         // TODO, can we maybe merge both install tasks and do this detection in there?
         //       I dislike that we have to download this file in a call path that just evaluates
         //       what needs to be done for an installation.
-        NewDownloadTask task = builder()
+        DownloadTask task = builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
                 .dest(notation.toPath(Constants.LIBRARY_LOCATION))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -86,7 +86,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
                 .withClassifier("installer");
 
         // TODO, this is a common path with above.
-        NewDownloadTask task = builder()
+        DownloadTask task = builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
                 .dest(notation.toPath(Constants.LIBRARY_LOCATION))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -151,7 +151,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     }
 
     protected static Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
-        NewDownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
+        DownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
         if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
 
         Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));

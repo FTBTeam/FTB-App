@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.install;
 
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.OperationProgressUpdateData;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 
@@ -23,7 +23,6 @@ public class OperationProgressTracker {
     private int steps;
     private int completedSteps;
 
-    private double progress;
     private long speed;
     private long currentBytes;
     private long overallBytes;
@@ -100,7 +99,7 @@ public class OperationProgressTracker {
             lastSpeedBytes = currentBytes;
         }
 
-        Settings.webSocketAPI.sendMessage(new OperationProgressUpdateData(
+        WebSocketHandler.sendMessage(new OperationProgressUpdateData(
                 type,
                 meta,
                 stage,
@@ -112,17 +111,13 @@ public class OperationProgressTracker {
                 overallBytes
         ));
     }
-    
+
     private double computeProgress(long currentBytes, long overallBytes) {
         if (overallBytes == 0) {
             return 0;
         }
-        
+
         return (double) currentBytes / (double) overallBytes * 100.0D;
-    }
-    
-    public void addMeta(String key, String value) {
-        meta.put(key, value);
     }
 
     /**

@@ -69,6 +69,7 @@ import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import UiPagination from '@/components/core/ui/UiPagination.vue';
 import {packBlacklist} from '@/core/state/modpacks/modpacksState';
+import {createLogger} from '@/core/logger';
 
 @Component({
   components: {
@@ -83,6 +84,8 @@ export default class BrowseModpacks extends Vue {
   @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>;
   
   @State('auth') public authState!: AuthState;
+  
+  private logger = createLogger(BrowseModpacks.name + ".vue")
 
   searchValue: string = '';
   currentTab: PackProviders = 'modpacksch';
@@ -106,20 +109,24 @@ export default class BrowseModpacks extends Vue {
       return;
     }
 
-    await toggleBeforeAndAfter(async () => {
-      const data = await Promise.all([
-        await modpackApi.modpacks.getModpacks(),
-        await modpackApi.modpacks.getPrivatePacks()
-      ])
-      
-      const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
-      this.ourPackIds = [...allPackIds].sort((a, b) => b - a);
-      
-      // remove the modloader packs
-      this.ourPackIds = this.ourPackIds.filter(e => !packBlacklist.includes(e));
-      
-      this.visiblePacks = this.ourPackIds.slice(0, 10);
-    }, (state) => this.loadingInitialPacks = state);
+    try {
+      await toggleBeforeAndAfter(async () => {
+        const data = await Promise.all([
+          await modpackApi.modpacks.getModpacks(),
+          await modpackApi.modpacks.getPrivatePacks()
+        ])
+
+        const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
+        this.ourPackIds = [...allPackIds].sort((a, b) => b - a);
+
+        // remove the modloader packs
+        this.ourPackIds = this.ourPackIds.filter(e => !packBlacklist.includes(e));
+
+        this.visiblePacks = this.ourPackIds.slice(0, 10);
+      }, (state) => this.loadingInitialPacks = state);
+    } catch (error) {
+      this.logger.error("Failed to load packs", error);
+    }
   }
 
   scrollToTop() {
@@ -174,8 +181,12 @@ export default class BrowseModpacks extends Vue {
 
     this.loading = true;
     
-    const results = await toggleBeforeAndAfter(() => modpackApi.search.search(this.searchValue, this.currentTab), v => this.loading = v);
-    this.searchResults = results?.packs ?? [];
+    try {
+      const results = await toggleBeforeAndAfter(() => modpackApi.search.search(this.searchValue, this.currentTab), v => this.loading = v);
+      this.searchResults = results?.packs ?? [];
+    } catch (error) {
+      this.logger.error("Failed to search packs", error);
+    }
   }
 
   get results(): SearchResultPack[] {

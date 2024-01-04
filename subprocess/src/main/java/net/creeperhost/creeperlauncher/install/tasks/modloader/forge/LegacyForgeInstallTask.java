@@ -2,8 +2,8 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import net.covers1624.quack.maven.MavenNotation;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -48,7 +48,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
         if (cancelToken != null) cancelToken.throwIfCancelled();
 
         MavenNotation universal = getForgeNotation(mcVersion, forgeVersion);
-        NewDownloadTask dlForge = NewDownloadTask.builder()
+        DownloadTask dlForge = DownloadTask.builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, "/") + universal.toPath())
                 .dest(instMods.resolve(versionName + ".jar"))
                 .build();
@@ -64,7 +64,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
                 StandardCopyOption.REPLACE_EXISTING
         );
 
-        NewDownloadTask dlForgeVersionJson = NewDownloadTask.builder()
+        DownloadTask dlForgeVersionJson = DownloadTask.builder()
                 .url(Constants.MC_JSONS + "forge-" + mcVersion + ".json")
                 .dest(versionsDir.resolve(versionName).resolve(versionName + ".json"))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))

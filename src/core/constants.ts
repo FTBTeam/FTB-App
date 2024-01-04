@@ -6,7 +6,7 @@ export const constants = {
   modpacksApi: useStaging ? "https://staging.api.modpacks.ch" : "https://api.modpacks.ch",
   metaApi: "https://meta.feed-the-beast.com",
   ftbDomain: "https://www.feed-the-beast.com",
-  mcHeadApi: "https://mcs.tools.ftb.dev/profile/{uuid}/head",
+  mcHeadApi: "https://api.feed-the-beast.com/v1/lookup/profile/{uuid}/head",
   isProduction: production,
   isDevelopment: !production,
   platform: platform,

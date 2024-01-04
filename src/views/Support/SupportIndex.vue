@@ -62,14 +62,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 import Platform from '@/utils/interface/electron-overwolf';
-import { IconLookup, IconName } from '@fortawesome/fontawesome-common-types';
-import { DiscordWidget } from '@/types';
-import { getLogger } from '@/utils';
+import {IconLookup, IconName} from '@fortawesome/fontawesome-common-types';
+import {DiscordWidget} from '@/types';
 
 import ChLogo from '@/assets/ch-logo.svg';
 import MineTogetherLogo from '@/assets/images/mt-logo.webp';
+import {logger} from '@/core/logger';
 
 const endpoint = (goEndpoint: string) => `https://go.ftb.team/${goEndpoint}`;
 
@@ -161,7 +161,6 @@ export default class SupportIndex extends Vue {
   topicList = topicList;
 
   discordWidgetData: DiscordWidget | null = null;
-  logger = getLogger('support-index');
 
   async mounted() {
     // Fetch the widget data from discord, we don't care if this doesn't load so just log and move on
@@ -169,7 +168,7 @@ export default class SupportIndex extends Vue {
       const req = await fetch('https://discord.com/api/guilds/372448486723158016/widget.json');
       this.discordWidgetData = (await req.json()) as DiscordWidget;
     } catch (error: any) {
-      this.logger.error('Failed to load discord data, maybe their api is offline?', error);
+      logger.error('Failed to load discord data, maybe their api is offline?', error);
     }
   }
 }

@@ -1,17 +1,15 @@
 package net.creeperhost.creeperlauncher.api.handlers.other;
 
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.WebRequestData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import okhttp3.*;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -48,10 +46,10 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
                 }
                 resp.body.bytes = body.bytes();
             }
-            
-            Settings.webSocketAPI.sendMessage(resp);
+
+            WebSocketHandler.sendMessage(resp);
         } catch (IOException ex) {
-            Settings.webSocketAPI.sendMessage(new WebRequestData.WebRequestDataResponse(data, "error", ex.getMessage()));
+            WebSocketHandler.sendMessage(new WebRequestData.WebRequestDataResponse(data, "error", ex.getMessage()));
             LOGGER.warn("Failed to make web request to {}.", data.url, ex);
         }
     }

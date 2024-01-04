@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader;
 
 import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
@@ -34,8 +34,8 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
     public static FabricInstallTask fabric(String mcVersion, String loaderVersion) {
         return new FabricInstallTask("fabric-loader", mcVersion, loaderVersion) {
             @Override
-            protected NewDownloadTask getProfileDownload(Path dest) {
-                return NewDownloadTask.builder()
+            protected DownloadTask getProfileDownload(Path dest) {
+                return DownloadTask.builder()
                         .url(FABRIC_META + "v2/versions/loader/" + mcVersion + "/" + loaderVersion + "/profile/json")
                         .dest(dest)
                         .build();
@@ -46,8 +46,8 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
     public static FabricInstallTask quilt(String mcVersion, String loaderVersion) {
         return new FabricInstallTask("quilt-loader", mcVersion, loaderVersion) {
             @Override
-            protected NewDownloadTask getProfileDownload(Path dest) {
-                return NewDownloadTask.builder()
+            protected DownloadTask getProfileDownload(Path dest) {
+                return DownloadTask.builder()
                         .url(QUILT_META + "v3/versions/loader/" + mcVersion + "/" + loaderVersion + "/profile/json")
                         .dest(dest)
                         .build();
@@ -71,14 +71,13 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
         }
     }
 
-    @Nullable
     @Override
-    public String getResult() {
+    public String getModLoaderTarget() {
         return versionName;
     }
 
     private void processLibrary(@Nullable CancellationToken token, Path librariesDir, VersionManifest.Library library) throws IOException {
-        NewDownloadTask task = library.createDownloadTask(librariesDir, true);
+        DownloadTask task = library.createDownloadTask(librariesDir, true);
         if (task == null) throw new IOException("Unable to download or locate library: " + library.name);
 
         if (!task.isRedundant()) {
@@ -86,10 +85,10 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
         }
     }
 
-    protected abstract NewDownloadTask getProfileDownload(Path dest);
+    protected abstract DownloadTask getProfileDownload(Path dest);
 
     private VersionManifest downloadLoaderManifest(Path dest, @Nullable CancellationToken cancellationToken) throws IOException {
-        NewDownloadTask task = getProfileDownload(dest);
+        DownloadTask task = getProfileDownload(dest);
         if (!task.isRedundant()) {
             task.execute(cancellationToken, null);
         }

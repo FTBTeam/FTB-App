@@ -8,7 +8,7 @@ import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.FileValidation;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +89,7 @@ public abstract class InstanceOperation {
         if (cfExtractEntries.size() > 1) throw new IllegalStateException("More than one cf-extract entry found.");
 
         ModpackVersionManifest.ModpackFile cfExtractEntry = cfExtractEntries.getFirst();
-        NewDownloadTask task = NewDownloadTask.builder()
+        DownloadTask task = DownloadTask.builder()
                 .url(cfExtractEntry.getUrl())
                 .withMirrors(cfExtractEntry.getMirror())
                 .dest(cfExtractEntry.getCfExtractPath(instance.getDir(), manifest.getName()))

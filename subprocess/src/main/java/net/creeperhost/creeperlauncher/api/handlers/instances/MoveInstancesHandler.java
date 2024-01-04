@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
@@ -42,45 +43,45 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
         // Very defensive checks
         if (newLocation == null) {
             LOGGER.warn("New location is null");
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location can not be unset"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location can not be unset"));
             return;
         }
         
         if (newLocation.equals(currentLocation)) {
             LOGGER.warn("New location is the same as the current location");
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location can not be the same as the current location"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location can not be the same as the current location"));
             return;
         }
         
         if (Files.notExists(newLocation)) {
             LOGGER.warn("New location {} does not exist", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location does not exist"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location does not exist"));
             return;
         }
         
         if (!Files.isDirectory(newLocation)) {
             LOGGER.warn("New location {} is not a directory", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is not a directory"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location is not a directory"));
             return;
         }
         
         // Ensure the new location is not a subdirectory of the current location
         if (newLocation.startsWith(currentLocation)) {
             LOGGER.warn("New location {} is a subdirectory of the current location {}", newLocation, currentLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is a subdirectory of the current location"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location is a subdirectory of the current location"));
             return;
         }
         
         // Also, don't allow the data folder
         if (newLocation.equals(Constants.getDataDir())) {
             LOGGER.warn("New location {} is the data folder", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location can not be the data folder"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location can not be the data folder"));
             return;
         }
         
         if (!Files.isWritable(newLocation)) {
             LOGGER.warn("New location {} is not writable", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is not writable"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location is not writable"));
             return;
         }
         
@@ -88,7 +89,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
         // This is super overkill, but it's better to be safe than sorry
         if (!net.creeperhost.creeperlauncher.util.FileUtils.pathWritableByApp(newLocation)) {
             LOGGER.warn("New location {} is not writable by the app", newLocation);
-            Settings.webSocketAPI.sendMessage(new Reply(data, "New location is not writable by the FTB App"));
+            WebSocketHandler.sendMessage(new Reply(data, "New location is not writable by the FTB App"));
             return;
         }
 
@@ -98,7 +99,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
         this.moveInstances(data, currentLocation, newLocation);
         
         // Send a reply to say we're processing
-        Settings.webSocketAPI.sendMessage(new Reply(data, "processing", ""));
+        WebSocketHandler.sendMessage(new Reply(data, "processing", ""));
     }
 
     /**
@@ -199,14 +200,14 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             // Not really a fatal error, but we should probably let the user know
             if (!failedRemovals.isEmpty()) {
                 LOGGER.warn("Failed to remove some instance directories, please remove them manually. {}", failedRemovals);
-                Settings.webSocketAPI.sendMessage(new Reply(data, "Failed to remove some instance directories, please remove them manually. " + failedRemovals));
+                WebSocketHandler.sendMessage(new Reply(data, "Failed to remove some instance directories, please remove them manually. " + failedRemovals));
             }
         }).whenComplete((aVoid, throwable) -> {
             tracker.finished();
             
             if (throwable != null) {
                 LOGGER.error("Failed to move instances from {} to {}", currentLocation, newLocation, throwable);
-                Settings.webSocketAPI.sendMessage(new Reply(data, throwable.getMessage()));
+                WebSocketHandler.sendMessage(new Reply(data, throwable.getMessage()));
             } else {
                 LOGGER.info("Successfully completed moving instances from {} to {}", currentLocation, newLocation);
                 
@@ -217,7 +218,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
                 Instances.refreshInstances();
                 Path oldCache = currentLocation.resolve(".localCache");
                 oldCache.toFile().deleteOnExit();
-                Settings.webSocketAPI.sendMessage(new Reply(data, "success", ""));
+                WebSocketHandler.sendMessage(new Reply(data, "success", ""));
             }
         });
     }

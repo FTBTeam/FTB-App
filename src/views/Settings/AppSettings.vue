@@ -100,7 +100,7 @@
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="upload">Upload App Logs</ui-button>
+      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="upload">Upload App Logs</ui-button>
     </div>
 
     <div class="section cache mb-6 sm:flex items-center">
@@ -161,6 +161,7 @@ export default class AppSettings extends Vue {
   appVersion: string = platform.get.config.appVersion;
   
   working = false;
+  uploadingLogs = false;
 
   async created() {
     await this.loadSettings();
@@ -222,6 +223,7 @@ export default class AppSettings extends Vue {
   }
 
   public async uploadLogData(): Promise<void> {
+    this.uploadingLogs = true;
     const result = await sendMessage("uploadLogs", {
       uiVersion: this.webVersion
     })
@@ -231,6 +233,8 @@ export default class AppSettings extends Vue {
       platform.get.cb.copy(url);
       alertController.success('The URL has been copied to your clipboard')
     }
+    
+    this.uploadingLogs = false;
   }
 
   public refreshCachePlz() {

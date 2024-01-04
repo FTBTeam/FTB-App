@@ -122,7 +122,9 @@ import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
-import {consoleBadButNoLogger} from '@/utils';
+import {waitForWebsockets} from '@/utils';
+import {createLogger} from '@/core/logger';
+import {SocketState} from '@/modules/websocket/types';
 
 export enum ModpackPageTabs {
   OVERVIEW = "overview",
@@ -145,6 +147,7 @@ export enum ModpackPageTabs {
   },
 })
 export default class InstancePage extends Vue {
+  @State('websocket') public websockets!: SocketState;
   @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   
@@ -157,6 +160,8 @@ export default class InstancePage extends Vue {
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
 
+  private logger = createLogger(InstancePage.name + ".vue");
+  
   packLoading = false;
 
   // New stuff
@@ -177,21 +182,24 @@ export default class InstancePage extends Vue {
   borkedVersionIsDowngrade = false;
 
   async mounted() {
-    // TODO: (M#02) Setup a system to wait for instances to be loaded before rejecting
+    this.logger.debug("Mounted instance page, waiting for websockets")
+    await waitForWebsockets(this.websockets.socket)
+    
+    this.logger.debug("Websockets ready, loading instance")
     if (this.instance == null) {
-      consoleBadButNoLogger("E", "Instance not found")
+      this.logger.error(`Instance not found ${this.$route.params.uuid}`)
       await this.$router.push(RouterNames.ROOT_LIBRARY);
       return;
     }
     
     const quickNav = this.$route.query.quickNav;
     if (quickNav) {
-      consoleBadButNoLogger("I", `Quick nav detected, navigating to ${quickNav}`)
+      this.logger.debug(`Quick nav detected, navigating to ${quickNav}`)
       // Ensure the tab is valid
       if (Object.values(ModpackPageTabs).includes(quickNav as ModpackPageTabs)) {
         this.activeTab = quickNav as ModpackPageTabs; 
       } else {
-        consoleBadButNoLogger("E", "Invalid quick nav tab")
+        this.logger.error("Invalid quick nav tab")
       }
     }
     
@@ -205,18 +213,22 @@ export default class InstancePage extends Vue {
       this.activeTab = ModpackPageTabs.MODS;
     }
 
-    this.loadBackups().catch(e => consoleBadButNoLogger("E", e))
+    this.logger.debug("Loading backups")
+    this.loadBackups().catch(e => this.logger.error(e))
 
     // Throwaway error, don't block
-    this.checkForBorkedVersion().catch(e => consoleBadButNoLogger("E", e))
+    this.checkForBorkedVersion().catch(e => this.logger.error(e))
 
     if (this.getActiveProfile) {
+      this.logger.debug("Active profile found, allowing offline")
       this.offlineAllowed = true;
     }
 
     if (this.$route.query.presentOffline) {
+      this.logger.debug("Present offline query detected")
       this.offlineMessageOpen = true;
     }
+    
     this.offlineUserName = this.getActiveProfile?.username;
   }
 
@@ -225,6 +237,7 @@ export default class InstancePage extends Vue {
    * if the held version is set to `archived`
    */
   private async checkForBorkedVersion() {
+    this.logger.debug("Checking for borked version")
     if (!this.instance?.versionId || !this.apiPack) {
       return;
     }
@@ -246,8 +259,10 @@ export default class InstancePage extends Vue {
     // Find a downgrade / upgrade version
     const nextAvailableVersion = this.apiPack.versions.find((e) => e.type !== 'archived');
     if (nextAvailableVersion) {
+      this.logger.debug("Found next available version")
       this.borkedVersionDowngradeId = nextAvailableVersion.id;
       if (nextAvailableVersion.id < this.instance.versionId) {
+        this.logger.debug("Borked version is a downgrade")
         this.borkedVersionIsDowngrade = true;
       }
     }
@@ -273,6 +288,7 @@ export default class InstancePage extends Vue {
     }
     
     if (this.instance.pendingCloudInstance) {
+      this.logger.debug("Launching cloud instance")
       const result = await sendMessage("syncInstance", {
         uuid: this.instance.uuid
       })
@@ -285,6 +301,7 @@ export default class InstancePage extends Vue {
     }
 
     if (this.instance.memory < this.instance.minMemory) {
+      this.logger.debug("Showing low memory warning")
       const result = await dialogsController.createConfirmationDialog("Low memory",
         `You are trying to launch the modpack with memory settings that are below the` +
         `minimum required.This may cause the modpack to not start or crash frequently.<br>We recommend that you` +
@@ -300,32 +317,36 @@ export default class InstancePage extends Vue {
   }
 
   public launch() {
+    this.logger.debug("Launching instance from instance page")
     this.$router.push({
       name: RouterNames.ROOT_LAUNCH_PACK,
-      query: { uuid: this.instance?.uuid },
+      query: { uuid: this.instance?.uuid ?? "" },
     });
   }
 
   public playOffline() {
+    this.logger.debug("Launching instance in offline mode")
     this.$router.push({
       name: RouterNames.ROOT_LAUNCH_PACK,
-      query: { uuid: this.instance?.uuid, offline: 'true', username: this.offlineUserName },
+      query: { uuid: this.instance?.uuid ?? "", offline: 'true', username: this.offlineUserName },
     });
   }
 
   public update(version: Versions | null = null): void {
     const targetVersion = version ?? this.apiPack?.versions.sort((a, b) => b.id - a.id)[0];
     if (!targetVersion || !this.instance) {
-      // How?
+      this.logger.error("Failed to find pack for update")
       return;
     }
     
+    this.logger.debug(`Requesting update to ${targetVersion.id} ${targetVersion.type}`)
     instanceInstallController.requestUpdate(this.instance, targetVersion, typeIdToProvider(this.instance.packType))
   }
 
   public updateOrDowngrade(versionId: number) {
     const pack = this.apiPack?.versions.find((e) => e.id === versionId);
     if (!pack) {
+      this.logger.error("Failed to find pack for update / downgrade")
       alertController.error('The selected recovery pack version id was not available...')
       return;
     }
@@ -341,17 +362,20 @@ export default class InstancePage extends Vue {
     })
 
     this.instanceBackups = backups.backups.sort((a, b) => b.createTime - a.createTime);
+    if (!backups.backups.length) {
+      this.logger.debug("No backups found")
+    }
   }
 
   closeOfflineModel() {
     this.offlineMessageOpen = false;
     if (this.$route.query.presentOffline) {
-      this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
+      this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, params: { uuid: this.instance?.uuid ?? "" } });
     }
   }
   
   get instance() {
-    consoleBadButNoLogger("I", `Getting instance ${this.$route.params.uuid}`)
+    this.logger.debug(`Getting instance ${this.$route.params.uuid}`)
     return this.instances.find(e => e.uuid === this.$route.params.uuid) ?? null;
   }
 
