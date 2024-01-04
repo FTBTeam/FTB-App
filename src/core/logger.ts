@@ -52,7 +52,7 @@ class Logger {
       return
     }
     
-    console.debug(`[${this.now()}][${this.typeToShort(LogLevel.DEBUG)}][${this.name}]`, ...args)
+    console.info(`[${this.now()}][${this.typeToShort(LogLevel.DEBUG)}][${this.name}]`, ...args)
   }
   
   info(...args: any[]) {

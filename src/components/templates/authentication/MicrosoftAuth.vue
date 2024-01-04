@@ -73,8 +73,9 @@ import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import {Action} from 'vuex-class';
 import {loginWithMicrosoft} from '@/utils/auth/authentication';
-import {consoleBadButNoLogger, emitter} from '@/utils';
+import {emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
+import {createLogger} from '@/core/logger';
 
 function createStep(name: string) {
   return {
@@ -88,6 +89,8 @@ function createStep(name: string) {
 @Component
 export default class MicrosoftAuth extends Vue {
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
+  
+  private logger = createLogger(MicrosoftAuth.name + ".vue");
   
   steps: Record<string, ReturnType<typeof createStep>> = {
     START_DANCE: createStep('Credentials Received'),
@@ -112,13 +115,13 @@ export default class MicrosoftAuth extends Vue {
     
     emitter.on("authentication.callback", this.onAuthenticationCallback as any)
     emitter.on('ws.message', this.onStepUpdate);
-    consoleBadButNoLogger("I", "Listening for authentication callback")
+    this.logger.info("Listening for authentication callback")
   }
   
   destroyed() {
     emitter.off("authentication.callback", this.onAuthenticationCallback as any)
     emitter.off('ws.message', this.onStepUpdate);
-    consoleBadButNoLogger("I", "Closing listener for authentication callback")
+    this.logger.info("Closing listener for authentication callback")
   }
   
   async onAuthenticationCallback(credentials?: AuthenticationCredentialsPayload) {

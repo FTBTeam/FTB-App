@@ -3,7 +3,6 @@ import {SocketState} from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import {emitter} from '@/utils/event-bus';
-import {consoleBadButNoLogger} from '@/utils';
 import {createLogger} from '@/core/logger';
 
 const logger = createLogger("websocket/mutations.ts");
@@ -73,7 +72,7 @@ export const mutations: MutationTree<SocketState> = {
     platform.get.websocket.notifyWebhookReceived(message);
   },
   SOCKET_RECONNECT(state: any, count: number) {
-    consoleBadButNoLogger("I", `Attempting to reconnect to java-backend, tries: ${count}`);
+    logger.info(`Attempting to reconnect to java-backend, tries: ${count}`);
     state.reconnects = count;
   },
   SOCKET_RECONNECT_ERROR(state: any) {

@@ -2,18 +2,21 @@ import {ActionContext, ActionTree} from 'vuex';
 import {SocketState} from './types';
 import {RootState} from '@/types';
 import Vue from 'vue';
-import {consoleBadButNoLogger, logVerbose} from '@/utils';
+import {logVerbose} from '@/utils';
 import platform from '@/utils/interface/electron-overwolf';
+import {createLogger} from '@/core/logger';
 
 export interface MessageData {
   payload: any;
   callback: (data: any) => void;
 }
 
+const logger = createLogger("websocket/actions.ts");
+
 export const actions: ActionTree<SocketState, RootState> = {
   sendMessage({ commit, rootState }: ActionContext<SocketState, RootState>, payload: MessageData) {
     if (Vue.prototype.$socket.readyState !== 1) {
-      consoleBadButNoLogger("W", 
+      logger.warn(
         'Tried to send message whilst not connected properly',
         Vue.prototype.$socket.readyState,
         Vue.prototype.$socket,

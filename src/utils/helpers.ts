@@ -44,28 +44,3 @@ export function computeAspectRatio(width: number, height: number) {
 }
 
 export const parseMarkdown = (input: string) => markdownParser.render(input);
-
-/**
- * Cursed method to flag valid but shouldn't be used console log statements to allow for easier 
- * removal later on
- */
-export const consoleBadButNoLogger = (type: "L" | "I" | "D" | "E" | "W", ...args: any) => {
-  switch (type) {
-    case "I":
-      console.info(...args);
-      break;
-    case "D":
-      console.debug(...args);
-      break;
-    case "E":
-      console.error(...args);
-      break;
-    case "W":
-      console.warn(...args);
-      break;
-    case 'L':
-    default:
-      console.log(...args);
-      break;
-  }
-}

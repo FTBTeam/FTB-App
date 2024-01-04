@@ -78,8 +78,9 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import Loader from '@/components/atoms/Loader.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
-import {consoleBadButNoLogger, emitter} from '@/utils';
+import {emitter} from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
+import {createLogger} from '@/core/logger';
 
 export type ApiMod = {
 	fileId: number;
@@ -105,6 +106,8 @@ export type ApiMod = {
   },
 })
 export default class ModpackMods extends Vue {
+  private logger = createLogger(ModpackMods.name + ".vue")
+  
   @Prop() packInstalled!: boolean;
   @Prop() instance!: InstanceJson;
   @Prop() apiPack!: ModPack;
@@ -150,7 +153,7 @@ export default class ModpackMods extends Vue {
       
       this.apiMods = apiMods.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)))
     } else {
-      this.getModList().catch(e => consoleBadButNoLogger("E", e))
+      this.getModList().catch(e => this.logger.error(e))
     }
   }
 
@@ -234,7 +237,7 @@ export default class ModpackMods extends Vue {
 
   updateAll() {
     for (const key of this.modUpdatesAvailableKeys) {
-      this.updateMod(key).catch(e => consoleBadButNoLogger("E", e))
+      this.updateMod(key).catch(e => this.logger.error(e))
     }
   }
   
