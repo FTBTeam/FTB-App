@@ -47,8 +47,8 @@ import {AsyncFunction} from '@/core/@types/commonTypes';
 import {BlogPost} from '@/core/@types/external/metaApi.types';
 import dayjs from 'dayjs';
 import {standardDateTime} from '@/utils/helpers/dateHelpers';
-import {consoleBadButNoLogger} from '@/utils';
 import {constants} from '@/core/constants';
+import {createLogger} from '@/core/logger';
 
 @Component({
   components: {
@@ -64,10 +64,12 @@ export default class Blog extends Vue {
   @Getter('news', ns("v2/news")) news!: BlogPost[];
   @Getter('loading', ns("v2/news")) loading!: boolean;
   
+  private logger = createLogger(Blog.name + ".vue");
+  
   public mounted() {
     if (this.news == null || this.news.length < 1) {
       this.loadNews()
-        .catch(e => consoleBadButNoLogger("E", e))
+        .catch(e => this.logger.error("Failed to load news", e))
     }
   }
   

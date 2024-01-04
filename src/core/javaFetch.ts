@@ -1,9 +1,9 @@
-import {getLogger} from '@/utils';
 import store from '@/modules/store';
 import {HttpMethod} from '@/core/@types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
 import {WebRequestData} from '@/core/@types/javaApi';
 import {constants} from '@/core/constants';
+import {createLogger} from '@/core/logger';
 
 interface FetchResponseRaw {
   status: string;
@@ -66,7 +66,7 @@ class FetchResponse implements FetchResponseRaw {
 }
 
 export class JavaFetch {
-  private readonly logger = getLogger("java-fetch");
+  private readonly logger = createLogger(JavaFetch.name + ".ts")
   
   private _url;
   private _headers: Record<string, string[]> = {};
@@ -89,7 +89,11 @@ export class JavaFetch {
   }
   
   public static modpacksChPrivate(endpoint: string) {
-    return JavaFetch.create(`${constants.modpacksApi}/${store.state.auth?.token?.attributes.modpackschkey ?? "public"}/${endpoint}`)
+    return JavaFetch.create(`${constants.modpacksApi}/${JavaFetch.apiKey()}/${endpoint}`)
+  }
+  
+  private static apiKey() {
+    return store.state.auth?.token?.attributes.modpackschkey ?? "public"
   }
   //#endregion
   
@@ -133,6 +137,9 @@ export class JavaFetch {
   }
   
   async execute(): Promise<FetchResponse | null> {
+    const cleanUrl = JavaFetch.apiKey() === "public" ? this._url : this._url.replace(JavaFetch.apiKey(), "********")
+    this.logger.debug(`Executing request to ${this._method}::${cleanUrl}`)
+    
     const payload: Nullable<MessageRaw<WebRequestData>, "body"> = {
       url: this._url,
       method: this._method,
@@ -151,7 +158,7 @@ export class JavaFetch {
       const request = await sendMessage("webRequest", payload, this._timeout);
       return FetchResponse.of(request);
     } catch(error) {
-      this.logger.info(`Request to ${this._method}::${this._url} failed due to ${error}`)
+      this.logger.error(`Request to ${this._method}::${this._url} failed`, error)
       return null;
     }
   }

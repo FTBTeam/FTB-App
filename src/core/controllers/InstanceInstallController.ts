@@ -1,4 +1,4 @@
-import {consoleBadButNoLogger, emitter} from '@/utils';
+import {emitter} from '@/utils';
 import store from '@/modules/store';
 import {
   CloudSavesReloadedData,
@@ -14,8 +14,7 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {PackProviders, Versions} from '@/modules/modpacks/types';
 import {alertController} from '@/core/controllers/alertController';
 import platform from '@/utils/interface/electron-overwolf';
-
-const uuid = platform.get.utils.crypto.randomUUID
+import {createLogger} from '@/core/logger';
 
 export type InstallRequest = {
   uuid: string;
@@ -75,13 +74,14 @@ const betterStageNames: Map<Stage, string> = new Map([
  * Instance install controller backed by a vuex store queue
  */
 class InstanceInstallController {
+  private logger = createLogger(InstanceInstallController.name + ".ts");
   private installLock = false;
   
   constructor() {
     emitter.on("ws.message", async (data: any) => {
       if (data.type === "cloudInstancesReloaded") {
         this.addCloudInstances(data as CloudSavesReloadedData)
-          .catch(e => consoleBadButNoLogger("E", e))
+          .catch(e => this.logger.error(e))
       }
       
       if (data.type === "instanceOverrideModLoaderReply") {
@@ -92,17 +92,19 @@ class InstanceInstallController {
     
     // Force the queue to be checked on startup
     this.checkQueue()
-      .catch(e => consoleBadButNoLogger("E", e))
+      .catch(e => this.logger.error(e))
     
     setInterval(() => {
       this.checkQueue()
-        .catch(e => consoleBadButNoLogger("E", e))
+        .catch(e => this.logger.error(e))
     }, 5000); // 5 seconds
   }
   
   public async requestInstall(request: Omit<InstallRequest, "uuid">) {
+    this.logger.debug("Install requested", request)
+    
     this.queue.push({
-      uuid: uuid(),
+      uuid: platform.get.utils.crypto.randomUUID(),
       ...request,
     });
     
@@ -112,8 +114,10 @@ class InstanceInstallController {
   }
 
   public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions | string | number, provider: PackProviders = "modpacksch") {
+    this.logger.debug("Update requested", instance, version, provider)
+    
     this.queue.push({
-      uuid: uuid(), // Not the same as the instance uuid
+      uuid: platform.get.utils.crypto.randomUUID(), // Not the same as the instance uuid
       id: instance.id,
       version: typeof version === "object" ? version.id : version,
       name: instance.name,
@@ -130,8 +134,10 @@ class InstanceInstallController {
   }
   
   public async requestImport(path: string, category: string) {
+    this.logger.debug("Import requested", path, category)
+    
     this.queue.push({
-      uuid: uuid(),
+      uuid: platform.get.utils.crypto.randomUUID(),
       id: -1,
       version: -1,
       name: "Import",
@@ -148,8 +154,10 @@ class InstanceInstallController {
   }
   
   public async requestShareImport(shareCode: string, category: string) {
+    this.logger.debug("Share import requested", shareCode, category)
+    
     this.queue.push({
-      uuid: uuid(),
+      uuid: platform.get.utils.crypto.randomUUID(),
       id: -1,
       version: -1,
       name: "Import",
@@ -166,8 +174,10 @@ class InstanceInstallController {
   }
   
   public async requestSync(instance: InstanceJson | SugaredInstanceJson) {
+    this.logger.debug("Sync requested", instance)
+    
     this.queue.push({
-      uuid: uuid(),
+      uuid: platform.get.utils.crypto.randomUUID(),
       id: -1,
       version: -1,
       name: instance.name,
@@ -188,14 +198,17 @@ class InstanceInstallController {
       return;
     }
     
+    this.logger.debug("Checking queue")
+    this.logger.debug("Queue items", this.queue.length);
     const request = await store.dispatch("v2/install/popInstallQueue", {root: true}) as InstallRequest | null;
     if (request == null) {
+      this.logger.debug("Queue is empty")
       return;
     }
     
     // Don't holt the queue while we install
     this.installPack(request)
-      .catch(e => consoleBadButNoLogger("E", e))
+      .catch(e => this.logger.error(e))
   }
 
   /**
@@ -253,41 +266,61 @@ class InstanceInstallController {
       }
     }
     
-    let knownInstanceUuid: string;
+    this.logger.debug("Sending install request", payload)
+    
+    let knownInstanceUuid = "";
+    let continuePast = false;
     if (!request.syncUuid) {
       // Make the installation request!
-      const installResponse = await sendMessage("installInstance", payload);
+      this.logger.debug("Attempting to install instance");
+      try {
+        const installResponse = await sendMessage("installInstance", payload);
 
-      if (installResponse.status === "error" || installResponse.status === "prepare_error") {
-        consoleBadButNoLogger("D", "Failed to send install request", installResponse);
-        alertController.error(`Failed to start installation due to ${installResponse.message ?? "an unknown error"}`);
-        this.installLock = false;
-        return;
-      }
+        if (installResponse.status === "error" || installResponse.status === "prepare_error") {
+          this.logger.debug("Failed to send install request", installResponse);
+          alertController.error(`Failed to start installation due to ${installResponse.message ?? "an unknown error"}`);
+          this.installLock = false;
+          return;
+        }
 
-      if (installResponse.instanceData && !isUpdate) {
-        // Don't add if it's an update otherwise we'll have two instances
-        store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+        if (installResponse.instanceData && !isUpdate) {
+          // Don't add if it's an update otherwise we'll have two instances
+          store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+        }
+
+        knownInstanceUuid = installResponse.instanceData.uuid;
+        continuePast = true;
+      } catch (error) {
+        this.logger.error("Failed to send install request", error);
       }
-      
-      knownInstanceUuid = installResponse.instanceData.uuid;;
     } else {
-      const installResponse = await sendMessage("syncInstance", {
-        uuid: request.syncUuid
-      });
-      
-      if (installResponse.status !== "success") {
-        consoleBadButNoLogger("E", "Failed to send sync request", installResponse);
-        alertController.error(`Failed to start sync due to ${installResponse.message ?? "an unknown error"}`);
-        this.installLock = false;
-        return;
+      try {
+        const installResponse = await sendMessage("syncInstance", {
+          uuid: request.syncUuid
+        });
+
+        if (installResponse.status !== "success") {
+          this.logger.error("Failed to send sync request", installResponse);
+          alertController.error(`Failed to start sync due to ${installResponse.message ?? "an unknown error"}`);
+          this.installLock = false;
+          return;
+        }
+
+        knownInstanceUuid = request.syncUuid;
+        continuePast = true;
+      } catch (error) {
+        this.logger.error("Failed to send sync request", error);
       }
-      
-      knownInstanceUuid = request.syncUuid;
+    }
+    
+    if (!continuePast) {
+      this.installLock = false;
+      this.logger.debug("Unlocking install lock due to error");
+      return;
     }
     
     const installRequest: InstallResult = await new Promise((resolve, reject) => {
-      
+      this.logger.debug("Preparing install listener")
       this.updateInstallStatus({
         request,
         progress: "0",
@@ -353,6 +386,7 @@ class InstanceInstallController {
       emitter.on("ws.message", instanceInstaller  as any);
     });
     
+    this.logger.debug("Install result", installRequest)
     if (installRequest.success && installRequest.instance) {
       // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
       store.dispatch(`v2/instances/updateInstance`, installRequest.instance, {root: true});
@@ -369,6 +403,7 @@ class InstanceInstallController {
       }
     }
     
+    this.logger.debug("Unlocking install lock")
     this.installLock = false;
     await this.checkQueue(); // Force a queue check again 
   }
@@ -389,6 +424,8 @@ class InstanceInstallController {
       return;
     }
     
+    this.logger.debug("Adding cloud instances", payload)
+    
     for (const pack of payload.changedInstances) {
       // We shouldn't already have it but we might so keep it in sync regardless
       if ((store.state as any)['v2/instances'].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
@@ -399,9 +436,13 @@ class InstanceInstallController {
     }
   }
 
+  /**
+   * Handles modloader overloading state updating
+   */
   private handleOverrideState(typedData: InstanceOverrideModLoaderDataReply) {
     const status = typedData.status;
     if (status === "prepare") {
+      this.logger.debug("Preparing modloader update, unable override the state")
       return;
     }
     

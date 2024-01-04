@@ -2,6 +2,7 @@ import {ActionContext, ActionTree, GetterTree, Module, MutationTree} from 'vuex'
 import {ModPack, ModpackVersion, PackProviders, Versions} from '@/modules/modpacks/types';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {RootState} from '@/types';
+import {createLogger} from '@/core/logger';
 
 export type ModpackState = typeof state;
 
@@ -19,6 +20,8 @@ const state = {
   latestPackIds: [] as number[],
 }
 
+const logger = createLogger("modpacks/modpacksState.ts");
+
 async function getModpackIds(type: "featured" | "latest", {state, commit}: ActionContext<ModpackState, RootState>, limit = 5, ignoreBlacklist = false): Promise<number[]> {
   const endpoints = {
     featured: {
@@ -34,12 +37,15 @@ async function getModpackIds(type: "featured" | "latest", {state, commit}: Actio
   }
   
   const endpoint = endpoints[type];
+  logger.debug(`Getting ${type} packs`)
   if ((state as any)[endpoint.existing].length > 0) {
+    logger.debug(`Returning cached ${type} packs`)
     return (state as any)[endpoint.existing];
   }
   
   const req = await endpoint.endpoint();
   if (!req) {
+    logger.error(`Failed to get ${type} packs`)
     return [];
   }
 
@@ -63,11 +69,14 @@ const actions: ActionTree<ModpackState, RootState> = {
     const {id, provider} = payload;
     
     if (state.modpacks.has(id)) {
+      logger.debug(`Returning cached modpack ${id}`)
       return state.modpacks.get(id)!;
     }
     
+    logger.debug(`Getting modpack ${id}`)
     const req = await modpackApi.modpacks.getModpack(id, provider ?? "modpacksch");
     if (req == null || req.status !== "success") {
+      logger.debug(`Failed to get modpack ${id}`)
       return null;
     }
     
@@ -76,6 +85,7 @@ const actions: ActionTree<ModpackState, RootState> = {
       commit('SET_MODPACK', modpack);
     }
     
+    logger.debug(`Returning modpack ${id}`)
     return modpack;
   },
   
@@ -87,11 +97,13 @@ const actions: ActionTree<ModpackState, RootState> = {
     const {id, versionId, provider} = payload;
 
     if (state.modpackVersions.has(versionId)) {
+      logger.debug(`Returning cached modpack version ${versionId}`)
       return state.modpackVersions.get(versionId)!;
     }
 
     const req = await modpackApi.modpacks.getModpackVersion(id, versionId, provider ?? "modpacksch");
     if (req == null || req.status !== "success") {
+      logger.error(`Failed to get modpack version ${versionId}`)
       return null;
     }
 
@@ -100,6 +112,7 @@ const actions: ActionTree<ModpackState, RootState> = {
       commit('SET_MODPACK_VERSION', modpackVersion);
     }
 
+    logger.debug(`Returning modpack version ${versionId}`)
     return modpackVersion;
   },
   

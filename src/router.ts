@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import Home from '@/views/Home.vue';
 import MainApp from './views/MainApp.vue';
+import {createLogger} from '@/core/logger';
 
 Vue.use(Router);
 
@@ -27,7 +28,7 @@ export enum RouterNames {
   SUPPORT = 'support-index',
 }
 
-export default new Router({
+const router = new Router({
   mode: 'hash',
   routes: [
     {
@@ -172,3 +173,11 @@ export default new Router({
     }
   }
 });
+
+const logger = createLogger('router.ts');
+router.beforeEach((to, from, next) => {
+  logger.debug(`Navigating from ${from.path} to ${to.path}`);
+  next();
+});
+
+export default router;

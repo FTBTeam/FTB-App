@@ -4,8 +4,11 @@ import {RouterNames} from '@/router';
 import store from '@/modules/store';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import {alertController} from '@/core/controllers/alertController';
+import {createLogger} from '@/core/logger';
 
 export class InstanceActions {
+  private static logger = createLogger(InstanceActions.name + ".ts");
+  
   static async start(instance: SugaredInstanceJson) {
     if (!this.canStart(instance) || this.isUpdating(instance)) return false;
     
@@ -26,6 +29,7 @@ export class InstanceActions {
   }
   
   static clearInstanceCache(announce = true) {
+    InstanceActions.logger.debug("Clearing instance cache")
     store.dispatch("v2/modpacks/clearModpacks", undefined, {
       root: true
     });

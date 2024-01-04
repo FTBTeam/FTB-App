@@ -79,8 +79,7 @@ export default class AppInfo extends Vue {
   @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
+    return this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth')?.identityProvider
   }
 
   private openLogin() {

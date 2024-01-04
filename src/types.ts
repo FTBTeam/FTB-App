@@ -131,13 +131,6 @@ export interface ModArt {
   type: string;
 }
 
-export interface ModSearchResults {
-  mods: number[];
-  total: number;
-  limit: number;
-  refreshed: number;
-}
-
 export interface DiscordWidget {
   id: string;
   name: string;

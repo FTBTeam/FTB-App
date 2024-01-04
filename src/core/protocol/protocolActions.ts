@@ -1,6 +1,6 @@
 import {ModpackInstallAction} from './actions/ModpackInstallAction';
 import {AuthAction} from '@/core/protocol/actions/AuthAction';
-import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 export type ActionType = 'modpack' | 'auth';
 
@@ -17,6 +17,7 @@ export interface Action {
   run: (context: ActionContext) => void;
 }
 
+const logger = createLogger('core/protocol.ts');
 const protocolSpace = 'ftb';
 
 const actions: Action[] = [
@@ -42,7 +43,7 @@ export const parseInput = (rawInput: string, log = true) => {
 
   if (inputParts.length < 2) {
     if (log) {
-      consoleBadButNoLogger("W", 'Unable to find at least a namespace and action from the url');
+      logger.warn('Unable to find at least a namespace and action from the url', rawInput)
     }
 
     return null;
@@ -60,12 +61,13 @@ export const parseInput = (rawInput: string, log = true) => {
 export const handleAction = (rawInput: string) => {
   const input = parseInput(rawInput);
   if (input == null) {
-    consoleBadButNoLogger("W", 'Rejecting protocol as we could not parse the input', rawInput);
+    logger.warn('Rejecting protocol as we could not parse the input', rawInput);
     return;
   }
 
   const runner = actions.find((e) => e.namespace === input.namespace && e.action === input.action);
   if (runner) {
+    logger.info(`Running action ${runner.action} from namespace ${runner.namespace}`);
     runner.run({
       self: runner,
       args: input.args,

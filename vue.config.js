@@ -5,12 +5,7 @@ const packageJson = require('./package.json');
 
 const webpackPlugins = [];
 
-//process.env.CI_COMMIT_BRANCH === 'develop' add back when we start using preview builds in production
-if (
-  process.env.SENTRY_AUTH_TOKEN &&
-  (process.env.VERSION || process.env.VERSION_OVERRIDE) &&
-  (process.env.CI_COMMIT_BRANCH === 'release' || process.env.CI_COMMIT_BRANCH === 'develop')
-) {
+if (process.env.CI_COMMIT_TAG) {
   webpackPlugins.push(
     new SentryWebpackPlugin({
       authToken: process.env.SENTRY_AUTH_TOKEN,

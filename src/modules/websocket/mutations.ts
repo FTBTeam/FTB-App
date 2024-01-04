@@ -4,6 +4,9 @@ import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import {emitter} from '@/utils/event-bus';
 import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
+
+const logger = createLogger("websocket/mutations.ts");
 
 export const mutations: MutationTree<SocketState> = {
   SOCKET_ONOPEN(state: any, event: any) {
@@ -25,12 +28,9 @@ export const mutations: MutationTree<SocketState> = {
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
     if (message.type !== 'ping' && message.type !== 'pong') {
-      if (process.env.NODE_ENV === 'development') {
-        const { requestId, type, ...rest } = message;
-        consoleBadButNoLogger("D",
-          `[${message.requestId ? ('' + message.requestId).padStart(6, '0') : '......'}][id//${message.type}]`,
-          rest,
-        );
+      const { requestId, type, ...rest } = message;
+      if (message.type !== "launchInstance.logs") {
+        logger.debug(`WS Message: [${message.requestId ?? 'unknown'}::${message.type}]`, rest)
       }
       emitter.emit('ws.message', message);
     }
