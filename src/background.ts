@@ -9,7 +9,7 @@ import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 import {createLogger} from '@/core/logger';
 import https from 'https';
 import AdmZip from 'adm-zip';
-import {execSync, spawn} from 'child_process';
+import {ChildProcess, execSync, spawn} from 'child_process';
 
 const protocolSpace = 'ftb';
 const logger = createLogger('background.ts');
@@ -56,6 +56,7 @@ if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
   app.setAsDefaultProtocolClient(protocolSpace);
 }
 
+let subprocess: ChildProcess | null = null;
 let win: BrowserWindow | null;
 // let friendsWindow: BrowserWindow | null;
 
@@ -421,9 +422,14 @@ ipcMain.handle("startSubprocess", async (event, args) => {
   const javaPath = args.javaPath;
   const argsList = args.args;
   
+  if (subprocess !== null) {
+    logger.debug("Subprocess is already running, killing it")
+    subprocess.kill();
+  }
+  
   logger.debug("Starting subprocess", javaPath, argsList)
   // Spawn the process so it can run in the background and capture the output
-  const subprocess = spawn(javaPath, argsList, {
+  subprocess = spawn(javaPath, argsList, {
     detached: true,
     stdio: 'inherit',
   });
@@ -563,6 +569,10 @@ async function createWindow() {
   }
 
   win.on('closed', () => {
+    // Kill the subprocess if it's running
+    if (subprocess !== null) {
+      subprocess.kill();
+    }
     win = null;
     // if (friendsWindow) {
     //   friendsWindow.close();

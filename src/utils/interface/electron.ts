@@ -493,7 +493,7 @@ const Electron: ElectronOverwolfInterface = {
         args: [
           "-jar",
           `${appPath}/bin/FTBApp.jar`,
-          "--dev"
+          "--dev" // Required for now
         ]
       });
       
