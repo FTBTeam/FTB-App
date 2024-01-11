@@ -1,37 +1,44 @@
 <template>
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
-    <div class="app-container" :class="{'no-system-bar': systemBarDisabled}" v-if="websockets.socket.isConnected && !loading">
-      <main class="main">
-        <sidebar v-if="showSidebar" />
-        <div class="app-content relative">
-          <router-view />
-        </div>
-        <ad-aside v-show="advertsEnabled" />
-      </main>
-    </div>
-    <div class="app-container centered" :class="{'no-system-bar': !hasInitialized || (hasInitialized && systemBarDisabled)}" v-else>
-      <div class="pushed-content">
-        <report-form
-          v-if="websockets.reconnects > 10 && this.loading"
-          :loadingFailed="loading"
-          :websocketsFailed="!websockets || websockets.reconnects > 10"
-          :websockets="websockets"
-          :max-tries="10"
-        />
-        <div
-          class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
-          style="flex-direction: column; justify-content: center; align-items: center"
-          v-else
-        >
-          <img src="../assets/images/ftb-logo-full.svg" width="300" class="loader-logo-animation" />
-          <div class="progress">
-            <div class="bar"></div>
-          </div>
-          <em class="mt-6">{{ stage }}</em>
-        </div>
+    <div v-if="appReady && !appInstalled">
+      <div class="app-container">
+        <router-view />
       </div>
     </div>
+    <template v-else>
+      <div class="app-container" :class="{'no-system-bar': systemBarDisabled}" v-if="websockets.socket.isConnected && !loading">
+        <main class="main">
+          <sidebar v-if="showSidebar" />
+          <div class="app-content relative">
+            <router-view />
+          </div>
+          <ad-aside v-show="advertsEnabled" />
+        </main>
+      </div>
+      <div class="app-container centered" :class="{'no-system-bar': !hasInitialized || (hasInitialized && systemBarDisabled)}" v-else>
+        <div class="pushed-content">
+          <report-form
+            v-if="websockets.reconnects > 10 && this.loading"
+            :loadingFailed="loading"
+            :websocketsFailed="!websockets || websockets.reconnects > 10"
+            :websockets="websockets"
+            :max-tries="10"
+          />
+          <div
+            class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
+            style="flex-direction: column; justify-content: center; align-items: center"
+            v-else
+          >
+            <img src="../assets/images/ftb-logo-full.svg" width="300" class="loader-logo-animation" />
+            <div class="progress">
+              <div class="bar"></div>
+            </div>
+            <em class="mt-6">{{ stage }}</em>
+          </div>
+        </div>
+      </div>
+    </template>
 
     <global-components />
   </div>
@@ -51,11 +58,12 @@ import GlobalComponents from '@/components/templates/GlobalComponents.vue';
 import {AuthState} from '@/modules/auth/types';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import os from 'os';
 import {requiresWsControllers} from '@/core/controllerRegistry';
 import {createLogger} from '@/core/logger';
+import {RouterNames} from '@/router';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import os from 'os';
 
 @Component({
   components: {
@@ -83,6 +91,9 @@ export default class MainApp extends Vue {
   
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
 
+  @Getter("ready", ns("v2/app")) appReady!: boolean
+  @Getter("installed", ns("v2/app")) appInstalled!: boolean
+  
   private loggger = createLogger(MainApp.name + ".vue");
   
   private platfrom = platfrom;
@@ -124,8 +135,26 @@ export default class MainApp extends Vue {
   
   public mounted() {
     this.loggger.info("Mounted MainApp");
-    this.isMac = os.type() === 'Darwin';
+    if (this.$router.currentRoute.name !== RouterNames.ONBOARING && !this.appInstalled) {
+      this.$router.push({
+        name: RouterNames.ONBOARING
+      })
+      
+      this.loggger.debug("Not ready, redirecting to onboarding")
+    }
     
+    const interval = setInterval(() => {
+      // Waiting for the app to be ready
+      if (this.appReady && this.appInstalled) {
+        clearInterval(interval);
+        this.startupApp();
+      }
+    }, 1000)
+  }
+  
+  startupApp() {
+    this.isMac = os.type() === 'Darwin';
+
     this.loggger.debug("Starting ping poll");
     this.registerPingCallback((data: any) => {
       if (data.type === 'ping') {

@@ -4,8 +4,10 @@ import {InstallState} from '@/core/state/instances/installState';
 import {NewsState} from '@/core/state/misc/newsState';
 import {DialogsState} from '@/core/state/misc/dialogsState';
 import {AdsState} from '@/core/state/misc/adsState';
+import {CoreAppState} from '@/core/state/core/coreAppState';
 
 export type AppState = {
+  "v2/app": CoreAppState,
   "v2/modpacks": ModpackState,
   "v2/instances": InstanceState,
   "v2/install": InstallState,

@@ -7,6 +7,9 @@ import * as electronLogger from 'electron-log';
 import install, {VUEJS_DEVTOOLS} from 'electron-devtools-installer';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
 import {createLogger} from '@/core/logger';
+import https from 'https';
+import AdmZip from 'adm-zip';
+import {execSync, spawn} from 'child_process';
 
 const protocolSpace = 'ftb';
 const logger = createLogger('background.ts');
@@ -324,6 +327,122 @@ ipcMain.on('openDevTools', (event, data) => {
       win.webContents.openDevTools();
     }
   }
+});
+
+/**
+ * Download method that uses native node modules and supports redirects
+ */
+function downloadFile(url: string, path: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(path);
+
+    const download = (url: string, redirects = 0) => {
+      if (redirects > 10) {
+        reject(`Too many redirects for '${url}'`);
+        return;
+      }
+      
+      https.get(url, function(response: any) {
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          // If it's a redirect, make a request to the redirect location
+          download(response.headers.location, redirects + 1);
+        } else if (response.statusCode !== 200) {
+          // If the status code is not 200, reject the promise
+          reject(new Error(`Failed to get '${url}' (${response.statusCode})`));
+        } else {
+          // Otherwise, pipe the response into the file
+          response.pipe(file);
+
+          file.on('finish', function() {
+            file.close();
+            resolve(true);
+          });
+
+          file.on('error', (err) => {
+            reject(err);
+          });
+        }
+      }).on('error', (err) => {
+        reject(err);
+      });
+    };
+
+    download(url);
+  });
+}
+
+ipcMain.handle("downloadFile", async (event, args) => {
+  const url = args.url;
+  const path = args.path;
+
+  // Node fetch no work and other libraries are too big or require esm
+  return await downloadFile(url, path);
+});
+
+function extractTarball(tarballPath: string, outputPath: string) {
+  // It looks like tar is available on all platforms, so we can just use that `tar -xzf`
+  // But let's redirect the contents to the output path
+  // And capture the output so we can log it
+  const command = `tar -xzf "${tarballPath}" -C "${outputPath}"`;
+  logger.debug("Extracting tarball", command)
+  const output = execSync(command).toString();
+  logger.debug("Tarball extraction output", output)
+  
+  return true;
+}
+
+function extractZip(zipPath: string, outputPath: string) {
+  const zip = new AdmZip(zipPath);
+  zip.extractAllTo(outputPath, true);
+  
+  return true;
+}
+
+ipcMain.handle("extractFile", async (event, args) => {
+  const input = args.input;
+  const output = args.output;
+  
+  if (!fs.existsSync(output)) {
+    fs.mkdirSync(output, { recursive: true });
+  }
+  
+  console.log("Extracting file", input, output)
+
+  if (input.endsWith(".tar.gz")) {
+    return extractTarball(input, output);
+  } else if (input.endsWith(".zip")) {
+    return extractZip(input, output);
+  }
+
+  return false
+});
+
+ipcMain.handle("startSubprocess", async (event, args) => {
+  const javaPath = args.javaPath;
+  const argsList = args.args;
+  
+  logger.debug("Starting subprocess", javaPath, argsList)
+  // Spawn the process so it can run in the background and capture the output
+  const subprocess = spawn(javaPath, argsList, {
+    detached: true,
+    stdio: 'inherit',
+  });
+  
+  subprocess.stderr?.on('data', (data) => {
+    logger.debug("Subprocess stderr", data.toString())
+  });
+  
+  subprocess.stdout?.on('data', (data) => {
+    logger.debug("Subprocess stdout", data.toString())
+  });
+  
+  subprocess?.on('error', (err) => {
+    logger.error("Subprocess error", err)
+  });
+  
+  subprocess?.on('close', (code) => {
+    logger.debug("Subprocess closed", code)
+  });
 });
 
 // function createFriendsWindow() {

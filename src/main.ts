@@ -48,6 +48,27 @@ const appSetup = async () => {
   } catch (e) {
     logger.error("Failed to setup platform", e);
   }
+  
+  if (!platform.isOverwolf()) {
+    // Get the app settings
+    // If the app isn't installed, set the global store to reflect that
+    const installed = await platform.get.app.runtimeAvailable();
+    store.state["v2/app"].properties.installed = installed;
+    if (!installed) {
+      logger.info("App not installed, setting installed to false");
+    }
+    
+    if (installed) {
+      logger.info("App is installed, starting subprocess");
+      // if (process.env.NODE_ENV === 'production') {
+        await platform.get.app.startSubprocess();
+      // }
+    }
+  } else {
+    store.state["v2/app"].properties.installed = true;
+  }
+  
+  store.state["v2/app"].properties.ready = true;
 
   if (process.env.NODE_ENV === 'production') {
     logger.info("Setting up sentry");

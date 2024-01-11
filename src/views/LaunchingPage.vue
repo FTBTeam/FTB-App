@@ -372,7 +372,7 @@ export default class LaunchingPage extends Vue {
 
   public async mounted() {
     this.logger.debug("Mounted Launch page, waiting for websockets...");
-    await waitForWebsockets(this.websockets.socket)
+    await waitForWebsockets("Launch page", this.websockets.socket)
 
     this.logger.debug("Websockets ready, loading instance")
     

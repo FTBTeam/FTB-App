@@ -106,7 +106,7 @@ export default class TitleBar extends Vue {
   }
   
   get branch() {
-    return platform.get.config.branch
+    return platform.get?.config?.branch
   }
 
   goToSettings() {

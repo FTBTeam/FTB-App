@@ -1,4 +1,5 @@
 {
+  "productName": "FTB App",
   "name": "ftb-app",
   "version": "1.6.4",
   "private": true,
@@ -28,6 +29,7 @@
   "dependencies": {
     "@sentry/tracing": "^6.19.7",
     "@sentry/vue": "^6.19.7",
+    "adm-zip": "^0.5.10",
     "balloon-css": "^1.2.0",
     "dayjs": "^1.11.7",
     "electron": "^22.3.3",
@@ -55,11 +57,13 @@
     "@overwolf/ow-cli": "0.0.5-0",
     "@overwolf/types": "^3.16.0",
     "@sentry/webpack-plugin": "^1.18.9",
+    "@types/adm-zip": "^0.5.5",
     "@types/jest": "^29.4.0",
     "@types/markdown-it": "^12.2.3",
     "@types/node": "^18.14.0",
     "@types/node-fetch": "^2.5.7",
     "@types/semver": "^7.2.0",
+    "@types/tar": "^6.1.10",
     "@types/webpack-env": "1.16.0",
     "@types/xml2js": "^0.4.9",
     "@vue/cli-plugin-babel": "^4.5.19",

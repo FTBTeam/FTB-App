@@ -37,9 +37,9 @@ export function shortenHash(longHash: string): string {
   return `MT${longHash.substring(0, 28).toUpperCase()}`;
 }
 
-export async function waitForWebsockets(websockets: Socket) {
+export async function waitForWebsockets(user: string, websockets: Socket) {
   if (!websockets.isConnected) {
-    logger.debug("WS not connected, delaying page load for 100ms")
+    logger.debug("WS not connected, delaying page load for 100ms for user", user);
     await new Promise((resolve) => {
       // Wait for 30 seconds for the websocket to connect
       const timoutRef = setTimeout(() => {

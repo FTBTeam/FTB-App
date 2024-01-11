@@ -261,6 +261,37 @@ const Overwolf: ElectronOverwolfInterface = {
     notifyWebhookReceived(message: string) {},
   },
 
+  app: {
+    async appSettings() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.appSettings() on Overwolf")
+    },
+    async appData() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.appData() on Overwolf")
+    },
+    async appHome() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.appHome() on Overwolf")
+    },
+    async appRuntimes() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.appRuntimes() on Overwolf")
+    },
+    async runtimeAvailable() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.runtimeAvailable() on Overwolf")
+    },
+    async installApp() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.installApp() on Overwolf")
+    },
+    async startSubprocess() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.startSubprocess() on Overwolf")
+    }
+  },
+
   setupApp(vm) {
     owLogger.info('Setting up app for overwolf')
     // setup websockets and the actual window

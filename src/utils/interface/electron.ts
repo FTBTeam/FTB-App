@@ -15,6 +15,8 @@ import {emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import log from 'electron-log';
 import {createLogger} from '@/core/logger';
+import {computeArch, computeOs, jreLocation} from '@/utils/interface/electron-helpers';
+import {execSync} from 'child_process';
 
 function getAppHome() {
   if (os.platform() === "darwin") {
@@ -348,6 +350,157 @@ const Electron: ElectronOverwolfInterface = {
     },
   },
 
+  app: {
+    async appHome(): Promise<string> {
+      return getAppHome();
+    },
+    async appSettings() {
+      const settingsPath = getAppHome() + "/bin/settings.json";
+      if (!fs.existsSync(settingsPath)) {
+        return null
+      }
+
+      return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+    },
+    async appData(): Promise<string> {
+      return path.join(getAppHome(), 'bin');
+    },
+    async appRuntimes(): Promise<string> {
+      return path.join(getAppHome(), 'runtime');
+    },
+    async runtimeAvailable(): Promise<boolean> {
+      const appPath = getAppHome();
+      return fs.existsSync(jreLocation(appPath));
+    },
+    async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
+      onStageChange("Locating Java");
+
+      /**
+       * Procedure:
+       * - Figure out the system architecture and platform type (mac, windows, linux)
+       * - Locate the java version from the adoptium api
+       * - Download the java version
+       * - Extract the tar or the zip
+       * - Move the java version to the runtime folder
+       * - Ensure the java version is executable and works (run java -version)
+       * - If it doesn't work, try again
+       * - If it still doesn't work, throw an error
+       * - If it does work, continue
+       * - Try and start the backend (Call to different method procedure)
+       * - If it fails, try again
+       * - If it fails more than 3 times, throw an error
+       */
+      
+      const platformData = {
+        arch: os.arch(),
+        platform: os.platform(),
+      };
+
+      const ourOs = computeOs(platformData.platform);
+      const ourArch = computeArch(platformData.arch)
+
+      // Attempt to get the java
+      const adopiumRequest = await fetch(`https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`);
+      const adopiumRes = await adopiumRequest.json();
+
+      const binary = adopiumRes.find((e: any) => e.binary)?.binary
+      const link = binary.package.link;
+
+      const appPath = getAppHome();
+      const runtimePath = `${appPath}/runtime`;
+
+      // TODO: Validate this works
+      if (!fs.existsSync(runtimePath)) {
+        fs.mkdirSync(runtimePath, {
+          recursive: true
+        });
+      }
+
+      const res = await ipcRenderer.invoke("downloadFile", {
+        url: link,
+        path: `${runtimePath}/jre.tar.gz`
+      });
+
+      console.log(adopiumRes)
+      console.log(res);
+      
+      if (!res) {
+        throw new Error("Failed to download java");
+      }
+      
+      // Extract the tar
+      const extractResult = await ipcRenderer.invoke("extractFile", {
+        input: `${runtimePath}/jre.tar.gz`,
+        output: `${runtimePath}/jre`
+      });
+      
+      console.log(extractResult);
+      // Assuming this worked
+      // Does the jre/jdk-* folder exist?
+      const jreFolder = fs.readdirSync(`${runtimePath}/jre`).find(e => e.startsWith("jdk-"));
+      if (jreFolder == null) {
+        throw new Error("Failed to find jre folder");
+      }
+      
+      // Move all of the folders contents to the runtime folder
+      // Then delete the jre folder
+      const jrePath = `${runtimePath}/jre/${jreFolder}`;
+      const jreFiles = fs.readdirSync(jrePath);
+      jreFiles.forEach(e => {
+        fs.renameSync(`${jrePath}/${e}`, `${runtimePath}/${e}`);
+      });
+      
+      fs.rmdirSync(jrePath);
+      fs.rmdirSync(`${runtimePath}/jre`)
+      fs.rmSync(`${runtimePath}/jre.tar.gz`)
+      
+      // Touch a file to note down what java version we have
+      fs.writeFileSync(`${runtimePath}/.java-version`, jreFolder);
+      
+      // Ensure the java version is executable and works
+      const jreExecPath = jreLocation(appPath);
+      if (!fs.existsSync(jreExecPath)) {
+        throw new Error("Failed to find java executable");
+      }
+      
+      // TODO: Actually validate this
+      const result = execSync(`"${jreExecPath}" -version`);
+      console.log(result.toString());
+      
+      // Assuming this worked, we should tell the frontend to continue
+    },
+    async startSubprocess() {
+      // TODO: Get the args from the meta file
+      
+      // Get the runtime
+      const appPath = getAppHome();
+      const runtimePath = `${appPath}/runtime`;
+      
+      if (!fs.existsSync(`${runtimePath}/.java-version`)) {
+        throw new Error("Missing java version");
+      }
+      
+      // TODO: Check if this needs updating I guess
+      
+      // Start the subprocess
+      const jreExecPath = jreLocation(appPath);
+      if (!fs.existsSync(jreExecPath)) {
+        throw new Error("Failed to find java executable");
+      }
+      
+      await ipcRenderer.invoke("startSubprocess", {
+        javaPath: jreExecPath,
+        args: [
+          "-jar",
+          `${appPath}/bin/FTBApp.jar`,
+          "--dev"
+        ]
+      });
+      
+      // Finally, if the above worked, tell the app to connect to the WS protocol
+    }
+  },
+  
   setupApp(vm) {
     eLogger.debug("Setting up the app from the interface on electron")
     ipcRenderer.send('sendMeSecret');

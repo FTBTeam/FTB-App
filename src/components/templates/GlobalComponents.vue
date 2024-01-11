@@ -31,7 +31,7 @@
     />
 
     <!-- Only checks for an update once during startup -->
-    <changelog />
+    <changelog v-if="appCompletelyReady" />
     <dialogs />
     <alerts />
     
@@ -54,6 +54,7 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
 import DevToolsActions from '@/components/core/misc/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/core/global/contextMenu/ContentMenuGlobal.vue';
+import {ns} from '@/core/state/appState';
 
 @Component({
   components: {
@@ -73,6 +74,8 @@ export default class GlobalComponents extends Vue {
   @Action('closeSignIn', { namespace: 'core' }) closeSignIn: any;
   
   @State('websocket') websocket?: SocketState;
+  
+  @Getter("completelyReady", ns("v2/app")) private appCompletelyReady!: boolean
   
   get modal() {
     return this.websocket?.modal as OpenModalData | null | undefined;

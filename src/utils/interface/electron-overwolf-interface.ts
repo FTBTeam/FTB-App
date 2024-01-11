@@ -81,6 +81,16 @@ export interface Websocket {
   notifyWebhookReceived: (message: string) => void;
 }
 
+export interface App {
+  appHome(): Promise<string>;
+  appData(): Promise<string>;
+  appSettings(): Promise<any | null>;
+  appRuntimes(): Promise<string>;
+  runtimeAvailable(): Promise<boolean>;
+  installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void): Promise<void>;
+  startSubprocess(): Promise<void>;
+}
+
 export default interface ElectronOverwolfInterface {
   utils: Util;
   actions: Actions;
@@ -89,5 +99,6 @@ export default interface ElectronOverwolfInterface {
   config: Config;
   io: InputOutput;
   websocket: Websocket;
+  app: App;
   setupApp: (vm: any) => void;
 }

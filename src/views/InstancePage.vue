@@ -183,7 +183,7 @@ export default class InstancePage extends Vue {
 
   async mounted() {
     this.logger.debug("Mounted instance page, waiting for websockets")
-    await waitForWebsockets(this.websockets.socket)
+    await waitForWebsockets("instancePage", this.websockets.socket)
     
     this.logger.debug("Websockets ready, loading instance")
     if (this.instance == null) {

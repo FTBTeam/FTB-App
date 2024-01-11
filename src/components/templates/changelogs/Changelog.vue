@@ -57,7 +57,7 @@ export default class Changelog extends Vue  {
   changelogData: ChangelogData | null = null;
 
   async mounted() {
-    await waitForWebsockets(this.websockets.socket)
+    await waitForWebsockets("changelog", this.websockets.socket)
 
     this.checkForUpdate().catch((e) => {
       this.logger.error('Unable to find any changelog data, maybe the servers down?', e);
