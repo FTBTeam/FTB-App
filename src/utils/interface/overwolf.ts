@@ -1,4 +1,3 @@
-import router from '@/router';
 import store from '@/modules/store';
 import {emitter, logVerbose} from '@/utils';
 import Vue from 'vue';
@@ -57,7 +56,7 @@ const Overwolf: ElectronOverwolfInterface = {
     
     crypto: {
       randomUUID(): string {
-        return overwolf.windows.getMainWindow().randomUUID() as string;
+        return overwolf.windows.getMainWindow().funcs.randomUUID() as string;
       }
     },
 
@@ -96,7 +95,7 @@ const Overwolf: ElectronOverwolfInterface = {
 
     async openLogin(cb: (data: any) => void) {
       owLogger.debug("Starting webserver and attempting to open Minetogether")
-      await overwolf.windows.getMainWindow().openWebserver(cb);
+      await overwolf.windows.getMainWindow().funcs.openWebserver(cb);
       overwolf.utils.openUrlInDefaultBrowser(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
     },
 
@@ -128,8 +127,6 @@ const Overwolf: ElectronOverwolfInterface = {
       //@ts-ignore
       if (window.isChat === undefined || window.isChat === false) {
         cb();
-        //@ts-ignore
-        // overwolf.windows.getMainWindow().closeEverythingAndLeave();
       }
     },
 
@@ -140,7 +137,7 @@ const Overwolf: ElectronOverwolfInterface = {
     
     restartApp() {
       owLogger.debug("Restarting app")
-      overwolf.windows.getMainWindow().restartApp();
+      overwolf.windows.getMainWindow().funcs.restartApp();
     }
   },
 
@@ -550,15 +547,15 @@ const Overwolf: ElectronOverwolfInterface = {
     }
 
     //@ts-ignore
-    if (window.isChat) {
-      router.push('/chat');
-      //@ts-ignore
-      overwolf.windows.getMainWindow().addCallback((data: any) => {
-        if (data.token) {
-          store.dispatch('auth/setSessionID', data.token, { root: true });
-        }
-      });
-    }
+    // if (window.isChat) {
+    //   router.push('/chat');
+    //   //@ts-ignore
+    //   overwolf.windows.getMainWindow().addCallback((data: any) => {
+    //     if (data.token) {
+    //       store.dispatch('auth/setSessionID', data.token, { root: true });
+    //     }
+    //   });
+    // }
   },
 };
 

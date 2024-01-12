@@ -419,6 +419,11 @@ ipcMain.handle("extractFile", async (event, args) => {
 });
 
 ipcMain.handle("startSubprocess", async (event, args) => {
+  if (process.env.NODE_ENV !== 'production') {
+    logger.debug("Not starting subprocess in dev mode")
+    return;
+  }
+  
   const javaPath = args.javaPath;
   const argsList = args.args;
   
