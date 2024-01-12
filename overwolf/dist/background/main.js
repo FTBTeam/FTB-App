@@ -1,5 +1,8 @@
 const checkIfAdmin = async () => {  
   // Check if running as admin
+  // Has the user ignored the warning?
+  let hasIgnoredWarning = localStorage.getItem("hasIgnoredAdminWarning");
+  
   let isRunningAsAdmin = plugin.get().IsRunningAsAdministrator();
   if (isRunningAsAdmin && !hasIgnoredWarning) {
     console.warn("APP IS RUNNING AS ADMIN!")
