@@ -3,8 +3,8 @@
     <div class="profile" v-if="getActiveProfile || auth.token">
       <div class="avatar">
         <img
-          v-if="getActiveProfile ? getActiveProfile.uuid : mtAvatar"
-          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : mtAvatar)"
+          v-if="getActiveProfile"
+          :src="getMinecraftHead(getActiveProfile.uuid)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -113,7 +113,7 @@ import {AuthState} from '@/modules/auth/types';
 import {Prop} from 'vue-property-decorator';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
-import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 @Component({
   methods: {getMinecraftHead}
@@ -128,27 +128,27 @@ export default class SidebarProfile extends Vue {
   @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
   @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
 
+  private logger = createLogger(SidebarProfile.name + ".vue")
+  
   editMode = false;
   loading = false;
-
-  get mtAvatar() {
-    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
-  }
 
   async removeProfile(profile: AuthProfile) {
     this.loading = true;
 
     try {
+      this.logger.debug(`Removing profile ${profile.uuid}`)
       const data = await sendMessage("profiles.remove", {
         uuid: profile.uuid
       })
 
       if (data.success) {
         this.loadProfiles();
+      } else {
+        this.logger.debug('Failed to remove profile');
       }
-    } catch {
-      consoleBadButNoLogger("D", 'Failed to remove profile');
+    } catch (error) {
+      this.logger.debug('Failed to remove profile due to message errors', error);
     }
 
     this.loading = false;
@@ -157,23 +157,25 @@ export default class SidebarProfile extends Vue {
   async setActiveProfile(profile: AuthProfile) {
     this.loading = true;
     try {
+      this.logger.debug(`Setting active profile ${profile.uuid}`)
       const data = await sendMessage("profiles.setActiveProfile", {
         uuid: profile.uuid
       })
 
       if (data.success) {
         this.loadProfiles();
+      } else {
+        this.logger.debug('Failed to set active profile');
       }
-    } catch {
-      consoleBadButNoLogger("D", 'Failed to set active profile');
+    } catch (error) {
+      this.logger.debug('Failed to set active profile due to message errors', error);
     }
 
     this.loading = false;
   }
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
+    return this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth')?.userId;
   }
 }
 </script>

@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -26,7 +26,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
         try {
             Instance instance = Instances.getInstance(data.uuid);
             if (instance == null) {
-                Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));
+                WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));
                 return;
             }
 
@@ -66,17 +66,17 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
 
             if (jreRealPath != null) {
                 if (JavaLocator.parseInstall(jreRealPath) == null) {
-                    Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
+                    WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
                     return;
                 }
                 instance.props.jrePath = jreRealPath;
             }
 
             instance.saveJson();
-            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "success", "", new InstalledInstancesHandler.SugaredInstanceJson(instance)));
+            WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "success", "", new InstalledInstancesHandler.SugaredInstanceJson(instance)));
         } catch (IOException ex) {
             LOGGER.error("Failed to update instance settings.", ex);
-            Settings.webSocketAPI.sendMessage(new InstanceConfigureData.Reply(data, "error", "Fatal error on settings saving..."));
+            WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "error", "Fatal error on settings saving..."));
         }
     }
 

@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.install.tasks.modloader;
 
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.Task;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.forge.AbstractForgeInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 /**
  * Created by covers1624 on 28/1/22.
  */
-public abstract class ModLoaderInstallTask implements Task<String> {
+public abstract class ModLoaderInstallTask implements Task {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -43,6 +43,8 @@ public abstract class ModLoaderInstallTask implements Task<String> {
     // The minecraft version range which denotes a 'jar mod' environment.
     public static final VersionRange FORGE_LEGACY_INSTALL = createRange("[1.2,1.5.2]");
 
+    public abstract String getModLoaderTarget();
+
     public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion) throws IOException {
         return switch (mlName) {
             case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(instance, mcVersion, mlVersion);
@@ -61,7 +63,7 @@ public abstract class ModLoaderInstallTask implements Task<String> {
             throw new IOException("No vanilla version manifest found for " + version);
         }
 
-        NewDownloadTask clientDownload = manifest.getClientDownload(versionsDir, manifest.id);
+        DownloadTask clientDownload = manifest.getClientDownload(versionsDir, manifest.id);
         if (clientDownload == null) {
             LOGGER.warn("Failed to find 'client' download for {}. Skipping..", version);
             return manifest;

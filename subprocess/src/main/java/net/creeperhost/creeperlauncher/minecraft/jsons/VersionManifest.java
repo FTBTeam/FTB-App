@@ -15,9 +15,8 @@ import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.platform.Architecture;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
-import net.covers1624.quack.util.SneakyUtils;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
@@ -116,7 +115,7 @@ public class VersionManifest {
     public static VersionManifest update(Path versionsDir, VersionListManifest.Version version) throws IOException {
         Path versionFile = versionsDir.resolve(version.id).resolve(version.id + ".json");
         LOGGER.info("Updating version manifest for '{}' from '{}'.", version.id, version.url);
-        NewDownloadTask downloadTask = NewDownloadTask.builder()
+        DownloadTask downloadTask = DownloadTask.builder()
                 .url(version.url)
                 .withMirror(JSON_PROXY + version.url)
                 .dest(versionFile)
@@ -169,12 +168,12 @@ public class VersionManifest {
     }
 
     @Nullable
-    public NewDownloadTask getClientDownload(Path versionsDir, String id) {
+    public DownloadTask getClientDownload(Path versionsDir, String id) {
         return getDownload("client", versionsDir.resolve(id).resolve(id + ".jar"));
     }
 
     @Nullable
-    public NewDownloadTask getDownload(String dlName, Path dest) {
+    public DownloadTask getDownload(String dlName, Path dest) {
         Download download = downloads.get(dlName);
         if (download == null || download.url == null) return null;
 
@@ -183,7 +182,7 @@ public class VersionManifest {
         if (download.sha1 != null) {
             validation = validation.withHash(Hashing.sha1(), download.sha1);
         }
-        return NewDownloadTask.builder()
+        return DownloadTask.builder()
                 .url(download.url)
                 .tryResumeDownload()
                 .dest(dest)
@@ -330,7 +329,7 @@ public class VersionManifest {
         }
 
         @Nullable
-        public NewDownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
+        public DownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
             // We have 'natives'
             if (natives != null) {
                 String classifier = ARTIFACT_SUBSTITUTIONS.replace(natives.get(OS.current()));
@@ -338,7 +337,7 @@ public class VersionManifest {
                 if (downloads == null) {
 
                     MavenNotation nativeNotation = name.withClassifier(classifier);
-                    return NewDownloadTask.builder()
+                    return DownloadTask.builder()
                             .url(CH_MAVEN + nativeNotation.toPath())
                             .dest(nativeNotation.toPath(librariesDir))
                             .build();
@@ -355,7 +354,7 @@ public class VersionManifest {
             if (url != null || downloads == null) {
                 // The Vanilla launcher will explicitly use the 'url' property if it exists, however we override this to the CH maven.
                 // If the 'downloads' property is null, it tries from Mojang's maven directly, however we override this to the CH maven.
-                return NewDownloadTask.builder()
+                return DownloadTask.builder()
                         .url(CH_MAVEN + name.toPath())
                         .dest(name.toPath(librariesDir))
                         .build();
@@ -367,7 +366,7 @@ public class VersionManifest {
         }
 
         @Nullable
-        private NewDownloadTask downloadTaskFor(Path librariesDir, LibraryDownload artifact, MavenNotation name, boolean ignoreLocalLibraries) {
+        private DownloadTask downloadTaskFor(Path librariesDir, LibraryDownload artifact, MavenNotation name, boolean ignoreLocalLibraries) {
             if (StringUtils.isEmpty(artifact.url) && ignoreLocalLibraries) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
 
             if (artifact.path == null) {
@@ -392,7 +391,7 @@ public class VersionManifest {
             }
 
             // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
-            return NewDownloadTask.builder()
+            return DownloadTask.builder()
                     .url(url)
                     .dest(librariesDir.resolve(artifact.path))
                     .withValidation(validation)

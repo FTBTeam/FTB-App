@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.CreeperLauncher;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceCloudSyncResolveConflictData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 
@@ -13,15 +13,15 @@ public class InstanceCloudSyncResolveConflictHandler implements IMessageHandler<
     @Override
     public void handle(InstanceCloudSyncResolveConflictData data) {
         if (!CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured()) {
-            Settings.webSocketAPI.sendMessage(new InstanceCloudSyncResolveConflictData.Reply("not_configured", "Cloud saves not configured."));
+            WebSocketHandler.sendMessage(new InstanceCloudSyncResolveConflictData.Reply("not_configured", "Cloud saves not configured."));
             return;
         }
 
         try {
             CreeperLauncher.CLOUD_SAVE_MANAGER.resolveConflict(data.uuid, data.resolution);
-            Settings.webSocketAPI.sendMessage(new InstanceCloudSyncResolveConflictData.Reply("success", null));
+            WebSocketHandler.sendMessage(new InstanceCloudSyncResolveConflictData.Reply("success", null));
         } catch (IllegalStateException ex) {
-            Settings.webSocketAPI.sendMessage(new InstanceCloudSyncResolveConflictData.Reply("error", ex.getMessage()));
+            WebSocketHandler.sendMessage(new InstanceCloudSyncResolveConflictData.Reply("error", ex.getMessage()));
         }
     }
 }

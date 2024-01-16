@@ -1,18 +1,15 @@
 package net.creeperhost.creeperlauncher.util;
 
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
+import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.pack.Instance;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
@@ -20,15 +17,18 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.RegEx;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by covers1624 on 24/2/21.
@@ -49,38 +49,133 @@ public class LogsUploader {
      */
     @Nullable
     public static String uploadUILogs(@Nullable String uiVersion) {
-        var logs = collectLogs();
-
         var obj = new JsonObject();
-        obj.addProperty("uiVersion", uiVersion);
-        obj.addProperty("appVersion", Constants.APPVERSION);
-        obj.addProperty("platform", Constants.PLATFORM);
-        obj.addProperty("os", OS.CURRENT.toString());
-        obj.addProperty("arch", System.getProperty("os.arch"));
-        obj.addProperty("javaVersion", System.getProperty("java.version"));
-        obj.addProperty("javaVendor", System.getProperty("java.vendor"));
         
-        var logObj = new JsonObject();
-        logs.forEach(logObj::addProperty);
-        obj.add("logs", logObj);
+        obj.addProperty("version", "2.0.0");
+        
+        var metaDetails = new JsonObject();
+        metaDetails.addProperty("instanceCount", Instances.allInstances().size());
+        metaDetails.addProperty("cloudInstances", Instances.allInstances().stream().filter(e -> e.props.cloudSaves).count());
+        metaDetails.addProperty("today", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        metaDetails.addProperty("time", System.currentTimeMillis());
+        metaDetails.addProperty("addedAccounts", AccountManager.get().getProfiles().size());
+        metaDetails.addProperty("hasActiveAccount", AccountManager.get().getActiveProfile() != null);
+        obj.add("metaDetails", metaDetails);
+        
+        var appDetails = new JsonObject();
+        appDetails.addProperty("ui", uiVersion);
+        appDetails.addProperty("app", Constants.APPVERSION);
+        appDetails.addProperty("platform", Constants.PLATFORM);
+        obj.add("appDetails", appDetails);
+        
+        var systemDetails = new JsonObject();
+        systemDetails.addProperty("os", OS.CURRENT.toString());
+        systemDetails.addProperty("arch", System.getProperty("os.arch"));
+        systemDetails.addProperty("javaVersion", System.getProperty("java.version"));
+        systemDetails.addProperty("javaVendor", System.getProperty("java.vendor"));
+        obj.add("appDetails", appDetails);
+        
+        obj.add("appLogs", collectLogs());
+        
+        var providerInstanceMapping = new JsonObject();
+        for (Instance instance : Instances.allInstances()) {
+            var instanceObj = new JsonObject();
+            instanceObj.addProperty("name", instance.getName());
+            instanceObj.addProperty("packType", instance.props.packType);
+            instanceObj.addProperty("packId", instance.props.id);
+            instanceObj.addProperty("packVersion", instance.props.versionId);
+            
+            providerInstanceMapping.add(instance.getUuid().toString(), instanceObj);
+        }
+        obj.add("providerInstanceMapping", providerInstanceMapping);
+        
+        // Collect all the instance logs
+        obj.add("instanceLogs", collectInstanceLogs());
         
         return uploadPaste(GSON.toJson(obj));
     }
 
-    private static Map<String, String> collectLogs() {
-        Map<String, String> logs = Maps.newHashMap();
-        logs.put("debug.log", uploadIfNotEmpty(getDebugLog()));
-        logs.put("settings.json", uploadIfNotEmpty(getSettings()));
+    private static String getFilteredSettings() {
+        var settingsData = new HashMap<>(Settings.settings);
+        if (settingsData.containsKey("sessionString")) {
+            settingsData.put("sessionStringWasEmpty", settingsData.get("sessionString").isEmpty() + "");
+            settingsData.put("sessionString", "REDACTED");
+        }
+        
+        return uploadIfNotEmpty(GSON.toJson(settingsData));
+    }
+    
+    private static JsonObject collectLogs() {
+        JsonObject logs = new JsonObject();
+        logs.addProperty("debug.log", uploadIfNotEmpty(getDebugLog()));
         
         var frontendLogs = getFrontendLogs();
-        frontendLogs.forEach((key, value) -> logs.put(key, uploadIfNotEmpty(value)));
+        frontendLogs.forEach((key, value) -> logs.addProperty(key, uploadIfNotEmpty(value)));
         
-        logs.put("versions.log", uploadIfNotEmpty(getVersions()));
-        logs.put("runtimes.json", uploadIfNotEmpty(getRuntimes()));
-        logs.put("instances.log", uploadIfNotEmpty(getInstances()));
-        logs.put("instances-memory.json", uploadIfNotEmpty(getInstancesFromMemory()));
+        combineAndUpload(Map.of(
+            "versions.log", getVersions(),
+            "runtimes.json", getRuntimes(),
+            "instances.log", getInstances(),
+            "instances-memory.json", getInstancesFromMemory(),
+            "settings.json", getFilteredSettings()
+        ))
+            .entrySet()
+            .forEach(e -> logs.addProperty(e.getKey(), e.getValue().getAsString()));
+        
+        getLastTwoDebugLogsFromHistory()
+            .forEach((key, value) -> logs.addProperty(key, uploadIfNotEmpty(value)));
         
         return logs;
+    }
+    
+    private static JsonArray collectInstanceLogs() {
+        var instances = Instances.allInstances();
+        if (instances.isEmpty()) {
+            return new JsonArray();
+        }
+        
+        var instanceLogs = new JsonArray();
+        for (Instance instance : instances) {
+            var instanceObj = new JsonObject();
+            
+            // Get the creation time of the instance dir
+            var creationTime = 0L;
+            try {
+                creationTime = Files.getFileAttributeView(instance.getDir(), BasicFileAttributeView.class)
+                    .readAttributes()
+                    .creationTime()
+                    .toInstant()
+                    .getEpochSecond();
+            } catch (IOException e) {
+                LOGGER.warn("Failed to get creation time of instance {}", instance, e);
+            }
+
+            instanceObj.addProperty("created", creationTime != 0 ? creationTime : null);
+            instanceObj.addProperty("name", instance.getName());
+            instanceObj.addProperty("uuid", instance.getUuid().toString());
+            instanceObj.addProperty("mcVersion", instance.getMcVersion());
+            instanceObj.addProperty("modloader", instance.props.modLoader);
+            
+            var today = LocalDate.now();
+            var todayFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            var crashLogs = FileUtils.listDir(instance.getDir().resolve("crash-reports"))
+                .stream()
+                .filter(e -> e.getFileName().toString().endsWith(".txt") 
+                    && e.getFileName().toString().startsWith("crash-") 
+                    && e.getFileName().toString().contains(today.format(todayFormat))
+                ).toList();
+            
+            instanceObj.add("crashLogs", crashLogs.isEmpty() ? null : combineAndUploadPaths(crashLogs));
+            
+            var logs = new JsonObject();
+            logs.addProperty("debug.log", uploadIfNotEmpty(readOrEmpty(instance.getDir().resolve("logs/debug.log"))));
+            logs.addProperty("latest.log", uploadIfNotEmpty(readOrEmpty(instance.getDir().resolve("logs/latest.log"))));
+            instanceObj.add("logs", logs);
+            
+            instanceLogs.add(instanceObj);
+        }
+        
+        return instanceLogs;
     }
     
     @Nullable
@@ -90,7 +185,52 @@ public class LogsUploader {
         }
         
         return uploadPaste(data);
-    } 
+    }
+    
+    /**
+     * Combines the given paths into a single string and uploads it to pste.ch
+     * <p>
+     * We use the following format:
+     * uuid|base64 separated by newlines. Each line is a file. Each uuid maps to a file.
+     */
+    private static JsonObject combineAndUploadPaths(List<Path> paths) {
+        var pathMapping = paths
+            .stream()
+            .collect(Collectors.toMap(
+                e -> e.getFileName().toString(),
+                LogsUploader::readOrEmpty
+            ));
+        
+        return combineAndUpload(pathMapping);
+    }
+    
+    private static JsonObject combineAndUpload(Map<String, String> nameToInputMapping) {
+        var pathToUuidMapping = new HashMap<String, String>();
+        var combined = new StringBuilder();
+        for (Map.Entry<String, String> nameAndInput : nameToInputMapping.entrySet()) {
+            var line = new StringBuilder();
+
+            var uuid = UUID.randomUUID();
+            var base64Input = Base64.getEncoder().encodeToString(nameAndInput.getValue().getBytes());
+
+            line.append(uuid).append("|").append(base64Input);
+            combined.append(line).append("\n");
+
+            pathToUuidMapping.put(nameAndInput.getKey(), uuid.toString());
+        }
+
+        var code = uploadIfNotEmpty(combined.toString());
+        if (code == null) {
+            return new JsonObject();
+        }
+
+        var obj = new JsonObject();
+        for (var entry : pathToUuidMapping.entrySet()) {
+            obj.addProperty(entry.getKey(), code + "|" + entry.getValue());
+        }
+
+        return obj;
+    }
     
     /**
      * Reads the latest backend debug.log file from disk.
@@ -121,6 +261,34 @@ public class LogsUploader {
             }
         }
         return null;
+    }
+    
+    public static Map<String, String> getLastTwoDebugLogsFromHistory() {
+        var files = List.of("debug-1.log.gz", "debug-2.log.gz");
+        var existingFiles = files.stream()
+            .map(Constants.getDataDir().resolve("logs")::resolve)
+            .filter(Files::exists)
+            .toList();
+        
+        if (existingFiles.isEmpty()) {
+            return Map.of();
+        }
+        
+        // Map the file content to the file name
+        Map<String, String> logs = Maps.newHashMap();
+        for (Path file : existingFiles) {
+            try (FileInputStream fis = new FileInputStream(file.toFile())) {
+                GZIPInputStream gis = new GZIPInputStream(fis);
+                
+                // Read the file to a string
+                String content = new String(gis.readAllBytes());
+                logs.put(file.getFileName().toString(), content);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to read debug log file {}", file, e);
+            }
+        }
+        
+        return logs;
     }
 
     private static Map<String, String> getFrontendLogs() {
@@ -159,28 +327,6 @@ public class LogsUploader {
     
     private static String getVersions() {
         return pathToString(Constants.BIN_LOCATION.resolve("versions"));
-    }
-    
-    private static String getSettings() {
-        var settings = Constants.BIN_LOCATION.resolve("settings.json");
-        
-        // Parse it as json
-        try {
-            JsonElement jsonData = GsonUtils.loadJson(settings, JsonElement.class);
-            if (jsonData == null) {
-                return "";
-            }
-
-            if (jsonData.isJsonObject() && jsonData.getAsJsonObject().has("sessionString")) {
-                jsonData.getAsJsonObject().remove("sessionString");
-            }
-
-            return GSON.toJson(jsonData);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to parse settings.json", e);
-        }
-        
-        return "";
     }
     
     private static String getInstances() {
@@ -248,24 +394,5 @@ public class LogsUploader {
         } catch (Throwable e) {
             return null;
         }
-    }
-
-    private static String padString(String stringToPad) {
-        int desiredLength = 86;
-        char padChar = '=';
-        int strLen = stringToPad.length();
-        float halfLength = ((float) desiredLength - (float) strLen) / (float) 2;
-        int leftPad;
-        int rightPad;
-        if (((int) halfLength) != halfLength) {
-            leftPad = (int) halfLength + 1;
-            rightPad = (int) halfLength;
-        } else {
-            leftPad = rightPad = (int) halfLength;
-        }
-
-        String padCharStr = String.valueOf(padChar);
-
-        return padCharStr.repeat(leftPad).concat(stringToPad).concat(padCharStr.repeat(rightPad));
     }
 }

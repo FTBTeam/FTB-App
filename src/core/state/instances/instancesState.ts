@@ -2,6 +2,7 @@ import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {InstanceJson} from '@/core/@types/javaApi';
 import {RootState} from '@/types';
+import {createLogger} from '@/core/logger';
 
 export type InstanceState = typeof state;
 
@@ -14,6 +15,8 @@ const state = {
    }
 }
 
+const logger = createLogger("instances/instancesState.ts");
+
 const actions: ActionTree<InstanceState, RootState> = {
   async loadInstances({state, commit}, payload: {refresh?: boolean} = {}) {
     if (state.state.loadingInstances) {
@@ -21,13 +24,21 @@ const actions: ActionTree<InstanceState, RootState> = {
     }
     
     commit('SET_LOADING_INSTANCES', true);
-    const instances = await sendMessage('installedInstances', {refresh: true});
-    commit('SET_INSTANCES', instances.instances);
-    commit('SET_CATEGORIES', instances.availableCategories);
-    commit('SET_LOADING_INSTANCES', false);
+    logger.debug("Loading instances")
+    try {
+      const instances = await sendMessage('installedInstances', {refresh: true});
+      logger.debug("Loaded instances")
+      commit('SET_INSTANCES', instances.instances);
+      commit('SET_CATEGORIES', instances.availableCategories);
+    } catch (error) {
+      logger.error("Failed to load instances", error);
+    } finally {
+      commit('SET_LOADING_INSTANCES', false);
+    }
   },
   
   async addInstance({state, commit}, instance: InstanceJson) {
+    logger.debug("Adding instance")
     commit('ADD_INSTANCE', instance);
     
     // Recalculate categories
@@ -36,8 +47,10 @@ const actions: ActionTree<InstanceState, RootState> = {
   },
   
   async updateInstance({state, commit}, instance: InstanceJson) {
+    logger.debug("Updating instance")
     const index = state.instances.findIndex(i => i.uuid === instance.uuid);
     if (index === -1) {
+      logger.debug("Instance not found")
       return;
     }
     
@@ -49,8 +62,10 @@ const actions: ActionTree<InstanceState, RootState> = {
   },
   
   async removeInstance({state, commit}, uuid: string) {
+    logger.debug("Removing instance")
     const index = state.instances.findIndex(i => i.uuid === uuid);
     if (index === -1) {
+      logger.debug("Instance not found for removal")
       return;
     }
     

@@ -1,11 +1,12 @@
 import router from '@/router';
 import store from '@/modules/store';
-import {consoleBadButNoLogger, emitter, getLogger, logVerbose} from '@/utils';
+import {emitter, logVerbose} from '@/utils';
 import Vue from 'vue';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
+import {createLogger} from '@/core/logger';
 
 declare global {
   var overwolf: any;
@@ -13,7 +14,7 @@ declare global {
 
 const versionData = overwolf.windows.getMainWindow().getVersionData();
 
-const logger = getLogger('overwolf-bridge');
+const owLogger = createLogger('platform/overwolf.ts');
 
 const getWindowState = (windowId: any) => {
   return new Promise((resolve, reject) => {
@@ -68,18 +69,20 @@ const Overwolf: ElectronOverwolfInterface = {
   // Actions
   actions: {
     openMsAuth() {
+      owLogger.debug("Opening ms auth")
       overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com?useNew=true`);
     },
 
     emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload) {
+      owLogger.debug("Emitting authentication update")
       emitter.emit("authentication.callback", credentials)
     },
 
     closeWebservers() {
-      // Should likely do something but right now it's not as important
     },
 
     openModpack(payload) {
+      owLogger.debug("Opening modpack", payload)
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
     },
 
@@ -92,6 +95,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     async openLogin(cb: (data: any) => void) {
+      owLogger.debug("Starting webserver and attempting to open Minetogether")
       await overwolf.windows.getMainWindow().openWebserver(cb);
       overwolf.utils.openUrlInDefaultBrowser(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
     },
@@ -101,6 +105,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     logoutFromMinetogether() {
+      owLogger.debug("Logging out of MineTogether")
       overwolf.windows.obtainDeclaredWindow('chat', (result: any) => {
         if (result.success && result.window.isVisible) {
           overwolf.windows.close(result.window.id);
@@ -134,6 +139,7 @@ const Overwolf: ElectronOverwolfInterface = {
     sendSession() {},
     
     restartApp() {
+      owLogger.debug("Restarting app")
       overwolf.windows.getMainWindow().restartApp();
     }
   },
@@ -256,10 +262,12 @@ const Overwolf: ElectronOverwolfInterface = {
   },
 
   setupApp(vm) {
+    owLogger.info('Setting up app for overwolf')
     // setup websockets and the actual window
     let mainWindow = overwolf.windows.getMainWindow();    
     let initialData = mainWindow.getWebsocketData();
-    logger.info('Initial WS data: ', initialData);
+    
+    owLogger.info('Initial data', initialData);
     let ws: WebSocket;
     let reconnectCount = 0;
     
@@ -270,7 +278,7 @@ const Overwolf: ElectronOverwolfInterface = {
 
         // Work out the smallest monitor and use that as the max height we can work within
         if (!result.displays) {
-          consoleBadButNoLogger("D", "No displays found")
+          owLogger.debug("No displays found")
           return;
         }
 
@@ -280,7 +288,7 @@ const Overwolf: ElectronOverwolfInterface = {
           maxHeight = Math.min(maxHeight, windowHeight);
         });
 
-        consoleBadButNoLogger("D", "Max height: ", maxHeight)
+        owLogger.info("Max height found", maxHeight)
         
         resolve(maxHeight)
       });
@@ -288,8 +296,11 @@ const Overwolf: ElectronOverwolfInterface = {
       const manifestData: any = await new Promise(resolve => overwolf.extensions.current.getManifest((manifest: any) => resolve(manifest)));
       const indexWindow = manifestData.data.windows.index;
 
+      owLogger.info("Index window", indexWindow)
+      
       if (height < 880) {
-        overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, (e: any) => consoleBadButNoLogger("D", e));
+        owLogger.info("Setting min size for index window")
+        overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, (e: any) => owLogger.debug("Set min size error", e));
         if (!(window as any).ftbFlags) {
           (window as any).ftbFlags = {};
         }
@@ -299,9 +310,10 @@ const Overwolf: ElectronOverwolfInterface = {
     })
     
     async function onConnect() {
-      logger.info('Auth data:', mainWindow.getAuthData());
+      owLogger.info('Found auth data:', mainWindow.getAuthData());
       //@ts-ignore
       if (mainWindow.getAuthData() !== undefined) {
+        owLogger.info("Loading app with auth data")
         //@ts-ignore
         let data = overwolf.windows.getMainWindow().getAuthData();
         if (data.token) {
@@ -318,6 +330,7 @@ const Overwolf: ElectronOverwolfInterface = {
           }
         }
       } else {
+        owLogger.info("Loading app without auth data")
         await store.dispatch('settings/loadSettings');
         const settings = store.state.settings?.settings;
         if (settings !== undefined) {
@@ -336,6 +349,7 @@ const Overwolf: ElectronOverwolfInterface = {
     }
 
     function setupWS(port: Number = 13377) {
+      owLogger.info("Setting up WS", port)
       ws = new WebSocket('ws://localhost:' + port);
       Vue.prototype.$socket = ws;
       ws.addEventListener('message', (event) => {
@@ -355,9 +369,9 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
       ws.addEventListener('open', (event) => {
-        consoleBadButNoLogger("I", 'Connected to socket!', mainWindow.getWebsocketData());
+        owLogger.info('Connected to socket!', mainWindow.getWebsocketData());
         if (mainWindow.getWebsocketData().dev || mainWindow.getWebsocketData().secret !== undefined) {
-          consoleBadButNoLogger("I", 'Socket opened correctly and ready!');
+          owLogger.info("Socket opened correctly and ready!")
           setTimeout(() => {
             store.commit('SOCKET_ONOPEN');
             onConnect();
@@ -366,18 +380,18 @@ const Overwolf: ElectronOverwolfInterface = {
         reconnectCount = 0;
       });
       ws.addEventListener('error', (err) => {
-        consoleBadButNoLogger("E", 'Error!', err);
+        owLogger.error('Error with socket', err);
         store.commit('SOCKET_ONERROR', err);
       });
       ws.addEventListener('close', (event) => {
         if (event.target !== ws) {
           return;
         }
-        consoleBadButNoLogger("I", 'Disconnected!', event, event.code, event.reason);
+        owLogger.info('Socket closed!', event.code, event.reason)
         if (event.reason !== 'newport' || (port === 13377 && mainWindow.getWebsocketData().secret !== undefined)) {
-          consoleBadButNoLogger("I",'Retrying connection');
           setTimeout(() => setupWS(port), 1000);
           reconnectCount++;
+          owLogger.info("Socket closed incorrectly, retrying connection: ", reconnectCount);
           setTimeout(() => store.commit('SOCKET_RECONNECT', reconnectCount), 200);
         }
         setTimeout(() => store.commit('SOCKET_ONCLOSE', event), 200);
@@ -439,9 +453,10 @@ const Overwolf: ElectronOverwolfInterface = {
     handleWSInfo(initialData.port, true, initialData.secret, initialData.dev);
 
     function handleWSInfo(port: Number, isFirstConnect: Boolean = false, secret?: String, dev?: Boolean) {
-      consoleBadButNoLogger("I", 'Handling WS INFO', port, secret, dev);
+      owLogger.info('Handling WS INFO', port, secret, dev);
       setupWS(port);
       if (secret && !dev) {
+        owLogger.info("Setting up ws secret")
         store.commit('STORE_WS', initialData);
       }
     }
@@ -461,7 +476,7 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
 
-      addWindowListener().catch(logger.error);
+      addWindowListener().catch(owLogger.error);
     }
 
     async function addWindowListener() {
@@ -474,9 +489,10 @@ const Overwolf: ElectronOverwolfInterface = {
       });
 
       overwolf.windows.onStateChanged.addListener((event: any) => {
+        owLogger.info('Window state changed', event)
         const windowAd: any = (window as any).ads;
         if (!windowAd) {
-          logger.warn("Unable to control ad as it's not set");
+          owLogger.warn("Unable to control ad as it's not set");
           return;
         }
         
@@ -487,7 +503,7 @@ const Overwolf: ElectronOverwolfInterface = {
           ) {
             if (windowAd) {
               Object.values(windowAd.ads ?? {}).forEach((e: any) => e.refreshAd());
-              logger.info('Refreshing owAd');
+              owLogger.info('Refreshing owAd');
             }
           } else if (
             event.window_state_ex === 'minimized' &&
@@ -495,7 +511,7 @@ const Overwolf: ElectronOverwolfInterface = {
           ) {
             if (windowAd) {
               Object.values(windowAd.ads ?? {}).forEach((e: any) => e.removeAd());
-              logger.info('removing owAd');
+              owLogger.info('removing owAd');
             }
           }
         }

@@ -1,4 +1,4 @@
-import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 /**
  * Codes follow a simple schema, your prefix (always ftb start), the system
@@ -21,6 +21,8 @@ export type ErrorCode = {
   code: ErrorCodes;
 };
 
+const logger = createLogger('errors/errorCodes.ts');
+
 /**
  * Creates an error code based on the provided error code by ensuring the error code
  * is valid preventing the possibility of unknown error codes.
@@ -30,7 +32,7 @@ export type ErrorCode = {
 export const createError = (code: ErrorCodes): ErrorCode => {
   // This isn't really possible due to the type contracts here...
   if (!Codes[code]) {
-    consoleBadButNoLogger("E", `[error] Failed to find error code {${code}`);
+    logger.error(`[error] Failed to find error code {${code}`);
 
     if (code !== 'ftb-errors#1000') {
       return createError('ftb-errors#1000');

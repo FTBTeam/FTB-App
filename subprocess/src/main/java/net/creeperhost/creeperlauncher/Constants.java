@@ -7,8 +7,10 @@ import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.util.*;
-import net.creeperhost.minetogether.lib.util.SignatureUtil;
-import okhttp3.*;
+import okhttp3.Cache;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okio.Throttler;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +62,7 @@ public class Constants {
     public static final String MS_OAUTH_CHECK_STORE = "https://api.minecraftservices.com/entitlements/mcstore";
     public static final String MC_GET_PROFILE = "https://api.minecraftservices.com/minecraft/profile";
     public static final String MC_CHECK_MIGRATION = "https://api.minecraftservices.com/rollout/v1/msamigration";
-    
+
     //Other
     public static final int WEBSOCKET_PORT = 13377;
     public static final String APPVERSION = "@APPVERSION@";
@@ -69,6 +71,8 @@ public class Constants {
     public static final String PLATFORM = WORKING_DIR.toAbsolutePath().toString().contains("Overwolf") ? "Overwolf" : "Electron";
     public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
+
+    public static final String WEBSOCKET_SECRET = UUID.randomUUID().toString();
 
     // 50MB cache for DNS.
     private static final Cache DOH_CACHE = new Cache(getDataDir().resolve(".doh_cache").toFile(), 50 * 1024 * 1024);
@@ -105,11 +109,6 @@ public class Constants {
     //Auth
     public static String KEY = "";
     public static String SECRET = "";
-
-    //MT Identifiers
-    public static String MT_HASH = "";
-
-    public static String LIB_SIGNATURE = SignatureUtil.getSignature();
 
     public static void refreshHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()

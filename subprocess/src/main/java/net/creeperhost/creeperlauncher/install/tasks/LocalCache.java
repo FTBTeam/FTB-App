@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings ({ "deprecation", "UnstableApiUsage" })
-public class LocalCache implements NewDownloadTask.LocalFileLocator {
+public class LocalCache implements DownloadTask.LocalFileLocator {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new GsonBuilder()

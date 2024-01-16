@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.api.handlers.importer;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.instance.importer.Importer;
@@ -18,7 +18,7 @@ public class ImportProviderImportHandler implements IMessageHandler<ImportProvid
             var instancePath = Path.of(instanceLocation);
             Result<Boolean, String> instance = importer.importInstance(instancePath);
             // TODO: handle result
-            Settings.webSocketAPI.sendMessage(new Reply(data, true));
+            WebSocketHandler.sendMessage(new Reply(data, true));
         }
     }
 

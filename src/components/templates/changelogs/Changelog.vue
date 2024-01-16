@@ -19,12 +19,13 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import {State} from 'vuex-class';
-import {consoleBadButNoLogger} from '@/utils/helpers';
 import platform from '@/utils/interface/electron-overwolf';
 import {SocketState} from '@/modules/websocket/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {constants} from '@/core/constants';
 import ChangelogEntry from '@/components/templates/changelogs/ChangelogEntry.vue';
+import {createLogger} from '@/core/logger';
+import {waitForWebsockets} from '@/utils';
 
 export type ChangelogData = {
   version: string;
@@ -49,34 +50,28 @@ export type ChangelogData = {
 @Component({
   components: {ChangelogEntry}
 })
-export default class Changelog extends Vue {
+export default class Changelog extends Vue  {
   @State('websocket') public websockets!: SocketState;
-
-  changelogData: ChangelogData | null = null;
-  checkIntervalRef: number | null = null;
+  private logger = createLogger(Changelog.name + ".vue")
   
-  mounted() {
-    // TODO: (legacy) All of this should be part of an initial handshake with the backend
-    // Check if the websockets is connected each second. If it is, get the changelog
-    this.checkIntervalRef = setInterval(() => {
-      if (this.websockets.socket.isConnected) {
-        if (this.checkIntervalRef) {
-          clearInterval(this.checkIntervalRef);
-        }
-        
-        this.checkForUpdate().catch((e) => {
-          consoleBadButNoLogger("E", 'Unable to find any changelog data, maybe the servers down?', e);
-        });
-      }
-    }, 1_000) as unknown as number; // Once a second
+  changelogData: ChangelogData | null = null;
+
+  async mounted() {
+    await waitForWebsockets(this.websockets.socket)
+
+    this.checkForUpdate().catch((e) => {
+      this.logger.error('Unable to find any changelog data, maybe the servers down?', e);
+    });
   }
 
   async checkForUpdate() {
+    this.logger.info("Checking for changelog")
     const data = await sendMessage("storage.get", {
       key: 'lastVersion'
     })
 
     const currentVersion = this.getCurrentVersion();
+    this.logger.dd('currentVersion', currentVersion)
     const lastVersion = data.response;
     
     // No held last version meaning we should find a changelog
@@ -100,12 +95,12 @@ export default class Changelog extends Vue {
           })
         }
       } catch (e) {
-        consoleBadButNoLogger("E", 'caught error', e);
+        this.logger.debug('caught error', e);
         // Stop here, don't do anything, something is wrong, we'll try again next launch.
         return;
       }
     } else {
-      consoleBadButNoLogger("D", 'No changelog to show, already seen it')
+      this.logger.debug('No changelog to show, already seen it')
     }
   }
 

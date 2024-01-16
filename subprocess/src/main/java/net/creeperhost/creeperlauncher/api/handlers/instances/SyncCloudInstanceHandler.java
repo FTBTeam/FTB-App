@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.SyncCloudInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -12,30 +12,30 @@ public class SyncCloudInstanceHandler implements IMessageHandler<SyncCloudInstan
     @Override
     public void handle(SyncCloudInstanceData data) {
         if (!CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured()) {
-            Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Cloud saves not configured."));
+            WebSocketHandler.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Cloud saves not configured."));
             return;
         }
         if (data.uuid == null) {
-            Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance not specified."));
+            WebSocketHandler.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance not specified."));
             return;
         }
         Instance instance = Instances.getInstance(data.uuid);
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance does not exist."));
+            WebSocketHandler.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance does not exist."));
             return;
         }
 
         if (!instance.props.cloudSaves) {
-            Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance is not cloud enabled."));
+            WebSocketHandler.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance is not cloud enabled."));
             return;
         }
 
         if (CreeperLauncher.CLOUD_SAVE_MANAGER.isSyncing(instance.getUuid())) {
-            Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance is already syncing."));
+            WebSocketHandler.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "error", "Instance is already syncing."));
             return;
         }
 
         CreeperLauncher.CLOUD_SAVE_MANAGER.requestInstanceSync(instance);
-        Settings.webSocketAPI.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "success", "Instance sync queued."));
+        WebSocketHandler.sendMessage(new SyncCloudInstanceData.Reply(data.requestId, "success", "Instance sync queued."));
     }
 }

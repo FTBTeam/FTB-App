@@ -51,7 +51,7 @@
 import {ModPack, Versions} from '@/modules/modpacks/types';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import {consoleBadButNoLogger, getColorForReleaseType, parseMarkdown} from '@/utils';
+import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {InstanceJson} from '@/core/@types/javaApi';
@@ -62,11 +62,14 @@ import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue'
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import {createLogger} from '@/core/logger';
 
 @Component({
   components: {UiButton, Selection2}
 })
 export default class ModpackVersions extends Vue {
+  private logger = createLogger(ModpackVersions.name + ".vue")
+  
   @Prop() versions!: Versions[];
   @Prop() packInstance!: ModPack;
   @Prop() instance!: InstanceJson;
@@ -100,7 +103,7 @@ export default class ModpackVersions extends Vue {
         this.changelogs['' + lcurrent] = data;
         this.setActive(lcurrent);
       })
-      .catch(e => consoleBadButNoLogger("E", e))
+      .catch(e => this.logger.error(e))
   }
   
   destoryed() {
@@ -139,7 +142,7 @@ export default class ModpackVersions extends Vue {
 
       return changelog?.content ?? `No changelog available for this version`;
     } catch (e) {
-      consoleBadButNoLogger("E", e)
+      this.logger.error(e)
       alertController.warning("Unable to load changelog")
       return "Unable to locate changelog for this version";
     }

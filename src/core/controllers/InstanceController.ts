@@ -1,6 +1,7 @@
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import store from '@/modules/store';
+import {createLogger} from '@/core/logger';
 
 export type SaveJson = {
   name: string;
@@ -22,6 +23,8 @@ export type SaveJson = {
  * Wrapper controller for an instance to ensure consistency in the store 
  */
 export class InstanceController {
+  private static logger = createLogger("InstanceController.ts");
+  
   private constructor(private readonly instance: SugaredInstanceJson | InstanceJson) {
     if (this.instance === null || this.instance === undefined) {
       throw new Error('Instance cannot be null or undefined');
@@ -33,6 +36,7 @@ export class InstanceController {
   }
   
   async updateInstance(data: SaveJson) {
+    InstanceController.logger.debug("Updating instance", data);
     const result = await sendMessage("instanceConfigure", {
       uuid: this.instance.uuid,
       instanceJson: JSON.stringify(data)
@@ -43,11 +47,13 @@ export class InstanceController {
       await store.dispatch('v2/instances/updateInstance', result.instanceJson);
       return result;
     }
-    
+
+    InstanceController.logger.warn("Failed to update instance", result);
     return null
   }
   
   async deleteInstance() {
+    InstanceController.logger.debug(`Deleting instance ${this.instance.uuid}`);
     const result = await sendMessage('uninstallInstance', {
       uuid: this.instance.uuid
     });
@@ -58,6 +64,7 @@ export class InstanceController {
       return true;
     }
     
+    InstanceController.logger.warn("Failed to delete instance", result);
     return false;
   }
 }

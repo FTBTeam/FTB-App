@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.other;
 
 import com.google.common.collect.ImmutableMap;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.SettingsConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.SettingsChangeUtil;
@@ -35,6 +36,6 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
             SettingsChangeUtil.onSettingsChanged(oldSettings);
             Settings.saveSettings();
         }
-        Settings.webSocketAPI.sendMessage(new SettingsConfigureData.Reply(data, "success"));
+        WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success"));
     }
 }

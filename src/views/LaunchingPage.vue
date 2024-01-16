@@ -66,8 +66,10 @@
             </ftb-button>
 
             <ftb-button
+              :disabled="preLaunch"
               @click="cancelLoading"
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
+              :class="{ 'opacity-50 cursor-not-allowed': preLaunch }"
             >
               <font-awesome-icon icon="skull-crossbones" class="mr-2" />
               Kill instance
@@ -203,7 +205,9 @@ import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {FixedSizeArray} from '@/utils/std/fixedSizeArray';
-import {consoleBadButNoLogger} from '@/utils';
+import {safeNavigate, waitForWebsockets} from '@/utils';
+import {createLogger} from '@/core/logger';
+import {SocketState} from '@/modules/websocket/types';
 
 type InstanceActionCategory = {
   title: string;
@@ -318,11 +322,14 @@ export default class LaunchingPage extends Vue {
   @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
   @Getter('getInstance', ns("v2/instances")) getInstance!: (uuid: string) => SugaredInstanceJson | undefined;
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
+  @State('websocket') public websockets!: SocketState;
   
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
   
   @State('settings') public settingsState!: SettingsState;
   @State('auth') public auth!: AuthState;
+  
+  private logger = createLogger(LaunchingPage.name + ".vue");
 
   loading = false;
   preLaunch = true;
@@ -355,32 +362,42 @@ export default class LaunchingPage extends Vue {
   lastIndex = 0;
 
   public cancelLoading() {
-    gobbleError(() => {
-      sendMessage("instance.kill", {
-        uuid: this.instance?.uuid ?? ""
-      })
-    })
+    this.logger.debug("Attempting to kill instance")
+    sendMessage("instance.kill", {
+      uuid: this.instance?.uuid ?? ""
+    }).catch((error) => {
+      this.logger.error("Failed to kill instance", error)
+    });
   }
 
   public async mounted() {
+    this.logger.debug("Mounted Launch page, waiting for websockets...");
+    await waitForWebsockets(this.websockets.socket)
+
+    this.logger.debug("Websockets ready, loading instance")
+    
     if (this.instance == null) {
       alertController.error('Instance not found')
-      await gobbleError(() => this.$router.push(RouterNames.ROOT_LIBRARY));
+      this.logger.debug("Instance not found, redirecting to library", this.$route.query.uuid)
+      await safeNavigate(RouterNames.ROOT_LIBRARY);
       return;
     }
 
     emitter.on('ws.message', this.onLaunchProgressUpdate);
+
+    this.logger.debug("Fetching instance modpack")
     await this.getModpack({
       id: this.instance.id,
       provider: typeIdToProvider(this.instance.packType)
     });
+    
     await this.launch();
 
     sendMessage("getInstanceFolders", {
       uuid: this.instance.uuid
     })
       .then((e) => (this.instanceFolders = e.folders))
-      .catch(e => consoleBadButNoLogger("E", e));
+      .catch(e => this.logger.error("Failed to get instance folders", e))
   }
 
   onLaunchProgressUpdate(data: any) {
@@ -434,7 +451,7 @@ export default class LaunchingPage extends Vue {
 
   leavePage() {
     if (this.instance) {
-      this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
+      this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, params: { uuid: this.instance?.uuid ?? "" } });
     } else {
       this.$router.push({ name: RouterNames.ROOT_LIBRARY });
     }
@@ -490,7 +507,7 @@ export default class LaunchingPage extends Vue {
   }
 
   handleClientLaunch(data: any) {
-    consoleBadButNoLogger("I", "Launch data", data);
+    this.logger.info("Client launch data", data)
     if (data.messageType === 'message') {
       this.launchProgress = data.message === 'init' ? [] : undefined;
     } else if (data.messageType === 'progress') {
@@ -503,6 +520,8 @@ export default class LaunchingPage extends Vue {
   }
 
   public async launch(): Promise<void> {
+    this.logger.debug("Launching modpack")
+    
     // Reset everything (supports relaunching)
     this.loading = false;
     this.preLaunch = true;
@@ -514,19 +533,24 @@ export default class LaunchingPage extends Vue {
     this.launchProgress = null;
     
     if (!this.$route.query.offline) {
+      this.logger.debug("Checking authentication for launch")
       const refreshResponse = await validateAuthenticationOrSignIn(this.instance?.uuid);
       if (!refreshResponse.ok && !refreshResponse.networkError) {
         if (!this.instance) {
+          this.logger.warn("Instance not found, redirecting to library")
           await this.$router.push({ name: RouterNames.ROOT_LIBRARY });
           return;
         }
 
-        await this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, query: { uuid: this.instance?.uuid } });
+        this.logger.warn("Failed to refresh auth, redirecting to local pack")
+        await this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, params: { uuid: this.instance?.uuid ?? "" } });
         return;
       } else if (refreshResponse.networkError) {
+        this.logger.warn("Network error whilst refreshing auth, assuming offline mode")
         await this.$router.push({
           name: RouterNames.ROOT_LOCAL_PACK,
-          query: { uuid: this.instance?.uuid, presentOffline: 'true' },
+          params: { uuid: this.instance?.uuid ?? "" },
+          query: { presentOffline: 'true' }
         });
         return;
       }
@@ -535,6 +559,7 @@ export default class LaunchingPage extends Vue {
     const disableChat = this.settingsState.settings.enableChat;
     this.preLaunch = true;
 
+    this.logger.debug("Sending launch message")
     const result = await sendMessage("launchInstance", {
       uuid: this.instance?.uuid ?? "",
       extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
@@ -544,10 +569,12 @@ export default class LaunchingPage extends Vue {
     })
     
     if (result.status === 'error') {
+      this.logger.debug("Failed to launch instance, redirecting to library")
       this.$router.back();
       alertController.warning(result.message);
     } else if (result.status === 'success') {
       this.preLaunch = false;
+      this.logger.debug("Successfully completed launch handshake")
     }
   }
 

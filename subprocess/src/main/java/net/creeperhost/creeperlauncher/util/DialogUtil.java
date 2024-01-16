@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.util;
 
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 
@@ -20,14 +20,14 @@ public class DialogUtil {
                 new OpenModalData.ModalButton(confirmText, "success", () -> {
                     result.set(true);
                     synchronized (result) {
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
+                        WebSocketHandler.sendMessage(new CloseModalData());
                         result.notify();
                     }
                 }),
                 new OpenModalData.ModalButton(denyText, "danger", () -> {
                     result.set(false);
                     synchronized (result) {
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
+                        WebSocketHandler.sendMessage(new CloseModalData());
                         result.notify();
                     }
                 })
@@ -49,7 +49,7 @@ public class DialogUtil {
         OpenModalData.openModal(title, body, List.of(
                 new OpenModalData.ModalButton("Ok", "success", () -> {
                     synchronized (lock) {
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
+                        WebSocketHandler.sendMessage(new CloseModalData());
                         lock.notify();
                     }
                 })

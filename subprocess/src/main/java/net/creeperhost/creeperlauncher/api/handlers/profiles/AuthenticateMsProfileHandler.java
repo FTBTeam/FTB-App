@@ -1,11 +1,11 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.Result;
@@ -26,7 +26,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
 
         if (authenticate.isErr()) {
             MicrosoftOAuth.DanceCodedError danceCodedError = authenticate.unwrapErr();
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
+            WebSocketHandler.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
             return;
         }
 
@@ -44,7 +44,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         // Try and add the profile
         AccountManager.get().addProfile(profile);
 
-        Settings.webSocketAPI.sendMessage(new Reply(data));
+        WebSocketHandler.sendMessage(new Reply(data));
     }
 
     private static class Reply extends Data {

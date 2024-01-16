@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.covers1624.quack.io.IOUtils;
 import net.creeperhost.creeperlauncher.*;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
@@ -172,14 +173,14 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     private static void beginInstallTask(InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance));
+        WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "init", "Starting installation.", instance));
 
         InstallationOperation op = new InstallationOperation(CreeperLauncher.LONG_TASK_MANAGER, data, instance, manifest);
         op.submit();
     }
 
     private static void abort(InstallInstanceData data, String reason) {
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason));
+        WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "prepare_error", reason));
     }
 
     @Nullable

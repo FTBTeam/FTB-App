@@ -1,10 +1,14 @@
+const path = require('path');
 const fs = require('fs');
+
+console.log(path.resolve('public/version.json'));
 
 let versionData = JSON.parse(fs.readFileSync('public/version.json', 'utf-8'));
 let manifestData = JSON.parse(fs.readFileSync('overwolf/manifest.json', 'utf-8'));
 
 let version = manifestData.meta.version;
 let versionTime = versionData.jarVersion.split('-')[0].substring(2);
+
 version =
   version.split('.')[0] +
   '.' +
@@ -13,14 +17,16 @@ version =
   parseInt(versionTime.substring(2, 6)) +
   '.' +
   parseInt(versionTime.substring(6));
-manifestData.meta.version = version;
-// if (versionData.branch === 'release') {
-  manifestData.meta.name = 'FTB App';
-  manifestData.meta.icon = 'icon_256.png';
-  manifestData.meta.icon_gray = 'icon_256.png';
-// } else {
-//   manifestData.meta.name = 'FTB App Preview';
-//   manifestData.meta.icon = 'icon_256_preview.png';
-//   manifestData.meta.icon_gray = 'icon_256_preview.png';
-// }
+
+manifestData = {
+  ...manifestData,
+  meta: {
+    ...manifestData.meta,
+    version,
+    name: 'FTB App',
+    icon: 'icon_256.png',
+    icon_gray: 'icon_256.png',
+  }
+}
+
 fs.writeFileSync('overwolf/manifest.json', JSON.stringify(manifestData));

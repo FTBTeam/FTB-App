@@ -1,6 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
@@ -10,6 +9,7 @@ import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticat
 import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.DataResult;
@@ -29,13 +29,13 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
     @Override
     public void handle(Data data) {
         if (data.profileUuid == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found", false));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found", false));
             return;
         }
 
         AccountProfile profile = AccountManager.get().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Profile not found", false));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found", false));
             return;
         }
 
@@ -53,7 +53,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
      */
     private void refreshMicrosoft(MicrosoftAuthenticator validator, Data data, AccountProfile profile) {
         if (data.liveAccessToken == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Missing essential information...", false));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Missing essential information...", false));
         }
 
         Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh = null;
@@ -77,7 +77,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
         if (refresh.isErr()) {
             MicrosoftOAuth.DanceCodedError danceCodedError = refresh.unwrapErr();
             LOGGER.warn("Did not get valid token. :( {} {}", danceCodedError.code(), danceCodedError.networkError());
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
+            WebSocketHandler.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
             return;
         }
 
@@ -87,7 +87,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
         
         profile.msAuth = refresh.unwrap().store();
         AccountManager.get().saveProfiles();
-        Settings.webSocketAPI.sendMessage(new Reply(data, true, "", false));
+        WebSocketHandler.sendMessage(new Reply(data, true, "", false));
     }
 
     /**
@@ -101,8 +101,8 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
         refresh.data().ifPresentOrElse(d -> {
             profile.mcAuth = d;
             AccountManager.get().saveProfiles();
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "updated", false));
-        }, () -> Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"), false)));
+            WebSocketHandler.sendMessage(new Reply(data, true, "updated", false));
+        }, () -> WebSocketHandler.sendMessage(new Reply(data, false, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"), false)));
     }
 
     private static class Reply extends Data {

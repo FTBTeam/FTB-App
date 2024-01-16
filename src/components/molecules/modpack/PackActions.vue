@@ -75,7 +75,7 @@ import {InstanceController} from '@/core/controllers/InstanceController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 @Component({
   components: {
@@ -86,6 +86,8 @@ import {consoleBadButNoLogger} from '@/utils';
 export default class PackActions extends Vue {
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Prop({ default: false }) allowOffline!: boolean;
+  
+  private logger = createLogger(PackActions.name + ".vue")
 
   instanceFolders: string[] = [];
   shareConfirm = false;
@@ -94,14 +96,19 @@ export default class PackActions extends Vue {
   mounted() {
     sendMessage('getInstanceFolders', { uuid: this.instance.uuid })
       .then((e) => (this.instanceFolders = e.folders))
-      .catch(e => consoleBadButNoLogger("E", e));
+      .catch(e => this.logger.error("Failed to get instance folders", e));
   }
 
   async openInstanceFolder(folder: string) {
-    await sendMessage('instanceBrowse', {
-      uuid: this.instance.uuid,
-      folder,
-    })
+    this.logger.debug("Opening instance folder", folder)
+    try {
+      await sendMessage('instanceBrowse', {
+        uuid: this.instance.uuid,
+        folder,
+      })
+    } catch (e) {
+      this.logger.error("Failed to open instance folder", e);
+    }
   }
 
   folderExists(path: string) {
@@ -113,6 +120,7 @@ export default class PackActions extends Vue {
   }
 
   public deleteInstance() {
+    this.logger.debug("Asking user to confirm instance deletion", this.instance)
     const dialogRef = dialogsController.createDialog(
       dialog("Are you sure?")
         .withContent(`Are you absolutely sure you want to delete \`${this.instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)

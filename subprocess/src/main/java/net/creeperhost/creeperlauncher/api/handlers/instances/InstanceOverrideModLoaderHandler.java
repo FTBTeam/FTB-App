@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import com.google.gson.JsonSyntaxException;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceOverrideModLoaderData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
@@ -25,7 +25,7 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
     public void handle(InstanceOverrideModLoaderData data) {
         Instance instance = Instances.getInstance(data.uuid);
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Instance does not exist."));
+            WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Instance does not exist."));
             return;
         }
 
@@ -39,16 +39,16 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
                 versionManifest = ModpackVersionManifest.queryManifest(data.modLoaderId, data.modLoaderVersion, false, (byte) 0);
             } catch (IOException | JsonSyntaxException ex) {
                 LOGGER.error("Error Finding ModLoader Manifest.", ex);
-                Settings.webSocketAPI.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Error requesting ModLoader version."));
+                WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Error requesting ModLoader version."));
                 return;
             }
             if (versionManifest == null) {
-                Settings.webSocketAPI.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "ModLoader version does not exist."));
+                WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "ModLoader version does not exist."));
                 return;
             }
             target = versionManifest.findTarget("modloader");
             if (target == null) {
-                Settings.webSocketAPI.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Version does not have ModLoader target??"));
+                WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Version does not have ModLoader target??"));
                 return;
             }
         }
@@ -62,7 +62,7 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
             // If the target is null here, we have un-installed a modloader override on vanilla.
             if (target != null) {
                 // TODO, do this in the background? Replace with new generic progress system?
-                Settings.webSocketAPI.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "prepare", "Preparing ModLoader install."));
+                WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "prepare", "Preparing ModLoader install."));
 
                 ModLoaderInstallTask task = ModLoaderInstallTask.createInstallTask(
                         instance,
@@ -72,16 +72,16 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
                 );
 
                 task.execute(null, null);
-                instance.props.modLoader = task.getResult();
+                instance.props.modLoader = task.getModLoaderTarget();
             } else {
                 // Must be vanilla, set loader to game version.
                 instance.props.modLoader = instance.versionManifest.getTargetVersion("game");
             }
             instance.saveJson();
             instance.saveModifications();
-            Settings.webSocketAPI.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "success", "ModLoader Switched!"));
+            WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "success", "ModLoader Switched!"));
         } catch (Throwable ex) {
-            Settings.webSocketAPI.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Error installing ModLoader version."));
+            WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Error installing ModLoader version."));
         }
 
     }

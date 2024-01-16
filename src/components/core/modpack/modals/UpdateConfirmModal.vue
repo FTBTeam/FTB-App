@@ -42,18 +42,21 @@ import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import Loader from '@/components/atoms/Loader.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {consoleBadButNoLogger, parseMarkdown} from '@/utils';
+import {parseMarkdown} from '@/utils';
 import {Versions} from '@/modules/modpacks/types';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {alertController} from '@/core/controllers/alertController';
+import {createLogger} from '@/core/logger';
 
 @Component({
   methods: {parseMarkdown},
   components: {UiButton, Loader}
 })
 export default class UpdateConfirmModal extends Vue {
+  private logger = createLogger(UpdateConfirmModal.name + ".vue");
+  
   @Prop() open!: boolean;
   @Prop() localInstance!: InstanceJson | SugaredInstanceJson;
   @Prop() latestVersion!: Versions;
@@ -77,7 +80,7 @@ export default class UpdateConfirmModal extends Vue {
     }
     
     if (!this.latestVersion || !this.localInstance) {
-      // How?
+      this.logger.error("No latest version or local instance provided, can't open update modal")
       return;
     }
     
@@ -85,13 +88,13 @@ export default class UpdateConfirmModal extends Vue {
     
     this.loadChanges()
       .then(() => (this.loadingChanges = true))
-      .catch(e => consoleBadButNoLogger("E", e))
+      .catch(e => this.logger.error("Failed to load changes", e))
       .finally(() => (this.loadingChanges = false));
   }
 
   update() {
     if (!this.latestVersion) {
-      // How?
+      this.logger.error("No latest version provided, can't update")
       return;
     }
     
@@ -110,7 +113,8 @@ export default class UpdateConfirmModal extends Vue {
     }
 
     if (!this.latestVersion) {
-      return; // how?
+      this.logger.error("No latest version provided, can't load changes")
+      return;
     }
 
     try {

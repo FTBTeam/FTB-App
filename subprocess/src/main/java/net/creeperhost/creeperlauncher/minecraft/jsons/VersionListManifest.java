@@ -2,8 +2,8 @@ package net.creeperhost.creeperlauncher.minecraft.jsons;
 
 import com.google.gson.JsonParseException;
 import net.covers1624.quack.gson.JsonUtils;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,7 +42,7 @@ public class VersionListManifest {
      */
     public static VersionListManifest update(Path versionsDir) throws IOException {
         Path versionsFile = versionsDir.resolve("version_manifest.json");
-        NewDownloadTask downloadTask = NewDownloadTask.builder()
+        DownloadTask downloadTask = DownloadTask.builder()
                 .url(URL)
                 .withMirror(JSON_PROXY + URL)
                 .dest(versionsFile)

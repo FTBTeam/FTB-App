@@ -16,6 +16,7 @@ import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesReloadedData;
 import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesStatsData;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceCloudSyncConflictData;
@@ -364,9 +365,9 @@ public final class CloudSaveManager {
                     }
                 }
                 if (!instanceJsons.isEmpty() || !removedPending.isEmpty()) {
-                    Settings.webSocketAPI.sendMessage(new CloudSavesReloadedData(instanceJsons, removedPending));
+                    WebSocketHandler.sendMessage(new CloudSavesReloadedData(instanceJsons, removedPending));
                 }
-                Settings.webSocketAPI.sendMessage(new CloudSavesStatsData(bucketSize));
+                WebSocketHandler.sendMessage(new CloudSavesStatsData(bucketSize));
             } finally {
                 tracker.finished();
             }
@@ -604,7 +605,7 @@ public final class CloudSaveManager {
                 operation.prepare(resolution);
             } catch (CloudSyncOperation.ConflictException ex) {
                 conflict = ex;
-                Settings.webSocketAPI.sendMessage(new InstanceCloudSyncConflictData(uuid, ex.code, ex.message));
+                WebSocketHandler.sendMessage(new InstanceCloudSyncConflictData(uuid, ex.code, ex.message));
                 return new SyncResult(ResultType.CONFLICT, "Sync conflict. Requires resolution.");
             } catch (Throwable ex) {
                 LOGGER.error("Fatal error preparing instance for sync.", ex);

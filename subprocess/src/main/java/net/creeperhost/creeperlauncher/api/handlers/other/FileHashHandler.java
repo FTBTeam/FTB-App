@@ -4,6 +4,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.FileHashData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +19,7 @@ public class FileHashHandler implements IMessageHandler<FileHashData> {
     @Override
     public void handle(FileHashData data) {
         Path file = Settings.getInstancesDir().resolve(data.uuid).resolve(data.filePath);
-        Settings.webSocketAPI.sendMessage(new FileHashData.Reply(data, safeHash(Hashing.md5(), file), safeHash(Hashing.sha256(), file)));
+        WebSocketHandler.sendMessage(new FileHashData.Reply(data, safeHash(Hashing.md5(), file), safeHash(Hashing.sha256(), file)));
     }
 
     private static String safeHash(HashFunction func, Path file) {

@@ -4,7 +4,7 @@ import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstalledInstancesData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
@@ -32,7 +32,7 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
         Set<String> availableCategories = instanceJsons.stream().map(e -> e.category).collect(Collectors.toSet());
         
         InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, List.of(), availableCategories);
-        Settings.webSocketAPI.sendMessage(reply);
+        WebSocketHandler.sendMessage(reply);
     }
 
     public static class SugaredInstanceJson extends InstanceJson {

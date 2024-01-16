@@ -2,8 +2,8 @@ package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
 import com.google.common.hash.HashCode;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
@@ -25,20 +25,20 @@ public class ForgeLegacyLibraryHelper {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static void installLegacyLibs(@Nullable CancellationToken cancelToken, Instance instance, String mcVersion) throws IOException {
-        List<NewDownloadTask> tasks = getLibraryTasks(instance, mcVersion);
+        List<DownloadTask> tasks = getLibraryTasks(instance, mcVersion);
         if (tasks.isEmpty()) return;
 
         LOGGER.info("Installing Forge Legacy libraries.");
 
-        for (NewDownloadTask task : tasks) {
+        for (DownloadTask task : tasks) {
             if (cancelToken != null) cancelToken.throwIfCancelled();
             task.execute(cancelToken, null);
         }
     }
 
-    public static List<NewDownloadTask> getLibraryTasks(Instance instance, String mcVersion) {
+    public static List<DownloadTask> getLibraryTasks(Instance instance, String mcVersion) {
         Path libsDir = instance.getDir().resolve("lib");
-        List<NewDownloadTask> libraries = new LinkedList<>();
+        List<DownloadTask> libraries = new LinkedList<>();
         switch (mcVersion) {
             case "1.4.7":
                 libraries.add(makeTask(libsDir.resolve("bcprov-jdk15on-147.jar"),
@@ -94,8 +94,8 @@ public class ForgeLegacyLibraryHelper {
         return libraries;
     }
 
-    private static NewDownloadTask makeTask(Path dest, String url, long size, String sha1) {
-        return NewDownloadTask.builder()
+    private static DownloadTask makeTask(Path dest, String url, long size, String sha1) {
+        return DownloadTask.builder()
                 .url(url)
                 .dest(dest)
                 .withValidation(DownloadValidation.of()

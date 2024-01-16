@@ -71,6 +71,7 @@ import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {ns} from '@/core/state/appState';
 import {GetModpack, GetModpackVersion} from '@/core/state/modpacks/modpacksState';
 import Loader from '@/components/atoms/Loader.vue';
+import {createLogger} from '@/core/logger';
 
 @Component({
   name: 'ModpackPage',
@@ -88,6 +89,8 @@ export default class ModpackPage extends Vue {
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   @Action("getVersion", ns("v2/modpacks")) getVersion!: GetModpackVersion;
   
+  private logger = createLogger(ModpackPage.name + ".vue")
+  
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
   showVersions = false;
 
@@ -101,9 +104,9 @@ export default class ModpackPage extends Vue {
   async mounted() {
     const packID: number = parseInt(this.$route.query.modpackid as string, 10);
     this.packTypeId = parseInt(this.$route.query.type as string, 10);
-
-    let pack: ModPack;
+    
     try {
+      this.logger.debug("Loading modpack", packID, this.packTypeId)
       const modpack = await this.getModpack({
         id: packID,
         provider: typeIdToProvider(this.packTypeId)
@@ -118,6 +121,7 @@ export default class ModpackPage extends Vue {
         this.currentModpack = copyModpack;
       }
     } catch (error) {
+      this.logger.error("Failed to load modpack", error)
       this.loading = false;
       this.error =
         "Unable to find this modpack, it's possible something has failed to load. Try again in a few minutes...";
@@ -125,6 +129,7 @@ export default class ModpackPage extends Vue {
     }
 
     if (this.$route.query.showInstall === 'true') {
+      this.logger.debug("Showing install box")
       this.showInstallBox = true;
     }
 

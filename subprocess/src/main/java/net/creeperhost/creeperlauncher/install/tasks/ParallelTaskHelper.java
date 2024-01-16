@@ -23,10 +23,10 @@ public class ParallelTaskHelper {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static <T extends Task<?>> void executeInParallel(@Nullable CancellationToken token, ExecutorService executor, List<T> tasks, @Nullable TaskProgressAggregator listener) {
+    public static <T extends Task> void executeInParallel(@Nullable CancellationToken token, ExecutorService executor, List<T> tasks, @Nullable TaskProgressAggregator listener) {
         List<Throwable> failures = Collections.synchronizedList(new LinkedList<>());
         List<CompletableFuture<?>> futures = new LinkedList<>();
-        for (Task<?> task : tasks) {
+        for (T task : tasks) {
             CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
                 if (token != null && token.isCanceled()) return;
                 try {

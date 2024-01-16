@@ -46,9 +46,9 @@ import Component from 'vue-class-component';
 import {State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {AuthState} from '@/modules/auth/types';
-import {consoleBadButNoLogger, getLogger} from '@/utils';
 import {JavaFetch} from '@/core/javaFetch';
 import ChAdsArea from '@/components/core/misc/ChAdsArea.vue';
+import {createLogger} from '@/core/logger';
 
 @Component({
   components: {ChAdsArea}
@@ -56,8 +56,8 @@ import ChAdsArea from '@/components/core/misc/ChAdsArea.vue';
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
   @State('auth') public auth!: AuthState;
-
-  private logger = getLogger('ad-aside-vue');
+  
+  private logger = createLogger(AdAside.name + ".vue");
 
   ads: Record<string, any> = {};
   platform = platform;
@@ -141,7 +141,7 @@ export default class AdAside extends Vue {
       this.logger.info(`[AD: ${id}] Display ad loaded and ready`);
       JavaFetch.modpacksCh("analytics/ads/static")
         .execute()
-        .catch(e => consoleBadButNoLogger("E", e))
+        .catch(e => this.logger.error("Failed to send analytics", e))
     });
     this.ads[id].addEventListener('play', () => {
       emitPlaceholderUpdate(false);
@@ -153,7 +153,7 @@ export default class AdAside extends Vue {
     this.ads[id].addEventListener('impression', () => {
       JavaFetch.modpacksCh("analytics/ads/video")
         .execute()
-        .catch(e => consoleBadButNoLogger("E", e))
+        .catch(e => this.logger.error("Failed to send analytics", e))
     });
   }
 

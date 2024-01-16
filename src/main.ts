@@ -33,20 +33,24 @@ import VueMixins from '@/core/vueMixins.vue';
 
 // @ts-ignore - no types
 import VueVirtualScroller from 'vue-virtual-scroller';
-import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
+
+const logger = createLogger("main.ts");
+logger.info("Starting app");
 
 const appSetup = async () => {
   try {
     await platform.setup();
     (window as any).platform = platform;
   } catch (e) {
-    consoleBadButNoLogger("E", 'Platform failed resolve deps', e);
+    logger.error("Failed to setup platform", e);
   }
 
   if (process.env.NODE_ENV === 'production') {
+    logger.info("Setting up sentry");
     Sentry.init({
       Vue,
       environment: process.env.VUE_APP_PLATFORM,
@@ -97,6 +101,7 @@ const appSetup = async () => {
   Vue.filter('formatNumber', localiseNumber);
   Vue.filter('title', toTitleCase);
 
+  logger.info("Creating vue instance");
   const vm = new Vue({
     router,
     store,
@@ -106,4 +111,4 @@ const appSetup = async () => {
   platform.get.setupApp(vm);
 };
 
-appSetup().catch(e => consoleBadButNoLogger("E", e))
+appSetup().catch(e => logger.error("Failed to setup app", e));

@@ -55,6 +55,7 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import os from 'os';
 import {requiresWsControllers} from '@/core/controllerRegistry';
+import {createLogger} from '@/core/logger';
 
 @Component({
   components: {
@@ -82,6 +83,8 @@ export default class MainApp extends Vue {
   
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
 
+  private loggger = createLogger(MainApp.name + ".vue");
+  
   private platfrom = platfrom;
   private windowId: string | null = null;
 
@@ -120,14 +123,17 @@ export default class MainApp extends Vue {
   private pollRef: number | null = null;
   
   public mounted() {
+    this.loggger.info("Mounted MainApp");
     this.isMac = os.type() === 'Darwin';
     
+    this.loggger.debug("Starting ping poll");
     this.registerPingCallback((data: any) => {
       if (data.type === 'ping') {
         gobbleError(() => sendMessage("pong", {}, 500))
       }
     });
 
+    this.loggger.debug("Starting exit callback and setting up title bar");
     this.platfrom.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
 
     // Only used on overwolf.
@@ -150,11 +156,15 @@ export default class MainApp extends Vue {
   @Watch('websockets', { deep: true })
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (newVal.socket.isConnected && this.loading) {
+      this.loggger.info("Websockets connected, loading app");
       this.loading = false;
       await this.setupApp();
+      this.loggger.info("Finished loading app");
     }
 
     if (!newVal.socket.isConnected && !this.loading) {
+      this.loggger.warn("Websockets disconnected, unloading app");
+      this.loggger.debug("Notifying all controllers of disconnected status")
       requiresWsControllers.forEach(e => e.onDisconnected());
       this.loading = true;
       this.stage = 'Attempting to reconnect to the apps agent...';
@@ -167,15 +177,19 @@ export default class MainApp extends Vue {
       this.hasInitialized = true;
     }
     this.platfrom.get.actions.onAppReady();
+    
+    this.loggger.debug("Notifying all controllers of connected status")
     requiresWsControllers.forEach(e => e.onConnected());
   }
 
   public async fetchStartData() {
+    this.loggger.info("Starting startup jobs");
     for (const job of this.startupJobs) {
+      this.loggger.info(`Starting ${job.name}`)
       await job.action();
       
       // TODO: (M#01) FINISH THIS
-      console.log(`Finished ${job.name}`)
+      this.loggger.info(`Finished ${job.name}`)
       job.done = true;
     }
   }

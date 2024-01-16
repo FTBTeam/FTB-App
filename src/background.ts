@@ -3,13 +3,13 @@ import {app, BrowserWindow, dialog, ipcMain, protocol, session, shell} from 'ele
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import * as log from 'electron-log';
-import childProcess from 'child_process';
-import {FriendListResponse} from './types';
+import * as electronLogger from 'electron-log';
 import install, {VUEJS_DEVTOOLS} from 'electron-devtools-installer';
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
+import {createLogger} from '@/core/logger';
 
 const protocolSpace = 'ftb';
+const logger = createLogger('background.ts');
 
 function getAppHome() {
   if (os.platform() === "darwin") {
@@ -32,19 +32,18 @@ function getAppSettings(appSettingsPath: string) {
 }
 
 const appHome = getAppHome();
+logger.debug('App home is', appHome)
+
 const appSettingsPath = path.join(appHome, 'bin', 'settings.json');
 let appSettings = getAppSettings(appSettingsPath);
 
-log.transports.file.resolvePath = (vars, message) => path.join(appHome, 'logs', 'ftb-app-electron.log');
+electronLogger.transports.file.resolvePath = (variables, message) => 
+  path.join(appHome, 'logs', 'ftb-app-electron.log');
 
-Object.assign(console, log.functions);
-(app as any).console = log;
+Object.assign(console, electronLogger.functions);
+(app as any).console = electronLogger;
 
 const isDevelopment = process.env.NODE_ENV !== 'production' || process.argv.indexOf('--dev') !== -1;
-
-log.transports.file.resolvePath = (variables, message): string => {
-  return path.join(process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)), 'electron.log');
-};
 
 protocol.registerSchemesAsPrivileged([{ scheme: protocolSpace, privileges: { secure: true, standard: true } }]);
 
@@ -55,7 +54,7 @@ if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
 }
 
 let win: BrowserWindow | null;
-let friendsWindow: BrowserWindow | null;
+// let friendsWindow: BrowserWindow | null;
 
 let protocolURL: string | null;
 
@@ -71,70 +70,31 @@ declare const __static: string;
 let wsPort: number;
 let wsSecret: string;
 if (process.argv.indexOf('--ws') !== -1) {
-  log.info('We have a --ws');
+  logger.debug('App was launched with --ws');
   const wsArg = process.argv[process.argv.indexOf('--ws') + 1];
   const wsArgSplit = wsArg.split(':');
+  
   wsPort = Number(wsArgSplit[0]);
   wsSecret = wsArgSplit[1];
+  logger.debug(`App websocket data port: ${wsPort}:${wsSecret}`);
 } else {
-  log.info('Setting default port and secret');
+  logger.debug("App was not launched with --ws, falling back to default")
   wsPort = 13377;
   wsSecret = '';
-}
-
-if (process.argv.indexOf('--pid') === -1) {
-  log.info('No backend found, starting our own');
-  const ourPID = process.pid;
-  log.info('Our PID is', ourPID);
-  log.info('Exec path is', process.execPath);
-  const currentPath = process.execPath.substring(0, process.execPath.lastIndexOf(path.sep));
-  log.info('Current working directory is', currentPath);
-  let binaryFile = 'FTBApp';
-  const operatingSystem = os.platform();
-  if (operatingSystem === 'win32') {
-    binaryFile += '.exe';
-  }
-  binaryFile = path.join(currentPath, '..', binaryFile);
-  if (fs.existsSync(binaryFile)) {
-    log.info('Starting process of backend', binaryFile);
-    const child = childProcess.execFile(binaryFile, ['--pid', ourPID.toString()]);
-    child.on('exit', (code, signal) => {
-      log.info('child process exited with ' + `code ${code} and signal ${signal}`);
-    });
-    child.on('error', (err) => {
-      log.error('Error starting binary', err);
-    });
-    // @ts-ignore
-    child.stdout.on('data', (data) => {
-      log.info(`child stdout:\n${data}`);
-    });
-    // @ts-ignore
-    child.stderr.on('data', (data) => {
-      log.error(`child stderr:\n${data}`);
-    });
-  } else {
-    log.info('Could not find the binary to launch backend', binaryFile);
-  }
-}
-
-export interface MTModpacks {
-  [index: string]: string;
 }
 
 let userData: any;
 let authData: any;
 let sessionString: string;
-const seenModpacks: MTModpacks = {};
-const friends: FriendListResponse = { online: [], offline: [], pending: [] };
 
 ipcMain.on('sendMeSecret', (event) => {
   event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
 });
 
 ipcMain.on('showFriends', () => {
-  if (userData) {
-    createFriendsWindow();
-  }
+  // if (userData) {
+  //   createFriendsWindow();
+  // }
 });
 
 ipcMain.on('appReady', async (event) => {
@@ -148,9 +108,9 @@ ipcMain.on("restartApp", () => {
 });
 
 ipcMain.on('updateSettings', async (event, data) => {
-  if (friendsWindow !== null && friendsWindow !== undefined) {
-    friendsWindow.webContents.send('updateSettings', data);
-  }
+  // if (friendsWindow !== null && friendsWindow !== undefined) {
+  //   friendsWindow.webContents.send('updateSettings', data);
+  // }
   if (data.sessionString) {
     sessionString = data.sessionString;
     if (!userData && win) {
@@ -168,12 +128,12 @@ ipcMain.on('session', (event, data) => {
 ipcMain.on('user', (event, data) => {
   if (!userData) {
     userData = data;
-    if (friendsWindow !== undefined && friendsWindow !== null) {
-      friendsWindow.webContents.send('hereAuthData', userData);
-    }
-    log.info('Checking if linked Minecraft Account');
+    // if (friendsWindow !== undefined && friendsWindow !== null) {
+    //   friendsWindow.webContents.send('hereAuthData', userData);
+    // }
+    logger.info('MineTogether: Checking if linked Minecraft Account');
     if (userData?.accounts?.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
-      log.info('Linked Minecraft account, connecting to IRC');
+      logger.info('MineTogether: Linked Minecraft account, connecting to IRC');
     }
   }
 });
@@ -192,13 +152,17 @@ ipcMain.on('user', (event, data) => {
 
 ipcMain.on('gimmeAuthData', (event) => {
   if (userData) {
+    logger.debug("Auth data handed back from the frontend")
     event.reply('hereAuthData', userData);
   }
 });
 
 ipcMain.on('openModpack', (event, data) => {
   if (win !== null && win !== undefined) {
+    logger.debug("Opening modpack", data)
     win.webContents.send('openModpack', data);
+  } else {
+    logger.warn("Win is null or undefined")
   }
 });
 
@@ -224,6 +188,7 @@ app.on('open-url', async (event, customSchemeData) => {
 
 ipcMain.handle('selectFolder', async (event, data) => {
   if (win === null) {
+    logger.debug("Win is null, unable to select folder")
     return;
   }
 
@@ -235,6 +200,7 @@ ipcMain.handle('selectFolder', async (event, data) => {
   if (result.filePaths.length > 0) {
     return result.filePaths[0];
   } else {
+    logger.debug("No file paths returned from dialog, this could be an error or just a cancel")
     return null;
   }
 });
@@ -243,6 +209,8 @@ const reloadMainWindow = async () => {
   if (!win) {
     return;
   }
+  
+  logger.info("Reloading main window")
   
   // Create a tmp window to keep the app alive
   const tmpWindow = new BrowserWindow({
@@ -264,6 +232,8 @@ ipcMain.handle('setSystemWindowStyle', async (event, data) => {
     return;
   }
   
+  logger.info("Setting system window style to", typedData)
+  
   // Reload the app settings
   appSettings.useSystemWindowStyle = typedData.toString();
   await reloadMainWindow();
@@ -274,7 +244,7 @@ ipcMain.handle('openFinder', async (event, data) => {
     await shell.openPath(data);
     return true;    
   } catch (e) {
-    log.error(e);
+    logger.error("Failed to open finder", e)
     return false;
   }
 });
@@ -284,6 +254,7 @@ ipcMain.handle('selectFile', async (event) => {
     return null;
   }
 
+  logger.debug("Selecting file using the frontend")
   const result = await dialog.showOpenDialog(win, {
     properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
     filters: [
@@ -302,7 +273,6 @@ ipcMain.handle('selectFile', async (event) => {
 ipcMain.on('windowControls', (event, data) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (window) {
-    log.info(data);
     switch (data.action) {
       case 'close':
         window.close();
@@ -326,14 +296,16 @@ ipcMain.on('windowControls', (event, data) => {
 });
 
 ipcMain.on('quit_app', (event, data) => {
+  logger.debug("Quitting app")
   process.exit(1);
 });
 
 ipcMain.on('logout', (event, data) => {
-  if (friendsWindow) {
-    friendsWindow.close();
-  }
+  // if (friendsWindow) {
+  //   friendsWindow.close();
+  // }
   
+  logger.debug("Logging out from the frontend")
   userData = undefined;
 });
 
@@ -354,61 +326,62 @@ ipcMain.on('openDevTools', (event, data) => {
   }
 });
 
-function createFriendsWindow() {
-  if (friendsWindow !== null && friendsWindow !== undefined) {
-    friendsWindow.focus();
-    if (win) {
-      win.webContents.send('setFriendsWindow', true);
-    }
-    return;
-  }
-  friendsWindow = new BrowserWindow({
-    title: 'FTB App',
-
-    // Other
-    icon: path.join(__static, 'favicon.ico'),
-    // Size Settings
-    minWidth: 300,
-    minHeight: 626,
-    // maxWidth: 1000,
-    // maxHeight: 626,
-    height: 626,
-    width: 300,
-    frame: false,
-    titleBarStyle: 'hidden',
-    backgroundColor: '#313131',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      disableBlinkFeatures: 'Auxclick',
-    },
-  });
-
-  friendsWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
-    return { action: 'deny' }
-  })
-
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    friendsWindow.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL as string}#chat`);
-    if (!process.env.IS_TEST) {
-      friendsWindow.webContents.openDevTools();
-    }
-  } else {
-    friendsWindow.loadURL('app://./index.html#chat');
-  }
-  if (win) {
-    win.webContents.send('setFriendsWindow', true);
-  }
-  friendsWindow.on('closed', () => {
-    friendsWindow = null;
-    if (win) {
-      win.webContents.send('setFriendsWindow', false);
-    }
-  });
-}
+// function createFriendsWindow() {
+//   if (friendsWindow !== null && friendsWindow !== undefined) {
+//     friendsWindow.focus();
+//     if (win) {
+//       win.webContents.send('setFriendsWindow', true);
+//     }
+//     return;
+//   }
+//   friendsWindow = new BrowserWindow({
+//     title: 'FTB App',
+//
+//     // Other
+//     icon: path.join(__static, 'favicon.ico'),
+//     // Size Settings
+//     minWidth: 300,
+//     minHeight: 626,
+//     // maxWidth: 1000,
+//     // maxHeight: 626,
+//     height: 626,
+//     width: 300,
+//     frame: false,
+//     titleBarStyle: 'hidden',
+//     backgroundColor: '#313131',
+//     webPreferences: {
+//       nodeIntegration: true,
+//       contextIsolation: false,
+//       disableBlinkFeatures: 'Auxclick',
+//     },
+//   });
+//
+//   friendsWindow.webContents.setWindowOpenHandler((details) => {
+//     shell.openExternal(details.url);
+//     return { action: 'deny' }
+//   })
+//
+//   if (process.env.WEBPACK_DEV_SERVER_URL) {
+//     friendsWindow.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL as string}#chat`);
+//     if (!process.env.IS_TEST) {
+//       friendsWindow.webContents.openDevTools();
+//     }
+//   } else {
+//     friendsWindow.loadURL('app://./index.html#chat');
+//   }
+//   if (win) {
+//     win.webContents.send('setFriendsWindow', true);
+//   }
+//   friendsWindow.on('closed', () => {
+//     friendsWindow = null;
+//     if (win) {
+//       win.webContents.send('setFriendsWindow', false);
+//     }
+//   });
+// }
 
 async function createWindow() {
+  logger.debug("Creating main window")
   const useSystemFrame = appSettings?.useSystemWindowStyle === "true" ?? false;
   
   win = new BrowserWindow({
@@ -430,7 +403,7 @@ async function createWindow() {
       webSecurity: false,
     },
   });
-
+  
   win.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' }
@@ -450,9 +423,11 @@ async function createWindow() {
   });
   
   if (process.env.WEBPACK_DEV_SERVER_URL) {
+    logger.debug("Loading dev server url")
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
     
     if (process.env.NODE_ENV !== "production") {
+      logger.debug("Opening dev tools")
       win.webContents.openDevTools({
         mode: 'detach',
       });
@@ -463,15 +438,16 @@ async function createWindow() {
       win?.focus();
     }, 100)
   } else {
+    logger.debug("Loading app from built files")
     createProtocol(protocolSpace)
     await win.loadURL(`${protocolSpace}://./index.html`);
   }
 
   win.on('closed', () => {
     win = null;
-    if (friendsWindow) {
-      friendsWindow.close();
-    }
+    // if (friendsWindow) {
+    //   friendsWindow.close();
+    // }
   });
 }
 
@@ -498,22 +474,23 @@ app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
-  log.debug('Not got the lock');
+  logger.debug("Preventing extra windows of the app from loading")
   app.quit();
 } else {
-  log.debug('Got the lock');
+  logger.debug("Lock found, let's try and focus the app")
   app.on('second-instance', (event, commandLine, workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
     // log.info(`Event: ${event.s}`)
     if (win) {
       if (win.isMinimized()) {
+        logger.debug("Window is minimized, restoring")
         win.restore();
       }
       win.focus();
       commandLine.forEach((c) => {
-        log.info(c);
+        logger.debug("Command line arg", c)
         if (c.indexOf('ftb://') !== -1) {
-          log.info('parsing through protocol');
+          logger.debug("Sending protocol url to frontend")
           // @ts-ignore
           win.webContents.send('parseProtocolURL', c);
         }
@@ -522,6 +499,7 @@ if (!gotTheLock) {
   });
 
   app.on('ready', async () => {
+    logger.info("App is ready")
     createWindow();
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {

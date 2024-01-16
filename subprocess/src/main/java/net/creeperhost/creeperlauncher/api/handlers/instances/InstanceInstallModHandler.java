@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.covers1624.quack.collection.FastStream;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceInstallModData;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceInstallModData.PendingInstall;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
@@ -23,13 +23,13 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
     public void handle(InstanceInstallModData data) {
         Instance instance = Instances.getInstance(data.uuid);
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not exist."));
+            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not exist."));
             return;
         }
 
         String mcVersion = instance.getMcVersion();
         if (mcVersion == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a game version??"));
+            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a game version??"));
             return;
         }
 
@@ -40,7 +40,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         }
 
         if (modLoader == null) {
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a ModLoader installed."));
+            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a ModLoader installed."));
             return;
         }
 
@@ -50,7 +50,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
             modInstaller.resolve();
         } catch (ModInstaller.ModInstallerException ex) {
             LOGGER.warn("Error whilst preparing Mod install.", ex);
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
+            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
             return;
         }
 
@@ -59,14 +59,14 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         List<PendingInstall> pending = FastStream.of(modInstaller.getToInstall())
                 .map(e -> new PendingInstall(e.getKey().getId(), e.getValue().getId()))
                 .toList();
-        Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "processing", "Processing install.", pending));
+        WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "processing", "Processing install.", pending));
 
         try {
             modInstaller.install();
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "success", "Install successful."));
+            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "success", "Install successful."));
         } catch (ModInstaller.ModInstallerException ex) {
             LOGGER.warn("Error whilst installing mods.", ex);
-            Settings.webSocketAPI.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
+            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
         }
     }
 }

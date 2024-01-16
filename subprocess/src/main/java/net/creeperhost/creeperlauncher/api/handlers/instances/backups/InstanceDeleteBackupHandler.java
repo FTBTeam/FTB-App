@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances.backups;
 
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
@@ -18,7 +18,7 @@ public class InstanceDeleteBackupHandler implements IMessageHandler<InstanceDele
     public void handle(Request data) {
         var backupFileLocation = Path.of(data.backupLocation);
         if (Files.notExists(backupFileLocation)) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to locate the backup that was requested to be deleted"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Unable to locate the backup that was requested to be deleted"));
             return;
         }
 
@@ -34,9 +34,9 @@ public class InstanceDeleteBackupHandler implements IMessageHandler<InstanceDele
                 GsonUtils.saveJson(jsonStore, jsonData);
             }
             
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, "Deleted %s".formatted(backupFileLocation.getFileName())));
+            WebSocketHandler.sendMessage(new Reply(data, true, "Deleted %s".formatted(backupFileLocation.getFileName())));
         } catch (IOException e) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, "Unable to delete %s".formatted(backupFileLocation.getFileName())));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Unable to delete %s".formatted(backupFileLocation.getFileName())));
         }
     }
     

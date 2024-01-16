@@ -1,8 +1,11 @@
 import {SettingsState} from '@/modules/settings/types';
 import {RootState} from '@/types';
-import {consoleBadButNoLogger} from '@/utils/helpers';
+import {Socket} from '@/modules/websocket/types';
+import {createLogger} from '@/core/logger';
 // import { MCProtocol } from '@/modules/servers/types';
 // import mcQuery from 'mcping-js';
+
+const logger = createLogger("utils/utilities.ts");
 
 export function debounce(func: () => void, wait: number): () => void {
   let timeout: NodeJS.Timeout | undefined;
@@ -20,18 +23,39 @@ export function logVerbose(state: RootState | SettingsState, ...message: any[]) 
   if (state.settings?.settings === undefined) {
     // @ts-ignore
     if (state.settings?.verbose === true || state.settings?.verbose === 'true') {
-      consoleBadButNoLogger("D", '[DEBUG]', ...message);
+      logger.debug("[VERBOSE]", ...message);
     }
   } else {
     // @ts-ignore
     if (state.settings?.settings.verbose === true || state.settings?.settings.verbose === 'true') {
-      consoleBadButNoLogger("D", '[DEBUG]', ...message);
+      logger.debug("[VERBOSE]", ...message);
     }
   }
 }
 
 export function shortenHash(longHash: string): string {
   return `MT${longHash.substring(0, 28).toUpperCase()}`;
+}
+
+export async function waitForWebsockets(websockets: Socket) {
+  if (!websockets.isConnected) {
+    logger.debug("WS not connected, delaying page load for 100ms")
+    await new Promise((resolve) => {
+      // Wait for 30 seconds for the websocket to connect
+      const timoutRef = setTimeout(() => {
+        clearTimeout(timoutRef);
+        resolve(null);
+      }, 30_000); // 30 seconds
+      
+      // Check every 100ms if the websocket is connected
+      const interval = setInterval(() => {
+        if (websockets.isConnected) {
+          clearInterval(interval);
+          resolve(null);
+        }
+      }, 100);
+    });
+  }
 }
 
 // TODO: We should just use an api for this. It's simpler. 

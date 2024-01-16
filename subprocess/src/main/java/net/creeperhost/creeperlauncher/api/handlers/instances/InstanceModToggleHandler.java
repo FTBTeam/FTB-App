@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceModToggleData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.pack.Instance;
@@ -19,10 +19,10 @@ public class InstanceModToggleHandler implements IMessageHandler<InstanceModTogg
 
         try {
             instance.toggleMod(data.fileId, data.fileName);
-            Settings.webSocketAPI.sendMessage(new InstanceModToggleData.Reply(data, true));
+            WebSocketHandler.sendMessage(new InstanceModToggleData.Reply(data, true));
         } catch (Throwable ex) {
             LOGGER.warn("Error whilst toggling mod state.", ex);
-            Settings.webSocketAPI.sendMessage(new InstanceModToggleData.Reply(data, false));
+            WebSocketHandler.sendMessage(new InstanceModToggleData.Reply(data, false));
         }
     }
 }

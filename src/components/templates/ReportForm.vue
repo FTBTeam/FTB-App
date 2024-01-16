@@ -62,11 +62,12 @@
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import {consoleBadButNoLogger} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 @Component
 export default class ReportForm extends Vue {
-
+  private logger = createLogger(ReportForm.name + '.vue')
+  
   @Prop() loadingFailed!: boolean;
   @Prop() websocketsFailed!: boolean;
 
@@ -91,7 +92,7 @@ export default class ReportForm extends Vue {
   public async submitError() {
     platform.get.actions.uploadClientLogs();
     if (!ReportForm.emailRegex.test(this.errorEmail)) {
-      consoleBadButNoLogger("D", 'Email regex not passing');
+      this.logger.debug('Email regex not passing');
       return;
     }
     if (this.errorDescription.length === 0) {
