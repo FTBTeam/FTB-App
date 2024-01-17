@@ -26,7 +26,6 @@ export enum RouterNames {
   SETTINGS_CHANGELOGS = 'changelogs',
   // CHAT = 'chat',
   SUPPORT = 'support-index',
-  ONBOARING = 'onboarding',
 }
 
 const router = new Router({
@@ -40,11 +39,6 @@ const router = new Router({
           path: '/',
           name: RouterNames.HOME,
           component: Home,
-        },
-        {
-          path: '/onboarding',
-          name: RouterNames.ONBOARING,
-          component: () => import(/* webpackChunkName: "onboarding" */ './views/onboarding/Onboarding.vue'),
         },
         {
           path: '/modpacks',

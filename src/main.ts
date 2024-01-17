@@ -30,6 +30,8 @@ import ModalBody from '@/components/atoms/modal/ModalBody.vue';
 import {localiseNumber, toTitleCase} from '@/utils/helpers/stringHelpers';
 import {standardDate, standardDateTime, timeFromNow} from '@/utils/helpers/dateHelpers';
 import VueMixins from '@/core/vueMixins.vue';
+// @ts-ignore no typescript package available
+import VueNativeSock from 'vue-native-websocket';
 
 // @ts-ignore - no types
 import VueVirtualScroller from 'vue-virtual-scroller';
@@ -48,27 +50,6 @@ const appSetup = async () => {
   } catch (e) {
     logger.error("Failed to setup platform", e);
   }
-  
-  if (!platform.isOverwolf()) {
-    // Get the app settings
-    // If the app isn't installed, set the global store to reflect that
-    const installed = await platform.get.app.runtimeAvailable();
-    store.state["v2/app"].properties.installed = installed;
-    if (!installed) {
-      logger.info("App not installed, setting installed to false");
-    }
-    
-    if (installed) {
-      logger.info("App is installed, starting subprocess");
-      // if (process.env.NODE_ENV === 'production') {
-        await platform.get.app.startSubprocess();
-      // }
-    }
-  } else {
-    store.state["v2/app"].properties.installed = true;
-  }
-  
-  store.state["v2/app"].properties.ready = true;
 
   if (process.env.NODE_ENV === 'production') {
     logger.info("Setting up sentry");
@@ -113,7 +94,7 @@ const appSetup = async () => {
 
   Vue.config.productionTip = false;
   Vue.config.devtools = true;
-
+  
   Vue.mixin(VueMixins);
 
   Vue.filter('dayjs', standardDate);
@@ -128,6 +109,13 @@ const appSetup = async () => {
     store,
     render: (h: any) => h(App),
   }).$mount('#app');
+
+  Vue.use(VueNativeSock, 'ws://localhost:13377', {
+    format: 'json',
+    reconnection: true,
+    connectManually: true,
+    store
+  });
   
   platform.get.setupApp(vm);
 };

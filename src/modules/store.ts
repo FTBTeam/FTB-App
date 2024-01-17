@@ -1,6 +1,5 @@
-import {logVerbose} from '@/utils';
 import Vue from 'vue';
-import Vuex, {MutationTree, Store, StoreOptions} from 'vuex';
+import Vuex, {MutationTree, StoreOptions} from 'vuex';
 import {RootState} from '@/types';
 import {websocket} from './websocket';
 import {settings} from './settings';
@@ -32,21 +31,12 @@ export const mutations: MutationTree<RootState> = {
   },
 };
 
-const wsLoggerPlugin = (store: Store<RootState>) => {
-  store.subscribe((mutation, state) => {
-    if (mutation.type === 'SOCKET_ONMESSAGE') {
-      logVerbose(state, 'New WebSocket message', JSON.stringify(mutation.payload));
-    }
-  });
-};
-
 const store: StoreOptions<RootState> = {
   state: {
     version: '1.0.0',
     wsPort: 0,
     wsSecret: '',
   } as any,
-  plugins: [wsLoggerPlugin],
   actions: {
     hideModal: ({ commit }: any) => {
       commit('HIDE_MODAL');
@@ -68,7 +58,7 @@ const store: StoreOptions<RootState> = {
     "v2/news": newsStateModule,
     "v2/dialogs": dialogsState,
     "v2/ads": adsStateModule
-  },
+  }
 };
 
 export default new Vuex.Store<RootState>(store);

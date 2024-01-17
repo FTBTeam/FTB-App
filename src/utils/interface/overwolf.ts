@@ -132,7 +132,6 @@ const Overwolf: ElectronOverwolfInterface = {
 
     // Nothing done for reasons
     onAppReady() {},
-    updateSettings() {},
     sendSession() {},
     
     restartApp() {
@@ -252,12 +251,6 @@ const Overwolf: ElectronOverwolfInterface = {
     }
   },
 
-  // Websockets
-  websocket: {
-    // Empty shim (this doesn't happen on overwolf)
-    notifyWebhookReceived(message: string) {},
-  },
-
   app: {
     async appSettings() {
       // Don't use this on overwolf
@@ -320,7 +313,8 @@ const Overwolf: ElectronOverwolfInterface = {
         
         resolve(maxHeight)
       });
-    }).then(async (height: any) => {
+    })
+      .then(async (height: any) => {
       const manifestData: any = await new Promise(resolve => overwolf.extensions.current.getManifest((manifest: any) => resolve(manifest)));
       const indexWindow = manifestData.data.windows.index;
 
@@ -338,36 +332,6 @@ const Overwolf: ElectronOverwolfInterface = {
     })
     
     async function onConnect() {
-      owLogger.info('Found auth data:', mainWindow.getAuthData());
-      //@ts-ignore
-      if (mainWindow.getAuthData() !== undefined) {
-        owLogger.info("Loading app with auth data")
-        //@ts-ignore
-        let data = overwolf.windows.getMainWindow().getAuthData();
-        if (data.token) {
-          store.dispatch('auth/setSessionID', data.token, { root: true });
-        }
-        //@ts-ignore
-        if (data['app-auth'] && !window.isChat) {
-          const settings = store.state.settings?.settings;
-          if (settings !== undefined) {
-            if (settings.sessionString !== data['app-auth']) {
-              settings.sessionString = data['app-auth'];
-              store.dispatch('settings/saveSettings', settings, { root: true });
-            }
-          }
-        }
-      } else {
-        owLogger.info("Loading app without auth data")
-        await store.dispatch('settings/loadSettings');
-        const settings = store.state.settings?.settings;
-        if (settings !== undefined) {
-          if (settings.sessionString !== undefined && settings.sessionString.length > 0) {
-            store.dispatch('auth/getNewSession', settings.sessionString, { root: true });
-          }
-        }
-      }
-
       //@ts-ignore
       let launchedProtoURL = overwolf.windows.getMainWindow().getProtocolURL();
       if (launchedProtoURL !== undefined) {

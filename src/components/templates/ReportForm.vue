@@ -66,7 +66,7 @@ import {createLogger} from '@/core/logger';
 
 @Component
 export default class ReportForm extends Vue {
-  private logger = createLogger(ReportForm.name + '.vue')
+  private logger = createLogger('ReportForm.vue')
   
   @Prop() loadingFailed!: boolean;
   @Prop() websocketsFailed!: boolean;

@@ -87,7 +87,7 @@ export default class PackActions extends Vue {
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Prop({ default: false }) allowOffline!: boolean;
   
-  private logger = createLogger(PackActions.name + ".vue")
+  private logger = createLogger("PackActions.vue")
 
   instanceFolders: string[] = [];
   shareConfirm = false;

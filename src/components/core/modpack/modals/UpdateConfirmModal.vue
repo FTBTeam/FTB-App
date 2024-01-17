@@ -55,7 +55,7 @@ import {createLogger} from '@/core/logger';
   components: {UiButton, Loader}
 })
 export default class UpdateConfirmModal extends Vue {
-  private logger = createLogger(UpdateConfirmModal.name + ".vue");
+  private logger = createLogger("UpdateConfirmModal.vue");
   
   @Prop() open!: boolean;
   @Prop() localInstance!: InstanceJson | SugaredInstanceJson;

@@ -106,7 +106,7 @@ export type ApiMod = {
   },
 })
 export default class ModpackMods extends Vue {
-  private logger = createLogger(ModpackMods.name + ".vue")
+  private logger = createLogger("ModpackMods.vue")
   
   @Prop() packInstalled!: boolean;
   @Prop() instance!: InstanceJson;

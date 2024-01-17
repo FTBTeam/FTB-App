@@ -64,7 +64,7 @@ export default class Blog extends Vue {
   @Getter('news', ns("v2/news")) news!: BlogPost[];
   @Getter('loading', ns("v2/news")) loading!: boolean;
   
-  private logger = createLogger(Blog.name + ".vue");
+  private logger = createLogger("Blog.vue");
   
   public mounted() {
     if (this.news == null || this.news.length < 1) {

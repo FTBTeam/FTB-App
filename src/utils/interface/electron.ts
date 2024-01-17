@@ -1,11 +1,8 @@
 // @ts-ignore no typescript package available
-import VueNativeSock from 'vue-native-websocket';
 import {clipboard, ipcRenderer} from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
-import store from '@/modules/store';
-import Vue from 'vue';
 import EventEmitter from 'events';
 import http from 'http';
 import os from 'os';
@@ -238,11 +235,7 @@ const Electron: ElectronOverwolfInterface = {
 
     // Obviously do nothing
     changeExitOverwolfSetting() {},
-    updateSettings(msg) {
-      eLogger.debug("Updating settings", msg)
-      ipcRenderer.send('updateSettings', msg);
-    },
-
+    
     setUser(payload) {
       eLogger.debug("Setting MT user")
       ipcRenderer.send('user', payload.user);
@@ -341,15 +334,7 @@ const Electron: ElectronOverwolfInterface = {
       return path.join(os.homedir(), "AppData", "Local"); 
     }
   },
-
-  // Websockets
-  websocket: {
-    // Empty shim (this doesn't happen on overwolf)
-    notifyWebhookReceived(message: string) {
-      ipcRenderer.send('websocketReceived', message);
-    },
-  },
-
+  
   app: {
     async appHome(): Promise<string> {
       return getAppHome();
@@ -498,83 +483,43 @@ const Electron: ElectronOverwolfInterface = {
       });
       
       // Finally, if the above worked, tell the app to connect to the WS protocol
+      return {
+        port: 13377,
+        secret: ""
+      }
     }
   },
   
   setupApp(vm) {
     eLogger.debug("Setting up the app from the interface on electron")
-    ipcRenderer.send('sendMeSecret');
-    ipcRenderer.on('hereIsSecret', (event, data) => {
-      eLogger.debug("Received secret from main process", data)
-      if (data.port === 13377 && !data.isDevMode) {
-        Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {
-          format: 'json',
-          reconnection: true,
-          connectManually: true,
-        });
-        vm.$connect();
-        vm.$socket.onmessage = (msgData: MessageEvent) => {
-          const wsInfo = JSON.parse(msgData.data);
-          store.commit('STORE_WS', wsInfo);
-          vm.$disconnect();
-          const index = Vue._installedPlugins.indexOf(VueNativeSock);
-          if (index > -1) {
-            Vue._installedPlugins.splice(index, 1);
-          }
-          Vue.use(VueNativeSock, 'ws://localhost:' + wsInfo.port, { store, format: 'json', reconnection: true });
-          ipcRenderer.send('updateSecret', wsInfo);
-        };
-      } else {
-        eLogger.debug("Setting up websocket connection on port", data.port)
-        store.commit('STORE_WS', data);
-        Vue.use(VueNativeSock, 'ws://localhost:' + data.port, { store, format: 'json', reconnection: true });
-      }
-    });
+    // ipcRenderer.send('sendMeSecret');
+    // ipcRenderer.on('hereIsSecret', (event, data) => {
+    //   eLogger.debug("Received secret from main process", data)
+    //   if (data.port === 13377 && !data.isDevMode) {
+    //     Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {
+    //       format: 'json',
+    //       reconnection: true,
+    //       connectManually: true,
+    //     });
+    //     vm.$connect();
+    //     vm.$socket.onmessage = (msgData: MessageEvent) => {
+    //       const wsInfo = JSON.parse(msgData.data);
+    //       store.commit('STORE_WS', wsInfo);
+    //       vm.$disconnect();
+    //       const index = Vue._installedPlugins.indexOf(VueNativeSock);
+    //       if (index > -1) {
+    //         Vue._installedPlugins.splice(index, 1);
+    //       }
+    //       Vue.use(VueNativeSock, 'ws://localhost:' + wsInfo.port, { store, format: 'json', reconnection: true });
+    //       ipcRenderer.send('updateSecret', wsInfo);
+    //     };
+    //   } else {
+    //     eLogger.debug("Setting up websocket connection on port", data.port)
+    //     store.commit('STORE_WS', data);
+    //     Vue.use(VueNativeSock, 'ws://localhost:' + data.port, { store, format: 'json', reconnection: true });
+    //   }
+    // });
     
-    eLogger.debug("Requesting auth data")
-    ipcRenderer.send('gimmeAuthData');
-    ipcRenderer.on('hereAuthData', (event, data) => {
-      eLogger.debug("Received auth data from main process", data)
-      store.commit('auth/storeAuthDetails', data, { root: true });
-    });
-    ipcRenderer.on('setFriendsWindow', (event, data) => {
-      store.dispatch('auth/setWindow', data, { root: true });
-    });
-    ipcRenderer.on('auth-window-closed', (event, data) => {
-      miniServers.forEach((server) => {
-        server.close().then(() => {
-          eLogger.debug("Closing mini server")
-        });
-      });
-
-      miniServers = [];
-    });
-    ipcRenderer.on('setSessionString', (event, data) => {
-      eLogger.debug("Received session string from main process")
-      const settings = store.state.settings?.settings;
-      if (settings !== undefined) {
-        settings.sessionString = data;
-      }
-      store.dispatch('settings/saveSettings', settings, { root: true });
-    });
-    ipcRenderer.on('getNewSession', (event, data) => {
-      eLogger.debug("Requesting new session from main process")
-      store.dispatch('auth/getNewSession', data, { root: true });
-    });
-    ipcRenderer.on('setSessionID', (event, data) => {
-      eLogger.debug("Setting session ID from main process")
-      store.dispatch('auth/setSessionID', data, { root: true });
-    });
-    ipcRenderer.on('blockFriend', (event, data) => {
-      const settings = store.state.settings?.settings;
-      if (settings !== undefined && settings.blockedUsers === undefined) {
-        settings.blockedUsers = [];
-      }
-      if (typeof settings?.blockedUsers !== 'string') {
-        settings?.blockedUsers.push(data);
-      }
-      store.dispatch('settings/saveSettings', settings, { root: true });
-    });
     // // TODO: (M#01) Yeet me
     // ipcRenderer.on('openModpack', (event, data) => {
     //   const { name, id } = data;

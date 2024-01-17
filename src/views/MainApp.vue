@@ -1,46 +1,89 @@
 <template>
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
-    <div v-if="appReady && !appInstalled">
-      <div class="app-container">
-        <router-view />
+    
+    <div class="app-container" v-if="!appReadyToGo">
+      Not ready
+      <pre>App Ready: {{appReadyToGo}}
+App Starting: {{appStarting}}
+App Loaded: {{appLoaded}}
+App Installing: {{appInstalling}}
+App Installing Stage: {{appInstallStage}}
+App Connecting: {{appConnecting}}
+App Reconnecting: {{isReconnecting}}
+      </pre>
+      
+      <div class="initializing" v-if="appStarting && !appInstalling">
+        Starting up
+      </div>
+  
+      <!-- App trying to connect to subprocess -->
+      <div class="installing" v-if="appInstalling">
+        Installing {{appInstallStage}}
+      </div>
+      
+      <div class="connecting" v-if="appConnecting && !appInstalling">
+        Connecting {{reconnectAttempts}}
+      </div>
+      
+      <!-- App has connected but is trying to reconnect -->
+      <div class="reconnecting" v-if="!appStarting && !appInstalling && isReconnecting">
+        Reconnecting
       </div>
     </div>
-    <template v-else>
-      <div class="app-container" :class="{'no-system-bar': systemBarDisabled}" v-if="websockets.socket.isConnected && !loading">
-        <main class="main">
-          <sidebar v-if="showSidebar" />
-          <div class="app-content relative">
-            <router-view />
-          </div>
-          <ad-aside v-show="advertsEnabled" />
-        </main>
-      </div>
-      <div class="app-container centered" :class="{'no-system-bar': !hasInitialized || (hasInitialized && systemBarDisabled)}" v-else>
-        <div class="pushed-content">
-          <report-form
-            v-if="websockets.reconnects > 10 && this.loading"
-            :loadingFailed="loading"
-            :websocketsFailed="!websockets || websockets.reconnects > 10"
-            :websockets="websockets"
-            :max-tries="10"
-          />
-          <div
-            class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"
-            style="flex-direction: column; justify-content: center; align-items: center"
-            v-else
-          >
-            <img src="../assets/images/ftb-logo-full.svg" width="300" class="loader-logo-animation" />
-            <div class="progress">
-              <div class="bar"></div>
-            </div>
-            <em class="mt-6">{{ stage }}</em>
-          </div>
+    
+    <!-- App has connected and is ready to use -->
+    <div class="app-container" v-if="appReadyToGo" :class="{'no-system-bar': systemBarDisabled}">
+      <main class="main">
+        <sidebar v-if="showSidebar" />
+        <div class="app-content relative">
+          <router-view />
         </div>
-      </div>
-    </template>
+        <ad-aside v-show="advertsEnabled" />
+      </main>
+    </div>
+    
+    <global-components v-if="appReadyToGo" />
+<!--    <div v-if="appReady && !appInstalled">-->
+<!--      <div class="app-container">-->
+<!--        <router-view />-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <template v-else>-->
+<!--      <div class="app-container" :class="{'no-system-bar': systemBarDisabled}" v-if="websockets.socket.isConnected && !loading">-->
+<!--        <main class="main">-->
+<!--          <sidebar v-if="showSidebar" />-->
+<!--          <div class="app-content relative">-->
+<!--            <router-view />-->
+<!--          </div>-->
+<!--          <ad-aside v-show="advertsEnabled" />-->
+<!--        </main>-->
+<!--      </div>-->
+<!--      <div class="app-container centered" :class="{'no-system-bar': !hasInitialized || (hasInitialized && systemBarDisabled)}" v-else>-->
+<!--        <div class="pushed-content">-->
+<!--          <report-form-->
+<!--            v-if="websockets.reconnects > 10 && this.loading"-->
+<!--            :loadingFailed="loading"-->
+<!--            :websocketsFailed="!websockets || websockets.reconnects > 10"-->
+<!--            :websockets="websockets"-->
+<!--            :max-tries="10"-->
+<!--          />-->
+<!--          <div-->
+<!--            class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"-->
+<!--            style="flex-direction: column; justify-content: center; align-items: center"-->
+<!--            v-else-->
+<!--          >-->
+<!--            <img src="../assets/images/ftb-logo-full.svg" width="300" class="loader-logo-animation" />-->
+<!--            <div class="progress">-->
+<!--              <div class="bar"></div>-->
+<!--            </div>-->
+<!--            <em class="mt-6">{{ stage }}</em>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </template>-->
 
-    <global-components />
+<!--    <global-components />-->
   </div>
 </template>
 
@@ -52,6 +95,7 @@ import {Action, Getter, State} from 'vuex-class';
 import {SocketState} from '@/modules/websocket/types';
 import {SettingsState} from '@/modules/settings/types';
 import platfrom from '@/utils/interface/electron-overwolf';
+import platform from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
@@ -60,10 +104,11 @@ import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
 import {requiresWsControllers} from '@/core/controllerRegistry';
 import {createLogger} from '@/core/logger';
-import {RouterNames} from '@/router';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import os from 'os';
+import {constants} from '@/core/constants';
+// @ts-ignore no typescript package available
 
 @Component({
   components: {
@@ -75,6 +120,90 @@ import os from 'os';
   },
 })
 export default class MainApp extends Vue {
+  appStarting = true;
+  appLoaded = false;
+  appInstalling = false;
+  appInstallStage = "";
+  
+  get appReadyToGo() {
+    return !this.appStarting
+      && this.appLoaded 
+      && !this.appInstalling 
+      && !this.isReconnecting 
+      && !this.appConnecting
+  }
+  
+  async mounted() {
+    this.appStarting = true;
+    this.appLoaded = false;
+    
+    this.logger.info("Mounted MainApp");
+    
+    // Check if the app is installed
+    let installed = true;
+    if (!this.platfrom.isOverwolf()) {
+      installed = await platform.get.app.runtimeAvailable();
+      
+      if (!installed) {
+        // We need to install the app
+        const result = await this.installApp();
+        
+        // TODO: Error check
+      }
+      
+      await this.startApp();
+    }
+    
+    this.appLoaded = true;
+  }
+  
+  async installApp() {
+    this.appInstalling = true;
+    this.logger.info("Installing app");
+    await this.platfrom.get.app.installApp(stage => this.appInstallStage = stage, () => {
+      console.log("Update")
+    })
+    this.appInstalling = false;
+  }
+  
+  async startApp() {
+    this.appStarting = false;
+    this.logger.info("Starting app");
+    
+    if (!constants.isProduction) {
+      this.logger.info("Starting production app");
+
+      // Try and connect to dev stuff
+      await this.connectToWebsockets();
+      return;
+    }
+
+    const appData: any = await platform.get.app.startSubprocess();
+    this.logger.info("Started app subprocess", appData);
+    
+    // Finally we need to get the app to connect to the subprocess
+    await this.connectToWebsockets(appData.port, appData.secret);
+  }
+  
+  async connectToWebsockets(port: number = 13377, secret: string = "") {    
+    // Store the secret
+    this.logger.info("Starting websocket connection on port", port, "with secret", secret);
+    
+    this.$connect('ws://localhost:' + port);
+  }
+  
+  get appConnecting() {
+    return !this.websockets.socket.isConnected
+  }
+  
+  get reconnectAttempts() {
+    return this.websockets.reconnects
+  }
+  
+  get isReconnecting() {
+    return this.appConnecting && !this.websockets.firstStart
+  }
+  
   @State('websocket') public websockets!: SocketState;
   @State('settings') public settings!: SettingsState;
   @State('auth') public auth!: AuthState;
@@ -90,11 +219,8 @@ export default class MainApp extends Vue {
   @Action('loadInstances', ns("v2/instances")) private loadInstances!: AsyncFunction;
   
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-
-  @Getter("ready", ns("v2/app")) appReady!: boolean
-  @Getter("installed", ns("v2/app")) appInstalled!: boolean
   
-  private loggger = createLogger(MainApp.name + ".vue");
+  private logger = createLogger("MainApp.vue");
   
   private platfrom = platfrom;
   private windowId: string | null = null;
@@ -133,36 +259,36 @@ export default class MainApp extends Vue {
 
   private pollRef: number | null = null;
   
-  public mounted() {
-    this.loggger.info("Mounted MainApp");
-    if (this.$router.currentRoute.name !== RouterNames.ONBOARING && !this.appInstalled) {
-      this.$router.push({
-        name: RouterNames.ONBOARING
-      })
-      
-      this.loggger.debug("Not ready, redirecting to onboarding")
-    }
-    
-    const interval = setInterval(() => {
-      // Waiting for the app to be ready
-      if (this.appReady && this.appInstalled) {
-        clearInterval(interval);
-        this.startupApp();
-      }
-    }, 1000)
-  }
+  // public mounted() {
+  //   this.logger.info("Mounted MainApp");
+  //   if (this.$router.currentRoute.name !== RouterNames.ONBOARING && !this.appInstalled) {
+  //     this.$router.push({
+  //       name: RouterNames.ONBOARING
+  //     })
+  //    
+  //     this.logger.debug("Not ready, redirecting to onboarding")
+  //   }
+  //  
+  //   const interval = setInterval(() => {
+  //     // Waiting for the app to be ready
+  //     if (this.appReady && this.appInstalled) {
+  //       clearInterval(interval);
+  //       this.startupApp();
+  //     }
+  //   }, 1000)
+  // }
   
   startupApp() {
     this.isMac = os.type() === 'Darwin';
 
-    this.loggger.debug("Starting ping poll");
+    this.logger.debug("Starting ping poll");
     this.registerPingCallback((data: any) => {
       if (data.type === 'ping') {
         gobbleError(() => sendMessage("pong", {}, 500))
       }
     });
 
-    this.loggger.debug("Starting exit callback and setting up title bar");
+    this.logger.debug("Starting exit callback and setting up title bar");
     this.platfrom.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
 
     // Only used on overwolf.
@@ -185,15 +311,15 @@ export default class MainApp extends Vue {
   @Watch('websockets', { deep: true })
   public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
     if (newVal.socket.isConnected && this.loading) {
-      this.loggger.info("Websockets connected, loading app");
+      this.logger.info("Websockets connected, loading app");
       this.loading = false;
       await this.setupApp();
-      this.loggger.info("Finished loading app");
+      this.logger.info("Finished loading app");
     }
 
     if (!newVal.socket.isConnected && !this.loading) {
-      this.loggger.warn("Websockets disconnected, unloading app");
-      this.loggger.debug("Notifying all controllers of disconnected status")
+      this.logger.warn("Websockets disconnected, unloading app");
+      this.logger.debug("Notifying all controllers of disconnected status")
       requiresWsControllers.forEach(e => e.onDisconnected());
       this.loading = true;
       this.stage = 'Attempting to reconnect to the apps agent...';
@@ -207,18 +333,18 @@ export default class MainApp extends Vue {
     }
     this.platfrom.get.actions.onAppReady();
     
-    this.loggger.debug("Notifying all controllers of connected status")
+    this.logger.debug("Notifying all controllers of connected status")
     requiresWsControllers.forEach(e => e.onConnected());
   }
 
   public async fetchStartData() {
-    this.loggger.info("Starting startup jobs");
+    this.logger.info("Starting startup jobs");
     for (const job of this.startupJobs) {
-      this.loggger.info(`Starting ${job.name}`)
+      this.logger.info(`Starting ${job.name}`)
       await job.action();
       
       // TODO: (M#01) FINISH THIS
-      this.loggger.info(`Finished ${job.name}`)
+      this.logger.info(`Finished ${job.name}`)
       job.done = true;
     }
   }

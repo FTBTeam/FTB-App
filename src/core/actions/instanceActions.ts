@@ -7,7 +7,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 
 export class InstanceActions {
-  private static logger = createLogger(InstanceActions.name + ".ts");
+  private static logger = createLogger("InstanceActions.ts");
   
   static async start(instance: SugaredInstanceJson) {
     if (!this.canStart(instance) || this.isUpdating(instance)) return false;

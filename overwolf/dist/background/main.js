@@ -53,7 +53,7 @@ const setup = async () => {
   const plugin = new OverwolfPlugin('OverwolfShim', true);
 
   let status = await p(plugin.initialize).catch(e => console.log(e));
-  if (status == false) {
+  if (status === false) {
     // TODO: Warn user
     console.error("Plugin couldn't be loaded??");
     return;
@@ -83,7 +83,7 @@ const setup = async () => {
   overwolf.windows.onStateChanged.addListener(async state => {
     console.log('State changed');
     console.log(state);
-    if (state.window_state_ex == 'closed' && state.window_name == 'index') {
+    if (state.window_state_ex === 'closed' && state.window_name === 'index') {
       // Close the webserver and background if the main app window closes
       console.log('Closing');
       if (server !== undefined) {
@@ -104,8 +104,12 @@ setup()
   .catch(e => console.error("Failed to setup app", e));
 
 const funcs = {
+  /**
+   * Crypto module is not available in OW so we use C# to do it
+   * @returns {*}
+   */
   randomUUID: () => app.plugin.get().randomUUID(),
-  wsData: () => app.wsData,
+  wsData: () => app.wsData, // TODO: Finish this
   async restartApp() {
     // Get the current index window and close it
     const window = await p(overwolf.windows.obtainDeclaredWindow, 'index')
@@ -114,6 +118,9 @@ const funcs = {
     let windowRet = await p(overwolf.windows.obtainDeclaredWindow, 'index');
     await p(overwolf.windows.restore, windowRet.window.id);
   },
+  /**
+   * Creates a temporary webserver to listen for auth data from a website on the users system
+   */
   async openWebserver(authDataCallback) {
     if (app.webserver !== undefined) {
       return app.webserver;
@@ -182,7 +189,7 @@ async function p(func, ...args) {
             rej(result);
           }
         } else if ('status' in result) {
-          if (result.status == 'success') {
+          if (result.status === 'success') {
             acc(result);
           } else {
             rej(result);

@@ -29,7 +29,6 @@ export interface Actions {
 
   // Res only used on overwolf
   setUser: (payload: any) => void;
-  updateSettings: (info: any) => void;
   changeExitOverwolfSetting: (value: boolean) => void;
   logoutFromMinetogether: () => void;
   sendSession: (payload: any) => void;
@@ -77,10 +76,6 @@ export interface InputOutput {
   getLocalAppData: () => string;
 }
 
-export interface Websocket {
-  notifyWebhookReceived: (message: string) => void;
-}
-
 export interface App {
   appHome(): Promise<string>;
   appData(): Promise<string>;
@@ -88,7 +83,10 @@ export interface App {
   appRuntimes(): Promise<string>;
   runtimeAvailable(): Promise<boolean>;
   installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void): Promise<void>;
-  startSubprocess(): Promise<void>;
+  startSubprocess(): Promise<{ 
+    port: number;
+    secret: string;
+  }>;
 }
 
 export default interface ElectronOverwolfInterface {
@@ -98,7 +96,6 @@ export default interface ElectronOverwolfInterface {
   frame: Frame;
   config: Config;
   io: InputOutput;
-  websocket: Websocket;
   app: App;
   setupApp: (vm: any) => void;
 }

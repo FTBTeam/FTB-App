@@ -66,7 +66,7 @@ class FetchResponse implements FetchResponseRaw {
 }
 
 export class JavaFetch {
-  private readonly logger = createLogger(JavaFetch.name + ".ts")
+  private readonly logger = createLogger("JavaFetch.ts")
   
   private _url;
   private _headers: Record<string, string[]> = {};

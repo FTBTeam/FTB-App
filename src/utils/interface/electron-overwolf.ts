@@ -7,7 +7,7 @@ import {createLogger} from '@/core/logger';
  */
 class Platform {
   protected inter: ElectronOverwolfInterface = {} as ElectronOverwolfInterface;
-  private logger = createLogger(Platform.name + ".ts")
+  private logger = createLogger("Platform.ts")
 
   constructor() {}
 

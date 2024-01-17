@@ -91,16 +91,6 @@ let userData: any;
 let authData: any;
 let sessionString: string;
 
-ipcMain.on('sendMeSecret', (event) => {
-  event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
-});
-
-ipcMain.on('showFriends', () => {
-  // if (userData) {
-  //   createFriendsWindow();
-  // }
-});
-
 ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
     event.reply('parseProtocolURL', protocolURL);
@@ -109,56 +99,6 @@ ipcMain.on('appReady', async (event) => {
 
 ipcMain.on("restartApp", () => {
   reloadMainWindow()
-});
-
-ipcMain.on('updateSettings', async (event, data) => {
-  // if (friendsWindow !== null && friendsWindow !== undefined) {
-  //   friendsWindow.webContents.send('updateSettings', data);
-  // }
-  if (data.sessionString) {
-    sessionString = data.sessionString;
-    if (!userData && win) {
-      win.webContents.send('getNewSession', sessionString);
-    }
-  }
-});
-
-ipcMain.on('session', (event, data) => {
-  if (!authData) {
-    authData = data;
-  }
-});
-
-ipcMain.on('user', (event, data) => {
-  if (!userData) {
-    userData = data;
-    // if (friendsWindow !== undefined && friendsWindow !== null) {
-    //   friendsWindow.webContents.send('hereAuthData', userData);
-    // }
-    logger.info('MineTogether: Checking if linked Minecraft Account');
-    if (userData?.accounts?.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
-      logger.info('MineTogether: Linked Minecraft account, connecting to IRC');
-    }
-  }
-});
-
-// ipcMain.on('authData', async (event, data) => {
-//     authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
-//     authData.mc.friendCode = await getFriendCode(authData.mc.hash);
-//     // @ts-ignore
-//     win.webContents.send('hereAuthData', authData);
-//     // @ts-ignore
-//     if (friendsWindow !== undefined && friendsWindow !== null) {
-//         friendsWindow.webContents.send('hereAuthData', authData);
-//     }
-//     connectToIRC();
-// });
-
-ipcMain.on('gimmeAuthData', (event) => {
-  if (userData) {
-    logger.debug("Auth data handed back from the frontend")
-    event.reply('hereAuthData', userData);
-  }
 });
 
 ipcMain.on('openModpack', (event, data) => {

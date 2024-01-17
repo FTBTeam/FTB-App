@@ -57,7 +57,7 @@ export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
   @State('auth') public auth!: AuthState;
   
-  private logger = createLogger(AdAside.name + ".vue");
+  private logger = createLogger("AdAside.vue");
 
   ads: Record<string, any> = {};
   platform = platform;

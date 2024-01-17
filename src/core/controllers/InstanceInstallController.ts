@@ -74,7 +74,7 @@ const betterStageNames: Map<Stage, string> = new Map([
  * Instance install controller backed by a vuex store queue
  */
 class InstanceInstallController {
-  private logger = createLogger(InstanceInstallController.name + ".ts");
+  private logger = createLogger("InstanceInstallController.ts");
   private installLock = false;
   
   constructor() {

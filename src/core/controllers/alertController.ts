@@ -7,7 +7,7 @@ export type Alert = {
 }
 
 class AlertController {
-  private logger = createLogger(AlertController.name + ".ts");
+  private logger = createLogger("AlertController.ts");
   
   success(message: string) {
     this.createAlert(message, "success")

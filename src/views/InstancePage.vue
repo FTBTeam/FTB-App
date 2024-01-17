@@ -160,7 +160,7 @@ export default class InstancePage extends Vue {
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
 
-  private logger = createLogger(InstancePage.name + ".vue");
+  private logger = createLogger("InstancePage.vue");
   
   packLoading = false;
 

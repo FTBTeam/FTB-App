@@ -52,7 +52,7 @@ export type ChangelogData = {
 })
 export default class Changelog extends Vue  {
   @State('websocket') public websockets!: SocketState;
-  private logger = createLogger(Changelog.name + ".vue")
+  private logger = createLogger("Changelog.vue")
   
   changelogData: ChangelogData | null = null;
 

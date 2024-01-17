@@ -2,7 +2,6 @@ import {ActionContext, ActionTree} from 'vuex';
 import {SocketState} from './types';
 import {RootState} from '@/types';
 import Vue from 'vue';
-import {logVerbose} from '@/utils';
 import platform from '@/utils/interface/electron-overwolf';
 import {createLogger} from '@/core/logger';
 
@@ -23,19 +22,17 @@ export const actions: ActionTree<SocketState, RootState> = {
       );
       return;
     }
+    
     const requestId = platform.get.utils.crypto.randomUUID();
     payload.payload.requestId = requestId;
     payload.payload.secret = rootState.wsSecret;
-    if (!(payload.payload?.type && payload.payload?.type !== '' && payload.payload?.type.startsWith('profiles.'))) {
-      logVerbose(rootState, payload.payload);
-    } else {
-      logVerbose(rootState, 'Rejecting logging of profile data');
-    }
-    Vue.prototype.$socket[platform.isElectron() ? 'sendObj' : 'send'](
-      platform.isElectron() ? payload.payload : JSON.stringify(payload.payload),
-    );
+    Vue.prototype.$socket.sendObj(payload.payload);
+    
     commit('ADD_CALLBACK', { id: requestId, callback: payload.callback });
     return requestId;
+  },
+  connected() {
+    
   },
   disconnect() {
     Vue.prototype.$socket.close();

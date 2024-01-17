@@ -329,7 +329,7 @@ export default class LaunchingPage extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @State('auth') public auth!: AuthState;
   
-  private logger = createLogger(LaunchingPage.name + ".vue");
+  private logger = createLogger("LaunchingPage.vue");
 
   loading = false;
   preLaunch = true;

@@ -90,7 +90,7 @@ function createStep(name: string) {
 export default class MicrosoftAuth extends Vue {
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
   
-  private logger = createLogger(MicrosoftAuth.name + ".vue");
+  private logger = createLogger("MicrosoftAuth.vue");
   
   steps: Record<string, ReturnType<typeof createStep>> = {
     START_DANCE: createStep('Credentials Received'),

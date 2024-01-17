@@ -85,7 +85,7 @@ export default class BrowseModpacks extends Vue {
   
   @State('auth') public authState!: AuthState;
   
-  private logger = createLogger(BrowseModpacks.name + ".vue")
+  private logger = createLogger("BrowseModpacks.vue")
 
   searchValue: string = '';
   currentTab: PackProviders = 'modpacksch';

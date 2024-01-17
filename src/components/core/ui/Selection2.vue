@@ -60,7 +60,7 @@ export type SelectionOption = {
 // TODO: (M#01) Migrate everything to this one.
 @Component
 export default class Selection2 extends Vue {
-  private logger = createLogger(`${Selection2.name}.vue`);
+  private logger = createLogger(`Selection2.vue`);
   
   @Prop() label!: string;
   @Prop({default: null}) icon!: string | string[] | null;

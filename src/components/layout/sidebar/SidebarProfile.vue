@@ -128,7 +128,7 @@ export default class SidebarProfile extends Vue {
   @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
   @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
 
-  private logger = createLogger(SidebarProfile.name + ".vue")
+  private logger = createLogger("SidebarProfile.vue")
   
   editMode = false;
   loading = false;
