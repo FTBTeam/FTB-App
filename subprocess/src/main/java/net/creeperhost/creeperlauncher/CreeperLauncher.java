@@ -3,8 +3,6 @@ package net.creeperhost.creeperlauncher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
-import com.install4j.api.launcher.ApplicationLauncher;
-import com.install4j.api.update.UpdateChecker;
 import io.sentry.Sentry;
 import io.sentry.log4j2.BuildConfig;
 import io.sentry.protocol.SdkVersion;
@@ -37,7 +35,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -178,27 +179,30 @@ public class CreeperLauncher {
             WebsocketServer.PortMode portMode;
             if (isDevMode) {
                 portMode = WebsocketServer.PortMode.STATIC;
-            } else if (isOverwolf) {
-                portMode = WebsocketServer.PortMode.DYNAMIC_ON_CONNECT;
+//            } else if (isOverwolf) {
+//                portMode = WebsocketServer.PortMode.DYNAMIC_ON_CONNECT;
+//            } 
             } else {
                 portMode = WebsocketServer.PortMode.DYNAMIC;
             }
-            WebSocketHandler.startWebsocket(portMode);
+            
+            var port = WebSocketHandler.startWebsocket(portMode);
+            LOGGER.info("{T:CI={p:%s;s:%s}}".formatted(port, Constants.WEBSOCKET_SECRET), port);
             if (OS.CURRENT == OS.WIN) pingPong();
         } catch (Throwable t) {
             websocketDisconnect = true;
             LOGGER.error("Unable to open websocket port or websocket has disconnected...", t);
         }
 
-        if (startProcess) {
-            startElectron();
-        }
+//        if (startProcess) {
+//            startElectron();
+//        }
 
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
         initSettingsAndCache();
 
-        doUpdate(args);
+//        doUpdate(args);
 
         FileUtils.listDir(Constants.WORKING_DIR).stream()
             .filter(e -> e.getFileName().toString().endsWith(".jar") && !e.getFileName().toString().contains(Constants.APPVERSION))
@@ -270,52 +274,52 @@ public class CreeperLauncher {
     }
 
     private static void registerSettingsListeners(String[] args) {
-        SettingsChangeUtil.registerChangeHandler("enablePreview", (key, value) -> {
-            if (Settings.settings.getOrDefault("enablePreview", "").isEmpty() && value.equals("false")) return true;
-            if (Constants.BRANCH.equals("release") || Constants.BRANCH.equals("preview")) {
-                OpenModalData.openModal("Update", "Do you wish to change to this branch now?", List.of(
-                    new OpenModalData.ModalButton("Yes", "success", () -> {
-                        doUpdate(args);
-                    }),
-                    new OpenModalData.ModalButton("No", "danger", () -> {
-                        WebSocketHandler.sendMessage(new CloseModalData());
-                    })
-                ));
-                return true;
-            } else {
-                if (!warnedDevelop) {
-                    warnedDevelop = true;
-                    OpenModalData.openModal("Update", "Unable to switch from branch " + Constants.BRANCH + " via this toggle.", List.of(
-                        new OpenModalData.ModalButton("Ok", "danger", () -> WebSocketHandler.sendMessage(new CloseModalData()))
-                    ));
-                }
-                return false;
-            }
-        });
+//        SettingsChangeUtil.registerChangeHandler("enablePreview", (key, value) -> {
+//            if (Settings.settings.getOrDefault("enablePreview", "").isEmpty() && value.equals("false")) return true;
+//            if (Constants.BRANCH.equals("release") || Constants.BRANCH.equals("preview")) {
+//                OpenModalData.openModal("Update", "Do you wish to change to this branch now?", List.of(
+//                    new OpenModalData.ModalButton("Yes", "success", () -> {
+//                        doUpdate(args);
+//                    }),
+//                    new OpenModalData.ModalButton("No", "danger", () -> {
+//                        WebSocketHandler.sendMessage(new CloseModalData());
+//                    })
+//                ));
+//                return true;
+//            } else {
+//                if (!warnedDevelop) {
+//                    warnedDevelop = true;
+//                    OpenModalData.openModal("Update", "Unable to switch from branch " + Constants.BRANCH + " via this toggle.", List.of(
+//                        new OpenModalData.ModalButton("Ok", "danger", () -> WebSocketHandler.sendMessage(new CloseModalData()))
+//                    ));
+//                }
+//                return false;
+//            }
+//        });
 
         SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());
     }
 
     @SuppressWarnings("ConstantConditions")
-    private static void doUpdate(String[] args) {
-        String preview = Settings.settings.getOrDefault("enablePreview", "");
-        String[] updaterArgs = new String[]{};
-        if (Constants.BRANCH.equals("release") && preview.equals("true")) {
-            updaterArgs = new String[]{"-VupdatesUrl=https://apps.modpacks.ch/FTBApp/preview.xml", "-VforceUpdate=true"};
-        } else if (Constants.BRANCH.equals("preview") && !preview.isEmpty() && !preview.equals("true")) {
-            updaterArgs = new String[]{"-VupdatesUrl=https://apps.modpacks.ch/FTBApp/release.xml", "-VforceUpdate=true"};
-        }
-        //Auto update - will block, kill us and relaunch if necessary
-        try {
-            ApplicationLauncher.launchApplicationInProcess("346", updaterArgs, null, null, null);
-
-            if (UpdateChecker.isUpdateScheduled()) {
-                UpdateChecker.executeScheduledUpdate(Arrays.asList("-q", "-splash", "\"Updating...\""), true, Arrays.asList(args), null);
-            }
-        } catch (Throwable e) {
-
-        }
-    }
+//    private static void doUpdate(String[] args) {
+//        String preview = Settings.settings.getOrDefault("enablePreview", "");
+//        String[] updaterArgs = new String[]{};
+//        if (Constants.BRANCH.equals("release") && preview.equals("true")) {
+//            updaterArgs = new String[]{"-VupdatesUrl=https://apps.modpacks.ch/FTBApp/preview.xml", "-VforceUpdate=true"};
+//        } else if (Constants.BRANCH.equals("preview") && !preview.isEmpty() && !preview.equals("true")) {
+//            updaterArgs = new String[]{"-VupdatesUrl=https://apps.modpacks.ch/FTBApp/release.xml", "-VforceUpdate=true"};
+//        }
+//        //Auto update - will block, kill us and relaunch if necessary
+//        try {
+//            ApplicationLauncher.launchApplicationInProcess("346", updaterArgs, null, null, null);
+//
+//            if (UpdateChecker.isUpdateScheduled()) {
+//                UpdateChecker.executeScheduledUpdate(Arrays.asList("-q", "-splash", "\"Updating...\""), true, Arrays.asList(args), null);
+//            }
+//        } catch (Throwable e) {
+//
+//        }
+//    }
 
     private static void pingPong() {
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -440,67 +444,67 @@ public class CreeperLauncher {
         }
     }
 
-    private static void startElectron() {
-        Path electron;
-
-        ArrayList<String> args = new ArrayList<>();
-
-
-        switch (OS.CURRENT) {
-            case MAC:
-                electron = Constants.BIN_LOCATION_OURS.resolve("ftbapp.app");
-                args.add(0, electron.resolve("Contents/MacOS/ftbapp").toAbsolutePath().toString());
-                break;
-            case LINUX:
-                electron = Constants.BIN_LOCATION_OURS.resolve("ftb-app");
-                FileUtils.setFilePermissions(electron);
-
-                args.add(0, electron.toAbsolutePath().toString());
-
-                try {
-                    if (Files.exists(Path.of("/proc/sys/kernel/unprivileged_userns_clone")) && new String(Files.readAllBytes(Path.of("/proc/sys/kernel/unprivileged_userns_clone"))).equals("0")) {
-                        args.add(1, "--no-sandbox");
-                    }
-                } catch (IOException ignored) {
-                }
-                break;
-            default:
-                electron = Constants.BIN_LOCATION_OURS.resolve("ftbapp.exe");
-                args.add(0, electron.toAbsolutePath().toString());
-        }
-
-        args.add("--ws");
-        args.add(WebSocketHandler.getPort() + ":" + Constants.WEBSOCKET_SECRET);
-        args.add("--pid");
-        args.add(String.valueOf(ProcessHandle.current().pid()));
-
-        ProcessBuilder app = new ProcessBuilder(args);
-
-        if (Files.exists(electron)) {
-            try {
-                LOGGER.info("Starting Electron: " + String.join(" ", args));
-                elect = app.start();
-                StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
-                        .setName("Electron STDOUT gobbler")
-                        .setInput(elect.getInputStream())
-                        .setOutput(LOGGER::info);
-                stdoutGobbler.start();
-                StreamGobblerLog stderrGobbler = new StreamGobblerLog()
-                        .setName("Electron STDERR gobbler")
-                        .setInput(elect.getErrorStream())
-                        .setOutput(LOGGER::warn);
-                stderrGobbler.start();
-                elect.onExit().thenRunAsync(() -> {
-                    stdoutGobbler.stop();
-                    stderrGobbler.stop();
-                    CreeperLauncher.exit();
-                });
-            } catch (IOException e) {
-                LOGGER.error("Error starting Electron: ", e);
-            }
-            Runtime.getRuntime().addShutdownHook(new Thread(elect::destroy));
-        }
-    }
+//    private static void startElectron() {
+//        Path electron;
+//
+//        ArrayList<String> args = new ArrayList<>();
+//
+//
+//        switch (OS.CURRENT) {
+//            case MAC:
+//                electron = Constants.BIN_LOCATION_OURS.resolve("ftbapp.app");
+//                args.add(0, electron.resolve("Contents/MacOS/ftbapp").toAbsolutePath().toString());
+//                break;
+//            case LINUX:
+//                electron = Constants.BIN_LOCATION_OURS.resolve("ftb-app");
+//                FileUtils.setFilePermissions(electron);
+//
+//                args.add(0, electron.toAbsolutePath().toString());
+//
+//                try {
+//                    if (Files.exists(Path.of("/proc/sys/kernel/unprivileged_userns_clone")) && new String(Files.readAllBytes(Path.of("/proc/sys/kernel/unprivileged_userns_clone"))).equals("0")) {
+//                        args.add(1, "--no-sandbox");
+//                    }
+//                } catch (IOException ignored) {
+//                }
+//                break;
+//            default:
+//                electron = Constants.BIN_LOCATION_OURS.resolve("ftbapp.exe");
+//                args.add(0, electron.toAbsolutePath().toString());
+//        }
+//
+//        args.add("--ws");
+//        args.add(WebSocketHandler.getPort() + ":" + Constants.WEBSOCKET_SECRET);
+//        args.add("--pid");
+//        args.add(String.valueOf(ProcessHandle.current().pid()));
+//
+//        ProcessBuilder app = new ProcessBuilder(args);
+//
+//        if (Files.exists(electron)) {
+//            try {
+//                LOGGER.info("Starting Electron: " + String.join(" ", args));
+//                elect = app.start();
+//                StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
+//                        .setName("Electron STDOUT gobbler")
+//                        .setInput(elect.getInputStream())
+//                        .setOutput(LOGGER::info);
+//                stdoutGobbler.start();
+//                StreamGobblerLog stderrGobbler = new StreamGobblerLog()
+//                        .setName("Electron STDERR gobbler")
+//                        .setInput(elect.getErrorStream())
+//                        .setOutput(LOGGER::warn);
+//                stderrGobbler.start();
+//                elect.onExit().thenRunAsync(() -> {
+//                    stdoutGobbler.stop();
+//                    stderrGobbler.stop();
+//                    CreeperLauncher.exit();
+//                });
+//            } catch (IOException e) {
+//                LOGGER.error("Error starting Electron: ", e);
+//            }
+//            Runtime.getRuntime().addShutdownHook(new Thread(elect::destroy));
+//        }
+//    }
 
     public static void cleanUpBeforeExit() {
         LOGGER.info("Cleaning up for shutdown");

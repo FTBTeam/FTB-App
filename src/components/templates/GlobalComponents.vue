@@ -31,7 +31,7 @@
     />
 
     <!-- Only checks for an update once during startup -->
-    <changelog v-if="appCompletelyReady" />
+    <changelog />
     <dialogs />
     <alerts />
     

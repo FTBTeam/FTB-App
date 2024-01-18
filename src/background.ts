@@ -56,6 +56,8 @@ if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
   app.setAsDefaultProtocolClient(protocolSpace);
 }
 
+let appCommunicationSetup = false;
+
 let subprocess: ChildProcess | null = null;
 let win: BrowserWindow | null;
 // let friendsWindow: BrowserWindow | null;
@@ -71,25 +73,7 @@ for (let i = 0; i < process.argv.length; i++) {
 
 declare const __static: string;
 
-let wsPort: number;
-let wsSecret: string;
-if (process.argv.indexOf('--ws') !== -1) {
-  logger.debug('App was launched with --ws');
-  const wsArg = process.argv[process.argv.indexOf('--ws') + 1];
-  const wsArgSplit = wsArg.split(':');
-  
-  wsPort = Number(wsArgSplit[0]);
-  wsSecret = wsArgSplit[1];
-  logger.debug(`App websocket data port: ${wsPort}:${wsSecret}`);
-} else {
-  logger.debug("App was not launched with --ws, falling back to default")
-  wsPort = 13377;
-  wsSecret = '';
-}
-
 let userData: any;
-let authData: any;
-let sessionString: string;
 
 ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
@@ -374,26 +358,49 @@ ipcMain.handle("startSubprocess", async (event, args) => {
   
   logger.debug("Starting subprocess", javaPath, argsList)
   // Spawn the process so it can run in the background and capture the output
-  subprocess = spawn(javaPath, argsList, {
-    detached: true,
-    stdio: 'inherit',
-  });
-  
-  subprocess.stderr?.on('data', (data) => {
-    logger.debug("Subprocess stderr", data.toString())
-  });
-  
-  subprocess.stdout?.on('data', (data) => {
-    logger.debug("Subprocess stdout", data.toString())
-  });
-  
-  subprocess?.on('error', (err) => {
-    logger.error("Subprocess error", err)
-  });
-  
-  subprocess?.on('close', (code) => {
-    logger.debug("Subprocess closed", code)
-  });
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject("Subprocess timed out")
+    }, 30_000) // 30 seconds
+    
+    subprocess = spawn(javaPath, argsList, {
+      detached: true,
+      stdio: 'pipe'
+    });
+
+    subprocess.stderr?.on('data', (data) => {
+      logger.debug("Subprocess stderr", data.toString())
+    });
+
+    subprocess.stdout?.on('data', (data) => {
+      logger.debug("Subprocess stdout", data.toString())
+      if (!appCommunicationSetup) {
+        if (data.includes("{T:CI")) {
+          const regex = /{p:([0-9]+);s:([^}]+)}/gi;
+          const matches = regex.exec(data.toString());
+          
+          if (matches !== null) {
+            const [, port, secret] = matches;
+            logger.debug("Found port and secret", port, secret)
+            appCommunicationSetup = true;
+            clearTimeout(timeout);
+            resolve({
+              port,
+              secret
+            }) 
+          }
+        }
+      }
+    });
+
+    subprocess?.on('error', (err) => {
+      logger.error("Subprocess error", err)
+    });
+
+    subprocess?.on('close', (code) => {
+      logger.debug("Subprocess closed", code)
+    });
+  })
 });
 
 // function createFriendsWindow() {

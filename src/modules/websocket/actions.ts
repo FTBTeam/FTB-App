@@ -42,8 +42,5 @@ export const actions: ActionTree<SocketState, RootState> = {
   },
   registerIRCCallback({ commit }: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
     commit('ADD_IRC_MESSAGE_CALLBACK', callback);
-  },
-  registerExitCallback({ commit }: ActionContext<SocketState, RootState>, callback: (data: any) => void) {
-    commit('ADD_EXIT_CALLBACK', callback);
-  },
+  }
 };

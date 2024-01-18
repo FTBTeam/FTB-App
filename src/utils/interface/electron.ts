@@ -252,7 +252,6 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     uploadClientLogs() {},
-    yeetLauncher() {},
 
     restartApp() {
       eLogger.debug("Restarting app")
@@ -296,7 +295,6 @@ const Electron: ElectronOverwolfInterface = {
 
     // we don't need this on electron because it's not silly
     handleDrag() {},
-    setupTitleBar() {},
     setSystemWindowStyle(enabled) {
       ipcRenderer.invoke('setSystemWindowStyle', enabled);
     }
@@ -473,7 +471,7 @@ const Electron: ElectronOverwolfInterface = {
         throw new Error("Failed to find java executable");
       }
       
-      await ipcRenderer.invoke("startSubprocess", {
+      const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
         javaPath: jreExecPath,
         args: [
           "-jar",
@@ -484,8 +482,8 @@ const Electron: ElectronOverwolfInterface = {
       
       // Finally, if the above worked, tell the app to connect to the WS protocol
       return {
-        port: 13377,
-        secret: ""
+        port,
+        secret
       }
     }
   },

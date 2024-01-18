@@ -120,15 +120,6 @@ const Overwolf: ElectronOverwolfInterface = {
       overwolf.utils.uploadClientLogs((result: any) => {
       });
     },
-    
-    yeetLauncher(windowId, cb) {
-      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
-      overwolf.windows.close(windowId);
-      //@ts-ignore
-      if (window.isChat === undefined || window.isChat === false) {
-        cb();
-      }
-    },
 
     // Nothing done for reasons
     onAppReady() {},
@@ -185,13 +176,6 @@ const Overwolf: ElectronOverwolfInterface = {
       }
 
       overwolf.windows.dragMove(windowId);
-    },
-    setupTitleBar(cb: (windowId: any) => void) {
-      overwolf.windows.getCurrentWindow((result: any) => {
-        if (result && result.status === 'success' && result.window && result.window.id) {
-          cb(result.window.id);
-        }
-      });
     },
     expandWindow() {
       overwolf.windows.getCurrentWindow((result: any) => {
@@ -276,9 +260,34 @@ const Overwolf: ElectronOverwolfInterface = {
       // Don't use this on overwolf
       throw new Error("Don't use app.installApp() on Overwolf")
     },
+    /**
+     * Because the subprocess is already started in this instance. We're just going to askk 
+     * the main window for the credentials so we can connect
+     */
     async startSubprocess() {
-      // Don't use this on overwolf
-      throw new Error("Don't use app.startSubprocess() on Overwolf")
+      const mainWindow = overwolf.windows.getMainWindow();
+
+      /**
+       * It's possible it won't be ready yet, so we'll wait for it to be ready
+       */
+      let attempts = 0;
+      return new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+          const data = mainWindow.funcs.wsData()
+          if (data) {
+            resolve({
+              port: data.port,
+              secret: data.secret
+            });
+          } else {
+            attempts++;
+            if (attempts > 30) {
+              clearInterval(interval);
+              reject("Unable to get ws data")
+            }
+          }
+        }, 1_000) // 1 second
+      })
     }
   },
 

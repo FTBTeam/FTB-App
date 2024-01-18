@@ -6,11 +6,6 @@ import platform, {PlatformType} from '@/utils/interface/electron-overwolf';
 export default class VueMixins extends Vue {
   appPlatform: PlatformType = platform;
   
-  created() {
-    const componentName = this.$options.name;
-    console.log(`Created ${componentName}`);
-  }
-  
   openExternal(event: any) {
     event.preventDefault();
     let urlTarget = event.target;

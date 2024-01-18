@@ -17,7 +17,7 @@ public interface WebsocketServer {
 
     enum PortMode {
         DYNAMIC,
-        DYNAMIC_ON_CONNECT,
+//        DYNAMIC_ON_CONNECT,
         STATIC,
     }
 }

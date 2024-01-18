@@ -65,7 +65,6 @@ public class WebSocketHandler {
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
         register("instanceEnableCloudSaves", InstanceEnableCloudSavesData.class, new InstanceEnableCloudSavesHandler());
         register("instanceDisableCloudSaves", InstanceDisableCloudSavesData.class, new InstanceDisableCloudSavesHandler());
-        register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
@@ -105,13 +104,14 @@ public class WebSocketHandler {
         register.put(name, Pair.of(clazz, handler));
     }
 
-    public static void startWebsocket(PortMode portMode) {
+    public static int startWebsocket(PortMode portMode) {
         int port = switch (portMode) {
             case DYNAMIC -> MiscUtils.getRandomEphemeralPort();
-            case STATIC, DYNAMIC_ON_CONNECT -> Constants.WEBSOCKET_PORT;
+            case STATIC -> Constants.WEBSOCKET_PORT;
         };
         server = new NanoHttpdWebsocketServer(port, portMode);
         server.startServer();
+        return port;
     }
 
     public static void restartOnPort(int newPort) {

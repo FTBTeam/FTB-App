@@ -32,7 +32,6 @@ export interface Actions {
   changeExitOverwolfSetting: (value: boolean) => void;
   logoutFromMinetogether: () => void;
   sendSession: (payload: any) => void;
-  yeetLauncher: (windowId: any, cb: () => void) => void;
   onAppReady: () => void;
 
   restartApp(): void;
@@ -54,7 +53,6 @@ export interface Frame {
 
   // Overwolf specific
   handleDrag: (event: any, windowId: any) => void;
-  setupTitleBar: (cb: (windowId: any) => void) => void;
   setSystemWindowStyle(enabled: boolean): void;
 }
 

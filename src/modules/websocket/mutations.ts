@@ -55,10 +55,6 @@ export const mutations: MutationTree<SocketState> = {
       if (!state.socket.isConnected) {
         state.socket.isConnected = true;
       }
-    } else if (message.type === 'yeetLauncher') {
-      if (state.exitCallback) {
-        state.exitCallback(message);
-      }
     } else if (message.type === 'openModal') {
       state.modal = message;
     } else if (message.type === 'closeModal') {
@@ -78,8 +74,5 @@ export const mutations: MutationTree<SocketState> = {
   },
   ADD_PING_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
     state.pingEventCallback = callback;
-  },
-  ADD_EXIT_CALLBACK(state: any, callback: (data: any) => void) {
-    state.exitCallback = callback;
-  },
+  }
 };

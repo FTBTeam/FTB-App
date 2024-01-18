@@ -99,8 +99,7 @@ import {
   VideoCacheHandlerData,
   VideoCacheHandlerReply,
   WebRequestData,
-  WebRequestDataResponse,
-  YeetLauncherData
+  WebRequestDataResponse
 } from '@/core/@types/javaApi';
 import {Nullable} from '@/core/websockets/websocketsApi';
 
@@ -133,7 +132,6 @@ export type MessageType =
   "blockFriend" |
   "addFriend" |
   "instanceMods" |
-  "yeetLauncher" |
   "pong" |
   "ping" |
   "messageClient" |
@@ -274,10 +272,6 @@ export type MessagePayload = {
   "instanceMods": {
     input: InstanceModsData,
     output: InstanceModsDataReply
-  }
-  "yeetLauncher": {
-    input: YeetLauncherData,
-    output: EmptyMessageResponse
   }
   "pong": {
     input: PongLauncherData

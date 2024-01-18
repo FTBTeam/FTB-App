@@ -493,9 +493,6 @@ export interface WebRequestDataResponse extends BaseData {
     body: Body;
 }
 
-export interface YeetLauncherData extends BaseData {
-}
-
 export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerRequest {
     message: string;
     success: boolean;

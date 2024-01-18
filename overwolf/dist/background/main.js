@@ -47,6 +47,7 @@ const ensureBackendIsStopped = async (plugin) => {
 
 let versionData = null;
 const setup = async () => {
+  let wsData = null;
   // Version data
   versionData = await fetch('../../version.json').then(e => e.json());
   
@@ -59,9 +60,30 @@ const setup = async () => {
     return;
   }
   
+  let finishedSetup = false;
+  
   plugin.get().onData.addListener(({ error, output }) => {
     if (error) console.error(error);
-    if (output) console.log(output);
+    if (output) {
+      console.log(output);
+      
+      if (!finishedSetup) {
+        if (data.includes("{T:CI")) {
+          const regex = /{p:([0-9]+);s:([^}]+)}/gi;
+          const matches = regex.exec(data);
+
+          if (matches !== null) {
+            const [, port, secret] = matches;
+            console.log("Found port and secret", data)
+            wsData = {
+              port: parseInt(port),
+              secret
+            }
+            finishedSetup = true;
+          }
+        }
+      }
+    }
   });
   
   await checkIfAdmin();
@@ -94,7 +116,8 @@ const setup = async () => {
   });
   
   return {
-    plugin
+    plugin,
+    wsData
   }
 }
 

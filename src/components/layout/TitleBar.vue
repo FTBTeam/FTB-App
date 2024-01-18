@@ -65,8 +65,6 @@ export default class TitleBar extends Vue {
   
   mounted() {
     this.isMac = os.type() === 'Darwin';
-
-    platform.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
     
     window.addEventListener('blur', this.windowFocusChanged);
     window.addEventListener('focus', this.windowFocusChanged);
