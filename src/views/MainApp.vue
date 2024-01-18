@@ -112,6 +112,8 @@ export default class MainApp extends Vue {
   @Action('loadProfiles', { namespace: 'core' }) loadProfiles!: AsyncFunction;
   @Action('loadInstances', ns("v2/instances")) loadInstances!: AsyncFunction;
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
+  
+  @Action("storeWsSecret", ns("v2/app")) storeWsSecret!: (secret: string) => Promise<void>
 
   private logger = createLogger("MainApp.vue");
   
@@ -168,10 +170,9 @@ export default class MainApp extends Vue {
         
         // TODO: Error check
       }
-      
-      await this.startApp();
     }
-    
+
+    await this.startApp();
     this.appLoaded = true;
   }
   
@@ -209,7 +210,7 @@ export default class MainApp extends Vue {
   async connectToWebsockets(port: number = 13377, secret: string = "") {    
     // Store the secret
     this.logger.info("Starting websocket connection on port", port, "with secret", secret);
-    
+    await this.storeWsSecret(secret);
     this.$connect('ws://localhost:' + port);
   }
 

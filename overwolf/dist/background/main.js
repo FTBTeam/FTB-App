@@ -1,4 +1,4 @@
-const checkIfAdmin = async () => {  
+const checkIfAdmin = async (plugin) => {  
   // Check if running as admin
   // Has the user ignored the warning?
   let hasIgnoredWarning = localStorage.getItem("hasIgnoredAdminWarning");
@@ -36,20 +36,20 @@ const checkIfAdmin = async () => {
 }
 
 const ensureBackendIsStopped = async (plugin) => {
-  let backgroundProcess = plugin.IsJavaStillRunning();
+  let backgroundProcess = plugin.get().IsJavaStillRunning();
   if (backgroundProcess) {
     console.log('Yeeting old java process');
-    plugin.YeetOldJavaProcess();
+    plugin.get().YeetOldJavaProcess();
   } else {
     console.log('No old java process');
   }
 }
 
 let versionData = null;
+let wsData = null;
 const setup = async () => {
-  let wsData = null;
   // Version data
-  versionData = await fetch('../../version.json').then(e => e.json());
+  versionData = await fetch('../desktop/version.json').then(e => e.json());
   
   const plugin = new OverwolfPlugin('OverwolfShim', true);
 
@@ -68,30 +68,32 @@ const setup = async () => {
       console.log(output);
       
       if (!finishedSetup) {
-        if (data.includes("{T:CI")) {
+        if (output.includes("{T:CI")) {
           const regex = /{p:([0-9]+);s:([^}]+)}/gi;
-          const matches = regex.exec(data);
+          const matches = regex.exec(output);
 
           if (matches !== null) {
             const [, port, secret] = matches;
-            console.log("Found port and secret", data)
+            console.log("Found port and secret", output)
             wsData = {
               port: parseInt(port),
               secret
             }
             finishedSetup = true;
+            
+            console.log(wsData)
           }
         }
       }
     }
   });
   
-  await checkIfAdmin();
-  await ensureBackendIsStopped(plugin);
-  
   // Launch the backend
-  const startupResponse = await p(plugin.get().LaunchJava, version, false);
+  const startupResponse = await p(plugin.get().LaunchJava, versionData.jarVersion, false);
   console.debug(JSON.stringify(startupResponse));
+  
+  await checkIfAdmin(plugin);
+  await ensureBackendIsStopped(plugin);
 
   const {pid: processId} = startupResponse;
 
@@ -116,23 +118,27 @@ const setup = async () => {
   });
   
   return {
-    plugin,
-    wsData
+    plugin
   }
 }
 
 let app = null;
 setup()
-  .then(e => app = e)
+  .then(e => {
+    console.log("Finished setup");
+    app = e;
+    console.log(app)
+  })
   .catch(e => console.error("Failed to setup app", e));
 
-const funcs = {
+const appFunctions = {
   /**
    * Crypto module is not available in OW so we use C# to do it
-   * @returns {*}
    */
-  randomUUID: () => app.plugin.get().randomUUID(),
-  wsData: () => app.wsData, // TODO: Finish this
+  randomUUID: () => {
+    return app.plugin.get().RandomUUID();
+  },
+  wsData: () => wsData,
   async restartApp() {
     // Get the current index window and close it
     const window = await p(overwolf.windows.obtainDeclaredWindow, 'index')
@@ -174,6 +180,10 @@ const funcs = {
       return null;
     }
   }
+}
+
+function funcs() {
+  return appFunctions;
 }
 
 let protocolURL = undefined;

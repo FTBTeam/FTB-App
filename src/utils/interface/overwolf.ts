@@ -56,7 +56,7 @@ const Overwolf: ElectronOverwolfInterface = {
     
     crypto: {
       randomUUID(): string {
-        return overwolf.windows.getMainWindow().funcs.randomUUID() as string;
+        return overwolf.windows.getMainWindow().funcs().randomUUID() as string;
       }
     },
 
@@ -95,7 +95,7 @@ const Overwolf: ElectronOverwolfInterface = {
 
     async openLogin(cb: (data: any) => void) {
       owLogger.debug("Starting webserver and attempting to open Minetogether")
-      await overwolf.windows.getMainWindow().funcs.openWebserver(cb);
+      await overwolf.windows.getMainWindow().funcs().openWebserver(cb);
       overwolf.utils.openUrlInDefaultBrowser(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
     },
 
@@ -127,7 +127,7 @@ const Overwolf: ElectronOverwolfInterface = {
     
     restartApp() {
       owLogger.debug("Restarting app")
-      overwolf.windows.getMainWindow().funcs.restartApp();
+      overwolf.windows.getMainWindow().funcs().restartApp();
     }
   },
 
@@ -266,15 +266,18 @@ const Overwolf: ElectronOverwolfInterface = {
      */
     async startSubprocess() {
       const mainWindow = overwolf.windows.getMainWindow();
+      console.log("Main window", Object.keys(mainWindow))
 
       /**
        * It's possible it won't be ready yet, so we'll wait for it to be ready
        */
+      console.log("Attempting to get ws data")
       let attempts = 0;
       return new Promise((resolve, reject) => {
         const interval = setInterval(() => {
-          const data = mainWindow.funcs.wsData()
+          const data = mainWindow.funcs().wsData()
           if (data) {
+            clearInterval(interval)
             resolve({
               port: data.port,
               secret: data.secret
@@ -294,10 +297,10 @@ const Overwolf: ElectronOverwolfInterface = {
   setupApp(vm) {
     owLogger.info('Setting up app for overwolf')
     // setup websockets and the actual window
-    let mainWindow = overwolf.windows.getMainWindow();    
-    let initialData = mainWindow.getWebsocketData();
+    // let mainWindow = overwolf.windows.getMainWindow();    
+    // let initialData = mainWindow.getWebsocketData();
     
-    owLogger.info('Initial data', initialData);
+    // owLogger.info('Initial data', initialData);
     let ws: WebSocket;
     let reconnectCount = 0;
     
@@ -349,55 +352,55 @@ const Overwolf: ElectronOverwolfInterface = {
       }
     }
 
-    function setupWS(port: Number = 13377) {
-      owLogger.info("Setting up WS", port)
-      ws = new WebSocket('ws://localhost:' + port);
-      Vue.prototype.$socket = ws;
-      ws.addEventListener('message', (event) => {
-        let content = JSON.parse(event.data);
-        if (!(content?.type && content?.type !== '' && content?.type.startsWith('profiles.'))) {
-          logVerbose(store.state, event.data);
-        } else {
-          logVerbose(store.state, 'Rejecting logging of profile data');
-        }
-        if (content.port && content.secret) {
-          ws.close(4000, 'newport');
-          store.commit('STORE_WS', content);
-          mainWindow.setWSData(content);
-          setupWS(content.port);
-        } else {
-          store.commit('SOCKET_ONMESSAGE', content);
-        }
-      });
-      ws.addEventListener('open', (event) => {
-        owLogger.info('Connected to socket!', mainWindow.getWebsocketData());
-        if (mainWindow.getWebsocketData().dev || mainWindow.getWebsocketData().secret !== undefined) {
-          owLogger.info("Socket opened correctly and ready!")
-          setTimeout(() => {
-            store.commit('SOCKET_ONOPEN');
-            onConnect();
-          }, 200);
-        }
-        reconnectCount = 0;
-      });
-      ws.addEventListener('error', (err) => {
-        owLogger.error('Error with socket', err);
-        store.commit('SOCKET_ONERROR', err);
-      });
-      ws.addEventListener('close', (event) => {
-        if (event.target !== ws) {
-          return;
-        }
-        owLogger.info('Socket closed!', event.code, event.reason)
-        if (event.reason !== 'newport' || (port === 13377 && mainWindow.getWebsocketData().secret !== undefined)) {
-          setTimeout(() => setupWS(port), 1000);
-          reconnectCount++;
-          owLogger.info("Socket closed incorrectly, retrying connection: ", reconnectCount);
-          setTimeout(() => store.commit('SOCKET_RECONNECT', reconnectCount), 200);
-        }
-        setTimeout(() => store.commit('SOCKET_ONCLOSE', event), 200);
-      });
-    }
+    // function setupWS(port: Number = 13377) {
+    //   owLogger.info("Setting up WS", port)
+    //   ws = new WebSocket('ws://localhost:' + port);
+    //   Vue.prototype.$socket = ws;
+    //   ws.addEventListener('message', (event) => {
+    //     let content = JSON.parse(event.data);
+    //     if (!(content?.type && content?.type !== '' && content?.type.startsWith('profiles.'))) {
+    //       logVerbose(store.state, event.data);
+    //     } else {
+    //       logVerbose(store.state, 'Rejecting logging of profile data');
+    //     }
+    //     if (content.port && content.secret) {
+    //       ws.close(4000, 'newport');
+    //       store.commit('STORE_WS', content);
+    //       mainWindow.setWSData(content);
+    //       setupWS(content.port);
+    //     } else {
+    //       store.commit('SOCKET_ONMESSAGE', content);
+    //     }
+    //   });
+    //   ws.addEventListener('open', (event) => {
+    //     owLogger.info('Connected to socket!', mainWindow.getWebsocketData());
+    //     if (mainWindow.getWebsocketData().dev || mainWindow.getWebsocketData().secret !== undefined) {
+    //       owLogger.info("Socket opened correctly and ready!")
+    //       setTimeout(() => {
+    //         store.commit('SOCKET_ONOPEN');
+    //         onConnect();
+    //       }, 200);
+    //     }
+    //     reconnectCount = 0;
+    //   });
+    //   ws.addEventListener('error', (err) => {
+    //     owLogger.error('Error with socket', err);
+    //     store.commit('SOCKET_ONERROR', err);
+    //   });
+    //   ws.addEventListener('close', (event) => {
+    //     if (event.target !== ws) {
+    //       return;
+    //     }
+    //     owLogger.info('Socket closed!', event.code, event.reason)
+    //     if (event.reason !== 'newport' || (port === 13377 && mainWindow.getWebsocketData().secret !== undefined)) {
+    //       setTimeout(() => setupWS(port), 1000);
+    //       reconnectCount++;
+    //       owLogger.info("Socket closed incorrectly, retrying connection: ", reconnectCount);
+    //       setTimeout(() => store.commit('SOCKET_RECONNECT', reconnectCount), 200);
+    //     }
+    //     setTimeout(() => store.commit('SOCKET_ONCLOSE', event), 200);
+    //   });
+    // }
 
     function parseAndHandleURL(protocolURL: string) {
       handleAction(protocolURL);
@@ -451,18 +454,17 @@ const Overwolf: ElectronOverwolfInterface = {
       // }
     }
 
-    handleWSInfo(initialData.port, true, initialData.secret, initialData.dev);
-
-    function handleWSInfo(port: Number, isFirstConnect: Boolean = false, secret?: String, dev?: Boolean) {
-      owLogger.info('Handling WS INFO', port, secret, dev);
-      setupWS(port);
-      if (secret && !dev) {
-        owLogger.info("Setting up ws secret")
-        store.commit('STORE_WS', initialData);
-      }
-    }
-
-    mainWindow.setNewWebsocketCallback(handleWSInfo);
+    // handleWSInfo(initialData.port, true, initialData.secret, initialData.dev);
+    //
+    // function handleWSInfo(port: Number, isFirstConnect: Boolean = false, secret?: String, dev?: Boolean) {
+    //   owLogger.info('Handling WS INFO', port, secret, dev);
+    //   // setupWS(port);
+    //   if (secret && !dev) {
+    //     owLogger.info("Setting up ws secret")
+    //     store.commit('STORE_WS', initialData);
+    //   }
+    // }
+    
     //@ts-ignore
     if (window.isChat === undefined || !window.isChat) {
       //@ts-ignore
