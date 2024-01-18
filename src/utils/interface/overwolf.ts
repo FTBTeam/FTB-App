@@ -153,20 +153,7 @@ const Overwolf: ElectronOverwolfInterface = {
     changeExitOverwolfSetting(value: boolean) {
       overwolf.settings.setExtensionSettings({ exit_overwolf_on_exit: value }, (data: any) => {});
     },
-
-    logoutFromMinetogether() {
-      owLogger.debug("Logging out of MineTogether")
-      overwolf.windows.obtainDeclaredWindow('chat', (result: any) => {
-        if (result.success && result.window.isVisible) {
-          overwolf.windows.close(result.window.id);
-        }
-      });
-    },
-
-    setUser(payload) {
-      overwolf.windows.getMainWindow().setAuthData(payload);
-    },
-
+    
     uploadClientLogs() {
       overwolf.utils.uploadClientLogs((result: any) => {
       });
@@ -180,7 +167,6 @@ const Overwolf: ElectronOverwolfInterface = {
         parseAndHandleURL(launchedProtoURL);
       }
     },
-    sendSession() {},
     
     restartApp() {
       owLogger.debug("Restarting app")
@@ -225,6 +211,17 @@ const Overwolf: ElectronOverwolfInterface = {
       } else {
         overwolf.windows.maximize(windowId);
       }
+    },
+    async getWindowId() {
+      return new Promise((resolve, reject) => {
+        overwolf.windows.getCurrentWindow((result: any) => {
+          if (result && result.status === 'success' && result.window && result.window.id) {
+            resolve(result.window.id as string);
+          } else {
+            reject(result);
+          }
+        });
+      });
     },
     // we don't need this on electron because it's not silly
     handleDrag(event: any, windowId: any) {

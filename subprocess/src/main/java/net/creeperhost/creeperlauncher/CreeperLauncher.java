@@ -175,6 +175,7 @@ public class CreeperLauncher {
             }
             
             var port = WebSocketHandler.startWebsocket(portMode);
+            // Common format both electron and overwolf can understand
             LOGGER.info("{T:CI={p:%s;s:%s}}".formatted(port, Constants.WEBSOCKET_SECRET), port);
             if (OS.CURRENT == OS.WIN) pingPong();
         } catch (Throwable t) {

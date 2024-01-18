@@ -28,10 +28,7 @@ export interface Actions {
   uploadClientLogs: () => void;
 
   // Res only used on overwolf
-  setUser: (payload: any) => void;
   changeExitOverwolfSetting: (value: boolean) => void;
-  logoutFromMinetogether: () => void;
-  sendSession: (payload: any) => void;
   onAppReady: () => void;
 
   restartApp(): void;
@@ -51,7 +48,9 @@ export interface Frame {
   expandWindow: () => void;
   collapseWindow: () => void;
 
+  
   // Overwolf specific
+  getWindowId: () => Promise<string>;
   handleDrag: (event: any, windowId: any) => void;
   setSystemWindowStyle(enabled: boolean): void;
 }

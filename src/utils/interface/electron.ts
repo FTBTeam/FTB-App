@@ -228,23 +228,8 @@ const Electron: ElectronOverwolfInterface = {
       cb(result);
     },
 
-    logoutFromMinetogether() {
-      eLogger.debug("Logging out from minetogether")
-      ipcRenderer.send('logout');
-    },
-
     // Obviously do nothing
-    changeExitOverwolfSetting() {},
-    
-    setUser(payload) {
-      eLogger.debug("Setting MT user")
-      ipcRenderer.send('user', payload.user);
-    },
-
-    sendSession(payload) {
-      eLogger.debug("Sending session (MT)")
-      ipcRenderer.send('session', payload);
-    },
+    changeExitOverwolfSetting() {},    
 
     onAppReady() {
       eLogger.debug("Interface has been told the app is ready")
@@ -294,6 +279,9 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     // we don't need this on electron because it's not silly
+    async getWindowId() {
+      return ""
+    },
     handleDrag() {},
     setSystemWindowStyle(enabled) {
       ipcRenderer.invoke('setSystemWindowStyle', enabled);

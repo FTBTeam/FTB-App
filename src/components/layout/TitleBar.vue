@@ -50,6 +50,7 @@ import {SettingsState} from '@/modules/settings/types';
 import os from 'os';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
+import {createLogger} from '@/core/logger';
 
 @Component
 export default class TitleBar extends Vue {
@@ -58,13 +59,18 @@ export default class TitleBar extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
   @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
   
-  public isMac: boolean = false;
+  private logger = createLogger('TitleBar.vue'); 
   private windowId: string | null = null;
+  
+  isMac: boolean = false;
 
   blurred = false;
   
-  mounted() {
+  async mounted() {
     this.isMac = os.type() === 'Darwin';
+    
+    this.windowId = await platform.get.frame.getWindowId();
+    this.logger.debug('Window ID', this.windowId)
     
     window.addEventListener('blur', this.windowFocusChanged);
     window.addEventListener('focus', this.windowFocusChanged);

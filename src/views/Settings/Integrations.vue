@@ -106,8 +106,6 @@ export default class AppInfo extends Vue {
     // get instances and store
     sendMessage("ircQuitRequest", {})
 
-    platform.get.actions.logoutFromMinetogether();
-
     this.settings.settings.sessionString = undefined;
     this.saveSettings(this.settings.settings);
   }

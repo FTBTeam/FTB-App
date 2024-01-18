@@ -97,9 +97,7 @@ export default class MTIntegration extends Vue {
     gobbleError(() => {
       sendMessage("ircQuitRequest", {})
     })
-
-    platform.get.actions.logoutFromMinetogether();
-
+    
     this.settings.settings.sessionString = undefined;
     this.saveSettings(this.settings.settings);
 

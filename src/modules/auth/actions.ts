@@ -1,7 +1,6 @@
 import {ActionTree} from 'vuex';
 import {AuthState} from './types';
 import {RootState} from '@/types';
-import platfrom from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {createLogger} from '@/core/logger';
@@ -68,9 +67,9 @@ export const actions: ActionTree<AuthState, RootState> = {
         commit('loggedIn');
       }
     }
-    platfrom.get.actions.setUser(
-      platfrom.isElectron() ? { user } : { token: payload, 'app-auth': (response as any)['app-auth'] },
-    );
+    // platfrom.get.actions.setUser(
+    //   platfrom.isElectron() ? { user } : { token: payload, 'app-auth': (response as any)['app-auth'] },
+    // );
     dispatch('storeAuthDetails', user);
     commit('loggedIn');
   },
@@ -111,12 +110,11 @@ export const actions: ActionTree<AuthState, RootState> = {
       }
     }
 
-    platfrom.get.actions.setUser(
-      platfrom.isElectron() ? { user } : { token: request.headers.get('app-token'), 'app-auth': payload },
-    );
+    // platfrom.get.actions.setUser(
+    //   platfrom.isElectron() ? { user } : { token: request.headers.get('app-token'), 'app-auth': payload },
+    // );
     dispatch('storeAuthDetails', user);
     commit('storeSession', request.headers.get('app-token'));
-    platfrom.get.actions.sendSession(request.headers.get('app-token'));
     commit('loggedIn');
   },
   async storeAuthDetails({ rootState, commit, dispatch }, payload: any) {
