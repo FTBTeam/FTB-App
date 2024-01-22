@@ -1,49 +1,19 @@
 // @ts-nocheck
 
+export interface SettingsData {
+    spec: string;
+    instanceLocation: string;
+    general: GeneralSettings;
+    instanceDefaults: InstanceSettings;
+    appearance: AppearanceSettings;
+    proxy: ProxySettings;
+    download: DownloadSettings;
+}
+
 export interface BaseData {
     type: string;
     requestId: string;
     secret: string;
-}
-
-export interface AcceptedFriendData extends BaseData {
-    friendName: string;
-    friendData: any;
-}
-
-export interface AddFriendData extends BaseData {
-    target: string;
-}
-
-export interface AddFriendDataReply extends BaseData {
-    status: boolean;
-    message: string;
-    hash: string;
-}
-
-export interface BlockFriendData extends BaseData {
-    hash: string;
-}
-
-export interface FriendData extends BaseData {
-    profile: Profile;
-}
-
-export interface GetFriendsData extends BaseData {
-}
-
-export interface GetFriendsDataReply extends BaseData {
-    online: Profile[];
-    offline: Profile[];
-    pending: Profile[];
-}
-
-export interface OnlineFriendData extends FriendData {
-}
-
-export interface RequestFriendData extends BaseData {
-    friendName: string;
-    friendData: any;
 }
 
 export interface BrowseInstanceData extends BaseData {
@@ -350,30 +320,6 @@ export interface UninstallInstanceDataReply extends BaseData {
 export interface UpdateInstanceData extends InstallInstanceData {
 }
 
-export interface IRCConnectData extends BaseData {
-    host: string;
-    port: number;
-    nick: string;
-    realname: string;
-}
-
-export interface IRCEventMessageData extends BaseData {
-    target: string;
-    message: string;
-    nick: string;
-}
-
-export interface IRCPartyInviteData extends FriendData {
-}
-
-export interface IRCQuitRequestData extends BaseData {
-}
-
-export interface IRCSendMessageData extends BaseData {
-    nick: string;
-    message: string;
-}
-
 export interface ClientLaunchData extends BaseData {
 }
 
@@ -555,6 +501,16 @@ export interface InstanceRestoreBackupHandlerRequest extends BaseData {
     backupLocation: string;
 }
 
+export interface MineTogetherAuthenticationHandlerData extends BaseData {
+    authType: string;
+    apiKey: string;
+    appToken: string;
+}
+
+export interface MineTogetherAuthenticationHandlerReply extends MineTogetherAuthenticationHandlerData {
+    success: boolean;
+}
+
 export interface VideoCacheHandlerData extends BaseData {
     url: string;
     fileName: string;
@@ -650,28 +606,39 @@ export interface StoragePutHandlerReply extends StoragePutHandlerData {
     success: boolean;
 }
 
-export interface Profile {
-    longHash: string;
-    shortHash: string;
-    mediumHash: string;
-    online: boolean;
-    display: string;
-    premium: boolean;
-    userDisplay: string;
-    friend: boolean;
-    lastFriendCheck: number;
-    friendName: string;
-    friendCode: string;
-    banned: boolean;
-    packID: string;
-    lastOnlineCheck: number;
-    isOnline: boolean;
-    isLoadingProfile: boolean;
-    profileAge: number;
-    hasAccount: boolean;
-    muted: boolean;
-    isPartyMember: boolean;
-    pending: boolean;
+export interface GeneralSettings {
+    releaseChannel: string;
+    cacheLife: number;
+    exitOverwolf: boolean;
+    verbose: boolean;
+}
+
+export interface InstanceSettings {
+    width: number;
+    height: number;
+    memory: number;
+    fullscreen: boolean;
+    updateChannel: string;
+    javaArgs: { [index: string]: string };
+    shellArgs: { [index: string]: string };
+}
+
+export interface AppearanceSettings {
+    useSystemWindowStyle: boolean;
+    showAds: boolean;
+}
+
+export interface ProxySettings {
+    type: string;
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+}
+
+export interface DownloadSettings {
+    threadLimit: number;
+    speedLimit: number;
 }
 
 export interface InstanceJson {

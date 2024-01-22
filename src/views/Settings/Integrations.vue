@@ -76,36 +76,39 @@ export default class AppInfo extends Vue {
   @State('settings') private settings!: SettingsState;
   @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
 
   get avatarName() {
     return this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth')?.identityProvider
   }
 
   private openLogin() {
-    platform.get.actions.openLogin((data: { token: string; 'app-auth': string } | null) => {
+    platform.get.actions.openLogin(async (data: { token: string; 'app-auth': string } | null) => {
       if (data === null) {
         return;
       }
 
-      if (data.token) {
-        this.setSessionID(data.token);
-      }
-      if (data['app-auth']) {
-        let settings = this.settings?.settings;
-        if (settings !== undefined) {
-          settings.sessionString = data['app-auth'];
-        }
-        this.saveSettings(settings);
-      }
+      await sendMessage("minetogetherAuthentication", {
+        authType: "login",
+        apiKey: data.token,
+        appToken: data['app-auth']
+      })
+      
+      // if (data.token) {
+      //   this.setSessionID(data.token);
+      // }
+      // if (data['app-auth']) {
+      //   let settings = this.settings?.settings;
+      //   if (settings !== undefined) {
+      //     settings.sessionString = data['app-auth'];
+      //   }
+      //   this.saveSettings(settings);
+      // }
     });
   }
 
   public logout() {
     this.logoutAction();
     // get instances and store
-    sendMessage("ircQuitRequest", {})
-
     this.settings.settings.sessionString = undefined;
     this.saveSettings(this.settings.settings);
   }

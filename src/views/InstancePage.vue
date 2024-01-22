@@ -102,7 +102,6 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {ModPack, Versions} from '@/modules/modpacks/types';
 import {Action, Getter, State} from 'vuex-class';
-import {AuthState} from '@/modules/auth/types';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
@@ -150,8 +149,6 @@ export default class InstancePage extends Vue {
   @State('websocket') public websockets!: SocketState;
   @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
-  
-  @State('auth') public auth!: AuthState;
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;

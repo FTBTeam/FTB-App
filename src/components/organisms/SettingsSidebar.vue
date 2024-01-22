@@ -76,7 +76,7 @@ import {RouterNames} from '@/router';
 
 @Component
 export default class SettingsSidebar extends Vue {
-  @State('auth') private auth!: AuthState;
+  @State('auth') auth!: AuthState;
 
   platform = platform;
   RouterNames = RouterNames;

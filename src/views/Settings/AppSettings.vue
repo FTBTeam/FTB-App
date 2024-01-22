@@ -122,8 +122,6 @@
       :align-right="true"
     />
     
-    <!--      :disabled="auth.token === null ? 'true' : ''"-->
-    <!--      :value="localSettings.enableChat"-->
   </div>
 </template>
 
@@ -132,7 +130,6 @@ import {Component, Vue} from 'vue-property-decorator';
 import {Settings, SettingsState} from '@/modules/settings/types';
 import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import {AuthState} from '@/modules/auth/types';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import os from 'os';
@@ -149,7 +146,6 @@ import {InstanceActions} from '@/core/actions/instanceActions';
   },
 })
 export default class AppSettings extends Vue {
-  @State('auth') auth!: AuthState;
   @State('settings') settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
@@ -174,14 +170,7 @@ export default class AppSettings extends Vue {
     this.localSettings.enablePreview = value;
     this.saveSettings(this.localSettings);
   }
-
-  enableChat(value: boolean): void {
-    if (this.auth.token !== null) {
-      this.localSettings.enableChat = value;
-      this.saveSettings(this.localSettings);
-    }
-  }
-
+  
   exitOverwolf(value: boolean): void {
     this.localSettings.exitOverwolf = value;
     this.saveSettings(this.localSettings);

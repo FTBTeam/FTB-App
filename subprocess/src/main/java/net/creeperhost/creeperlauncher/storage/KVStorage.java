@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher;
+package net.creeperhost.creeperlauncher.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -6,6 +6,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
+import net.creeperhost.creeperlauncher.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,7 +23,7 @@ import java.util.Map;
  * <p>
  * This is very similar to how localStorage works in electron, but I want it to save to file instead of the app.
  */
-public class GenericStorage {
+public class KVStorage {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -31,17 +32,17 @@ public class GenericStorage {
     private static final Path STORAGE_FILE = Constants.getDataDir().resolve("storage/storage.json");
     private final Map<String, String> data;
 
-    private static GenericStorage INSTANCE;
+    private static KVStorage INSTANCE;
 
-    public static GenericStorage getInstance() {
+    public static KVStorage getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new GenericStorage(load());
+            INSTANCE = new KVStorage(load());
         }
 
         return INSTANCE;
     }
 
-    public GenericStorage(Map<String, String> data) {
+    public KVStorage(Map<String, String> data) {
         this.data = data;
     }
 

@@ -1,9 +1,9 @@
 package net.creeperhost.creeperlauncher.api.handlers.storage;
 
-import net.creeperhost.creeperlauncher.GenericStorage;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.storage.KVStorage;
 
 import javax.annotation.Nullable;
 
@@ -15,7 +15,7 @@ public class StorageGetHandler implements IMessageHandler<StorageGetHandler.Data
             return;
         }
 
-        WebSocketHandler.sendMessage(new Reply(data, GenericStorage.getInstance().getValue(data.key)));
+        WebSocketHandler.sendMessage(new Reply(data, KVStorage.getInstance().getValue(data.key)));
     }
 
     public static class Data extends BaseData {

@@ -5,7 +5,6 @@ import {websocket} from './websocket';
 import {settings} from './settings';
 import {auth} from './auth';
 import {core} from '@/modules/core/core';
-import {appStore} from '@/modules/app/appStore';
 import {modpackStateModule} from '@/core/state/modpacks/modpacksState';
 import {instanceStateModule} from '@/core/state/instances/instancesState';
 import {installStateModule} from '@/core/state/instances/installState';
@@ -22,21 +21,13 @@ interface SecretMessage {
 }
 
 export const mutations: MutationTree<RootState> = {
-  STORE_WS(state: any, data: SecretMessage) {
-    state.wsPort = data.port;
-    state.wsSecret = data.secret;
-  },
   HIDE_MODAL(state: any) {
     state.websocket.modal = null;
   },
 };
 
 const store: StoreOptions<RootState> = {
-  state: {
-    version: '1.0.0',
-    wsPort: 0,
-    wsSecret: '',
-  } as any,
+  state: {} as any,
   actions: {
     hideModal: ({ commit }: any) => {
       commit('HIDE_MODAL');
@@ -50,7 +41,6 @@ const store: StoreOptions<RootState> = {
     // discovery,
     // servers,
     core,
-    app: appStore,
     "v2/app": coreAppStateModule,
     "v2/modpacks": modpackStateModule,
     "v2/instances": instanceStateModule,

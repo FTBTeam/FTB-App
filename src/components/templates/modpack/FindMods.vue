@@ -108,11 +108,9 @@
 </template>
 
 <script lang="ts">
-import {AuthState} from '@/modules/auth/types';
 import {Mod} from '@/types';
 import {debounce} from '@/utils';
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
-import {State} from 'vuex-class';
 import FTBSearchBar from '../../atoms/input/FTBSearchBar.vue';
 import ModCard from '../../molecules/modpack/ModCard.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
@@ -128,8 +126,6 @@ import {compatibleCrossLoaderPlatforms, resolveModloader} from '@/utils/helpers/
   },
 })
 export default class FindMods extends Vue {
-  @State('auth') public auth!: AuthState;
-
   // Normal
   @Prop() instance!: InstanceJson;
   @Prop() installedMods!: [number, number][];

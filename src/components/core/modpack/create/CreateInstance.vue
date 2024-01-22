@@ -130,7 +130,7 @@ import {AuthState} from '@/modules/auth/types';
   }
 })
 export default class CreateInstance extends Vue {
-  @State('auth') public auth!: AuthState;
+  @State('auth') auth!: AuthState;
   @State('settings') public settingsState!: SettingsState;
   
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
@@ -266,7 +266,7 @@ export default class CreateInstance extends Vue {
       fullscreen: this.settingFullscreen === this.settingsState.settings.fullScreen ? undefined : this.settingFullscreen,
       width: this.userWidth == this.settingsState.settings.width ? undefined : this.userWidth,
       height: this.userHeight == this.settingsState.settings.height ? undefined : this.userHeight,
-      cloudSaves: this.userCloudSaves === this.settingsState.settings.cloudSaves ? undefined : this.userCloudSaves,
+      cloudSaves: this.userCloudSaves,
     }
     
     // Magic

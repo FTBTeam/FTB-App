@@ -20,17 +20,7 @@
       </div>
     </div>
 
-    <div class="">
-<!--      <ftb-toggle-->
-<!--        label="Automatically open friends list"-->
-<!--        :value="settings.settings.autoOpenChat === true || settings.settings.autoOpenChat === 'true'"-->
-<!--        onColor="bg-primary"-->
-<!--        @change="toggleAutoOpenChat"-->
-<!--        :disabled="true"-->
-<!--        class="mb-8"-->
-<!--        small="When enabled, the MineTogether friends list will automatically open in a new window on startup. Currently disabled."-->
-<!--      />-->
-      
+    <div class="">      
       <ui-toggle
         label="Show adverts"
         desc="Any paid plan can optionally disable ads throughout the app"
@@ -48,8 +38,6 @@ import {Action, State} from 'vuex-class';
 import {AuthState} from '@/modules/auth/types';
 import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
@@ -71,11 +59,6 @@ export default class MTIntegration extends Vue {
     return this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth')?.userId
   }
 
-  public toggleAutoOpenChat(value: boolean) {
-    this.settings.settings.autoOpenChat = value;
-    this.saveSettings(this.settings.settings);
-  }
-
   public toggleAdverts(value: boolean) {
     this.settings.settings.showAdverts = value;
     this.saveSettings(this.settings.settings);
@@ -93,10 +76,6 @@ export default class MTIntegration extends Vue {
 
   public logout() {
     this.logoutAction();
-    // get instances and store
-    gobbleError(() => {
-      sendMessage("ircQuitRequest", {})
-    })
     
     this.settings.settings.sessionString = undefined;
     this.saveSettings(this.settings.settings);

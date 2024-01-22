@@ -28,9 +28,10 @@ export const mutations: MutationTree<SocketState> = {
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
     if (message.type !== 'ping' && message.type !== 'pong') {
       const { requestId, type, ...rest } = message;
-      // if (message.type !== "launchInstance.logs") {
-      //   logger.debug(`WS Message: [${message.requestId ?? 'unknown'}::${message.type}]`, rest)
-      // }
+      if (message.type !== "launchInstance.logs") {
+        // Done like this to avoid being seen when searching for the normal version
+        console["debug"](`WS Message: [${message.requestId ?? 'unknown'}::${message.type}]`, rest)
+      }
       emitter.emit('ws.message', message);
     }
 

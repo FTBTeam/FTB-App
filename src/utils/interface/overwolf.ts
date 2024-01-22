@@ -44,24 +44,6 @@ function parseAndHandleURL(protocolURL: string) {
   //       });
   //     }
   //   }
-  // } else if (command === 'instance') {
-  //   if (args.length === 0) {
-  //     return;
-  //   }
-  //   const instanceID = args[0];
-  //   if (args.length === 1) {
-  //     // Open instance page
-  //     router.push({ name: 'instancepage', query: { uuid: instanceID } });
-  //   } else if (args.length === 2) {
-  //     // Start instance
-  //     router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
-  //   }
-  // } else if (command === 'server') {
-  //   if (args.length === 0) {
-  //     return;
-  //   }
-  //   const serverID = args[0];
-  //   router.push({ name: 'server', query: { serverid: serverID } });
   // }
 }
 
@@ -375,22 +357,22 @@ const Overwolf: ElectronOverwolfInterface = {
       });
     })
       .then(async (height: any) => {
-      const manifestData: any = await new Promise(resolve => overwolf.extensions.current.getManifest((manifest: any) => resolve(manifest)));
-      const indexWindow = manifestData.data.windows.index;
-
-      owLogger.info("Index window", indexWindow)
-      
-      if (height < 880) {
-        owLogger.info("Setting min size for index window")
-        overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, (e: any) => owLogger.debug("Set min size error", e));
-        if (!(window as any).ftbFlags) {
-          (window as any).ftbFlags = {};
+        const manifestData: any = await new Promise(resolve => overwolf.extensions.current.getManifest((manifest: any) => resolve(manifest)));
+        const indexWindow = manifestData.data.windows.index;
+  
+        owLogger.info("Index window", indexWindow)
+        
+        if (height < 880) {
+          owLogger.info("Setting min size for index window")
+          overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, (e: any) => owLogger.debug("Set min size error", e));
+          if (!(window as any).ftbFlags) {
+            (window as any).ftbFlags = {};
+          }
+  
+          (window as any).ftbFlags.smallMonitor = true;
         }
-
-        (window as any).ftbFlags.smallMonitor = true;
-      }
-    })
-    
+      })
+      
     //@ts-ignore
     if (window.isChat === undefined || !window.isChat) {
       //@ts-ignore

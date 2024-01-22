@@ -1,14 +1,11 @@
 import {
   AccountIsValidHandlerData,
   AccountIsValidHandlerReply,
-  AddFriendData,
-  AddFriendDataReply,
   AuthenticateMcProfileHandlerData,
   AuthenticateMcProfileHandlerReply,
   AuthenticateMsProfileHandlerData,
   AuthenticateMsProfileHandlerReply,
   BaseData,
-  BlockFriendData,
   BrowseInstanceData,
   BrowseInstanceDataReply,
   CancelInstallInstanceData,
@@ -21,8 +18,6 @@ import {
   DuplicateInstanceHandlerRequest,
   FileHashData,
   FileHashDataReply,
-  GetFriendsData,
-  GetFriendsDataReply,
   GetInstanceFoldersHandlerReply,
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
@@ -54,14 +49,13 @@ import {
   InstanceRestoreBackupHandlerRequest,
   InstanceVersionInfoData,
   InstanceVersionInfoDataReply,
-  IRCConnectData,
-  IRCQuitRequestData,
-  IRCSendMessageData,
   KillInstanceData,
   KillInstanceDataReply,
   LaunchInstanceData,
   LaunchInstanceDataReply,
   MessageClientData,
+  MineTogetherAuthenticationHandlerData,
+  MineTogetherAuthenticationHandlerReply,
   ModalCallbackData,
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
@@ -123,14 +117,8 @@ export type MessageType =
   "fileHash" |
   "storeAuthDetails" |
   "syncInstance" |
-  "ircConnect" |
-  "ircSendMessage" |
-  "ircQuitRequest" |
   "uploadLogs" |
   "getJavas" |
-  "getFriends" |
-  "blockFriend" |
-  "addFriend" |
   "instanceMods" |
   "pong" |
   "ping" |
@@ -160,7 +148,8 @@ export type MessageType =
   "webRequest" |
   "openDebugTools" |
   "videoCache" |
-  "moveInstances"
+  "moveInstances" | 
+  "minetogetherAuthentication"
 
 export type EmptyMessageResponse = {}
 
@@ -237,18 +226,6 @@ export type MessagePayload = {
     input: SyncCloudInstanceData,
     output: SyncCloudInstanceDataReply
   }
-  "ircConnect": {
-    input: IRCConnectData,
-    output: EmptyMessageResponse // This one is super weird
-  }
-  "ircSendMessage": {
-    input: IRCSendMessageData,
-    output: EmptyMessageResponse
-  }
-  "ircQuitRequest": {
-    input: IRCQuitRequestData,
-    output: EmptyMessageResponse
-  }
   "uploadLogs": {
     input: UploadLogsData,
     output: UploadLogsDataReply
@@ -256,18 +233,6 @@ export type MessagePayload = {
   "getJavas": {
     input: GetJavasData,
     output: GetJavasDataReply
-  }
-  "getFriends": {
-    input: GetFriendsData,
-    output: GetFriendsDataReply
-  }
-  "blockFriend": {
-    input: BlockFriendData,
-    output: EmptyMessageResponse
-  }
-  "addFriend": {
-    input: AddFriendData,
-    output: AddFriendDataReply
   }
   "instanceMods": {
     input: InstanceModsData,
@@ -393,5 +358,9 @@ export type MessagePayload = {
   "moveInstances": {
     input: MoveInstancesHandlerData
     output: MoveInstancesHandlerReply
+  },
+  "minetogetherAuthentication": {
+    input: MineTogetherAuthenticationHandlerData,
+    output: MineTogetherAuthenticationHandlerReply
   }
 }

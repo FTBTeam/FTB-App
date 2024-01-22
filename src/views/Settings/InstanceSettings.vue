@@ -185,11 +185,6 @@ export default class InstanceSettings extends Vue {
       ?.value ?? "";
   }
 
-  keepLauncherOpen(value: boolean): void {
-    this.localSettings.keepLauncherOpen = value;
-    this.saveSettings(this.localSettings);
-  }
-
   saveMutated() {
     // Compare the last settings to the current settings, if they are the same, don't save
     if (JSON.stringify(this.lastSettings) === JSON.stringify(this.localSettings)) {

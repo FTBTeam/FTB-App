@@ -193,7 +193,6 @@ import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
 import {SettingsState} from '@/modules/settings/types';
-import {AuthState} from '@/modules/auth/types';
 import {emitter} from '@/utils/event-bus';
 import {RouterNames} from '@/router';
 import Router from 'vue-router';
@@ -327,7 +326,6 @@ export default class LaunchingPage extends Vue {
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
   
   @State('settings') public settingsState!: SettingsState;
-  @State('auth') public auth!: AuthState;
   
   private logger = createLogger("LaunchingPage.vue");
 

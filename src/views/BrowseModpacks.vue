@@ -55,11 +55,10 @@
 
 <script lang="ts">
 import {Component, Vue, Watch} from 'vue-property-decorator';
-import {Action, Getter, State} from 'vuex-class';
+import {Action, Getter} from 'vuex-class';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import {PackProviders} from '@/modules/modpacks/types';
 import {Route} from 'vue-router';
-import {AuthState} from '@/modules/auth/types';
 import {debounce} from '@/utils';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
@@ -82,8 +81,6 @@ import {createLogger} from '@/core/logger';
 export default class BrowseModpacks extends Vue {
   @Getter("latestPacks", ns("v2/modpacks")) latestPacks!: number[];
   @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>;
-  
-  @State('auth') public authState!: AuthState;
   
   private logger = createLogger("BrowseModpacks.vue")
 

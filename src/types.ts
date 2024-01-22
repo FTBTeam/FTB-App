@@ -13,9 +13,6 @@ export namespace App {
 }
 
 export type RootState = {
-  version: string;
-  wsPort: number;
-  wsSecret: string;
   settings: SettingsState | null;
   auth: AuthState | null;
 } & AppState

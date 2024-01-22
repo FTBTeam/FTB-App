@@ -478,66 +478,6 @@ const Electron: ElectronOverwolfInterface = {
   
   setupApp(vm) {
     eLogger.debug("Setting up the app from the interface on electron")
-    // ipcRenderer.send('sendMeSecret');
-    // ipcRenderer.on('hereIsSecret', (event, data) => {
-    //   eLogger.debug("Received secret from main process", data)
-    //   if (data.port === 13377 && !data.isDevMode) {
-    //     Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {
-    //       format: 'json',
-    //       reconnection: true,
-    //       connectManually: true,
-    //     });
-    //     vm.$connect();
-    //     vm.$socket.onmessage = (msgData: MessageEvent) => {
-    //       const wsInfo = JSON.parse(msgData.data);
-    //       store.commit('STORE_WS', wsInfo);
-    //       vm.$disconnect();
-    //       const index = Vue._installedPlugins.indexOf(VueNativeSock);
-    //       if (index > -1) {
-    //         Vue._installedPlugins.splice(index, 1);
-    //       }
-    //       Vue.use(VueNativeSock, 'ws://localhost:' + wsInfo.port, { store, format: 'json', reconnection: true });
-    //       ipcRenderer.send('updateSecret', wsInfo);
-    //     };
-    //   } else {
-    //     eLogger.debug("Setting up websocket connection on port", data.port)
-    //     store.commit('STORE_WS', data);
-    //     Vue.use(VueNativeSock, 'ws://localhost:' + data.port, { store, format: 'json', reconnection: true });
-    //   }
-    // });
-    
-    // // TODO: (M#01) Yeet me
-    // ipcRenderer.on('openModpack', (event, data) => {
-    //   const { name, id } = data;
-    //   getAPIRequest(store.state, `modpack/search/8?term=${name}`)
-    //     .then((response) => response.json())
-    //     .then(async (data) => {
-    //       if (data.status === 'error') {
-    //         return;
-    //       }
-    //       const packIDs = data.packs;
-    //       if (packIDs == null) {
-    //         return;
-    //       }
-    //       if (packIDs.length === 0) {
-    //         return;
-    //       }
-    //       for (let i = 0; i < packIDs.length; i++) {
-    //         const packID = packIDs[i];
-    //         const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
-    //         if (pack !== undefined) {
-    //           const foundVersion = pack.versions.find((v) => v.mtgID === id);
-    //           if (foundVersion !== undefined) {
-    //             router.push({ name: 'modpackpage', query: { modpackid: packID } });
-    //             return;
-    //           }
-    //         }
-    //       }
-    //     })
-    //     .catch((err) => {
-    //       console.error(err);
-    //     });
-    // });
     
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       handleAction(data);
@@ -575,24 +515,6 @@ const Electron: ElectronOverwolfInterface = {
       //       });
       //     }
       //   }
-      // } else if (command === 'instance') {
-      //   if (args.length === 0) {
-      //     return;
-      //   }
-      //   const instanceID = args[0];
-      //   if (args.length === 1) {
-      //     // Open instance page
-      //     router.push({ name: 'instancepage', query: { uuid: instanceID } });
-      //   } else if (args.length === 2) {
-      //     // Start instance
-      //     router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
-      //   }
-      // } else if (command === 'server') {
-      //   if (args.length === 0) {
-      //     return;
-      //   }
-      //   const serverID = args[0];
-      //   router.push({ name: 'server', query: { serverid: serverID } });
       // }
     });
   },
