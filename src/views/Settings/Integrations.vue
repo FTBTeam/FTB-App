@@ -109,7 +109,8 @@ export default class AppInfo extends Vue {
   public logout() {
     this.logoutAction();
     // get instances and store
-    this.settings.settings.sessionString = undefined;
+    // TODO: FIX ME 
+    // this.settings.settings.sessionString = undefined;
     this.saveSettings(this.settings.settings);
   }
 }

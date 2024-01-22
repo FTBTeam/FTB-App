@@ -5,7 +5,7 @@ import {createLogger} from '@/core/logger';
 
 export type SaveJson = {
   name: string;
-  jvmArgs: string;
+  jvmArgs: { [key: string]: string };
   jrePath: string;
   memory: number;
   width: number;
@@ -16,7 +16,7 @@ export type SaveJson = {
   instanceImage?: string;
   category: string;
   locked: boolean;
-  shellArgs: string;
+  shellArgs: { [key: string]: string };
 }
 
 /**

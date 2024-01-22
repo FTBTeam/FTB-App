@@ -297,11 +297,11 @@ export default class MainApp extends Vue {
     }
 
     // If this fails, show the ads
-    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+    return this.settings?.settings?.appearance?.showAds ?? true;
   }
 
   get systemBarDisabled() {
-    return !this.settings.settings.useSystemWindowStyle ?? false;
+    return !this.settings?.settings?.appearance?.useSystemWindowStyle ?? false;
   }
 }
 </script>

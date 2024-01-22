@@ -1,5 +1,5 @@
 <template>
-  <div class="instance-settings">
+  <div class="instance-settings" v-if="localSettings.spec">
     <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
     <div class="flex items-center mb-6">
       <div class="block flex-1 mr-2">
@@ -11,18 +11,18 @@
       <selection2
         v-if="loadedSettings"
         :options="channelOptions"
-        v-model="localSettings.updateChannel"
+        v-model="localSettings.instanceDefaults.updateChannel"
         :style="{width: '192px'}"
         @change="v => saveMutated()"
       />
     </div>
     <p class="block text-white-700 text-lg font-bold mb-4">Window Size</p>
     <div class="mb-6">
-      <ui-toggle label="Fullscreen" desc="Always open Minecraft in Fullscreen mode" v-model="localSettings.fullScreen" class="mb-4" @input="() => {
+      <ui-toggle label="Fullscreen" desc="Always open Minecraft in Fullscreen mode" v-model="localSettings.instanceDefaults.fullscreen" class="mb-4" @input="() => {
         saveMutated()
       }" />
       
-      <div :class="{'cursor-not-allowed opacity-50 pointer-events-none': localSettings.fullScreen}">
+      <div :class="{'cursor-not-allowed opacity-50 pointer-events-none': localSettings.instanceDefaults.fullscreen}">
         <div class="flex items-center mb-4">
           <div class="block flex-1 mr-2">
             <b>Size presets</b>
@@ -42,25 +42,25 @@
             <b>Width</b>
             <small class="text-muted block mt-2">The Minecraft windows screen width</small>
           </div>
-          <ftb-input class="mb-0" v-model="localSettings.width" :value="localSettings.width" @blur="saveMutated" />  
+          <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />  
         </div>
         <div class="flex items-center">
           <div class="block flex-1 mr-2">
             <b>Height</b>
             <small class="text-muted block mt-2">The Minecraft windows screen height</small>
           </div>
-          <ftb-input class="mb-0" v-model="localSettings.height" :value="localSettings.height" @blur="saveMutated" />
+          <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />
         </div>
       </div>
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
-    <ram-slider class="mb-6" v-model="localSettings.memory" @change="saveMutated" />
+    <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
 
     <ftb-input
       label="Custom Arguments"
       placeholder="-TestArgument=120"
-      v-model="localSettings.jvmargs"
+      v-model="localSettings.instanceDefaults.javaArgs"
       @blur="saveMutated"
     />
     <small class="text-muted block mb-6 max-w-xl">
@@ -69,8 +69,8 @@
 
     <ftb-input
       label="Shell arguments"
-      :value="localSettings.shellArgs"
-      v-model="localSettings.shellArgs"
+      :value="localSettings.instanceDefaults.shellArgs"
+      v-model="localSettings.instanceDefaults.shellArgs"
       placeholder="/usr/local/application-wrapper"
       @blur="saveMutated"
     />
@@ -81,8 +81,8 @@
     <p class="mb-2">Startup preview</p>
     <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
     
-    <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.memory">
-      {{localSettings.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.memory.toString()) * 1024 * 1000))}} {{localSettings.jvmargs}}
+    <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.instanceDefaults.memory">
+      {{localSettings.instanceDefaults.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.instanceDefaults.memory.toString()) * 1024 * 1000))}} {{localSettings.instanceDefaults.javaArgs}}
     </code>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Misc</p>
@@ -123,13 +123,14 @@
       </template>
     </modal>
   </div>
+  <Loader v-else />
 </template>
 
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 
 import {Action, State} from 'vuex-class';
-import {Settings, SettingsState} from '@/modules/settings/types';
+import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
 import Selection2 from '@/components/core/ui/Selection2.vue';
@@ -139,15 +140,17 @@ import UiToggle from '@/components/core/ui/UiToggle.vue';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {dialogsController} from '@/core/controllers/dialogsController';
-import {MoveInstancesHandlerReply, OperationProgressUpdateData} from '@/core/@types/javaApi';
+import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/@types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {InstanceActions} from '@/core/actions/instanceActions';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   methods: {prettyByteFormat},
   components: {
+    Loader,
     ProgressBar,
     UiButton,
     RamSlider,
@@ -160,8 +163,8 @@ export default class InstanceSettings extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   
-  localSettings: Settings = {} as Settings;
-  lastSettings: Settings = {} as Settings;
+  localSettings: SettingsData = {} as SettingsData;
+  lastSettings: string = ""
 
   loadedSettings = false;
 
@@ -178,22 +181,23 @@ export default class InstanceSettings extends Vue {
 
     // Make a copy of the settings so we don't mutate the vuex state
     this.localSettings = { ...this.settingsState.settings };
-    this.lastSettings = { ...this.localSettings };
+    this.lastSettings = JSON.stringify(this.localSettings)
 
     this.resolutionId = this.resolutionList
-      .find((e) => e.value === `${this.localSettings.width ?? ''}|${this.localSettings.height ?? ''}`)
+      .find((e) => e.value === `${this.localSettings.instanceDefaults.width ?? ''}|${this.localSettings.instanceDefaults.height ?? ''}`)
       ?.value ?? "";
   }
 
   saveMutated() {
     // Compare the last settings to the current settings, if they are the same, don't save
-    if (JSON.stringify(this.lastSettings) === JSON.stringify(this.localSettings)) {
+    if (this.lastSettings === JSON.stringify(this.localSettings)) {
+      console.log("Settings are the same, not saving")
       return;
     }
     
     alertController.success("Settings saved")
     this.saveSettings(this.localSettings);
-    this.lastSettings = { ...this.localSettings };
+    this.lastSettings = JSON.stringify(this.localSettings)
   }
   
   selectResolution(id: string) {
@@ -202,8 +206,8 @@ export default class InstanceSettings extends Vue {
       return;
     }
     
-    this.localSettings.width = selected.width;
-    this.localSettings.height = selected.height;
+    this.localSettings.instanceDefaults.width = selected.width;
+    this.localSettings.instanceDefaults.height = selected.height;
     this.saveMutated();
   }
 

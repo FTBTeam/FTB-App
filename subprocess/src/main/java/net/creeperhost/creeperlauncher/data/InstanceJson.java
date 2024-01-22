@@ -1,20 +1,22 @@
 package net.creeperhost.creeperlauncher.data;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.handlers.instances.InstanceConfigureHandler;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -36,16 +38,16 @@ public class InstanceJson {
     public int minMemory = 2048;
     @Deprecated  // May not be required, it's mirrored from the version manifest.
     public int recMemory = 4096;
-    public int memory = Integer.parseInt(Settings.settings.getOrDefault("memory", "2048"));
+    public int memory = Settings.getSettings().instanceDefaults().memory();
 
-    public String jvmArgs = Settings.settings.getOrDefault("jvmArgs", "");
-    public String shellArgs = Settings.settings.getOrDefault("shellArgs", "");
-    public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
+    public HashMap<String, String> jvmArgs = Settings.getSettings().instanceDefaults().javaArgs();
+    public HashMap<String, String> shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
+    public boolean embeddedJre = true;
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
-    public Path jrePath = Settings.getPathOpt("jrePath", null);
-    public int width = Integer.parseInt(Settings.settings.getOrDefault("width", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2)));
-    public int height = Integer.parseInt(Settings.settings.getOrDefault("height", String.valueOf((int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2)));
+    public Path jrePath = null;
+    public int width = Settings.getSettings().instanceDefaults().width();
+    public int height = Settings.getSettings().instanceDefaults().height();
     public boolean fullscreen = false;
     public String modLoader = "";
 
@@ -139,7 +141,30 @@ public class InstanceJson {
     }
 
     public static InstanceJson load(Path path) throws IOException {
-        return JsonUtils.parse(GSON, path, InstanceJson.class);
+        // Parse to generic obj
+        JsonObject obj = JsonUtils.parse(GSON, path, JsonObject.class);
+        
+        // Is the jvmArgs/shellArgs a string? If so, convert it to a map.
+        // This is pretty gross
+        if (obj.has("jvmArgs") && obj.get("jvmArgs").isJsonPrimitive()) {
+            if (obj.get("jvmArgs").getAsString().isEmpty()) {
+                obj.add("jvmArgs", new JsonObject());
+            }
+            
+            var map = InstanceConfigureHandler.JSON_TO_HASHMAP.apply(obj.get("jvmArgs"));
+            obj.add("jvmArgs", new Gson().toJsonTree(map));
+        }
+        
+        if (obj.has("shellArgs") && obj.get("shellArgs").isJsonPrimitive()) {
+            if (obj.get("shellArgs").getAsString().isEmpty()) {
+                obj.add("shellArgs", new JsonObject());
+            }
+            var map = InstanceConfigureHandler.JSON_TO_HASHMAP.apply(obj.get("shellArgs"));
+            obj.add("shellArgs", new Gson().toJsonTree(map));
+        }
+        
+        // Parse to instance json.
+        return GSON.fromJson(obj, InstanceJson.class);
     }
 
     public static InstanceJson load(byte[] bytes) throws IOException {

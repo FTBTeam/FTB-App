@@ -99,7 +99,7 @@ export default class Dialogs extends Vue {
     }
 
     // If this fails, show the ads
-    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+    return this.settings?.settings?.appearance?.showAds ?? true;
   }
 }
 </script>

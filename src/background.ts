@@ -37,8 +37,15 @@ function getAppSettings(appSettingsPath: string) {
 const appHome = getAppHome();
 logger.debug('App home is', appHome)
 
-const appSettingsPath = path.join(appHome, 'bin', 'settings.json');
+let usingLegacySettings = false;
+const appSettingsPathLegacy = path.join(appHome, 'bin', 'settings.json');
+const appSettingsPath = path.join(appHome, "storage", 'settings.json');
 let appSettings = getAppSettings(appSettingsPath);
+if (appSettings === null) {
+  logger.debug("App settings not found, trying legacy settings")
+  usingLegacySettings = true;
+  appSettings = getAppSettings(appSettingsPathLegacy);
+}
 
 electronLogger.transports.file.resolvePath = (variables, message) => 
   path.join(appHome, 'logs', 'ftb-app-electron.log');
@@ -163,7 +170,12 @@ ipcMain.handle('setSystemWindowStyle', async (event, data) => {
   logger.info("Setting system window style to", typedData)
   
   // Reload the app settings
-  appSettings.useSystemWindowStyle = typedData.toString();
+  if (usingLegacySettings) {
+    appSettings.useSystemWindowStyle = typedData;  
+  } else {
+    appSettings.appearance.useSystemWindowStyle = typedData;
+  }
+  
   await reloadMainWindow();
 });
 
@@ -459,7 +471,12 @@ ipcMain.handle("startSubprocess", async (event, args) => {
 
 async function createWindow() {
   logger.debug("Creating main window")
-  const useSystemFrame = appSettings?.useSystemWindowStyle === "true" ?? false;
+  let useSystemFrame = false;
+  if (usingLegacySettings) {
+    useSystemFrame = appSettings?.useSystemWindowStyle === "true" ?? false;
+  } else {
+    useSystemFrame = appSettings.appearance.useSystemWindowStyle
+  }
   
   win = new BrowserWindow({
     title: 'FTB App',

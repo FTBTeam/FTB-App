@@ -24,7 +24,7 @@
       <ui-toggle
         label="Show adverts"
         desc="Any paid plan can optionally disable ads throughout the app"
-        :value="settings.settings.showAdverts === true || settings.settings.showAdverts === 'true'"
+        :value="settings.settings.appearance.showAds"
         @input="toggleAdverts"
         :disabled="!auth?.token?.activePlan"
       />
@@ -60,7 +60,7 @@ export default class MTIntegration extends Vue {
   }
 
   public toggleAdverts(value: boolean) {
-    this.settings.settings.showAdverts = value;
+    this.settings.settings.appearance.showAds = value;
     this.saveSettings(this.settings.settings);
     
     if (value) {
@@ -77,7 +77,8 @@ export default class MTIntegration extends Vue {
   public logout() {
     this.logoutAction();
     
-    this.settings.settings.sessionString = undefined;
+    /// TODO: FIX ME
+    // this.settings.settings.sessionString = undefined;
     this.saveSettings(this.settings.settings);
 
     this.$router.push('/');

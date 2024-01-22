@@ -1,5 +1,5 @@
 <template>
-  <div class="app-settings">
+  <div class="app-settings" v-if="localSettings.spec">
     <div class="app-info-section mb-8">
       <div class="items sm:flex">
         <div class="title-value mr-10">
@@ -58,7 +58,7 @@
       v-if="!platform.isElectron()"
       label="Close Overwolf on Exit"
       desc="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
-      :value="localSettings.exitOverwolf"
+      :value="localSettings.general.exitOverwolf"
       @input="exitOverwolf"
       class="mb-8"
     />
@@ -77,7 +77,7 @@
       v-if="platform.isElectron()"
       label="Use systems window style"
       desc="Instead of using the apps internal Titlebar, we'll use the system's titlebar instead. This setting will restart the app!"
-      v-model="localSettings.useSystemWindowStyle"
+      v-model="localSettings.appearance.useSystemWindowStyle"
       @input="toggleSystemStyleWindow"
       class="mb-8"
     />
@@ -117,17 +117,18 @@
     <ui-toggle
       label="Verbose"
       desc="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
-      :value="localSettings.verbose"
+      :value="localSettings.general.verbose"
       @input="enableVerbose"
       :align-right="true"
     />
     
   </div>
+  <Loader v-else />
 </template>
 
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
-import {Settings, SettingsState} from '@/modules/settings/types';
+import {SettingsState} from '@/modules/settings/types';
 import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
@@ -138,9 +139,12 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {InstanceActions} from '@/core/actions/instanceActions';
+import {SettingsData} from '@/core/@types/javaApi';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   components: {
+    Loader,
     UiButton,
     UiToggle,
   },
@@ -151,7 +155,7 @@ export default class AppSettings extends Vue {
   @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
 
   platform = platform;
-  localSettings: Settings = {} as Settings;
+  localSettings: SettingsData = {} as SettingsData;
 
   webVersion: string = platform.get.config.webVersion;
   appVersion: string = platform.get.config.appVersion;
@@ -166,19 +170,19 @@ export default class AppSettings extends Vue {
     this.localSettings = { ...this.settingsState.settings };
   }
 
-  enablePreview(value: boolean): void {
-    this.localSettings.enablePreview = value;
-    this.saveSettings(this.localSettings);
-  }
+  // enablePreview(value: boolean): void {
+  //   this.localSettings.enablePreview = value;
+  //   this.saveSettings(this.localSettings);
+  // }
   
   exitOverwolf(value: boolean): void {
-    this.localSettings.exitOverwolf = value;
+    this.localSettings.general.exitOverwolf = value;
     this.saveSettings(this.localSettings);
     platform.get.actions.changeExitOverwolfSetting(value);
   }
   
   toggleSystemStyleWindow(value: boolean): void {
-    this.localSettings.useSystemWindowStyle = value;
+    this.localSettings.appearance.useSystemWindowStyle = value;
     this.saveSettings(this.localSettings);
     
     platform.get.frame.setSystemWindowStyle(value);
@@ -231,7 +235,7 @@ export default class AppSettings extends Vue {
   }
 
   public enableVerbose(value: boolean): void {
-    this.localSettings.verbose = value;
+    this.localSettings.general.verbose = value;
     this.saveSettings(this.localSettings);
   }
 }

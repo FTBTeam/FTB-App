@@ -231,7 +231,7 @@ tasks.named("generateTypeScript", GenerateTask) {
         "net.creeperhost.creeperlauncher.api.handlers.**.*\$Request",
         "net.creeperhost.creeperlauncher.api.handlers.**.*\$Reply",
         "net.creeperhost.creeperlauncher.api.handlers.**.*\$Data",
-        "net.creeperhost.creeperlauncher.Settings\$SettingsData"
+        "net.creeperhost.creeperlauncher.storage.settings.SettingsData"
     ]
     excludeClasses = sharedSettings.excludeClasses
     customTypeMappings = sharedSettings.customTypeMappings

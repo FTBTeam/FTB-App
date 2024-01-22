@@ -173,11 +173,11 @@ export default class CreateInstance extends Vue {
   async mounted() {
     await this.loadInitialState();
     
-    this.settingFullscreen = this.settings.settings.fullScreen;
-    this.settingScreenResolution = this.settings.settings.width + "x" + this.settings.settings.height;
-    this.settingRam = this.settings.settings.memory;
-    this.userWidth = this.settings.settings.width;
-    this.userHeight = this.settings.settings.height;
+    this.settingFullscreen = this.settings.settings.instanceDefaults.fullscreen;
+    this.settingScreenResolution = this.settings.settings.instanceDefaults.width + "x" + this.settings.settings.instanceDefaults.height;
+    this.settingRam = this.settings.settings.instanceDefaults.memory;
+    this.userWidth = this.settings.settings.instanceDefaults.width;
+    this.userHeight = this.settings.settings.instanceDefaults.height;
   }
   
   onScreenResolutionChange(newVal: string) {
@@ -262,10 +262,10 @@ export default class CreateInstance extends Vue {
       private: false,
       category: this.userCategory,
       ourOwn: true,
-      ram: this.settingRam == this.settingsState.settings.memory ? -1 : this.settingRam,
-      fullscreen: this.settingFullscreen === this.settingsState.settings.fullScreen ? undefined : this.settingFullscreen,
-      width: this.userWidth == this.settingsState.settings.width ? undefined : this.userWidth,
-      height: this.userHeight == this.settingsState.settings.height ? undefined : this.userHeight,
+      ram: this.settingRam == this.settingsState.settings.instanceDefaults.memory ? -1 : this.settingRam,
+      fullscreen: this.settingFullscreen === this.settingsState.settings.instanceDefaults.fullscreen ? undefined : this.settingFullscreen,
+      width: this.userWidth == this.settingsState.settings.instanceDefaults.width ? undefined : this.userWidth,
+      height: this.userHeight == this.settingsState.settings.instanceDefaults.height ? undefined : this.userHeight,
       cloudSaves: this.userCloudSaves,
     }
     

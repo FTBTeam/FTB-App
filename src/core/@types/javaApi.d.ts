@@ -1,15 +1,5 @@
 // @ts-nocheck
 
-export interface SettingsData {
-    spec: string;
-    instanceLocation: string;
-    general: GeneralSettings;
-    instanceDefaults: InstanceSettings;
-    appearance: AppearanceSettings;
-    proxy: ProxySettings;
-    download: DownloadSettings;
-}
-
 export interface BaseData {
     type: string;
     requestId: string;
@@ -380,7 +370,7 @@ export interface PongLauncherData extends BaseData {
 }
 
 export interface SettingsConfigureData extends BaseData {
-    settingsInfo: { [index: string]: string };
+    settings: SettingsData;
 }
 
 export interface SettingsConfigureDataReply extends BaseData {
@@ -391,7 +381,7 @@ export interface SettingsInfoData extends BaseData {
 }
 
 export interface SettingsInfoDataReply extends SettingsInfoData {
-    settingsInfo: { [index: string]: string };
+    settingsInfo: SettingsData;
     totalMemory: number;
     availableMemory: number;
     totalCores: number;
@@ -606,39 +596,14 @@ export interface StoragePutHandlerReply extends StoragePutHandlerData {
     success: boolean;
 }
 
-export interface GeneralSettings {
-    releaseChannel: string;
-    cacheLife: number;
-    exitOverwolf: boolean;
-    verbose: boolean;
-}
-
-export interface InstanceSettings {
-    width: number;
-    height: number;
-    memory: number;
-    fullscreen: boolean;
-    updateChannel: string;
-    javaArgs: { [index: string]: string };
-    shellArgs: { [index: string]: string };
-}
-
-export interface AppearanceSettings {
-    useSystemWindowStyle: boolean;
-    showAds: boolean;
-}
-
-export interface ProxySettings {
-    type: string;
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-}
-
-export interface DownloadSettings {
-    threadLimit: number;
-    speedLimit: number;
+export interface SettingsData {
+    spec: string;
+    instanceLocation: string;
+    general: GeneralSettings;
+    instanceDefaults: InstanceSettings;
+    appearance: AppearanceSettings;
+    proxy: ProxySettings;
+    download: DownloadSettings;
 }
 
 export interface InstanceJson {
@@ -657,8 +622,8 @@ export interface InstanceJson {
      */
     recMemory: number;
     memory: number;
-    jvmArgs: string;
-    shellArgs: string;
+    jvmArgs: { [index: string]: string };
+    shellArgs: { [index: string]: string };
     embeddedJre: boolean;
     jrePath: string;
     width: number;
@@ -734,6 +699,41 @@ export interface AccountProfile {
     msAuth: MSAuthStore;
     mcAuth: YggdrasilAuthStore;
     skins: AccountSkin[];
+}
+
+export interface GeneralSettings {
+    releaseChannel: string;
+    cacheLife: number;
+    exitOverwolf: boolean;
+    verbose: boolean;
+}
+
+export interface InstanceSettings {
+    width: number;
+    height: number;
+    memory: number;
+    fullscreen: boolean;
+    updateChannel: string;
+    javaArgs: { [index: string]: string };
+    shellArgs: { [index: string]: string };
+}
+
+export interface AppearanceSettings {
+    useSystemWindowStyle: boolean;
+    showAds: boolean;
+}
+
+export interface ProxySettings {
+    type: string;
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+}
+
+export interface DownloadSettings {
+    threadLimit: number;
+    speedLimit: number;
 }
 
 export interface Specs {

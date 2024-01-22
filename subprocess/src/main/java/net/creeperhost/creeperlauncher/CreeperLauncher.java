@@ -20,6 +20,7 @@ import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
 import org.apache.commons.lang3.tuple.Pair;
@@ -112,7 +113,7 @@ public class CreeperLauncher {
     }
 
     public static void initSettingsAndCache() {
-        Settings.loadSettings();
+        Settings.loadSettings(true);
         localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
     }
 
@@ -128,7 +129,7 @@ public class CreeperLauncher {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
 
-        Settings.loadSettings();
+        Settings.loadSettings(true);
         Instances.refreshInstances();
 
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();

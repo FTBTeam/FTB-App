@@ -554,13 +554,13 @@ export default class LaunchingPage extends Vue {
       }
     }
 
-    const disableChat = this.settingsState.settings.enableChat;
+    // const disableChat = truethis.settingsState.settings.enableChat;
     this.preLaunch = true;
 
     this.logger.debug("Sending launch message")
     const result = await sendMessage("launchInstance", {
       uuid: this.instance?.uuid ?? "",
-      extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
+      extraArgs: "", //disableChat ? '-Dmt.disablechat=true' : '',
       offline: this.$route.query.offline === "true",
       offlineUsername: this.$route.query.username as string ?? 'FTB Player',
       cancelLaunch: null

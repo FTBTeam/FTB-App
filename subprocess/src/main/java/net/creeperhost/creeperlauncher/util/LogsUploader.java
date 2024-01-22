@@ -5,11 +5,11 @@ import com.google.gson.*;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
@@ -96,13 +96,7 @@ public class LogsUploader {
     }
 
     private static String getFilteredSettings() {
-        var settingsData = new HashMap<>(Settings.settings);
-        if (settingsData.containsKey("sessionString")) {
-            settingsData.put("sessionStringWasEmpty", settingsData.get("sessionString").isEmpty() + "");
-            settingsData.put("sessionString", "REDACTED");
-        }
-        
-        return uploadIfNotEmpty(GSON.toJson(settingsData));
+        return uploadIfNotEmpty(GSON.toJson(Settings.getSettings()));
     }
     
     private static JsonObject collectLogs() {

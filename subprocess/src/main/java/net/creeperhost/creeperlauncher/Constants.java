@@ -6,6 +6,7 @@ import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.*;
 import okhttp3.Cache;
 import okhttp3.ConnectionPool;
@@ -50,7 +51,18 @@ public class Constants {
     //Paths
     public static final Path BIN_LOCATION_OURS = WORKING_DIR.resolve("bin");
     public static final Path BIN_LOCATION = getDataDir().resolve("bin");
+    
+    public static final Path STORAGE_DIR = getDataDir().resolve("storage");
 
+    /**
+     * @deprecated Use {@link #SETTINGS_FILE} instead.
+     */
+    @Deprecated
+    public static final Path SETTINGS_FILE_LEGACY = BIN_LOCATION.resolve("settings.json");
+    public static final Path SETTINGS_FILE = STORAGE_DIR.resolve("settings.json");
+    public static final Path KV_STORE_FILE = STORAGE_DIR.resolve("storage.json");
+    public static final Path CREDENTIALS_FILE = STORAGE_DIR.resolve("credentials.encr");
+    
     public static final Path VERSIONS_FOLDER_LOC = getDataDir().resolve(Paths.get("bin", "versions"));
     public static final Path INSTANCES_FOLDER_LOC = getDataDir().resolve("instances");
     public static final Path LIBRARY_LOCATION = BIN_LOCATION.resolve("libraries");

@@ -1,38 +1,12 @@
 import {MutationTree} from 'vuex';
-import {Resolution, Settings, SettingsState} from './types';
-
-const defaultSettings: Settings = {
-  width: 1720,
-  height: 840,
-  memory: 3072,
-  enablePreview: false,
-  jvmargs: '',
-  exitOverwolf: false,
-  enableChat: true, 
-  threadLimit: 2,
-  speedLimit: 0,
-  cacheLife: 5184000,
-  instanceLocation: '',
-  verbose: false,
-  autoOpenChat: true,
-  blockedUsers: [],
-  showAdverts: true,
-  proxyPort: -1,
-  proxyType: 'none',
-  proxyHost: '',
-  proxyPassword: '',
-  proxyUser: '',
-  updateChannel: 'release',
-  fullScreen: false,
-  useSystemWindowStyle: false,
-  shellArgs: '',
-};
+import {Resolution, SettingsState} from './types';
+import {SettingsData} from '@/core/@types/javaApi';
 
 export const mutations: MutationTree<SettingsState> = {
-  loadSettings(state, payload: Settings) {
-    state.settings = { ...defaultSettings, ...payload };
+  loadSettings(state, payload: SettingsData) {
+    state.settings = { ...payload };
   },
-  saveSettings(state, payload: Settings) {
+  saveSettings(state, payload: SettingsData) {
     state.settings = payload;
   },
   loadHardware(state, payload: any) {

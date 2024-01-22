@@ -15,11 +15,19 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.function.Function;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData> {
-
     private static final Logger LOGGER = LogManager.getLogger();
+    public static final Function<JsonElement, HashMap<String, String>> JSON_TO_HASHMAP = (elm) -> {
+        var obj = elm.getAsJsonObject();
+        var map = new HashMap<String, String>();
+        for (var entry : obj.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().getAsString());
+        }
+        return map;
+    };
 
     @Override
     public void handle(InstanceConfigureData data) {
@@ -33,8 +41,8 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             JsonObject updateJson = JsonUtils.parseRaw(data.instanceJson).getAsJsonObject();
 
             instance.props.name = getOrDefault(updateJson, "name", JsonElement::getAsString, instance.props.name);
-            instance.props.jvmArgs = getOrDefault(updateJson, "jvmArgs", JsonElement::getAsString, instance.props.jvmArgs);
-            instance.props.shellArgs = getOrDefault(updateJson, "shellArgs", JsonElement::getAsString, instance.props.shellArgs);
+            instance.props.jvmArgs = getOrDefault(updateJson, "jvmArgs", JSON_TO_HASHMAP, instance.props.jvmArgs);
+            instance.props.shellArgs = getOrDefault(updateJson, "shellArgs", JSON_TO_HASHMAP, instance.props.shellArgs);
 
             Path jreRealPath = instance.props.jrePath;
             if (updateJson.has("jrePath")) {

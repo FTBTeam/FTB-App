@@ -18,10 +18,11 @@ export const actions: ActionTree<AuthState, RootState> = {
     commit('storeAuthDetails', null);
     const settings = rootState.settings?.settings;
     if (settings !== undefined) {
-      if (settings.sessionString !== undefined && settings.sessionString.length > 0) {
-        settings.sessionString = '';
-        dispatch('settings/saveSettings', settings, { root: true });
-      }
+      // TODO: FIX ME (REMOVED FROM SETTINGS)
+      // if (settings.sessionString !== undefined && settings.sessionString.length > 0) {
+      //   settings.sessionString = '';
+      //   dispatch('settings/saveSettings', settings, { root: true });
+      // }
     }
   },
   setWindow({ rootState, commit }, data: boolean): void {

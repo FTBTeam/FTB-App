@@ -118,7 +118,7 @@ export default class TitleBar extends Vue {
   }
   
   get systemBarDisabled() {
-    return !this.settings.settings.useSystemWindowStyle ?? false;
+    return !this.settings?.settings?.appearance?.useSystemWindowStyle ?? false;
   }
   
   get isUnix() {

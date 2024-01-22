@@ -7,7 +7,10 @@ import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.HashUtils;
-import net.creeperhost.creeperlauncher.*;
+import net.creeperhost.creeperlauncher.Analytics;
+import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
@@ -21,6 +24,7 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.CurseMetadataCache.FileMetadata;
 import net.creeperhost.creeperlauncher.util.DialogUtil;
 import net.creeperhost.creeperlauncher.util.FileUtils;
@@ -280,21 +284,24 @@ public class Instance {
 
         LOGGER.info("Adding start/shutdown tasks..");
         launcher.withStartTask(ctx -> {
-            ctx.shellArgs.addAll(MiscUtils.splitCommand(props.shellArgs));
+            // TODO: VALIDATE ME
+            for (Map.Entry<String, String> stringStringEntry : props.shellArgs.entrySet()) {
+                var value = Objects.equals(stringStringEntry.getValue(), "") ? "" : "=" + stringStringEntry.getValue();
+                ctx.shellArgs.add("%s%s".formatted(stringStringEntry.getKey(), value));
+            }
             
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
 
             // TODO, do this on LocalInstance load, potentially combine with changes to make jvmArgs an array.
-            List<String> jvmArgs = MiscUtils.splitCommand(props.jvmArgs);
-            for (Iterator<String> iterator = jvmArgs.iterator(); iterator.hasNext(); ) {
-                String jvmArg = iterator.next();
-                if (jvmArg.contains("-Xmx")) {
-                    iterator.remove();
-                    break;
+            for (Map.Entry<String, String> stringStringEntry : props.jvmArgs.entrySet()) {
+                if (stringStringEntry.getKey().contains("-Xmx") || stringStringEntry.getKey().contains("-Xms")) {
+                    continue;
                 }
+                
+                var value = Objects.equals(stringStringEntry.getValue(), "") ? "" : "=" + stringStringEntry.getValue();
+                ctx.extraJVMArgs.add("%s%s".formatted(stringStringEntry.getKey(), value));
             }
-            ctx.extraJVMArgs.addAll(jvmArgs);
         });
 
         if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured() && props.cloudSaves) {
