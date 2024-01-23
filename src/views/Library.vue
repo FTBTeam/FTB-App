@@ -3,10 +3,13 @@
     <div class="page-spacing" v-if="!loading && instances.length > 0">
       <header class="flex gap-4 mb-6 items-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="flex-1" />
+        
         <selection2 v-if="Object.keys(groupedPacks).length > 1" icon="folder" direction="right" min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
         <selection2 icon="sort" direction="right" min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
+        
+        <install-queue />
       </header>
-
+      
       <div class="categories">
         <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`" :class="{'collapsed': collapsedGroups.includes(index)}">
           <template v-if="category.length">
@@ -67,6 +70,7 @@ import Loader from '@/components/atoms/Loader.vue';
 import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import InstallQueue from '@/components/core/modpack/InstallQueue/InstallQueue.vue';
 
 const groupOptions = [
   ['Category', 'category'],
@@ -93,6 +97,7 @@ const groupByOptions = createOrderedOptions(groupOptions)
 
 @Component({
   components: {
+    InstallQueue,
     UiButton,
     Selection2,
     Loader,
