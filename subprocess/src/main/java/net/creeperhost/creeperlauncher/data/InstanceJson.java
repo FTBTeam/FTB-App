@@ -141,29 +141,7 @@ public class InstanceJson {
     public static InstanceJson load(Path path) throws IOException {
         // Parse to generic obj
         JsonObject obj = JsonUtils.parse(GSON, path, JsonObject.class);
-        
-        // Is the jvmArgs/shellArgs a string? If so, convert it to a map.
-        // This is pretty gross
-        if (obj.has("jvmArgs") && obj.get("jvmArgs").isJsonPrimitive()) {
-            String argsStr = obj.get("jvmArgs").getAsString();
-            if (argsStr.isEmpty()) {
-                obj.add("jvmArgs", new JsonObject());
-            }
-            
-            var map = Settings.SettingsMigrator.CONVERT_ARGS_LIST.apply(argsStr);
-            obj.add("jvmArgs", new Gson().toJsonTree(map));
-        }
-        
-        if (obj.has("shellArgs") && obj.get("shellArgs").isJsonPrimitive()) {
-            String argsStr = obj.get("shellArgs").getAsString();
-            if (argsStr.isEmpty()) {
-                obj.add("shellArgs", new JsonObject());
-            }
-
-            var map = Settings.SettingsMigrator.CONVERT_ARGS_LIST.apply(argsStr);
-            obj.add("shellArgs", new Gson().toJsonTree(map));
-        }
-        
+                
         // Parse to instance json.
         return GSON.fromJson(obj, InstanceJson.class);
     }
@@ -172,7 +150,7 @@ public class InstanceJson {
         return JsonUtils.parse(GSON, new ByteArrayInputStream(bytes), InstanceJson.class);
     }
 
-    public static void save(Path path, InstanceJson properties) throws IOException {
+    public static void save(Path path, InstanceJson properties ) throws IOException {
         JsonUtils.write(GSON, path, properties);
     }
 
