@@ -56,7 +56,7 @@
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
-
+    
     <ftb-input
       label="Custom Arguments"
       placeholder="-TestArgument=120"
@@ -146,10 +146,12 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import Loader from '@/components/atoms/Loader.vue';
+import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.vue';
 
 @Component({
   methods: {prettyByteFormat},
   components: {
+    KeyValueEditor,
     Loader,
     ProgressBar,
     UiButton,
@@ -187,7 +189,7 @@ export default class InstanceSettings extends Vue {
       .find((e) => e.value === `${this.localSettings.instanceDefaults.width ?? ''}|${this.localSettings.instanceDefaults.height ?? ''}`)
       ?.value ?? "";
   }
-
+  
   saveMutated() {
     // Compare the last settings to the current settings, if they are the same, don't save
     if (this.lastSettings === JSON.stringify(this.localSettings)) {

@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
-import net.creeperhost.creeperlauncher.api.handlers.instances.InstanceConfigureHandler;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
@@ -16,7 +15,6 @@ import oshi.hardware.HardwareAbstractionLayer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -40,8 +38,8 @@ public class InstanceJson {
     public int recMemory = 4096;
     public int memory = Settings.getSettings().instanceDefaults().memory();
 
-    public HashMap<String, String> jvmArgs = Settings.getSettings().instanceDefaults().javaArgs();
-    public HashMap<String, String> shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
+    public String jvmArgs = Settings.getSettings().instanceDefaults().javaArgs();
+    public String shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
     public boolean embeddedJre = true;
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
@@ -147,19 +145,22 @@ public class InstanceJson {
         // Is the jvmArgs/shellArgs a string? If so, convert it to a map.
         // This is pretty gross
         if (obj.has("jvmArgs") && obj.get("jvmArgs").isJsonPrimitive()) {
-            if (obj.get("jvmArgs").getAsString().isEmpty()) {
+            String argsStr = obj.get("jvmArgs").getAsString();
+            if (argsStr.isEmpty()) {
                 obj.add("jvmArgs", new JsonObject());
             }
             
-            var map = InstanceConfigureHandler.JSON_TO_HASHMAP.apply(obj.get("jvmArgs"));
+            var map = Settings.SettingsMigrator.CONVERT_ARGS_LIST.apply(argsStr);
             obj.add("jvmArgs", new Gson().toJsonTree(map));
         }
         
         if (obj.has("shellArgs") && obj.get("shellArgs").isJsonPrimitive()) {
-            if (obj.get("shellArgs").getAsString().isEmpty()) {
+            String argsStr = obj.get("shellArgs").getAsString();
+            if (argsStr.isEmpty()) {
                 obj.add("shellArgs", new JsonObject());
             }
-            var map = InstanceConfigureHandler.JSON_TO_HASHMAP.apply(obj.get("shellArgs"));
+
+            var map = Settings.SettingsMigrator.CONVERT_ARGS_LIST.apply(argsStr);
             obj.add("shellArgs", new Gson().toJsonTree(map));
         }
         

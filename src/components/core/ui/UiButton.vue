@@ -5,12 +5,12 @@
       @click="click"
     >
       <span :class="{'opacity-0': working}">
-        <font-awesome-icon v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
+        <font-awesome-icon :fixedWidth="true" v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
         <slot />
       </span>
       <transition name="fade">
         <span v-if="working" class="absolute inset-0 flex items-center justify-center">
-          <font-awesome-icon icon="spinner" spin />
+          <font-awesome-icon :fixedWidth="true" icon="spinner" spin />
         </span>
       </transition>
     </div>

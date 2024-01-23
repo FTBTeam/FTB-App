@@ -166,7 +166,7 @@
           <ui-button type="success" icon="folder" @click="browseForJava">Browse</ui-button>
         </div>
       </section>
-
+      
       <ftb-input
         label="Java runtime arguments"
         placeholder="-TestArgument=120"
@@ -270,10 +270,12 @@ import {ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
 import {ns} from '@/core/state/appState';
 import {ModLoaderUpdateState} from '@/core/@types/states/appState';
+import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.vue';
 
 @Component({
   methods: {prettyByteFormat, resolveModLoaderVersion, resolveModloader},
   components: {
+    KeyValueEditor,
     RamSlider,
     ModloaderSelect,
     UiToggle,

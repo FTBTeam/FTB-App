@@ -11,7 +11,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 
 /**
  * Damn settings need to be mutated so this can't be a record :cry:
@@ -87,8 +86,8 @@ public class SettingsData {
                 4096,
                 false,
                 "release",
-                new HashMap<>(),
-                new HashMap<>()
+                "",
+                ""
             ),
             new AppearanceSettings(
                 false,
@@ -170,10 +169,10 @@ public class SettingsData {
         private int memory;
         private boolean fullscreen;
         private String updateChannel;
-        private HashMap<String, String> javaArgs;
-        private HashMap<String, String> shellArgs;
+        private String javaArgs;
+        private String shellArgs;
 
-        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, HashMap<String, String> javaArgs, HashMap<String, String> shellArgs) {
+        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, String javaArgs, String shellArgs) {
             this.width = width;
             this.height = height;
             this.memory = memory;
@@ -203,11 +202,11 @@ public class SettingsData {
             return updateChannel;
         }
 
-        public HashMap<String, String> javaArgs() {
+        public String javaArgs() {
             return javaArgs;
         }
 
-        public HashMap<String, String> shellArgs() {
+        public String shellArgs() {
             return shellArgs;
         }
 
@@ -231,11 +230,11 @@ public class SettingsData {
             this.updateChannel = updateChannel;
         }
 
-        public void setJavaArgs(HashMap<String, String> javaArgs) {
+        public void setJavaArgs(String javaArgs) {
             this.javaArgs = javaArgs;
         }
 
-        public void setShellArgs(HashMap<String, String> shellArgs) {
+        public void setShellArgs(String shellArgs) {
             this.shellArgs = shellArgs;
         }
     }

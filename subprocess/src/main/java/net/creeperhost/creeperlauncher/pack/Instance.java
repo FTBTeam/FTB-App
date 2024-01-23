@@ -284,23 +284,18 @@ public class Instance {
 
         LOGGER.info("Adding start/shutdown tasks..");
         launcher.withStartTask(ctx -> {
-            // TODO: VALIDATE ME
-            for (Map.Entry<String, String> stringStringEntry : props.shellArgs.entrySet()) {
-                var value = Objects.equals(stringStringEntry.getValue(), "") ? "" : "=" + stringStringEntry.getValue();
-                ctx.shellArgs.add("%s%s".formatted(stringStringEntry.getKey(), value));
-            }
+            ctx.shellArgs.addAll(MiscUtils.splitCommand(props.shellArgs));
             
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
 
             // TODO, do this on LocalInstance load, potentially combine with changes to make jvmArgs an array.
-            for (Map.Entry<String, String> stringStringEntry : props.jvmArgs.entrySet()) {
-                if (stringStringEntry.getKey().contains("-Xmx") || stringStringEntry.getKey().contains("-Xms")) {
+            var args = MiscUtils.splitCommand(props.jvmArgs);
+            for (String arg : args) {
+                if (arg.contains("-Xmx") || arg.contains("-Xms")) {
                     continue;
                 }
-                
-                var value = Objects.equals(stringStringEntry.getValue(), "") ? "" : "=" + stringStringEntry.getValue();
-                ctx.extraJVMArgs.add("%s%s".formatted(stringStringEntry.getKey(), value));
+                ctx.extraJVMArgs.add(arg);
             }
         });
 

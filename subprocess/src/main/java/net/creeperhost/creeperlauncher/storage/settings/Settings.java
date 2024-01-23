@@ -134,8 +134,8 @@ public class Settings {
     
     private static final SettingsData DEFAULT_SETTINGS = SettingsData.createDefault();
     
-    private static class SettingsMigrator {        
-        private static final Function<String, HashMap<String, String>> CONVERT_ARGS_LIST = (value) -> {
+    public static class SettingsMigrator {        
+        public static final Function<String, HashMap<String, String>> CONVERT_ARGS_LIST = (value) -> {
             var commands = MiscUtils.splitCommand(value);
             var map = new HashMap<String, String>();
             
@@ -143,6 +143,11 @@ public class Settings {
                 String command = commands.get(i);
                 if (command.startsWith("-")) {
                     String key = command.substring(1);
+                    if (i + 1 > commands.size() - 1) {
+                        map.put(key, "");
+                        continue;
+                    }
+                    
                     String val = commands.get(i + 1);
                     
                     // Skip the next value if it's a flag
@@ -182,8 +187,8 @@ public class Settings {
                     getOrDefault("memory", Integer::parseInt, DEFAULT_SETTINGS.instanceDefaults().memory()),
                     getOrDefault("fullscreen", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().fullscreen()),
                     getOrDefault("updateChannel", DEFAULT_SETTINGS.instanceDefaults().updateChannel()),
-                    getOrDefault("jvmargs", CONVERT_ARGS_LIST, DEFAULT_SETTINGS.instanceDefaults().javaArgs()),
-                    getOrDefault("shellArgs", CONVERT_ARGS_LIST, DEFAULT_SETTINGS.instanceDefaults().shellArgs())
+                    getOrDefault("jvmargs", DEFAULT_SETTINGS.instanceDefaults().javaArgs()),
+                    getOrDefault("shellArgs", DEFAULT_SETTINGS.instanceDefaults().shellArgs())
                 ),
                 new SettingsData.AppearanceSettings(
                     getOrDefault("useSystemWindowStyle", Boolean::parseBoolean, DEFAULT_SETTINGS.appearance().useSystemWindowStyle()),

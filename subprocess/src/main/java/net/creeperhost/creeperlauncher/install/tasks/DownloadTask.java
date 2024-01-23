@@ -314,7 +314,18 @@ public class DownloadTask implements Task {
                     downloadFailures.add(ex);
                 } finally {
                     if (DEBUG) {
-                        LOGGER.info("Finished '{}'. Success? {}", url, success);
+                        boolean hitKnownCache = false;
+                        String cloudfrontCache = response.header("x-cache");
+                        String cloudflareCache = response.header("cf-cache-status");
+                        boolean noCacheHeadersFound = cloudflareCache == null && cloudfrontCache == null;
+                        
+                        if (cloudflareCache != null && Objects.equals(cloudflareCache, "HIT")) {
+                            hitKnownCache = true;
+                        } else if (cloudfrontCache != null && cloudfrontCache.toLowerCase().contains("hit")) {
+                            hitKnownCache = true;
+                        }
+                        
+                        LOGGER.info("Finished[{}]; Success[{}]; Remote Cache[{}]", url, success, noCacheHeadersFound ? "Unknown" : hitKnownCache);
                     }
                     if (success) {
                         Files.move(tempFile, path, StandardCopyOption.REPLACE_EXISTING);
