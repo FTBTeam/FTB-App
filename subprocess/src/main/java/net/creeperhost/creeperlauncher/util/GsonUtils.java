@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.util;
 import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import net.covers1624.quack.gson.HashCodeAdapter;
+import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +74,29 @@ public class GsonUtils {
         }
     }
 
+    /**
+     * Parse a json file as a raw {@link JsonElement}, returning {@code null}
+     * if the input is missing, malformed, etc.
+     *
+     * @param json The json file.
+     * @return The parsed json.
+     */
+    public static @Nullable JsonElement parseRawSafe(Path json) {
+        if (Files.notExists(json)) return null;
+
+        try {
+            JsonElement element = JsonUtils.parseRaw(json);
+            // EOF or 'null'
+            if (element == null || element.isJsonNull()) {
+                return null;
+            }
+
+            return element;
+        } catch (IOException | JsonParseException ex) {
+            return null;
+        }
+    }
+
     @Nullable
     public static <T> T getNestedField(String keyList, JsonElement jsonElm, Function<JsonElement, T> getter) {
         // If it's a single key, just return it.
@@ -80,10 +104,10 @@ public class GsonUtils {
             if (!jsonElm.isJsonObject()) {
                 throw new IllegalArgumentException("Expected object");
             }
-            
+
             return getter.apply(jsonElm.getAsJsonObject().get(keyList));
         }
-        
+
         // If it's a list of keys, we need to traverse the tree.
         if (!jsonElm.isJsonObject()) {
             throw new IllegalArgumentException("Expected object");
