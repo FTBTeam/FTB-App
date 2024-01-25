@@ -94,7 +94,6 @@ export class JavaFetch {
   
   public static modpacksChPrivate(endpoint: string) {
     const credentials = store.state["v2/apiCredentials"];
-    console.log(credentials);
     const {apiUrl, apiSecret, settings} = credentials;
     const {useAuthorizationHeader, useAuthorizationAsBearer, usePublicUrl} = settings;
 
