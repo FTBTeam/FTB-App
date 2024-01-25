@@ -84,6 +84,8 @@ public enum Providers {
             )
     );
 
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public final InstanceProvider provider;
     private final Map<OperatingSystem, Supplier<Path>> instancesDirs;
 
@@ -105,11 +107,13 @@ public enum Providers {
         Path instancesDir = overridePath != null ? overridePath : getInstancesDir();
         if (Files.notExists(instancesDir)) return List.of();
 
+        LOGGER.info("Finding instances for {} in {}..", this, instancesDir);
         try (Stream<Path> files = Files.list(instancesDir)) {
             return files
                     .filter(Files::isDirectory)
                     .map(provider::scanForInstance)
                     .filter(Objects::nonNull)
+                    .peek(e -> LOGGER.info(" Found {}", e))
                     .collect(Collectors.toList());
         }
     }
