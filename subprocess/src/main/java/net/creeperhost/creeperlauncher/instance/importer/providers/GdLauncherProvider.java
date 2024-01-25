@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
-import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo;
+import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.jetbrains.annotations.Nullable;
@@ -16,21 +16,16 @@ import java.nio.file.Path;
  *       this code only handles their current mainline launcher.
  */
 public class GdLauncherProvider implements InstanceProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GdLauncherProvider.class);
 
     @Override
-    public Result<Boolean, String> importInstance(Path instancePath) {
-        return Result.err("Not implemented");
-    }
-    
-    @Override
     @Nullable
-    public SimpleInstanceInfo instance(Path instanceLocation) {
-        if (!isValidInstance(instanceLocation)) {
-            return null;
-        }
+    public InstanceSummary scanForInstance(Path instancePath) {
+        Path configPath = instancePath.resolve("config.json");
+        if (Files.notExists(configPath)) return null;
 
-        var instanceData = this.loadJson(instanceLocation.resolve("config.json"));
+        var instanceData = GsonUtils.parseRawSafe(configPath);
         if (instanceData == null) {
             return null;
         }
@@ -38,34 +33,13 @@ public class GdLauncherProvider implements InstanceProvider {
         // Handle errors (basically just throw)
         var name = GsonUtils.getNestedField("name", instanceData, JsonElement::getAsString);
         var minecraftVersion = GsonUtils.getNestedField("loader.mcVersion", instanceData, JsonElement::getAsString);
-        
+
         // TODO: Where do we get java from
-        return new SimpleInstanceInfo(name, instanceLocation, minecraftVersion, null);
+        return new InstanceSummary(name, instancePath, minecraftVersion, null);
     }
 
     @Override
-    public Path windowsSourceLocation() {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public Path macosSourceLocation() {
-        // TODO: Is next their main launcher?
-        return Path.of("/Users/michael/Library/Application Support/gdlauncher_next/instances");
-    }
-
-    @Override
-    public Path linuxSourceLocation() {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public boolean isValidInstance(Path path) {
-        return Files.exists(path.resolve("config.json"));
-    }
-
-    @Override
-    public boolean isValidInstanceProvider(Path path) {
-        return false;
+    public Result<Boolean, String> importInstance(Path instancePath) {
+        return Result.err("Not implemented");
     }
 }

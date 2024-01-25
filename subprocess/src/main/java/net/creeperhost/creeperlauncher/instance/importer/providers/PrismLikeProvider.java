@@ -1,7 +1,8 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
-import net.creeperhost.creeperlauncher.instance.importer.meta.SimpleInstanceInfo;
+import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
+import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -12,23 +13,24 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 public abstract class PrismLikeProvider implements InstanceProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PrismLikeProvider.class);
-    
+
     @Override
     @Nullable
-    public SimpleInstanceInfo instance(Path instancePath) {
-        if (!isValidInstance(instancePath)) {
+    public InstanceSummary scanForInstance(Path instancePath) {
+        Path metaPath = instancePath.resolve("mmc-pack.json");
+        Path configPath = instancePath.resolve("instance.cfg");
+        if (Files.notExists(metaPath) || Files.notExists(configPath)) {
             return null;
         }
-        
+
         // Load the instance meta file
-        var metaFile = instancePath.resolve("mmc-pack.json");
-        var metaJson = this.loadJson(metaFile);
-        
+        var metaJson = GsonUtils.parseRawSafe(metaPath);
         if (metaJson == null) {
             return null;
         }
-        
+
         // Load the instance cfg file
         Properties instanceCfg = new Properties();
         try {
@@ -37,9 +39,9 @@ public abstract class PrismLikeProvider implements InstanceProvider {
             LOGGER.error("Failed to read instance.cfg", e);
             return null;
         }
-        
+
         var name = instanceCfg.getProperty("name");
-        
+
         // Game version
         var components = metaJson.getAsJsonObject().get("components");
         if (components.isJsonNull()) {
@@ -61,22 +63,12 @@ public abstract class PrismLikeProvider implements InstanceProvider {
             LOGGER.error("Failed to read instance.json");
             return null;
         }
-        
-        return new SimpleInstanceInfo(name, instancePath, minecraftVersion, null);
+
+        return new InstanceSummary(name, instancePath, minecraftVersion, null);
     }
 
     @Override
     public Result<Boolean, String> importInstance(Path instancePath) {
         return Result.err("Not implemented");
-    }
-
-    @Override
-    public boolean isValidInstance(Path path) {
-        return Files.exists(path.resolve("instance.cfg")) && Files.exists(path.resolve("mmc-pack.json"));
-    }
-
-    @Override
-    public boolean isValidInstanceProvider(Path path) {
-        return false;
     }
 }

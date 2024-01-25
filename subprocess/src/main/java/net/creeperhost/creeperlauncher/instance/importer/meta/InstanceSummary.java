@@ -5,9 +5,9 @@ import net.covers1624.quack.gson.PathTypeAdapter;
 
 import java.nio.file.Path;
 
-public record SimpleInstanceInfo(
-   String name,
-   @JsonAdapter(PathTypeAdapter.class) Path dataLocation,
-   String minecraftVersion,
-   String javaVersion
-) {}
+public record InstanceSummary(
+        String name,
+        @JsonAdapter (PathTypeAdapter.class) Path dataLocation,
+        String minecraftVersion,
+        String javaVersion
+) { }
