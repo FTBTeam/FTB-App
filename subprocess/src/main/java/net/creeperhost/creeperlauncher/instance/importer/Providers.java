@@ -7,6 +7,8 @@ import net.creeperhost.creeperlauncher.instance.importer.providers.*;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -30,12 +32,14 @@ public enum Providers {
             new PrismProvider(),
             Map.of(
                     MACOS, () -> userHome().resolve("/Library/Application Support/PrismLauncher/instances/"),
+                    LINUX, () -> userHome().resolve(".local/share/PrismLauncher/instances/")
             )
     ),
     MULTIMC(
             new MultiMcProvider(),
             Map.of(
                     MACOS, () -> Path.of("/Applications/MultiMC.app/Data/instances/"),
+                    LINUX, () -> userHome().resolve(".local/share/multimc/instances/")
             )
     ),
     ATLAUNCHER(
