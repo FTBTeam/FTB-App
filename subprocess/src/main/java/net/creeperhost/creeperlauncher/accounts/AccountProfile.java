@@ -1,9 +1,7 @@
 package net.creeperhost.creeperlauncher.accounts;
 
 import com.google.common.base.Objects;
-import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
-import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
 import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
@@ -45,8 +43,8 @@ public class AccountProfile {
         this.skins = skins;
     }
 
-    public AuthenticatorValidator<?, ?, ?> getValidator() {
-        return this.isMicrosoft ? new MicrosoftAuthenticator() : new MojangAuthenticator();
+    public MicrosoftAuthenticator getValidator() {
+        return new MicrosoftAuthenticator();
     }
 
     @Override

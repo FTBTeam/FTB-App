@@ -2,13 +2,13 @@
   <div class="app-integrations">
     <h3 class="text-xl mb-4 font-bold">Active integrations</h3>
     <div class="active-integrations integrations mb-8">
-      <p v-if="auth.token === null && !auth.loggingIn">
+      <p v-if="!getMtAccount">
         Looks like you've not got any integrations setup, use the 'available integrations' section below to get started.
       </p>
 
       <div class="card" v-else>
         <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
-        <div class="main" v-if="!auth.loggingIn">
+        <div class="main" v-if="getMtAccount">
           <div class="name font-bold mb-2 flex items-center">
             <div class="avatar mr-2">
               <img
@@ -18,20 +18,17 @@
               />
             </div>
             <div class="name flex flex-col">
-              <span class="block">{{
-                auth.token.mc !== undefined && auth.token.mc.display !== null
-                  ? auth.token.mc.display.split('#')[0]
-                  : auth.token.username
-              }}</span
-              ><span
-                v-if="auth.token.mc !== undefined && auth.token.mc.display !== null"
+              <span class="block">{{getMtProfile?.display?.split("#")[0] || getMtAccount.username || "Unknown" }}</span>
+              <span
+                v-if="getMtProfile?.display"
                 class="text-xs opacity-50 hash"
-                >#{{ auth.token.mc.display.split('#')[1] }}</span
               >
+                #{{ getMtProfile?.display.split('#')[1] }}
+              </span>
             </div>
           </div>
           <div class="setup inline-block mt-4 text-sm">
-            <ui-button :wider="true" type="success" @click="logout" icon="sign-out">Logout</ui-button>
+            <ui-button :wider="true" type="success" @click="logout" :working="working" icon="sign-out">Logout</ui-button>
           </div>
         </div>
         <div class="main flex" v-else>
@@ -41,9 +38,9 @@
       </div>
     </div>
 
-    <h3 class="text-xl font-bold mb-4" v-if="auth.token === null">Available integrations</h3>
-    <div class="integrations" v-if="auth.token === null">
-      <div class="card" :class="{ disabled: auth.loggingIn }">
+    <h3 class="text-xl font-bold mb-4" v-if="!getMtAccount">Available integrations</h3>
+    <div class="integrations" v-if="!getMtProfile">
+      <div class="card">
         <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
         <div class="main">
           <div class="name font-bold mb-1">MineTogether</div>
@@ -59,59 +56,97 @@
 
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
-import {Action, State} from 'vuex-class';
-import {AuthState} from '@/modules/auth/types';
+import {Action, Getter} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import {SettingsState} from '@/modules/settings/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import {alertController} from '@/core/controllers/alertController';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
+import MTIntegration from '@/views/Settings/MTIntegration.vue';
+import {createLogger} from '@/core/logger';
+import {SetAccountMethod, SetProfileMethod} from '@/core/state/core/mtAuthState';
+import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
+import {InstanceActions} from '@/core/actions/instanceActions';
 
 @Component({
   components: {UiButton},
   methods: {getMinecraftHead}
 })
 export default class AppInfo extends Vue {
-  @State('auth') private auth!: AuthState;
-  @State('settings') private settings!: SettingsState;
-  @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
+  private logger = createLogger("AppInfo.vue");
+
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
 
+  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+
+  @Action("setProfile", ns("v2/mtauth")) setProfile!: SetProfileMethod;
+  @Action("setAccount", ns("v2/mtauth")) setAccount!: SetAccountMethod;
+  @Action("storeCredentials", ns("v2/apiCredentials")) storeCredentials!: StoreCredentialsAction;
+  @Getter("wasUserSet", ns("v2/mtauth")) wasUserSet!: boolean;
+
+  working = false;
+  
   get avatarName() {
-    return this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth')?.identityProvider
+    return this.getMtAccount?.accounts?.find((s) => s.identityProvider === 'mcauth')?.userId
   }
 
-  private openLogin() {
+  openLogin() {
     platform.get.actions.openLogin(async (data: { token: string; 'app-auth': string } | null) => {
       if (data === null) {
         return;
       }
-
-      await sendMessage("minetogetherAuthentication", {
+      
+      const result = await sendMessage("minetogetherAuthentication", {
         authType: "login",
         apiKey: data.token,
         appToken: data['app-auth']
       })
       
-      // if (data.token) {
-      //   this.setSessionID(data.token);
-      // }
-      // if (data['app-auth']) {
-      //   let settings = this.settings?.settings;
-      //   if (settings !== undefined) {
-      //     settings.sessionString = data['app-auth'];
-      //   }
-      //   this.saveSettings(settings);
-      // }
+      if (!result || !result.success) {
+        alertController.error(`Failed to login to MineTogether due to ${result?.message || "Unknown error"}`)
+        return;
+      }
+      
+      // We have to handle the profile being null maybe
+      if (!result.basicData) {
+        alertController.error(`Failed to login to MineTogether due to as we could not find your profile`)
+        return;
+      }
+      
+      // We're good, the backend has stored what we need, we'll just update our data stores
+      const {basicData, profile} = result;
+      if (basicData) {
+        this.logger.info("Setting account");
+        await this.setAccount(basicData.account);
+
+        if (!this.wasUserSet) {
+          if (basicData.data.modpacksToken) {
+            this.logger.info("Setting modpacks token");
+            await this.storeCredentials({
+              apiSecret: basicData.data.modpacksToken,
+            });
+          }
+        }
+      }
+
+      if (profile) {
+        this.logger.info("Setting profile");
+        await this.setProfile(profile);
+      }
+      
+      await InstanceActions.clearInstanceCache(false);
     });
   }
 
-  public logout() {
-    this.logoutAction();
-    // get instances and store
-    // TODO: FIX ME 
-    // this.settings.settings.sessionString = undefined;
-    this.saveSettings(this.settings.settings);
+  public async logout() {
+    this.working = true;
+    await MTIntegration.logoutFromMineTogether();
+    this.working = false;
+
+    await this.$router.push('/');
   }
 }
 </script>

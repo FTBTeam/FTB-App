@@ -132,7 +132,12 @@ const actions: ActionTree<ModpackState, RootState> = {
 
 const mutations: MutationTree<ModpackState> = {
   SET_MODPACK: (state: ModpackState, modpack: ModPack) => state.modpacks.set(modpack.id, modpack),
-  CLEAR_MODPACKS: (state: ModpackState) => state.modpacks.clear(),
+  CLEAR_MODPACKS: (state: ModpackState) => {
+    state.modpacks.clear();
+    state.modpackVersions.clear();
+    state.latestPackIds = [];
+    state.featuredPackIds = [];
+  },
   CLEAR_VERSIONS: (state: ModpackState) => state.modpackVersions.clear(),
   SET_FEATURED_PACKS: (state: ModpackState, packs: number[]) => state.featuredPackIds = packs,
   SET_LATEST_PACKS: (state: ModpackState, packs: number[]) => state.latestPackIds = packs,

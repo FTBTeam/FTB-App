@@ -19,16 +19,6 @@ import java.util.function.Function;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData> {
     private static final Logger LOGGER = LogManager.getLogger();
-    
-// TODO: Add back
-//    public static final Function<JsonElement, HashMap<String, String>> JSON_TO_HASHMAP = (elm) -> {
-//        var obj = elm.getAsJsonObject();
-//        var map = new HashMap<String, String>();
-//        for (var entry : obj.entrySet()) {
-//            map.put(entry.getKey(), entry.getValue().getAsString());
-//        }
-//        return map;
-//    };
 
     @Override
     public void handle(InstanceConfigureData data) {

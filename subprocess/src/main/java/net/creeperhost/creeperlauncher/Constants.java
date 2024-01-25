@@ -62,6 +62,7 @@ public class Constants {
     public static final Path SETTINGS_FILE = STORAGE_DIR.resolve("settings.json");
     public static final Path KV_STORE_FILE = STORAGE_DIR.resolve("storage.json");
     public static final Path CREDENTIALS_FILE = STORAGE_DIR.resolve("credentials.encr");
+    public static final Path USER_PROVIDED_API_CREDENTIALS_FILE = STORAGE_DIR.resolve("api-credentials.json");
     
     public static final Path VERSIONS_FOLDER_LOC = getDataDir().resolve(Paths.get("bin", "versions"));
     public static final Path INSTANCES_FOLDER_LOC = getDataDir().resolve("instances");
@@ -120,7 +121,6 @@ public class Constants {
 
     //Auth
     public static String KEY = "";
-    public static String SECRET = "";
 
     public static void refreshHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()

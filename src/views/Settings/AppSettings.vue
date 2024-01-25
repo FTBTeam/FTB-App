@@ -230,8 +230,8 @@ export default class AppSettings extends Vue {
     this.uploadingLogs = false;
   }
 
-  public refreshCachePlz() {
-    InstanceActions.clearInstanceCache()
+  public async refreshCachePlz() {
+    await InstanceActions.clearInstanceCache()
   }
 
   public enableVerbose(value: boolean): void {

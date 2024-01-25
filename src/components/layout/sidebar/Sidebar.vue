@@ -12,19 +12,10 @@
       </popover>
     </div>
 
-    <div class="nav-items">
-<!--      <a-->
-<!--        v-if="auth.token !== null"-->
-<!--        class="nav-item capitalize"-->
-<!--        :class="{ 'item-disabled': disableNav }"-->
-<!--        @click="openFriends"-->
-<!--      >-->
-<!--        <div class="icon"><font-awesome-icon icon="user-friends" class="mr-3" /></div>-->
-<!--        <span class="whitespace-no-wrap">Friends List</span>-->
-<!--      </a>-->
-      
+    <div class="nav-items">      
       <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
     </div>
+    
     <popover text="Setup a server with CreeperHost" class="w-full">
       <img
         @click="openPromo"
@@ -40,8 +31,7 @@
 
 <script lang="ts">
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
-import {AuthState} from '@/modules/auth/types';
-import {Action, State} from 'vuex-class';
+import {Action} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import {RouterNames} from '@/router';
@@ -53,7 +43,6 @@ import {ContextMenus} from '@/core/context/contextMenus';
   components: {SidebarCreate, SidebarProfile },
 })
 export default class Sidebar extends Vue {
-  @State('auth') auth!: AuthState;
   @Prop({ default: false }) isTransparent!: boolean;
 
   @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;

@@ -243,7 +243,6 @@
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import {Action, Getter, State} from 'vuex-class';
-import {AuthState} from '@/modules/auth/types';
 import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
@@ -251,7 +250,7 @@ import Platform from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson, MineTogetherAccount, MineTogetherProfile, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
@@ -289,11 +288,12 @@ import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.
   },
 })
 export default class ModpackSettings extends Vue {
-  // Vuex
-  @State('auth') public auth!: AuthState;
   @State('settings') public settingsState!: SettingsState;
   @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
+  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+  
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
   
@@ -537,11 +537,11 @@ export default class ModpackSettings extends Vue {
   }
 
   get accountHasPlan() {
-    if (!this.auth || !this.auth.token || !this.auth.token?.activePlan) {
+    if (!this.getMtAccount?.activePlan) {
       return false;
     }
     
-    const plan = this.auth.token.activePlan;
+    const plan = this.getMtAccount.activePlan;
     return plan.status === "Active";
   }
 

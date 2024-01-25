@@ -281,7 +281,7 @@ export default class InstanceSettings extends Vue {
     
     if (migrationResult) {
       this.localSettings.instanceLocation = location;
-      InstanceActions.clearInstanceCache(false)
+      await InstanceActions.clearInstanceCache(false)
     }
   }
 

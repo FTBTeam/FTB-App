@@ -84,7 +84,6 @@ import platform from '@/utils/interface/electron-overwolf';
 import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
-import {AuthState} from '@/modules/auth/types';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
 import {requiresWsControllers} from '@/core/controllerRegistry';
@@ -93,6 +92,10 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import os from 'os';
 import {constants} from '@/core/constants';
+import {SetAccountMethod, SetProfileMethod} from '@/core/state/core/mtAuthState';
+import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
+import {adsEnabled} from '@/utils';
+import {MineTogetherAccount} from '@/core/@types/javaApi';
 
 @Component({
   components: {
@@ -106,7 +109,6 @@ import {constants} from '@/core/constants';
 export default class MainApp extends Vue {
   @State('websocket') websockets!: SocketState;
   @State('settings') settings!: SettingsState;
-  @State('auth') auth!: AuthState;
   @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
   @Action('registerPingCallback') registerPingCallback: any;
   @Action('loadProfiles', { namespace: 'core' }) loadProfiles!: AsyncFunction;
@@ -114,7 +116,14 @@ export default class MainApp extends Vue {
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
   
   @Action("storeWsSecret", ns("v2/app")) storeWsSecret!: (secret: string) => Promise<void>
-
+  
+  @Action("setProfile", ns("v2/mtauth")) setProfile!: SetProfileMethod;
+  @Action("setAccount", ns("v2/mtauth")) setAccount!: SetAccountMethod;
+  @Action("storeCredentials", ns("v2/apiCredentials")) storeCredentials!: StoreCredentialsAction;
+  @Action("setWasUserSet", ns("v2/apiCredentials")) setWasUserSet!: () => Promise<void>;
+  
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+  
   private logger = createLogger("MainApp.vue");
   
   // App runtime
@@ -134,6 +143,11 @@ export default class MainApp extends Vue {
       name: "Settings",
       done: false,
       action: () => this.loadSettings()
+    },
+    {
+      name: "Init App",
+      done: false,
+      action: () => this.initApp()
     },
     {
       name: "Profiles",
@@ -176,6 +190,45 @@ export default class MainApp extends Vue {
     this.appLoaded = true;
   }
   
+  async initApp() {
+    this.logger.info("Initializing app");
+    try {
+      const reply = await sendMessage("appInit", {});
+      if (!reply?.success) {
+        this.logger.error("Failed to initialize app", reply);
+        return;
+      }
+      
+      // TODO: Get api credentials here as well
+      this.logger.info("App initialized from the subprocess");
+      const {basicData, profile, apiCredentials} = reply;
+      if (basicData) {
+        this.logger.info("Setting account");
+        await this.setAccount(basicData.account);
+
+        if (basicData.data.modpacksToken && !apiCredentials) {
+          this.logger.info("Setting modpacks token");
+          await this.storeCredentials({
+            apiSecret: basicData.data.modpacksToken,
+          });
+        }
+      }
+      
+      if (profile) {
+        this.logger.info("Setting profile");
+        await this.setProfile(profile);
+      }
+      
+      if (apiCredentials) {
+        this.logger.info("Setting api credentials");
+        await this.storeCredentials(apiCredentials);
+        await this.setWasUserSet();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   async installApp() {
     this.appInstalling = true;
     this.logger.info("Installing app");
@@ -281,6 +334,7 @@ export default class MainApp extends Vue {
       && !this.appInstalling
       && !this.isReconnecting
       && !this.appConnecting
+      && this.allJobsDone()
   }
   
   get showSidebar() {
@@ -288,16 +342,7 @@ export default class MainApp extends Vue {
   }
 
   get advertsEnabled(): boolean {
-    if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
-      return false
-    }
-    
-    if (!this.auth?.token?.activePlan) {
-      return true;
-    }
-
-    // If this fails, show the ads
-    return this.settings?.settings?.appearance?.showAds ?? true;
+    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
   }
 
   get systemBarDisabled() {

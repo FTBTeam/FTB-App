@@ -43,19 +43,22 @@
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import Component from 'vue-class-component';
-import {State} from 'vuex-class';
+import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
-import {AuthState} from '@/modules/auth/types';
 import {JavaFetch} from '@/core/javaFetch';
 import ChAdsArea from '@/components/core/misc/ChAdsArea.vue';
 import {createLogger} from '@/core/logger';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount} from '@/core/@types/javaApi';
+import {adsEnabled} from '@/utils';
 
 @Component({
   components: {ChAdsArea}
 })
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
-  @State('auth') public auth!: AuthState;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
   
   private logger = createLogger("AdAside.vue");
 
@@ -156,14 +159,9 @@ export default class AdAside extends Vue {
         .catch(e => this.logger.error("Failed to send analytics", e))
     });
   }
-
+  
   get advertsEnabled(): boolean {
-    if (!this.auth?.token?.activePlan) {
-      return true;
-    }
-
-    // If this fails, show the ads
-    return this.settings?.settings?.appearance?.showAds ?? true;
+    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
   }
 
   static mkRandom() {

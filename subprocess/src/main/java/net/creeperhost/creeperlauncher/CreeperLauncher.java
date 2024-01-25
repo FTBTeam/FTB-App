@@ -20,6 +20,7 @@ import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.storage.CredentialStorage;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
@@ -165,6 +166,12 @@ public class CreeperLauncher {
             }
         } else {
             LOGGER.info(isDevMode ? "Development mode" : "No PID args specified");
+        }
+
+        // Set the API key if we have it
+        String apiKey = CredentialStorage.getInstance().get("modpacksChApiKey");
+        if (apiKey != null && !apiKey.isEmpty()) {
+            Constants.KEY = apiKey;
         }
 
         try {

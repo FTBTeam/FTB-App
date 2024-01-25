@@ -28,13 +28,13 @@ export class InstanceActions {
     await safeNavigate(RouterNames.ROOT_LOCAL_PACK, {uuid: instance.uuid}, {quickNav: ModpackPageTabs.SETTINGS})
   }
   
-  static clearInstanceCache(announce = true) {
+  static async clearInstanceCache(announce = true) {
     InstanceActions.logger.debug("Clearing instance cache")
-    store.dispatch("v2/modpacks/clearModpacks", undefined, {
+    await store.dispatch("v2/modpacks/clearModpacks", undefined, {
       root: true
     });
     
-    store.dispatch("v2/instances/loadInstances", undefined, {
+    await store.dispatch("v2/instances/loadInstances", undefined, {
       root: true
     }); // Reload instances
     

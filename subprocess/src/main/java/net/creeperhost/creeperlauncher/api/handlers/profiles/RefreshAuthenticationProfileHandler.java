@@ -2,26 +2,18 @@ package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-import net.creeperhost.creeperlauncher.accounts.authentication.AuthenticatorValidator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
-import net.creeperhost.creeperlauncher.accounts.authentication.MojangAuthenticator;
-import net.creeperhost.creeperlauncher.accounts.data.ErrorWithCode;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
-import net.creeperhost.creeperlauncher.accounts.stores.YggdrasilAuthStore;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.util.DataResult;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 
-/**
- * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
- */
 public class RefreshAuthenticationProfileHandler implements IMessageHandler<RefreshAuthenticationProfileHandler.Data> {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -39,13 +31,8 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             return;
         }
 
-        AuthenticatorValidator<?, ?, ?> specificValidator = profile.getValidator();
-        if (specificValidator instanceof MicrosoftAuthenticator validator) {
-            refreshMicrosoft(validator, data, profile);
-            return;
-        }
-
-        refreshMinecraft((MojangAuthenticator) specificValidator, data, profile);
+        MicrosoftAuthenticator authenticator = profile.getValidator();
+        refreshMicrosoft(authenticator, data, profile);
     }
 
     /**
@@ -88,21 +75,6 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
         profile.msAuth = refresh.unwrap().store();
         AccountManager.get().saveProfiles();
         WebSocketHandler.sendMessage(new Reply(data, true, "", false));
-    }
-
-    /**
-     * Refresh using the Minecraft flow
-     * 
-     * @implNote Minecraft auth is being yeeted
-     */
-    private void refreshMinecraft(MojangAuthenticator validator, Data data, AccountProfile profile) {
-        DataResult<YggdrasilAuthStore, ErrorWithCode> refresh = validator.refresh(profile, "ignore me");
-
-        refresh.data().ifPresentOrElse(d -> {
-            profile.mcAuth = d;
-            AccountManager.get().saveProfiles();
-            WebSocketHandler.sendMessage(new Reply(data, true, "updated", false));
-        }, () -> WebSocketHandler.sendMessage(new Reply(data, false, "Unable to refresh: " + refresh.error().map(ErrorWithCode::error).orElse("Unknown error"), false)));
     }
 
     private static class Reply extends Data {

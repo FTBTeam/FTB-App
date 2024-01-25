@@ -1,8 +1,8 @@
 import {
   AccountIsValidHandlerData,
   AccountIsValidHandlerReply,
-  AuthenticateMcProfileHandlerData,
-  AuthenticateMcProfileHandlerReply,
+  AppInitHandlerData,
+  AppInitHandlerReply,
   AuthenticateMsProfileHandlerData,
   AuthenticateMsProfileHandlerReply,
   BaseData,
@@ -56,6 +56,7 @@ import {
   MessageClientData,
   MineTogetherAuthenticationHandlerData,
   MineTogetherAuthenticationHandlerReply,
+  minetogetherLogoutHandlerReply,
   ModalCallbackData,
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
@@ -82,7 +83,6 @@ import {
   StorageGetHandlerReply,
   StoragePutHandlerData,
   StoragePutHandlerReply,
-  StoreAuthDetailsData,
   SyncCloudInstanceData,
   SyncCloudInstanceDataReply,
   UninstallInstanceData,
@@ -115,7 +115,6 @@ export type MessageType =
   "saveSettings" |
   "modalCallback" |
   "fileHash" |
-  "storeAuthDetails" |
   "syncInstance" |
   "uploadLogs" |
   "getJavas" |
@@ -136,7 +135,6 @@ export type MessageType =
   "profiles.get" |
   "profiles.remove" |
   "profiles.setActiveProfile" |
-  "profiles.mc.authenticate" |
   "profiles.ms.authenticate" |
   "instanceEnableCloudSaves" |
   "instanceDisableCloudSaves" |
@@ -149,11 +147,21 @@ export type MessageType =
   "openDebugTools" |
   "videoCache" |
   "moveInstances" | 
-  "minetogetherAuthentication"
+  "minetogetherAuthentication" |
+  "minetogetherLogoutHandler" |
+  "appInit"
 
 export type EmptyMessageResponse = {}
 
 export type MessagePayload = {
+  "appInit": {
+    input: AppInitHandlerData,
+    output: AppInitHandlerReply
+  },
+  "minetogetherLogoutHandler": {
+    input: BaseData,
+    output: minetogetherLogoutHandlerReply
+  },
   "installedInstances": {
     input: InstalledInstancesData,
     output: InstalledInstancesDataReply
@@ -217,10 +225,6 @@ export type MessagePayload = {
   "fileHash": {
     input: FileHashData,
     output: FileHashDataReply
-  }
-  "storeAuthDetails": {
-    input: StoreAuthDetailsData,
-    output: EmptyMessageResponse
   }
   "syncInstance": {
     input: SyncCloudInstanceData,
@@ -303,10 +307,6 @@ export type MessagePayload = {
     input: SetActiveProfileHandlerData,
     output: SetActiveProfileHandlerReply
   }
-  "profiles.mc.authenticate": {
-    input: AuthenticateMcProfileHandlerData,
-    output: AuthenticateMcProfileHandlerReply
-  }
   "profiles.ms.authenticate": {
     input: AuthenticateMsProfileHandlerData,
     output: AuthenticateMsProfileHandlerReply
@@ -361,6 +361,6 @@ export type MessagePayload = {
   },
   "minetogetherAuthentication": {
     input: MineTogetherAuthenticationHandlerData,
-    output: MineTogetherAuthenticationHandlerReply
+    output: Nullable<MineTogetherAuthenticationHandlerReply, "basicData" | "profile">
   }
 }

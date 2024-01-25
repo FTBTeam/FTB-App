@@ -25,21 +25,49 @@ import java.util.Base64;
 import java.util.HashMap;
 
 /**
- * TODO: When available, use the systems credential storage to store the users credentials.
+ * A non-ideal credential storage system backed by the users mac address.
  */
 public class CredentialStorage {
     private static final Logger LOGGER = LoggerFactory.getLogger(CredentialStorage.class);
+    private static CredentialStorage INSTANCE;
     
     private HashMap<String, String> credentials = new HashMap<>();
     private @Nullable String macAddress;
     
-    public CredentialStorage() {
+    private CredentialStorage() {
         try {
             macAddress = getMacAddress();
+            LOGGER.info("Loading credentials for user");
+            load();
         } catch (SocketException | UnknownHostException e) {
             LOGGER.error("Failed to get mac address", e);
             macAddress = null;
         }
+    }
+    
+    public static CredentialStorage getInstance() {
+        if (CredentialStorage.INSTANCE == null) {
+            CredentialStorage.INSTANCE = new CredentialStorage();
+        }
+        return CredentialStorage.INSTANCE;
+    }
+    
+    public @Nullable String get(String key) {
+        return credentials.get(key);
+    }
+    
+    public void set(String key, String value) {
+        credentials.put(key, value);
+        save();
+    }
+    
+    public void remove(String key) {
+        credentials.remove(key);
+        save();
+    }
+    
+    public HashMap<String, String> getCredentials() {
+        return credentials;
     }
 
     /**
@@ -74,7 +102,7 @@ public class CredentialStorage {
             String encryptedCredentials = Base64.getEncoder().encodeToString(encryptedBytes);
             
             // Save the data to the file system
-            Files.writeString(Constants.getDataDir().resolve("credentials.bat"), encryptedCredentials);
+            Files.writeString(Constants.CREDENTIALS_FILE, encryptedCredentials);
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to encrypt credentials", e);
@@ -89,7 +117,7 @@ public class CredentialStorage {
         }
         
         // Load the encrypted credentials from the file system
-        Path credentials = Constants.getDataDir().resolve("credentials.bat");
+        Path credentials = Constants.CREDENTIALS_FILE;
         if (!Files.exists(credentials)) {
             LOGGER.error("Failed to load credentials, credentials file does not exist");
             return false;

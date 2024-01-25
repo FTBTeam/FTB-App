@@ -28,7 +28,9 @@ import Platform from '@/utils/interface/electron-overwolf';
 import os from 'os';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
-import {AuthState} from '@/modules/auth/types';
+import {adsEnabled} from '@/utils';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount} from '@/core/@types/javaApi';
 
 // TODO: (M#02) Remove this component and replace it with a modal that support full screen
 @Component
@@ -61,22 +63,13 @@ export default class ClosablePanel extends Vue {
   
   // Apparently OS is safe on overwolf?
   isMac = os.type() === 'Darwin';
-
-  // Not ideal...
+  
   @State('settings') public settings!: SettingsState;
-  @State('auth') public auth!: AuthState;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  
   get advertsEnabled(): boolean {
-    if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
-      return false
-    }
-
-    if (!this.auth?.token?.activePlan) {
-      return true;
-    }
-
-    // If this fails, show the ads
-    return (this.settings?.settings?.appearance?.showAds === true) ?? true;
+    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
   }
 }
 </script>

@@ -1,11 +1,10 @@
 package net.creeperhost.creeperlauncher.util;
 
 import com.google.common.hash.HashCode;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -71,5 +70,38 @@ public class GsonUtils {
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             GSON.toJson(thing, type, writer);
         }
+    }
+
+    /**
+     * Helper method to get a field from a JsonObject using dot notation.
+     */
+    @Nullable
+    public static JsonElement getField(JsonElement object, String dotNotation) {
+        if (isNull(object)) return null;
+
+        String[] keys = dotNotation.split("\\.");
+
+        JsonElement currentElement = object;
+
+        for (String key : keys) {
+            if (currentElement.isJsonObject()) {
+                JsonObject jsonObject = currentElement.getAsJsonObject();
+                if (jsonObject.has(key)) {
+                    currentElement = jsonObject.get(key);
+                } else {
+                    return null; // Key not found
+                }
+            } else {
+                return null; // Not a JsonObject
+            }
+        }
+        
+        return currentElement.isJsonPrimitive() ? 
+            currentElement.getAsJsonPrimitive() : null;
+    }
+    
+    public static boolean isNull(@Nullable JsonElement element) {
+        if (element == null) return true;
+        return element.isJsonNull();
     }
 }

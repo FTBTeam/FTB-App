@@ -1,6 +1,7 @@
 package net.creeperhost.creeperlauncher.util;
 
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.storage.CredentialStorage;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -42,8 +43,16 @@ public class ProxyUtils {
         String settingsProxyHost = Settings.getSettings().proxy().host();
         int settingsProxyPort = Settings.getSettings().proxy().port();
         String settingsProxyUser = Settings.getSettings().proxy().username();
-        // TODO: Credential store?
-        String settingsProxyPassword = Settings.getSettings().proxy().password();
+        
+        // TODO: Remove: Migration, won't be needed for much longer
+        if (!Settings.getSettings().proxy().password().isEmpty()) {
+            // Move it to the credential storage.
+            CredentialStorage.getInstance().set("proxyPassword", Settings.getSettings().proxy().password());
+            Settings.getSettings().proxy().setPassword("");
+            Settings.saveSettings();
+        }
+        
+        String settingsProxyPassword = CredentialStorage.getInstance().get("proxyPassword");
         boolean requiresReset;
         requiresReset = !Objects.equals(proxyType, settingsProxyType);
         requiresReset |= !Objects.equals(proxyHost, settingsProxyHost);

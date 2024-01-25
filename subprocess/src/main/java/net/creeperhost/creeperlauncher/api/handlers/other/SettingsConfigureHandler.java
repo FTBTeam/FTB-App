@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.api.handlers.other;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.SettingsConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.storage.CredentialStorage;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.SettingsChangeUtil;
 import org.apache.logging.log4j.LogManager;
@@ -24,6 +25,11 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
                 return;
             }
 
+            if (!data.settings.proxy().password().isEmpty()) {
+                CredentialStorage.getInstance().set("proxyPassword", data.settings.proxy().password());
+                data.settings.proxy().setPassword("");
+            }
+            
             // Actually handle the settings change
             Settings.updateSettings(data.settings);
             // Dispatch the event
