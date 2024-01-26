@@ -4,7 +4,7 @@
     
     <div class="nav-items nav-main mt-2">      
       <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
-        <router-link :to="{ name: item.to }">
+        <router-link :to="{ name: item.to }" :class="{'pointer-events-none': disableNav}">
           <div class="nav-item" :class="{ 'item-disabled': disableNav }" @click.right="e => navItemRightClick(e, item)">
             <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
           </div>
