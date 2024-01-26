@@ -85,9 +85,16 @@ module.exports = {
       nodeIntegration: true,
       customFileProtocol: `ftb://./`,
       builderOptions: {
-        productName: 'ftbapp',
-        appId: 'com.feedthebeast.Launcher',
-        
+        productName: 'FTB App',
+        appId: 'dev.ftb.app',
+        extraResources: [
+          {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
+          {from: "subprocess/build/libs/licenses.json", to: ""},
+          {from: "subprocess/build/libs/meta.json", to: ""},
+        ],
+        win: {
+          target: ['nsis'],
+        },
         mac: {
           // #TODO https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/
           identity: 'null',
@@ -97,6 +104,7 @@ module.exports = {
           entitlementsInherit: 'build/entitlements.mac.plist',
           target: ['dir'],
           artifactName: '${productName}-mac.${ext}',
+          category: 'public.app-category.games',
         },
         linux: {
           target: ['dir'],

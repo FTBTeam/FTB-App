@@ -22,7 +22,7 @@ export const mutations: MutationTree<SocketState> = {
     state.socket.isConnected = false;
   },
   SOCKET_ONERROR(state: any, event: any) {
-    console.error(state, event);
+    // console.error(state, event);
     state.firstStart = false;
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {

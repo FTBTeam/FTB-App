@@ -62,7 +62,6 @@ import {Mod} from '@/types';
 import {BaseData, InstanceJson, OperationProgressUpdateData} from '@/core/@types/javaApi';
 import {compatibleCrossLoaderPlatforms} from '@/utils/helpers/packHelpers';
 
-// TODO: Remove
 type InstallProgress = {
   percentage: number;
   speed: number;

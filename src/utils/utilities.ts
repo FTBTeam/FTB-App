@@ -53,7 +53,6 @@ export async function waitForWebsockets(user: string, websockets: Socket) {
   }
 }
 
-// TODO: We should just use an api for this. It's simpler. 
 // export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
 //   return new Promise((resolve, reject) => {
 //     if (serverInfo.includes(':')) {

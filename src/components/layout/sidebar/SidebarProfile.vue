@@ -1,10 +1,9 @@
 <template>
   <div class="profile-area" :class="{ disable }">
-    <div class="profile" v-if="getActiveProfile || auth.token">
+    <div class="profile">
       <div class="avatar">
         <img
-          v-if="getActiveProfile"
-          :src="getMinecraftHead(getActiveProfile.uuid)"
+          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : null)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -22,7 +21,7 @@
             <font-awesome-icon
               class="cursor-pointer"
               v-if="getProfiles.length"
-              icon="edit"
+              :icon="editMode ? 'times' : 'edit'"
               @click="editMode = !editMode"
             />
           </div>
@@ -68,7 +67,7 @@
                 <img src="@/assets/mtg-tiny-desat.webp" alt="MineTogether Logo" />
                 MineTogether
               </div>
-              <router-link :to="{ name: 'integrations' }">
+              <router-link :to="{ name: 'integrations' }" v-if="getMtProfile">
                 <font-awesome-icon icon="edit" />
               </router-link>
             </div>

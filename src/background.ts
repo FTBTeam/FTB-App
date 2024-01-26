@@ -17,6 +17,8 @@ const logger = createLogger('background.ts');
 function getAppHome() {
   if (os.platform() === "darwin") {
     return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+  } else if (os.platform() === "win32") {
+    return path.join(os.homedir(), 'AppData', 'Local', '.ftba');
   } else {
     return path.join(os.homedir(), '.ftba');
   }
@@ -152,6 +154,9 @@ const reloadMainWindow = async () => {
     show: false,
   });
 
+  // Reset the port and secret scanning
+  appCommunicationSetup = false;
+  
   // Enable the windows frame
   win.destroy()
   await createWindow()
@@ -354,6 +359,10 @@ ipcMain.handle("extractFile", async (event, args) => {
   return false
 });
 
+ipcMain.handle("getAppExecutablePath", async (event, args) => {
+  return app.getAppPath();
+});
+
 ipcMain.handle("startSubprocess", async (event, args) => {
   if (process.env.NODE_ENV !== 'production') {
     logger.debug("Not starting subprocess in dev mode")
@@ -361,7 +370,8 @@ ipcMain.handle("startSubprocess", async (event, args) => {
   }
   
   const javaPath = args.javaPath;
-  const argsList = args.args;
+  const argsList = args.args as string[]
+  const env = args.env as string[]
   
   if (subprocess !== null) {
     logger.debug("Subprocess is already running, killing it")
@@ -374,10 +384,26 @@ ipcMain.handle("startSubprocess", async (event, args) => {
     const timeout = setTimeout(() => {
       reject("Subprocess timed out")
     }, 30_000) // 30 seconds
+
+    const mappedEnv = env.reduce((curr, itt) => {
+      const [key, value] = itt.split("=");
+      curr[key] = value;
+      return curr;
+    }, {} as Record<string, string>)
+    
+    logger.debug("Mapped env", mappedEnv)
+    logger.debug("Args list", argsList)
+    
+    // Windows might be fucked?
+    logger.debug(javaPath)
     
     subprocess = spawn(javaPath, argsList, {
       detached: true,
-      stdio: 'pipe'
+      stdio: 'pipe',
+      env: {
+        ...process.env,
+        ...mappedEnv,
+      }
     });
 
     subprocess.stderr?.on('data', (data) => {

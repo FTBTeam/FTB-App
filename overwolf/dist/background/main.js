@@ -55,7 +55,6 @@ const setup = async () => {
 
   let status = await p(plugin.initialize).catch(e => console.log(e));
   if (status === false) {
-    // TODO: Warn user
     console.error("Plugin couldn't be loaded??");
     return;
   }

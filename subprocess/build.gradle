@@ -141,10 +141,9 @@ def dependencySources = [
         "net.covers1624:Quack"                     : "https://github.com/covers1624/Quack"
 ]
 
-tasks.register('writeVersion') {
+tasks.register('writeLicenses') {
     it.dependsOn 'downloadLicenses'
     doLast {
-        def packageJson = new JsonSlurper().parse(file("../package.json"))
         def data = new JsonSlurper().parse(new File("$projectDir/build/reports/license/dependency-license.json"))
         def dependencies = data.get("dependencies")
         def licenses = [:]
@@ -155,20 +154,52 @@ tasks.register('writeVersion') {
                     repository: dependencySources.get(value.name.take(value.name.lastIndexOf(":")) as String)
             ])
         }
-        file("$projectDir/build/libs/version.json").newWriter().withWriter { w ->
+
+        file("$projectDir/build/libs/licenses.json").newWriter().withWriter { w ->
+            w << JsonOutput.toJson(licenses)
+        }
+    }
+}
+
+tasks.register('writeVersion') {
+    it.dependsOn 'downloadLicenses'
+    doLast {
+        def packageJson = new JsonSlurper().parse(file("../package.json"))
+
+        file("$projectDir/build/libs/meta.json").newWriter().withWriter { w ->
             w << JsonOutput.toJson(
                     [
-                            jarVersion    : version,
-                            webVersion    : webVersion,
-                            publicVersion : packageJson.version,
+                            appVersion    : packageJson.version,
+                            commit        : details.gitHash,
                             branch        : branch,
-                            timestampBuilt: Instant.now().getEpochSecond(),
-                            javaLicense   : licenses
+                            released      : Instant.now().getEpochSecond(),
+                            runtime       : [
+                                    version: "21",
+                                    // Get the output of the fatjar -all
+                                    jar: shadowJar.outputs.files.singleFile.name,
+
+                                    /**
+                                     * The env and args use the following format:
+                                     * {
+                                     *    "key": "" // Optional, if not set, the value will be used as the key and value.
+                                     *    "value": "",
+                                     *    // At least one of the following must be set.
+                                     *    "filter": {
+                                     *       "os": "windows", // optional
+                                     *       "arch": "x64", // optional
+                                     *    }
+                                     * }
+                                     */
+                                    env: [],
+                                    jvmArgs: []
+                            ]
                     ]
             )
         }
     }
 }
+
+build.dependsOn 'writeLicenses'
 build.dependsOn 'writeVersion'
 
 wrapper {

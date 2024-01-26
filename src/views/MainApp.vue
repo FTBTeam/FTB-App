@@ -2,37 +2,25 @@
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
     
-    <div class="app-container" v-if="!appReadyToGo">
-      Not ready
-      <pre>App Ready: {{appReadyToGo}}
-App Starting: {{appStarting}}
-App Loaded: {{appLoaded}}
-App Installing: {{appInstalling}}
-App Installing Stage: {{appInstallStage}}
-App Connecting: {{appConnecting}}
-App Reconnecting: {{isReconnecting}}
-      </pre>
-      
-      <div class="initializing" v-if="appStarting && !appInstalling">
-        Starting up
-      </div>
-  
-      <!-- App trying to connect to subprocess -->
-      <div class="installing" v-if="appInstalling">
-        Installing {{appInstallStage}}
-      </div>
-      
-      <div class="connecting" v-if="appConnecting && !appInstalling">
-        Connecting {{reconnectAttempts}}
-      </div>
-      
-      <!-- App has connected but is trying to reconnect -->
-      <div class="reconnecting" v-if="!appStarting && !appInstalling && isReconnecting">
-        Reconnecting
-      </div>
-
-      <div class="progress">
-        <div class="bar"></div>
+    <div class="app-container relative flex justify-center items-center h-full" v-if="!appReadyToGo">
+      <div class="text-center">
+        <loader :title="status" sub-title="We're just getting some things ready... This shouldn't take long!" />
+        
+        <p v-if="appInstalling" class="text-center mt-2">
+          {{appInstallStage}}
+        </p>
+        
+        <div class="debug font-mono font-bold flex gap-6 items-center">
+          <div class="debug-item" :class="{active: appReadyToGo}">R</div>
+          <div class="debug-item" :class="{active: appStarting}">S</div>
+          <div class="debug-item" :class="{active: appLoaded}">L</div>
+          <div class="debug-item" :class="{active: appInstalling}">I</div>
+          <div class="debug-item" :class="{active: appConnecting}">C</div>
+          <div class="debug-item" :class="{active: isReconnecting}">RE</div>
+          <div class="opacity-25">
+            Attempts {{reconnectAttempts}}
+          </div>
+        </div>
       </div>
     </div>
     
@@ -48,28 +36,6 @@ App Reconnecting: {{isReconnecting}}
     </div>
     
     <global-components v-if="appReadyToGo" />
-<!--      <div class="app-container centered" :class="{'no-system-bar': !hasInitialized || (hasInitialized && systemBarDisabled)}" v-else>-->
-<!--        <div class="pushed-content">-->
-<!--          <report-form-->
-<!--            v-if="websockets.reconnects > 10 && this.loading"-->
-<!--            :loadingFailed="loading"-->
-<!--            :websocketsFailed="!websockets || websockets.reconnects > 10"-->
-<!--            :websockets="websockets"-->
-<!--            :max-tries="10"-->
-<!--          />-->
-<!--          <div-->
-<!--            class="container flex pt-1 flex-wrap overflow-x-auto justify-center flex-col"-->
-<!--            style="flex-direction: column; justify-content: center; align-items: center"-->
-<!--            v-else-->
-<!--          >-->
-<!--            <img src="../assets/images/ftb-logo-full.svg" width="300" class="loader-logo-animation" />-->
-<!--            <div class="progress">-->
-<!--              <div class="bar"></div>-->
-<!--            </div>-->
-<!--            <em class="mt-6">{{ stage }}</em>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
   </div>
 </template>
 
@@ -96,9 +62,11 @@ import {SetAccountMethod, SetProfileMethod} from '@/core/state/core/mtAuthState'
 import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
 import {adsEnabled} from '@/utils';
 import {MineTogetherAccount} from '@/core/@types/javaApi';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   components: {
+    Loader,
     GlobalComponents,
     Sidebar,
     TitleBar,
@@ -175,12 +143,20 @@ export default class MainApp extends Vue {
     
     // Check if the app is installed
     let installed = true;
+    this.logger.info("overwolf", this.platform.isOverwolf());
+    this.logger.info("electron", this.platform.isElectron());
     if (!this.platform.isOverwolf()) {
       installed = await platform.get.app.runtimeAvailable();
       
+      this.logger.info("App installed", installed);
       if (!installed) {
         // We need to install the app
-        const result = await this.installApp();
+        try {
+          const result = await this.installApp();
+          console.log(result)
+        } catch (e) {
+          console.error(e);
+        }
         
         // TODO: Error check
       }
@@ -199,7 +175,6 @@ export default class MainApp extends Vue {
         return;
       }
       
-      // TODO: Get api credentials here as well
       this.logger.info("App initialized from the subprocess");
       const {basicData, profile, apiCredentials} = reply;
       if (basicData) {
@@ -232,10 +207,12 @@ export default class MainApp extends Vue {
   async installApp() {
     this.appInstalling = true;
     this.logger.info("Installing app");
+    
     // TODO: Progress
     await this.platform.get.app.installApp((stage: any) => this.appInstallStage = stage, () => {
       console.log("Update")
     })
+    
     this.appInstalling = false;
   }
   
@@ -243,6 +220,7 @@ export default class MainApp extends Vue {
     this.appStarting = false;
     this.logger.info("Starting app");
     
+    console.log("prod", constants.isProduction);
     if (!constants.isProduction) {
       this.logger.info("Starting production app");
 
@@ -251,13 +229,18 @@ export default class MainApp extends Vue {
       return;
     }
 
-    const appData: any = await platform.get.app.startSubprocess();
-    this.logger.info("Started app subprocess", appData);
-    
-    // TODO: Error handling, maybe try again?
-    
-    // Finally we need to get the app to connect to the subprocess
-    await this.connectToWebsockets(appData.port, appData.secret);
+    this.logger.info("Sending start subprocess message");
+    try {
+      const appData: any = await platform.get.app.startSubprocess();
+      this.logger.info("Started app subprocess", appData);
+
+      // TODO: Error handling, maybe try again?
+
+      // Finally we need to get the app to connect to the subprocess
+      await this.connectToWebsockets(appData.port, appData.secret);
+    } catch (e) {
+      this.logger.error("Failed to start subprocess", e);
+    }
   }
   
   async connectToWebsockets(port: number = 13377, secret: string = "") {    
@@ -347,6 +330,18 @@ export default class MainApp extends Vue {
 
   get systemBarDisabled() {
     return !this.settings?.settings?.appearance?.useSystemWindowStyle ?? false;
+  }
+  
+  get status() {
+    if (this.appStarting && !this.appInstalling) {
+      return "Starting up"
+    } else if (this.appInstalling) {
+      return "Installing"
+    } else if (this.appConnecting && !this.isReconnecting && !this.appInstalling) {
+      return "Connecting..."
+    } else if (!this.appStarting && !this.appInstalling && this.isReconnecting) {
+      return "Reconnecting..."
+    }
   }
 }
 </script>
@@ -448,6 +443,21 @@ main.main {
       100% {
         left: 100%;
       }
+    }
+  }
+}
+
+.debug {
+  position: absolute;
+  left: 1.5rem;
+  bottom: 3rem;
+ 
+  .debug-item {
+    color: rgba(white, .2);
+    transition: color .25s ease-in-out;
+    
+    &.active {
+      color: var(--color-primary-button);
     }
   }
 }

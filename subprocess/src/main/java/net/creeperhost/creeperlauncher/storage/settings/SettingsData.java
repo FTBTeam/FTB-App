@@ -41,6 +41,10 @@ public class SettingsData {
     public void write() {
         var jsonData = gson.toJson(this);
         try {
+            if (Files.notExists(Constants.SETTINGS_FILE.getParent())) {
+                Files.createDirectories(Constants.SETTINGS_FILE.getParent());
+            }
+            
             Files.writeString(Constants.SETTINGS_FILE, jsonData);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -48,7 +52,7 @@ public class SettingsData {
     }
 
     // Reader
-    public static SettingsData read() {
+    public static SettingsData read() {        
         try {
             var jsonData = Files.readString(Constants.SETTINGS_FILE);
             return gson.fromJson(jsonData, SettingsData.class);

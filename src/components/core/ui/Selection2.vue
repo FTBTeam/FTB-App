@@ -57,7 +57,6 @@ export type SelectionOption = {
   meta?: any;
 };
 
-// TODO: (M#01) Migrate everything to this one.
 @Component
 export default class Selection2 extends Vue {
   private logger = createLogger(`Selection2.vue`);

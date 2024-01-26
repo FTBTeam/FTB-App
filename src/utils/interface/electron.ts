@@ -12,21 +12,68 @@ import {emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import log from 'electron-log';
 import {createLogger} from '@/core/logger';
-import {computeArch, computeOs, jreLocation} from '@/utils/interface/electron-helpers';
+import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers';
 import {execSync} from 'child_process';
+import * as process from 'process';
 
-function getAppHome() {
-  if (os.platform() === "darwin") {
-    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
-  } else {
-    return path.join(os.homedir(), '.ftba');
+export type Arg = string | {
+  key?: string;
+  value: string;
+  filter: { 
+    os?: string[] | string;
+    arch?: string[] | string;
+  }
+}
+
+export type MetaData = {
+  appVersion: string;
+  commit: string;
+  branch: string;
+  released: number;
+  runtime: {
+    version: string;
+    jar: string;
+    env: Arg[];
+    jvmArgs: Arg[];
+  };
+}
+
+const fallbackMetaData: MetaData = {
+  appVersion: "Unknown",
+  commit: "Unknown",
+  branch: "release",
+  released: new Date().getTime(),
+  runtime: {
+    version: "21", // We can only control this using the endpoint we are using
+    jar: "launcher.jar", // TODO: Fix me,
+    env: [],
+    jvmArgs: []
   }
 }
 
 const eLogger = createLogger("platform/electron.ts");
-log.transports.file.resolvePath = (vars, message) => path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
-
+log.transports.file.resolvePath = (vars, message) =>
+  path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
 Object.assign(console, log.functions);
+
+const resourcesPath = process.resourcesPath
+
+eLogger.info("Resources path", resourcesPath)
+
+const metaFilePath = path.join(resourcesPath, "meta.json");
+const metaData = process.env.NODE_ENV === "development" ? fallbackMetaData : JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
+
+eLogger.info("Meta data", metaData)
+
+function getAppHome() {
+  if (os.platform() === "darwin") {
+    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+  } else if (os.platform() === "win32") {
+    return path.join(os.homedir(), 'AppData', 'Local', '.ftba');
+  } else {
+    return path.join(os.homedir(), '.ftba');
+  }
+}
 
 declare const __static: string;
 
@@ -370,10 +417,17 @@ const Electron: ElectronOverwolfInterface = {
       const ourOs = computeOs(platformData.platform);
       const ourArch = computeArch(platformData.arch)
 
+      const javaVersion = metaData.runtime.version;
+      
       // Attempt to get the java
-      const adopiumRequest = await fetch(`https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`);
+      // TODO: Error catch. Retries.
+      const url = `https://api.adoptium.net/v3/assets/latest/${javaVersion}/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`;
+      
+      eLogger.log("Downloading java from", url)
+      const adopiumRequest = await fetch(url);
       const adopiumRes = await adopiumRequest.json();
 
+      // TODO: Error catch.
       const binary = adopiumRes.find((e: any) => e.binary)?.binary
       const link = binary.package.link;
 
@@ -381,52 +435,54 @@ const Electron: ElectronOverwolfInterface = {
       const runtimePath = `${appPath}/runtime`;
 
       // TODO: Validate this works
+      // TODO: DO something if somethings broke
       if (!fs.existsSync(runtimePath)) {
         fs.mkdirSync(runtimePath, {
           recursive: true
         });
       }
 
+      // TODO: Ensure this worked
+      const isWindows = os.platform() === "win32";
+      const jreDownloadName = isWindows ? `jre.zip` : `jre.tar.gz`;
       const res = await ipcRenderer.invoke("downloadFile", {
         url: link,
-        path: `${runtimePath}/jre.tar.gz`
+        path: path.join(runtimePath, jreDownloadName)
       });
-
-      console.log(adopiumRes)
-      console.log(res);
       
       if (!res) {
         throw new Error("Failed to download java");
       }
       
+      // TODO: Ensure this worked
       // Extract the tar
       const extractResult = await ipcRenderer.invoke("extractFile", {
-        input: `${runtimePath}/jre.tar.gz`,
-        output: `${runtimePath}/jre`
+        input: path.join(runtimePath, jreDownloadName),
+        output: path.join(runtimePath, `jre`)
       });
       
-      console.log(extractResult);
+      eLogger.info(extractResult);
       // Assuming this worked
       // Does the jre/jdk-* folder exist?
-      const jreFolder = fs.readdirSync(`${runtimePath}/jre`).find(e => e.startsWith("jdk-"));
+      const jreFolder = fs.readdirSync(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
       if (jreFolder == null) {
         throw new Error("Failed to find jre folder");
       }
       
       // Move all of the folders contents to the runtime folder
       // Then delete the jre folder
-      const jrePath = `${runtimePath}/jre/${jreFolder}`;
+      const jrePath = path.join(runtimePath, "jre", jreFolder);
       const jreFiles = fs.readdirSync(jrePath);
       jreFiles.forEach(e => {
-        fs.renameSync(`${jrePath}/${e}`, `${runtimePath}/${e}`);
+        fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
       });
       
       fs.rmdirSync(jrePath);
-      fs.rmdirSync(`${runtimePath}/jre`)
-      fs.rmSync(`${runtimePath}/jre.tar.gz`)
+      fs.rmdirSync(path.join(runtimePath, 'jre'))
+      fs.rmSync(path.join(runtimePath, jreDownloadName));
       
       // Touch a file to note down what java version we have
-      fs.writeFileSync(`${runtimePath}/.java-version`, jreFolder);
+      fs.writeFileSync(path.join(runtimePath, ".java-version"), javaVersion);
       
       // Ensure the java version is executable and works
       const jreExecPath = jreLocation(appPath);
@@ -436,7 +492,7 @@ const Electron: ElectronOverwolfInterface = {
       
       // TODO: Actually validate this
       const result = execSync(`"${jreExecPath}" -version`);
-      console.log(result.toString());
+      eLogger.info(result.toString());
       
       // Assuming this worked, we should tell the frontend to continue
     },
@@ -448,10 +504,14 @@ const Electron: ElectronOverwolfInterface = {
       const runtimePath = `${appPath}/runtime`;
       
       if (!fs.existsSync(`${runtimePath}/.java-version`)) {
+        // TODO: Try installing again?
         throw new Error("Missing java version");
       }
       
       // TODO: Check if this needs updating I guess
+      //       - Check the .java-version file
+      //       - Check the meta file
+      //       - Check the version of java we have and compare it to the meta file. If it's different, update it
       
       // Start the subprocess
       const jreExecPath = jreLocation(appPath);
@@ -459,13 +519,20 @@ const Electron: ElectronOverwolfInterface = {
         throw new Error("Failed to find java executable");
       }
       
+      const envVars = parseArgs(metaData.runtime.env);
+      const jvmArgs = parseArgs(metaData.runtime.jvmArgs);
+      
+      const jarName = metaData.runtime.jar;
+      
+      // TODO: Error catch and retry a few times
       const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
         javaPath: jreExecPath,
         args: [
           "-jar",
-          `${appPath}/bin/FTBApp.jar`,
-          "--dev" // Required for now
-        ]
+          `${resourcesPath}/${jarName}`,
+          ...jvmArgs
+        ],
+        env: envVars
       });
       
       // Finally, if the above worked, tell the app to connect to the WS protocol

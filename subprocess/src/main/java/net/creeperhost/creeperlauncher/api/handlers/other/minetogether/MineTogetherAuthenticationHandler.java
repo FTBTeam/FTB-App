@@ -54,7 +54,10 @@ public class MineTogetherAuthenticationHandler implements IMessageHandler<MineTo
         }
 
         Constants.KEY = user.data().modpacksToken();
-        CreeperLauncher.CLOUD_SAVE_MANAGER.configure(user.data().s3Credentials());
+        
+        if (user.data().s3Credentials() != null) {
+            CreeperLauncher.CLOUD_SAVE_MANAGER.configure(user.data().s3Credentials());
+        }
 
         CredentialStorage.getInstance().set("minetogether", token);
         CredentialStorage.getInstance().set("modpacksChApiKey", user.data().modpacksToken());

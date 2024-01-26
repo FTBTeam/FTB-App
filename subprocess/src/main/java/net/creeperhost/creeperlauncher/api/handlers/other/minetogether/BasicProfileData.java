@@ -1,3 +1,5 @@
 package net.creeperhost.creeperlauncher.api.handlers.other.minetogether;
 
-public record BasicProfileData(String uuid, String modpacksToken, S3Credentials s3Credentials) {}
+import org.jetbrains.annotations.Nullable;
+
+public record BasicProfileData(String uuid, String modpacksToken, @Nullable S3Credentials s3Credentials) {}

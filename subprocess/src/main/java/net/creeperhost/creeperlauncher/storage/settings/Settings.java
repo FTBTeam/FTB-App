@@ -39,7 +39,7 @@ public class Settings {
     }
     
     public static void loadSettings(boolean firstLoad) {
-        // TODO: Remove
+        // TODO: Remove in newer versions
         if (firstLoad) {
             attemptMigration();
             if (Settings.settingsData != null) {
@@ -123,6 +123,10 @@ public class Settings {
     }
 
     public static long getSpeedLimit() {
+        if (settingsData == null || settingsData.download() == null) {
+            return 0;
+        }
+        
         return settingsData.download().speedLimit();
     }
 
