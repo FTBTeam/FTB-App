@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import * as process from 'process';
 import {constants} from '@/core/constants';
 import inspect from 'object-inspect';
 

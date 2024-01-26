@@ -1,6 +1,6 @@
 <template>
   <transition name="slide-in-out" duration="250">
-    <div v-if="open" class="closable-panel" :class="{ overwolf: platform.isOverwolf(), 'is-mac': isMac, ads: advertsEnabled }" @click.self="close" >
+    <div v-if="open" class="closable-panel" :class="{'is-mac': isMac, ads: advertsEnabled }" @click.self="close" >
       <div class="panel-container">
         <div class="heading">
           <div class="main">
@@ -90,11 +90,7 @@ export default class ClosablePanel extends Vue {
   width: 100vw;
   
   &.ads {
-    width: calc(100% - 300px - (2.5rem));
-
-    &.overwolf {
-      width: calc(100% - 400px);
-    }
+    width: calc(100% - 400px);
   }
 
   &.is-mac {

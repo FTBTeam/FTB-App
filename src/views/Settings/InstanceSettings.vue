@@ -193,7 +193,6 @@ export default class InstanceSettings extends Vue {
   saveMutated() {
     // Compare the last settings to the current settings, if they are the same, don't save
     if (this.lastSettings === JSON.stringify(this.localSettings)) {
-      console.log("Settings are the same, not saving")
       return;
     }
     

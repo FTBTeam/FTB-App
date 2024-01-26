@@ -1,6 +1,6 @@
 <template>
   <transition name="transition-fade" duration="250">
-    <div class="dialog-container" :class="{'overwolf': appPlatform.isOverwolf(), ads: advertsEnabled}" v-if="dialogs.length" @click.self="closeTopDialog">
+    <div class="dialog-container" :class="{ads: advertsEnabled}" v-if="dialogs.length" @click.self="closeTopDialog">
       <transition-group class="stacker" tag="div" name="transition-fade" duration="250">
         <div
           v-for="(dialog, index) in dialogs"
@@ -108,11 +108,7 @@ export default class Dialogs extends Vue {
   background: rgba(black, 0.75);
   
   &.ads {
-    width: calc(100% - (300px + 2.5rem));
-    
-    &.overwolf {
-      width: calc(100% - 400px);
-    }
+    width: calc(100% - 400px);
   }
   
 

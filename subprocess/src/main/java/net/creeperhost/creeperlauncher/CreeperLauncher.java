@@ -134,6 +134,7 @@ public class CreeperLauncher {
         Instances.refreshInstances();
 
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
+        LOGGER.info("Args: {}", Args);
 
         isDevMode = Args.containsKey("dev");
         Constants.IS_DEV_MODE = isDevMode;

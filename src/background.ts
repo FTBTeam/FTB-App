@@ -5,7 +5,7 @@ import os from 'os';
 import fs from 'fs';
 import * as electronLogger from 'electron-log';
 import install, {VUEJS_DEVTOOLS} from 'electron-devtools-installer';
-import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
+import {createProtocol} from '@ftbapp/vue-cli-plugin-electron-builder/lib';
 import {createLogger} from '@/core/logger';
 import https from 'https';
 import AdmZip from 'adm-zip';
@@ -386,6 +386,10 @@ ipcMain.handle("startSubprocess", async (event, args) => {
   }
   
   logger.debug("Starting subprocess", javaPath, argsList)
+  
+  const electronPid = process.pid;
+  argsList.push(...["--pid", "" + electronPid])
+  
   // Spawn the process so it can run in the background and capture the output
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -400,10 +404,8 @@ ipcMain.handle("startSubprocess", async (event, args) => {
     
     logger.debug("Mapped env", mappedEnv)
     logger.debug("Args list", argsList)
-    
-    // Windows might be fucked?
-    logger.debug(javaPath)
-    
+
+    appCommunicationSetup = false;
     subprocess = spawn(javaPath, argsList, {
       detached: true,
       stdio: 'pipe',
@@ -517,10 +519,10 @@ async function createWindow() {
     // Other
     icon: path.join(__static, 'favicon.ico'),
     // Size Settings
-    minWidth: 1120,
-    minHeight: 800,
-    width: 1320,
-    height: 800,
+    minWidth: 1220,
+    minHeight: 895,
+    width: 1545,
+    height: 900,
     frame: useSystemFrame,
     titleBarStyle: useSystemFrame ? 'default' : 'hidden',
     webPreferences: {

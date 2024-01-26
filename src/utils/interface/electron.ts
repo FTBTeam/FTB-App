@@ -14,7 +14,6 @@ import log from 'electron-log';
 import {createLogger} from '@/core/logger';
 import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers';
 import {execSync} from 'child_process';
-import * as process from 'process';
 
 export type Arg = string | {
   key?: string;

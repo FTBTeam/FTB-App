@@ -1,9 +1,5 @@
 <template>
   <div class="ad-aside" :class="{ 'electron': isElectron }">
-    <!--    <div class="ftb-ad-frame" v-if="!isDevEnv">-->
-    <!--      <ins :data-revive-zoneid="adZone" data-revive-target="_blank" data-revive-id="3c373f2ff71422c476e109f9079cb399"></ins>-->
-    <!--    </div>-->
-    
     <div class="ad-container ads" v-if="!isElectron" key="adside-ad-type">
       <div class="ad-holder small" v-if="!isSmallDisplay">
         <div
@@ -33,7 +29,22 @@
       </div>
     </div>
 
-    <div class="ad-container ads-electron electron" v-else key="adside-ad-type">
+    <div class="ad-container ads" v-else key="adside-ad-type">
+      <div class="ad-holder small">
+        <div style="width: 300px; height: 250px; background: transparent;">
+          <owadview />
+        </div>
+      </div>
+      
+      <div class="ad-holder">
+        <div style="width: 400px; height: 600px; background: transparent;">
+          <owadview />
+        </div>
+      </div>
+    </div>
+    
+    <!-- TODO: Workout what I wanna do here -->
+    <div class="ad-container ads-electron electron" v-if="false" key="adside-ad-type">
       <ch-ads-area />
     </div>
   </div>
@@ -67,8 +78,6 @@ export default class AdAside extends Vue {
   showAdOnePlaceholder = true;
   showAdTwoPlaceholder = true;
 
-  random = AdAside.mkRandom();
-
   get isElectron() {
     return platform.isElectron();
   }
@@ -79,21 +88,13 @@ export default class AdAside extends Vue {
   
   async mounted() {
     this.logger.info('Loaded ad sidebar widget');
-
-    // I've lost brain cells from this. Please just fucking work 
-    // - Covers
-    // if (!this.isDevEnv) {
-    //   const helpMe = document.createElement("script");
-    //   helpMe.src = "https://adserver.ftb.team/www/delivery/asyncjs.php";
-    //   helpMe.async = true;
-    //   document.head.append(helpMe)
-    // }
-
+    
     // Kinda dirty hack for this file
     if (this.isElectron) {
       return;
     }
 
+    // TODO: Figure this out
     setTimeout(() => {
       this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
       if (!(window as any)?.ftbFlags?.smallMonitor) {
@@ -164,14 +165,6 @@ export default class AdAside extends Vue {
     return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
   }
 
-  static mkRandom() {
-    return Math.round(Math.random() * 999999999999);
-  }
-
-  get adZone() {
-    return this.platform.isElectron() ? "4" : "1"
-  }
-
   get isDevEnv() {
     return process.env.NODE_ENV !== 'production';
   }
@@ -189,12 +182,6 @@ export default class AdAside extends Vue {
   justify-content: flex-end;
 
   border-left: 2px solid rgba(black, 0.1);
-
-  &.electron {
-    padding: 1rem;
-    min-width: 300px;
-    width: calc(300px + 2.5rem); // Why? Fuck knows, Thanks css
-  }
   
   .ads {
     display: flex;
@@ -204,20 +191,12 @@ export default class AdAside extends Vue {
     z-index: 1;
 
     &.ad-container {
-      width: 400px;
-      &.electron {
-        width: 300px;
-      }
     }
 
     .ad-holder {
       position: relative;
-      width: 400px;
-      height: 600px;
 
       &.small {
-        width: 300px;
-        height: 250px;
         margin-bottom: .5rem;
       }
 

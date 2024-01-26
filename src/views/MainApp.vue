@@ -135,6 +135,7 @@ export default class MainApp extends Vue {
   }
   
   async mounted() {
+    this.logger.info("App started on ", constants.platform)
     this.isMac = os.type() === 'Darwin';
 
     this.appStarting = true;
@@ -221,7 +222,6 @@ export default class MainApp extends Vue {
     this.appStarting = false;
     this.logger.info("Starting app");
     
-    console.log("prod", constants.isProduction);
     if (!constants.isProduction) {
       this.logger.info("Starting production app");
 
@@ -371,16 +371,16 @@ export default class MainApp extends Vue {
   }
 }
 
-#app.macos {
-  .app-container {
-    height: 100%;
-
-    &.no-system-bar {
-      // Title bar on macos is 1.8rem not 2rem
-      height: calc(100% - 1.8rem);
-    }
-  }
-}
+//#app.macos {
+//  .app-container {
+//    height: 100%;
+//
+//    &.no-system-bar {
+//      // Title bar on macos is 1.8rem not 2rem
+//      height: calc(100% - 1.8rem);
+//    }
+//  }
+//}
 
 main.main {
   position: relative;

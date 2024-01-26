@@ -1,5 +1,6 @@
 const production = process.env.NODE_ENV === "production";
-const platform = process.env.VUE_APP_PLATFORM ?? "electron";
+const platform = process.env.VUE_APP_PLATFORM
+  
 const useStaging = false;
 
 export const constants = {

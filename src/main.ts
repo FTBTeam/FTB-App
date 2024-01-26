@@ -36,6 +36,7 @@ import VueNativeSock from 'vue-native-websocket';
 // @ts-ignore - no types
 import VueVirtualScroller from 'vue-virtual-scroller';
 import {createLogger} from '@/core/logger';
+import {constants} from '@/core/constants';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -49,20 +50,21 @@ const appSetup = async () => {
     (window as any).platform = platform;
   } catch (e) {
     logger.error("Failed to setup platform", e);
+    console.error(e);
   }
 
   if (process.env.NODE_ENV === 'production') {
     logger.info("Setting up sentry");
     Sentry.init({
       Vue,
-      environment: process.env.VUE_APP_PLATFORM,
+      environment: constants.platform,
       dsn: process.env.VUE_APP_SENTRY_DSN,
       integrations: [
         new BrowserTracing({
           routingInstrumentation: Sentry.vueRouterInstrumentation(router),
         }),
       ],
-      release: `${platform.get.config.version}-${process.env.VUE_APP_PLATFORM}`,
+      release: `${platform.get.config.version}-${constants.platform}`,
       initialScope: {
         tags: {
           'release.public': platform.get.config.version,

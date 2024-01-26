@@ -3,7 +3,7 @@ import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
-import {createLogger} from '@/core/logger';
+import {createLogger, logger} from '@/core/logger';
 
 declare global {
   var overwolf: any;
@@ -300,12 +300,11 @@ const Overwolf: ElectronOverwolfInterface = {
      */
     async startSubprocess() {
       const mainWindow = overwolf.windows.getMainWindow();
-      console.log("Main window", Object.keys(mainWindow))
 
       /**
        * It's possible it won't be ready yet, so we'll wait for it to be ready
        */
-      console.log("Attempting to get ws data")
+      logger.log("Attempting to get ws data")
       let attempts = 0;
       return new Promise((resolve, reject) => {
         const interval = setInterval(() => {
