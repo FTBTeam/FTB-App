@@ -85,7 +85,7 @@ export default class AppInfo extends Vue {
   @Action("setProfile", ns("v2/mtauth")) setProfile!: SetProfileMethod;
   @Action("setAccount", ns("v2/mtauth")) setAccount!: SetAccountMethod;
   @Action("storeCredentials", ns("v2/apiCredentials")) storeCredentials!: StoreCredentialsAction;
-  @Getter("wasUserSet", ns("v2/mtauth")) wasUserSet!: boolean;
+  @Getter("wasUserSet", ns("v2/apiCredentials")) wasUserSet!: boolean;
 
   working = false;
   

@@ -40,12 +40,12 @@ const router = new Router({
         {
           path: '/modpacks',
           name: RouterNames.ROOT_LIBRARY,
-          component: () => import(/* webpackChunkName: "modpacks" */ './views/Library.vue'),
+          component: () => import(/* webpackChunkName: "library" */ './views/Library.vue'),
         },
         {
           path: '/browseModpacks/:search?',
           name: RouterNames.ROOT_BROWSE_PACKS,
-          component: () => import(/* webpackChunkName: "modpacks" */ './views/BrowseModpacks.vue'),
+          component: () => import(/* webpackChunkName: "search" */ './views/BrowseModpacks.vue'),
         },
         {
           path: '/blog',

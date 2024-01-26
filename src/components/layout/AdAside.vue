@@ -1,6 +1,6 @@
 <template>
   <div class="ad-aside" :class="{ 'electron': isElectron }">
-    <div class="ad-container ads" v-if="!isElectron" key="adside-ad-type">
+    <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type">
       <div class="ad-holder small" v-if="!isSmallDisplay">
         <div
           v-if="!isElectron"
@@ -173,6 +173,7 @@ export default class AdAside extends Vue {
 
 <style lang="scss" scoped>
 .ad-aside {
+  position: relative;
   background-color: black;
   min-width: 400px;
 
@@ -182,6 +183,23 @@ export default class AdAside extends Vue {
   justify-content: flex-end;
 
   border-left: 2px solid rgba(black, 0.1);
+
+  .ad-container.overwolf {
+    position: relative;
+    min-width: 400px;
+    height: 100%;
+
+    .ad-holder {
+      position: relative;
+      width: 400px;
+      height: 600px;
+
+      &.small {
+        width: 300px;
+        height: 250px;
+      }
+    }
+  }
   
   .ads {
     display: flex;

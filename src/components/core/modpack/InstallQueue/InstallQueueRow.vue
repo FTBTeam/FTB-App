@@ -23,12 +23,10 @@
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import {InstallRequest, InstallStatus, instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import {stat} from 'fs-extra';
 import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
   components: {UiButton},
-  methods: {stat}
 })
 export default class InstallQueueRow extends Vue {
   @Prop() item!: InstallRequest | InstallStatus;

@@ -15,7 +15,7 @@ class Platform {
   constructor() {}
 
   public async setup() {
-    this.logger.info('Setting up platform');
+    this.logger.info('Setting up platform', this.platformProvider);
     this.inter = ((await import(`./${this.platformProvider}`)).default as unknown) as ElectronOverwolfInterface;
     this.logger.info(`Platform setup complete for ${this.platformProvider ?? "electron"}`);
   }

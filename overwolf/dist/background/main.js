@@ -93,8 +93,7 @@ const setup = async () => {
     }
   });
   
-  //launcher-{version}-all.jar
-  const match = /launcher-([0-9.]+)-all.jar/gi.exec(versionData.runtime.jar);
+  const match = /launcher-([0-9a-z-.]+)-all.jar/gi.exec(versionData.runtime.jar);
   const backendVersion = match[1];
   
   // Launch the backend

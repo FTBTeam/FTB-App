@@ -67,6 +67,9 @@ const getters: GetterTree<ApiCredentialsState, RootState> = {
   },
   settings(state) {
     return state.settings;
+  },
+  wasUserSet(state) {
+    return state.wasUserSet;
   }
 }
 
