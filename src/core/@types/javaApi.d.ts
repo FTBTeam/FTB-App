@@ -390,7 +390,6 @@ export interface SettingsInfoDataReply extends SettingsInfoData {
 }
 
 export interface UploadLogsData extends BaseData {
-    uiVersion: string;
 }
 
 export interface UploadLogsDataReply extends BaseData {

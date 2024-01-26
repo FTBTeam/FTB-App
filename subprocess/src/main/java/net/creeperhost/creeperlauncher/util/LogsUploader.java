@@ -42,13 +42,10 @@ public class LogsUploader {
     
     /**
      * Uploads the UI and Backend Debug logs to pste.ch
-     *
-     * @param uiVersion    The UI Version.
-
      * @return The pste.ch code, or null if an error occurred.
      */
     @Nullable
-    public static String uploadUILogs(@Nullable String uiVersion) {
+    public static String uploadUILogs() {
         var obj = new JsonObject();
         
         obj.addProperty("version", "2.0.0");
@@ -63,7 +60,6 @@ public class LogsUploader {
         obj.add("metaDetails", metaDetails);
         
         var appDetails = new JsonObject();
-        appDetails.addProperty("ui", uiVersion);
         appDetails.addProperty("app", Constants.APPVERSION);
         appDetails.addProperty("platform", Constants.PLATFORM);
         obj.add("appDetails", appDetails);

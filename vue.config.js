@@ -1,7 +1,5 @@
 const path = require('path');
 const SentryWebpackPlugin = require('@sentry/webpack-plugin');
-const fs = require('fs');
-const packageJson = require('./package.json');
 
 const webpackPlugins = [];
 
@@ -20,43 +18,6 @@ if (process.env.CI_COMMIT_TAG) {
     }),
   );
 }
-
-/**
- * A simple plugin that allows for dynamic generation of assets
- */
-const VersionDataPlugin = (options) => {
-  return {
-    apply: (compiler) => {
-      compiler.hooks.emit.tapAsync('VersionDataPlugin', (compilation, callback) => {
-        if (!options.predicate(compilation)) {
-          return callback();
-        }
-        
-        const { fileName, content } = options;
-
-        compilation.assets[fileName] = {
-          source: () => content,
-          size: () => content.length
-        }
-        
-        callback();
-      })
-    }
-  }
-}
-
-webpackPlugins.push(VersionDataPlugin({
-  predicate: () => process.env.TARGET_PLATFORM === 'overwolf' && process.env.NODE_ENV !== 'production',
-  fileName: 'version.json',
-  content: JSON.stringify({
-    "jarVersion": "invalid-as-dev-does-not-use-the-jar",
-    "webVersion": "no-a-version",
-    "publicVersion": packageJson.version,
-    "branch": "development",
-    "timestampBuilt": Date.now(),
-    "javaLicense": {}
-  })
-}));
 
 module.exports = {
   publicPath: './',
@@ -89,7 +50,8 @@ module.exports = {
         appId: 'dev.ftb.app',
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
-          {from: "subprocess/build/libs/licenses.json", to: ""},
+          {from: "subprocess/build/libs/java-licenses.json", to: ""},
+          {from: "./licenses.json", to: ""},
           {from: "subprocess/build/libs/meta.json", to: ""},
         ],
         win: {

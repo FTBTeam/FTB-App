@@ -9,7 +9,7 @@ plugins {
     id 'java'
     id "com.github.johnrengelman.shadow" version "7.0.0"
     id "com.palantir.git-version" version "0.12.2"
-    id "com.github.hierynomus.license" version "0.16.1" apply false
+    id "com.github.hierynomus.license-report" version "0.16.1"
     id "com.dorongold.task-tree" version "2.1.0"
     id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.3"
     id 'cz.habarta.typescript-generator' version "3.2.+"
@@ -26,7 +26,6 @@ archivesBaseName = "launcher"
 def details = versionDetails()
 def branch = System.getenv("BRANCH_OVERRIDE") ?: (details.branchName ?: System.getenv("CI_COMMIT_BRANCH") ?: "release").replaceAll('/', '-')
 version = System.getenv("VERSION_OVERRIDE") ?: (date + "-" + details.gitHash + (branch != 'release' ? "-" + branch : ""))
-def webVersion = details.gitHash
 def sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 
 repositories {
@@ -141,24 +140,24 @@ def dependencySources = [
         "net.covers1624:Quack"                     : "https://github.com/covers1624/Quack"
 ]
 
-tasks.register('writeLicenses') {
-    it.dependsOn 'downloadLicenses'
-    doLast {
-        def data = new JsonSlurper().parse(new File("$projectDir/build/reports/license/dependency-license.json"))
-        def dependencies = data.get("dependencies")
-        def licenses = [:]
-        for (obj in dependencies) {
-            def value = obj
-            licenses.put(value.name as String, [
-                    license   : value.licenses.last().name as String,
-                    repository: dependencySources.get(value.name.take(value.name.lastIndexOf(":")) as String)
-            ])
-        }
-
-        file("$projectDir/build/libs/licenses.json").newWriter().withWriter { w ->
-            w << JsonOutput.toJson(licenses)
-        }
+downloadLicenses {
+    includeProjectDependencies = true
+    report {
+        html(false)
+        xml(false)
     }
+    
+    // Only include things that will be part of the final jar.
+    dependencyConfiguration = "runtimeClasspath"
+}
+
+// Simple task to copy the $buildDir/reports/licenses/dependency-license.json to the build/libs/java-licenses.json
+tasks.register('writeLicenses', Copy) {
+    it.dependsOn 'downloadLicenses'
+    from "$buildDir/reports/license"
+    into "$buildDir/libs"
+    include "dependency-license.json"
+    rename "dependency-license.json", "java-licenses.json"
 }
 
 tasks.register('writeVersion') {

@@ -63,11 +63,9 @@ const getWindowState = (windowId: any) => {
 
 const Overwolf: ElectronOverwolfInterface = {
   config: {
-    publicVersion: versionData.publicVersion ?? 'Missing version file',
-    appVersion: versionData.jarVersion ?? 'Missing Version File',
-    webVersion: versionData.webVersion ?? 'Missing Version File',
-    dateCompiled: versionData.timestampBuilt ?? 'Missing Version File',
-    javaLicenses: versionData.javaLicense ?? {},
+    version: versionData.appVersion ?? 'Missing Version File',
+    commit: versionData.commit ?? 'Missing Version File',
+    dateCompiled: versionData.released ?? 'Missing Version File',
     branch: versionData.branch ?? 'Release'
   },
 
@@ -327,6 +325,14 @@ const Overwolf: ElectronOverwolfInterface = {
           }
         }, 1_000) // 1 second
       })
+    },
+    getLicenses() {
+      // Get main window
+      const mainWindow = overwolf.windows.getMainWindow();
+      return {
+        javascript: mainWindow.getLicenseData(),
+        java: mainWindow.getJavaLicenseData()
+      }
     }
   },
 

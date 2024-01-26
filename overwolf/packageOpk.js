@@ -29,7 +29,9 @@ if (process.argv.length > 3) {
 
 console.log("Using output path: " + outputPath)
 
-const versionData = JSON.parse(fs.readFileSync('public/version.json', 'utf-8'));
+// Only available at buildtime
+const metaData = JSON.parse(fs.readFileSync('./meta.json', 'utf-8'));
+
 const manifestData = JSON.parse(fs.readFileSync('overwolf/manifest.json', 'utf-8'));
 const archive = archiver('zip', {zlib: {level: 9}})
 
@@ -60,7 +62,9 @@ archive.file("overwolf/OverwolfShim.dll", {name: 'OverwolfShim.dll'})
 archive.file("overwolf/launchericon.ico", {name: 'launchericon.ico'})
 archive.file(`overwolf/${manifestData.meta.icon}`, {name: manifestData.meta.icon})
 archive.file("overwolf/manifest.json", {name: 'manifest.json'})
-archive.file("overwolf/version.json", {name: 'version.json'})
-archive.file(`subprocess/build/libs/launcher-${versionData.jarVersion}-all.jar`, {name: `launcher-${versionData.jarVersion}-all.jar`})
+archive.file("overwolf/meta.json", {name: 'meta.json'})
+archive.file("overwolf/java-licenses.json", {name: 'java-licenses.json'})
+archive.file("./licenses.json", {name: './licenses.json'})
+archive.file(`subprocess/build/libs/${metaData.runtime.jar}`, {name: metaData.runtime.jar})
 
 archive.finalize()

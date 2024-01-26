@@ -47,7 +47,6 @@ import {Action, Getter, State} from 'vuex-class';
 import {SocketState} from '@/modules/websocket/types';
 import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
-import ReportForm from '@/components/templates/ReportForm.vue';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
 import {ns} from '@/core/state/appState';
@@ -70,7 +69,6 @@ import Loader from '@/components/atoms/Loader.vue';
     GlobalComponents,
     Sidebar,
     TitleBar,
-    ReportForm,
     AdAside,
   },
 })
@@ -116,7 +114,10 @@ export default class MainApp extends Vue {
       name: "Init App",
       done: false,
       action: () => this.initApp()
-    },
+    }
+  ]
+  
+  postStartupJobs = [
     {
       name: "Profiles",
       done: false,
@@ -262,6 +263,10 @@ export default class MainApp extends Vue {
       });
       
       this.hasInitialized = true;
+      for (const job of this.postStartupJobs) {
+        this.logger.info(`Starting post ${job.name}`)
+        await job.action();
+      }
     }
     
     this.platform.get.actions.onAppReady();

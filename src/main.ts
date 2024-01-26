@@ -62,11 +62,10 @@ const appSetup = async () => {
           routingInstrumentation: Sentry.vueRouterInstrumentation(router),
         }),
       ],
-      release: `${platform.get.config.appVersion}-${process.env.VUE_APP_PLATFORM}`,
+      release: `${platform.get.config.version}-${process.env.VUE_APP_PLATFORM}`,
       initialScope: {
         tags: {
-          'release.vue': platform.get.config.webVersion,
-          'release.public': platform.get.config.publicVersion,
+          'release.public': platform.get.config.version,
           'release.platform': await platform.get.utils.getPlatformVersion(),
           'os.arch': platform.get.utils.getOsArch(),
         },
@@ -110,6 +109,7 @@ const appSetup = async () => {
     render: (h: any) => h(App),
   }).$mount('#app');
 
+  // This port isn't used for anything as we manually connect to the websocket later on
   Vue.use(VueNativeSock, 'ws://localhost:13377', {
     format: 'json',
     reconnection: true,

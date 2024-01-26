@@ -106,7 +106,7 @@ export default class Changelog extends Vue  {
 
   // Some magic to get the current version
   getCurrentVersion() {
-    return platform.get.config.publicVersion;
+    return platform.get.config.version;
   }
 }
 </script>

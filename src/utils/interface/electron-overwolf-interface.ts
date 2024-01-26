@@ -1,4 +1,5 @@
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
+import {JavaLicenses, JavascriptLicenses} from '@/core/@types/external/licenses.types';
 
 /**
  * This isn't my final form, I should be more unified and less hacky on some of
@@ -56,11 +57,9 @@ export interface Frame {
 }
 
 export interface Config {
-  publicVersion: string;
-  appVersion: string;
-  webVersion: string;
+  version: string;
   dateCompiled: string;
-  javaLicenses: object;
+  commit: string;
   branch: string
 }
 
@@ -84,6 +83,11 @@ export interface App {
     port: number;
     secret: string;
   }>;
+  
+  getLicenses(): {
+    javascript: JavascriptLicenses | null,
+    java: JavaLicenses | null,
+  };
 }
 
 export default interface ElectronOverwolfInterface {

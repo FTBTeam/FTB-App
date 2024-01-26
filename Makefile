@@ -47,8 +47,10 @@ build_subprocess:
 build_overwolf: build_shim build_subprocess ensure_licenses
 	cp $(SUBPROCESS_DIR)/build/libs/*-all.jar $(OVERWOLF_DIR)/ && \
 	cp $(SUBPROCESS_DIR)/build/libs/*-all.jar $(BUILD_DIR)/ && \
-	cp $(SUBPROCESS_DIR)/build/libs/version.json $(PUBLIC_DIR)/ && \
-	cp $(SUBPROCESS_DIR)/build/libs/version.json $(BUILD_DIR)/ && \
+	cp $(SUBPROCESS_DIR)/build/libs/meta.json $(OVERWOLF_DIR)/ && \
+	cp $(SUBPROCESS_DIR)/build/libs/meta.json $(BUILD_DIR)/ && \
+	cp $(SUBPROCESS_DIR)/build/libs/java-licenses.json $(OVERWOLF_DIR)/ && \
+	cp $(SUBPROCESS_DIR)/build/libs/java-licenses.json $(BUILD_DIR)/ && \
 	pnpm install --frozen-lockfile && \
 	node $(OVERWOLF_DIR)/patchManifest.js && \
 	pnpm run vue:build:overwolf && \
@@ -56,7 +58,8 @@ build_overwolf: build_shim build_subprocess ensure_licenses
 
 # Clean up after ourselves	
 clean_up:
-	rm -f $(PUBLIC_DIR)/version.json || true
+	rm -f $(OVERWOLF_DIR)/meta.json || true
+	rm -f $(OVERWOLF_DIR)/java-licenses.json || true
 	rm -f $(SUBPROCESS_DIR)/build/libs/*-all.jar || true
 	rm -f $(OVERWOLF_DIR)/*-all.jar || true
 	

@@ -3,30 +3,12 @@
     <div class="app-info-section mb-8">
       <div class="items sm:flex">
         <div class="title-value mr-10">
-          <div class="title text-muted mb-1">UI Version</div>
-          <div class="value">
-            <span class="select-text">{{ webVersion }}</span>
-            <div class="copy-me inline-block" aria-label="Click to copy" data-balloon-pos="up">
-              <font-awesome-icon
-                @click="copyToClipboard(webVersion)"
-                class="ml-2 cursor-pointer"
-                icon="copy"
-                size="1x"
-              />
-            </div>
-            <a class="cursor-pointer hover:underline" href="https://go.ftb.team/app-feedback" target="_blank"
-            ><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
-            /></a>
-          </div>
-        </div>
-
-        <div class="title-value mt-4 sm:mt-0">
           <div class="title text-muted mb-1">App Version</div>
           <div class="value">
-            <span class="select-text">{{ appVersion }}</span>
+            <span class="select-text">{{ configData.version }}</span>
             <div class="copy-me inline-block" aria-label="Click to copy" data-balloon-pos="up">
               <font-awesome-icon
-                @click="copyToClipboard(appVersion)"
+                @click="copyToClipboard(configData.version)"
                 class="ml-2 cursor-pointer"
                 icon="copy"
                 size="1x"
@@ -156,9 +138,6 @@ export default class AppSettings extends Vue {
 
   platform = platform;
   localSettings: SettingsData = {} as SettingsData;
-
-  webVersion: string = platform.get.config.webVersion;
-  appVersion: string = platform.get.config.appVersion;
   
   working = false;
   uploadingLogs = false;
@@ -217,9 +196,7 @@ export default class AppSettings extends Vue {
 
   public async uploadLogData(): Promise<void> {
     this.uploadingLogs = true;
-    const result = await sendMessage("uploadLogs", {
-      uiVersion: this.webVersion
-    })
+    const result = await sendMessage("uploadLogs", {})
 
     if (!result.error) {
       const url = `https://pste.ch/${result.code}`;
@@ -237,6 +214,10 @@ export default class AppSettings extends Vue {
   public enableVerbose(value: boolean): void {
     this.localSettings.general.verbose = value;
     this.saveSettings(this.localSettings);
+  }
+  
+  get configData() {
+    return platform.get.config
   }
 }
 </script>

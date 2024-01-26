@@ -47,9 +47,15 @@ const ensureBackendIsStopped = async (plugin) => {
 
 let versionData = null;
 let wsData = null;
+
+let licenseData = null;
+let javaLicenseData = null;
+
 const setup = async () => {
   // Version data
-  versionData = await fetch('../desktop/version.json').then(e => e.json());
+  versionData = await fetch('../../meta.json').then(e => e.json());
+  licenseData = await fetch('../../licenses.json').then(e => e.json()).catch(e => console.error("Failed to load licenses", e));
+  javaLicenseData = await fetch('../../java-licenses.json').then(e => e.json()).catch(e => console.error("Failed to load java licenses", e));
   
   const plugin = new OverwolfPlugin('OverwolfShim', true);
 
@@ -87,8 +93,12 @@ const setup = async () => {
     }
   });
   
+  //launcher-{version}-all.jar
+  const match = /launcher-([0-9.]+)-all.jar/gi.exec(versionData.runtime.jar);
+  const backendVersion = match[1];
+  
   // Launch the backend
-  const startupResponse = await p(plugin.get().LaunchJava, versionData.jarVersion, false);
+  const startupResponse = await p(plugin.get().LaunchJava, backendVersion, false);
   console.debug(JSON.stringify(startupResponse));
   
   await checkIfAdmin(plugin);
@@ -201,6 +211,14 @@ function getProtocolURL() {
 
 function getVersionData() {
   return versionData;
+}
+
+function getLicenseData() {
+  return licenseData;
+}
+
+function getJavaLicenseData() {
+  return javaLicenseData;
 }
 
 async function p(func, ...args) {

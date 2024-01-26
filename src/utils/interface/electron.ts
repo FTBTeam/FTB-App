@@ -52,8 +52,16 @@ const fallbackMetaData: MetaData = {
 }
 
 const eLogger = createLogger("platform/electron.ts");
+const electronFrontendLogFile = path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
+if (fs.existsSync(electronFrontendLogFile)) {
+  try {
+    fs.writeFileSync(electronFrontendLogFile, '')
+  } catch (e) {
+    eLogger.error("Failed to clear electron frontend log file", e)
+  }
+}
 log.transports.file.resolvePath = (vars, message) =>
-  path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
+  electronFrontendLogFile;
 Object.assign(console, log.functions);
 
 const resourcesPath = process.resourcesPath
@@ -62,6 +70,16 @@ eLogger.info("Resources path", resourcesPath)
 
 const metaFilePath = path.join(resourcesPath, "meta.json");
 const metaData = process.env.NODE_ENV === "development" ? fallbackMetaData : JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
+
+let licensesData: any = {};
+let javaLicensesData: any = {};
+
+try {
+  licensesData = JSON.parse(fs.readFileSync(path.join(resourcesPath, "licenses.json"), 'utf-8'));
+  javaLicensesData = JSON.parse(fs.readFileSync(path.join(resourcesPath, "java-licenses.json"), 'utf-8'));
+} catch (e) {
+  eLogger.error("Failed to load licenses", e);
+}
 
 eLogger.info("Meta data", metaData)
 
@@ -74,13 +92,6 @@ function getAppHome() {
     return path.join(os.homedir(), '.ftba');
   }
 }
-
-declare const __static: string;
-
-const contents = fs.existsSync(path.join(__static, 'version.json'))
-  ? fs.readFileSync(path.join(__static, 'version.json'), 'utf-8')
-  : null;
-const jsonContent = contents ? JSON.parse(contents) : null;
 
 class MiniWebServer extends EventEmitter {
   server: http.Server | null = null;
@@ -179,12 +190,10 @@ let miniServers: MiniWebServer[] = [];
 
 const Electron: ElectronOverwolfInterface = {
   config: {
-    publicVersion: jsonContent?.publicVersion ?? 'Missing version file',
-    appVersion: jsonContent?.jarVersion ?? 'Missing Version File',
-    webVersion: jsonContent?.webVersion ?? 'Missing Version File',
-    dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',
-    javaLicenses: jsonContent?.javaLicense ?? {},
-    branch: jsonContent.branch ?? 'Release'
+    version: metaData.appVersion ?? 'Missing Version File',
+    commit: metaData.commit ?? 'Missing Version File',
+    dateCompiled: metaData.released ?? new Date().getTime(),
+    branch: metaData.branch ?? 'release'
   },
 
   // Tools
@@ -539,6 +548,12 @@ const Electron: ElectronOverwolfInterface = {
       return {
         port,
         secret
+      }
+    },
+    getLicenses() {
+      return {
+        javascript: licensesData,
+        java: javaLicensesData
       }
     }
   },

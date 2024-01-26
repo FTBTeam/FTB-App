@@ -1,7 +1,7 @@
 {
   "productName": "FTB App",
   "name": "ftb-app",
-  "version": "1.6.4",
+  "version": "1.30.0",
   "private": true,
   "main": "background.js",
   "author": "Feed The Beast",
@@ -17,8 +17,8 @@
     "vue:serve:overwolf": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
     "build": "vue-cli-service electron:build",
     "build:electron": "vue-cli-service electron:build -w --x64",
-    "build:electron:rush": "vue-cli-service electron:build -m --x64",
-    "gen:license": "license-checker --json > licenses.json",
+    "build:electron:rush": "vue-cli-service electron:build -m --arm64",
+    "gen:license": "license-checker --excludePrivatePackages --json --production > licenses.json",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
   },

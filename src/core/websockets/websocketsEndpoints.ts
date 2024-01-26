@@ -56,7 +56,7 @@ import {
   MessageClientData,
   MineTogetherAuthenticationHandlerData,
   MineTogetherAuthenticationHandlerReply,
-  minetogetherLogoutHandlerReply,
+  MineTogetherLogoutHandlerReply,
   ModalCallbackData,
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
@@ -160,7 +160,7 @@ export type MessagePayload = {
   },
   "minetogetherLogoutHandler": {
     input: BaseData,
-    output: minetogetherLogoutHandlerReply
+    output: MineTogetherLogoutHandlerReply
   },
   "installedInstances": {
     input: InstalledInstancesData,

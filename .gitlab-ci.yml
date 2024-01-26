@@ -63,7 +63,8 @@ build_overwolf:
         - npm install --global pnpm || true
         - pnpm config set store-dir .pnpm-store
     script:
-        - cp subprocess/build/libs/version.json public/version.json
+        - cp subprocess/build/libs/meta.json overwolf/
+        - cp subprocess/build/libs/java-licenses.json overwolf/
         - pnpm install
         - pnpm gen:license
         - node overwolf/patchManifest.js
@@ -106,7 +107,8 @@ build_electron:
         - npm install --global pnpm || true
         - pnpm config set store-dir .pnpm-store
     script:
-        - cp subprocess/build/libs/version.json public/version.json
+#      - TODO: Meta? Or is this just handled now xD. This all needs changing
+#        - cp subprocess/build/libs/version.json public/version.json
         - pnpm install
         - pnpm gen:license
         - pnpm build:electron

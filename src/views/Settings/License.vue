@@ -3,10 +3,11 @@
     <router-link :to="{ name: 'app-settings' }">
       <ui-button icon="arrow-left" type="success" :wider="true">Back</ui-button>
     </router-link>
-    <div class="flex flex-col mt-4">
-      <h1 class="text-xl mb-4">NodeJS Package Licenses</h1>
+    
+    <div class="flex flex-col mt-4" v-if="licenseData && licenseData.javascript">
+      <h1 class="text-xl mb-4">NPM Package Licenses</h1>
       <div class="rounded packages">
-        <div class="flex flex-row mb-2" v-for="(license, index) in licenses" :key="index">
+        <div class="flex flex-row mb-2" v-for="(license, index) in licenseData.javascript" :key="index">
           <a class="inline-block" :href="license.repository" target="_blank">{{ index }}</a>
           <div class="tag bg-blue-400 inline-block text-gray-900 font-bold px-2 py-1 ml-auto rounded text-xs">
             {{ license.licenses }}
@@ -17,24 +18,31 @@
     <div class="disclaimer mt-2 mb-6">
       <small class="text-muted">
         <font-awesome-icon icon="info" class="mr-4" />
-        The information on this page was valid as of {{ config.dateCompiled | dayjs }}
+        The information on this page was valid as of {{ configData.dateCompiled | dayjs }}
       </small>
     </div>
 
-    <h1 class="text-xl mb-4">Java Dependency Licenses</h1>
-    <div class="rounded packages">
-      <div class="flex flex-row mb-2" v-for="(license, index) in config.javaLicenses" :key="index">
-        <a class="inline-block" target="_blank" :href="license.repository">{{ index }}</a>
-        <div class="tag bg-blue-400 inline-block text-gray-900 font-bold px-2 py-1 ml-auto rounded text-xs">
-          {{ license.license }}
+    <div class="flex flex-col mt-4" v-if="licenseData && licenseData.java">
+      <h1 class="text-xl mb-4">Java Dependency Licenses</h1>
+      <div class="rounded packages">
+        <div class="flex flex-row mb-2" v-for="(license, index) in licenseData.java.dependencies" :key="index">
+          <div class="inline-block">{{ license.name }}</div>
+          <div class="tag bg-blue-400 inline-block text-gray-900 font-bold px-2 py-1 ml-auto rounded text-xs">
+            <div class="licensesHolder flex gap-2">
+              <template v-for="(licenseItem, index) in license.licenses" :key="`li-${index}`">
+                <a class="inline-block" target="_blank" v-if="licenseItem.url" :href="licenseItem.url">{{licenseItem.name}}</a>
+                <span class="inline-block" v-else>{{licenseItem.name}}</span>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="disclaimer mt-2 mb-6">
-      <small class="text-muted">
-        <font-awesome-icon icon="info" class="mr-4" />
-        The information on this page was valid as of {{ config.dateCompiled | dayjs }}
-      </small>
+      <div class="disclaimer mt-2 mb-6">
+        <small class="text-muted">
+          <font-awesome-icon icon="info" class="mr-4" />
+          The information on this page was valid as of {{ configData.dateCompiled | dayjs }}
+        </small>
+      </div>
     </div>
   </div>
 </template>
@@ -42,19 +50,24 @@
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 
-import Licenses from '../../../licenses.json';
 import platform from '@/utils/interface/electron-overwolf';
 import UiButton from '@/components/core/ui/UiButton.vue';
+
+type LicenseResponse = Awaited<ReturnType<typeof platform.get.app.getLicenses>>;
 
 @Component({
   components: {UiButton}
 })
 export default class LicensePage extends Vue {
-  private licenses = Licenses;
-  private config = {
-    dateCompiled: platform.get.config.dateCompiled,
-    javaLicenses: platform.get.config.javaLicenses,
-  };
+  licenseData: LicenseResponse | null = null;
+  
+  async mounted() {
+    this.licenseData = platform.get.app.getLicenses();
+  }
+  
+  get configData() {
+    return platform.get.config
+  }
 }
 </script>
 

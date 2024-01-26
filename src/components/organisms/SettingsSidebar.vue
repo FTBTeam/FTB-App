@@ -49,16 +49,20 @@
     <div class="meta">
       <span>App version</span>
       <popover position="bottom">
-        <div class="value copyable pr-3">{{ version }}</div>
+        <div class="value copyable pr-3">{{ configData.version }}</div>
         <template #inner>
           <div class="version">
             <div class="field mb-4">
-              <div class="head">UI Version</div>
-              <div class="value copyable">{{ uiVersion }}</div>
+              <div class="head">Released</div>
+              <div class="value copyable" :title="configData.dateCompiled | dayjsFull">{{ configData.dateCompiled | dayjsFromNow }}</div>
             </div>
             <div class="field">
-              <div class="head">Subprocess Version</div>
-              <div class="value copyable">{{ appVersion }}</div>
+              <div class="head">Branch</div>
+              <div class="value copyable">{{ configData.branch }}</div>
+            </div>
+            <div class="field">
+              <div class="head">Commit</div>
+              <div class="value copyable">{{ configData.commit }}</div>
             </div>
           </div>
         </template>
@@ -81,11 +85,12 @@ export default class SettingsSidebar extends Vue {
 
   platform = platform;
   RouterNames = RouterNames;
-
-  version = platform.get.config.publicVersion;
-  uiVersion = platform.get.config.webVersion;
-  appVersion = platform.get.config.appVersion;
+  
   changesHistoryOpen: boolean = false;
+  
+  get configData() {
+    return platform.get.config;
+  }
 }
 </script>
 

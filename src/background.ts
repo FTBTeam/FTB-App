@@ -49,8 +49,16 @@ if (appSettings === null) {
   appSettings = getAppSettings(appSettingsPathLegacy);
 }
 
+const electronLogFile = path.join(appHome, 'logs', 'ftb-app-electron.log');
+if (fs.existsSync(electronLogFile)) {
+  try {
+    fs.writeFileSync(electronLogFile, '')
+  } catch (e) {
+    logger.error("Failed to clear electron log file", e)
+  }
+}
 electronLogger.transports.file.resolvePath = (variables, message) => 
-  path.join(appHome, 'logs', 'ftb-app-electron.log');
+  electronLogFile;
 
 Object.assign(console, electronLogger.functions);
 (app as any).console = electronLogger;
@@ -83,7 +91,6 @@ for (let i = 0; i < process.argv.length; i++) {
 declare const __static: string;
 
 let userData: any;
-
 ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
     event.reply('parseProtocolURL', protocolURL);

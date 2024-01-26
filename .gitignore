@@ -29,7 +29,8 @@ electron.log
 release/
 /subprocess/storage
 
-public/version.json
+overwolf/meta.json
+overwolf/java-licenses.json
 licenses.json
 
 # Overwolf
