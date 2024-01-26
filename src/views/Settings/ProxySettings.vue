@@ -123,11 +123,13 @@ export default class MTIntegration extends Vue {
     
     this.saveSettings({
       ...this.settings.settings,
-      proxyUser: remove ? "" : this.proxyUser,
-      proxyPort: remove ? -1 : this.proxyPort,
-      proxyHost: remove ? "" : this.proxyHost,
-      proxyPassword: remove ? "" : this.proxyPass,
-      proxyType: remove ? "none" : this.proxyType,
+      proxy: {
+        type: this.proxyType,
+        host: this.proxyHost,
+        port: this.proxyPort,
+        username: this.proxyUser,
+        password: this.proxyPass
+      }
     })
 
     alertController.success("Proxy Settings updated")

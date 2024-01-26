@@ -1,6 +1,6 @@
 <template>
   <div class="profile-area" :class="{ disable }">
-    <div class="profile">
+    <div class="profile" v-if="(getProfiles && getProfiles.length) || getMtAccount">
       <div class="avatar">
         <img
           :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : null)"

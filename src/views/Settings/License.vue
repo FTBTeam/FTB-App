@@ -29,9 +29,9 @@
           <div class="inline-block">{{ license.name }}</div>
           <div class="tag bg-blue-400 inline-block text-gray-900 font-bold px-2 py-1 ml-auto rounded text-xs">
             <div class="licensesHolder flex gap-2">
-              <template v-for="(licenseItem, index) in license.licenses" :key="`li-${index}`">
-                <a class="inline-block" target="_blank" v-if="licenseItem.url" :href="licenseItem.url">{{licenseItem.name}}</a>
-                <span class="inline-block" v-else>{{licenseItem.name}}</span>
+              <template v-for="(licenseItem, index) in license.licenses">
+                <a :key="`li-${index}`" class="inline-block" target="_blank" v-if="licenseItem.url" :href="licenseItem.url">{{licenseItem.name}}</a>
+                <span :key="`li-${index}`" class="inline-block" v-else>{{licenseItem.name}}</span>
               </template>
             </div>
           </div>
