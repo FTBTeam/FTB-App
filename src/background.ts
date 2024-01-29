@@ -14,6 +14,9 @@ import {ChildProcess, execSync, spawn} from 'child_process';
 const protocolSpace = 'ftb';
 const logger = createLogger('background.ts');
 
+console.log("Env", process.env)
+console.log("Keys", Object.keys(app))
+
 function getAppHome() {
   if (os.platform() === "darwin") {
     return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
@@ -426,11 +429,20 @@ ipcMain.handle("startSubprocess", async (event, args) => {
     });
 
     subprocess.stderr?.on('data', (data) => {
-      logger.debug("Subprocess stderr", data.toString())
+      let outputData = data.toString();
+      if (outputData.endsWith("\n")) {
+        outputData = outputData.slice(0, -1);
+      }
+      logger.debug("Subprocess stderr", outputData)
     });
 
     subprocess.stdout?.on('data', (data) => {
-      logger.debug("Subprocess stdout", data.toString())
+      let outputData = data.toString();
+      if (outputData.endsWith("\n")) {
+        outputData = outputData.slice(0, -1);
+      }
+      
+      logger.debug("Subprocess stdout", outputData)
       if (!appCommunicationSetup) {
         if (data.includes("{T:CI")) {
           const regex = /{p:([0-9]+);s:([^}]+)}/gi;

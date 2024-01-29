@@ -600,7 +600,7 @@ const Electron: ElectronOverwolfInterface = {
       const jvmArgs = parseArgs(metaData.runtime.jvmArgs);
       
       const jarName = metaData.runtime.jar;
-
+      
       try {
         return await retryAttempt(async () => {
           const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
@@ -699,24 +699,17 @@ const Electron: ElectronOverwolfInterface = {
  * @param fn
  * @param attempts
  */
-function retryAttempt<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
-  return new Promise((resolve, reject) => {
-    let attemptsLeft = attempts;
-    
-    const attempt = () => {
-      fn()
-        .then((res) => resolve(res))
-        .catch((e) => {
-          if (--attemptsLeft === 0) {
-            reject(e);
-          } else {
-            setTimeout(() => attempt(), 1000);
-          }
-        });
-    };
-    
-    attempt();
-  });
+async function retryAttempt<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let attempt = 0;
+  while (attempt < attempts) {
+    try {
+      return await fn();
+    } catch (e) {
+      attempt++;
+    }
+  }
+
+  throw new Error("Failed to retry attempt")
 }
 
 function throwCustomError(message: string, customMessage: string) {

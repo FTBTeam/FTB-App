@@ -255,7 +255,8 @@ export default class MainApp extends Vue {
     try {
       let appData: any = await platform.get.app.startSubprocess();
       
-      if (!appData || "port" in appData || "secret" in appData) {
+      // False means update
+      if (!appData) {
         try {
           await this.platform.get.app.updateApp(
             (stage: any) => this.appInstallStage = stage,
