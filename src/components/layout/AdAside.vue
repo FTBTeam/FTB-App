@@ -1,52 +1,54 @@
 <template>
   <div class="ad-aside" :class="{ 'electron': isElectron }">
-    <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type">
-      <div class="ad-holder small" v-if="!isSmallDisplay">
-        <div
-          v-if="!isElectron"
-          v-show="advertsEnabled ?? true"
-          id="ow-ad-second"
-          ref="adRefSecond"
-          style="max-width: 300px; max-height: 250px;"
-        />
-        <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder" />
-      </div>
-
-      <div class="ad-holder">
-        <div
-          v-if="!isElectron"
-          v-show="advertsEnabled ?? true"
-          id="ow-ad"
-          ref="adRef"
-          style="max-width: 400px; max-height: 600px;"
-        />
-
-        <div class='place-holder' v-if="!isElectron && showAdOnePlaceholder">
-          <img src="@/assets/images/ftb-logo.svg" class="mb-8" width="70" alt="FTB Logo">
-          <p class="mb-1">Thank you for supporting FTB ❤️</p>
-          <p>Ads support FTB & CurseForge Authors!</p>
+    <template v-if="!hideAds">
+      <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type">
+        <div class="ad-holder small" v-if="!isSmallDisplay">
+          <div
+            v-if="!isElectron"
+            v-show="advertsEnabled ?? true"
+            id="ow-ad-second"
+            ref="adRefSecond"
+            style="max-width: 300px; max-height: 250px;"
+          />
+          <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder" />
+        </div>
+  
+        <div class="ad-holder">
+          <div
+            v-if="!isElectron"
+            v-show="advertsEnabled ?? true"
+            id="ow-ad"
+            ref="adRef"
+            style="max-width: 400px; max-height: 600px;"
+          />
+  
+          <div class='place-holder' v-if="!isElectron && showAdOnePlaceholder">
+            <img src="@/assets/images/ftb-logo.svg" class="mb-8" width="70" alt="FTB Logo">
+            <p class="mb-1">Thank you for supporting FTB ❤️</p>
+            <p>Ads support FTB & CurseForge Authors!</p>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="ad-container ads" v-else key="adside-ad-type">
-      <div class="ad-holder small">
-        <div style="width: 300px; height: 250px; background: transparent;">
-          <owadview />
+  
+      <div class="ad-container ads" v-else key="adside-ad-type">
+        <div class="ad-holder small">
+          <div style="width: 300px; height: 250px; background: transparent;">
+            <owadview />
+          </div>
+        </div>
+        
+        <div class="ad-holder">
+          <div style="width: 400px; height: 600px; background: transparent;">
+            <owadview />
+          </div>
         </div>
       </div>
       
-      <div class="ad-holder">
-        <div style="width: 400px; height: 600px; background: transparent;">
-          <owadview />
-        </div>
+      <!-- TODO: Workout what I wanna do here -->
+      <div class="ad-container ads-electron electron" v-if="false" key="adside-ad-type">
+        <ch-ads-area />
       </div>
-    </div>
-    
-    <!-- TODO: Workout what I wanna do here -->
-    <div class="ad-container ads-electron electron" v-if="false" key="adside-ad-type">
-      <ch-ads-area />
-    </div>
+    </template>
   </div>
 </template>
 
@@ -62,6 +64,7 @@ import {createLogger} from '@/core/logger';
 import {ns} from '@/core/state/appState';
 import {MineTogetherAccount} from '@/core/@types/javaApi';
 import {adsEnabled} from '@/utils';
+import {Prop} from 'vue-property-decorator';
 
 @Component({
   components: {ChAdsArea}
@@ -70,6 +73,8 @@ export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
   @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  
+  @Prop({default: false}) public hideAds!: boolean;
   
   private logger = createLogger("AdAside.vue");
 

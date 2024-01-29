@@ -31,11 +31,12 @@
         <div class="app-content relative">
           <router-view />
         </div>
-        <ad-aside v-show="advertsEnabled" />
+        <ad-aside v-show="advertsEnabled" :hide-ads="showOnboarding" />
       </main>
     </div>
     
     <global-components v-if="appReadyToGo" />
+    <onboarding v-if="showOnboarding" @accepted="showOnboarding = false" />
   </div>
 </template>
 
@@ -62,9 +63,11 @@ import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
 import {adsEnabled} from '@/utils';
 import {MineTogetherAccount} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
+import Onboarding from '@/components/core/dialogs/Onboarding.vue';
 
 @Component({
   components: {
+    Onboarding,
     Loader,
     GlobalComponents,
     Sidebar,
@@ -103,6 +106,8 @@ export default class MainApp extends Vue {
   appLoaded = false;
   appInstalling = false;
   appInstallStage = "";
+
+  showOnboarding = false;
 
   startupJobs = [
     {
@@ -263,6 +268,11 @@ export default class MainApp extends Vue {
       });
       
       this.hasInitialized = true;
+
+      this.checkForFirstRun()
+        .then(() => this.logger.info("Finished checking for first run"))
+        .catch(error => this.logger.error("Failed to check for first run", error));
+      
       for (const job of this.postStartupJobs) {
         this.logger.info(`Starting post ${job.name}`)
         await job.action();
@@ -301,6 +311,16 @@ export default class MainApp extends Vue {
       this.logger.debug("Notifying all controllers of disconnected status")
       requiresWsControllers.forEach(e => e.onDisconnected());
       this.loading = true;
+    }
+  }
+  
+  async checkForFirstRun() {
+    if (!this.platform.isElectron()) {
+      return;
+    }
+    
+    if (await this.platform.get.app.cpm.isFirstLaunch()) {
+     this.showOnboarding = true;
     }
   }
   
@@ -371,16 +391,14 @@ export default class MainApp extends Vue {
   }
 }
 
-//#app.macos {
-//  .app-container {
-//    height: 100%;
-//
-//    &.no-system-bar {
-//      // Title bar on macos is 1.8rem not 2rem
-//      height: calc(100% - 1.8rem);
-//    }
-//  }
-//}
+#app.macos {
+  .app-container {
+    &.no-system-bar {
+      // Title bar on macos is 1.8rem not 2rem
+      height: calc(100% - 1.8rem);
+    }
+  }
+}
 
 main.main {
   position: relative;

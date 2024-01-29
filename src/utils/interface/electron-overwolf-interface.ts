@@ -88,6 +88,13 @@ export interface App {
     javascript: JavascriptLicenses | null,
     java: JavaLicenses | null,
   };
+  
+  cpm: {
+    required(): Promise<boolean>;
+    openWindow(tab: 'purposes' | 'features' | 'vendors'): Promise<void>;
+    isFirstLaunch: () => Promise<boolean>;
+    setFirstLaunched: () => Promise<void>;
+  }
 }
 
 export default interface ElectronOverwolfInterface {

@@ -554,6 +554,22 @@ const Electron: ElectronOverwolfInterface = {
         javascript: licensesData,
         java: javaLicensesData
       }
+    },
+    cpm: {
+      async required() {
+        // Required for OW Ads 
+        return await ipcRenderer.invoke("ow:cpm:is_required");
+      },
+      async openWindow(arg = "purposes") {
+        // Required for OW Ads
+        await ipcRenderer.invoke("ow:cpm:open_window", arg);
+      },
+      async isFirstLaunch() {
+        return !fs.existsSync(path.join(getAppHome(), "bin", ".first-launch"));
+      },
+      async setFirstLaunched() {
+        fs.writeFileSync(path.join(getAppHome(), "bin", ".first-launch"), "");
+      }
     }
   },
   

@@ -332,6 +332,18 @@ const Overwolf: ElectronOverwolfInterface = {
         javascript: mainWindow.getLicenseData(),
         java: mainWindow.getJavaLicenseData()
       }
+    },
+    cpm: {
+      async required() {
+        return false;
+      },
+      async openWindow() {
+        // IGNORED
+      },
+      async isFirstLaunch() {
+        return false;
+      },
+      async setFirstLaunched() {},
     }
   },
 

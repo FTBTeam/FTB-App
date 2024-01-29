@@ -370,6 +370,16 @@ ipcMain.handle("getAppExecutablePath", async (event, args) => {
   return app.getAppPath();
 });
 
+ipcMain.handle("ow:cpm:is_required", async (event) => {
+  return (app as any).overwolf.isCMPRequired();
+})
+
+ipcMain.handle("ow:cpm:open_window", async (event, data) => {
+  (app as any).overwolf.openCMPWindow({
+    tab: data ?? "purposes" 
+  });
+});
+
 ipcMain.handle("startSubprocess", async (event, args) => {
   if (process.env.NODE_ENV !== 'production') {
     logger.debug("Not starting subprocess in dev mode")
