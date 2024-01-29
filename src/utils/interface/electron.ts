@@ -43,8 +43,8 @@ const fallbackMetaData: MetaData = {
   branch: "release",
   released: new Date().getTime(),
   runtime: {
-    version: "21", // We can only control this using the endpoint we are using
-    jar: "launcher.jar", // TODO: Fix me,
+    version: "21", // If we're using this, something has gone wrong
+    jar: "launcher.jar", // If we're using this, something has gone wrong
     env: [],
     jvmArgs: []
   }
@@ -453,7 +453,9 @@ const Electron: ElectronOverwolfInterface = {
 
       const appPath = getAppHome();
       const runtimePath = `${appPath}/runtime`;
+      
       if (isUpdate) {
+        onStageChange("Removing old runtime")
         if (fs.existsSync(runtimePath)) {
           try {
             fs.rmSync(runtimePath, {
@@ -464,7 +466,8 @@ const Electron: ElectronOverwolfInterface = {
           }
         }
       }
-      
+
+      onStageChange("Creating runtime folder")
       try {
         if (!fs.existsSync(runtimePath)) {
           fs.mkdirSync(runtimePath, {
@@ -477,19 +480,19 @@ const Electron: ElectronOverwolfInterface = {
       
       const isWindows = os.platform() === "win32";
       const jreDownloadName = isWindows ? `jre.zip` : `jre.tar.gz`;
-      let res;
+      onStageChange("Downloading Java from Adoptium")
       try {
-        res = await ipcRenderer.invoke("downloadFile", {
+        await ipcRenderer.invoke("downloadFile", {
           url: link,
           path: path.join(runtimePath, jreDownloadName)
         });
       } catch (e) {
         throw throwCustomError("Failed to download java from endpoint", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
       }
-      
-      let extractResult;
+
+      onStageChange("Extracting Java")
       try {
-        extractResult = await ipcRenderer.invoke("extractFile", {
+        await ipcRenderer.invoke("extractFile", {
           input: path.join(runtimePath, jreDownloadName),
           output: path.join(runtimePath, `jre`)
         });
@@ -497,10 +500,9 @@ const Electron: ElectronOverwolfInterface = {
         throw throwCustomError("Failed to extract java", "We've not been able to extract Java... We can't recover from this.")
       }
       
-      eLogger.info(extractResult);
-      
       // Assuming this worked
       // Does the jre/jdk-* folder exist?
+      onStageChange("Moving Java to the correct location")
       const jreFolder = fs.readdirSync(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
       if (jreFolder == null) {
         throw throwCustomError("Failed to find java folder", "We've not been able to find the Java folder. We can't recover from this.")
@@ -513,7 +515,8 @@ const Electron: ElectronOverwolfInterface = {
       jreFiles.forEach(e => {
         fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
       });
-      
+
+      onStageChange("Cleaning up")
       try {
         // It's not fatal if this fails
         fs.rmdirSync(jrePath);
@@ -522,14 +525,16 @@ const Electron: ElectronOverwolfInterface = {
       } catch (e) {
         // Ignore
       }
-      
+
+      onStageChange("Finishing up")
       // Touch a file to note down what java version we have
       try {
         fs.writeFileSync(path.join(runtimePath, ".java-version"), javaVersion);
       } catch (e) {
         throw throwCustomError("Failed to write java version file", "We've not been able to write the java version file. We can't recover from this.")
       }
-      
+
+      onStageChange("Checking Java works")
       // Ensure the java version is executable and works
       const jreExecPath = jreLocation(appPath);
       if (!fs.existsSync(jreExecPath)) {
@@ -542,6 +547,8 @@ const Electron: ElectronOverwolfInterface = {
       if (!resultString.includes("openjdk")) {
         throw throwCustomError("Failed to run java executable", "We've not been able to run the java executable. We can't recover from this.")
       }
+
+      onStageChange("Starting subprocess")
     },
     async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
       // Get the runtime

@@ -21,14 +21,14 @@
 import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
 import {Component, Prop, Vue} from 'vue-property-decorator';
 
-type ButtonType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
-type ButtonSize = 'small' | 'normal' | 'large';
-type AriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
+export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
+export type ElementAriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
+export type ElementStandardSizing = 'small' | 'normal' | 'large';
 
 @Component
 export default class UiButton extends Vue {
-  @Prop({ default: 'normal' }) type!: ButtonType;
-  @Prop({ default: 'normal' }) size!: ButtonSize;
+  @Prop({ default: 'normal' }) type!: ElementColorType;
+  @Prop({ default: 'normal' }) size!: ElementStandardSizing;
   @Prop() disabled!: boolean;
   @Prop() working!: boolean;
   @Prop() icon!: IconDefinition;
@@ -37,7 +37,7 @@ export default class UiButton extends Vue {
   @Prop({ default: false }) wider!: boolean;
   
   @Prop({ default: "" }) ariaLabel!: string;
-  @Prop({ default: "down" as AriaDirection }) ariaLabelPos!: AriaDirection;
+  @Prop({ default: "down" as ElementAriaDirection }) ariaLabelPos!: ElementAriaDirection;
   
   click(event: MouseEvent) {
     if (this.disabled || this.working) {
@@ -48,14 +48,18 @@ export default class UiButton extends Vue {
   }
   
   get colorFromType() {
-    switch (this.type) {
-      case 'primary': return 'bg-indigo-600' + (!this.disabled && !this.working ? ' hover:bg-indigo-500' : '');
-      case 'secondary': return 'bg-green-600' + (!this.disabled && !this.working ? ' hover:bg-green-500' : '');
-      case 'success': return 'bg-primary' + (!this.disabled && !this.working ? ' hover:bg-light-primary' : '');
-      case 'danger': return 'bg-danger' + (!this.disabled && !this.working ? ' hover:bg-light-danger' : '');
-      case 'warning': return 'bg-warning' + (!this.disabled && !this.working ? ' hover:bg-light-warning' : '');
-      case 'info': return 'bg-info' + (!this.disabled && !this.working ? ' hover:bg-light-info' : '');
-      case 'normal': return 'bg-gray-600' + (!this.disabled && !this.working ? ' hover:bg-gray-500' : '');
+    return UiButton.colorFromElementColorType(this.type, this.disabled, this.working);
+  }
+  
+  public static colorFromElementColorType(type: ElementColorType, disabled: boolean = false, working = false) {
+    switch (type) {
+      case 'primary': return 'bg-indigo-600' + (!disabled && !working ? ' hover:bg-indigo-500' : '');
+      case 'secondary': return 'bg-green-600' + (!disabled && !working ? ' hover:bg-green-500' : '');
+      case 'success': return 'bg-primary' + (!disabled && !working ? ' hover:bg-light-primary' : '');
+      case 'danger': return 'bg-danger' + (!disabled && !working ? ' hover:bg-light-danger' : '');
+      case 'warning': return 'bg-warning' + (!disabled && !working ? ' hover:bg-light-warning' : '');
+      case 'info': return 'bg-info' + (!disabled && !working ? ' hover:bg-light-info' : '');
+      case 'normal': return 'bg-gray-600' + (!disabled && !working ? ' hover:bg-gray-500' : '');
     }
   }
 }

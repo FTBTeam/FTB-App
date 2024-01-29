@@ -234,10 +234,7 @@ export default class MainApp extends Vue {
     this.appInstalling = true;
     this.logger.info("Installing app");
     
-    // TODO: Progress
-    await this.platform.get.app.installApp((stage: any) => this.appInstallStage = stage, () => {
-      console.log("Update")
-    }, false)
+    await this.platform.get.app.installApp((stage: any) => this.appInstallStage = stage, () => {}, false)
     
     this.appInstalling = false;
   }

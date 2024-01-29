@@ -98,8 +98,7 @@ export default class AdAside extends Vue {
     if (this.isElectron) {
       return;
     }
-
-    // TODO: Figure this out
+    
     setTimeout(() => {
       this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
       if (!(window as any)?.ftbFlags?.smallMonitor) {
