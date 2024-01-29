@@ -78,11 +78,12 @@ export interface App {
   appSettings(): Promise<any | null>;
   appRuntimes(): Promise<string>;
   runtimeAvailable(): Promise<boolean>;
-  installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void): Promise<void>;
+  installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate: boolean): Promise<void>;
+  updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void): Promise<void>;
   startSubprocess(): Promise<{ 
     port: number;
     secret: string;
-  }>;
+  } | false>;
   
   getLicenses(): {
     javascript: JavascriptLicenses | null,

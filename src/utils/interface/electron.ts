@@ -398,7 +398,7 @@ const Electron: ElectronOverwolfInterface = {
       const appPath = getAppHome();
       return fs.existsSync(jreLocation(appPath));
     },
-    async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
+    async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate = false) {
       onStageChange("Locating Java");
 
       /**
@@ -428,53 +428,82 @@ const Electron: ElectronOverwolfInterface = {
       const javaVersion = metaData.runtime.version;
       
       // Attempt to get the java
-      // TODO: Error catch. Retries.
       const url = `https://api.adoptium.net/v3/assets/latest/${javaVersion}/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`;
       
       eLogger.log("Downloading java from", url)
-      const adopiumRequest = await fetch(url);
-      const adopiumRes = await adopiumRequest.json();
-
-      // TODO: Error catch.
-      const binary = adopiumRes.find((e: any) => e.binary)?.binary
+      onStageChange("Downloading Java")
+      
+      let adopiumRes;
+      try {
+        adopiumRes = await retryAttempt(async () => {
+          const adopiumRequest = await fetch(url);
+          return await adopiumRequest.json();
+        });
+      } catch (e) {
+        eLogger.error("Failed to download java", e)
+        throw throwCustomError("Failed to download java", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
+      }
+      
+      const binary = adopiumRes.find((e: any) => e.binary)?.binary;
+      if (!binary) {
+        throw throwCustomError("Failed to find java binary", "We've not been able to find a Java binary for you system. Please ensure you are using a supported system.")
+      }
+      
       const link = binary.package.link;
 
       const appPath = getAppHome();
       const runtimePath = `${appPath}/runtime`;
-
-      // TODO: Validate this works
-      // TODO: DO something if somethings broke
-      if (!fs.existsSync(runtimePath)) {
-        fs.mkdirSync(runtimePath, {
-          recursive: true
-        });
+      if (isUpdate) {
+        if (fs.existsSync(runtimePath)) {
+          try {
+            fs.rmSync(runtimePath, {
+              recursive: true
+            });
+          } catch (e) {
+            throw throwCustomError("Failed to remove runtime folder", "We've not been able to remove the runtime folder. Please ensure the app has the correct permissions to remove folders.")
+          }
+        }
       }
-
-      // TODO: Ensure this worked
+      
+      try {
+        if (!fs.existsSync(runtimePath)) {
+          fs.mkdirSync(runtimePath, {
+            recursive: true
+          });
+        }
+      } catch (e) {
+        throw throwCustomError("Failed to create runtime folder", "We've not been able to create the runtime folder. Please ensure the app has the correct permissions to create folders.")
+      }
+      
       const isWindows = os.platform() === "win32";
       const jreDownloadName = isWindows ? `jre.zip` : `jre.tar.gz`;
-      const res = await ipcRenderer.invoke("downloadFile", {
-        url: link,
-        path: path.join(runtimePath, jreDownloadName)
-      });
-      
-      if (!res) {
-        throw new Error("Failed to download java");
+      let res;
+      try {
+        res = await ipcRenderer.invoke("downloadFile", {
+          url: link,
+          path: path.join(runtimePath, jreDownloadName)
+        });
+      } catch (e) {
+        throw throwCustomError("Failed to download java from endpoint", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
       }
       
-      // TODO: Ensure this worked
-      // Extract the tar
-      const extractResult = await ipcRenderer.invoke("extractFile", {
-        input: path.join(runtimePath, jreDownloadName),
-        output: path.join(runtimePath, `jre`)
-      });
+      let extractResult;
+      try {
+        extractResult = await ipcRenderer.invoke("extractFile", {
+          input: path.join(runtimePath, jreDownloadName),
+          output: path.join(runtimePath, `jre`)
+        });
+      } catch (e) {
+        throw throwCustomError("Failed to extract java", "We've not been able to extract Java... We can't recover from this.")
+      }
       
       eLogger.info(extractResult);
+      
       // Assuming this worked
       // Does the jre/jdk-* folder exist?
       const jreFolder = fs.readdirSync(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
       if (jreFolder == null) {
-        throw new Error("Failed to find jre folder");
+        throw throwCustomError("Failed to find java folder", "We've not been able to find the Java folder. We can't recover from this.")
       }
       
       // Move all of the folders contents to the runtime folder
@@ -485,41 +514,74 @@ const Electron: ElectronOverwolfInterface = {
         fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
       });
       
-      fs.rmdirSync(jrePath);
-      fs.rmdirSync(path.join(runtimePath, 'jre'))
-      fs.rmSync(path.join(runtimePath, jreDownloadName));
+      try {
+        // It's not fatal if this fails
+        fs.rmdirSync(jrePath);
+        fs.rmdirSync(path.join(runtimePath, 'jre'))
+        fs.rmSync(path.join(runtimePath, jreDownloadName));
+      } catch (e) {
+        // Ignore
+      }
       
       // Touch a file to note down what java version we have
-      fs.writeFileSync(path.join(runtimePath, ".java-version"), javaVersion);
+      try {
+        fs.writeFileSync(path.join(runtimePath, ".java-version"), javaVersion);
+      } catch (e) {
+        throw throwCustomError("Failed to write java version file", "We've not been able to write the java version file. We can't recover from this.")
+      }
       
       // Ensure the java version is executable and works
       const jreExecPath = jreLocation(appPath);
       if (!fs.existsSync(jreExecPath)) {
-        throw new Error("Failed to find java executable");
+        throw throwCustomError("Failed to find java executable", "We've not been able to find the java executable. We can't recover from this.")
       }
       
-      // TODO: Actually validate this
       const result = execSync(`"${jreExecPath}" -version`);
-      eLogger.info(result.toString());
+      const resultString = result.toString();
       
-      // Assuming this worked, we should tell the frontend to continue
+      if (!resultString.includes("openjdk")) {
+        throw throwCustomError("Failed to run java executable", "We've not been able to run the java executable. We can't recover from this.")
+      }
     },
-    async startSubprocess() {
-      // TODO: Get the args from the meta file
-      
+    async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
       // Get the runtime
       const appPath = getAppHome();
       const runtimePath = `${appPath}/runtime`;
       
       if (!fs.existsSync(`${runtimePath}/.java-version`)) {
-        // TODO: Try installing again?
-        throw new Error("Missing java version");
+        // How did we get here? Just install it
+        return await this.installApp(onStageChange, onUpdate, false);
       }
       
-      // TODO: Check if this needs updating I guess
-      //       - Check the .java-version file
-      //       - Check the meta file
-      //       - Check the version of java we have and compare it to the meta file. If it's different, update it
+      // Get the original java version
+      const javaVersion = fs.readFileSync(`${runtimePath}/.java-version`, 'utf-8');
+      
+      if (metaData.runtime.version === javaVersion) {
+        // We don't need to update
+        return;
+      }
+      
+      // We need to update
+      return await this.installApp(onStageChange, onUpdate, true);
+    },
+    async startSubprocess() {
+      // Get the runtime
+      const appPath = getAppHome();
+      const runtimePath = `${appPath}/runtime`;
+      
+      if (!fs.existsSync(`${runtimePath}/.java-version`)) {
+        throw new CustomError("Failed to find java version file", "We've not been able to find the java version file. We can't recover from this.");
+      }
+      
+      const javaVersion = fs.readFileSync(`${runtimePath}/.java-version`, 'utf-8');
+      if (!javaVersion) {
+        throw new CustomError("Failed to read java version file", "We've not been able to read the java version file. We can't recover from this.");
+      }
+      
+      if (javaVersion !== metaData.runtime.version) {
+        // Looks like we need to try and update the java version
+        return false;
+      }
       
       // Start the subprocess
       const jreExecPath = jreLocation(appPath);
@@ -531,22 +593,30 @@ const Electron: ElectronOverwolfInterface = {
       const jvmArgs = parseArgs(metaData.runtime.jvmArgs);
       
       const jarName = metaData.runtime.jar;
-      
-      // TODO: Error catch and retry a few times
-      const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
-        javaPath: jreExecPath,
-        args: [
-          "-jar",
-          `${resourcesPath}/${jarName}`,
-          ...jvmArgs
-        ],
-        env: envVars
-      });
-      
-      // Finally, if the above worked, tell the app to connect to the WS protocol
-      return {
-        port,
-        secret
+
+      try {
+        return await retryAttempt(async () => {
+          const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
+            javaPath: jreExecPath,
+            args: [
+              "-jar",
+              `${resourcesPath}/${jarName}`,
+              ...jvmArgs
+            ],
+            env: envVars
+          });
+
+          if (port && secret) {
+            return {
+              port,
+              secret
+            }
+          }
+
+          throw new CustomError("Failed to start subprocess", "We've not been able to start the subprocess. We can't recover from this.")
+        });
+      } catch (e) {
+        throw new CustomError("Failed to start subprocess after 3 attempts", "We've not been able to start the subprocess. We can't recover from this.")
       }
     },
     getLicenses() {
@@ -616,5 +686,45 @@ const Electron: ElectronOverwolfInterface = {
     });
   },
 };
+
+/**
+ * Retries a promise a number of times with a delay
+ * @param fn
+ * @param attempts
+ */
+function retryAttempt<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let attemptsLeft = attempts;
+    
+    const attempt = () => {
+      fn()
+        .then((res) => resolve(res))
+        .catch((e) => {
+          if (--attemptsLeft === 0) {
+            reject(e);
+          } else {
+            setTimeout(() => attempt(), 1000);
+          }
+        });
+    };
+    
+    attempt();
+  });
+}
+
+function throwCustomError(message: string, customMessage: string) {
+  eLogger.error(message);
+  throw new CustomError(message, customMessage);
+}
+
+class CustomError extends Error {
+  customMessage: string;
+  
+  constructor(message: string, customMessage: string) {
+    super(message);
+    this.name = "CustomError";
+    this.customMessage = customMessage;
+  }
+}
 
 export default Electron;

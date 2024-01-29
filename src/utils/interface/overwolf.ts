@@ -294,6 +294,10 @@ const Overwolf: ElectronOverwolfInterface = {
       // Don't use this on overwolf
       throw new Error("Don't use app.installApp() on Overwolf")
     },
+    async updateApp() {
+      // Don't use this on overwolf
+      throw new Error("Don't use app.updateApp() on Overwolf")
+    },
     /**
      * Because the subprocess is already started in this instance. We're just going to askk 
      * the main window for the credentials so we can connect

@@ -37,6 +37,22 @@
     
     <global-components v-if="appReadyToGo" />
     <onboarding v-if="showOnboarding" @accepted="showOnboarding = false" />
+    
+    <modal :open="appInstallFailed || appStartupFailed" title="Something's gone wrong!" sub-title="Looks like there might be a problem...">
+      <p class="mb-1">{{appInstallError}}</p>
+      
+      <p>Sometimes these things happen, it could be a random failure, try restarting the app and if that doesn't work, try reaching out on our Discord (linked below)</p>
+      <template #footer>
+        <div class="flex gap-4 justify-end items-center">
+          <ui-button size="small" type="danger" class="mr-auto" @click="() => {
+            appInstallFailed = false
+            appStartupFailed = false
+          }">Let me in anyway...</ui-button>
+          <ui-button type="info" :icon="['fab', 'discord']" @click="platform.get.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</ui-button>
+          <ui-button type="success" icon="power-off">Restart</ui-button>
+        </div>
+      </template>
+    </modal>
   </div>
 </template>
 
@@ -64,9 +80,11 @@ import {adsEnabled} from '@/utils';
 import {MineTogetherAccount} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import Onboarding from '@/components/core/dialogs/Onboarding.vue';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
   components: {
+    UiButton,
     Onboarding,
     Loader,
     GlobalComponents,
@@ -106,6 +124,10 @@ export default class MainApp extends Vue {
   appLoaded = false;
   appInstalling = false;
   appInstallStage = "";
+  
+  appInstallFailed = false;
+  appStartupFailed = false;
+  appInstallError = "";
 
   showOnboarding = false;
 
@@ -146,12 +168,10 @@ export default class MainApp extends Vue {
     this.appStarting = true;
     this.appLoaded = false;
     
-    this.logger.info("Mounted MainApp");
+    this.logger.info("Mounted MainApp for ", constants.platform);
     
     // Check if the app is installed
     let installed = true;
-    this.logger.info("overwolf", this.platform.isOverwolf());
-    this.logger.info("electron", this.platform.isElectron());
     if (!this.platform.isOverwolf()) {
       installed = await platform.get.app.runtimeAvailable();
       
@@ -159,13 +179,12 @@ export default class MainApp extends Vue {
       if (!installed) {
         // We need to install the app
         try {
-          const result = await this.installApp();
-          console.log(result)
-        } catch (e) {
-          console.error(e);
+          await this.installApp();
+        } catch (e: any) {
+          this.appInstallFailed = true;
+          this.appInstallError = e?.customMessage || "The app has failed to install the necessary files, please try again or contact support...";
+          this.logger.error("Failed to install app", e);
         }
-        
-        // TODO: Error check
       }
     }
 
@@ -218,7 +237,7 @@ export default class MainApp extends Vue {
     // TODO: Progress
     await this.platform.get.app.installApp((stage: any) => this.appInstallStage = stage, () => {
       console.log("Update")
-    })
+    }, false)
     
     this.appInstalling = false;
   }
@@ -237,14 +256,37 @@ export default class MainApp extends Vue {
 
     this.logger.info("Sending start subprocess message");
     try {
-      const appData: any = await platform.get.app.startSubprocess();
+      let appData: any = await platform.get.app.startSubprocess();
+      
+      if (!appData || "port" in appData || "secret" in appData) {
+        try {
+          await this.platform.get.app.updateApp(
+            (stage: any) => this.appInstallStage = stage,
+            () => this.logger.info("Update complete")
+          );
+        } catch (e: any) {
+          this.appInstallFailed = true;
+          this.appInstallError = e?.customMessage || "The app has failed to update, please try again or contact support...";
+          this.logger.error("Failed to update app", e);
+        }
+        
+        appData = await platform.get.app.startSubprocess();
+      }
+      
       this.logger.info("Started app subprocess", appData);
-
-      // TODO: Error handling, maybe try again?
+      if (!appData.port || !appData.secret) {
+        this.appStartupFailed = true;
+        this.appInstallError = "The app has failed to start due to connection issues, please try again or contact support...";
+        this.logger.error("Failed to start subprocess due to connection issues", appData);
+        return;
+      }
 
       // Finally we need to get the app to connect to the subprocess
       await this.connectToWebsockets(appData.port, appData.secret);
-    } catch (e) {
+    } catch (e: any) {
+      // Same as the install, grab the custom error if possible
+      this.appStartupFailed = true;
+      this.appInstallError = e?.customMessage || "The app has failed to start, please try again or contact support...";
       this.logger.error("Failed to start subprocess", e);
     }
   }
@@ -290,10 +332,8 @@ export default class MainApp extends Vue {
     for (const job of this.startupJobs) {
       this.logger.info(`Starting ${job.name}`)
       await job.action();
-
-      // TODO: (M#01) FINISH THIS
-      this.logger.info(`Finished ${job.name}`)
       job.done = true;
+      this.logger.info(`Finished ${job.name}`)
     }
   }
   
