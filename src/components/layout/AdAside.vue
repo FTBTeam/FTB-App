@@ -187,6 +187,7 @@ export default class AdAside extends Vue {
   justify-content: flex-end;
 
   border-left: 2px solid rgba(black, 0.1);
+  padding-bottom: .4rem;
 
   .ad-container.overwolf {
     position: relative;
