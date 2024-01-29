@@ -1,5 +1,5 @@
 <template>
-  <a class="link hover:text-blue-500 underline italic" @click.prevent="open">
+  <a class="link hover:text-blue-500 text-blue-300 hover:underline italic cursor-pointer" @click.prevent="open">
     <slot></slot>
   </a>
 </template>
