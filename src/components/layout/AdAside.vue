@@ -94,6 +94,7 @@ export default class AdAside extends Vue {
   async mounted() {
     this.logger.info('Loaded ad sidebar widget');
     
+    
     // Kinda dirty hack for this file
     if (this.isElectron) {
       return;

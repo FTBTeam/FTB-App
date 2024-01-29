@@ -12,13 +12,17 @@
           <font-awesome-icon icon="gamepad" />
           <span>Instances</span>
         </router-link>
-        <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
-          <font-awesome-icon icon="cloud-download-alt" />
-          <span>Downloads</span>
-        </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_APP }" class="item">
           <font-awesome-icon icon="rocket" />
           <span>App</span>
+        </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_PRIVACY }" class="item">
+          <font-awesome-icon icon="user-secret" />
+          <span>Privacy</span>
+        </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
+          <font-awesome-icon icon="cloud-download-alt" />
+          <span>Downloads</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_INTEGRATION }" class="item">
           <font-awesome-icon icon="link" />

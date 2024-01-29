@@ -22,6 +22,7 @@ export enum RouterNames {
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
   SETTINGS_CHANGELOGS = 'changelogs',
+  SETTINGS_PRIVACY = 'privacy',
   SUPPORT = 'support-index',
 }
 
@@ -95,7 +96,12 @@ const router = new Router({
               path: 'changelogs',
               name: RouterNames.SETTINGS_CHANGELOGS,
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Changelogs.vue'),
-            }
+            },
+            {
+              path: 'privacy',
+              name: RouterNames.SETTINGS_PRIVACY,
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Privacy.vue'),
+            },
           ],
         },
         {
