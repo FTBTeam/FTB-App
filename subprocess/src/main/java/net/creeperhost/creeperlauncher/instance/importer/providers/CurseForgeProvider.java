@@ -1,9 +1,11 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
+import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.Result;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +18,7 @@ import java.nio.file.Path;
  * - Instances folder is always called instances
  * - Curseforge instances do not set their own java version so we'll need to figure that bit out
  */
-public class CurseForgeProvider implements InstanceProvider {
+public class CurseForgeProvider extends InstanceProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CurseForgeProvider.class);
 
@@ -51,20 +53,11 @@ public class CurseForgeProvider implements InstanceProvider {
         // Pull some nice to have info
         var memory = GsonUtils.getNestedField("allocatedMemory", metaJson, JsonElement::getAsInt);
 
-        return new InstanceSummary(name, instancePath, gameVersion, installDate);
+        return new InstanceSummary(name, instancePath, gameVersion, null, installDate);
     }
 
     @Override
-    public Result<Boolean, String> importInstance(Path identifier) {
-        // Load the instance again
-        var instance = scanForInstance(identifier);
-        if (instance == null) {
-            return Result.err("Failed to load instance");
-        }
-
-        // Now import it I guess
-        // At the core of it all, we just need to copy a directory from one place to another
-
-        return Result.err("Not implemented");
+    public InstalledInstancesHandler.SugaredInstanceJson importInstance(Path identifier) {
+        throw new NotImplementedException("TODO");
     }
 }

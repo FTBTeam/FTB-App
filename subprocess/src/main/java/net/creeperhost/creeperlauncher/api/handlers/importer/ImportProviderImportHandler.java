@@ -5,21 +5,29 @@ import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.instance.importer.Providers;
-import net.creeperhost.creeperlauncher.util.Result;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.List;
 
 public class ImportProviderImportHandler implements IMessageHandler<ImportProviderImportHandler.Data> {
 
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Override
     public void handle(Data data) {
         for (var instanceLocation : data.locations) {
             var instancePath = Path.of(instanceLocation);
-            Result<Boolean, String> instance = data.provider.provider.importInstance(instancePath);
-            // TODO: handle result
-            Settings.webSocketAPI.sendMessage(new Reply(data, true));
+            try {
+                InstalledInstancesHandler.SugaredInstanceJson instance = data.provider.provider.importInstance(instancePath);
+                WebSocketHandler.sendMessage(new Reply(data, true));
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to import instance.", ex);
+                WebSocketHandler.sendMessage(new Reply(data, true));
+            }
         }
     }
 

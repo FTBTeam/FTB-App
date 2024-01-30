@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -97,6 +98,7 @@ public class ModpackManifest {
     public String getSynopsis() { return requireNonNull(synopsis); }
     public List<Author> getAuthors() { return authors; }
     public List<Art> getArt() { return art; }
+    public List<Version> getVersions() { return versions; }
     // @formatter:on
 
     public static class Author {
@@ -161,12 +163,14 @@ public class ModpackManifest {
         private String type;
 
         private long updated;
+        private List<ModpackVersionManifest.Target> targets = new ArrayList<>();
 
         // @formatter:off
         public long getId() { return id; }
         public String getName() { return requireNonNull(name); }
         public String getType() { return requireNonNull(type); }
         public long getUpdated() { return updated; }
+        public List<ModpackVersionManifest.Target> getTargets() { return targets; }
         // @formatter:on
     }
 

@@ -1,9 +1,11 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
+import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import net.creeperhost.creeperlauncher.util.Result;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class ModrinthProvider implements InstanceProvider {
+public class ModrinthProvider extends InstanceProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModrinthProvider.class);
 
@@ -31,11 +33,11 @@ public class ModrinthProvider implements InstanceProvider {
         var name = GsonUtils.getNestedField("metadata.name", instanceData, JsonElement::getAsString);
         var minecraftVersion = GsonUtils.getNestedField("metadata.game_version", instanceData, JsonElement::getAsString);
 
-        return new InstanceSummary(name, instancePath, minecraftVersion, null);
+        return new InstanceSummary(name, instancePath, minecraftVersion, null, null);
     }
 
     @Override
-    public Result<Boolean, String> importInstance(Path instancePath) {
-        return Result.err("Not implemented");
+    public InstalledInstancesHandler.SugaredInstanceJson importInstance(Path instancePath) {
+        throw new NotImplementedException("TODO");
     }
 }
