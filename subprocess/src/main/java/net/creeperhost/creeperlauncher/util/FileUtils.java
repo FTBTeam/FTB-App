@@ -5,15 +5,14 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -370,6 +369,18 @@ public class FileUtils
         } catch (Throwable ex) {
             LOGGER.error("Failed to check if path is writable by app.", ex);
             return false;
+        }
+    }
+
+    public static @Nullable Properties parsePropertiesSafe(Path file) {
+        if (Files.notExists(file)) return null;
+
+        Properties props = new Properties();
+        try (InputStream is = Files.newInputStream(file)) {
+            props.load(is);
+            return props;
+        } catch (IOException ex) {
+            return null;
         }
     }
 }
