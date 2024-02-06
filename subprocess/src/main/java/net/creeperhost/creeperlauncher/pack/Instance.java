@@ -273,12 +273,14 @@ public class Instance {
         pollVersionManifest();
 
         LOGGER.info("Scanning instance.");
-        InstanceScanner scanner = new InstanceScanner(path, versionManifest);
-        scanner.scan();
-        if (scanner.isPotentiallyInvalid()) {
-            boolean abort = DialogUtil.confirmDialog("Potentially invalid instance", "Abort", "Launch", "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?");
-            if (abort) {
-                throw new InstanceLaunchException.Abort("Aborted.");
+        InstanceScanner scanner = new InstanceScanner(path, versionManifest, this);
+        if (scanner.shouldScan()) {
+            scanner.scan();
+            if (scanner.isPotentiallyInvalid()) {
+                boolean abort = DialogUtil.confirmDialog("Potentially invalid instance", "Abort", "Launch", "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?");
+                if (abort) {
+                    throw new InstanceLaunchException.Abort("Aborted.");
+                }
             }
         }
 

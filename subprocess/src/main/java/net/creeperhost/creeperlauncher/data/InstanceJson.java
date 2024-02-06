@@ -72,6 +72,8 @@ public class InstanceJson {
     @Nullable
     @Deprecated // TODO Replace with Artv2 system.
     public String art;
+    
+    public boolean potentiallyBrokenDismissed = false;
 
     // Gson
     InstanceJson() {
