@@ -541,11 +541,13 @@ const Electron: ElectronOverwolfInterface = {
         throw throwCustomError("Failed to find java executable", "We've not been able to find the java executable. We can't recover from this.")
       }
       
-      const result = execSync(`"${jreExecPath}" -version`);
-      const resultString = result.toString();
-      
-      if (!resultString.includes("openjdk")) {
-        throw throwCustomError("Failed to run java executable", "We've not been able to run the java executable. We can't recover from this.")
+      // Run the java --version command and ensure we get the correct exit code
+      try {
+        execSync(`${jreExecPath} --version`, {
+          stdio: 'ignore'
+        });
+      } catch (e) {
+        throw throwCustomError("Failed to run java --version", "We've not been able to run the java --version command. We can't recover from this.")
       }
 
       onStageChange("Starting subprocess")
