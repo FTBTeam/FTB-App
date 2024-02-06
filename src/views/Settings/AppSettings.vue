@@ -185,7 +185,7 @@ export default class AppSettings extends Vue {
   }
 
   public static getAppHome() {
-    if (platform.isOverwolf()) {
+    if (platform.isOverwolf() || os.platform() === "win32") {
       return path.join(platform.get.io.getLocalAppData(), '.ftba');
     } else if (os.platform() === "darwin") {
       return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
