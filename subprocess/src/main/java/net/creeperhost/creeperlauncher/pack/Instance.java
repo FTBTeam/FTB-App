@@ -480,12 +480,14 @@ public class Instance {
     }
 
     @Nullable
-    public Instance duplicate(String instanceName) throws IOException {
+    public Instance duplicate(String instanceName, @Nullable String category) throws IOException {
         if (pendingCloudInstance) throw new UnsupportedOperationException("Can't duplicate un synced cloud instances.");
 
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
+        json.potentiallyBrokenDismissed = false;
+        json.category = category != null ? category : props.category;
 
         Path newDir = Settings.getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");

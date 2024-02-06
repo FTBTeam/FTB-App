@@ -427,6 +427,7 @@ export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerR
 export interface DuplicateInstanceHandlerRequest extends BaseData {
     uuid: string;
     newName: string;
+    category: string;
 }
 
 export interface GetInstanceFoldersHandlerReply extends GetInstanceFoldersHandlerRequest {
@@ -643,6 +644,7 @@ export interface InstanceJson {
      * @deprecated
      */
     art: string;
+    potentiallyBrokenDismissed: boolean;
 }
 
 export interface ModInfo {

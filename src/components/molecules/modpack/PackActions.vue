@@ -58,6 +58,7 @@
         @finished="duplicateConfirm = false"
         :uuid="instance.uuid"
         :instanceName="instance.name"
+        :category="instance.category"
       />
     </modal>
   </div>

@@ -208,6 +208,7 @@
         @finished="showDuplicate = false"
         :uuid="instance.uuid"
         :instanceName="instance.name"
+        :category="instance.category"
       />
     </modal>
     

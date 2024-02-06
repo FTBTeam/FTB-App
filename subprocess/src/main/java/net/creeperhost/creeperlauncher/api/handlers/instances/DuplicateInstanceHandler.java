@@ -25,7 +25,7 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
         }
 
         try {
-            Instance newInstance = instance.duplicate(data.newName);
+            Instance newInstance = instance.duplicate(data.newName, data.category);
             if (newInstance == null) {
                 WebSocketHandler.sendMessage(new Reply(data, false, "Failed to duplicate instance...", null));
                 return;
@@ -42,6 +42,9 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
     public static class Request extends BaseData {
         public String uuid;
         public String newName;
+        @Nullable
+        public String category;
+        
     }
     
     private static class Reply extends Request {
