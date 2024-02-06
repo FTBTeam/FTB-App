@@ -621,9 +621,9 @@ const Electron: ElectronOverwolfInterface = {
           }
 
           throw new CustomError("Failed to start subprocess", "We've not been able to start the subprocess. We can't recover from this.")
-        });
+        }, 20);
       } catch (e) {
-        throw new CustomError("Failed to start subprocess after 3 attempts", "We've not been able to start the subprocess. We can't recover from this.")
+        throw new CustomError("Failed to start subprocess after 20 attempts", "We've not been able to start the subprocess. We can't recover from this.")
       }
     },
     getLicenses() {
@@ -705,6 +705,7 @@ async function retryAttempt<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
     try {
       return await fn();
     } catch (e) {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for a second
       attempt++;
     }
   }

@@ -19,6 +19,7 @@
     "build:electron": "vue-cli-service ow:electron:build -w --x64",
     "build:electron:rush": "vue-cli-service ow:electron:build -m --arm64",
     "build:electron:l": "vue-cli-service ow:electron:build -l --x64",
+    "build:electron:standard": "vue-cli-service ow:electron:build",
     "gen:license": "license-checker --excludePrivatePackages --json --production > licenses.json",
     "postinstall": "ow-electron-builder install-app-deps",
     "postuninstall": "ow-electron-builder install-app-deps"
@@ -86,6 +87,7 @@
     "electron-devtools-installer": "^3.2.0",
     "electron-dl": "^3.0.0",
     "electron-log": "^4.1.2",
+    "glob": "^10.3.10",
     "jest": "^29.4.3",
     "license-checker": "25.0.1",
     "sass": "^1.35.1",

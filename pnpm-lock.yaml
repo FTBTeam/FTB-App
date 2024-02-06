@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 overrides:
   '@achrinza/node-ipc': ^10.1.7
 
@@ -170,6 +174,9 @@ devDependencies:
   electron-log:
     specifier: ^4.1.2
     version: 4.4.8
+  glob:
+    specifier: ^10.3.10
+    version: 10.3.10
   jest:
     specifier: ^29.4.3
     version: 29.5.0(@types/node@18.14.1)
@@ -15493,7 +15500,3 @@ packages:
       - webpack-cli
       - webpack-command
     dev: true
-
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false

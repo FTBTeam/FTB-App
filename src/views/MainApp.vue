@@ -49,7 +49,7 @@
             appStartupFailed = false
           }">Let me in anyway...</ui-button>
           <ui-button type="info" :icon="['fab', 'discord']" @click="platform.get.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</ui-button>
-          <ui-button type="success" icon="power-off">Restart</ui-button>
+          <ui-button type="success" icon="power-off" @click="restartApp">Restart</ui-button>
         </div>
       </template>
     </modal>
@@ -172,7 +172,7 @@ export default class MainApp extends Vue {
     
     // Check if the app is installed
     let installed = true;
-    if (!this.platform.isOverwolf()) {
+    if (!this.platform.isOverwolf() && constants.isProduction) {
       installed = await platform.get.app.runtimeAvailable();
       
       this.logger.info("App installed", installed);
@@ -281,6 +281,7 @@ export default class MainApp extends Vue {
 
       // Finally we need to get the app to connect to the subprocess
       await this.connectToWebsockets(appData.port, appData.secret);
+      this.checkForUpdates().catch(e => this.logger.error("Failed to check for updates", e));
     } catch (e: any) {
       // Same as the install, grab the custom error if possible
       this.appStartupFailed = true;
@@ -360,6 +361,14 @@ export default class MainApp extends Vue {
     if (await this.platform.get.app.cpm.isFirstLaunch()) {
      this.showOnboarding = true;
     }
+  }
+  
+  async checkForUpdates() {
+
+  }
+
+  async restartApp() {
+    this.platform.get.actions.restartApp();
   }
   
   get appConnecting() {

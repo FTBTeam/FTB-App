@@ -42,6 +42,13 @@ function getAppSettings(appSettingsPath: string) {
 const appHome = getAppHome();
 logger.debug('App home is', appHome)
 
+let cachedProcessData = null as {
+  pid: number;
+  port: number;
+  secret: string;
+} | null;
+
+let preserveSubprocess = false;
 let usingLegacySettings = false;
 const appSettingsPathLegacy = path.join(appHome, 'bin', 'settings.json');
 const appSettingsPath = path.join(appHome, "storage", 'settings.json');
@@ -156,7 +163,8 @@ const reloadMainWindow = async () => {
   if (!win) {
     return;
   }
-  
+
+  preserveSubprocess = true;
   logger.info("Reloading main window")
   
   // Create a tmp window to keep the app alive
@@ -169,7 +177,7 @@ const reloadMainWindow = async () => {
   
   // Enable the windows frame
   win.destroy()
-  await createWindow()
+  await createWindow(true)
 
   // Close the tmp window
   tmpWindow.close();
@@ -388,21 +396,37 @@ ipcMain.handle("startSubprocess", async (event, args) => {
     logger.debug("Not starting subprocess in dev mode")
     return;
   }
-  
+
   const javaPath = args.javaPath;
   const argsList = args.args as string[]
   const env = args.env as string[]
-  
-  if (subprocess !== null) {
+
+  if (subprocess !== null && cachedProcessData === null) {
+    // Check if the process is still running
+    let pid = subprocess.pid;
+    subprocess.unref();
+
+    // Kill the subprocess
+    if (pid) {
+      process.kill(pid, 'SIGINT');
+    }
+    
     logger.debug("Subprocess is already running, killing it")
-    subprocess.kill();
   }
   
-  logger.debug("Starting subprocess", javaPath, argsList)
-  
+  if (subprocess && cachedProcessData !== null) {
+    return {
+      port: cachedProcessData.port,
+      secret: cachedProcessData.secret
+    }
+  }
+
+  const correctedPath = javaPath.replace(/\\/g, "/");
+  logger.debug("Starting subprocess", correctedPath, argsList)
+
   const electronPid = process.pid;
   argsList.push(...["--pid", "" + electronPid])
-  
+
   // Spawn the process so it can run in the background and capture the output
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -414,18 +438,19 @@ ipcMain.handle("startSubprocess", async (event, args) => {
       curr[key] = value;
       return curr;
     }, {} as Record<string, string>)
-    
+
     logger.debug("Mapped env", mappedEnv)
     logger.debug("Args list", argsList)
 
     appCommunicationSetup = false;
-    subprocess = spawn(javaPath, argsList, {
+    subprocess = spawn(correctedPath, argsList, {
       detached: true,
-      stdio: 'pipe',
+      stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin, pipe stdout and stderr
       env: {
         ...process.env,
         ...mappedEnv,
-      }
+      },
+      cwd: appHome
     });
 
     subprocess.stderr?.on('data', (data) => {
@@ -441,22 +466,33 @@ ipcMain.handle("startSubprocess", async (event, args) => {
       if (outputData.endsWith("\n")) {
         outputData = outputData.slice(0, -1);
       }
-      
+
       logger.debug("Subprocess stdout", outputData)
       if (!appCommunicationSetup) {
         if (data.includes("{T:CI")) {
           const regex = /{p:([0-9]+);s:([^}]+)}/gi;
           const matches = regex.exec(data.toString());
-          
+
           if (matches !== null) {
             const [, port, secret] = matches;
             logger.debug("Found port and secret", port, secret)
             appCommunicationSetup = true;
             clearTimeout(timeout);
+            
+            if (subprocess?.pid) {
+              cachedProcessData = {
+                pid: subprocess.pid,
+                port: parseInt(port),
+                secret: secret
+              };
+              
+              logger.debug("Cached process data", cachedProcessData)
+            }
+            
             resolve({
               port,
               secret
-            }) 
+            })
           }
         }
       }
@@ -464,6 +500,10 @@ ipcMain.handle("startSubprocess", async (event, args) => {
 
     subprocess?.on('error', (err) => {
       logger.error("Subprocess error", err)
+    });
+
+    subprocess.on('exit', (code, signal) => {
+      logger.debug("Subprocess exited", code, signal)
     });
 
     subprocess?.on('close', (code) => {
@@ -526,7 +566,7 @@ ipcMain.handle("startSubprocess", async (event, args) => {
 //   });
 // }
 
-async function createWindow() {
+async function createWindow(reset = false) {
   logger.debug("Creating main window")
   let useSystemFrame = false;
   if (usingLegacySettings) {
@@ -583,20 +623,22 @@ async function createWindow() {
         mode: 'detach',
       });
     }
-
-    win.blur();
-    setTimeout(() => {
-      win?.focus();
-    }, 100)
   } else {
     logger.debug("Loading app from built files")
     createProtocol(protocolSpace)
     await win.loadURL(`${protocolSpace}://./index.html`);
+    
+    // Try and force focus on the window
+    win.focus();
+  }
+
+  if (reset) {
+    preserveSubprocess = false;
   }
 
   win.on('closed', () => {
     // Kill the subprocess if it's running
-    if (subprocess !== null) {
+    if (subprocess !== null && !preserveSubprocess) {
       subprocess.kill();
     }
     win = null;

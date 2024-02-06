@@ -1,5 +1,8 @@
 const path = require('path');
 const SentryWebpackPlugin = require('@sentry/webpack-plugin');
+const glob = require('glob');
+const {globSync} = require("glob");
+const fs = require('fs');
 
 const webpackPlugins = [];
 
@@ -17,6 +20,46 @@ if (process.env.CI_COMMIT_TAG) {
         : ""
     }),
   );
+}
+
+// This is required, the amount of times the IDE will import this just for using the variable is insane
+if (process.env.NODE_ENV === 'production') {
+  console.log("Checking for bad imports")
+  const start = Date.now();
+  const badStrings = [
+    "import * as process from 'process'",
+    "import * as process from \"process\"",
+    "import process from 'process'",
+    "import process from \"process\"",
+  ]
+  
+  // Don't allow a build if "import * as process from 'process'" exists in any file
+  const sourceFiles = globSync('src/**/*.{ts,js,vue}', {ignore: ['node_modules/**']});
+  for (const file of sourceFiles) {
+    // Stream the file for performance
+    const stream = fs.createReadStream(file);
+    let found = false;
+    let buffer = Buffer.alloc(0);
+    stream.on('data', (chunk) => {
+      buffer = Buffer.concat([buffer, chunk]);
+      for (const badString of badStrings) {
+        if (buffer.includes(badString)) {
+          found = true;
+          stream.close();
+          break;
+        }
+      }
+    });
+    
+    stream.on('close', () => {
+      if (found) {
+        console.error(`Found "import * as process from 'process'" in ${file}`);
+        process.exit(1);
+      }
+    });
+  }
+  
+  console.log(`Checked for bad imports in ${Date.now() - start}ms`);
 }
 
 module.exports = {

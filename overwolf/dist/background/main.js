@@ -80,24 +80,28 @@ const setup = async () => {
           if (matches !== null) {
             const [, port, secret] = matches;
             console.log("Found port and secret", output)
+            
             wsData = {
               port: parseInt(port),
               secret
             }
             finishedSetup = true;
-            
-            console.log(wsData)
           }
         }
       }
     }
   });
   
-  const match = /launcher-([0-9a-z-.]+)-all.jar/gi.exec(versionData.runtime.jar);
-  const backendVersion = match[1];
-  
   // Launch the backend
-  const startupResponse = await p(plugin.get().LaunchJava, backendVersion, false);
+  const javaPath = plugin.get().GetOverwolfDir() + "/jdk-17.0.1+12-minimal/bin/java.exe";
+  const pid = plugin.get().GetOverwolfPID();
+  const args = [
+    "--pid",
+    pid,
+    "--overwolf"
+  ]
+  
+  const startupResponse = await p(plugin.get().LaunchJava, plugin.get().GetDotFTBADir(), javaPath, [], versionData.runtime.jar, args);
   console.debug(JSON.stringify(startupResponse));
   
   await checkIfAdmin(plugin);
