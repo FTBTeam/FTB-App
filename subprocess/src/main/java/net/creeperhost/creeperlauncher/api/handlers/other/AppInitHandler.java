@@ -41,6 +41,7 @@ public class AppInitHandler implements IMessageHandler<AppInitHandler.Data> {
         
         UserApiCredentials userApiCredentials = this.loadUserApiCredentials();
         if (userApiCredentials != null) {
+            Constants.KEY = userApiCredentials.apiSecret;
             reply.setUserApiCredentials(userApiCredentials);
         }
         

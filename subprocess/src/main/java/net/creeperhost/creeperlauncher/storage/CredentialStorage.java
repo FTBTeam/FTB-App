@@ -10,18 +10,16 @@ import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.Enumeration;
 import java.util.HashMap;
 
 /**
@@ -32,17 +30,12 @@ public class CredentialStorage {
     private static CredentialStorage INSTANCE;
     
     private HashMap<String, String> credentials = new HashMap<>();
-    private @Nullable String macAddress;
+    private final byte[] macAddress;
     
     private CredentialStorage() {
-        try {
-            macAddress = getMacAddress();
-            LOGGER.info("Loading credentials for user");
-            load();
-        } catch (SocketException | UnknownHostException e) {
-            LOGGER.error("Failed to get mac address", e);
-            macAddress = null;
-        }
+        macAddress = getMacAddress();
+        LOGGER.info("Loading credentials for user");
+        load();
     }
     
     public static CredentialStorage getInstance() {
@@ -145,13 +138,30 @@ public class CredentialStorage {
     
     private SecretKeySpec generateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(macAddress.toCharArray(), "FTBAPP".getBytes(), 65536, 256);
+        KeySpec spec = new PBEKeySpec(new String(macAddress).toCharArray(), "FTBAPP".getBytes(), 65536, 256);
         return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
-    
-    private static String getMacAddress() throws SocketException, UnknownHostException {
-        NetworkInterface networkInterface = NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
-        byte[] macAddressBytes = networkInterface.getHardwareAddress();
-        return Arrays.toString(macAddressBytes);
+
+    public static byte[] getMacAddress () {
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface network = networkInterfaces.nextElement();
+                byte[] mac = network.getHardwareAddress();
+                if (mac != null && mac.length > 0 && !network.isLoopback() && !network.isVirtual() && !network.isPointToPoint() && !network.getName().substring(0,3).equals("ham") && !network.getName().substring(0, 3).equals("vir") && !network.getName().startsWith("docker") && !network.getName().startsWith("br-")) {
+                    LOGGER.debug("Interface: " + network.getDisplayName() + " : " + network.getName());
+                    var address = new byte[mac.length * 10];
+                    for (int i = 0; i < address.length; i++) {
+                        address[i] = mac[i - (Math.round(i / mac.length) * mac.length)];
+                    }
+                    return address;
+                }
+            }
+        } catch (SocketException e) {
+            LOGGER.warn("Exception getting MAC address", e);
+        }
+
+        LOGGER.warn("Failed to get MAC address, using default logindata key");
+        return new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     }
 }

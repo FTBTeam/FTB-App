@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -41,7 +40,8 @@ public final class DNSDebug {
             "api.creeperhost.net",
             "maven.creeperhost.net",
             "maven.fabricmc.net",
-            "maven.minecraftforge.net"
+            "maven.minecraftforge.net",
+            "maven.neoforged.net"
     };
 
     @Nullable
