@@ -1,11 +1,8 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
-import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
-import net.creeperhost.creeperlauncher.util.Result;
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +29,5 @@ public class AtLauncherProvider extends InstanceProvider {
         var mcVersion = GsonUtils.getNestedField("id", instanceData, JsonElement::getAsString); // This might be wrong
 
         return new InstanceSummary(name, instancePath, mcVersion, null, String.valueOf(javaVersion));
-    }
-
-    @Override
-    public InstalledInstancesHandler.SugaredInstanceJson importInstance(Path instanceLocation) {
-        throw new NotImplementedException("TODO");
     }
 }

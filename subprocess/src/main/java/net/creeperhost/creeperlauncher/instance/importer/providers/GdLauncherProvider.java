@@ -1,11 +1,8 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
-import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
-import net.creeperhost.creeperlauncher.util.Result;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +35,5 @@ public class GdLauncherProvider extends InstanceProvider {
 
         // TODO: Where do we get java from
         return new InstanceSummary(name, instancePath, minecraftVersion, null, null);
-    }
-
-    @Override
-    public InstalledInstancesHandler.SugaredInstanceJson importInstance(Path instancePath) {
-        throw new NotImplementedException("TODO");
     }
 }

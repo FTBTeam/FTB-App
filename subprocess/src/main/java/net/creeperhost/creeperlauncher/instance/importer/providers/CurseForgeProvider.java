@@ -1,11 +1,8 @@
 package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
-import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
 import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
-import net.creeperhost.creeperlauncher.util.Result;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,10 +51,5 @@ public class CurseForgeProvider extends InstanceProvider {
         var memory = GsonUtils.getNestedField("allocatedMemory", metaJson, JsonElement::getAsInt);
 
         return new InstanceSummary(name, instancePath, gameVersion, null, installDate);
-    }
-
-    @Override
-    public InstalledInstancesHandler.SugaredInstanceJson importInstance(Path identifier) {
-        throw new NotImplementedException("TODO");
     }
 }
