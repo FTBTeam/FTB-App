@@ -50,6 +50,6 @@ public class CurseForgeProvider extends InstanceProvider {
         // Pull some nice to have info
         var memory = GsonUtils.getNestedField("allocatedMemory", metaJson, JsonElement::getAsInt);
 
-        return new InstanceSummary(name, instancePath, gameVersion, null, installDate);
+        return new InstanceSummary(name, instancePath, instancePath, gameVersion, null, installDate);
     }
 }

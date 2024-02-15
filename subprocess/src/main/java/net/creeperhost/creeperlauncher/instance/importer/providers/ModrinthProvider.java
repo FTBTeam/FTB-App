@@ -30,6 +30,6 @@ public class ModrinthProvider extends InstanceProvider {
         var name = GsonUtils.getNestedField("metadata.name", instanceData, JsonElement::getAsString);
         var minecraftVersion = GsonUtils.getNestedField("metadata.game_version", instanceData, JsonElement::getAsString);
 
-        return new InstanceSummary(name, instancePath, minecraftVersion, null, null);
+        return new InstanceSummary(name, instancePath, instancePath, minecraftVersion, null, null);
     }
 }

@@ -8,7 +8,8 @@ import java.nio.file.Path;
 
 public record InstanceSummary(
         String name,
-        @JsonAdapter (PathTypeAdapter.class) Path dataLocation,
+        @JsonAdapter (PathTypeAdapter.class) Path instancePath,
+        @JsonAdapter (PathTypeAdapter.class) Path instanceDataPath,
         String minecraftVersion,
         @Nullable ModLoader modLoader,
         String javaVersion
