@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.instance.importer.providers;
 
 import com.google.gson.JsonElement;
 import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.instance.importer.meta.InstanceSummary;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Properties;
 
 public abstract class PrismLikeProvider extends InstanceProvider {
@@ -36,6 +38,7 @@ public abstract class PrismLikeProvider extends InstanceProvider {
 
         return new InstanceSummary(
                 props.getProperty("name"),
+                instancePath,
                 instancePath.resolve(".minecraft"),
                 mcVersion,
                 detectModLoader(components),
@@ -64,8 +67,9 @@ public abstract class PrismLikeProvider extends InstanceProvider {
 
         return FastStream.of(components.getAsJsonArray())
                 .map(JsonElement::getAsJsonObject)
-                .filter(e -> e.get("uid").getAsString().equals(uid))
-                .map(e -> e.get("version").getAsString())
+                .filter(e -> uid.equals(JsonUtils.getString(e, "uid", null)))
+                .map(e -> JsonUtils.getString(e, "version", null))
+                .filter(Objects::nonNull)
                 .firstOrDefault();
     }
 }

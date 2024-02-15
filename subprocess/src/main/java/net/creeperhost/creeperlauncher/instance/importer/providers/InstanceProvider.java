@@ -72,7 +72,7 @@ public abstract class InstanceProvider {
         LOGGER.info("Copying files..");
         // Copy the files from the instance.
         try {
-            Files.walkFileTree(summary.dataLocation(), new CopyingFileVisitor(summary.dataLocation(), instance.getDir()));
+            Files.walkFileTree(summary.instancePath(), new CopyingFileVisitor(summary.instanceDataPath(), instance.getDir()));
         } catch (IOException ex) {
             throw new ImportException("Failed to copy instance files.", ex);
         }

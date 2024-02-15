@@ -28,6 +28,6 @@ public class AtLauncherProvider extends InstanceProvider {
         var javaVersion = GsonUtils.getNestedField("javaVersion.majorVersion", instanceData, JsonElement::getAsInt);
         var mcVersion = GsonUtils.getNestedField("id", instanceData, JsonElement::getAsString); // This might be wrong
 
-        return new InstanceSummary(name, instancePath, mcVersion, null, String.valueOf(javaVersion));
+        return new InstanceSummary(name, instancePath, instancePath, mcVersion, null, String.valueOf(javaVersion));
     }
 }

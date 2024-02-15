@@ -34,6 +34,6 @@ public class GdLauncherProvider extends InstanceProvider {
         var minecraftVersion = GsonUtils.getNestedField("loader.mcVersion", instanceData, JsonElement::getAsString);
 
         // TODO: Where do we get java from
-        return new InstanceSummary(name, instancePath, minecraftVersion, null, null);
+        return new InstanceSummary(name, instancePath, instancePath, minecraftVersion, null, null);
     }
 }

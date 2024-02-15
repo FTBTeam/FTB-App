@@ -100,11 +100,11 @@ public enum Providers {
 
     public Path getInstancesDir() {
         OperatingSystem os = OperatingSystem.current();
-        Path path = instancesDirs.get(os).get();
-        if (path == null) {
+        Supplier<Path> supp = instancesDirs.get(os);
+        if (supp == null) {
             throw new NotImplementedException("We don't current know where instances for " + this + " are installed on " + os);
         }
-        return path;
+        return supp.get();
     }
 
     public List<InstanceSummary> findInstances(@Nullable Path overridePath) throws IOException {
