@@ -2,7 +2,7 @@
   <div class="ad-aside" :class="{ 'electron': isElectron }">
     <template v-if="!hideAds">
       <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type">
-        <div class="ad-holder small" v-if="!isSmallDisplay">
+        <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd">
           <div
             v-if="!isElectron"
             v-show="advertsEnabled ?? true"
@@ -31,7 +31,7 @@
       </div>
   
       <div class="ad-container ads" v-else key="adside-ad-type">
-        <div class="ad-holder small">
+        <div class="ad-holder small" v-if="!disableSmallerAd">
           <div style="width: 300px; height: 250px; background: transparent;">
             <owadview />
           </div>
@@ -82,6 +82,8 @@ export default class AdAside extends Vue {
   platform = platform;
   showAdOnePlaceholder = true;
   showAdTwoPlaceholder = true;
+  
+  disableSmallerAd = false;
 
   get isElectron() {
     return platform.isElectron();
@@ -94,6 +96,11 @@ export default class AdAside extends Vue {
   async mounted() {
     this.logger.info('Loaded ad sidebar widget');
     
+    // On windows reload
+    window.addEventListener("resize", this.onResize);
+    
+    // Trigger initial mount
+    this.onResize();
     
     // Kinda dirty hack for this file
     if (this.isElectron) {
@@ -111,6 +118,20 @@ export default class AdAside extends Vue {
         });
       }
     }, 1500);
+  }
+  
+  destroyed() {
+    window.removeEventListener("resize", this.onResize);
+  }
+  
+  onResize() {
+    if (window.outerHeight < 890 && !this.disableSmallerAd) {
+      this.disableSmallerAd = true;
+    }
+
+    if (window.outerHeight > 890 && this.disableSmallerAd) {
+      this.disableSmallerAd = false;
+    }
   }
 
   async loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => void, elm: any, options?: any) {

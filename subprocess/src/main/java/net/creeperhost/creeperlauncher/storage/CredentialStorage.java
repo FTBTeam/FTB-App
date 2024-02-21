@@ -35,7 +35,13 @@ public class CredentialStorage {
     private CredentialStorage() {
         macAddress = getMacAddress();
         LOGGER.info("Loading credentials for user");
-        load();
+        try {
+            // If it fails, it shouldn't be fatal. It will be a bit annoying for the user
+            // but it's not the end of the world. 
+            load();
+        } catch (Exception e) {
+            LOGGER.error("Failed to load credentials", e);
+        }
     }
     
     public static CredentialStorage getInstance() {
@@ -142,7 +148,7 @@ public class CredentialStorage {
         return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
 
-    public static byte[] getMacAddress () {
+    public static byte[] getMacAddress() {
         try {
             Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
             while (networkInterfaces.hasMoreElements()) {

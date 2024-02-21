@@ -81,6 +81,7 @@ import {MineTogetherAccount} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import Onboarding from '@/components/core/dialogs/Onboarding.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
+import {alertController} from '@/core/controllers/alertController';
 
 @Component({
   components: {
@@ -162,6 +163,7 @@ export default class MainApp extends Vue {
   }
   
   async mounted() {
+    this.startNetworkMonitor();
     this.logger.info("App started on ", constants.platform)
     this.isMac = os.type() === 'Darwin';
 
@@ -365,6 +367,20 @@ export default class MainApp extends Vue {
   
   async checkForUpdates() {
 
+  }
+  
+  startNetworkMonitor() {
+    if (!navigator.onLine) {
+      alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
+    }
+    
+    window.addEventListener("offline", (e) => {
+      alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
+    });
+
+    window.addEventListener("online", (e) => {
+      alertController.success("You're back online, the app should be working as expected");
+    });
   }
 
   async restartApp() {
