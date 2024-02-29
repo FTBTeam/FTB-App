@@ -28,6 +28,6 @@ public class ConstantsTests {
         assertEquals("https://api.modpacks.ch/public/curseforge/", ModpacksChUtils.getModpacksEndpoint(true, (byte) 1));
 
         // Unknown ID's should default to type 0
-        assertEquals("https://api.modpacks.ch/potatoes/modpack/", ModpacksChUtils.getModpacksEndpoint(true, (byte) 69));
+        assertEquals("https://api.modpacks.ch/potatoes/unknown/", ModpacksChUtils.getModpacksEndpoint(true, (byte) 69));
     }
 }
