@@ -28,8 +28,11 @@ public class Constants {
     public static boolean IS_DEV_MODE = false;
 
     //CWD
+    // TODO: On linux, move to XDG_DATA_HOME 
+    // TODO: On macos, don't use a hidden folder
+    // TODO: On windows don't use a hidden folder
     public static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
-    private static final String INNER_DATA_DIR = "FTB App";
+    private static final String INNER_DATA_DIR = ".ftba";
     private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), INNER_DATA_DIR);
 
     //Mojang
