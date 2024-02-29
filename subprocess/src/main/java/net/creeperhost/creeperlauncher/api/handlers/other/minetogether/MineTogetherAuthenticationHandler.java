@@ -1,11 +1,11 @@
 package net.creeperhost.creeperlauncher.api.handlers.other.minetogether;
 
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.storage.CredentialStorage;
+import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public class MineTogetherAuthenticationHandler implements IMessageHandler<MineTo
             LOGGER.error("Failed to get profile: {}", profile.unwrapErr());
         }
 
-        Constants.KEY = user.data().modpacksToken();
+        ModpacksChUtils.API_TOKEN = user.data().modpacksToken();
         
         if (user.data().s3Credentials() != null) {
             CreeperLauncher.CLOUD_SAVE_MANAGER.configure(user.data().s3Credentials());

@@ -801,12 +801,6 @@ export interface Chat {
     online: boolean;
 }
 
-export interface ApiSettings {
-    useAuthorizationHeader: boolean;
-    useAuthorizationAsBearer: boolean;
-    usePublicUrl: boolean;
-}
-
 export interface MSAuthStore {
     minecraftUuid: string;
     minecraftToken: string;

@@ -8,11 +8,8 @@ export type ApiCredentialsState = typeof state;
 const defaultCredentials = {
   apiUrl: constants.modpacksApi,
   apiSecret: null as string | null,
-  settings: {
-    useAuthorizationHeader: false,
-    useAuthorizationAsBearer: false,
-    usePublicUrl: true
-  },
+  supportsPublicPrefix: true,
+  usesBearerAuth: false,
   wasUserSet: false
 }
 
@@ -20,7 +17,7 @@ const state = {
   ...defaultCredentials
 }
 
-export type ApiCredentialsPayload = Pick<ApiCredentialsState, "apiUrl" | "apiSecret" | "settings">
+export type ApiCredentialsPayload = Pick<ApiCredentialsState, "apiUrl" | "apiSecret" | "usesBearerAuth" | "supportsPublicPrefix">
 
 const logger = createLogger("apiCredentialsState.ts");
 
@@ -42,15 +39,17 @@ const actions: ActionTree<ApiCredentialsState, RootState> = {
 export type StoreCredentialsAction = (payload: Partial<ApiCredentialsPayload>) => Promise<void>;
 
 const mutations: MutationTree<ApiCredentialsState> = {
-  STORE_CREDENTIALS(state, payload: ApiCredentialsState) {
-    state.apiUrl = payload.apiUrl;
-    state.apiSecret = payload.apiSecret;
-    state.settings = payload.settings;
+  STORE_CREDENTIALS(state, payload: Partial<ApiCredentialsState>) {
+    state.apiUrl = payload.apiUrl ?? state.apiUrl;
+    state.apiSecret = payload.apiSecret ?? state.apiSecret;
+    state.usesBearerAuth = payload.usesBearerAuth ?? state.usesBearerAuth;
+    state.supportsPublicPrefix = payload.supportsPublicPrefix ?? state.supportsPublicPrefix;
   },
   RESET_CREDENTIALS(state) {
     state.apiUrl = defaultCredentials.apiUrl;
     state.apiSecret = defaultCredentials.apiSecret;
-    state.settings = defaultCredentials.settings;
+    state.usesBearerAuth = defaultCredentials.usesBearerAuth;
+    state.supportsPublicPrefix = defaultCredentials.supportsPublicPrefix;
     state.wasUserSet = false;
   },
   SET_WAS_USER_SET(state, payload: boolean) {
@@ -58,20 +57,7 @@ const mutations: MutationTree<ApiCredentialsState> = {
   }
 }
 
-const getters: GetterTree<ApiCredentialsState, RootState> = {
-  apiUrl(state) {
-    return state.apiUrl;
-  },
-  apiSecret(state) {
-    return state.apiSecret;
-  },
-  settings(state) {
-    return state.settings;
-  },
-  wasUserSet(state) {
-    return state.wasUserSet;
-  }
-}
+const getters: GetterTree<ApiCredentialsState, RootState> = {}
 
 export const apiCredentialsStateModule: Module<ApiCredentialsState, RootState> = {
   namespaced: true,

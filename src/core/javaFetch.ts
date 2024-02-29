@@ -85,23 +85,32 @@ export class JavaFetch {
   //#region helper methods
   public static modpacksCh(endpoint: string) {
     const credentials = store.state["v2/apiCredentials"];
-    const {apiUrl, settings} = credentials;
+    const {apiUrl, usesBearerAuth} = credentials;
     
-    const useAuthorizationHeader = settings.useAuthorizationHeader;
-    const url = `${apiUrl}${useAuthorizationHeader ? "" : "/public"}/${endpoint}`;
+    const url = `${apiUrl}${usesBearerAuth ? "" : "/public"}/${endpoint}`;
     return JavaFetch.create(url)
   }
   
   public static modpacksChPrivate(endpoint: string) {
     const credentials = store.state["v2/apiCredentials"];
-    const {apiUrl, apiSecret, settings} = credentials;
-    const {useAuthorizationHeader, useAuthorizationAsBearer, usePublicUrl} = settings;
-
-    const url = `${apiUrl}${!useAuthorizationHeader ? `/${apiSecret ?? "public"}` : (usePublicUrl ? "/public" : "")}/${endpoint}`;
+    const {apiUrl, apiSecret, supportsPublicPrefix, usesBearerAuth, wasUserSet} = credentials;
+    
+    // Compute the correct url
+    let url;
+    if (!wasUserSet) {
+      url = `${apiUrl}/${apiSecret ?? 'public'}/${endpoint}`; 
+    } else {
+      if (supportsPublicPrefix && !usesBearerAuth) {
+        url = `${apiUrl}/${apiSecret ?? "public"}/${endpoint}`;
+      } else {
+        url = `${apiUrl}/${endpoint}`;
+      }
+    }
+    
     const fetcher = JavaFetch.create(url);
     
-    if (useAuthorizationHeader && apiSecret) {
-      fetcher.header("Authorization", useAuthorizationAsBearer ? `Bearer ${apiSecret}` : apiSecret)
+    if (wasUserSet && usesBearerAuth && apiSecret) {
+      fetcher.header("Authorization", `Bearer ${apiSecret}`)
     }
     
     return fetcher

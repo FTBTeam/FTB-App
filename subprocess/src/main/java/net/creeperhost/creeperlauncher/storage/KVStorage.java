@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,12 +23,10 @@ import java.util.Map;
  * This is very similar to how localStorage works in electron, but I want it to save to file instead of the app.
  */
 public class KVStorage {
-
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-
-    private static final Path STORAGE_FILE = Constants.getDataDir().resolve("storage/storage.json");
+    
     private final Map<String, String> data;
 
     private static KVStorage INSTANCE;
@@ -47,9 +44,9 @@ public class KVStorage {
     }
 
     private static Map<String, String> load() {
-        if (Files.exists(STORAGE_FILE)) {
+        if (Files.exists(Constants.KV_STORE_FILE)) {
             try {
-                return JsonUtils.parse(GSON, STORAGE_FILE, MAP_TYPE);
+                return JsonUtils.parse(GSON, Constants.KV_STORE_FILE, MAP_TYPE);
             } catch (IOException | JsonSyntaxException e) {
                 LOGGER.error("Failed to read generic storage", e);
             }
@@ -72,7 +69,7 @@ public class KVStorage {
 
     private boolean save() {
         try {
-            JsonUtils.write(GSON, IOUtils.makeParents(STORAGE_FILE), data, MAP_TYPE);
+            JsonUtils.write(GSON, IOUtils.makeParents(Constants.KV_STORE_FILE), data, MAP_TYPE);
         } catch (IOException e) {
             LOGGER.fatal("Failed to write data to the storage file", e);
             return false;

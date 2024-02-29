@@ -25,11 +25,11 @@ public class Constants {
     // Don't put a Logger in this class, it is called before log4j can be initialized.
     // Adding a logger will break sentry!
 
-    static boolean IS_DEV_MODE = false;
+    public static boolean IS_DEV_MODE = false;
 
     //CWD
     public static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
-    private static final String INNER_DATA_DIR = ".ftba";
+    private static final String INNER_DATA_DIR = "FTB App";
     private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), INNER_DATA_DIR);
 
     //Mojang
@@ -38,8 +38,8 @@ public class Constants {
     public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
     //API
-    private static final String CREEPERHOST_MODPACK = "https://api.modpacks.ch";
-    private static final String CREEPERHOST_MODPACK_STAGING = "https://staging.api.modpacks.ch";
+    public static final String CREEPERHOST_MODPACK = "https://api.modpacks.ch";
+    public static final String CREEPERHOST_MODPACK_STAGING = "https://staging.api.modpacks.ch";
     public static final String JSON_PROXY = "https://api.modpacks.ch/public/meta/proxy/";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
@@ -119,9 +119,6 @@ public class Constants {
             "-XX:G1HeapRegionSize=32M"
     };
 
-    //Auth
-    public static String KEY = "";
-
     public static void refreshHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .dns(new DNSChain.OkHTTPAdapter(DNS_CHAIN))
@@ -166,32 +163,6 @@ public class Constants {
             );
         }
         return JDK_INSTALL_MANAGER;
-    }
-
-    public static String getModpacksApi() {
-        return IS_DEV_MODE ? CREEPERHOST_MODPACK_STAGING : CREEPERHOST_MODPACK;
-    }
-
-    public static String getModEndpoint() {
-        return getModpacksApi() + "/public/mod/";
-    }
-
-    public static String getModpacksEndpoint(boolean isPrivate, byte packType) {
-        String key = "public";
-        String typeSlug = switch (packType) {
-            case 1 -> "curseforge";
-            default -> "modpack";
-        };
-
-        if (packType == 1) {
-            // CurseForge has no private packs.
-            isPrivate = false;
-        }
-
-        if (!Constants.KEY.isEmpty() && isPrivate) {
-            key = Constants.KEY;
-        }
-        return getModpacksApi() + "/" + key + "/" + typeSlug + "/";
     }
 
     public static Path getDataDir() {

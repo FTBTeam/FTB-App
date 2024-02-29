@@ -3,7 +3,7 @@ package net.creeperhost.creeperlauncher.util;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import okhttp3.*;
 import okhttp3.dnsoverhttps.DnsOverHttps;
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +13,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,7 +51,7 @@ public final class DNSChain {
             .build();
 
     public DNSChain(DNSStep... steps) {
-        this.steps = StreamableIterable.of(steps)
+        this.steps = FastStream.of(steps)
                 .map(StepEntry::new)
                 .toImmutableList();
 
@@ -173,7 +176,7 @@ public final class DNSChain {
         private SelfTestReport runDnsTest(String host, String expected) {
             try {
                 InetAddress[] answer = step.resolve(host);
-                boolean pass = StreamableIterable.of(answer)
+                boolean pass = FastStream.of(answer)
                         .anyMatch(e -> e.getHostAddress().equals(expected));
                 return new SelfTestReport(
                         "resolve-test: " + host,

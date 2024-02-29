@@ -647,6 +647,13 @@ const Electron: ElectronOverwolfInterface = {
         return !fs.existsSync(path.join(getAppHome(), "bin", ".first-launch"));
       },
       async setFirstLaunched() {
+        // Create parents
+        if (!fs.existsSync(path.join(getAppHome(), "bin"))) {
+          fs.mkdirSync(path.join(getAppHome(), "bin"), {
+            recursive: true
+          });
+        }
+        
         fs.writeFileSync(path.join(getAppHome(), "bin", ".first-launch"), "");
       }
     }

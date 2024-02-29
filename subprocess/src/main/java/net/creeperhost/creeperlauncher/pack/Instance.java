@@ -333,6 +333,7 @@ public class Instance {
             });
         }
 
+        // TODO: Check if private
         launcher.withStartTask(ctx -> {
             Analytics.sendPlayRequest(getId(), getVersionId(), props.packType);
         });

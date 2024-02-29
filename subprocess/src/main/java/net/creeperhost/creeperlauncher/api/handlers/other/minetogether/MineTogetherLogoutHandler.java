@@ -1,11 +1,11 @@
 package net.creeperhost.creeperlauncher.api.handlers.other.minetogether;
 
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.storage.CredentialStorage;
+import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
 
 public class MineTogetherLogoutHandler implements IMessageHandler<BaseData> {
     @Override
@@ -18,7 +18,7 @@ public class MineTogetherLogoutHandler implements IMessageHandler<BaseData> {
 
         // This will close the save manager
         CreeperLauncher.CLOUD_SAVE_MANAGER.configure(new S3Credentials("", "", "", ""));
-        Constants.KEY = "";
+        ModpacksChUtils.API_TOKEN = "";
         
         WebSocketHandler.sendMessage(new Reply(data, true));
     }

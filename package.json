@@ -1,13 +1,14 @@
 {
-  "productName": "FTB-App",
+  "productName": "FTB Electron App",
   "name": "ftb-app",
-  "version": "1.30.0",
+  "version": "1.30.1",
   "private": true,
   "main": "background.js",
   "author": "Feed The Beast",
   "description": "FTB Desktop App for downloading and managing Modpacks",
   "scripts": {
-    "serve": "cross-env WEBPACK_DEV_SERVER_URL=http://localhost:8080 TARGET_PLATFORM=electron NODE_ENV=development vue-cli-service ow:electron:serve --mode electron --test-ad",
+    "serve": "pnpm run serve:no-ad-test --test-ad",
+    "serve:no-ad-test": "cross-env WEBPACK_DEV_SERVER_URL=http://localhost:8080 TARGET_PLATFORM=electron NODE_ENV=development vue-cli-service ow:electron:serve --mode electron",
     "serve:overwolf": "cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service ow:electron:serve",
     "lint": "vue-cli-service lint",
     "test": "jest",

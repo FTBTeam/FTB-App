@@ -172,7 +172,7 @@ public class CreeperLauncher {
         // Set the API key if we have it
         String apiKey = CredentialStorage.getInstance().get("modpacksChApiKey");
         if (apiKey != null && !apiKey.isEmpty()) {
-            Constants.KEY = apiKey;
+            ModpacksChUtils.API_TOKEN = apiKey;
         }
 
         try {

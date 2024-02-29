@@ -19,7 +19,6 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -153,8 +152,10 @@ public class CurseMetadataCache {
             LOGGER.info("Querying metadata for {}", sha1);
             DownloadAction action = new OkHttpDownloadAction()
                     .setClient(Constants.httpClient())
-                    .setUrl(Constants.getModEndpoint() + "lookup/" + sha1)
+                    .setUrl(ModpacksChUtils.getModEndpoint() + "lookup/" + sha1)
                     .setDest(sw);
+            
+            ModpacksChUtils.injectBearerHeader(action);
             action.execute();
 
             FileLookupResponse resp = JsonUtils.parse(GSON, sw.toString(), FileLookupResponse.class);

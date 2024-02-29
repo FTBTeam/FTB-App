@@ -3,7 +3,7 @@ package net.creeperhost.creeperlauncher.data;
 import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
@@ -87,7 +87,7 @@ public class InstanceSupportMeta {
     }
 
     public List<SupportFile> getSupportMods(String type) {
-        return StreamableIterable.of(supportMods)
+        return FastStream.of(supportMods)
                 .filter(e -> e.getType().equals(type))
                 .flatMap(SupportEntry::getFiles)
                 .toList();

@@ -9,6 +9,8 @@ import net.creeperhost.creeperlauncher.api.handlers.other.minetogether.MineToget
 import net.creeperhost.creeperlauncher.api.handlers.other.minetogether.MineTogetherAuthenticationHandler;
 import net.creeperhost.creeperlauncher.api.handlers.other.minetogether.MineTogetherProfile;
 import net.creeperhost.creeperlauncher.storage.CredentialStorage;
+import net.creeperhost.creeperlauncher.storage.UserApiCredentials;
+import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +43,8 @@ public class AppInitHandler implements IMessageHandler<AppInitHandler.Data> {
         
         UserApiCredentials userApiCredentials = this.loadUserApiCredentials();
         if (userApiCredentials != null) {
-            Constants.KEY = userApiCredentials.apiSecret;
+            ModpacksChUtils.API_TOKEN = userApiCredentials.apiSecret();
+            ModpacksChUtils.USER_PROVIDED_CREDENTIALS = userApiCredentials;
             reply.setUserApiCredentials(userApiCredentials);
         }
         
@@ -117,18 +120,5 @@ public class AppInitHandler implements IMessageHandler<AppInitHandler.Data> {
                 return reply;
             }
         }
-    }
-    
-    record UserApiCredentials(
-        String apiUrl,
-        String apiSecret,
-        ApiSettings settings
-    ) {
-        
-        static class ApiSettings {
-            boolean useAuthorizationHeader = false;
-            boolean useAuthorizationAsBearer = false;
-            boolean usePublicUrl = true;
-        } 
     }
 }

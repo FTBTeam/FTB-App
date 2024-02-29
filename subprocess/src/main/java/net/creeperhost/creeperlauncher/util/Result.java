@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * @param <TResult> the resulting datatype
  * @param <TError> the resulting error
  *                
- * @implNote Specifically not used @Nullable as that's the intention of this class. We avoid having to do null checks 
+ * Specifically not used @Nullable as that's the intention of this class. We avoid having to do null checks 
  */
 public final class Result<TResult, TError> {
     private final TResult value;

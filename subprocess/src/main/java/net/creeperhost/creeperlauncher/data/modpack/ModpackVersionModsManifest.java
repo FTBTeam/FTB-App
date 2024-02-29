@@ -8,6 +8,7 @@ import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -42,13 +43,15 @@ public class ModpackVersionModsManifest {
     }
 
     public static ModpackVersionModsManifest query(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        String url = Constants.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId + "/mods";
+        String url = ModpacksChUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId + "/mods";
         LOGGER.info("Querying Modpack version mods manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
                 .setClient(Constants.httpClient())
                 .setUrl(url)
                 .setDest(sw);
+        
+        ModpacksChUtils.injectBearerHeader(action);
         action.execute();
 
         return JsonUtils.parse(GSON, sw.toString(), ModpackVersionModsManifest.class);
