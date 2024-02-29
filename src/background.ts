@@ -10,6 +10,7 @@ import {createLogger} from '@/core/logger';
 import https from 'https';
 import AdmZip from 'adm-zip';
 import {ChildProcess, execSync, spawn} from 'child_process';
+import { autoUpdater } from 'electron-updater'
 
 const protocolSpace = 'ftb';
 const logger = createLogger('background.ts');
@@ -698,6 +699,7 @@ if (!gotTheLock) {
   app.on('ready', async () => {
     logger.info("App is ready")
     createWindow();
+    autoUpdater.checkForUpdatesAndNotify();
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {
         if (details.responseHeaders) {

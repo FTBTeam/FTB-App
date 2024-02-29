@@ -94,18 +94,29 @@ module.exports = {
         copyright: `Copyright © ${new Date().getFullYear()} - Feed The Beast Ltd`,
         publish: {
           provider: 's3',
-          bucket: 'ftb-app',
-          path: 'ftb-app',
-          endpoint: "s3.us-west-002.backblazeb2.com"
+          bucket: 'ftb-app-updates',
+          endpoint: 's3.eu-central-003.backblazeb2.com',
+          path: 'ftb-app-updates'
         },
         afterPack: (context) => {
-          const appPath = context.appOutDir;
-          const appUpdatePath = path.join(appPath, context.packager.appInfo.productName + ".app", "Contents", "Resources", 'app-update.yml');
-          const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
-          
-          // Replace the backblaze URL with the correct one
-          const newAppUpdate = appUpdate.replace("s3.us-west-002.backblazeb2.com", "s3.us-west-002.notbackblaze.com");
-          fs.writeFileSync(appUpdatePath, newAppUpdate);
+          if(context.electronPlatformName === 'darwin') {
+            const appPath = context.appOutDir;
+            let appUpdatePath = path.join(appPath, context.packager.appInfo.productName + '.app', 'Contents', 'Resources', 'app-update.yml');
+            const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
+            
+            // Replace the backblaze URL with the correct one
+            const newAppUpdate = appUpdate.replace('s3.eu-central-003.backblazeb2.com', 'https://piston.feed-the-beast.com').replace("path: ftb-app-updates", "");
+            fs.writeFileSync(appUpdatePath, newAppUpdate);
+          }
+          if(context.electronPlatformName === 'win32' || context.electronPlatformName === 'linux') {
+            const appPath = context.appOutDir;
+            const appUpdatePath = path.join(appPath, 'resources', 'app-update.yml');
+            const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
+            
+            // Replace the backblaze URL with the correct one
+            const newAppUpdate = appUpdate.replace('s3.eu-central-003.backblazeb2.com', 'https://piston.feed-the-beast.com').replace("path: ftb-app-updates", "");
+            fs.writeFileSync(appUpdatePath, newAppUpdate);
+          }
         },
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
