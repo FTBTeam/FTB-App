@@ -91,6 +91,22 @@ module.exports = {
       builderOptions: {
         productName: 'FTB App',
         appId: 'dev.ftb.app',
+        copyright: `Copyright © ${new Date().getFullYear()} - Feed The Beast Ltd`,
+        publish: {
+          provider: 's3',
+          bucket: 'ftb-app',
+          path: 'ftb-app',
+          endpoint: "s3.us-west-002.backblazeb2.com"
+        },
+        afterPack: (context) => {
+          const appPath = context.appOutDir;
+          const appUpdatePath = path.join(appPath, context.packager.appInfo.productName + ".app", "Contents", "Resources", 'app-update.yml');
+          const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
+          
+          // Replace the backblaze URL with the correct one
+          const newAppUpdate = appUpdate.replace("s3.us-west-002.backblazeb2.com", "s3.us-west-002.notbackblaze.com");
+          fs.writeFileSync(appUpdatePath, newAppUpdate);
+        },
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
           {from: "subprocess/build/libs/java-licenses.json", to: ""},
@@ -99,22 +115,22 @@ module.exports = {
         ],
         win: {
           target: ['nsis'],
+          artifactName: '${productName}-${version}-win.${ext}',
         },
         mac: {
-          // #TODO https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/
-          identity: 'null',
           hardenedRuntime: true,
           gatekeeperAssess: false,
-          entitlements: 'build/entitlements.mac.plist',
-          entitlementsInherit: 'build/entitlements.mac.plist',
-          target: ['dir'],
-          artifactName: '${productName}-mac.${ext}',
+          target: ['dmg'],
+          artifactName: '${productName}-${version}-mac.${ext}',
           category: 'public.app-category.games',
+          binaries: [
+            "subprocess/build/libs/launcher-*.jar"
+          ]
         },
         linux: {
           target: ['dir'],
           category: 'Game',
-          artifactName: '${productName}-linux.${ext}',
+          artifactName: '${productName}-${version}-linux.${ext}',
         },
         directories: {
           output: 'release',
