@@ -543,10 +543,11 @@ const Electron: ElectronOverwolfInterface = {
       
       // Run the java --version command and ensure we get the correct exit code
       try {
-        execSync(`${jreExecPath} --version`, {
+        execSync(`"${jreExecPath}" --version`, {
           stdio: 'ignore'
         });
       } catch (e) {
+        eLogger.error("Failed to run java --version", e)
         throw throwCustomError("Failed to run java --version", "We've not been able to run the java --version command. We can't recover from this.")
       }
 

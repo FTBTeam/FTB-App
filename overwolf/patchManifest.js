@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const packageJson = JSON.parse(fs.readFileSync('../package.json', 'utf-8'));
+const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 let manifestData = JSON.parse(fs.readFileSync('overwolf/manifest.json', 'utf-8'));
 
 manifestData = {

@@ -1,8 +1,9 @@
 const path = require('path');
 const SentryWebpackPlugin = require('@sentry/webpack-plugin');
-const glob = require('glob');
 const {globSync} = require("glob");
 const fs = require('fs');
+const yaml = require('yaml')
+const {execSync} = require('child_process');
 
 const webpackPlugins = [];
 
@@ -62,6 +63,8 @@ if (process.env.NODE_ENV === 'production') {
   console.log(`Checked for bad imports in ${Date.now() - start}ms`);
 }
 
+let hasRepackedJar = false;
+
 module.exports = {
   publicPath: './',
   outputDir:
@@ -98,25 +101,27 @@ module.exports = {
           endpoint: 's3.eu-central-003.backblazeb2.com',
           path: 'ftb-app-updates'
         },
+        beforePack: async (context) => {
+          if (context.electronPlatformName === 'darwin' && !hasRepackedJar) {
+            await signJnilibInJar(context);
+            hasRepackedJar = true; // Don't do this more than once
+          }
+        },
         afterPack: (context) => {
+          const appPath = context.appOutDir;
+          let appUpdatePath = path.join(appPath, 'resources', 'app-update.yml');
           if(context.electronPlatformName === 'darwin') {
-            const appPath = context.appOutDir;
-            let appUpdatePath = path.join(appPath, context.packager.appInfo.productName + '.app', 'Contents', 'Resources', 'app-update.yml');
-            const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
-            
-            // Replace the backblaze URL with the correct one
-            const newAppUpdate = appUpdate.replace('s3.eu-central-003.backblazeb2.com', 'https://piston.feed-the-beast.com').replace("path: ftb-app-updates", "");
-            fs.writeFileSync(appUpdatePath, newAppUpdate);
+            appUpdatePath = path.join(appPath, context.packager.appInfo.productName + '.app', 'Contents', 'Resources', 'app-update.yml');
           }
-          if(context.electronPlatformName === 'win32' || context.electronPlatformName === 'linux') {
-            const appPath = context.appOutDir;
-            const appUpdatePath = path.join(appPath, 'resources', 'app-update.yml');
-            const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
-            
-            // Replace the backblaze URL with the correct one
-            const newAppUpdate = appUpdate.replace('s3.eu-central-003.backblazeb2.com', 'https://piston.feed-the-beast.com').replace("path: ftb-app-updates", "");
-            fs.writeFileSync(appUpdatePath, newAppUpdate);
-          }
+   
+          const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
+          const parsedData = yaml.parse(appUpdate);
+
+          parsedData.endpoint = 'https://piston.feed-the-beast.com';
+          delete parsedData.path;
+          
+          // Replace the backblaze URL with the correct one
+          fs.writeFileSync(appUpdatePath, yaml.stringify(parsedData));
         },
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
@@ -126,22 +131,23 @@ module.exports = {
         ],
         win: {
           target: ['nsis'],
-          artifactName: '${productName}-${version}-win.${ext}',
+          artifactName: '${productName}-${version}-${arch}.${ext}',
         },
         mac: {
           hardenedRuntime: true,
           gatekeeperAssess: false,
           target: ['dmg'],
-          artifactName: '${productName}-${version}-mac.${ext}',
+          artifactName: '${productName}-${version}-${arch}.${ext}',
           category: 'public.app-category.games',
           binaries: [
-            "subprocess/build/libs/launcher-*.jar"
+            getPathToLauncher()
           ]
         },
         linux: {
-          target: ['dir'],
+          target: ['dir', 'AppImage', 'deb', 'rpm'],
           category: 'Game',
-          artifactName: '${productName}-${version}-linux.${ext}',
+          artifactName: '${productName}-${version}-${arch}.${ext}',
+          synopsis: 'FTB Desktop App for downloading and managing Modpacks',
         },
         directories: {
           output: 'release',
@@ -154,3 +160,75 @@ module.exports = {
     plugins: webpackPlugins,
   },
 };
+
+function getPathToLauncher() {
+  try {
+    const subprocessPath = path.resolve(__dirname, 'subprocess');
+    const buildPath = path.resolve(subprocessPath, 'build', "libs");
+
+    const files = fs.readdirSync(buildPath);
+    const jarFiles = files.filter(file => file.startsWith('launcher') && file.endsWith('.jar'));
+
+    if (jarFiles.length === 0) {
+      console.error("No launcher jar found");
+      return "";
+    }
+
+    return path.relative(__dirname, path.join(buildPath, jarFiles[0]));
+  } catch (e) {
+    
+    return "";
+  }
+}
+
+async function signJnilibInJar(context) {
+  const packer = context.packager;
+  const keychainFile = (await packer.codeSigningInfo.value).keychainFile
+  
+  const signingIdentity = '5372643C69B1D499BDF6EA772082E9CE99E85029';
+  const entitlementsPath = './node_modules/.pnpm/@overwolf+ow-app-builder-lib@24.7.0/node_modules/@overwolf/ow-app-builder-lib/templates/entitlements.mac.plist';
+  
+  const jar = getPathToLauncher();
+  const absoluteJar = path.resolve(jar);
+  if (jar === "") {
+    throw new Error("No launcher jar found");
+  }
+  
+  // Make a tmp directory to store the jnilib files
+  if (!fs.existsSync('tmp')) {
+    fs.mkdirSync('tmp');
+  }
+  
+  // Expand the jar 
+  console.log("Expanding jar");
+  execSync(`jar --extract --file=${absoluteJar}`, {cwd: 'tmp'});
+  
+  // Find all the jnilib files
+  const files = execSync(`find tmp -name '*.jnilib'`, {encoding: 'utf-8'})
+    .split('\n')
+    .filter(file => file); // filter out empty strings
+  
+  if (files.length === 0) {
+    // This is almost definitely a mistake
+    throw new Error("No jnilib files found");
+  }
+  
+  console.log("Signing jnilib files in jar");
+  files.forEach(file => {
+    const toSignFile = `${file}-tosign`;
+
+    // Move the file to a new name with -tosign appended
+    fs.renameSync(file, toSignFile);
+
+    // Sign the file
+    console.log(`codesign --sign ${signingIdentity} --force --timestamp --options runtime --entitlements ${entitlementsPath} ${toSignFile} --keychain ${keychainFile}`)
+    execSync(`codesign --sign ${signingIdentity} --force --timestamp --options runtime --entitlements ${entitlementsPath} ${toSignFile} --keychain ${keychainFile}`);
+    
+    // Move the file back to its original name
+    fs.renameSync(toSignFile, file);
+
+    // Update the JAR file with the signed file
+    console.info(`Updating ${file} in ${jar}`);
+    execSync(`jar --update --file=${absoluteJar} ${file}`);
+  });
+}

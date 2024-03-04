@@ -1,10 +1,14 @@
 const fs = require('fs');
 const archiver = require('archiver')
+const path = require('path')
+
+// Relative to the project root
+const projectRoot = __dirname;
 
 // Check if we're given an output path
-let outputPath = "overwolf/"
+let outputPath = projectRoot
 let createZip = false
-console.log(process.argv)
+
 if (process.argv.length > 3) {
   // Try and find it
   let foundPath = undefined;
@@ -30,9 +34,9 @@ if (process.argv.length > 3) {
 console.log("Using output path: " + outputPath)
 
 // Only available at buildtime
-const metaData = JSON.parse(fs.readFileSync('./meta.json', 'utf-8'));
+const metaData = JSON.parse(fs.readFileSync(path.join(projectRoot, 'meta.json'), 'utf-8'));
 
-const manifestData = JSON.parse(fs.readFileSync('overwolf/manifest.json', 'utf-8'));
+const manifestData = JSON.parse(fs.readFileSync(path.join(projectRoot, 'manifest.json'), 'utf-8'));
 const archive = archiver('zip', {zlib: {level: 9}})
 
 const output = fs.createWriteStream(`${outputPath}/${manifestData.meta.name} - ${manifestData.meta.version}.opk`);
