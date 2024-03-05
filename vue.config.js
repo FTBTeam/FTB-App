@@ -136,7 +136,7 @@ module.exports = {
         mac: {
           hardenedRuntime: true,
           gatekeeperAssess: false,
-          target: ['dmg'],
+          target: ['default'], // We use default in order to allow for updates. DMG only allows installation.
           artifactName: '${productName}-${version}-${arch}.${ext}',
           category: 'public.app-category.games',
           binaries: [
