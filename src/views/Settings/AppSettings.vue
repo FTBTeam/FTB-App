@@ -1,32 +1,14 @@
 <template>
-  <div class="app-settings">
+  <div class="app-settings" v-if="localSettings.spec">
     <div class="app-info-section mb-8">
       <div class="items sm:flex">
         <div class="title-value mr-10">
-          <div class="title text-muted mb-1">UI Version</div>
-          <div class="value">
-            <span class="select-text">{{ webVersion }}</span>
-            <div class="copy-me inline-block" aria-label="Click to copy" data-balloon-pos="up">
-              <font-awesome-icon
-                @click="copyToClipboard(webVersion)"
-                class="ml-2 cursor-pointer"
-                icon="copy"
-                size="1x"
-              />
-            </div>
-            <a class="cursor-pointer hover:underline" href="https://go.ftb.team/app-feedback" target="_blank"
-            ><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
-            /></a>
-          </div>
-        </div>
-
-        <div class="title-value mt-4 sm:mt-0">
           <div class="title text-muted mb-1">App Version</div>
           <div class="value">
-            <span class="select-text">{{ appVersion }}</span>
+            <span class="select-text">{{ configData.version }}</span>
             <div class="copy-me inline-block" aria-label="Click to copy" data-balloon-pos="up">
               <font-awesome-icon
-                @click="copyToClipboard(appVersion)"
+                @click="copyToClipboard(configData.version)"
                 class="ml-2 cursor-pointer"
                 icon="copy"
                 size="1x"
@@ -58,7 +40,7 @@
       v-if="!platform.isElectron()"
       label="Close Overwolf on Exit"
       desc="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
-      :value="localSettings.exitOverwolf"
+      :value="localSettings.general.exitOverwolf"
       @input="exitOverwolf"
       class="mb-8"
     />
@@ -77,7 +59,7 @@
       v-if="platform.isElectron()"
       label="Use systems window style"
       desc="Instead of using the apps internal Titlebar, we'll use the system's titlebar instead. This setting will restart the app!"
-      v-model="localSettings.useSystemWindowStyle"
+      v-model="localSettings.appearance.useSystemWindowStyle"
       @input="toggleSystemStyleWindow"
       class="mb-8"
     />
@@ -117,22 +99,20 @@
     <ui-toggle
       label="Verbose"
       desc="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
-      :value="localSettings.verbose"
+      :value="localSettings.general.verbose"
       @input="enableVerbose"
       :align-right="true"
     />
     
-    <!--      :disabled="auth.token === null ? 'true' : ''"-->
-    <!--      :value="localSettings.enableChat"-->
   </div>
+  <Loader v-else />
 </template>
 
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
-import {Settings, SettingsState} from '@/modules/settings/types';
+import {SettingsState} from '@/modules/settings/types';
 import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import {AuthState} from '@/modules/auth/types';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import os from 'os';
@@ -141,24 +121,23 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {InstanceActions} from '@/core/actions/instanceActions';
+import {SettingsData} from '@/core/@types/javaApi';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   components: {
+    Loader,
     UiButton,
     UiToggle,
   },
 })
 export default class AppSettings extends Vue {
-  @State('auth') auth!: AuthState;
   @State('settings') settingsState!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
 
   platform = platform;
-  localSettings: Settings = {} as Settings;
-
-  webVersion: string = platform.get.config.webVersion;
-  appVersion: string = platform.get.config.appVersion;
+  localSettings: SettingsData = {} as SettingsData;
   
   working = false;
   uploadingLogs = false;
@@ -170,26 +149,19 @@ export default class AppSettings extends Vue {
     this.localSettings = { ...this.settingsState.settings };
   }
 
-  enablePreview(value: boolean): void {
-    this.localSettings.enablePreview = value;
-    this.saveSettings(this.localSettings);
-  }
-
-  enableChat(value: boolean): void {
-    if (this.auth.token !== null) {
-      this.localSettings.enableChat = value;
-      this.saveSettings(this.localSettings);
-    }
-  }
-
+  // enablePreview(value: boolean): void {
+  //   this.localSettings.enablePreview = value;
+  //   this.saveSettings(this.localSettings);
+  // }
+  
   exitOverwolf(value: boolean): void {
-    this.localSettings.exitOverwolf = value;
+    this.localSettings.general.exitOverwolf = value;
     this.saveSettings(this.localSettings);
     platform.get.actions.changeExitOverwolfSetting(value);
   }
   
   toggleSystemStyleWindow(value: boolean): void {
-    this.localSettings.useSystemWindowStyle = value;
+    this.localSettings.appearance.useSystemWindowStyle = value;
     this.saveSettings(this.localSettings);
     
     platform.get.frame.setSystemWindowStyle(value);
@@ -213,7 +185,7 @@ export default class AppSettings extends Vue {
   }
 
   public static getAppHome() {
-    if (platform.isOverwolf()) {
+    if (platform.isOverwolf() || os.platform() === "win32") {
       return path.join(platform.get.io.getLocalAppData(), '.ftba');
     } else if (os.platform() === "darwin") {
       return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
@@ -224,9 +196,7 @@ export default class AppSettings extends Vue {
 
   public async uploadLogData(): Promise<void> {
     this.uploadingLogs = true;
-    const result = await sendMessage("uploadLogs", {
-      uiVersion: this.webVersion
-    })
+    const result = await sendMessage("uploadLogs", {})
 
     if (!result.error) {
       const url = `https://pste.ch/${result.code}`;
@@ -237,13 +207,17 @@ export default class AppSettings extends Vue {
     this.uploadingLogs = false;
   }
 
-  public refreshCachePlz() {
-    InstanceActions.clearInstanceCache()
+  public async refreshCachePlz() {
+    await InstanceActions.clearInstanceCache()
   }
 
   public enableVerbose(value: boolean): void {
-    this.localSettings.verbose = value;
+    this.localSettings.general.verbose = value;
     this.saveSettings(this.localSettings);
+  }
+  
+  get configData() {
+    return platform.get.config
   }
 }
 </script>

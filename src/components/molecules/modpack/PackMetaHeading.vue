@@ -110,7 +110,7 @@ export default class PackMetaHeading extends Vue {
       return 'vanilla';
     }
     
-    const releaseChannel = store.state.settings?.settings.updateChannel ?? 'release';
+    const releaseChannel = store.state.settings?.settings.instanceDefaults.updateChannel ?? 'release';
     const sortedVersions = this.apiPack.versions
       .sort((a, b) => b.id - a.id);
     

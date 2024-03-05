@@ -3,10 +3,10 @@ package net.creeperhost.creeperlauncher.api.handlers.other;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import net.covers1624.quack.util.HashUtils;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.FileHashData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

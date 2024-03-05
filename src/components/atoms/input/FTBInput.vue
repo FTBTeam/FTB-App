@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col my-2 ftb-input" :class="{ disabled }">
+  <div class="flex flex-col ftb-input" :class="{ disabled, 'my-2': !noSpacing }">
     <!-- <div class="flex flex-row justify-center my-4">
         <input class="bg-background focus:bg-background-lighten focus:outline-none border border-gray-700 block w-full p-2 appep class="text-white w-64 pr-4 mx-auto">{{label}}</p>
         <arance-none leading-normal text-gray-300" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
@@ -56,6 +56,7 @@ export default class FTBInput extends Vue {
   @Prop({ default: 'Submit' }) buttonText!: string;
   @Prop() buttonColor!: string;
   @Prop() label!: string;
+  @Prop({default: false}) noSpacing!: boolean;
   
   @Prop() min!: number;
   @Prop() max!: number;

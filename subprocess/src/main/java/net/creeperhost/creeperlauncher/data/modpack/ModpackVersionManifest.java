@@ -6,7 +6,6 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.collection.StreamableIterable;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
@@ -14,6 +13,7 @@ import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.util.FileUtils;
+import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
 import net.creeperhost.creeperlauncher.util.PathRequestBody;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -89,10 +89,10 @@ public class ModpackVersionManifest {
         name = other.name;
         specs = other.specs != null ? other.specs.copy() : null;
         type = other.type;
-        targets = StreamableIterable.of(other.targets)
+        targets = FastStream.of(other.targets)
                 .map(Target::copy)
                 .toLinkedList();
-        files = StreamableIterable.of(other.files)
+        files = FastStream.of(other.files)
                 .map(ModpackFile::copy)
                 .toLinkedList();
         installs = other.installs;
@@ -132,8 +132,8 @@ public class ModpackVersionManifest {
     }
 
     @Nullable
-    public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        return queryManifest(Constants.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
+    public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {        
+        return queryManifest(ModpacksChUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
     }
 
     @Nullable
@@ -145,6 +145,9 @@ public class ModpackVersionManifest {
                 .setUserAgent(Constants.USER_AGENT)
                 .setUrl(url)
                 .setDest(sw);
+        
+        ModpacksChUtils.injectBearerHeader(action);
+        
         action.execute();
 
         ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
@@ -161,8 +164,11 @@ public class ModpackVersionManifest {
         LOGGER.info("Converting pack '{}'.", manifest);
 
         Request.Builder builder = new Request.Builder()
-                .url(Constants.getModpacksApi() + "/public/curseforge/import")
+                .url(ModpacksChUtils.getPublicApi() + "/curseforge/import")
                 .put(new PathRequestBody(manifest));
+        
+        ModpacksChUtils.injectBearerHeader(builder);
+        
         try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
             if (body == null) {
@@ -195,7 +201,7 @@ public class ModpackVersionManifest {
      */
     @Nullable
     public Target findTarget(String type) throws IllegalStateException {
-        LinkedList<Target> targetsMatching = StreamableIterable.of(getTargets())
+        LinkedList<Target> targetsMatching = FastStream.of(getTargets())
                 .filter(e -> type.equals(e.getType()))
                 .toLinkedList();
 

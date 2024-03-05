@@ -15,12 +15,12 @@ import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesReloadedData;
 import net.creeperhost.creeperlauncher.api.data.instances.CloudSavesStatsData;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceCloudSyncConflictData;
 import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
+import net.creeperhost.creeperlauncher.api.handlers.other.minetogether.S3Credentials;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
@@ -28,6 +28,7 @@ import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager.SyncResult.ResultType;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSyncOperation.SyncDirection;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.s3.OkHTTPS3HttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -109,12 +110,12 @@ public final class CloudSaveManager {
                 try {
                     JsonObject obj = JsonUtils.parseRaw(path).getAsJsonObject();
                     LOGGER.info("Configuring cloud saves from SystemProperty override.");
-                    configure(
-                            JsonUtils.getString(obj, "s3Host"),
-                            JsonUtils.getString(obj, "s3Bucket"),
+                    configure(new S3Credentials(
                             JsonUtils.getString(obj, "s3Key"),
-                            JsonUtils.getString(obj, "s3Secret")
-                    );
+                            JsonUtils.getString(obj, "s3Secret"),
+                            JsonUtils.getString(obj, "s3Bucket"),
+                            JsonUtils.getString(obj, "s3Host")
+                    ));
                 } catch (IOException ex) {
                     LOGGER.error("Failed to configure dev creds.");
                 }
@@ -122,13 +123,13 @@ public final class CloudSaveManager {
         }
     }
 
-    public void configure(String s3Host, String s3Bucket, String s3Key, String s3Secret) {
+    public void configure(S3Credentials credentials) {
         if (s3Client != null) {
             LOGGER.info("Reconfiguring cloud saves...");
-            if (Objects.equals(this.s3Host, s3Host)
-                    && Objects.equals(this.s3Bucket, s3Bucket)
-                    && Objects.equals(this.s3Key, s3Key)
-                    && Objects.equals(this.s3Secret, s3Secret)) {
+            if (Objects.equals(this.s3Host, credentials.host)
+                && Objects.equals(this.s3Bucket, credentials.bucket)
+                && Objects.equals(this.s3Key, credentials.accessKeyId)
+                && Objects.equals(this.s3Secret, credentials.secretAccessKey)) {
                 LOGGER.info("Skipping reconfigure, details are identical.");
                 return;
             }
@@ -138,20 +139,20 @@ public final class CloudSaveManager {
         }
         assert s3Client == null;
 
-        if (isEmpty(s3Host) || isEmpty(s3Bucket) || isEmpty(s3Key) || isEmpty(s3Secret)) {
+        if (isEmpty(credentials.host) || isEmpty(credentials.bucket) || isEmpty(credentials.accessKeyId) || isEmpty(credentials.secretAccessKey)) {
             return;
         }
 
-        this.s3Host = s3Host;
-        this.s3Bucket = s3Bucket;
-        this.s3Key = s3Key;
-        this.s3Secret = s3Secret;
+        this.s3Host = credentials.host;
+        this.s3Bucket = credentials.bucket;
+        this.s3Key = credentials.accessKeyId;
+        this.s3Secret = credentials.secretAccessKey;
 
         LOGGER.info("Configuring cloud saves..");
 
         try {
             S3ClientBuilder builder = S3Client.builder()
-                    .endpointOverride(URI.create(s3Host))
+                    .endpointOverride(URI.create(this.s3Host))
                     .region(Region.US_WEST_1)
                     .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()) // Enable path-style addressing
                     .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(s3Key, s3Secret)))

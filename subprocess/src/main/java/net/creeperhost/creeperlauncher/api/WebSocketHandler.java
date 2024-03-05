@@ -16,6 +16,8 @@ import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceDe
 import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceGetBackupsHandler;
 import net.creeperhost.creeperlauncher.api.handlers.instances.backups.InstanceRestoreBackupHandler;
 import net.creeperhost.creeperlauncher.api.handlers.other.*;
+import net.creeperhost.creeperlauncher.api.handlers.other.minetogether.MineTogetherAuthenticationHandler;
+import net.creeperhost.creeperlauncher.api.handlers.other.minetogether.MineTogetherLogoutHandler;
 import net.creeperhost.creeperlauncher.api.handlers.profiles.*;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetAllHandler;
 import net.creeperhost.creeperlauncher.api.handlers.storage.StorageGetHandler;
@@ -40,6 +42,7 @@ public class WebSocketHandler {
     private static @Nullable WebsocketServer server;
 
     static {
+        register("appInit", AppInitHandler.Data.class, new AppInitHandler());
         register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
         register("launchInstance", LaunchInstanceData.class, new LaunchInstanceHandler());
@@ -58,14 +61,12 @@ public class WebSocketHandler {
         register("saveSettings", SettingsConfigureData.class, new SettingsConfigureHandler());
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
         register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
-        register("storeAuthDetails", StoreAuthDetailsData.class, new StoreAuthDetailsHandler());
         register("syncInstance", SyncCloudInstanceData.class, new SyncCloudInstanceHandler());
         register("uploadLogs", UploadLogsData.class, new UploadLogsHandler());
         register("getJavas", GetJavasData.class, new GetJavasHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
         register("instanceEnableCloudSaves", InstanceEnableCloudSavesData.class, new InstanceEnableCloudSavesHandler());
         register("instanceDisableCloudSaves", InstanceDisableCloudSavesData.class, new InstanceDisableCloudSavesHandler());
-        register("yeetLauncher", YeetLauncherData.class, new YeetLauncherHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
@@ -86,10 +87,11 @@ public class WebSocketHandler {
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
-        register("profiles.mc.authenticate", AuthenticateMcProfileHandler.Data.class, new AuthenticateMcProfileHandler());
         register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
+        register("minetogetherAuthentication", MineTogetherAuthenticationHandler.Data.class, new MineTogetherAuthenticationHandler());
+        register("minetogetherLogoutHandler", BaseData.class, new MineTogetherLogoutHandler());
 
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());
@@ -105,13 +107,14 @@ public class WebSocketHandler {
         register.put(name, Pair.of(clazz, handler));
     }
 
-    public static void startWebsocket(PortMode portMode) {
+    public static int startWebsocket(PortMode portMode) {
         int port = switch (portMode) {
             case DYNAMIC -> MiscUtils.getRandomEphemeralPort();
-            case STATIC, DYNAMIC_ON_CONNECT -> Constants.WEBSOCKET_PORT;
+            case STATIC -> Constants.WEBSOCKET_PORT;
         };
         server = new NanoHttpdWebsocketServer(port, portMode);
         server.startServer();
+        return port;
     }
 
     public static void restartOnPort(int newPort) {

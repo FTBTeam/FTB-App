@@ -102,7 +102,6 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {ModPack, Versions} from '@/modules/modpacks/types';
 import {Action, Getter, State} from 'vuex-class';
-import {AuthState} from '@/modules/auth/types';
 import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
 import ModpackSettings from '@/components/templates/modpack/ModpackSettings.vue';
 import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
@@ -150,8 +149,6 @@ export default class InstancePage extends Vue {
   @State('websocket') public websockets!: SocketState;
   @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
-  
-  @State('auth') public auth!: AuthState;
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
@@ -160,7 +157,7 @@ export default class InstancePage extends Vue {
   @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
   @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
 
-  private logger = createLogger(InstancePage.name + ".vue");
+  private logger = createLogger("InstancePage.vue");
   
   packLoading = false;
 
@@ -183,7 +180,7 @@ export default class InstancePage extends Vue {
 
   async mounted() {
     this.logger.debug("Mounted instance page, waiting for websockets")
-    await waitForWebsockets(this.websockets.socket)
+    await waitForWebsockets("instancePage", this.websockets.socket)
     
     this.logger.debug("Websockets ready, loading instance")
     if (this.instance == null) {

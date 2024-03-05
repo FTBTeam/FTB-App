@@ -1,11 +1,8 @@
 // @ts-ignore no typescript package available
-import VueNativeSock from 'vue-native-websocket';
 import {clipboard, ipcRenderer} from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
-import store from '@/modules/store';
-import Vue from 'vue';
 import EventEmitter from 'events';
 import http from 'http';
 import os from 'os';
@@ -15,26 +12,85 @@ import {emitter} from '@/utils';
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import log from 'electron-log';
 import {createLogger} from '@/core/logger';
+import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers';
+import {execSync} from 'child_process';
 
-function getAppHome() {
-  if (os.platform() === "darwin") {
-    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
-  } else {
-    return path.join(os.homedir(), '.ftba');
+export type Arg = string | {
+  key?: string;
+  value: string;
+  filter: { 
+    os?: string[] | string;
+    arch?: string[] | string;
+  }
+}
+
+export type MetaData = {
+  appVersion: string;
+  commit: string;
+  branch: string;
+  released: number;
+  runtime: {
+    version: string;
+    jar: string;
+    env: Arg[];
+    jvmArgs: Arg[];
+  };
+}
+
+const fallbackMetaData: MetaData = {
+  appVersion: "Unknown",
+  commit: "Unknown",
+  branch: "release",
+  released: new Date().getTime(),
+  runtime: {
+    version: "21", // If we're using this, something has gone wrong
+    jar: "launcher.jar", // If we're using this, something has gone wrong
+    env: [],
+    jvmArgs: []
   }
 }
 
 const eLogger = createLogger("platform/electron.ts");
-log.transports.file.resolvePath = (vars, message) => path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
-
+const electronFrontendLogFile = path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
+if (fs.existsSync(electronFrontendLogFile)) {
+  try {
+    fs.writeFileSync(electronFrontendLogFile, '')
+  } catch (e) {
+    eLogger.error("Failed to clear electron frontend log file", e)
+  }
+}
+log.transports.file.resolvePath = (vars, message) =>
+  electronFrontendLogFile;
 Object.assign(console, log.functions);
 
-declare const __static: string;
+const resourcesPath = process.resourcesPath
 
-const contents = fs.existsSync(path.join(__static, 'version.json'))
-  ? fs.readFileSync(path.join(__static, 'version.json'), 'utf-8')
-  : null;
-const jsonContent = contents ? JSON.parse(contents) : null;
+eLogger.info("Resources path", resourcesPath)
+
+const metaFilePath = path.join(resourcesPath, "meta.json");
+const metaData = process.env.NODE_ENV === "development" ? fallbackMetaData : JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
+
+let licensesData: any = {};
+let javaLicensesData: any = {};
+
+try {
+  licensesData = JSON.parse(fs.readFileSync(path.join(resourcesPath, "licenses.json"), 'utf-8'));
+  javaLicensesData = JSON.parse(fs.readFileSync(path.join(resourcesPath, "java-licenses.json"), 'utf-8'));
+} catch (e) {
+  eLogger.error("Failed to load licenses", e);
+}
+
+eLogger.info("Meta data", metaData)
+
+function getAppHome() {
+  if (os.platform() === "darwin") {
+    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+  } else if (os.platform() === "win32") {
+    return path.join(os.homedir(), 'AppData', 'Local', '.ftba');
+  } else {
+    return path.join(os.homedir(), '.ftba');
+  }
+}
 
 class MiniWebServer extends EventEmitter {
   server: http.Server | null = null;
@@ -133,12 +189,10 @@ let miniServers: MiniWebServer[] = [];
 
 const Electron: ElectronOverwolfInterface = {
   config: {
-    publicVersion: jsonContent?.publicVersion ?? 'Missing version file',
-    appVersion: jsonContent?.jarVersion ?? 'Missing Version File',
-    webVersion: jsonContent?.webVersion ?? 'Missing Version File',
-    dateCompiled: jsonContent?.timestampBuilt ?? 'Missing Version File',
-    javaLicenses: jsonContent?.javaLicense ?? {},
-    branch: jsonContent.branch ?? 'Release'
+    version: metaData.appVersion ?? 'Missing Version File',
+    commit: metaData.commit ?? 'Missing Version File',
+    dateCompiled: metaData.released ?? new Date().getTime(),
+    branch: metaData.branch ?? 'release'
   },
 
   // Tools
@@ -229,27 +283,8 @@ const Electron: ElectronOverwolfInterface = {
       cb(result);
     },
 
-    logoutFromMinetogether() {
-      eLogger.debug("Logging out from minetogether")
-      ipcRenderer.send('logout');
-    },
-
     // Obviously do nothing
-    changeExitOverwolfSetting() {},
-    updateSettings(msg) {
-      eLogger.debug("Updating settings", msg)
-      ipcRenderer.send('updateSettings', msg);
-    },
-
-    setUser(payload) {
-      eLogger.debug("Setting MT user")
-      ipcRenderer.send('user', payload.user);
-    },
-
-    sendSession(payload) {
-      eLogger.debug("Sending session (MT)")
-      ipcRenderer.send('session', payload);
-    },
+    changeExitOverwolfSetting() {},    
 
     onAppReady() {
       eLogger.debug("Interface has been told the app is ready")
@@ -257,7 +292,6 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     uploadClientLogs() {},
-    yeetLauncher() {},
 
     restartApp() {
       eLogger.debug("Restarting app")
@@ -300,8 +334,10 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     // we don't need this on electron because it's not silly
+    async getWindowId() {
+      return ""
+    },
     handleDrag() {},
-    setupTitleBar() {},
     setSystemWindowStyle(enabled) {
       ipcRenderer.invoke('setSystemWindowStyle', enabled);
     }
@@ -339,121 +375,293 @@ const Electron: ElectronOverwolfInterface = {
       return path.join(os.homedir(), "AppData", "Local"); 
     }
   },
-
-  // Websockets
-  websocket: {
-    // Empty shim (this doesn't happen on overwolf)
-    notifyWebhookReceived(message: string) {
-      ipcRenderer.send('websocketReceived', message);
+  
+  app: {
+    async appHome(): Promise<string> {
+      return getAppHome();
     },
-  },
-
-  setupApp(vm) {
-    eLogger.debug("Setting up the app from the interface on electron")
-    ipcRenderer.send('sendMeSecret');
-    ipcRenderer.on('hereIsSecret', (event, data) => {
-      eLogger.debug("Received secret from main process", data)
-      if (data.port === 13377 && !data.isDevMode) {
-        Vue.use(VueNativeSock, 'ws://localhost:' + data.port, {
-          format: 'json',
-          reconnection: true,
-          connectManually: true,
-        });
-        vm.$connect();
-        vm.$socket.onmessage = (msgData: MessageEvent) => {
-          const wsInfo = JSON.parse(msgData.data);
-          store.commit('STORE_WS', wsInfo);
-          vm.$disconnect();
-          const index = Vue._installedPlugins.indexOf(VueNativeSock);
-          if (index > -1) {
-            Vue._installedPlugins.splice(index, 1);
-          }
-          Vue.use(VueNativeSock, 'ws://localhost:' + wsInfo.port, { store, format: 'json', reconnection: true });
-          ipcRenderer.send('updateSecret', wsInfo);
-        };
-      } else {
-        eLogger.debug("Setting up websocket connection on port", data.port)
-        store.commit('STORE_WS', data);
-        Vue.use(VueNativeSock, 'ws://localhost:' + data.port, { store, format: 'json', reconnection: true });
+    async appSettings() {
+      const settingsPath = getAppHome() + "/bin/settings.json";
+      if (!fs.existsSync(settingsPath)) {
+        return null
       }
-    });
-    
-    eLogger.debug("Requesting auth data")
-    ipcRenderer.send('gimmeAuthData');
-    ipcRenderer.on('hereAuthData', (event, data) => {
-      eLogger.debug("Received auth data from main process", data)
-      store.commit('auth/storeAuthDetails', data, { root: true });
-    });
-    ipcRenderer.on('setFriendsWindow', (event, data) => {
-      store.dispatch('auth/setWindow', data, { root: true });
-    });
-    ipcRenderer.on('auth-window-closed', (event, data) => {
-      miniServers.forEach((server) => {
-        server.close().then(() => {
-          eLogger.debug("Closing mini server")
+
+      return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+    },
+    async appData(): Promise<string> {
+      return path.join(getAppHome(), 'bin');
+    },
+    async appRuntimes(): Promise<string> {
+      return path.join(getAppHome(), 'runtime');
+    },
+    async runtimeAvailable(): Promise<boolean> {
+      const appPath = getAppHome();
+      return fs.existsSync(jreLocation(appPath));
+    },
+    async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate = false) {
+      onStageChange("Locating Java");
+
+      /**
+       * Procedure:
+       * - Figure out the system architecture and platform type (mac, windows, linux)
+       * - Locate the java version from the adoptium api
+       * - Download the java version
+       * - Extract the tar or the zip
+       * - Move the java version to the runtime folder
+       * - Ensure the java version is executable and works (run java -version)
+       * - If it doesn't work, try again
+       * - If it still doesn't work, throw an error
+       * - If it does work, continue
+       * - Try and start the backend (Call to different method procedure)
+       * - If it fails, try again
+       * - If it fails more than 3 times, throw an error
+       */
+      
+      const platformData = {
+        arch: os.arch(),
+        platform: os.platform(),
+      };
+
+      const ourOs = computeOs(platformData.platform);
+      const ourArch = computeArch(platformData.arch)
+
+      const javaVersion = metaData.runtime.version;
+      
+      // Attempt to get the java
+      const url = `https://api.adoptium.net/v3/assets/latest/${javaVersion}/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`;
+      
+      eLogger.log("Downloading java from", url)
+      onStageChange("Downloading Java")
+      
+      let adopiumRes;
+      try {
+        adopiumRes = await retryAttempt(async () => {
+          const adopiumRequest = await fetch(url);
+          return await adopiumRequest.json();
         });
+      } catch (e) {
+        eLogger.error("Failed to download java", e)
+        throw throwCustomError("Failed to download java", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
+      }
+      
+      const binary = adopiumRes.find((e: any) => e.binary)?.binary;
+      if (!binary) {
+        throw throwCustomError("Failed to find java binary", "We've not been able to find a Java binary for you system. Please ensure you are using a supported system.")
+      }
+      
+      const link = binary.package.link;
+
+      const appPath = getAppHome();
+      const runtimePath = `${appPath}/runtime`;
+      
+      if (isUpdate) {
+        onStageChange("Removing old runtime")
+        if (fs.existsSync(runtimePath)) {
+          try {
+            fs.rmSync(runtimePath, {
+              recursive: true
+            });
+          } catch (e) {
+            throw throwCustomError("Failed to remove runtime folder", "We've not been able to remove the runtime folder. Please ensure the app has the correct permissions to remove folders.")
+          }
+        }
+      }
+
+      onStageChange("Creating runtime folder")
+      try {
+        if (!fs.existsSync(runtimePath)) {
+          fs.mkdirSync(runtimePath, {
+            recursive: true
+          });
+        }
+      } catch (e) {
+        throw throwCustomError("Failed to create runtime folder", "We've not been able to create the runtime folder. Please ensure the app has the correct permissions to create folders.")
+      }
+      
+      const isWindows = os.platform() === "win32";
+      const jreDownloadName = isWindows ? `jre.zip` : `jre.tar.gz`;
+      onStageChange("Downloading Java from Adoptium")
+      try {
+        await ipcRenderer.invoke("downloadFile", {
+          url: link,
+          path: path.join(runtimePath, jreDownloadName)
+        });
+      } catch (e) {
+        throw throwCustomError("Failed to download java from endpoint", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
+      }
+
+      onStageChange("Extracting Java")
+      try {
+        await ipcRenderer.invoke("extractFile", {
+          input: path.join(runtimePath, jreDownloadName),
+          output: path.join(runtimePath, `jre`)
+        });
+      } catch (e) {
+        throw throwCustomError("Failed to extract java", "We've not been able to extract Java... We can't recover from this.")
+      }
+      
+      // Assuming this worked
+      // Does the jre/jdk-* folder exist?
+      onStageChange("Moving Java to the correct location")
+      const jreFolder = fs.readdirSync(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
+      if (jreFolder == null) {
+        throw throwCustomError("Failed to find java folder", "We've not been able to find the Java folder. We can't recover from this.")
+      }
+      
+      // Move all of the folders contents to the runtime folder
+      // Then delete the jre folder
+      const jrePath = path.join(runtimePath, "jre", jreFolder);
+      const jreFiles = fs.readdirSync(jrePath);
+      jreFiles.forEach(e => {
+        fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
       });
 
-      miniServers = [];
-    });
-    ipcRenderer.on('setSessionString', (event, data) => {
-      eLogger.debug("Received session string from main process")
-      const settings = store.state.settings?.settings;
-      if (settings !== undefined) {
-        settings.sessionString = data;
+      onStageChange("Cleaning up")
+      try {
+        // It's not fatal if this fails
+        fs.rmdirSync(jrePath);
+        fs.rmdirSync(path.join(runtimePath, 'jre'))
+        fs.rmSync(path.join(runtimePath, jreDownloadName));
+      } catch (e) {
+        // Ignore
       }
-      store.dispatch('settings/saveSettings', settings, { root: true });
-    });
-    ipcRenderer.on('getNewSession', (event, data) => {
-      eLogger.debug("Requesting new session from main process")
-      store.dispatch('auth/getNewSession', data, { root: true });
-    });
-    ipcRenderer.on('setSessionID', (event, data) => {
-      eLogger.debug("Setting session ID from main process")
-      store.dispatch('auth/setSessionID', data, { root: true });
-    });
-    ipcRenderer.on('blockFriend', (event, data) => {
-      const settings = store.state.settings?.settings;
-      if (settings !== undefined && settings.blockedUsers === undefined) {
-        settings.blockedUsers = [];
+
+      onStageChange("Finishing up")
+      // Touch a file to note down what java version we have
+      try {
+        fs.writeFileSync(path.join(runtimePath, ".java-version"), javaVersion);
+      } catch (e) {
+        throw throwCustomError("Failed to write java version file", "We've not been able to write the java version file. We can't recover from this.")
       }
-      if (typeof settings?.blockedUsers !== 'string') {
-        settings?.blockedUsers.push(data);
+
+      onStageChange("Checking Java works")
+      // Ensure the java version is executable and works
+      const jreExecPath = jreLocation(appPath);
+      if (!fs.existsSync(jreExecPath)) {
+        throw throwCustomError("Failed to find java executable", "We've not been able to find the java executable. We can't recover from this.")
       }
-      store.dispatch('settings/saveSettings', settings, { root: true });
-    });
-    // // TODO: (M#01) Yeet me
-    // ipcRenderer.on('openModpack', (event, data) => {
-    //   const { name, id } = data;
-    //   getAPIRequest(store.state, `modpack/search/8?term=${name}`)
-    //     .then((response) => response.json())
-    //     .then(async (data) => {
-    //       if (data.status === 'error') {
-    //         return;
-    //       }
-    //       const packIDs = data.packs;
-    //       if (packIDs == null) {
-    //         return;
-    //       }
-    //       if (packIDs.length === 0) {
-    //         return;
-    //       }
-    //       for (let i = 0; i < packIDs.length; i++) {
-    //         const packID = packIDs[i];
-    //         const pack: ModPack = await store.dispatch('modpacks/fetchModpack', packID, { root: true });
-    //         if (pack !== undefined) {
-    //           const foundVersion = pack.versions.find((v) => v.mtgID === id);
-    //           if (foundVersion !== undefined) {
-    //             router.push({ name: 'modpackpage', query: { modpackid: packID } });
-    //             return;
-    //           }
-    //         }
-    //       }
-    //     })
-    //     .catch((err) => {
-    //       console.error(err);
-    //     });
-    // });
+      
+      // Run the java --version command and ensure we get the correct exit code
+      try {
+        execSync(`"${jreExecPath}" --version`, {
+          stdio: 'ignore'
+        });
+      } catch (e) {
+        eLogger.error("Failed to run java --version", e)
+        throw throwCustomError("Failed to run java --version", "We've not been able to run the java --version command. We can't recover from this.")
+      }
+
+      onStageChange("Starting subprocess")
+    },
+    async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
+      // Get the runtime
+      const appPath = getAppHome();
+      const runtimePath = `${appPath}/runtime`;
+      
+      if (!fs.existsSync(`${runtimePath}/.java-version`)) {
+        // How did we get here? Just install it
+        return await this.installApp(onStageChange, onUpdate, false);
+      }
+      
+      // Get the original java version
+      const javaVersion = fs.readFileSync(`${runtimePath}/.java-version`, 'utf-8');
+      
+      if (metaData.runtime.version === javaVersion) {
+        // We don't need to update
+        return;
+      }
+      
+      // We need to update
+      return await this.installApp(onStageChange, onUpdate, true);
+    },
+    async startSubprocess() {
+      // Get the runtime
+      const appPath = getAppHome();
+      const runtimePath = `${appPath}/runtime`;
+      
+      if (!fs.existsSync(`${runtimePath}/.java-version`)) {
+        throw new CustomError("Failed to find java version file", "We've not been able to find the java version file. We can't recover from this.");
+      }
+      
+      const javaVersion = fs.readFileSync(`${runtimePath}/.java-version`, 'utf-8');
+      if (!javaVersion) {
+        throw new CustomError("Failed to read java version file", "We've not been able to read the java version file. We can't recover from this.");
+      }
+      
+      if (javaVersion !== metaData.runtime.version) {
+        // Looks like we need to try and update the java version
+        return false;
+      }
+      
+      // Start the subprocess
+      const jreExecPath = jreLocation(appPath);
+      if (!fs.existsSync(jreExecPath)) {
+        throw new Error("Failed to find java executable");
+      }
+      
+      const envVars = parseArgs(metaData.runtime.env);
+      const jvmArgs = parseArgs(metaData.runtime.jvmArgs);
+      
+      const jarName = metaData.runtime.jar;
+      
+      try {
+        return await retryAttempt(async () => {
+          const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
+            javaPath: jreExecPath,
+            args: [
+              "-jar",
+              `${resourcesPath}/${jarName}`,
+              ...jvmArgs
+            ],
+            env: envVars
+          });
+
+          if (port && secret) {
+            return {
+              port,
+              secret
+            }
+          }
+
+          throw new CustomError("Failed to start subprocess", "We've not been able to start the subprocess. We can't recover from this.")
+        }, 20);
+      } catch (e) {
+        throw new CustomError("Failed to start subprocess after 20 attempts", "We've not been able to start the subprocess. We can't recover from this.")
+      }
+    },
+    getLicenses() {
+      return {
+        javascript: licensesData,
+        java: javaLicensesData
+      }
+    },
+    cpm: {
+      async required() {
+        // Required for OW Ads 
+        return await ipcRenderer.invoke("ow:cpm:is_required");
+      },
+      async openWindow(arg = "purposes") {
+        // Required for OW Ads
+        await ipcRenderer.invoke("ow:cpm:open_window", arg);
+      },
+      async isFirstLaunch() {
+        return !fs.existsSync(path.join(getAppHome(), "bin", ".first-launch"));
+      },
+      async setFirstLaunched() {
+        // Create parents
+        if (!fs.existsSync(path.join(getAppHome(), "bin"))) {
+          fs.mkdirSync(path.join(getAppHome(), "bin"), {
+            recursive: true
+          });
+        }
+        
+        fs.writeFileSync(path.join(getAppHome(), "bin", ".first-launch"), "");
+      }
+    }
+  },
+  
+  setupApp(vm) {
+    eLogger.debug("Setting up the app from the interface on electron")
     
     ipcRenderer.on('parseProtocolURL', (event, data) => {
       handleAction(data);
@@ -491,27 +699,43 @@ const Electron: ElectronOverwolfInterface = {
       //       });
       //     }
       //   }
-      // } else if (command === 'instance') {
-      //   if (args.length === 0) {
-      //     return;
-      //   }
-      //   const instanceID = args[0];
-      //   if (args.length === 1) {
-      //     // Open instance page
-      //     router.push({ name: 'instancepage', query: { uuid: instanceID } });
-      //   } else if (args.length === 2) {
-      //     // Start instance
-      //     router.push({ name: 'instancepage', query: { uuid: instanceID, shouldPlay: 'true' } });
-      //   }
-      // } else if (command === 'server') {
-      //   if (args.length === 0) {
-      //     return;
-      //   }
-      //   const serverID = args[0];
-      //   router.push({ name: 'server', query: { serverid: serverID } });
       // }
     });
   },
 };
+
+/**
+ * Retries a promise a number of times with a delay
+ * @param fn
+ * @param attempts
+ */
+async function retryAttempt<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let attempt = 0;
+  while (attempt < attempts) {
+    try {
+      return await fn();
+    } catch (e) {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for a second
+      attempt++;
+    }
+  }
+
+  throw new Error("Failed to retry attempt")
+}
+
+function throwCustomError(message: string, customMessage: string) {
+  eLogger.error(message);
+  throw new CustomError(message, customMessage);
+}
+
+class CustomError extends Error {
+  customMessage: string;
+  
+  constructor(message: string, customMessage: string) {
+    super(message);
+    this.name = "CustomError";
+    this.customMessage = customMessage;
+  }
+}
 
 export default Electron;

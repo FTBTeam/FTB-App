@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.api.handlers.instances;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceModsData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;

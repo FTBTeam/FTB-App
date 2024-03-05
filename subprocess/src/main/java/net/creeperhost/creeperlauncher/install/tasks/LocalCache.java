@@ -9,8 +9,8 @@ import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.install.FileValidation;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -177,7 +177,7 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
      * Removes any files that are too old from the cache.
      */
     public void clean() {
-        long cacheLife = Long.parseLong(Settings.settings.getOrDefault("cacheLife", "5184000"));
+        long cacheLife = Settings.getSettings().general().cacheLife();
         if (cacheLife < 0) cacheLife = 900L;
         synchronized (files) {
             Instant now = Instant.now();

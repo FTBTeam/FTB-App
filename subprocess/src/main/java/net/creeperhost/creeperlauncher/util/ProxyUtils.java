@@ -1,7 +1,8 @@
 package net.creeperhost.creeperlauncher.util;
 
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.storage.CredentialStorage;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -31,18 +32,27 @@ public class ProxyUtils {
     @Nullable
     private static String proxyHost;
     @Nullable
-    private static String proxyPort;
+    private static int proxyPort;
     @Nullable
     private static String proxyUser;
     @Nullable
     private static String proxyPassword;
 
     public static void loadProxy() {
-        String settingsProxyType = Settings.settings.get("proxyType");
-        String settingsProxyHost = Settings.settings.get("proxyHost");
-        String settingsProxyPort = Settings.settings.get("proxyPort");
-        String settingsProxyUser = Settings.settings.get("proxyUser");
-        String settingsProxyPassword = Settings.settings.get("proxyPassword");
+        String settingsProxyType = Settings.getSettings().proxy().type();
+        String settingsProxyHost = Settings.getSettings().proxy().host();
+        int settingsProxyPort = Settings.getSettings().proxy().port();
+        String settingsProxyUser = Settings.getSettings().proxy().username();
+        
+        // TODO: Remove: Migration, won't be needed for much longer
+        if (!Settings.getSettings().proxy().password().isEmpty()) {
+            // Move it to the credential storage.
+            CredentialStorage.getInstance().set("proxyPassword", Settings.getSettings().proxy().password());
+            Settings.getSettings().proxy().setPassword("");
+            Settings.saveSettings();
+        }
+        
+        String settingsProxyPassword = CredentialStorage.getInstance().get("proxyPassword");
         boolean requiresReset;
         requiresReset = !Objects.equals(proxyType, settingsProxyType);
         requiresReset |= !Objects.equals(proxyHost, settingsProxyHost);
@@ -72,10 +82,10 @@ public class ProxyUtils {
     }
 
     @Nullable
-    private static ProxyWithAuth loadProxy(String type, String host, String port, String username, String password) {
+    private static ProxyWithAuth loadProxy(String type, String host, int port, String username, String password) {
         if ("none".equals(type)) return null;
 
-        if (StringUtils.isEmpty(type) || StringUtils.isEmpty(host) || StringUtils.isEmpty(port)) {
+        if (StringUtils.isEmpty(type) || StringUtils.isEmpty(host) || port == -1) {
             return null;
         }
 
@@ -88,7 +98,7 @@ public class ProxyUtils {
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
             auth = new PasswordAuthentication(username, password.toCharArray());
         }
-        return new ProxyWithAuth(proxyType, host, Integer.parseInt(port), auth);
+        return new ProxyWithAuth(proxyType, host, port, auth);
     }
 
     public static void inject(OkHttpClient.Builder builder) {

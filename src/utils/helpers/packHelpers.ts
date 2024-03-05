@@ -161,7 +161,7 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
     return undefined;
   }
   
-  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (store.state.settings?.settings.updateChannel ?? "release");
+  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (store.state.settings?.settings.instanceDefaults.updateChannel ?? "release");
   const allowedTypes: VersionTypes[] = channel === "release" ? ["release"] : (channel === "beta" ? ["release", "beta"] : ["release", "beta", "alpha"]);
   
   const packVersions = apiPack.versions.sort((a, b) => b.id - a.id);

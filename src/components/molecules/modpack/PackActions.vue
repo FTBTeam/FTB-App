@@ -35,7 +35,7 @@
         <li @click="duplicateConfirm = true">
           <span><font-awesome-icon icon="copy" /></span>Duplicate instance
         </li>
-        <li @click="shareConfirm = true">
+        <li v-if="getProfiles && getProfiles.length > 0" @click="shareConfirm = true">
           <span><font-awesome-icon icon="share" /></span>Share instance
         </li>
         <li class="title">Danger</li>
@@ -58,6 +58,7 @@
         @finished="duplicateConfirm = false"
         :uuid="instance.uuid"
         :instanceName="instance.name"
+        :category="instance.category"
       />
     </modal>
   </div>
@@ -76,6 +77,8 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {createLogger} from '@/core/logger';
+import {Getter} from 'vuex-class';
+import {AuthProfile} from '@/modules/core/core.types';
 
 @Component({
   components: {
@@ -86,8 +89,9 @@ import {createLogger} from '@/core/logger';
 export default class PackActions extends Vue {
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Prop({ default: false }) allowOffline!: boolean;
+  @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
   
-  private logger = createLogger(PackActions.name + ".vue")
+  private logger = createLogger("PackActions.vue")
 
   instanceFolders: string[] = [];
   shareConfirm = false;

@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.util;
 
 import com.google.common.collect.ImmutableList;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import okhttp3.HttpUrl;
 
 import java.net.InetAddress;
@@ -44,6 +44,6 @@ public enum DOHHost {
     DOHHost(String host, List<String> alternativeNames, String... bootstrapHosts) {
         this.host = host;
         this.alternativeNames = new ImmutableList.Builder<String>().add(HttpUrl.get(host).host()).addAll(alternativeNames).build();
-        this.bootstrapHosts = StreamableIterable.of(bootstrapHosts).map(sneak(InetAddress::getByName)).toImmutableList();
+        this.bootstrapHosts = FastStream.of(bootstrapHosts).map(sneak(InetAddress::getByName)).toImmutableList();
     }
 }

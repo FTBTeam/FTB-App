@@ -5,15 +5,24 @@ import os from 'os';
 import fs from 'fs';
 import * as electronLogger from 'electron-log';
 import install, {VUEJS_DEVTOOLS} from 'electron-devtools-installer';
-import {createProtocol} from 'vue-cli-plugin-electron-builder/lib';
+import {createProtocol} from '@ftbapp/vue-cli-plugin-electron-builder/lib';
 import {createLogger} from '@/core/logger';
+import https from 'https';
+import AdmZip from 'adm-zip';
+import {ChildProcess, execSync, spawn} from 'child_process';
+import {autoUpdater} from 'electron-updater';
 
 const protocolSpace = 'ftb';
 const logger = createLogger('background.ts');
 
+console.log("Env", process.env)
+console.log("Keys", Object.keys(app))
+
 function getAppHome() {
   if (os.platform() === "darwin") {
     return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+  } else if (os.platform() === "win32") {
+    return path.join(os.homedir(), 'AppData', 'Local', '.ftba');
   } else {
     return path.join(os.homedir(), '.ftba');
   }
@@ -34,11 +43,33 @@ function getAppSettings(appSettingsPath: string) {
 const appHome = getAppHome();
 logger.debug('App home is', appHome)
 
-const appSettingsPath = path.join(appHome, 'bin', 'settings.json');
-let appSettings = getAppSettings(appSettingsPath);
+let cachedProcessData = null as {
+  pid: number;
+  port: number;
+  secret: string;
+} | null;
 
+let preserveSubprocess = false;
+let usingLegacySettings = false;
+const appSettingsPathLegacy = path.join(appHome, 'bin', 'settings.json');
+const appSettingsPath = path.join(appHome, "storage", 'settings.json');
+let appSettings = getAppSettings(appSettingsPath);
+if (appSettings === null) {
+  logger.debug("App settings not found, trying legacy settings")
+  usingLegacySettings = true;
+  appSettings = getAppSettings(appSettingsPathLegacy);
+}
+
+const electronLogFile = path.join(appHome, 'logs', 'ftb-app-electron.log');
+if (fs.existsSync(electronLogFile)) {
+  try {
+    fs.writeFileSync(electronLogFile, '')
+  } catch (e) {
+    logger.error("Failed to clear electron log file", e)
+  }
+}
 electronLogger.transports.file.resolvePath = (variables, message) => 
-  path.join(appHome, 'logs', 'ftb-app-electron.log');
+  electronLogFile;
 
 Object.assign(console, electronLogger.functions);
 (app as any).console = electronLogger;
@@ -53,6 +84,9 @@ if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
   app.setAsDefaultProtocolClient(protocolSpace);
 }
 
+let appCommunicationSetup = false;
+
+let subprocess: ChildProcess | null = null;
 let win: BrowserWindow | null;
 // let friendsWindow: BrowserWindow | null;
 
@@ -67,36 +101,7 @@ for (let i = 0; i < process.argv.length; i++) {
 
 declare const __static: string;
 
-let wsPort: number;
-let wsSecret: string;
-if (process.argv.indexOf('--ws') !== -1) {
-  logger.debug('App was launched with --ws');
-  const wsArg = process.argv[process.argv.indexOf('--ws') + 1];
-  const wsArgSplit = wsArg.split(':');
-  
-  wsPort = Number(wsArgSplit[0]);
-  wsSecret = wsArgSplit[1];
-  logger.debug(`App websocket data port: ${wsPort}:${wsSecret}`);
-} else {
-  logger.debug("App was not launched with --ws, falling back to default")
-  wsPort = 13377;
-  wsSecret = '';
-}
-
 let userData: any;
-let authData: any;
-let sessionString: string;
-
-ipcMain.on('sendMeSecret', (event) => {
-  event.reply('hereIsSecret', { port: wsPort, secret: wsSecret, isDevMode: isDevelopment });
-});
-
-ipcMain.on('showFriends', () => {
-  // if (userData) {
-  //   createFriendsWindow();
-  // }
-});
-
 ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
     event.reply('parseProtocolURL', protocolURL);
@@ -105,56 +110,6 @@ ipcMain.on('appReady', async (event) => {
 
 ipcMain.on("restartApp", () => {
   reloadMainWindow()
-});
-
-ipcMain.on('updateSettings', async (event, data) => {
-  // if (friendsWindow !== null && friendsWindow !== undefined) {
-  //   friendsWindow.webContents.send('updateSettings', data);
-  // }
-  if (data.sessionString) {
-    sessionString = data.sessionString;
-    if (!userData && win) {
-      win.webContents.send('getNewSession', sessionString);
-    }
-  }
-});
-
-ipcMain.on('session', (event, data) => {
-  if (!authData) {
-    authData = data;
-  }
-});
-
-ipcMain.on('user', (event, data) => {
-  if (!userData) {
-    userData = data;
-    // if (friendsWindow !== undefined && friendsWindow !== null) {
-    //   friendsWindow.webContents.send('hereAuthData', userData);
-    // }
-    logger.info('MineTogether: Checking if linked Minecraft Account');
-    if (userData?.accounts?.find((s: any) => s.identityProvider === 'mcauth') !== undefined) {
-      logger.info('MineTogether: Linked Minecraft account, connecting to IRC');
-    }
-  }
-});
-
-// ipcMain.on('authData', async (event, data) => {
-//     authData = JSON.parse(data.replace(/(<([^>]+)>)/ig, ''));
-//     authData.mc.friendCode = await getFriendCode(authData.mc.hash);
-//     // @ts-ignore
-//     win.webContents.send('hereAuthData', authData);
-//     // @ts-ignore
-//     if (friendsWindow !== undefined && friendsWindow !== null) {
-//         friendsWindow.webContents.send('hereAuthData', authData);
-//     }
-//     connectToIRC();
-// });
-
-ipcMain.on('gimmeAuthData', (event) => {
-  if (userData) {
-    logger.debug("Auth data handed back from the frontend")
-    event.reply('hereAuthData', userData);
-  }
 });
 
 ipcMain.on('openModpack', (event, data) => {
@@ -209,7 +164,8 @@ const reloadMainWindow = async () => {
   if (!win) {
     return;
   }
-  
+
+  preserveSubprocess = true;
   logger.info("Reloading main window")
   
   // Create a tmp window to keep the app alive
@@ -217,9 +173,12 @@ const reloadMainWindow = async () => {
     show: false,
   });
 
+  // Reset the port and secret scanning
+  appCommunicationSetup = false;
+  
   // Enable the windows frame
   win.destroy()
-  await createWindow()
+  await createWindow(true)
 
   // Close the tmp window
   tmpWindow.close();
@@ -235,7 +194,12 @@ ipcMain.handle('setSystemWindowStyle', async (event, data) => {
   logger.info("Setting system window style to", typedData)
   
   // Reload the app settings
-  appSettings.useSystemWindowStyle = typedData.toString();
+  if (usingLegacySettings) {
+    appSettings.useSystemWindowStyle = typedData;  
+  } else {
+    appSettings.appearance.useSystemWindowStyle = typedData;
+  }
+  
   await reloadMainWindow();
 });
 
@@ -326,6 +290,229 @@ ipcMain.on('openDevTools', (event, data) => {
   }
 });
 
+/**
+ * Download method that uses native node modules and supports redirects
+ */
+function downloadFile(url: string, path: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(path);
+
+    const download = (url: string, redirects = 0) => {
+      if (redirects > 10) {
+        reject(`Too many redirects for '${url}'`);
+        return;
+      }
+      
+      https.get(url, function(response: any) {
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          // If it's a redirect, make a request to the redirect location
+          download(response.headers.location, redirects + 1);
+        } else if (response.statusCode !== 200) {
+          // If the status code is not 200, reject the promise
+          reject(new Error(`Failed to get '${url}' (${response.statusCode})`));
+        } else {
+          // Otherwise, pipe the response into the file
+          response.pipe(file);
+
+          file.on('finish', function() {
+            file.close();
+            resolve(true);
+          });
+
+          file.on('error', (err) => {
+            reject(err);
+          });
+        }
+      }).on('error', (err) => {
+        reject(err);
+      });
+    };
+
+    download(url);
+  });
+}
+
+ipcMain.handle("downloadFile", async (event, args) => {
+  const url = args.url;
+  const path = args.path;
+
+  // Node fetch no work and other libraries are too big or require esm
+  return await downloadFile(url, path);
+});
+
+function extractTarball(tarballPath: string, outputPath: string) {
+  // It looks like tar is available on all platforms, so we can just use that `tar -xzf`
+  // But let's redirect the contents to the output path
+  // And capture the output so we can log it
+  const command = `tar -xzf "${tarballPath}" -C "${outputPath}"`;
+  logger.debug("Extracting tarball", command)
+  const output = execSync(command).toString();
+  logger.debug("Tarball extraction output", output)
+  
+  return true;
+}
+
+function extractZip(zipPath: string, outputPath: string) {
+  const zip = new AdmZip(zipPath);
+  zip.extractAllTo(outputPath, true);
+  
+  return true;
+}
+
+ipcMain.handle("extractFile", async (event, args) => {
+  const input = args.input;
+  const output = args.output;
+  
+  if (!fs.existsSync(output)) {
+    fs.mkdirSync(output, { recursive: true });
+  }
+  
+  console.log("Extracting file", input, output)
+
+  if (input.endsWith(".tar.gz")) {
+    return extractTarball(input, output);
+  } else if (input.endsWith(".zip")) {
+    return extractZip(input, output);
+  }
+
+  return false
+});
+
+ipcMain.handle("getAppExecutablePath", async (event, args) => {
+  return app.getAppPath();
+});
+
+ipcMain.handle("ow:cpm:is_required", async (event) => {
+  return (app as any).overwolf.isCMPRequired();
+})
+
+ipcMain.handle("ow:cpm:open_window", async (event, data) => {
+  (app as any).overwolf.openCMPWindow({
+    tab: data ?? "purposes" 
+  });
+});
+
+ipcMain.handle("startSubprocess", async (event, args) => {
+  if (process.env.NODE_ENV !== 'production') {
+    logger.debug("Not starting subprocess in dev mode")
+    return;
+  }
+
+  const javaPath = args.javaPath;
+  const argsList = args.args as string[]
+  const env = args.env as string[]
+
+  if (subprocess !== null && cachedProcessData === null) {
+    // Check if the process is still running
+    let pid = subprocess.pid;
+    subprocess.unref();
+
+    // Kill the subprocess
+    if (pid) {
+      process.kill(pid, 'SIGINT');
+    }
+    
+    logger.debug("Subprocess is already running, killing it")
+  }
+  
+  if (subprocess && cachedProcessData !== null) {
+    return {
+      port: cachedProcessData.port,
+      secret: cachedProcessData.secret
+    }
+  }
+
+  const correctedPath = javaPath.replace(/\\/g, "/");
+  logger.debug("Starting subprocess", correctedPath, argsList)
+
+  const electronPid = process.pid;
+  argsList.push(...["--pid", "" + electronPid])
+
+  // Spawn the process so it can run in the background and capture the output
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject("Subprocess timed out")
+    }, 30_000) // 30 seconds
+
+    const mappedEnv = env.reduce((curr, itt) => {
+      const [key, value] = itt.split("=");
+      curr[key] = value;
+      return curr;
+    }, {} as Record<string, string>)
+
+    logger.debug("Mapped env", mappedEnv)
+    logger.debug("Args list", argsList)
+
+    appCommunicationSetup = false;
+    subprocess = spawn(correctedPath, argsList, {
+      detached: true,
+      stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin, pipe stdout and stderr
+      env: {
+        ...process.env,
+        ...mappedEnv,
+      },
+      cwd: appHome
+    });
+
+    subprocess.stderr?.on('data', (data) => {
+      let outputData = data.toString();
+      if (outputData.endsWith("\n")) {
+        outputData = outputData.slice(0, -1);
+      }
+      logger.debug("Subprocess stderr", outputData)
+    });
+
+    subprocess.stdout?.on('data', (data) => {
+      let outputData = data.toString();
+      if (outputData.endsWith("\n")) {
+        outputData = outputData.slice(0, -1);
+      }
+
+      logger.debug("Subprocess stdout", outputData)
+      if (!appCommunicationSetup) {
+        if (data.includes("{T:CI")) {
+          const regex = /{p:([0-9]+);s:([^}]+)}/gi;
+          const matches = regex.exec(data.toString());
+
+          if (matches !== null) {
+            const [, port, secret] = matches;
+            logger.debug("Found port and secret", port, secret)
+            appCommunicationSetup = true;
+            clearTimeout(timeout);
+            
+            if (subprocess?.pid) {
+              cachedProcessData = {
+                pid: subprocess.pid,
+                port: parseInt(port),
+                secret: secret
+              };
+              
+              logger.debug("Cached process data", cachedProcessData)
+            }
+            
+            resolve({
+              port,
+              secret
+            })
+          }
+        }
+      }
+    });
+
+    subprocess?.on('error', (err) => {
+      logger.error("Subprocess error", err)
+    });
+
+    subprocess.on('exit', (code, signal) => {
+      logger.debug("Subprocess exited", code, signal)
+    });
+
+    subprocess?.on('close', (code) => {
+      logger.debug("Subprocess closed", code)
+    });
+  })
+});
+
 // function createFriendsWindow() {
 //   if (friendsWindow !== null && friendsWindow !== undefined) {
 //     friendsWindow.focus();
@@ -380,9 +567,16 @@ ipcMain.on('openDevTools', (event, data) => {
 //   });
 // }
 
-async function createWindow() {
+async function createWindow(reset = false) {
+  autoUpdater.checkForUpdatesAndNotify();
+  
   logger.debug("Creating main window")
-  const useSystemFrame = appSettings?.useSystemWindowStyle === "true" ?? false;
+  let useSystemFrame = false;
+  if (usingLegacySettings) {
+    useSystemFrame = appSettings?.useSystemWindowStyle === "true" ?? false;
+  } else {
+    useSystemFrame = appSettings.appearance.useSystemWindowStyle
+  }
   
   win = new BrowserWindow({
     title: 'FTB App',
@@ -390,10 +584,10 @@ async function createWindow() {
     // Other
     icon: path.join(__static, 'favicon.ico'),
     // Size Settings
-    minWidth: 1120,
-    minHeight: 800,
-    width: 1320,
-    height: 800,
+    minWidth: 1220,
+    minHeight: 895,
+    width: 1545,
+    height: 900,
     frame: useSystemFrame,
     titleBarStyle: useSystemFrame ? 'default' : 'hidden',
     webPreferences: {
@@ -432,18 +626,24 @@ async function createWindow() {
         mode: 'detach',
       });
     }
-
-    win.blur();
-    setTimeout(() => {
-      win?.focus();
-    }, 100)
   } else {
     logger.debug("Loading app from built files")
     createProtocol(protocolSpace)
     await win.loadURL(`${protocolSpace}://./index.html`);
+    
+    // Try and force focus on the window
+    win.focus();
+  }
+
+  if (reset) {
+    preserveSubprocess = false;
   }
 
   win.on('closed', () => {
+    // Kill the subprocess if it's running
+    if (subprocess !== null && !preserveSubprocess) {
+      subprocess.kill();
+    }
     win = null;
     // if (friendsWindow) {
     //   friendsWindow.close();

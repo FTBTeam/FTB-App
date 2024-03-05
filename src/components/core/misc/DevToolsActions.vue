@@ -67,7 +67,7 @@ export default class DevToolsActions extends Vue {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
-  right: 1rem;
+  left: 5rem;
 
   .divider {
     height: 1rem;

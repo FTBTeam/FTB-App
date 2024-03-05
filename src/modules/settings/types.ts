@@ -1,41 +1,4 @@
-export interface Settings {
-  width: number;
-  height: number;
-  memory: number;
-  keepLauncherOpen: boolean;
-  jvmargs: string;
-  shellArgs: string;
-  enableAnalytics: boolean;
-  enableChat: boolean;
-  enableBeta: boolean;
-  enablePreview: boolean;
-  threadLimit: number;
-  speedLimit: number;
-  cacheLife: number;
-  packCardSize: number;
-  listMode: boolean;
-  instanceLocation: string;
-  verbose: boolean;
-  cloudSaves: boolean;
-  autoOpenChat: boolean | string;
-  blockedUsers: string[] | string;
-  sessionString?: string;
-  mtConnect: boolean;
-  automateMojang: boolean;
-  showAdverts: boolean | string;
-  exitOverwolf?: boolean;
-  updateChannel: string;
-  fullScreen: boolean;
-  
-  useSystemWindowStyle: boolean;
-  
-  // new ish
-  proxyHost: string;
-  proxyPort: number;
-  proxyUser: string;
-  proxyPassword: string;
-  proxyType: 'http' | 'sock5' | 'none';
-}
+import {SettingsData} from '@/core/@types/javaApi';
 
 export interface Hardware {
   totalMemory: number;
@@ -46,7 +9,7 @@ export interface Hardware {
 }
 
 export interface SettingsState {
-  settings: Settings;
+  settings: SettingsData;
   error: boolean;
   hardware: Hardware;
 }

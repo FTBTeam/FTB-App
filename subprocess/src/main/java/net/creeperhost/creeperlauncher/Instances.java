@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher;
 
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.ElapsedTimer;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import org.apache.logging.log4j.LogManager;

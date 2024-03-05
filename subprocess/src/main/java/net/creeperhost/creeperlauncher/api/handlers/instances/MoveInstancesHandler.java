@@ -5,12 +5,12 @@ import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
     
     @Override
     public void handle(Data data) {
-        var currentLocation = Path.of(Settings.settings.getOrDefault("instanceLocation", Constants.INSTANCES_FOLDER_LOC.toAbsolutePath().toString()));
+        var currentLocation = Settings.getSettings().instanceLocation();
         if (currentLocation.toString().isEmpty()) {
             // Something is borked, just assume the default location is the right one
             currentLocation = Constants.INSTANCES_FOLDER_LOC;
@@ -211,9 +211,9 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             } else {
                 LOGGER.info("Successfully completed moving instances from {} to {}", currentLocation, newLocation);
                 
-                Settings.settings.remove("instanceLocation");
-                Settings.settings.put("instanceLocation", newLocation.toAbsolutePath().toString());
+                Settings.getSettings().setInstanceLocation(newLocation.toAbsolutePath());
                 Settings.saveSettings();
+                
                 CreeperLauncher.localCache = new LocalCache(newLocation.resolve(".localCache"));
                 Instances.refreshInstances();
                 Path oldCache = currentLocation.resolve(".localCache");

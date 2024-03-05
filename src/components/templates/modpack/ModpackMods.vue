@@ -3,8 +3,8 @@
     <div class="flex mb-8 gap-4 items-center relative z-50">
       <f-t-b-search-bar placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
       <template v-if="packInstalled">
-        <ui-button type="success" @click="searchingForMods = true" icon="plus" data-balloon-length="medium" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Add more mods'" :disabled="instance.locked" />
-        <ui-button type="info" @click="updateAll" icon="download" data-balloon-length="medium" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Update all mods'" :disabled="instance.locked || modUpdatesAvailableKeys.length === 0" />
+        <ui-button type="success" @click="searchingForMods = true" icon="plus" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Add more mods'" :disabled="instance.locked" />
+        <ui-button type="info" @click="updateAll" icon="download" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Update all mods'" :disabled="instance.locked || modUpdatesAvailableKeys.length === 0" />
         <ui-button type="info" icon="sync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="getModList(true)" />
       </template>
     </div>
@@ -106,7 +106,7 @@ export type ApiMod = {
   },
 })
 export default class ModpackMods extends Vue {
-  private logger = createLogger(ModpackMods.name + ".vue")
+  private logger = createLogger("ModpackMods.vue")
   
   @Prop() packInstalled!: boolean;
   @Prop() instance!: InstanceJson;
@@ -164,6 +164,16 @@ export default class ModpackMods extends Vue {
         _private: this.instance?._private ?? false,
       }), state => this.updatingModlist = state)
 
+      // try and keep the previous curse data
+      if (this.modlist) {
+        for (const mod of mods.files) {
+          const previous = this.modlist.find(e => e.sha1 === mod.sha1);
+          if (previous) {
+            mod.curse = previous.curse;
+          }
+        }
+      }
+      
       this.modlist = mods.files;
     } catch (e) {
       alertController.error("Unable to load mods for this instance...")

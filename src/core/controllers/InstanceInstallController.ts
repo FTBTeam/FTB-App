@@ -1,6 +1,7 @@
 import {emitter} from '@/utils';
 import store from '@/modules/store';
 import {
+  CancelInstallInstanceDataReply,
   CloudSavesReloadedData,
   InstallInstanceDataReply,
   InstanceJson,
@@ -74,7 +75,7 @@ const betterStageNames: Map<Stage, string> = new Map([
  * Instance install controller backed by a vuex store queue
  */
 class InstanceInstallController {
-  private logger = createLogger(InstanceInstallController.name + ".ts");
+  private logger = createLogger("InstanceInstallController.ts");
   private installLock = false;
   
   constructor() {
@@ -110,7 +111,7 @@ class InstanceInstallController {
     
     // Trigger a check queue
     await this.checkQueue();
-    alertController.info(`Install requested for ${request.name}`);
+    alertController.info(`${request.name} queued for installation`);
   }
 
   public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions | string | number, provider: PackProviders = "modpacksch") {
@@ -193,6 +194,53 @@ class InstanceInstallController {
     alertController.info(`Sync requested for ${instance.name}`);
   }
   
+  public async cancelInstall(uuid: string, isInstall = false) {
+    this.logger.debug("Cancel requested", uuid)
+    
+    if (isInstall) {
+      // Get the current install request
+      const currentInstall = store.state["v2/install"].currentInstall;
+      if (currentInstall == null) {
+        return;
+      }
+      
+      // Failsafe
+      if (currentInstall.request.uuid !== uuid) {
+        return;
+      }
+      
+      // Cancel the install
+      let tried = 0;
+      let result: null | CancelInstallInstanceDataReply = null;
+      while (++tried < 3) {
+        try {
+          result = await sendMessage("cancelInstallInstance", {
+            uuid: currentInstall.forInstanceUuid
+          }, 10_000);
+          
+          if (result.status === "success") {
+            break;
+          }
+        } catch (e) {
+          this.logger.error("Failed to cancel install", e);
+        }
+      }
+      
+      if (result == null || result.status !== "success") {
+        alertController.error(`Failed to cancel install for ${currentInstall.request.name}`);
+        return;
+      }
+    }
+    
+    const index = this.queue.findIndex(e => e.uuid === uuid);
+    if (index === -1) {
+      return;
+    }
+    
+    alertController.info(`Cancelled install for ${this.queue[index].name}`);
+    this.queue.splice(index, 1);
+  }
+  
   private async checkQueue() {
     if (this.queue.length === 0 || this.installLock) {
       return;
@@ -267,7 +315,7 @@ class InstanceInstallController {
     }
     
     this.logger.debug("Sending install request", payload)
-    
+        
     let knownInstanceUuid = "";
     let continuePast = false;
     if (!request.syncUuid) {

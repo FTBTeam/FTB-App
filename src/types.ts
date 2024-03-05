@@ -1,5 +1,4 @@
 import {SettingsState} from './modules/settings/types';
-import {AuthState, Friend} from './modules/auth/types';
 import {AppState} from '@/core/state/appState';
 
 export namespace App {
@@ -13,11 +12,7 @@ export namespace App {
 }
 
 export type RootState = {
-  version: string;
-  wsPort: number;
-  wsSecret: string;
   settings: SettingsState | null;
-  auth: AuthState | null;
 } & AppState
 
 
@@ -26,12 +21,6 @@ export interface ModalBox {
   title: string;
   message: string;
   buttons: Button[];
-}
-
-export interface FriendListResponse {
-  online: Friend[];
-  offline: Friend[];
-  pending: Friend[];
 }
 
 export interface Button {

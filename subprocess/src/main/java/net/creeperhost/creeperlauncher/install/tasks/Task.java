@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;

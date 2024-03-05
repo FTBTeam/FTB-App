@@ -29,7 +29,8 @@ export const mutations: MutationTree<SocketState> = {
     if (message.type !== 'ping' && message.type !== 'pong') {
       const { requestId, type, ...rest } = message;
       if (message.type !== "launchInstance.logs") {
-        logger.debug(`WS Message: [${message.requestId ?? 'unknown'}::${message.type}]`, rest)
+        // Done like this to avoid being seen when searching for the normal version
+        console["debug"](`WS Message: [${message.requestId ?? 'unknown'}::${message.type}]`, rest)
       }
       emitter.emit('ws.message', message);
     }
@@ -55,21 +56,12 @@ export const mutations: MutationTree<SocketState> = {
       if (!state.socket.isConnected) {
         state.socket.isConnected = true;
       }
-    } else if (message.type === 'yeetLauncher') {
-      if (state.exitCallback) {
-        state.exitCallback(message);
-      }
     } else if (message.type === 'openModal') {
       state.modal = message;
     } else if (message.type === 'closeModal') {
       state.modal = null;
-    } else if (message.type === 'ircMessage') {
-      if (state.ircEventCallback) {
-        state.ircEventCallback(message);
-      }
     }
     state.socket.message = message;
-    platform.get.websocket.notifyWebhookReceived(message);
   },
   SOCKET_RECONNECT(state: any, count: number) {
     logger.info(`Attempting to reconnect to java-backend, tries: ${count}`);
@@ -83,11 +75,5 @@ export const mutations: MutationTree<SocketState> = {
   },
   ADD_PING_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
     state.pingEventCallback = callback;
-  },
-  ADD_IRC_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
-    state.ircEventCallback = callback;
-  },
-  ADD_EXIT_CALLBACK(state: any, callback: (data: any) => void) {
-    state.exitCallback = callback;
-  },
+  }
 };

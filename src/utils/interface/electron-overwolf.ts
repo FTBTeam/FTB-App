@@ -1,5 +1,6 @@
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import {createLogger} from '@/core/logger';
+import {constants} from '@/core/constants';
 
 /**
  * Creates a simple way of abstracting the logic between overwolf and electron into a
@@ -7,14 +8,16 @@ import {createLogger} from '@/core/logger';
  */
 class Platform {
   protected inter: ElectronOverwolfInterface = {} as ElectronOverwolfInterface;
-  private logger = createLogger(Platform.name + ".ts")
+  private logger = createLogger("Platform.ts")
 
+  private platformProvider = constants.platform
+  
   constructor() {}
 
   public async setup() {
-    this.logger.info('Setting up platform');
-    this.inter = ((await import(`./${process.env.VUE_APP_PLATFORM}`)).default as unknown) as ElectronOverwolfInterface;
-    this.logger.info(`Platform setup complete for ${process.env.VUE_APP_PLATFORM}`);
+    this.logger.info('Setting up platform', this.platformProvider);
+    this.inter = ((await import(`./${this.platformProvider}`)).default as unknown) as ElectronOverwolfInterface;
+    this.logger.info(`Platform setup complete for ${this.platformProvider ?? "electron"}`);
   }
 
   get get() {
@@ -22,11 +25,11 @@ class Platform {
   }
 
   public isOverwolf() {
-    return process.env.VUE_APP_PLATFORM !== 'electron';
+    return this.platformProvider === 'overwolf';
   }
 
   public isElectron() {
-    return process.env.VUE_APP_PLATFORM === 'electron';
+    return this.platformProvider === 'electron';
   }
 }
 

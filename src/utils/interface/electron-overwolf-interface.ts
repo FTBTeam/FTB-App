@@ -1,4 +1,5 @@
 import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
+import {JavaLicenses, JavascriptLicenses} from '@/core/@types/external/licenses.types';
 
 /**
  * This isn't my final form, I should be more unified and less hacky on some of
@@ -28,12 +29,7 @@ export interface Actions {
   uploadClientLogs: () => void;
 
   // Res only used on overwolf
-  setUser: (payload: any) => void;
-  updateSettings: (info: any) => void;
   changeExitOverwolfSetting: (value: boolean) => void;
-  logoutFromMinetogether: () => void;
-  sendSession: (payload: any) => void;
-  yeetLauncher: (windowId: any, cb: () => void) => void;
   onAppReady: () => void;
 
   restartApp(): void;
@@ -53,18 +49,17 @@ export interface Frame {
   expandWindow: () => void;
   collapseWindow: () => void;
 
+  
   // Overwolf specific
+  getWindowId: () => Promise<string>;
   handleDrag: (event: any, windowId: any) => void;
-  setupTitleBar: (cb: (windowId: any) => void) => void;
   setSystemWindowStyle(enabled: boolean): void;
 }
 
 export interface Config {
-  publicVersion: string;
-  appVersion: string;
-  webVersion: string;
+  version: string;
   dateCompiled: string;
-  javaLicenses: object;
+  commit: string;
   branch: string
 }
 
@@ -77,8 +72,30 @@ export interface InputOutput {
   getLocalAppData: () => string;
 }
 
-export interface Websocket {
-  notifyWebhookReceived: (message: string) => void;
+export interface App {
+  appHome(): Promise<string>;
+  appData(): Promise<string>;
+  appSettings(): Promise<any | null>;
+  appRuntimes(): Promise<string>;
+  runtimeAvailable(): Promise<boolean>;
+  installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate: boolean): Promise<void>;
+  updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void): Promise<void>;
+  startSubprocess(): Promise<{ 
+    port: number;
+    secret: string;
+  } | false>;
+  
+  getLicenses(): {
+    javascript: JavascriptLicenses | null,
+    java: JavaLicenses | null,
+  };
+  
+  cpm: {
+    required(): Promise<boolean>;
+    openWindow(tab: 'purposes' | 'features' | 'vendors'): Promise<void>;
+    isFirstLaunch: () => Promise<boolean>;
+    setFirstLaunched: () => Promise<void>;
+  }
 }
 
 export default interface ElectronOverwolfInterface {
@@ -88,6 +105,6 @@ export default interface ElectronOverwolfInterface {
   frame: Frame;
   config: Config;
   io: InputOutput;
-  websocket: Websocket;
+  app: App;
   setupApp: (vm: any) => void;
 }

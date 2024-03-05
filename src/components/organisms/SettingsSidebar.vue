@@ -12,13 +12,17 @@
           <font-awesome-icon icon="gamepad" />
           <span>Instances</span>
         </router-link>
-        <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
-          <font-awesome-icon icon="cloud-download-alt" />
-          <span>Downloads</span>
-        </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_APP }" class="item">
           <font-awesome-icon icon="rocket" />
           <span>App</span>
+        </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_PRIVACY }" class="item">
+          <font-awesome-icon icon="user-secret" />
+          <span>Privacy</span>
+        </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
+          <font-awesome-icon icon="cloud-download-alt" />
+          <span>Downloads</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_INTEGRATION }" class="item">
           <font-awesome-icon icon="link" />
@@ -29,7 +33,7 @@
           <span>Proxy</span>
         </router-link>
       </nav>
-      <nav v-if="auth.token !== null">
+      <nav v-if="getMtAccount">
         <div class="heading">Integrations</div>
         <router-link :to="{ name: RouterNames.SETTINGS_MT_INTEGRATION }" class="item app-info-item">
           <img src="@/assets/images/mt-logo.webp" alt="" />
@@ -49,16 +53,20 @@
     <div class="meta">
       <span>App version</span>
       <popover position="bottom">
-        <div class="value copyable pr-3">{{ version }}</div>
+        <div class="value copyable pr-3">{{ configData.version }}</div>
         <template #inner>
           <div class="version">
             <div class="field mb-4">
-              <div class="head">UI Version</div>
-              <div class="value copyable">{{ uiVersion }}</div>
+              <div class="head">Released</div>
+              <div class="value copyable" :title="configData.dateCompiled | dayjsFull">{{ configData.dateCompiled | dayjsFromNow }}</div>
             </div>
             <div class="field">
-              <div class="head">Subprocess Version</div>
-              <div class="value copyable">{{ appVersion }}</div>
+              <div class="head">Branch</div>
+              <div class="value copyable">{{ configData.branch }}</div>
+            </div>
+            <div class="field">
+              <div class="head">Commit</div>
+              <div class="value copyable">{{ configData.commit }}</div>
             </div>
           </div>
         </template>
@@ -70,21 +78,23 @@
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import {State} from 'vuex-class';
-import {AuthState} from '@/modules/auth/types';
+import {Getter} from 'vuex-class';
 import {RouterNames} from '@/router';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount} from '@/core/@types/javaApi';
 
 @Component
 export default class SettingsSidebar extends Vue {
-  @State('auth') private auth!: AuthState;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
 
   platform = platform;
   RouterNames = RouterNames;
-
-  version = platform.get.config.publicVersion;
-  uiVersion = platform.get.config.webVersion;
-  appVersion = platform.get.config.appVersion;
+  
   changesHistoryOpen: boolean = false;
+  
+  get configData() {
+    return platform.get.config;
+  }
 }
 </script>
 

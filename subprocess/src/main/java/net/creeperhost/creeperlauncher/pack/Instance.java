@@ -7,7 +7,10 @@ import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.HashUtils;
-import net.creeperhost.creeperlauncher.*;
+import net.creeperhost.creeperlauncher.Analytics;
+import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.data.InstanceModifications;
 import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
@@ -21,6 +24,7 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.CurseMetadataCache.FileMetadata;
 import net.creeperhost.creeperlauncher.util.DialogUtil;
 import net.creeperhost.creeperlauncher.util.FileUtils;
@@ -269,12 +273,14 @@ public class Instance {
         pollVersionManifest();
 
         LOGGER.info("Scanning instance.");
-        InstanceScanner scanner = new InstanceScanner(path, versionManifest);
-        scanner.scan();
-        if (scanner.isPotentiallyInvalid()) {
-            boolean abort = DialogUtil.confirmDialog("Potentially invalid instance", "Abort", "Launch", "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?");
-            if (abort) {
-                throw new InstanceLaunchException.Abort("Aborted.");
+        InstanceScanner scanner = new InstanceScanner(path, versionManifest, this);
+        if (scanner.shouldScan()) {
+            scanner.scan();
+            if (scanner.isPotentiallyInvalid()) {
+                boolean abort = DialogUtil.confirmDialog("Potentially invalid instance", "Abort", "Launch", "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?");
+                if (abort) {
+                    throw new InstanceLaunchException.Abort("Aborted.");
+                }
             }
         }
 
@@ -286,15 +292,13 @@ public class Instance {
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
 
             // TODO, do this on LocalInstance load, potentially combine with changes to make jvmArgs an array.
-            List<String> jvmArgs = MiscUtils.splitCommand(props.jvmArgs);
-            for (Iterator<String> iterator = jvmArgs.iterator(); iterator.hasNext(); ) {
-                String jvmArg = iterator.next();
-                if (jvmArg.contains("-Xmx")) {
-                    iterator.remove();
-                    break;
+            var args = MiscUtils.splitCommand(props.jvmArgs);
+            for (String arg : args) {
+                if (arg.contains("-Xmx") || arg.contains("-Xms")) {
+                    continue;
                 }
+                ctx.extraJVMArgs.add(arg);
             }
-            ctx.extraJVMArgs.addAll(jvmArgs);
         });
 
         if (CreeperLauncher.CLOUD_SAVE_MANAGER.isConfigured() && props.cloudSaves) {
@@ -329,6 +333,7 @@ public class Instance {
             });
         }
 
+        // TODO: Check if private
         launcher.withStartTask(ctx -> {
             Analytics.sendPlayRequest(getId(), getVersionId(), props.packType);
         });
@@ -476,12 +481,14 @@ public class Instance {
     }
 
     @Nullable
-    public Instance duplicate(String instanceName) throws IOException {
+    public Instance duplicate(String instanceName, @Nullable String category) throws IOException {
         if (pendingCloudInstance) throw new UnsupportedOperationException("Can't duplicate un synced cloud instances.");
 
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
+        json.potentiallyBrokenDismissed = false;
+        json.category = category != null ? category : props.category;
 
         Path newDir = Settings.getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");

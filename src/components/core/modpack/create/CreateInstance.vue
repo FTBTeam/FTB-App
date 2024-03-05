@@ -102,7 +102,7 @@ import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelecto
 import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
 import {ns} from '@/core/state/appState';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import {Action, State} from 'vuex-class';
+import {Action, Getter, State} from 'vuex-class';
 import {ModPack} from '@/modules/modpacks/types';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -117,7 +117,7 @@ import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelec
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
-import {AuthState} from '@/modules/auth/types';
+import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
 
 @Component({
   components: {
@@ -130,12 +130,14 @@ import {AuthState} from '@/modules/auth/types';
   }
 })
 export default class CreateInstance extends Vue {
-  @State('auth') public auth!: AuthState;
   @State('settings') public settingsState!: SettingsState;
   
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   @State('settings') private settings!: SettingsState;
-  
+
+  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+
   @Prop() open!: boolean;
   @Emit() close() {
     this.step = 0;
@@ -173,11 +175,11 @@ export default class CreateInstance extends Vue {
   async mounted() {
     await this.loadInitialState();
     
-    this.settingFullscreen = this.settings.settings.fullScreen;
-    this.settingScreenResolution = this.settings.settings.width + "x" + this.settings.settings.height;
-    this.settingRam = this.settings.settings.memory;
-    this.userWidth = this.settings.settings.width;
-    this.userHeight = this.settings.settings.height;
+    this.settingFullscreen = this.settings.settings.instanceDefaults.fullscreen;
+    this.settingScreenResolution = this.settings.settings.instanceDefaults.width + "x" + this.settings.settings.instanceDefaults.height;
+    this.settingRam = this.settings.settings.instanceDefaults.memory;
+    this.userWidth = this.settings.settings.instanceDefaults.width;
+    this.userHeight = this.settings.settings.instanceDefaults.height;
   }
   
   onScreenResolutionChange(newVal: string) {
@@ -262,11 +264,11 @@ export default class CreateInstance extends Vue {
       private: false,
       category: this.userCategory,
       ourOwn: true,
-      ram: this.settingRam == this.settingsState.settings.memory ? -1 : this.settingRam,
-      fullscreen: this.settingFullscreen === this.settingsState.settings.fullScreen ? undefined : this.settingFullscreen,
-      width: this.userWidth == this.settingsState.settings.width ? undefined : this.userWidth,
-      height: this.userHeight == this.settingsState.settings.height ? undefined : this.userHeight,
-      cloudSaves: this.userCloudSaves === this.settingsState.settings.cloudSaves ? undefined : this.userCloudSaves,
+      ram: this.settingRam == this.settingsState.settings.instanceDefaults.memory ? -1 : this.settingRam,
+      fullscreen: this.settingFullscreen === this.settingsState.settings.instanceDefaults.fullscreen ? undefined : this.settingFullscreen,
+      width: this.userWidth == this.settingsState.settings.instanceDefaults.width ? undefined : this.userWidth,
+      height: this.userHeight == this.settingsState.settings.instanceDefaults.height ? undefined : this.userHeight,
+      cloudSaves: this.userCloudSaves,
     }
     
     // Magic
@@ -325,11 +327,11 @@ export default class CreateInstance extends Vue {
   }
 
   get accountHasPlan() {
-    if (!this.auth || !this.auth.token || !this.auth.token?.activePlan) {
+    if (!this.getMtAccount?.activePlan) {
       return false;
     }
 
-    const plan = this.auth.token.activePlan;
+    const plan = this.getMtAccount.activePlan;
     return plan.status === "Active";
   }
 }

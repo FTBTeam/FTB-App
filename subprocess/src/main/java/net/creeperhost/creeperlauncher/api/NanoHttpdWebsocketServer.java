@@ -3,10 +3,8 @@ package net.creeperhost.creeperlauncher.api;
 import com.google.gson.Gson;
 import fi.iki.elonen.NanoWSD;
 import net.covers1624.quack.reflect.PrivateLookups;
-import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
-import net.creeperhost.creeperlauncher.util.MiscUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -116,18 +114,18 @@ public class NanoHttpdWebsocketServer extends NanoWSD implements WebsocketServer
         @Override
         protected void onOpen() {
             LOGGER.info("New connection to {}.", getHandshakeRequest().getRemoteIpAddress());
-            if (portMode == PortMode.DYNAMIC_ON_CONNECT) {
-                int port = MiscUtils.getRandomEphemeralPort();
-                LOGGER.info("Changing websocket port.");
-                send("{\"port\": \"" + port + "\", \"secret\": \"" + Constants.WEBSOCKET_SECRET + "\"}");
-                try {
-                    close(WebSocketFrame.CloseCode.NormalClosure, "change_port", false);
-                } catch (IOException ex) {
-                    LOGGER.warn("Failed to close close.", ex);
-                }
-                WebSocketHandler.restartOnPort(port);
-                return;
-            }
+//            if (portMode == PortMode.DYNAMIC_ON_CONNECT) {
+//                int port = MiscUtils.getRandomEphemeralPort();
+//                LOGGER.info("Changing websocket port.");
+//                send("{\"port\": \"" + port + "\", \"secret\": \"" + Constants.WEBSOCKET_SECRET + "\"}");
+//                try {
+//                    close(WebSocketFrame.CloseCode.NormalClosure, "change_port", false);
+//                } catch (IOException ex) {
+//                    LOGGER.warn("Failed to close close.", ex);
+//                }
+//                WebSocketHandler.restartOnPort(port);
+//                return;
+//            }
 
             addConnection(this);
             CreeperLauncher.websocketDisconnect = false;

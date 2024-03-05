@@ -1,9 +1,9 @@
 <template>
-  <div class="download-settings">
+  <div class="download-settings" v-if="localSettings.spec">
     <ftb-slider
       label="Download Threads"
-      v-model="localSettings.threadLimit"
-      :currentValue="localSettings.threadLimit"
+      v-model="localSettings.download.threadLimit"
+      :currentValue="localSettings.download.threadLimit"
       minValue="1"
       :maxValue="settingsState.hardware.totalCores * 2"
       @change="saveMutated"
@@ -15,8 +15,8 @@
 
     <ftb-slider
       label="Download Speed"
-      v-model="localSettings.speedLimit"
-      :currentValue="(localSettings.speedLimit / 1000).toFixed(0)"
+      v-model="localSettings.download.speedLimit"
+      :currentValue="(localSettings.download.speedLimit / 1000).toFixed(0)"
       minValue="0"
       :maxValue="250000"
       @change="saveMutated"
@@ -31,8 +31,8 @@
 
     <ftb-slider
       label="Cache Life"
-      v-model="localSettings.cacheLife"
-      :currentValue="localSettings.cacheLife"
+      v-model="localSettings.general.cacheLife"
+      :currentValue="localSettings.general.cacheLife"
       minValue="900"
       maxValue="15768000"
       @change="saveMutated"
@@ -43,16 +43,20 @@
       small="We store some information on your machine to speed up the app, you can control how long that data lives on your machine before being updated again."
     />
   </div>
+  <Loader v-else />
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Settings, SettingsState } from '@/modules/settings/types';
-import { Action, State } from 'vuex-class';
+import {Component, Vue} from 'vue-property-decorator';
+import {SettingsState} from '@/modules/settings/types';
+import {Action, State} from 'vuex-class';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
+import {SettingsData} from '@/core/@types/javaApi';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
   components: {
+    Loader,
     'ftb-slider': FTBSlider,
   },
 })
@@ -61,7 +65,7 @@ export default class DownloadSettings extends Vue {
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
   @State('settings') public settingsState!: SettingsState;
 
-  localSettings: Settings = {} as Settings;
+  localSettings: SettingsData = {} as SettingsData;
 
   async created() {
     await this.loadSettings();

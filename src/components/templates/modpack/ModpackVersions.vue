@@ -68,7 +68,7 @@ import {createLogger} from '@/core/logger';
   components: {UiButton, Selection2}
 })
 export default class ModpackVersions extends Vue {
-  private logger = createLogger(ModpackVersions.name + ".vue")
+  private logger = createLogger("ModpackVersions.vue")
   
   @Prop() versions!: Versions[];
   @Prop() packInstance!: ModPack;

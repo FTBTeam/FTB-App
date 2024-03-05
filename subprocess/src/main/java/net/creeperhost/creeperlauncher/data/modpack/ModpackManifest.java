@@ -4,12 +4,13 @@ import com.google.common.hash.HashCode;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
+import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public class ModpackManifest {
 
     @Nullable
     public static ModpackManifest queryManifest(long packId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        String url = Constants.getModpacksEndpoint(isPrivate, packType) + packId;
+        String url = ModpacksChUtils.getModpacksEndpoint(isPrivate, packType) + packId;
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
@@ -57,6 +58,9 @@ public class ModpackManifest {
                 .setUserAgent(Constants.USER_AGENT)
                 .setUrl(url)
                 .setDest(sw);
+        
+        ModpacksChUtils.injectBearerHeader(action);
+        
         action.execute();
 
         ModpackManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackManifest.class);
@@ -80,7 +84,7 @@ public class ModpackManifest {
 
     @Nullable
     public Art getFirstArt(String type) {
-        return StreamableIterable.of(art)
+        return FastStream.of(art)
                 .filter(e -> e.getType().equals(type))
                 .firstOrDefault();
     }

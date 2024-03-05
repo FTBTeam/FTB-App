@@ -2,7 +2,6 @@ import store from '@/modules/store';
 import {HttpMethod} from '@/core/@types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
 import {WebRequestData} from '@/core/@types/javaApi';
-import {constants} from '@/core/constants';
 import {createLogger} from '@/core/logger';
 
 interface FetchResponseRaw {
@@ -66,7 +65,7 @@ class FetchResponse implements FetchResponseRaw {
 }
 
 export class JavaFetch {
-  private readonly logger = createLogger(JavaFetch.name + ".ts")
+  private readonly logger = createLogger("JavaFetch.ts")
   
   private _url;
   private _headers: Record<string, string[]> = {};
@@ -85,15 +84,40 @@ export class JavaFetch {
   
   //#region helper methods
   public static modpacksCh(endpoint: string) {
-    return JavaFetch.create(`${constants.modpacksApi}/public/${endpoint}`)
+    const credentials = store.state["v2/apiCredentials"];
+    const {apiUrl, usesBearerAuth} = credentials;
+    
+    const url = `${apiUrl}${usesBearerAuth ? "" : "/public"}/${endpoint}`;
+    return JavaFetch.create(url)
   }
   
   public static modpacksChPrivate(endpoint: string) {
-    return JavaFetch.create(`${constants.modpacksApi}/${JavaFetch.apiKey()}/${endpoint}`)
+    const credentials = store.state["v2/apiCredentials"];
+    const {apiUrl, apiSecret, supportsPublicPrefix, usesBearerAuth, wasUserSet} = credentials;
+    
+    // Compute the correct url
+    let url;
+    if (!wasUserSet) {
+      url = `${apiUrl}/${apiSecret ?? 'public'}/${endpoint}`; 
+    } else {
+      if (supportsPublicPrefix && !usesBearerAuth) {
+        url = `${apiUrl}/${apiSecret ?? "public"}/${endpoint}`;
+      } else {
+        url = `${apiUrl}/${endpoint}`;
+      }
+    }
+    
+    const fetcher = JavaFetch.create(url);
+    
+    if (wasUserSet && usesBearerAuth && apiSecret) {
+      fetcher.header("Authorization", `Bearer ${apiSecret}`)
+    }
+    
+    return fetcher
   }
   
   private static apiKey() {
-    return store.state.auth?.token?.attributes.modpackschkey ?? "public"
+    return store.state["v2/apiCredentials"].apiSecret ?? "public"
   }
   //#endregion
   
@@ -139,7 +163,7 @@ export class JavaFetch {
   async execute(): Promise<FetchResponse | null> {
     const cleanUrl = JavaFetch.apiKey() === "public" ? this._url : this._url.replace(JavaFetch.apiKey(), "********")
     this.logger.debug(`Executing request to ${this._method}::${cleanUrl}`)
-    
+
     const payload: Nullable<MessageRaw<WebRequestData>, "body"> = {
       url: this._url,
       method: this._method,

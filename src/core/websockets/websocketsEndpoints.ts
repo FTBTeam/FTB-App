@@ -1,14 +1,11 @@
 import {
   AccountIsValidHandlerData,
   AccountIsValidHandlerReply,
-  AddFriendData,
-  AddFriendDataReply,
-  AuthenticateMcProfileHandlerData,
-  AuthenticateMcProfileHandlerReply,
+  AppInitHandlerData,
+  AppInitHandlerReply,
   AuthenticateMsProfileHandlerData,
   AuthenticateMsProfileHandlerReply,
   BaseData,
-  BlockFriendData,
   BrowseInstanceData,
   BrowseInstanceDataReply,
   CancelInstallInstanceData,
@@ -21,8 +18,6 @@ import {
   DuplicateInstanceHandlerRequest,
   FileHashData,
   FileHashDataReply,
-  GetFriendsData,
-  GetFriendsDataReply,
   GetInstanceFoldersHandlerReply,
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
@@ -54,14 +49,14 @@ import {
   InstanceRestoreBackupHandlerRequest,
   InstanceVersionInfoData,
   InstanceVersionInfoDataReply,
-  IRCConnectData,
-  IRCQuitRequestData,
-  IRCSendMessageData,
   KillInstanceData,
   KillInstanceDataReply,
   LaunchInstanceData,
   LaunchInstanceDataReply,
   MessageClientData,
+  MineTogetherAuthenticationHandlerData,
+  MineTogetherAuthenticationHandlerReply,
+  MineTogetherLogoutHandlerReply,
   ModalCallbackData,
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
@@ -88,7 +83,6 @@ import {
   StorageGetHandlerReply,
   StoragePutHandlerData,
   StoragePutHandlerReply,
-  StoreAuthDetailsData,
   SyncCloudInstanceData,
   SyncCloudInstanceDataReply,
   UninstallInstanceData,
@@ -99,8 +93,7 @@ import {
   VideoCacheHandlerData,
   VideoCacheHandlerReply,
   WebRequestData,
-  WebRequestDataResponse,
-  YeetLauncherData
+  WebRequestDataResponse
 } from '@/core/@types/javaApi';
 import {Nullable} from '@/core/websockets/websocketsApi';
 
@@ -122,18 +115,10 @@ export type MessageType =
   "saveSettings" |
   "modalCallback" |
   "fileHash" |
-  "storeAuthDetails" |
   "syncInstance" |
-  "ircConnect" |
-  "ircSendMessage" |
-  "ircQuitRequest" |
   "uploadLogs" |
   "getJavas" |
-  "getFriends" |
-  "blockFriend" |
-  "addFriend" |
   "instanceMods" |
-  "yeetLauncher" |
   "pong" |
   "ping" |
   "messageClient" |
@@ -150,7 +135,6 @@ export type MessageType =
   "profiles.get" |
   "profiles.remove" |
   "profiles.setActiveProfile" |
-  "profiles.mc.authenticate" |
   "profiles.ms.authenticate" |
   "instanceEnableCloudSaves" |
   "instanceDisableCloudSaves" |
@@ -162,11 +146,22 @@ export type MessageType =
   "webRequest" |
   "openDebugTools" |
   "videoCache" |
-  "moveInstances"
+  "moveInstances" | 
+  "minetogetherAuthentication" |
+  "minetogetherLogoutHandler" |
+  "appInit"
 
 export type EmptyMessageResponse = {}
 
 export type MessagePayload = {
+  "appInit": {
+    input: AppInitHandlerData,
+    output: AppInitHandlerReply
+  },
+  "minetogetherLogoutHandler": {
+    input: BaseData,
+    output: MineTogetherLogoutHandlerReply
+  },
   "installedInstances": {
     input: InstalledInstancesData,
     output: InstalledInstancesDataReply
@@ -231,25 +226,9 @@ export type MessagePayload = {
     input: FileHashData,
     output: FileHashDataReply
   }
-  "storeAuthDetails": {
-    input: StoreAuthDetailsData,
-    output: EmptyMessageResponse
-  }
   "syncInstance": {
     input: SyncCloudInstanceData,
     output: SyncCloudInstanceDataReply
-  }
-  "ircConnect": {
-    input: IRCConnectData,
-    output: EmptyMessageResponse // This one is super weird
-  }
-  "ircSendMessage": {
-    input: IRCSendMessageData,
-    output: EmptyMessageResponse
-  }
-  "ircQuitRequest": {
-    input: IRCQuitRequestData,
-    output: EmptyMessageResponse
   }
   "uploadLogs": {
     input: UploadLogsData,
@@ -259,25 +238,9 @@ export type MessagePayload = {
     input: GetJavasData,
     output: GetJavasDataReply
   }
-  "getFriends": {
-    input: GetFriendsData,
-    output: GetFriendsDataReply
-  }
-  "blockFriend": {
-    input: BlockFriendData,
-    output: EmptyMessageResponse
-  }
-  "addFriend": {
-    input: AddFriendData,
-    output: AddFriendDataReply
-  }
   "instanceMods": {
     input: InstanceModsData,
     output: InstanceModsDataReply
-  }
-  "yeetLauncher": {
-    input: YeetLauncherData,
-    output: EmptyMessageResponse
   }
   "pong": {
     input: PongLauncherData
@@ -344,10 +307,6 @@ export type MessagePayload = {
     input: SetActiveProfileHandlerData,
     output: SetActiveProfileHandlerReply
   }
-  "profiles.mc.authenticate": {
-    input: AuthenticateMcProfileHandlerData,
-    output: AuthenticateMcProfileHandlerReply
-  }
   "profiles.ms.authenticate": {
     input: AuthenticateMsProfileHandlerData,
     output: AuthenticateMsProfileHandlerReply
@@ -399,5 +358,9 @@ export type MessagePayload = {
   "moveInstances": {
     input: MoveInstancesHandlerData
     output: MoveInstancesHandlerReply
+  },
+  "minetogetherAuthentication": {
+    input: MineTogetherAuthenticationHandlerData,
+    output: Nullable<MineTogetherAuthenticationHandlerReply, "basicData" | "profile">
   }
 }

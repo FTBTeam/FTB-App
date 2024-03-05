@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.util;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.io.IndentPrintWriter;
 import net.creeperhost.creeperlauncher.Constants;
 import org.apache.logging.log4j.LogManager;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -31,7 +30,6 @@ public final class DNSDebug {
     );
 
     private static final String[] IMPORTANT_HOSTS = new String[] {
-            "authserver.mojang.com",
             "sessionserver.mojang.com",
             "launchermeta.mojang.com",
             "api.mojang.com",
@@ -39,9 +37,11 @@ public final class DNSDebug {
             "piston-meta.mojang.com",
             "api.modpacks.ch",
             "api.creeperhost.net",
+            "dist.modpacks.ch",
             "maven.creeperhost.net",
             "maven.fabricmc.net",
-            "maven.minecraftforge.net"
+            "maven.minecraftforge.net",
+            "maven.neoforged.net"
     };
 
     @Nullable
@@ -92,7 +92,7 @@ public final class DNSDebug {
             try {
                 DNSChain.DNSResult result = Constants.DNS_CHAIN.query(host);
                 pw.println("From  : " + result.resolvedBy());
-                pw.println("Answer: [" + StreamableIterable.of(result.answer()).map(InetAddress::getHostAddress).join(", ") + "]");
+                pw.println("Answer: [" + FastStream.of(result.answer()).map(InetAddress::getHostAddress).join(", ") + "]");
             } catch (Throwable ex) {
                 pw.println("Request failed.");
                 pw.pushIndent();

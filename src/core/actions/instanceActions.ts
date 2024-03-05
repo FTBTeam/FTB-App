@@ -7,7 +7,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 
 export class InstanceActions {
-  private static logger = createLogger(InstanceActions.name + ".ts");
+  private static logger = createLogger("InstanceActions.ts");
   
   static async start(instance: SugaredInstanceJson) {
     if (!this.canStart(instance) || this.isUpdating(instance)) return false;
@@ -28,13 +28,13 @@ export class InstanceActions {
     await safeNavigate(RouterNames.ROOT_LOCAL_PACK, {uuid: instance.uuid}, {quickNav: ModpackPageTabs.SETTINGS})
   }
   
-  static clearInstanceCache(announce = true) {
+  static async clearInstanceCache(announce = true) {
     InstanceActions.logger.debug("Clearing instance cache")
-    store.dispatch("v2/modpacks/clearModpacks", undefined, {
+    await store.dispatch("v2/modpacks/clearModpacks", undefined, {
       root: true
     });
     
-    store.dispatch("v2/instances/loadInstances", undefined, {
+    await store.dispatch("v2/instances/loadInstances", undefined, {
       root: true
     }); // Reload instances
     

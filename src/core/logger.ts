@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
-import * as process from 'process';
+import {constants} from '@/core/constants';
+import inspect from 'object-inspect';
 
 enum LogLevel {
   SILLY = "silly",
@@ -34,51 +35,52 @@ class Logger {
   }
 
   warn(...args: any[]) {
-    if (!this.shouldLog(LogLevel.WARN)) {
-      return
-    }
-    
-    console.warn(`[${this.now()}][${this.typeToShort(LogLevel.WARN)}][${this.name}]`, ...args)
+    this.internalLog(LogLevel.WARN, ...args)
   }
 
   error(...args: any[]) {
-    if (!this.shouldLog(LogLevel.ERROR)) {
-      return
-    }
-    
-    console.error(`[${this.now()}][${this.typeToShort(LogLevel.ERROR)}][${this.name}]`, ...args)
+    this.internalLog(LogLevel.ERROR, ...args)
   }
 
   debug(...args: any[]) {
-    if (!this.shouldLog(LogLevel.DEBUG)) {
-      return
-    }
-    
-    console.info(`[${this.now()}][${this.typeToShort(LogLevel.DEBUG)}][${this.name}]`, ...args)
+    this.internalLog(LogLevel.DEBUG, ...args)
   }
   
   info(...args: any[]) {
-    if (!this.shouldLog(LogLevel.INFO)) {
-      return
-    }
-    
-    console.info(`[${this.now()}][${this.typeToShort(LogLevel.INFO)}][${this.name}]`, ...args)
+    this.internalLog(LogLevel.INFO, ...args)
   }
   
   silly(...args: any[]) {
-    if (!this.shouldLog(LogLevel.SILLY)) {
-      return
-    }
-    
-    console.log(`[${this.now()}][${this.typeToShort(LogLevel.SILLY)}][${this.name}]`, ...args)
+    this.internalLog(LogLevel.SILLY, ...args)
   }
   
   dd(...args: any[]) {
-    if (!this.shouldLog(LogLevel.DEV)) {
+    this.internalLog(LogLevel.DEV, ...args)
+  }
+  
+  private internalLog(level: LogLevel, ...args: any[]) {
+    if (!this.shouldLog(level)) {
       return
     }
     
-    console.log(`[${this.now()}][${this.typeToShort(LogLevel.DEV)}][${this.name}]`, ...args)
+    let logMethod = this.levelToMethod(level) 
+    if (constants.isProduction) {
+      // prod does not play nicely with other types of logging
+      logMethod = console.log
+    }
+    
+    // Remap the args to use stringify-object
+    args = args.map((arg) => {
+      if (typeof arg === "object") {
+        return `obj(${inspect(arg, {
+          depth: 10
+        })})`
+      }
+      
+      return arg
+    })
+    
+    logMethod(`[${this.now()}][${this.typeToShort(level)}][${this.name}]`, ...args)
   }
   
   private now() {
@@ -99,6 +101,23 @@ class Logger {
         return "E"
       case LogLevel.DEV:
         return "DD"
+    }
+  }
+  
+  private levelToMethod(level: LogLevel) {
+    switch (level) {
+      case LogLevel.SILLY:
+        return console.log
+      case LogLevel.DEBUG:
+        return console.log
+      case LogLevel.INFO:
+        return console.log
+      case LogLevel.WARN:
+        return console.warn
+      case LogLevel.ERROR:
+        return console.error
+      case LogLevel.DEV:
+        return console.log
     }
   }
   

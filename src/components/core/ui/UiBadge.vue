@@ -12,32 +12,20 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
+import UiButton, {ElementAriaDirection, ElementColorType} from '@/components/core/ui/UiButton.vue';
 
-// TODO: (M#01) stop duplicating this
-type BadgeType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
-type AriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
 
 @Component
 export default class UiBadge extends Vue {
-  // TODO: (M#01) stop duplicating this
-  @Prop({default: 'normal'}) type!: BadgeType;
+  @Prop({default: 'normal'}) type!: ElementColorType;
   @Prop() icon!: string;
   @Prop({ default: "" }) ariaLabel!: string;
-  @Prop({ default: "down" as AriaDirection }) ariaLabelPos!: AriaDirection;
+  @Prop({ default: "down" as ElementAriaDirection }) ariaLabelPos!: ElementAriaDirection;
   
   @Prop({ default: false }) hoverEffect!: boolean;
-
-  // TODO: (M#01) stop duplicating this
+  
   get colorFromType() {
-    switch (this.type) {
-      case 'primary': return `bg-indigo-600 ${this.hoverEffect ? 'hover:bg-indigo-500' : ''}`;
-      case 'secondary': return `bg-green-600 ${this.hoverEffect ? 'hover:bg-green-500' : ''}`;
-      case 'success': return `bg-primary ${this.hoverEffect ? 'hover:bg-light-primary' : ''}`;
-      case 'danger': return `bg-danger ${this.hoverEffect ? 'hover:bg-light-danger' : ''}`;
-      case 'warning': return `bg-warning ${this.hoverEffect ? 'hover:bg-light-warning' : ''}`;
-      case 'info': return `bg-info ${this.hoverEffect ? 'hover:bg-light-info' : ''}`;
-      case 'normal': return `bg-gray-600 ${this.hoverEffect ? 'hover:bg-gray-500' : ''}`;
-    }
+    return UiButton.colorFromElementColorType(this.type, !this.hoverEffect, false);
   }
 }
 </script>

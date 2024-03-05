@@ -91,13 +91,13 @@ export default class MTIntegration extends Vue {
   async created() {
     await this.loadSettings();
     
-    const {proxyUser, proxyPort, proxyHost, proxyPassword, proxyType} = this.settings.settings;
+    const {username, port, host, password, type} = this.settings.settings.proxy
 
-    this.proxyType = proxyType ?? "none";
-    this.proxyHost = proxyHost ?? "";
-    this.proxyPort = proxyPort;
-    this.proxyUser = proxyUser ?? "";
-    this.proxyPass = proxyPassword ?? "";
+    this.proxyType = type ?? "none";
+    this.proxyHost = host ?? "";
+    this.proxyPort = port;
+    this.proxyUser = username ?? "";
+    this.proxyPass = password ?? "";
   }
   
   @Watch('proxyType')
@@ -123,11 +123,13 @@ export default class MTIntegration extends Vue {
     
     this.saveSettings({
       ...this.settings.settings,
-      proxyUser: remove ? "" : this.proxyUser,
-      proxyPort: remove ? -1 : this.proxyPort,
-      proxyHost: remove ? "" : this.proxyHost,
-      proxyPassword: remove ? "" : this.proxyPass,
-      proxyType: remove ? "none" : this.proxyType,
+      proxy: {
+        type: this.proxyType,
+        host: this.proxyHost,
+        port: this.proxyPort,
+        username: this.proxyUser,
+        password: this.proxyPass
+      }
     })
 
     alertController.success("Proxy Settings updated")

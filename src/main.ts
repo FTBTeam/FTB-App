@@ -30,10 +30,13 @@ import ModalBody from '@/components/atoms/modal/ModalBody.vue';
 import {localiseNumber, toTitleCase} from '@/utils/helpers/stringHelpers';
 import {standardDate, standardDateTime, timeFromNow} from '@/utils/helpers/dateHelpers';
 import VueMixins from '@/core/vueMixins.vue';
+// @ts-ignore no typescript package available
+import VueNativeSock from 'vue-native-websocket';
 
 // @ts-ignore - no types
 import VueVirtualScroller from 'vue-virtual-scroller';
 import {createLogger} from '@/core/logger';
+import {constants} from '@/core/constants';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -47,24 +50,24 @@ const appSetup = async () => {
     (window as any).platform = platform;
   } catch (e) {
     logger.error("Failed to setup platform", e);
+    console.error(e);
   }
 
   if (process.env.NODE_ENV === 'production') {
     logger.info("Setting up sentry");
     Sentry.init({
       Vue,
-      environment: process.env.VUE_APP_PLATFORM,
+      environment: constants.platform,
       dsn: process.env.VUE_APP_SENTRY_DSN,
       integrations: [
         new BrowserTracing({
           routingInstrumentation: Sentry.vueRouterInstrumentation(router),
         }),
       ],
-      release: `${platform.get.config.appVersion}-${process.env.VUE_APP_PLATFORM}`,
+      release: `${platform.get.config.version}-${constants.platform}`,
       initialScope: {
         tags: {
-          'release.vue': platform.get.config.webVersion,
-          'release.public': platform.get.config.publicVersion,
+          'release.public': platform.get.config.version,
           'release.platform': await platform.get.utils.getPlatformVersion(),
           'os.arch': platform.get.utils.getOsArch(),
         },
@@ -92,7 +95,7 @@ const appSetup = async () => {
 
   Vue.config.productionTip = false;
   Vue.config.devtools = true;
-
+  
   Vue.mixin(VueMixins);
 
   Vue.filter('dayjs', standardDate);
@@ -107,6 +110,14 @@ const appSetup = async () => {
     store,
     render: (h: any) => h(App),
   }).$mount('#app');
+
+  // This port isn't used for anything as we manually connect to the websocket later on
+  Vue.use(VueNativeSock, 'ws://localhost:13377', {
+    format: 'json',
+    reconnection: true,
+    connectManually: true,
+    store
+  });
   
   platform.get.setupApp(vm);
 };

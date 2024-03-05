@@ -52,12 +52,12 @@ export type ChangelogData = {
 })
 export default class Changelog extends Vue  {
   @State('websocket') public websockets!: SocketState;
-  private logger = createLogger(Changelog.name + ".vue")
+  private logger = createLogger("Changelog.vue")
   
   changelogData: ChangelogData | null = null;
 
   async mounted() {
-    await waitForWebsockets(this.websockets.socket)
+    await waitForWebsockets("changelog", this.websockets.socket)
 
     this.checkForUpdate().catch((e) => {
       this.logger.error('Unable to find any changelog data, maybe the servers down?', e);
@@ -106,7 +106,7 @@ export default class Changelog extends Vue  {
 
   // Some magic to get the current version
   getCurrentVersion() {
-    return platform.get.config.publicVersion;
+    return platform.get.config.version;
   }
 }
 </script>

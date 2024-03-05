@@ -41,10 +41,6 @@ public class WebUtils
                 }
             }
             conn.setRequestProperty("User-Agent", Constants.USER_AGENT);
-            if(!Constants.KEY.isEmpty() | !Constants.SECRET.isEmpty())
-            {
-                conn.addRequestProperty("USER_SECRET", Constants.SECRET);
-            }
             BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String line;
             StringBuilder respData = new StringBuilder();

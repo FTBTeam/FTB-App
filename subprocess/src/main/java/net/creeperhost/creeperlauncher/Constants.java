@@ -6,6 +6,7 @@ import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.*;
 import okhttp3.Cache;
 import okhttp3.ConnectionPool;
@@ -24,9 +25,12 @@ public class Constants {
     // Don't put a Logger in this class, it is called before log4j can be initialized.
     // Adding a logger will break sentry!
 
-    static boolean IS_DEV_MODE = false;
+    public static boolean IS_DEV_MODE = false;
 
     //CWD
+    // TODO: On linux, move to XDG_DATA_HOME 
+    // TODO: On macos, don't use a hidden folder
+    // TODO: On windows don't use a hidden folder
     public static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
     private static final String INNER_DATA_DIR = ".ftba";
     private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), INNER_DATA_DIR);
@@ -37,8 +41,8 @@ public class Constants {
     public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
     //API
-    private static final String CREEPERHOST_MODPACK = "https://api.modpacks.ch";
-    private static final String CREEPERHOST_MODPACK_STAGING = "https://staging.api.modpacks.ch";
+    public static final String CREEPERHOST_MODPACK = "https://api.modpacks.ch";
+    public static final String CREEPERHOST_MODPACK_STAGING = "https://staging.api.modpacks.ch";
     public static final String JSON_PROXY = "https://api.modpacks.ch/public/meta/proxy/";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
@@ -50,7 +54,19 @@ public class Constants {
     //Paths
     public static final Path BIN_LOCATION_OURS = WORKING_DIR.resolve("bin");
     public static final Path BIN_LOCATION = getDataDir().resolve("bin");
+    
+    public static final Path STORAGE_DIR = getDataDir().resolve("storage");
 
+    /**
+     * @deprecated Use {@link #SETTINGS_FILE} instead.
+     */
+    @Deprecated
+    public static final Path SETTINGS_FILE_LEGACY = BIN_LOCATION.resolve("settings.json");
+    public static final Path SETTINGS_FILE = STORAGE_DIR.resolve("settings.json");
+    public static final Path KV_STORE_FILE = STORAGE_DIR.resolve("storage.json");
+    public static final Path CREDENTIALS_FILE = STORAGE_DIR.resolve("credentials.encr");
+    public static final Path USER_PROVIDED_API_CREDENTIALS_FILE = STORAGE_DIR.resolve("api-credentials.json");
+    
     public static final Path VERSIONS_FOLDER_LOC = getDataDir().resolve(Paths.get("bin", "versions"));
     public static final Path INSTANCES_FOLDER_LOC = getDataDir().resolve("instances");
     public static final Path LIBRARY_LOCATION = BIN_LOCATION.resolve("libraries");
@@ -106,10 +122,6 @@ public class Constants {
             "-XX:G1HeapRegionSize=32M"
     };
 
-    //Auth
-    public static String KEY = "";
-    public static String SECRET = "";
-
     public static void refreshHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .dns(new DNSChain.OkHTTPAdapter(DNS_CHAIN))
@@ -154,32 +166,6 @@ public class Constants {
             );
         }
         return JDK_INSTALL_MANAGER;
-    }
-
-    public static String getModpacksApi() {
-        return IS_DEV_MODE ? CREEPERHOST_MODPACK_STAGING : CREEPERHOST_MODPACK;
-    }
-
-    public static String getModEndpoint() {
-        return getModpacksApi() + "/public/mod/";
-    }
-
-    public static String getModpacksEndpoint(boolean isPrivate, byte packType) {
-        String key = "public";
-        String typeSlug = switch (packType) {
-            case 1 -> "curseforge";
-            default -> "modpack";
-        };
-
-        if (packType == 1) {
-            // CurseForge has no private packs.
-            isPrivate = false;
-        }
-
-        if (!Constants.KEY.isEmpty() && isPrivate) {
-            key = Constants.KEY;
-        }
-        return getModpacksApi() + "/" + key + "/" + typeSlug + "/";
     }
 
     public static Path getDataDir() {

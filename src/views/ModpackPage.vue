@@ -89,7 +89,7 @@ export default class ModpackPage extends Vue {
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   @Action("getVersion", ns("v2/modpacks")) getVersion!: GetModpackVersion;
   
-  private logger = createLogger(ModpackPage.name + ".vue")
+  private logger = createLogger("ModpackPage.vue")
   
   activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
   showVersions = false;

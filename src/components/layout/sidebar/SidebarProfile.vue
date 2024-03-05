@@ -1,10 +1,9 @@
 <template>
   <div class="profile-area" :class="{ disable }">
-    <div class="profile" v-if="getActiveProfile || auth.token">
+    <div class="profile" v-if="(getProfiles && getProfiles.length) || getMtAccount">
       <div class="avatar">
         <img
-          v-if="getActiveProfile"
-          :src="getMinecraftHead(getActiveProfile.uuid)"
+          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : null)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -22,7 +21,7 @@
             <font-awesome-icon
               class="cursor-pointer"
               v-if="getProfiles.length"
-              icon="edit"
+              :icon="editMode ? 'times' : 'edit'"
               @click="editMode = !editMode"
             />
           </div>
@@ -68,20 +67,20 @@
                 <img src="@/assets/mtg-tiny-desat.webp" alt="MineTogether Logo" />
                 MineTogether
               </div>
-              <router-link :to="{ name: 'integrations' }">
+              <router-link :to="{ name: 'integrations' }" v-if="getMtProfile">
                 <font-awesome-icon icon="edit" />
               </router-link>
             </div>
-            <div class="account" v-if="auth.token">
+            <div class="account" v-if="getMtProfile">
               <div class="avatar">
                 <img :src="getMinecraftHead(avatarName)" alt="Profile" class="rounded" />
               </div>
               <div class="meta">
                 <div class="name selectable">
-                  {{ auth.token.mc && auth.token.mc.display ? auth.token.mc.display : auth.token.username }}
+                  {{ getMtProfile.display || getMtAccount.username }}
                 </div>
-                <div class="hash selectable" v-if="auth.token.mc" title="I'm your friends code 👍">
-                  {{ auth.token.mc.friendCode }}
+                <div class="hash selectable" v-if="getMtProfile.friendCode" title="I'm your friends code 👍">
+                  {{ getMtProfile.friendCode }}
                 </div>
               </div>
             </div>
@@ -107,13 +106,14 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import {Action, Getter, State} from 'vuex-class';
+import {Action, Getter} from 'vuex-class';
 import {AuthProfile} from '@/modules/core/core.types';
-import {AuthState} from '@/modules/auth/types';
 import {Prop} from 'vue-property-decorator';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import {createLogger} from '@/core/logger';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
 
 @Component({
   methods: {getMinecraftHead}
@@ -123,12 +123,14 @@ export default class SidebarProfile extends Vue {
 
   @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
-
-  @State('auth') auth!: AuthState;
+  
   @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
   @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
+  
+  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
 
-  private logger = createLogger(SidebarProfile.name + ".vue")
+  private logger = createLogger("SidebarProfile.vue")
   
   editMode = false;
   loading = false;
@@ -175,7 +177,7 @@ export default class SidebarProfile extends Vue {
   }
 
   get avatarName() {
-    return this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth')?.userId;
+    return this.getMtAccount?.accounts?.find((s) => s.identityProvider === 'mcauth')?.userId
   }
 }
 </script>

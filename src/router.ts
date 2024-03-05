@@ -14,8 +14,6 @@ export enum RouterNames {
   ROOT_LOCAL_PACK = 'instancepage',
   ROOT_PREVIEW_PACK = 'modpackpage',
   ROOT_LAUNCH_PACK = 'launchingpage',
-  // ROOT_DISCOVER = 'discover',
-  // ROOT_SERVER = 'server',
   SETTINGS_INSTANCE = 'instance-settings',
   SETTINGS_DOWNLOAD = 'download-settings',
   SETTINGS_APP = 'app-settings',
@@ -24,7 +22,7 @@ export enum RouterNames {
   SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
   SETTINGS_CHANGELOGS = 'changelogs',
-  // CHAT = 'chat',
+  SETTINGS_PRIVACY = 'privacy',
   SUPPORT = 'support-index',
 }
 
@@ -43,12 +41,12 @@ const router = new Router({
         {
           path: '/modpacks',
           name: RouterNames.ROOT_LIBRARY,
-          component: () => import(/* webpackChunkName: "modpacks" */ './views/Library.vue'),
+          component: () => import(/* webpackChunkName: "library" */ './views/Library.vue'),
         },
         {
           path: '/browseModpacks/:search?',
           name: RouterNames.ROOT_BROWSE_PACKS,
-          component: () => import(/* webpackChunkName: "modpacks" */ './views/BrowseModpacks.vue'),
+          component: () => import(/* webpackChunkName: "search" */ './views/BrowseModpacks.vue'),
         },
         {
           path: '/blog',
@@ -98,7 +96,12 @@ const router = new Router({
               path: 'changelogs',
               name: RouterNames.SETTINGS_CHANGELOGS,
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Changelogs.vue'),
-            }
+            },
+            {
+              path: 'privacy',
+              name: RouterNames.SETTINGS_PRIVACY,
+              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Privacy.vue'),
+            },
           ],
         },
         {
@@ -116,16 +119,6 @@ const router = new Router({
           name: RouterNames.ROOT_LAUNCH_PACK,
           component: () => import(/* webpackChunkName: "launchingpage" */ './views/LaunchingPage.vue'),
         },
-        // {
-        //   path: '/discover',
-        //   name: RouterNames.ROOT_DISCOVER,
-        //   component: () => import(/* webpackChunkName: "discovery" */ './views/DiscoverPage.vue'),
-        // },
-        // {
-        //   path: '/server',
-        //   name: RouterNames.ROOT_SERVER,
-        //   component: () => import(/* webpackChunkName: "server" */ './views/ServerLandingPage.vue'),
-        // },
         {
           path: '/support',
           component: () => import(/* webpackChunkName: "support" */ './views/Support/SupportBase.vue'),
@@ -139,11 +132,6 @@ const router = new Router({
         },
       ],
     },
-    // {
-    //   path: '/chat',
-    //   name: RouterNames.CHAT,
-    //   component: ChatWindow,
-    // },
     // Fallback route for 404
     {
       path: '*',

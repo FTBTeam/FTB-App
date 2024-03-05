@@ -18,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.function.Function;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData> {
-
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override

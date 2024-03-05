@@ -9,11 +9,11 @@ public class UploadLogsHandler implements IMessageHandler<UploadLogsData> {
 
     @Override
     public void handle(UploadLogsData data) {
-        uploadLogs(data.uiVersion, data.requestId);
+        uploadLogs(data.requestId);
     }
 
-    public static void uploadLogs(String uiVersion, String requestId) {
-        String code = LogsUploader.uploadUILogs(uiVersion);
+    public static void uploadLogs(String requestId) {
+        String code = LogsUploader.uploadUILogs();
         if (code == null) {
             WebSocketHandler.sendMessage(new UploadLogsData.Reply(requestId)); // error
             return;

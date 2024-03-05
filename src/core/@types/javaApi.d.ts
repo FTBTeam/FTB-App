@@ -6,46 +6,6 @@ export interface BaseData {
     secret: string;
 }
 
-export interface AcceptedFriendData extends BaseData {
-    friendName: string;
-    friendData: any;
-}
-
-export interface AddFriendData extends BaseData {
-    target: string;
-}
-
-export interface AddFriendDataReply extends BaseData {
-    status: boolean;
-    message: string;
-    hash: string;
-}
-
-export interface BlockFriendData extends BaseData {
-    hash: string;
-}
-
-export interface FriendData extends BaseData {
-    profile: Profile;
-}
-
-export interface GetFriendsData extends BaseData {
-}
-
-export interface GetFriendsDataReply extends BaseData {
-    online: Profile[];
-    offline: Profile[];
-    pending: Profile[];
-}
-
-export interface OnlineFriendData extends FriendData {
-}
-
-export interface RequestFriendData extends BaseData {
-    friendName: string;
-    friendData: any;
-}
-
 export interface BrowseInstanceData extends BaseData {
     uuid: string;
     folder: string;
@@ -350,30 +310,6 @@ export interface UninstallInstanceDataReply extends BaseData {
 export interface UpdateInstanceData extends InstallInstanceData {
 }
 
-export interface IRCConnectData extends BaseData {
-    host: string;
-    port: number;
-    nick: string;
-    realname: string;
-}
-
-export interface IRCEventMessageData extends BaseData {
-    target: string;
-    message: string;
-    nick: string;
-}
-
-export interface IRCPartyInviteData extends FriendData {
-}
-
-export interface IRCQuitRequestData extends BaseData {
-}
-
-export interface IRCSendMessageData extends BaseData {
-    nick: string;
-    message: string;
-}
-
 export interface ClientLaunchData extends BaseData {
 }
 
@@ -434,7 +370,7 @@ export interface PongLauncherData extends BaseData {
 }
 
 export interface SettingsConfigureData extends BaseData {
-    settingsInfo: { [index: string]: string };
+    settings: SettingsData;
 }
 
 export interface SettingsConfigureDataReply extends BaseData {
@@ -445,7 +381,7 @@ export interface SettingsInfoData extends BaseData {
 }
 
 export interface SettingsInfoDataReply extends SettingsInfoData {
-    settingsInfo: { [index: string]: string };
+    settingsInfo: SettingsData;
     totalMemory: number;
     availableMemory: number;
     totalCores: number;
@@ -453,18 +389,7 @@ export interface SettingsInfoDataReply extends SettingsInfoData {
     supportedResolutions: Dimension[];
 }
 
-export interface StoreAuthDetailsData extends BaseData {
-    mpKey: string;
-    mpSecret: string;
-    mtHash: string;
-    s3Key: string;
-    s3Secret: string;
-    s3Bucket: string;
-    s3Host: string;
-}
-
 export interface UploadLogsData extends BaseData {
-    uiVersion: string;
 }
 
 export interface UploadLogsDataReply extends BaseData {
@@ -493,9 +418,6 @@ export interface WebRequestDataResponse extends BaseData {
     body: Body;
 }
 
-export interface YeetLauncherData extends BaseData {
-}
-
 export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerRequest {
     message: string;
     success: boolean;
@@ -505,6 +427,7 @@ export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerR
 export interface DuplicateInstanceHandlerRequest extends BaseData {
     uuid: string;
     newName: string;
+    category: string;
 }
 
 export interface GetInstanceFoldersHandlerReply extends GetInstanceFoldersHandlerRequest {
@@ -558,6 +481,17 @@ export interface InstanceRestoreBackupHandlerRequest extends BaseData {
     backupLocation: string;
 }
 
+export interface AppInitHandlerData extends BaseData {
+}
+
+export interface AppInitHandlerReply extends AppInitHandlerData {
+    success: boolean;
+    errorMessage: string;
+    basicData: BasicDataAndAccount;
+    profile: MineTogetherProfile;
+    apiCredentials: UserApiCredentials;
+}
+
 export interface VideoCacheHandlerData extends BaseData {
     url: string;
     fileName: string;
@@ -567,21 +501,28 @@ export interface VideoCacheHandlerReply extends VideoCacheHandlerData {
     location: string;
 }
 
+export interface MineTogetherAuthenticationHandlerData extends BaseData {
+    authType: string;
+    apiKey: string;
+    appToken: string;
+}
+
+export interface MineTogetherAuthenticationHandlerReply extends MineTogetherAuthenticationHandlerData {
+    success: boolean;
+    message: string;
+    basicData: BasicDataAndAccount;
+    profile: MineTogetherProfile;
+}
+
+export interface MineTogetherLogoutHandlerReply extends BaseData {
+    success: boolean;
+}
+
 export interface AccountIsValidHandlerData extends BaseData {
     profileUuid: string;
 }
 
 export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
-    success: boolean;
-    response: string;
-}
-
-export interface AuthenticateMcProfileHandlerData extends BaseData {
-    username: string;
-    password: string;
-}
-
-export interface AuthenticateMcProfileHandlerReply extends AuthenticateMcProfileHandlerData {
     success: boolean;
     response: string;
 }
@@ -653,28 +594,14 @@ export interface StoragePutHandlerReply extends StoragePutHandlerData {
     success: boolean;
 }
 
-export interface Profile {
-    longHash: string;
-    shortHash: string;
-    mediumHash: string;
-    online: boolean;
-    display: string;
-    premium: boolean;
-    userDisplay: string;
-    friend: boolean;
-    lastFriendCheck: number;
-    friendName: string;
-    friendCode: string;
-    banned: boolean;
-    packID: string;
-    lastOnlineCheck: number;
-    isOnline: boolean;
-    isLoadingProfile: boolean;
-    profileAge: number;
-    hasAccount: boolean;
-    muted: boolean;
-    isPartyMember: boolean;
-    pending: boolean;
+export interface SettingsData {
+    spec: string;
+    instanceLocation: string;
+    general: GeneralSettings;
+    instanceDefaults: InstanceSettings;
+    appearance: AppearanceSettings;
+    proxy: ProxySettings;
+    download: DownloadSettings;
 }
 
 export interface InstanceJson {
@@ -717,6 +644,7 @@ export interface InstanceJson {
      * @deprecated
      */
     art: string;
+    potentiallyBrokenDismissed: boolean;
 }
 
 export interface ModInfo {
@@ -762,6 +690,27 @@ export interface Dimension {
     height: number;
 }
 
+export interface BasicDataAndAccount {
+    data: BasicProfileData;
+    account: MineTogetherAccount;
+}
+
+export interface MineTogetherProfile {
+    hash: Hashes;
+    friendCode: string;
+    chat: Chat;
+    cached: boolean;
+    display: string;
+    hasAccount: boolean;
+    premium: boolean;
+}
+
+export interface UserApiCredentials {
+    apiUrl: string;
+    apiSecret: string;
+    settings: ApiSettings;
+}
+
 export interface AccountProfile {
     isMicrosoft: boolean;
     uuid: string;
@@ -770,6 +719,41 @@ export interface AccountProfile {
     msAuth: MSAuthStore;
     mcAuth: YggdrasilAuthStore;
     skins: AccountSkin[];
+}
+
+export interface GeneralSettings {
+    releaseChannel: string;
+    cacheLife: number;
+    exitOverwolf: boolean;
+    verbose: boolean;
+}
+
+export interface InstanceSettings {
+    width: number;
+    height: number;
+    memory: number;
+    fullscreen: boolean;
+    updateChannel: string;
+    javaArgs: string;
+    shellArgs: string;
+}
+
+export interface AppearanceSettings {
+    useSystemWindowStyle: boolean;
+    showAds: boolean;
+}
+
+export interface ProxySettings {
+    type: string;
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+}
+
+export interface DownloadSettings {
+    threadLimit: number;
+    speedLimit: number;
 }
 
 export interface Specs {
@@ -787,6 +771,34 @@ export interface Backup {
     sha1: string;
     preview: string;
     snapshot: boolean;
+}
+
+export interface BasicProfileData {
+    uuid: string;
+    modpacksToken: string;
+    s3Credentials: S3Credentials;
+}
+
+export interface MineTogetherAccount {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    attributes: { [index: string]: string[] };
+    accounts: Account[];
+    mtHash: string;
+    fullMTHash: string;
+    activePlan: ActivePlan;
+}
+
+export interface Hashes {
+    long: string;
+}
+
+export interface Chat {
+    hash: ChatHash;
+    online: boolean;
 }
 
 export interface MSAuthStore {
@@ -828,12 +840,56 @@ export interface ModpackFile {
     updated: number;
 }
 
+export interface S3Credentials {
+    accessKeyId: string;
+    secretAccessKey: string;
+    bucket: string;
+    host: string;
+}
+
+export interface ActivePlan {
+    id: number;
+    orderid: number;
+    pid: number;
+    name: string;
+    paymentMethod: string;
+    paymentMethodActual: string;
+    nextDueDate: string;
+    status: string;
+    customFields: CustomFields;
+}
+
+export interface ChatHash {
+    medium: string;
+    hashShort: string;
+}
+
 export interface AccountSkin {
     id: string;
     state: string;
     url: string;
     variant: string;
     alias: string;
+}
+
+export interface Account {
+    identityProvider: string;
+    userId: string;
+    userName: string;
+    mcName: string;
+    accountKey: string;
+    accountSecret: string;
+}
+
+export interface CustomFields {
+    customfield: Customfield[];
+}
+
+export interface Customfield {
+    id: number;
+    name: string;
+    translatedName: string;
+    value: string;
 }
 
 export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";

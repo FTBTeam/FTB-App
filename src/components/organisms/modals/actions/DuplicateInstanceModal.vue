@@ -1,16 +1,17 @@
 <template>
   <div>
     <modal-body>
-      Duplicating {{ instanceName }} will copy all of the contents of this pack to a new instance. Are you sure this is
-      want you want to do? If so, give your new instance a name!
+      Duplicating {{ instanceName }} will copy all of the contents of this pack to a new instance.
 
       <ftb-input
         :value="newName"
         v-model="newName"
-        class="mt-4"
+        class="mt-4 mb-4"
         label="New instance name"
         :disabled="working || done"
       />
+      
+      <category-selector v-model="newCategory" />
     </modal-body>
     <modal-footer class="flex justify-end">
       <ftb-button
@@ -35,26 +36,45 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
-import {Action} from 'vuex-class';
+import {Action, Getter} from 'vuex-class';
 import {RouterNames} from '@/router';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {ns} from '@/core/state/appState';
 import {AddInstanceFunction} from '@/core/state/instances/instancesState';
+import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import {equalsIgnoreCase} from '@/utils/helpers/stringHelpers';
 
-@Component
+@Component({
+  components: {CategorySelector}
+})
 export default class DuplicateInstanceModal extends Vue {
   @Prop() uuid!: string;
   @Prop() instanceName!: string;
+  @Prop() category!: string;
+
+  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
   @Action('addInstance', ns("v2/instances")) addInstance!: AddInstanceFunction;
   
   newName = '';
+  newCategory = '';
 
   working = false;
   done = false;
   status = '';
 
+  mounted() {
+    const duplicateCount = this.getDuplicateNameCount();
+    if (duplicateCount > 1) {
+      this.newName = this.instanceName + ' (copy ' + (duplicateCount + 1) + ')';
+    } else {
+      this.newName = this.instanceName + ' (copy)';
+    }
+    this.newCategory = this.category;
+  }
+  
   async duplicate() {
     if (this.working) {
       return;
@@ -66,6 +86,7 @@ export default class DuplicateInstanceModal extends Vue {
     const result = await sendMessage("duplicateInstance", {
       uuid: this.uuid,
       newName: this.newName,
+      category: this.newCategory
     })
     
     if (!result.success) {
@@ -84,6 +105,10 @@ export default class DuplicateInstanceModal extends Vue {
     
     await gobbleError(() => this.$router.push({ name: RouterNames.ROOT_LIBRARY }));
     this.$emit('finished');
+  }
+  
+  getDuplicateNameCount() {
+    return this.instances.filter(i => equalsIgnoreCase(i.name, this.instanceName)).length
   }
 }
 </script>

@@ -1,15 +1,13 @@
 package net.creeperhost.creeperlauncher.api.handlers.other;
 
-import com.google.common.collect.ImmutableMap;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.SettingsConfigureData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.storage.CredentialStorage;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.SettingsChangeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.Map;
 
 public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigureData> {
 
@@ -17,25 +15,30 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
 
     @Override
     public void handle(SettingsConfigureData data) {
-        boolean anyChanged = false;
-        Map<String, String> oldSettings = ImmutableMap.copyOf(Settings.settings);
-        for (Map.Entry<String, String> setting : data.settingsInfo.entrySet()) {
-            try {
-                if (!Settings.settings.containsKey(setting.getKey()) || !Settings.settings.get(setting.getKey()).equals(setting.getValue())) {
-                    if (SettingsChangeUtil.handleSettingChange(setting.getKey(), setting.getValue())) {
-                        Settings.settings.remove(setting.getKey());
-                        Settings.settings.put(setting.getKey(), setting.getValue());
-                        anyChanged = true;
-                    }
-                }
-            } catch (Exception e) {
-                LOGGER.error("Failed to handle settings change event.", e);
+        // Is this a waste to parse the obj to json just to compare it to the data provided?
+        try {
+            var originalSettings = Settings.getSettings().toString();
+            var newSettings = data.settings.toString();
+
+            if (originalSettings.equals(newSettings)) {
+                WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success"));
+                return;
             }
+
+            if (!data.settings.proxy().password().isEmpty()) {
+                CredentialStorage.getInstance().set("proxyPassword", data.settings.proxy().password());
+                data.settings.proxy().setPassword("");
+            }
+            
+            // Actually handle the settings change
+            Settings.updateSettings(data.settings);
+            // Dispatch the event
+            SettingsChangeUtil.onSettingsChanged(Settings.getSettings());
+            
+            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success"));
+        } catch (Exception e) {
+            LOGGER.error("Failed to handle settings change event.", e);
+            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "failed"));
         }
-        if (anyChanged) {
-            SettingsChangeUtil.onSettingsChanged(oldSettings);
-            Settings.saveSettings();
-        }
-        WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success"));
     }
 }

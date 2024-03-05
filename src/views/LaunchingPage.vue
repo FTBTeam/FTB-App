@@ -193,7 +193,6 @@ import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
 import {SettingsState} from '@/modules/settings/types';
-import {AuthState} from '@/modules/auth/types';
 import {emitter} from '@/utils/event-bus';
 import {RouterNames} from '@/router';
 import Router from 'vue-router';
@@ -327,9 +326,8 @@ export default class LaunchingPage extends Vue {
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
   
   @State('settings') public settingsState!: SettingsState;
-  @State('auth') public auth!: AuthState;
   
-  private logger = createLogger(LaunchingPage.name + ".vue");
+  private logger = createLogger("LaunchingPage.vue");
 
   loading = false;
   preLaunch = true;
@@ -372,7 +370,7 @@ export default class LaunchingPage extends Vue {
 
   public async mounted() {
     this.logger.debug("Mounted Launch page, waiting for websockets...");
-    await waitForWebsockets(this.websockets.socket)
+    await waitForWebsockets("Launch page", this.websockets.socket)
 
     this.logger.debug("Websockets ready, loading instance")
     
@@ -556,13 +554,13 @@ export default class LaunchingPage extends Vue {
       }
     }
 
-    const disableChat = this.settingsState.settings.enableChat;
+    // const disableChat = truethis.settingsState.settings.enableChat;
     this.preLaunch = true;
 
     this.logger.debug("Sending launch message")
     const result = await sendMessage("launchInstance", {
       uuid: this.instance?.uuid ?? "",
-      extraArgs: disableChat ? '-Dmt.disablechat=true' : '',
+      extraArgs: "", //disableChat ? '-Dmt.disablechat=true' : '',
       offline: this.$route.query.offline === "true",
       offlineUsername: this.$route.query.username as string ?? 'FTB Player',
       cancelLaunch: null

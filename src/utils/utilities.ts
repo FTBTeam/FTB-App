@@ -1,9 +1,6 @@
-import {SettingsState} from '@/modules/settings/types';
-import {RootState} from '@/types';
 import {Socket} from '@/modules/websocket/types';
 import {createLogger} from '@/core/logger';
-// import { MCProtocol } from '@/modules/servers/types';
-// import mcQuery from 'mcping-js';
+import {MineTogetherAccount, SettingsData} from '@/core/@types/javaApi';
 
 const logger = createLogger("utils/utilities.ts");
 
@@ -18,28 +15,26 @@ export function debounce(func: () => void, wait: number): () => void {
   };
 }
 
-export function logVerbose(state: RootState | SettingsState, ...message: any[]) {
-  // @ts-ignore
-  if (state.settings?.settings === undefined) {
-    // @ts-ignore
-    if (state.settings?.verbose === true || state.settings?.verbose === 'true') {
-      logger.debug("[VERBOSE]", ...message);
-    }
-  } else {
-    // @ts-ignore
-    if (state.settings?.settings.verbose === true || state.settings?.settings.verbose === 'true') {
-      logger.debug("[VERBOSE]", ...message);
-    }
-  }
-}
-
 export function shortenHash(longHash: string): string {
   return `MT${longHash.substring(0, 28).toUpperCase()}`;
 }
 
-export async function waitForWebsockets(websockets: Socket) {
+export function adsEnabled(settings: SettingsData, mtAccount: MineTogetherAccount | null, debugMode = false) {
+  if (process.env.NODE_ENV !== "production" && debugMode) {
+    return false
+  }
+  
+  if (!mtAccount || !mtAccount?.activePlan || mtAccount.activePlan.status !== "Active") {
+    return true;
+  }
+  
+  // If this fails, show the ads
+  return settings?.appearance?.showAds ?? true;
+}
+
+export async function waitForWebsockets(user: string, websockets: Socket) {
   if (!websockets.isConnected) {
-    logger.debug("WS not connected, delaying page load for 100ms")
+    logger.debug("WS not connected, delaying page load for 100ms for user", user);
     await new Promise((resolve) => {
       // Wait for 30 seconds for the websocket to connect
       const timoutRef = setTimeout(() => {
@@ -58,7 +53,6 @@ export async function waitForWebsockets(websockets: Socket) {
   }
 }
 
-// TODO: We should just use an api for this. It's simpler. 
 // export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
 //   return new Promise((resolve, reject) => {
 //     if (serverInfo.includes(':')) {

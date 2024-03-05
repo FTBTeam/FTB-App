@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade-and-grow">
-    <div v-if="open" class="modal-container" :class="{ow: isOverwolf, ads: advertsEnabled}" @mousedown.self="() => close(true)">
+    <div v-if="open" class="modal-container" :class="{ads: advertsEnabled}" @mousedown.self="() => close(true)">
       <div class="modal-contents" :class="`${size}`">
         <div class="modal-header" :class="{'no-subtitle': !subTitle}">
           <div class="modal-heading">
@@ -30,7 +30,9 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 import Platform from '../../../utils/interface/electron-overwolf';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
-import {AuthState} from '@/modules/auth/types';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount} from '@/core/@types/javaApi';
+import {adsEnabled} from '@/utils';
 
 export enum ModalSizes {
   SMALL = 'small',
@@ -50,7 +52,11 @@ export default class Modal extends Vue {
 
   @Prop({ default: true }) closeOnBackgroundClick!: boolean;
   @Prop({ default: false }) externalContents!: boolean;
-
+  
+  @State('settings') public settings!: SettingsState;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  
   get isOverwolf() {
     return Platform.isOverwolf();
   }
@@ -82,22 +88,9 @@ export default class Modal extends Vue {
 
     this.$emit('closed');
   }
-
-  // Not ideal...
-  @State('settings') public settings!: SettingsState;
-  @State('auth') public auth!: AuthState;
-  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  
   get advertsEnabled(): boolean {
-    if (process.env.NODE_ENV !== "production" && this.debugDisabledAdAside) {
-      return false
-    }
-
-    if (!this.auth?.token?.activePlan) {
-      return true;
-    }
-
-    // If this fails, show the ads
-    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
   }
 }
 </script>
@@ -117,11 +110,7 @@ export default class Modal extends Vue {
   border-right: 1px solid rgba(white, .15);
   
   &.ads {
-    width: calc(100vw - (300px + 2.5rem));
-    
-    &.ow {
-      width: calc(100vw - 400px);
-    }
+    width: calc(100vw - 400px);
   }
 }
 

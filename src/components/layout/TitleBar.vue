@@ -50,6 +50,7 @@ import {SettingsState} from '@/modules/settings/types';
 import os from 'os';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
+import {createLogger} from '@/core/logger';
 
 @Component
 export default class TitleBar extends Vue {
@@ -58,15 +59,18 @@ export default class TitleBar extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
   @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
   
-  public isMac: boolean = false;
+  private logger = createLogger('TitleBar.vue'); 
   private windowId: string | null = null;
+  
+  isMac: boolean = false;
 
   blurred = false;
   
-  mounted() {
+  async mounted() {
     this.isMac = os.type() === 'Darwin';
-
-    platform.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
+    
+    this.windowId = await platform.get.frame.getWindowId();
+    this.logger.debug('Window ID', this.windowId)
     
     window.addEventListener('blur', this.windowFocusChanged);
     window.addEventListener('focus', this.windowFocusChanged);
@@ -106,7 +110,7 @@ export default class TitleBar extends Vue {
   }
   
   get branch() {
-    return platform.get.config.branch
+    return platform.get?.config?.branch
   }
 
   goToSettings() {
@@ -114,7 +118,7 @@ export default class TitleBar extends Vue {
   }
   
   get systemBarDisabled() {
-    return !this.settings.settings.useSystemWindowStyle ?? false;
+    return !this.settings?.settings?.appearance?.useSystemWindowStyle ?? false;
   }
   
   get isUnix() {
