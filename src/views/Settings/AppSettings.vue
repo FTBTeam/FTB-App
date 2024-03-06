@@ -196,12 +196,15 @@ export default class AppSettings extends Vue {
 
   public async uploadLogData(): Promise<void> {
     this.uploadingLogs = true;
-    const result = await sendMessage("uploadLogs", {})
-
-    if (!result.error) {
-      const url = `https://pste.ch/${result.code}`;
-      platform.get.cb.copy(url);
-      alertController.success('The URL has been copied to your clipboard')
+    try {
+      const result = await sendMessage("uploadLogs", {})
+      if (!result.error) {
+        const url = `https://pste.ch/${result.code}`;
+        platform.get.cb.copy(url);
+        alertController.success('The URL has been copied to your clipboard')
+      }
+    } catch (e) {
+      alertController.error('Failed to upload logs, please try again later')
     }
     
     this.uploadingLogs = false;

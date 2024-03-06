@@ -73,6 +73,14 @@ module.exports = {
       : path.resolve(__dirname, './dist'),
   productionSourceMap: process.env.NODE_ENV !== 'production',
   pages: {
+    prelaunch: {
+      entry: 'src/prelaunch.ts',
+      template: 'public/prelaunch.html',
+      filename: 'prelaunch.html',
+      title: 'FTB App',
+      chunks: ['chunk-vendors', 'chunk-common', 'prelaunch'],
+      sourceMap: false,
+    },
     index: {
       // entry for the page
       entry: 'src/main.ts',

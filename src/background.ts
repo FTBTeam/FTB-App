@@ -15,8 +15,14 @@ import {autoUpdater} from 'electron-updater';
 const protocolSpace = 'ftb';
 const logger = createLogger('background.ts');
 
-console.log("Env", process.env)
-console.log("Keys", Object.keys(app))
+autoUpdater.logger = electronLogger;
+
+autoUpdater.on('checking-for-update', () => ipcMain.emit('updater:checking-for-update'));
+autoUpdater.on('update-available', () => ipcMain.emit('updater:update-available'));
+autoUpdater.on('update-not-available', () => ipcMain.emit('updater:update-not-available'));
+autoUpdater.on('error', (error) => ipcMain.emit('updater:error', error));
+autoUpdater.on('download-progress', (progress) => ipcMain.emit('updater:download-progress', progress));
+autoUpdater.on('update-downloaded', (info) => ipcMain.emit('updater:update-downloaded', info));
 
 function getAppHome() {
   if (os.platform() === "darwin") {
@@ -88,6 +94,9 @@ let appCommunicationSetup = false;
 
 let subprocess: ChildProcess | null = null;
 let win: BrowserWindow | null;
+let prelaunchWindow: BrowserWindow | null = null;
+let hasPassedPreLaunch = false;
+
 // let friendsWindow: BrowserWindow | null;
 
 let protocolURL: string | null;
@@ -567,8 +576,79 @@ ipcMain.handle("startSubprocess", async (event, args) => {
 //   });
 // }
 
+async function createPreLaunchWindow(source: string) {
+  logger.debug("Creating prelaunch window", source)
+  
+  prelaunchWindow = new BrowserWindow({
+    title: 'FTB Launch',
+    icon: path.join(__static, 'favicon.ico'),
+    minWidth: 300,
+    minHeight: 400,
+    width: 300,
+    height: 400,
+    maxWidth: 300,
+    maxHeight: 400,
+    resizable: false,
+    frame: false,
+    titleBarStyle: 'hidden',
+    // Remove close button on mac
+    closable: false,
+    minimizable: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
+  });
+
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    logger.debug("Loading dev server url")
+    await prelaunchWindow.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL as string}/prelaunch.html`);
+
+    if (process.env.NODE_ENV !== "production") {
+      logger.debug("Opening dev tools for prelaunch window")
+      prelaunchWindow.webContents.openDevTools({
+        mode: 'detach',
+      });
+    }
+  } else {
+    logger.debug("Loading app from built files")
+    createProtocol(protocolSpace)
+    await prelaunchWindow.loadURL(`${protocolSpace}://./prelaunch.html`);
+
+    // Try and force focus on the prelaunchWindow
+    prelaunchWindow.focus();
+  }
+  
+  prelaunchWindow.on('closed', () => {
+    prelaunchWindow = null;
+  });
+}
+
+ipcMain.handle('updater:check-for-update', async () => {
+  return await autoUpdater.checkForUpdates()
+})
+
+ipcMain.handle('app:launch', async () => {
+  hasPassedPreLaunch = true;
+  logger.debug("Launching app")
+  if (win) {
+    // This shouldn't happen, but if it does, just close the window
+    win.close();
+  }
+  
+  createWindow().catch(e => logger.error("Failed to create window", e));
+  // Kill the prelaunch window
+  if (prelaunchWindow) {
+    prelaunchWindow.destroy()
+  }
+})
+
+ipcMain.handle('app:quit-and-install', async () => {
+  // Restart the entire app
+  autoUpdater.quitAndInstall();
+});
+
 async function createWindow(reset = false) {
-  autoUpdater.checkForUpdatesAndNotify();
   
   logger.debug("Creating main window")
   let useSystemFrame = false;
@@ -621,7 +701,7 @@ async function createWindow(reset = false) {
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
     
     if (process.env.NODE_ENV !== "production") {
-      logger.debug("Opening dev tools")
+      logger.debug("Opening dev tools for main window")
       win.webContents.openDevTools({
         mode: 'detach',
       });
@@ -664,8 +744,8 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  if (win === null) {
-    createWindow();
+  if (!prelaunchWindow && !win) {
+    createPreLaunchWindow("AppActivate");
   }
 });
 
@@ -700,7 +780,7 @@ if (!gotTheLock) {
 
   app.on('ready', async () => {
     logger.info("App is ready")
-    createWindow();
+    createPreLaunchWindow("AppReady");
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       if (details.url.indexOf('twitch.tv') !== -1) {
         if (details.responseHeaders) {

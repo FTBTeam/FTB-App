@@ -120,6 +120,7 @@ jobs:
         env:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
+          DEBUG: true
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/

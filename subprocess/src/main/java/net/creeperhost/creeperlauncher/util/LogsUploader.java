@@ -10,6 +10,9 @@ import net.creeperhost.creeperlauncher.data.InstanceJson;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
@@ -372,17 +375,29 @@ public class LogsUploader {
      * @param data The data to upload.
      * @return The pste.ch code, or null if an error occured.
      */
-    @Nullable
     public static String uploadPaste(@Nullable String data) {
-        String result = WebUtils.postWebResponse("https://pste.ch/documents", data == null ? "No data available." : data, "text/plain; charset=UTF-8");
         try {
-            JsonObject objResponse = GsonUtils.GSON.fromJson(result, JsonObject.class);
+            var client = Constants.httpClient();
+            var res = client.newCall(new Request.Builder()
+                .url("https://pste.ch/documents")
+                .post(RequestBody.create(data == null ? "No data available." : data, MediaType.get("text/plain; charset=UTF-8")))
+                .build()).execute();
+            
+            if (!res.isSuccessful() || res.body() == null) {
+                LOGGER.warn("Failed to upload logs to pste.ch: {}", res);
+                return "failed";
+            }
+            
+            var body = res.body().string();
+            
+            JsonObject objResponse = GsonUtils.GSON.fromJson(body, JsonObject.class);
             JsonElement key = objResponse.get("key");
-            if (key == null || !key.isJsonPrimitive()) return null;
+            if (key == null || !key.isJsonPrimitive()) return "failed to parse";
 
             return key.getAsString();
         } catch (Throwable e) {
-            return null;
+            LOGGER.warn("Failed to upload logs to pste.ch", e);
+            return "failed to upload";
         }
     }
 }
