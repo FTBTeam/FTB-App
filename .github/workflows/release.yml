@@ -111,11 +111,6 @@ jobs:
         with:
           name: subprocess-jar
           path: subprocess/build/libs/
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 17
       - name: Build App (Overwolf)
         env:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}

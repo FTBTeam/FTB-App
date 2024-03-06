@@ -34,9 +34,6 @@ dependencies:
   dayjs:
     specifier: ^1.11.7
     version: 1.11.7
-  electron-notarize:
-    specifier: ^1.2.2
-    version: 1.2.2
   electron-updater:
     specifier: ^6.1.8
     version: 6.1.8
@@ -4125,6 +4122,7 @@ packages:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
     engines: {node: '>= 4.0.0'}
     requiresBuild: true
+    dev: true
 
   /atob@2.1.2:
     resolution: {integrity: sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==}
@@ -6602,17 +6600,6 @@ packages:
     resolution: {integrity: sha512-QQ4GvrXO+HkgqqEOYbi+DHL7hj5JM+nHi/j+qrN9zeeXVKy8ZABgbu4CnG+BBqDZ2+tbeq9tUC4DZfIWFU5AZA==}
     dev: true
 
-  /electron-notarize@1.2.2:
-    resolution: {integrity: sha512-ZStVWYcWI7g87/PgjPJSIIhwQXOaw4/XeXU+pWqMMktSLHaGMLHdyPPN7Cmao7+Cr7fYufA16npdtMndYciHNw==}
-    engines: {node: '>= 10.0.0'}
-    deprecated: Please use @electron/notarize moving forward.  There is no API change, just a package name change
-    dependencies:
-      debug: 4.3.4(supports-color@6.1.0)
-      fs-extra: 9.1.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
   /electron-publish@24.5.0:
     resolution: {integrity: sha512-zwo70suH15L15B4ZWNDoEg27HIYoPsGJUF7xevLJLSI7JUPC8l2yLBdLGwqueJ5XkDL7ucYyRZzxJVR8ElV9BA==}
     dependencies:
@@ -7588,6 +7575,7 @@ packages:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
       universalify: 2.0.0
+    dev: true
 
   /fs-minipass@2.1.0:
     resolution: {integrity: sha512-V/JgOLFCS+R6Vcq0slCuaeWEdNC3ouDlJMNIsacH2VtALiu9mV4LPrHc5cDl8k5aw6J8jwgWWpiTo5RYhmIzvg==}

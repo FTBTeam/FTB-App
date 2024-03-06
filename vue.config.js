@@ -4,7 +4,6 @@ const {globSync} = require("glob");
 const fs = require('fs');
 const yaml = require('yaml')
 const {execSync} = require('child_process');
-const {notarize} = require("electron-notarize");
 
 const webpackPlugins = [];
 
@@ -111,12 +110,15 @@ module.exports = {
           path: 'ftb-app-updates'
         },
         beforePack: async (context) => {
-          // if (context.electronPlatformName === 'darwin' && !hasRepackedJar) {
-          //   await signJnilibInJar(context);
-          //   hasRepackedJar = true; // Don't do this more than once
-          // }
+          if (context.electronPlatformName === 'darwin' && !hasRepackedJar) {
+            await signJnilibInJar(context);
+            hasRepackedJar = true; // Don't do this more than once
+          }
         },
         afterPack: (context) => {
+          /**
+           * We don't use the bucket so we rewrite it to the correct URL
+           */
           const appPath = context.appOutDir;
           let appUpdatePath = path.join(appPath, 'resources', 'app-update.yml');
           if(context.electronPlatformName === 'darwin') {
@@ -131,26 +133,6 @@ module.exports = {
           
           // Replace the backblaze URL with the correct one
           fs.writeFileSync(appUpdatePath, yaml.stringify(parsedData));
-        },
-        afterSign: async (context) => {
-          const { electronPlatformName, appOutDir } = context;
-          if (electronPlatformName !== 'darwin') {
-            return;
-          }
-          
-          // Should we sign?
-          if (!process.env.APPLE_ID) {
-            return;
-          }
-
-          const appName = context.packager.appInfo.productFilename;
-
-          return await notarize({
-            appBundleId: 'com.yourcompany.yourAppId',
-            appPath: `${appOutDir}/${appName}.app`,
-            appleId: process.env.APPLE_ID,
-            appleIdPassword: process.env.APPLE_APP_PASSWORD,
-          });
         },
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},

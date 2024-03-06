@@ -41,7 +41,6 @@
     "adm-zip": "^0.5.10",
     "balloon-css": "^1.2.0",
     "dayjs": "^1.11.7",
-    "electron-notarize": "^1.2.2",
     "electron-updater": "^6.1.8",
     "markdown-it": "^13.0.1",
     "mitt": "^3.0.0",
