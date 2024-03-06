@@ -28,7 +28,12 @@ ipcRenderer.invoke('updater:check-for-update')
     if (updater === null) {
       // No update, continue
       await ipcRenderer.invoke('app:launch');
-      console.log("Launched app");
+    } else {
+      if (updater.downloadPromise) {
+        logger.info("Waiting for download promise");
+      } else {
+        await ipcRenderer.invoke('app:launch');
+      }
     }
   })
   .catch((e) => {

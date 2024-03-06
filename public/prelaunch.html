@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     
-        <title>FTB App</title>
+        <title>FTB App Launch</title>
         <style>
             * {
                 margin: 0;
@@ -19,11 +19,12 @@
             body, html {
                 height: 100%;
                 -webkit-app-region: drag;
+                overflow: hidden;
             }
             
             body {
                 overflow-y: hidden;
-                background-color: #000000;
+                background-color: #000000 !important;
                 color: white;
                 position: absolute;
                 display: flex;
@@ -31,7 +32,7 @@
                 flex-direction: column;
             }
             
-            #app {
+            #app-prelauncher {
                 flex: 1;
                 background-color: rgba(42, 42, 42, 0.49);
                 backdrop-filter: blur(80px);
@@ -117,7 +118,7 @@
         
         <div id="highlighter"></div>
         
-        <div id="app">
+        <div id="app-prelauncher">
             <img src="assets/images/branding/ftb-logo-full.svg" alt="FTB Logo" width="140" style="margin-bottom: 2rem;" />
             
             <div id="status">
