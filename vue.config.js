@@ -17,7 +17,7 @@ if (process.env.CI_COMMIT_TAG) {
       include: process.env.TARGET_PLATFORM === 'overwolf' ? './overwolf/dist/desktop/' : './dist_electron/bundled/',
       ignore: ['node_modules', 'webpack.config.js'],
       urlPrefix: process.env.TARGET_PLATFORM === 'overwolf' 
-        ? `overwolf-extension://${process.env.CI_COMMIT_BRANCH === 'release' ? "cmogmmciplgmocnhikmphehmeecmpaggknkjlbag" : "nelapelmednbnaigieobbdgbinpgcgkfmmdjembg"}/dist/desktop/` 
+        ? `overwolf-extension://cmogmmciplgmocnhikmphehmeecmpaggknkjlbag/dist/desktop/` 
         : ""
     }),
   );
@@ -103,6 +103,7 @@ module.exports = {
         productName: 'FTB App',
         appId: 'dev.ftb.app',
         copyright: `Copyright © ${new Date().getFullYear()} - Feed The Beast Ltd`,
+        generateUpdatesFilesForAllChannels: true,
         publish: {
           provider: 's3',
           bucket: 'ftb-app-updates',
@@ -142,13 +143,13 @@ module.exports = {
         ],
         win: {
           target: ['nsis'],
-          artifactName: '${productName}-${version}-${arch}.${ext}',
+          artifactName: 'ftb-app-${version}-${arch}.${ext}',
         },
         mac: {
           hardenedRuntime: true,
           gatekeeperAssess: false,
           target: ['default'], // We use default in order to allow for updates. DMG only allows installation.
-          artifactName: '${productName}-${version}-${arch}.${ext}',
+          artifactName: 'ftb-app-${version}-${arch}.${ext}',
           category: 'public.app-category.games',
           binaries: [
             getPathToLauncher()
@@ -157,7 +158,7 @@ module.exports = {
         linux: {
           target: ['dir', 'AppImage', 'deb', 'rpm'],
           category: 'Game',
-          artifactName: '${productName}-${version}-${arch}.${ext}',
+          artifactName: 'ftb-app-${version}-${arch}.${ext}',
           synopsis: 'FTB Desktop App for downloading and managing Modpacks',
         },
         directories: {

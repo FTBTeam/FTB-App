@@ -56,7 +56,7 @@
         <div class="value copyable pr-3">{{ configData.version }}</div>
         <template #inner>
           <div class="version">
-            <div class="field mb-4">
+            <div class="field">
               <div class="head">Released</div>
               <div class="value copyable" :title="configData.dateCompiled | dayjsFull">{{ configData.dateCompiled | dayjsFromNow }}</div>
             </div>
@@ -158,7 +158,6 @@ export default class SettingsSidebar extends Vue {
   }
 
   .meta {
-    display: flex;
     margin-top: 0.5rem;
     font-size: 0.875rem;
     padding: 0 .5rem;

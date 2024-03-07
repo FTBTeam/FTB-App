@@ -31,6 +31,11 @@ ipcRenderer.invoke('updater:check-for-update')
     } else {
       if (updater.downloadPromise) {
         logger.info("Waiting for download promise");
+        updater.downloadPromise.then((e: any) => {
+          logger.info("Download promise resolved", e);
+        
+          ipcRenderer.invoke('app:quit-and-install')
+        })
       } else {
         await ipcRenderer.invoke('app:launch');
       }

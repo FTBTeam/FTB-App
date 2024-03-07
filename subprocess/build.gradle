@@ -19,13 +19,11 @@ apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-def date = new Date().format('yyyyMMddHHmm')
-
 group = "net.creeperhost"
 archivesBaseName = "launcher"
 def details = versionDetails()
 def branch = System.getenv("BRANCH_OVERRIDE") ?: (details.branchName ?: System.getenv("GITHUB_REF_NAME") ?: "release").replaceAll('/', '-')
-version = System.getenv("VERSION_OVERRIDE") ?: (date + "-" + details.gitHash + (branch != 'release' ? "-" + branch : ""))
+version = System.getenv("VERSION_OVERRIDE") ?: (details.gitHash + (branch != 'release' ? "-" + branch : ""))
 def sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 
 repositories {
