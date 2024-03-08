@@ -20,9 +20,9 @@ autoUpdater.logger = electronLogger;
 autoUpdater.on('checking-for-update', () => ipcMain.emit('updater:checking-for-update'));
 autoUpdater.on('update-available', () => ipcMain.emit('updater:update-available'));
 autoUpdater.on('update-not-available', () => ipcMain.emit('updater:update-not-available'));
-autoUpdater.on('error', (error) => ipcMain.emit('updater:error', error));
-autoUpdater.on('download-progress', (progress) => ipcMain.emit('updater:download-progress', progress));
-autoUpdater.on('update-downloaded', (info) => ipcMain.emit('updater:update-downloaded', info));
+autoUpdater.on('error', (error) => ipcMain.emit('updater:error', JSON.stringify(error)));
+autoUpdater.on('download-progress', (progress) => ipcMain.emit('updater:download-progress'));
+autoUpdater.on('update-downloaded', (info) => ipcMain.emit('updater:update-downloaded'));
 
 function getAppHome() {
   if (os.platform() === "darwin") {

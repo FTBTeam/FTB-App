@@ -131,7 +131,7 @@ jobs:
           name: subprocess-jar
           path: subprocess/build/libs/
       - name: Restore pnpm
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: cache
         with:
           path: .pnpm-store

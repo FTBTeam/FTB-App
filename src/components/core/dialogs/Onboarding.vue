@@ -17,7 +17,7 @@
       <template #footer>
         <div class="flex gap-4 justify-end">
           <ui-button @click="showManageWindow()">Manage</ui-button>
-          <ui-button type="success" @click="accept()">Accept & Continue</ui-button>
+          <ui-button type="success" @click="accept()">Next</ui-button>
         </div>
       </template>
     </modal>

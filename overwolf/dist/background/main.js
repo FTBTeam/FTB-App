@@ -93,7 +93,8 @@ const setup = async () => {
   });
   
   // Launch the backend
-  const javaPath = plugin.get().GetOverwolfDir() + "\\jdk-17.0.1+12-minimal\\bin\\java.exe";
+  const owDir = plugin.get().GetOverwolfDir();
+  const javaPath = owDir + "\\jdk-17.0.1+12-minimal\\bin\\java.exe";
   const pid = plugin.get().GetOverwolfPID();
   const args = serializeToStringList([
     "--pid",
@@ -102,7 +103,7 @@ const setup = async () => {
   ])
   
   const ftbaDir = plugin.get().GetDotFTBADir();
-  const startupResponse = await p(plugin.get().LaunchJava, ftbaDir, javaPath, versionData.runtime.jar, args, serializeToStringList([]));
+  const startupResponse = await p(plugin.get().LaunchJava, ftbaDir, javaPath, owDir + "\\" + versionData.runtime.jar, args, serializeToStringList([]));
   console.debug(JSON.stringify(startupResponse));
   
   await checkIfAdmin(plugin);
