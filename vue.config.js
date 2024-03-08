@@ -110,8 +110,8 @@ module.exports = {
         generateUpdatesFilesForAllChannels: true,
         publish: {
           provider: 's3',
-          bucket: 'ftb-app-updates',
-          endpoint: 's3.eu-central-003.backblazeb2.com',
+          bucket: process.env.PUBLISH_BUCKET,
+          endpoint: process.env.PUBLISH_ENDPOINT,
           path: 'ftb-app-updates'
         },
         beforePack: async (context) => {          
@@ -150,7 +150,6 @@ module.exports = {
           parsedData.endpoint = 'https://piston.feed-the-beast.com';
           delete parsedData.path;
           
-          // Replace the backblaze URL with the correct one
           fs.writeFileSync(appUpdatePath, yaml.stringify(parsedData));
         },
         afterSign: async (context) => {
@@ -194,7 +193,7 @@ module.exports = {
           ]
         },
         linux: {
-          target: ['dir', 'AppImage', 'deb'],// 'rpm'],
+          target: ['dir', 'AppImage', 'deb', 'rpm'],
           category: 'Game',
           artifactName: 'ftb-app-${version}-${arch}.${ext}',
           synopsis: 'FTB Desktop App for downloading and managing Modpacks',

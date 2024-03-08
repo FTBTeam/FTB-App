@@ -42,7 +42,6 @@ jobs:
     - name: Build App (Windows & Linux)
       env:
         APP_TARGET_PLATFORM: "linux"
-        DEBUG: "true"
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
