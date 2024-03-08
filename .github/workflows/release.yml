@@ -51,6 +51,12 @@ jobs:
         pnpm install
         pnpm gen:license
         pnpm build --publish always -l --x64 --arm64
+    - uses: actions/cache/save@v4
+      id: cache
+      name: Save pnpm modules
+      with:
+        path: .pnpm-store
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
     # Upload the subprocess/build/libs/ directory as an artifact
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -124,6 +130,12 @@ jobs:
         with:
           name: subprocess-jar
           path: subprocess/build/libs/
+      - name: Restore pnpm
+        uses: actions/cache/restore@v3
+        id: cache
+        with:
+          path: .pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
       - name: Build App (Overwolf)
         env:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
