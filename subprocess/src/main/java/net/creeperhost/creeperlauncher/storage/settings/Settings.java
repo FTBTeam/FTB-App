@@ -218,7 +218,12 @@ public class Settings {
                 return defaultValue;
             }
             
-            return transform.apply(value);
+            try {
+                return transform.apply(value);
+            } catch (Exception e) {
+                LOGGER.error("Failed to parse setting " + key + " with value " + value, e);
+                return defaultValue;
+            }
         }
 
         /**

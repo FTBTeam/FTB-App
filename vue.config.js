@@ -4,16 +4,20 @@ const {globSync} = require("glob");
 const fs = require('fs');
 const yaml = require('yaml')
 const {execSync} = require('child_process');
+const {notarize} = require("@electron/notarize");
+
+const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
 const webpackPlugins = [];
 
-if (process.env.CI_COMMIT_TAG) {
+if (process.env.GITHUB_REF_NAME) {
   webpackPlugins.push(
     new SentryWebpackPlugin({
       authToken: process.env.SENTRY_AUTH_TOKEN,
       org: 'creeperhost',
       project: 'ftb-app',
-      release: `${process.env.VERSION || process.env.VERSION_OVERRIDE}-${process.env.VUE_APP_PLATFORM}`,
+      release: `${packageJson.version}`,
+      dist: process.env.APP_TARGET_PLATFORM ?? "unknown",
       include: process.env.TARGET_PLATFORM === 'overwolf' ? './overwolf/dist/desktop/' : './dist_electron/bundled/',
       ignore: ['node_modules', 'webpack.config.js'],
       urlPrefix: process.env.TARGET_PLATFORM === 'overwolf' 
@@ -24,7 +28,7 @@ if (process.env.CI_COMMIT_TAG) {
 }
 
 // This is required, the amount of times the IDE will import this just for using the variable is insane
-if (process.env.NODE_ENV === 'production') {
+if (process.env.GITHUB_REF_NAME) {
   console.log("Checking for bad imports")
   const start = Date.now();
   const badStrings = [
@@ -71,7 +75,7 @@ module.exports = {
     process.env.TARGET_PLATFORM === 'overwolf'
       ? path.resolve(__dirname, './overwolf/dist/desktop')
       : path.resolve(__dirname, './dist'),
-  productionSourceMap: process.env.NODE_ENV !== 'production',
+  productionSourceMap: true,
   pages: {
     prelaunch: {
       entry: 'src/prelaunch.ts',
@@ -110,10 +114,24 @@ module.exports = {
           endpoint: 's3.eu-central-003.backblazeb2.com',
           path: 'ftb-app-updates'
         },
-        beforePack: async (context) => {
+        beforePack: async (context) => {          
           if (context.electronPlatformName === 'darwin' && !hasRepackedJar) {
             await signJnilibInJar(context);
             hasRepackedJar = true; // Don't do this more than once
+          }
+          
+          // Remove the sourcemaps before packing as we only need them for sentry upload
+          const sourceMapFiles = globSync(`${__dirname}/dist_electron/**/*.js.map`, {ignore: ['node_modules/**']});
+          for (const sourceMapFile of sourceMapFiles) {
+            fs.unlinkSync(sourceMapFile);
+          }
+          
+          // Quickly patch all the .js files to remove their //# sourceMappingURL=
+          const jsFiles = globSync(`${__dirname}/dist_electron/**/*.js`, {ignore: ['node_modules/**']});
+          for (const jsFile of jsFiles) {
+            let file = fs.readFileSync(jsFile, 'utf-8');
+            file = file.replace(/^\/\/# sourceMappingURL=.*\.js\.map$/gm, '');
+            fs.writeFileSync(jsFile, file);
           }
         },
         afterPack: (context) => {
@@ -134,6 +152,26 @@ module.exports = {
           
           // Replace the backblaze URL with the correct one
           fs.writeFileSync(appUpdatePath, yaml.stringify(parsedData));
+        },
+        afterSign: async (context) => {
+          const { electronPlatformName, appOutDir } = context;
+          if (electronPlatformName !== 'darwin') {
+            return;
+          }
+          
+          if (!process.env.APPLE_API_KEY) {
+            console.error("No apple api key found");
+            return;
+          }
+
+          const appName = context.packager.appInfo.productFilename;
+          return await notarize({
+            appBundleId: 'dev.ftb.app',
+            appPath: `${appOutDir}/${appName}.app`,
+            appleApiKey: "./apple_api_key.p8", // Only exists at CI time
+            appleApiKeyId: process.env.APPLE_API_KEY_ID,
+            appleApiIssuer: process.env.APPLE_API_ISSUER,
+          });
         },
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
@@ -156,7 +194,7 @@ module.exports = {
           ]
         },
         linux: {
-          target: ['dir', 'AppImage', 'deb', 'rpm'],
+          target: ['dir', 'AppImage', 'deb'],// 'rpm'],
           category: 'Game',
           artifactName: 'ftb-app-${version}-${arch}.${ext}',
           synopsis: 'FTB Desktop App for downloading and managing Modpacks',
@@ -252,7 +290,6 @@ async function signJnilibInJar(context) {
     fs.renameSync(file, toSignFile);
 
     // Sign the file
-    console.log(`codesign --sign ${signingIdentity} --force --timestamp --options runtime --entitlements ${entitlementsPath} ${toSignFile} --keychain ${keychainFile}`)
     execSync(`codesign --sign ${signingIdentity} --force --timestamp --options runtime --entitlements ${entitlementsPath} ${toSignFile} --keychain ${keychainFile}`);
     
     // Move the file back to its original name

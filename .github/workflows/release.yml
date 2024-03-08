@@ -40,6 +40,9 @@ jobs:
         cd subprocess
         ./gradlew clean build -si
     - name: Build App (Windows & Linux)
+      env:
+        APP_TARGET_PLATFORM: "linux"
+        DEBUG: "true"
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
@@ -65,6 +68,8 @@ jobs:
         name: subprocess-jar
         path: subprocess/build/libs/
     - name: Build App (Windows)
+      env:
+        APP_TARGET_PLATFORM: "windows"
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
@@ -92,6 +97,7 @@ jobs:
         java-version: 17
     - name: Build App (MacOS)
       env:
+        APP_TARGET_PLATFORM: "macos"
         CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         CSC_LINK: ${{ secrets.CSC_LINK }}
         APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -102,6 +108,7 @@ jobs:
         pnpm config set store-dir .pnpm-store
         pnpm install
         pnpm gen:license
+        echo "$APPLE_API_KEY" > apple_api_key.p8
         pnpm build --publish always -m --x64 --arm64
   build-overwolf:
     needs:
@@ -119,6 +126,7 @@ jobs:
         env:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
+          APP_TARGET_PLATFORM: "overwolf"
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/

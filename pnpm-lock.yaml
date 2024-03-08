@@ -75,6 +75,9 @@ dependencies:
     version: 0.0.4
 
 devDependencies:
+  '@electron/notarize':
+    specifier: ^2.3.0
+    version: 2.3.0(patch_hash=q5pmifdhk2e4ap6ft6v4ltnxsa)
   '@fortawesome/fontawesome-svg-core':
     specifier: ^6.1.1
     version: 6.3.0
@@ -1543,6 +1546,18 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@electron/notarize@2.3.0(patch_hash=q5pmifdhk2e4ap6ft6v4ltnxsa):
+    resolution: {integrity: sha512-EiTBU0BwE7HZZjAG1fFWQaiQpCuPrVGn7jPss1kUjD6eTTdXXd29RiZqEqkgN7xqt/Pgn4g3I7Saqovanrfj3w==}
+    engines: {node: '>= 10.0.0'}
+    dependencies:
+      debug: 4.3.4(supports-color@6.1.0)
+      fs-extra: 9.1.0
+      promise-retry: 2.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+    patched: true
 
   /@electron/osx-sign@1.0.5:
     resolution: {integrity: sha512-k9ZzUQtamSoweGQDV2jILiRIHUu7lYlJ3c6IEmjv1hC17rclE+eb9U+f6UFlOOETo0JzY1HNlXy4YOlCvl+Lww==}

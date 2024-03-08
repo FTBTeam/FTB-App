@@ -1,7 +1,7 @@
 {
   "productName": "FTB Electron App",
   "name": "ftb-app",
-  "version": "1.25.0-beta.2",
+  "version": "1.24.9002",
   "private": true,
   "main": "background.js",
   "email": "admin@feed-the-beast.com",
@@ -59,6 +59,7 @@
     "@achrinza/node-ipc": "^10.1.7"
   },
   "devDependencies": {
+    "@electron/notarize": "^2.3.0",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
     "@fortawesome/free-brands-svg-icons": "^6.1.1",
     "@fortawesome/free-regular-svg-icons": "^6.1.1",
