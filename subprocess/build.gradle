@@ -22,7 +22,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 group = "net.creeperhost"
 archivesBaseName = "launcher"
 def details = versionDetails()
-def branch = System.getenv("BRANCH_OVERRIDE") ?: (details.branchName ?: System.getenv("GITHUB_REF_NAME") ?: "release").replaceAll('/', '-')
+def branch = System.getenv("BRANCH_OVERRIDE") ?: System.getenv("GITHUB_BRANCH") ?: "release" //(details.branchName ?: System.getenv("GITHUB_BRANCH") ?: "release").replaceAll('/', '-')
 version = System.getenv("VERSION_OVERRIDE") ?: (details.gitHash + (branch != 'release' ? "-" + branch : ""))
 def sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 

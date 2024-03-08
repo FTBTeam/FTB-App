@@ -44,7 +44,7 @@ The FTB App is built using Electron and Vue(2) and is written in TypeScript, sty
 
 ### Java
 
-1. Load the '/subprocess' folder into your IDE
+1. Load the `/subprocess` folder into your IDE
 2. Let the IDE handle the rest
 3. When using IntelliJ (Highly recommended), a `Start Backend` run configuration will be created for you
 4. Run the `Start Backend` run configuration to start the Java backend
