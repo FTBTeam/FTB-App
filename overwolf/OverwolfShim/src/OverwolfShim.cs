@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -129,25 +130,25 @@ public class OverwolfShim : IDisposable {
         }
     }
 
-    [Obsolete("Provided for binary compatibility until new method is used by Frontend.")]
-    public void LaunchJava(string version, bool dev, Action<object> callback) {
-        var args = new List<string>();
-        args.Add("--pid");
-        args.Add(Process.GetCurrentProcess().Id.ToString());
-        args.Add("--overwolf");
-        if (dev) {
-            args.Add("--dev");
-        }
-
-        LaunchJava(
-            overwolfDir,
-            Path.Combine(overwolfDir, @".\jdk-17.0.1+12-minimal\bin\java.exe"),
-            new List<string>(),
-            $"launcher-{version}-all.jar",
-            args,
-            callback
-        );
-    }
+//    [Obsolete("Provided for binary compatibility until new method is used by Frontend.")]
+//    public void LaunchJava(string version, bool dev, Action<object> callback) {
+//        var args = new List<string>();
+//        args.Add("--pid");
+//        args.Add(Process.GetCurrentProcess().Id.ToString());
+//        args.Add("--overwolf");
+//        if (dev) {
+//            args.Add("--dev");
+//        }
+//
+//        LaunchJava(
+//            overwolfDir,
+//            Path.Combine(overwolfDir, @".\jdk-17.0.1+12-minimal\bin\java.exe"),
+//            new List<string>(),
+//            $"launcher-{version}-all.jar",
+//            args,
+//            callback
+//        );
+//    }
 
     /// <summary>
     /// Start a Java sub-process.
@@ -161,22 +162,39 @@ public class OverwolfShim : IDisposable {
     /// <param name="jar">The absolute path to the Jar file to execute.</param>
     /// <param name="arguments">List of Program arguments to add.</param>
     /// <param name="callback">Error/success callback for starting the process.</param>
-    public void LaunchJava(string workingDir, string javaPath, List<string> jvmArgs, string jar, List<string> arguments, Action<object> callback) {
+    public void LaunchJava(
+        string workingDir, 
+        string javaPath,
+        string jar,
+        string arguments,
+        string jvmArgsRaw,
+        Action<object> callback
+    ) {
+        // Deserialize the arguments from the json string
+        var appArgs = deserializeArgsString(arguments);
+        var jvmArgs = deserializeArgsString(jvmArgsRaw);
+        
         if (IsJavaRunning()) {
             callback(new { success = false, message = "Already running." });
             return;
         }
 
         List<string> args = new();
+
         args.AddRange(jvmArgs);
         args.Add("-jar");
         args.Add(jar);
-        args.AddRange(arguments);
+        args.AddRange(appArgs);
 
         for (int i = 0; i < args.Count; i++) {
             if (args[i].Contains(" ")) {
                 args[i] = "\"" + args[i] + "\"";
             }
+        }
+        
+        // Create the working directory if it doesn't exist.
+        if (!Directory.Exists(workingDir)) {
+            Directory.CreateDirectory(workingDir);
         }
 
         try {
@@ -208,6 +226,18 @@ public class OverwolfShim : IDisposable {
             javaProcess = null;
             callback(new { successs = false, message = "Failed to start process: " + ex });
         }
+    }
+
+    private List<string> deserializeArgsString(string args)
+    {
+        if (string.IsNullOrEmpty(args))
+        {
+            return new List<string>();
+        }
+        
+        // We have args, we split on ;
+        var splitArgs = args.Split(';');
+        return new List<string>(splitArgs);
     }
 
     /// <summary>

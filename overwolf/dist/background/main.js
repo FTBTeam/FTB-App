@@ -93,15 +93,16 @@ const setup = async () => {
   });
   
   // Launch the backend
-  const javaPath = plugin.get().GetOverwolfDir() + "/jdk-17.0.1+12-minimal/bin/java.exe";
+  const javaPath = plugin.get().GetOverwolfDir() + "\\jdk-17.0.1+12-minimal\\bin\\java.exe";
   const pid = plugin.get().GetOverwolfPID();
-  const args = [
+  const args = serializeToStringList([
     "--pid",
     pid,
     "--overwolf"
-  ]
+  ])
   
-  const startupResponse = await p(plugin.get().LaunchJava, plugin.get().GetDotFTBADir(), javaPath, [], versionData.runtime.jar, args);
+  const ftbaDir = plugin.get().GetDotFTBADir();
+  const startupResponse = await p(plugin.get().LaunchJava, ftbaDir, javaPath, versionData.runtime.jar, args, serializeToStringList([]));
   console.debug(JSON.stringify(startupResponse));
   
   await checkIfAdmin(plugin);
@@ -254,4 +255,8 @@ async function p(func, ...args) {
     ];
     func.apply(null, realArgs);
   });
+}
+
+function serializeToStringList(list) {
+  return list.join(';');
 }
