@@ -101,7 +101,8 @@ export default class RamSlider extends Vue {
   }
   
   get valueAsByteReadable() {
-    return prettyByteFormat(Math.floor(parseInt(this.value.toString()) * 1024 * 1000));
+    const megabyteSize = 1024 * 1024;
+    return prettyByteFormat(Math.floor(parseInt(this.value.toString()) * megabyteSize));
   }
   
   get valueAsPercentage() {
