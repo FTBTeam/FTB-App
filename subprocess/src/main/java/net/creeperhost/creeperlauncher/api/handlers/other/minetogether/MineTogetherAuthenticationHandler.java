@@ -3,6 +3,7 @@ package net.creeperhost.creeperlauncher.api.handlers.other.minetogether;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.api.data.PrivateBaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.storage.CredentialStorage;
 import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
@@ -80,7 +81,7 @@ public class MineTogetherAuthenticationHandler implements IMessageHandler<MineTo
         }
     }
 
-    public static class Reply extends Data {
+    public static class Reply extends PrivateBaseData {
         boolean success;
         @Nullable String message;
         @Nullable MineTogetherApi.BasicDataAndAccount basicData;

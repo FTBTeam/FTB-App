@@ -7,6 +7,7 @@ import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.api.data.PrivateBaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.Result;
 import org.apache.logging.log4j.LogManager;
@@ -77,7 +78,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
         WebSocketHandler.sendMessage(new Reply(data, true, "", false));
     }
 
-    private static class Reply extends Data {
+    private static class Reply extends PrivateBaseData {
         public boolean networkError;
         public boolean success;
         public String code;

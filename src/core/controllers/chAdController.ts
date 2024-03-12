@@ -132,4 +132,4 @@ class ChAdController extends RequiresWs {
   }
 }
 
-export const chAdController = new ChAdController();
+// export const chAdController = new ChAdController();

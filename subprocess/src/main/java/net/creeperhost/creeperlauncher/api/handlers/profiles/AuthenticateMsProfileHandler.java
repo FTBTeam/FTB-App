@@ -7,6 +7,7 @@ import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
 import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.api.data.PrivateBaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.Result;
 
@@ -47,7 +48,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         WebSocketHandler.sendMessage(new Reply(data));
     }
 
-    private static class Reply extends Data {
+    private static class Reply extends PrivateBaseData {
         public boolean success;
         public boolean networkError;
         @Nullable public String code;
