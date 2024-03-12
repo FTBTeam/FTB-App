@@ -1,235 +1,115 @@
 <template>
-  <div class="mod-card" :class="{ 'modal-open': showInstall }">
-    <div class="art">
-      <img :src="art" alt="Mod artwork" />
-    </div>
-
-    <div class="main" :style="{ backgroundImage: art }">
-      <div class="content">
-        <div class="about">
-          <div class="name">{{ mod.name }}</div>
-          <div class="desc pr-10 mb-3">{{ mod.synopsis }}</div>
-        </div>
-        <div class="get">
-          <ftb-button color="primary" class="px-6 py-2" @click="showInstall = true">Install</ftb-button>
-        </div>
+  <div class="mod-card-wrapper">
+    <div class="mod-card">
+      <div class="art">
+        <img :src="art" alt="Mod artwork" />
       </div>
 
-      <div class="numbers">
-        <div class="stat">
-          <div class="text">Downloads</div>
-          <div class="value is-value">{{ mod.installs.toLocaleString() }}</div>
-        </div>
-        <div class="stat">
-          <div class="text">Latest</div>
-          <div class="value">
-            {{ latest.length > 20 ? latest.substr(0, 20) + '...' : latest }}
+      <div class="main">
+        <div class="content">
+          <div class="about">
+            <div class="name flex gap-4 items-center">{{ mod.name }} <ui-badge type="success" v-if="projectInstalled" icon="check" aria-label="This mod is already installed in your pack, installing again will cause the mod to update."> Installed</ui-badge></div>
+            <div class="desc pr-10 mb-3">{{ mod.synopsis }}</div>
           </div>
+          <ui-button type="success" icon="download" @click="$emit('install')">Install</ui-button>
         </div>
-        <div class="stat">
-          <div class="text">Author{{ mod.authors.length > 1 ? 's' : '' }}</div>
-          <div class="value authors">
-            {{ mod.authors.map((e) => e.name).join(', ') }}
-          </div>
-        </div>
-        <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
-          <img src="@/assets/curse-logo.svg" alt="" />
-        </div>
-      </div>
-    </div>
 
-    <ftb-modal :visible="showInstall" size="medium" @dismiss-modal="closeModal" :dismissable="!installing">
-      <h2 class="text-3xl mb-2">{{ mod.name }}</h2>
-      <p
-        :style="{
-          opacity: !installing && !finishedInstalling ? 1 : 0,
-          height: !installing && !finishedInstalling ? 'auto' : '0 !important',
-        }"
-      >
-        Select the version of '{{ mod.name }}' that you'd like to install to your pack.
-      </p>
-
-      <template v-if="!installing && !finishedInstalling">
-        <selection
-          class="my-6"
-          label="Selection mod version"
-          @selected="(e) => (selectedVersion = e)"
-          v-if="versions"
-          :options="
-            versions.map((e) => ({
-              value: e.id,
-              text: e.name,
-              badge: {
-                text: e.type,
-                color: getColorForReleaseType(e.type),
-              },
-              meta: prettyBytes(e.size),
-            }))
-          "
-        />
-
-        <ftb-button
-          color="secondary"
-          class="py-2 px-8 mb-4 text-center"
-          :disabled="!selectedVersion"
-          @click="installMod"
-          >Install</ftb-button
-        >
-      </template>
-
-      <div class="installing mt-6 mb-4" v-else-if="!finishedInstalling">
-        <div class="progress font-bold"><font-awesome-icon icon="spinner" spin class="mr-2" /> Installing</div>
-        <div class="stats">
-          <div class="stat">
-            <div class="text">Progress</div>
-            <div class="value">{{ installProgress.percentage }}%</div>
-          </div>
-          <div class="stat">
-            <div class="text">Speed</div>
-            <div class="value">{{ prettyBytes(installProgress.speed) }}/s</div>
+        <div class="numbers">
+          <div class="stat" :aria-label="mod.installs.toLocaleString() + ' Downloads'" data-balloon-pos="down">
+            <font-awesome-icon icon="download" />
+            <div class="value is-value">{{ prettyNumber(mod.installs) }}</div>
           </div>
 
-          <div class="stat">
-            <div class="text">Downloaded</div>
-            <div class="value">
-              {{ prettyBytes(installProgress.current) }} / {{ prettyBytes(installProgress.total) }}
+          <div class="stat" aria-label="Authors" data-balloon-pos="down">
+            <font-awesome-icon icon="users" />
+            <div class="value authors">
+              {{ mod.authors.slice(0, 3).map((e) => e.name).join(', ') }}
             </div>
           </div>
+          
+          <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
+            <img src="@/assets/curse-logo.svg" alt="" />
+          </div>
         </div>
-      </div>
-
-      <div class="done" v-else>
-        <span class="block">{{ mod.name }} has been installed!</span>
-
-        <ftb-button color="primary" class="py-2 px-6 inline-block mt-6 mb-3" @click="closeModal">Close</ftb-button>
-      </div>
-    </ftb-modal>
+      </div>  
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Mod, ModVersion } from '@/types';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import {Mod, ModVersion} from '@/types';
+import {Component, Prop, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { Instance } from '@/modules/modpacks/types';
-import { Action } from 'vuex-class';
-import Selection from '@/components/atoms/input/Selection.vue';
-import FTBModal from '../../atoms/FTBModal.vue';
-import MessageModal from '../../organisms/modals/MessageModal.vue';
-import { emitter } from '@/utils/event-bus';
-import { prettyByteFormat } from '@/utils/helpers';
-import { getColorForReleaseType } from '@/utils/colors';
-
-type InstallProgress = {
-  percentage: number;
-  speed: number;
-  current: number;
-  total: number;
-};
+import UiButton from '@/components/core/ui/UiButton.vue';
+import Selection2 from '@/components/core/ui/Selection2.vue';
+import {InstanceJson} from '@/core/@types/javaApi';
+import UiBadge from '@/components/core/ui/UiBadge.vue';
+import {prettyNumber} from '../../../utils/helpers/stringHelpers';
 
 @Component({
+  methods: {prettyNumber},
   components: {
-    'ftb-modal': FTBModal,
-    MessageModal,
-    Selection,
+    UiBadge,
+    UiButton,
+    Selection2,
   },
 })
 export default class ModCard extends Vue {
-  static emptyProgress = {
-    percentage: 0,
-    speed: 0,
-    current: 0,
-    total: 0,
-  };
-
-  @Action('sendMessage') public sendMessage!: any;
-
   @Prop() mod!: Mod;
-  @Prop() instance!: Instance;
+  @Prop() instance!: InstanceJson;
   @Prop() target!: string;
 
+  @Prop() installedMods!: [number, number][];
+
   platform = platform;
-  showInstall = false;
-  selectedVersion: string | null = null;
 
-  installing = false;
-  finishedInstalling = false;
-  installProgress: InstallProgress = ModCard.emptyProgress;
-  wsReqId = -1;
-
-  getColorForReleaseType = getColorForReleaseType;
-  prettyBytes = prettyByteFormat;
-
-  versions: ModVersion[] = [];
-
-  mounted() {
-    this.versions =
-      this.mod.versions
-        .filter(
-          (e) =>
-            e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
-        )
-        .sort((a, b) => b.id - a.id) ?? [];
-
-    emitter.on('ws.message', this.onInstallMessage);
-  }
-
-  onInstallMessage(data: any) {
-    if (!this.installing || this.wsReqId === -1 || this.wsReqId !== data.requestId) {
-      return;
+  static fileName(modName: string, fileName: string, trim = -1, trimReverse = false) {
+    const cleanedModName = modName.split("-")[0].replaceAll(" ", "").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    
+    // Try and remove the modname from the file name
+    let replacedName = fileName.replace(new RegExp(cleanedModName, "gi"), "").replace(".jar", "").toLowerCase();
+    
+    if (replacedName.startsWith("-") || replacedName.startsWith("_")) {
+      replacedName = replacedName.substring(1);
     }
-
-    // Handle progress
-    if (data.type === 'instanceInstallModProgress') {
-      this.installProgress = {
-        percentage: data.overallPrecentage,
-        speed: data.speed,
-        current: data.currentBytes,
-        total: data.overallBytes,
-      };
+    
+    const variations = ["$1", "$1_", "$1-", "-$1", "_$1", "_$1_", "-$1-"].reverse();
+    const lookups  = ["forge", "fabric", "quilt", "neoforge", "mc", "minecraft", "release", "alpha", "beta"];
+    
+    // Soft search to save on performance
+    // Look over the lookups list and see if the name contains any of them
+    if (lookups.findIndex((e) => replacedName.includes(e)) !== -1) {
+      for (const variation of variations) {
+        for (const lookup of lookups) {
+          const regex = new RegExp(`(${variation.replace("$1", lookup)})`, "gi");
+          replacedName = replacedName.replace(regex, "");
+        }
+      }
     }
-
-    // Handle completion
-    if (data.type === 'instanceInstallModReply') {
-      this.wsReqId = -1;
-      this.installing = false;
-      this.installProgress = ModCard.emptyProgress;
-      this.finishedInstalling = true;
-      this.$emit('modInstalled');
+    
+    if (trim === -1 || replacedName.length <= trim) {
+      return replacedName;
     }
+    
+    return !trimReverse ? ("..." + replacedName.substring(0, trim)) : (replacedName.substring(replacedName.length - trim) + "...")
   }
-
-  destroyed() {
-    // Stop listening to events!
-    emitter.off('ws.message', this.onInstallMessage);
+  
+  static fileNameFromMod(mod: Mod, file: ModVersion) {
+    return ModCard.fileName(mod.name, file.name);
   }
-
-  installMod() {
-    if (!this.selectedVersion) {
-      return;
-    }
-
-    this.installing = true;
-    this.sendMessage({
-      payload: {
-        type: 'instanceInstallMod',
-        uuid: this.instance?.uuid,
-        modId: this.mod.id,
-        versionId: this.selectedVersion,
-      },
-      callback: (_: any, wsMessageId: number) => {
-        this.wsReqId = wsMessageId;
-      },
-    });
-
-    this.selectedVersion = null;
+  
+  _fileName(fileName: string) {
+    return ModCard.fileName(this.mod.name, fileName, 20);
   }
-
-  closeModal() {
-    this.showInstall = false;
-    this.finishedInstalling = false;
+  
+  get projectInstalled() {
+    return this.installedMods.findIndex((e) => e[0] === this.mod.id) !== -1;
   }
-
+  
+  get projectFileInstalled() {
+    return this.installedMods.findIndex((e) => e[1] === this.versions[this.versions.length - 1].id) !== -1;
+  }
+  
   get art() {
     return this.mod.art[0]?.url ?? 'broken';
   }
@@ -241,10 +121,24 @@ export default class ModCard extends Vue {
   get curseLink() {
     return this.mod.links.find((e) => e.type === 'curseforge');
   }
+  
+  get versions() {
+    return this.mod.versions
+        .filter(
+          (e) =>
+            e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === this.target) !== -1,
+        )
+        .sort((a, b) => b.id - a.id) ?? [];
+  }
 }
 </script>
 
 <style lang="scss" scoped>
+.curse-border {
+  border-color: var(--curse-color);
+  border-width: 2px;
+}
+
 .mod-card {
   display: flex;
   align-items: center;
@@ -258,7 +152,7 @@ export default class ModCard extends Vue {
     min-width: 120px;
 
     img {
-      max-width: 120px;
+      max-width: 80px;
       border-radius: 5px;
       margin: 0 auto;
     }
@@ -270,6 +164,7 @@ export default class ModCard extends Vue {
     .content {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
 
       .name {
         font-size: 1.1rem;
@@ -279,26 +174,26 @@ export default class ModCard extends Vue {
 
       .about {
         user-select: text;
+        flex: 1;
       }
     }
 
     .numbers {
       display: flex;
       align-items: center;
+      gap: 1.5rem;
 
       .stat {
-        margin-right: 2rem;
+        display: flex;
+        align-items: center;
+        gap: .8rem;
 
-        .text {
+        svg {
           opacity: 0.7;
         }
 
         .value {
           font-weight: bold;
-
-          &.is-value {
-            font-family: Arial, Helvetica, sans-serif;
-          }
         }
       }
 
@@ -341,7 +236,6 @@ export default class ModCard extends Vue {
 
         .value {
           font-weight: bold;
-          font-family: Arial, Helvetica, sans-serif;
         }
       }
     }

@@ -1,57 +1,23 @@
-import { ActionTree } from 'vuex';
-import { Settings, SettingsState } from './types';
-import { RootState } from '@/types';
-import platform from '@/utils/interface/electron-overwolf';
+import {ActionTree} from 'vuex';
+import {SettingsState} from './types';
+import {RootState} from '@/types';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {SettingsData} from '@/core/@types/javaApi';
 
 export const actions: ActionTree<SettingsState, RootState> = {
-  loadSettings({ dispatch, commit }) {
-    return new Promise((resolve, reject) => {
-      dispatch(
-        'sendMessage',
-        {
-          payload: { type: 'getSettings' },
-          callback: (msg: any) => {
-            if (msg.settingsInfo.blockedUesrs !== undefined && !Array.isArray(msg.settingsInfo.blockedUesrs)) {
-              msg.settingsInfo.blockedUsers = JSON.parse(msg.settingsInfo.blockedUsers);
-            }
+  async loadSettings({ dispatch, commit }) {
+    const result = await sendMessage("getSettings", {});
 
-            const settings = msg.settingsInfo;
-            Object.keys(settings).forEach((key: string) => {
-              if (key === 'listMode' && settings[key] === undefined) {
-                settings[key] = false;
-              }
-              if ((settings as any)[key] === 'true') {
-                (settings as any)[key] = true;
-              } else if ((settings as any)[key] === 'false') {
-                (settings as any)[key] = false;
-              } else if (key !== 'jvmargs' && key !== 'instanceLocation' && !isNaN((settings as any)[key])) {
-                (settings as any)[key] = parseInt((settings as any)[key], 10);
-              }
-            });
-
-            commit('loadSettings', settings);
-            platform.get.actions.updateSettings(msg.settingsInfo);
-            commit('loadHardware', msg);
-            resolve(null);
-          },
-        },
-        { root: true },
-      );
-    });
+    const settings = result.settingsInfo
+    
+    commit('loadSettings', settings);
+    commit('loadHardware', result);
   },
-  saveSettings({ dispatch, commit }, settings: Settings) {
-    if (Array.isArray(settings.blockedUsers)) {
-      settings.blockedUsers = JSON.stringify(settings.blockedUsers);
-    }
-    dispatch(
-      'sendMessage',
-      {
-        payload: { type: 'saveSettings', settingsInfo: settings },
-        callback: () => {
-          dispatch('loadSettings');
-        },
-      },
-      { root: true },
-    );
+  async saveSettings({ dispatch, commit }, settings: SettingsData) {
+    await sendMessage('saveSettings', {
+      settings: settings
+    })
+    
+    dispatch('loadSettings');
   },
 };

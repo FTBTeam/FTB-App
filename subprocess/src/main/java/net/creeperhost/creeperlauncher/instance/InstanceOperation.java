@@ -3,13 +3,13 @@ package net.creeperhost.creeperlauncher.instance;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.install.FileValidation;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -26,13 +26,13 @@ import java.util.stream.Stream;
  */
 public abstract class InstanceOperation {
 
-    protected final LocalInstance instance;
+    protected final Instance instance;
     protected final ModpackVersionManifest manifest;
 
     @Nullable
     protected Map<String, IndexedFile> knownFiles;
 
-    protected InstanceOperation(LocalInstance instance, ModpackVersionManifest manifest) {
+    protected InstanceOperation(Instance instance, ModpackVersionManifest manifest) {
         this.instance = instance;
         this.manifest = manifest;
     }
@@ -48,10 +48,14 @@ public abstract class InstanceOperation {
     protected Map<String, IndexedFile> computeKnownFiles(ModpackVersionManifest manifest) {
         Map<String, IndexedFile> knownFiles = new HashMap<>();
         for (ModpackVersionManifest.ModpackFile file : manifest.getFiles()) {
+            if (file.getName().isEmpty() || file.getUrl().isEmpty()) continue; // What??
             if (file.getType().equals("cf-extract")) continue;
+
             Path path = file.toPath(instance.getDir()).toAbsolutePath().normalize();
             String relPath = instance.getDir().relativize(path).toString().replace('\\', '/');
-            knownFiles.put(relPath, new IndexedFile(relPath, file.getSha1OrNull(), file.getSize()));
+
+            boolean isTrackedMod = Instance.isMod(file.getName());
+            knownFiles.put(relPath, new IndexedFile(file.getId(), isTrackedMod, relPath, file.getName(), file.getSha1OrNull(), file.getSize()));
         }
         Path cfOverrides = getCFOverridesZip(manifest);
         if (cfOverrides != null) {
@@ -61,7 +65,7 @@ public abstract class InstanceOperation {
                     for (Path path : ColUtils.iterable(paths)) {
                         if (Files.isDirectory(path)) continue;
                         String relPath = root.relativize(path).toString().replace('\\', '/');
-                        knownFiles.put(relPath, new IndexedFile(relPath, HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
+                        knownFiles.put(relPath, new IndexedFile(relPath, path.getFileName().toString(), HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
                     }
                 }
             } catch (IOException ex) {
@@ -77,7 +81,7 @@ public abstract class InstanceOperation {
             return manifest.cfExtractOverride;
         }
 
-        LinkedList<ModpackVersionManifest.ModpackFile> cfExtractEntries = StreamableIterable.of(manifest.getFiles())
+        LinkedList<ModpackVersionManifest.ModpackFile> cfExtractEntries = FastStream.of(manifest.getFiles())
                 .filter(e -> e.getType().equals("cf-extract"))
                 .toLinkedList();
 
@@ -85,8 +89,9 @@ public abstract class InstanceOperation {
         if (cfExtractEntries.size() > 1) throw new IllegalStateException("More than one cf-extract entry found.");
 
         ModpackVersionManifest.ModpackFile cfExtractEntry = cfExtractEntries.getFirst();
-        NewDownloadTask task = NewDownloadTask.builder()
+        DownloadTask task = DownloadTask.builder()
                 .url(cfExtractEntry.getUrl())
+                .withMirrors(cfExtractEntry.getMirror())
                 .dest(cfExtractEntry.getCfExtractPath(instance.getDir(), manifest.getName()))
                 .withValidation(cfExtractEntry.createValidation().asDownloadValidation())
                 .build();
@@ -99,7 +104,11 @@ public abstract class InstanceOperation {
         return task.getDest();
     }
 
-    protected static record IndexedFile(String path, @Nullable HashCode sha1, long length) {
+    protected record IndexedFile(long fileId, boolean isTrackedMod, String relPath, String fileName, @Nullable HashCode sha1, long length) {
+
+        public IndexedFile(String path, String fileName, @Nullable HashCode sha1, long length) {
+            this(-1, false, path, fileName, sha1, length);
+        }
 
         public FileValidation createValidation() {
             FileValidation validation = FileValidation.of();

@@ -1,10 +1,10 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.SetInstanceArtData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,20 +21,20 @@ public class SetInstanceArtHandler implements IMessageHandler<SetInstanceArtData
 
     @Override
     public void handle(SetInstanceArtData data) {
-        LocalInstance instance = Instances.getInstance(data.uuid);
+        Instance instance = Instances.getInstance(data.uuid);
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new SetInstanceArtData.Reply(data, "error", "Instance does not exist."));
+            WebSocketHandler.sendMessage(new SetInstanceArtData.Reply(data, "error", "Instance does not exist."));
             return;
         }
 
         Path path = Path.of(data.artPath);
         if (!Files.exists(path)) {
-            Settings.webSocketAPI.sendMessage(new SetInstanceArtData.Reply(data, "error", "Selected art file does not exist."));
+            WebSocketHandler.sendMessage(new SetInstanceArtData.Reply(data, "error", "Selected art file does not exist."));
             return;
         }
 
         if (!Files.isRegularFile(path)) {
-            Settings.webSocketAPI.sendMessage(new SetInstanceArtData.Reply(data, "error", "Selected art file is not a file."));
+            WebSocketHandler.sendMessage(new SetInstanceArtData.Reply(data, "error", "Selected art file is not a file."));
             return;
         }
 
@@ -42,9 +42,9 @@ public class SetInstanceArtHandler implements IMessageHandler<SetInstanceArtData
             instance.importArt(path);
         } catch (IOException ex) {
             LOGGER.warn("Failed to import art: {}", path, ex);
-            Settings.webSocketAPI.sendMessage(new SetInstanceArtData.Reply(data, "error", "Failed to import art: " + ex.getClass().getName() + ": " + ex.getMessage()));
+            WebSocketHandler.sendMessage(new SetInstanceArtData.Reply(data, "error", "Failed to import art: " + ex.getClass().getName() + ": " + ex.getMessage()));
             return;
         }
-        Settings.webSocketAPI.sendMessage(new SetInstanceArtData.Reply(data, "success", ""));
+        WebSocketHandler.sendMessage(new SetInstanceArtData.Reply(data, "success", ""));
     }
 }

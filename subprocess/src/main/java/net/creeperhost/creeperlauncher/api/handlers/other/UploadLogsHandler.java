@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.other;
 
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.other.UploadLogsData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 import net.creeperhost.creeperlauncher.util.LogsUploader;
@@ -9,14 +9,15 @@ public class UploadLogsHandler implements IMessageHandler<UploadLogsData> {
 
     @Override
     public void handle(UploadLogsData data) {
-        uploadLogs(data.uiVersion, data.frontendLogs, data.requestId);
+        uploadLogs(data.requestId);
     }
 
-    public static void uploadLogs(String uiVersion, String frontendLogs, int requestId) {
-        String code = LogsUploader.uploadUILogs(uiVersion, frontendLogs);
+    public static void uploadLogs(String requestId) {
+        String code = LogsUploader.uploadUILogs();
         if (code == null) {
-            Settings.webSocketAPI.sendMessage(new UploadLogsData.Reply(requestId)); // error
+            WebSocketHandler.sendMessage(new UploadLogsData.Reply(requestId)); // error
+            return;
         }
-        Settings.webSocketAPI.sendMessage(new UploadLogsData.Reply(requestId, code));
+        WebSocketHandler.sendMessage(new UploadLogsData.Reply(requestId, code));
     }
 }

@@ -4,16 +4,15 @@ import com.google.gson.JsonObject;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
-import net.covers1624.quack.util.SneakyUtils;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.data.forge.VersionOverrides;
 import net.creeperhost.creeperlauncher.data.forge.installerv1.InstallProfile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
@@ -21,16 +20,15 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-import static net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.*;
+import static net.creeperhost.creeperlauncher.install.tasks.DownloadTask.*;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 
 /**
@@ -40,19 +38,20 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final MavenNotation FORGE_NOTATION = MavenNotation.parse("net.minecraftforge:forge");
+    private static final MavenNotation NEO_FORGE_NOTATION = MavenNotation.parse("net.neoforged:forge");
+    private static final MavenNotation NEO_FORGE_1_20_2_PLUS_NOTATION = MavenNotation.parse("net.neoforged:neoforge");
 
     private static final VersionOverrides SPECIAL_VERSIONS = VersionOverrides.compute();
 
     @Nullable
     protected String versionName;
 
-    @Nullable
     @Override
-    public final String getResult() {
-        return versionName;
+    public final String getModLoaderTarget() {
+        return Objects.requireNonNull(versionName);
     }
 
-    public static AbstractForgeInstallTask createInstallTask(LocalInstance instance, String mcVersion, String forgeVersion) throws IOException {
+    public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion) throws IOException {
         if (FORGE_LEGACY_INSTALL.containsVersion(new DefaultArtifactVersion(mcVersion))) {
             return new LegacyForgeInstallTask(instance, mcVersion, forgeVersion);
         }
@@ -65,7 +64,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         // TODO, can we maybe merge both install tasks and do this detection in there?
         //       I dislike that we have to download this file in a call path that just evaluates
         //       what needs to be done for an installation.
-        NewDownloadTask task = builder()
+        DownloadTask task = builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
                 .dest(notation.toPath(Constants.LIBRARY_LOCATION))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -76,7 +75,29 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return detectInstallerVersion(instance, task.getDest());
     }
 
-    private static AbstractForgeInstallTask detectInstallerVersion(LocalInstance instance, Path installer) throws IOException {
+    public static AbstractForgeInstallTask createNeoForgeInstallTask(Instance instance, String mcVersion, String neoForgeVersion) throws IOException {
+        MavenNotation versionSpecificNotation = NEO_FORGE_1_20_2_PLUS_NOTATION.withVersion(neoForgeVersion);
+        
+        if (mcVersion.equals("1.20.1")) {
+            versionSpecificNotation = NEO_FORGE_NOTATION.withVersion(mcVersion + "-" + neoForgeVersion);
+        }
+        
+        MavenNotation notation = versionSpecificNotation
+                .withClassifier("installer");
+
+        // TODO, this is a common path with above.
+        DownloadTask task = builder()
+                .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
+                .dest(notation.toPath(Constants.LIBRARY_LOCATION))
+                .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
+                .tryCompanionHashes()
+                .build();
+
+        task.execute(null, null);
+        return new ForgeV2InstallTask(instance, task.getDest());
+    }
+
+    private static AbstractForgeInstallTask detectInstallerVersion(Instance instance, Path installer) throws IOException {
         try (FileSystem fs = IOUtils.getJarFileSystem(installer, true)) {
             Path installProfile = fs.getPath("/install_profile.json");
 
@@ -130,7 +151,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     }
 
     protected static Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
-        NewDownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
+        DownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
         if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
 
         Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
@@ -213,12 +234,12 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     protected record PackedJarLocator(Path localPath) implements LocalFileLocator {
 
         @Override
-        public Path getLocalFile(String url, FileValidation validation, Path dest) {
+        public Path getLocalFile(FileValidation validation, Path dest) {
             return localPath;
         }
 
         @Override
-        public void onFileDownloaded(String url, FileValidation validation, Path dest) {
+        public void onFileDownloaded(FileValidation validation, Path dest) {
         }
     }
 }

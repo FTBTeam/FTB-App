@@ -1,11 +1,10 @@
 package net.creeperhost.creeperlauncher.api.data.instances;
 
 import net.creeperhost.creeperlauncher.api.data.BaseData;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
+import net.creeperhost.creeperlauncher.data.InstanceJson;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public class InstallInstanceData extends BaseData {
 
@@ -14,62 +13,52 @@ public class InstallInstanceData extends BaseData {
     public long version;
     public boolean _private = false;
     public byte packType = 0;
+    public @Nullable String mcVersion;
     public String shareCode;
     @Nullable
     public String importFrom;
+    @Nullable
+    public String name;
+    @Nullable
+    public String artPath;
+    @Nullable
+    public String category;
+
+    // QOL stuff for own instances
+    public boolean ourOwn = false; // Marker for when it's a custom instance creation
+    public int ram = -1; // Default
+    @Nullable
+    public Boolean fullscreen = false; // default
+    @Nullable
+    public Boolean cloudSaves = false; // default
+    public int screenWidth = -1; // default
+    public int screenHeight = -1; // default
 
     public static class Reply extends BaseData {
 
         public final String status;
         public final String message;
-        public final String uuid;
         @Nullable
-        public final LocalInstance instanceData;
+        public final InstanceJson instanceData;
 
-        public Reply(InstallInstanceData data, String status, String message, String uuid) {
-            this(data, status, message, uuid, null);
+        public Reply(InstallInstanceData data, String status, String message) {
+            this(data, status, message, null);
         }
 
-        public Reply(InstallInstanceData data, String status, String message, LocalInstance instanceData) {
-            this(data, status, message, instanceData.getUuid().toString(), instanceData);
-        }
-
-        public Reply(InstallInstanceData data, String status, String message, String uuid, LocalInstance instanceData) {
+        public Reply(InstallInstanceData data, String status, String message, @Nullable Instance instance) {
             type = "installInstanceDataReply";
             requestId = data.requestId;
             this.status = status;
             this.message = message;
-            this.uuid = uuid;
-            this.instanceData = instanceData;
-        }
-    }
 
-    public static class Progress extends BaseData {
-
-        public final double overallPercentage;
-        public final long speed;
-        public final long currentBytes;
-        public final long overallBytes;
-        public final InstallStage currentStage;
-
-        public Progress(InstallInstanceData data, Double overallPercentage, long speed, long currentBytes, long overallBytes, InstallStage currentStage) {
-            requestId = data.requestId;
-            type = "installInstanceProgress";
-            this.overallPercentage = overallPercentage;
-            this.speed = speed;
-            this.currentBytes = currentBytes;
-            this.overallBytes = overallBytes;
-            this.currentStage = currentStage;
-        }
-    }
-
-    public static class FilesEvent extends BaseData {
-
-        public final Map<Long, String> files;
-
-        public FilesEvent(Map<Long, String> files) {
-            type = "install.filesEvent";
-            this.files = files;
+            if (instance == null) {
+                instanceData = null;
+            } else if (instance.props.installComplete) {
+                // Send a sugared instance json to the frontend upon completion
+                this.instanceData = new InstalledInstancesHandler.SugaredInstanceJson(instance);
+            } else {
+                this.instanceData = instance.props;
+            }
         }
     }
 }

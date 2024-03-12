@@ -1,130 +1,23 @@
 package net.creeperhost.creeperlauncher.minecraft.modloader.forge;
 
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.api.DownloadableFile;
-import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
-import net.creeperhost.creeperlauncher.minecraft.McUtils;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import net.creeperhost.creeperlauncher.util.FileUtils;
-import net.creeperhost.creeperlauncher.util.ForgeUtils;
-import net.creeperhost.creeperlauncher.util.LoaderTarget;
-import net.creeperhost.creeperlauncher.util.WebUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Collections;
 import java.util.List;
 
-public class ForgeJarModLoader extends ForgeModLoader
-{
+@Deprecated
+public class ForgeJarModLoader {
     private static final Logger LOGGER = LogManager.getLogger();
 
-	public ForgeJarModLoader(List<LoaderTarget> loaderTargets)
-	{
-		super(loaderTargets);
-	}
-
-	@Override
-	public String getName()
-	{
-		return "forge";
-	}
-
-	@Override
-	public Path install(LocalInstance instance)
-	{
-		Path returnFile = null;
-		String newname = getMinecraftVersion() + "-forge" + getMinecraftVersion() + "-" + getForgeVersion();
-		instance.mcVersion = getMinecraftVersion();
-		instance.modLoader = newname;
-		instance.hasInstMods = true;
-
-		LOGGER.info("Minecraft version: {} Forge version: {} NewName: {}", getMinecraftVersion(), getForgeVersion(), newname);
-
-		Path file = Constants.VERSIONS_FOLDER_LOC.resolve(newname);
-		FileUtils.createDirectories(file);
-
-		//Add the jvm args to fix loading older forge versions
-		instance.jvmArgs = instance.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath().toString().trim() + "\"";
-		try
-		{
-			URI url = null;
-			try
-			{
-				url = ForgeUtils.findForgeDownloadURL(getMinecraftVersion(), getForgeVersion());
-			} catch (URISyntaxException | MalformedURLException e)
-			{
-				e.printStackTrace();
-			}
-            Path instMods = instance.getDir().resolve("instmods");
-			Files.createDirectories(instMods);
-
-            Path forgeFile = instMods.resolve(newname + ".jar");
-			if(Files.notExists(forgeFile))
-			{
-				LOGGER.info(forgeFile.toAbsolutePath() + " Does not exist, Downloading from " + url.toString());
-
-				DownloadableFile forge = new DownloadableFile(forgeFile, url.toString(), Collections.emptyList(), 0, 0, newname, "modloader");
-				DownloadTask task = new DownloadTask(forge, forgeFile);
-				task.execute();
-			}
-
-            Path mcFile = instMods.resolve("minecraft.jar");
-			if(Files.notExists(mcFile))
-			{
-				LOGGER.info(mcFile.toAbsolutePath() + " Does not exist, Downloading from Mojang servers");
-				DownloadableFile mc = McUtils.getMinecraftDownload(getMinecraftVersion(), instMods);
-				DownloadTask mcTask = new DownloadTask(mc, mcFile);
-				mcTask.execute();
-			}
-
-			Path forgeJson = file.resolve(newname + ".json");
-			if(Files.notExists(forgeJson))
-			{
-				String downloadName = "forge-" + getMinecraftVersion() + ".json";
-				String jsonurl = "https://apps.modpacks.ch/versions/minecraftjsons/" + downloadName;
-
-				LOGGER.error("Failed to extract version json, attempting to download it from repo " + jsonurl);
-
-				if(WebUtils.checkExist(new URL(jsonurl)))
-				{
-					DownloadableFile fjson = new DownloadableFile(forgeJson, jsonurl, Collections.emptyList(), 0, 0, downloadName, "modloader");
-					DownloadTask ftask = new DownloadTask(fjson, forgeJson);
-					ftask.execute().join();
-				}
-				else
-				{
-                    LOGGER.error("Failed to download {} from repo", downloadName);
-				}
-			}
-
-			if(Files.exists(forgeJson))
-			{
-				boolean val = ForgeUtils.updateForgeJson(forgeJson, newname, getMinecraftVersion(), true);
-				LOGGER.info(val ? "ForgeJson has been updated at " + forgeJson.toAbsolutePath() : "Failed to update ForgeJson " + forgeJson.toAbsolutePath());
-				returnFile = forgeJson;
-			}
-
-			LOGGER.info("Forge Install finished");
-			return returnFile;
-		} catch (Exception exception)
-		{
-			exception.printStackTrace();
-		}
-		return returnFile;
-	}
-
-	public static void prePlay(LocalInstance instance)
-	{
-		try
-		{
+    @Deprecated // This can be done very differently!
+	public static void prePlay(Instance instance) {
+		try {
 			LOGGER.info("Pre-Play started");
 			String newname = instance.getModLoader();
 
@@ -208,13 +101,5 @@ public class ForgeJarModLoader extends ForgeModLoader
 		{
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	public boolean isApplicable()
-	{
-		int minorMcVersion = McUtils.parseMinorVersion(getTargetVersion("minecraft").orElse("0.0.0"));
-		//1.2.5 -> 1.5.2
-		return super.isApplicable() && minorMcVersion >= 2 && minorMcVersion <= 5;
 	}
 }

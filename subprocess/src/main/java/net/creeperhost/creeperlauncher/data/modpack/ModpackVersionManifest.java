@@ -5,15 +5,15 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.api.handlers.ModFile;
 import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.util.FileUtils;
+import net.creeperhost.creeperlauncher.util.ModpacksChUtils;
 import net.creeperhost.creeperlauncher.util.PathRequestBody;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static net.creeperhost.creeperlauncher.Constants.CREEPERHOST_MODPACK;
 
 /**
  * Models the <code>modpacks.ch</code> api.
@@ -47,6 +46,8 @@ public class ModpackVersionManifest {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static final Gson GSON = new Gson();
+
+    public static final int INVALID_ID = -1000;
 
     public static final int MINIMUM_SPEC = 4096;
     public static final int RECOMMENDED_SPEC = 6132;
@@ -75,6 +76,9 @@ public class ModpackVersionManifest {
     private long updated;
     private long refreshed;
 
+    @Nullable
+    public transient Path cfExtractOverride;
+
     public ModpackVersionManifest() {
     }
 
@@ -85,10 +89,10 @@ public class ModpackVersionManifest {
         name = other.name;
         specs = other.specs != null ? other.specs.copy() : null;
         type = other.type;
-        targets = StreamableIterable.of(other.targets)
+        targets = FastStream.of(other.targets)
                 .map(Target::copy)
                 .toLinkedList();
-        files = StreamableIterable.of(other.files)
+        files = FastStream.of(other.files)
                 .map(ModpackFile::copy)
                 .toLinkedList();
         installs = other.installs;
@@ -97,8 +101,13 @@ public class ModpackVersionManifest {
         refreshed = other.refreshed;
     }
 
-    @Nullable
-    public transient Path cfExtractOverride;
+    public static ModpackVersionManifest makeInvalid() {
+        ModpackVersionManifest manifest = new ModpackVersionManifest();
+        manifest.id = INVALID_ID;
+        manifest.parent = INVALID_ID;
+        manifest.name = "Corrupt instance install.";
+        return manifest;
+    }
 
     @Nullable
     public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
@@ -123,8 +132,8 @@ public class ModpackVersionManifest {
     }
 
     @Nullable
-    public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        return queryManifest(Constants.getCreeperhostModpackPrefix(isPrivate, packType) + packId + "/" + versionId);
+    public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {        
+        return queryManifest(ModpacksChUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
     }
 
     @Nullable
@@ -132,10 +141,13 @@ public class ModpackVersionManifest {
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.OK_HTTP_CLIENT)
+                .setClient(Constants.httpClient())
                 .setUserAgent(Constants.USER_AGENT)
                 .setUrl(url)
                 .setDest(sw);
+        
+        ModpacksChUtils.injectBearerHeader(action);
+        
         action.execute();
 
         ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
@@ -152,9 +164,12 @@ public class ModpackVersionManifest {
         LOGGER.info("Converting pack '{}'.", manifest);
 
         Request.Builder builder = new Request.Builder()
-                .url(CREEPERHOST_MODPACK + "/public/curseforge/import")
+                .url(ModpacksChUtils.getPublicApi() + "/curseforge/import")
                 .put(new PathRequestBody(manifest));
-        try (Response response = Constants.OK_HTTP_CLIENT.newCall(builder.build()).execute()) {
+        
+        ModpacksChUtils.injectBearerHeader(builder);
+        
+        try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
             if (body == null) {
                 LOGGER.error("Request returned empty body. Status code: " + response.code());
@@ -186,7 +201,7 @@ public class ModpackVersionManifest {
      */
     @Nullable
     public Target findTarget(String type) throws IllegalStateException {
-        LinkedList<Target> targetsMatching = StreamableIterable.of(getTargets())
+        LinkedList<Target> targetsMatching = FastStream.of(getTargets())
                 .filter(e -> type.equals(e.getType()))
                 .toLinkedList();
 
@@ -213,6 +228,18 @@ public class ModpackVersionManifest {
         return target != null ? target.getVersion() : null;
     }
 
+    /**
+     * Count the number of targets which share this type.
+     *
+     * @param type The types.
+     * @return The count.
+     */
+    public int getTargetCount(String type) {
+        return FastStream.of(getTargets())
+                .filter(e -> type.equals(e.getType()))
+                .count();
+    }
+
     public ModpackVersionManifest copy() {
         return new ModpackVersionManifest(this);
     }
@@ -232,17 +259,6 @@ public class ModpackVersionManifest {
     public long getUpdated() { return updated; }
     public long getRefreshed() { return refreshed; }
     // @formatter:on
-
-    public List<ModFile> toLegacyFiles() {
-        List<ModFile> files = new LinkedList<>();
-        for (ModpackFile file : this.files) {
-            if (!file.getPath().startsWith("./mods") || !ModFile.isPotentialMod(file.getName())) continue;
-            String sha1 = file.getSha1OrNull() != null ? file.getSha1OrNull().toString() : "";
-            files.add(new ModFile(file.getName(), file.getVersion(), file.getSize(), sha1));
-        }
-        files.sort((e1, e2) -> e1.getRealName().compareToIgnoreCase(e2.getRealName()));
-        return files;
-    }
 
     public static class Specs {
 
@@ -314,6 +330,7 @@ public class ModpackVersionManifest {
         private String name;
         @Nullable
         private String url;
+        private List<String> mirror = new LinkedList<>();
         @Nullable
         @JsonAdapter (HashCodeAdapter.class)
         private HashCode sha1;
@@ -361,7 +378,11 @@ public class ModpackVersionManifest {
         }
 
         public Path toPath(Path root) {
-            return root.resolve(getPath()).resolve(getName());
+            return toPath(root, "");
+        }
+
+        public Path toPath(Path root, String nameSuffix) {
+            return root.resolve(getPath()).resolve(getName() + nameSuffix);
         }
 
         public String instanceRelPath() {
@@ -392,9 +413,11 @@ public class ModpackVersionManifest {
         // @formatter:off
         public long getId() { return id; }
         public String getVersion() { return requireNonNull(version); }
+        public @Nullable String getVersionOrNull() { return version; }
         public String getPath() { return requireNonNull(path); }
         public String getName() { return requireNonNull(name); }
         public String getUrl() { return requireNonNull(url); }
+        public List<String> getMirror() { return mirror; }
         public HashCode getSha1() { return requireNonNull(sha1); }
         @Nullable public HashCode getSha1OrNull() { return sha1; }
         public long getSize() { return size; }

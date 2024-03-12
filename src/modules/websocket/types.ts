@@ -1,4 +1,4 @@
-import { ModalBox } from '@/types';
+import {ModalBox} from '@/types';
 
 export interface SocketState {
   firstStart: boolean;
@@ -9,7 +9,6 @@ export interface SocketState {
   ircEventCallback: ((data: any) => void) | undefined;
   pingEventCallback: ((data: any) => void) | undefined;
   exitCallback: ((data: any) => void) | undefined;
-  downloadedFiles: { [index: string]: string };
 }
 
 export interface Socket {

@@ -1,115 +1,116 @@
 <template>
   <div class="settings-sidebar">
     <router-link to="/" class="back">
-      <font-awesome-icon icon="chevron-left" class="mr-2" />
+      <font-awesome-icon icon="arrow-left" class="mr-2" />
       Back to app
     </router-link>
 
     <main>
       <nav>
         <div class="heading">Settings</div>
-        <router-link :to="{ name: 'instance-settings' }" class="item">
+        <router-link :to="{ name: RouterNames.SETTINGS_INSTANCE }" class="item">
           <font-awesome-icon icon="gamepad" />
           <span>Instances</span>
         </router-link>
-        <router-link :to="{ name: 'download-settings' }" class="item">
-          <font-awesome-icon icon="cloud-download-alt" />
-          <span>Downloads</span>
-        </router-link>
-        <router-link :to="{ name: 'app-settings' }" class="item">
+        <router-link :to="{ name: RouterNames.SETTINGS_APP }" class="item">
           <font-awesome-icon icon="rocket" />
           <span>App</span>
         </router-link>
-        <router-link :to="{ name: 'integrations' }" class="item">
+        <router-link :to="{ name: RouterNames.SETTINGS_PRIVACY }" class="item">
+          <font-awesome-icon icon="user-secret" />
+          <span>Privacy</span>
+        </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
+          <font-awesome-icon icon="cloud-download-alt" />
+          <span>Downloads</span>
+        </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_INTEGRATION }" class="item">
           <font-awesome-icon icon="link" />
           <span>Integrations</span>
         </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_PROXY }" class="item">
+          <font-awesome-icon icon="shuffle" />
+          <span>Proxy</span>
+        </router-link>
       </nav>
-      <nav v-if="auth.token !== null">
+      <nav v-if="getMtAccount">
         <div class="heading">Integrations</div>
-        <router-link :to="{ name: 'MTIntegration' }" class="item app-info-item">
-          <img src="@/assets/images/mt-logo.png" alt="" />
+        <router-link :to="{ name: RouterNames.SETTINGS_MT_INTEGRATION }" class="item app-info-item">
+          <img src="@/assets/images/mt-logo.webp" alt="" />
           <span>MineTogether</span>
         </router-link>
       </nav>
       <nav>
         <div class="heading">Info</div>
-        <router-link :to="{ name: 'app-info' }" class="item app-info-item">
-          <font-awesome-icon icon="info" />
-          <span>App info</span>
-        </router-link>
 
-        <!--        <div @click="changesHistoryOpen = true" class="item app-info-item">-->
-        <!--          <font-awesome-icon icon="info" />-->
-        <!--          <span>Changelogs</span>-->
-        <!--        </div>-->
+        <router-link :to="{ name: RouterNames.SETTINGS_CHANGELOGS }" class="item app-info-item">
+          <font-awesome-icon icon="info" />
+          <span>Changelogs</span>
+        </router-link>
       </nav>
     </main>
 
     <div class="meta">
       <span>App version</span>
       <popover position="bottom">
-        <div class="value copyable pr-3">{{ version }}</div>
+        <div class="value copyable pr-3">{{ configData.version }}</div>
         <template #inner>
           <div class="version">
-            <div class="field mb-4">
-              <div class="head">UI Version</div>
-              <div class="value copyable">{{ uiVersion }}</div>
+            <div class="field">
+              <div class="head">Released</div>
+              <div class="value copyable" :title="configData.dateCompiled | dayjsFull">{{ configData.dateCompiled | dayjsFromNow }}</div>
             </div>
             <div class="field">
-              <div class="head">Subprocess Version</div>
-              <div class="value copyable">{{ appVersion }}</div>
+              <div class="head">Branch</div>
+              <div class="value copyable">{{ configData.branch }}</div>
+            </div>
+            <div class="field">
+              <div class="head">Commit</div>
+              <div class="value copyable">{{ configData.commit }}</div>
             </div>
           </div>
         </template>
       </popover>
     </div>
-
-    <!--    <modal-->
-    <!--      :open="changesHistoryOpen"-->
-    <!--      title="Changelogs"-->
-    <!--      subTitle="Checkout the changes we've been making!"-->
-    <!--      size="medium"-->
-    <!--      @closed="changesHistoryOpen = false"-->
-    <!--    >-->
-    <!--      <changelog-history v-if="changesHistoryOpen" />-->
-    <!--    </modal>-->
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import {Component, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { State } from 'vuex-class';
-import { AuthState } from '@/modules/auth/types';
-import ChangelogHistory from '@/components/templates/changelogs/ChangelogHistory.vue';
+import {Getter} from 'vuex-class';
+import {RouterNames} from '@/router';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount} from '@/core/@types/javaApi';
 
-@Component({
-  components: { ChangelogHistory },
-})
+@Component
 export default class SettingsSidebar extends Vue {
-  @State('auth') private auth!: AuthState;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
 
   platform = platform;
-
-  version = platform.get.config.publicVersion;
-  uiVersion = platform.get.config.webVersion;
-  appVersion = platform.get.config.appVersion;
+  RouterNames = RouterNames;
+  
   changesHistoryOpen: boolean = false;
+  
+  get configData() {
+    return platform.get.config;
+  }
 }
 </script>
 
 <style scoped lang="scss">
 .settings-sidebar {
   background-color: var(--color-background);
-  width: 280px;
-  padding: 2rem 1.5rem;
+  width: 220px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
+  font-size: 14px;
 
   .back {
     opacity: 0.8;
     transition: opacity 0.25s ease-in-out;
+    margin: 0 .5rem 1rem;
 
     &:hover {
       opacity: 1;
@@ -121,12 +122,12 @@ export default class SettingsSidebar extends Vue {
   }
 
   nav {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
 
     .heading {
       font-weight: bold;
       opacity: 0.5;
-      margin-bottom: 1rem;
+      margin: 0 .5rem .5rem;
       font-size: 0.875rem;
     }
 
@@ -150,17 +151,16 @@ export default class SettingsSidebar extends Vue {
 
       svg,
       img {
-        margin-right: 0.8rem;
-        width: 30px;
-        font-size: 18px;
+        margin-right: 1rem;
+        width: 20px;
       }
     }
   }
 
   .meta {
-    display: flex;
     margin-top: 0.5rem;
     font-size: 0.875rem;
+    padding: 0 .5rem;
 
     span {
       margin-right: 0.8rem;

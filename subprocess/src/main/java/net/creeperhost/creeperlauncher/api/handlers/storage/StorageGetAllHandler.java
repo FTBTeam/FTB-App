@@ -1,14 +1,14 @@
 package net.creeperhost.creeperlauncher.api.handlers.storage;
 
-import net.creeperhost.creeperlauncher.GenericStorage;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.storage.KVStorage;
 
 public class StorageGetAllHandler implements IMessageHandler<BaseData> {
     @Override
     public void handle(BaseData data) {
-        Settings.webSocketAPI.sendMessage(new Reply(data, GenericStorage.getInstance().getAllAsJson()));
+        WebSocketHandler.sendMessage(new Reply(data, KVStorage.getInstance().getAllAsJson()));
     }
 
     static class Reply extends BaseData {

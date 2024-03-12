@@ -51,7 +51,7 @@ export default class Message extends Vue {
   .message-header {
     display: flex;
     align-items: center;
-    padding: 0.8rem 1rem;
+    padding: 0.5rem 1rem;
     background-color: #454545;
     border-radius: 5px 5px 0 0;
     font-weight: bold;
@@ -81,6 +81,7 @@ export default class Message extends Vue {
 
   &.danger .message-body {
     border-color: var(--color-danger-button);
+    background-color: #862929;
   }
 
   &.success .message-header {

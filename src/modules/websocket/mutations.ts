@@ -1,8 +1,11 @@
-import { MutationTree } from 'vuex';
-import { SocketState } from './types';
+import {MutationTree} from 'vuex';
+import {SocketState} from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
-import { emitter } from '@/utils/event-bus';
+import {emitter} from '@/utils/event-bus';
+import {createLogger} from '@/core/logger';
+
+const logger = createLogger("websocket/mutations.ts");
 
 export const mutations: MutationTree<SocketState> = {
   SOCKET_ONOPEN(state: any, event: any) {
@@ -24,12 +27,12 @@ export const mutations: MutationTree<SocketState> = {
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {
     if (message.type !== 'ping' && message.type !== 'pong') {
-      if (process.env.NODE_ENV === 'development') {
-        const { requestId, type, ...rest } = message;
-        console.info(
-          `[${message.requestId ? ('' + message.requestId).padStart(6, '0') : '......'}][id//${message.type}]`,
-          rest,
-        );
+      const { requestId, type, ...rest } = message;
+      if (message.type !== "launchInstance.logs" && !message?.notViableForLogging) {
+        // Done like this to avoid being seen when searching for the normal version
+        console["debug"](`WS Message: [${message.requestId ?? 'unknown'}::${message.type}]`, rest)
+      } else if (message.notViableForLogging) {
+        console["debug"](`WS Message: [${message.requestId ?? 'unknown'}::${message.type}]`, "Not viable for logging")
       }
       emitter.emit('ws.message', message);
     }
@@ -45,9 +48,6 @@ export const mutations: MutationTree<SocketState> = {
           message.type !== 'launchInstance.status'
         ) {
           delete state.messages[message.requestId];
-        } else if (message.status === 'success') {
-          delete state.messages[message.requestId];
-          state.downloadedFiles = {};
         }
       }
     }
@@ -58,30 +58,15 @@ export const mutations: MutationTree<SocketState> = {
       if (!state.socket.isConnected) {
         state.socket.isConnected = true;
       }
-    } else if (message.type === 'yeetLauncher') {
-      if (state.exitCallback) {
-        state.exitCallback(message);
-      }
     } else if (message.type === 'openModal') {
       state.modal = message;
     } else if (message.type === 'closeModal') {
       state.modal = null;
-    } else if (message.type === 'ircMessage') {
-      if (state.ircEventCallback) {
-        state.ircEventCallback(message);
-      }
-    } else if (message.type === 'install.filesEvent') {
-      Object.keys(message.files).forEach((f: string) => {
-        const status = message.files[f];
-        Vue.set(state.downloadedFiles, f, status);
-      });
-      // Vue.set(state.downloadedFiles, message.fileName, message.status);
     }
     state.socket.message = message;
-    platform.get.websocket.notifyWebhookReceived(message);
   },
   SOCKET_RECONNECT(state: any, count: number) {
-    console.info(`Attempting to reconnect to java-backend, tries: ${count}`);
+    logger.info(`Attempting to reconnect to java-backend, tries: ${count}`);
     state.reconnects = count;
   },
   SOCKET_RECONNECT_ERROR(state: any) {
@@ -92,11 +77,5 @@ export const mutations: MutationTree<SocketState> = {
   },
   ADD_PING_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
     state.pingEventCallback = callback;
-  },
-  ADD_IRC_MESSAGE_CALLBACK(state: any, callback: (data: any) => void) {
-    state.ircEventCallback = callback;
-  },
-  ADD_EXIT_CALLBACK(state: any, callback: (data: any) => void) {
-    state.exitCallback = callback;
-  },
+  }
 };

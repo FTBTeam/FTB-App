@@ -1,6 +1,5 @@
-import { SettingsState } from './modules/settings/types';
-import { ModpackState } from './modules/modpacks/types';
-import { AuthState, Friend } from './modules/auth/types';
+import {SettingsState} from './modules/settings/types';
+import {AppState} from '@/core/state/appState';
 
 export namespace App {
   export interface MsgBox {
@@ -12,38 +11,16 @@ export namespace App {
   }
 }
 
-export interface RootState {
-  version: string;
-  alerts: Alert[];
-  wsPort: number;
-  wsSecret: string;
-  modpacks: ModpackState | null;
+export type RootState = {
   settings: SettingsState | null;
-  auth: AuthState | null;
-}
+} & AppState
 
-export interface Alert {
-  type: string;
-  title: string;
-  message: string;
-}
-
-export interface AlertWithId extends Alert {
-  id: string;
-  timeout: any;
-}
 
 export interface ModalBox {
+  id: string;
   title: string;
   message: string;
   buttons: Button[];
-  dismissable: boolean;
-}
-
-export interface FriendListResponse {
-  online: Friend[];
-  offline: Friend[];
-  pending: Friend[];
 }
 
 export interface Button {
@@ -143,9 +120,21 @@ export interface ModArt {
   type: string;
 }
 
-export interface ModSearchResults {
-  mods: number[];
-  total: number;
-  limit: number;
-  refreshed: number;
+export interface DiscordWidget {
+  id: string;
+  name: string;
+  instant_invite: string;
+  channels: any[];
+  members: {
+    id: string;
+    username: string;
+    discriminator: string;
+    avatar: null;
+    status: "dnd" | "idle" | "online";
+    avatar_url: string;
+    game?: {
+      name: string;
+    };
+  }[];
+  presence_count: number;
 }

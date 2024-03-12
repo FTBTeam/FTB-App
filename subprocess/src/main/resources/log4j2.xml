@@ -16,14 +16,8 @@
             ]]></Script>
     </Scripts>
     <Filters>
-        <!-- Drop all Pircbotx logger markers and java websockets, these are just full of spam that we don't need. -->
-        <MarkerFilter marker="pircbotx.ddcChat.input" onMatch="${sys:pircbotx.ddcChat.input:-DENY}" onMismatch="NEUTRAL"/>
-        <MarkerFilter marker="pircbotx.ddcChat.output" onMatch="${sys:pircbotx.ddcChat.output:-DENY}" onMismatch="NEUTRAL"/>
-        <MarkerFilter marker="pircbotx.input" onMatch="${sys:pircbotx.input:-DENY}" onMismatch="NEUTRAL"/>
-        <MarkerFilter marker="pircbotx.output" onMatch="${sys:pircbotx.output:-DENY}" onMismatch="NEUTRAL"/>
         <!-- Drop Minecraft logging -->
         <MarkerFilter marker="MINECRAFT" onMatch="${sys:InstanceLauncher.minecraft:-DENY}" onMismatch="NEUTRAL"/>
-        <LoggerNameFilter logger="org.java_websocket" contains="true" onMatch="${sys:org.java_websocket:-DENY}" onMismatch="NEUTRAL"/>
     </Filters>
     <Appenders>
         <Console name="SysOut" target="SYSTEM_OUT">
@@ -89,10 +83,18 @@
     </Appenders>
     <Loggers>
         <Root level="all">
-            <AppenderRef ref="SysOut" level="${sys:console.level:-info}"/>
-            <AppenderRef ref="Latest" level="info"/>
-            <AppenderRef ref="Debug" level="trace"/>
-            <AppenderRef ref="Sentry"/>
+            <AppenderRef ref="SysOut" level="${sys:console.level:-info}">
+                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
+            <AppenderRef ref="Latest" level="info">
+                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
+            <AppenderRef ref="Debug" level="trace">
+                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
+            <AppenderRef ref="Sentry">
+                <MarkerFilter marker="NO_SENTRY" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </AppenderRef>
         </Root>
     </Loggers>
 </Configuration>

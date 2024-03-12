@@ -94,7 +94,6 @@ export default class FTBSlider extends Vue {
     background-color: var(--color-background);
     padding: 0.8rem 1.3rem 1rem 1.3rem;
     border-radius: 5px;
-    font-family: Helvetica Neue, Helvetica, Arial, serif;
     position: relative;
     z-index: 1;
 

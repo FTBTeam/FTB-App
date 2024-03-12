@@ -1,7 +1,7 @@
 package net.creeperhost.creeperlauncher.install.tasks;
 
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;
@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Created by covers1624 on 17/11/21.
  */
-public interface Task<T> {
+public interface Task {
 
     ExecutorService TASK_POOL = new ThreadPoolExecutor(
             Settings.getThreadLimit(),
@@ -30,19 +30,4 @@ public interface Task<T> {
      * @throws Throwable If any exception is thrown whilst executing the task.
      */
     void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable;
-
-    /**
-     * Checks if executing this task would do nothing.
-     *
-     * @return If this task is redundant.
-     */
-    default boolean isRedundant() { return false; }
-
-    /**
-     * Returns the Optional result of this task.
-     *
-     * @return The task's result or <code>null</code> if the task has no result.
-     */
-    @Nullable
-    T getResult();
 }

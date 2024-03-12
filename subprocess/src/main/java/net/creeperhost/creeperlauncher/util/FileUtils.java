@@ -1,86 +1,54 @@
 package net.creeperhost.creeperlauncher.util;
 
+import net.covers1624.quack.util.SneakyUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.nio.file.FileSystem;
+import java.awt.*;
+import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.security.MessageDigest;
-import java.util.*;
+import java.nio.file.attribute.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static net.covers1624.quack.util.SneakyUtils.*;
+import static net.covers1624.quack.util.SneakyUtils.sneak;
 
 public class FileUtils
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void fileFromZip(Path zip, Path dest, String fileName) throws IOException
-    {
-        try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip))
-        {
-            Path fileToExtract = fileSystem.getPath(fileName);
-            Files.copy(fileToExtract, dest, REPLACE_EXISTING);
+    /**
+     * Allows the subprocess to open a desktop's finder / explorer / etc
+     *
+     * @param location the path to open                
+     * @return if the open action was successful
+     */
+    public static boolean openFolder(Path location) {
+        if (Files.notExists(location)) {
+            return false;
         }
-    }
 
-    public static void extractFromZip(Path zip, Path dest, String fileName, boolean relative) throws IOException
-    {
-        try (java.nio.file.FileSystem fileSystem = FileSystems.newFileSystem(zip))
-        {
-            Path src = fileSystem.getPath(fileName);
-            try (Stream<Path> stream = Files.walk(src)) {
-                stream.forEach(source -> {
-                    Path localPath = pathTransform(dest.getFileSystem(), source);
-                    if (relative) {
-                        if (localPath.getNameCount() == 1) {
-                            return; // Eh, probably directory
-                        } else {
-                            localPath = localPath.subpath(1, localPath.getNameCount());
-                        }
-
-                        if(Files.isDirectory(source)) {
-                            //noinspection ResultOfMethodCallIgnored
-                            dest.resolve(localPath).toFile().mkdirs();
-                            return;
-                        }
-
-                        //TODO: If we end up having to remove multiple, work this out, for now works to hardcode to -1
-                    }
-
-                    copy(source, dest.resolve(localPath));
-                });
-            }
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().open(location.toFile());
+            } catch (IOException ignored) {}
+            return true;
         }
+        return false;
     }
 
-    private static Path pathTransform(final FileSystem fs, final Path path)
-    {
-        Path ret = fs.getPath(path.isAbsolute() ? fs.getSeparator() : "");
-        for (final Path component: path)
-            ret = ret.resolve(component.getFileName().toString());
-        return ret;
-    }
-
-    private static void copy(Path source, Path dest) {
-        try {
-            Files.copy(source, dest, REPLACE_EXISTING);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+    
     public static void deletePath(Path path) {
-        if (Files.notExists(path)) {
-            return;
-        }
-        
+        if (Files.notExists(path)) return;
+
         if (Files.isDirectory(path)) {
             deleteDirectory(path);
         } else {
@@ -89,15 +57,23 @@ public class FileUtils
             } catch (IOException ignored) {}
         }
     }
-    
-    public static void deleteDirectory(Path file)
-    {
+
+    public static void deleteDirectory(Path file) {
         if (Files.notExists(file)) return;
+
         try (Stream<Path> files = Files.walk(file)) {
                     files
                     .filter(Files::exists)
                     .sorted(Comparator.reverseOrder())
-                    .forEach(sneak(Files::delete));
+                    .forEach(e -> {
+                        try {
+                            Files.deleteIfExists(e);
+                        } catch (IOException ex) {
+                            if (Files.exists(e)) {
+                                SneakyUtils.throwUnchecked(ex);
+                            }
+                        }
+                    });
 
         } catch (IOException e) {
             LOGGER.error("Failed to delete directory. {}", file, e);
@@ -186,6 +162,8 @@ public class FileUtils
     }
 
     public static List<Path> listDir(Path dir) {
+        if (Files.notExists(dir)) return Collections.emptyList();
+
         try (Stream<Path> stream = Files.walk(dir, 1)) {
             return stream.filter(e -> !e.equals(dir))
                     .collect(Collectors.toList());
@@ -314,7 +292,6 @@ public class FileUtils
 
     public static void move(Path from, Path to, boolean replaceExisting) throws IOException {
         if (Files.isDirectory(from)) {
-            System.out.println(to);
             if (!Files.isDirectory(to)) throw new IllegalArgumentException("Requested to move directory into file.");
             try (Stream<Path> children = Files.list(from)) {
                 children.filter(e -> e != from)
@@ -335,42 +312,6 @@ public class FileUtils
         }
     }
 
-    public static String getHash(Path file, String hashType)
-    {
-        try {
-            return hashToString(createChecksum(file, hashType));
-        } catch (Exception e) {
-            return "error - " + e.getMessage();
-        }
-    }
-
-    private static byte[] createChecksum(Path file, String hashType) throws Exception {
-        try (InputStream is = Files.newInputStream(file)) {
-
-            byte[] buffer = new byte[4096];
-            MessageDigest complete = MessageDigest.getInstance(hashType);
-            int numRead;
-
-            do {
-                numRead = is.read(buffer);
-                if (numRead > 0) {
-                    complete.update(buffer, 0, numRead);
-                }
-            }
-            while (numRead != -1);
-            return complete.digest();
-        }
-    }
-
-    private static String hashToString(byte[] b) {
-        StringBuilder result = new StringBuilder();
-
-        for (byte value : b) {
-            result.append(Integer.toString((value & 0xff) + 0x100, 16).substring(1));
-        }
-        return result.toString();
-    }
-
     /**
      * Sanitize filename or path segment name to not include problematic
      * characters for some filesystems (eg: Windows)
@@ -389,5 +330,46 @@ public class FileUtils
             }
         }
         return result.toString();
+    }
+
+    public static String getAcl(Path path) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("ACL info for: ").append(path).append("\n");
+            AclFileAttributeView view = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            for (AclEntry entry : view.getAcl()) {
+                sb.append(entry.principal().getName()).append("\n");
+                sb.append(" === flags ===").append("\n");
+                for (AclEntryFlag flags : entry.flags()) {
+                    sb.append("  ").append(flags.name()).append("\n");
+                }
+
+                sb.append(" === permissions ===").append("\n");
+                for (AclEntryPermission permission : entry.permissions()) {
+                    sb.append("  ").append(permission.name()).append("\n");
+                }
+            }
+            return sb.toString();
+        } catch (Throwable ex) {
+            return "Failed to get ACL.\n" + ExceptionUtils.getMessage(ex);
+        }
+    }
+
+    /**
+     * Checks if a give path is writable by the current process (This app)
+     * 
+     * @param path The path to check
+     * @return If the path is writable by the current process.
+     */
+    public static boolean pathWritableByApp(Path path) {
+        try {
+            var testFile = path.resolve(".ftb-app-write-test-file");
+            Files.createFile(testFile);
+            Files.delete(testFile);
+            return true;
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to check if path is writable by app.", ex);
+            return false;
+        }
     }
 }

@@ -1,20 +1,69 @@
-import { AuthProfile } from '@/modules/core/core.types';
+import {AuthProfile} from '@/modules/core/core.types';
 import store from '@/modules/store';
-import { wsTimeoutWrapper } from '../helpers';
-import dayjs from 'dayjs';
+import {createError} from '@/core/errors/errorCodes';
+import {alertController} from '@/core/controllers/alertController';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {createLogger} from '@/core/logger';
+
+const logger = createLogger("auth/authentication.ts");
+
+type RefreshResponse = {
+  ok: boolean;
+  networkError?: boolean;
+  tryLoginAgain?: boolean;
+};
 
 interface Authenticator {
-  refresh: (profile: AuthProfile) => Promise<boolean>;
+  refresh: (profile: AuthProfile) => Promise<RefreshResponse>;
 }
 
-// Todo: reduce logging in the future
+export async function loginWithMicrosoft(payload: string | {key: string; iv: string; password: string}): Promise<{ success: boolean; code: string, networkError: boolean }> {
+  logger.debug("Logging in with Microsoft");
+  try {
+    const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(typeof payload === "string" ? {credentials: payload} : payload),
+    });
 
-export const logAuth = (level: 'debug' | 'warn' | 'error', message: any) =>
-  console.log(`[${dayjs().format('DD/MM/YY hh:mm:ss')}] [${level}] [auth] ${message}`);
+    logger.debug("Received the authentication data from the backend")
+    const response: any = (await responseRaw.json()).data;
+    if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
+      logger.error("Failed to login with Microsoft, missing authentication data");
+      return {
+        success: false,
+        code: "ftb-f-auth-000001",
+        networkError: false,
+      };
+    } else {
+      logger.debug("Successfully received the authentication data from the backend")
+    }
+
+    logger.debug("Sending the authentication request to the backend")
+    const res = await sendMessage("profiles.ms.authenticate", {
+      ...response
+    })
+
+    return {
+      success: res.success ?? false,
+      code: res.code ?? "ftb-f-auth-000002",
+      networkError: res.networkError ?? false
+    }
+  } catch (error) {
+    logger.error("Failed to login with Microsoft", error);
+    return {
+      success: false,
+      code: "ftb-f-auth-000002",
+      networkError: true
+    }
+  }
+}
 
 const msAuthenticator: Authenticator = {
-  async refresh(profile: AuthProfile): Promise<boolean> {
-    logAuth('debug', `Asking the refresh service to refresh the token for ${profile.username}`);
+  async refresh(profile: AuthProfile): Promise<RefreshResponse> {
+    logger.debug(`Asking the refresh service to refresh the token for ${profile.username}`);
 
     try {
       let rawResponse = await fetch(`https://msauth.feed-the-beast.com/v1/authenticate`, {
@@ -29,11 +78,11 @@ const msAuthenticator: Authenticator = {
         }),
       });
 
-      logAuth('debug', `Sending the refresh request to the refresh service for ${profile.username}`);
+      logger.debug(`Sending the refresh request to the refresh service for ${profile.username}`);
 
       let response = await rawResponse.json();
       if (response.iv) {
-        logAuth('debug', `Received a valid set of encryption details to decrypt authentication data`);
+        logger.debug(`Received a valid set of encryption details to decrypt authentication data`);
 
         let res = await fetch(`https://msauth.feed-the-beast.com/v1/retrieve`, {
           method: 'POST',
@@ -43,210 +92,159 @@ const msAuthenticator: Authenticator = {
           body: JSON.stringify(response),
         });
 
-        logAuth('debug', `Sending retrieve request to decrypt the authentication data`);
+        logger.debug(`Sending retrieve request to decrypt the authentication data`);
         const data = (await res.json()).data;
 
-        const authenticator = await wsTimeoutWrapper({
-          type: 'profiles.refresh',
+        const authenticator = await sendMessage("profiles.refresh", {
           profileUuid: profile.uuid,
           ...data,
-        });
+        })
 
-        if (authenticator?.response === 'updated') {
-          logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
-          return true;
+        if (authenticator?.success) {
+          logger.debug(`Successfully refreshed the token for ${profile.username}`);
+          return { ok: true };
         } else {
-          logAuth(
-            'warn',
-            `Failed to refresh the token for ${profile.username} due to ${authenticator?.response ?? 'unknown'}`,
-          );
-          return false;
+          logger.warn(`Failed to refresh the token for ${profile.username}... Error code ${authenticator?.code ?? 'unknown'}`,);
+          return { ok: false, networkError: authenticator?.networkError ?? false };
         }
       } else {
-        logAuth('error', `No encryption details, we can not proceed...`);
-        console.log('Unable to refresh token due to missing encryption details', response);
-        return false;
+        logger.error(`No encryption details, we can not proceed...`);
+        logger.debug('Unable to refresh token due to missing encryption details', response);
+        if (response?.raw?.issue?.error === "invalid_grant") {
+          return {ok: false, tryLoginAgain: true};
+        }
+        
+        return {ok: false}
       }
     } catch (e) {
-      logAuth('error', `Request errored with the response of ${(e as any).message}`);
-      console.log(e);
-      return false;
+      logger.error(`Request errored with the response of ${(e as any).message}`);
+      return { ok: false, networkError: true };
     }
   },
 };
 
-const mcAuthenticator: Authenticator = {
-  async refresh(profile: AuthProfile): Promise<boolean> {
-    const authenticator = await wsTimeoutWrapper({
-      type: 'profiles.refresh',
-      profileUuid: profile.uuid,
-    });
-
-    if (authenticator?.response === 'updated') {
-      logAuth('debug', `Successfully refreshed the token for ${profile.username}`);
-      return true;
-    } else {
-      logAuth(
-        'warn',
-        `Failed to refresh the token for ${profile.username} due to ${authenticator?.response ?? 'unknown'}`,
-      );
-      return false;
-    }
-  },
+export type LaunchCheckResult = {
+  ok: boolean;
+  requiresSignIn: boolean;
+  allowOffline?: boolean;
+  quite?: boolean;
+  error?: {
+    message: string;
+    code: string;
+  };
 };
 
-const purgeMinecraftProfiles = async (profiles: AuthProfile[]) => {
-  const minecraftProfiles = profiles.filter((profile) => profile.type !== 'microsoft');
-
-  logAuth('debug', `Pruning ${minecraftProfiles.length} Minecraft profiles`);
-
-  for (let minecraftProfile of minecraftProfiles) {
-    try {
-      await wsTimeoutWrapper({
-        type: 'profiles.remove',
-        uuid: minecraftProfile.uuid,
-      });
-    } catch {
-      console.log('Failed to remove profile');
-    }
-  }
-
-  logAuth('debug', `Loading profiles again`);
-  await store.dispatch('core/loadProfiles');
-
-  return minecraftProfiles;
-};
-
-const attemptToRemoveMojangAccounts = async (
-  profiles: AuthProfile[],
-  profile: AuthProfile,
-  signInAgain: () => void,
-) => {
-  logAuth('debug', 'triggered catch all for accounts past the 10/03/2022');
-  // Use this chance to purge all old profiles
-  const removedProfiles = await purgeMinecraftProfiles(profiles);
-  const removedOurProfile = removedProfiles.find((p: AuthProfile) => p.uuid === profile?.uuid);
-
-  for (let removedProfile of removedProfiles) {
-    logAuth(
-      'debug',
-      `Found profile ${removedProfile.username} with uuid ${removedProfile.uuid} which is using Mojang auth. Removing...`,
-    );
-    await store.dispatch('showAlert', {
-      type: 'warning',
-      title: 'Profile removed',
-      message: `We've automatically removed ${removedProfile.username} as it was added using the old authentication system.`,
+export const removeActiveProfile = async (): Promise<boolean> => {
+  const { 'core/getActiveProfile': activeProfile } = store.getters;
+  if (activeProfile) {
+    await sendMessage("profiles.remove", {
+      uuid: activeProfile.uuid,
     });
   }
 
-  if (removedOurProfile) {
-    logAuth('debug', `The active profile was removed, attempting to fall back`);
-    // Show remaining profiles
-    const remainingProfile = profiles.length > 0 ? profiles[0] : null;
-    if (remainingProfile) {
-      logAuth(
-        'debug',
-        `Successfully found a fallback profile ${remainingProfile.username} with uuid ${remainingProfile.uuid}`,
-      );
-      profile = remainingProfile;
-
-      // Alert the user
-      await store.dispatch('showAlert', {
-        type: 'primary',
-        title: 'Using Microsoft account instead',
-        message: `We've automatically switched your active account to ${profile?.username}`,
-      });
-
-      // Set the active profile to the remaining profile
-      try {
-        const data = await wsTimeoutWrapper({
-          type: 'profiles.setActiveProfile',
-          uuid: remainingProfile.uuid,
-        });
-
-        if (data.success) {
-          await store.dispatch('core/loadProfiles');
-          logAuth(
-            'debug',
-            `Successfully set active profile to ${remainingProfile.username} with uuid ${remainingProfile.uuid}`,
-          );
-        } else {
-          logAuth('error', `Failed to set active profile`);
-        }
-      } catch {
-        logAuth('error', `Failed to set active profile`);
-        console.log('Failed to set active profile');
-      }
-    } else {
-      logAuth('debug', `No remaining profiles found, prompting user to sign in`);
-      await signInAgain();
-      return false;
-    }
-  }
+  // No profile found, assume success
+  return true;
 };
 
 // 🚀
-export const preLaunchChecksValid = async (tryAgainInstanceUuid: any) => {
+export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
+  logger.debug(`Running pre-launch checks`)
   const { 'core/getProfiles': profiles, 'core/getActiveProfile': activeProfile } = store.getters;
 
-  const signInAgain = async () => {
-    await store.dispatch('core/openSignIn', { open: true, tryAgainInstanceUuid }, { root: true });
-  };
-
   if (profiles.length === 0) {
-    logAuth('debug', 'No profiles found, prompting user to sign in');
-    await signInAgain();
-    return false;
+    logger.debug(`No profiles found, asking the user to sign-in`)
+    return {
+      ok: false,
+      requiresSignIn: true,
+      quite: true,
+      error: createError('ftb-auth#1000'),
+    };
   }
 
   let profile: AuthProfile | null = profiles.find((profile: AuthProfile) => profile.uuid == activeProfile.uuid);
   if (!profile) {
-    logAuth('debug', 'No active profile found, prompting user to sign in');
-    await signInAgain();
-    return false;
+    logger.debug("No active profile found, asking the user to sign-in")
+    return {
+      ok: false,
+      requiresSignIn: true,
+      quite: true,
+      error: createError('ftb-auth#1001'),
+    };
   }
 
-  // TODO: remove in April 2022
-  // if (dayjs().isAfter('2022-03-10')) {
-  //   await attemptToRemoveMojangAccounts(profiles, profile, signInAgain);
-  // }
-  // TODO: end of remove in April 2022
-
-  // Something went really wrong here...
-  if (profile == null) {
-    logAuth('error', `Fatal error, falling back to sign in`);
-    await signInAgain();
-    return false;
+  if (profile.type !== "microsoft") {
+    logger.debug("User signed in with a non-microsoft account, asking the user to sign-in")
+    return {
+      ok: false,
+      requiresSignIn: true,
+      quite: true,
+      error: createError('ftb-auth#1003'),
+    };
   }
 
-  const validator = profile.type === 'microsoft' ? msAuthenticator : mcAuthenticator;
+  logger.debug(`Validating profile ${profile.username} with uuid ${profile.uuid} against Microsoft`,);
 
-  logAuth(
-    'debug',
-    `Validating profile ${profile.username} with uuid ${profile.uuid} against ${
-      profile.type === 'microsoft' ? 'Microsoft' : 'Mojang'
-    }`,
-  );
-
-  const isValid = await wsTimeoutWrapper({
-    type: 'profiles.is-valid',
+  const isValid = await sendMessage("profiles.is-valid", {
     profileUuid: profile.uuid,
   });
 
-  logAuth('debug', `The users token is ${isValid.success ? 'valid' : 'invalid'}`);
+  logger.debug(`The users token is ${isValid.success ? 'valid' : 'invalid'}`);
   if (!isValid?.success) {
-    logAuth('debug', `Found a profile that no longer can be validated. Trying to refresh`);
-    const refresh = await validator.refresh(profile);
-    if (!refresh) {
-      logAuth('error', `Failed to refresh token`);
-    }
+    logger.debug(`Found a profile that no longer can be validated. Trying to refresh`);
+    const refresh = await msAuthenticator.refresh(profile);
 
     // Update the profiles
     await store.dispatch('core/loadProfiles');
-    logAuth('debug', `The refresh was ${refresh ? 'successful' : 'unsuccessful'}`);
-    return refresh;
+    logger.debug(`The refresh was ${refresh.ok ? 'successful' : 'unsuccessful'}`);
+    return {
+      ok: refresh.ok,
+      allowOffline: !refresh.ok && !refresh.tryLoginAgain,
+      requiresSignIn: refresh.tryLoginAgain ?? false,
+      error: refresh.ok ? createError('ftb-auth#1002') : undefined,
+    };
   }
 
-  logAuth('debug', `Successfully authenticated ${profile.username} with uuid ${profile.uuid}`);
-  return true;
+  logger.debug(`Successfully authenticated ${profile.username} with uuid ${profile.uuid}`);
+  return {
+    ok: true,
+    requiresSignIn: false,
+  };
+};
+
+/**
+ * Runs the above validation, logs any errors, and handles the removal of the profile if it's invalid / errored and
+ * will force the displaying of the login modal if needed.
+ *
+ * @param instanceId
+ */
+export const validateAuthenticationOrSignIn = async (instanceId?: string): Promise<RefreshResponse> => {
+  logger.debug(`Validating authentication or sign-in`)
+  const validationResult = await preLaunchChecksValid();
+  if (validationResult.ok) {
+    logger.debug(`Validation was successful`)
+    return {
+      ok: true,
+    };
+  }
+
+  if (validationResult.error) {
+    logger.warn("validation error", validationResult.error?.code + ': ' + validationResult.error?.message);
+  }
+
+  if (!validationResult.quite) {
+    alertController.error(validationResult.requiresSignIn
+      ? "We've been unable to refresh your account details, please sign back in"
+      : 'Profile validation failed, please login again. If this keeps happening, ask for support in our Discord',)
+  }
+
+  if (validationResult.requiresSignIn && !validationResult.allowOffline) {
+    logger.debug('Removing active profile and asking the user to sign-in again');
+    await removeActiveProfile();
+    await store.dispatch('core/openSignIn', { open: true, tryAgainInstanceUuid: instanceId ?? null }, { root: true });
+  }
+
+  return {
+    ok: false,
+    networkError: validationResult.allowOffline,
+  };
 };

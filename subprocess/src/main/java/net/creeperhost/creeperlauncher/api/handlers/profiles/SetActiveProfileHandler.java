@@ -1,8 +1,9 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
+import net.creeperhost.creeperlauncher.api.data.PrivateBaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
 
 import java.util.UUID;
@@ -11,7 +12,7 @@ public class SetActiveProfileHandler implements IMessageHandler<SetActiveProfile
     @Override
     public void handle(SetActiveProfileHandler.Data data) {
         AccountManager.get().setActiveProfile(data.uuid);
-        Settings.webSocketAPI.sendMessage(new Reply(
+        WebSocketHandler.sendMessage(new Reply(
                 data,
                 true
         ));
@@ -21,7 +22,7 @@ public class SetActiveProfileHandler implements IMessageHandler<SetActiveProfile
         public UUID uuid;
     }
 
-    private static class Reply extends BaseData {
+    private static class Reply extends PrivateBaseData {
         boolean success;
 
         public Reply(BaseData data, boolean success) {

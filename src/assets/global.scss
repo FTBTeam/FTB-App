@@ -1,3 +1,11 @@
+:root {
+  --curse-color-hsl: 15 87% 58%;
+  --curse-color: hsl(var(--curse-color-hsl));
+  
+  // Standard animation timing
+  --transition-duration: 0.25s;
+}
+
 html,
 body {
   height: 100%;
@@ -9,15 +17,15 @@ body {
 #app {
   background-color: var(--color-background);
   margin: 0;
-  //font-family: 'Noto Sans', sans-serif;
-  //font-family: "SF Pro", -apple-system, BlinkMacSystemFont, 'Segoe UI', Ubuntu, 'Noto Sans', sans-serif;
-  //font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-family: 'Raleway', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text);
   height: 100%;
 }
+
+@import "modals";
+@import "animations";
 
 .pack-page {
   position: relative;
@@ -34,11 +42,12 @@ body {
       position: absolute;
       top: -10px;
       left: -10px;
-      width: calc(100% + 20px);
+      width: calc(100% + 10px);
       height: calc(100% + 10px);
       background-attachment: fixed;
+      background-size: 100%;
       z-index: -1;
-      filter: blur(5px);
+      filter: blur(3px);
     }
     
     > header {
@@ -79,11 +88,26 @@ body {
   background-color: rgba(#1c1c1c, 0.82);
   z-index: 1000;
 
+  .closer {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: .5rem .9rem;
+    border-radius: 5px;
+    background: black;
+    transition: .25s ease-in-out background-color;
+    cursor: pointer;
+    
+    &:hover {
+      background-color: var(--color-warning-button);
+    }
+  }
+  
   .body-contents {
     background-color: #313131;
     border-radius: 10px;
     box-shadow: 0 6.6px 22.66px 0 #00000040;
-    padding: 3rem;
+    padding: 3rem 2rem 2rem;
     width: 590px;
     position: relative;
     z-index: 1;
@@ -94,7 +118,7 @@ body {
       align-items: center;
       top: 1rem;
       left: 1rem;
-      padding: 1rem;
+      padding: .5rem .9rem;
       cursor: pointer;
       transition: background-color 0.25s ease-in-out, opacity 0.25s ease-in-out, max-width 0.25s ease-in-out;
       border-radius: 5px;
@@ -143,4 +167,24 @@ body {
     transform: translateX(0.3rem) translateY(-0.3rem);
     box-shadow: -0.3rem 0.3rem 5px 0 #00000040;
   }
+}
+
+.post-contents-raw-html {
+  img {
+    border-radius: 5px;
+  }
+}
+
+.page-spacing {
+  padding: 1rem 1.5rem;
+}
+
+.pack-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 1.5rem;
+}
+
+.allow-overflow-x {
+  overflow-x: auto !important;
 }

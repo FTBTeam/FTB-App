@@ -21,24 +21,19 @@ public class StartArgParser {
     private void parseInput() {
         String argName = null;
 
-        for(String arg : this.input)
-        {
-            if(arg.length() > 2) {
-                if (arg.startsWith("--")) {
-                    argName = arg.substring(2);
-                    this.args.put(argName, "");
+        for(String arg : this.input) {
+            if (arg.isEmpty()) continue;
+            if (arg.startsWith("--")) {
+                argName = arg.substring(2);
+                // Setup the arg in-case it has a value later
+                this.args.put(argName, "");
+            } else if (argName != null) {
+                if (this.args.containsKey(argName)) {
+                    this.args.put(argName, arg);
                 }
-                if (argName != null) {
-                    if (argName.length() > 2) {
-                        if (!argName.equals(arg.substring(2))) {
-                            if (this.args.containsKey(argName)) {
-                                this.args.remove(argName);
-                            }
-                            this.args.put(argName, arg);
-                            argName = null;
-                        }
-                    }
-                }
+                argName = null;
+            } else {
+                this.args.put(arg, "");
             }
         }
     }

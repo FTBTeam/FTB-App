@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -13,12 +14,17 @@ namespace OverwolfShim;
 
 public class OverwolfShim : IDisposable {
 
-    private readonly string    overwolfDir   = new FileInfo(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!).FullName;
-    private readonly string    dotFtbaDir    = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ".ftba");
-    private readonly List<int> openedWindows = new();
+    private static readonly string    overwolfDir   = new FileInfo(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!).FullName;
+    private static readonly string    dotFtbaDir    = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ".ftba");
+    private static readonly string    subprocessPid = Path.Combine(dotFtbaDir, "subprocess.pid");
+    private readonly        List<int> openedWindows = new();
 
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     private static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("shell32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsUserAnAdmin();
 
     private const UInt32 WM_CLOSE = 0x0010;
 
@@ -34,6 +40,15 @@ public class OverwolfShim : IDisposable {
     #endregion Events
 
     #region Shim
+
+    /// <summary>
+    /// Generate a new random GUID
+    /// </summary>
+    /// <returns>The random GUID</returns>
+    public string RandomUUID() => Guid.NewGuid().ToString();
+
+    /// <returns>If the current process is running with admin permissions.</returns>
+    public bool IsRunningAsAdministrator() => IsUserAnAdmin();
 
     #region IO
 
@@ -80,24 +95,60 @@ public class OverwolfShim : IDisposable {
     /// <returns>If the sub-process is running or not.</returns>
     public bool IsJavaRunning() => javaProcess != null && !javaProcess.HasExited;
 
-    [Obsolete("Provided for binary compatibility until new method is used by Frontend.")]
-    public void LaunchJava(string version, bool dev, Action<object> callback) {
-        var args = new List<string>();
-        args.Add("--pid");
-        args.Add(Process.GetCurrentProcess().Id.ToString());
-        if (dev) {
-            args.Add("--dev");
+    /// <summary>
+    /// Checks if the Java sub-process is still running in the background.
+    /// </summary>
+    /// <returns>If another copy of the sub-process is still running.</returns>
+    public bool IsJavaStillRunning() {
+        try {
+            if (!File.Exists(subprocessPid)) return false;
+            
+            int pid;
+            if (!int.TryParse(File.ReadAllText(subprocessPid), out pid)) return false;
+
+            Process process = Process.GetProcessById(pid);
+            return process.StartInfo.FileName.Contains("java");
+        } catch (Exception) {
+            return false;
         }
 
-        LaunchJava(
-            overwolfDir,
-            Path.Combine(overwolfDir, @".\jdk-17.0.1+12-minimal\bin\java.exe"),
-            new List<string>(),
-            $"launcher-{version}-all.jar",
-            args,
-            callback
-        );
     }
+
+    /// <summary>
+    /// Try to yeet the old sub-process still running in the background.
+    /// </summary>
+    public void YeetOldJavaProcess() {
+        try {
+            if (!File.Exists(subprocessPid)) return;
+            
+            int pid;
+            if (!int.TryParse(File.ReadAllText(subprocessPid), out pid)) return;
+            
+            Process process = Process.GetProcessById(pid);
+            process.Kill();
+        } catch (Exception) {
+        }
+    }
+
+//    [Obsolete("Provided for binary compatibility until new method is used by Frontend.")]
+//    public void LaunchJava(string version, bool dev, Action<object> callback) {
+//        var args = new List<string>();
+//        args.Add("--pid");
+//        args.Add(Process.GetCurrentProcess().Id.ToString());
+//        args.Add("--overwolf");
+//        if (dev) {
+//            args.Add("--dev");
+//        }
+//
+//        LaunchJava(
+//            overwolfDir,
+//            Path.Combine(overwolfDir, @".\jdk-17.0.1+12-minimal\bin\java.exe"),
+//            new List<string>(),
+//            $"launcher-{version}-all.jar",
+//            args,
+//            callback
+//        );
+//    }
 
     /// <summary>
     /// Start a Java sub-process.
@@ -111,22 +162,39 @@ public class OverwolfShim : IDisposable {
     /// <param name="jar">The absolute path to the Jar file to execute.</param>
     /// <param name="arguments">List of Program arguments to add.</param>
     /// <param name="callback">Error/success callback for starting the process.</param>
-    public void LaunchJava(string workingDir, string javaPath, List<string> jvmArgs, string jar, List<string> arguments, Action<object> callback) {
+    public void LaunchJava(
+        string workingDir, 
+        string javaPath,
+        string jar,
+        string arguments,
+        string jvmArgsRaw,
+        Action<object> callback
+    ) {
+        // Deserialize the arguments from the json string
+        var appArgs = deserializeArgsString(arguments);
+        var jvmArgs = deserializeArgsString(jvmArgsRaw);
+        
         if (IsJavaRunning()) {
             callback(new { success = false, message = "Already running." });
             return;
         }
 
         List<string> args = new();
+
         args.AddRange(jvmArgs);
         args.Add("-jar");
         args.Add(jar);
-        args.AddRange(arguments);
+        args.AddRange(appArgs);
 
         for (int i = 0; i < args.Count; i++) {
             if (args[i].Contains(" ")) {
                 args[i] = "\"" + args[i] + "\"";
             }
+        }
+        
+        // Create the working directory if it doesn't exist.
+        if (!Directory.Exists(workingDir)) {
+            Directory.CreateDirectory(workingDir);
         }
 
         try {
@@ -134,8 +202,10 @@ public class OverwolfShim : IDisposable {
             javaProcess.StartInfo.UseShellExecute = false;
             javaProcess.StartInfo.FileName = javaPath;
             javaProcess.StartInfo.Arguments = string.Join(" ", args);
-            // Strip "_JAVA_OPTIONS" from the environment variables. If this env variable has unknown or bad arguments, it can cause crashes.
+            // Strip known problem environment variables. If these env vars have unknown or bad arguments, it can cause crashes.
             javaProcess.StartInfo.Environment.Remove("_JAVA_OPTIONS");
+            javaProcess.StartInfo.Environment.Remove("JAVA_TOOL_OPTIONS");
+            javaProcess.StartInfo.Environment.Remove("JAVA_OPTIONS");
             javaProcess.StartInfo.CreateNoWindow = true;
             javaProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             javaProcess.StartInfo.RedirectStandardInput = true;
@@ -151,10 +221,23 @@ public class OverwolfShim : IDisposable {
             javaProcess.BeginErrorReadLine();
             javaProcess.BeginOutputReadLine();
             callback(new { success = true, message = "Started Java with pid " + javaProcess.Id, pid = javaProcess.Id });
+            WriteJavaPID(javaProcess.Id);
         } catch (Exception ex) {
             javaProcess = null;
             callback(new { successs = false, message = "Failed to start process: " + ex });
         }
+    }
+
+    private List<string> deserializeArgsString(string args)
+    {
+        if (string.IsNullOrEmpty(args))
+        {
+            return new List<string>();
+        }
+        
+        // We have args, we split on ;
+        var splitArgs = args.Split(';');
+        return new List<string>(splitArgs);
     }
 
     /// <summary>
@@ -245,6 +328,14 @@ public class OverwolfShim : IDisposable {
     private void JavaProcess_Exited(object sender, EventArgs e) {
         openedWindows.ForEach(CloseWindow);
         javaProcess = null;
+    }
+
+    private void WriteJavaPID(int pid) {
+        try {
+            File.WriteAllText(subprocessPid, pid.ToString());
+        } catch (Exception) {
+            // ignored We don't care about this.
+        }
     }
 
     void CloseWindow(int hwnd) {

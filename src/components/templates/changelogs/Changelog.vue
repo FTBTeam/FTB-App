@@ -1,44 +1,33 @@
 <template>
   <modal
     v-if="changelogData"
-    :open="changelogData"
+    :open="!!changelogData"
     title="Latest updates"
     :subTitle="changelogData.title"
     size="medium"
-    class="wysiwyg"
+    class="wysiwyg select-text"
     @closed="changelogData = null"
   >
-    <img :src="headingImage" class="heading-image" alt="Heading image" v-if="headingImage" />
-    <p v-if="changelogData.header">
-      <vue-showdown>
-        {{ changelogData.header }}
-      </vue-showdown>
-    </p>
-
-    <template v-for="(heading, key) in headings">
-      <template v-if="changelogData.changes[key]">
-        <h3 :style="{ color: heading.color, 'word-spacing': '.5rem' }">{{ heading.heading | title }}</h3>
-        <vue-showdown :markdown="changelogData.changes[key].map((e) => `- ${e}`).join('\n')" />
-      </template>
-    </template>
-
-    <p v-if="changelogData.footer" class="mt-4">
-      <vue-showdown>
-        {{ changelogData.footer }}
-      </vue-showdown>
-    </p>
+    <changelog-entry v-if="changelogData" :use-extended="true" :changelog="changelogData" />
+    <message v-else type="danger">
+      Unable to find any changelog data... 
+    </message>
   </modal>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Action } from 'vuex-class';
-import { wsTimeoutWrapper } from '@/utils/helpers';
-import FTBModal from '@/components/atoms/FTBModal.vue';
+import {State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
+import {SocketState} from '@/modules/websocket/types';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {constants} from '@/core/constants';
+import ChangelogEntry from '@/components/templates/changelogs/ChangelogEntry.vue';
+import {createLogger} from '@/core/logger';
+import {waitForWebsockets} from '@/utils';
 
-export type ChangelogEntry = {
+export type ChangelogData = {
   version: string;
   title: string;
   header: string;
@@ -55,96 +44,73 @@ export type ChangelogEntry = {
     fixed: string[];
     removed: string[];
   };
+  extends?: string[]
 };
 
 @Component({
-  components: {
-    'ftb-modal': FTBModal,
-  },
+  components: {ChangelogEntry}
 })
-export default class Changelog extends Vue {
-  @Action('sendMessage') public sendMessage: any;
+export default class Changelog extends Vue  {
+  @State('websocket') public websockets!: SocketState;
+  private logger = createLogger("Changelog.vue")
+  
+  changelogData: ChangelogData | null = null;
 
-  changelogData: ChangelogEntry | null = null;
+  async mounted() {
+    await waitForWebsockets("changelog", this.websockets.socket)
 
-  headings = {
-    added: {
-      heading: '🎉 Added',
-      color: '#53cb6a',
-    },
-    changed: {
-      heading: '🔧 Changed',
-      color: '#fcae21',
-    },
-    fixed: {
-      heading: '🐞 Fixed',
-      color: '#ff5e5e',
-    },
-    removed: {
-      heading: '🗑 Removed',
-      color: 'inherit',
-    },
-  };
-
-  mounted() {
-    setTimeout(() => {
-      this.checkForUpdate().catch((e) => {
-        console.log('Unable to find any changelog data, maybe the servers down?', e);
-      });
-    }, 2_000);
+    this.checkForUpdate().catch((e) => {
+      this.logger.error('Unable to find any changelog data, maybe the servers down?', e);
+    });
   }
 
   async checkForUpdate() {
-    const data = await wsTimeoutWrapper({
-      type: 'storage.get',
-      key: 'lastVersion',
-    });
+    this.logger.info("Checking for changelog")
+    const data = await sendMessage("storage.get", {
+      key: 'lastVersion'
+    })
 
+    const currentVersion = this.getCurrentVersion();
+    this.logger.dd('currentVersion', currentVersion)
+    const lastVersion = data.response;
+    
     // No held last version meaning we should find a changelog
-    if (!data.response || data.response !== this.getCurrentVersion()) {
+    if (!lastVersion || lastVersion !== currentVersion) {
       // Get the available versions
       try {
-        const changelogsReq = await fetch(`${process.env.VUE_APP_META_API}/v1/changelogs/app`);
+        const changelogsReq = await fetch(`${constants.metaApi}/v1/changelogs/app`);
         const changelogs = await changelogsReq.json();
 
-        if (changelogs?.versions?.includes(this.getCurrentVersion())) {
+        if (changelogs?.versions?.includes(currentVersion)) {
           const changelogReq = await fetch(
-            `${process.env.VUE_APP_META_API}/v1/changelogs/app/${this.getCurrentVersion()}`,
+            `${constants.metaApi}/v1/changelogs/app/${currentVersion}`,
           );
 
           this.changelogData = await changelogReq.json();
 
           // Attempt to update the lastVersion to prevent the modal showing again
-          await wsTimeoutWrapper({
-            type: 'storage.put',
+          await sendMessage("storage.put", {
             key: 'lastVersion',
-            value: this.getCurrentVersion(),
-          });
+            value: currentVersion,
+          })
         }
       } catch (e) {
-        console.error('caught error', e);
+        this.logger.debug('caught error', e);
         // Stop here, don't do anything, something is wrong, we'll try again next launch.
         return;
       }
+    } else {
+      this.logger.debug('No changelog to show, already seen it')
     }
-  }
-
-  get headingImage() {
-    const image = this.changelogData?.media?.find((e) => e.heading && e.type === 'image');
-    return image ? image.source : null;
   }
 
   // Some magic to get the current version
   getCurrentVersion() {
-    return platform.get.config.publicVersion;
+    return platform.get.config.version;
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.heading-image {
-  display: block;
-  margin-bottom: 1rem;
-  border-radius: 5px;
-}
+
 </style>

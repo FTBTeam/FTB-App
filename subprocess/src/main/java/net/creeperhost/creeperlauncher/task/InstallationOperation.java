@@ -1,16 +1,17 @@
 package net.creeperhost.creeperlauncher.task;
 
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstallInstanceData;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker;
 import net.creeperhost.creeperlauncher.install.InstanceInstaller;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker;
+import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Created by covers1624 on 3/6/22.
@@ -20,20 +21,20 @@ public class InstallationOperation extends LongRunningOperation {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final InstallInstanceData data;
-    private final LocalInstance instance;
+    private final Instance instance;
     private final ModpackVersionManifest manifest;
     private final InstanceInstaller installer;
 
-    public InstallationOperation(LongRunningTaskManager manager, InstallInstanceData data, LocalInstance instance, ModpackVersionManifest manifest) throws IOException {
+    public InstallationOperation(LongRunningTaskManager manager, InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
         super(manager);
         this.data = data;
         this.instance = instance;
         this.manifest = manifest;
-        InstallProgressTracker tracker = new InstallProgressTracker(data);
+        OperationProgressTracker tracker = new OperationProgressTracker("install", Map.of("instance", instance.getUuid().toString()));
         installer = new InstanceInstaller(instance, manifest, cancelToken, tracker);
     }
 
-    public LocalInstance getInstance() {
+    public Instance getInstance() {
         return instance;
     }
 
@@ -51,13 +52,13 @@ public class InstallationOperation extends LongRunningOperation {
     @Override
     protected void onOperationException(Throwable ex) {
         if (ex instanceof PrepareException pex) {
-            LOGGER.error("Fatal exception whilst preparing modpack installation.");
-            Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack instllation.", ""));
+            LOGGER.error("Fatal exception whilst preparing modpack installation.", pex);
+            WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst preparing modpack installation."));
             return;
         }
 
         LOGGER.error("Fatal exception whilst installing modpack.", ex);
-        Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack.", ""));
+        WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "error", "Fatal exception whilst installing modpack."));
     }
 
     @Override
@@ -65,9 +66,9 @@ public class InstallationOperation extends LongRunningOperation {
         switch (reason) {
             case NORMAL -> {
                 Instances.addInstance(instance);
-                Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance));
+                WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "success", "Install complete.", instance));
             }
-            case CANCELED -> Settings.webSocketAPI.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", ""));
+            case CANCELED -> WebSocketHandler.sendMessage(new InstallInstanceData.Reply(data, "canceled", "Install canceled.", instance));
         }
     }
 

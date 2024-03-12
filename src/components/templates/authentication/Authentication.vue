@@ -1,12 +1,15 @@
 <template>
-  <div class="global__fullscreen-modal authentication" @mousedown.self="() => close()">
+  <div class="global__fullscreen-modal authentication">
     <div class="body-contents text-center">
       <div class="back" v-if="!onMainView && !loggedIn && !loading" @click="back()">
         <font-awesome-icon icon="chevron-left" />
         <span>Back to options</span>
       </div>
+      <div class="closer" @click="close()">
+        <font-awesome-icon icon="times" />
+      </div>
       <div class="main" v-if="loading">
-        <Loading />
+        <loader />
       </div>
 
       <div class="main text-center" v-else-if="error.length > 0">
@@ -14,16 +17,12 @@
         <p class="text-red-400 font-bold mt-6 mb-8">{{ error }}</p>
 
         <div v-if="fatalAccountError" class="text-left mb-8">
-          <p>There is a few things that could have gone wrong...</p>
+          <p>We've listed the most common issues in order below.</p>
           <ul class="list-decimal pl-6 my-4 leading-relaxed">
-            <li>You may be attempting to use an under 18s account</li>
-            <li>You don't own Minecraft: Java Edition on this Microsoft account</li>
-            <li>Ensure you're using the correct Microsoft Account</li>
-            <li>You're trying to use Gamepass and have not used the official Minecraft Launcher at least once</li>
-            <li>
-              You're using Gamepass but have not played Minecraft for a while. You'll need to use the Minecraft Launcher
-              again.
-            </li>
+            <li>Ensure you're using the correct Microsoft Account.</li>
+            <li>You don't own <b class="font-bold">Minecraft: Java Edition</b> on this Microsoft account</li>
+            <li>You may be attempting to use an under 18s account. Your account will need to be added <a @click="openExternal" href="https://go.ftb.team/ms-support-family-account">to a Family account.</a></li>
+            <li>You're trying to use Gamepass and have not used the official Minecraft Launcher at least once or in a while. Try Launching Vanilla Minecraft using the Minecraft Launcher. Then attempt to login again.</li>
           </ul>
 
           <p class="opacity-50">Sorry for any inconvenience.</p>
@@ -35,54 +34,20 @@
       <div class="main" v-else-if="onMainView && !loggedIn">
         <h3 class="text-2xl mb-4"><b>Minecraft Login</b></h3>
         <p class="mb-8">
-          Now that Minecraft uses Microsoft to login, we now require to login to your Microsoft account or your Mojang
-          account.
+          Use your Microsoft account to Login into your Minecraft account
         </p>
-
-        <h4 class="text-center font-bold mb-8">Sign in with</h4>
 
         <button
           class="actionable-button"
           @click="
             () => {
               onMsAuth = true;
-              onMcAuth = false;
               onMainView = false;
             }
           "
         >
           <img src="@/assets/images/branding/microsoft.svg" alt="Microsoft Login" />
         </button>
-
-        <template v-if="mojangAuthAllowed">
-          <div class="or">
-            <span>or</span>
-          </div>
-
-          <button
-            class="actionable-button"
-            @click="
-              () => {
-                onMcAuth = true;
-                onMsAuth = false;
-                onMainView = false;
-              }
-            "
-          >
-            <img src="@/assets/images/branding/mojang.svg" alt="Mojang Login" />
-          </button>
-
-          <small class="text-red-400 mt-4 block text-center"
-            >Mojang accounts must be migrated before March 10th, see this
-            <a
-              class="text-gray-400 hover:text-white"
-              href="https://www.minecraft.net/en-us/article/last-call-voluntarily-migrate-java-accounts"
-              @click.prevent="openExternal"
-              >official blog</a
-            >
-            post for more information</small
-          >
-        </template>
       </div>
 
       <div class="logged-in text-center" v-else-if="loggedIn">
@@ -98,8 +63,7 @@
       </div>
 
       <div class="auth-views" v-else>
-        <microsoft-auth v-if="onMsAuth" @authenticated="authenticated()" @error="onError" />
-        <yggdrasil-auth-form v-if="onMcAuth" :uuid="uuid" @authenticated="authenticated()" />
+        <microsoft-auth @authenticated="authenticated()" @error="onError" />
       </div>
     </div>
   </div>
@@ -108,21 +72,18 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import YggdrasilAuthForm from '@/components/templates/authentication/YggdrasilAuthForm.vue';
-import Loading from '@/components/atoms/Loading.vue';
 import { Action } from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
 import { Prop } from 'vue-property-decorator';
 import { RouterNames } from '@/router';
+import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
-  components: { MicrosoftAuth, YggdrasilAuthForm, Loading },
+  components: {Loader, MicrosoftAuth},
 })
 export default class Authentication extends Vue {
-  @Action('sendMessage') public sendMessage: any;
   @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
-
-  @Prop() public jump!: string;
+  
   @Prop() public uuid!: string;
   @Prop() public tryAgainInstanceUuid!: any;
 
@@ -131,23 +92,16 @@ export default class Authentication extends Vue {
   error = '';
   loading = false;
 
-  onMcAuth = false;
   onMsAuth = false;
 
   fatalAccountError = false;
 
   public mounted() {
-    if (this.jump === 'mc') {
-      this.onMainView = false;
-      this.onMcAuth = true;
-      this.onMsAuth = false;
-    }
   }
 
   back() {
     this.onMainView = true;
     this.onMsAuth = false;
-    this.onMcAuth = false;
     this.error = '';
     this.fatalAccountError = false;
   }
@@ -171,15 +125,23 @@ export default class Authentication extends Vue {
       this.fatalAccountError = true;
     }
   }
-
-  get mojangAuthAllowed() {
-    return true; // !dayjs().isAfter('2022-03-10');
-  }
 }
 </script>
 
 <style lang="scss" scoped>
+a[href] {
+  text-decoration: underline;
+}
+
 .authentication {
+  .login-with-legacy {
+    cursor: pointer;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   .or {
     display: flex;
     justify-content: center;
@@ -208,6 +170,7 @@ export default class Authentication extends Vue {
       color: rgba(white, 0.25);
     }
   }
+
 
   .checks {
     svg {

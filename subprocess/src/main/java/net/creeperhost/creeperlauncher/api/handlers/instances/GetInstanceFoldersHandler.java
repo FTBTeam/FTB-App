@@ -1,11 +1,12 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
-import net.creeperhost.creeperlauncher.api.WebSocketAPI;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,11 +16,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class GetInstanceFoldersHandler implements IMessageHandler<GetInstanceFoldersHandler.Request> {
+
+    private static final Logger LOGGER = LogManager.getLogger();
     @Override
     public void handle(Request data) {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, Set.of()));
+            WebSocketHandler.sendMessage(new Reply(data, false, Set.of()));
             return;
         }
 
@@ -31,10 +34,10 @@ public class GetInstanceFoldersHandler implements IMessageHandler<GetInstanceFol
                 .map(e -> instanceDir.relativize(e).toString())
                 .collect(Collectors.toSet());
             
-            Settings.webSocketAPI.sendMessage(new Reply(data, true, folders));
+            WebSocketHandler.sendMessage(new Reply(data, true, folders));
         } catch (IOException e) {
-            WebSocketAPI.LOGGER.error("Unable to read paths from {}", instanceDir, e);
-            Settings.webSocketAPI.sendMessage(new Reply(data, false, Set.of()));
+            LOGGER.error("Unable to read paths from {}", instanceDir, e);
+            WebSocketHandler.sendMessage(new Reply(data, false, Set.of()));
         }
     }
     

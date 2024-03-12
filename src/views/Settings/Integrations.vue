@@ -2,36 +2,33 @@
   <div class="app-integrations">
     <h3 class="text-xl mb-4 font-bold">Active integrations</h3>
     <div class="active-integrations integrations mb-8">
-      <p v-if="auth.token === null && !auth.loggingIn">
+      <p v-if="!getMtAccount">
         Looks like you've not got any integrations setup, use the 'available integrations' section below to get started.
       </p>
 
       <div class="card" v-else>
-        <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
-        <div class="main" v-if="!auth.loggingIn">
+        <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
+        <div class="main" v-if="getMtAccount">
           <div class="name font-bold mb-2 flex items-center">
             <div class="avatar mr-2">
               <img
-                :src="`https://api.mymcuu.id/head/${avatarName}`"
+                :src="getMinecraftHead(avatarName)"
                 style="margin-right: 0.75em; width: 40px; height: 40px"
                 class="rounded-full"
               />
             </div>
             <div class="name flex flex-col">
-              <span class="block">{{
-                auth.token.mc !== undefined && auth.token.mc.display !== null
-                  ? auth.token.mc.display.split('#')[0]
-                  : auth.token.username
-              }}</span
-              ><span
-                v-if="auth.token.mc !== undefined && auth.token.mc.display !== null"
+              <span class="block">{{getMtProfile?.display?.split("#")[0] || getMtAccount.username || "Unknown" }}</span>
+              <span
+                v-if="getMtProfile?.display"
                 class="text-xs opacity-50 hash"
-                >#{{ auth.token.mc.display.split('#')[1] }}</span
               >
+                #{{ getMtProfile?.display.split('#')[1] }}
+              </span>
             </div>
           </div>
           <div class="setup inline-block mt-4 text-sm">
-            <ftb-button @click="logout" class="px-4 py-2" color="primary">Logout to disable</ftb-button>
+            <ui-button :wider="true" type="success" @click="logout" :working="working" icon="sign-out">Logout</ui-button>
           </div>
         </div>
         <div class="main flex" v-else>
@@ -41,15 +38,15 @@
       </div>
     </div>
 
-    <h3 class="text-xl font-bold mb-4" v-if="auth.token === null">Available integrations</h3>
-    <div class="integrations" v-if="auth.token === null">
-      <div class="card" :class="{ disabled: auth.loggingIn }">
-        <div class="logo"><img src="@/assets/images/mt-logo.png" alt="" /></div>
+    <h3 class="text-xl font-bold mb-4" v-if="!getMtAccount">Available integrations</h3>
+    <div class="integrations" v-if="!getMtProfile">
+      <div class="card">
+        <div class="logo"><img src="@/assets/images/mt-logo.webp" alt="" /></div>
         <div class="main">
           <div class="name font-bold mb-1">MineTogether</div>
           <div class="desc opacity-75">Integrate with MineTogether to use cloudsaves and private packs.</div>
           <div class="setup inline-block mt-4 text-sm">
-            <ftb-button class="px-4 py-2" color="primary" @click="openLogin">Login to setup</ftb-button>
+            <ui-button :wider="true" type="success" @click="openLogin" icon="sign-in">Login to setup</ui-button>
           </div>
         </div>
       </div>
@@ -58,58 +55,98 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import { AuthState } from '@/modules/auth/types';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, Getter} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import { SettingsState } from '@/modules/settings/types';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import {alertController} from '@/core/controllers/alertController';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
+import MTIntegration from '@/views/Settings/MTIntegration.vue';
+import {createLogger} from '@/core/logger';
+import {SetAccountMethod, SetProfileMethod} from '@/core/state/core/mtAuthState';
+import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
+import {InstanceActions} from '@/core/actions/instanceActions';
 
-@Component
+@Component({
+  components: {UiButton},
+  methods: {getMinecraftHead}
+})
 export default class AppInfo extends Vue {
-  @State('auth') private auth!: AuthState;
-  @State('settings') private settings!: SettingsState;
-  @Action('sendMessage') public sendMessage: any;
-  @Action('logout', { namespace: 'auth' }) private logoutAction!: () => void;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('setSessionID', { namespace: 'auth' }) private setSessionID!: any;
+  private logger = createLogger("AppInfo.vue");
 
+  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
+
+  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+
+  @Action("setProfile", ns("v2/mtauth")) setProfile!: SetProfileMethod;
+  @Action("setAccount", ns("v2/mtauth")) setAccount!: SetAccountMethod;
+  @Action("storeCredentials", ns("v2/apiCredentials")) storeCredentials!: StoreCredentialsAction;
+  @Getter("wasUserSet", ns("v2/apiCredentials")) wasUserSet!: boolean;
+
+  working = false;
+  
   get avatarName() {
-    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
+    return this.getMtAccount?.accounts?.find((s) => s.identityProvider === 'mcauth')?.userId
   }
 
-  private openLogin() {
-    platform.get.actions.openLogin((data: { token: string; 'app-auth': string } | null) => {
+  openLogin() {
+    platform.get.actions.openLogin(async (data: { token: string; 'app-auth': string } | null) => {
       if (data === null) {
         return;
       }
+      
+      const result = await sendMessage("minetogetherAuthentication", {
+        authType: "login",
+        apiKey: data.token,
+        appToken: data['app-auth']
+      })
+      
+      if (!result || !result.success) {
+        alertController.error(`Failed to login to MineTogether due to ${result?.message || "Unknown error"}`)
+        return;
+      }
+      
+      // We have to handle the profile being null maybe
+      if (!result.basicData) {
+        alertController.error(`Failed to login to MineTogether due to as we could not find your profile`)
+        return;
+      }
+      
+      // We're good, the backend has stored what we need, we'll just update our data stores
+      const {basicData, profile} = result;
+      if (basicData) {
+        this.logger.info("Setting account");
+        await this.setAccount(basicData.account);
 
-      if (data.token) {
-        this.setSessionID(data.token);
-      }
-      if (data['app-auth']) {
-        let settings = this.settings?.settings;
-        if (settings !== undefined) {
-          settings.sessionString = data['app-auth'];
+        if (!this.wasUserSet) {
+          if (basicData.data.modpacksToken) {
+            this.logger.info("Setting modpacks token");
+            await this.storeCredentials({
+              apiSecret: basicData.data.modpacksToken,
+            });
+          }
         }
-        this.saveSettings(settings);
       }
+
+      if (profile) {
+        this.logger.info("Setting profile");
+        await this.setProfile(profile);
+      }
+      
+      await InstanceActions.clearInstanceCache(false);
     });
   }
 
-  public logout() {
-    this.logoutAction();
-    // get instances and store
-    this.sendMessage({
-      payload: {
-        type: 'ircQuitRequest',
-      },
-    });
+  public async logout() {
+    this.working = true;
+    await MTIntegration.logoutFromMineTogether();
+    this.working = false;
 
-    platform.get.actions.logoutFromMinetogether();
-
-    this.settings.settings.sessionString = undefined;
-    this.saveSettings(this.settings.settings);
+    await this.$router.push('/');
   }
 }
 </script>

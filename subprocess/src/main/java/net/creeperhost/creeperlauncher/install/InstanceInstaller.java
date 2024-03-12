@@ -3,20 +3,24 @@ package net.creeperhost.creeperlauncher.install;
 import com.google.common.hash.HashCode;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.io.CopyingFileVisitor;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
+import net.creeperhost.creeperlauncher.data.InstanceModifications;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverride;
+import net.creeperhost.creeperlauncher.data.InstanceModifications.ModOverrideState;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker.DlFile;
-import net.creeperhost.creeperlauncher.install.InstallProgressTracker.InstallStage;
+import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionModsManifest;
+import net.creeperhost.creeperlauncher.install.OperationProgressTracker.DefaultStages;
 import net.creeperhost.creeperlauncher.install.tasks.*;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.instance.InstanceOperation;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
+import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.util.PathFixingCopyingFileVisitor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -25,13 +29,12 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static net.covers1624.quack.util.SneakyUtils.nullCons;
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.GSON;
 import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.Target;
 
@@ -39,7 +42,10 @@ import static net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifes
  * Created by covers1624 on 3/2/22.
  */
 public class InstanceInstaller extends InstanceOperation {
-
+    // This is a lazy hack that covers will hate but this fixes the "failed to install due to missing file" error caused by zero length files.
+    // The api will always resolve these files to this url so we can just ignore them.
+    private static final String IGNORE_SNOWFLAKE_FILE_URL = "https://dist.modpacks.ch/modpacks/0/FTB Academy-1.0.0/config/brandon3055/ResourceCache/Cache";
+    
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("InstanceInstaller.debug");
 
@@ -53,13 +59,18 @@ public class InstanceInstaller extends InstanceOperation {
             "scripts"
     );
 
-    private final InstallProgressTracker tracker;
+    private final OperationProgressTracker tracker;
     private final CancellationToken cancelToken;
 
     @Nullable
     private final ModpackVersionManifest oldManifest;
 
     private final OperationType operationType;
+
+    private @Nullable
+    final ModpackVersionModsManifest oldMods;
+    private @Nullable
+    final ModpackVersionModsManifest newMods;
 
     //region Tracking
     /**
@@ -91,11 +102,19 @@ public class InstanceInstaller extends InstanceOperation {
      * Any files the Update/Validation operations have determined to be removed.
      */
     private final List<Path> filesToRemove = new LinkedList<>();
+    private final List<ModOverride> overridesToRemove = new LinkedList<>();
 
     /**
      * Any files that will be downloaded.
      */
     private final List<Path> filesToDownload = new LinkedList<>();
+
+    /**
+     * new id -> old id
+     */
+    private final Map<Long, Long> fileUpdateMap = new HashMap<>();
+
+    private final List<ModOverride> newOverrides = new LinkedList<>();
     //endregion
 
     private final List<DlTask> tasks = new LinkedList<>();
@@ -106,10 +125,13 @@ public class InstanceInstaller extends InstanceOperation {
     @Nullable
     private Map<String, IndexedFile> knownFiles;
 
-    public InstanceInstaller(LocalInstance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, InstallProgressTracker tracker) throws IOException {
+    public InstanceInstaller(Instance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, OperationProgressTracker tracker) throws IOException {
         super(instance, manifest);
         this.cancelToken = cancelToken;
         this.tracker = tracker;
+
+        ModpackVersionModsManifest oldMods = null;
+        ModpackVersionModsManifest newMods = null;
 
         Path instanceVersionFile = instance.getDir().resolve("version.json");
         if (!Files.exists(instanceVersionFile)) {
@@ -121,9 +143,17 @@ public class InstanceInstaller extends InstanceOperation {
                 operationType = OperationType.VALIDATE;
             } else {
                 operationType = OperationType.UPGRADE;
+                oldMods = instance.getModsManifest();
+                try {
+                    newMods = ModpackVersionModsManifest.query(instance.props.id, manifest.getId(), instance.props._private, instance.props.packType);
+                } catch (IOException ex) {
+                    LOGGER.error("Failed to query mods manifest.", ex);
+                }
             }
         }
 
+        this.oldMods = oldMods;
+        this.newMods = newMods;
     }
 
     /**
@@ -152,7 +182,7 @@ public class InstanceInstaller extends InstanceOperation {
         return filesToDownload;
     }
 
-    public LocalInstance getInstance() {
+    public Instance getInstance() {
         return instance;
     }
 
@@ -171,6 +201,11 @@ public class InstanceInstaller extends InstanceOperation {
         tracker.nextStage(InstallStage.PREPARE);
         if (operationType == OperationType.VALIDATE) {
             validateFiles();
+            String gameVersion = manifest.getTargetVersion("game");
+            if (gameVersion != null && !instance.props.mcVersion.equals(gameVersion)) {
+                LOGGER.warn("Instance had invalid mcVersion attribute. Repairing..");
+                instance.props.mcVersion = gameVersion;
+            }
         } else if (operationType == OperationType.UPGRADE) {
             processUpgrade();
         }
@@ -212,20 +247,27 @@ public class InstanceInstaller extends InstanceOperation {
                 }
             }
 
-            tracker.nextStage(InstallStage.MODLOADER);
+            InstanceModifications modifications = instance.getModifications();
+            if (modifications != null) {
+                LOGGER.info("Removing dead overrides..");
+                overridesToRemove.forEach(modifications.getOverrides()::remove);
+                instance.saveModifications();
+            }
+
+            tracker.nextStage(InstallStage.MOD_LOADER);
             if (modLoaderInstallTask != null) {
                 LOGGER.info("Installing ModLoader..");
                 modLoaderInstallTask.execute(cancelToken, null);
-                instance.modLoader = modLoaderInstallTask.getResult();
+                instance.props.modLoader = modLoaderInstallTask.getModLoaderTarget();
             } else {
                 // Mod loader doesn't exist. This must be vanilla
-                instance.modLoader = manifest.getTargetVersion("game");
+                instance.props.modLoader = manifest.getTargetVersion("game");
             }
 
             cancelToken.throwIfCancelled();
 
             LOGGER.info("Downloading new files.");
-            tracker.nextStage(InstallStage.DOWNLOADS);
+            tracker.nextStage(InstallStage.FILES, tasks.size());
             long totalSize = tasks.stream()
                     .mapToLong(e -> e.size)
                     .sum();
@@ -244,24 +286,30 @@ public class InstanceInstaller extends InstanceOperation {
                 LOGGER.info("Extracting CurseForge overrides.");
                 try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
                     Path root = fs.getPath("/overrides/");
-                    Files.walkFileTree(root, new CopyingFileVisitor(root, instance.getDir()));
+                    Files.walkFileTree(root, new PathFixingCopyingFileVisitor(root, instance.getDir()));
                 }
             }
 
             cancelToken.throwIfCancelled();
 
+            if (modifications != null) {
+                LOGGER.info("Adding new overrides..");
+                modifications.getOverrides().addAll(newOverrides);
+                instance.saveModifications();
+            }
+
             JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
 
-            instance.installComplete = true;
-            instance.versionId = manifest.getId();
-            instance.version = manifest.getName();
+            instance.props.installComplete = true;
+            instance.props.versionId = manifest.getId();
+            instance.props.version = manifest.getName();
             instance.versionManifest = manifest;
             try {
                 instance.saveJson();
             } catch (IOException ex) {
                 throw new InstallationFailureException("Failed to save instance json.", ex);
             }
-            tracker.nextStage(InstallStage.FINISHED);
+            tracker.nextStage(DefaultStages.FINISHED);
             LOGGER.info("Install finished!");
         } catch (InstallationFailureException | CancellationToken.Cancellation ex) {
             throw ex;
@@ -277,8 +325,12 @@ public class InstanceInstaller extends InstanceOperation {
     private void validateFiles() {
         Map<String, IndexedFile> knownFiles = getKnownFiles();
         for (Map.Entry<String, IndexedFile> entry : knownFiles.entrySet()) {
-            Path file = instance.getDir().resolve(entry.getKey());
             IndexedFile modpackFile = entry.getValue();
+            Path file = remapFileFromOverride(
+                    modpackFile,
+                    instance.getDir().resolve(entry.getKey()),
+                    nullCons()
+            );
             if (Files.notExists(file)) {
                 invalidFiles.add(new InvalidFile(file, modpackFile.sha1(), null, modpackFile.length(), -1));
             } else {
@@ -306,12 +358,41 @@ public class InstanceInstaller extends InstanceOperation {
     private void processUpgrade() {
         assert oldManifest != null;
 
+        // Figure out which file paths just don't exist anymore.
         Map<String, IndexedFile> newFiles = getKnownFiles();
         Map<String, IndexedFile> oldFiles = computeKnownFiles(oldManifest);
         for (String oldFilePath : oldFiles.keySet()) {
             if (!newFiles.containsKey(oldFilePath)) {
-                filesToRemove.add(instance.getDir().resolve(oldFilePath));
+                IndexedFile file = oldFiles.get(oldFilePath);
+                Path path = remapFileFromOverride(
+                        file,
+                        instance.getDir().resolve(oldFilePath),
+                        overridesToRemove::add
+                );
+                filesToRemove.add(path);
             }
+        }
+
+        Map<Long, Long> projectLookup = new HashMap<>();
+        if (oldMods != null && newMods != null) {
+            for (ModpackVersionModsManifest.Mod mod : newMods.getMods()) {
+                long curseProj = mod.getCurseProject();
+                if (curseProj == -1) continue;
+                projectLookup.put(curseProj, mod.getFileId());
+            }
+            for (ModpackVersionModsManifest.Mod mod : oldMods.getMods()) {
+                long curseProj = mod.getCurseProject();
+                if (curseProj == -1) continue;
+                Long newFileId = projectLookup.get(curseProj);
+                if (newFileId == null) continue;
+                fileUpdateMap.put(newFileId, mod.getFileId());
+            }
+        }
+
+        // Ensure the mods lookup cache for the previous version gets nuked on upgrade.
+        Path meta = instance.getDir().resolve(".ftba/version_mods.json");
+        if (Files.exists(meta)) {
+            filesToRemove.add(meta);
         }
     }
 
@@ -344,16 +425,19 @@ public class InstanceInstaller extends InstanceOperation {
     }
 
     private void prepareModLoader() {
-        Target gameTarget = manifest.findTarget("game");
-        assert gameTarget != null;
-        assert gameTarget.getName().equals("minecraft");
+        InstanceModifications modifications = instance.getModifications();
 
-        Target modLoaderTarget = manifest.findTarget("modloader");
+        Target modLoaderTarget;
+        if (modifications != null && modifications.getModLoaderOverride() != null) {
+            modLoaderTarget = modifications.getModLoaderOverride();
+        } else {
+            modLoaderTarget = manifest.findTarget("modloader");
+        }
         if (modLoaderTarget != null) {
             try {
                 modLoaderInstallTask = ModLoaderInstallTask.createInstallTask(
                         instance,
-                        gameTarget.getVersion(),
+                        instance.getMcVersion(),
                         modLoaderTarget.getName(),
                         modLoaderTarget.getVersion()
                 );
@@ -364,26 +448,77 @@ public class InstanceInstaller extends InstanceOperation {
     }
 
     private void prepareFileDownloads() {
-        List<DlFile> dlFiles = new LinkedList<>();
         for (ModpackFile file : manifest.getFiles()) {
             if (file.getType().equals("cf-extract")) continue;
-            NewDownloadTask task = NewDownloadTask.builder()
+            Path filePath = file.toPath(instance.getDir());
+            ModOverride override = findModOverride(fileUpdateMap.get(file.getId()));
+            if (override != null) {
+                filePath = mapFileName(filePath, override.getState());
+
+                ModOverride newOverride = new ModOverride(
+                        override.getState(),
+                        file.getName(),
+                        file.getId()
+                );
+                newOverrides.add(newOverride);
+            }
+            
+            // Last line of defense against zero byte files.
+            if (file.getUrl().equals(IGNORE_SNOWFLAKE_FILE_URL) || file.getSize() == 0) {
+                filesToDownload.add(filePath);
+                tasks.add(new DlTask(0, new EmptyFileDlTask(filePath)));
+                continue;
+            }
+
+            DownloadTask task = DownloadTask.builder()
                     .url(file.getUrl())
-                    .dest(file.toPath(instance.getDir()))
+                    .withMirrors(file.getMirror())
+                    .dest(filePath)
                     .withValidation(file.createValidation().asDownloadValidation())
                     .withFileLocator(CreeperLauncher.localCache)
                     .build();
             if (!task.isRedundant()) {
                 long size = file.getSize();
                 if (size <= 0) {
-                    size = NewDownloadTask.getContentLength(file.getUrl());
+                    size = DownloadTask.getContentLength(file.getUrl());
                 }
                 filesToDownload.add(task.getDest());
-                tasks.add(new DlTask(file.getId(), size, task));
-                dlFiles.add(new DlFile(file.getId(), file.getName()));
+                tasks.add(new DlTask(size, task));
             }
         }
-        tracker.submitFiles(dlFiles);
+    }
+
+    private Path remapFileFromOverride(IndexedFile file, Path path, Consumer<ModOverride> cons) {
+        ModOverride override = findModOverride(file.fileName());
+        if (override != null) {
+            LOGGER.info("File {} has override!", path);
+            path = mapFileName(path, override.getState());
+            cons.accept(override);
+            LOGGER.info("Remapped file path to {} for state {}.", path, override.getState());
+        }
+        return path;
+    }
+
+    private Path mapFileName(Path path, ModOverrideState state) {
+        if (state == ModOverrideState.DISABLED) return path.resolveSibling(path.getFileName() + ".disabled");
+        if (state == ModOverrideState.ENABLED) return path.resolveSibling(StringUtils.stripEnd(path.getFileName().toString(), ".disabled"));
+        return path;
+    }
+
+    private @Nullable ModOverride findModOverride(@Nullable Long fileId) {
+        if (fileId == null) return null;
+
+        InstanceModifications modifications = instance.getModifications();
+        if (modifications == null) return null;
+
+        return modifications.findOverride(fileId);
+    }
+
+    private @Nullable ModOverride findModOverride(String fName) {
+        InstanceModifications modifications = instance.getModifications();
+        if (modifications == null) return null;
+
+        return modifications.findOverride(fName);
     }
 
     /**
@@ -402,6 +537,12 @@ public class InstanceInstaller extends InstanceOperation {
          * This is a validation pass, this is effectively an UPGRADE but using the existing instance manifest.
          */
         VALIDATE,
+    }
+
+    public enum InstallStage implements OperationProgressTracker.Stage {
+        PREPARE,
+        MOD_LOADER,
+        FILES,
     }
 
     public static record InvalidFile(
@@ -423,14 +564,12 @@ public class InstanceInstaller extends InstanceOperation {
         }
     }
 
-    private class DlTask implements Task<Object> {
+    private class DlTask implements Task {
 
-        private final long id;
         private final long size;
-        private final Task<?> task;
+        private final Task task;
 
-        private DlTask(long id, long size, Task<?> task) {
-            this.id = id;
+        private DlTask(long size, Task task) {
             this.size = size;
             this.task = task;
         }
@@ -438,13 +577,21 @@ public class InstanceInstaller extends InstanceOperation {
         @Override
         public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
             task.execute(cancelToken, listener);
-            tracker.fileFinished(id);
+            tracker.stepFinished();
         }
+    }
 
+    private record EmptyFileDlTask(Path destination) implements Task {
         @Override
-        @Nullable
-        public Object getResult() {
-            return task.getResult();
+        public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+            LOGGER.info("Ignoring zero byte file: {}", this.destination);
+
+            // Just create an empty file.
+            try {
+                Files.createFile(IOUtils.makeParents(this.destination));
+            } catch (IOException e) {
+                LOGGER.error("Failed to create empty file: {}", this.destination, e);
+            }
         }
     }
 }

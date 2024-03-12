@@ -1,0 +1,35 @@
+name: Feature Request
+description: Suggest an idea for this project
+labels: ["feature-request"]
+body:
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What is your suggestion?
+      description: Please described your feature request in as much detail as possible 
+      placeholder: |
+        I would like to see ... added to the app because ... which would make the app better because ...
+    validations:
+      required: true
+  - type: input
+    id: alternatives
+    attributes:
+      label: Alternatives ideas
+      description: |
+        In the case your primary request isn't accepted, do you have any alternative suggestions?
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your suggestion.
+    validations:
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Add any other context about the suggestion here
+    validations:
+      required: false

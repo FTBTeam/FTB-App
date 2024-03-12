@@ -1,10 +1,9 @@
 <template>
   <div class="profile-area" :class="{ disable }">
-    <div class="profile" v-if="getActiveProfile || auth.token">
+    <div class="profile" v-if="(getProfiles && getProfiles.length) || getMtAccount">
       <div class="avatar">
         <img
-          v-if="getActiveProfile ? getActiveProfile.uuid : mtAvatar"
-          :src="`https://api.mymcuu.id/head/${getActiveProfile ? getActiveProfile.uuid : mtAvatar}`"
+          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : null)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -22,7 +21,7 @@
             <font-awesome-icon
               class="cursor-pointer"
               v-if="getProfiles.length"
-              icon="edit"
+              :icon="editMode ? 'times' : 'edit'"
               @click="editMode = !editMode"
             />
           </div>
@@ -35,9 +34,9 @@
               @click="() => setActiveProfile(item)"
             >
               <div class="avatar">
-                <img :src="`https://api.mymcuu.id/head/${item.uuid}`" alt="Profile" class="rounded" />
+                <img :src="getMinecraftHead(item.uuid)" alt="Profile" class="rounded" />
                 <div class="ms-identifier" v-if="item.type === 'microsoft'">
-                  <img src="@/assets/images/branding/microsoft-squares.png" alt="Microsoft account" />
+                  <img src="@/assets/images/branding/microsoft-squares.webp" alt="Microsoft account" />
                 </div>
               </div>
               <div class="name selectable">
@@ -65,23 +64,23 @@
           <div class="mt-area">
             <div class="headings">
               <div class="main">
-                <img src="@/assets/mtg-tiny-desat.png" alt="MineTogether Logo" />
+                <img src="@/assets/mtg-tiny-desat.webp" alt="MineTogether Logo" />
                 MineTogether
               </div>
-              <router-link :to="{ name: 'integrations' }">
+              <router-link :to="{ name: 'integrations' }" v-if="getMtProfile">
                 <font-awesome-icon icon="edit" />
               </router-link>
             </div>
-            <div class="account" v-if="auth.token">
+            <div class="account" v-if="getMtProfile">
               <div class="avatar">
-                <img :src="`https://api.mymcuu.id/head/${avatarName}`" alt="Profile" class="rounded" />
+                <img :src="getMinecraftHead(avatarName)" alt="Profile" class="rounded" />
               </div>
               <div class="meta">
                 <div class="name selectable">
-                  {{ auth.token.mc && auth.token.mc.display ? auth.token.mc.display : auth.token.username }}
+                  {{ getMtProfile.display || getMtAccount.username }}
                 </div>
-                <div class="hash selectable" v-if="auth.token.mc" title="I'm your friends code 👍">
-                  {{ auth.token.mc.friendCode }}
+                <div class="hash selectable" v-if="getMtProfile.friendCode" title="I'm your friends code 👍">
+                  {{ getMtProfile.friendCode }}
                 </div>
               </div>
             </div>
@@ -107,47 +106,51 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Action, Getter, State } from 'vuex-class';
-import { AuthProfile } from '@/modules/core/core.types';
-import { AuthState } from '@/modules/auth/types';
-import { wsTimeoutWrapper } from '@/utils/helpers';
-import { Prop } from 'vue-property-decorator';
+import {Action, Getter} from 'vuex-class';
+import {AuthProfile} from '@/modules/core/core.types';
+import {Prop} from 'vue-property-decorator';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import {createLogger} from '@/core/logger';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
 
-@Component
+@Component({
+  methods: {getMinecraftHead}
+})
 export default class SidebarProfile extends Vue {
   @Prop({ default: false }) disable!: boolean;
 
-  @Getter('getProfiles', { namespace: 'core' }) private getProfiles!: AuthProfile[];
-  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: AuthProfile;
+  @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
+  @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
+  
+  @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
+  @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
+  
+  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
 
-  @State('auth') private auth!: AuthState;
-  @Action('openSignIn', { namespace: 'core' }) private openSignIn!: () => void;
-  @Action('loadProfiles', { namespace: 'core' }) public loadProfiles: any;
-
-  @Action('sendMessage') private sendMessage!: any;
-
+  private logger = createLogger("SidebarProfile.vue")
+  
   editMode = false;
   loading = false;
-
-  get mtAvatar() {
-    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
-  }
 
   async removeProfile(profile: AuthProfile) {
     this.loading = true;
 
     try {
-      const data = await wsTimeoutWrapper({
-        type: 'profiles.remove',
-        uuid: profile.uuid,
-      });
+      this.logger.debug(`Removing profile ${profile.uuid}`)
+      const data = await sendMessage("profiles.remove", {
+        uuid: profile.uuid
+      })
 
       if (data.success) {
         this.loadProfiles();
+      } else {
+        this.logger.debug('Failed to remove profile');
       }
-    } catch {
-      console.log('Failed to remove profile');
+    } catch (error) {
+      this.logger.debug('Failed to remove profile due to message errors', error);
     }
 
     this.loading = false;
@@ -156,24 +159,25 @@ export default class SidebarProfile extends Vue {
   async setActiveProfile(profile: AuthProfile) {
     this.loading = true;
     try {
-      const data = await wsTimeoutWrapper({
-        type: 'profiles.setActiveProfile',
-        uuid: profile.uuid,
-      });
+      this.logger.debug(`Setting active profile ${profile.uuid}`)
+      const data = await sendMessage("profiles.setActiveProfile", {
+        uuid: profile.uuid
+      })
 
       if (data.success) {
         this.loadProfiles();
+      } else {
+        this.logger.debug('Failed to set active profile');
       }
-    } catch {
-      console.log('Failed to set active profile');
+    } catch (error) {
+      this.logger.debug('Failed to set active profile due to message errors', error);
     }
 
     this.loading = false;
   }
 
   get avatarName() {
-    const provider = this.auth.token?.accounts.find((s) => s.identityProvider === 'mcauth');
-    return provider !== undefined && provider !== null ? provider.userId : 'MHF_Steve';
+    return this.getMtAccount?.accounts?.find((s) => s.identityProvider === 'mcauth')?.userId
   }
 }
 </script>

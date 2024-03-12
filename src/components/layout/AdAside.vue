@@ -1,93 +1,54 @@
 <template>
-  <div class="ad-aside" :class="{ 'is-dev': isDev }">
-    <div class="heading">
-      <nav>
-        <p class="font-bold text-lg mb-4">Helpful links</p>
-        <div class="flex">
+  <div class="ad-aside" :class="{ 'electron': isElectron }">
+    <template v-if="!hideAds">
+      <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type">
+        <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd">
           <div
-            class="item up"
-            aria-label="FTB Discord"
-            data-balloon-pos="down-left"
-            @click="() => platform.get.utils.openUrl('https://go.ftb.team/discord')"
-          >
-            <font-awesome-icon :icon="['fab', 'discord']" />
-          </div>
-
+            v-if="!isElectron"
+            v-show="advertsEnabled ?? true"
+            id="ow-ad-second"
+            ref="adRefSecond"
+            style="max-width: 300px; max-height: 250px;"
+          />
+          <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder" />
+        </div>
+  
+        <div class="ad-holder">
           <div
-            class="item up"
-            aria-label="FTB Twitter"
-            data-balloon-pos="down-left"
-            @click="() => platform.get.utils.openUrl('https://go.ftb.team/twitter')"
-          >
-            <font-awesome-icon :icon="['fab', 'twitter']" />
-          </div>
-
-          <div
-            class="item up"
-            aria-label="FTB Twitch"
-            data-balloon-pos="down-left"
-            @click="() => platform.get.utils.openUrl('https://go.ftb.team/twitch')"
-          >
-            <font-awesome-icon :icon="['fab', 'twitch']" />
-          </div>
-        </div>
-
-        <p class="font-bold text-lg mt-6 mb-2">Support</p>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/creeperhost')">
-          Order a server from CreeperHost
-        </div>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/support')">
-          Need help using the app?
-        </div>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/app-feedback')">
-          Report an app bug
-        </div>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/server-setup')">
-          Server setup guide
-        </div>
-        <div class="item" @click="() => platform.get.utils.openUrl('https://go.ftb.team/app-support')">App Guides</div>
-      </nav>
-    </div>
-
-    <div class="ad-space">
-      <div class="heart text-center mb-4" v-if="!isElectron">
-        <div class="heart-hearts">
-          <font-awesome-icon icon="heart" size="2x" class="mb-2" />
-          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-2 mb-2" />
-          <font-awesome-icon icon="heart" size="2x" class="less-than-three heart-3 mb-2" />
-        </div>
-        <p class="font-bold">Supports FTB & Curseforge Authors</p>
-      </div>
-      <div class="ad-box" :class="{ overwolf: !isElectron }">
-        <div class="flex flex-col w-full mt-auto mb-auto" v-show="advertsEnabled">
-          <div
-            v-if="!showPlaceholder && !isElectron"
+            v-if="!isElectron"
+            v-show="advertsEnabled ?? true"
             id="ow-ad"
             ref="adRef"
-            style="max-width: 400px; max-height: 300px; display: flex; margin: 0 auto"
+            style="max-width: 400px; max-height: 600px;"
           />
-          <video
-            @click="platform.get.utils.openUrl('https://go.ftb.team/creeperhost')"
-            class="cursor-pointer"
-            width="400"
-            height="300"
-            autoplay
-            muted
-            loop
-            style="margin: 0 auto"
-            v-if="isElectron && !isDevEnv"
-          >
-            <source src="https://dist.modpacks.ch/windows_desktop_src_assets_CH_AD.mp4" type="video/mp4" />
-          </video>
+  
+          <div class='place-holder' v-if="!isElectron && showAdOnePlaceholder">
+            <img src="@/assets/images/ftb-logo.svg" class="mb-8" width="70" alt="FTB Logo">
+            <p class="mb-1">Thank you for supporting FTB ❤️</p>
+            <p>Ads support FTB & CurseForge Authors!</p>
+          </div>
         </div>
       </div>
-      <!--      <small-->
-      <!--        class="text-xs text-center block cursor-pointer mt-2 text-muted hover:text-white hover:shadow"-->
-      <!--        @click="reportAdvert"-->
-      <!--        v-if="!isElectron"-->
-      <!--        >Report advert</small-->
-      <!--      >-->
-    </div>
+  
+      <div class="ad-container ads" v-else key="adside-ad-type">
+        <div class="ad-holder small" v-if="!disableSmallerAd">
+          <div style="width: 300px; height: 250px; background: transparent;">
+            <owadview />
+          </div>
+        </div>
+        
+        <div class="ad-holder">
+          <div style="width: 400px; height: 600px; background: transparent;">
+            <owadview />
+          </div>
+        </div>
+      </div>
+      
+      <!-- TODO: Workout what I wanna do here -->
+      <div class="ad-container ads-electron electron" v-if="false" key="adside-ad-type">
+        <ch-ads-area />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -95,220 +56,228 @@
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
 import Component from 'vue-class-component';
-import { Action, State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
-import { AuthState } from '@/modules/auth/types';
-import { Prop } from 'vue-property-decorator';
+import {Getter, State} from 'vuex-class';
+import {SettingsState} from '@/modules/settings/types';
+import {JavaFetch} from '@/core/javaFetch';
+import ChAdsArea from '@/components/core/misc/ChAdsArea.vue';
+import {createLogger} from '@/core/logger';
+import {ns} from '@/core/state/appState';
+import {MineTogetherAccount} from '@/core/@types/javaApi';
+import {adsEnabled} from '@/utils';
+import {Prop} from 'vue-property-decorator';
 
-/**
- * TODO: clean all of this up, it's a mess and a copy of a different component
- */
-@Component
+@Component({
+  components: {ChAdsArea}
+})
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
-  @State('auth') public auth!: AuthState;
-  @Action('reportAdvert') public reportAd!: any;
-  @Prop({ default: false }) public isDev!: boolean;
+  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
+  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+  
+  @Prop({default: false}) public hideAds!: boolean;
+  
+  private logger = createLogger("AdAside.vue");
 
-  private ad: any;
+  ads: Record<string, any> = {};
   platform = platform;
-  showPlaceholder = false;
-
-  private starAPI = (window as any).cpmstarAPI;
+  showAdOnePlaceholder = true;
+  showAdTwoPlaceholder = true;
+  
+  disableSmallerAd = false;
 
   get isElectron() {
     return platform.isElectron();
   }
 
+  get isSmallDisplay() {
+    return (window as any)?.ftbFlags?.smallMonitor;
+  }
+  
   async mounted() {
-    console.log('Loading ad sidebar widget');
+    this.logger.info('Loaded ad sidebar widget');
+    
+    // On windows reload
+    window.addEventListener("resize", this.onResize);
+    
+    // Trigger initial mount
+    this.onResize();
+    
     // Kinda dirty hack for this file
-    if (this.platform.isOverwolf()) {
-      setTimeout(() => {
-        console.log('Loading advert');
-        //@ts-ignore
-        if (!OwAd) {
-          this.showPlaceholder = true;
-          console.log('No advert loaded');
-        } else {
-          //@ts-ignore
-          if (window.ad) {
-            console.log('Is window advert');
-            //@ts-ignore
-            this.ad = window.ad;
-            this.ad.refreshAd();
-          } else {
-            console.log('Created advert');
-            //@ts-ignore
-            this.ad = new OwAd(document.getElementById('ow-ad'));
-            console.log(this.ad, document.getElementById('ow-ad'));
-
-            //@ts-ignore
-            window.ad = this.ad;
+    if (this.isElectron) {
+      return;
+    }
+    
+    setTimeout(() => {
+      this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
+      if (!(window as any)?.ftbFlags?.smallMonitor) {
+        this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {
+          size: {
+            width: 300,
+            height: 250
           }
-          this.ad.add;
-          this.ad.addEventListener('error', (error: any) => {
-            this.showPlaceholder = true;
-            console.log('Failed to load ad');
-            console.log(error);
-          });
-          this.ad.addEventListener('player_loaded', () => {
-            console.log('player loaded for overwolf');
-          });
-          this.ad.addEventListener('display_ad_loaded', () => {
-            console.log('display_ad_loaded overwolf');
-          });
-          this.ad.addEventListener('play', () => {
-            console.log('play overwolf');
-          });
-          this.ad.addEventListener('complete', () => {
-            console.log('complete ads for overwolf');
-          });
-          this.ad.addEventListener('impression', () => {
-            fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/video`);
-          });
-          this.ad.addEventListener('display_ad_loaded', () => {
-            fetch(`${process.env.VUE_APP_MODPACK_API}/public/analytics/ads/static`);
-          });
-        }
-      }, 1500); // Wait 1.5 seconds
+        });
+      }
+    }, 1500);
+  }
+  
+  destroyed() {
+    window.removeEventListener("resize", this.onResize);
+  }
+  
+  onResize() {
+    if (window.outerHeight < 890 && !this.disableSmallerAd) {
+      this.disableSmallerAd = true;
+    }
+
+    if (window.outerHeight > 890 && this.disableSmallerAd) {
+      this.disableSmallerAd = false;
     }
   }
 
-  get advertsEnabled(): boolean {
-    if (this.auth?.token?.activePlan === null) {
-      return true;
+  async loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => void, elm: any, options?: any) {
+    emitPlaceholderUpdate(true);
+
+    if (this.isDevEnv) {
+      return;
     }
 
-    // If this fails, show the ads
-    return (this.settings?.settings?.showAdverts === true || this.settings?.settings?.showAdverts === 'true') ?? true;
+    this.logger.info(`[AD: ${id}] Loading advert system for ${id}`);
+
+    if (typeof OwAd === 'undefined' || !OwAd) {
+      emitPlaceholderUpdate(true);
+      this.logger.info(`[AD: ${id}] No advert object available`);
+      return;
+    }
+
+    this.logger.info(`[AD: ${id}] Created advert object`);
+
+    this.ads[id] = new OwAd(elm, options);
+    
+    const win = window as any;
+    if (!win.ads) {
+      win.ads = {};
+    } 
+    
+    win.ads[id] = this.ads[id];
+    this.ads[id].addEventListener('error', (error: any) => {
+      emitPlaceholderUpdate(true);
+      this.logger.info(`[AD: ${id}] Failed to load ad`);
+    });
+    this.ads[id].addEventListener('player_loaded', () => {
+      this.logger.info(`[AD: ${id}] Player loaded`);
+    });
+    this.ads[id].addEventListener('display_ad_loaded', () => {
+      emitPlaceholderUpdate(false);
+      this.logger.info(`[AD: ${id}] Display ad loaded and ready`);
+      JavaFetch.modpacksCh("analytics/ads/static")
+        .execute()
+        .catch(e => this.logger.error("Failed to send analytics", e))
+    });
+    this.ads[id].addEventListener('play', () => {
+      emitPlaceholderUpdate(false);
+      this.logger.info(`[AD: ${id}] Ad ready and loaded`);
+    });
+    this.ads[id].addEventListener('complete', () => {
+      this.logger.info(`[AD: ${id}] Video ad finished playing`);
+    });
+    this.ads[id].addEventListener('impression', () => {
+      JavaFetch.modpacksCh("analytics/ads/video")
+        .execute()
+        .catch(e => this.logger.error("Failed to send analytics", e))
+    });
+  }
+  
+  get advertsEnabled(): boolean {
+    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
   }
 
   get isDevEnv() {
-    return process.env.NODE_ENV === 'development';
-  }
-
-  public reportAdvert() {
-    // const el = document.getElementById('banner300x250');
-    // if (!el) {
-    //   this.showPlaceholder = true;
-    //   return;
-    // }
-    // // @ts-ignore
-    // const adHTML = el.children[0].contentDocument.body.innerHTML;
-    // // @ts-ignore
-    // this.starAPI(api => {
-    //   api.game.setTarget(null);
-    // });
-    // el.innerHTML = '';
-    // this.ad = null;
-    // // @ts-ignore
-    // window.ad = null;
-    // this.showPlaceholder = true;
-    // this.reportAd({ object: '', html: adHTML });
+    return process.env.NODE_ENV !== 'production';
   }
 }
 </script>
 
 <style lang="scss" scoped>
 .ad-aside {
-  padding: 1.5rem;
-  background: rgba(black, 0.5);
+  position: relative;
+  background-color: black;
+  min-width: 400px;
 
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
 
-  justify-content: space-between;
-  transition: background-color 0.3s ease-in-out;
+  border-left: 2px solid rgba(black, 0.1);
+  padding-bottom: .4rem;
 
-  &.is-dev {
-    background-color: #171c1f;
-  }
+  .ad-container.overwolf {
+    position: relative;
+    min-width: 400px;
+    height: 100%;
 
-  .heading {
-    nav {
-      .item {
-        padding: 0.25rem 0;
-        opacity: 0.75;
-
-        cursor: pointer;
-        transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
-
-        &.up:hover {
-          transform: translateY(-3px);
-        }
-
-        &:hover {
-          opacity: 1;
-          transform: translateX(5px);
-        }
-
-        svg {
-          margin-right: 1rem;
-        }
-      }
-    }
-  }
-
-  .ad-space {
-    .heart {
+    .ad-holder {
       position: relative;
-      svg {
-        color: #ff4040;
-      }
+      width: 400px;
+      height: 600px;
 
-      .less-than-three {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%) scale(1.5);
-        opacity: 0;
-
-        animation: scale 2s ease-in-out infinite;
-
-        &.heart-3 {
-          animation: scale2 2s ease-in-out infinite;
-          animation-delay: 0.4s;
-        }
-
-        @keyframes scale {
-          0%,
-          100% {
-            transform: translateX(-50%) scale(1);
-            opacity: 0;
-          }
-          50% {
-            transform: translateX(-50%) scale(1.5);
-            opacity: 0.6;
-          }
-        }
-
-        @keyframes scale2 {
-          0%,
-          100% {
-            transform: translateX(-50%) scale(1);
-            opacity: 0;
-          }
-          50% {
-            transform: translateX(-50%) scale(1.8);
-            opacity: 0.2;
-          }
-        }
+      &.small {
+        width: 300px;
+        height: 250px;
       }
     }
+  }
+  
+  .ads {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
 
-    .ad-box {
-      background: black;
-      width: 300px;
-      height: 250px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
+    &.ad-container {
+    }
 
-      border-radius: 5px;
+    .ad-holder {
+      position: relative;
 
-      &.overwolf {
+      &.small {
+        margin-bottom: .5rem;
+      }
+
+      .place-holder {
+        position: absolute;
         width: 400px;
-        height: 300px;
+        height: 600px;
+        background: black;
+        border-radius: 5px;
+        top: 0;
+        left: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex-direction: column;
+        padding: 3rem;
+        text-align: center;
+        font-weight: bold;
+        z-index: -1;
+
+        span {
+          display: block;
+          margin-bottom: 1rem;
+        }
+
+        .logo {
+          max-width: 60px;
+          margin-bottom: 1rem;
+        }
+
+        &.small {
+          height: 250px;
+          left: -50px;
+        }
       }
     }
   }

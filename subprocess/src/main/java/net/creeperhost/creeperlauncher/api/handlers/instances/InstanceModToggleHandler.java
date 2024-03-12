@@ -1,29 +1,28 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import net.creeperhost.creeperlauncher.Instances;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.InstanceModToggleData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.api.handlers.ModFile;
-import net.creeperhost.creeperlauncher.pack.LocalInstance;
-
-import java.util.Optional;
-import java.util.UUID;
+import net.creeperhost.creeperlauncher.pack.Instance;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class InstanceModToggleHandler implements IMessageHandler<InstanceModToggleData> {
 
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Override
     public void handle(InstanceModToggleData data) {
-        LocalInstance instance = Instances.getInstance(UUID.fromString(data.uuid));
+        Instance instance = Instances.getInstance(data.uuid);
+        if (instance == null) return;
 
-        Optional<ModFile> mod = instance.getMods(false).stream()
-                .filter(e -> e.getName().equals(data.fileName))
-                .findFirst();
-
-        boolean successful = mod
-                .map(e -> e.setEnabled(data.state))
-                .orElse(false);
-
-        Settings.webSocketAPI.sendMessage(new InstanceModToggleData.Reply(data, successful, mod.map(ModFile::isEnabled).orElse(true)));
+        try {
+            instance.toggleMod(data.fileId, data.fileName);
+            WebSocketHandler.sendMessage(new InstanceModToggleData.Reply(data, true));
+        } catch (Throwable ex) {
+            LOGGER.warn("Error whilst toggling mod state.", ex);
+            WebSocketHandler.sendMessage(new InstanceModToggleData.Reply(data, false));
+        }
     }
 }

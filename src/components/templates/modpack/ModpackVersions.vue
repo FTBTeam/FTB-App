@@ -1,109 +1,78 @@
 <template>
-  <div class="pack-versions py-4">
-    <div class="aside">
-      <p>Versions</p>
-      <div class="items">
-        <div
-          class="item"
-          :class="{ active: version.id === activeLog }"
-          v-for="(version, index) in versions"
-          :key="index"
-        >
-          <div class="main" @click="() => loadChanges(version.id)">
-            <header class="flex justify-between flex-wrap">
-              <div class="version">{{ version.name }}</div>
-              <div class="updated">{{ version.updated | dayjsFromNow }}</div>
-            </header>
-            <div class="type-data">
-              <div
-                class="type"
-                :style="{
-                  backgroundColor:
-                    version.type.toLowerCase() === 'release'
-                      ? '#27AE60'
-                      : version.type.toLowerCase() === 'beta'
-                      ? '#00a8FF'
-                      : 'black',
-                }"
-              >
-                {{ version.type }}
-              </div>
-              <div class="current" v-if="version.id === current">Current</div>
-              <div class="latest" v-if="index === 0">Latest</div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="pack-versions">
+    <div class="aside mb-6">
+      <selection2
+        :badge-end="true"
+        :options="packVersions"
+        v-model="version"
+      />
     </div>
-    <div class="main flex flex-col" :key="activeLog">
+    <div class="main flex pb-8 flex-col" :key="activeLog">
       <div class="heading flex items-center mb-4" v-if="currentVersion">
         <div class="content flex-1 mr-4">
           <p class="opacity-50">Changelog for</p>
           <div class="font-bold name text-xl">{{ currentVersion.name }}</div>
         </div>
-        <div class="buttons flex text-sm">
-          <ftb-button
-            @click="
-              () =>
-                platform.get.utils.openUrl(
-                  `https://feed-the-beast.com/modpacks/${packInstance.id}/server/${currentVersion.id}${
-                    packInstance.type.toLowerCase() === 'curseforge' ? '/curseforge' : ''
-                  }`,
-                )
-            "
-            class="py-2 px-4 ml-auto mr-1"
-            color="info"
-            css-class="text-center text-l"
-          >
-            <font-awesome-icon icon="server" class="mr-2" />
-            Server files
-          </ftb-button>
-          <ftb-button
-            v-if="instance && currentVersion && instance.versionId !== activeLog"
-            class="py-2 px-4 ml-1"
-            color="warning"
-            css-class="text-center text-l"
-            @click="update"
-          >
-            <font-awesome-icon icon="download" class="mr-2" />
+        <div class="buttons flex text-sm gap-2">
+          <ui-button type="info" size="small" icon="server" @click="() => platform.get.utils.openUrl(`https://go.ftb.team/serverfiles`)">Server files</ui-button>
+          <ui-button
+            :wider="true"
+            v-if="instance && currentVersion && instance.versionId !== activeLog && currentVersion.type.toLowerCase() !== 'archived'" 
+            :type="isOlderVersion(currentVersion.id) ? 'warning' : 'success'" size="small" icon="download" @click="update">
             {{ isOlderVersion(currentVersion.id) ? 'Downgrade' : 'Update' }}
-          </ftb-button>
+          </ui-button>
         </div>
       </div>
-      <!--      <div class="updated">{{ version.updated | momentFromNow }}</div>-->
-      <div class="body-contents flex-1 overflow-y-auto">
-        <div v-if="loading" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
-        <div v-else class="bg-orange-400 text-orange-900 font-bold px-4 py-4 rounded mb-6">
-          Warning! Always backup your worlds before updating.
+      <div class="body-contents flex-1 select-text">
+        <div v-if="loading && !isCursePack" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
+        <div
+          v-else-if="currentVersion && currentVersion.type.toLowerCase() !== 'archived'"
+          class="bg-orange-400 text-orange-900 font-bold px-4 py-4 rounded mb-6"
+        >         
+          <font-awesome-icon icon="triangle-exclamation" size="xl" class="mr-4" /> Always backup your worlds before updating.
         </div>
-        <VueShowdown
-          v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''"
-          flavor="github"
-          :markdown="changelogs[activeLog]"
-          :extensions="['classMap']"
-        />
+        <message class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-if="currentVersion && currentVersion.type.toLowerCase() === 'archived'">
+          <p>
+            This version has been archived! This typically means the update contained a fatal error causing the version
+            to be too unstable for players to use.
+          </p>
+        </message>
+        
+        <div class="wysiwyg" v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''" v-html="parseMarkdown(changelogs[activeLog])" />
+        <div v-if="isCursePack">
+          <message type="info">Changelogs are not yet supported for non-FTB modpacks.</message>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Instance, ModPack, Versions } from '@/modules/modpacks/types';
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Action } from 'vuex-class';
+import {ModPack, Versions} from '@/modules/modpacks/types';
+import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import { InstallerState } from '@/modules/app/appStore.types';
-import { getPackArt } from '@/utils';
+import {getColorForReleaseType, parseMarkdown} from '@/utils';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
+import {InstanceJson} from '@/core/@types/javaApi';
+import {RouterNames} from '@/router';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
+import dayjs from 'dayjs';
+import {alertController} from '@/core/controllers/alertController';
+import UiButton from '@/components/core/ui/UiButton.vue';
+import {createLogger} from '@/core/logger';
 
-@Component
+@Component({
+  components: {UiButton, Selection2}
+})
 export default class ModpackVersions extends Vue {
-  @Action('getChangelog', { namespace: 'modpacks' }) public getChangelog!: any;
-  @Action('installModpack', { namespace: 'app' }) public installModpack!: (data: InstallerState) => void;
-
+  private logger = createLogger("ModpackVersions.vue")
+  
   @Prop() versions!: Versions[];
   @Prop() packInstance!: ModPack;
-  @Prop() instance!: Instance;
-  @Prop() current!: number;
+  @Prop() instance!: InstanceJson;
 
   platform = platform;
 
@@ -112,25 +81,46 @@ export default class ModpackVersions extends Vue {
   activeLog: number = -1;
   loading = true;
 
-  mounted() {
-    const lcurrent = this.current ?? this.versions[0].id;
+  version: number | string = -1;
+  
+  parseMarkdown = parseMarkdown;
 
+  mounted() {
+    const sortedVersion = this.versions.sort((a, b) => b.id - a.id);
+    
+    const currentId = this.instance?.versionId ?? this.packInstance?.versions[0]?.id ?? -1;
+    const lcurrent = sortedVersion.find(e => e.id === currentId)?.id ?? sortedVersion[0].id;
+    this.version = lcurrent;
+
+    // TODO: (M#01) Fix this once the api has been updated to support a `provider` field
+    if (this.isCursePack) {
+      return;
+    }
+    
     // get the first log
     this.fetchLog(lcurrent)
       .then((data) => {
         this.changelogs['' + lcurrent] = data;
         this.setActive(lcurrent);
       })
-      .catch(console.error);
+      .catch(e => this.logger.error(e))
+  }
+  
+  destoryed() {
+    this.changelogs = {};
   }
 
+  @Watch('version')
   async loadChanges(versionId: number) {
     if (this.changelogs['' + versionId]) {
       this.setActive(versionId);
       return;
     }
-
-    this.changelogs['' + versionId] = await this.fetchLog(versionId);
+    
+    if (!this.isCursePack) {
+      this.changelogs['' + versionId] = await this.fetchLog(versionId);
+    }
+    
     this.setActive(versionId);
   }
 
@@ -140,15 +130,22 @@ export default class ModpackVersions extends Vue {
   }
 
   async fetchLog(versionId: number) {
-    this.loading = true;
-    const changelog = await this.getChangelog({
-      packID: this.packInstance.id,
-      versionID: versionId,
-      type: this.packInstance?.type?.toLowerCase() === 'curseforge' ? 1 : 0,
-    });
+    if (this.isCursePack) {
+      return "";
+    }
+    
+    try {
+      const changelog = await toggleBeforeAndAfter(
+        () => modpackApi.modpacks.getChangelog(this.packInstance.id, versionId, this.isCursePack ? "curseforge" : "modpacksch"),
+        state => this.loading = state
+      )
 
-    this.loading = false;
-    return changelog.content ?? `No changelog available for this version`;
+      return changelog?.content ?? `No changelog available for this version`;
+    } catch (e) {
+      this.logger.error(e)
+      alertController.warning("Unable to load changelog")
+      return "Unable to locate changelog for this version";
+    }
   }
 
   public isOlderVersion(version: number) {
@@ -156,110 +153,66 @@ export default class ModpackVersions extends Vue {
   }
 
   public update(): void {
-    this.installModpack({
-      pack: {
-        id: this.instance.id,
-        uuid: this.instance.uuid,
-        version: this.currentVersion?.id,
-        packType: this.instance.packType,
-      },
-      meta: {
-        name: this.instance.name,
-        version: this.currentVersion?.name ?? '',
-        art: getPackArt(this.instance?.art),
-      },
-    });
-    // this.$router.replace({
-    //   name: 'installingpage',
-    //   query: { modpackid: modpackID?.toString(), versionID: version?.toString(), uuid: this.instance?.uuid },
-    // });
+    if (!this.instance || !this.currentVersion) {
+      // Non-instances can't be updated
+      return;
+    }
+    
+    instanceInstallController.requestUpdate(this.instance, this.currentVersion, typeIdToProvider(this.instance.packType));
+    this.$router.push({
+      name: RouterNames.ROOT_LIBRARY
+    })
+  }
+  
+  get packVersions(): SelectionOptions {
+    return [...this.versions].sort((a, b) => b.id - a.id).map(e => ({
+      value: e.id, 
+      label: e.name + (this.instance?.versionId === e.id ? ' (Current)' : ''), 
+      meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"), 
+      badge: {color: getColorForReleaseType(e.type), text: e.type} 
+    })) ?? []
+  }
+  
+  get isCursePack() {
+    // TODO: (M#01) Fix this once the api has been updated to support a `provider` field
+    // TODO: (M#01) > 1000 isn't a great option here but it's the only way to ensure this still works once the
+    //       provider field is added and the type is set correctly
+    return this.packInstance.type.toLowerCase() == "curseforge" || this.packInstance.id > 1000;
   }
 }
 </script>
 
 <style scoped lang="scss">
 .pack-versions {
-  display: flex;
   height: 100%;
+  position: relative;
+  font-size: 0.875rem;
+
+  line-height: 1.8em;
 
   .aside,
   .main {
     > p {
-      margin-bottom: 1rem;
       font-size: 1.25rem;
-    }
-  }
-
-  .aside {
-    margin-right: 2rem;
-    overflow-y: auto;
-    height: 100%;
-
-    .items {
-      width: 280px;
-
-      .item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        margin-bottom: 1rem;
-        padding: 0.8rem 1rem;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.25s ease-in-out;
-
-        &.active,
-        &:hover {
-          background-color: var(--color-background);
-        }
-
-        .type-data {
-          display: flex;
-
-          %type {
-            padding: 0.1rem 0.3rem;
-            border-radius: 3px;
-            background-color: #595959;
-            font-size: 0.875rem;
-            text-transform: capitalize;
-            display: inline-block;
-          }
-
-          .type,
-          .latest,
-          .current {
-            @extend %type;
-            margin-right: 0.5rem;
-          }
-
-          .latest {
-            background-color: var(--color-info-button);
-          }
-
-          .current {
-            background-color: var(--color-warning-button);
-          }
-        }
-
-        .version {
-          font-weight: bold;
-          font-family: Arial, Helvetica, sans-serif;
-          margin-bottom: 0.4rem;
-        }
-
-        .updated {
-          font-size: 0.875rem;
-          opacity: 0.8;
-        }
-      }
     }
   }
 
   .main {
     flex: 1;
-    overflow-x: auto;
-    height: 100%;
+  }
+
+  .closer {
+    cursor: pointer;
+    padding: 0.5rem 0.8rem;
+    font-size: 1.2rem;
+    position: absolute;
+    top: -1rem;
+    right: -2rem;
+    opacity: 0.5;
+    transition: opacity 0.2s ease-in-out;
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 </style>

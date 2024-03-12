@@ -1,12 +1,12 @@
 <template>
-  <div class="titlebar" :class="{ isMac, 'is-dev': isDev }" @mousedown="startDragging">
-    <div class="debug-items" v-if="inDevMode">
-      <span>Dev tools</span>
-      <router-link class="item" :to="{ name: 'home' }">
-        <font-awesome-icon icon="home" />
-      </router-link>
+  <div class="titlebar" :class="{ isMac, isUnix }" @mousedown="startDragging" @dblclick="minMax" v-show="systemBarDisabled">
+    <div class="spacer" v-if="isMac"></div>
+    <div class="meta-title">
+      <span>FTB App</span>
     </div>
-    <div class="meta-title">FTB App</div>
+    <div class="branch-container">
+      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ branch }}</div>
+    </div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">
         <div class="title-action close" @click="close">
@@ -43,34 +43,46 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import os from 'os';
+import {Component, Vue} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import { SettingsState } from '@/modules/settings/types';
+import {SettingsState} from '@/modules/settings/types';
+import os from 'os';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
+import {createLogger} from '@/core/logger';
 
 @Component
 export default class TitleBar extends Vue {
-  @Action('sendMessage') public sendMessage: any;
   @Action('disconnect') public disconnect: any;
   @State('settings') private settings!: SettingsState;
   @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
-
-  @Prop({ default: false }) isDev!: boolean;
-
-  public isMac: boolean = false;
+  @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
+  
+  private logger = createLogger('TitleBar.vue'); 
   private windowId: string | null = null;
+  
+  isMac: boolean = false;
 
-  inDevMode = process.env.NODE_ENV === 'development';
-
-  public mounted() {
-    if (os.type() === 'Darwin') {
-      this.isMac = true;
-    } else {
-      this.isMac = false;
-    }
-
-    platform.get.frame.setupTitleBar((windowId) => (this.windowId = windowId));
+  blurred = false;
+  
+  async mounted() {
+    this.isMac = os.type() === 'Darwin';
+    
+    this.windowId = await platform.get.frame.getWindowId();
+    this.logger.debug('Window ID', this.windowId)
+    
+    window.addEventListener('blur', this.windowFocusChanged);
+    window.addEventListener('focus', this.windowFocusChanged);
+  }
+  
+  destroyed() {
+    window.removeEventListener('blur', this.windowFocusChanged);
+    window.removeEventListener('focus', this.windowFocusChanged);
+  }
+  
+  windowFocusChanged(event: any) {
+    this.blurred = event.type === 'blur';
   }
 
   public startDragging(event: any) {
@@ -85,12 +97,32 @@ export default class TitleBar extends Vue {
     });
   }
 
+  minMax() {
+    platform.get.frame.max(this.windowId);
+  }
+
   public minimise(): void {
     platform.get.frame.min(this.windowId);
   }
 
   public max(): void {
     platform.get.frame.max(this.windowId);
+  }
+  
+  get branch() {
+    return platform.get?.config?.branch
+  }
+
+  goToSettings() {
+    safeNavigate(RouterNames.SETTINGS_APP)
+  }
+  
+  get systemBarDisabled() {
+    return !this.settings?.settings?.appearance?.useSystemWindowStyle ?? false;
+  }
+  
+  get isUnix() {
+    return !platform.isOverwolf()
   }
 }
 </script>
@@ -99,71 +131,62 @@ export default class TitleBar extends Vue {
 .titlebar {
   height: 2rem;
   background-color: #1d1c1c;
-  display: flex;
+  display: grid;
+  grid-template: 'left center right';
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
-  -webkit-app-region: drag;
   z-index: 50000;
   position: relative;
   transition: background-color 0.3s ease-in-out;
-
-  &.is-dev {
-    background-color: #0c0d0f;
+  
+  &.blurred {
+    background-color: var(--color-navbar);
   }
 
+  &.isUnix {
+    -webkit-app-region: drag;
+  }
+  
   &.isMac {
     height: 1.8em;
     text-align: center;
 
+    .spacer {
+      grid-area: left;
+      width: 50px;
+    }
+    
     .meta-title {
       font-weight: 800;
       width: 100%;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-        'Helvetica Neue', sans-serif;
 
       img {
         margin-left: 1rem;
         margin-right: 0;
       }
     }
-  }
-
-  .debug-items {
-    position: fixed;
-    padding: 0.5rem 1rem;
-    bottom: 1rem;
-    background-color: black;
-    z-index: 1000;
-    border-radius: 5px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-
-    span {
-      margin-right: 1rem;
-      font-size: 0.8rem;
-      opacity: 0.5;
-    }
-
-    .item {
-      display: block;
-      transition: 0.2s ease-in-out transform;
-
-      &:hover {
-        transform: scale(1.1);
-      }
+    
+    .branch-container {
+      grid-area: right;
+      margin-right: .4rem;
+      margin-left: 0;
+      justify-content: flex-end;
     }
   }
 
   .meta-title {
+    grid-area: center;
     padding: 0 0.5rem;
     font-size: 0.875rem;
-    opacity: 0.5;
+    color: rgba(white, .5);
     display: flex;
     font-weight: 500;
+    align-items: center;
+    gap: 1.5rem;
+    justify-content: center;
 
     img {
       height: 18px;
@@ -177,6 +200,25 @@ export default class TitleBar extends Vue {
   }
 
   user-select: none;
+}
+
+.branch {
+  font-size: 10px;
+  background-color: rgba(white, .2);
+  color: white;
+  border-radius: 4px;
+  font-weight: normal;
+  padding: .1rem .3rem;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.branch-container {
+  grid-area: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-left: .4rem;
 }
 
 .title-action {

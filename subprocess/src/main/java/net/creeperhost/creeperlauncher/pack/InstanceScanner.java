@@ -42,6 +42,7 @@ public class InstanceScanner {
             "kubejs"
     );
 
+    private final Instance instance;
     private final Path instanceDir;
     private final ModpackVersionManifest manifest;
     private final Map<String, ModpackFile> modpackFiles = new HashMap<>();
@@ -52,13 +53,14 @@ public class InstanceScanner {
 
     private boolean hasLegacyJavaFixer;
 
-    public InstanceScanner(Path instanceDir, ModpackVersionManifest manifest) {
+    public InstanceScanner(Path instanceDir, ModpackVersionManifest manifest, Instance instance) {
         this.instanceDir = instanceDir;
         this.manifest = manifest;
         for (ModpackFile file : manifest.getFiles()) {
             Path path = instanceDir.resolve(file.getPath()).resolve(file.getName());
             modpackFiles.put(instanceDir.relativize(path).toString(), file);
         }
+        this.instance = instance;
     }
 
     public boolean isPotentiallyInvalid() {
@@ -121,6 +123,24 @@ public class InstanceScanner {
         } catch (IOException ex) {
             LOGGER.warn("Failed to scan.", ex);
         }
+    }
+    
+    public boolean shouldScan() {
+        if (this.instance.props.potentiallyBrokenDismissed) {
+            return false;
+        }
+        
+        if (!this.instance.props.locked) {
+            // If you unlocked it, it's your problem now
+            return false;
+        }
+
+        if (this.instance.props._private && (this.instance.props.version.contains("alpha") || this.instance.props.version.contains("beta") || this.instance.props.version.contains("rc"))) {
+            // If it's a private pack and it's an alpha, beta, or rc, it's your problem now
+            return false;
+        }
+        
+        return true;
     }
 
     private void investigateMod(Path mod) {

@@ -1,9 +1,9 @@
 package net.creeperhost.creeperlauncher.api.handlers.storage;
 
-import net.creeperhost.creeperlauncher.GenericStorage;
-import net.creeperhost.creeperlauncher.Settings;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import net.creeperhost.creeperlauncher.storage.KVStorage;
 
 import javax.annotation.Nullable;
 
@@ -11,12 +11,12 @@ public class StoragePutHandler implements IMessageHandler<StoragePutHandler.Data
     @Override
     public void handle(Data data) {
         if (data.key == null || data.key.isEmpty()) {
-            Settings.webSocketAPI.sendMessage(new Reply(data, false));
+            WebSocketHandler.sendMessage(new Reply(data, false));
             return;
         }
 
-        var success = GenericStorage.getInstance().put(data.key, data.value);
-        Settings.webSocketAPI.sendMessage(new Reply(data, success));
+        var success = KVStorage.getInstance().put(data.key, data.value);
+        WebSocketHandler.sendMessage(new Reply(data, success));
     }
 
     public static class Data extends BaseData {

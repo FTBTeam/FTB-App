@@ -3,18 +3,21 @@ package net.creeperhost.creeperlauncher.data;
 import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import net.covers1624.quack.collection.StreamableIterable;
+import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask.DownloadValidation;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask.DownloadValidation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,26 +31,63 @@ import static java.util.Objects.requireNonNull;
 @SuppressWarnings ("FieldMayBeFinal") // Gson
 public class InstanceSupportMeta {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new Gson();
     private static final String URL = "https://apps.modpacks.ch/meta.json";
 
     private List<SupportEntry> supportMods = new LinkedList<>();
     private List<SupportEntry> supportAgents = new LinkedList<>();
 
+    @Nullable
     public static InstanceSupportMeta update() throws IOException {
+        return update(0);
+    }
+
+    @Nullable
+    private static InstanceSupportMeta update(int depth) throws IOException {
         Path metaFile = Constants.BIN_LOCATION.resolve("support-meta.json");
-        NewDownloadTask task = NewDownloadTask.builder()
+        if (Files.exists(metaFile)) {
+            try {
+                if (Files.readString(metaFile).trim().isEmpty()) {
+                    LOGGER.info("Instance meta json is empty. Deleting..");
+                    delete(metaFile);
+                }
+            } catch (IOException ignored) {
+            }
+        }
+
+        DownloadTask task = DownloadTask.builder()
                 .url(URL)
                 .dest(metaFile)
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .build();
         task.execute(null, null);
 
-        return JsonUtils.parse(GSON, metaFile, InstanceSupportMeta.class);
+        InstanceSupportMeta meta = JsonUtils.parse(GSON, metaFile, InstanceSupportMeta.class);
+        if (meta == null) {
+            if (depth == 3) {
+                LOGGER.error("Tried to dowload meta.json 3 times. Aborting..");
+                return null;
+            }
+
+            LOGGER.info("Meta file parsed to null. Deleting..");
+            delete(metaFile);
+            return update(depth + 1);
+        }
+        return meta;
+    }
+
+    private static void delete(Path metaFile) {
+        try {
+            Files.delete(metaFile);
+            Files.deleteIfExists(metaFile.resolveSibling(metaFile.getFileName() + ".etag"));
+        } catch (IOException ex) {
+            LOGGER.warn("Failed to delete files.", ex);
+        }
     }
 
     public List<SupportFile> getSupportMods(String type) {
-        return StreamableIterable.of(supportMods)
+        return FastStream.of(supportMods)
                 .filter(e -> e.getType().equals(type))
                 .flatMap(SupportEntry::getFiles)
                 .toList();
@@ -106,8 +146,8 @@ public class InstanceSupportMeta {
             return validation;
         }
 
-        public NewDownloadTask createTask(Path destFolder) {
-            return NewDownloadTask.builder()
+        public DownloadTask createTask(Path destFolder) {
+            return DownloadTask.builder()
                     .url(getUrl())
                     .dest(destFolder.resolve(getName()))
                     .withValidation(makeValidation())

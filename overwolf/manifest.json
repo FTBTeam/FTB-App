@@ -18,7 +18,8 @@
     "Streaming",
     "Profile",
     "GameInfo",
-    "Shutdown"
+    "Shutdown",
+    "DesktopStreaming"
   ],
   "data": {
     "externally_connectable": {
@@ -26,7 +27,8 @@
         "https://login.live.com",
         "https://*.xboxlive.com",
         "https://api.minecraftservices.com",
-        "https://*.mojang.com"
+        "https://*.mojang.com",
+        "https://adserver.ftb.team"
       ]
     },
     "start_window": "background",
@@ -38,7 +40,6 @@
       "index": {
         "file": "dist/desktop/index.html",
         "native_window": true,
-        "transparent": true,
         "resizable": true,
         "desktop_only": true,
         "size": {
@@ -47,7 +48,7 @@
         },
         "min_size": {
           "width": 1220,
-          "height": 780
+          "height": 895
         },
         "block_top_window_navigation": true,
         "popup_blocker": true

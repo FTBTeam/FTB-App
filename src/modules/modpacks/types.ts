@@ -17,7 +17,55 @@ export interface ModPack {
   tags: ModPackTag[];
   notification: string;
   links: ModPackLink[];
+  private?: boolean;
+  provider: 'modpacks.ch' | 'curseforge'
 }
+
+export interface ModpackVersion {
+  files: VersionFiles[];
+  specs: VersionSpecs;
+  targets: Targets[];
+  installs: number;
+  plays: number;
+  refreshed: number;
+  changelog: string;
+  parent: number;
+  notification: string;
+  links: any[];
+  status: string;
+  id: number;
+  name: string;
+  type: string;
+  updated: number;
+  private: boolean;
+}
+
+export interface VersionFiles {
+  version: string;
+  path: string;
+  url: string;
+  mirrors: any[];
+  sha1: string;
+  size: number;
+  tags: any[];
+  clientonly: boolean;
+  serveronly: boolean;
+  optional: boolean;
+  id: number;
+  name: string;
+  type: string;
+  updated: number;
+}
+
+export interface Targets {
+  version: string;
+  id: number;
+  name: string;
+  type: string;
+  updated: number;
+}
+
+export type PackProviders = "modpacksch" | "curseforge"
 
 export interface ModPackLink {
   id: number;
@@ -26,33 +74,6 @@ export interface ModPackLink {
   type: string;
 }
 
-export interface Instance {
-  kind: string;
-  id: number;
-  uuid: string;
-  name: string;
-  versionId: number;
-  version: string;
-  art: string;
-  path: string;
-  authors: string[];
-  lastPlayed: number;
-  isImport: boolean;
-  jvmArgs: string;
-  jrePath: string;
-  memory: number;
-  minMemory: number;
-  recMemory: number;
-  width: number;
-  height: number;
-  notification: string;
-  modpack: ModPack | undefined;
-  cloudSaves: boolean;
-  packType: number;
-  modLoader: string;
-  embeddedJre: boolean;
-  totalPlayTime: number;
-}
 
 export interface Art {
   width: number;
@@ -80,6 +101,8 @@ export interface Versions {
   type: string;
   updated: number;
   mtgID?: string;
+  private?: boolean;
+  targets: Targets[]
 }
 
 export interface VersionSpecs {
@@ -91,51 +114,6 @@ export interface VersionSpecs {
 export interface File {
   name: string;
   downloaded: boolean;
-}
-
-export interface InstallProgress {
-  modpackID: number;
-  messageID: number;
-  instanceID?: string;
-  progress: number;
-  pack?: ModPack;
-  error?: boolean;
-  errorMessage?: string;
-  downloadSpeed: number;
-  stage: string;
-  downloadedBytes: number;
-  message: string;
-  totalBytes: number;
-  files: File[];
-}
-
-export interface ModpackState {
-  searchCurse: ModPack[];
-  curseLoading: boolean;
-  installedPacks: Instance[];
-  search: ModPack[];
-  popularInstalls: ModPack[];
-  popularPlays: ModPack[];
-  featuredPacks: ModPack[];
-  recentPacks: ModPack[];
-  privatePacks: ModPack[];
-  all: ModPack[];
-  error: boolean;
-  errorMsg: string;
-  loading: boolean;
-  installing: InstallProgress | null;
-  currentModpack: ModPack | null;
-  packsCache: ModPacks;
-  searchString: string;
-}
-
-export interface ModPacks {
-  [index: number]: ModPack;
-}
-export interface Changelog {
-  content: string;
-  updated: number;
-  status: string;
 }
 
 export interface ModPackTag {

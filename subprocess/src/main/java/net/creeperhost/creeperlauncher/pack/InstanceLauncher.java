@@ -10,12 +10,12 @@ import net.covers1624.quack.util.DataUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
-import net.creeperhost.creeperlauncher.install.tasks.NewDownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
@@ -29,8 +29,6 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -41,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,6 +47,8 @@ import java.util.zip.ZipFile;
 
 import static net.covers1624.quack.collection.ColUtils.iterable;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
+import static net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.LEGACY_ASSETS_VERSION;
+import static net.creeperhost.creeperlauncher.util.Log4jMarkers.*;
 
 /**
  * Responsible for launching a specific instance.
@@ -59,10 +58,11 @@ import static net.covers1624.quack.util.SneakyUtils.sneak;
 public class InstanceLauncher {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Marker MINECRAFT_MARKER = MarkerManager.getMarker("MINECRAFT");
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
-    private final LocalInstance instance;
+    private static final List<String> TELEMETRY_ARGS = List.of("clientid", "auth_xuid"); // Tracking & XBox related
+    
+    private final Instance instance;
     private Phase phase = Phase.NOT_STARTED;
 
     private final List<VersionManifest> manifests = new ArrayList<>();
@@ -77,12 +77,12 @@ public class InstanceLauncher {
     private boolean forceStopped;
 
     private final ProgressTracker progressTracker = new ProgressTracker();
-    private final List<ThrowingConsumer<LaunchContext, IOException>> startTasks = new LinkedList<>();
-    private final List<ThrowingRunnable<IOException>> exitTasks = new LinkedList<>();
+    private final List<ThrowingConsumer<LaunchContext, Throwable>> startTasks = new LinkedList<>();
+    private final List<ThrowingRunnable<Throwable>> exitTasks = new LinkedList<>();
 
     private static final int NUM_STEPS = 5;
 
-    public InstanceLauncher(LocalInstance instance) {
+    public InstanceLauncher(Instance instance) {
         this.instance = instance;
     }
 
@@ -91,7 +91,7 @@ public class InstanceLauncher {
      *
      * @param task The task.
      */
-    public void withStartTask(ThrowingConsumer<LaunchContext, IOException> task) {
+    public void withStartTask(ThrowingConsumer<LaunchContext, Throwable> task) {
         startTasks.add(task);
     }
 
@@ -100,7 +100,7 @@ public class InstanceLauncher {
      *
      * @param task The task.
      */
-    public void withExitTask(ThrowingRunnable<IOException> task) {
+    public void withExitTask(ThrowingRunnable<Throwable> task) {
         exitTasks.add(task);
     }
 
@@ -129,7 +129,7 @@ public class InstanceLauncher {
      *
      * @throws InstanceLaunchException If there was a direct error preparing the instance to be launched.
      */
-    public synchronized void launch(CancellationToken token) throws InstanceLaunchException {
+    public synchronized void launch(CancellationToken token, @Nullable String offlineUsername) throws InstanceLaunchException {
         assert !isRunning();
         LOGGER.info("Attempting to launch instance {}({})", instance.getName(), instance.getUuid());
         setPhase(Phase.INITIALIZING);
@@ -140,7 +140,7 @@ public class InstanceLauncher {
         Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
 
         Set<String> features = new HashSet<>();
-        if (instance.width != 0 && instance.height != 0) {
+        if (instance.props.width != 0 && instance.props.height != 0) {
             features.add("has_custom_resolution");
         }
 
@@ -148,7 +148,7 @@ public class InstanceLauncher {
 
         // This is run outside the future, as whatever is calling this method should immediately handle any errors
         // preparing the instance to be launched. It is not fun to propagate exceptions/errors across threads.
-        ProcessBuilder builder = prepareProcess(token, assetsDir, versionsDir, librariesDir, features, privateTokens);
+        ProcessBuilder builder = prepareProcess(token, offlineUsername, assetsDir, versionsDir, librariesDir, features, privateTokens);
 
         // Start thread.
         processThread = new Thread(() -> {
@@ -163,34 +163,38 @@ public class InstanceLauncher {
                 } catch (IOException e) {
                     LOGGER.error("Failed to start minecraft process!", e);
                     setPhase(Phase.ERRORED);
-                    Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
+                    WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
                     process = null;
                     processThread = null;
                     return;
                 }
                 setPhase(Phase.STARTED);
+
+                // Start up the logging threads.
                 logThread = new LogThread(IOUtils.makeParents(instance.getDir().resolve("logs/console.log")));
                 Logger logger = LogManager.getLogger("Minecraft");
-                // TODO these should not use CompletableFutures, these should be separate logging threads setup manually.
-                //  These take up slots on the builtin ForkJoin pool, and may not even execute on systems with low processor thread counts.
-                CompletableFuture<Void> stdoutFuture = StreamGobblerLog.redirectToLogger(process.getInputStream(), message -> {
-                    logThread.bufferMessage(message);
-                    logger.info(MINECRAFT_MARKER, message);
-                });
-                CompletableFuture<Void> stderrFuture = StreamGobblerLog.redirectToLogger(process.getErrorStream(), message -> {
-                    logThread.bufferMessage(message);
-                    logger.error(MINECRAFT_MARKER, message);
-                });
+                StreamGobblerLog stdoutGobbler = new StreamGobblerLog()
+                        .setName("Instance STDOUT log Gobbler")
+                        .setInput(process.getInputStream())
+                        .setOutput(message -> {
+                            logThread.bufferMessage(message);
+                            logger.info(MINECRAFT, message);
+                        });
+                StreamGobblerLog stderrGobbler = new StreamGobblerLog()
+                        .setName("Instance STDERR log Gobbler")
+                        .setInput(process.getErrorStream())
+                        .setOutput(message -> {
+                            logThread.bufferMessage(message);
+                            logger.error(MINECRAFT, message);
+                        });
+                stdoutGobbler.start();
+                stderrGobbler.start();
                 logThread.start();
 
                 process.onExit().thenRunAsync(() -> {
-                    if (!stdoutFuture.isDone()) {
-                        stdoutFuture.cancel(true);
-                    }
-                    if (!stderrFuture.isDone()) {
-                        stderrFuture.cancel(true);
-                    }
-                    // Not strictly necessary, but exits the log thread faster.
+                    // Not strictly necessary, but exits the log threads faster.
+                    stdoutGobbler.stop();
+                    stderrGobbler.stop();
                     logThread.stop = true;
                     logThread.interrupt();
                 });
@@ -204,7 +208,7 @@ public class InstanceLauncher {
                 int exit = process.exitValue();
                 LOGGER.info("Minecraft exited with status code: " + exit);
                 setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
-                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
                 forceStopped = false;
                 process = null;
                 processThread = null;
@@ -218,7 +222,7 @@ public class InstanceLauncher {
                 }
                 processThread = null;
                 setPhase(Phase.ERRORED);
-                Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
             }
         });
         processThread.setName("Instance Thread [" + THREAD_COUNTER.getAndIncrement() + "]");
@@ -257,6 +261,12 @@ public class InstanceLauncher {
         setPhase(Phase.NOT_STARTED);
     }
 
+    public void setLogStreaming(boolean state) {
+        if (logThread == null) return;
+
+        logThread.setStreamingEnabled(state);
+    }
+
     private void setPhase(Phase newPhase) {
         if (newPhase == Phase.STOPPED || newPhase == Phase.ERRORED) {
             onStopped();
@@ -266,11 +276,12 @@ public class InstanceLauncher {
     }
 
     private void onStopped() {
-        for (ThrowingRunnable<IOException> exitTask : exitTasks) {
+        for (ThrowingRunnable<Throwable> exitTask : exitTasks) {
             try {
                 exitTask.run();
-            } catch (IOException e) {
-                LOGGER.error("Failed to execute exit task for instance {}({})", instance.getName(), instance.getUuid(), e);
+            } catch (Throwable e) {
+                LOGGER.error(NO_SENTRY, "Failed to execute exit task for instance {}({})", instance.getName(), instance.getUuid(), e);
+                LOGGER.error(SENTRY_ONLY, "Failed to execute instance exit tasks.", e);
             }
         }
 
@@ -290,12 +301,12 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(CancellationToken token, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
+    private ProcessBuilder prepareProcess(CancellationToken token, String offlineUsername, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
         try {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
             LaunchContext context = new LaunchContext();
-            for (ThrowingConsumer<LaunchContext, IOException> startTask : startTasks) {
+            for (ThrowingConsumer<LaunchContext, Throwable> startTask : startTasks) {
                 startTask.accept(context);
             }
             progressTracker.finishStep();
@@ -304,20 +315,20 @@ public class InstanceLauncher {
 
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
-            if (instance.embeddedJre) {
+            if (instance.props.embeddedJre) {
                 String javaTarget = instance.versionManifest.getTargetVersion("runtime");
                 Path javaHome;
                 if (javaTarget == null) {
                     LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
                     JavaVersion version = getJavaVersion();
-                    javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(
+                    javaHome = Constants.getJdkManager().provisionJdk(
                             version,
                             null,
                             true,
                             new QuackProgressAdapter(progressTracker.listenerForStep(true))
                     );
                 } else {
-                    javaHome = Constants.JDK_INSTALL_MANAGER.provisionJdk(
+                    javaHome = Constants.getJdkManager().provisionJdk(
                             javaTarget,
                             true,
                             new QuackProgressAdapter(progressTracker.listenerForStep(true))
@@ -325,7 +336,7 @@ public class InstanceLauncher {
                 }
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
-                javaExecutable = instance.jrePath;
+                javaExecutable = instance.props.jrePath;
             }
             progressTracker.finishStep();
 
@@ -334,7 +345,7 @@ public class InstanceLauncher {
             token.throwIfCancelled();
 
             progressTracker.startStep("Validate assets");
-            Pair<AssetIndex, AssetIndexManifest> assetPair = checkAssets(token);
+            Pair<AssetIndex, AssetIndexManifest> assetPair = checkAssets(token, versionsDir);
             Path virtualAssets = buildVirtualAssets(assetPair.getLeft(), assetPair.getRight(), gameDir, assetsDir);
             progressTracker.finishStep();
 
@@ -355,14 +366,14 @@ public class InstanceLauncher {
 
             token.throwIfCancelled();
 
-            Path nativesDir = versionsDir.resolve(instance.modLoader).resolve(instance.modLoader + "-natives-" + System.nanoTime());
+            Path nativesDir = versionsDir.resolve(instance.props.modLoader).resolve(instance.props.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
 
             Map<String, String> subMap = new HashMap<>();
             AccountProfile profile = AccountManager.get().getActiveProfile();
-            if (profile == null) {
+            if (offlineUsername != null || profile == null) {
                 // Offline
-                subMap.put("auth_player_name", "Player"); // TODO, give user ability to set name?
+                subMap.put("auth_player_name", offlineUsername);
                 subMap.put("auth_uuid", new UUID(0, 0).toString());
                 subMap.put("user_type", "legacy");
                 subMap.put("auth_access_token", "null");
@@ -389,7 +400,7 @@ public class InstanceLauncher {
                 privateTokens.add(accessToken);
             }
 
-            subMap.put("version_name", instance.modLoader);
+            subMap.put("version_name", instance.props.modLoader);
             subMap.put("game_directory", gameDir.toString());
             subMap.put("assets_root", assetsDir.toAbsolutePath().toString());
             subMap.put("game_assets", virtualAssets.toAbsolutePath().toString());
@@ -399,10 +410,10 @@ public class InstanceLauncher {
             subMap.put("launcher_name", "FTBApp");
             subMap.put("launcher_version", Constants.APPVERSION);
             subMap.put("primary_jar", getGameJar(versionsDir).toAbsolutePath().toString());
-            subMap.put("memory", String.valueOf(instance.memory));
+            subMap.put("memory", String.valueOf(instance.props.memory));
 
-            subMap.put("resolution_width", String.valueOf(instance.width));
-            subMap.put("resolution_height", String.valueOf(instance.height));
+            subMap.put("resolution_width", String.valueOf(instance.props.width));
+            subMap.put("resolution_height", String.valueOf(instance.props.height));
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
             List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
@@ -421,6 +432,10 @@ public class InstanceLauncher {
             StrSubstitutor sub = new StrSubstitutor(new StrLookup<>() {
                 @Override
                 public String lookup(String key) {
+                    if (TELEMETRY_ARGS.contains(key)) {
+                        return null;
+                    }
+                    
                     String value = subMap.get(key);
                     if (value == null) {
                         LOGGER.fatal("Unmapped token key '{}' in Minecraft arguments!! ", key);
@@ -438,6 +453,7 @@ public class InstanceLauncher {
                     .collect(Collectors.toList());
 
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
+            command.addAll(context.shellArgs);
             command.add(javaExecutable.toAbsolutePath().toString());
             command.addAll(jvmArgs);
             command.addAll(context.extraJVMArgs);
@@ -445,9 +461,14 @@ public class InstanceLauncher {
             for (String arg : Constants.MOJANG_DEFAULT_ARGS) {
                 command.add(sub.replace(arg));
             }
+            command.add("-Duser.language=en");
+            command.add("-Duser.country=US");
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
+            if (instance.props.fullscreen) {
+                command.add("--fullscreen");
+            }
             ProcessBuilder builder = new ProcessBuilder()
                     .directory(gameDir.toFile())
                     .command(command);
@@ -455,6 +476,8 @@ public class InstanceLauncher {
             Map<String, String> env = builder.environment();
             // Apparently this can override our passed in Java arguments.
             env.remove("_JAVA_OPTIONS");
+            env.remove("JAVA_TOOL_OPTIONS");
+            env.remove("JAVA_OPTIONS");
 
             return builder;
         } catch (Throwable ex) {
@@ -469,10 +492,10 @@ public class InstanceLauncher {
         manifests.clear();
         VersionListManifest versions = VersionListManifest.update(versionsDir);
         Set<String> seen = new HashSet<>();
-        String id = instance.modLoader;
+        String id = instance.props.modLoader;
         while (id != null) {
             token.throwIfCancelled();
-            if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.modLoader);
+            if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.props.modLoader);
             LOGGER.info("Preparing manifest {}", id);
             VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
             if (manifest == null) {
@@ -484,18 +507,23 @@ public class InstanceLauncher {
         }
     }
 
-    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token) throws IOException {
+    private Pair<AssetIndex, AssetIndexManifest> checkAssets(CancellationToken token, Path versionsDir) throws IOException, InstanceLaunchException {
         assert !manifests.isEmpty();
 
         LOGGER.info("Updating assets..");
         VersionManifest manifest = manifests.get(0);
         AssetIndex index = manifest.assetIndex;
         if (index == null) {
+            LOGGER.info("Old manifest with broken assets. Querying vanilla manifest for assets..");
             if (manifest.assets == null) {
-                LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy.", manifest.id);
-                index = VersionManifest.LEGACY_ASSETS;
+                LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy. (Harvesting from {})", manifest.id, LEGACY_ASSETS_VERSION);
+                index = VersionManifest.assetsFor(versionsDir, LEGACY_ASSETS_VERSION);
             } else {
-                index = AssetIndex.forUnknown(manifest.assets);
+                index = VersionManifest.assetsFor(versionsDir, manifest.assets);
+            }
+            if (index == null) {
+                LOGGER.error("Unable to find assets for '{}'.", manifest.id);
+                throw new InstanceLaunchException("Unable to prepare Legacy/Unknown assets for '" + manifest.id + "'.");
             }
         }
 
@@ -535,7 +563,7 @@ public class InstanceLauncher {
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest vanillaManifest = manifests.get(0);
-        NewDownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
+        DownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
         if (task != null) {
             LOGGER.info("Validating client download for {}", vanillaManifest.id);
             task.execute(token, progressTracker.listenerForStep(true));
@@ -544,9 +572,9 @@ public class InstanceLauncher {
 
     private void validateLibraries(CancellationToken token, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
         LOGGER.info("Validating minecraft libraries...");
-        List<NewDownloadTask> tasks = new LinkedList<>();
+        List<DownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            NewDownloadTask task = library.createDownloadTask(librariesDir, true);
+            DownloadTask task = library.createDownloadTask(librariesDir, true);
             if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }
@@ -556,7 +584,7 @@ public class InstanceLauncher {
                 .mapToLong(e -> {
                     if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
-                        return NewDownloadTask.getContentLength(e.getUrl());
+                        return DownloadTask.getContentLength(e.getUrl());
                     }
                     return e.getValidation().expectedSize;
                 })
@@ -567,7 +595,7 @@ public class InstanceLauncher {
         TaskProgressAggregator progressAggregator = new TaskProgressAggregator(rootListener);
         if (!tasks.isEmpty()) {
             LOGGER.info("{} dependencies failed to validate or were missing.", tasks.size());
-            for (NewDownloadTask task : tasks) {
+            for (DownloadTask task : tasks) {
                 token.throwIfCancelled();
                 LOGGER.info("Downloading {}", task.getUrl());
                 task.execute(token, progressAggregator);
@@ -661,9 +689,9 @@ public class InstanceLauncher {
     }
 
     public static class LaunchContext {
-
         public final List<String> extraJVMArgs = new ArrayList<>();
         public final List<String> extraProgramArgs = new ArrayList<>();
+        public final List<String> shellArgs = new ArrayList<>();
     }
 
     public enum Phase {
@@ -773,8 +801,7 @@ public class InstanceLauncher {
                 LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
             }
 
-            if (Settings.webSocketAPI == null) return;
-            Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+            WebSocketHandler.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }
 
@@ -785,6 +812,8 @@ public class InstanceLauncher {
          * The time in milliseconds between bursts of logging output.
          */
         private static final long INTERVAL = 250;
+
+        private boolean streamingEnabled = true;
 
         private boolean stop = false;
         private final List<String> pendingMessages = new ArrayList<>(100);
@@ -816,7 +845,7 @@ public class InstanceLauncher {
                             LOGGER.info("Flushing {} messages.", toSend.size());
                         }
 
-                        Settings.webSocketAPI.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
+                        WebSocketHandler.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
                     }
                 }
                 try {
@@ -835,11 +864,22 @@ public class InstanceLauncher {
         }
 
         private void bufferMessage(String message) {
-            synchronized (pendingMessages) {
-                pendingMessages.add(message);
+            if (streamingEnabled) {
+                synchronized (pendingMessages) {
+                    pendingMessages.add(message);
+                }
             }
             if (pw != null) {
                 pw.println(message);
+            }
+        }
+
+        public void setStreamingEnabled(boolean state) {
+            streamingEnabled = state;
+            if (!state) {
+                synchronized (pendingMessages) {
+                    pendingMessages.clear();
+                }
             }
         }
     }

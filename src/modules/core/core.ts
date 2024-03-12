@@ -1,18 +1,27 @@
 import { Module } from 'vuex';
 import { RootState } from '@/types';
 import { AuthProfile, CoreMutations, CoreState } from '@/modules/core/core.types';
-import store from '../store';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 /**
  * Vuex, the correct way.
  */
 export const core: Module<CoreState, RootState> = {
   namespaced: true,
-  state: {
-    profiles: [],
-    activeProfile: {} as AuthProfile,
-    signInOpened: { open: false, jumpToAuth: null, uuid: null },
-    instanceLoading: false,
+  state: () => {
+    let disableAdAside = false;
+    const localEntry = localStorage.getItem("debug-disable-ad-aside");
+    if (localEntry !== null && localEntry === "true") {
+      disableAdAside = true;
+    }
+    
+    return {
+      profiles: [],
+      activeProfile: {} as AuthProfile,
+      signInOpened: { open: false, jumpToAuth: null, uuid: null },
+      instanceLoading: false,
+      debugDisableAdAside: disableAdAside,
+    }
   },
   getters: {
     /**
@@ -42,6 +51,8 @@ export const core: Module<CoreState, RootState> = {
     getInstanceLoading: (state: CoreState): boolean => {
       return state.instanceLoading;
     },
+    
+    getDebugDisabledAdAside: state => process.env.NODE_ENV !== "production" && state.debugDisableAdAside,
   },
   actions: {
     openSignIn: (
@@ -71,36 +82,36 @@ export const core: Module<CoreState, RootState> = {
       commit(CoreMutations.REMOVE_PROFILE, profile);
     },
 
-    loadProfiles: ({ commit }) => {
-      store.dispatch('sendMessage', {
-        payload: {
-          type: 'profiles.get',
-        },
-        callback: (e: any) => {
-          const profiles = e.profiles.map(
-            (a: any) =>
-              ({
-                type: a.isMicrosoft ? 'microsoft' : 'mojang',
-                tokens: a.isMicrosoft
-                  ? {
-                      accessToken: a.msAuth.minecraftToken,
-                      refreshToken: a.msAuth.liveRefreshToken,
-                    }
-                  : {
-                      clientToken: a.mcAuth.clientToken,
-                      accessToken: a.mcAuth.accessToken,
-                    },
-                username: a.username,
-                uuid: a.uuid,
-                expiresAt: a.isMicrosoft ? a.msAuth.liveExpiresAt : undefined,
-              } as AuthProfile),
-          );
+    loadProfiles: async ({ commit }) => {
+      const result = await sendMessage("profiles.get", {});
+      
+      const profiles = result.profiles.map(
+        (a: any) =>
+          ({
+            type: a.isMicrosoft ? 'microsoft' : 'mojang',
+            tokens: a.isMicrosoft
+              ? {
+                  accessToken: a.msAuth.minecraftToken,
+                  refreshToken: a.msAuth.liveRefreshToken,
+                }
+              : {
+                  clientToken: a.mcAuth.clientToken,
+                  accessToken: a.mcAuth.accessToken,
+                },
+            username: a.username,
+            uuid: a.uuid,
+            expiresAt: a.isMicrosoft ? a.msAuth.liveExpiresAt : undefined,
+          } as AuthProfile),
+      );
 
-          commit(CoreMutations.SET_ACTIVE_PROFILE, e.activeProfile);
-          commit(CoreMutations.LOAD_PROFILES, profiles);
-        },
-      });
+      commit(CoreMutations.SET_ACTIVE_PROFILE, result.activeProfile);
+      commit(CoreMutations.LOAD_PROFILES, profiles);
     },
+
+    toggleDebugDisableAdAside({commit, state}) {
+      commit(CoreMutations.TOGGLE_DEBUG_AD_ASIDE);
+      localStorage.setItem("debug-disable-ad-aside", "" + state.debugDisableAdAside);
+    }
   },
   mutations: {
     openSignIn(
@@ -136,5 +147,7 @@ export const core: Module<CoreState, RootState> = {
     setActiveProfile: (state: CoreState, profile: AuthProfile) => {
       state.activeProfile = profile;
     },
+    
+    toggleDebugDisableAdAside: (state) => state.debugDisableAdAside = !state.debugDisableAdAside  
   },
 };

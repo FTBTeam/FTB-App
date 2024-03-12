@@ -29,7 +29,8 @@ electron.log
 release/
 /subprocess/storage
 
-public/version.json
+overwolf/meta.json
+overwolf/java-licenses.json
 licenses.json
 
 # Overwolf
@@ -75,3 +76,8 @@ subprocess/launcher.log.1
 subprocess/launcher.log.1.lck
 subprocess/tempDMGExtract/
 subprocess/electron.log
+subprocess/debugger
+
+**/.yarn
+
+frontend

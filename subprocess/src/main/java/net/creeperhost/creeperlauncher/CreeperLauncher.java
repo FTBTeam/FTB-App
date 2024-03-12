@@ -1,9 +1,8 @@
 package net.creeperhost.creeperlauncher;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
-import com.install4j.api.launcher.ApplicationLauncher;
-import com.install4j.api.update.UpdateChecker;
 import io.sentry.Sentry;
 import io.sentry.log4j2.BuildConfig;
 import io.sentry.protocol.SdkVersion;
@@ -11,17 +10,20 @@ import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.covers1624.quack.platform.Architecture;
-import net.creeperhost.creeperlauncher.api.WebSocketAPI;
+import net.creeperhost.creeperlauncher.api.DebugTools;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
+import net.creeperhost.creeperlauncher.api.WebsocketServer;
 import net.creeperhost.creeperlauncher.api.data.other.ClientLaunchData;
 import net.creeperhost.creeperlauncher.api.data.other.CloseModalData;
 import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
-import net.creeperhost.creeperlauncher.migration.MigrationManager;
+import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.os.OS;
+import net.creeperhost.creeperlauncher.storage.CredentialStorage;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.task.LongRunningTaskManager;
 import net.creeperhost.creeperlauncher.util.*;
-import net.creeperhost.minetogether.lib.vpn.MineTogetherConnect;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,13 +33,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -87,70 +90,65 @@ public class CreeperLauncher {
 
     static {
         Log4jUtils.redirectStreams();
+        SSLUtils.inject();
+        DNSDebug.printDebugReport();
         System.setProperty("apple.awt.UIElement", "true");
     }
-
-    public static Process elect = null;
+    
     public static boolean isDevMode = false;
 
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
+    public static CloudSaveManager CLOUD_SAVE_MANAGER = new CloudSaveManager();
+
+    public static ExecutorService INSTANCE_LAUNCHER_POOL = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Instance Launcher %d").setDaemon(true).build());
 
     public static LocalCache localCache;
 
-    public static boolean defaultWebsocketPort = false;
-    public static int websocketPort = WebSocketAPI.generateRandomPort();
-    public static final String websocketSecret = WebSocketAPI.generateSecret();
     public static boolean websocketDisconnect = false;
     public static AtomicBoolean isSyncing = new AtomicBoolean(false);
-    public static MineTogetherConnect mtConnect;
-
-    private static boolean warnedDevelop = false;
-
-    public static boolean verbose = false;
+    
+    public static DebugTools DEBUG_TOOLS = DebugTools.NONE;
 
     public CreeperLauncher() {
     }
 
     public static void initSettingsAndCache() {
-        Settings.loadSettings();
-        localCache = new LocalCache(Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache"));
+        Settings.loadSettings(true);
+        localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
     }
 
     public static void main(String[] args) {
+        try {
+            mainImpl(args);
+        } catch (Throwable ex) {
+            LOGGER.error("Main method threw exception:", ex);
+        }
+    }
+
+    private static void mainImpl(String[] args) {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
 
-        System.out.println(Constants.LIB_SIGNATURE);
-        // Construct immediately to properly detect the version.
-        MigrationManager migrationManager = new MigrationManager();
-        // Do this as soon as possible. Settings and instance location SHOULD be right by this point
-        // (with a slim chance of legacy migration), but better to have some settings than none
-        Settings.loadSettings();
+        Settings.loadSettings(true);
         Instances.refreshInstances();
 
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
+        LOGGER.info("Args: {}", Args);
 
         isDevMode = Args.containsKey("dev");
+        Constants.IS_DEV_MODE = isDevMode;
 
         boolean isOverwolf = Args.containsKey("overwolf");
-        boolean startProcess = !isDevMode;
-
-        if (isDevMode || isOverwolf) {
-            startProcess = false;
-            defaultWebsocketPort = true;
-        }
-
         LOGGER.info((isOverwolf ? "Overwolf" : "Electron") + " integration mode");
 
+        // Hook the pid so we can shutdown the frontend when it's closed
         if (Args.containsKey("pid") && !isDevMode) {
             try {
                 long pid = Long.parseLong(Args.get("pid"));
-                Optional<ProcessHandle> electronProc = ProcessHandle.of(pid);
-                if (electronProc.isPresent()) {
-                    startProcess = false;
-                    defaultWebsocketPort = true;
-                    ProcessHandle handle = electronProc.get();
+                Optional<ProcessHandle> frontendProcess = ProcessHandle.of(pid);
+                if (frontendProcess.isPresent()) {
+                    ProcessHandle handle = frontendProcess.get();
                     handle.onExit().thenRun(() ->
                     {
                         while (isSyncing.get()) {
@@ -171,29 +169,32 @@ public class CreeperLauncher {
             LOGGER.info(isDevMode ? "Development mode" : "No PID args specified");
         }
 
+        // Set the API key if we have it
+        String apiKey = CredentialStorage.getInstance().get("modpacksChApiKey");
+        if (apiKey != null && !apiKey.isEmpty()) {
+            ModpacksChUtils.API_TOKEN = apiKey;
+        }
 
         try {
-            Settings.webSocketAPI = new WebSocketAPI(new InetSocketAddress(InetAddress.getLoopbackAddress(), defaultWebsocketPort || isDevMode ? Constants.WEBSOCKET_PORT : websocketPort));
-            Settings.webSocketAPI.setConnectionLostTimeout(0);
-            Settings.webSocketAPI.start();
+            WebsocketServer.PortMode portMode;
+            if (isDevMode) {
+                portMode = WebsocketServer.PortMode.STATIC;
+            } else {
+                portMode = WebsocketServer.PortMode.DYNAMIC;
+            }
+            
+            var port = WebSocketHandler.startWebsocket(portMode);
+            // Common format both electron and overwolf can understand
+            LOGGER.info("{T:CI={p:%s;s:%s}}".formatted(port, Constants.WEBSOCKET_SECRET), port);
             if (OS.CURRENT == OS.WIN) pingPong();
         } catch (Throwable t) {
             websocketDisconnect = true;
             LOGGER.error("Unable to open websocket port or websocket has disconnected...", t);
         }
-
-        if (startProcess) {
-            startElectron();
-        }
-
-        migrationManager.doMigrations();
-
+        
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
         initSettingsAndCache();
-        Instances.refreshInstances();
-
-        doUpdate(args);
 
         FileUtils.listDir(Constants.WORKING_DIR).stream()
             .filter(e -> e.getFileName().toString().endsWith(".jar") && !e.getFileName().toString().contains(Constants.APPVERSION))
@@ -211,14 +212,18 @@ public class CreeperLauncher {
 
         if (!Files.isWritable(Constants.getDataDir())) {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
-                new OpenModalData.ModalButton("Exit", "green", CreeperLauncher::exit),
-                new OpenModalData.ModalButton("Continue", "", () -> {
-                    Settings.webSocketAPI.sendMessage(new CloseModalData());
+                new OpenModalData.ModalButton("Exit", "success", CreeperLauncher::exit),
+                new OpenModalData.ModalButton("Continue", "danger", () -> {
+                    WebSocketHandler.sendMessage(new CloseModalData());
                 }))
             );
         }
 
         updateJavaVersions();
+
+        if (Boolean.getBoolean("Debugger.onStartup")) {
+            openDebugTools();
+        }
 
         //Hang indefinitely until this lock is interrupted.
         try {
@@ -261,130 +266,7 @@ public class CreeperLauncher {
     }
 
     private static void registerSettingsListeners(String[] args) {
-        SettingsChangeUtil.registerListener("instanceLocation", (key, value) -> {
-            OpenModalData.openModal("Confirmation", "Are you sure you wish to move your instances to this location? <br tag='haha line break go brr'> All content in your current instance location will be moved, and if content exists with the same name in the destination it will be replaced.", List.of(
-                new OpenModalData.ModalButton("Yes", "green", () -> {
-                    OpenModalData.openModal("Please wait", "Your instances are now moving", List.of());
-                    Path currentInstanceLoc = Path.of(Settings.settings.getOrDefault(key, Constants.INSTANCES_FOLDER_LOC.toAbsolutePath().toString()));
-                    List<Path> subFiles = FileUtils.listDir(currentInstanceLoc);
-
-                    if (value == null || value.isEmpty()) {
-                        OpenModalData.openModal("Failed", "Instance Location can not be blank", List.of(
-                            new OpenModalData.ModalButton("OK", "green", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-                        ));
-                        return;
-                    }
-
-                    Path newInstanceDir = Path.of(value);
-                    boolean failed = false;
-                    HashMap<Pair<Path, Path>, IOException> lastError = new HashMap<>();
-                    LOGGER.info("Moving instances from {} to {}", currentInstanceLoc, value);
-                    if (subFiles != null) {
-                        for (Path file : subFiles) {
-                            String fileName = file.getFileName().toString();
-                            if (fileName.length() == 36) {
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    UUID.fromString(fileName);
-                                } catch (Throwable ignored) {
-                                    continue;
-                                }
-                            } else if (!fileName.equals(".localCache")) {
-                                continue;
-                            }
-                            Path dstPath = newInstanceDir.resolve(fileName);
-                            lastError = FileUtils.move(file, dstPath, true, true);
-                            failed = !lastError.isEmpty() && !fileName.equals(".localCache");
-                            if (failed) break;
-                            LOGGER.info("Moved {} to {} successfully", file, dstPath);
-                        }
-                    }
-                    if (failed) {
-                        LOGGER.error("Error occurred whilst migrating instances to the new location. Errors follow.");
-                        lastError.forEach((moveKey, moveValue) -> {
-                            LOGGER.error("Moving {} to {} failed:", moveKey.getLeft(), moveKey.getRight(), moveValue);
-                        });
-                        LOGGER.error("Moving any successful instance moves back");
-                        List<Path> newInstanceDirFiles = FileUtils.listDir(newInstanceDir);
-                        if (newInstanceDirFiles != null) {
-                            for (Path file : newInstanceDirFiles) {
-                                FileUtils.move(file, currentInstanceLoc.resolve(file.getFileName()));
-                            }
-                        }
-                        OpenModalData.openModal("Error", "Unable to move instances. Please ensure you have permission to create files and folders in this location.", List.of(
-                            new OpenModalData.ModalButton("Ok", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-                        ));
-                    } else {
-                        Path oldCache = Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache");
-                        oldCache.toFile().deleteOnExit();
-                        Settings.settings.remove("instanceLocation");
-                        Settings.settings.put("instanceLocation", value);
-                        Settings.saveSettings();
-                        Instances.refreshInstances();
-                        localCache = new LocalCache(Settings.getInstanceLocOr(Constants.INSTANCES_FOLDER_LOC).resolve(".localCache"));
-                        OpenModalData.openModal("Success", "Moved instance folder location successfully", List.of(
-                            new OpenModalData.ModalButton("Yay!", "green", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-                        ));
-                    }
-                }),
-                new OpenModalData.ModalButton("No", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-            ));
-            return false;
-        });
-
-
-        SettingsChangeUtil.registerListener("enablePreview", (key, value) -> {
-            if (Settings.settings.getOrDefault("enablePreview", "").isEmpty() && value.equals("false")) return true;
-            if (Constants.BRANCH.equals("release") || Constants.BRANCH.equals("preview")) {
-                OpenModalData.openModal("Update", "Do you wish to change to this branch now?", List.of(
-                    new OpenModalData.ModalButton("Yes", "green", () -> {
-                        doUpdate(args);
-                    }),
-                    new OpenModalData.ModalButton("No", "red", () -> {
-                        Settings.webSocketAPI.sendMessage(new CloseModalData());
-                    })
-                ));
-                return true;
-            } else {
-                if (!warnedDevelop) {
-                    warnedDevelop = true;
-                    OpenModalData.openModal("Update", "Unable to switch from branch " + Constants.BRANCH + " via this toggle.", List.of(
-                        new OpenModalData.ModalButton("Ok", "red", () -> Settings.webSocketAPI.sendMessage(new CloseModalData()))
-                    ));
-                }
-                return false;
-            }
-        });
-
-        SettingsChangeUtil.registerListener("verbose", (key, value) -> {
-            verbose = value.equals("true");
-            return true;
-        });
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private static void doUpdate(String[] args) {
-        String preview = Settings.settings.getOrDefault("enablePreview", "");
-        String[] updaterArgs = new String[]{};
-        if (Constants.BRANCH.equals("release") && preview.equals("true")) {
-            updaterArgs = new String[]{"-VupdatesUrl=https://apps.modpacks.ch/FTBApp/preview.xml", "-VforceUpdate=true"};
-        } else if (Constants.BRANCH.equals("preview") && !preview.isEmpty() && !preview.equals("true")) {
-            updaterArgs = new String[]{"-VupdatesUrl=https://apps.modpacks.ch/FTBApp/release.xml", "-VforceUpdate=true"};
-        }
-        //Auto update - will block, kill us and relaunch if necessary
-        try {
-            ApplicationLauncher.launchApplicationInProcess("346", updaterArgs, null, null, null);
-
-            if (UpdateChecker.isUpdateScheduled()) {
-                UpdateChecker.executeScheduledUpdate(Arrays.asList("-q", "-splash", "\"Updating...\""), true, Arrays.asList(args), null);
-            }
-        } catch (Throwable e) {
-
-        }
-    }
-
-    public static long unixtimestamp() {
-        return System.currentTimeMillis() / 1000L;
+        SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());
     }
 
     private static void pingPong() {
@@ -393,7 +275,7 @@ public class CreeperLauncher {
             try {
                 PingLauncherData ping = new PingLauncherData();
                 CreeperLauncher.missedPings++;
-                Settings.webSocketAPI.sendMessage(ping);
+                WebSocketHandler.sendMessage(ping);
             } catch (Exception ignored) {
                 LOGGER.error("Failed to send ping");
             }
@@ -448,7 +330,7 @@ public class CreeperLauncher {
                         reply = new ClientLaunchData.Reply(lastInstance, type, message, data);
                         lastMessageTime = System.currentTimeMillis();
                         try {
-                            Settings.webSocketAPI.sendMessage(reply);
+                            WebSocketHandler.sendMessage(reply);
                         } catch (Throwable t) {
                             LOGGER.warn("Unable to send MC client loading update to frontend!", t);
                         }
@@ -462,7 +344,7 @@ public class CreeperLauncher {
         } catch (Throwable e) {
             if (lastInstance.length() > 0) {
                 reply = new ClientLaunchData.Reply(lastInstance, "clientDisconnect", new Object());
-                Settings.webSocketAPI.sendMessage(reply);
+                WebSocketHandler.sendMessage(reply);
             }
 
             closeSockets();
@@ -509,73 +391,11 @@ public class CreeperLauncher {
             }
         }
     }
-
-    private static void startElectron() {
-        Path electron;
-
-        ArrayList<String> args = new ArrayList<>();
-
-
-        switch (OS.CURRENT) {
-            case MAC:
-                electron = Constants.BIN_LOCATION_OURS.resolve("ftbapp.app");
-                args.add(0, electron.resolve("Contents/MacOS/ftbapp").toAbsolutePath().toString());
-                break;
-            case LINUX:
-                electron = Constants.BIN_LOCATION_OURS.resolve("ftb-app");
-                FileUtils.setFilePermissions(electron);
-
-                args.add(0, electron.toAbsolutePath().toString());
-
-                try {
-                    if (Files.exists(Path.of("/proc/sys/kernel/unprivileged_userns_clone")) && new String(Files.readAllBytes(Path.of("/proc/sys/kernel/unprivileged_userns_clone"))).equals("0")) {
-                        args.add(1, "--no-sandbox");
-                    }
-                } catch (IOException ignored) {
-                }
-                break;
-            default:
-                electron = Constants.BIN_LOCATION_OURS.resolve("ftbapp.exe");
-                args.add(0, electron.toAbsolutePath().toString());
-        }
-
-        args.add("--ws");
-        args.add(websocketPort + ":" + websocketSecret);
-        args.add("--pid");
-        args.add(String.valueOf(ProcessHandle.current().pid()));
-
-        ProcessBuilder app = new ProcessBuilder(args);
-
-        if (Files.exists(electron)) {
-            try {
-                LOGGER.info("Starting Electron: " + String.join(" ", args));
-                elect = app.start();
-                StreamGobblerLog.redirectToLogger(elect.getErrorStream(), LOGGER::warn);
-                StreamGobblerLog.redirectToLogger(elect.getInputStream(), LOGGER::info);
-            } catch (IOException e) {
-                LOGGER.error("Error starting Electron: ", e);
-            }
-            CompletableFuture<Process> completableFuture = elect.onExit();
-            completableFuture.thenRun(CreeperLauncher::exit);
-            Runtime.getRuntime().addShutdownHook(new Thread(elect::destroy));
-        }
-    }
-
+    
     public static void cleanUpBeforeExit() {
         LOGGER.info("Cleaning up for shutdown");
-        try {
-            if (Settings.webSocketAPI != null) {
-                Settings.webSocketAPI.stop();
-            }
-
-            closeSockets();
-
-            if (CreeperLauncher.mtConnect != null && CreeperLauncher.mtConnect.isEnabled() && CreeperLauncher.mtConnect.isConnected()) {
-                CreeperLauncher.mtConnect.disconnect();
-            }
-        } catch (IOException | InterruptedException e) {
-            LOGGER.error("Failed to close sockets...", e);
-        }
+        WebSocketHandler.stopWebsocket();
+        closeSockets();
 
         Settings.saveSettings();
     }
@@ -583,6 +403,20 @@ public class CreeperLauncher {
     public static void exit() {
         cleanUpBeforeExit();
         System.exit(0);
+    }
+
+    public static synchronized void openDebugTools() {
+        if (!DebugTools.IS_AVAILABLE || DEBUG_TOOLS != DebugTools.NONE) return;
+        LOGGER.info("Trying to open Debug Tools.");
+        DEBUG_TOOLS = DebugTools.load();
+    }
+
+    public static void closeDebugTools() {
+        if (DEBUG_TOOLS != DebugTools.NONE) {
+            LOGGER.info("Closing Debug Tools.");
+            DEBUG_TOOLS.close();
+            DEBUG_TOOLS = DebugTools.NONE;
+        }
     }
 }
 
