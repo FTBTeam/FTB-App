@@ -52,7 +52,7 @@ public class Settings {
         try {
             Settings.settingsData = SettingsData.read();
         } catch (Exception e) {
-            LOGGER.error("Failed to load settings file, using defaults.", e);
+            LOGGER.warn("Failed to load settings file, using defaults.", e);
             Settings.settingsData = Settings.DEFAULT_SETTINGS;
             
             // Backup the old settings file
@@ -60,7 +60,7 @@ public class Settings {
                 try {
                     Files.move(Constants.SETTINGS_FILE, Constants.SETTINGS_FILE.resolveSibling("settings.json.bak"));
                 } catch (IOException ex) {
-                    LOGGER.error("Failed to backup settings file.", ex);
+                    LOGGER.warn("Failed to backup settings file.", ex);
                 }
             }
 

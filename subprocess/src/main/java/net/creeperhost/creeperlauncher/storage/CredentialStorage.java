@@ -118,7 +118,7 @@ public class CredentialStorage {
         // Load the encrypted credentials from the file system
         Path credentials = Constants.CREDENTIALS_FILE;
         if (!Files.exists(credentials)) {
-            LOGGER.error("Failed to load credentials, credentials file does not exist");
+            LOGGER.warn("Failed to load credentials, credentials file does not exist");
             return false;
         }
         
