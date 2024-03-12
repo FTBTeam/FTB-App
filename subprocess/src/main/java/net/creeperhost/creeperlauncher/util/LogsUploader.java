@@ -376,12 +376,11 @@ public class LogsUploader {
      * @return The pste.ch code, or null if an error occured.
      */
     public static String uploadPaste(@Nullable String data) {
-        try {
-            var client = Constants.httpClient();
-            var res = client.newCall(new Request.Builder()
-                .url("https://pste.ch/documents")
-                .post(RequestBody.create(data == null ? "No data available." : data, MediaType.get("text/plain; charset=UTF-8")))
-                .build()).execute();
+        var client = Constants.httpClient();
+        try(var res = client.newCall(new Request.Builder()
+            .url("https://pste.ch/documents")
+            .post(RequestBody.create(data == null ? "No data available." : data, MediaType.get("text/plain; charset=UTF-8")))
+            .build()).execute()) {
             
             if (!res.isSuccessful() || res.body() == null) {
                 LOGGER.warn("Failed to upload logs to pste.ch: {}", res);

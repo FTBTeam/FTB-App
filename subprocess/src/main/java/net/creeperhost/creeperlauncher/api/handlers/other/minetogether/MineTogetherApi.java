@@ -31,8 +31,7 @@ public class MineTogetherApi {
             .header("Accept", "application/json")
             .build();
 
-        try {
-            Response execute = client.newCall(request).execute();
+        try (Response execute = client.newCall(request).execute()) {
             if (execute.code() != 200) {
                 return Result.err("Got unexpected response code of %s".formatted(execute.code()));
             }
@@ -109,8 +108,7 @@ public class MineTogetherApi {
             .post(RequestBody.create(new Gson().toJson(map), MediaType.parse("application/json")))
             .url("https://api.creeper.host/minetogether/profile");
         
-        try {
-            Response execute = client.newCall(request.build()).execute();
+        try (Response execute = client.newCall(request.build()).execute()) {
             if (execute.body() == null) {
                 return Result.err("Unable to read response data");
             }
