@@ -22,7 +22,7 @@ public class Analytics {
         CompletableFuture.runAsync(() -> {
             try {
                 OkHttpClient okHttpClient = Constants.httpClient();
-                okHttpClient.newCall(new Request.Builder().url(endpoint).build()).execute();
+                okHttpClient.newCall(new Request.Builder().url(endpoint).build()).execute().close();
             } catch (Exception e) {
                 // We don't care if this fails.
             }
