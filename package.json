@@ -56,7 +56,11 @@
     "wysiwyg.css": "^0.0.4"
   },
   "resolutions": {
-    "@achrinza/node-ipc": "^10.1.7"
+    "@achrinza/node-ipc": "^10.1.7",
+    "@babel/traverse": "^7.23.2",
+    "class-validator": ">=0.14.0",
+    "loader-utils": ">=1.4.1",
+    "ejs": ">=3.1.7"
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.0",
