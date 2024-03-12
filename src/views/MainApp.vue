@@ -360,7 +360,7 @@ export default class MainApp extends Vue {
       return;
     }
     
-    if (await this.platform.get.app.cpm.isFirstLaunch()) {
+    if (await this.platform.get.app.cpm.required() && await this.platform.get.app.cpm.isFirstLaunch()) {
      this.showOnboarding = true;
     }
   }

@@ -6,7 +6,7 @@
    <p class="block text-white-700 font-bold mb-4">About ads on our platform</p>
    <p class="mb-8">The ads on our App support the continued development of this application as well as directly support FTB in creating unique, immersive and high quality modpacks for the Modded Minecraft Community. Our ads are provided by <Link url="https://www.overwolf.com">Overwolf</Link> and you can visit their <Link url="https://go.ftb.team/ow-privacy">Privacy Policy</Link> and <Link url="https://go.ftb.team/ow-terms">Terms of Use</Link> on their website.</p>
 
-   <template v-if="platform.isElectron()">
+   <template v-if="platform.isElectron() && showAdPersonalizationButton">
      <p class="block text-white-700 text-lg font-bold mb-4">Ads personalization & Data</p>
      <div>
        <p>View and manage how advertisers on select apps may use your data for ad personalization</p>
@@ -27,6 +27,13 @@ import Link from '@/components/core/ui/Link.vue';
 })
 export default class Privacy extends Vue {
   platform = platform;
+  showAdPersonalizationButton = false;
+  
+  mounted() {
+    platform.get.app.cpm.required().then((required) => {
+      this.showAdPersonalizationButton = required;
+    });
+  }
 }
 </script>
 
