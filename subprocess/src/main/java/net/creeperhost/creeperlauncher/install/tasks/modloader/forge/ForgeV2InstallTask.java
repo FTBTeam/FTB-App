@@ -78,14 +78,15 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             );
             VersionManifest vanillaManifest = downloadVanilla(versionsDir, instManifest.minecraft);
 
-            List<VersionManifest.Library> libraries = new LinkedList<>(forgeManifest.libraries);
-            FastStream.of(instManifest.libraries)
+            List<VersionManifest.Library> libraries = new ArrayList<>(forgeManifest.libraries.size() + instManifest.libraries.size());
+            FastStream.of(forgeManifest.libraries)
                     // 1.20.4+ forge adds a library with a null URL. This file is installed
                     // by the processors, to the correct place in the libraries dir. We need to
                     // ignore them here so we don't fail at downloading libraries. Anything done here
                     // for the installed profile is just to speed up launching later on.
                     .filter(e -> e.url != null && !e.url.isEmpty())
                     .forEach(libraries::add);
+            libraries.addAll(instManifest.libraries);
 
             for (VersionManifest.Library library : libraries) {
                 if (cancelToken != null) cancelToken.throwIfCancelled();
