@@ -480,6 +480,11 @@ export default class LaunchingPage extends Vue {
       if (message.includes("Created:") && message.includes("minecraft:textures/atlas") && message.includes("TextureAtlas")) {
         this.finishedLoading = true;
       }
+      
+      // This also tends to happen relatively late in the startup process so we can use it as a marker as well
+      if (message.includes("Sound engine started") && message.includes("SoundEngine")) {
+        this.finishedLoading = true;
+      }
     }
   }
 
