@@ -188,3 +188,9 @@ body {
 .allow-overflow-x {
   overflow-x: auto !important;
 }
+
+.log-contents-fixer {
+  width: unset !important;
+  padding-right: 1rem;
+  overflow: unset !important;
+}

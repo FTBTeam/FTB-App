@@ -119,14 +119,6 @@
         <!--        </ftb-button>-->
         <div
           class="color cursor-pointer ml-4"
-          :aria-label="disableFollow ? 'Enable auto-scroll' : 'Disable auto-scroll'"
-          data-balloon-pos="down"
-          @click="disableFollow = !disableFollow"
-        >
-          <font-awesome-icon icon="arrow-down" />
-        </div>
-        <div
-          class="color cursor-pointer ml-4"
           :aria-label="darkMode ? 'Light mode' : 'Dark mode'"
           data-balloon-pos="down"
           @click="darkMode = !darkMode"
@@ -158,7 +150,15 @@
       </div>
     </div>
     
-    <recycle-scroller id="log-container" :items="logMessages" list-class="allow-overflow-x" key-field="i" :item-size="20" class="select-text scroller log-contents" :class="{ 'dark-mode': darkMode }" v-slot="{ item }">
+    <recycle-scroller 
+      id="log-container"
+      :items="logMessages"
+      key-field="i" 
+      :item-size="20" 
+      class="select-text log-contents"
+      list-class="log-contents-fixer"
+      :class="{ 'dark-mode': darkMode }" v-slot="{ item }"
+    >
       <div class="log-item" :class="messageTypes[item.t] + (!darkMode ? '-LIGHT': '')" :key="item.i">{{item.v}}</div>
     </recycle-scroller>
     
@@ -329,6 +329,8 @@ export default class LaunchingPage extends Vue {
   
   private logger = createLogger("LaunchingPage.vue");
 
+  // @Ref('logContainer') logContainer!: HTMLDivElement;
+  
   loading = false;
   preLaunch = true;
   platform = platform;
@@ -396,6 +398,15 @@ export default class LaunchingPage extends Vue {
     })
       .then((e) => (this.instanceFolders = e.folders))
       .catch(e => this.logger.error("Failed to get instance folders", e))
+
+
+    document.querySelector('.log-contents')?.addEventListener('scroll', this.userInteractedWithLogs);
+  }
+  
+  userInteractedWithLogs(event: any) {
+    const location = event.target.scrollTop + event.target.clientHeight;
+    // Give a 10px buffer
+    this.disableFollow = location < event.target.scrollHeight - 10;
   }
 
   onLaunchProgressUpdate(data: any) {
@@ -433,7 +444,7 @@ export default class LaunchingPage extends Vue {
       this.leavePage();
     }
     
-    setInterval(this.scrollToBottom, 100);
+    setInterval(this.scrollToBottom, 500);
   }
   
   scrollToBottom() {
@@ -468,6 +479,7 @@ export default class LaunchingPage extends Vue {
     // Stop listening to events!
     emitter.off('ws.message', this.onLaunchProgressUpdate);
     clearInterval(this.scrollToBottom as any)
+    document.querySelector('.log-contents')?.removeEventListener('scroll', this.userInteractedWithLogs);
   }
   
   async lazyLogChecker(messages: string[]) {
@@ -569,7 +581,7 @@ export default class LaunchingPage extends Vue {
       offline: this.$route.query.offline === "true",
       offlineUsername: this.$route.query.username as string ?? 'FTB Player',
       cancelLaunch: null
-    })
+    }, 1000 * 60 * 10) // 10 minutes It's a long time, but we don't want to timeout too early
     
     if (result.status === 'error') {
       this.logger.debug("Failed to launch instance, redirecting to library")
@@ -694,7 +706,6 @@ export default class LaunchingPage extends Vue {
 </script>
 
 <style lang="scss" scoped>
-
 .pack-loading {
   display: flex;
   flex-direction: column;
@@ -709,7 +720,7 @@ export default class LaunchingPage extends Vue {
     background-color: #ececec;
     transition: 0.25s ease-in-out background-color;
   }
-
+  
   &.dark-mode {
     background-color: #1c1c1c;
 
@@ -768,14 +779,14 @@ export default class LaunchingPage extends Vue {
   }
 
   .log-contents {
-    flex: 1;
-    display: flex;
-    //flex-direction: column-reverse;
-    padding: 1rem 1rem 0 0;
-    overflow: auto;
+    //width: 100%;
+    //height: 100%;
+    padding: 1rem;
     font-family: 'Consolas', 'Courier New', Courier, monospace;
-    margin: 0 0.1rem 0.5rem 1rem;
     font-size: 12px;
+    
+    overflow-x: auto;
+    white-space: nowrap;
 
     &::-webkit-scrollbar-track {
       background: transparent;
@@ -798,7 +809,7 @@ export default class LaunchingPage extends Vue {
     }
 
     .log-item {
-      white-space: nowrap;
+      white-space: pre;
     }
   }
 
