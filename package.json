@@ -1,7 +1,7 @@
 {
   "productName": "FTB Electron App",
   "name": "ftb-app",
-  "version": "1.25.1",
+  "version": "1.25.2",
   "private": true,
   "main": "background.js",
   "email": "admin@feed-the-beast.com",
