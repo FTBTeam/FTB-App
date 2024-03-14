@@ -110,8 +110,8 @@ module.exports = {
         generateUpdatesFilesForAllChannels: true,
         publish: {
           provider: 's3',
-          bucket: process.env.PUBLISH_BUCKET,
-          endpoint: process.env.PUBLISH_ENDPOINT,
+          bucket: process.env.PUBLISH_BUCKET ?? "test",
+          endpoint: process.env.PUBLISH_ENDPOINT ?? "test",
           path: 'ftb-app-updates'
         },
         beforePack: async (context) => {          
@@ -150,6 +150,7 @@ module.exports = {
           parsedData.endpoint = 'https://piston.feed-the-beast.com';
           delete parsedData.path;
           
+          console.log(parsedData)
           fs.writeFileSync(appUpdatePath, yaml.stringify(parsedData));
         },
         afterSign: async (context) => {
@@ -250,6 +251,10 @@ function getPathToLauncher() {
 }
 
 async function signJnilibInJar(context) {
+  if (!process.env.GITHUB_REF_NAME) {
+    return;
+  }
+  
   const packer = context.packager;
   const keychainFile = (await packer.codeSigningInfo.value).keychainFile
   
