@@ -150,7 +150,6 @@ module.exports = {
           parsedData.endpoint = 'https://piston.feed-the-beast.com';
           delete parsedData.path;
           
-          console.log(parsedData)
           fs.writeFileSync(appUpdatePath, yaml.stringify(parsedData));
         },
         afterSign: async (context) => {
