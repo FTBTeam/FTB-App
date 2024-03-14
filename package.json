@@ -113,7 +113,8 @@
   "pnpm": {
     "patchedDependencies": {
       "webpack@4.46.0": "patches/webpack@4.46.0.patch",
-      "terser-webpack-plugin@1.4.5": "patches/terser-webpack-plugin@1.4.5.patch"
+      "terser-webpack-plugin@1.4.5": "patches/terser-webpack-plugin@1.4.5.patch",
+      "app-builder-lib@24.7.0": "patches/app-builder-lib@24.7.0.patch"
     }
   }
 }

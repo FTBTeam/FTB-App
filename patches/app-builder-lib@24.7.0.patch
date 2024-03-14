@@ -1,0 +1,30 @@
+diff --git a/out/targets/AppImageTarget.js b/out/targets/AppImageTarget.js
+index 557b1dafd8a00d82a1fc2271044a7ccc7cde80dd..2ce5dfafe1ea481c519b5e400ab7aef86a825c52 100644
+--- a/out/targets/AppImageTarget.js
++++ b/out/targets/AppImageTarget.js
+@@ -48,9 +48,9 @@ class AppImageTarget extends core_1.Target {
+         const license = c[3];
+         const stageDir = c[4];
+         const publishConfig = c[2];
+-        if (publishConfig != null) {
+-            await (0, fs_extra_1.outputFile)(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), (0, builder_util_1.serializeToYaml)(publishConfig));
+-        }
++        // if (publishConfig != null) {
++        //     await (0, fs_extra_1.outputFile)(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), (0, builder_util_1.serializeToYaml)(publishConfig));
++        // }
+         if (this.packager.packagerOptions.effectiveOptionComputed != null &&
+             (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: await this.desktopEntry.value }))) {
+             return;
+diff --git a/out/targets/FpmTarget.js b/out/targets/FpmTarget.js
+index f4043443791e5e6834796154f42d45a4258f862f..ed50efe6dcd3559371a0585ddef4310bfc41e8ca 100644
+--- a/out/targets/FpmTarget.js
++++ b/out/targets/FpmTarget.js
+@@ -112,7 +112,7 @@ class FpmTarget extends core_1.Target {
+             const linuxDistType = this.packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${(0, builder_util_1.getArchSuffix)(arch)}-unpacked`);
+             const resourceDir = packager.getResourcesDir(linuxDistType);
+             builder_util_1.log.info({ resourceDir }, `adding autoupdate files for: ${target}. (Beta feature)`);
+-            await (0, fs_extra_1.outputFile)(path.join(resourceDir, "app-update.yml"), (0, builder_util_1.serializeToYaml)(publishConfig));
++            // await (0, fs_extra_1.outputFile)(path.join(resourceDir, "app-update.yml"), (0, builder_util_1.serializeToYaml)(publishConfig));
+             // Extra file needed for auto-updater to detect installation method
+             await (0, fs_extra_1.outputFile)(path.join(resourceDir, "package-type"), target);
+         }
