@@ -62,7 +62,18 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: subprocess-jar
-        path: subprocess/build/libs/
+        path: |
+          subprocess/build/libs/
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-linux
+        path: |
+          release/ftb-app-*.deb
+          release/ftb-app-*.AppImage
+          release/ftb-app-*.rpm
+          release/*-linux.yml
+          release/*-linux-*.yml
   build-windows:
     runs-on: windows-latest
     # Only run this job if the previous job was successful
@@ -84,6 +95,16 @@ jobs:
         pnpm install
         pnpm gen:license
         pnpm build --publish always -w --x64
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-windows
+        path: |
+          release/ftb-app-*.exe
+          release/*.blockmap
+          release/latest.yml
+          release/alpha.yml
+          release/beta.yml
   build-macos:
     runs-on: macos-latest
     # Only run this job if the previous job was successful
@@ -118,6 +139,15 @@ jobs:
         pnpm gen:license
         echo "$APPLE_API_KEY" > apple_api_key.p8
         pnpm build --publish always -m --x64 --arm64
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-macos
+        path: |
+          release/ftb-app-*.dmg
+          release/ftb-app-*.zip
+          release/*.blockmap
+          release/*-mac.yml
   build-overwolf:
     needs:
       - build-linux
@@ -154,3 +184,35 @@ jobs:
           echo "Signing OPK.."
           pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
           pnpm ow opk upload -w true overwolf/signed.opk
+  release-artifacts:
+    needs:
+      - build-linux
+      - build-windows
+      - build-macos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download linux releases
+        uses: actions/download-artifact@v4
+        with:
+          name: release-linux
+          path: release/
+      - name: Download windows releases
+        uses: actions/download-artifact@v4
+        with:
+          name: release-windows
+          path: release/
+      - name: Download macos releases
+        uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: release/
+      - name: Get B2 client
+        shell: bash
+        run: |
+          wget -O /usr/local/bin/b2 https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux
+          chmod +x /usr/local/bin/b2
+      - name: Upload
+        shell: bash
+        run: |
+          b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          b2 sync --replaceNewer release b2://${{ secrets.PUBLISH_BUCKET }}/app

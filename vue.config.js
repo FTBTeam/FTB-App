@@ -22,7 +22,7 @@ if (process.env.GITHUB_REF_NAME) {
       ignore: ['node_modules', 'webpack.config.js'],
       urlPrefix: process.env.TARGET_PLATFORM === 'overwolf' 
         ? `overwolf-extension://cmogmmciplgmocnhikmphehmeecmpaggknkjlbag/dist/desktop/` 
-        : ""
+        : "ftb://./"
     }),
   );
 }
@@ -109,10 +109,8 @@ module.exports = {
         copyright: `Copyright © ${new Date().getFullYear()} - Feed The Beast Ltd`,
         generateUpdatesFilesForAllChannels: true,
         publish: {
-          provider: 's3',
-          bucket: process.env.PUBLISH_BUCKET ?? "test",
-          endpoint: process.env.PUBLISH_ENDPOINT ?? "test",
-          path: 'ftb-app-updates'
+          provider: 'generic',
+          url: "https://piston.feed-the-beast.com/app"
         },
         beforePack: async (context) => {          
           if (context.electronPlatformName === 'darwin' && !hasRepackedJar) {
@@ -133,24 +131,6 @@ module.exports = {
             file = file.replace(/^\/\/# sourceMappingURL=.*\.js\.map$/gm, '');
             fs.writeFileSync(jsFile, file);
           }
-        },
-        afterPack: (context) => {
-          /**
-           * We don't use the bucket so we rewrite it to the correct URL
-           */
-          const appPath = context.appOutDir;
-          let appUpdatePath = path.join(appPath, 'resources', 'app-update.yml');
-          if(context.electronPlatformName === 'darwin') {
-            appUpdatePath = path.join(appPath, context.packager.appInfo.productName + '.app', 'Contents', 'Resources', 'app-update.yml');
-          }
-   
-          const appUpdate = fs.readFileSync(appUpdatePath, 'utf8');
-          const parsedData = yaml.parse(appUpdate);
-
-          parsedData.endpoint = 'https://piston.feed-the-beast.com';
-          delete parsedData.path;
-          
-          fs.writeFileSync(appUpdatePath, yaml.stringify(parsedData));
         },
         afterSign: async (context) => {
           const { electronPlatformName, appOutDir } = context;
