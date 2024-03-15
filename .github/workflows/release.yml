@@ -209,10 +209,10 @@ jobs:
       - name: Get B2 client
         shell: bash
         run: |
-          wget -O /usr/local/bin/b2 https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux
+          wget -q -O /usr/local/bin/b2 https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux
           chmod +x /usr/local/bin/b2
       - name: Upload
         shell: bash
         run: |
-          b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          b2 sync --replaceNewer release b2://${{ secrets.PUBLISH_BUCKET }}/app
+          b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
+          b2 sync --replaceNewer --noProgress release b2://${{ secrets.PUBLISH_BUCKET }}/app > /dev/null 2>&1
