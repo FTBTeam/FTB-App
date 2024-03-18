@@ -94,7 +94,13 @@ public class Settings {
                 LOGGER.error("Failed to delete old settings file.", e);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("Failed to migrate settings file. Aborting migration process.", e);
+            LOGGER.info("Deleting old settings file. If possible");
+            try {
+                Files.deleteIfExists(Constants.SETTINGS_FILE_LEGACY);
+            } catch (IOException ex) {
+                LOGGER.error("Failed to delete old settings file.", ex);
+            }
         }
     }
     
