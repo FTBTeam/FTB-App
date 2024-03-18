@@ -24,22 +24,14 @@ setTimeout(() => {
 
 ipcRenderer.invoke('updater:check-for-update')
   .then(async (updater) => {
-    logger.info("Received updater", updater, updater === null);
-    if (updater === null) {
-      // No update, continue
-      await ipcRenderer.invoke('app:launch');
-    } else {
-      if (updater.downloadPromise) {
-        logger.info("Waiting for download promise");
-        updater.downloadPromise.then((e: any) => {
-          logger.info("Download promise resolved", e);
-        
-          ipcRenderer.invoke('app:quit-and-install')
-        })
-      } else {
-        await ipcRenderer.invoke('app:launch');
-      }
+    logger.info("Received updater", updater);
+    if (updater) {
+      logger.info("For some reason, we got the update here so let's also try and update", updater);
+      ipcRenderer.invoke('app:quit-and-install')
+      return;
     }
+
+    await ipcRenderer.invoke('app:launch');
   })
   .catch((e) => {
     logger.error("Failed to get updater", e);

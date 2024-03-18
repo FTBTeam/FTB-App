@@ -625,7 +625,18 @@ async function createPreLaunchWindow(source: string) {
 }
 
 ipcMain.handle('updater:check-for-update', async () => {
-  return await autoUpdater.checkForUpdates()
+  const result = await autoUpdater.checkForUpdates();
+  
+  if (result?.downloadPromise) {
+    logger.debug("Waiting for download promise")
+    await result.downloadPromise;
+    
+    // Quit the app and install the update
+    autoUpdater.quitAndInstall()
+    return true;
+  }
+  
+  return false;
 })
 
 ipcMain.handle('app:launch', async () => {
