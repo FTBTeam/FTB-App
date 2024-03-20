@@ -25,13 +25,7 @@ public class Settings {
     public static void saveSettings() {
         // Very defensive fallback system but allows us to save settings even if they weren't loaded.
         if (settingsData == null) {
-            LOGGER.warn("No settings available at save time.");
-            try {
-                loadSettings();
-            } catch (Exception e) {
-                LOGGER.error("Failed to load settings.", e);
-            }
-            
+            LOGGER.warn("No settings available at save time. Failing back to defaults.");
             if (settingsData == null) {
                 settingsData = DEFAULT_SETTINGS;
             }
@@ -110,17 +104,8 @@ public class Settings {
     
     public static SettingsData getSettings() {
         if (settingsData == null) {
-            LOGGER.warn("Attempted to get settings before they were loaded, attempting to load them now.");
-            try {
-                loadSettings();
-            } catch (Exception e) {
-                LOGGER.error("Failed to load settings.", e);
-            }
-            
-            if (settingsData == null) {
-                LOGGER.error("Failed to load settings, using defaults.");
-                settingsData = DEFAULT_SETTINGS;
-            }
+            LOGGER.error("Failed to load settings, using defaults.");
+            settingsData = DEFAULT_SETTINGS;
         }
         
         return settingsData;

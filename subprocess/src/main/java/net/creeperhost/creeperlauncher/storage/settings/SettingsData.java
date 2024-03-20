@@ -52,9 +52,12 @@ public class SettingsData {
     }
 
     // Reader
-    public static SettingsData read() {        
+    public static SettingsData read() {
         try {
             var jsonData = Files.readString(Constants.SETTINGS_FILE);
+            if (jsonData.isBlank()) {
+                throw new IOException("Settings file is empty.");
+            }
             return gson.fromJson(jsonData, SettingsData.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
