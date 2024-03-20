@@ -114,7 +114,7 @@ public class CreeperLauncher {
     }
 
     public static void initSettingsAndCache() {
-        Settings.loadSettings(true);
+        Settings.loadSettings();
         localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
     }
 
@@ -130,7 +130,7 @@ public class CreeperLauncher {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(CreeperLauncher::cleanUpBeforeExit));
 
-        Settings.loadSettings(true);
+        Settings.loadSettings();
         Instances.refreshInstances();
 
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
