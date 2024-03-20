@@ -23,8 +23,18 @@ public class Settings {
     private static SettingsData settingsData = null;
 
     public static void saveSettings() {
+        // Very defensive fallback system but allows us to save settings even if they weren't loaded.
         if (settingsData == null) {
-            throw new IllegalStateException("Settings not loaded yet!");
+            LOGGER.warn("No settings available at save time.");
+            try {
+                loadSettings();
+            } catch (Exception e) {
+                LOGGER.error("Failed to load settings.", e);
+            }
+            
+            if (settingsData == null) {
+                settingsData = DEFAULT_SETTINGS;
+            }
         }
         
         try {
@@ -35,19 +45,13 @@ public class Settings {
     }
     
     public static void loadSettings() {
-        loadSettings(false);
-    }
-    
-    public static void loadSettings(boolean firstLoad) {
         // TODO: Remove in newer versions
-        if (firstLoad) {
-            attemptMigration();
-            if (Settings.settingsData != null) {
-                // Migration happened, we don't need to load.
-                return;
-            }
+        attemptMigration();
+        if (Settings.settingsData != null) {
+            // Migration happened, we don't need to load.
+            return;
         }
-        
+            
         // Try and load the settings file
         try {
             Settings.settingsData = SettingsData.read();
@@ -106,7 +110,17 @@ public class Settings {
     
     public static SettingsData getSettings() {
         if (settingsData == null) {
-            throw new IllegalStateException("Settings not loaded yet!");
+            LOGGER.warn("Attempted to get settings before they were loaded, attempting to load them now.");
+            try {
+                loadSettings();
+            } catch (Exception e) {
+                LOGGER.error("Failed to load settings.", e);
+            }
+            
+            if (settingsData == null) {
+                LOGGER.error("Failed to load settings, using defaults.");
+                settingsData = DEFAULT_SETTINGS;
+            }
         }
         
         return settingsData;
