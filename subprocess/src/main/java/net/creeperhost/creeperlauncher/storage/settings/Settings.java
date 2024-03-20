@@ -91,7 +91,7 @@ public class Settings {
             } catch (IOException e) {
                 LOGGER.error("Failed to delete old settings file.", e);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Failed to migrate settings file. Aborting migration process.", e);
             LOGGER.info("Deleting old settings file. If possible");
             try {
@@ -181,6 +181,11 @@ public class Settings {
          * Migrate old settings to the new format.
          */
         private SettingsData migrate() {
+            if (this.oldSettings == null) {
+                // Something failed, fallback. We likely read the file wrong or an empty file
+                return DEFAULT_SETTINGS;
+            }
+            
             return new SettingsData(
                 DEFAULT_SPEC,
                 getOrDefault("instanceLocation", Path::of, DEFAULT_SETTINGS.instanceLocation()),

@@ -12,6 +12,7 @@ const Codes: Readonly<Record<string, string>> = {
   'ftb-auth#1001': 'No active profiles found, an active profile is required',
   'ftb-auth#1002': 'Attempted to refresh user profile but failed',
   'ftb-auth#1003': 'Legacy Mojang accounts are no longer supported',
+  'ftb-auth#1004': 'Unable to validate profile data, please retry.',
 };
 
 export type ErrorCodes = keyof typeof Codes;

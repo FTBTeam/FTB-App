@@ -184,31 +184,40 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
 
   logger.debug(`Validating profile ${profile.username} with uuid ${profile.uuid} against Microsoft`,);
 
-  const isValid = await sendMessage("profiles.is-valid", {
-    profileUuid: profile.uuid,
-  });
+  try {
+    const isValid = await sendMessage("profiles.is-valid", {
+      profileUuid: profile.uuid,
+    });
 
-  logger.debug(`The users token is ${isValid.success ? 'valid' : 'invalid'}`);
-  if (!isValid?.success) {
-    logger.debug(`Found a profile that no longer can be validated. Trying to refresh`);
-    const refresh = await msAuthenticator.refresh(profile);
+    logger.debug(`The users token is ${isValid.success ? 'valid' : 'invalid'}`);
+    if (!isValid?.success) {
+      logger.debug(`Found a profile that no longer can be validated. Trying to refresh`);
+      const refresh = await msAuthenticator.refresh(profile);
 
-    // Update the profiles
-    await store.dispatch('core/loadProfiles');
-    logger.debug(`The refresh was ${refresh.ok ? 'successful' : 'unsuccessful'}`);
+      // Update the profiles
+      await store.dispatch('core/loadProfiles');
+      logger.debug(`The refresh was ${refresh.ok ? 'successful' : 'unsuccessful'}`);
+      return {
+        ok: refresh.ok,
+        allowOffline: !refresh.ok && !refresh.tryLoginAgain,
+        requiresSignIn: refresh.tryLoginAgain ?? false,
+        error: refresh.ok ? createError('ftb-auth#1002') : undefined,
+      };
+    }
+
+    logger.debug(`Successfully authenticated ${profile.username} with uuid ${profile.uuid}`);
     return {
-      ok: refresh.ok,
-      allowOffline: !refresh.ok && !refresh.tryLoginAgain,
-      requiresSignIn: refresh.tryLoginAgain ?? false,
-      error: refresh.ok ? createError('ftb-auth#1002') : undefined,
+      ok: true,
+      requiresSignIn: false,
+    };
+  } catch (e) {
+    logger.error(`Failed to validate the profile ${profile.username} with uuid ${profile.uuid}`, e);
+    return {
+      ok: false,
+      requiresSignIn: false,
+      error: createError('ftb-auth#1004'),
     };
   }
-
-  logger.debug(`Successfully authenticated ${profile.username} with uuid ${profile.uuid}`);
-  return {
-    ok: true,
-    requiresSignIn: false,
-  };
 };
 
 /**
