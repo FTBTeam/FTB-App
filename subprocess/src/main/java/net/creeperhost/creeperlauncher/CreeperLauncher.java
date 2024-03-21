@@ -81,7 +81,6 @@ public class CreeperLauncher {
     private static final Object DIE_LOCK = new Object();
 
     public static List<Pair<String, String>> javaVersions = List.of();
-    public static int missedPings = 0;
     public static ServerSocket serverSocket = null;
     public static Socket socket = null;
     public static OutputStream socketWrite = null;
@@ -120,9 +119,46 @@ public class CreeperLauncher {
 
     public static void main(String[] args) {
         try {
+            prelaunchChecks();
+        } catch (Throwable ex) {
+            LOGGER.error("Prelaunch checks failed but are not fatal", ex);
+        }
+        
+        try {
             mainImpl(args);
         } catch (Throwable ex) {
             LOGGER.error("Main method threw exception:", ex);
+        }
+    }
+    
+    /**
+     * Only allow the app to run one instance at a time. Otherwise things get messy!
+     */
+    private static void prelaunchChecks() {
+        var appPath = Constants.getDataDir();
+        var appPidFile = appPath.resolve("app.pid");
+        
+        // Read the pid and check if the process is still running
+        if (Files.exists(appPidFile)) {
+            try {
+                var data = Files.readString(appPidFile);
+                var pid = Long.parseLong(data);
+                ProcessHandle.of(pid).ifPresent((handle) -> {
+                    // SHUT IT DOWN!
+                    LOGGER.info("Found running process with pid {}", pid);
+                    handle.destroy();
+                });
+            } catch (Throwable ex) {
+                LOGGER.warn("Failed to read app.pid file", ex);
+            }
+        }
+        
+        // Write the current pid to the file
+        var currentPid = ProcessHandle.current().pid();
+        try {
+            Files.writeString(appPidFile, String.valueOf(currentPid));
+        } catch (IOException ex) {
+            LOGGER.error("Failed to write app.pid file", ex);
         }
     }
 
@@ -273,22 +309,9 @@ public class CreeperLauncher {
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleAtFixedRate(() -> {
             try {
-                PingLauncherData ping = new PingLauncherData();
-                CreeperLauncher.missedPings++;
-                WebSocketHandler.sendMessage(ping);
+                WebSocketHandler.sendMessage(new PingLauncherData());
             } catch (Exception ignored) {
-                LOGGER.error("Failed to send ping");
-            }
-
-            // Don't do this in dev mode, when the frontend restarts, it can miss this amount of pings
-            //15 minutes without ping/pong or an explicit disconnect event happened...
-            if (!isDevMode && (missedPings > 300 || websocketDisconnect && missedPings > 3)) {
-                if (!websocketDisconnect) {
-                    LOGGER.error("Closed backend due to no response from frontend for {} seconds...", (missedPings * 3));
-                } else {
-                    LOGGER.error("Closed backend due to websocket error! Also no messages from frontend for {} seconds.", (missedPings * 3));
-                }
-                CreeperLauncher.exit();
+                LOGGER.warn("Failed to send ping");
             }
         }, 0, 3, TimeUnit.SECONDS);
     }

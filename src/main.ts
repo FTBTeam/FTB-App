@@ -64,7 +64,8 @@ const appSetup = async () => {
           routingInstrumentation: Sentry.vueRouterInstrumentation(router),
         }),
       ],
-      release: `${platform.get.config.version}-${constants.platform}`,
+      release: `${platform.get.config.version}`,
+      dist: `${process.env.VUE_APP_TARGET_PLATFORM}`,
       initialScope: {
         tags: {
           'release.public': platform.get.config.version,

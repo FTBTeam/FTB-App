@@ -45,6 +45,7 @@ jobs:
     - name: Build App (Windows & Linux)
       env:
         APP_TARGET_PLATFORM: "linux"
+        
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
@@ -89,6 +90,7 @@ jobs:
     - name: Build App (Windows)
       env:
         APP_TARGET_PLATFORM: "windows"
+        VUE_APP_TARGET_PLATFORM: "windows"
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
@@ -127,6 +129,7 @@ jobs:
     - name: Build App (MacOS)
       env:
         APP_TARGET_PLATFORM: "macos"
+        VUE_APP_TARGET_PLATFORM: "macos"
         CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         CSC_LINK: ${{ secrets.CSC_LINK }}
         APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -171,6 +174,7 @@ jobs:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
           APP_TARGET_PLATFORM: "overwolf"
+          VUE_APP_TARGET_PLATFORM: "overwolf"
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/
