@@ -53,6 +53,29 @@ export async function waitForWebsockets(user: string, websockets: Socket) {
   }
 }
 
+export async function waitForWebsocketsAndData(user: string, websockets: Socket, fieldDataPredicate: () => boolean) {
+  logger.debug("Waiting for websockets and data for user", user);
+  await waitForWebsockets(user, websockets);
+  
+  logger.debug("Websockets connected, waiting for data for user", user);
+  // Now wait for some data, let's give it 30 seconds to get the data before we give up
+  await new Promise((resolve, reject) => {
+    const timeoutRef = setTimeout(() => {
+      clearTimeout(timeoutRef);
+      reject("Timed out waiting for data");
+    }, 30_000);
+    
+    const interval = setInterval(() => {
+      if (fieldDataPredicate()) {
+        logger.debug("Data found for user", user);
+        clearInterval(interval);
+        clearTimeout(timeoutRef);
+        resolve(null);
+      }
+    }, 100);
+  });
+}
+
 // export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
 //   return new Promise((resolve, reject) => {
 //     if (serverInfo.includes(':')) {

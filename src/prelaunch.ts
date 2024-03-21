@@ -27,7 +27,8 @@ ipcRenderer.invoke('updater:check-for-update')
     logger.info("Received updater", updater);
     if (updater) {
       logger.info("For some reason, we got the update here so let's also try and update", updater);
-      ipcRenderer.invoke('app:quit-and-install')
+      await ipcRenderer.invoke('app:quit-and-install')
+      logger.info("Update should have been installed")
       return;
     }
 

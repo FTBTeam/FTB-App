@@ -17,12 +17,17 @@ const logger = createLogger('background.ts');
 
 autoUpdater.logger = electronLogger;
 
-autoUpdater.on('checking-for-update', () => ipcMain.emit('updater:checking-for-update'));
-autoUpdater.on('update-available', () => ipcMain.emit('updater:update-available'));
-autoUpdater.on('update-not-available', () => ipcMain.emit('updater:update-not-available'));
-autoUpdater.on('error', (error) => ipcMain.emit('updater:error', JSON.stringify(error)));
-autoUpdater.on('download-progress', (progress) => ipcMain.emit('updater:download-progress'));
-autoUpdater.on('update-downloaded', (info) => ipcMain.emit('updater:update-downloaded'));
+const logAndEmit = (event: string, ...args: any[]) => {
+  logger.debug("Emitting downloader event", event, args)
+  ipcMain.emit(event, ...args);
+}
+
+autoUpdater.on('checking-for-update', () => logAndEmit('updater:checking-for-update'));
+autoUpdater.on('update-available', () => logAndEmit('updater:update-available'));
+autoUpdater.on('update-not-available', () => logAndEmit('updater:update-not-available'));
+autoUpdater.on('error', (error) => logAndEmit('updater:error', JSON.stringify(error)));
+autoUpdater.on('download-progress', (progress) => logAndEmit('updater:download-progress', progress));
+autoUpdater.on('update-downloaded', (info) => logAndEmit('updater:update-downloaded', info));
 
 function getAppHome() {
   if (os.platform() === "darwin") {
@@ -629,9 +634,11 @@ ipcMain.handle('updater:check-for-update', async () => {
   
   if (result?.downloadPromise) {
     logger.debug("Waiting for download promise")
-    await result.downloadPromise;
+    const version = await result.downloadPromise;
+    logger.debug("Download promise resolved", version)
     
     // Quit the app and install the update
+    logger.debug("Requesting app quit and install")
     autoUpdater.quitAndInstall()
     return true;
   }
@@ -655,8 +662,10 @@ ipcMain.handle('app:launch', async () => {
 })
 
 ipcMain.handle('app:quit-and-install', async () => {
+  logger.debug("Quitting and installing app")
   // Restart the entire app
   autoUpdater.quitAndInstall();
+  
 });
 
 async function createWindow(reset = false) {

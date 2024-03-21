@@ -204,7 +204,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {FixedSizeArray} from '@/utils/std/fixedSizeArray';
-import {safeNavigate, waitForWebsockets} from '@/utils';
+import {safeNavigate, waitForWebsocketsAndData} from '@/utils';
 import {createLogger} from '@/core/logger';
 import {SocketState} from '@/modules/websocket/types';
 
@@ -372,7 +372,10 @@ export default class LaunchingPage extends Vue {
 
   public async mounted() {
     this.logger.debug("Mounted Launch page, waiting for websockets...");
-    await waitForWebsockets("Launch page", this.websockets.socket)
+    await waitForWebsocketsAndData("Launch page", this.websockets.socket, () => {
+      // This should get resolved quickly but it's possible it wont
+      return this.instance != null;
+    })
 
     this.logger.debug("Websockets ready, loading instance")
     
