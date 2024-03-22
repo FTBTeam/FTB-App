@@ -228,7 +228,7 @@ public class Settings {
                 LOGGER.info("Migrated setting " + key + " with value " + value + " to " + result);
                 return result;
             } catch (Exception e) {
-                LOGGER.error("Failed to parse setting " + key + " with value " + value, e);
+                LOGGER.warn("Failed to parse setting " + key + " with value " + value, e);
                 return defaultValue;
             }
         }
