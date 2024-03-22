@@ -231,7 +231,7 @@ public class Settings {
             try {
                 return transform.apply(value);
             } catch (Exception e) {
-                LOGGER.error("Failed to parse setting " + key + " with value " + value, e);
+                LOGGER.warn("Failed to parse setting " + key + " with value " + value, e);
                 return defaultValue;
             }
         }
