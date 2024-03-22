@@ -74,8 +74,8 @@ import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
 import {MiscApi} from '@/core/pack-api/miscApi';
 import {alertController} from '@/core/controllers/alertController';
 
-const anyOption: SelectionOption = { label: 'Any', value: 'any' };
-const loaderOptions: SelectionOption[] = [
+export const anyOption: SelectionOption = { label: 'Any', value: 'any' };
+export const loaderOptions: SelectionOption[] = [
   anyOption,
   { label: 'Neoforge', value: 'neoforge' },
   { label: 'Forge', value: 'forge' },
@@ -83,7 +83,7 @@ const loaderOptions: SelectionOption[] = [
   { label: 'Quilt', value: 'quilt' },
 ]
 
-const sortOptions: SelectionOption[] = [
+export const sortOptions: SelectionOption[] = [
   { label: 'Newest', value: 'new' },
   { label: 'Featured', value: 'featured' },
   { label: 'Popular', value: 'popular' },

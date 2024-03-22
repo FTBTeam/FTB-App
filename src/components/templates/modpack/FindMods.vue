@@ -1,7 +1,13 @@
 <template>
   <div class="find-mods">
-    <div class="header flex items-center mt-2">
+    <div class="header flex items-center mt-2 gap-4">
       <ftb-search :alpha="true" class="w-full flex-1" placeholder="Search for a mod" min="3" v-model="search" />
+      <template v-if="search === ''">
+        <selection2 icon="tag" direction="left" v-model="selectedTag" :options="tagOptions" min-width="200" />
+        <selection2 icon="cubes" direction="right" v-model="selectedLoader" :options="loaderOptions" min-width="200" aria-label="Mod Loader" data-balloon-pos="down-right" />
+        <selection2 icon="code-branch" direction="right" v-model="selectedVersion" :options="versionOptions" min-width="200" aria-label="Game version" data-balloon-pos="down-right" />
+        <selection2 icon="sort" direction="right" v-model="selectedSort" :options="sortOptions"  min-width="200" aria-label="Sort by" data-balloon-pos="down-right" />
+      </template>
     </div>
     <div class="body pt-6">
       <div class="stats-bar" v-if="resultingIds.length">
@@ -23,6 +29,23 @@
         </div>
       </div>
       <div class="results">
+        <template v-if="search === ''">
+          <loader v-if="browseLoading" />
+          
+          {{selectedTag}}
+          {{selectedVersion}}
+          {{selectedLoader}}
+          {{selectedSort}}
+          
+          <div class="mods" v-if="!browseLoading && browseResults">
+            <mod-card v-for="(result, index) in browseResults" :key="index"
+                      :mod="result" :instance="instance" :installed-mods="installedMods" :target="target" @install="selectedMod = result"
+            />
+            
+            <ui-pagination v-if="browsePages > 1" v-model="browsePage" :total="browsePages * 50" per-page="50" @input="loadBrowseMods" />
+          </div>
+        </template>
+        
         <template v-if="results.length">
           <mod-card
             v-for="(mod, index) in results"
@@ -70,7 +93,7 @@
             </div>
           </div>
         </div>
-        <div class="make-a-search" v-else>
+        <div class="make-a-search" v-else-if="search !== ''">
           <div class="search-prompt">
             <div class="icon-container">
               <font-awesome-icon icon="search" class="primary" />
@@ -117,9 +140,19 @@ import {modpackApi} from '@/core/pack-api/modpackApi';
 import {InstanceJson} from '@/core/@types/javaApi';
 import InstallModModal from '@/components/core/mods/InstallModModal.vue';
 import {compatibleCrossLoaderPlatforms, resolveModloader} from '@/utils/helpers/packHelpers';
+import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
+import {anyOption, loaderOptions, sortOptions} from '@/views/BrowseModpacks.vue';
+import {MiscApi} from '@/core/pack-api/miscApi';
+import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import Loader from '@/components/atoms/Loader.vue';
+import UiPagination from '@/components/core/ui/UiPagination.vue';
 
 @Component({
   components: {
+    UiPagination,
+    Loader,
+    Selection2,
     InstallModModal,
     'ftb-search': FTBSearchBar,
     ModCard,
@@ -130,6 +163,24 @@ export default class FindMods extends Vue {
   @Prop() instance!: InstanceJson;
   @Prop() installedMods!: [number, number][];
 
+  // NEW
+  sortOptions = sortOptions;
+  loaderOptions = loaderOptions;
+  versionOptions: SelectionOption[] = [anyOption];
+  tagOptions: SelectionOption[] = [anyOption];
+  
+  selectedSort = sortOptions[0].value;
+  selectedTag = anyOption.value;
+  selectedVersion = anyOption.value;
+  selectedLoader = loaderOptions[0].value;
+  
+  browseLoading = false;
+  browseResults: SearchResultPack[] = [];
+  browsePages = 0;
+  browsePage = 1;
+  
+  // OLD 
+  
   selectedMod: Mod | null = null;
   
   private offset = 0;
@@ -172,6 +223,57 @@ export default class FindMods extends Vue {
 
     this.searchDebounce = debounce(() => this.searchForMod(), 500);
     await this.loadInstanceVersion();
+
+    const mcVers = await MiscApi.getMinecraftVersions();
+    if (mcVers) {
+      this.versionOptions = [anyOption, ...mcVers
+        .filter(e => e.type === 'release')
+        .map(e => ({ label: e.name, value: e.name }))];
+    }
+    
+    const tags = await modpackApi.browse.modTags();
+    if (tags) {
+      this.tagOptions = [anyOption, ...tags.tags.map(e => ({ label: e.name, value: e.id }))];
+    }
+    
+    // Attempt to set the minecraft version based on the mdopack version
+    if (this.instance.mcVersion) {
+      this.selectedVersion = this.versionOptions.find(e => e.value === this.instance.mcVersion)?.value ?? anyOption.value;
+    }
+    
+    // Attempt to set the correct mod loader based on the instance
+    if (this.instance.modLoader) {
+      const modloader = resolveModloader(this.instance);
+      this.selectedLoader = this.loaderOptions.find(e => e.value === modloader)?.value ?? anyOption.value;
+    }
+    
+    await this.loadBrowseMods();
+  }
+  
+  private async loadBrowseMods() {
+    await toggleBeforeAndAfter(async () => {
+      this.browseResults = [];
+      const mods = await modpackApi.browse.browseMods({
+        page: this.browsePage,
+        sort: this.selectedSort,
+        tag: this.selectedTag === anyOption.value ? undefined : this.selectedTag,
+        version: this.selectedVersion === anyOption.value ? undefined : this.selectedVersion,
+        loader: this.selectedLoader === anyOption.value ? undefined : this.selectedLoader,
+      });
+      
+      if (mods) {
+        this.browseResults = mods.mods;
+        this.browsePages = mods.pages;
+      }
+    }, v => this.browseLoading = v);
+  }
+  
+  @Watch('selectedTag')
+  @Watch('selectedVersion')
+  @Watch('selectedLoader')
+  @Watch('selectedSort')
+  async onFilterChange() {
+    await this.loadBrowseMods();
   }
 
   @Watch('search')

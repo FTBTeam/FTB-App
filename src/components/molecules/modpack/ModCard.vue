@@ -15,7 +15,7 @@
         </div>
 
         <div class="numbers">
-          <div class="stat" :aria-label="mod.installs.toLocaleString() + ' Downloads'" data-balloon-pos="down">
+          <div class="stat" v-if="mod.installs" :aria-label="mod.installs.toLocaleString() + ' Downloads'" data-balloon-pos="down">
             <font-awesome-icon icon="download" />
             <div class="value is-value">{{ prettyNumber(mod.installs) }}</div>
           </div>
@@ -27,7 +27,7 @@
             </div>
           </div>
           
-          <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
+          <div class="curse-btn" v-if="curseLink && curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
             <img src="@/assets/curse-logo.svg" alt="" />
           </div>
         </div>
@@ -119,7 +119,7 @@ export default class ModCard extends Vue {
   }
 
   get curseLink() {
-    return this.mod.links.find((e) => e.type === 'curseforge');
+    return this.mod?.links?.find((e) => e.type === 'curseforge');
   }
   
   get versions() {

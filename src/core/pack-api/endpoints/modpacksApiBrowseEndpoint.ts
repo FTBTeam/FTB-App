@@ -28,6 +28,12 @@ export class ModpacksApiBrowseEndpoint extends ApiEndpoint {
     }>(platform, "GET", this.computeUrl(platform, 'tags'));
   }
   
+  async modTags() {
+    return this.fetchPublic<{
+      tags: {id: number, name: string}[]
+    }>("GET", "curseforge/mods/tags");
+  }
+  
   async browse(platform: PackProviders = "modpacksch", options: BrowseOptions) {
     // Construct the url based on the options
     const url = this.computeBrowseUrl(platform, options);
@@ -38,8 +44,18 @@ export class ModpacksApiBrowseEndpoint extends ApiEndpoint {
     }>>(platform, "GET", url);
   }
   
-  private computeBrowseUrl(platform: PackProviders, options: BrowseOptions) {
-    let suffix = 'browse/';
+  async browseMods(options: BrowseOptions) {
+    // Construct the url based on the options
+    const url = this.computeBrowseUrl("curseforge", options, true);
+    return this.fetchPublic<StatusResult<{
+      mods: SearchResultPack[],
+      page: number,
+      pages: number,
+    }>>("GET", url);
+  }
+  
+  private computeBrowseUrl(platform: PackProviders, options: BrowseOptions, isMods = false) {
+    let suffix = `${isMods ? 'mods/' : ''}browse/`;
     if (options.tag) {
       suffix += `${options.tag}/`;
     }
