@@ -25,34 +25,32 @@
         :min="3"
       />
     </div>
+    
+    <div class="mb-6" v-if="searchValue === ''">
+      <div class="flex gap-4 text-sm">
+        <selection2 class="flex-1" label="Tags" :options="tagOptions" v-model="selectedTag"></selection2>
+        <selection2 class="flex-1" label="Version" :options="versionOptions" v-model="selectedVersion"></selection2>
+        <selection2 class="flex-1" label="Loader" :options="loaderOptions" v-model="selectedLoader"></selection2>
+        <selection2 class="flex-1" label="Sort by" :options="sortOptions" v-model="selectedSort" :allow-deselect="false"></selection2>
+      </div>
+    </div>
 
     <message icon="warning" type="danger" class="my-6" v-if="error">
       {{ error }}
     </message>
 
-    <message icon="info" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
+    <message icon="info" type="info" class="my-6" v-if="!error && searchResults.length === 0 && !loading">
       No results found for '{{ searchValue }}'
     </message>
 
-    <loader class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
-    
-    <message v-if="searchValue === '' && !loading && !loadingInitialPacks && !ourPackIds.length">
-      <p>No packs available</p>
-    </message>
+    <loader class="mt-20"  v-if="(!error && loading)" />
 
     <div class="result-cards pb-2" v-if="!error && results.length > 0">
       <pack-preview v-for="(pack, index) in results" :partial-pack="pack" :key="index" :provider="currentTab" />
     </div>
-    
-    <div class="latest-packs" v-if="searchValue === '' && !loading">
-      <div class="result-cards pb-2">
-        <pack-preview v-for="(packId, index) in visiblePacks" :pack-id="packId" :key="`${currentPage}:${index}`" />
-      </div>
 
-      <div class="flex justify-center pb-8">
-        <ui-pagination v-if="ourPackIds.length" v-model="currentPage" :total="ourPackIds.length" :per-page="10" @input="scrollToTop" />
-      </div>
-      <loader class="mt-20" v-if="loadingInitialPacks" />
+    <div class="pages pb-8" v-if="maxPages > 1 && searchValue === '' && searchResults.length">
+      <ui-pagination v-model="currentPage" :total="maxPages * 50" :per-page="50" @input="scrollToTop" />
     </div>
   </div>
 </template>
@@ -71,11 +69,30 @@ import Loader from '@/components/atoms/Loader.vue';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import UiPagination from '@/components/core/ui/UiPagination.vue';
-import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 import {createLogger} from '@/core/logger';
+import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
+import {MiscApi} from '@/core/pack-api/miscApi';
+import {alertController} from '@/core/controllers/alertController';
+
+const anyOption: SelectionOption = { label: 'Any', value: 'any' };
+const loaderOptions: SelectionOption[] = [
+  anyOption,
+  { label: 'Neoforge', value: 'neoforge' },
+  { label: 'Forge', value: 'forge' },
+  { label: 'Fabric', value: 'fabric' },
+  { label: 'Quilt', value: 'quilt' },
+]
+
+const sortOptions: SelectionOption[] = [
+  { label: 'Newest', value: 'new' },
+  { label: 'Featured', value: 'featured' },
+  { label: 'Popular', value: 'popular' },
+  { label: 'Updated', value: 'updated' },
+]
 
 @Component({
   components: {
+    Selection2,
     UiPagination,
     PackPreview,
     Loader,
@@ -88,20 +105,32 @@ export default class BrowseModpacks extends Vue {
   
   private logger = createLogger("BrowseModpacks.vue")
 
+  selectedTag: string = anyOption.value;
+  selectedLoader: string = loaderOptions[0].value;
+  selectedVersion: string = anyOption.value;
+  selectedSort: string = sortOptions[0].value; 
+
+  /**
+   * Expose the data to vue
+   */
+  loaderOptions = loaderOptions;
+  sortOptions = sortOptions;
+  versionOptions: SelectionOption[] = [
+    anyOption
+  ];
+  tagOptions: SelectionOption[] = [
+    anyOption,
+  ];
+
   searchValue: string = '';
   currentTab: PackProviders = 'modpacksch';
 
   searchResults: SearchResultPack[] = [];
 
   loading = false;
-  
   error = '';
-  
-  loadingInitialPacks = false;
-  
-  ourPackIds: number[] = [];
   currentPage = 1;
-  visiblePacks: number[] = [];
+  maxPages = 0;
 
   async mounted() {
     if (this.$route.params.search) {
@@ -112,24 +141,45 @@ export default class BrowseModpacks extends Vue {
 
     try {
       await toggleBeforeAndAfter(async () => {
-        const data = await Promise.all([
-          await modpackApi.modpacks.getModpacks(),
-          await modpackApi.modpacks.getPrivatePacks()
-        ])
-
-        const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
-        this.ourPackIds = [...allPackIds].sort((a, b) => b - a);
-
-        // remove the modloader packs
-        this.ourPackIds = this.ourPackIds.filter(e => !packBlacklist.includes(e));
-
-        this.visiblePacks = this.ourPackIds.slice(0, 10);
-      }, (state) => this.loadingInitialPacks = state);
+        const minecraftVersions = await MiscApi.getMinecraftVersions();
+        if (!minecraftVersions) {
+          alertController.error("Failed to load minecraft versions");
+        } else {
+          this.versionOptions = [anyOption, ...minecraftVersions
+            .filter(e => e.type === 'release')
+            .map(e => ({ label: e.name, value: e.name }))];
+        }
+        
+        const tags = await modpackApi.browse.tags('modpacksch');
+        if (!tags) {
+          alertController.error("Failed to load tags");
+        } else {
+          this.tagOptions = [anyOption, ...tags.tags.map(e => ({ label: e.name, value: e.id }))];
+        }
+        
+        await this.updatePacks();
+      }, (state) => this.loading = state);
     } catch (error) {
       this.logger.error("Failed to load packs", error);
     }
   }
 
+  private async updatePacks(page = 1) {
+    this.searchResults = [];
+    this.loading = true;
+    const tmpModpacks = await modpackApi.browse.browse(this.currentTab, {
+      page: page,
+      tag: this.selectedTag == 'any' ? undefined : parseInt(this.selectedTag, 10),
+      version: this.selectedVersion == 'any' ? undefined : this.selectedVersion,
+      loader: this.selectedLoader == 'any' ? undefined : this.selectedLoader,
+      sort: this.selectedSort as any,
+    })
+    this.loading = false;
+    
+    this.searchResults = tmpModpacks?.packs ?? [];
+    this.maxPages = tmpModpacks?.pages ?? 0;
+  }
+  
   scrollToTop() {
     // Smooth scroll to top
     document.querySelector('.app-content')?.scrollTo({
@@ -138,9 +188,18 @@ export default class BrowseModpacks extends Vue {
     });
   }
   
+  @Watch('selectedTag')
+  @Watch('selectedVersion')
+  @Watch('selectedLoader')
+  @Watch('selectedSort')
+  async onFilterChange() {
+    this.currentPage = 1;
+    await this.updatePacks(this.currentPage);
+  }
+  
   @Watch('currentPage')
-  onPageChange() {
-    this.visiblePacks = this.ourPackIds.slice((this.currentPage - 1) * 10, ((this.currentPage - 1) * 10 + 10));
+  async onPageChange() {
+    await this.updatePacks(this.currentPage)
   }
   
   @Watch('$route')
@@ -157,6 +216,13 @@ export default class BrowseModpacks extends Vue {
 
   async changeTab(tab: PackProviders) {
     this.currentTab = tab;
+    
+    if (this.searchValue === '') {
+      this.currentPage = 1;
+      await this.updatePacks(this.currentPage)
+      return;
+    }
+    
     this.searchResults = [];
     await this.searchPacks();
   }
@@ -167,8 +233,8 @@ export default class BrowseModpacks extends Vue {
     this.searchResults = [];
     
     if (this.searchValue === '') {
-      this.loading = false;
-      this.error = '';
+      this.searchResults = [];
+      this.updatePacks();
       return;
     }
 
