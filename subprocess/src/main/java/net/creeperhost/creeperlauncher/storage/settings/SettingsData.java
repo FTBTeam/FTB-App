@@ -17,7 +17,7 @@ import java.nio.file.Path;
  */
 public class SettingsData {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
+    
     private String spec;
     @JsonAdapter(PathTypeAdapter.class)
     private Path instanceLocation;

@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.storage.settings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.util.MiscUtils;
 import net.creeperhost.creeperlauncher.util.ProxyUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,12 +42,24 @@ public class Settings {
         attemptMigration();
         if (Settings.settingsData != null) {
             // Migration happened, we don't need to load.
+
+            // Again, this shouldn't be needed but it looks like it is...
+            if (settingsData.instanceLocation().equals(Constants.getDataDir())) {
+                Settings.settingsData.setInstanceLocation(Constants.INSTANCES_FOLDER_LOC);
+            }
+            
             return;
         }
             
         // Try and load the settings file
         try {
             Settings.settingsData = SettingsData.read();
+            
+            // Attempt to fix the instance location if it's fucked for some reason
+            // I think something with path parsing might break it.
+            if (settingsData.instanceLocation().equals(Constants.getDataDir())) {
+                Settings.settingsData.setInstanceLocation(Constants.INSTANCES_FOLDER_LOC);   
+            }
         } catch (Exception e) {
             LOGGER.warn("Failed to load settings file, using defaults.", e);
             Settings.settingsData = Settings.DEFAULT_SETTINGS;
@@ -69,7 +80,8 @@ public class Settings {
     }
 
     public static void attemptMigration() {
-        if (Files.notExists(Constants.SETTINGS_FILE_LEGACY)) {
+        // Don't migrate if the new settings file exists or the old one doesn't
+        if (Files.notExists(Constants.SETTINGS_FILE_LEGACY) || Files.exists(Constants.SETTINGS_FILE)) {
             return;
         }
         
@@ -143,34 +155,7 @@ public class Settings {
     
     private static final SettingsData DEFAULT_SETTINGS = SettingsData.createDefault();
     
-    public static class SettingsMigrator {        
-        public static final Function<String, HashMap<String, String>> CONVERT_ARGS_LIST = (value) -> {
-            var commands = MiscUtils.splitCommand(value);
-            var map = new HashMap<String, String>();
-            
-            for (int i = 0; i < commands.size(); i++) {
-                String command = commands.get(i);
-                if (command.startsWith("-")) {
-                    String key = command.substring(1);
-                    if (i + 1 > commands.size() - 1) {
-                        map.put(key, "");
-                        continue;
-                    }
-                    
-                    String val = commands.get(i + 1);
-                    
-                    // Skip the next value if it's a flag
-                    if (val.startsWith("-")) {
-                        val = "";
-                    }
-                    
-                    map.put(key, val);
-                }
-            }
-            
-            return map;
-        };
-        
+    public static class SettingsMigrator {
         private final Map<String, String> oldSettings;
         
         public SettingsMigrator(Map<String, String> oldSettings) {
@@ -188,7 +173,17 @@ public class Settings {
             
             return new SettingsData(
                 DEFAULT_SPEC,
-                getOrDefault("instanceLocation", Path::of, DEFAULT_SETTINGS.instanceLocation()),
+                getOrDefault("instanceLocation", input -> {
+                    // This shouldn't be needed but it looks like it is...
+                    var path = Path.of(input);
+                    if (path.equals(Constants.getDataDir())) {
+                        // Something borked...
+                        LOGGER.error("Instance location is the same as the data directory. Using default.");
+                        return Constants.INSTANCES_FOLDER_LOC;
+                    }
+                    
+                    return path;
+                }, DEFAULT_SETTINGS.instanceLocation()),
                 new SettingsData.GeneralSettings(
                     getOrDefault("updateChannel", DEFAULT_SETTINGS.general().releaseChannel()),
                     getOrDefault("cacheLife", Integer::parseInt, DEFAULT_SETTINGS.general().cacheLife()),
@@ -229,7 +224,9 @@ public class Settings {
             }
             
             try {
-                return transform.apply(value);
+                var result =  transform.apply(value);
+                LOGGER.info("Migrated setting " + key + " with value " + value + " to " + result);
+                return result;
             } catch (Exception e) {
                 LOGGER.error("Failed to parse setting " + key + " with value " + value, e);
                 return defaultValue;
