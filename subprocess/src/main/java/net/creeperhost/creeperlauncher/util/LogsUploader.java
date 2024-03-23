@@ -51,7 +51,7 @@ public class LogsUploader {
     public static String uploadUILogs() {
         var obj = new JsonObject();
         
-        obj.addProperty("version", "2.0.0");
+        obj.addProperty("version", "2.0.1");
         
         var metaDetails = new JsonObject();
         metaDetails.addProperty("instanceCount", Instances.allInstances().size());
@@ -65,6 +65,7 @@ public class LogsUploader {
         var appDetails = new JsonObject();
         appDetails.addProperty("app", Constants.APPVERSION);
         appDetails.addProperty("platform", Constants.PLATFORM);
+        appDetails.addProperty("sharedVersion", Constants.SHARED_VERSION);
         obj.add("appDetails", appDetails);
         
         var systemDetails = new JsonObject();
@@ -95,7 +96,12 @@ public class LogsUploader {
     }
 
     private static String getFilteredSettings() {
-        return uploadIfNotEmpty(GSON.toJson(Settings.getSettings()));
+        try {
+            return GSON.toJson(Settings.getSettings());
+        } catch (Throwable e) {
+            LOGGER.warn("Failed to get settings", e);
+            return "settings failed to load";
+        }
     }
     
     private static JsonObject collectLogs() {
@@ -115,7 +121,7 @@ public class LogsUploader {
             .entrySet()
             .forEach(e -> logs.addProperty(e.getKey(), e.getValue().getAsString()));
         
-        getLastTwoDebugLogsFromHistory()
+        getLastFourDebugLogsFromHistory()
             .forEach((key, value) -> logs.addProperty(key, uploadIfNotEmpty(value)));
         
         return logs;
@@ -256,8 +262,8 @@ public class LogsUploader {
         return null;
     }
     
-    public static Map<String, String> getLastTwoDebugLogsFromHistory() {
-        var files = List.of("debug-1.log.gz", "debug-2.log.gz");
+    public static Map<String, String> getLastFourDebugLogsFromHistory() {
+        var files = List.of("debug-1.log.gz", "debug-2.log.gz", "debug-3.log.gz", "debug-4.log.gz");
         var existingFiles = files.stream()
             .map(Constants.getDataDir().resolve("logs")::resolve)
             .filter(Files::exists)

@@ -86,10 +86,20 @@ dependencies {
 //    useJUnitPlatform()
 //}
 
+// Lazy wrapper for the package.json data.
+def packageJsonData = null
+def packageJsonHolder = () -> {
+    if (packageJsonData == null) {
+        packageJsonData = new JsonSlurper().parse(file("../package.json"))
+    }
+    
+    return packageJsonData
+}
+
 task processSource(type: Sync) {
     from sourceSets.main.java
     inputs.property 'version', version
-    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, BRANCH: branch, SENTRY: sentryDsn])
+    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, SHAREDVERSION: packageJsonHolder().version, BRANCH: branch, SENTRY: sentryDsn])
     into "$buildDir/src"
 }
 
@@ -161,7 +171,7 @@ tasks.register('writeLicenses', Copy) {
 tasks.register('writeVersion') {
     it.dependsOn 'downloadLicenses'
     doLast {
-        def packageJson = new JsonSlurper().parse(file("../package.json"))
+        def packageJson = packageJsonHolder()
 
         file("$projectDir/build/libs/meta.json").newWriter().withWriter { w ->
             w << JsonOutput.toJson(
