@@ -60,7 +60,7 @@ public class Settings {
             if (settingsData.instanceLocation().equals(Constants.getDataDir())) {
                 Settings.settingsData.setInstanceLocation(Constants.INSTANCES_FOLDER_LOC);   
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.warn("Failed to load settings file, using defaults.", e);
             Settings.settingsData = Settings.DEFAULT_SETTINGS;
             
@@ -103,7 +103,7 @@ public class Settings {
             } catch (IOException e) {
                 LOGGER.error("Failed to delete old settings file.", e);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Failed to migrate settings file. Aborting migration process.", e);
             LOGGER.info("Deleting old settings file. If possible");
             try {
@@ -224,10 +224,8 @@ public class Settings {
             }
             
             try {
-                var result =  transform.apply(value);
-                LOGGER.info("Migrated setting " + key + " with value " + value + " to " + result);
-                return result;
-            } catch (Exception e) {
+                return transform.apply(value);
+            } catch (Throwable e) {
                 LOGGER.error("Failed to parse setting " + key + " with value " + value, e);
                 return defaultValue;
             }
