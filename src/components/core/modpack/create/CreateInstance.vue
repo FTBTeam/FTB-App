@@ -118,6 +118,8 @@ import UiToggle from '@/components/core/ui/UiToggle.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
 import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
 
 @Component({
   components: {
@@ -294,6 +296,7 @@ export default class CreateInstance extends Vue {
     }
     
     this.close()
+    safeNavigate(RouterNames.ROOT_LIBRARY);
   }
   
   get selectedMcVersion() {
