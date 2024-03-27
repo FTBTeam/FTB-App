@@ -82,9 +82,9 @@ dependencies {
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
 }
 
-//test {
-//    useJUnitPlatform()
-//}
+test {
+    useJUnitPlatform()
+}
 
 // Lazy wrapper for the package.json data.
 def packageJsonData = null
