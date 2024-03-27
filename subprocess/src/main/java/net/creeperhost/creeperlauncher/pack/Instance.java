@@ -349,7 +349,9 @@ public class Instance {
             if (supportMeta == null) return; // Should be _incredibly_ rare. But just incase...
 
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
-            if (!loadingMods.isEmpty()) {
+            
+            // Only inject custom mods if we have any, and we're not a "custom" instance.
+            if (!loadingMods.isEmpty() && !this.isLoaderInstance()) {
                 if (Files.notExists(path.resolve(".no_loading_mods.marker"))) {
                     for (InstanceSupportMeta.SupportFile file : loadingMods) {
                         if (!file.canApply(props.modLoader, os)) continue;
@@ -378,6 +380,7 @@ public class Instance {
                     LOGGER.warn("Failed to find free Ephemeral port.");
                 }
             }
+            
             for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
                 for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
                     if (!file.canApply(props.modLoader, os)) continue;
@@ -711,6 +714,23 @@ public class Instance {
                 this,
                 action
         );
+    }
+
+    /**
+     * Checks if this instance is a loader instance. Aka: The instance is a vanilla, forge, fabric, or neo instance.
+     * <p>
+     * Without doing requests, this is basically the easiest way to check if this is a custom modpack or not.
+     * 81,  // Vanilla
+     * 104, // Forge
+     * 105, // Fabric
+     * 116  // NeoForge
+     */
+    public boolean isLoaderInstance() {
+        if (this.props.id == 0 || this.props.versionId == 0) {
+            return false;
+        }
+
+        return this.props.id == 81 || this.props.id == 104 || this.props.id == 105 || this.props.id == 116;
     }
 
     /**
