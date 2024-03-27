@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
+  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }" v-show="!disableNav">
     <sidebar-create :disabled="disableNav" />
     
     <div class="nav-items nav-main mt-2">      
