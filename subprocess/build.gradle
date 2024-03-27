@@ -181,7 +181,7 @@ tasks.register('writeVersion') {
                             branch        : branch,
                             released      : Instant.now().getEpochSecond(),
                             runtime       : [
-                                    version: "21",
+                                    version: project.target_java_version,
                                     // Get the output of the fatjar -all
                                     jar: shadowJar.outputs.files.singleFile.name,
 

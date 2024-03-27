@@ -11,7 +11,8 @@ env:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   
 jobs:      
-  build-linux:
+  test-subprocess:
+    name: Test Subprocess
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
@@ -40,3 +41,10 @@ jobs:
         run: |
           cd subprocess
           ./gradlew clean test
+      # Upload the report regardless of a failure
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: subprocess/build/reports/tests/
