@@ -88,8 +88,8 @@ public class SettingsData {
                 false
             ),
             new InstanceSettings(
-                (int) (Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2),
-                (int) (Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2),
+                getScreenWidth(),
+                getScreenHeight(),
                 4096,
                 false,
                 "release",
@@ -112,6 +112,16 @@ public class SettingsData {
                 0
             )
         );
+    }
+    
+    private static int getScreenWidth() {
+        if (System.getenv("CI") != null) return 1920; // CI doesn't have a screen size
+        return (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+    }
+    
+    private static int getScreenHeight() {
+        if (System.getenv("CI") != null) return 1080; // CI doesn't have a screen size
+        return (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
     }
 
     public String spec() {

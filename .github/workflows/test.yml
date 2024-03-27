@@ -38,6 +38,7 @@ jobs:
         env:
           SUBPROCESS_SENTRY_DSN: ${{ secrets.SUBPROCESS_SENTRY_DSN }}
           GITHUB_BRANCH: "test"
+          CI: true
         run: |
           cd subprocess
           ./gradlew clean test
