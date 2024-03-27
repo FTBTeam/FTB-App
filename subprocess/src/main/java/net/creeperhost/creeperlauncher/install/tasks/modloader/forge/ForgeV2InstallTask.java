@@ -12,6 +12,7 @@ import joptsimple.OptionSpec;
 import joptsimple.util.PathConverter;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
+import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
@@ -78,17 +79,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             );
             VersionManifest vanillaManifest = downloadVanilla(versionsDir, instManifest.minecraft);
 
-            List<VersionManifest.Library> libraries = new ArrayList<>(forgeManifest.libraries.size() + instManifest.libraries.size());
-            FastStream.of(forgeManifest.libraries)
-                    // 1.20.4+ forge adds a library with a null URL. This file is installed
-                    // by the processors, to the correct place in the libraries dir. We need to
-                    // ignore them here so we don't fail at downloading libraries. Anything done here
-                    // for the installed profile is just to speed up launching later on.
-                    .filter(e -> e.url != null && !e.url.isEmpty())
-                    .forEach(libraries::add);
-            libraries.addAll(instManifest.libraries);
-
-            for (VersionManifest.Library library : libraries) {
+            for (VersionManifest.Library library : FastStream.concat(forgeManifest.libraries, instManifest.libraries)) {
                 if (cancelToken != null) cancelToken.throwIfCancelled();
                 processLibrary(cancelToken, installerRoot, librariesDir, library);
             }

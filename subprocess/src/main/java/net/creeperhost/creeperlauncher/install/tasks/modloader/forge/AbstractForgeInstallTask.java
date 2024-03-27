@@ -1,5 +1,6 @@
 package net.creeperhost.creeperlauncher.install.tasks.modloader.forge;
 
+import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
@@ -11,6 +12,7 @@ import net.creeperhost.creeperlauncher.install.FileValidation;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.install.tasks.modloader.ModLoaderInstallTask;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
+import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.LibraryDownload;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.apache.logging.log4j.LogManager;
@@ -77,11 +79,11 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
     public static AbstractForgeInstallTask createNeoForgeInstallTask(Instance instance, String mcVersion, String neoForgeVersion) throws IOException {
         MavenNotation versionSpecificNotation = NEO_FORGE_1_20_2_PLUS_NOTATION.withVersion(neoForgeVersion);
-        
+
         if (mcVersion.equals("1.20.1")) {
             versionSpecificNotation = NEO_FORGE_NOTATION.withVersion(mcVersion + "-" + neoForgeVersion);
         }
-        
+
         MavenNotation notation = versionSpecificNotation
                 .withClassifier("installer");
 
@@ -150,11 +152,19 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return FORGE_NOTATION.withVersion(mcVersion + "-" + forgeVersion);
     }
 
-    protected static Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
+    protected static @Nullable Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
+        LOGGER.info("Processing library " + library.name);
+        Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
+        if (!library.hasDownloadPath() && Files.notExists(installerMavenFile)) {
+            // 1.20.4+ forge adds a library with a null URL, which is not located inside the jar.
+            // All previous versions had this file inside the installer jar, instead this file is installed
+            // by the processors to the correct place in the libraries dir. Just ignore these.
+            // File has no download path and is not inside the installer jar. This must be a generated artifact.
+            LOGGER.info(" Library does not exist inside forge installer jar. Must be a generated artifact.");
+            return null;
+        }
         DownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
         if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
-
-        Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
 
         downloadTask = downloadTask.toBuilder()
                 .withFileLocator(new PackedJarLocator(installerMavenFile))

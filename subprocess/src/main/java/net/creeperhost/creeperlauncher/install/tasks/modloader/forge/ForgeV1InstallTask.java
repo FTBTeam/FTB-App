@@ -79,7 +79,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
                 if (library.clientreq == null || !library.clientreq) continue; // Skip, mirrors forge logic.
                 Path libraryPath = processLibrary(cancelToken, installerRoot, librariesDir, library);
 
-                if (library.checksums.isEmpty()) continue;
+                if (libraryPath == null || library.checksums.isEmpty()) continue;
 
                 String sha1 = HashUtils.hash(Hashing.sha1(), libraryPath).toString();
 

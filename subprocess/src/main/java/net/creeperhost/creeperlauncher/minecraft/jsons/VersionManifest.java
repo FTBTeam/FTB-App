@@ -397,6 +397,19 @@ public class VersionManifest {
                     .withValidation(validation)
                     .build();
         }
+
+        /**
+         * Has empty download path.
+         *
+         * @return If this library has a download path.
+         */
+        public boolean hasDownloadPath() {
+            if (url != null && !url.isEmpty()) return true;
+
+            if (downloads == null) return false;
+            if (downloads.artifact == null) return false;
+            return StringUtils.isNotEmpty(downloads.artifact.url);
+        }
     }
 
     public static class Logging {
