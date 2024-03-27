@@ -107,8 +107,15 @@
       </div>
     </header>
 
-    <div class="logs flex justify-between items-center" :class="{ 'dark-mode': darkMode }">
-      <h3 class="font-bold text-lg">Log</h3>
+    <div class="logs flex items-center" :class="{ 'dark-mode': darkMode }">
+      <h3 class="font-bold text-lg mr-6">Log</h3>
+      
+      <div class="flex text-sm gap-2 flex-1">
+        <div v-for="(type, index) in logTypes" :key="index" @click="() => toggleEnabledLog(type)" class="border rounded px-1 border-gray-700 text-white opacity-50 transition-colors cursor-pointer duration-200" :class="{'bg-gray-700 text-white  opacity-100': enabledLogTypes.includes(type)}">
+          {{ type }}
+        </div>
+      </div>
+      
       <div class="buttons flex items-center">
         <!--        <ftb-button-->
         <!--          class="transition ease-in-out duration-200 text-xs border border-solid px-2 py-1 mr-4 hover:bg-green-600 hover:text-white hover:border-green-600"-->
@@ -150,16 +157,17 @@
       </div>
     </div>
     
-    <recycle-scroller 
+    <recycle-scroller
       id="log-container"
       :items="logMessages"
-      key-field="i" 
+      key-field="i"
       :item-size="20" 
       class="select-text log-contents flex-1"
       list-class="log-contents-fixer"
       :class="{ 'dark-mode': darkMode }" v-slot="{ item }"
+      @scroll.native="userInteractedWithLogs"
     >
-      <div class="log-item" :class="messageTypes[item.t] + (!darkMode ? '-LIGHT': '')" :key="item.i">{{item.v}}</div>
+      <div class="log-item" :class="messageTypes[item.t] + (!darkMode ? '-600': '-400')" :key="item.i">{{item.v}}</div>
     </recycle-scroller>
     
     <modal :open="showOptions" title="Instance options" :sub-title="instanceName" @closed="showOptions = false">
@@ -328,8 +336,9 @@ export default class LaunchingPage extends Vue {
   @State('settings') public settingsState!: SettingsState;
   
   private logger = createLogger("LaunchingPage.vue");
-
-  // @Ref('logContainer') logContainer!: HTMLDivElement;
+  
+  enabledLogTypes = ["Info", "Warn", "Error"];
+  logTypes = ["Info", "Warn", "Error", "Debug", "Trace"];
   
   loading = false;
   preLaunch = true;
@@ -355,11 +364,13 @@ export default class LaunchingPage extends Vue {
   finishedLoading = false;
   preInitMessages: Set<string> = new Set();
 
-  messages: FixedSizeArray<{ i: number, t: string, v: string }> = new FixedSizeArray<{ i: number, t: string, v: string }>(20_000);
+  messages: FixedSizeArray<{ i: number, t: string, v: string }> = new FixedSizeArray<{ i: number, t: string, v: string }>(100_000);
   launchProgress: Bar[] | null | undefined = null;
 
   showOptions = false;
   lastIndex = 0;
+  
+  scrollIntervalRef: any = null;
 
   public cancelLoading() {
     this.logger.debug("Attempting to kill instance")
@@ -371,6 +382,10 @@ export default class LaunchingPage extends Vue {
   }
 
   public async mounted() {
+    if (localStorage.getItem("enabledLogTypes")) {
+      this.enabledLogTypes = localStorage.getItem("enabledLogTypes")!.split(",");
+    }
+    
     this.logger.debug("Mounted Launch page, waiting for websockets...");
     await waitForWebsocketsAndData("Launch page", this.websockets.socket, () => {
       // This should get resolved quickly but it's possible it wont
@@ -395,21 +410,22 @@ export default class LaunchingPage extends Vue {
     });
     
     await this.launch();
-
+    
     sendMessage("getInstanceFolders", {
       uuid: this.instance.uuid
     })
       .then((e) => (this.instanceFolders = e.folders))
       .catch(e => this.logger.error("Failed to get instance folders", e))
-
-
-    document.querySelector('.log-contents')?.addEventListener('scroll', this.userInteractedWithLogs);
+    
+    this.scrollIntervalRef = setInterval(this.scrollToBottom, 500);
   }
   
   userInteractedWithLogs(event: any) {
+    console.log(event);
     const location = event.target.scrollTop + event.target.clientHeight;
+    
     // Give a 10px buffer
-    this.disableFollow = location < event.target.scrollHeight - 10;
+    this.disableFollow = location < event.target.scrollHeight - 5;
   }
 
   onLaunchProgressUpdate(data: any) {
@@ -446,15 +462,13 @@ export default class LaunchingPage extends Vue {
 
       this.leavePage();
     }
-    
-    setInterval(this.scrollToBottom, 500);
   }
   
   scrollToBottom() {
     if (this.disableFollow) {
       return;
     }
-    
+
     const elm = document.getElementById('log-container');
     if (elm) {
       elm.scrollTop = elm.scrollHeight;
@@ -481,8 +495,7 @@ export default class LaunchingPage extends Vue {
   destroyed() {
     // Stop listening to events!
     emitter.off('ws.message', this.onLaunchProgressUpdate);
-    clearInterval(this.scrollToBottom as any)
-    document.querySelector('.log-contents')?.removeEventListener('scroll', this.userInteractedWithLogs);
+    clearInterval(this.scrollIntervalRef)
   }
   
   async lazyLogChecker(messages: string[]) {
@@ -638,18 +651,19 @@ export default class LaunchingPage extends Vue {
   }
 
   messageTypes = {
-    "W": "text-orange-200",
-    "I": "text-blue-200",
-    "E": "text-red-200",
-    "W-LIGHT": "text-orange-700",
-    "I-LIGHT": "text-blue-700",
-    "E-LIGHT": "text-red-700",
+    "W": "text-orange",
+    "I": "text-blue",
+    "E": "text-red",
+    "D": "text-purple",
+    "T": "text-green",
   };
   
   typeMap = new Map([
     ["WARN", "W"],
     ["INFO", "I"],
-    ["ERROR", "E"]
+    ["ERROR", "E"],
+    ["DEBUG", "D"],
+    ["TRACE", "T"],
   ])
   
   lastType = "I";
@@ -703,7 +717,46 @@ export default class LaunchingPage extends Vue {
   }
   
   get logMessages() {
-    return this.messages.getItems();
+    if (this.enabledLogTypes.length === 0) {
+      return [{
+        i: 0,
+        t: "I",
+        v: "No logs to display"
+      }];
+    }
+    
+    // Don't filter. 
+    if (this.enabledLogTypes.length === this.logTypes.length) {
+      return this.messages.getItems();
+    }
+
+    return this.messages.getItems()
+      .filter((e) => this.includeLog(e.t));
+  }
+  
+  includeLog(type: string) {
+    switch (type) {
+      case "I":
+        return this.enabledLogTypes.includes("Info");
+      case "W":
+        return this.enabledLogTypes.includes("Warn");
+      case "E":
+        return this.enabledLogTypes.includes("Error");
+      case "D":
+        return this.enabledLogTypes.includes("Debug");
+      case "T":
+        return this.enabledLogTypes.includes("Trace");
+    }
+  }
+  
+  toggleEnabledLog(type: string) {
+    if (this.enabledLogTypes.includes(type)) {
+      this.enabledLogTypes = this.enabledLogTypes.filter((e) => e !== type);
+    } else {
+      this.enabledLogTypes.push(type);
+    }
+    
+    localStorage.setItem("enabledLogTypes", this.enabledLogTypes.join(","));
   }
 }
 </script>
@@ -782,10 +835,8 @@ export default class LaunchingPage extends Vue {
   }
 
   .log-contents {
-    //width: 100%;
-    //height: 100%;
     padding: 1rem;
-    font-family: 'Consolas', 'Courier New', Courier, monospace;
+    font-family: 'JetBrains Mono', 'Consolas', 'Courier New', Courier, monospace;
     font-size: 12px;
     
     overflow-x: auto;
