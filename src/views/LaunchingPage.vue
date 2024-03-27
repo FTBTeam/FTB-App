@@ -155,7 +155,7 @@
       :items="logMessages"
       key-field="i" 
       :item-size="20" 
-      class="select-text log-contents"
+      class="select-text log-contents flex-1"
       list-class="log-contents-fixer"
       :class="{ 'dark-mode': darkMode }" v-slot="{ item }"
     >
