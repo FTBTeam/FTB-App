@@ -112,6 +112,14 @@ module.exports = {
           provider: 'generic',
           url: "https://piston.feed-the-beast.com/app"
         },
+        protocols: [
+          {
+            name: "FTB App Protocol",
+            schemes: [
+              "ftb"
+            ]
+          }
+        ],
         beforePack: async (context) => {          
           if (context.electronPlatformName === 'darwin' && !hasRepackedJar) {
             await signJnilibInJar(context);
