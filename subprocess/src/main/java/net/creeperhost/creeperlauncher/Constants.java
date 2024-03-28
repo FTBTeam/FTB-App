@@ -131,8 +131,9 @@ public class Constants {
                 .readTimeout(5, TimeUnit.MINUTES)
                 .connectionPool(new ConnectionPool())
                 .cookieJar(new SimpleCookieJar())
-                .addInterceptor(new ThrottlerInterceptor())
                 .addInterceptor(new MultiHasherInterceptor())
+                .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().tag(Throttler.class, getGlobalThrottler()).build()))
+                .addInterceptor(new ThrottlerInterceptor())
                 .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT).build()));
 
         SSLUtils.inject(builder);
@@ -183,7 +184,7 @@ public class Constants {
         return ret.toAbsolutePath().normalize();
     }
 
-    public static Throttler getGlobalThrottler() {
+    private static Throttler getGlobalThrottler() {
         // TODO, double-check this logic.
         long maxSpeed = Settings.getSpeedLimit() * 1000L;
         if (maxSpeed > 0) {

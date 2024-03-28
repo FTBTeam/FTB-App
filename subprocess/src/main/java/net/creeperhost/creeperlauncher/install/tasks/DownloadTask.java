@@ -235,8 +235,6 @@ public class DownloadTask implements Task {
                 builder.addHeader("If-Modified-Since", TimeUtils.FORMAT_RFC1123.format(new Date(lastModified)));
             }
 
-            builder.tag(Throttler.class, Constants.getGlobalThrottler());
-
             boolean tempExists = Files.exists(tempFile);
             long existingSize = tempExists ? Files.size(tempFile) : -1;
             boolean tryResume = tryResumeDownload && tempExists;
