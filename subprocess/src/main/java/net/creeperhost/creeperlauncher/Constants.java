@@ -1,7 +1,8 @@
 package net.creeperhost.creeperlauncher;
 
-import net.covers1624.jdkutils.AdoptiumProvisioner;
 import net.covers1624.jdkutils.JdkInstallationManager;
+import net.covers1624.jdkutils.provisioning.adoptium.AdoptiumProvisioner;
+import net.covers1624.quack.net.httpapi.okhttp.OkHttpEngine;
 import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
@@ -161,11 +162,12 @@ public class Constants {
         if (JDK_INSTALL_MANAGER == null) {
             JDK_INSTALL_MANAGER = new JdkInstallationManager(
                     Constants.BIN_LOCATION.resolve("runtime"),
-                    new AdoptiumProvisioner(() -> new OkHttpDownloadAction()
-                            .setClient(httpClient())
-                            .addTag(Throttler.class, Constants.getGlobalThrottler())
-                    ),
-                    true
+                    new AdoptiumProvisioner(new OkHttpEngine() {
+                        @Override
+                        protected OkHttpClient getClient() {
+                            return httpClient();
+                        }
+                    })
             );
         }
         return JDK_INSTALL_MANAGER;

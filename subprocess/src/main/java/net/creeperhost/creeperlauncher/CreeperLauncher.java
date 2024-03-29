@@ -7,7 +7,7 @@ import io.sentry.Sentry;
 import io.sentry.log4j2.BuildConfig;
 import io.sentry.protocol.SdkVersion;
 import net.covers1624.jdkutils.JavaInstall;
-import net.covers1624.jdkutils.JavaLocator;
+import net.covers1624.jdkutils.locator.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.covers1624.quack.platform.Architecture;
 import net.creeperhost.creeperlauncher.api.DebugTools;

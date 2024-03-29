@@ -4,8 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
+import net.covers1624.jdkutils.JdkInstallationManager;
+import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
+import net.covers1624.quack.net.httpapi.RequestListener;
 import net.covers1624.quack.util.DataUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
@@ -322,16 +325,19 @@ public class InstanceLauncher {
                     LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
                     JavaVersion version = getJavaVersion();
                     javaHome = Constants.getJdkManager().provisionJdk(
-                            version,
-                            null,
-                            true,
-                            new QuackProgressAdapter(progressTracker.listenerForStep(true))
+                            new ProvisionRequest.Builder()
+                                    .forVersion(version)
+                                    .preferJRE(true)
+                                    .downloadListener(progressTracker.requestListener())
+                                    .build()
                     );
                 } else {
                     javaHome = Constants.getJdkManager().provisionJdk(
-                            javaTarget,
-                            true,
-                            new QuackProgressAdapter(progressTracker.listenerForStep(true))
+                            new ProvisionRequest.Builder()
+                                    .withSemver(javaTarget)
+                                    .preferJRE(true)
+                                    .downloadListener(progressTracker.requestListener())
+                                    .build()
                     );
                 }
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
@@ -778,6 +784,33 @@ public class InstanceLauncher {
 
                 @Override
                 public void finish(long total) {
+                }
+            };
+        }
+
+        public RequestListener requestListener() {
+            return new RequestListener() {
+                @Override
+                public void start(Direction type) { }
+
+                @Override
+                public void onUpload(long total, long now) {
+                }
+
+                @Override
+                public void onDownload(long total, long now) {
+                    stepProgress = (float) ((double) now / (double) total);
+                    if (stepProgress == Float.NEGATIVE_INFINITY || stepProgress == Float.POSITIVE_INFINITY) {
+                        // Wat?
+                        stepProgress = 0;
+                    }
+                    humanDesc = DataUtils.humanSize(now) + " / " + DataUtils.humanSize(total);
+                    sendUpdate(false);
+                }
+
+                @Override
+                public void end() {
+
                 }
             };
         }

@@ -2,7 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.instances;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.covers1624.jdkutils.JavaLocator;
+import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
@@ -64,7 +64,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             }
 
             if (jreRealPath != null) {
-                if (JavaLocator.parseInstall(jreRealPath) == null) {
+                if (JavaInstall.parse(jreRealPath) == null) {
                     WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
                     return;
                 }
