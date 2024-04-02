@@ -22,12 +22,18 @@ const logAndEmit = (event: string, ...args: any[]) => {
   ipcMain.emit(event, ...args);
 }
 
+let checkUpdaterLock = false;
+
 autoUpdater.on('checking-for-update', () => logAndEmit('updater:checking-for-update'));
 autoUpdater.on('update-available', () => logAndEmit('updater:update-available'));
 autoUpdater.on('update-not-available', () => logAndEmit('updater:update-not-available'));
 autoUpdater.on('error', (error) => logAndEmit('updater:error', JSON.stringify(error)));
 autoUpdater.on('download-progress', (progress) => logAndEmit('updater:download-progress', progress));
-autoUpdater.on('update-downloaded', (info) => logAndEmit('updater:update-downloaded', info));
+autoUpdater.on('update-downloaded', (info) => {
+  logger.debug("Update downloaded", info)
+  ipcMain.emit('updater:update-downloaded');
+  updateApp("UpdateDownloaded");
+});
 
 function getAppHome() {
   if (os.platform() === "darwin") {
@@ -630,19 +636,23 @@ async function createPreLaunchWindow(source: string) {
 }
 
 ipcMain.handle('updater:check-for-update', async () => {
+  if (checkUpdaterLock) {
+    logger.debug("Updater is already checking for updates, returning")
+    return false;
+  }
+  
+  checkUpdaterLock = true;
   const result = await autoUpdater.checkForUpdates();
   
   if (result?.downloadPromise) {
     logger.debug("Waiting for download promise")
     const version = await result.downloadPromise;
     logger.debug("Download promise resolved", version)
-    
-    // Quit the app and install the update
-    logger.debug("Requesting app quit and install")
-    autoUpdater.quitAndInstall()
+    checkUpdaterLock = false;
     return true;
   }
-  
+
+  checkUpdaterLock = false;
   return false;
 })
 
@@ -662,11 +672,26 @@ ipcMain.handle('app:launch', async () => {
 })
 
 ipcMain.handle('app:quit-and-install', async () => {
-  logger.debug("Quitting and installing app")
-  // Restart the entire app
-  autoUpdater.quitAndInstall();
-  
+  updateApp("QuitAndInstall")
 });
+
+function updateApp(source: string) {
+  logger.debug("Quitting and installing app from: ", source)
+
+  // Get all known windows and close them
+  logger.debug("Removing all listeners and closing windows");
+  app.removeAllListeners('window-all-closed');
+  
+  logger.debug("Closing all windows")
+  BrowserWindow.getAllWindows().forEach((window) => {
+    logger.debug("Closing window", window.id)
+    window.removeAllListeners('close');
+    window.destroy();
+  });
+  
+  logger.debug("Quitting app")
+  autoUpdater.quitAndInstall();
+}
 
 async function createWindow(reset = false) {
   

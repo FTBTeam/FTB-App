@@ -3,6 +3,17 @@ import {ipcRenderer} from 'electron';
 
 logger.info("Hello from prelaunch.ts");
 
+const statusElement = document.getElementById('status');
+
+function updateElementText(text: string) {
+  if (!statusElement) {
+    logger.error("Failed to get #status element");
+    return;
+  }
+  
+  statusElement.innerText = text;
+}
+
 // Start a failsafe timer to launch the app after 30 seconds
 setTimeout(() => {
   logger.error("Failsafe timer expired, launching app");
@@ -26,9 +37,7 @@ ipcRenderer.invoke('updater:check-for-update')
   .then(async (updater) => {
     logger.info("Received updater", updater);
     if (updater) {
-      logger.info("For some reason, we got the update here so let's also try and update", updater);
-      await ipcRenderer.invoke('app:quit-and-install')
-      logger.info("Update should have been installed")
+      updateElementText("Preparing update...");
       return;
     }
 
@@ -39,10 +48,6 @@ ipcRenderer.invoke('updater:check-for-update')
     // Just launch the app
     ipcRenderer.invoke('app:launch').catch((e) => logger.error("Failed to launch app", e));
   });
-
-ipcRenderer.on('updater:checking-for-update', () => logger.info("Checking for update"));
-
-ipcRenderer.on('updater:update-available', () => logger.info("Update available"));
 
 ipcRenderer.on('updater:update-not-available', async() => {
   logger.info("Update not available");
@@ -55,10 +60,12 @@ ipcRenderer.on('updater:error', async (e) => {
   await ipcRenderer.invoke('app:launch')
 });
 
-ipcRenderer.on('updater:download-progress', (progress) => logger.info("Download progress", progress));
+ipcRenderer.on('updater:download-progress', (progress: any) => {
+  logger.info("Download progress", progress);
+  updateElementText(`Downloading update: ${Math.round(progress.percent)}%`);
+});
 
-ipcRenderer.on('updater:update-downloaded', async (info) => {
-  logger.info("Update downloaded", info)
-
-  await ipcRenderer.invoke('app:quit-and-install')
+ipcRenderer.on('updater:update-downloaded', async () => {
+  logger.info("Update downloaded, restarting app");
+  updateElementText("Update downloaded, restarting...");
 });

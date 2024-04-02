@@ -1,5 +1,4 @@
-import { Action, ActionContext, ActionType } from '../protocolActions';
-import store from '@/modules/store';
+import {Action, ActionContext, ActionType} from '../protocolActions';
 import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
 

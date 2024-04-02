@@ -283,7 +283,6 @@ export default class MainApp extends Vue {
 
       // Finally we need to get the app to connect to the subprocess
       await this.connectToWebsockets(appData.port, appData.secret);
-      this.checkForUpdates().catch(e => this.logger.error("Failed to check for updates", e));
     } catch (e: any) {
       // Same as the install, grab the custom error if possible
       this.appStartupFailed = true;
@@ -363,10 +362,6 @@ export default class MainApp extends Vue {
     if (await this.platform.get.app.cpm.required() && await this.platform.get.app.cpm.isFirstLaunch()) {
      this.showOnboarding = true;
     }
-  }
-  
-  async checkForUpdates() {
-
   }
   
   startNetworkMonitor() {

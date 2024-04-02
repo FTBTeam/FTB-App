@@ -164,7 +164,7 @@ public class ModpackVersionManifest {
         LOGGER.info("Converting pack '{}'.", manifest);
 
         Request.Builder builder = new Request.Builder()
-                .url(ModpacksChUtils.getPublicApi() + "/curseforge/import")
+                .url(ModpacksChUtils.getPublicApi() + "curseforge/import")
                 .put(new PathRequestBody(manifest));
         
         ModpacksChUtils.injectBearerHeader(builder);
