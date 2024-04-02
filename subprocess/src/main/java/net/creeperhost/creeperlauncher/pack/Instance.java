@@ -734,13 +734,34 @@ public class Instance {
     }
 
     /**
-     * Creates a safe pack name from the instance name, then seeds it with the instance UUID.
+     * Creates a safe pack name from the instance name
      */
     private static String folderNameFor(InstanceJson props) {
-        // TODO: Eval the issues cased by this.
-//        return props.name
-//            .replaceAll("[^a-zA-Z0-9\\s-]", "") + " (" + props.uuid.toString().split("-")[0] + ")";
-        return props.uuid.toString();
+        var computedName = props.name.replaceAll("[^a-zA-Z0-9\\s-]", "").toLowerCase();
+        
+        // Trim the computed name to 64 characters.
+        computedName = computedName.substring(0, Math.min(computedName.length(), 64));
+        
+        Path instancesDir = Settings.getInstancesDir();
+        if (!Files.exists(instancesDir.resolve(computedName))) {
+            return computedName;
+        }
+        
+        int count = 1;
+        try (var stream = Files.list(instancesDir)) {
+            for (var path : stream.toList()) {
+                if (path.getFileName().toString().toLowerCase().startsWith(computedName)) {
+                    count++;
+                }
+            }
+        } catch (IOException ex) {
+            LOGGER.error("Failed to count instances.", ex);
+            
+            // Fallback to UUID.
+            return computedName + "-" + UUID.randomUUID().toString().substring(0, 8);
+        }
+        
+        return computedName + " (" + count + ")";
     }
 
     // @formatter:off
