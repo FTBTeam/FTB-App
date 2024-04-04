@@ -58,6 +58,7 @@ public class InstanceJson {
     public String releaseChannel = "unset";
     
     public boolean locked = true;
+    public boolean pinned = false;
     
     public byte packType;
     // TODO migrate this to `isPrivate`
@@ -110,6 +111,8 @@ public class InstanceJson {
         releaseChannel = other.releaseChannel;
         locked = other.locked;
         shellArgs = other.shellArgs;
+        pinned = other.pinned;
+        potentiallyBrokenDismissed = other.potentiallyBrokenDismissed;
     }
 
     // Copy instance.

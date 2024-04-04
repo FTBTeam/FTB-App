@@ -5,6 +5,7 @@ import store from '@/modules/store';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
+import {sendMessage} from '@/core/websockets/websocketsApi';
 
 export class InstanceActions {
   private static logger = createLogger("InstanceActions.ts");
@@ -18,6 +19,20 @@ export class InstanceActions {
   
   static canStart(instance: SugaredInstanceJson) {
     return !instance.pendingCloudInstance;
+  }
+  
+  static async pin(instance: SugaredInstanceJson, pin: boolean) {
+    const result = await sendMessage("pinInstance", {
+      instance: instance.uuid,
+      pin
+    })
+    
+    if (result.success) {
+      // Update the store
+      await store.dispatch(`v2/instances/updateInstance`, result.instance, {root: true});
+    }
+    
+    return result.success;
   }
   
   static isUpdating(instance: SugaredInstanceJson) {

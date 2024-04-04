@@ -45,6 +45,7 @@ public class WebSocketHandler {
         register("appInit", AppInitHandler.Data.class, new AppInitHandler());
         register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
+        register("pinInstance", PinInstanceHandler.Data.class, new PinInstanceHandler());
         register("launchInstance", LaunchInstanceData.class, new LaunchInstanceHandler());
         register("instance.kill", KillInstanceData.class, new KillInstanceHandler());
         register("installInstance", InstallInstanceData.class, new InstallInstanceHandler());

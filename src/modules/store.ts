@@ -13,6 +13,7 @@ import {adsStateModule} from '@/core/state/misc/adsState';
 import {coreAppStateModule} from '@/core/state/core/coreAppState';
 import {mtAuthStateModule} from '@/core/state/core/mtAuthState';
 import {apiCredentialsStateModule} from '@/core/state/core/apiCredentialsState';
+import {userFavouritesModule} from '@/core/state/misc/userFavouritesState';
 
 Vue.use(Vuex);
 
@@ -44,7 +45,8 @@ const store: StoreOptions<RootState> = {
     "v2/dialogs": dialogsState,
     "v2/ads": adsStateModule,
     "v2/mtauth": mtAuthStateModule,
-    "v2/apiCredentials": apiCredentialsStateModule
+    "v2/apiCredentials": apiCredentialsStateModule,
+    "v2/userFavourites": userFavouritesModule
   }
 };
 

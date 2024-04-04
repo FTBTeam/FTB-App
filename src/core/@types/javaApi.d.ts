@@ -6,6 +6,10 @@ export interface BaseData {
     secret: string;
 }
 
+export interface PrivateBaseData extends BaseData {
+    notViableForLogging: boolean;
+}
+
 export interface BrowseInstanceData extends BaseData {
     uuid: string;
     folder: string;
@@ -454,6 +458,16 @@ export interface MoveInstancesHandlerReply extends MoveInstancesHandlerData {
     error: string;
 }
 
+export interface PinInstanceHandlerData extends BaseData {
+    instance: string;
+    pin: boolean;
+}
+
+export interface PinInstanceHandlerReply extends BaseData {
+    success: boolean;
+    instance: SugaredInstanceJson;
+}
+
 export interface InstanceDeleteBackupHandlerReply extends InstanceDeleteBackupHandlerRequest {
     message: string;
     success: boolean;
@@ -507,7 +521,7 @@ export interface MineTogetherAuthenticationHandlerData extends BaseData {
     appToken: string;
 }
 
-export interface MineTogetherAuthenticationHandlerReply extends MineTogetherAuthenticationHandlerData {
+export interface MineTogetherAuthenticationHandlerReply extends PrivateBaseData {
     success: boolean;
     message: string;
     basicData: BasicDataAndAccount;
@@ -533,13 +547,13 @@ export interface AuthenticateMsProfileHandlerData extends BaseData {
     liveExpires: number;
 }
 
-export interface AuthenticateMsProfileHandlerReply extends AuthenticateMsProfileHandlerData {
+export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
     success: boolean;
     networkError: boolean;
     code: string;
 }
 
-export interface GetProfilesHandlerReply extends BaseData {
+export interface GetProfilesHandlerReply extends PrivateBaseData {
     profiles: AccountProfile[];
     activeProfile: AccountProfile;
 }
@@ -551,7 +565,7 @@ export interface RefreshAuthenticationProfileHandlerData extends BaseData {
     liveExpires: number;
 }
 
-export interface RefreshAuthenticationProfileHandlerReply extends RefreshAuthenticationProfileHandlerData {
+export interface RefreshAuthenticationProfileHandlerReply extends PrivateBaseData {
     networkError: boolean;
     success: boolean;
     code: string;
@@ -569,7 +583,7 @@ export interface SetActiveProfileHandlerData extends BaseData {
     uuid: string;
 }
 
-export interface SetActiveProfileHandlerReply extends BaseData {
+export interface SetActiveProfileHandlerReply extends PrivateBaseData {
     success: boolean;
 }
 
@@ -636,6 +650,7 @@ export interface InstanceJson {
     category: string;
     releaseChannel: string;
     locked: boolean;
+    pinned: boolean;
     packType: number;
     _private: boolean;
     totalPlayTime: number;
@@ -708,7 +723,8 @@ export interface MineTogetherProfile {
 export interface UserApiCredentials {
     apiUrl: string;
     apiSecret: string;
-    settings: ApiSettings;
+    supportsPublicPrefix: boolean;
+    usesBearerAuth: boolean;
 }
 
 export interface AccountProfile {

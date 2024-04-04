@@ -61,6 +61,8 @@ import {
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
   PingLauncherData,
+  PinInstanceHandlerData,
+  PinInstanceHandlerReply,
   PollCloudInstancesData,
   PollCloudInstancesDataReply,
   PongLauncherData,
@@ -99,6 +101,7 @@ import {Nullable} from '@/core/websockets/websocketsApi';
 
 export type MessageType =
   "installedInstances" |
+  "pinInstance" |
   "launchInstance" |
   "instance.kill" |
   "installInstance" |
@@ -158,6 +161,10 @@ export type MessagePayload = {
     input: AppInitHandlerData,
     output: AppInitHandlerReply
   },
+  "pinInstance": {
+    input: PinInstanceHandlerData,
+    output: PinInstanceHandlerReply
+  }
   "minetogetherLogoutHandler": {
     input: BaseData,
     output: MineTogetherLogoutHandlerReply

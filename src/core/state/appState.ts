@@ -7,6 +7,7 @@ import {AdsState} from '@/core/state/misc/adsState';
 import {CoreAppState} from '@/core/state/core/coreAppState';
 import {MTAuthState} from '@/core/state/core/mtAuthState';
 import {ApiCredentialsState} from '@/core/state/core/apiCredentialsState';
+import {UserFavouritesState} from '@/core/state/misc/userFavouritesState';
 
 export type AppState = {
   "v2/app": CoreAppState,
@@ -17,7 +18,8 @@ export type AppState = {
   "v2/dialogs": DialogsState,
   "v2/ads": AdsState,
   "v2/mtauth": MTAuthState
-  "v2/apiCredentials": ApiCredentialsState
+  "v2/apiCredentials": ApiCredentialsState,
+  "v2/userFavourites": UserFavouritesState,
 }
 
 export type AppStoreModules = keyof AppState;

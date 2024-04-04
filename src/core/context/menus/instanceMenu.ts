@@ -1,5 +1,5 @@
 import {ContextMenu, MenuItem, MenuOptions} from '@/core/context/menus/contextMenu';
-import {faCog, faFolder, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {faCog, faFolder, faLocationPin, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
 import platform from '@/utils/interface/electron-overwolf';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {InstanceActions} from '@/core/actions/instanceActions';
@@ -55,6 +55,22 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
           await InstanceActions.start(context.instance)
         },
         predicate: context => InstanceActions.canStart(context.instance) && !InstanceActions.isUpdating(context.instance)
+      },
+      {
+        title: 'Pin',
+        icon: faLocationPin,
+        async action(context) {
+          await InstanceActions.pin(context.instance, true)
+        },
+        predicate: context => !context.instance.pinned
+      },
+      {
+        title: 'Unpin',
+        icon: faLocationPin,
+        async action(context) {
+          await InstanceActions.pin(context.instance, false)
+        },
+        predicate: context => context.instance.pinned
       },
       {
         title: 'Open folder',

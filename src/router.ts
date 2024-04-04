@@ -11,6 +11,7 @@ export enum RouterNames {
   ROOT_LIBRARY = 'modpacks',
   ROOT_BROWSE_PACKS = 'browseModpacks',
   ROOT_BLOG = 'blog',
+  ROOT_FAVORITES = 'favorites',
   ROOT_LOCAL_PACK = 'instancepage',
   ROOT_PREVIEW_PACK = 'modpackpage',
   ROOT_LAUNCH_PACK = 'launchingpage',
@@ -52,6 +53,11 @@ const router = new Router({
           path: '/blog',
           name: RouterNames.ROOT_BLOG,
           component: () => import(/* webpackChunkName: "blog" */ './views/Blog.vue'),
+        },
+        {
+          path: '/favorites',
+          name: RouterNames.ROOT_FAVORITES,
+          component: () => import(/* webpackChunkName: "favorites" */ './views/Favorites.vue'),
         },
         {
           path: '/settings',

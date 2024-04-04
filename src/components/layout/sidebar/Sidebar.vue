@@ -75,6 +75,11 @@ export default class Sidebar extends Vue {
     //   icon: 'globe-europe',
     // },
     {
+      name: "Favorites",
+      to: RouterNames.ROOT_FAVORITES,
+      icon: 'star',
+    },
+    {
       name: 'Blog',
       to: RouterNames.ROOT_BLOG,
       icon: 'rss',

@@ -17,8 +17,14 @@
           <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
         </div>
       </div>
-      <div class="install-btn" @click.stop="install">
-        <font-awesome-icon icon="download" />
+      <div class="actions flex gap-2">
+        <div class="fav-btn" :class="{'is-fav': alreadyFavourited}" @click.stop="favourite" :aria-label="alreadyFavourited ? `Remove favourite` : `Save for later`" data-balloon-pos="up-right">
+          <font-awesome-icon icon="star" />
+        </div>
+        
+        <div class="install-btn" @click.stop="install" aria-label="Install modpack" data-balloon-pos="up-right">
+          <font-awesome-icon icon="download" />
+        </div>
       </div>
     </div>
     <div class="pack-preview preview-shadow" v-else>
@@ -45,6 +51,9 @@ import {stringOrDefault} from '@/utils/helpers/stringHelpers';
 import {RouterNames} from '@/router';
 import ModpackInstallModal from '@/components/core/modpack/modals/ModpackInstallModal.vue';
 import {dialogsController} from '@/core/controllers/dialogsController';
+import {Action, Getter} from 'vuex-class';
+import {ns} from '@/core/state/appState';
+import {UserFavorite} from '@/core/state/misc/userFavouritesState';
 
 @Component({
   components: {ModpackInstallModal},
@@ -53,6 +62,10 @@ import {dialogsController} from '@/core/controllers/dialogsController';
   }
 })
 export default class PackPreview extends PackCardCommon {
+  @Getter('favourites', ns("v2/userFavourites")) favourites!: UserFavorite[];
+  @Action('addFavourite', { namespace: 'v2/userFavourites' }) addFavourite!: (favourite: UserFavorite) => void;
+  @Action('removeFavourite', { namespace: 'v2/userFavourites' }) removeFavourite!: (favourite: UserFavorite) => void;
+  
   @Prop() packId?: number;
   @Prop() partialPack?: SearchResultPack;
   @Prop({default: "modpacksch" as PackProviders}) provider!: PackProviders;
@@ -80,6 +93,20 @@ export default class PackPreview extends PackCardCommon {
     this.showInstall = true;
   }
   
+  async favourite() {
+    if (this.alreadyFavourited) {
+      this.removeFavourite({
+        packId: "" + this.packData?.id,
+        provider: this.provider
+      });
+    } else {
+      this.addFavourite({
+        packId: "" + this.packData?.id,
+        provider: this.provider
+      });
+    }
+  }
+  
   get artwork() {
     return resolveArtwork(this.packData, "splash");
   }
@@ -88,6 +115,10 @@ export default class PackPreview extends PackCardCommon {
     return resolveArtwork(this.packData, "square");
   }
 
+  get alreadyFavourited() {
+    return this.favourites.some((fav) => fav.packId === "" + this.packData?.id && fav.provider === this.provider);
+  }
+  
   /**
    * Provides a consistent data structure for the pack data
    */
@@ -251,6 +282,24 @@ export default class PackPreview extends PackCardCommon {
 
     &:hover {
       background-color: #39d05f;
+    }
+  }
+
+  .fav-btn {
+    padding: 0.5rem .8rem;
+    background-color: var(--color-navbar);
+    border-radius: 5px;
+    box-shadow: 0 4px 15px rgba(black, 0.2);
+    transition: background-color 0.25s ease-in-out, color 0.25s ease-in-out;
+    
+    &:hover, &.is-fav {
+      background-color: #ffD700;
+      color: darken(#ffD700, 30%)
+    }
+    
+    &.is-fav:hover {
+      background-color: var(--color-danger-button);
+      color: white;
     }
   }
 }
