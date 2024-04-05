@@ -124,8 +124,8 @@ const setup = async () => {
     if (state.window_state_ex === 'closed' && state.window_name === 'index') {
       // Close the webserver and background if the main app window closes
       console.log('Closing');
-      if (server !== undefined) {
-        server.close();
+      if (app?.webserver !== undefined) {
+        app.webserver.close();
       }
       overwolf.windows.close('background');
     }
