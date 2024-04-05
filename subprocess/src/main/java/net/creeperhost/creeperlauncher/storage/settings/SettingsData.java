@@ -94,6 +94,8 @@ public class SettingsData {
                 false,
                 "release",
                 "",
+                "",
+                true,
                 ""
             ),
             new AppearanceSettings(
