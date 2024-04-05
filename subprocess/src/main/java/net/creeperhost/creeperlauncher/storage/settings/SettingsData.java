@@ -188,6 +188,9 @@ public class SettingsData {
         private String updateChannel;
         private String javaArgs;
         private String shellArgs;
+        // Since instance importing
+        private String envArgs = "";
+        private boolean embeddedJre = true;
 
         public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, String javaArgs, String shellArgs) {
             this.width = width;
@@ -197,6 +200,18 @@ public class SettingsData {
             this.updateChannel = updateChannel;
             this.javaArgs = javaArgs;
             this.shellArgs = shellArgs;
+        }
+        
+        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, String javaArgs, String shellArgs, boolean embeddedJre, String envArgs) {
+            this.width = width;
+            this.height = height;
+            this.memory = memory;
+            this.fullscreen = fullscreen;
+            this.updateChannel = updateChannel;
+            this.javaArgs = javaArgs;
+            this.shellArgs = shellArgs;
+            this.embeddedJre = embeddedJre;
+            this.envArgs = envArgs;
         }
 
         public int width() {
@@ -253,6 +268,22 @@ public class SettingsData {
 
         public void setShellArgs(String shellArgs) {
             this.shellArgs = shellArgs;
+        }
+
+        public boolean isEmbeddedJre() {
+            return embeddedJre;
+        }
+
+        public void setEmbeddedJre(boolean embeddedJre) {
+            this.embeddedJre = embeddedJre;
+        }
+
+        public String getEnvArgs() {
+            return envArgs;
+        }
+
+        public void setEnvArgs(String envArgs) {
+            this.envArgs = envArgs;
         }
     }
 

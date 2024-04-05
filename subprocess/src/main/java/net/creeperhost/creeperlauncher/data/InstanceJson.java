@@ -40,8 +40,8 @@ public class InstanceJson {
 
     public String jvmArgs = Settings.getSettings().instanceDefaults().javaArgs();
     public String shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
-    public boolean embeddedJre = Boolean.parseBoolean(Settings.settings.getOrDefault("embeddedJre", "true"));
-    public String envArgs = Settings.settings.getOrDefault("envArgs", "");
+    public String envArgs = Settings.getSettings().instanceDefaults().getEnvArgs();
+    public boolean embeddedJre = Settings.getSettings().instanceDefaults().isEmbeddedJre();
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
     public Path jrePath = null;
