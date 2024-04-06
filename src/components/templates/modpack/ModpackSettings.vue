@@ -263,7 +263,7 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {resolveModloader, resolveModLoaderVersion, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
-import {computeAspectRatio, prettyByteFormat} from '@/utils';
+import {computeAspectRatio, prettyByteFormat, megabyteSize} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 import {ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
@@ -301,8 +301,6 @@ export default class ModpackSettings extends Vue {
   
   instanceSettings: SaveJson = {} as any;
   previousSettings: SaveJson = {} as any;
-
-  megabyteSize = 1024 * 1024;
 
   showDuplicate = false;
   shareConfirm = false;
