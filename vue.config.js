@@ -104,7 +104,7 @@ module.exports = {
       nodeIntegration: true,
       customFileProtocol: `ftb://./`,
       builderOptions: {
-        productName: 'FTB App',
+        productName: 'FTB Electron App',
         appId: 'dev.ftb.app',
         copyright: `Copyright © ${new Date().getFullYear()} - Feed The Beast Ltd`,
         generateUpdatesFilesForAllChannels: true,
