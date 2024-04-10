@@ -1,4 +1,3 @@
-import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import {JavaLicenses, JavascriptLicenses} from '@/core/@types/external/licenses.types';
 
 /**
@@ -20,12 +19,8 @@ export interface Util {
 }
 
 export interface Actions {
-  openMsAuth(): void;
-  emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload): void;
   openModpack: (payload: { name: string; id: string }) => void;
-  closeWebservers(): void;
   openFriends: () => void;
-  openLogin: (cb: (data: { token: string; 'app-auth': string }) => void) => void;
   uploadClientLogs: () => void;
 
   // Res only used on overwolf

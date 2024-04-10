@@ -69,13 +69,14 @@ import {createLogger} from '@/core/logger';
 import {SetAccountMethod, SetProfileMethod} from '@/core/state/core/mtAuthState';
 import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
 import {InstanceActions} from '@/core/actions/instanceActions';
+import {emitter} from '@/utils';
 
 @Component({
   components: {UiButton},
   methods: {getMinecraftHead}
 })
-export default class AppInfo extends Vue {
-  private logger = createLogger("AppInfo.vue");
+export default class Integrations extends Vue {
+  private logger = createLogger("Integrations.vue");
 
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
 
@@ -89,33 +90,46 @@ export default class AppInfo extends Vue {
 
   working = false;
   
+  mounted() {
+    emitter.on('mt:auth-callback', this.login);
+  }
+  
+  destroyed() {
+    emitter.off('mt:auth-callback', this.login);
+  }
+  
   get avatarName() {
     return this.getMtAccount?.accounts?.find((s) => s.identityProvider === 'mcauth')?.userId
   }
+  
+  async login(callbackData: any) {
+    this.working = true
+    try {
+      const token = callbackData.token;
+      const appToken = callbackData.appToken;
 
-  openLogin() {
-    platform.get.actions.openLogin(async (data: { token: string; 'app-auth': string } | null) => {
-      if (data === null) {
+      if (!token || !appToken) {
+        alertController.error("Failed to login to MineTogether due to missing data");
         return;
       }
-      
+
       const result = await sendMessage("minetogetherAuthentication", {
         authType: "login",
-        apiKey: data.token,
-        appToken: data['app-auth']
+        apiKey: token,
+        appToken: appToken
       })
-      
+
       if (!result || !result.success) {
         alertController.error(`Failed to login to MineTogether due to ${result?.message || "Unknown error"}`)
         return;
       }
-      
+
       // We have to handle the profile being null maybe
       if (!result.basicData) {
         alertController.error(`Failed to login to MineTogether due to as we could not find your profile`)
         return;
       }
-      
+
       // We're good, the backend has stored what we need, we'll just update our data stores
       const {basicData, profile} = result;
       if (basicData) {
@@ -136,9 +150,18 @@ export default class AppInfo extends Vue {
         this.logger.info("Setting profile");
         await this.setProfile(profile);
       }
-      
+
       await InstanceActions.clearInstanceCache(false);
-    });
+    } catch (e: any) {
+      this.logger.error("Failed to login to MineTogether due to an error", e);
+      alertController.error(`Failed to login to MineTogether due to an error: ${e.message || "Unknown error"}`)
+    } finally {
+      this.working = false;
+    }
+  }
+
+  openLogin() {
+    platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=ftb://mauth/process")
   }
 
   public async logout() {

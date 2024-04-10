@@ -161,39 +161,6 @@ const appFunctions = {
     let windowRet = await p(overwolf.windows.obtainDeclaredWindow, 'index');
     await p(overwolf.windows.restore, windowRet.window.id);
   },
-  /**
-   * Creates a temporary webserver to listen for auth data from a website on the users system
-   */
-  async openWebserver(authDataCallback) {
-    if (app.webserver !== undefined) {
-      return app.webserver;
-    }
-    let response = await p(overwolf.web.createServer, 7755);
-    if (response.status === 'success') {
-      app.webserver = response.server;
-      
-      const onRequest = info => {
-        let data = JSON.parse(info.content);
-        if ((data.token && data.token.length > 0) || (data.key && data.iv && data.password)) {
-          app.webserver.close();
-          app.webserver = undefined;
-          authDataCallback(data);
-        } else {
-          app.webserver.close();
-          app.webserver = undefined;
-        }
-      }
-      
-      app.webserver.onRequest.removeListener(onRequest);
-      app.webserver.onRequest.addListener(onRequest);
-      app.webserver.listen(info => {
-        console.log('Server listening status on port ' + 7755 + ' : ' + info);
-      });
-      return app.webserver;
-    } else {
-      return null;
-    }
-  }
 }
 
 function funcs() {

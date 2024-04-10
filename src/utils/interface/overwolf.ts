@@ -1,8 +1,6 @@
-import {emitter} from '@/utils';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
-import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import {createLogger, logger} from '@/core/logger';
 
 declare global {
@@ -98,19 +96,6 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openMsAuth() {
-      owLogger.debug("Opening ms auth")
-      overwolf.utils.openUrlInDefaultBrowser(`https://msauth.feed-the-beast.com?useNew=true`);
-    },
-
-    emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload) {
-      owLogger.debug("Emitting authentication update")
-      emitter.emit("authentication.callback", credentials)
-    },
-
-    closeWebservers() {
-    },
-
     openModpack(payload) {
       owLogger.debug("Opening modpack", payload)
       overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
@@ -122,12 +107,6 @@ const Overwolf: ElectronOverwolfInterface = {
           overwolf.windows.restore(result.window.id);
         }
       });
-    },
-
-    async openLogin(cb: (data: any) => void) {
-      owLogger.debug("Starting webserver and attempting to open Minetogether")
-      await overwolf.windows.getMainWindow().funcs().openWebserver(cb);
-      overwolf.utils.openUrlInDefaultBrowser(`https://minetogether.io/api/login?redirect=http://localhost:7755`);
     },
 
     changeExitOverwolfSetting(value: boolean) {

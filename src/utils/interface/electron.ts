@@ -3,13 +3,8 @@ import {clipboard, ipcRenderer} from 'electron';
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import fs from 'fs';
 import path from 'path';
-import EventEmitter from 'events';
-import http from 'http';
 import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions';
-import platform from '@/utils/interface/electron-overwolf';
-import {emitter} from '@/utils';
-import {AuthenticationCredentialsPayload} from '@/core/@types/authentication.types';
 import log from 'electron-log';
 import {createLogger} from '@/core/logger';
 import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers';
@@ -92,101 +87,6 @@ function getAppHome() {
   }
 }
 
-class MiniWebServer extends EventEmitter {
-  server: http.Server | null = null;
-  timeoutRef: NodeJS.Timeout | null = null;
-  closing = false;
-
-  open() {
-    this.closing = false;
-    if (this.server == null) {
-      this.server = http.createServer((req: any, res: any) => {
-        let body = '';
-        req.on('data', (chunk: any) => {
-          body += chunk;
-        });
-
-        req.on('end', () => {
-          if (!body) {
-            res.end();
-            return;
-          }
-
-          const jsonResponse = JSON.parse(body);
-          if (jsonResponse == null) {
-            eLogger.debug('Failed to parse json response');
-            res.end();
-            this.close();
-            return;
-          }
-
-          // HACKS Hijank the old flow
-          if (jsonResponse.key) {
-            this.emit('response', jsonResponse);
-            res.write('success');
-            res.end();
-            this.close();
-            return;
-          }
-
-          const { token, 'app-auth': appAuth } = jsonResponse;
-          if (token == null || appAuth == null) {
-            eLogger.error('Failed to parse token or appAuth');
-            return;
-          }
-
-          this.emit('response', jsonResponse);
-          res.write('success');
-          res.end();
-          this.close();
-        });
-      });
-
-      this.server.listen(7755, () => {
-        eLogger.debug('MiniWebServer listening on 7755');
-        this.emit('open');
-      });
-
-      this.closeAfterFive();
-    } else {
-      this.emit('open', false);
-    }
-  }
-
-  closeAfterFive() {
-    if (this.timeoutRef != null) {
-      clearTimeout(this.timeoutRef);
-    }
-
-    this.timeoutRef = setTimeout(async () => {
-      this.emit('timeout');
-      await this.close();
-    }, 1000 * 60 * 5);
-  }
-
-  async close() {
-    if (!this.server || this.closing) {
-      return;
-    }
-
-    this.closing = true;
-    return new Promise((resolve) => {
-      this.server?.close(() => {
-        this.server = null;
-        if (this.timeoutRef != null) {
-          clearTimeout(this.timeoutRef);
-        }
-
-        this.closing = false;
-        this.emit('close');
-        resolve(true);
-      });
-    });
-  }
-}
-
-let miniServers: MiniWebServer[] = [];
-
 const Electron: ElectronOverwolfInterface = {
   config: {
     version: metaData.appVersion ?? 'Missing Version File',
@@ -222,65 +122,12 @@ const Electron: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    async openMsAuth() {
-      eLogger.debug("Opening ms auth page and starting server")
-      platform.get.utils.openUrl("https://msauth.feed-the-beast.com");
-
-      const mini = new MiniWebServer();
-      miniServers.push(mini);
-      const result: any = await new Promise((resolve, reject) => {
-        mini.open();
-        mini.on('response', (data: { token: string; 'app-auth': string }) => {
-          eLogger.debug("Received response from mini web server")
-          resolve(data);
-        });
-
-        mini.on('close', () => {
-          eLogger.debug("Closing mini web server")
-          resolve(null);
-        });
-      });
-
-      eLogger.debug("Finished mini web server flow");
-      emitter.emit("authentication.callback", result?.key ? result : undefined);
-    },
-    
-    emitAuthenticationUpdate(credentials?: AuthenticationCredentialsPayload) {
-      emitter.emit("authentication.callback", credentials)
-    },
-
-    closeWebservers() {
-      miniServers.forEach(e => e.close())
-      miniServers = [];
-    },
-
     openModpack(payload: { name: string; id: string }) {
       ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
     },
 
     openFriends() {
       ipcRenderer.send('showFriends');
-    },
-    
-    async openLogin(cb: (data: { token: string; 'app-auth': string }) => void) {
-      // TODO: (legacy) Fix soon plz
-      platform.get.utils.openUrl("https://minetogether.io/api/login?redirect=http://localhost:7755")
-      
-      const mini = new MiniWebServer();
-      miniServers.push(mini);
-      const result: any = await new Promise((resolve, reject) => {
-        mini.open();
-        mini.on('response', (data: { token: string; 'app-auth': string }) => {
-          resolve(data);
-        });
-
-        mini.on('close', () => {
-          resolve(null);
-        });
-      });
-      
-      mini.close().catch(e => eLogger.error("Failed to close the miniserver", e))
-      cb(result);
     },
 
     // Obviously do nothing

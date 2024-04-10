@@ -111,7 +111,7 @@ export default class MicrosoftAuth extends Vue {
   manualCode = "";
   
   mounted() {
-    platform.get.actions.openMsAuth();
+    platform.get.utils.openUrl(`https://msauth.feed-the-beast.com?useNew=true`)
     
     emitter.on("authentication.callback", this.onAuthenticationCallback as any)
     emitter.on('ws.message', this.onStepUpdate);
@@ -172,7 +172,6 @@ export default class MicrosoftAuth extends Vue {
   
   async successDownAndOut() {
     await this.loadProfiles();
-    await platform.get.actions.closeWebservers();
     this.$emit('authenticated');
     this.cleanUp();
   }

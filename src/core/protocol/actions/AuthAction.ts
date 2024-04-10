@@ -1,6 +1,6 @@
 import {Action, ActionContext, ActionType} from '../protocolActions';
-import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
+import {emitter} from '@/utils';
 
 export class AuthAction implements Action {
   namespace: ActionType = 'auth';
@@ -13,11 +13,11 @@ export class AuthAction implements Action {
       alertController.error('Failed to login due to missing credentials...')
       
       // Failed
-      platform.get.actions.emitAuthenticationUpdate();
+      emitter.emit("authentication.callback")
       return;
     }
 
     // Send the credentials!
-    platform.get.actions.emitAuthenticationUpdate(credentials);
+    emitter.emit("authentication.callback", credentials)
   }
 }

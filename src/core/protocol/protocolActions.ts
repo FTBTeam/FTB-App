@@ -1,8 +1,9 @@
 import {ModpackInstallAction} from './actions/ModpackInstallAction';
 import {AuthAction} from '@/core/protocol/actions/AuthAction';
 import {createLogger} from '@/core/logger';
+import {MTAuthAction} from '@/core/protocol/actions/MTAuthAction';
 
-export type ActionType = 'modpack' | 'auth';
+export type ActionType = 'modpack' | 'auth' | 'mauth';
 
 export type ActionContext = {
   self: Action;
@@ -24,6 +25,7 @@ const actions: Action[] = [
   // NOTE: Used in test cases, don't remove without updating tests!
   new ModpackInstallAction(),
   new AuthAction(),
+  new MTAuthAction(),
 ];
 
 export const parseInput = (rawInput: string, log = true) => {
