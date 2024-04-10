@@ -87,11 +87,11 @@
 
     <p class="block text-white-700 text-lg font-bold mb-4">Misc</p>
     <ftb-input
-      label="Instance Location"
-      :value="localSettings.instanceLocation"
+      label="Relocate instances"
+      :value="localSettings.instanceLocation + ' (Current)'"
       :disabled="true"
       button="true"
-      buttonText="Browse"
+      buttonText="Relocate / Move"
       buttonColor="primary"
       :buttonClick="moveInstances"
     />

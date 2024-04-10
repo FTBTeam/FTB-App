@@ -32,7 +32,7 @@
             </div>
           </transition>
         </div>
-        <ftb-button v-if="button" :color="buttonColor" @click="handleClick" class="py-2 px-4 rounded-l-none py-2">{{
+        <ftb-button v-if="button" :color="buttonColor" @click="handleClick" class="py-2 px-4 rounded py-2">{{
           buttonText
         }}</ftb-button>
         <slot name="extra"></slot>
