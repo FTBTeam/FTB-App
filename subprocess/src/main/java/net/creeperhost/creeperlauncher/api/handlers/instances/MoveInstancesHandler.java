@@ -65,20 +65,6 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             return;
         }
         
-        // Ensure the new location is not a subdirectory of the current location
-        if (newLocation.startsWith(currentLocation)) {
-            LOGGER.warn("New location {} is a subdirectory of the current location {}", newLocation, currentLocation);
-            WebSocketHandler.sendMessage(new Reply(data, "New location is a subdirectory of the current location"));
-            return;
-        }
-        
-        // Also, don't allow the data folder
-        if (newLocation.equals(Constants.getDataDir())) {
-            LOGGER.warn("New location {} is the data folder", newLocation);
-            WebSocketHandler.sendMessage(new Reply(data, "New location can not be the data folder"));
-            return;
-        }
-        
         if (!Files.isWritable(newLocation)) {
             LOGGER.warn("New location {} is not writable", newLocation);
             WebSocketHandler.sendMessage(new Reply(data, "New location is not writable"));
@@ -146,25 +132,26 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             int requiredSuccesses = 0;
             List<Path> successfulFiles = new ArrayList<>();
             
-            try (var files = Files.list(currentLocation)) {
-                if (files == null) throw new RuntimeException("Failed to list files in old location");
-                
-                var fileList = files.toList();
-                
-                for (var path : fileList) {
-                    if (Files.isDirectory(path)) {
-                        requiredSuccesses ++;
-                        try {
-                            LOGGER.info("Moving instance directory {} to {}", path.getFileName(), newLocation.resolve(path.getFileName()));
-                            FileUtils.copyDirectory(path.toFile(), newLocation.resolve(path.getFileName()).toFile());
-                            successfulFiles.add(path);
-                        } catch (Throwable t) {
-                            throw new RuntimeException("Failed to move instance directory " + path.getFileName(), t);
-                        }
-                    }
+            // Get all the instances from the instance store
+            var instancesPaths = Instances.allInstances()
+                .stream()
+                .map(e -> e.path)
+                .toList();
+            
+            // In
+            for (var path : instancesPaths) {
+                if (!Files.isDirectory(path)) {
+                    continue;
                 }
-            } catch (Throwable t) {
-                throw new RuntimeException("Failed to move instances", t);
+                
+                requiredSuccesses ++;
+                try {
+                    LOGGER.info("Moving instance directory {} to {}", path.getFileName(), newLocation.resolve(path.getFileName()));
+                    FileUtils.copyDirectory(path.toFile(), newLocation.resolve(path.getFileName()).toFile());
+                    successfulFiles.add(path);
+                } catch (Throwable t) {
+                    throw new RuntimeException("Failed to move instance directory " + path.getFileName(), t);
+                }
             }
 
             tracker.nextStage(MoveStage.VALIDATING);
