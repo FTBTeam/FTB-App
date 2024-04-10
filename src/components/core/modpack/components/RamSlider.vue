@@ -46,7 +46,7 @@ import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 import {SettingsState} from '@/modules/settings/types';
 import {State} from 'vuex-class';
 import UiButton from '@/components/core/ui/UiButton.vue';
-import {prettyByteFormat} from '@/utils';
+import {prettyByteFormat, megabyteSize} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
@@ -56,7 +56,7 @@ export default class RamSlider extends Vue {
   @State('settings') public settingsState!: SettingsState;
   
   @Prop({default: 0}) min!: number;
-  @Prop({default: 0}) value!: number | string;
+  @Prop({default: 0}) value!: number | string; // stored in megabytes.
   @Emit() input(value: number) {}
   @Emit() change(value: number) {}
   
@@ -101,7 +101,6 @@ export default class RamSlider extends Vue {
   }
   
   get valueAsByteReadable() {
-    const megabyteSize = 1024 * 1024;
     return prettyByteFormat(Math.floor(parseInt(this.value.toString()) * megabyteSize));
   }
   

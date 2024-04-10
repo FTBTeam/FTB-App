@@ -19,6 +19,11 @@ export async function safeNavigate(name: RouterNames, params?: any, query?: any)
   }
 }
 
+// Sizes of various byte amounts
+export const kilobyteSize: number = 1024;
+export const megabyteSize: number = 1024 * kilobyteSize;
+export const gigabyteSize: number = 1024 * megabyteSize;
+
 export const prettyByteFormat = (bytes: number) => {
   if (bytes === 0) return '0B';
 

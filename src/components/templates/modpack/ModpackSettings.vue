@@ -193,7 +193,7 @@
       <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
 
       <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto select-text" v-if="instanceSettings.memory">
-        {{instanceSettings.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * 1024 * 1000))}} {{instanceSettings.jvmArgs}}
+        {{instanceSettings.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * megabyteSize))}} {{instanceSettings.jvmArgs}}
       </code>
     </div>
 
@@ -263,7 +263,7 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {resolveModloader, resolveModLoaderVersion, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/core/modpack/create/CategorySelector.vue';
-import {computeAspectRatio, prettyByteFormat} from '@/utils';
+import {computeAspectRatio, prettyByteFormat, megabyteSize} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelect.vue';
 import {ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
@@ -288,6 +288,7 @@ import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.
     ShareInstanceModal,
   },
 })
+
 export default class ModpackSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
