@@ -13,12 +13,19 @@
       <loader v-if="!packInstalled && modsLoading" />
       <template v-if="!packInstalled">
         <recycle-scroller :items="simpleMods" key-field="fileId" :item-size="70" class="select-text scroller" v-slot="{ item }">
-          <div class=" flex gap-6 items-start mb-4" :key="item.fileId">
-            <img v-if="item.icon" :src="item.icon" class="rounded mt-2" width="40" alt="">
-            <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>
-            <div class="main">
-              <b class="mb-1 block">{{item.name || item.filename}}</b>
-              <p class="only-one-line">{{item.synopsis}}</p>
+          <div class="flex items-center gap-6 mb-4" :key="item.fileId">
+            <div class="flex gap-6 items-start flex-1">
+              <img v-if="item.icon" :src="item.icon" class="rounded mt-2" width="40" alt="">
+              <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>
+              <div class="main">
+                <b class="mb-1 block">{{item.name || item.filename}}</b>
+                <p class="only-one-line">{{item.synopsis}}</p>
+              </div>
+            </div>
+            <div>
+              <a @click="openExternal" class="curse-btn cursor-pointer" aria-label="Open on CurseForge" data-balloon-pos="down-right" v-if="item.curseSlug" :href="`https://curseforge.com/minecraft/mc-mods/${item.curseSlug}`">
+                <img src="../../../assets/curse-logo.svg" width="24" alt="Open on CurseForge" />
+              </a>
             </div>
           </div>
         </recycle-scroller>
@@ -30,11 +37,15 @@
             <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="file.fileName !== ''"></div>
             
             <div class="main flex-1 transition-opacity duration-200" :class="{'opacity-50': !file.enabled}">
-              <b class="mb-1 block">{{file.curse?.name || file.fileName.replace(".jar", "")}}</b>
-              <p class="only-one-line">{{file.curse?.synopsis ?? ""}}</p>
+              <b class="mb-1 block select-text">{{file.curse?.name || file.fileName.replace(".jar", "")}}</b>
+              <p class="only-one-line select-text" v-if="file.curse?.synopsis">{{file.curse?.synopsis}}</p>
+              <p class="only-one-line text-muted italic" v-else>(Not found on CurseForge)</p>
             </div>
             
-            <div class="meta flex gap-4 items-center">
+            <div class="meta flex gap-6 items-center">
+              <a @click="openExternal" class="curse-btn cursor-pointer" aria-label="Open on CurseForge" data-balloon-pos="down-right" v-if="file.curse?.slug" :href="`https://curseforge.com/minecraft/mc-mods/${file.curse.slug}`">
+                <img src="../../../assets/curse-logo.svg" width="24" alt="Open on CurseForge" />
+              </a>
               <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(file.sha1) && !updatingModShas.includes(file.sha1)" :aria-label="`Update available (${modUpdates[file.sha1][0].fileName} -> ${modUpdates[file.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(file.sha1)">
                 <font-awesome-icon icon="download" :fixed-width="true" />
               </div>

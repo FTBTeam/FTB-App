@@ -83,6 +83,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                                     manifest.getId(),
                                     version.getId(),
                                     version.getName(),
+                                    curseData.slug(),
                                     curseData.synopsis(),
                                     curseData.icon()
                             )

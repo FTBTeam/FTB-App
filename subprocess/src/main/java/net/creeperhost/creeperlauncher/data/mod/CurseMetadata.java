@@ -10,16 +10,17 @@ public record CurseMetadata(
         long curseProject,
         long curseFile,
         @Nullable String name,
+        @Nullable String slug,
         @Nullable String synopsis,
         @Nullable String icon
 ) {
 
     public static CurseMetadata basic(long project, long file) {
-        return new CurseMetadata(Type.BASIC, project, file, null, null, null);
+        return new CurseMetadata(Type.BASIC, project, file, null, null, null, null);
     }
 
-    public static CurseMetadata full(long project, long file, @Nullable String name, @Nullable String synopsis, @Nullable String icon) {
-        return new CurseMetadata(Type.FULL, project, file, name, synopsis, icon);
+    public static CurseMetadata full(long project, long file, @Nullable String name, @Nullable String slug, @Nullable String synopsis, @Nullable String icon) {
+        return new CurseMetadata(Type.FULL, project, file, name, slug, synopsis, icon);
     }
 
     public enum Type {

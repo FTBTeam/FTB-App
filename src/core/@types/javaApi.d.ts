@@ -677,6 +677,7 @@ export interface CurseMetadata {
     curseProject: number;
     curseFile: number;
     name: string;
+    slug: string;
     synopsis: string;
     icon: string;
 }

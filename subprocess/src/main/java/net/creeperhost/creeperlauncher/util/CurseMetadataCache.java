@@ -65,7 +65,8 @@ public class CurseMetadataCache {
             String name = mod.getName();
             String synopsis = mod.getSynopsis();
             String icon = mod.getIcon();
-            return CurseMetadata.full(projectId, fileId, name, synopsis, icon);
+            String slug = mod.getCurseSlug();
+            return CurseMetadata.full(projectId, fileId, name, slug, synopsis, icon);
         }
 
         FileMetadata metadata = queryMetadata(sha1);
@@ -87,12 +88,23 @@ public class CurseMetadataCache {
             version = mod.findVersion(curseFile);
         }
 
-        if (version == null) return CurseMetadata.full(curseProject, curseFile, null, null, null);
+        if (version == null) return CurseMetadata.full(curseProject, curseFile, null, null, null, null);
 
+        var curseSlug = mod.getLinks()
+            .stream()
+            .filter(e -> e.getType().equals("curseforge"))
+            .map(e -> {
+                var parts = e.getLink().split("/");
+                return parts[parts.length - 1];
+            })
+            .findFirst()
+            .orElse(null);
+        
         return CurseMetadata.full(
                 curseProject,
                 curseFile,
                 mod.getName(),
+                curseSlug,
                 mod.getSynopsis(),
                 !mod.getArt().isEmpty() ? mod.getArt().get(0).getUrl() : null // TODO, this is so dumb.
         );
@@ -182,7 +194,7 @@ public class CurseMetadataCache {
     ) {
 
         public CurseMetadata toCurseInfo() {
-            return CurseMetadata.full(curseProject, curseFile, name, synopsis, icon);
+            return CurseMetadata.full(curseProject, curseFile, name, curseSlug, synopsis, icon);
         }
     }
 
