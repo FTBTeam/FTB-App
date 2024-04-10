@@ -744,7 +744,7 @@ public class Instance {
         
         Path instancesDir = Settings.getInstancesDir();
         if (!Files.exists(instancesDir.resolve(computedName))) {
-            return computedName;
+            return computedName.trim();
         }
         
         int count = 1;
@@ -758,10 +758,10 @@ public class Instance {
             LOGGER.error("Failed to count instances.", ex);
             
             // Fallback to UUID.
-            return computedName + "-" + UUID.randomUUID().toString().substring(0, 8);
+            return computedName + "-" + UUID.randomUUID().toString().substring(0, 8).trim();
         }
         
-        return computedName + " (" + count + ")";
+        return computedName + " (" + count + ")".trim();
     }
 
     // @formatter:off
