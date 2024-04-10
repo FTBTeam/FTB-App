@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.time.Instant;
 
 public class MicrosoftAuthenticator implements AuthenticatorValidator<
@@ -26,11 +25,12 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<
             return false;
         }
 
-        // Is valid if the expire token is in the future minus 30 minutes
-        boolean valid = Instant.now().getEpochSecond() < profile.msAuth.liveExpiresAt - (60 * 30);
+        // The token is valid if it expires in more than 1 hour
+        boolean valid = Instant.now().getEpochSecond() < profile.msAuth.liveExpiresAt - (60 * 60);
         int mcTokenExpires = extractExpiresFromToken(profile.msAuth.minecraftToken);
         if (mcTokenExpires != -1) {
-            boolean mcValid = Instant.now().getEpochSecond() < mcTokenExpires - (60 * 30);
+            // The mc token is valid if it expires in more than 6 hour
+            boolean mcValid = Instant.now().getEpochSecond() < mcTokenExpires - (60 * 60 * 6);
             LOGGER.info("Found exp for Minecraft token: {}, has expired {}", mcTokenExpires, !mcValid ? "YES" : "NO");
             valid = valid && mcValid;
         }
