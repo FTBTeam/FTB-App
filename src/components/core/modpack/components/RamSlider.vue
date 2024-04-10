@@ -28,16 +28,16 @@
        />
 
        <datalist id="ram-markers">
-         <option v-for="i in Math.ceil(this.maxRam / 1024) + 1" :value="(i - 1) * 1024" />
+         <option v-for="i in Math.ceil(maxRam / 1024) + 1" :value="(i - 1) * 1024" />
        </datalist>
      </div>
      
      <div class="value-input gap-2 flex items-center">
-       <ftb-input type="number" style="width: 120px" :value="value.toString()" @input="v => updateValue(parseInt(v))" @change="change(parseInt(value.toString()));" />
+       <ftb-input @blur="change(parseInt(value.toString()))" type="number" style="width: 120px" :value="value.toString()" @input="v => updateValue(parseInt(v))" @change="change(parseInt(value.toString()));" />
      </div>
    </div>
    
-   <ui-toggle v-if="maxRam <= this.settingsState.hardware.totalMemory" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
+   <ui-toggle v-if="maxRam <= settingsState.hardware.totalMemory" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
  </div>
 </template>
 
@@ -46,7 +46,7 @@ import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 import {SettingsState} from '@/modules/settings/types';
 import {State} from 'vuex-class';
 import UiButton from '@/components/core/ui/UiButton.vue';
-import {prettyByteFormat, megabyteSize} from '@/utils';
+import {megabyteSize, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 
 @Component({
