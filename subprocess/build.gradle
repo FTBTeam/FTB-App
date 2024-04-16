@@ -129,6 +129,7 @@ assemble.dependsOn 'shadowJar'
 project(":web") {
 }
 
+// Used to map dependencies to their respective repositories.
 def dependencySources = [
         "org.jetbrains:annotations"                : "https://github.com/JetBrains/java-annotations",
         "com.squareup.okio:okio"                   : "https://github.com/square/okio",
@@ -157,13 +158,29 @@ downloadLicenses {
     dependencyConfiguration = "runtimeClasspath"
 }
 
-// Simple task to copy the $buildDir/reports/licenses/dependency-license.json to the build/libs/java-licenses.json
 tasks.register('writeLicenses', Copy) {
     it.dependsOn 'downloadLicenses'
     from "$buildDir/reports/license"
     into "$buildDir/libs"
     include "dependency-license.json"
     rename "dependency-license.json", "java-licenses.json"
+
+    // Parse the dependency-license.json and add the repository to the object where possible.
+    doLast {
+        def data = new JsonSlurper().parse(new File("$projectDir/build/libs/java-licenses.json"))
+        def dependencies = data.get("dependencies")
+        for (obj in dependencies) {
+            def repo = dependencySources.get(obj.name.take(obj.name.lastIndexOf(":")) as String)
+            if (repo != null) {
+                obj.repository = repo
+            }
+        }
+
+        // Write the new json.
+        file("$projectDir/build/libs/java-licenses.json").newWriter().withWriter { w ->
+            w << JsonOutput.toJson(data)
+        }
+    }
 }
 
 tasks.register('writeVersion') {

@@ -6,6 +6,7 @@ export interface JavaDependency {
   name: string
   file: string
   licenses: JavaLicense[]
+  repository?: string;
 }
 
 export interface JavaLicense {

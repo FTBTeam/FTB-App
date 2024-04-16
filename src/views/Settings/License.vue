@@ -26,7 +26,8 @@
       <h1 class="text-xl mb-4">Java Dependency Licenses</h1>
       <div class="rounded packages">
         <div class="flex flex-row mb-2" v-for="(license, index) in licenseData.java.dependencies" :key="index">
-          <div class="inline-block">{{ license.name }}</div>
+          <div v-if="!license.repository" class="inline-block">{{ license.name }}</div>
+          <a v-else class="inline-block" :href="license.repository" target="_blank">{{ license.name }}</a>
           <div class="tag bg-blue-400 inline-block text-gray-900 font-bold px-2 py-1 ml-auto rounded text-xs">
             <div class="licensesHolder flex gap-2">
               <template v-for="(licenseItem, index) in license.licenses">
