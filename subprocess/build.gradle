@@ -30,8 +30,6 @@ repositories {
     maven { url 'https://maven.creeperhost.net' }
     mavenCentral()
     jcenter() // Gradle _Says_ it wont resolve artifacts, but its gone into read-only indefinitely. (JdkUtils uses some libraries from here)
-    maven { url 'https://jitpack.io' }
-    maven { url 'https://maven.covers1624.net/' }
 }
 
 dependencies {
@@ -93,7 +91,7 @@ def packageJsonHolder = () -> {
     return packageJsonData
 }
 
-task processSource(type: Sync) {
+tasks.register('processSource', Sync) {
     from sourceSets.main.java
     inputs.property 'version', version
     filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, SHAREDVERSION: packageJsonHolder().version, BRANCH: branch, SENTRY: sentryDsn])
