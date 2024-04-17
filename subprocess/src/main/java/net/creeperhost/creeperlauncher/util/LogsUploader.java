@@ -168,6 +168,7 @@ public class LogsUploader {
             
             var logs = new JsonObject();
             logs.addProperty("debug.log", uploadIfNotEmpty(readOrEmpty(instance.getDir().resolve("logs/debug.log"))));
+            logs.addProperty("console.log", uploadIfNotEmpty(readOrEmpty(instance.getDir().resolve("logs/console.log"))));
             logs.addProperty("latest.log", uploadIfNotEmpty(readOrEmpty(instance.getDir().resolve("logs/latest.log"))));
             instanceObj.add("logs", logs);
             
