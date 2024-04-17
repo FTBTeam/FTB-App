@@ -12,7 +12,6 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   VUE_APP_SENTRY_DSN: ${{ secrets.VUE_APP_SENTRY_DSN }}
   PUBLISH_BUCKET: ${{ secrets.PUBLISH_BUCKET }}
-  PUBLISH_ENDPOINT: ${{ secrets.PUBLISH_ENDPOINT }}
   
 jobs:
   build-linux:
@@ -45,11 +44,10 @@ jobs:
     - name: Build App (Windows & Linux)
       env:
         APP_TARGET_PLATFORM: "linux"
-        
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
-        pnpm install
+        pnpm install --no-frozen-lockfile
         pnpm gen:license
         pnpm build --publish always -l --x64 --arm64
     - uses: actions/cache/save@v4
@@ -87,14 +85,22 @@ jobs:
       with:
         name: subprocess-jar
         path: subprocess/build/libs/
+    - name: Download AzureSignTool from nuget
+      run: |
+        dotnet tool install --global AzureSignTool --version 5.0.0        
     - name: Build App (Windows)
       env:
         APP_TARGET_PLATFORM: "windows"
         VUE_APP_TARGET_PLATFORM: "windows"
+        AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
+        AZURE_KEY_VAULT_NAME: ${{ secrets.AZURE_KEY_VAULT_NAME }}
+        AZURE_KEY_VAULT_SECRET_NAME: ${{ secrets.AZURE_KEY_VAULT_SECRET_NAME }}
+        AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
+        AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
-        pnpm install
+        pnpm install --no-frozen-lockfile
         pnpm gen:license
         pnpm build --publish always -w --x64
     - name: Upload artifact
@@ -110,7 +116,7 @@ jobs:
   build-macos:
     runs-on: macos-latest
     # Only run this job if the previous job was successful
-    needs: 
+    needs:
       - build-linux
       - build-windows
     steps:
@@ -139,7 +145,7 @@ jobs:
       run: |
         npm install --global pnpm || true
         pnpm config set store-dir .pnpm-store
-        pnpm install
+        pnpm install --no-frozen-lockfile
         pnpm gen:license
         echo "$APPLE_API_KEY" > apple_api_key.p8
         pnpm build --publish always -m --x64 --arm64
@@ -181,7 +187,7 @@ jobs:
           cp subprocess/build/libs/java-licenses.json overwolf/
           npm install --global pnpm || true
           pnpm config set store-dir .pnpm-store
-          pnpm install
+          pnpm install --no-frozen-lockfile
           pnpm gen:license
           node overwolf/patchManifest.js
           pnpm overwolf:build

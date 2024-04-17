@@ -2,7 +2,6 @@ const path = require('path');
 const SentryWebpackPlugin = require('@sentry/webpack-plugin');
 const {globSync} = require("glob");
 const fs = require('fs');
-const yaml = require('yaml')
 const {execSync} = require('child_process');
 const {notarize} = require("@electron/notarize");
 
@@ -169,6 +168,9 @@ module.exports = {
         win: {
           target: ['nsis'],
           artifactName: 'ftb-app-${version}-${arch}.${ext}',
+          sign: './windows-signing.js',
+          signingHashAlgorithms: ["sha256"],
+          icon: "./resources/icons/app-icon-windows.ico"
         },
         mac: {
           hardenedRuntime: true,

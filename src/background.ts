@@ -592,7 +592,6 @@ async function createPreLaunchWindow(source: string) {
   
   prelaunchWindow = new BrowserWindow({
     title: 'FTB Launch',
-    icon: path.join(__static, 'favicon.ico'),
     minWidth: 300,
     minHeight: 400,
     width: 300,
@@ -706,8 +705,6 @@ async function createWindow(reset = false) {
   win = new BrowserWindow({
     title: 'FTB App',
 
-    // Other
-    icon: path.join(__static, 'favicon.ico'),
     // Size Settings
     minWidth: 1220,
     minHeight: 895,
