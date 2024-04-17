@@ -12,9 +12,6 @@ overrides:
   ejs: '>=3.1.7'
 
 patchedDependencies:
-  app-builder-lib@24.7.0:
-    hash: tzv7mwcn2cepw6mdpf2deutzrm
-    path: patches/app-builder-lib@24.7.0.patch
   terser-webpack-plugin@1.4.5:
     hash: ra2x2visp7ftkcqwvqllfxzxzq
     path: patches/terser-webpack-plugin@1.4.5.patch
@@ -4029,7 +4026,7 @@ packages:
     resolution: {integrity: sha512-xwdG0FJPQMe0M0UA4Tz0zEB8rBJTRA5a476ZawAqiBkMv16GRK5xpXThOjMaEOFnZ6zabejjG4J3da0SXG63KA==}
     dev: true
 
-  /app-builder-lib@24.7.0(patch_hash=tzv7mwcn2cepw6mdpf2deutzrm):
+  /app-builder-lib@24.7.0:
     resolution: {integrity: sha512-9tmcvNtk+AdJBi3ku1uNep1b9tOFXTdfgfOQlPkuJk+VOXTYggjIZHxsLvgCjDFOxGucXpv2aiA6GWJlSGDqTw==}
     engines: {node: '>=14.0.0'}
     dependencies:
@@ -4064,7 +4061,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-    patched: true
 
   /aproba@1.2.0:
     resolution: {integrity: sha512-Y9J6ZjXtoYh8RnXVCMOU/ttDmk1aBjunq9vO0ta5x85WDQiQfUF9sIPBITdbiiIVcBo03Hi3jMxigBtsddlXRw==}
@@ -6498,7 +6494,7 @@ packages:
   /dmg-builder@24.7.0:
     resolution: {integrity: sha512-XU/AmcOWPM0X3OUufvvy8+RBKnvd+Rd66Eys9uq1FTZ/9ssgqWf/4SHC/OzAwaeN/qF6HHzR63Bvu+xHjuliGw==}
     dependencies:
-      app-builder-lib: 24.7.0(patch_hash=tzv7mwcn2cepw6mdpf2deutzrm)
+      app-builder-lib: 24.7.0
       builder-util: 24.5.0
       builder-util-runtime: 9.2.1
       fs-extra: 10.1.0
