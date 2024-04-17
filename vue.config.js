@@ -248,7 +248,7 @@ async function signJnilibInJar(context) {
   const keychainFile = (await packer.codeSigningInfo.value).keychainFile
   
   const signingIdentity = '5372643C69B1D499BDF6EA772082E9CE99E85029';
-  const entitlementsPath = './node_modules/.pnpm/@overwolf+ow-app-builder-lib@24.7.0/node_modules/@overwolf/ow-app-builder-lib/templates/entitlements.mac.plist';
+  const entitlementsPath = './node_modules/.pnpm/@overwolf+ow-electron-builder@24.13.4_electron-builder-squirrel-windows@24.13.3/node_modules/@overwolf/ow-app-builder-lib/templates/entitlements.mac.plist';
   
   const jar = getPathToLauncher();
   const absoluteJar = path.resolve(jar);
