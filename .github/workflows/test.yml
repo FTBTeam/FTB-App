@@ -29,11 +29,11 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
       - name: Build subprocess
         env:
           SUBPROCESS_SENTRY_DSN: ${{ secrets.SUBPROCESS_SENTRY_DSN }}
@@ -41,7 +41,7 @@ jobs:
           CI: true
         run: |
           cd subprocess
-          ./gradlew clean test
+          ./gradlew clean test -si
       # Upload the report regardless of a failure
       - name: Upload Test Report
         if: always()

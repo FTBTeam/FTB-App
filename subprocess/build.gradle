@@ -16,7 +16,12 @@ plugins {
 
 apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
+}
 
 group = "net.creeperhost"
 archivesBaseName = "launcher"
