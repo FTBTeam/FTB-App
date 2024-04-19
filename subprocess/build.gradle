@@ -25,6 +25,8 @@ def branch = System.getenv("BRANCH_OVERRIDE") ?: System.getenv("GITHUB_BRANCH") 
 version = System.getenv("VERSION_OVERRIDE") ?: (details.gitHash + (branch != 'release' ? "-" + branch : ""))
 def sentryDsn = System.getenv("SUBPROCESS_SENTRY_DSN") ?: ""
 
+def packageJson = new JsonSlurper().parse(file("../package.json"))
+
 repositories {
     mavenLocal()
     maven { url 'https://maven.creeperhost.net' }
@@ -81,20 +83,10 @@ test {
     useJUnitPlatform()
 }
 
-// Lazy wrapper for the package.json data.
-def packageJsonData = null
-def packageJsonHolder = () -> {
-    if (packageJsonData == null) {
-        packageJsonData = new JsonSlurper().parse(file("../package.json"))
-    }
-    
-    return packageJsonData
-}
-
 tasks.register('processSource', Sync) {
     from sourceSets.main.java
     inputs.property 'version', version
-    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, SHAREDVERSION: packageJsonHolder().version, BRANCH: branch, SENTRY: sentryDsn])
+    filter(ReplaceTokens, tokens: [APPVERSION: version, WEBVERSION: version, SHAREDVERSION: packageJson.version, BRANCH: branch, SENTRY: sentryDsn])
     into "$buildDir/src"
 }
 
@@ -126,100 +118,98 @@ assemble.dependsOn 'shadowJar'
 project(":web") {
 }
 
-// Used to map dependencies to their respective repositories.
-def dependencySources = [
-        "org.jetbrains:annotations"                : "https://github.com/JetBrains/java-annotations",
-        "com.squareup.okio:okio"                   : "https://github.com/square/okio",
-        "com.github.oshi:oshi-core"                : "https://github.com/oshi/oshi",
-        "net.java.dev.jna:jna-platform"            : "https://github.com/java-native-access/jna",
-        "org.apache.commons:commons-compress"      : "https://github.com/apache/commons-compress",
-        "org.jetbrains.kotlin:kotlin-stdlib-common": "https://github.com/JetBrains/kotlin/tree/master/libraries",
-        "org.java-websocket:Java-WebSocket"        : "https://github.com/TooTallNate/Java-WebSocket",
-        "com.squareup.okhttp3:okhttp"              : "https://github.com/square/okhttp",
-        "net.java.dev.jna:jna"                     : "https://github.com/java-native-access/jna",
-        "org.slf4j:slf4j-api"                      : "https://github.com/qos-ch/slf4j",
-        "com.google.code.gson:gson"                : "https://github.com/google/gson",
-        "org.jetbrains.kotlin:kotlin-stdlib"       : "https://github.com/JetBrains/kotlin/tree/master/libraries/stdlib",
-        "org.apache.tika:tika-core"                : "https://github.com/apache/tika",
-        "net.covers1624:Quack"                     : "https://github.com/covers1624/Quack"
-]
-
 downloadLicenses {
     includeProjectDependencies = true
     report {
         html(false)
         xml(false)
     }
-    
+
     // Only include things that will be part of the final jar.
     dependencyConfiguration = "runtimeClasspath"
 }
 
-tasks.register('writeLicenses', Copy) {
+def dependencySources = layout.projectDirectory.file('dependency_sources.json')
+def licensesOutput = layout.buildDirectory.file('libs/java-licenses.json')
+def writeLicenses = tasks.register('writeLicenses') {
     it.dependsOn 'downloadLicenses'
-    from "$buildDir/reports/license"
-    into "$buildDir/libs"
-    include "dependency-license.json"
-    rename "dependency-license.json", "java-licenses.json"
+    inputs.file(dependencySources)
+    outputs.file(licensesOutput)
 
     // Parse the dependency-license.json and add the repository to the object where possible.
     doLast {
-        def data = new JsonSlurper().parse(new File("$projectDir/build/libs/java-licenses.json"))
-        def dependencies = data.get("dependencies")
-        for (obj in dependencies) {
-            def repo = dependencySources.get(obj.name.take(obj.name.lastIndexOf(":")) as String)
-            if (repo != null) {
+        def sources = new JsonSlurper().parse(dependencySources.asFile) as Map<String, String>
+        def data = new JsonSlurper().parse(new File("$buildDir/reports/license/dependency-license.json"))
+        def missing = []
+        def used = []
+        for (obj in data['dependencies']) {
+            def name = obj['name']
+            if (!name.contains(':')) continue
+            name = name.take(name.lastIndexOf(":"))
+            def repo = sources[name]
+            used << name
+            if (repo == null) {
+                missing << name
+            } else {
                 obj.repository = repo
             }
         }
+        if (!missing.isEmpty()) {
+            getLogger().warn("The following dependencies are missing repo links: ")
+            missing.each{ getLogger().warn("  $it")}
+        }
+
+        def unused = sources.keySet() - used
+        if (!unused.isEmpty()) {
+            getLogger().warn("The following dependency repo links aren't required: ")
+            unused.each{ getLogger().warn("  $it")}
+        }
+
 
         // Write the new json.
-        file("$projectDir/build/libs/java-licenses.json").newWriter().withWriter { w ->
-            w << JsonOutput.toJson(data)
-        }
+        licensesOutput.get().asFile.text = JsonOutput.toJson(data)
     }
 }
 
-tasks.register('writeVersion') {
-    it.dependsOn 'downloadLicenses'
+def metaOutput = layout.buildDirectory.file('libs/meta.json')
+def writeVersion = tasks.register('writeVersion') {
+    outputs.file(metaOutput)
     doLast {
-        def packageJson = packageJsonHolder()
+        metaOutput.get().asFile.text = JsonOutput.toJson(
+                [
+                        appVersion: packageJson.version,
+                        commit    : details.gitHash,
+                        branch    : branch,
+                        released  : Instant.now().getEpochSecond(),
+                        runtime   : [
+                                version: project.target_java_version,
+                                // Get the output of the fatjar -all
+                                jar    : shadowJar.outputs.files.singleFile.name,
 
-        file("$projectDir/build/libs/meta.json").newWriter().withWriter { w ->
-            w << JsonOutput.toJson(
-                    [
-                            appVersion    : packageJson.version,
-                            commit        : details.gitHash,
-                            branch        : branch,
-                            released      : Instant.now().getEpochSecond(),
-                            runtime       : [
-                                    version: project.target_java_version,
-                                    // Get the output of the fatjar -all
-                                    jar: shadowJar.outputs.files.singleFile.name,
-
-                                    /**
-                                     * The env and args use the following format:
-                                     * {
-                                     *    "key": "" // Optional, if not set, the value will be used as the key and value.
-                                     *    "value": "",
-                                     *    // At least one of the following must be set.
-                                     *    "filter": {
-                                     *       "os": "windows", // optional
-                                     *       "arch": "x64", // optional
-                                     *    }
-                                     * }
-                                     */
-                                    env: [],
-                                    jvmArgs: []
-                            ]
-                    ]
-            )
-        }
+                                /**
+                                 * The env and args use the following format:
+                                 * {
+                                 *    "key": "" // Optional, if not set, the value will be used as the key and value.
+                                 *    "value": "",
+                                 *    // At least one of the following must be set.
+                                 *    "filter": {
+                                 *       "os": "windows", // optional
+                                 *       "arch": "x64", // optional
+                                 *    }
+                                 * }
+                                 */
+                                env    : [],
+                                jvmArgs: []
+                        ]
+                ]
+        )
     }
 }
 
-build.dependsOn 'writeLicenses'
-build.dependsOn 'writeVersion'
+tasks.named('build').configure {
+    it.dependsOn writeLicenses
+    it.dependsOn writeVersion
+}
 
 wrapper {
     gradleVersion = "8.7"
@@ -248,21 +238,21 @@ idea.project.settings {
 }
 
 def sharedSettings = [
-    excludeClasses: [
-            "java.lang.Iterable",
-            "java.lang.Comparable",
-            "java.lang.Cloneable",
-            "java.nio.Watchable",
-            "java.io.Serializable",
-            "com.google.common.hash.HashCode",
-            "com.google.gson.JsonElement",
-            "com.google.gson.JsonArray",
-            "com.google.gson.JsonObject",
-            "java.awt.geom.Dimension2D"
-    ],
-    customTypeMappings: [
-            "java.nio.file.Path:string"
-    ]
+        excludeClasses    : [
+                "java.lang.Iterable",
+                "java.lang.Comparable",
+                "java.lang.Cloneable",
+                "java.nio.Watchable",
+                "java.io.Serializable",
+                "com.google.common.hash.HashCode",
+                "com.google.gson.JsonElement",
+                "com.google.gson.JsonArray",
+                "com.google.gson.JsonObject",
+                "java.awt.geom.Dimension2D"
+        ],
+        customTypeMappings: [
+                "java.nio.file.Path:string"
+        ]
 ]
 
 tasks.named("generateTypeScript", GenerateTask) {
@@ -274,14 +264,14 @@ tasks.named("generateTypeScript", GenerateTask) {
     outputKind = "module"
     outputFile = project.file("../src/core/@types/javaApi.d.ts")
     classPatterns = [
-        "net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler\$SugaredInstanceJson",
-        "net.creeperhost.creeperlauncher.api.data.*",
-        "net.creeperhost.creeperlauncher.api.data.**.*",
-        "net.creeperhost.creeperlauncher.api.data.**.*\$*",
-        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Request",
-        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Reply",
-        "net.creeperhost.creeperlauncher.api.handlers.**.*\$Data",
-        "net.creeperhost.creeperlauncher.storage.settings.SettingsData"
+            'net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler$SugaredInstanceJson',
+            'net.creeperhost.creeperlauncher.api.data.*',
+            'net.creeperhost.creeperlauncher.api.data.**.*',
+            'net.creeperhost.creeperlauncher.api.data.**.*$*',
+            'net.creeperhost.creeperlauncher.api.handlers.**.*$Request',
+            'net.creeperhost.creeperlauncher.api.handlers.**.*$Reply',
+            'net.creeperhost.creeperlauncher.api.handlers.**.*$Data',
+            'net.creeperhost.creeperlauncher.storage.settings.SettingsData'
     ]
     excludeClasses = sharedSettings.excludeClasses
     customTypeMappings = sharedSettings.customTypeMappings

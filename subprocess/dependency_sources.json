@@ -1,0 +1,16 @@
+{
+    "org.jetbrains:annotations": "https://github.com/JetBrains/java-annotations",
+    "com.squareup.okio:okio": "https://github.com/square/okio",
+    "com.github.oshi:oshi-core": "https://github.com/oshi/oshi",
+    "net.java.dev.jna:jna-platform": "https://github.com/java-native-access/jna",
+    "org.apache.commons:commons-compress": "https://github.com/apache/commons-compress",
+    "org.jetbrains.kotlin:kotlin-stdlib-common": "https://github.com/JetBrains/kotlin/tree/master/libraries",
+    "org.java-websocket:Java-WebSocket": "https://github.com/TooTallNate/Java-WebSocket",
+    "com.squareup.okhttp3:okhttp": "https://github.com/square/okhttp",
+    "net.java.dev.jna:jna": "https://github.com/java-native-access/jna",
+    "org.slf4j:slf4j-api": "https://github.com/qos-ch/slf4j",
+    "com.google.code.gson:gson": "https://github.com/google/gson",
+    "org.jetbrains.kotlin:kotlin-stdlib": "https://github.com/JetBrains/kotlin/tree/master/libraries/stdlib",
+    "org.apache.tika:tika-core": "https://github.com/apache/tika",
+    "net.covers1624:Quack": "https://github.com/covers1624/Quack"
+}
