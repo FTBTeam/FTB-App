@@ -91,9 +91,9 @@ public class OperationProgressTracker {
         }
 
         long speedTime = time / 1000L;
-        if (currentBytes > 0 && (speedTime) - (lastSpeedTime) > 0) {
-
-            speed = ((currentBytes - lastSpeedBytes) / (speedTime - lastSpeedTime)) * 8;
+        long dTime = speedTime - lastSpeedTime;
+        if (currentBytes > 0 &&  dTime > 0) {
+            speed = ((currentBytes - lastSpeedBytes) / dTime) * 8;
 
             lastSpeedTime = speedTime;
             lastSpeedBytes = currentBytes;
