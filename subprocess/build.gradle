@@ -60,10 +60,9 @@ dependencies {
 
     implementation 'com.electronwill.night-config:toml:3.6.4'
 
-    implementation 'org.apache.httpcomponents:httpmime:4.5.13'
-
     implementation('software.amazon.awssdk:s3:2.20.4') {
         exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+        exclude group: 'software.amazon.awssdk', module: 'apache-client'
     }
 
     compileOnly 'org.jetbrains:annotations:22.0.0'
