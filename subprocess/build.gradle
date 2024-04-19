@@ -119,11 +119,8 @@ project(":web") {
 }
 
 downloadLicenses {
-    includeProjectDependencies = true
-    report {
-        html(false)
-        xml(false)
-    }
+    // Can only be the debugger, just ignore
+    includeProjectDependencies = false
 
     // Only include things that will be part of the final jar.
     dependencyConfiguration = "runtimeClasspath"

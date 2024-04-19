@@ -1,16 +1,81 @@
 {
-    "org.jetbrains:annotations": "https://github.com/JetBrains/java-annotations",
-    "com.squareup.okio:okio": "https://github.com/square/okio",
-    "com.github.oshi:oshi-core": "https://github.com/oshi/oshi",
-    "net.java.dev.jna:jna-platform": "https://github.com/java-native-access/jna",
-    "org.apache.commons:commons-compress": "https://github.com/apache/commons-compress",
-    "org.jetbrains.kotlin:kotlin-stdlib-common": "https://github.com/JetBrains/kotlin/tree/master/libraries",
-    "org.java-websocket:Java-WebSocket": "https://github.com/TooTallNate/Java-WebSocket",
-    "com.squareup.okhttp3:okhttp": "https://github.com/square/okhttp",
-    "net.java.dev.jna:jna": "https://github.com/java-native-access/jna",
+    "org.apache.logging.log4j:log4j-core": "https://github.com/apache/logging-log4j2",
+    "org.apache.logging.log4j:log4j-api": "https://github.com/apache/logging-log4j2",
+    "org.apache.logging.log4j:log4j-slf4j-impl": "https://github.com/apache/logging-log4j2",
+    "org.apache.logging.log4j:log4j-jul": "https://github.com/apache/logging-log4j2",
     "org.slf4j:slf4j-api": "https://github.com/qos-ch/slf4j",
+
+    "io.sentry:sentry": "https://github.com/getsentry/sentry-java",
+    "io.sentry:sentry-log4j2": "https://github.com/getsentry/sentry-java",
+
+    "net.sf.jopt-simple:jopt-simple": "https://github.com/jopt-simple/jopt-simple",
+
     "com.google.code.gson:gson": "https://github.com/google/gson",
+
+    "org.nanohttpd:nanohttpd": "https://github.com/NanoHttpd/nanohttpd",
+    "org.nanohttpd:nanohttpd-websocket": "https://github.com/NanoHttpd/nanohttpd",
+
+    "com.github.oshi:oshi-core": "https://github.com/oshi/oshi",
+    "net.java.dev.jna:jna": "https://github.com/java-native-access/jna",
+    "net.java.dev.jna:jna-platform": "https://github.com/java-native-access/jna",
+
+    "com.squareup.okhttp3:okhttp": "https://github.com/square/okhttp",
+    "com.squareup.okio:okio": "https://github.com/square/okio",
+    "com.squareup.okhttp3:okhttp-dnsoverhttps": "https://github.com/square/okhttp",
     "org.jetbrains.kotlin:kotlin-stdlib": "https://github.com/JetBrains/kotlin/tree/master/libraries/stdlib",
-    "org.apache.tika:tika-core": "https://github.com/apache/tika",
-    "net.covers1624:Quack": "https://github.com/covers1624/Quack"
+    "org.jetbrains.kotlin:kotlin-stdlib-common": "https://github.com/JetBrains/kotlin/tree/master/libraries",
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk8": "https://github.com/JetBrains/kotlin/tree/master/libraries",
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk7": "https://github.com/JetBrains/kotlin/tree/master/libraries",
+    
+    "org.apache.commons:commons-compress": "https://github.com/apache/commons-compress",
+    "commons-io:commons-io":"https://github.com/apache/commons-io",
+    "org.apache.commons:commons-lang3": "https://github.com/apache/commons-lang",
+    
+    "org.apache.maven:maven-artifact": "https://github.com/apache/maven",
+
+    "net.covers1624:Quack": "https://github.com/covers1624/Quack",
+    "net.covers1624:JdkUtils": "https://github.com/covers1624/JdkUtils",
+    "net.rubygrapefruit:native-platform": "https://github.com/gradle/native-platform",
+    "net.rubygrapefruit:native-platform-windows-amd64": "https://github.com/gradle/native-platform",
+    "net.rubygrapefruit:native-platform-windows-i386": "https://github.com/gradle/native-platform",
+    
+    "com.google.guava:guava": "https://github.com/google/guava",
+    "com.google.guava:listenablefuture": "https://github.com/google/guava",
+    "com.google.guava:failureaccess": "https://github.com/google/guava",
+    "com.google.errorprone:error_prone_annotations": "https://github.com/google/error-prone",
+    "org.checkerframework:checker-qual": "https://github.com/typetools/checker-framework",
+    "com.google.j2objc:j2objc-annotations": "https://github.com/google/j2objc",
+    
+    "com.electronwill.night-config:core": "https://github.com/TheElectronWill/night-config",
+    "com.electronwill.night-config:toml": "https://github.com/TheElectronWill/night-config",
+    
+    "software.amazon.awssdk:s3": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:aws-xml-protocol": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:aws-query-protocol": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:protocol-core": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:sdk-core": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:annotations": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:http-client-spi": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:utils": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:metrics-spi": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:endpoints-spi": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:profiles": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:json-utils": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:third-party-jackson-core": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:regions": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:arns": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:auth": "https://github.com/aws/aws-sdk-java-v2",
+    "software.amazon.awssdk:aws-core": "https://github.com/aws/aws-sdk-java-v2",
+    "org.reactivestreams:reactive-streams": "https://github.com/reactive-streams/reactive-streams-jvm",
+    "software.amazon.eventstream:eventstream": "https://github.com/awslabs/aws-eventstream-java",
+    
+    "org.openjdk.nashorn:nashorn-core": "https://github.com/openjdk/nashorn",
+    "org.ow2.asm:asm": "https://gitlab.ow2.org/asm/asm",
+    "org.ow2.asm:asm-commons": "https://gitlab.ow2.org/asm/asm",
+    "org.ow2.asm:asm-tree": "https://gitlab.ow2.org/asm/asm",
+    "org.ow2.asm:asm-util": "https://gitlab.ow2.org/asm/asm",
+    "org.ow2.asm:asm-analysis": "https://gitlab.ow2.org/asm/asm",
+    
+    "com.google.code.findbugs:jsr305": "https://github.com/findbugsproject/findbugs",
+    "org.jetbrains:annotations": "https://github.com/JetBrains/java-annotations"
 }
