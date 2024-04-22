@@ -602,6 +602,7 @@ async function createPreLaunchWindow(source: string) {
     frame: false,
     titleBarStyle: 'hidden',
     show: false,
+    backgroundColor: '#151515',
     // Remove close button on mac
     closable: false,
     minimizable: false,
@@ -717,6 +718,7 @@ async function createWindow(reset = false) {
     titleBarStyle: useSystemFrame ? 'default' : 'hidden',
     autoHideMenuBar: true,
     show: false,
+    backgroundColor: '#2a2a2a',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
