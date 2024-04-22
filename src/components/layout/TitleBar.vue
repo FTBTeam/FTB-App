@@ -1,5 +1,5 @@
 <template>
-  <div class="titlebar" :class="{ isMac, isUnix }" @mousedown="startDragging" @dblclick="minMax" v-show="systemBarDisabled">
+  <div class="titlebar" :class="{ isMac, isUnix }" @mousedown="startDragging" @dblclick="minMax">
     <div class="spacer" v-if="isMac"></div>
     <div class="meta-title">
       <span>FTB App</span>
@@ -117,10 +117,6 @@ export default class TitleBar extends Vue {
     safeNavigate(RouterNames.SETTINGS_APP)
   }
   
-  get systemBarDisabled() {
-    return !this.settings?.settings?.appearance?.useSystemWindowStyle ?? false;
-  }
-  
   get isUnix() {
     return !platform.isOverwolf()
   }
@@ -140,6 +136,10 @@ export default class TitleBar extends Vue {
   z-index: 50000;
   position: relative;
   transition: background-color 0.3s ease-in-out;
+
+  .system-frame & {
+    display: none;
+  }
   
   &.blurred {
     background-color: var(--color-navbar);
