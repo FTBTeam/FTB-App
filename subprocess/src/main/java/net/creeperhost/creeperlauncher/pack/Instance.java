@@ -741,10 +741,11 @@ public class Instance {
         
         // Trim the computed name to 64 characters.
         computedName = computedName.substring(0, Math.min(computedName.length(), 64));
+        computedName = computedName.trim();
         
         Path instancesDir = Settings.getInstancesDir();
         if (!Files.exists(instancesDir.resolve(computedName))) {
-            return computedName.trim();
+            return computedName;
         }
         
         int count = 1;
