@@ -196,7 +196,7 @@
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 import {ModPack} from '@/modules/modpacks/types';
-import {Action, Getter, State} from 'vuex-class';
+import {Getter, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
@@ -206,8 +206,7 @@ import {RouterNames} from '@/router';
 import Router from 'vue-router';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {GetModpack} from '@/core/state/modpacks/modpacksState';
+import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -326,9 +325,7 @@ const cleanAuthIds = {
   },
 })
 export default class LaunchingPage extends Vue {
-  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
   @Getter('getInstance', ns("v2/instances")) getInstance!: (uuid: string) => SugaredInstanceJson | undefined;
-  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   @State('websocket') public websockets!: SocketState;
   
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
@@ -402,12 +399,6 @@ export default class LaunchingPage extends Vue {
     }
 
     emitter.on('ws.message', this.onLaunchProgressUpdate);
-
-    this.logger.debug("Fetching instance modpack")
-    await this.getModpack({
-      id: this.instance.id,
-      provider: typeIdToProvider(this.instance.packType)
-    });
     
     await this.launch();
     

@@ -1,5 +1,5 @@
 <template>
-  <div class="changelogs">
+  <div class="changelogs" v-if="!error">
     <div class="changelogs">
       <div class="log mb-8" v-for="(changelog, index) in allLogs">
         <h3 class="mb-4 text-xl font-bold">{{changelog.title ?? changelog.version}}</h3>
@@ -10,6 +10,11 @@
     <div class="flex justify-center">
       <ui-button type="info" @click="loadMore" v-if="!allLoaded">Load more</ui-button>
     </div>
+  </div>
+  <div v-else>
+    <message type="warning">
+      <p>{{error}}</p>
+    </message>
   </div>
 </template>
 
@@ -36,6 +41,8 @@ export default class Changelogs extends Vue {
   changelogs: string[] = [];
   changelogData: Record<string, ChangelogData> = {};
   
+  error = ""
+  
   async mounted() {
     await this.getChangelogs();
   }
@@ -58,8 +65,7 @@ export default class Changelogs extends Vue {
       await this.loadInView();
     } catch (e) {
       console.error(e);
-      alertController.error('Failed to load changelogs');
-      return;
+      this.error = 'Failed to load changelogs';
     }
   }
   
