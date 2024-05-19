@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
@@ -20,7 +21,7 @@ public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHand
             return;
         }
 
-        WebSocketHandler.sendMessage(new Reply(data, profile.getValidator().isValid(profile), "is_valid"));
+        WebSocketHandler.sendMessage(new Reply(data, MicrosoftAuthenticator.isValid(profile), "is_valid"));
     }
 
     private static class Reply extends Data {

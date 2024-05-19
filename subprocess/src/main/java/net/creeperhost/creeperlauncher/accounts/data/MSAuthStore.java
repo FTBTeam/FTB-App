@@ -1,4 +1,4 @@
-package net.creeperhost.creeperlauncher.accounts.stores;
+package net.creeperhost.creeperlauncher.accounts.data;
 
 import java.util.StringJoiner;
 import java.util.UUID;

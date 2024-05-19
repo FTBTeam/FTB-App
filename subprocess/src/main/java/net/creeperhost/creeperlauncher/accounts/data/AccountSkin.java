@@ -1,6 +1,4 @@
-package net.creeperhost.creeperlauncher.accounts.stores;
-
-import java.util.Objects;
+package net.creeperhost.creeperlauncher.accounts.data;
 
 public final class AccountSkin {
     private String id;

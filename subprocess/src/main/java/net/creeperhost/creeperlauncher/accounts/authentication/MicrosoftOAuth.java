@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import net.covers1624.quack.gson.JsonUtils;
 import net.creeperhost.creeperlauncher.Constants;
-import net.creeperhost.creeperlauncher.accounts.stores.MSAuthStore;
+import net.creeperhost.creeperlauncher.accounts.data.MSAuthStore;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 import net.creeperhost.creeperlauncher.util.Result;
 import okhttp3.*;
@@ -19,7 +19,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static net.creeperhost.creeperlauncher.accounts.authentication.ApiRecords.*;
+import static net.creeperhost.creeperlauncher.accounts.authentication.ApiRecords.Requests;
+import static net.creeperhost.creeperlauncher.accounts.authentication.ApiRecords.Responses;
 
 public class MicrosoftOAuth {
     private static final Logger LOGGER = LogManager.getLogger();

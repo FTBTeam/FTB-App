@@ -35,9 +35,6 @@
             >
               <div class="avatar">
                 <img :src="getMinecraftHead(item.uuid)" alt="Profile" class="rounded" />
-                <div class="ms-identifier" v-if="item.type === 'microsoft'">
-                  <img src="@/assets/images/branding/microsoft-squares.webp" alt="Microsoft account" />
-                </div>
               </div>
               <div class="name selectable">
                 <div class="username-container" :title="`${item.username} - Click to set as active profile`">

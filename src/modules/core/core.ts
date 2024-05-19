@@ -1,6 +1,6 @@
-import { Module } from 'vuex';
-import { RootState } from '@/types';
-import { AuthProfile, CoreMutations, CoreState } from '@/modules/core/core.types';
+import {Module} from 'vuex';
+import {RootState} from '@/types';
+import {AuthProfile, CoreMutations, CoreState} from '@/modules/core/core.types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 
 /**
@@ -88,16 +88,11 @@ export const core: Module<CoreState, RootState> = {
       const profiles = result.profiles.map(
         (a: any) =>
           ({
-            type: a.isMicrosoft ? 'microsoft' : 'mojang',
-            tokens: a.isMicrosoft
-              ? {
-                  accessToken: a.msAuth.minecraftToken,
-                  refreshToken: a.msAuth.liveRefreshToken,
-                }
-              : {
-                  clientToken: a.mcAuth.clientToken,
-                  accessToken: a.mcAuth.accessToken,
-                },
+            type: 'microsoft',
+            tokens: {
+              accessToken: a.msAuth.minecraftToken,
+              refreshToken: a.msAuth.liveRefreshToken,
+            },
             username: a.username,
             uuid: a.uuid,
             expiresAt: a.isMicrosoft ? a.msAuth.liveExpiresAt : undefined,

@@ -307,12 +307,7 @@ public class InstanceSharer extends InstanceOperation {
         String username = profile.username;
         UUID uuid = profile.uuid;
         String token;
-        if (profile.msAuth != null) {
-            token = profile.msAuth.minecraftToken;
-        } else {
-            assert profile.mcAuth != null;
-            token = profile.mcAuth.accessToken;
-        }
+        token = profile.msAuth.minecraftToken;
 
         String serverId = String.valueOf(new Random().nextLong());
 

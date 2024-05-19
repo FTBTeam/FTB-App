@@ -4,7 +4,7 @@ import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
-import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
+import net.creeperhost.creeperlauncher.accounts.data.AccountSkin;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.data.PrivateBaseData;
@@ -20,10 +20,8 @@ import java.time.Instant;
 public class AuthenticateMsProfileHandler implements IMessageHandler<AuthenticateMsProfileHandler.Data> {
     @Override
     public void handle(Data data) {
-        MicrosoftAuthenticator auth = new MicrosoftAuthenticator();
-
         // Try and authenticate with the MC server
-        Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate = auth.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
+        Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate = MicrosoftAuthenticator.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
 
         if (authenticate.isErr()) {
             MicrosoftOAuth.DanceCodedError danceCodedError = authenticate.unwrapErr();

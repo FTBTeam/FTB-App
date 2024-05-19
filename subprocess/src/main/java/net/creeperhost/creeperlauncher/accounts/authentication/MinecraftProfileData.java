@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.accounts.authentication;
 
-import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
+import net.creeperhost.creeperlauncher.accounts.data.AccountSkin;
 
 import java.util.List;
 

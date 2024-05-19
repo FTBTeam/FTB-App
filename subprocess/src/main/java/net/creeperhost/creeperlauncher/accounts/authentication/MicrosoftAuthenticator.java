@@ -11,15 +11,10 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nonnull;
 import java.time.Instant;
 
-public class MicrosoftAuthenticator implements AuthenticatorValidator<
-    Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError>, 
-    MicrosoftAuthenticator.AuthRequest, 
-    MicrosoftAuthenticator.AuthRequest
-> {
+public class MicrosoftAuthenticator  {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    @Override
-    public boolean isValid(AccountProfile profile) {
+    public static boolean isValid(AccountProfile profile) {
         if (profile.msAuth == null) {
             LOGGER.warn("Attempted to check Mojang account for valid Microsoft authentication... uuid: {}", profile.uuid);
             return false;
@@ -74,8 +69,7 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<
      * Due to the way we handle authentication, this is basically ideal for a authentication, we only do the code twice to support different logger info.
      */
     @Nonnull
-    @Override
-    public Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh(AccountProfile profile, AuthRequest refreshData) {
+    public static Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> refresh(AccountProfile profile, AuthRequest refreshData) {
         return MicrosoftOAuth.
             create(new MicrosoftOAuth.DanceContext(refreshData.authToken, refreshData.liveRefreshToken, refreshData.liveExpiresAt), step -> {
                 WebSocketHandler.sendMessage(new StepProgressReply(step));
@@ -84,8 +78,7 @@ public class MicrosoftAuthenticator implements AuthenticatorValidator<
     }
 
     @Nonnull
-    @Override
-    public Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate(AuthRequest accessData) {
+    public static Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate(AuthRequest accessData) {
         return MicrosoftOAuth
             .create(new MicrosoftOAuth.DanceContext(accessData.authToken, accessData.liveRefreshToken, accessData.liveExpiresAt), step -> {
                 WebSocketHandler.sendMessage(new StepProgressReply(step));

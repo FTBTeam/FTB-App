@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
-import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
@@ -17,15 +16,14 @@ import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
-import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.install.tasks.InstallAssetsTask;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressAggregator;
 import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.AssetIndexManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionListManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest.AssetIndex;
-import net.creeperhost.creeperlauncher.util.QuackProgressAdapter;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
@@ -389,16 +387,9 @@ public class InstanceLauncher {
                 subMap.put("auth_player_name", profile.username);
                 subMap.put("auth_uuid", profile.uuid.toString());
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
-                String accessToken;
-                if (profile.msAuth != null) {
-                    subMap.put("user_type", "msa");
-                    subMap.put("xuid", profile.msAuth.xblUserHash);
-                    accessToken = profile.msAuth.minecraftToken;
-                } else {
-                    assert profile.mcAuth != null;
-                    subMap.put("user_type", "mojang");
-                    accessToken = profile.mcAuth.accessToken;
-                }
+                subMap.put("user_type", "msa");
+                subMap.put("xuid", profile.msAuth.xblUserHash);
+                String accessToken = profile.msAuth.minecraftToken;
                 String sessionToken = "token:" + accessToken + ":" + profile.uuid.toString().replace("-", "");
                 subMap.put("auth_session", sessionToken);
                 subMap.put("auth_access_token", accessToken);

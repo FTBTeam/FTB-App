@@ -4,7 +4,7 @@ import net.creeperhost.creeperlauncher.accounts.AccountManager;
 import net.creeperhost.creeperlauncher.accounts.AccountProfile;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
 import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
-import net.creeperhost.creeperlauncher.accounts.stores.AccountSkin;
+import net.creeperhost.creeperlauncher.accounts.data.AccountSkin;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.data.PrivateBaseData;
@@ -31,15 +31,14 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found", false));
             return;
         }
-
-        MicrosoftAuthenticator authenticator = profile.getValidator();
-        refreshMicrosoft(authenticator, data, profile);
+        
+        refreshMicrosoft(data, profile);
     }
 
     /**
      * Refresh using Microsoft flow
      */
-    private void refreshMicrosoft(MicrosoftAuthenticator validator, Data data, AccountProfile profile) {
+    private void refreshMicrosoft(Data data, AccountProfile profile) {
         if (data.liveAccessToken == null) {
             WebSocketHandler.sendMessage(new Reply(data, false, "Missing essential information...", false));
         }
@@ -53,7 +52,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
                     Thread.sleep(tries * 1000L);
                 } catch (InterruptedException ignored) { }
             }
-            refresh = validator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
+            refresh = MicrosoftAuthenticator.refresh(profile, new MicrosoftAuthenticator.AuthRequest(
                     data.liveAccessToken, data.liveRefreshToken, data.liveExpires
             ));
             if (refresh.isErr()) {
