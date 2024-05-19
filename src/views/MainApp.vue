@@ -2,7 +2,7 @@
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
     
-    <div class="app-container relative flex justify-center items-center h-full" v-if="!appReadyToGo">
+    <div class="app-container relative flex justify-center items-center" v-if="!appReadyToGo">
       <div class="text-center">
         <loader :title="status" sub-title="We're just getting some things ready... This shouldn't take long!" />
         
@@ -25,7 +25,7 @@
     </div>
     
     <!-- App has connected and is ready to use -->
-    <div class="app-container" v-if="appReadyToGo" :class="{'no-system-bar': systemBarDisabled}">
+    <div class="app-container" v-if="appReadyToGo">
       <main class="main">
         <sidebar v-if="showSidebar" />
         <div class="app-content relative">
@@ -431,11 +431,16 @@ export default class MainApp extends Vue {
 
 <style lang="scss" scoped>
 .app-container {
-  height: 100%;
+  height: calc(100% - 2rem);
   position: relative;
   
-  &.no-system-bar {
-    height: calc(100% - 2rem);
+  .macos & {
+    // Title bar on macos is 1.8rem not 2rem
+    height: calc(100% - 1.8rem);
+  }
+
+  .system-frame & {
+    height: 100%;
   }
 
   &.centered {
@@ -445,15 +450,6 @@ export default class MainApp extends Vue {
 
     .pushed-content {
       margin-top: -5rem;
-    }
-  }
-}
-
-#app.macos {
-  .app-container {
-    &.no-system-bar {
-      // Title bar on macos is 1.8rem not 2rem
-      height: calc(100% - 1.8rem);
     }
   }
 }
@@ -531,7 +527,7 @@ main.main {
 .debug {
   position: absolute;
   left: 1.5rem;
-  bottom: 3rem;
+  bottom: 1rem;
  
   .debug-item {
     color: rgba(white, .2);

@@ -601,6 +601,8 @@ async function createPreLaunchWindow(source: string) {
     resizable: false,
     frame: false,
     titleBarStyle: 'hidden',
+    show: false,
+    backgroundColor: '#151515',
     // Remove close button on mac
     closable: false,
     minimizable: false,
@@ -624,10 +626,12 @@ async function createPreLaunchWindow(source: string) {
     logger.debug("Loading app from built files")
     createProtocol(protocolSpace)
     await prelaunchWindow.loadURL(`${protocolSpace}://./prelaunch.html`);
-
-    // Try and force focus on the prelaunchWindow
-    prelaunchWindow.focus();
   }
+
+  prelaunchWindow.on("ready-to-show", () => {
+    // Try and force focus on the prelaunchWindow
+    prelaunchWindow?.show();
+  });
   
   prelaunchWindow.on('closed', () => {
     prelaunchWindow = null;
@@ -712,12 +716,23 @@ async function createWindow(reset = false) {
     height: 900,
     frame: useSystemFrame,
     titleBarStyle: useSystemFrame ? 'default' : 'hidden',
+    autoHideMenuBar: true,
+    show: false,
+    backgroundColor: '#2a2a2a',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       disableBlinkFeatures: 'Auxclick',
       webSecurity: false,
     },
+  });
+
+  win.on('ready-to-show', async () => {
+    if (useSystemFrame) {
+      await win?.webContents.executeJavaScript("document.body.classList.add('system-frame')");
+    }
+    // Try and force focus on the window
+    win?.show();
   });
   
   win.webContents.setWindowOpenHandler((details) => {
@@ -752,9 +767,6 @@ async function createWindow(reset = false) {
     logger.debug("Loading app from built files")
     createProtocol(protocolSpace)
     await win.loadURL(`${protocolSpace}://./index.html`);
-    
-    // Try and force focus on the window
-    win.focus();
   }
 
   if (reset) {
