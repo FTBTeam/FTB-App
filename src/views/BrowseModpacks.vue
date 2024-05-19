@@ -35,6 +35,10 @@
     </message>
 
     <loader class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
+    
+    <message v-if="searchValue === '' && !loading && !loadingInitialPacks && !ourPackIds.length">
+      <p>No packs available</p>
+    </message>
 
     <div class="result-cards pb-2" v-if="!error && results.length > 0">
       <pack-preview v-for="(pack, index) in results" :partial-pack="pack" :key="index" :provider="currentTab" />
@@ -164,6 +168,7 @@ export default class BrowseModpacks extends Vue {
     
     if (this.searchValue === '') {
       this.loading = false;
+      this.error = '';
       return;
     }
 
@@ -183,6 +188,7 @@ export default class BrowseModpacks extends Vue {
       this.searchResults = results?.packs ?? [];
     } catch (error) {
       this.logger.error("Failed to search packs", error);
+      this.error = 'Failed to search packs';
     }
   }
 

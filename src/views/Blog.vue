@@ -67,7 +67,7 @@ export default class Blog extends Vue {
   private logger = createLogger("Blog.vue");
   
   public mounted() {
-    if (this.news == null || this.news.length < 1) {
+    if (this.news === null || this.news.length < 1) {
       this.loadNews()
         .catch(e => this.logger.error("Failed to load news", e))
     }

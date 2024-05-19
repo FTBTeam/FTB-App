@@ -24,18 +24,25 @@ const actions: ActionTree<NewsState, RootState> = {
 
     logger.debug("Loading news");
     commit('SET_LOADING', true);
-    const newsReq = await JavaFetch.create(`${constants.metaApi}/v1/blog/posts`)
-      .execute();
-    
-    if (!newsReq) {
-      logger.error("Failed to load news");
+    try {
+      const newsReq = await JavaFetch.create(`${constants.metaApi}/v1/blog/posts`)
+        .execute();
+
+      if (!newsReq) {
+        logger.error("Failed to load news");
+        commit('SET_LOADING', false);
+        return false;
+      }
+
+      logger.debug("Loaded news");
+      const news = newsReq.json<{posts: BlogPost[]}>();
+      commit('SET_NEWS', news.posts);
+    } catch (e) {
+      logger.error("Failed to load news", e);
       commit('SET_LOADING', false);
       return false;
     }
     
-    logger.debug("Loaded news");
-    const news = newsReq.json<{posts: BlogPost[]}>();
-    commit('SET_NEWS', news.posts);
     commit('SET_LOADING', false);
     return true;
   },

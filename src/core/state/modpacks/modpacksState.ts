@@ -43,19 +43,25 @@ async function getModpackIds(type: "featured" | "latest", {state, commit}: Actio
     return (state as any)[endpoint.existing];
   }
   
-  const req = await endpoint.endpoint();
-  if (!req) {
-    logger.error(`Failed to get ${type} packs`)
-    return [];
-  }
+  try {
+    const req = await endpoint.endpoint();
+    if (!req) {
+      logger.error(`Failed to get ${type} packs`)
+      return [];
+    }
 
-  let featuredPacks = req.packs.sort((a, b) => b - a)
-  if (!ignoreBlacklist) {
-    featuredPacks = featuredPacks.filter(e => !packBlacklist.includes(e));
+    let featuredPacks = req.packs.sort((a, b) => b - a)
+    if (!ignoreBlacklist) {
+      featuredPacks = featuredPacks.filter(e => !packBlacklist.includes(e));
+    }
+
+    commit(endpoint.store, featuredPacks);
+    return featuredPacks;
+  } catch (e) {
+    logger.error(`Failed to get ${type} packs`, e)
   }
   
-  commit(endpoint.store, featuredPacks);
-  return featuredPacks;
+  return [];
 }
 
 const actions: ActionTree<ModpackState, RootState> = {
