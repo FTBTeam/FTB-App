@@ -160,7 +160,7 @@ public class ModManifest {
         // @formatter:off
         public long getId() { return id; }
         public String getName() { return Objects.requireNonNull(name); }
-        public String getLink() { return Objects.requireNonNull(name); }
+        public String getLink() { return Objects.requireNonNull(link); }
         public String getType() { return Objects.requireNonNull(type); }
         // @formatter:on
     }
