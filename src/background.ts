@@ -35,6 +35,14 @@ autoUpdater.on('update-downloaded', (info) => {
   updateApp("UpdateDownloaded");
 });
 
+/**
+ * Fix for SUID sandbox issues on Linux
+ * See: https://github.com/electron/electron/issues/17972
+ */
+if (process.platform == "linux") {
+  app.commandLine.appendSwitch("--no-sandbox");
+}
+
 function getAppHome() {
   if (os.platform() === "darwin") {
     return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
