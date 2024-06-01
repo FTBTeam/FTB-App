@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * Created by covers1624 on 6/9/23.
@@ -84,11 +85,27 @@ public class ModpackVersionModsManifest {
         public @Nullable String getName() { return name; }
         public @Nullable String getSynopsis() { return synopsis; }
         public @Nullable String getIcon() { return icon; }
-        public String getCurseSlug() { return Objects.requireNonNull(curseSlug); }
+        public @Nullable String getCurseSlug() { return curseSlug; }
         public long getCurseProject() { return curseProject; }
         public long getCurseFile() { return curseFile; }
         public long getStored() { return stored; }
         public String getFilename() { return Objects.requireNonNull(filename); }
         // @formatter:on
+
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", Mod.class.getSimpleName() + "[", "]")
+                .add("fileId=" + fileId)
+                .add("name='" + name + "'")
+                .add("synopsis='" + synopsis + "'")
+                .add("icon='" + icon + "'")
+                .add("curseSlug='" + curseSlug + "'")
+                .add("curseProject=" + curseProject)
+                .add("curseFile=" + curseFile)
+                .add("stored=" + stored)
+                .add("filename='" + filename + "'")
+                .toString();
+        }
     }
 }
