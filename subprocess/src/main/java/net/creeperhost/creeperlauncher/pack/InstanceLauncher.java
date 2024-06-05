@@ -338,10 +338,18 @@ public class InstanceLauncher {
                                     .build()
                     );
                 }
+                LOGGER.info("Java home: {}", javaHome);
+                LOGGER.info("Java home: {}", javaHome.toString());
+                LOGGER.info("Java home: {}", javaHome.toUri());
+                LOGGER.info("Java home: {}", javaHome.toUri().toASCIIString());
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
                 javaExecutable = instance.props.jrePath;
             }
+            LOGGER.info("Java executable: {}", javaExecutable);
+            LOGGER.info("Java executable: {}", javaExecutable.toString());
+            LOGGER.info("Java executable: {}", javaExecutable.toUri());
+            LOGGER.info("Java executable: {}", javaExecutable.toUri().toASCIIString());
             progressTracker.finishStep();
 
             prepareManifests(token, versionsDir);
