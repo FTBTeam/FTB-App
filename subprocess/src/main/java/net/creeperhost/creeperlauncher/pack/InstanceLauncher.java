@@ -384,9 +384,19 @@ public class InstanceLauncher {
             Map<String, String> subMap = new HashMap<>();
             AccountProfile profile = AccountManager.get().getActiveProfile();
             if (offlineUsername != null || profile == null) {
+                UUID uuid;
+                String username;
+                if (profile == null) {
+                    uuid = new UUID(0, 0);
+                    username = offlineUsername != null ? offlineUsername : "Player";
+                } else {
+                    uuid = profile.uuid;
+                    username = profile.username;
+                }
+                
                 // Offline
-                subMap.put("auth_player_name", offlineUsername);
-                subMap.put("auth_uuid", new UUID(0, 0).toString());
+                subMap.put("auth_player_name", username);
+                subMap.put("auth_uuid", uuid.toString());
                 subMap.put("user_type", "legacy");
                 subMap.put("auth_access_token", "null");
                 subMap.put("user_properties", "{}");
