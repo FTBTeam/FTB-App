@@ -18,7 +18,7 @@ const state = {
 const logger = createLogger("instances/instancesState.ts");
 
 const actions: ActionTree<InstanceState, RootState> = {
-  async loadInstances({state, commit}, payload: {refresh?: boolean} = {}) {
+  async loadInstances({state, commit}) {
     if (state.state.loadingInstances) {
       return;
     }

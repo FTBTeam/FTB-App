@@ -13,7 +13,7 @@ const state = {
 
 const actions: ActionTree<InstallState, RootState> = {
   // Pull the top most entry from the queue and return it
-  async popInstallQueue({state, commit}) {
+  async popInstallQueue({state}) {
     if (state.installQueue.length == 0) {
       return null;
     }
@@ -21,11 +21,11 @@ const actions: ActionTree<InstallState, RootState> = {
     return state.installQueue.shift();
   },
   
-  addModloaderUpdate({state, commit}, payload: ModLoaderUpdateState) {
+  addModloaderUpdate({ commit}, payload: ModLoaderUpdateState) {
     commit("ADD_MODLOADER_UPDATE", payload);
   },
   
-  removeModloaderUpdate({state, commit}, packetId: string) {
+  removeModloaderUpdate({ commit}, packetId: string) {
     commit("REMOVE_MODLOADER_UPDATE", packetId);
   }
 }

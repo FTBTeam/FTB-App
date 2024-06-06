@@ -56,7 +56,7 @@ export const core: Module<CoreState, RootState> = {
   },
   actions: {
     openSignIn: (
-      { commit, state },
+      { commit },
       payload: { open: boolean; jumpToAuth: 'ms' | 'mc' | null; uuid: string | null; tryAgainInstanceUuid: any },
     ) => {
       commit(CoreMutations.OPEN_SIGNIN, payload);
@@ -74,11 +74,11 @@ export const core: Module<CoreState, RootState> = {
       commit(CoreMutations.INSTANCE_LOADING, false);
     },
 
-    addProfile: ({ commit, state }, profile: AuthProfile) => {
+    addProfile: ({ commit }, profile: AuthProfile) => {
       commit(CoreMutations.ADD_PROFILE, profile);
     },
 
-    removeProfile: ({ commit, state }, profile: AuthProfile) => {
+    removeProfile: ({ commit }, profile: AuthProfile) => {
       commit(CoreMutations.REMOVE_PROFILE, profile);
     },
 

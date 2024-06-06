@@ -105,7 +105,7 @@ export default class Sidebar extends Vue {
     return this.currentRoute === RouterNames.ROOT_LAUNCH_PACK;
   }
 
-  public openPromo(event: any): void {
+  public openPromo(): void {
     platform.get.utils.openUrl('https://go.ftb.team/ch-a-i');
   }
 

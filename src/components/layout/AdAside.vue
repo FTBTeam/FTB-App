@@ -161,7 +161,7 @@ export default class AdAside extends Vue {
     win.ads[id] = this.ads[id];
     this.ads[id].addEventListener('error', (error: any) => {
       emitPlaceholderUpdate(true);
-      this.logger.info(`[AD: ${id}] Failed to load ad`);
+      this.logger.info(`[AD: ${id}] Failed to load ad`, error);
     });
     this.ads[id].addEventListener('player_loaded', () => {
       this.logger.info(`[AD: ${id}] Player loaded`);

@@ -110,11 +110,11 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     changeExitOverwolfSetting(value: boolean) {
-      overwolf.settings.setExtensionSettings({ exit_overwolf_on_exit: value }, (data: any) => {});
+      overwolf.settings.setExtensionSettings({ exit_overwolf_on_exit: value }, () => {});
     },
     
     uploadClientLogs() {
-      overwolf.utils.uploadClientLogs((result: any) => {
+      overwolf.utils.uploadClientLogs(() => {
       });
     },
 
@@ -214,7 +214,7 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     },
-    setSystemWindowStyle(enabled) {}
+    setSystemWindowStyle() {}
   },
 
   // IO
@@ -330,7 +330,7 @@ const Overwolf: ElectronOverwolfInterface = {
     }
   },
 
-  setupApp(vm) {
+  setupApp() {
     owLogger.info('Setting up app for overwolf')
     // setup websockets and the actual window
 

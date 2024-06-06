@@ -367,7 +367,7 @@ class InstanceInstallController {
       return;
     }
     
-    const installRequest: InstallResult = await new Promise((resolve, reject) => {
+    const installRequest: InstallResult = await new Promise((resolve) => {
       this.logger.debug("Preparing install listener")
       this.updateInstallStatus({
         request,

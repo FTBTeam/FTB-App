@@ -1,6 +1,5 @@
 import store from '@/modules/store';
 import {Dialog, DialogButton} from '@/core/state/misc/dialogsState';
-import {emitter} from '@/utils';
 
 class DialogHolder {
   private readonly _dialog: Dialog;
@@ -56,10 +55,6 @@ class DialogsController {
   createDialog(dialog: Dialog) {
     store.dispatch('v2/dialogs/openDialog', dialog);
     return new DialogHolder(dialog);
-  }
-  
-  createErrorDialog(message: string) {
-    
   }
 }
 

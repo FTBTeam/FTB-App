@@ -28,13 +28,13 @@ const state = {
 }
 
 const actions: ActionTree<DialogsState, RootState> = {
-  async openDialog({state, commit}, dialog: Dialog) {
+  async openDialog({ commit}, dialog: Dialog) {
     commit('OPEN_DIALOG', dialog);
   },
-  async closeDialog({state, commit}, dialog: Dialog) {
+  async closeDialog({ commit}, dialog: Dialog) {
     commit('CLOSE_DIALOG', dialog);
   },
-  async updateDialog({state, commit}, dialog: Dialog) {
+  async updateDialog({ commit}, dialog: Dialog) {
     commit('UPDATE_DIALOG', dialog);
   }
 }

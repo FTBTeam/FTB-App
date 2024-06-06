@@ -338,7 +338,7 @@ export default class MainApp extends Vue {
   }
   
   @Watch('websockets', { deep: true })
-  public async onWebsocketsChange(newVal: SocketState, oldVal: SocketState) {
+  public async onWebsocketsChange(newVal: SocketState) {
     if (newVal.socket.isConnected && this.loading) {
       this.logger.info("Websockets connected, loading app");
       this.loading = false;
@@ -369,11 +369,11 @@ export default class MainApp extends Vue {
       alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
     }
     
-    window.addEventListener("offline", (e) => {
+    window.addEventListener("offline", () => {
       alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
     });
 
-    window.addEventListener("online", (e) => {
+    window.addEventListener("online", () => {
       alertController.success("You're back online, the app should be working as expected");
     });
   }

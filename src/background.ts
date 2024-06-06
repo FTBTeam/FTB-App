@@ -93,7 +93,7 @@ if (fs.existsSync(electronLogFile)) {
     logger.error("Failed to clear electron log file", e)
   }
 }
-electronLogger.transports.file.resolvePath = (variables, message) => 
+electronLogger.transports.file.resolvePath = () => 
   electronLogFile;
 
 Object.assign(console, electronLogger.functions);
@@ -114,7 +114,6 @@ let appCommunicationSetup = false;
 let subprocess: ChildProcess | null = null;
 let win: BrowserWindow | null;
 let prelaunchWindow: BrowserWindow | null = null;
-let hasPassedPreLaunch = false;
 
 // let friendsWindow: BrowserWindow | null;
 
@@ -129,7 +128,6 @@ for (let i = 0; i < process.argv.length; i++) {
 
 declare const __static: string;
 
-let userData: any;
 ipcMain.on('appReady', async (event) => {
   if (protocolURL !== null) {
     event.reply('parseProtocolURL', protocolURL);
@@ -241,7 +239,7 @@ ipcMain.handle('openFinder', async (event, data) => {
   }
 });
 
-ipcMain.handle('selectFile', async (event) => {
+ipcMain.handle('selectFile', async () => {
   if (win === null) {
     return null;
   }
@@ -287,18 +285,17 @@ ipcMain.on('windowControls', (event, data) => {
   }
 });
 
-ipcMain.on('quit_app', (event, data) => {
+ipcMain.on('quit_app', () => {
   logger.debug("Quitting app")
   process.exit(1);
 });
 
-ipcMain.on('logout', (event, data) => {
+ipcMain.on('logout', () => {
   // if (friendsWindow) {
   //   friendsWindow.close();
   // }
   
   logger.debug("Logging out from the frontend")
-  userData = undefined;
 });
 
 
@@ -306,7 +303,7 @@ ipcMain.on('openLink', (event, data) => {
   shell.openExternal(data);
 });
 
-ipcMain.on('openDevTools', (event, data) => {
+ipcMain.on('openDevTools', () => {
   if (win) {
     // If dev tools is already open, focus it
     if (win.webContents.isDevToolsOpened()) {
@@ -668,7 +665,6 @@ ipcMain.handle('updater:check-for-update', async () => {
 })
 
 ipcMain.handle('app:launch', async () => {
-  hasPassedPreLaunch = true;
   logger.debug("Launching app")
   if (win) {
     // This shouldn't happen, but if it does, just close the window
@@ -820,7 +816,7 @@ if (!gotTheLock) {
   app.quit();
 } else {
   logger.debug("Lock found, let's try and focus the app")
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
+  app.on('second-instance', (event, commandLine) => {
     // Someone tried to run a second instance, we should focus our window.
     // log.info(`Event: ${event.s}`)
     if (win) {

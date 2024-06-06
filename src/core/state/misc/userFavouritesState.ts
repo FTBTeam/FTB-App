@@ -1,6 +1,5 @@
 import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
-import {createLogger} from '@/core/logger';
 import {PackProviders} from '@/modules/modpacks/types';
 
 export type UserFavouritesState = ReturnType<typeof state>;
@@ -18,8 +17,6 @@ const state = () => {
     favourites: (userFavourites ? JSON.parse(userFavourites) : []) as UserFavorite[]
   }
 }
-
-const logger = createLogger("misc/userFavouritesState.ts");
 
 const actions: ActionTree<UserFavouritesState, RootState> = {
   async addFavourite({state, commit}, payload: UserFavorite) {

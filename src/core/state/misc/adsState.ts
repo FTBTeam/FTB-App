@@ -9,7 +9,7 @@ const state = {
 }
 
 const actions: ActionTree<AdsState, RootState> = {
-  async sync({state, commit}, ads: Ad[]) {
+  async sync({ commit}, ads: Ad[]) {
     commit('SET_ADS', ads);
   },
 }

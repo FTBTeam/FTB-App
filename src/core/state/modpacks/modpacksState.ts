@@ -130,7 +130,7 @@ const actions: ActionTree<ModpackState, RootState> = {
     return getModpackIds("latest", context, 15);
   },
   
-  clearModpacks({state, commit}) {
+  clearModpacks({ commit}) {
     commit('CLEAR_MODPACKS');
     commit('CLEAR_VERSIONS');
   }

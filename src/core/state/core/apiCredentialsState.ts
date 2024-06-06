@@ -1,6 +1,5 @@
 import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
-import {createLogger} from '@/core/logger';
 import {constants} from '@/core/constants';
 
 export type ApiCredentialsState = typeof state;
@@ -18,8 +17,6 @@ const state = {
 }
 
 export type ApiCredentialsPayload = Pick<ApiCredentialsState, "apiUrl" | "apiSecret" | "usesBearerAuth" | "supportsPublicPrefix">
-
-const logger = createLogger("apiCredentialsState.ts");
 
 const actions: ActionTree<ApiCredentialsState, RootState> = {
   storeCredentials({commit, state}, payload: Partial<ApiCredentialsPayload>) {

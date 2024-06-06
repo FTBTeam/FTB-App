@@ -1,6 +1,5 @@
 import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
-import {createLogger} from '@/core/logger';
 
 export type CoreAppState = typeof state;
 
@@ -9,8 +8,6 @@ const state = {
   properties: {
   }
 }
-
-const logger = createLogger("coreAppState.ts");
 
 const actions: ActionTree<CoreAppState, RootState> = {
   storeWsSecret({commit}, wsSecret: string) {

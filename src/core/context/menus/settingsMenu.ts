@@ -15,14 +15,14 @@ export class SettingMenu extends ContextMenu<{ }> {
       {
         title: 'Open App folder',
         icon: faFolder,
-        async action(context) {
+        async action() {
           await platform.get.io.openFinder(AppSettings.getAppHome());
         }
       },
       {
         title: "Open instance folder",
         icon: faFolder,
-        async action(context) {
+        async action() {
           const settings = store.state.settings?.settings.instanceLocation;
           if (settings) {
             await platform.get.io.openFinder(settings);

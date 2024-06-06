@@ -1,6 +1,5 @@
 import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
-import {createLogger} from '@/core/logger';
 import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
 
 export type MTAuthState = typeof state;
@@ -9,8 +8,6 @@ const state = {
   profile: null as MineTogetherProfile | null,
   account: null as MineTogetherAccount | null
 }
-
-const logger = createLogger("mtAuthState.ts");
 
 const actions: ActionTree<MTAuthState, RootState> = {
   setProfile({commit}, payload: MineTogetherProfile) {

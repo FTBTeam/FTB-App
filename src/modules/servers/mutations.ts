@@ -1,4 +1,4 @@
-import { MutationTree } from 'vuex';
+// import { MutationTree } from 'vuex';
 // import { ServersState } from './types';
 
 // export const mutations: MutationTree<ServersState> = {

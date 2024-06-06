@@ -20,9 +20,10 @@ export const mutations: MutationTree<SocketState> = {
   },
   SOCKET_ONCLOSE(state: any, event: any) {
     state.socket.isConnected = false;
+    logger.debug("Socket closed", event)
   },
   SOCKET_ONERROR(state: any, event: any) {
-    // console.error(state, event);
+    logger.error(state, event);
     state.firstStart = false;
   },
   SOCKET_ONMESSAGE(state: SocketState, message: any) {

@@ -54,7 +54,7 @@ if (fs.existsSync(electronFrontendLogFile)) {
     eLogger.error("Failed to clear electron frontend log file", e)
   }
 }
-log.transports.file.resolvePath = (vars, message) =>
+log.transports.file.resolvePath = () =>
   electronFrontendLogFile;
 Object.assign(console, log.functions);
 
@@ -507,7 +507,7 @@ const Electron: ElectronOverwolfInterface = {
     }
   },
   
-  setupApp(vm) {
+  setupApp() {
     eLogger.debug("Setting up the app from the interface on electron")
     
     ipcRenderer.on('parseProtocolURL', (event, data) => {
