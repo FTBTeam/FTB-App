@@ -200,7 +200,14 @@ def writeVersion = tasks.register('writeVersion') {
                                  * }
                                  */
                                 env    : [],
-                                jvmArgs: []
+                                jvmArgs: [
+                                        {
+                                            value = "-Duser.language=en"
+                                        },
+                                        {
+                                            value = "-Duser.country=US"
+                                        }
+                                ]
                         ]
                 ]
         )

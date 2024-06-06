@@ -102,8 +102,10 @@ const setup = async () => {
     "--overwolf"
   ])
   
+  const jvmArgs = serializeToStringList(parseArgs(versionData.runtime.jvmArgs));
+  
   const ftbaDir = plugin.get().GetDotFTBADir();
-  const startupResponse = await p(plugin.get().LaunchJava, ftbaDir, javaPath, owDir + "\\" + versionData.runtime.jar, args, serializeToStringList([]));
+  const startupResponse = await p(plugin.get().LaunchJava, ftbaDir, javaPath, owDir + "\\" + versionData.runtime.jar, args, jvmArgs);
   console.debug(JSON.stringify(startupResponse));
   
   await checkIfAdmin(plugin);
@@ -223,4 +225,42 @@ async function p(func, ...args) {
 
 function serializeToStringList(list) {
   return list.join(';');
+}
+
+function parseArgs(args) {
+  const ourOs = "windows";
+  const ourArch = "x64";
+
+  const finalOutput = [];
+  for (const arg of args) {
+    if (typeof arg === "string") {
+      finalOutput.push(arg)
+      continue;
+    }
+
+    if (arg.filter && arg.filter.os && !arg.filter.os.includes(ourOs)) {
+      continue;
+    }
+
+    if (arg.filter && arg.filter.arch && !arg.filter.arch.includes(ourArch)) {
+      continue;
+    }
+
+    finalOutput.push(addArg(arg));
+  }
+
+  return finalOutput;
+}
+
+function addArg(arg) {
+  // This shouldn't happen, but just in case
+  if (typeof arg === "string") {
+    return arg;
+  }
+
+  if (arg.key) {
+    return `${arg.key}=${arg.value}`;
+  }
+
+  return arg.value;
 }
