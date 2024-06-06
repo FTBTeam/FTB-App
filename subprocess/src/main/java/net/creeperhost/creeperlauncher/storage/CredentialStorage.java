@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
@@ -14,13 +15,12 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * A non-ideal credential storage system backed by the users mac address.
@@ -92,9 +92,15 @@ public class CredentialStorage {
             // Create a SecretKey
             var key = generateKey();
             
+            var userHome = System.getProperty("user.home");
+            // Use the user home directory as the IV
+            byte[] iv = userHome.getBytes();
+            
+            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+            
             // Use the mac address as the key to encrypt the credentials
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, key, spec);
             
             // Convert the encrypted credentials to a string
             byte[] encryptedBytes = cipher.doFinal(credentialsJson.getBytes());
@@ -125,9 +131,16 @@ public class CredentialStorage {
         // Decrypt the credentials
         try {
             String encryptedCredentials = Files.readString(credentials);
+
+            var userHome = System.getProperty("user.home");
+            // Use the user home directory as the IV
+            byte[] iv = userHome.getBytes();
+
+            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+            
             var key = generateKey();
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.DECRYPT_MODE, key);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, key, spec);
             
             byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedCredentials));
             String decryptedCredentials = new String(decryptedBytes);
@@ -135,10 +148,11 @@ public class CredentialStorage {
             // Convert the decrypted credentials to a HashMap
             this.credentials = new Gson().fromJson(decryptedCredentials, HashMap.class);
         } catch (IOException | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeySpecException |
-                 InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+                 InvalidKeyException | IllegalBlockSizeException | BadPaddingException |
+                 InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
         }
-        
+
         return true;
     }
     
@@ -150,18 +164,21 @@ public class CredentialStorage {
 
     public static byte[] getMacAddress() {
         try {
-            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-            while (networkInterfaces.hasMoreElements()) {
-                NetworkInterface network = networkInterfaces.nextElement();
-                byte[] mac = network.getHardwareAddress();
-                if (mac != null && mac.length > 0 && !network.isLoopback() && !network.isVirtual() && !network.isPointToPoint() && !network.getName().substring(0,3).equals("ham") && !network.getName().substring(0, 3).equals("vir") && !network.getName().startsWith("docker") && !network.getName().startsWith("br-")) {
-                    LOGGER.debug("Interface: " + network.getDisplayName() + " : " + network.getName());
-                    var address = new byte[mac.length * 10];
-                    for (int i = 0; i < address.length; i++) {
-                        address[i] = mac[i - (Math.round(i / mac.length) * mac.length)];
-                    }
-                    return address;
+            List<NetworkInterface> networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            Optional<NetworkInterface> sortedNetworks = networkInterfaces.stream()
+                .filter(CredentialStorage::networkIsValid)
+                .min(Comparator.comparing(NetworkInterface::getName));
+            
+            if (sortedNetworks.isPresent()) {
+                var network = sortedNetworks.get();
+                var mac = network.getHardwareAddress();
+                LOGGER.debug("Interface: {} : {}", network.getDisplayName(), network.getName());
+                var address = new byte[mac.length * 10];
+                for (int i = 0; i < address.length; i++) {
+                    address[i] = mac[i - (Math.round(i / mac.length) * mac.length)];
                 }
+
+                return address;    
             }
         } catch (SocketException e) {
             LOGGER.warn("Exception getting MAC address", e);
@@ -169,5 +186,18 @@ public class CredentialStorage {
 
         LOGGER.warn("Failed to get MAC address, using default logindata key");
         return new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    }
+    
+    private static boolean networkIsValid(NetworkInterface network) {
+        try {
+            var mac = network.getHardwareAddress();
+            var name = network.getName();
+
+            return mac != null && mac.length > 0 && !network.isLoopback() && !network.isVirtual() && !network.isPointToPoint() && !name.startsWith("ham") && !name.startsWith("vir") && !name.startsWith("docker") && !name.startsWith("br-");
+        } catch (Throwable error) {
+            LOGGER.error("Failed to check if network is valid", error);
+        }
+        
+        return false;
     }
 }

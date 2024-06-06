@@ -381,6 +381,12 @@ class InstanceInstallController {
       let lastKnownSpeed: number = 0;
       
       const instanceInstaller = (data: InstallInstanceDataReply | OperationProgressUpdateData) => {
+        const finish = (result: InstallResult) => {
+          emitter.off("ws.message", instanceInstaller as any);
+          this.updateInstallStatus(null)
+          resolve(result);
+        }
+        
         if (data.type === "installInstanceDataReply") {
           const typedData = data as InstallInstanceDataReply;
           if (typedData.status === "error") {            
@@ -425,13 +431,7 @@ class InstanceInstallController {
         }
       }
       
-      const finish = (result: InstallResult) => {
-        emitter.off("ws.message", instanceInstaller as any);
-        this.updateInstallStatus(null)
-        resolve(result);
-      }
-      
-      emitter.on("ws.message", instanceInstaller  as any);
+      emitter.on("ws.message", instanceInstaller as any);
     });
     
     this.logger.debug("Install result", installRequest)
@@ -476,7 +476,7 @@ class InstanceInstallController {
     
     for (const pack of payload.changedInstances) {
       // We shouldn't already have it but we might so keep it in sync regardless
-      if ((store.state as any)['v2/instances'].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
+      if (store.state['v2/instances'].instances.findIndex((i: InstanceJson) => i.uuid === pack.uuid) === -1) {
         await store.dispatch('v2/instances/addInstance', pack, {root: true});
       } else {
         await store.dispatch('v2/instances/updateInstance', pack, {root: true});
