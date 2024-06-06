@@ -33,14 +33,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -118,6 +116,8 @@ public class CreeperLauncher {
     }
 
     public static void main(String[] args) {
+        logAppDetails(args);
+        
         try {
             prelaunchChecks();
         } catch (Throwable ex) {
@@ -170,7 +170,6 @@ public class CreeperLauncher {
         Instances.refreshInstances();
 
         ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
-        LOGGER.info("Args: {}", Args);
 
         isDevMode = Args.containsKey("dev");
         Constants.IS_DEV_MODE = isDevMode;
@@ -440,6 +439,46 @@ public class CreeperLauncher {
             DEBUG_TOOLS.close();
             DEBUG_TOOLS = DebugTools.NONE;
         }
+    }
+
+    private static void logAppDetails(String[] args) {
+        List<String> jvmArgs = new ArrayList<>();
+        try {
+            jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to get JVM args", ex);
+        }
+
+        LOGGER.debug("""
+FTB App Subprocess startup;
+- App
+\t- Version:        {}
+\t- Branch:         {}
+\t- Platform:       {}
+- System
+\t- OS:             {}
+\t- OS Version:     {}
+\t- OS Arch:        {}
+- Paths
+\t- Data Dir:       {}
+\t- CWD:            {}
+\t- User home:      {}
+- Arguments
+\t- Args:           {}
+\t- JVM Args:       {}
+        """,
+            Constants.APPVERSION,
+            Constants.BRANCH,
+            Constants.PLATFORM,
+            System.getProperty("os.name"),
+            System.getProperty("os.version"),
+            Architecture.current().name(),
+            Constants.getDataDir(),
+            Constants.WORKING_DIR,
+            System.getProperty("user.home"),
+            String.join(" ", args),
+            jvmArgs
+        );
     }
 }
 
