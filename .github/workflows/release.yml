@@ -43,6 +43,7 @@ jobs:
         ./gradlew clean build -si
     - name: Build App (Windows & Linux)
       env:
+        VUE_APP_PLATFORM: "electron"
         APP_TARGET_PLATFORM: "linux"
       run: |
         npm install --global pnpm || true
@@ -90,6 +91,7 @@ jobs:
         dotnet tool install --global AzureSignTool --version 5.0.0        
     - name: Build App (Windows)
       env:
+        VUE_APP_PLATFORM: "electron"
         APP_TARGET_PLATFORM: "windows"
         VUE_APP_TARGET_PLATFORM: "windows"
         AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
@@ -135,6 +137,7 @@ jobs:
         java-version: 21
     - name: Build App (MacOS)
       env:
+        VUE_APP_PLATFORM: "electron"
         APP_TARGET_PLATFORM: "macos"
         VUE_APP_TARGET_PLATFORM: "macos"
         CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -182,6 +185,7 @@ jobs:
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
           APP_TARGET_PLATFORM: "overwolf"
           VUE_APP_TARGET_PLATFORM: "overwolf"
+          VUE_APP_PLATFORM: "overwolf"
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/

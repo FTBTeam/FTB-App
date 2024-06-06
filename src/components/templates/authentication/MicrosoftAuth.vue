@@ -50,7 +50,7 @@
               <span>{{ step.name }}</span>
               <p v-if="step.working">Waiting for response</p>
               <p v-else-if="step.error">Something has gone wrong, we can't proceed</p>
-              <p v-else-if="step.done">{{randomCongratulatoryEmoji()}}  Finished!</p>
+              <p v-else-if="step.done">🎉 Finished!</p>
               <p v-else>Waiting for step to start...</p>
             </div>
             <div class="icon" :class="{done: step.done, working: step.working, error: step.error}">
@@ -184,13 +184,7 @@ export default class MicrosoftAuth extends Vue {
   }
   
   get manualAuthUrl() {
-    // zsXz = ?useNew=true // Q9VA = legacy system
-    return platform.isOverwolf() ? "https://go.ftb.team/zsXz" : "https://go.ftb.team/Q9VA";
-  }
-  
-  randomCongratulatoryEmoji() {
-    const emojis = ["🎉", "🎈", "🎊", "🥳", "🎂", "✅", "🏅", "🚀", "✨", "🍿", "🍾"];
-    return emojis[Math.floor(Math.random() * emojis.length)];
+    return "https://go.ftb.team/zsXz";
   }
 }
 </script>

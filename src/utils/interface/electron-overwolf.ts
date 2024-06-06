@@ -29,7 +29,7 @@ class Platform {
   }
 
   public isElectron() {
-    return this.platformProvider === 'electron';
+    return this.platformProvider !== 'overwolf';
   }
 }
 
