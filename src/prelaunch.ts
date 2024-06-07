@@ -49,6 +49,11 @@ ipcRenderer.invoke('updater:check-for-update')
     ipcRenderer.invoke('app:launch').catch((e) => logger.error("Failed to launch app", e));
   });
 
+ipcRenderer.on("updater:update-cancelled", async () => {
+  logger.info("Update cancelled");
+  await ipcRenderer.invoke('app:launch');
+});
+
 ipcRenderer.on('updater:update-not-available', async() => {
   logger.info("Update not available");
 

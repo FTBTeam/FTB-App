@@ -25,6 +25,7 @@ const logAndEmit = (event: string, ...args: any[]) => {
 let checkUpdaterLock = false;
 
 autoUpdater.on('checking-for-update', () => logAndEmit('updater:checking-for-update'));
+autoUpdater.on("update-cancelled", () => logAndEmit('updater:update-cancelled'));
 autoUpdater.on('update-available', () => logAndEmit('updater:update-available'));
 autoUpdater.on('update-not-available', () => logAndEmit('updater:update-not-available'));
 autoUpdater.on('error', (error) => logAndEmit('updater:error', JSON.stringify(error)));
@@ -85,7 +86,16 @@ if (appSettings === null) {
   appSettings = getAppSettings(appSettingsPathLegacy);
 }
 
-const electronLogFile = path.join(appHome, 'logs', 'ftb-app-electron.log');
+const appLogsParent = path.join(appHome, 'logs');
+try {
+  if (!fs.existsSync(appLogsParent)) {
+    fs.mkdirSync(appLogsParent, { recursive: true });
+  }
+} catch (e) {
+  logger.error("Failed to create app logs parent directory", e)
+}
+
+const electronLogFile = path.join(appLogsParent, 'ftb-app-electron.log');
 if (fs.existsSync(electronLogFile)) {
   try {
     fs.writeFileSync(electronLogFile, '')
@@ -173,7 +183,7 @@ ipcMain.handle('selectFolder', async (event, data) => {
     return;
   }
 
-  const result = await dialog.showOpenDialog(win, {
+  const result: any = await dialog.showOpenDialog(win, {
     properties: ['openDirectory'],
     defaultPath: data,
   });
