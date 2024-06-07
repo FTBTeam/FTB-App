@@ -456,9 +456,9 @@ const Electron: ElectronOverwolfInterface = {
           const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
             javaPath: jreExecPath,
             args: [
+              ...jvmArgs,
               "-jar",
               `${resourcesPath}/${jarName}`,
-              ...jvmArgs
             ],
             env: envVars
           });
