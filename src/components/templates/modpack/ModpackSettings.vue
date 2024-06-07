@@ -1,7 +1,7 @@
 <template>
   <div class="pack-settings">
     <artwork-selector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" @change="(v) => {
-      this.instanceSettings.instanceImage = v ? v.path : null;
+      instanceSettings.instanceImage = v ? v.path : null;
       saveSettings();
     }" />
     

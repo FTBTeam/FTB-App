@@ -24,23 +24,6 @@ const paths = [
   ["scripts", "Scripts"],
 ]
 
-let folderOptions: MenuItem<InstanceMenuContext>[] = []
-
-folderOptions.push({
-  title: 'Instance folder',
-  async action(context) {
-    await platform.get.io.openFinder(context.instance.path);
-  },
-})
-
-folderOptions = [...folderOptions, ...paths.map((e) => ({
-  title: e[1],
-  async action(context) {
-    await platform.get.io.openFinder(context.instance.path + "/" + e[0]);
-  },
-  predicate: context => context.instance.rootDirs?.includes(e[0])
-})) as MenuItem<InstanceMenuContext>[]]
-
 export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
   name(): String {
     return 'Instance Menu';
@@ -78,7 +61,21 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
         async action(context) {
           await platform.get.io.openFinder(context.instance.path);
         },
-        children: folderOptions
+        children: [
+          {
+            title: 'Instance folder',
+            async action(context) {
+              await platform.get.io.openFinder(context.instance.path);
+            },
+          },
+          ...paths.map((e) => ({
+            title: e[1],
+            async action(context) {
+              await platform.get.io.openFinder(context.instance.path + "/" + e[0]);
+            },
+            predicate: context => context.instance.rootDirs?.includes(e[0])
+          })) as MenuItem<InstanceMenuContext>[]
+        ]
       },
       {
         title: 'Settings',

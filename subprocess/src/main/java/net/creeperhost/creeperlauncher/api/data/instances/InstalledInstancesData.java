@@ -3,7 +3,6 @@ package net.creeperhost.creeperlauncher.api.data.instances;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler;
-import net.creeperhost.creeperlauncher.data.InstanceJson;
 
 import java.util.List;
 import java.util.Set;

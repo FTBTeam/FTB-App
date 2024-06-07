@@ -76,6 +76,9 @@ import UpdateConfirmModal from '@/components/core/modpack/modals/UpdateConfirmMo
 import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from '@/core/context/contextMenus';
 import {InstanceActions} from '@/core/actions/instanceActions';
+import {createLogger} from '@/core/logger';
+
+const logger = createLogger('PackCard2.vue');
 
 @Component({
   components: {
@@ -133,6 +136,9 @@ export default class PackCard2 extends PackCardCommon {
       return;
     }
     
+    const {art, ...remaining} = this.instance;
+    logger.debug("Opening instance menu with the following context", remaining)
+    logger.debug("Root folders", this.instance.rootDirs)
     AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, {
       instance: this.instance
     });
