@@ -247,6 +247,7 @@ const Electron: ElectronOverwolfInterface = {
     },
     async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate = false) {
       const fsLogger = new FSLogger("ftb-app-installer");
+      fsLogger.clearLog();
       
       const logAndUpdate = (message: string) => {
         fsLogger.log(message);
@@ -254,9 +255,8 @@ const Electron: ElectronOverwolfInterface = {
       }
       
       const logToBoth = (message: string, normalLogger: any, ...args: any) => {
-        const argsList = [...args];
-        fsLogger.log(message + argsList.length ? " [" + JSON.stringify(argsList) + "]" : "");
-        normalLogger(message, ...args);
+        fsLogger.log(message, args);
+        normalLogger.bind(eLogger)(message, args);
       }
       
       logAndUpdate("Locating Java");
@@ -289,7 +289,7 @@ const Electron: ElectronOverwolfInterface = {
       
       // Attempt to get the java
       const url = `https://api.adoptium.net/v3/assets/latest/${javaVersion}/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`;
-
+      
       logToBoth("Downloading java from", eLogger.log, url);
       logAndUpdate("Downloading Java")
       
@@ -421,6 +421,7 @@ const Electron: ElectronOverwolfInterface = {
       }
 
       logAndUpdate("Starting subprocess")
+      // fsLogger.deleteLog();
     },
     async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
       // Get the runtime
@@ -623,16 +624,51 @@ class FSLogger {
     this.ensureParentExists();
   }
   
-  log(message: string) {
+  log(message: string, ...extraData: any[]) {
+    const parsedExtraData = extraData
+      .map(e => {
+        // Handle errors
+        if (e instanceof Error) {
+          return JSON.stringify({
+            message: e.message,
+            stack: e.stack
+          })
+        }
+
+        return JSON.stringify(e)
+      })
+      .join(" ");
+    const outMessage = `${new Date().toISOString()} - ${message} ${parsedExtraData}\n`;
+    
     try {
       this.ensureParentExists();
-      
-      fs.appendFileSync(this.path, `[${new Date().toISOString()}] - ${message}\n`, {
+            
+      fs.appendFileSync(this.path, outMessage, {
         encoding: 'utf-8',
       });
     } catch (e) {
       console.error("Failed to log message", e);
-      console.debug("Original message", message);
+      console.debug("Original message", outMessage);
+    }
+  }
+  
+  clearLog() {
+    try {
+      if (fs.existsSync(this.path)) {
+        fs.writeFileSync(this.path, '');
+      }
+    } catch (e) {
+      console.error("Failed to clear log", e);
+    }
+  }
+  
+  deleteLog() {
+    try {
+      if (fs.existsSync(this.path)) {
+        fs.rmSync(this.path);
+      }
+    } catch (e) {
+      console.error("Failed to delete log", e);
     }
   }
   
