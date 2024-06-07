@@ -246,7 +246,20 @@ const Electron: ElectronOverwolfInterface = {
       return fs.existsSync(jreLocation(appPath));
     },
     async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate = false) {
-      onStageChange("Locating Java");
+      const fsLogger = new FSLogger("ftb-app-installer");
+      
+      const logAndUpdate = (message: string) => {
+        fsLogger.log(message);
+        onStageChange(message);
+      }
+      
+      const logToBoth = (message: string, normalLogger: any, ...args: any) => {
+        const argsList = [...args];
+        fsLogger.log(message + argsList.length ? " [" + JSON.stringify(argsList) + "]" : "");
+        normalLogger(message, ...args);
+      }
+      
+      logAndUpdate("Locating Java");
 
       /**
        * Procedure:
@@ -276,9 +289,9 @@ const Electron: ElectronOverwolfInterface = {
       
       // Attempt to get the java
       const url = `https://api.adoptium.net/v3/assets/latest/${javaVersion}/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`;
-      
-      eLogger.log("Downloading java from", url)
-      onStageChange("Downloading Java")
+
+      logToBoth("Downloading java from", eLogger.log, url);
+      logAndUpdate("Downloading Java")
       
       let adopiumRes;
       try {
@@ -287,12 +300,13 @@ const Electron: ElectronOverwolfInterface = {
           return await adopiumRequest.json();
         });
       } catch (e) {
-        eLogger.error("Failed to download java", e)
+        logToBoth("Failed to download java", eLogger.error, e)
         throw throwCustomError("Failed to download java", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
       }
       
       const binary = adopiumRes.find((e: any) => e.binary)?.binary;
       if (!binary) {
+        logToBoth("Failed to find java binary", eLogger.error, adopiumRes)
         throw throwCustomError("Failed to find java binary", "We've not been able to find a Java binary for you system. Please ensure you are using a supported system.")
       }
       
@@ -302,19 +316,20 @@ const Electron: ElectronOverwolfInterface = {
       const runtimePath = `${appPath}/runtime`;
       
       if (isUpdate) {
-        onStageChange("Removing old runtime")
+        logAndUpdate("Removing old runtime")
         if (fs.existsSync(runtimePath)) {
           try {
             fs.rmSync(runtimePath, {
               recursive: true
             });
           } catch (e) {
+            logToBoth("Failed to remove runtime folder", eLogger.error, e)
             throw throwCustomError("Failed to remove runtime folder", "We've not been able to remove the runtime folder. Please ensure the app has the correct permissions to remove folders.")
           }
         }
       }
 
-      onStageChange("Creating runtime folder")
+      logAndUpdate("Creating runtime folder")
       try {
         if (!fs.existsSync(runtimePath)) {
           fs.mkdirSync(runtimePath, {
@@ -322,36 +337,40 @@ const Electron: ElectronOverwolfInterface = {
           });
         }
       } catch (e) {
+        logToBoth("Failed to create runtime folder", eLogger.error, e)
         throw throwCustomError("Failed to create runtime folder", "We've not been able to create the runtime folder. Please ensure the app has the correct permissions to create folders.")
       }
       
       const isWindows = os.platform() === "win32";
       const jreDownloadName = isWindows ? `jre.zip` : `jre.tar.gz`;
-      onStageChange("Downloading Java from Adoptium")
+      logAndUpdate("Downloading Java from Adoptium")
       try {
         await ipcRenderer.invoke("downloadFile", {
           url: link,
           path: path.join(runtimePath, jreDownloadName)
         });
       } catch (e) {
+        logToBoth("Failed to download java from endpoint", eLogger.error, e)
         throw throwCustomError("Failed to download java from endpoint", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
       }
 
-      onStageChange("Extracting Java")
+      logAndUpdate("Extracting Java")
       try {
         await ipcRenderer.invoke("extractFile", {
           input: path.join(runtimePath, jreDownloadName),
           output: path.join(runtimePath, `jre`)
         });
       } catch (e) {
+        logToBoth("Failed to extract java", eLogger.error, e)
         throw throwCustomError("Failed to extract java", "We've not been able to extract Java... We can't recover from this.")
       }
       
       // Assuming this worked
       // Does the jre/jdk-* folder exist?
-      onStageChange("Moving Java to the correct location")
+      logAndUpdate("Moving Java to the correct location")
       const jreFolder = fs.readdirSync(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
       if (jreFolder == null) {
+        logToBoth("Failed to find java folder", eLogger.error)
         throw throwCustomError("Failed to find java folder", "We've not been able to find the Java folder. We can't recover from this.")
       }
       
@@ -363,28 +382,31 @@ const Electron: ElectronOverwolfInterface = {
         fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
       });
 
-      onStageChange("Cleaning up")
+      logAndUpdate("Cleaning up")
       try {
         // It's not fatal if this fails
         fs.rmdirSync(jrePath);
         fs.rmdirSync(path.join(runtimePath, 'jre'))
         fs.rmSync(path.join(runtimePath, jreDownloadName));
       } catch (e) {
+        logToBoth("Failed to clean up", eLogger.error, e)
         // Ignore
       }
 
-      onStageChange("Finishing up")
+      logAndUpdate("Finishing up")
       // Touch a file to note down what java version we have
       try {
         fs.writeFileSync(path.join(runtimePath, ".java-version"), javaVersion);
       } catch (e) {
+        logToBoth("Failed to write java version file", eLogger.error, e)
         throw throwCustomError("Failed to write java version file", "We've not been able to write the java version file. We can't recover from this.")
       }
 
-      onStageChange("Checking Java works")
+      logAndUpdate("Checking Java works")
       // Ensure the java version is executable and works
       const jreExecPath = jreLocation(appPath);
       if (!fs.existsSync(jreExecPath)) {
+        logToBoth("Failed to find java executable", eLogger.error)
         throw throwCustomError("Failed to find java executable", "We've not been able to find the java executable. We can't recover from this.")
       }
       
@@ -394,11 +416,11 @@ const Electron: ElectronOverwolfInterface = {
           stdio: 'ignore'
         });
       } catch (e) {
-        eLogger.error("Failed to run java --version", e)
+        logToBoth("Failed to run java --version", eLogger.error)
         throw throwCustomError("Failed to run java --version", "We've not been able to run the java --version command. We can't recover from this.")
       }
 
-      onStageChange("Starting subprocess")
+      logAndUpdate("Starting subprocess")
     },
     async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
       // Get the runtime
@@ -586,3 +608,43 @@ class CustomError extends Error {
 }
 
 export default Electron;
+
+/**
+ * Avoid use unless absolutely need!
+ */
+class FSLogger {
+  path: string;
+  parent: string;
+  
+  constructor(name: string) {
+    this.parent = path.join(getAppHome(), 'logs');
+    this.path = path.join(this.parent, `${name}.log`);
+    
+    this.ensureParentExists();
+  }
+  
+  log(message: string) {
+    try {
+      this.ensureParentExists();
+      
+      fs.appendFileSync(this.path, `[${new Date().toISOString()}] - ${message}\n`, {
+        encoding: 'utf-8',
+      });
+    } catch (e) {
+      console.error("Failed to log message", e);
+      console.debug("Original message", message);
+    }
+  }
+  
+  private ensureParentExists() {
+    try {
+      if (!fs.existsSync(this.parent)) {
+        fs.mkdirSync(this.parent, {
+          recursive: true
+        });
+      }
+    } catch (e) {
+      console.error("Failed to create log directory", e);
+    }
+  }
+}
