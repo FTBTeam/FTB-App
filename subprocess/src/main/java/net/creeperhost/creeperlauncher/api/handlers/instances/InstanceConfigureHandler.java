@@ -38,7 +38,11 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             Path jreRealPath = instance.props.jrePath;
             if (updateJson.has("jrePath")) {
                 String jrePath = updateJson.get("jrePath").getAsString();
-                jreRealPath = Paths.get(jrePath);
+                if (!jrePath.isEmpty()) {
+                    jreRealPath = Paths.get(jrePath);
+                } else {
+                    jreRealPath = null;
+                }
             }
 
             instance.props.jrePath = jreRealPath;
