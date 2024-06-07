@@ -651,6 +651,7 @@ export interface InstanceJson {
     releaseChannel: string;
     locked: boolean;
     pinned: boolean;
+    preventMetaModInjection: boolean;
     packType: number;
     _private: boolean;
     totalPlayTime: number;
@@ -729,12 +730,10 @@ export interface UserApiCredentials {
 }
 
 export interface AccountProfile {
-    isMicrosoft: boolean;
     uuid: string;
     lastLogin: number;
     username: string;
     msAuth: MSAuthStore;
-    mcAuth: YggdrasilAuthStore;
     skins: AccountSkin[];
 }
 
@@ -825,11 +824,6 @@ export interface MSAuthStore {
     liveAccessToken: string;
     liveRefreshToken: string;
     liveExpiresAt: number;
-}
-
-export interface YggdrasilAuthStore {
-    clientToken: string;
-    accessToken: string;
 }
 
 export interface Target {

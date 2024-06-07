@@ -53,6 +53,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             
             // Support for unlocking a modpack
             instance.props.locked = getOrDefault(updateJson, "locked", JsonElement::getAsBoolean, instance.props.locked);
+            instance.props.preventMetaModInjection = getOrDefault(updateJson, "preventMetaModInjection", JsonElement::getAsBoolean, instance.props.preventMetaModInjection);
             
             var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
             if (instanceImage != null) {

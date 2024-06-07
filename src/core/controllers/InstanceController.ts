@@ -14,6 +14,7 @@ export type SaveJson = {
   fullScreen: boolean;
   releaseChannel: string;
   instanceImage?: string;
+  preventMetaModInjection?: boolean;
   category: string;
   locked: boolean;
   shellArgs: string;

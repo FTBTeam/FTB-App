@@ -350,8 +350,14 @@ public class Instance {
 
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
             
+            if (this.props.preventMetaModInjection) {
+                LOGGER.info("Preventing meta mod injection.");
+                Files.deleteIfExists(path.resolve("mods/ftb-hide.jar"));
+                Files.deleteIfExists(path.resolve("mods/ftb-progress.jar"));
+            }
+            
             // Only inject custom mods if we have any, and we're not a "custom" instance.
-            if (!loadingMods.isEmpty() && !this.isLoaderInstance()) {
+            if (!loadingMods.isEmpty() && !this.isLoaderInstance() && !this.props.preventMetaModInjection) {
                 if (Files.notExists(path.resolve(".no_loading_mods.marker"))) {
                     for (InstanceSupportMeta.SupportFile file : loadingMods) {
                         if (!file.canApply(props.modLoader, os)) continue;

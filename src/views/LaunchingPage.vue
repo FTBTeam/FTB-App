@@ -138,6 +138,7 @@
           aria-label="Sometimes an instance can get stuck hidden in the background... You can use this to show the instance if it's not showing up after you think it's finished loading."
           data-balloon-pos="up-right"
           data-balloon-length="xlarge"
+          v-if="!instance?.preventMetaModInjection"
         >
           <font-awesome-icon icon="eye" class="" />
         </ftb-button>

@@ -142,6 +142,14 @@
           </div>
         </div>
       </div>
+      
+      <ui-toggle
+        :align-right="true"
+        label="Disable helper mod injection"
+        desc="The FTB App will inject helper mods into your instance to help the app and your instance work together. Sometimes this can cause issues with Minecraft, Mods, Etc. You can disable this behaviour here."
+        v-model="instanceSettings.preventMetaModInjection"
+        @input="saveSettings"
+        class="mb-6" />
 
       <section class="flex-1 mb-4">
         <label class="block tracking-wide text-white-700 mb-2">Java Version</label>
@@ -512,6 +520,7 @@ export default class ModpackSettings extends Vue {
       category: instance.category,
       locked: instance.locked,
       shellArgs: instance.shellArgs,
+      preventMetaModInjection: instance.preventMetaModInjection,
     }
   }
   

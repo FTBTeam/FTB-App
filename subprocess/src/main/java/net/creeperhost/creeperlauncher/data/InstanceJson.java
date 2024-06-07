@@ -59,6 +59,12 @@ public class InstanceJson {
     
     public boolean locked = true;
     public boolean pinned = false;
+
+    /**
+     * When enabled, the app will not inject mods from the meta.modpacks.ch system. Sometimes these can 
+     * cause issues, so it's good to let the user have the option to turn them off
+     */
+    public boolean preventMetaModInjection = false;
     
     public byte packType;
     // TODO migrate this to `isPrivate`
@@ -113,6 +119,7 @@ public class InstanceJson {
         shellArgs = other.shellArgs;
         pinned = other.pinned;
         potentiallyBrokenDismissed = other.potentiallyBrokenDismissed;
+        preventMetaModInjection = other.preventMetaModInjection;
     }
 
     // Copy instance.
