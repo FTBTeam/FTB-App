@@ -75,10 +75,11 @@ import {button, dialog, dialogsController} from '@/core/controllers/dialogsContr
 import {InstanceController} from '@/core/controllers/InstanceController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {createLogger} from '@/core/logger';
 import {Getter} from 'vuex-class';
 import {AuthProfile} from '@/modules/core/core.types';
+import platform from '@/utils/interface/electron-overwolf';
 
 @Component({
   components: {
@@ -87,7 +88,7 @@ import {AuthProfile} from '@/modules/core/core.types';
   },
 })
 export default class PackActions extends Vue {
-  @Prop() instance!: InstanceJson | SugaredInstanceJson;
+  @Prop() instance!: SugaredInstanceJson;
   @Prop({ default: false }) allowOffline!: boolean;
   @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
   
@@ -96,6 +97,8 @@ export default class PackActions extends Vue {
   instanceFolders: string[] = [];
   shareConfirm = false;
   duplicateConfirm = false;
+  
+  platform = platform;
 
   mounted() {
     sendMessage('getInstanceFolders', { uuid: this.instance.uuid })
@@ -106,10 +109,7 @@ export default class PackActions extends Vue {
   async openInstanceFolder(folder: string) {
     this.logger.debug("Opening instance folder", folder)
     try {
-      await sendMessage('instanceBrowse', {
-        uuid: this.instance.uuid,
-        folder,
-      })
+      await platform.get.io.openFinder(`${this.instance.path}/${folder}`)
     } catch (e) {
       this.logger.error("Failed to open instance folder", e);
     }

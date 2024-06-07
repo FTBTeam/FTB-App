@@ -197,7 +197,9 @@ export default class MainApp extends Vue {
   async initApp() {
     this.logger.info("Initializing app");
     try {
+      this.logger.debug("Sending appInit message");
       const reply = await sendMessage("appInit", {});
+      this.logger.debug("Received appInit reply", reply);
       if (!reply?.success) {
         this.logger.error("Failed to initialize app", reply);
         return;

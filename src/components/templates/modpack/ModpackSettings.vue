@@ -248,6 +248,7 @@ import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
+import platform from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
@@ -318,6 +319,8 @@ export default class ModpackSettings extends Vue {
   userSelectModLoader = false;
   userSelectedLoader: [string, ModLoaderWithPackId] | null = null;
 
+  platform = platform;
+  
   async mounted() {
     const javas = await sendMessage("getJavas");
     this.javaVersions = javas.javas;
@@ -440,7 +443,7 @@ export default class ModpackSettings extends Vue {
     this.instanceSettings.locked = newState;
     await this.saveSettings();
   }
-
+  
   public async saveSettings() {
     // Compare the previous settings to the current settings
     // Yes... this is really how we do it...
@@ -465,9 +468,11 @@ export default class ModpackSettings extends Vue {
   }
 
   async browseInstance() {
-    await sendMessage("instanceBrowse", {
-      uuid: this.instance?.uuid ?? "",
-      folder: null
+    await gobbleError(async () => {
+      if ("path" in this.instance) {
+        await this.platform.get.io.openFinder(this.instance.path)
+        return;
+      }
     })
   }
 

@@ -248,9 +248,8 @@ function openFolderAction(name: string, path: string): InstanceAction {
     icon: "folder-open",
     condition: ({instanceFolders}) => folderExists(path, instanceFolders),
     action: (instance) => {
-      sendMessage("instanceBrowse", {
-        uuid: instance.uuid,
-        folder: path,
+      gobbleError(async () => {
+        await platform.get.io.openFinder(`${instance.path}/${path}`)
       })
     }
   } 
@@ -264,9 +263,8 @@ const instanceActions: InstanceActionCategory[] = [
         title: "Instance folder",
         icon: "folder-open",
         action: (instance) => {
-          sendMessage("instanceBrowse", {
-            uuid: instance.uuid,
-            folder: null
+          gobbleError(() => {
+            platform.get.io.openFinder(`${instance.path}`)
           })
         }
       },
@@ -412,7 +410,6 @@ export default class LaunchingPage extends Vue {
   }
   
   userInteractedWithLogs(event: any) {
-    console.log(event);
     const location = event.target.scrollTop + event.target.clientHeight;
     
     // Give a 10px buffer
@@ -601,11 +598,8 @@ export default class LaunchingPage extends Vue {
   }
 
   openFolder() {
-    gobbleError(() => {
-      sendMessage("instanceBrowse", {
-        uuid: this.instance?.uuid ?? "",
-        folder: null
-      })
+    gobbleError(async () => {
+      await this.platform.get.io.openFinder(`${this.instance?.path ?? ""}`)
     })
   }
 
