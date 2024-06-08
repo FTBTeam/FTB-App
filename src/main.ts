@@ -23,8 +23,8 @@ import FTBInput from '@/components/atoms/input/FTBInput.vue';
 import Popover from '@/components/atoms/Popover.vue';
 import Modal from '@/components/atoms/modal/Modal.vue';
 import Message from '@/components/atoms/Message.vue';
-import {BrowserTracing} from '@sentry/tracing';
-import * as Sentry from '@sentry/vue';
+// import {BrowserTracing} from '@sentry/tracing';
+// import * as Sentry from '@sentry/vue';
 import ModalFooter from '@/components/atoms/modal/ModalFooter.vue';
 import ModalBody from '@/components/atoms/modal/ModalBody.vue';
 import {localiseNumber, toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -36,7 +36,6 @@ import VueNativeSock from 'vue-native-websocket';
 // @ts-ignore - no types
 import VueVirtualScroller from 'vue-virtual-scroller';
 import {createLogger} from '@/core/logger';
-import {constants} from '@/core/constants';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -53,31 +52,31 @@ const appSetup = async () => {
     console.error(e);
   }
 
-  if (process.env.NODE_ENV === 'production') {
-    logger.info("Setting up sentry");
-    Sentry.init({
-      Vue,
-      environment: constants.platform,
-      dsn: process.env.VUE_APP_SENTRY_DSN,
-      integrations: [
-        new BrowserTracing({
-          routingInstrumentation: Sentry.vueRouterInstrumentation(router),
-        }),
-      ],
-      release: `${platform.get.config.version}`,
-      dist: `${process.env.VUE_APP_TARGET_PLATFORM}`,
-      initialScope: {
-        tags: {
-          'release.public': platform.get.config.version,
-          'release.platform': await platform.get.utils.getPlatformVersion(),
-          'os.arch': platform.get.utils.getOsArch(),
-        },
-      },
-      
-      trackComponents: true,
-      tracesSampleRate: 1.0,
-    });
-  }
+  // if (process.env.NODE_ENV === 'production') {
+  //   logger.info("Setting up sentry");
+  //   Sentry.init({
+  //     Vue,
+  //     environment: constants.platform,
+  //     dsn: process.env.VUE_APP_SENTRY_DSN,
+  //     integrations: [
+  //       new BrowserTracing({
+  //         routingInstrumentation: Sentry.vueRouterInstrumentation(router),
+  //       }),
+  //     ],
+  //     release: `${platform.get.config.version}`,
+  //     dist: `${process.env.VUE_APP_TARGET_PLATFORM}`,
+  //     initialScope: {
+  //       tags: {
+  //         'release.public': platform.get.config.version,
+  //         'release.platform': await platform.get.utils.getPlatformVersion(),
+  //         'os.arch': platform.get.utils.getOsArch(),
+  //       },
+  //     },
+  //    
+  //     trackComponents: true,
+  //     tracesSampleRate: 1.0,
+  //   });
+  // }
   
   library.add(fas);
   library.add(fab);

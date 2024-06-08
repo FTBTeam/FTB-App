@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher.api.handlers.instances;
 
-import io.sentry.Sentry;
+//import io.sentry.Sentry;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
 import net.creeperhost.creeperlauncher.Instances;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
@@ -61,7 +61,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
                 } else {
                     LOGGER.error(NO_SENTRY, "Failed to launch instance.", ex);
                     Throwable cause = ex.getCause();
-                    Sentry.addBreadcrumb(ex.getMessage());
+//                    Sentry.addBreadcrumb(ex.getMessage());
                     LOGGER.error(SENTRY_ONLY, "Failed to launch instance.", cause != null ? cause : ex);
 
                     String message = ex.getMessage();
