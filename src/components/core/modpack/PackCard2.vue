@@ -136,11 +136,10 @@ export default class PackCard2 extends PackCardCommon {
       return;
     }
     
-    const {art, ...remaining} = this.instance;
-    logger.debug("Opening instance menu with the following context", remaining)
-    logger.debug("Root folders", this.instance.rootDirs)
-    AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, {
-      instance: this.instance
+    AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, () => {
+      return {
+        instance: this.instance
+      }
     });
   }
   

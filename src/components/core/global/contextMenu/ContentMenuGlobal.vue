@@ -5,12 +5,7 @@
         top: menuY + 'px',
         left: menuX + 'px'
       }">
-        <div class="items" v-if="menu">
-          <template v-for="(option, key) in menu.options()">
-            <div :key="key" class="separator" v-if="option['separator']"></div>
-            <context-menu-item :open-to-left="openToLeft" :context="context" :overflow-fix="overflowFix" v-else @clicked="e => onOptionClick(e)" :option="option" />
-          </template>
-        </div>
+        <context-menu-item v-if="menu" :context="context" :open-to-left="openToLeft" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
       </div>
     </transition>
   </div>
@@ -23,7 +18,7 @@ import {ContextMenu, MenuItem} from '@/core/context/menus/contextMenu';
 import ContextMenuItem from '@/components/core/global/contextMenu/ContextMenuItem.vue';
 
 type ContextMenuEventContext = {
-  context: any,
+  context: () => any,
   menu: ContextMenu<any>,
   pointer: PointerEvent
 }
@@ -38,7 +33,7 @@ export default class ContextMenuGlobal extends Vue {
   
   openToLeft = false;
 
-  context: any = null;
+  context: (() => any) | null = null;
   overflowFix = false;
 
   mounted() {
@@ -62,13 +57,14 @@ export default class ContextMenuGlobal extends Vue {
   handleMenuOpen(context: ContextMenuEventContext) {
     this.menu = context.menu;
     this.context = context.context;
+
     this.$nextTick(() => {
       this.placeMenu(context.pointer);
     })
   }
 
   onOptionClick(option: MenuItem<any>) {
-    (option as MenuItem<any>).action(this.context)
+    (option as MenuItem<any>).action(this.context!())
     this.handleMenuClose()
   }
 

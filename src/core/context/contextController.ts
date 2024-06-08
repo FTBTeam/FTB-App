@@ -21,7 +21,7 @@ class ContextController {
   /**
    * TODO: strengthen the type of context
    */
-  openMenu<T>(name: ContextMenus, pointer: PointerEvent, context: T) {
+  openMenu<T>(name: ContextMenus, pointer: PointerEvent, context: () => T) {
     const menu = this.registry.get(name);
     
     if (!menu) {

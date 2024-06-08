@@ -1,18 +1,15 @@
 <template>
-  <div class="item" :class="{[option.color ?? 'normal']: true, 'has-children': option.children}" v-if="!option.predicate || option.predicate(context)" @click="() => $emit('clicked', option)">
-    <div class="main">
-      <font-awesome-icon :fixed-width="true" v-if="option.icon" :icon="option.icon" />
-      {{ option.title }}
-    </div>
-
-    <font-awesome-icon class="chevron" v-if="option.children" icon="chevron-right" />
-
-    <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
-      <div class="items">
-        <template v-for="(childOption, index) in option.children">
-          <div :key="index" class="separator" v-if="childOption['separator']"></div>
-          <ContextMenuItem :context="context" :overflow-fix="overflowFix" v-else :option="childOption" @clicked="$emit('clicked', childOption)" />
-        </template>
+  <div class="items">
+    <div class="item" v-for="(option, key) in options" :key="key" :class="{[option.color ?? 'normal']: true, 'has-children': option.children}" @click="() => $emit('clicked', option)" v-if="!option.predicate || option.predicate(context())">
+      <div class="main">
+        <font-awesome-icon :fixed-width="true" v-if="option.icon" :icon="option.icon" />
+        {{ option.title }}
+      </div>
+  
+      <font-awesome-icon class="chevron" v-if="option.children" icon="chevron-right" />
+  
+      <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
+        <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix" :open-to-left="openToLeft"  />
       </div>
     </div>
   </div>
@@ -23,14 +20,15 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 import {MenuItem} from '@/core/context/menus';
 
 @Component({
+  name: 'ContextMenuItem',
   components: {
-    ContextMenuItem
+    NestedContextMenuItem: () => import('@/components/core/global/contextMenu/ContextMenuItem.vue')
   }
 })
 export default class ContextMenuItem extends Vue {
-  @Prop() option!: MenuItem<any>;
+  @Prop() context!: () => any;
+  @Prop() options!: MenuItem<any>[];
   @Prop() overflowFix!: boolean;
-  @Prop() context!: any;
   @Prop({default: false}) openToLeft!: boolean;
 }
 </script>
