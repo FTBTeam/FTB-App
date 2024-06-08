@@ -28,7 +28,10 @@ import {JavaFetch} from '@/core/javaFetch';
 import {constants} from '@/core/constants';
 
 @Component({
-  components: {ChangelogEntry},
+  components: {
+    // Fixes circular dependency in production
+    ChangelogEntry: () => import('@/components/templates/changelogs/ChangelogEntry.vue'),
+  },
   methods: {parseMarkdown}
 })
 export default class ChangelogEntry extends Vue {
