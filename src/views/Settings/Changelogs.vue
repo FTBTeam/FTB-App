@@ -2,7 +2,7 @@
   <div class="changelogs" v-if="!error">
     <div class="changelogs">
       <div class="log mb-8" v-for="(changelog, index) in allLogs">
-        <h3 class="mb-4 text-xl font-bold">{{changelog.title ?? changelog.version}}</h3>
+        <h3 class="mb-4 text-xl font-bold">{{changelog.version}}{{ changelog.title != changelog.version ? ` - ${changelog.title}` : "" }}</h3>
         <changelog-entry :key="index" :changelog="changelog" />
       </div>
     </div>
