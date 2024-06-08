@@ -392,7 +392,8 @@ public class VersionManifest {
 
             // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
             return DownloadTask.builder()
-                    .url(url)
+                    .url(url) // Prefer the ch mirror but fallback to the provided url.
+                    .withMirror(artifact.url)
                     .dest(librariesDir.resolve(artifact.path))
                     .withValidation(validation)
                     .build();
