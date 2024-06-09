@@ -741,7 +741,7 @@ async function createWindow(reset = false) {
     },
   });
 
-  win.on('ready-to-show', async () => {
+  win.once('ready-to-show', async () => {
     if (useSystemFrame) {
       await win?.webContents.executeJavaScript("document.body.classList.add('system-frame')");
     }
