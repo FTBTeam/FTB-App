@@ -71,7 +71,7 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
           ...paths.map((e) => ({
             title: e[1],
             async action(context) {
-              await platform.get.io.openFinder(context.instance.path + "/" + e[0]);
+              await platform.get.io.openFinder(platform.get.io.pathJoin(context.instance.path, e[0]));
             },
             predicate: context => context.instance.rootDirs?.includes(e[0])
           })) as MenuItem<InstanceMenuContext>[]

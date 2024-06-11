@@ -116,7 +116,6 @@ import platform from '@/utils/interface/electron-overwolf';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import os from 'os';
-import path from 'path';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
@@ -176,7 +175,7 @@ export default class AppSettings extends Vue {
         toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
         break;
       case 'logs':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(path.join(AppSettings.getAppHome(), 'logs')), state => this.working = state)
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.pathJoin(AppSettings.getAppHome(), 'logs')), state => this.working = state)
         break;
       default:
         toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => this.working = state)
@@ -186,11 +185,11 @@ export default class AppSettings extends Vue {
 
   public static getAppHome() {
     if (platform.isOverwolf() || os.platform() === "win32") {
-      return path.join(platform.get.io.getLocalAppData(), '.ftba');
+      return platform.get.io.pathJoin(platform.get.io.getLocalAppData(), '.ftba');
     } else if (os.platform() === "darwin") {
-      return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
+      return platform.get.io.pathJoin(os.homedir(), 'Library', 'Application Support', '.ftba');
     } else {
-      return path.join(os.homedir(), '.ftba');
+      return platform.get.io.pathJoin(os.homedir(), '.ftba');
     }
   }
 

@@ -250,7 +250,7 @@ function openFolderAction(name: string, path: string): InstanceAction {
     condition: ({instanceFolders}) => folderExists(path, instanceFolders),
     action: (instance) => {
       gobbleError(async () => {
-        await platform.get.io.openFinder(`${instance.path}/${path}`)
+        await platform.get.io.openFinder(platform.get.io.pathJoin(instance.path, path))
       })
     }
   } 

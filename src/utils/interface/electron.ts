@@ -218,6 +218,10 @@ const Electron: ElectronOverwolfInterface = {
       return ipcRenderer.invoke('openFinder', path);
     },
     
+    pathJoin(...paths: string[]) {
+      return path.join(...paths);
+    },
+    
     getLocalAppData() {
       return path.join(os.homedir(), "AppData", "Local"); 
     }

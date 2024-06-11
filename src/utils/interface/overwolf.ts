@@ -243,6 +243,11 @@ const Overwolf: ElectronOverwolfInterface = {
       });
     },
     
+    pathJoin(...paths: string[]) {
+      // Because we're on windows we need to use backslashes
+      return paths.join('\\');
+    },
+    
     getLocalAppData() {
       return overwolf.io.paths.localAppData;
     }

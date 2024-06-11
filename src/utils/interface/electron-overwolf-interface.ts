@@ -63,6 +63,7 @@ export interface InputOutput {
   selectFileDialog: (cb: (selectedFile: string | null) => void) => void;
   
   openFinder(path: string): Promise<boolean>;
+  pathJoin(...paths: string[]) : string;
   
   getLocalAppData: () => string;
 }
