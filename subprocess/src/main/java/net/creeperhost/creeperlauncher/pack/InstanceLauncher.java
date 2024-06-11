@@ -81,7 +81,7 @@ public class InstanceLauncher {
     private final List<ThrowingConsumer<LaunchContext, Throwable>> startTasks = new LinkedList<>();
     private final List<ThrowingRunnable<Throwable>> exitTasks = new LinkedList<>();
 
-    private static final int NUM_STEPS = 5;
+    private static final int NUM_STEPS = 7;
 
     public InstanceLauncher(Instance instance) {
         this.instance = instance;
@@ -310,6 +310,7 @@ public class InstanceLauncher {
             for (ThrowingConsumer<LaunchContext, Throwable> startTask : startTasks) {
                 startTask.accept(context);
             }
+            progressTracker.updateDesc("Pre-Start Tasks Complete");
             progressTracker.finishStep();
 
             token.throwIfCancelled();
@@ -350,6 +351,7 @@ public class InstanceLauncher {
             LOGGER.info("Java executable: {}", javaExecutable.toString());
             LOGGER.info("Java executable: {}", javaExecutable.toUri());
             LOGGER.info("Java executable: {}", javaExecutable.toUri().toASCIIString());
+            progressTracker.updateDesc("Java Runtime Validated");
             progressTracker.finishStep();
 
             prepareManifests(token, versionsDir);
@@ -359,6 +361,7 @@ public class InstanceLauncher {
             progressTracker.startStep("Validate assets");
             Pair<AssetIndex, AssetIndexManifest> assetPair = checkAssets(token, versionsDir);
             Path virtualAssets = buildVirtualAssets(assetPair.getLeft(), assetPair.getRight(), gameDir, assetsDir);
+            progressTracker.updateDesc("Assets Validated");
             progressTracker.finishStep();
 
             token.throwIfCancelled();
@@ -368,19 +371,28 @@ public class InstanceLauncher {
 
             progressTracker.startStep("Validate libraries");
             validateLibraries(token, librariesDir, libraries);
+            progressTracker.updateDesc("Libraries Validated");
             progressTracker.finishStep();
 
             token.throwIfCancelled();
 
             progressTracker.startStep("Validate client");
             validateClient(token, versionsDir);
+            progressTracker.updateDesc("Client Validated");
             progressTracker.finishStep();
 
             token.throwIfCancelled();
 
+            progressTracker.startStep("Extract natives");
             Path nativesDir = versionsDir.resolve(instance.props.modLoader).resolve(instance.props.modLoader + "-natives-" + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
+            progressTracker.updateDesc("Natives Extracted");
+            progressTracker.finishStep();
 
+            token.throwIfCancelled();
+            
+            progressTracker.startStep("Prepare process");
+            
             Map<String, String> subMap = new HashMap<>();
             AccountProfile profile = AccountManager.get().getActiveProfile();
             if (offlineUsername != null || profile == null) {
@@ -494,6 +506,9 @@ public class InstanceLauncher {
             env.remove("JAVA_TOOL_OPTIONS");
             env.remove("JAVA_OPTIONS");
 
+            progressTracker.updateDesc("Process Prepared");
+            progressTracker.finishStep();
+            
             return builder;
         } catch (Throwable ex) {
             if (ex instanceof CancellationToken.Cancellation cancellation) {
