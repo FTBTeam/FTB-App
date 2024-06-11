@@ -20,8 +20,8 @@ public class MicrosoftAuthenticator  {
             return false;
         }
 
-        // The token is valid if it expires in more than 1 hour
-        boolean valid = Instant.now().getEpochSecond() < profile.msAuth.liveExpiresAt - (60 * 60);
+        // The token is valid if it expires in less than 30 minutes
+        boolean valid = Instant.now().getEpochSecond() < profile.msAuth.liveExpiresAt - (30 * 60);
         int mcTokenExpires = extractExpiresFromToken(profile.msAuth.minecraftToken);
         if (mcTokenExpires != -1) {
             // The mc token is valid if it expires in more than 6 hour
