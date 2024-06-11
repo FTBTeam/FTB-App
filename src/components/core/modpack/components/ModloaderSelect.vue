@@ -66,7 +66,11 @@ export default class ModloaderSelect extends Vue {
   userUseLatestLoader = true;
   userLoaderVersion = "";
   
-  @Emit() select(loader: string, version: string): [string, ModLoaderWithPackId] | null {
+  @Emit() select(loader: string | null, version: string | null): [string, ModLoaderWithPackId] | null {
+    if (loader === null || version === null) {
+      return null;
+    }
+    
     const loaderProvider = this.availableLoaders[loader];
     if (!loaderProvider) {
       return null;
@@ -125,6 +129,7 @@ export default class ModloaderSelect extends Vue {
     
     if (this.userLoaderProvider === "") {
       this.userLoaderVersion = "";
+      this.select(null, null)
       return;
     }
     
