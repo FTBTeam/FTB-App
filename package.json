@@ -71,7 +71,7 @@
     "@fortawesome/vue-fontawesome": "^2.0.6",
     "@ftbapp/vue-cli-plugin-electron-builder": "file:patches/vue-cli-plugin-electron-builder-20.2.0.tgz",
     "@overwolf/ow-cli": "0.0.5-0",
-    "@overwolf/ow-electron": "^28.2.5",
+    "@overwolf/ow-electron": "^28.3.2",
     "@overwolf/ow-electron-builder": "^24.7.0",
     "@overwolf/types": "^3.16.0",
     "@sentry/webpack-plugin": "^1.18.9",

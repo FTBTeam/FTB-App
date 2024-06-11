@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
+import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {emitter, getColorForReleaseType, prettyByteFormat} from '@/utils';
@@ -102,6 +102,13 @@ export default class InstallModModal extends Vue {
   
   installProgress: InstallProgress = InstallModModal.emptyProgress;
   wsReqId = "";
+  
+  @Watch('open')
+  onOpen(newVal: boolean) {
+    if (!newVal) return;
+
+    this.selectedVersion = this.options[0]?.value as any;
+  }
   
   mounted() {
     emitter.on('ws.message', this.onInstallMessage);
