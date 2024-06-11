@@ -299,8 +299,14 @@ public class MicrosoftOAuth {
         LOGGER.info(message);
         this.onUpdate.accept(step);
     }
-
+    
     private <T> Result<T, DanceCodedError> emitAndError(String message, String code, DanceStep step, Result<?, RequestError> resultError) {
+        // Special case for 429 as this should be handled differently
+        var status = resultError.unwrapErr().status();
+        if (status == 429) {
+            return this.emitAndError("Rate limited", "ftb-auth-000020", step, true);
+        }
+        
         return this.emitAndError(message, code, step, resultError.unwrapErr().status() == -1);
     }
 

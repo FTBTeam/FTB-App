@@ -27,6 +27,7 @@
         <div class="error-code select-text">
           <b class="font-mono mb-1 block">{{code.toUpperCase()}}</b>
           <p v-if="code === 'ftb-auth-000001' || code === 'ftb-auth-000002' || code === 'ftb-auth-000003'">We've been unable to communicate with XBox live. It's possible their services are down.</p>
+          <p v-else-if="code === 'ftb-auth-000020'">It looks like your network is being rate limited. Please try again in a few minutes.</p>
           <p v-else-if="code === 'ftb-auth-000012'">The account used does not have an XBox Live account, this likely means you haven't yet migrated your account...</p>
           <p v-else-if="code === 'ftb-auth-000013'">Your account resided in a region that does not support XBox Live... This means we will not be able to log you in.</p>
           <p v-else-if="code === 'ftb-auth-000014'">The account needs adult verification on Xbox page (typically only seen on South Korean accounts)</p>
