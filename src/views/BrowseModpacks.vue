@@ -25,7 +25,7 @@
         :min="3"
       />
     </div>
-
+    
     <message icon="warning" type="danger" class="my-6" v-if="error">
       {{ error }}
     </message>
@@ -66,13 +66,14 @@ import {Route} from 'vue-router';
 import {debounce} from '@/utils';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
-import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import Loader from '@/components/atoms/Loader.vue';
 import PackPreview from '@/components/core/modpack/PackPreview.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import UiPagination from '@/components/core/ui/UiPagination.vue';
 import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 import {createLogger} from '@/core/logger';
+import {RouterNames} from '@/router';
 
 @Component({
   components: {
@@ -104,8 +105,13 @@ export default class BrowseModpacks extends Vue {
   visiblePacks: number[] = [];
 
   async mounted() {
-    if (this.$route.params.search) {
-      this.searchValue = this.$route.params.search;
+    // Update the current tab based on the route
+    if (this.$route.query.provider) {
+      this.currentTab = this.$route.query.provider as PackProviders;
+    }
+    
+    if (this.$route.query.search) {
+      this.searchValue = this.$route.query.search as string;
       await this.searchPacks();
       return;
     }
@@ -145,8 +151,8 @@ export default class BrowseModpacks extends Vue {
   
   @Watch('$route')
   public async onPropertyChanged(value: Route, oldValue: Route) {
-    if (value.params.search !== oldValue.params.search) {
-      this.searchValue = value.params.search;
+    if (value.query.search !== oldValue.query.search) {
+      this.searchValue = value.query.search as string;
       await this.searchPacks();
     }
   }
@@ -156,6 +162,10 @@ export default class BrowseModpacks extends Vue {
   }, 500);
 
   async changeTab(tab: PackProviders) {
+    // Update the route
+    gobbleError(() => this.$router.push({ name: RouterNames.ROOT_BROWSE_PACKS, query: { provider: tab } }))
+      .catch(e => this.logger.error("Failed to update route", e));
+    
     this.currentTab = tab;
     this.searchResults = [];
     await this.searchPacks();

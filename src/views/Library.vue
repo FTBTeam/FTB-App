@@ -35,23 +35,28 @@
     </div>
     
     <loader v-else-if="loading" />
-
-    <div class="flex flex-1 flex-wrap justify-center flex-col items-center no-packs" v-else>
-      <div class="message flex flex-1 flex-wrap items-center flex-col mt-32">
-        <font-awesome-icon icon="heart-broken" size="6x" />
-        <h1 class="text-5xl">Oh no!</h1>
-        <span class="mb-4 w-3/4 text-center">
-          Would you look at that! Looks like you've got no modpacks installed yet... If you know what you want, click
-          Browse and search through our collection and all of CurseForge modpacks, otherwise, use Discover we've got
-          some great recommended packs.
-        </span>
-        <div class="flex flex-row justify-between my-2">
+    
+    <div class="no-packs" v-else>
+      <div class="message px-8 pt-20">
+        <h1 class="text-5xl font-bold mb-1">Library Empty</h1>
+        <p class="mb-8">
+          It looks like your library is empty, you can search for new modpacks to install or pick from our recommendations below.
+        </p>
+        <div class="flex gap-6 mb-8">
           <router-link to="/browseModpacks">
-            <ui-button :wider="true" type="info" icon="search">Browse</ui-button>
+            <ui-button :wider="true" type="info" icon="search">Browse FTB Modpacks</ui-button>
           </router-link>
-<!--          <router-link to="/discover">-->
-<!--            <ftb-button color="primary" class="py-2 px-6 mx-2">Discover</ftb-button>-->
-<!--          </router-link>-->
+          <router-link :to="{ name: RouterNames.ROOT_BROWSE_PACKS, query: { provider: 'curseforge' } }">
+            <ui-button icon="search">Browse CurseForge Modpacks</ui-button>
+          </router-link>
+        </div>
+        
+        <div class="featured-packs pb-6">
+          <template v-if="!loadingFeatured && featuredPacksIds.length">
+            <h2 class="text-xl font-bold mb-3">Recommended Modpacks</h2>
+            <pack-preview v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
+          </template>
+          <loader v-else-if="loadingFeatured" />
         </div>
       </div>
     </div>
@@ -61,7 +66,7 @@
 <script lang="ts">
 import {Component, Vue, Watch} from 'vue-property-decorator';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
-import {Getter} from 'vuex-class';
+import {Action, Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/core/modpack/PackCard2.vue';
@@ -71,6 +76,8 @@ import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue'
 import {resolveModloader} from '@/utils/helpers/packHelpers';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import InstallQueue from '@/components/core/modpack/InstallQueue/InstallQueue.vue';
+import PackPreview from '@/components/core/modpack/PackPreview.vue';
+import {RouterNames} from '@/router';
 
 const groupOptions = [
   ['Category', 'category'],
@@ -97,6 +104,7 @@ const groupByOptions = createOrderedOptions(groupOptions)
 
 @Component({
   components: {
+    PackPreview,
     InstallQueue,
     UiButton,
     Selection2,
@@ -109,6 +117,12 @@ export default class Library extends Vue {
   @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
   @Getter('isLoadingInstances', ns("v2/instances")) loading!: boolean;
 
+  @Getter("featuredPacks", ns("v2/modpacks")) featuredPacksIds!: number[];
+  @Action("getFeaturedPacks", ns("v2/modpacks")) getFeaturedPacks!: () => Promise<number[]>;
+
+  RouterNames = RouterNames;
+  loadingFeatured = false;
+  
   searchTerm: string = '';
   
   sortByOptions = sortByOptions;
@@ -135,6 +149,16 @@ export default class Library extends Vue {
         this.groupBy = parsed.groupBy;
       }
     }
+  }
+  
+  @Watch("loading")
+  async onLoadingChange() {
+    if (this.loading) return;
+    if (this.instances.length !== 0) return;
+    
+    this.loadingFeatured = true;
+    await this.getFeaturedPacks();
+    this.loadingFeatured = false;
   }
 
   collapseGroup(group: string) {
@@ -369,12 +393,12 @@ export default class Library extends Vue {
     content: '';
     top: 0;
     left: 0;
-    position: absolute;
+    position: fixed;
     width: 100%;
     height: 100%;
 
-    background: url('../assets/images/no-pack-bg.webp') center center no-repeat;
     background-size: auto 100%;
+    background: url('../assets/images/no-pack-bg.webp') no-repeat fixed;
     z-index: -1;
     opacity: 0.3;
   }
