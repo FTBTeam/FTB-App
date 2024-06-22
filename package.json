@@ -1,7 +1,7 @@
 {
   "productName": "FTB Electron App",
   "name": "ftb-app",
-  "version": "1.25.13",
+  "version": "1.25.14",
   "private": true,
   "main": "background.js",
   "email": "admin@feed-the-beast.com",
@@ -45,7 +45,7 @@
     "markdown-it": "^13.0.1",
     "mitt": "^3.0.0",
     "object-inspect": "^1.13.1",
-    "semver": "^7.3.2",
+    "semver": "^7.6.2",
     "tailwindcss": "^1.9.6",
     "vue": "^2.7.14",
     "vue-native-websocket": "^2.0.14",

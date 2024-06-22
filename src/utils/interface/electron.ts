@@ -227,7 +227,7 @@ const Electron: ElectronOverwolfInterface = {
   
   app: {
     async appSettings() {
-      const settingsPath = appHome + "/bin/settings.json";
+      const settingsPath = path.join(appHome, "bin", "settings.json");
       if (!fs.existsSync(settingsPath)) {
         return null
       }
