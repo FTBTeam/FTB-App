@@ -1,0 +1,76 @@
+{
+  "appVersion": "unknown",
+  "commit"    : "unknown",
+  "branch"    : "unknown",
+  "released"  : 0,
+  "runtime"   : {
+    "version": "21",
+    "jar": "unknown",
+    "env": [],
+    "jvmArgs": [
+      "-Duser.language=en",
+      "-Duser.country=US"
+    ]
+  },
+  "debug": {
+    "logs": [
+      "debug.log",
+      "latest.log",
+      "debug-1.log.gz",
+      "debug-2.log.gz",
+      "debug-3.log.gz",
+      "ftb-app-electron.log",
+      "ftb-app-electron.old.log",
+      "ftb-app-frontend.log",
+      "ftb-app-frontend.old.log",
+      "ftb-app-installer.log"
+    ],
+    "importantFiles": [
+      "storage/settings.json",
+      "storage/storage.json",
+      "runtime/.java-version",
+      "bin/runtime/installations.json",
+      "bin/support-meta.json",
+      "bin/.first-launch"
+    ],
+    "ensureExists": [
+      {
+        "os": ["windows", "linux"],
+        "files": [
+          "runtime/bin/java.exe"
+        ]
+      },
+      {
+        "os": ["macos"],
+        "files": [
+          "runtime/Contents/Home/bin/java"
+        ]
+      }
+    ],
+    "toList": [
+      {
+        "name": "installed-instances",
+        "path": "instances",
+        "type": "recursive"
+      },
+      {
+        "name": "minecraft-versions",
+        "path": "bin/versions"
+      },
+      {
+        "name": "minecraft-app-runtimes",
+        "path": "bin/runtime"
+      },
+      {
+        "name": "minecraft-libraries",
+        "type": "recursive",
+        "path": "bin/libraries"
+      },
+      {
+        "name": "minecraft-assets",
+        "type": "recursive",
+        "path": "bin/assets"
+      }
+    ]
+  }
+}

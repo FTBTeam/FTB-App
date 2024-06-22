@@ -288,7 +288,7 @@ public class MicrosoftOAuth {
         }
     }
 
-    record DanceStep(
+    public record DanceStep(
         Step step,
         boolean successful,
         boolean error,
@@ -319,7 +319,7 @@ public class MicrosoftOAuth {
         return RequestBody.create(new Gson().toJson(any), MediaType.parse("application/json"));
     }
 
-    record DanceContext(
+    public record DanceContext(
         String authToken,
         String refreshToken,
         int expiresAt

@@ -115,7 +115,6 @@ import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
-import os from 'os';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
@@ -169,27 +168,17 @@ export default class AppSettings extends Vue {
   openFolder(location: string) {
     switch (location) {
       case 'home':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(AppSettings.getAppHome()), state => this.working = state)
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.appHome()), state => this.working = state)
         break;
       case 'instances': 
         toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
         break;
       case 'logs':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.pathJoin(AppSettings.getAppHome(), 'logs')), state => this.working = state)
+        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.pathJoin(platform.get.io.appHome(), 'logs')), state => this.working = state)
         break;
       default:
         toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => this.working = state)
         break;
-    }
-  }
-
-  public static getAppHome() {
-    if (platform.isOverwolf() || os.platform() === "win32") {
-      return platform.get.io.pathJoin(platform.get.io.getLocalAppData(), '.ftba');
-    } else if (os.platform() === "darwin") {
-      return platform.get.io.pathJoin(os.homedir(), 'Library', 'Application Support', '.ftba');
-    } else {
-      return platform.get.io.pathJoin(os.homedir(), '.ftba');
     }
   }
 

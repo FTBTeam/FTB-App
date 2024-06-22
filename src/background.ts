@@ -11,6 +11,7 @@ import https from 'https';
 import AdmZip from 'adm-zip';
 import {ChildProcess, execSync, spawn} from 'child_process';
 import {autoUpdater} from 'electron-updater';
+import {getAppHome} from '@/nuturalHelpers';
 
 const protocolSpace = 'ftb';
 const logger = createLogger('background.ts');
@@ -44,16 +45,6 @@ if (process.platform == "linux") {
   app.commandLine.appendSwitch("--no-sandbox");
 }
 
-function getAppHome() {
-  if (os.platform() === "darwin") {
-    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
-  } else if (os.platform() === "win32") {
-    return path.join(os.homedir(), 'AppData', 'Local', '.ftba');
-  } else {
-    return path.join(os.homedir(), '.ftba');
-  }
-}
-
 function getAppSettings(appSettingsPath: string) {
   if (!fs.existsSync(appSettingsPath)) {
     return null;
@@ -66,7 +57,7 @@ function getAppSettings(appSettingsPath: string) {
   }
 }
 
-const appHome = getAppHome();
+const appHome = getAppHome(os.platform(), os.homedir(), path.join);
 logger.debug('App home is', appHome)
 
 let cachedProcessData = null as {

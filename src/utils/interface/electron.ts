@@ -9,6 +9,8 @@ import log from 'electron-log';
 import {createLogger} from '@/core/logger';
 import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers';
 import {execSync} from 'child_process';
+import {FSLogger} from '@/utils/interface/electron/utils/fsLogger';
+import {getAppHome} from '@/nuturalHelpers';
 
 export type Arg = string | {
   key?: string;
@@ -45,8 +47,10 @@ const fallbackMetaData: MetaData = {
   }
 }
 
+const appHome = getAppHome(os.platform(), os.homedir(), path.join);
+
 const eLogger = createLogger("platform/electron.ts");
-const electronFrontendLogFile = path.join(getAppHome(), 'logs', 'ftb-app-frontend.log');
+const electronFrontendLogFile = path.join(appHome, 'logs', 'ftb-app-frontend.log');
 if (fs.existsSync(electronFrontendLogFile)) {
   try {
     fs.writeFileSync(electronFrontendLogFile, '')
@@ -76,16 +80,6 @@ try {
 }
 
 eLogger.info("Meta data", metaData)
-
-function getAppHome() {
-  if (os.platform() === "darwin") {
-    return path.join(os.homedir(), 'Library', 'Application Support', '.ftba');
-  } else if (os.platform() === "win32") {
-    return path.join(os.homedir(), 'AppData', 'Local', '.ftba');
-  } else {
-    return path.join(os.homedir(), '.ftba');
-  }
-}
 
 const Electron: ElectronOverwolfInterface = {
   config: {
@@ -224,15 +218,16 @@ const Electron: ElectronOverwolfInterface = {
     
     getLocalAppData() {
       return path.join(os.homedir(), "AppData", "Local"); 
+    },
+    
+    appHome() {
+      return appHome;
     }
   },
   
   app: {
-    async appHome(): Promise<string> {
-      return getAppHome();
-    },
     async appSettings() {
-      const settingsPath = getAppHome() + "/bin/settings.json";
+      const settingsPath = appHome + "/bin/settings.json";
       if (!fs.existsSync(settingsPath)) {
         return null
       }
@@ -240,13 +235,13 @@ const Electron: ElectronOverwolfInterface = {
       return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
     },
     async appData(): Promise<string> {
-      return path.join(getAppHome(), 'bin');
+      return path.join(appHome, 'bin');
     },
     async appRuntimes(): Promise<string> {
-      return path.join(getAppHome(), 'runtime');
+      return path.join(appHome, 'runtime');
     },
     async runtimeAvailable(): Promise<boolean> {
-      const appPath = getAppHome();
+      const appPath = appHome;
       return fs.existsSync(jreLocation(appPath));
     },
     async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate = false) {
@@ -316,7 +311,7 @@ const Electron: ElectronOverwolfInterface = {
       
       const link = binary.package.link;
 
-      const appPath = getAppHome();
+      const appPath = appHome;
       const runtimePath = `${appPath}/runtime`;
       
       if (isUpdate) {
@@ -429,7 +424,7 @@ const Electron: ElectronOverwolfInterface = {
     },
     async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
       // Get the runtime
-      const appPath = getAppHome();
+      const appPath = appHome;
       const runtimePath = `${appPath}/runtime`;
       
       if (!fs.existsSync(`${runtimePath}/.java-version`)) {
@@ -450,7 +445,7 @@ const Electron: ElectronOverwolfInterface = {
     },
     async startSubprocess() {
       // Get the runtime
-      const appPath = getAppHome();
+      const appPath = appHome;
       const runtimePath = `${appPath}/runtime`;
       
       if (!fs.existsSync(`${runtimePath}/.java-version`)) {
@@ -519,17 +514,17 @@ const Electron: ElectronOverwolfInterface = {
         await ipcRenderer.invoke("ow:cpm:open_window", arg);
       },
       async isFirstLaunch() {
-        return !fs.existsSync(path.join(getAppHome(), "bin", ".first-launch"));
+        return !fs.existsSync(path.join(appHome, "bin", ".first-launch"));
       },
       async setFirstLaunched() {
         // Create parents
-        if (!fs.existsSync(path.join(getAppHome(), "bin"))) {
-          fs.mkdirSync(path.join(getAppHome(), "bin"), {
+        if (!fs.existsSync(path.join(appHome, "bin"))) {
+          fs.mkdirSync(path.join(appHome, "bin"), {
             recursive: true
           });
         }
         
-        fs.writeFileSync(path.join(getAppHome(), "bin", ".first-launch"), "");
+        fs.writeFileSync(path.join(appHome, "bin", ".first-launch"), "");
       }
     }
   },
@@ -613,78 +608,3 @@ class CustomError extends Error {
 }
 
 export default Electron;
-
-/**
- * Avoid use unless absolutely need!
- */
-class FSLogger {
-  path: string;
-  parent: string;
-  
-  constructor(name: string) {
-    this.parent = path.join(getAppHome(), 'logs');
-    this.path = path.join(this.parent, `${name}.log`);
-    
-    this.ensureParentExists();
-  }
-  
-  log(message: string, ...extraData: any[]) {
-    const parsedExtraData = extraData
-      .map(e => {
-        // Handle errors
-        if (e instanceof Error) {
-          return JSON.stringify({
-            message: e.message,
-            stack: e.stack
-          })
-        }
-
-        return JSON.stringify(e)
-      })
-      .join(" ");
-    const outMessage = `${new Date().toISOString()} - ${message} ${parsedExtraData}\n`;
-    
-    try {
-      this.ensureParentExists();
-            
-      fs.appendFileSync(this.path, outMessage, {
-        encoding: 'utf-8',
-      });
-    } catch (e) {
-      console.error("Failed to log message", e);
-      console.debug("Original message", outMessage);
-    }
-  }
-  
-  clearLog() {
-    try {
-      if (fs.existsSync(this.path)) {
-        fs.writeFileSync(this.path, '');
-      }
-    } catch (e) {
-      console.error("Failed to clear log", e);
-    }
-  }
-  
-  deleteLog() {
-    try {
-      if (fs.existsSync(this.path)) {
-        fs.rmSync(this.path);
-      }
-    } catch (e) {
-      console.error("Failed to delete log", e);
-    }
-  }
-  
-  private ensureParentExists() {
-    try {
-      if (!fs.existsSync(this.parent)) {
-        fs.mkdirSync(this.parent, {
-          recursive: true
-        });
-      }
-    } catch (e) {
-      console.error("Failed to create log directory", e);
-    }
-  }
-}

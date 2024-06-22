@@ -250,6 +250,10 @@ const Overwolf: ElectronOverwolfInterface = {
     
     getLocalAppData() {
       return overwolf.io.paths.localAppData;
+    },
+    
+    appHome() {
+      return `${overwolf.io.paths.localAppData}\\.ftba`;
     }
   },
 
@@ -261,10 +265,6 @@ const Overwolf: ElectronOverwolfInterface = {
     async appData() {
       // Don't use this on overwolf
       throw new Error("Don't use app.appData() on Overwolf")
-    },
-    async appHome() {
-      // Don't use this on overwolf
-      throw new Error("Don't use app.appHome() on Overwolf")
     },
     async appRuntimes() {
       // Don't use this on overwolf

@@ -66,10 +66,10 @@ export interface InputOutput {
   pathJoin(...paths: string[]) : string;
   
   getLocalAppData: () => string;
+  appHome: () => string;
 }
 
 export interface App {
-  appHome(): Promise<string>;
   appData(): Promise<string>;
   appSettings(): Promise<any | null>;
   appRuntimes(): Promise<string>;

@@ -1,6 +1,11 @@
 import path from 'path';
 import os from 'os';
 import {Arg} from '@/utils/interface/electron';
+import {getAppHome} from '@/nuturalHelpers';
+
+export function electronAppHome() {
+  return getAppHome(os.platform(), os.homedir(), path.join);
+}
 
 /**
  * Electron can return different values for os.platform() than what the Adoptium api 

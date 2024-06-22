@@ -172,45 +172,34 @@ def writeLicenses = tasks.register('writeLicenses') {
     }
 }
 
+/**
+ * The template & app support advanced arguments for the runtime using the following format:
+ * {
+ *    "key": "" // Optional, if not set, the value will be used as the key and value.
+ *    "value": "",
+ *    // At least one of the following must be set.
+ *    "filter": {
+ *       "os": "windows", // optional
+ *       "arch": "x64", // optional
+ *    }
+ * }
+ */
 def metaOutput = layout.buildDirectory.file('libs/meta.json')
 def writeVersion = tasks.register('writeVersion') {
     outputs.file(metaOutput)
     doLast {
-        metaOutput.get().asFile.text = JsonOutput.toJson(
-                [
-                        appVersion: packageJson.version,
-                        commit    : details.gitHash,
-                        branch    : branch,
-                        released  : Instant.now().getEpochSecond(),
-                        runtime   : [
-                                version: project.target_java_version,
-                                // Get the output of the fatjar -all
-                                jar    : shadowJar.outputs.files.singleFile.name,
+        // Load the meta template file and replace specific parts of the data
+        def fileData = file("./meta-template.json").text
+        def template = new JsonSlurper().parseText(fileData)
 
-                                /**
-                                 * The env and args use the following format:
-                                 * {
-                                 *    "key": "" // Optional, if not set, the value will be used as the key and value.
-                                 *    "value": "",
-                                 *    // At least one of the following must be set.
-                                 *    "filter": {
-                                 *       "os": "windows", // optional
-                                 *       "arch": "x64", // optional
-                                 *    }
-                                 * }
-                                 */
-                                env    : [],
-                                jvmArgs: [
-                                        [
-                                            value: "-Duser.language=en"
-                                        ],
-                                        [
-                                            value: "-Duser.country=US"
-                                        ]
-                                ]
-                        ]
-                ]
-        )
+        template.appVersion = packageJson.version
+        template.commit = details.gitHash
+        template.branch = branch
+        template.released = Instant.now().getEpochSecond()
+        template.runtime.version = project.target_java_version
+        template.runtime.jar = shadowJar.outputs.files.singleFile.name
+
+        metaOutput.get().asFile.text = JsonOutput.toJson(template)
     }
 }
 
