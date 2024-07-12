@@ -20,6 +20,7 @@ jobs:
           days-before-close: 3
           days-before-pr-close: -1
           stale-issue-label: "status: stale"
+          only-issue-labels: 'awaiting response'
           exempt-issue-labels: "status: confirmed, status: investigate, feature:request,fixed/release,fixed/dev,status: planned,question/discussion,priority/high,priority/medium,priority/low"
           exempt-all-assignees: true
           exempt-all-milestones: true
