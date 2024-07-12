@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/stale@v8
         with:
-          stale-issue-message: 'This issue is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 5 days.'
+          stale-issue-message: 'This issue is stale because it has been open 7 days with no activity. Remove stale label or comment or this will be closed in 3 days.'
           close-issue-message: 'This issue / Pull request has been closed as there has been no recent activity after being marked as stale.'
           days-before-stale: 7
           days-before-close: 3
