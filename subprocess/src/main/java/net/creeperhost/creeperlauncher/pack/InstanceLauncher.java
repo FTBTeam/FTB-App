@@ -696,12 +696,74 @@ public class InstanceLauncher {
     }
 
     private List<Path> collectClasspath(Path librariesDir, Path versionsDir, List<VersionManifest.Library> libraries) {
-        List<Path> classpath = libraries.stream()
+        List<Path> classpath = createUniqueLibraryList(libraries).stream()
                 .filter(e -> e.natives == null)
                 .map(e -> e.name.toPath(librariesDir))
                 .collect(Collectors.toList());
+        
         classpath.add(getGameJar(versionsDir));
         return classpath;
+    }
+    
+    // TODO: Make this less jank
+    private List<VersionManifest.Library> createUniqueLibraryList(List<VersionManifest.Library> libraries) {
+        // Deduplicate libraries
+        List<VersionManifest.Library> uniqueLibraries = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        Set<String> handled = new HashSet<>();
+        for (VersionManifest.Library library : libraries) {
+            var name = createVersionAgnosticMavenString(library);
+
+            if (seen.add(name)) {
+                uniqueLibraries.add(library);
+            } else {
+                if (handled.contains(name)) {
+                    continue;
+                }
+
+                // It looks like the lowest versions are always first in the list.
+                LOGGER.info("Duplicate library found: {} ({})", name, library.name);
+
+                VersionManifest.Library lowest = null;
+                Set<VersionManifest.Library> possibleOptions = new HashSet<>();
+                for (VersionManifest.Library lib : libraries) {
+                    // Find the higher version of the library.
+                    var libName = createVersionAgnosticMavenString(lib);
+                    if (libName.equals(name)) {
+                        possibleOptions.add(lib);
+                        // Now we need to find the higher version.
+                        if (lowest != null) {
+                            continue;
+                        }
+                        
+                        lowest = lib;
+                    }
+                }
+
+                if (lowest != null) {
+                    uniqueLibraries.remove(library);
+                    uniqueLibraries.add(lowest);
+                    LOGGER.info("Using lowest version of library: {} ({}). Selected from:", name, lowest.name);
+                    for (VersionManifest.Library lib : possibleOptions) {
+                        LOGGER.info("\t- {}", lib.name);
+                    }
+                }
+
+                handled.add(name);
+            }
+        }
+        
+        return uniqueLibraries;
+    }
+    
+    private String createVersionAgnosticMavenString(VersionManifest.Library library) {
+        var name = library.name.group + ":" + library.name.module;
+        if (library.name.classifier != null) {
+            name += ":" + library.name.classifier;
+        }
+        
+        name += "@" + library.name.extension;
+        return name;
     }
 
     private Path getGameJar(Path versionsDir) {
