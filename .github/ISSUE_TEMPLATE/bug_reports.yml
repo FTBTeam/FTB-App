@@ -27,7 +27,10 @@ body:
     attributes:
       label: Debug Code
       description: |
-        Please run the following tool and provide the code given.
+        Please click the upload logs button located in the FTB App > settings > app tab
+
+        (ONLY IF YOUR APP WONT OPEN)
+        If your app wont open please run the following tool and provide the code given 
         [Windows](https://dist.creeper.host/tools/ftb-debug/ftb-debug.exe) [MacOS](https://dist.creeper.host/tools/ftb-debug/ftb-debug-macos) [Linux](https://dist.creeper.host/tools/ftb-debug/ftb-debug-linux)
         [Windows (Arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-arm64.exe) [MacOS (Arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-macos-arm64) [Linux (arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-linux-arm)
       placeholder: FTB-DBGTEVOISQIRA
