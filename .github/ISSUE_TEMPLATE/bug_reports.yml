@@ -33,7 +33,7 @@ body:
         If your app wont open please run the following tool and provide the code given 
         [Windows](https://dist.creeper.host/tools/ftb-debug/ftb-debug.exe) [MacOS](https://dist.creeper.host/tools/ftb-debug/ftb-debug-macos) [Linux](https://dist.creeper.host/tools/ftb-debug/ftb-debug-linux)
         [Windows (Arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-arm64.exe) [MacOS (Arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-macos-arm64) [Linux (arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-linux-arm)
-      placeholder: FTB-DBGTEVOISQIRA
+      placeholder: https://pste.ch/rtvuybhif or FTB-DBGTEVOISQIRA
     validations:
       required: true
   - type: textarea
