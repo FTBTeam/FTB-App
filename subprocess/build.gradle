@@ -223,6 +223,7 @@ idea.project.settings {
             mainClass = "net.creeperhost.creeperlauncher.CreeperLauncher"
             moduleName = "creeperlauncher.main"
             jvmArgs = '-ea '                                             // Enable assertions
+            jvmArgs = '-Dconsole.level=ALL '                             // Direct ALL log levels to console.
             jvmArgs += '-DDownloadTask.debug=true '                      // Enable Quack DownloadAction logging from DownloadTask
             jvmArgs += '-DInstanceLauncher.ProgressTracker.debug=true '  // Enable debug logging for InstanceLauncher's ProgressTracker TODO Log4j markers?
             jvmArgs += '-DInstanceInstaller.debug=true '                 // Enable debug logging for InstanceInstaller.
