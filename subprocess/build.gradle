@@ -58,8 +58,8 @@ dependencies {
     implementation('org.apache.maven:maven-artifact:3.8.4') {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
     }
-    implementation 'net.covers1624:Quack:0.4.10.104'
-    implementation 'net.covers1624:JdkUtils:0.6.0.20'
+    implementation 'net.covers1624:Quack:0.4.10.108'
+    implementation 'net.covers1624:JdkUtils:0.6.0.21'
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
 
