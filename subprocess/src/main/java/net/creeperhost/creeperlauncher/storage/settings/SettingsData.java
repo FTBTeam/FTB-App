@@ -26,8 +26,9 @@ public class SettingsData {
     private AppearanceSettings appearance;
     private ProxySettings proxy;
     private DownloadSettings download;
+    private WorkaroundSettings workaround;
 
-    public SettingsData(String spec, Path instanceLocation, GeneralSettings general, InstanceSettings instanceDefaults, AppearanceSettings appearance, ProxySettings proxy, DownloadSettings download) {
+    public SettingsData(String spec, Path instanceLocation, GeneralSettings general, InstanceSettings instanceDefaults, AppearanceSettings appearance, ProxySettings proxy, DownloadSettings download, WorkaroundSettings workaround) {
         this.spec = spec;
         this.instanceLocation = instanceLocation;
         this.general = general;
@@ -35,6 +36,7 @@ public class SettingsData {
         this.appearance = appearance;
         this.proxy = proxy;
         this.download = download;
+        this.workaround = workaround;
     }
 
     // Writer
@@ -110,6 +112,9 @@ public class SettingsData {
             new DownloadSettings(
                 Settings.getDefaultThreadLimit(),
                 0
+            ),
+            new WorkaroundSettings(
+                false
             )
         );
     }
@@ -150,6 +155,10 @@ public class SettingsData {
 
     public DownloadSettings download() {
         return download;
+    }
+
+    public WorkaroundSettings workaround() {
+        return workaround;
     }
 
     public void setSpec(String spec) {
@@ -388,6 +397,19 @@ public class SettingsData {
 
         public long speedLimit() {
             return speedLimit;
+        }
+    }
+
+    public static final class WorkaroundSettings {
+
+        public boolean ignoreForgeProcessorOutputHashes;
+
+        public WorkaroundSettings(boolean ignoreForgeProcessorOutputHashes) {
+            this.ignoreForgeProcessorOutputHashes = ignoreForgeProcessorOutputHashes;
+        }
+
+        public boolean ignoreForgeProcessorOutputHashes() {
+            return ignoreForgeProcessorOutputHashes;
         }
     }
 }

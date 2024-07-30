@@ -150,6 +150,10 @@ public class Settings {
     public static int getThreadLimit() {
         return settingsData.download().threadLimit();
     }
+
+    public static boolean ignoreForgeProcessorOutputHashes() {
+        return settingsData.workaround().ignoreForgeProcessorOutputHashes();
+    }
     
     public static final String DEFAULT_SPEC = "1.0.0";
     
@@ -213,6 +217,9 @@ public class Settings {
                 new SettingsData.DownloadSettings(
                     getOrDefault("threadLimit", Integer::parseInt, DEFAULT_SETTINGS.download().threadLimit()),
                     getOrDefault("speedLimit", Long::parseLong, DEFAULT_SETTINGS.download().speedLimit())
+                ),
+                new SettingsData.WorkaroundSettings(
+                    false
                 )
             );
         }

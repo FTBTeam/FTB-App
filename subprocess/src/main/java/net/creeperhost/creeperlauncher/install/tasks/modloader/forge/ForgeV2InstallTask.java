@@ -27,6 +27,7 @@ import net.creeperhost.creeperlauncher.install.tasks.TaskProgressListener;
 import net.creeperhost.creeperlauncher.minecraft.jsons.VersionManifest;
 import net.creeperhost.creeperlauncher.pack.CancellationToken;
 import net.creeperhost.creeperlauncher.pack.Instance;
+import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.StreamGobblerLog;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -327,7 +328,11 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                     LOGGER.warn("Output '{}' failed to validate.", output);
                     LOGGER.warn(" Expected: {}", value);
                     LOGGER.warn(" Got     : {}", hash);
-                    validated = false;
+                    if (Settings.ignoreForgeProcessorOutputHashes()) {
+                        LOGGER.warn("Ignoring invalid hash. Workaround active.");
+                    } else {
+                        validated = false;
+                    }
                 } else {
                     LOGGER.info("Output '{}' Validated: {}", output, hash);
                 }
