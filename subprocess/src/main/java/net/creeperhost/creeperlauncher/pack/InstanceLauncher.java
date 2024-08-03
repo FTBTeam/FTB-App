@@ -695,18 +695,41 @@ public class InstanceLauncher {
                 .collect(Collectors.toList());
     }
 
-    private List<Path> collectClasspath(Path librariesDir, Path versionsDir, List<VersionManifest.Library> libraries) {
+    private List<Path> collectClasspath(Path librariesDir, Path versionsDir, List<VersionManifest.Library> libraries) {        
         List<Path> classpath = createUniqueLibraryList(libraries).stream()
                 .filter(e -> e.natives == null)
                 .map(e -> e.name.toPath(librariesDir))
                 .collect(Collectors.toList());
         
-        classpath.add(getGameJar(versionsDir));
+        classpath.add(getGameJar(versionsDir));        
         return classpath;
     }
     
-    // TODO: Make this less jank
+    private boolean isModernNeoForge() {
+        var neoId = manifests.stream()
+            .map(e -> e.id)
+            .filter(e -> e.contains("neoforge"))
+            .findFirst();
+
+        if (neoId.isEmpty()) {
+            return false;
+        }
+        
+        var parted = neoId.get().split("-");
+        if (parted.length < 2) {
+            return false;
+        }
+        
+        // Modern neo is any version higher than 20.1, this is a safe enough check as it's never going to start with 20.1 if it's higher.
+        var version = parted[1];
+        return !version.startsWith("20.1");
+    }
+    
     private List<VersionManifest.Library> createUniqueLibraryList(List<VersionManifest.Library> libraries) {
+        if (!isModernNeoForge()) {
+            return libraries;
+        }
+        
         // Deduplicate libraries
         List<VersionManifest.Library> uniqueLibraries = new ArrayList<>();
         Set<String> seen = new HashSet<>();
