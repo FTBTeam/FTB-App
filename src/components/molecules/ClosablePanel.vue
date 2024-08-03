@@ -77,8 +77,8 @@ export default class ClosablePanel extends Vue {
 <style scoped lang="scss">
 .closable-panel {
   position: fixed;
-  height: calc(100% - 1.8rem);
   top: 2rem; // windows + linux title bar?
+  bottom: 0;
   left: 0;
 
   display: flex;
@@ -96,7 +96,11 @@ export default class ClosablePanel extends Vue {
   &.is-mac {
     top: 1.8rem;
   }
-  
+
+  .system-frame & {
+    top: 0;
+  }
+
   .panel-container {
     background-color: var(--color-navbar);
     width: 95%;
