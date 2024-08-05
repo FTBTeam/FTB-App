@@ -31,8 +31,8 @@ body:
 
         (ONLY IF YOUR APP WONT OPEN)
         If your app wont open please run the following tool and provide the code given 
-        [Windows](https://dist.creeper.host/tools/ftb-debug/ftb-debug.exe) [MacOS](https://dist.creeper.host/tools/ftb-debug/ftb-debug-macos) [Linux](https://dist.creeper.host/tools/ftb-debug/ftb-debug-linux)
-        [Windows (Arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-arm64.exe) [MacOS (Arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-macos-arm64) [Linux (arm)](https://dist.creeper.host/tools/ftb-debug/ftb-debug-linux-arm)
+        [Windows](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-windows-amd64.exe) [MacOS](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-darwin-amd64) [Linux](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-linux-amd64)
+        [Windows (Arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-windows-arm64.exe) [MacOS (Arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-darwin-arm64 [Linux (arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-linux-arm64)
       placeholder: https://pste.ch/rtvuybhif or FTB-DBGTEVOISQIRA
     validations:
       required: true
