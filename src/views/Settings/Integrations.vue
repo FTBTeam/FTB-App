@@ -1,6 +1,10 @@
 <template>
   <div class="app-integrations">
-    <h3 class="text-xl mb-4 font-bold">Active integrations</h3>
+    <div class="mb-6">
+      <h1 class="font-bold text-xl mb-2">Integrations</h1>
+      <p class="text-muted">Integrate with MineTogether to use cloudsaves and private packs.</p>
+    </div>
+    
     <div class="active-integrations integrations mb-8">
       <p v-if="!getMtAccount">
         Looks like you've not got any integrations setup, use the 'available integrations' section below to get started.

@@ -67,7 +67,7 @@
 
     <p class="block text-white-700 text-lg font-bold mb-4">Actions</p>
 
-    <p class="block text-white-700 font-bold mb-4">Open paths</p>
+    <p class="block text-white-700 font-bold mb-4">Common Folders</p>
     <div class="flex items-center gap-4 mb-6">
       <ui-button size="small" type="info" icon="folder-open" @click="openFolder('home')" :working="working">Home</ui-button>
       <ui-button size="small" type="info" icon="folder-open" @click="openFolder('instances')" :working="working">Instances</ui-button>
@@ -96,14 +96,43 @@
       <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" icon="sync">Refresh Cache</ui-button>
     </div>
 
-    <ui-toggle
-      label="Verbose"
-      desc="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
-      :value="localSettings.general.verbose"
-      @input="enableVerbose"
-      :align-right="true"
+    <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>
+    <ftb-input
+      label="Relocate instances"
+      :value="localSettings.instanceLocation + ' (Current)'"
+      :disabled="true"
+      button="true"
+      buttonText="Relocate / Move"
+      buttonColor="primary"
+      :buttonClick="moveInstances"
     />
-    
+    <small class="text-muted block max-w-xl"
+    >Changing your instance location with instances installed will cause your instances to be moved to the new
+      location automatically.</small
+    >
+
+    <modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
+      <template v-if="!instanceMoveModalComplete">
+        <div class="wysiwyg mb-6">
+          <p>This may take a while, please wait.</p>
+
+          <p>Moving <code>{{instanceMoveLocations.old}}</code><br/>To <code>{{instanceMoveLocations.new}}</code></p>
+
+          <p>Stage: <code>{{instanceMoveModalStage}}</code></p>
+        </div>
+
+        <progress-bar :infinite="true" />
+      </template>
+      <div class="wysiwyg" v-else>
+        <p>Instances moved successfully 🎉</p>
+      </div>
+
+      <template #footer v-if="instanceMoveModalComplete">
+        <div class="flex justify-end">
+          <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
+        </div>
+      </template>
+    </modal>    
   </div>
   <Loader v-else />
 </template>
@@ -119,11 +148,16 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {InstanceActions} from '@/core/actions/instanceActions';
-import {SettingsData} from '@/core/@types/javaApi';
+import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
+import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import {dialogsController} from '@/core/controllers/dialogsController';
+import {toTitleCase} from '@/utils/helpers/stringHelpers';
+import {emitter} from '@/utils';
 
 @Component({
   components: {
+    ProgressBar,
     Loader,
     UiButton,
     UiToggle,
@@ -140,6 +174,11 @@ export default class AppSettings extends Vue {
   working = false;
   uploadingLogs = false;
 
+  instanceMoveModalShow = false;
+  instanceMoveModalStage = "Preparing";
+  instanceMoveModalComplete = false;
+  instanceMoveLocations = {old: "", new: ""};
+  
   async created() {
     await this.loadSettings();
 
@@ -209,6 +248,78 @@ export default class AppSettings extends Vue {
   
   get configData() {
     return platform.get.config
+  }
+
+  async moveInstances() {
+    const location: string | null = await new Promise(resolve => {
+      platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
+        if (path == null) {
+          return;
+        }
+
+        resolve(path);
+      });
+    })
+
+    if (!location) {
+      return;
+    }
+
+    if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
+      return;
+    }
+
+    const result = await sendMessage("moveInstances", {
+      newLocation: location
+    })
+
+    if (result.state === "error") {
+      return alertController.error(result.error);
+    }
+
+    if (result.state === "processing") {
+      this.instanceMoveModalShow = true;
+      this.instanceMoveModalStage = "Preparing";
+      this.instanceMoveModalComplete = false;
+      this.instanceMoveLocations = {
+        old: this.localSettings.instanceLocation,
+        new: location
+      }
+    }
+
+    const migrationResult = await new Promise((res) => {
+      const onMoveProgress = (data: any) => {
+        if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
+        if (data.type === "operationUpdate") {
+          const typedData = data as OperationProgressUpdateData;
+          if (typedData.stage === "FINISHED") {
+            // It's done
+          } else {
+            this.instanceMoveModalStage = toTitleCase(typedData.stage.toString().replaceAll("_", " "));
+          }
+        } else {
+          const typedData = data as MoveInstancesHandlerReply;
+          if (typedData.state !== "success") {
+            // It's broken
+            this.instanceMoveModalShow = false;
+            alertController.error(typedData.error);
+            emitter.off("ws.message", onMoveProgress);
+            res(false);
+          } else {
+            this.instanceMoveModalComplete = true;
+            emitter.off("ws.message", onMoveProgress);
+            res(true);
+          }
+        }
+      }
+
+      emitter.on("ws.message", onMoveProgress);
+    })
+
+    if (migrationResult) {
+      this.localSettings.instanceLocation = location;
+      await InstanceActions.clearInstanceCache(false)
+    }
   }
 }
 </script>

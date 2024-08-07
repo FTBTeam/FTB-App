@@ -1,6 +1,10 @@
 <template>
  <div class="privacy">
-   <p class="block text-white-700 text-lg font-bold mb-4">Privacy</p>
+   <div class="mb-6">
+     <h1 class="font-bold text-xl mb-2">Privacy</h1>
+     <p class="text-muted">Here is some information about how we handle your data.</p>
+   </div>
+   
    <p class="mb-6">The FTB App is run and owned by Feed The Beast Ltd. You can check out our <Link url="https://go.ftb.team/privacy-notice">Privacy Policy</Link> and <Link url="https://go.ftb.team/t-and-c">Terms of Use</Link> on our website.</p>
 
    <p class="block text-white-700 font-bold mb-4">About ads on our platform</p>

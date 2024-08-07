@@ -91,7 +91,7 @@ export default class Sidebar extends Vue {
     },
     {
       name: 'Settings',
-      to: RouterNames.SETTINGS_INSTANCE,
+      to: RouterNames.SETTINGS_APP,
       icon: 'cog',
     },
   ];

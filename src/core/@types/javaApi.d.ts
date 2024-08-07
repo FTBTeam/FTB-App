@@ -616,6 +616,7 @@ export interface SettingsData {
     appearance: AppearanceSettings;
     proxy: ProxySettings;
     download: DownloadSettings;
+    workaround: WorkaroundSettings;
 }
 
 export interface InstanceJson {
@@ -770,6 +771,10 @@ export interface ProxySettings {
 export interface DownloadSettings {
     threadLimit: number;
     speedLimit: number;
+}
+
+export interface WorkaroundSettings {
+    ignoreForgeProcessorOutputHashes: boolean;
 }
 
 export interface Specs {

@@ -1,5 +1,10 @@
 <template>
   <div class="download-settings" v-if="localSettings.spec">
+    <div class="mb-6">
+      <h1 class="font-bold text-xl mb-2">Downloads</h1>
+      <p class="text-muted">Adjust the download settings to your liking, these settings will effect how the app downloads files and how it caches data.</p>
+    </div>
+    
     <ftb-slider
       label="Download Threads"
       v-model="localSettings.download.threadLimit"

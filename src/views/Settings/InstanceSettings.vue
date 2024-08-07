@@ -1,7 +1,12 @@
 <template>
   <div class="instance-settings" v-if="localSettings.spec">
+    <div class="mb-6">
+      <h1 class="font-bold text-xl mb-2">Instance defaults</h1>
+      <p class="text-muted">These settings are used when creating a new instance or installing a modpack. These settings will <b>Not</b> updated existing modpacks settings.</p>
+    </div>
+    
     <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
-    <div class="flex items-center mb-6">
+    <div class="flex items-center mb-4 border-b border-white border-opacity-25 pb-6">
       <div class="block flex-1 mr-2">
         <b>Release Channel</b>
         <small class="block text-muted mr-6 mt-2">
@@ -13,44 +18,50 @@
         :options="channelOptions"
         v-model="localSettings.instanceDefaults.updateChannel"
         :style="{width: '192px'}"
-        @change="v => saveMutated()"
+        @change="() => saveMutated()"
       />
     </div>
     <p class="block text-white-700 text-lg font-bold mb-4">Window Size</p>
-    <div class="mb-6">
+    <div class="mb-4 border-b border-white border-opacity-25 pb-6">
       <ui-toggle label="Fullscreen" desc="Always open Minecraft in Fullscreen mode" v-model="localSettings.instanceDefaults.fullscreen" class="mb-4" @input="() => {
         saveMutated()
       }" />
+
+      <ui-toggle label="Use presets" desc="You can pick between preset window sizes or entering your own values for the windows width and height." v-model="usePresets" class="mb-4" />
       
       <div :class="{'cursor-not-allowed opacity-50 pointer-events-none': localSettings.instanceDefaults.fullscreen}">
-        <div class="flex items-center mb-4">
-          <div class="block flex-1 mr-2">
-            <b>Size presets</b>
-            <small class="text-muted block mt-2">Select a preset based on your system</small>
-          </div>
+        <template v-if="usePresets">
+          <div class="flex items-center mb-4">
+            <div class="block flex-1 mr-2">
+              <b>Size presets</b>
+              <small class="text-muted block mt-2">Select a preset based on your system</small>
+            </div>
 
-          <selection2
-            v-if="resolutionList.length"
-            v-model="resolutionId"
-            @change="selectResolution"
-            :style="{width: '220px'}"
-            :options="resolutionList"
-          />
-        </div>
-        <div class="flex items-center mb-4">
-          <div class="block flex-1 mr-2">
-            <b>Width</b>
-            <small class="text-muted block mt-2">The Minecraft windows screen width</small>
+            <selection2
+              v-if="resolutionList.length"
+              v-model="resolutionId"
+              @change="selectResolution"
+              :style="{width: '220px'}"
+              :options="resolutionList"
+            />
           </div>
-          <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />  
-        </div>
-        <div class="flex items-center">
-          <div class="block flex-1 mr-2">
-            <b>Height</b>
-            <small class="text-muted block mt-2">The Minecraft windows screen height</small>
+        </template>
+        <template v-else>
+          <div class="flex items-center mb-4">
+            <div class="block flex-1 mr-2">
+              <b>Width</b>
+              <small class="text-muted block mt-2">The Minecraft windows screen width</small>
+            </div>
+            <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />
           </div>
-          <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />
-        </div>
+          <div class="flex items-center">
+            <div class="block flex-1 mr-2">
+              <b>Height</b>
+              <small class="text-muted block mt-2">The Minecraft windows screen height</small>
+            </div>
+            <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />
+          </div>
+        </template>
       </div>
     </div>
 
@@ -84,44 +95,6 @@
     <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.instanceDefaults.memory">
       {{localSettings.instanceDefaults.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.instanceDefaults.memory.toString()) * 1024 * 1000))}} {{localSettings.instanceDefaults.javaArgs}}
     </code>
-
-    <p class="block text-white-700 text-lg font-bold mb-4">Misc</p>
-    <ftb-input
-      label="Relocate instances"
-      :value="localSettings.instanceLocation + ' (Current)'"
-      :disabled="true"
-      button="true"
-      buttonText="Relocate / Move"
-      buttonColor="primary"
-      :buttonClick="moveInstances"
-    />
-    <small class="text-muted block max-w-xl"
-      >Changing your instance location with instances installed will cause your instances to be moved to the new
-      location automatically.</small
-    >
-    
-    <modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
-      <template v-if="!instanceMoveModalComplete">
-        <div class="wysiwyg mb-6">
-          <p>This may take a while, please wait.</p>
-
-          <p>Moving <code>{{instanceMoveLocations.old}}</code><br/>To <code>{{instanceMoveLocations.new}}</code></p>
-
-          <p>Stage: <code>{{instanceMoveModalStage}}</code></p>
-        </div>
-
-        <progress-bar :infinite="true" />
-      </template>
-      <div class="wysiwyg" v-else>
-        <p>Instances moved successfully 🎉</p>
-      </div>
-      
-      <template #footer v-if="instanceMoveModalComplete">
-        <div class="flex justify-end">
-          <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
-        </div>
-      </template>
-    </modal>
   </div>
   <Loader v-else />
 </template>
@@ -131,20 +104,15 @@ import {Component, Vue} from 'vue-property-decorator';
 
 import {Action, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
-import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import {computeAspectRatio, emitter, prettyByteFormat} from '@/utils';
+import {computeAspectRatio, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {dialogsController} from '@/core/controllers/dialogsController';
-import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/@types/javaApi';
-import {toTitleCase} from '@/utils/helpers/stringHelpers';
+import {SettingsData} from '@/core/@types/javaApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import {InstanceActions} from '@/core/actions/instanceActions';
 import Loader from '@/components/atoms/Loader.vue';
 import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.vue';
 
@@ -171,11 +139,7 @@ export default class InstanceSettings extends Vue {
   loadedSettings = false;
 
   resolutionId = "";
-  
-  instanceMoveModalShow = false;
-  instanceMoveModalStage = "Preparing";
-  instanceMoveModalComplete = false;
-  instanceMoveLocations = {old: "", new: ""};
+  usePresets = false;
   
   async created() {
     await this.loadSettings();
@@ -188,6 +152,10 @@ export default class InstanceSettings extends Vue {
     this.resolutionId = this.resolutionList
       .find((e) => e.value === `${this.localSettings.instanceDefaults.width ?? ''}|${this.localSettings.instanceDefaults.height ?? ''}`)
       ?.value ?? "";
+    
+    if (this.resolutionId !== "") {
+      this.usePresets = true;
+    }
   }
   
   saveMutated() {
@@ -210,78 +178,6 @@ export default class InstanceSettings extends Vue {
     this.localSettings.instanceDefaults.width = selected.width;
     this.localSettings.instanceDefaults.height = selected.height;
     this.saveMutated();
-  }
-
-  async moveInstances() {
-    const location: string | null = await new Promise(resolve => {
-      platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
-        if (path == null) {
-          return;
-        }
-
-        resolve(path);
-      });
-    })
-
-    if (!location) {
-      return;
-    }
-    
-    if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
-      return;
-    }
-    
-    const result = await sendMessage("moveInstances", {
-      newLocation: location
-    })
-    
-    if (result.state === "error") {
-      return alertController.error(result.error);
-    }
-    
-    if (result.state === "processing") {
-      this.instanceMoveModalShow = true;
-      this.instanceMoveModalStage = "Preparing";
-      this.instanceMoveModalComplete = false;
-      this.instanceMoveLocations = {
-        old: this.localSettings.instanceLocation,
-        new: location
-      }
-    }
-    
-    const migrationResult = await new Promise((res) => {
-      const onMoveProgress = (data: any) => {
-        if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
-        if (data.type === "operationUpdate") {
-          const typedData = data as OperationProgressUpdateData;
-          if (typedData.stage === "FINISHED") {
-            // It's done
-          } else {
-            this.instanceMoveModalStage = toTitleCase(typedData.stage.toString().replaceAll("_", " "));
-          }
-        } else {
-          const typedData = data as MoveInstancesHandlerReply;
-          if (typedData.state !== "success") {
-            // It's broken
-            this.instanceMoveModalShow = false;
-            alertController.error(typedData.error);
-            emitter.off("ws.message", onMoveProgress);
-            res(false);
-          } else {
-            this.instanceMoveModalComplete = true;
-            emitter.off("ws.message", onMoveProgress);
-            res(true);
-          }
-        }
-      }
-      
-      emitter.on("ws.message", onMoveProgress);
-    })
-    
-    if (migrationResult) {
-      this.localSettings.instanceLocation = location;
-      await InstanceActions.clearInstanceCache(false)
-    }
   }
 
   get resolutionList() {
