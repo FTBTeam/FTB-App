@@ -81,6 +81,28 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
 
         LOGGER.info("New location {} is valid, move started", newLocation);
         
+        if (Files.notExists(currentLocation)) {
+            // Bypass the migration completely and just change the setting
+            LOGGER.warn("Current location {} does not exist, bypassing migration", currentLocation);
+            
+            Settings.getSettings().setInstanceLocation(newLocation.toAbsolutePath());
+            Settings.saveSettings();
+            
+            CreeperLauncher.localCache = new LocalCache(newLocation.resolve(".localCache"));
+            Instances.refreshInstances();
+            
+            // Simulate a successful move
+            WebSocketHandler.sendMessage(new Reply(data, "processing", ""));
+            var tracker = new OperationProgressTracker("instance-move", Map.of(
+                "currentLocation", currentLocation.toString(),
+                "newLocation", newLocation.toString()
+            ));
+            
+            tracker.finished();
+            WebSocketHandler.sendMessage(new Reply(data, "success", ""));
+            return;
+        }
+        
         // We're good to go
         this.moveInstances(data, currentLocation, newLocation);
         
