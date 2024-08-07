@@ -2,6 +2,7 @@ package net.creeperhost.creeperlauncher.migration;
 
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.migration.migrations.MigrateJVMDefaultsToInstances;
+import net.creeperhost.creeperlauncher.migration.migrations.MigrateJVMDefaultsToSettingsDefaults;
 import net.creeperhost.creeperlauncher.util.GsonUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -19,8 +20,11 @@ public enum MigrationsManager {
     private static final Path MIGRATIONS_MEMORY = Constants.STORAGE_DIR.resolve("migrations.json");
     
     private static final List<Migration> migrations = List.of(
-            new MigrateJVMDefaultsToInstances()
+        new MigrateJVMDefaultsToInstances(),
+        new MigrateJVMDefaultsToSettingsDefaults()
     );
+    
+    private List<String> existingMigrations = new ArrayList<>();
 
     /**
      * Safely try and run migrations
@@ -55,8 +59,10 @@ public enum MigrationsManager {
         
         // Save the successful migrations to the memory file
         try {
-            String json = GsonUtils.GSON.toJson(successfulMigrations.stream().map(Migration::id).toList());
+            existingMigrations.addAll(successfulMigrations.stream().map(Migration::id).toList());
+            var json = GsonUtils.GSON.toJson(existingMigrations);
             Files.writeString(MIGRATIONS_MEMORY, json);
+            existingMigrations.clear();
         } catch (Exception exception) {
             LOGGER.error("Failed to save migrations to memory", exception);
         }
@@ -100,6 +106,7 @@ public enum MigrationsManager {
         try {
             String json = Files.readString(MIGRATIONS_MEMORY);
             var migrationIds = GsonUtils.GSON.<List<String>>fromJson(json, List.class);
+            existingMigrations = migrationIds;
             
             // Diff the migration ids
             var allMigrations = migrations.stream().map(Migration::id).toList();

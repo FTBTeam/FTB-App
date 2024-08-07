@@ -67,17 +67,25 @@
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
-    
-    <ftb-input
-      label="Custom Arguments"
-      placeholder="-TestArgument=120"
-      v-model="localSettings.instanceDefaults.javaArgs"
-      @blur="saveMutated"
-    />
-    <small class="text-muted block mb-6 max-w-xl">
+
+    <div class="flex gap-4 items-end">
+      <ftb-input
+        label="Java runtime arguments"
+        placeholder="-TestArgument=120"
+        v-model="localSettings.instanceDefaults.javaArgs"
+        @blur="saveMutated"
+        class="flex-1 mb-0"
+      />
+      <ui-button icon="undo" @click="() => {
+          localSettings.instanceDefaults.javaArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
+      }">
+        Reset to default
+      </ui-button>
+    </div>
+    <small class="text-muted block mb-6 max-w-xl mt-2">
       These arguments are appended to your instances upon start, they are normal java arguments.
     </small>
-
+    
     <ftb-input
       label="Shell arguments"
       :value="localSettings.instanceDefaults.shellArgs"
