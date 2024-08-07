@@ -482,12 +482,9 @@ public class InstanceLauncher {
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
             command.addAll(context.shellArgs);
             command.add(javaExecutable.toAbsolutePath().toString());
+            command.add(sub.replace("-Xmx${memory}M"));
             command.addAll(jvmArgs);
             command.addAll(context.extraJVMArgs);
-            // TODO, these should be the defaults inside the app, not added here.
-            for (String arg : Constants.MOJANG_DEFAULT_ARGS) {
-                command.add(sub.replace(arg));
-            }
             command.add("-Duser.language=en");
             command.add("-Duser.country=US");
             command.add(getMainClass());

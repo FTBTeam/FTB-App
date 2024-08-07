@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static net.creeperhost.creeperlauncher.Constants.MOJANG_DEFAULT_ARGS;
+
 /**
  * Damn settings need to be mutated so this can't be a record :cry:
  */
@@ -97,7 +99,7 @@ public class SettingsData {
                 computeRecommendedInstanceRam(),
                 false,
                 "release",
-                "",
+                String.join(" ", MOJANG_DEFAULT_ARGS), 
                 ""
             ),
             new AppearanceSettings(

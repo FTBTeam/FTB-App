@@ -4,7 +4,6 @@ import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.jdkutils.provisioning.adoptium.AdoptiumProvisioner;
 import net.covers1624.quack.net.httpapi.okhttp.OkHttpEngine;
 import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
-import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
@@ -116,7 +115,6 @@ public class Constants {
 
     // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
     public static final String[] MOJANG_DEFAULT_ARGS = {
-            "-Xmx${memory}M",
             "-XX:+UnlockExperimentalVMOptions",
             "-XX:+UseG1GC",
             "-XX:G1NewSizePercent=20",

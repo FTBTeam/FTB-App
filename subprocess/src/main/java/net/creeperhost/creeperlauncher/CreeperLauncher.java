@@ -16,6 +16,7 @@ import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 import net.creeperhost.creeperlauncher.api.data.other.PingLauncherData;
 import net.creeperhost.creeperlauncher.install.tasks.LocalCache;
 import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
+import net.creeperhost.creeperlauncher.migration.MigrationsManager;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.storage.CredentialStorage;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
@@ -256,6 +257,9 @@ public class CreeperLauncher {
         if (Boolean.getBoolean("Debugger.onStartup")) {
             openDebugTools();
         }
+        
+        // Lastly, run any needed migrations after the app is ready
+        MigrationsManager.INSTANCE.runMigrations();
 
         //Hang indefinitely until this lock is interrupted.
         try {
