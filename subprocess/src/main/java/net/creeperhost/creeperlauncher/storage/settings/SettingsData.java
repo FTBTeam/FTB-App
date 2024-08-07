@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import net.creeperhost.creeperlauncher.Constants;
+import oshi.SystemInfo;
+import oshi.hardware.HardwareAbstractionLayer;
 
 import java.awt.*;
 import java.io.IOException;
@@ -92,7 +94,7 @@ public class SettingsData {
             new InstanceSettings(
                 getScreenWidth(),
                 getScreenHeight(),
-                4096,
+                computeRecommendedInstanceRam(),
                 false,
                 "release",
                 "",
@@ -411,5 +413,18 @@ public class SettingsData {
         public boolean ignoreForgeProcessorOutputHashes() {
             return ignoreForgeProcessorOutputHashes;
         }
+    }
+    
+    private static int computeRecommendedInstanceRam() {
+        HardwareAbstractionLayer hal = new SystemInfo().getHardware();
+        long totalMemory = hal.getMemory().getTotal() / 1024 / 1024;
+        
+        // If the users ram is over 8GB we'll default to 6GB
+        if (totalMemory > 8192) {
+            return 6144;
+        }
+        
+        // Otherwise default to 4GB
+        return 4096;
     }
 }

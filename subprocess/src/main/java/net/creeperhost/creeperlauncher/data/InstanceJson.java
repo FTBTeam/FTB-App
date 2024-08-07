@@ -9,8 +9,6 @@ import net.creeperhost.creeperlauncher.data.modpack.ModpackManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import org.jetbrains.annotations.Nullable;
-import oshi.SystemInfo;
-import oshi.hardware.HardwareAbstractionLayer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -143,8 +141,7 @@ public class InstanceJson {
 
         minMemory = versionManifest.getMinimumSpec();
         recMemory = versionManifest.getRecommendedSpec();
-        memory = recMemory;
-        adjustMemory();
+        memory = Settings.getSettings().instanceDefaults().memory();
 
         this._private = isPrivate;
         this.packType = packType;
@@ -164,13 +161,5 @@ public class InstanceJson {
 
     public static void save(Path path, InstanceJson properties ) throws IOException {
         JsonUtils.write(GSON, path, properties);
-    }
-
-    private void adjustMemory() {
-        HardwareAbstractionLayer hal = new SystemInfo().getHardware();
-        long totalMemory = hal.getMemory().getTotal() / 1024 / 1024;
-        if (recMemory > (totalMemory - 2048)) {
-            memory = minMemory;
-        }
     }
 }
