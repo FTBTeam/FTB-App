@@ -49,6 +49,7 @@ export type InstallStatus = {
 
 type InstallResult = {
   success: boolean;
+  shouldRemove?: boolean;
   cancel?: boolean;
   message?: string;
   instance?: SugaredInstanceJson;
@@ -394,8 +395,18 @@ class InstanceInstallController {
             return finish({
               success: false,
               message: typedData.message,
+              shouldRemove: !isUpdate
             });
           } else if (typedData.status === 'success') {
+            if (typedData.message === "Triggered cancellation.") {
+              return finish({
+                success: false,
+                cancel: true,
+                // Check if it's an update or not. If it's not, we should remove it
+                shouldRemove: !isUpdate
+              });
+            }
+            
             return finish({
               success: true,
               instance: typedData.instanceData as SugaredInstanceJson, // It's not really but it's fine
@@ -406,7 +417,8 @@ class InstanceInstallController {
           } else if (typedData.status === 'canceled') {
             return finish({
               success: false,
-              cancel: true
+              cancel: true,
+              shouldRemove: !isUpdate
             });
           }
         } else if (data.type === 'operationUpdate') {
@@ -441,6 +453,7 @@ class InstanceInstallController {
     });
 
     this.logger.debug('Install result', installRequest);
+    console.log(installRequest)
     if (installRequest.success && installRequest.instance) {
       // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
       store.dispatch(`v2/instances/updateInstance`, installRequest.instance, {root: true});
@@ -454,7 +467,7 @@ class InstanceInstallController {
       alertController.info(`Cancelled install for ${request.name}`);
     } else {
       alertController.error(`Failed to install ${request.name} due to an unknown error`);
-      if (knownInstanceUuid) {
+      if (knownInstanceUuid && installRequest.shouldRemove) {
         store.dispatch(`v2/instances/removeInstance`, knownInstanceUuid, {root: true});
       }
     }
