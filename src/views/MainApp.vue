@@ -76,7 +76,7 @@ import os from 'os';
 import {constants} from '@/core/constants';
 import {SetAccountMethod, SetProfileMethod} from '@/core/state/core/mtAuthState';
 import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
-import {adsEnabled} from '@/utils';
+import {adsEnabled, emitter} from '@/utils';
 import {MineTogetherAccount} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import Onboarding from '@/components/core/dialogs/Onboarding.vue';
@@ -192,6 +192,12 @@ export default class MainApp extends Vue {
 
     await this.startApp();
     this.appLoaded = true;
+    
+    emitter.on("ws.message", (data: any) => {
+      if (data?.type === "refreshInstancesRequest") {
+        this.loadInstances();
+      }
+    })
   }
   
   async initApp() {

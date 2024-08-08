@@ -1,5 +1,4 @@
 const path = require('path');
-// const SentryWebpackPlugin = require('@sentry/webpack-plugin');
 const {globSync} = require("glob");
 const fs = require('fs');
 const {execSync} = require('child_process');
@@ -8,23 +7,6 @@ const {notarize} = require("@electron/notarize");
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
 const webpackPlugins = [];
-
-// if (process.env.GITHUB_REF_NAME) {
-//   webpackPlugins.push(
-//     new SentryWebpackPlugin({
-//       authToken: process.env.SENTRY_AUTH_TOKEN,
-//       org: 'creeperhost',
-//       project: 'ftb-app',
-//       release: `${packageJson.version}`,
-//       dist: process.env.APP_TARGET_PLATFORM ?? "unknown",
-//       include: process.env.TARGET_PLATFORM === 'overwolf' ? './overwolf/dist/desktop/' : './dist_electron/bundled/',
-//       ignore: ['node_modules', 'webpack.config.js'],
-//       urlPrefix: process.env.TARGET_PLATFORM === 'overwolf' 
-//         ? `overwolf-extension://cmogmmciplgmocnhikmphehmeecmpaggknkjlbag/dist/desktop/` 
-//         : "ftb://./"
-//     }),
-//   );
-// }
 
 // This is required, the amount of times the IDE will import this just for using the variable is insane
 if (process.env.GITHUB_REF_NAME) {

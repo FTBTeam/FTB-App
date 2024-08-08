@@ -2,6 +2,8 @@ package net.creeperhost.creeperlauncher.migration.migrations;
 
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.Instances;
+import net.creeperhost.creeperlauncher.api.WebSocketHandler;
+import net.creeperhost.creeperlauncher.api.data.other.RequestInstanceRefresh;
 import net.creeperhost.creeperlauncher.migration.Migration;
 import net.creeperhost.creeperlauncher.pack.Instance;
 import org.slf4j.Logger;
@@ -49,5 +51,10 @@ public class MigrateJVMDefaultsToInstances implements Migration {
         }
         
         return true;
+    }
+
+    @Override
+    public void cleanup() {
+        WebSocketHandler.sendMessage(new RequestInstanceRefresh());
     }
 }
