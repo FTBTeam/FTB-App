@@ -11,6 +11,6 @@ jobs:
         uses: FTBTeam/awaiting-reply-action@main
         with:
           label: "awaiting response"
-          ignore-labels: ""
+          ignore-labels: "Blocked"
           remove-labels: "state: Stale"
           ignore-string: "!skip"
