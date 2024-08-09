@@ -32,7 +32,7 @@ body:
         (ONLY IF YOUR APP WONT OPEN)
         If your app wont open please run the following tool and provide the code given 
         [Windows](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-windows-amd64.exe) [MacOS](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-darwin-amd64) [Linux](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-linux-amd64)
-        [Windows (Arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-windows-arm64.exe) [MacOS (Arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-darwin-arm64 [Linux (arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-linux-arm64)
+        [Windows (Arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-windows-arm64.exe) [MacOS (Arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-darwin-arm64) [Linux (arm)](https://github.com/FTBTeam/FTB-Debug/releases/latest/download/ftb-debug-linux-arm64)
       placeholder: https://pste.ch/rtvuybhif or dbg:YBJTSjo26pw
     validations:
       required: true
