@@ -1,15 +1,21 @@
 <template>
   <div class="items">
-    <div class="item" v-for="(option, key) in options" :key="key" :class="{[option.color ?? 'normal']: true, 'has-children': option.children}" @click="() => $emit('clicked', option)" v-if="!option.predicate || option.predicate(context())">
+    <div class="item"
+         v-for="(option, key) in options"
+         :key="key"
+         :class="{[option.color ?? 'normal']: true, 'has-children': option.children}"
+         @click.stop="(event) => $emit('clicked', option)"
+         v-if="!option.predicate || option.predicate(context())">
       <div class="main">
-        <font-awesome-icon :fixed-width="true" v-if="option.icon" :icon="option.icon" />
+        <font-awesome-icon :fixed-width="true" v-if="option.icon" :icon="option.icon"/>
         {{ option.title }}
       </div>
-  
-      <font-awesome-icon class="chevron" v-if="option.children" icon="chevron-right" />
-  
+
+      <font-awesome-icon class="chevron" v-if="option.children" icon="chevron-right"/>
+
       <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
-        <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix" :open-to-left="openToLeft"  />
+        <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix"
+                                  :open-to-left="openToLeft" @clicked="(data) => $emit('clicked', data)"/>
       </div>
     </div>
   </div>
