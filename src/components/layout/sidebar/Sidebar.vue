@@ -110,7 +110,7 @@ export default class Sidebar extends Vue {
   }
 
   navItemRightClick(event: PointerEvent, item: typeof this.navigation[0]) {
-    if (item.to === RouterNames.SETTINGS_INSTANCE) {
+    if (item.to === RouterNames.SETTINGS_APP) {
       AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {});
     }
   }
