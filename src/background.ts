@@ -731,11 +731,14 @@ async function createWindow(reset = false) {
       webSecurity: false,
     },
   });
-
+  
   win.once('ready-to-show', async () => {
-    if (useSystemFrame) {
-      await win?.webContents.executeJavaScript("document.body.classList.add('system-frame')");
-    }
+    // We update system frame but also the localStorage for remounts on the frontend
+    await win?.webContents.executeJavaScript(`
+      localStorage.setItem("useSystemFrame", "${useSystemFrame ? 'true' : 'false'}")
+      document.body.classList.add('loaded')
+    `.trim());
+
     // Try and force focus on the window
     win?.show();
   });

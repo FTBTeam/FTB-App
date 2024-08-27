@@ -163,6 +163,8 @@ export default class MainApp extends Vue {
   }
   
   async mounted() {
+    this.useSystemBar().catch(console.error)
+    
     this.startNetworkMonitor();
     this.logger.info("App started on ", constants.platform)
     this.isMac = os.type() === 'Darwin';
@@ -388,6 +390,37 @@ export default class MainApp extends Vue {
 
   async restartApp() {
     this.platform.get.actions.restartApp();
+  }
+  
+  async useSystemBar() {
+    // Wait until we see the loaded class on the body or after 5 seconds
+    await new Promise(res => {
+      let timeout: any = null;
+      let interval: any = null;
+      
+      timeout = setTimeout(() => {
+        if (interval) clearInterval(interval)
+        if (timeout) clearTimeout(timeout)
+        res(null)
+      }, 5000) // fail after 5 seconds
+      
+      interval = setInterval(() => {
+        if (document.body.classList.contains("loaded")) {
+          if (interval) clearInterval(interval)
+          if (timeout) clearTimeout(timeout)
+          res(null)
+        }
+      }, 100)
+    })
+    
+    const useSystemBarRaw = localStorage.getItem("useSystemFrame") ?? "false"
+    const useSystemBar = useSystemBarRaw === "true";
+    
+    if (useSystemBar) {      
+      if (!document.body.classList.contains("system-frame")) {
+        document.body.classList.add("system-frame")
+      }
+    }
   }
   
   get appConnecting() {
