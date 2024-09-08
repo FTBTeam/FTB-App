@@ -68,7 +68,6 @@ import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/templates/GlobalComponents.vue';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
-import {requiresWsControllers} from '@/core/controllerRegistry';
 import {createLogger} from '@/core/logger';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -334,7 +333,6 @@ export default class MainApp extends Vue {
     this.platform.get.actions.onAppReady();
 
     this.logger.debug("Notifying all controllers of connected status")
-    requiresWsControllers.forEach(e => e.onConnected());
   }
 
   public async fetchStartData() {
@@ -359,7 +357,6 @@ export default class MainApp extends Vue {
     if (!newVal.socket.isConnected && !this.loading) {
       this.logger.warn("Websockets disconnected, unloading app");
       this.logger.debug("Notifying all controllers of disconnected status")
-      requiresWsControllers.forEach(e => e.onDisconnected());
       this.loading = true;
     }
   }
