@@ -21,14 +21,16 @@
       </modal-footer>
     </modal>
     
-    <!-- Authentication -->
-    <authentication
-      v-if="getSignInOpened.open"
-      :jump="getSignInOpened.jumpToAuth"
-      :uuid="getSignInOpened.uuid"
-      :tryAgainInstanceUuid="getSignInOpened.tryAgainInstanceUuid"
-      @close="closeSignIn()"
-    />
+<!--    &lt;!&ndash; Authentication &ndash;&gt;-->
+<!--    <authentication-->
+<!--      v-if="getSignInOpened.open"-->
+<!--      :jump="getSignInOpened.jumpToAuth"-->
+<!--      :uuid="getSignInOpened.uuid"-->
+<!--      :tryAgainInstanceUuid="getSignInOpened.tryAgainInstanceUuid"-->
+<!--      @close="closeSignIn()"-->
+<!--    />-->
+    
+    <LoginModal :open="getSignInOpened" @closed="() => closeSignIn()" />
 
     <!-- Only checks for an update once during startup -->
     <changelog />
@@ -54,9 +56,11 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
 import DevToolsActions from '@/components/core/misc/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/core/global/contextMenu/ContentMenuGlobal.vue';
+import LoginModal from '@/components/core/auth/LoginModal.vue';
 
 @Component({
   components: {
+    LoginModal,
     ContentMenuGlobal,
     DevToolsActions,
     UiButton,

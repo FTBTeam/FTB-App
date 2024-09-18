@@ -172,9 +172,17 @@ export class JavaFetch {
     };
     
     if (this._body !== null) {
+      const byteArray = [];
+      const buff = Buffer.from(this._body as string);
+      
+      for (let i = 0; i < buff.length; i++) {
+        byteArray.push(buff[i])
+      }
+      
       payload.body = {
         contentType: this._contentType,
-        bytes: this._body instanceof Buffer ? this._body : Buffer.from(this._body as string),
+        // Create a byte array of the content body (u8)
+        bytes: byteArray
       }
     }
     

@@ -6,6 +6,7 @@ import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 import {sendMessage} from '@/core/websockets/websocketsApi';
+import {InstanceController} from '@/core/controllers/InstanceController';
 
 export class InstanceActions {
   private static logger = createLogger("InstanceActions.ts");
@@ -13,7 +14,8 @@ export class InstanceActions {
   static async start(instance: SugaredInstanceJson) {
     if (!this.canStart(instance) || this.isUpdating(instance)) return false;
     
-    await safeNavigate(RouterNames.ROOT_LAUNCH_PACK, undefined, {uuid: instance.uuid})
+    await InstanceController.from(instance).play()
+    // await safeNavigate(RouterNames.ROOT_LAUNCH_PACK, undefined, {uuid: instance.uuid})
     return true;
   }
   

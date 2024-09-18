@@ -13,7 +13,7 @@
     </div>
 
     <div class="nav-items">      
-      <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn({ open: true })" />
+      <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn()" />
     </div>
     
     <popover text="Setup a server with CreeperHost" class="w-full">

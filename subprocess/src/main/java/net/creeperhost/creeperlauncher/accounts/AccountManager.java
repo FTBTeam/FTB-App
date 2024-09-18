@@ -19,19 +19,20 @@ import java.util.Set;
 import java.util.UUID;
 
 public class AccountManager {
-
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static final String SPEC_VERSION = "1.0.0";
 
-    private static final Path STORE_FILE = Constants.getDataDir().resolve("profiles.json");
+    private static final Path STORE_FILE = Constants.STORAGE_DIR.resolve("mc-accounts.json");
+    private static final Path OLD_STORE_FILE = Constants.getDataDir().resolve("profiles.json");
+    
     private static final AccountManager ACCOUNT_MANAGER = new AccountManager();
 
-    private Set<AccountProfile> profiles = new HashSet<>();
+    private Set<MicrosoftProfile> profiles = new HashSet<>();
 
     @Nullable
-    private AccountProfile activeProfile = null;
+    private MicrosoftProfile activeProfile = null;
 
     private AccountManager() {
         loadProfiles();
@@ -42,11 +43,11 @@ public class AccountManager {
     }
 
     public boolean removeProfile(UUID uuid) {
-        boolean removed = this.profiles.stream().filter(p -> p.uuid.equals(uuid)).findFirst()
+        boolean removed = this.profiles.stream().filter(p -> p.getUuid().equals(uuid)).findFirst()
                 .map(e -> this.profiles.remove(e))
                 .orElse(false);
 
-        if (this.activeProfile != null && this.activeProfile.uuid.equals(uuid)) {
+        if (this.activeProfile != null && this.activeProfile.getUuid().equals(uuid)) {
             this.activeProfile = this.profiles.stream().findFirst().orElse(null);
         }
 
@@ -58,13 +59,13 @@ public class AccountManager {
     }
 
     public void setActiveProfile(UUID uuid) {
-        this.activeProfile = this.profiles.stream().filter(p -> p.uuid.equals(uuid)).findFirst().orElse(null);
+        this.activeProfile = this.profiles.stream().filter(p -> p.getUuid().equals(uuid)).findFirst().orElse(null);
         this.saveProfiles();
     }
 
-    public void addProfile(AccountProfile profile) {
+    public void addProfile(MicrosoftProfile profile) {
         // Remove the profile if it already exists.
-        this.removeProfile(profile.uuid);
+        this.removeProfile(profile.getUuid());
 
         // Now add the profile
         this.profiles.add(profile);
@@ -74,6 +75,14 @@ public class AccountManager {
 
     // Load profiles from json structure
     public void loadProfiles() {
+        if (Files.exists(OLD_STORE_FILE)) {
+            try {
+                Files.deleteIfExists(OLD_STORE_FILE);
+            } catch (IOException e) {
+                LOGGER.error("Failed to move old profiles file.", e);
+            }
+        }
+        
         if (!Files.exists(STORE_FILE)) {
             return;
         }
@@ -94,7 +103,7 @@ public class AccountManager {
 
             this.profiles = store.profiles;
             this.activeProfile = store.profiles.stream()
-                    .filter(e -> e.uuid.equals(store.activeProfile))
+                    .filter(e -> e.getUuid().equals(store.activeProfile))
                     .findFirst()
                     .orElse(null);
         } catch (IOException | JsonSyntaxException e) {
@@ -105,24 +114,27 @@ public class AccountManager {
     // Save profiles to json structure
     public void saveProfiles() {
         try {
-            AccountStore store = new AccountStore(profiles, activeProfile != null ? activeProfile.uuid : null);
+            AccountStore store = new AccountStore(profiles, activeProfile != null ? activeProfile.getUuid() : null);
             JsonUtils.write(GSON, STORE_FILE, store);
         } catch (IOException e) {
             LOGGER.error("Failed to write profiles.", e);
         }
     }
 
-    public Set<AccountProfile> getProfiles() {
+    public Set<MicrosoftProfile> getProfiles() {
         return profiles;
     }
 
     @Nullable
-    public AccountProfile getProfileFromUuid(String uuid) {
-        return profiles.stream().filter(p -> p.uuid.equals(MiscUtils.createUuidFromStringWithoutDashes(uuid))).findFirst().orElse(null);
+    public MicrosoftProfile getProfileFromUuid(String uuid) {
+        return profiles.stream()
+            .filter(p -> p.getUuid().equals(MiscUtils.createUuidFromStringWithoutDashes(uuid)))
+            .findFirst()
+            .orElse(null);
     }
 
     @Nullable
-    public AccountProfile getActiveProfile() {
+    public MicrosoftProfile getActiveProfile() {
         return this.activeProfile;
     }
 }

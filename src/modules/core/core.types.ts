@@ -9,27 +9,14 @@ export enum CoreMutations {
 }
 
 export interface AuthProfile {
-  type: 'mojang' | 'microsoft';
-  token: string;
-  refreshToken: string;
-  tokens:
-    | {
-        accessToken: string;
-        refreshToken: string;
-      }
-    | {
-        accessToken: string;
-        clientToken: string;
-      };
   username: string;
   uuid: string;
-  expiresAt?: number;
 }
 
 export type CoreState = {
   profiles: AuthProfile[];
   activeProfile?: AuthProfile;
-  signInOpened: {open: boolean, jumpToAuth?: 'ms' | 'mc' | null, uuid: string | null};
+  signInOpened: boolean;
   instanceLoading: boolean;
   debugDisableAdAside: boolean;
 };

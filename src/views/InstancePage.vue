@@ -124,6 +124,7 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {waitForWebsockets} from '@/utils';
 import {createLogger} from '@/core/logger';
 import {SocketState} from '@/modules/websocket/types';
+import {InstanceController} from '@/core/controllers/InstanceController';
 
 export enum ModpackPageTabs {
   OVERVIEW = "overview",
@@ -152,10 +153,6 @@ export default class InstancePage extends Vue {
 
   @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
   @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
-
-  @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
-  @Action('startInstanceLoading', { namespace: 'core' }) public startInstanceLoading: any;
-  @Action('stopInstanceLoading', { namespace: 'core' }) public stopInstanceLoading: any;
 
   private logger = createLogger("InstancePage.vue");
   
@@ -314,19 +311,20 @@ export default class InstancePage extends Vue {
   }
 
   public launch() {
+    if (this.instance === null) {
+      // HOW
+      return;
+    }
     this.logger.debug("Launching instance from instance page")
-    this.$router.push({
-      name: RouterNames.ROOT_LAUNCH_PACK,
-      query: { uuid: this.instance?.uuid ?? "" },
-    });
+    InstanceController.from(this.instance as SugaredInstanceJson).play();
   }
 
   public playOffline() {
     this.logger.debug("Launching instance in offline mode")
-    this.$router.push({
-      name: RouterNames.ROOT_LAUNCH_PACK,
-      query: { uuid: this.instance?.uuid ?? "", offline: 'true', username: this.offlineUserName },
-    });
+    // this.$router.push({
+    //   name: RouterNames.ROOT_LAUNCH_PACK,
+    //   query: { uuid: this.instance?.uuid ?? "", offline: 'true', username: this.offlineUserName },
+    // });
   }
 
   public update(version: Versions | null = null): void {

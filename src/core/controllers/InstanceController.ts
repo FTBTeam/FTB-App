@@ -36,6 +36,16 @@ export class InstanceController {
     return new InstanceController(instance);
   }
   
+  async play() {
+    InstanceController.logger.debug(`Playing instance ${this.instance.uuid}`);
+    
+    // Check active profile
+    // Check active profile validity
+    // Reject on failure and process the error
+    // Update the state for the pack starting
+    // Start the pack
+  }
+  
   async updateInstance(data: SaveJson) {
     InstanceController.logger.debug("Updating instance", data);
     const result = await sendMessage("instanceConfigure", {

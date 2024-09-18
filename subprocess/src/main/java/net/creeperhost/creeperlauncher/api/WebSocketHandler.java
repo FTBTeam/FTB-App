@@ -91,6 +91,7 @@ public class WebSocketHandler {
         register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
+        
         register("minetogetherAuthentication", MineTogetherAuthenticationHandler.Data.class, new MineTogetherAuthenticationHandler());
         register("minetogetherLogoutHandler", BaseData.class, new MineTogetherLogoutHandler());
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="progress" :class="{'infinite': infinite}">
+  <div class="progress" :class="{'infinite': infinite, 'animated': doProgressAnimation, [type]: true}">
     <div class="bar" :style="{ width: `${progress * 100}%`, transition: 'width 0.5s ease' }"></div>
   </div>
 </template>
@@ -7,10 +7,16 @@
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
 
+type ProgressType = "primary" | "muted"
+
 @Component
 export default class ProgressBar extends Vue {
   @Prop({ default: 0 }) progress!: number;
   @Prop({ default: false }) infinite!: boolean;
+  
+  @Prop({default: true}) doProgressAnimation!: boolean;
+  
+  @Prop({default: 'primary'}) type!: ProgressType;
 }
 </script>
 
@@ -27,8 +33,12 @@ export default class ProgressBar extends Vue {
     height: 100%;
     background: var(--color-primary-button);
   }
+  
+  &.muted .bar {
+    @apply bg-gray-700;
+  }
 
-  &::after {
+  &.animated::after {
     content: '';
     top: 0;
     width: 100%;

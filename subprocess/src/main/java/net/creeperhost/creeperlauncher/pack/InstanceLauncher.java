@@ -13,7 +13,7 @@ import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
 import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
-import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.MicrosoftProfile;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.instances.LaunchInstanceData;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
@@ -394,7 +394,7 @@ public class InstanceLauncher {
             progressTracker.startStep("Prepare process");
             
             Map<String, String> subMap = new HashMap<>();
-            AccountProfile profile = AccountManager.get().getActiveProfile();
+            MicrosoftProfile profile = AccountManager.get().getActiveProfile();
             if (offlineUsername != null || profile == null) {
                 UUID uuid;
                 String username;
@@ -402,8 +402,8 @@ public class InstanceLauncher {
                     uuid = new UUID(0, 0);
                     username = offlineUsername != null ? offlineUsername : "Player";
                 } else {
-                    uuid = profile.uuid;
-                    username = profile.username;
+                    uuid = profile.getUuid();
+                    username = profile.getMinecraftName();
                 }
                 
                 // Offline
@@ -414,13 +414,13 @@ public class InstanceLauncher {
                 subMap.put("user_properties", "{}");
                 subMap.put("auth_session", "null");
             } else {
-                subMap.put("auth_player_name", profile.username);
-                subMap.put("auth_uuid", profile.uuid.toString());
+                subMap.put("auth_player_name", profile.getMinecraftName());
+                subMap.put("auth_uuid", profile.getUuid().toString());
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
                 subMap.put("user_type", "msa");
-                subMap.put("xuid", profile.msAuth.xblUserHash);
-                String accessToken = profile.msAuth.minecraftToken;
-                String sessionToken = "token:" + accessToken + ":" + profile.uuid.toString().replace("-", "");
+                subMap.put("xuid", profile.getXstsUserHash());
+                String accessToken = profile.getMinecraftAccessToken();
+                String sessionToken = "token:" + accessToken + ":" + profile.getUuid().toString().replace("-", "");
                 subMap.put("auth_session", sessionToken);
                 subMap.put("auth_access_token", accessToken);
                 privateTokens.add(sessionToken);

@@ -18,108 +18,108 @@ interface Authenticator {
 }
 
 export async function loginWithMicrosoft(payload: string | {key: string; iv: string; password: string}): Promise<{ success: boolean; code: string, networkError: boolean }> {
-  logger.debug("Logging in with Microsoft");
-  try {
-    const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(typeof payload === "string" ? {credentials: payload} : payload),
-    });
-
-    logger.debug("Received the authentication data from the backend")
-    const response: any = (await responseRaw.json()).data;
-    if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
-      logger.error("Failed to login with Microsoft, missing authentication data");
-      return {
-        success: false,
-        code: "ftb-f-auth-000001",
-        networkError: false,
-      };
-    } else {
-      logger.debug("Successfully received the authentication data from the backend")
-    }
-
-    logger.debug("Sending the authentication request to the backend")
-    const res = await sendMessage("profiles.ms.authenticate", {
-      ...response
-    })
-
-    return {
-      success: res.success ?? false,
-      code: res.code ?? "ftb-f-auth-000002",
-      networkError: res.networkError ?? false
-    }
-  } catch (error) {
-    logger.error("Failed to login with Microsoft", error);
+  // logger.debug("Logging in with Microsoft");
+  // try {
+  //   const responseRaw: any = await fetch('https://msauth.feed-the-beast.com/v1/retrieve', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify(typeof payload === "string" ? {credentials: payload} : payload),
+  //   });
+  //
+  //   logger.debug("Received the authentication data from the backend")
+  //   const response: any = (await responseRaw.json()).data;
+  //   if (!response || !response.liveAccessToken || !response.liveRefreshToken || !response.liveExpires) {
+  //     logger.error("Failed to login with Microsoft, missing authentication data");
+  //     return {
+  //       success: false,
+  //       code: "ftb-f-auth-000001",
+  //       networkError: false,
+  //     };
+  //   } else {
+  //     logger.debug("Successfully received the authentication data from the backend")
+  //   }
+  //
+  //   logger.debug("Sending the authentication request to the backend")
+  //   const res = await sendMessage("profiles.ms.authenticate", {
+  //     ...response
+  //   })
+  //
+  //   return {
+  //     success: res.success ?? false,
+  //     code: res.code ?? "ftb-f-auth-000002",
+  //     networkError: res.networkError ?? false
+  //   }
+  // } catch (error) {
+  //   logger.error("Failed to login with Microsoft", error);
     return {
       success: false,
       code: "ftb-f-auth-000002",
       networkError: true
     }
-  }
+  // }
 }
 
 const msAuthenticator: Authenticator = {
   async refresh(profile: AuthProfile): Promise<RefreshResponse> {
-    logger.debug(`Asking the refresh service to refresh the token for ${profile.username}`);
-
-    try {
-      let rawResponse = await fetch(`https://msauth.feed-the-beast.com/v1/authenticate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: (profile.tokens as any).refreshToken,
-          refresh: true,
-          useNewFlow: true,
-        }),
-      });
-
-      logger.debug(`Sending the refresh request to the refresh service for ${profile.username}`);
-
-      let response = await rawResponse.json();
-      if (response.iv) {
-        logger.debug(`Received a valid set of encryption details to decrypt authentication data`);
-
-        let res = await fetch(`https://msauth.feed-the-beast.com/v1/retrieve`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(response),
-        });
-
-        logger.debug(`Sending retrieve request to decrypt the authentication data`);
-        const data = (await res.json()).data;
-
-        const authenticator = await sendMessage("profiles.refresh", {
-          profileUuid: profile.uuid,
-          ...data,
-        })
-
-        if (authenticator?.success) {
-          logger.debug(`Successfully refreshed the token for ${profile.username}`);
-          return { ok: true };
-        } else {
-          logger.warn(`Failed to refresh the token for ${profile.username}... Error code ${authenticator?.code ?? 'unknown'}`,);
-          return { ok: false, networkError: authenticator?.networkError ?? false };
-        }
-      } else {
-        logger.error(`No encryption details, we can not proceed...`);
-        logger.debug('Unable to refresh token due to missing encryption details', response);
-        if (response?.raw?.issue?.error === "invalid_grant") {
-          return {ok: false, tryLoginAgain: true};
-        }
-        
-        return {ok: false}
-      }
-    } catch (e) {
-      logger.error(`Request errored with the response of ${(e as any).message}`);
+    // logger.debug(`Asking the refresh service to refresh the token for ${profile.username}`);
+    //
+    // try {
+    //   let rawResponse = await fetch(`https://msauth.feed-the-beast.com/v1/authenticate`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({
+    //       code: (profile.tokens as any).refreshToken,
+    //       refresh: true,
+    //       useNewFlow: true,
+    //     }),
+    //   });
+    //
+    //   logger.debug(`Sending the refresh request to the refresh service for ${profile.username}`);
+    //
+    //   let response = await rawResponse.json();
+    //   if (response.iv) {
+    //     logger.debug(`Received a valid set of encryption details to decrypt authentication data`);
+    //
+    //     let res = await fetch(`https://msauth.feed-the-beast.com/v1/retrieve`, {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //       },
+    //       body: JSON.stringify(response),
+    //     });
+    //
+    //     logger.debug(`Sending retrieve request to decrypt the authentication data`);
+    //     const data = (await res.json()).data;
+    //
+    //     const authenticator = await sendMessage("profiles.refresh", {
+    //       profileUuid: profile.uuid,
+    //       ...data,
+    //     })
+    //
+    //     if (authenticator?.success) {
+    //       logger.debug(`Successfully refreshed the token for ${profile.username}`);
+    //       return { ok: true };
+    //     } else {
+    //       logger.warn(`Failed to refresh the token for ${profile.username}... Error code ${authenticator?.code ?? 'unknown'}`,);
+    //       return { ok: false, networkError: authenticator?.networkError ?? false };
+    //     }
+    //   } else {
+    //     logger.error(`No encryption details, we can not proceed...`);
+    //     logger.debug('Unable to refresh token due to missing encryption details', response);
+    //     if (response?.raw?.issue?.error === "invalid_grant") {
+    //       return {ok: false, tryLoginAgain: true};
+    //     }
+    //    
+    //     return {ok: false}
+    //   }
+    // } catch (e) {
+    //   logger.error(`Request errored with the response of ${(e as any).message}`);
       return { ok: false, networkError: true };
-    }
+    // }
   },
 };
 
@@ -172,15 +172,15 @@ export const preLaunchChecksValid = async (): Promise<LaunchCheckResult> => {
     };
   }
 
-  if (profile.type !== "microsoft") {
-    logger.debug("User signed in with a non-microsoft account, asking the user to sign-in")
-    return {
-      ok: false,
-      requiresSignIn: true,
-      quite: true,
-      error: createError('ftb-auth#1003'),
-    };
-  }
+  // if (profile.type !== "microsoft") {
+  //   logger.debug("User signed in with a non-microsoft account, asking the user to sign-in")
+  //   return {
+  //     ok: false,
+  //     requiresSignIn: true,
+  //     quite: true,
+  //     error: createError('ftb-auth#1003'),
+  //   };
+  // }
 
   logger.debug(`Validating profile ${profile.username} with uuid ${profile.uuid} against Microsoft`,);
 

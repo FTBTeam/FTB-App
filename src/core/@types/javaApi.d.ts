@@ -373,6 +373,9 @@ export interface PingLauncherData extends BaseData {
 export interface PongLauncherData extends BaseData {
 }
 
+export interface RequestInstanceRefresh extends BaseData {
+}
+
 export interface SettingsConfigureData extends BaseData {
     settings: SettingsData;
 }
@@ -549,24 +552,20 @@ export interface AuthenticateMsProfileHandlerData extends BaseData {
 
 export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
     success: boolean;
-    networkError: boolean;
     code: string;
+    message: string;
 }
 
 export interface GetProfilesHandlerReply extends PrivateBaseData {
-    profiles: AccountProfile[];
-    activeProfile: AccountProfile;
+    profiles: SharableData[];
+    activeProfile: SharableData;
 }
 
 export interface RefreshAuthenticationProfileHandlerData extends BaseData {
     profileUuid: string;
-    liveAccessToken: string;
-    liveRefreshToken: string;
-    liveExpires: number;
 }
 
 export interface RefreshAuthenticationProfileHandlerReply extends PrivateBaseData {
-    networkError: boolean;
     success: boolean;
     code: string;
 }
@@ -730,12 +729,10 @@ export interface UserApiCredentials {
     usesBearerAuth: boolean;
 }
 
-export interface AccountProfile {
+export interface SharableData {
     uuid: string;
-    lastLogin: number;
-    username: string;
-    msAuth: MSAuthStore;
-    skins: AccountSkin[];
+    minecraftName: string;
+    skinUrl: string;
 }
 
 export interface GeneralSettings {
@@ -822,15 +819,6 @@ export interface Chat {
     online: boolean;
 }
 
-export interface MSAuthStore {
-    minecraftUuid: string;
-    minecraftToken: string;
-    xblUserHash: string;
-    liveAccessToken: string;
-    liveRefreshToken: string;
-    liveExpiresAt: number;
-}
-
 export interface Target {
     id: number;
     version: string;
@@ -878,14 +866,6 @@ export interface ActivePlan {
 export interface ChatHash {
     medium: string;
     hashShort: string;
-}
-
-export interface AccountSkin {
-    id: string;
-    state: string;
-    url: string;
-    variant: string;
-    alias: string;
 }
 
 export interface Account {

@@ -11,7 +11,7 @@ import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
-import net.creeperhost.creeperlauncher.accounts.AccountProfile;
+import net.creeperhost.creeperlauncher.accounts.MicrosoftProfile;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest;
 import net.creeperhost.creeperlauncher.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.creeperhost.creeperlauncher.data.modpack.ShareManifest;
@@ -301,13 +301,13 @@ public class InstanceSharer extends InstanceOperation {
 
     // Yes.. 'join server'
     private static JoinServerResult joinServer() {
-        AccountProfile profile = AccountManager.get().getActiveProfile();
+        MicrosoftProfile profile = AccountManager.get().getActiveProfile();
         assert profile != null;
 
-        String username = profile.username;
-        UUID uuid = profile.uuid;
+        String username = profile.getMinecraftName();
+        UUID uuid = profile.getUuid();
         String token;
-        token = profile.msAuth.minecraftToken;
+        token = profile.getMinecraftAccessToken();
 
         String serverId = String.valueOf(new Random().nextLong());
 
