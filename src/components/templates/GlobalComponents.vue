@@ -36,6 +36,7 @@
     <changelog />
     <dialogs />
     <alerts />
+    <launch-instance-dialog />
     
     <dev-tools-actions />
   </div>
@@ -57,9 +58,11 @@ import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
 import DevToolsActions from '@/components/core/misc/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/core/global/contextMenu/ContentMenuGlobal.vue';
 import LoginModal from '@/components/core/auth/LoginModal.vue';
+import LaunchInstanceDialog from '@/components/core/dialogs/LaunchInstanceDialog.vue';
 
 @Component({
   components: {
+    LaunchInstanceDialog,
     LoginModal,
     ContentMenuGlobal,
     DevToolsActions,

@@ -2,6 +2,11 @@ import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import store from '@/modules/store';
 import {createLogger} from '@/core/logger';
+import {LaunchingStatus} from '@/core/state/misc/runningState';
+import {getProfileOrDefaultToActive} from '@/core/auth/authProfileSelector';
+import {safeCheckProfileActive} from '@/core/auth/authValidChecker';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
 
 export type SaveJson = {
   name: string;
@@ -36,14 +41,59 @@ export class InstanceController {
     return new InstanceController(instance);
   }
   
-  async play() {
+  async play(profileUuid: string | null = null) {
     InstanceController.logger.debug(`Playing instance ${this.instance.uuid}`);
     
-    // Check active profile
-    // Check active profile validity
-    // Reject on failure and process the error
-    // Update the state for the pack starting
-    // Start the pack
+    const activeProfile = getProfileOrDefaultToActive(profileUuid);
+    if (!activeProfile) {
+      return;
+    }
+    
+    const loadingStatus: LaunchingStatus = {
+      uuid: this.instance.uuid,
+      loggingIn: true,
+      starting: false,
+      error: "",
+      step: "Checking profile",
+    }
+    
+    await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+    const checkResult = await safeCheckProfileActive(activeProfile.uuid);
+    if (!checkResult) {
+      // TODO: correct 
+      return;
+    }
+    
+    loadingStatus.loggingIn = false;
+    loadingStatus.starting = true;
+    loadingStatus.step = "Starting instance";
+    await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+
+    const result = await sendMessage("launchInstance", {
+      uuid: this.instance.uuid,
+      extraArgs: "",
+      offline: false,
+      offlineUsername: "",
+      cancelLaunch: null
+    }, 1000 * 60 * 10) // 10 minutes It's a long time, but we don't want to timeout too early
+
+    if (result.status === 'success') {
+      InstanceController.logger.debug("Successfully completed launch handshake")
+    } else {
+      if (result.status === 'error') {
+        loadingStatus.error = result.message;  
+      } else {
+        loadingStatus.error = "Failed to launch instance";
+      }
+      
+      InstanceController.logger.warn("Failed to launch instance", result);
+      loadingStatus.starting = false;
+      await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+      return;
+    }
+
+    await store.dispatch('v2/running/clearLaunchingStatus');
+    await safeNavigate(RouterNames.ROOT_RUNNING_INSTANCE, {uuid: this.instance.uuid});
   }
   
   async updateInstance(data: SaveJson) {

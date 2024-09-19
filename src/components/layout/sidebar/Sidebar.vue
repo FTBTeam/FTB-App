@@ -1,19 +1,21 @@
 <template>
-  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }" v-show="!disableNav">
-    <sidebar-create :disabled="disableNav" />
+  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
+    <sidebar-create />
     
     <div class="nav-items nav-main mt-2">      
       <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
-        <router-link :to="{ name: item.to }" :class="{'pointer-events-none': disableNav}">
-          <div class="nav-item" :class="{ 'item-disabled': disableNav }" @click.right="e => navItemRightClick(e, item)">
+        <router-link :to="{ name: item.to }">
+          <div class="nav-item" @click.right="e => navItemRightClick(e, item)">
             <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
           </div>
         </router-link>
       </popover>
+
+      <sidebar-running-instances />
     </div>
 
-    <div class="nav-items">      
-      <sidebar-profile class="block" :disable="disableNav" @signin="openSignIn()" />
+    <div class="nav-items">
+      <sidebar-profile class="block" @signin="openSignIn()" />
     </div>
     
     <popover text="Setup a server with CreeperHost" class="w-full">
@@ -38,9 +40,10 @@ import {RouterNames} from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
 import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from '@/core/context/contextMenus';
+import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
 
 @Component({
-  components: {SidebarCreate, SidebarProfile },
+  components: {SidebarRunningInstances, SidebarCreate, SidebarProfile },
 })
 export default class Sidebar extends Vue {
   @Prop({ default: false }) isTransparent!: boolean;
@@ -99,10 +102,6 @@ export default class Sidebar extends Vue {
   @Watch('$route.name')
   onRouteChange(value: string) {
     this.currentRoute = value;
-  }
-
-  get disableNav() {
-    return this.currentRoute === RouterNames.ROOT_LAUNCH_PACK;
   }
 
   public openPromo(): void {

@@ -72,10 +72,9 @@
 <script lang="ts">
 import Component from 'vue-class-component';
 import Vue from 'vue';
-import { Action } from 'vuex-class';
+import {Action} from 'vuex-class';
 import MicrosoftAuth from '@/components/templates/authentication/MicrosoftAuth.vue';
-import { Prop } from 'vue-property-decorator';
-import { RouterNames } from '@/router';
+import {Prop} from 'vue-property-decorator';
 import Loader from '@/components/atoms/Loader.vue';
 
 @Component({
@@ -113,7 +112,7 @@ export default class Authentication extends Vue {
 
   close() {
     if (this.tryAgainInstanceUuid && this.loggedIn) {
-      this.$router.push({ name: RouterNames.ROOT_LAUNCH_PACK, query: { uuid: this.tryAgainInstanceUuid } });
+      // this.$router.push({ name: RouterNames.ROOT_RUNNING_INSTANCE, query: { uuid: this.tryAgainInstanceUuid } });
     }
 
     this.$emit('close');

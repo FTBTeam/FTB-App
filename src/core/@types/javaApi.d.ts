@@ -231,9 +231,11 @@ export interface Logs extends BaseData {
 export interface LaunchInstanceDataReply extends BaseData {
     status: string;
     message: string;
+    uuid: string;
 }
 
 export interface Status extends BaseData {
+    uuid: string;
     step: number;
     totalSteps: number;
     stepProgress: number;

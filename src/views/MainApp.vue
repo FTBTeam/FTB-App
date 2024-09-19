@@ -27,7 +27,7 @@
     <!-- App has connected and is ready to use -->
     <div class="app-container" v-if="appReadyToGo">
       <main class="main">
-        <sidebar v-if="showSidebar" />
+        <sidebar />
         <div class="app-content relative">
           <router-view />
         </div>
@@ -439,10 +439,6 @@ export default class MainApp extends Vue {
       && !this.isReconnecting
       && !this.appConnecting
       && this.allJobsDone()
-  }
-  
-  get showSidebar() {
-    return !this.$route.path.startsWith('/settings');
   }
 
   get advertsEnabled(): boolean {

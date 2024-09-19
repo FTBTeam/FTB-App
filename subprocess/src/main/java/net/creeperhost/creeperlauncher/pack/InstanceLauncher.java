@@ -77,7 +77,7 @@ public class InstanceLauncher {
 
     private boolean forceStopped;
 
-    private final ProgressTracker progressTracker = new ProgressTracker();
+    private final ProgressTracker progressTracker;
     private final List<ThrowingConsumer<LaunchContext, Throwable>> startTasks = new LinkedList<>();
     private final List<ThrowingRunnable<Throwable>> exitTasks = new LinkedList<>();
 
@@ -85,6 +85,7 @@ public class InstanceLauncher {
 
     public InstanceLauncher(Instance instance) {
         this.instance = instance;
+        this.progressTracker = new ProgressTracker(this.instance);
     }
 
     /**
@@ -835,9 +836,10 @@ public class InstanceLauncher {
     }
 
     private static class ProgressTracker {
-
         private static final boolean DEBUG = Boolean.getBoolean("InstanceLauncher.ProgressTracker.debug");
 
+        private Instance instance;
+        
         private int totalSteps = 0;
         private int currStep = 0;
 
@@ -846,6 +848,10 @@ public class InstanceLauncher {
         private float stepProgress;
         private String humanDesc = null;
         private long lastNonImportant = -1;
+
+        public ProgressTracker(Instance instance) {
+            this.instance = instance;
+        }
 
         public void reset(int totalSteps) {
             this.totalSteps = totalSteps;
@@ -940,7 +946,7 @@ public class InstanceLauncher {
                 LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
             }
 
-            WebSocketHandler.sendMessage(new LaunchInstanceData.Status(currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+            WebSocketHandler.sendMessage(new LaunchInstanceData.Status(this.instance.getUuid(), currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }
 
