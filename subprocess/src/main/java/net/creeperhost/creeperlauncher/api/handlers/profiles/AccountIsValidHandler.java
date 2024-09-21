@@ -11,13 +11,13 @@ public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHand
     @Override
     public void handle(Data data) {
         if (data.profileUuid == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
+            WebSocketHandler.sendMessage(new Reply(data, MicrosoftProfile.ValidCheckResult.TOTAL_FAILURE, "Profile not found"));
             return;
         }
 
         MicrosoftProfile profile = AccountManager.get().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
+            WebSocketHandler.sendMessage(new Reply(data, MicrosoftProfile.ValidCheckResult.TOTAL_FAILURE, "Profile not found"));
             return;
         }
 
@@ -25,16 +25,16 @@ public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHand
     }
 
     private static class Reply extends Data {
-        public boolean success;
+        public MicrosoftProfile.ValidCheckResult checkResult;
         
         @Nullable
         public String response;
 
-        public Reply(Data data, boolean success, @Nullable String rawResult) {
+        public Reply(Data data, MicrosoftProfile.ValidCheckResult checkResult, @Nullable String rawResult) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
 
-            this.success = success;
+            this.checkResult = checkResult;
             this.response = rawResult;
         }
     }

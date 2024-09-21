@@ -30,6 +30,7 @@ public class MicrosoftProfile {
     private long microsoftAccessExpiresAt;
     
     private String xstsUserHash;
+    private String xstsToken;
     private long xstsNotAfter;
 
     private String skinUrl;
@@ -53,12 +54,13 @@ public class MicrosoftProfile {
     /**
      * Checks to see if the account is still valid or if the tokens need to be refreshed
      */
-    public boolean isValid() {
+    public ValidCheckResult isValid() {
         if (this.notLoggedIn) {
-            return false;
+            return ValidCheckResult.NOT_LOGGED_IN;
         }
         
-        return Instant.now().getEpochSecond() < this.minecraftAccessExpiresAt;
+        var stillValid = Instant.now().getEpochSecond() < this.minecraftAccessExpiresAt;
+        return stillValid ? ValidCheckResult.VALID : ValidCheckResult.EXPIRED;
     }
     
     /**
@@ -66,12 +68,16 @@ public class MicrosoftProfile {
      */
     public boolean refreshAccount(boolean forceRefresh) {
         try {
+            LOGGER.info("Refreshing account for {}", this.minecraftName);
             boolean result = this.unsafeRefreshAccount(forceRefresh);
             if (!result) {
+                LOGGER.error("Failed to refresh account for {}", this.minecraftName);
+                
                 this.notLoggedIn = true;
                 AccountManager.get().saveProfiles();
             }
             
+            LOGGER.info("Finished refreshing account for {}", this.minecraftName);
             return result;
         } catch (Exception e) {
             LOGGER.error("Failed to refresh account", e);
@@ -93,11 +99,14 @@ public class MicrosoftProfile {
         var now = Instant.now();
         
         if (forceRefresh || now.getEpochSecond() >= this.microsoftAccessExpiresAt) {
+            LOGGER.info("Xbox token expired, refreshing");
             var refreshResult = MicrosoftRequests.refreshWithXbox(this.microsoftRefreshToken);
             if (refreshResult.isErr()) {
+                LOGGER.error("Failed to refresh Xbox token: {}", refreshResult.unwrapErr());
                 return false;
             }
             
+            LOGGER.info("Successfully refreshed Xbox token");
             var jsonData = refreshResult.unwrap();
             this.microsoftAccessToken = jsonData.get("access_token").getAsString();
             this.microsoftRefreshToken = jsonData.get("refresh_token").getAsString();
@@ -106,30 +115,51 @@ public class MicrosoftProfile {
         }
         
         if (forceRefresh || now.getEpochSecond() >= this.xstsNotAfter) {
-            var xstsResult = MicrosoftRequests.authenticateWithXSTS(this.microsoftAccessToken);
+            LOGGER.info("XSTS token expired, refreshing");
+            var xstsResult = MicrosoftRequests.authenticateWithXbox(this.microsoftAccessToken);
             if (xstsResult.isErr()) {
+                LOGGER.error("Failed to authenticate with XSTS: {}", xstsResult.unwrapErr());
                 return false;
             }
+            
 
             JsonObject xstsData = xstsResult.unwrap();
-            if (!xstsData.has("DisplayClaims")) {
+            if (!xstsData.has("DisplayClaims") || !xstsData.has("Token")) {
+                LOGGER.error("Invalid XSTS response: {}", xstsData);
                 return false;
             }
             
-            Result<String, ErrorWithCode> displayClaims = MicrosoftOAuthProcess.getUserHashFromDisplayClaims(xstsData.get("DisplayClaims").getAsJsonObject());
-            if (displayClaims.isErr()) {
+            var xstsTokenResult = MicrosoftRequests.authenticateWithXSTS(xstsData.get("Token").getAsString());
+            if (xstsTokenResult.isErr()) {
+                LOGGER.error("Failed to authenticate with XSTS Tokens: {}", xstsTokenResult.unwrapErr());
                 return false;
             }
-            
-            this.xstsUserHash = displayClaims.unwrap();
-            this.xstsNotAfter = Instant.parse(xstsData.get("NotAfter").getAsString()).getEpochSecond();
 
+            JsonObject xstsTokenData = xstsTokenResult.unwrap();
+            if (!xstsTokenData.has("DisplayClaims")) {
+                LOGGER.error("Invalid XSTS Tokens response: {}", xstsTokenData);
+                return false;
+            }
+            
+            Result<String, ErrorWithCode> displayClaims = MicrosoftOAuthProcess.getUserHashFromDisplayClaims(xstsTokenData.get("DisplayClaims").getAsJsonObject());
+            if (displayClaims.isErr()) {
+                LOGGER.error("Failed to get user hash from display claims: {}", displayClaims.unwrapErr());
+                return false;
+            }
+            
+            LOGGER.info("Successfully refreshed XSTS token");
+            this.xstsToken = xstsTokenData.get("Token").getAsString();
+            this.xstsUserHash = displayClaims.unwrap();
+            this.xstsNotAfter = Instant.parse(xstsTokenData.get("NotAfter").getAsString()).getEpochSecond();
+            
             AccountManager.get().saveProfiles();
         }
         
         if (forceRefresh || now.getEpochSecond() >= this.minecraftAccessExpiresAt) {
-            var minecraftResult = MicrosoftRequests.authenticateWithMinecraft(this.microsoftAccessToken, this.xstsUserHash);
+            LOGGER.info("Minecraft token expired, refreshing");
+            var minecraftResult = MicrosoftRequests.authenticateWithMinecraft(this.xstsToken, this.xstsUserHash);
             if (minecraftResult.isErr()) {
+                LOGGER.error("Failed to authenticate with Minecraft: {}", minecraftResult.unwrapErr());
                 return false;
             }
 
@@ -140,14 +170,18 @@ public class MicrosoftProfile {
             // Now rerun the entitlements check and profile fetching
             var profile = MicrosoftOAuthProcess.checkEntitlementsAndGetProfile(this.minecraftAccessToken);
             if (profile.isErr()) {
+                LOGGER.error("Failed to check entitlements and get profile: {}", profile.unwrapErr());
                 return false;
             }
 
+            LOGGER.info("Successfully refreshed Minecraft token");
             MinecraftProfileData profileData = profile.unwrap();
             
             this.minecraftName = profileData.name();
             this.skinUrl = profileData.getActiveSkinUrl();
             this.notLoggedIn = false;
+
+            AccountManager.get().saveProfiles();
         }
         
         return true;
@@ -178,4 +212,11 @@ public class MicrosoftProfile {
     }
     
     public record SharableData(UUID uuid, String minecraftName, String skinUrl) { }
+    
+    public enum ValidCheckResult {
+        VALID,
+        EXPIRED,
+        NOT_LOGGED_IN,
+        TOTAL_FAILURE
+    }
 }

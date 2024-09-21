@@ -542,7 +542,7 @@ export interface AccountIsValidHandlerData extends BaseData {
 }
 
 export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
-    success: boolean;
+    checkResult: ValidCheckResult;
     response: string;
 }
 
@@ -891,5 +891,7 @@ export interface Customfield {
 }
 
 export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";
+
+export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
 
 export type Type = "BASIC" | "FULL";

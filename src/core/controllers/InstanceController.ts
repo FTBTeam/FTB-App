@@ -44,8 +44,10 @@ export class InstanceController {
   async play(profileUuid: string | null = null) {
     InstanceController.logger.debug(`Playing instance ${this.instance.uuid}`);
     
+    InstanceController.logger.debug("Fetching active profile");
     const activeProfile = getProfileOrDefaultToActive(profileUuid);
     if (!activeProfile) {
+      InstanceController.logger.warn("Failed to get active profile");
       return;
     }
     
@@ -58,9 +60,26 @@ export class InstanceController {
     }
     
     await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+
+    InstanceController.logger.debug("Checking profile");
     const checkResult = await safeCheckProfileActive(activeProfile.uuid);
-    if (!checkResult) {
-      // TODO: correct 
+    if (checkResult !== "VALID") {
+      InstanceController.logger.warn("Failed to check profile");
+      
+      if (checkResult === "TOTAL_FAILURE") {
+        loadingStatus.loggingIn = false;
+        loadingStatus.error = "Failed to check profile";
+        await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+        return;
+      }
+      
+      if (checkResult === "NOT_LOGGED_IN") {
+        InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
+        // Get the user to log back in again
+        await store.dispatch('v2/running/clearLaunchingStatus');
+        await store.dispatch('core/openSignIn')
+      }
+      
       return;
     }
     
@@ -69,6 +88,7 @@ export class InstanceController {
     loadingStatus.step = "Starting instance";
     await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
 
+    InstanceController.logger.debug("Sending launch handshake");
     const result = await sendMessage("launchInstance", {
       uuid: this.instance.uuid,
       extraArgs: "",
@@ -93,6 +113,8 @@ export class InstanceController {
     }
 
     await store.dispatch('v2/running/clearLaunchingStatus');
+    
+    InstanceController.logger.debug("Navigating to running instance");
     await safeNavigate(RouterNames.ROOT_RUNNING_INSTANCE, {uuid: this.instance.uuid});
   }
   

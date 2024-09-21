@@ -161,6 +161,7 @@ public class MicrosoftRequests {
             
             var body = resBody.string();
             if (!body.startsWith("{")) {
+                LOGGER.error("Response was not a JSON object: {}", body);
                 return Result.err(logAndCreateError(CodedError.WRONG_BODY_TYPE));
             }
 

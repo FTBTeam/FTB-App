@@ -21,20 +21,20 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             return;
         }
         
-        refreshMicrosoft(profile);
+        refreshMicrosoft(data, profile);
     }
 
     /**
      * Refresh using Microsoft flow
      */
-    private void refreshMicrosoft(MicrosoftProfile profile) {
+    private void refreshMicrosoft(Data data, MicrosoftProfile profile) {
         var result = profile.refreshAccount();
         if (!result) {
-            WebSocketHandler.sendMessage(new Reply(new Data(), false, "Failed to refresh account"));
+            WebSocketHandler.sendMessage(new Reply(data, false, "Failed to refresh account"));
             return;
         }
         
-        WebSocketHandler.sendMessage(new Reply(new Data(), true, ""));
+        WebSocketHandler.sendMessage(new Reply(data, true, ""));
     }
 
     private static class Reply extends PrivateBaseData {

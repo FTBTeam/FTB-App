@@ -20,16 +20,7 @@
         </div>
       </modal-footer>
     </modal>
-    
-<!--    &lt;!&ndash; Authentication &ndash;&gt;-->
-<!--    <authentication-->
-<!--      v-if="getSignInOpened.open"-->
-<!--      :jump="getSignInOpened.jumpToAuth"-->
-<!--      :uuid="getSignInOpened.uuid"-->
-<!--      :tryAgainInstanceUuid="getSignInOpened.tryAgainInstanceUuid"-->
-<!--      @close="closeSignIn()"-->
-<!--    />-->
-    
+        
     <LoginModal :open="getSignInOpened" @closed="() => closeSignIn()" />
 
     <!-- Only checks for an update once during startup -->
@@ -46,7 +37,6 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import {Action, Getter, State} from 'vuex-class';
-import Authentication from '@/components/templates/authentication/Authentication.vue';
 import Changelog from '@/components/templates/changelogs/Changelog.vue';
 import Dialogs from '@/components/core/global/Dialogs.vue';
 import Alerts from '@/components/core/global/Alerts.vue';
@@ -69,8 +59,7 @@ import LaunchInstanceDialog from '@/components/core/dialogs/LaunchInstanceDialog
     UiButton,
     Alerts,
     Dialogs,
-    Changelog,
-    Authentication,
+    Changelog
   },
 })
 export default class GlobalComponents extends Vue {
