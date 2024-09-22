@@ -1,5 +1,5 @@
 <template>
-  <modal :permanent="true" :open="launchingStatus !== null" :title="title" :sub-title="subtitle">
+  <modal :permanent="!launchingStatus?.error" :open="launchingStatus !== null" :title="title" :sub-title="subtitle">
     <template v-if="launchingStatus">
       <loader v-if="!launchingStatus.error" :title="launchingStatus?.starting ? 'Starting...' : 'Logging in...'" />
       <div v-else>
@@ -7,6 +7,8 @@
         <code class="whitespace-pre-wrap" v-if="launchingStatus.error">
           {{launchingStatus.error}}
         </code>
+        
+        <ui-button @click="() => $store.dispatch('v2/running/clearLaunchingStatus')">Close</ui-button>
       </div>
     </template>
     <span v-else>This shouldn't be possible</span>
@@ -20,9 +22,10 @@ import {ns} from '@/core/state/appState';
 import {LaunchingStatus} from '@/core/state/misc/runningState';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
+import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
-  components: {Loader}
+  components: {UiButton, Loader}
 })
 export default class LaunchInstanceDialog extends Vue {
   @Getter("instances", ns("v2/instances")) public instances!: (SugaredInstanceJson | InstanceJson)[];

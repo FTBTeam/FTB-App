@@ -291,7 +291,9 @@ public class Instance {
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
             
-            ctx.extraProgramArgs.addAll(MiscUtils.splitCommand(props.programArgs));
+            if (props.programArgs != null || props.programArgs.isEmpty()) {
+                ctx.extraProgramArgs.addAll(MiscUtils.splitCommand(props.programArgs));
+            }
 
             // TODO, do this on LocalInstance load, potentially combine with changes to make jvmArgs an array.
             var args = MiscUtils.splitCommand(props.jvmArgs);
