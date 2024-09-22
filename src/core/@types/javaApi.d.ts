@@ -638,6 +638,7 @@ export interface InstanceJson {
     memory: number;
     jvmArgs: string;
     shellArgs: string;
+    programArgs: string;
     embeddedJre: boolean;
     jrePath: string;
     width: number;
@@ -752,6 +753,7 @@ export interface InstanceSettings {
     updateChannel: string;
     javaArgs: string;
     shellArgs: string;
+    programArgs: string;
 }
 
 export interface AppearanceSettings {

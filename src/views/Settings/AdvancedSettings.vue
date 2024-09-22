@@ -69,6 +69,8 @@ import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import Selection2 from '@/components/core/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
 
+type ReleaseChannel = 'release' | 'beta' | 'alpha';
+
 @Component({
   components: {
     Selection2,
@@ -89,7 +91,7 @@ export default class AppSettings extends Vue {
   fixMeKey = Math.random();
   
   checkingForUpdates = false;
-  appChannel = "release";
+  appChannel: ReleaseChannel = "release";
   
   async created() {
     await Promise.all([
@@ -98,10 +100,10 @@ export default class AppSettings extends Vue {
         if (channel === "latest") {
           this.appChannel = "release";
         } else {
-          this.appChannel = channel ?? "release";
+          this.appChannel = (channel as ReleaseChannel) ?? "release";
         }
 
-        res();
+        res(null);
       }),
       this.loadSettings()
     ])
@@ -152,7 +154,7 @@ export default class AppSettings extends Vue {
     this.checkingForUpdates = false;
   }
   
-  transformToElectronChannel(channel: 'release' | 'beta' | 'alpha') {
+  transformToElectronChannel(channel: ReleaseChannel) {
     switch (channel) {
       case 'release': return 'latest';
       case 'beta': return 'beta';

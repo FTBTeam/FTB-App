@@ -12,6 +12,7 @@ export type SaveJson = {
   name: string;
   jvmArgs: string;
   jrePath: string;
+  programArgs: string;
   memory: number;
   width: number;
   height: number;
