@@ -38,6 +38,8 @@ public class InstanceJson {
 
     public String jvmArgs = Settings.getSettings().instanceDefaults().javaArgs();
     public String shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
+    
+    @Nullable
     public String programArgs = Settings.getSettings().instanceDefaults().getProgramArgs(); 
     
     public boolean embeddedJre = true;
@@ -153,7 +155,7 @@ public class InstanceJson {
     public static InstanceJson load(Path path) throws IOException {
         // Parse to generic obj
         JsonObject obj = JsonUtils.parse(GSON, path, JsonObject.class);
-                
+        
         // Parse to instance json.
         return GSON.fromJson(obj, InstanceJson.class);
     }

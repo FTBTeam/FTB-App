@@ -96,6 +96,7 @@ async function onLaunchData(data: any) {
 
       const uuid = (data as Stopped).instanceId ?? (data as LaunchInstanceDataReply).uuid;
       await store.dispatch('v2/running/crashed', uuid);
+      await store.dispatch('v2/running/stopped', uuid);
     }
   }
 }

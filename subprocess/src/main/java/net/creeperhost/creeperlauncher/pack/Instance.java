@@ -291,7 +291,7 @@ public class Instance {
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
             
-            if (props.programArgs != null || props.programArgs.isEmpty()) {
+            if (props.programArgs != null && !props.programArgs.isEmpty()) {
                 ctx.extraProgramArgs.addAll(MiscUtils.splitCommand(props.programArgs));
             }
 
