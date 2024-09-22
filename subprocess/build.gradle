@@ -36,7 +36,13 @@ repositories {
     mavenLocal()
     maven { url 'https://maven.creeperhost.net' }
     mavenCentral()
-    jcenter() // Gradle _Says_ it wont resolve artifacts, but its gone into read-only indefinitely. (JdkUtils uses some libraries from here)
+    
+    maven { 
+        url "https://repo.gradle.org/artifactory/libs-releases/"
+        content {
+            includeGroupByRegex("net.rubygrapefruit.*")
+        }
+    }
 }
 
 dependencies {
