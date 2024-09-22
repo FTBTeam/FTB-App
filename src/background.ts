@@ -139,6 +139,32 @@ ipcMain.on("restartApp", () => {
   reloadMainWindow()
 });
 
+ipcMain.handle("app.change-channel", async (event, data) => {
+  logger.debug("Changing app channel", data)
+  
+  autoUpdater.channel = data;
+  const updateResult = await autoUpdater.checkForUpdates();
+  if (updateResult?.downloadPromise) {
+    const version = await updateResult.downloadPromise;
+    // Ask the user if they want to update
+    logger.debug("Update downloaded", version)
+    
+    const latestVersion = autoUpdater.currentVersion.version;
+    const currentVersion = app.getVersion();
+    
+    logger.debug("Latest version", latestVersion)
+    logger.debug("Current version", currentVersion)
+    
+    if (confirm(`A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`)) {
+      updateApp("ChannelChange");
+    }
+  }
+})
+
+ipcMain.handle("app.get-channel", async () => {
+  return autoUpdater.channel;
+})
+
 ipcMain.on('openModpack', (event, data) => {
   if (win !== null && win !== undefined) {
     logger.debug("Opening modpack", data)

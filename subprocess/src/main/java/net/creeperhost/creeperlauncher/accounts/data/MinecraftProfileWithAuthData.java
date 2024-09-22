@@ -6,5 +6,6 @@ public record MinecraftProfileWithAuthData(
     int minecraftExpiresIn,
     OAuthTokenHolder microsoftToken,
     String userHash,
-    String notAfter
+    String notAfter,
+    String xstsToken
 ) { }

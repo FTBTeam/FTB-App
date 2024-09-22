@@ -36,7 +36,7 @@ public class MicrosoftProfile {
     private String skinUrl;
     private boolean notLoggedIn = false;
 
-    public MicrosoftProfile(UUID uuid, String minecraftName, String minecraftAccessToken, int minecraftAccessExpiresIn, String microsoftAccessToken, String microsoftRefreshToken, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String skinUrl) {
+    public MicrosoftProfile(UUID uuid, String minecraftName, String minecraftAccessToken, int minecraftAccessExpiresIn, String microsoftAccessToken, String microsoftRefreshToken, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String xstsToken, String skinUrl) {
         var now = Instant.now();
         
         this.uuid = uuid;
@@ -48,6 +48,7 @@ public class MicrosoftProfile {
         this.microsoftAccessExpiresAt = now.plus(Duration.ofSeconds(microsoftAccessExpiresIn)).getEpochSecond();
         this.xstsUserHash = xstsUserHash;
         this.xstsNotAfter = Instant.parse(xstsNotAfter).getEpochSecond();
+        this.xstsToken = xstsToken;
         this.skinUrl = skinUrl;
     }
     
@@ -179,10 +180,10 @@ public class MicrosoftProfile {
             
             this.minecraftName = profileData.name();
             this.skinUrl = profileData.getActiveSkinUrl();
-            this.notLoggedIn = false;
-
-            AccountManager.get().saveProfiles();
         }
+
+        this.notLoggedIn = false;
+        AccountManager.get().saveProfiles();
         
         return true;
     }

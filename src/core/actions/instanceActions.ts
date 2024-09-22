@@ -7,6 +7,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {InstanceController} from '@/core/controllers/InstanceController';
+import {RunningState} from '@/core/state/misc/runningState';
 
 export class InstanceActions {
   private static logger = createLogger("InstanceActions.ts");
@@ -39,6 +40,10 @@ export class InstanceActions {
   
   static isUpdating(instance: SugaredInstanceJson) {
     return store.state["v2/install"].currentInstall?.forInstanceUuid === instance.uuid;
+  }
+  
+  static isRunning(instance: SugaredInstanceJson) {
+    return (store.state["v2/running"] as RunningState).instances.some(i => i.uuid === instance.uuid);
   }
   
   static async openSettings(instance: SugaredInstanceJson) {

@@ -23,9 +23,14 @@ async function checkProfileActive(profileUuid: string): Promise<LimitedCheckResu
     if (!refreshResult) {
       return "TOTAL_FAILURE";
     }
+    
+    if (refreshResult) {
+      return "VALID";
+    }
   }
   
-  return "VALID"
+  // Expired is handled so now it's a limited check
+  return res.checkResult as LimitedCheckResult;
 }
 
 async function refreshProfile(profileUuid: string): Promise<boolean> {

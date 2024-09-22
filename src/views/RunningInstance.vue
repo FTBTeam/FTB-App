@@ -8,7 +8,7 @@
           {{ launchStatus.replace('%s', instanceName) }}
         </h3>
         <p v-if="finishedLoading && !hasCrashed">
-          {{ instanceName }} should be running! Enjoy <font-awesome-icon class="ml-2" icon="thumbs-up" />
+          <i class="italic">{{ instanceName }}</i> running
         </p>
         <template v-if="!hasCrashed">
           <template v-if="!finishedLoading">
@@ -473,7 +473,15 @@ export default class RunningInstance extends Vue {
   }
 
   get instanceName() {
-    return (this.instance?.name ?? 'Unknown') + ' ' + (this.instance?.version ?? '');
+    if (!this.instance) {
+      return "Unknown";
+    }
+    
+    if (this.instance.name.endsWith(this.instance.version)) {
+      return this.instance.name;
+    }
+    
+    return `${this.instance.name} (${this.instance.version})`;
   }
 
   get currentModpack() {

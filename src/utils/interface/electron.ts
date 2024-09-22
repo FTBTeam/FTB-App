@@ -498,6 +498,12 @@ const Electron: ElectronOverwolfInterface = {
         throw new CustomError("Failed to start subprocess after 20 attempts", "We've not been able to start the subprocess. We can't recover from this.")
       }
     },
+    async appChannel() {
+      return await ipcRenderer.invoke("app.get-channel");
+    },
+    async changeAppChannel(channel: string) {
+      return await ipcRenderer.invoke("app.change-channel", channel);
+    },
     getLicenses() {
       return {
         javascript: licensesData,

@@ -127,14 +127,14 @@ async function lazyLogChecker(uuid: string, messages: string[]) {
   }
 
   // Make an educated guess that when this shows, we're likely good to assume it's loaded
-  for (const message of messages) {
-    if (message.includes("Created:") && message.includes("minecraft:textures/atlas") && message.includes("TextureAtlas")) {
+  for (const message of messages) {    
+    if (message.includes("Created:") && message.includes("minecraft:textures/atlas")) {
       console.log("Created assets", uuid)
       await store.dispatch('v2/running/finishedLoading', uuid);
     }
 
     // This also tends to happen relatively late in the startup process so we can use it as a marker as well
-    if (message.includes("Sound engine started") && message.includes("SoundEngine")) {
+    if (message.includes("Sound engine started")) {
       console.log("Sound engine started", uuid)
       await store.dispatch('v2/running/finishedLoading', uuid);
     }

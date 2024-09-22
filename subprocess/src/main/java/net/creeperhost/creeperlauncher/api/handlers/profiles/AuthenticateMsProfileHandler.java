@@ -39,6 +39,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
             data.liveExpires,
             accountData.userHash(),
             accountData.notAfter(),
+            accountData.xstsToken(),
             accountData.profileData().getActiveSkinUrl()
         );
         

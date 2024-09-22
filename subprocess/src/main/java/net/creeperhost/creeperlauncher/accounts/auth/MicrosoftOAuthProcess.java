@@ -29,6 +29,8 @@ public class MicrosoftOAuthProcess {
         
         var displayClaims = stepTwoData.get("DisplayClaims").getAsJsonObject();
         var notAfter = stepTwoData.get("NotAfter").getAsString();
+        var xstsToken = stepTwoData.get("Token").getAsString();
+        
         Result<String, ErrorWithCode> userHashRes = getUserHashFromDisplayClaims(displayClaims);
         if (userHashRes.isErr()) {
             return Result.err(userHashRes.unwrapErr());
@@ -59,33 +61,9 @@ public class MicrosoftOAuthProcess {
             minecraftExpiresIn,
             xboxTokenHolder,
             userHash,
-            notAfter
+            notAfter,
+            xstsToken
         ));
-    }
-
-    /**
-     * Refreshes the user account based on the XBox refresh token and returns a new profile object
-     */
-    public static Result<MinecraftProfileWithAuthData, ErrorWithCode> refreshUsingRefreshToken(String refreshToken) {
-        var refreshStep = MicrosoftRequests.refreshWithXbox(refreshToken);
-        if (refreshStep.isErr()) {
-            return Result.err(refreshStep.unwrapErr());
-        }
-        
-        // Now parse it into a token holder
-        var jsonData = refreshStep.unwrap();
-        var tokenHolder = new OAuthTokenHolder(
-            jsonData.get("access_token").getAsString(),
-            jsonData.get("refresh_token").getAsString(),
-            jsonData.get("expires_in").getAsLong()
-        );
-        
-        var fullFlow = authWithMinecraft(tokenHolder);
-        if (fullFlow.isErr()) {
-            return Result.err(fullFlow.unwrapErr());
-        }
-        
-        return Result.ok(fullFlow.unwrap());
     }
     
     private static boolean validateEntitlements(JsonObject entitlements) {

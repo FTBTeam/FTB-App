@@ -86,6 +86,9 @@ export interface App {
     java: JavaLicenses | null,
   };
   
+  appChannel(): Promise<string>;
+  changeAppChannel(channel: string): Promise<void>;
+  
   cpm: {
     required(): Promise<boolean>;
     openWindow(tab: 'purposes' | 'features' | 'vendors'): Promise<void>;

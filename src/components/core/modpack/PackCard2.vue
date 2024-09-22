@@ -51,7 +51,7 @@
           <div class="button" aria-label="Update available!" data-balloon-pos="down-left" :class="{disabled: isUpdating}" v-if="latestVersion && !needsSyncing" @click.stop="updateOpen = true">
             <font-awesome-icon icon="download" />
           </div>
-          <div class="play-button button" aria-label="Play" data-balloon-pos="down" v-if="!needsSyncing" :class="{disabled: isUpdating}" @click.stop="play">
+          <div class="play-button button" aria-label="Play" data-balloon-pos="down" v-if="!needsSyncing" :class="{disabled: isUpdating || isRunning}" @click.stop="play">
             <font-awesome-icon icon="play" />
           </div>
         </div>
@@ -77,6 +77,9 @@ import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from '@/core/context/contextMenus';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {createLogger} from '@/core/logger';
+import {State} from 'vuex-class';
+import {ns} from '@/core/state/appState';
+import {InstanceRunningData} from '@/core/state/misc/runningState';
 
 const logger = createLogger('PackCard2.vue');
 
@@ -88,6 +91,8 @@ const logger = createLogger('PackCard2.vue');
   }
 })
 export default class PackCard2 extends PackCardCommon {
+  @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
+  
   @Prop() instance!: SugaredInstanceJson;
   
   latestVersion: Versions | null = null;
@@ -149,6 +154,10 @@ export default class PackCard2 extends PackCardCommon {
   
   get packLogo() {
     return resolveArtwork(this.instance, "square", this.apiModpack)
+  }
+  
+  get isRunning() {
+    return this.runningInstances.some(e => e.uuid === this.instance.uuid);
   }
 
   get isInstalling() {

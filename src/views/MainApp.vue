@@ -27,7 +27,7 @@
     <!-- App has connected and is ready to use -->
     <div class="app-container" v-if="appReadyToGo">
       <main class="main">
-        <sidebar />
+        <sidebar v-if="showSidebar" />
         <div class="app-content relative">
           <router-view />
         </div>
@@ -459,6 +459,10 @@ export default class MainApp extends Vue {
     } else if (!this.appStarting && !this.appInstalling && this.isReconnecting) {
       return "Reconnecting..."
     }
+  }
+
+  get showSidebar() {
+    return !this.$route.path.startsWith('/settings');
   }
 }
 </script>
