@@ -1,38 +1,40 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
-import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
+import net.creeperhost.creeperlauncher.accounts.MicrosoftProfile;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
+import org.jetbrains.annotations.Nullable;
 
 public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHandler.Data> {
     @Override
     public void handle(Data data) {
         if (data.profileUuid == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
+            WebSocketHandler.sendMessage(new Reply(data, MicrosoftProfile.ValidCheckResult.TOTAL_FAILURE, "Profile not found"));
             return;
         }
 
-        AccountProfile profile = AccountManager.get().getProfileFromUuid(data.profileUuid);
+        MicrosoftProfile profile = AccountManager.get().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
+            WebSocketHandler.sendMessage(new Reply(data, MicrosoftProfile.ValidCheckResult.TOTAL_FAILURE, "Profile not found"));
             return;
         }
 
-        WebSocketHandler.sendMessage(new Reply(data, MicrosoftAuthenticator.isValid(profile), "is_valid"));
+        WebSocketHandler.sendMessage(new Reply(data, profile.isValid(), null));
     }
 
     private static class Reply extends Data {
-        public boolean success;
+        public MicrosoftProfile.ValidCheckResult checkResult;
+        
+        @Nullable
         public String response;
 
-        public Reply(Data data, boolean success, String rawResult) {
+        public Reply(Data data, MicrosoftProfile.ValidCheckResult checkResult, @Nullable String rawResult) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
 
-            this.success = success;
+            this.checkResult = checkResult;
             this.response = rawResult;
         }
     }

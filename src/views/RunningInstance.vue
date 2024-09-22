@@ -8,33 +8,10 @@
           {{ launchStatus.replace('%s', instanceName) }}
         </h3>
         <p v-if="finishedLoading && !hasCrashed">
-          {{ instanceName }} should be running! Enjoy <font-awesome-icon class="ml-2" icon="thumbs-up" />
+          <i class="italic">{{ instanceName }}</i> running
         </p>
         <template v-if="!hasCrashed">
-          <template v-if="preLaunch">
-            <div
-              class="progress-container"
-              :aria-label="`Getting everything ready for ${instanceName}`"
-              data-balloon-pos="up"
-            >
-              <ProgressBar class="mt-6 mb-4" :progress="currentStep.stepProgress" />
-            </div>
-            <div class="mb-2 text-sm flex items-center">
-              <div
-                class="progress-spinner"
-                aria-label="If this takes more than 5 minutes, kill the instance and try again."
-                data-balloon-pos="down-left"
-              >
-                <font-awesome-icon spin icon="circle-notch" class="mr-4" />
-              </div>
-
-              {{ currentStep.stepDesc ? currentStep.stepDesc : 'Initializing...' }}
-            </div>
-            <p class="mb-2 text-sm" v-if="currentStep.stepProgressHuman !== undefined">
-              {{ currentStep.stepProgressHuman }}
-            </p>
-          </template>
-          <template v-else-if="!finishedLoading">
+          <template v-if="!finishedLoading">
             <div class="loading-area" v-if="currentModpack !== null">
               <div
                 class="progress-container"
@@ -66,10 +43,8 @@
             </ftb-button>
 
             <ftb-button
-              :disabled="preLaunch"
               @click="cancelLoading"
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
-              :class="{ 'opacity-50 cursor-not-allowed': preLaunch }"
             >
               <font-awesome-icon icon="skull-crossbones" class="mr-2" />
               Kill instance
@@ -79,14 +54,14 @@
         <template v-else>
           <p>Looks like the instance has crashed during startup or whilst running...</p>
           <div class="flex mt-4">
-            <ftb-button
-              @click="launch"
-              color="primary"
-              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
-            >
-              <font-awesome-icon icon="arrow-rotate-right" class="mr-2" />
-              Retry launch
-            </ftb-button>
+<!--            <ftb-button-->
+<!--              @click="launch"-->
+<!--              color="primary"-->
+<!--              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"-->
+<!--            >-->
+<!--              <font-awesome-icon icon="arrow-rotate-right" class="mr-2" />-->
+<!--              Retry launch-->
+<!--            </ftb-button>-->
             <ftb-button
               @click="openFolder"
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
@@ -117,13 +92,6 @@
       </div>
       
       <div class="buttons flex items-center">
-        <!--        <ftb-button-->
-        <!--          class="transition ease-in-out duration-200 text-xs border border-solid px-2 py-1 mr-4 hover:bg-green-600 hover:text-white hover:border-green-600"-->
-        <!--          :class="{ 'border-black': !darkMode, 'border-white': darkMode }"-->
-        <!--        >-->
-        <!--          <font-awesome-icon icon="upload" class="mr-2" />-->
-        <!--          Upload logs-->
-        <!--        </ftb-button>-->
         <div
           class="color cursor-pointer ml-4"
           :aria-label="darkMode ? 'Light mode' : 'Dark mode'"
@@ -195,14 +163,12 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
+import {Component, Vue, Watch} from 'vue-property-decorator';
 import {ModPack} from '@/modules/modpacks/types';
 import {Getter, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import {validateAuthenticationOrSignIn} from '@/utils/auth/authentication';
 import {SettingsState} from '@/modules/settings/types';
-import {emitter} from '@/utils/event-bus';
 import {RouterNames} from '@/router';
 import Router from 'vue-router';
 import {ns} from '@/core/state/appState';
@@ -211,10 +177,10 @@ import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {FixedSizeArray} from '@/utils/std/fixedSizeArray';
 import {safeNavigate, waitForWebsocketsAndData} from '@/utils';
 import {createLogger} from '@/core/logger';
 import {SocketState} from '@/modules/websocket/types';
+import {InstanceMessageData, InstanceRunningData} from '@/core/state/misc/runningState';
 
 type InstanceActionCategory = {
   title: string;
@@ -308,28 +274,19 @@ export interface Bar {
   message: string;
 }
 
-const cleanAuthIds = {
-  "START_DANCE": "Starting authentication flow",
-  "AUTH_XBOX": "Contacting Xbox Live",
-  "AUTH_XSTS": "Authenticating with Xbox Services",
-  "LOGIN_XBOX": "Logging in with Xbox Live",
-  "GET_PROFILE": "Getting Minecraft Profile",
-  "CHECK_ENTITLEMENTS": "Verifying ownership"
-}
-
 @Component({
   name: 'LaunchingPage',
   components: {
     ProgressBar,
   },
 })
-export default class LaunchingPage extends Vue {
+export default class RunningInstance extends Vue {
   @Getter('getInstance', ns("v2/instances")) getInstance!: (uuid: string) => SugaredInstanceJson | undefined;
   @State('websocket') public websockets!: SocketState;
   
   @Getter("getApiPack", ns("v2/modpacks")) getApiPack!: (id: number) => ModPack | undefined;
-  
   @State('settings') public settingsState!: SettingsState;
+  @State('instances', ns("v2/running")) runningInstancesData!: InstanceRunningData[]
   
   private logger = createLogger("LaunchingPage.vue");
   
@@ -337,7 +294,6 @@ export default class LaunchingPage extends Vue {
   logTypes = ["Info", "Warn", "Error", "Debug", "Trace"];
   
   loading = false;
-  preLaunch = true;
   platform = platform;
 
   instanceActions = instanceActions
@@ -349,22 +305,21 @@ export default class LaunchingPage extends Vue {
   disableFollow = false;
 
   currentStep = {
-    stepDesc: '',
+    desc: '',
     step: 0,
     totalSteps: 0,
-    stepProgress: 0,
-    stepProgressHuman: '',
-  };
+    progress: 0,
+    progressHuman: '',
+  } as InstanceRunningData['startup']['step'];
   emptyCurrentStep = { ...this.currentStep };
 
   finishedLoading = false;
   preInitMessages: Set<string> = new Set();
 
-  messages: FixedSizeArray<{ i: number, t: string, v: string }> = new FixedSizeArray<{ i: number, t: string, v: string }>(100_000);
+  messages: InstanceMessageData[] = [];
   launchProgress: Bar[] | null | undefined = null;
 
   showOptions = false;
-  lastIndex = 0;
   
   scrollIntervalRef: any = null;
 
@@ -378,6 +333,14 @@ export default class LaunchingPage extends Vue {
   }
 
   public async mounted() {
+    this.loading = false;
+    this.hasCrashed = false;
+    this.currentStep = this.emptyCurrentStep;
+    this.finishedLoading = false;
+    this.preInitMessages = new Set();
+    this.messages = [];
+    this.launchProgress = null;
+    
     if (localStorage.getItem("enabledLogTypes")) {
       this.enabledLogTypes = localStorage.getItem("enabledLogTypes")!.split(",");
     }
@@ -392,14 +355,16 @@ export default class LaunchingPage extends Vue {
     
     if (this.instance == null) {
       alertController.error('Instance not found')
-      this.logger.debug("Instance not found, redirecting to library", this.$route.query.uuid)
+      this.logger.debug("Instance not found, redirecting to library", this.$route.params.uuid)
       await safeNavigate(RouterNames.ROOT_LIBRARY);
       return;
     }
-
-    emitter.on('ws.message', this.onLaunchProgressUpdate);
     
-    await this.launch();
+    // Sync from any previous data
+    const runningData = this.runningInstancesData.find(e => e.uuid === this.instance?.uuid)
+    if (runningData) {
+      this.syncDataFromRunningData(runningData)
+    }
     
     sendMessage("getInstanceFolders", {
       uuid: this.instance.uuid
@@ -410,47 +375,46 @@ export default class LaunchingPage extends Vue {
     this.scrollIntervalRef = setInterval(this.scrollToBottom, 500);
   }
   
+  @Watch('$route.params.uuid')
+  async onRouteUpdate() {
+    console.log("Route update")
+    this.messages = [];
+    this.$nextTick().then(() => {
+      const runningData = this.runningInstancesData.find(e => e.uuid === this.instance?.uuid)
+      if (runningData) {
+        console.log("Sycning data")
+        this.syncDataFromRunningData(runningData)
+      } else {
+        console.log("Instance not found, redirecting to library")
+      }
+    })
+  }
+  
+  @Watch('runningInstancesData', {deep: true})
+  async onRunningInstanceUpdate(newData: InstanceRunningData[]) {
+    const runningData = newData.find((e) => e.uuid === this.instance?.uuid);
+    if (!runningData) {
+      await safeNavigate(RouterNames.ROOT_LIBRARY)
+      return;
+    }
+    
+    this.syncDataFromRunningData(runningData);
+  }
+  
+  private syncDataFromRunningData(data: InstanceRunningData) {
+    this.hasCrashed = data.status.crashed;
+    this.finishedLoading = data.status.finishedLoading;
+    this.launchProgress = data.startup.bars;
+    this.messages = data.messages;
+    this.preInitMessages = data.preInitMessages;
+    this.currentStep = data.startup.step;
+  }
+  
   userInteractedWithLogs(event: any) {
     const location = event.target.scrollTop + event.target.clientHeight;
     
     // Give a 10px buffer
     this.disableFollow = location < event.target.scrollHeight - 5;
-  }
-
-  onLaunchProgressUpdate(data: any) {
-    if (data.type === 'launchInstance.logs') {
-      this.handleLogMessages(data);
-    }
-
-    if (data.type === 'launchInstance.status') {
-      this.handleInstanceLaunch(data);
-    }
-
-    if (data.type === 'clientLaunchData') {
-      this.handleClientLaunch(data);
-    }
-    
-    if (data.type === "authenticationStepUpdate") {
-      this.messages.push({i: ++this.lastIndex, t: "I", v: `[AUTH][INFO] ${(cleanAuthIds as any)[data.id] ?? data.id} ${data.working ? 'started' : 'finished'} ${!data.working ? (data.successful ? 'successfully' : 'unsuccessfully') : ''}`})
-    }
-
-    if (
-      data.type === 'launchInstance.stopped' ||
-      (data.type === 'launchInstance.reply' && (data.status === 'abort' || data.status === 'error'))
-    ) {
-      // Lets assume we've crashed
-      if (data.status === 'errored' || data.status === 'error') {
-        alertController.error(data.status === 'error'
-          ? 'Unable to start pack... please see the instance logs...'
-          : 'The instance has crashed or has been externally closed.'
-        )
-
-        this.hasCrashed = true;
-        return; // block the redirection
-      }
-
-      this.leavePage();
-    }
   }
   
   scrollToBottom() {
@@ -483,121 +447,9 @@ export default class LaunchingPage extends Vue {
 
   destroyed() {
     // Stop listening to events!
-    emitter.off('ws.message', this.onLaunchProgressUpdate);
     clearInterval(this.scrollIntervalRef)
   }
   
-  async lazyLogChecker(messages: string[]) {
-    if (this.finishedLoading) {
-      return;
-    }
-    
-    // Make an educated guess that when this shows, we're likely good to assume it's loaded
-    for (const message of messages) {
-      if (message.includes("Created:") && message.includes("minecraft:textures/atlas") && message.includes("TextureAtlas")) {
-        this.finishedLoading = true;
-      }
-      
-      // This also tends to happen relatively late in the startup process so we can use it as a marker as well
-      if (message.includes("Sound engine started") && message.includes("SoundEngine")) {
-        this.finishedLoading = true;
-      }
-    }
-  }
-
-  handleLogMessages(data: any) {
-    gobbleError(() => this.lazyLogChecker(data.messages));
-    
-    for (const e of data.messages) {
-      this.messages.push(this.formatMessage(e));
-    }
-  }
-
-  handleInstanceLaunch(data: any) {
-    this.currentStep.stepDesc = data.stepDesc;
-    this.currentStep.step = data.step;
-    this.currentStep.totalSteps = data.totalSteps;
-    this.currentStep.stepProgress = data.stepProgress;
-    this.currentStep.stepProgressHuman = data.stepProgressHuman;
-
-    if (!this.preInitMessages.has(data.stepDesc)) {
-      this.preInitMessages.add(data.stepDesc);
-      this.messages.push({i: ++this.lastIndex, t: "I", v: '[FTB APP][INFO] ' + data.stepDesc});
-    }
-  }
-
-  handleClientLaunch(data: any) {
-    this.logger.info("Client launch data", data)
-    if (data.messageType === 'message') {
-      this.launchProgress = data.message === 'init' ? [] : undefined;
-    } else if (data.messageType === 'progress') {
-      if (data.clientData.bars) {
-        this.launchProgress = data.clientData.bars;
-      }
-    } else if (data.messageType === 'clientDisconnect' || (data.messageType === 'message' && data.message === 'done')) {
-      this.finishedLoading = true;
-    }
-  }
-
-  public async launch(): Promise<void> {
-    this.logger.debug("Launching modpack")
-    
-    // Reset everything (supports relaunching)
-    this.loading = false;
-    this.preLaunch = true;
-    this.hasCrashed = false;
-    this.currentStep = this.emptyCurrentStep;
-    this.finishedLoading = false;
-    this.preInitMessages = new Set();
-    this.messages = new FixedSizeArray<{ i: number, t: string, v: string }>(20_000);
-    this.launchProgress = null;
-    
-    if (!this.$route.query.offline) {
-      this.logger.debug("Checking authentication for launch")
-      const refreshResponse = await validateAuthenticationOrSignIn(this.instance?.uuid);
-      if (!refreshResponse.ok && !refreshResponse.networkError) {
-        if (!this.instance) {
-          this.logger.warn("Instance not found, redirecting to library")
-          await this.$router.push({ name: RouterNames.ROOT_LIBRARY });
-          return;
-        }
-
-        this.logger.warn("Failed to refresh auth, redirecting to local pack")
-        await this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, params: { uuid: this.instance?.uuid ?? "" } });
-        return;
-      } else if (refreshResponse.networkError) {
-        this.logger.warn("Network error whilst refreshing auth, assuming offline mode")
-        await this.$router.push({
-          name: RouterNames.ROOT_LOCAL_PACK,
-          params: { uuid: this.instance?.uuid ?? "" },
-          query: { presentOffline: 'true' }
-        });
-        return;
-      }
-    }
-
-    // const disableChat = truethis.settingsState.settings.enableChat;
-    this.preLaunch = true;
-
-    this.logger.debug("Sending launch message")
-    const result = await sendMessage("launchInstance", {
-      uuid: this.instance?.uuid ?? "",
-      extraArgs: "", //disableChat ? '-Dmt.disablechat=true' : '',
-      offline: this.$route.query.offline === "true",
-      offlineUsername: this.$route.query.username as string ?? 'FTB Player',
-      cancelLaunch: null
-    }, 1000 * 60 * 10) // 10 minutes It's a long time, but we don't want to timeout too early
-    
-    if (result.status === 'error') {
-      this.logger.debug("Failed to launch instance, redirecting to library")
-      this.$router.back();
-      alertController.warning(result.message);
-    } else if (result.status === 'success') {
-      this.preLaunch = false;
-      this.logger.debug("Successfully completed launch handshake")
-    }
-  }
-
   openFolder() {
     gobbleError(async () => {
       await this.platform.get.io.openFinder(`${this.instance?.path ?? ""}`)
@@ -605,7 +457,7 @@ export default class LaunchingPage extends Vue {
   }
 
   get instance() {
-    return this.getInstance(this.$route.query.uuid as string) ?? null;
+    return this.getInstance(this.$route.params.uuid as string) ?? null;
   }
 
   get bars() {
@@ -621,19 +473,19 @@ export default class LaunchingPage extends Vue {
   }
 
   get instanceName() {
-    return (this.instance?.name ?? 'Unknown') + ' ' + (this.instance?.version ?? '');
+    if (!this.instance) {
+      return "Unknown";
+    }
+    
+    if (this.instance.name.endsWith(this.instance.version)) {
+      return this.instance.name;
+    }
+    
+    return `${this.instance.name} (${this.instance.version})`;
   }
 
   get currentModpack() {
     return this.instance;
-    // if (this.instance == null) {
-    //   return null;
-    // }
-    // const id: number = this.instance.id;
-    // if (this.modpacks.packsCache[id] === undefined) {
-    //   return null;
-    // }
-    // return this.modpacks.packsCache[id];
   }
 
   messageTypes = {
@@ -643,26 +495,6 @@ export default class LaunchingPage extends Vue {
     "D": "text-purple",
     "T": "text-green",
   };
-  
-  typeMap = new Map([
-    ["WARN", "W"],
-    ["INFO", "I"],
-    ["ERROR", "E"],
-    ["DEBUG", "D"],
-    ["TRACE", "T"],
-  ])
-  
-  lastType = "I";
-  formatMessage(message: string): { i: number, t: string, v: string } {
-    let type = this.lastType ?? "I";
-    const result = /^\[[^\/]+\/([^\]]+)]/.exec(message);
-    if (result !== null && result[1]) {
-      type = this.typeMap.get(result[1]) ?? "I";
-      this.lastType = type;
-    }
-    
-    return {i: ++this.lastIndex, t: type, v: message};
-  }
 
   runAction(action: InstanceAction) {
     if (!this.instance) {
@@ -673,22 +505,13 @@ export default class LaunchingPage extends Vue {
     this.showOptions = false;
   }
   
-  // get artSquare() {
-  //   if (!this.currentModpack?.art) {
-  //     return 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
-  //   }
-  //
-  //   const arts = this.currentModpack.art.filter((art) => art.type === 'square');
-  //   return arts.length > 0 ? arts[0].url : 'https://dist.creeper.host/FTB2/wallpapers/alt/T_nw.png';
-  // }
-    
   get launchStatus() {
     if (this.hasCrashed) {
       return '%s has crashed! 🔥';
     }
 
     if (!this.finishedLoading) {
-      return this.preLaunch ? 'Initializing %s' : 'Starting %s';
+      return 'Starting %s';
     }
 
     return 'Running %s';
@@ -713,25 +536,20 @@ export default class LaunchingPage extends Vue {
     
     // Don't filter. 
     if (this.enabledLogTypes.length === this.logTypes.length) {
-      return this.messages.getItems();
+      return this.messages;
     }
 
-    return this.messages.getItems()
-      .filter((e) => this.includeLog(e.t));
+    return this.messages.filter((e) => this.includeLog(e.t));
   }
   
   includeLog(type: string) {
     switch (type) {
-      case "I":
-        return this.enabledLogTypes.includes("Info");
-      case "W":
-        return this.enabledLogTypes.includes("Warn");
-      case "E":
-        return this.enabledLogTypes.includes("Error");
-      case "D":
-        return this.enabledLogTypes.includes("Debug");
-      case "T":
-        return this.enabledLogTypes.includes("Trace");
+      case "I": return this.enabledLogTypes.includes("Info");
+      case "W": return this.enabledLogTypes.includes("Warn");
+      case "E": return this.enabledLogTypes.includes("Error");
+      case "D": return this.enabledLogTypes.includes("Debug");
+      case "T": return this.enabledLogTypes.includes("Trace");
+      default: return this.enabledLogTypes.includes("Info");
     }
   }
   

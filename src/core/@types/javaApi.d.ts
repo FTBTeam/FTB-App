@@ -231,9 +231,11 @@ export interface Logs extends BaseData {
 export interface LaunchInstanceDataReply extends BaseData {
     status: string;
     message: string;
+    uuid: string;
 }
 
 export interface Status extends BaseData {
+    uuid: string;
     step: number;
     totalSteps: number;
     stepProgress: number;
@@ -371,6 +373,9 @@ export interface PingLauncherData extends BaseData {
 }
 
 export interface PongLauncherData extends BaseData {
+}
+
+export interface RequestInstanceRefresh extends BaseData {
 }
 
 export interface SettingsConfigureData extends BaseData {
@@ -537,7 +542,7 @@ export interface AccountIsValidHandlerData extends BaseData {
 }
 
 export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
-    success: boolean;
+    checkResult: ValidCheckResult;
     response: string;
 }
 
@@ -549,24 +554,20 @@ export interface AuthenticateMsProfileHandlerData extends BaseData {
 
 export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
     success: boolean;
-    networkError: boolean;
     code: string;
+    message: string;
 }
 
 export interface GetProfilesHandlerReply extends PrivateBaseData {
-    profiles: AccountProfile[];
-    activeProfile: AccountProfile;
+    profiles: SharableData[];
+    activeProfile: SharableData;
 }
 
 export interface RefreshAuthenticationProfileHandlerData extends BaseData {
     profileUuid: string;
-    liveAccessToken: string;
-    liveRefreshToken: string;
-    liveExpires: number;
 }
 
 export interface RefreshAuthenticationProfileHandlerReply extends PrivateBaseData {
-    networkError: boolean;
     success: boolean;
     code: string;
 }
@@ -637,6 +638,7 @@ export interface InstanceJson {
     memory: number;
     jvmArgs: string;
     shellArgs: string;
+    programArgs: string;
     embeddedJre: boolean;
     jrePath: string;
     width: number;
@@ -730,12 +732,10 @@ export interface UserApiCredentials {
     usesBearerAuth: boolean;
 }
 
-export interface AccountProfile {
+export interface SharableData {
     uuid: string;
-    lastLogin: number;
-    username: string;
-    msAuth: MSAuthStore;
-    skins: AccountSkin[];
+    minecraftName: string;
+    skinUrl: string;
 }
 
 export interface GeneralSettings {
@@ -753,6 +753,7 @@ export interface InstanceSettings {
     updateChannel: string;
     javaArgs: string;
     shellArgs: string;
+    programArgs: string;
 }
 
 export interface AppearanceSettings {
@@ -822,15 +823,6 @@ export interface Chat {
     online: boolean;
 }
 
-export interface MSAuthStore {
-    minecraftUuid: string;
-    minecraftToken: string;
-    xblUserHash: string;
-    liveAccessToken: string;
-    liveRefreshToken: string;
-    liveExpiresAt: number;
-}
-
 export interface Target {
     id: number;
     version: string;
@@ -880,14 +872,6 @@ export interface ChatHash {
     hashShort: string;
 }
 
-export interface AccountSkin {
-    id: string;
-    state: string;
-    url: string;
-    variant: string;
-    alias: string;
-}
-
 export interface Account {
     identityProvider: string;
     userId: string;
@@ -909,5 +893,7 @@ export interface Customfield {
 }
 
 export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";
+
+export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
 
 export type Type = "BASIC" | "FULL";

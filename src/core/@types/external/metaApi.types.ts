@@ -32,28 +32,3 @@ export interface BlogPost {
   feature_image_alt?: any;
   feature_image_caption?: any;
 }
-
-interface AdBase {
-  id: string;
-  priority: number;
-  hover?: string;
-  link?: string;
-}
-
-type VideoAd = AdBase & {
-  type: 'video';
-  asset: string;
-}
-
-type ImageAd = AdBase & {
-  type: 'image';
-  asset: string;
-}
-
-type TextAd = AdBase & {
-  type: 'text';
-  value: string;
-  markdown: boolean;
-}
-
-export type Ad = VideoAd | ImageAd | TextAd;

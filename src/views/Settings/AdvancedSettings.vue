@@ -7,6 +7,28 @@
         These settings are for advanced users only, changing these settings could have unintended consequences.
       </p>
     </div>
+
+    <div class="mb-4 border-b border-white border-opacity-25 pb-6" v-if="platform.isElectron()">
+      <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
+      <div class="flex items-center">
+        <div class="block flex-1 mr-2">
+          <b>Release Channel</b>
+          <small class="block text-muted mr-6 mt-2">
+            Feeling adventurous? Switch to the beta or alpha channel to get the latest features before they're released to everyone.
+          </small>
+        </div>
+  
+        <selection2
+          :disabled="checkingForUpdates"
+          :options="channelOptions"
+          v-model="appChannel"
+          :style="{width: '192px'}"
+          @change="setAppChannel"
+        />
+      </div>
+      
+      <p v-if="checkingForUpdates">Checking for updates...</p>
+    </div>
     
     <div class="mb-4 border-b border-white border-opacity-25 pb-6">
       <p class="block text-white-700 text-lg font-bold mt-6 mb-2">Troubleshooting</p>
@@ -44,9 +66,14 @@ import UiButton from '@/components/core/ui/UiButton.vue';
 import {SettingsData} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import Selection2 from '@/components/core/ui/Selection2.vue';
+import {ReleaseChannelOptions} from '@/utils/commonOptions';
+
+type ReleaseChannel = 'release' | 'beta' | 'alpha';
 
 @Component({
   components: {
+    Selection2,
     ProgressBar,
     Loader,
     UiButton,
@@ -63,8 +90,23 @@ export default class AppSettings extends Vue {
   
   fixMeKey = Math.random();
   
+  checkingForUpdates = false;
+  appChannel: ReleaseChannel = "release";
+  
   async created() {
-    await this.loadSettings();
+    await Promise.all([
+      new Promise(async (res) => {
+        const channel = await this.getChannel();
+        if (channel === "latest") {
+          this.appChannel = "release";
+        } else {
+          this.appChannel = (channel as ReleaseChannel) ?? "release";
+        }
+
+        res(null);
+      }),
+      this.loadSettings()
+    ])
 
     // Make a copy of the settings so we don't mutate the vuex state
     this.localSettings = { ...this.settingsState.settings };
@@ -86,6 +128,39 @@ export default class AppSettings extends Vue {
     this.localSettings.workaround.ignoreForgeProcessorOutputHashes = value;
     this.saveSettings(this.localSettings);
     this.fixMeKey = Math.random();
+  }
+  
+  get channelOptions() {
+    return ReleaseChannelOptions(false)
+  }
+  
+  public async getChannel() {
+    console.log(await platform.get.app.appChannel());
+    return await platform.get.app.appChannel();
+  }
+  
+  public async setAppChannel() {
+    if (!this.appChannel) {
+      return;
+    }
+    
+    this.checkingForUpdates = true;
+    try {
+      await platform.get.app.changeAppChannel(this.transformToElectronChannel(this.appChannel));
+    } catch (e) {
+      console.error('Failed to set app channel', e);
+    }
+    
+    this.checkingForUpdates = false;
+  }
+  
+  transformToElectronChannel(channel: ReleaseChannel) {
+    switch (channel) {
+      case 'release': return 'latest';
+      case 'beta': return 'beta';
+      case 'alpha': return 'alpha';
+      default: return 'latest';
+    }
   }
 }
 </script>

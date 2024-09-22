@@ -45,35 +45,60 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import { validateAuthenticationOrSignIn } from '@/utils/auth/authentication';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import platform from '@/utils/interface/electron-overwolf';
 import {alertController} from '@/core/controllers/alertController';
+import {safeCheckProfileActive} from '@/core/auth/authValidChecker';
+import store from '@/modules/store';
+import {createLogger} from '@/core/logger';
+import {Getter} from 'vuex-class';
+import {AuthProfile} from '@/modules/core/core.types';
+
+const logger = createLogger('ShareInstanceModal');
 
 @Component({
   components: {UiButton, ProgressBar },
 })
 export default class ShareInstanceModal extends Vue {
   @Prop() uuid!: string;
-
   @Prop({ default: false }) open!: boolean;
+  
   internalOpen = false;
 
   error: null | string = null;
   shareCode: null | string = null;
   loading = false;
+  
+  @Getter('getActiveProfile', { namespace: 'core' }) activeProfile!: AuthProfile | undefined;
 
   async shareInstance() {
     if (this.loading) {
       return;
     }
+    
+    // This shouldn't be possible
+    if (!this.activeProfile) {
+      alertController.error('You need to be logged in to share an instance');
+      this.close();
+      return;
+    }
 
     this.loading = true;
-    if (!(await validateAuthenticationOrSignIn()).ok) {
-      this.close();
+    const checkResult = await this.checkAuthState();
+    if (!checkResult) {
+      if (checkResult === null) {
+        // Close the modal if the user is not logged in
+        alertController.error('You need to be logged in to share an instance');
+        this.close();
+        return;
+      }
+      
+      // Otherwise, it's a fatal error
+      this.loading = false;
+      this.error = 'Failed to check profile';
       return;
     }
 
@@ -89,6 +114,30 @@ export default class ShareInstanceModal extends Vue {
 
     this.shareCode = shareRequest.code;
     this.loading = false;
+  }
+  
+  private async checkAuthState(): Promise<boolean | null> {
+    logger.debug("Checking profile");
+    const checkResult = await safeCheckProfileActive(this.activeProfile!.uuid);
+    if (checkResult !== "VALID") {
+      logger.warn("Failed to check profile");
+
+      if (checkResult === "TOTAL_FAILURE") {
+        logger.error("Failed to check profile");
+        // Technically we could ask the user to sign in here but technically this is fatal
+      }
+
+      if (checkResult === "NOT_LOGGED_IN") {
+        logger.debug("Profile is not logged in, asking the user to sign in");
+        
+        await store.dispatch('core/openSignIn')
+        return null;
+      }
+
+      return false;
+    }
+    
+    return true;
   }
 
   created() {

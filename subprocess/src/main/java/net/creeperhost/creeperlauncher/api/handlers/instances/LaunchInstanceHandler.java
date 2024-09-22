@@ -33,16 +33,16 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
 
         if (data.cancelLaunch && instance.prepareFuture != null && instance.prepareToken != null) {
             instance.prepareToken.cancel(instance.prepareFuture);
-            WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, "canceled", "Instance launch canceled."));
+            WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "canceled", "Instance launch canceled."));
             return;
         }
 
         if (launcher.isRunning()) {
-            WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, "error", "Instance is already running."));
+            WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "error", "Instance is already running."));
             return;
         }
         if (data.offline && StringUtils.isEmpty(data.offlineUsername)) {
-            WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, "error", "Offline username not specified."));
+            WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "error", "Offline username not specified."));
             return;
         }
 
@@ -54,10 +54,10 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
             LOGGER.info("Preparing instance for launch...");
             try {
                 instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.offlineUsername : null);
-                WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, "success", ""));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "success", ""));
             } catch (InstanceLaunchException ex) {
                 if (ex instanceof InstanceLaunchException.Abort) {
-                    WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, "abort", ex.getMessage()));
+                    WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "abort", ex.getMessage()));
                 } else {
                     LOGGER.error(NO_SENTRY, "Failed to launch instance.", ex);
                     Throwable cause = ex.getCause();
@@ -69,11 +69,11 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
                         message += " because.. " + cause.getClass().getName() + ": " + cause.getMessage();
                     }
 
-                    WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, "error", message));
+                    WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "error", message));
                 }
             } catch (Throwable ex) {
                 LOGGER.error("Unknown error whilst starting instance.", ex);
-                WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, "error", "Unexpected error whilst starting instance."));
+                WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "error", "Unexpected error whilst starting instance."));
             }
             instance.prepareToken = null;
             instance.prepareFuture = null;

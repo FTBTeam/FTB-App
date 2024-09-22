@@ -192,6 +192,17 @@
       <small class="text-muted block mb-6 max-w-xl mt-2">
         These arguments are appended to your instances upon start, they are normal java arguments.
       </small>
+
+      <ftb-input
+        label="Program arguments"
+        :value="instanceSettings.programArgs"
+        v-model="instanceSettings.programArgs"
+        placeholder="--fullscreen"
+        @blur="saveSettings"
+      />
+      <small class="text-muted block mb-6 max-w-xl">
+        These arguments are appended to the end of the java command, these are typically arguments Minecraft uses.
+      </small>
       
       <ftb-input
         label="Shell arguments"
@@ -208,7 +219,7 @@
       <p class="mb-4 block text-sm">This is for illustrative purposes only, this is not a complete example.</p>
 
       <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto select-text" v-if="instanceSettings.memory">
-        {{instanceSettings.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * megabyteSize))}} {{instanceSettings.jvmArgs}}
+        {{instanceSettings.shellArgs}} java {{instanceSettings.jvmArgs}} -Xmx{{prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * megabyteSize))}} -jar minecraft.jar {{instanceSettings.programArgs}}
       </code>
     </div>
 
@@ -527,6 +538,7 @@ export default class ModpackSettings extends Vue {
       category: instance.category,
       locked: instance.locked,
       shellArgs: instance.shellArgs,
+      programArgs: instance.programArgs,
       preventMetaModInjection: instance.preventMetaModInjection,
     }
   }

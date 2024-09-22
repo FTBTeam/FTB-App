@@ -7,7 +7,7 @@
 
       <ul class="actions">
         <li class="title">Tools</li>
-        <li v-if="allowOffline" @click="$emit('playOffline')">
+        <li v-if="allowOffline && !isRunning" @click="$emit('playOffline')">
           <span><font-awesome-icon icon="play" /></span> Play Offline
         </li>
         <li @click="$emit('openSettings')">
@@ -38,8 +38,8 @@
         <li v-if="getProfiles && getProfiles.length > 0" @click="shareConfirm = true">
           <span><font-awesome-icon icon="share" /></span>Share instance
         </li>
-        <li class="title">Danger</li>
-        <li @click="deleteInstance">
+        <li class="title" v-if="!isRunning">Danger</li>
+        <li @click="deleteInstance" v-if="!isRunning">
           <span><font-awesome-icon icon="trash" /></span>Delete instance
         </li>
       </ul>
@@ -77,9 +77,11 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {createLogger} from '@/core/logger';
-import {Getter} from 'vuex-class';
+import {Getter, State} from 'vuex-class';
 import {AuthProfile} from '@/modules/core/core.types';
 import platform from '@/utils/interface/electron-overwolf';
+import {ns} from '@/core/state/appState';
+import {InstanceRunningData} from '@/core/state/misc/runningState';
 
 @Component({
   components: {
@@ -91,6 +93,8 @@ export default class PackActions extends Vue {
   @Prop() instance!: SugaredInstanceJson;
   @Prop({ default: false }) allowOffline!: boolean;
   @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
+
+  @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
   
   private logger = createLogger("PackActions.vue")
 
@@ -121,6 +125,10 @@ export default class PackActions extends Vue {
     }
 
     return this.instanceFolders.findIndex((e) => e === path) !== -1;
+  }
+  
+  get isRunning() {
+    return this.runningInstances.some(e => e.uuid === this.instance.uuid);
   }
 
   public deleteInstance() {

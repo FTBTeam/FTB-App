@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade-and-grow">
-    <div v-if="open" class="modal-container" :class="{ads: advertsEnabled}" @mousedown.self="() => close(true)">
+    <div v-if="open" class="modal-container" :class="{ads: advertsEnabled}" @mousedown.self="() => close(true)">      
       <div class="modal-contents" :class="`${size}`">
         <div class="modal-header" :class="{'no-subtitle': !subTitle}">
           <div class="modal-heading">
@@ -101,13 +101,13 @@ export default class Modal extends Vue {
   z-index: 49999; // just under of the title bar
   background: rgba(black, 0.85);
   width: 100vw;
-  height: calc(100vh - 2px);
+  height: 100vh;
   top: 0;
   left: 0;
   display: grid;
   place-items: center;
   backdrop-filter: blur(5px);
-  border-right: 1px solid rgba(white, .15);
+  overflow: hidden;
   
   &.ads {
     width: calc(100vw - 400px);

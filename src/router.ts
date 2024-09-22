@@ -14,7 +14,7 @@ export enum RouterNames {
   ROOT_FAVORITES = 'favorites',
   ROOT_LOCAL_PACK = 'instancepage',
   ROOT_PREVIEW_PACK = 'modpackpage',
-  ROOT_LAUNCH_PACK = 'launchingpage',
+  ROOT_RUNNING_INSTANCE = 'running-instance',
   SETTINGS_INSTANCE = 'instance-settings',
   SETTINGS_ADVANCED = "advanced-settings",
   SETTINGS_DOWNLOAD = 'download-settings',
@@ -127,9 +127,9 @@ const router = new Router({
           component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
         },
         {
-          path: '/launching',
-          name: RouterNames.ROOT_LAUNCH_PACK,
-          component: () => import(/* webpackChunkName: "launchingpage" */ './views/LaunchingPage.vue'),
+          path: '/running/:uuid',
+          name: RouterNames.ROOT_RUNNING_INSTANCE,
+          component: () => import(/* webpackChunkName: "launchingpage" */ './views/RunningInstance.vue'),
         },
         {
           path: '/support',

@@ -440,10 +440,6 @@ export default class MainApp extends Vue {
       && !this.appConnecting
       && this.allJobsDone()
   }
-  
-  get showSidebar() {
-    return !this.$route.path.startsWith('/settings');
-  }
 
   get advertsEnabled(): boolean {
     return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
@@ -463,6 +459,10 @@ export default class MainApp extends Vue {
     } else if (!this.appStarting && !this.appInstalling && this.isReconnecting) {
       return "Reconnecting..."
     }
+  }
+
+  get showSidebar() {
+    return !this.$route.path.startsWith('/settings');
   }
 }
 </script>

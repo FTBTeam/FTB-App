@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class LaunchInstanceData extends BaseData {
-
     public String uuid;
     public String extraArgs = "";
     public boolean cancelLaunch = false;
@@ -16,7 +15,8 @@ public class LaunchInstanceData extends BaseData {
     public String offlineUsername;
 
     public static class Status extends BaseData {
-
+        public UUID uuid;
+        
         // The current step number (1-totalSteps)
         public int step;
         // The total number of steps that need to be executed.
@@ -32,8 +32,9 @@ public class LaunchInstanceData extends BaseData {
         @Nullable
         public String stepProgressHuman;
 
-        public Status(int step, int totalSteps, float stepProgress, String stepDesc, @Nullable String stepProgressHuman) {
+        public Status(UUID uuid, int step, int totalSteps, float stepProgress, String stepDesc, @Nullable String stepProgressHuman) {
             this.type = "launchInstance.status";
+            this.uuid = uuid;
             this.step = step;
             this.totalSteps = totalSteps;
             this.stepProgress = stepProgress;
@@ -43,14 +44,15 @@ public class LaunchInstanceData extends BaseData {
     }
 
     public static class Reply extends BaseData {
-
         public String status;
-
         public String message;
+        public UUID uuid;
 
-        public Reply(LaunchInstanceData data, String status, String message) {
+        public Reply(LaunchInstanceData data, UUID uuid, String status, String message) {
             type = "launchInstance.reply";
             requestId = data.requestId;
+            
+            this.uuid = uuid;
             this.status = status;
             this.message = message;
         }
@@ -73,13 +75,13 @@ public class LaunchInstanceData extends BaseData {
     public static class Logs extends BaseData {
 
         // The UUID of the instance.
-        public final String uuid;
+        public final UUID uuid;
         // The log messages to append.
         public final List<String> messages;
 
         public Logs(UUID instanceId, List<String> messages) {
             type = "launchInstance.logs";
-            this.uuid = instanceId.toString();
+            this.uuid = instanceId;
             this.messages = messages;
         }
     }

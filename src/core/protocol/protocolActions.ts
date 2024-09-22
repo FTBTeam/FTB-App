@@ -1,5 +1,4 @@
 import {ModpackInstallAction} from './actions/ModpackInstallAction';
-import {AuthAction} from '@/core/protocol/actions/AuthAction';
 import {createLogger} from '@/core/logger';
 import {MTAuthAction} from '@/core/protocol/actions/MTAuthAction';
 
@@ -24,7 +23,6 @@ const protocolSpace = 'ftb';
 const actions: Action[] = [
   // NOTE: Used in test cases, don't remove without updating tests!
   new ModpackInstallAction(),
-  new AuthAction(),
   new MTAuthAction(),
 ];
 

@@ -1,67 +1,69 @@
 package net.creeperhost.creeperlauncher.api.handlers.profiles;
 
 import net.creeperhost.creeperlauncher.accounts.AccountManager;
-import net.creeperhost.creeperlauncher.accounts.AccountProfile;
-import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftAuthenticator;
-import net.creeperhost.creeperlauncher.accounts.authentication.MicrosoftOAuth;
-import net.creeperhost.creeperlauncher.accounts.data.AccountSkin;
+import net.creeperhost.creeperlauncher.accounts.MicrosoftProfile;
+import net.creeperhost.creeperlauncher.accounts.auth.MicrosoftOAuthProcess;
+import net.creeperhost.creeperlauncher.accounts.data.OAuthTokenHolder;
 import net.creeperhost.creeperlauncher.api.WebSocketHandler;
 import net.creeperhost.creeperlauncher.api.data.BaseData;
 import net.creeperhost.creeperlauncher.api.data.PrivateBaseData;
 import net.creeperhost.creeperlauncher.api.handlers.IMessageHandler;
-import net.creeperhost.creeperlauncher.util.Result;
+import net.creeperhost.creeperlauncher.util.MiscUtils;
 
 import javax.annotation.Nullable;
-import java.time.Instant;
 
-/**
- * The authentication server has CORS! Ughhh! Looks like we're doing this here now :P
- */
 public class AuthenticateMsProfileHandler implements IMessageHandler<AuthenticateMsProfileHandler.Data> {
     @Override
     public void handle(Data data) {
-        // Try and authenticate with the MC server
-        Result<MicrosoftOAuth.DanceResult, MicrosoftOAuth.DanceCodedError> authenticate = MicrosoftAuthenticator.authenticate(new MicrosoftAuthenticator.AuthRequest(data.liveAccessToken, data.liveRefreshToken, data.liveExpires));
-
-        if (authenticate.isErr()) {
-            MicrosoftOAuth.DanceCodedError danceCodedError = authenticate.unwrapErr();
-            WebSocketHandler.sendMessage(new Reply(data, false, danceCodedError.code(), danceCodedError.networkError()));
+        var result = MicrosoftOAuthProcess.authWithMinecraft(new OAuthTokenHolder(
+                data.liveAccessToken,
+                data.liveRefreshToken,
+                data.liveExpires
+        ));
+        
+        if (result.isErr()) {
+            var error = result.unwrapErr();
+            WebSocketHandler.sendMessage(new Reply(data, false, error.code(), error.message()));
             return;
         }
-
-        MicrosoftOAuth.DanceResult result = authenticate.unwrap();
-        // Parse the users skins (We don't care if it fails).
-        AccountSkin[] skins = result.profile().skins().toArray(new AccountSkin[0]);
-        AccountProfile profile = new AccountProfile(
-                result.store().minecraftUuid,
-                Instant.now().getEpochSecond(),
-                result.profile().name(),
-                skins,
-                result.store()
+        
+        var accountData = result.unwrap();
+        
+        var newAccount = new MicrosoftProfile(
+            MiscUtils.createUuidFromStringWithoutDashes(accountData.profileData().id()),
+            accountData.profileData().name(),
+            accountData.minecraftAccessToken(),
+            accountData.minecraftExpiresIn(),
+            data.liveAccessToken,
+            data.liveRefreshToken,
+            data.liveExpires,
+            accountData.userHash(),
+            accountData.notAfter(),
+            accountData.xstsToken(),
+            accountData.profileData().getActiveSkinUrl()
         );
-
-        // Try and add the profile
-        AccountManager.get().addProfile(profile);
+        
+        AccountManager.get().addProfile(newAccount);
 
         WebSocketHandler.sendMessage(new Reply(data));
     }
 
     private static class Reply extends PrivateBaseData {
         public boolean success;
-        public boolean networkError;
         @Nullable public String code;
+        @Nullable public String message;
 
-        public Reply(Data data, boolean success, @Nullable String code, boolean networkError) {
+        public Reply(Data data, boolean success, @Nullable String code, @Nullable String message) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
 
             this.success = success;
             this.code = code;
-            this.networkError = networkError;
+            this.message = message;
         }
 
         public Reply(Data data) {
-            this(data, true, null, false);
+            this(data, true, null, null);
         }
     }
 

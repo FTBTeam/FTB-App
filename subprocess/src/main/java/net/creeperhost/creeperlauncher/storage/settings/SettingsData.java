@@ -100,6 +100,7 @@ public class SettingsData {
                 false,
                 "release",
                 String.join(" ", MOJANG_DEFAULT_ARGS), 
+                "",
                 ""
             ),
             new AppearanceSettings(
@@ -201,8 +202,9 @@ public class SettingsData {
         private String updateChannel;
         private String javaArgs;
         private String shellArgs;
+        private String programArgs;
 
-        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, String javaArgs, String shellArgs) {
+        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, String javaArgs, String shellArgs, String programArgs) {
             this.width = width;
             this.height = height;
             this.memory = memory;
@@ -210,6 +212,7 @@ public class SettingsData {
             this.updateChannel = updateChannel;
             this.javaArgs = javaArgs;
             this.shellArgs = shellArgs;
+            this.programArgs = programArgs;
         }
 
         public int width() {
@@ -266,6 +269,14 @@ public class SettingsData {
 
         public void setShellArgs(String shellArgs) {
             this.shellArgs = shellArgs;
+        }
+
+        public String getProgramArgs() {
+            return programArgs;
+        }
+
+        public void setProgramArgs(String programArgs) {
+            this.programArgs = programArgs;
         }
     }
 

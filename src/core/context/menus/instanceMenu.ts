@@ -37,7 +37,7 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
         async action(context) {
           await InstanceActions.start(context.instance)
         },
-        predicate: context => InstanceActions.canStart(context.instance) && !InstanceActions.isUpdating(context.instance)
+        predicate: context => InstanceActions.canStart(context.instance) && !InstanceActions.isUpdating(context.instance) && !InstanceActions.isRunning(context.instance)
       },
       {
         title: 'Pin',

@@ -38,6 +38,8 @@ public class InstanceJson {
 
     public String jvmArgs = Settings.getSettings().instanceDefaults().javaArgs();
     public String shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
+    public String programArgs = Settings.getSettings().instanceDefaults().getProgramArgs(); 
+    
     public boolean embeddedJre = true;
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
@@ -95,6 +97,7 @@ public class InstanceJson {
         recMemory = other.recMemory;
         memory = other.memory;
         jvmArgs = other.jvmArgs;
+        programArgs = other.programArgs;
         embeddedJre = other.embeddedJre;
         jrePath = other.jrePath;
         width = other.width;

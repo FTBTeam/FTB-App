@@ -4,7 +4,7 @@
       <div class="action-heading">
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && currentInstall) || modloaderUpdating}">
           <div class="play">
-            <ftb-button color="primary" class="py-3 px-8 ftb-play-button" @click="() => $emit('mainAction')">
+            <ftb-button color="primary" class="py-3 px-8 ftb-play-button" :disabled="isInstalled && !requiresSync && isRunning" @click="() => $emit('mainAction')">
               <font-awesome-icon :icon="isInstalled ? (requiresSync ? 'download' : 'play') : 'download'" class="mr-4" />
               {{ isInstalled ? (requiresSync ? 'Sync' : 'Play') : 'Install' }}
             </ftb-button>
@@ -234,9 +234,10 @@ import {parseMarkdown} from '@/utils';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {ns} from '@/core/state/appState';
 import {InstallStatus} from '@/core/controllers/InstanceInstallController';
-import {Getter} from 'vuex-class';
+import {Getter, State} from 'vuex-class';
 import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {InstanceRunningData} from '@/core/state/misc/runningState';
 
 @Component({
   name: 'pack-body',
@@ -265,6 +266,7 @@ export default class PackBody extends Vue {
 
   @Prop({ default: () => [] }) backups!: Backup[];
 
+  @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
   @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
   @Getter("currentModloaderUpdate", ns("v2/install")) currentModloaderUpdate!: ModLoaderUpdateState[] | null;
   
@@ -308,6 +310,12 @@ export default class PackBody extends Vue {
     }
 
     return this.currentInstall?.forInstanceUuid === this.instance.uuid
+  }
+  
+  get isRunning() {
+    if (!this.isInstalled || !this.instance) return false;
+    
+    return this.runningInstances.some(e => e.uuid === this.instance.uuid);    
   }
 
   get isVanilla() {

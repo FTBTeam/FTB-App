@@ -201,7 +201,8 @@ public class Settings {
                     getOrDefault("fullscreen", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().fullscreen()),
                     getOrDefault("updateChannel", DEFAULT_SETTINGS.instanceDefaults().updateChannel()),
                     getOrDefault("jvmargs", DEFAULT_SETTINGS.instanceDefaults().javaArgs()),
-                    getOrDefault("shellArgs", DEFAULT_SETTINGS.instanceDefaults().shellArgs())
+                    getOrDefault("shellArgs", DEFAULT_SETTINGS.instanceDefaults().shellArgs()),
+                    "" // There is no existing setting for this
                 ),
                 new SettingsData.AppearanceSettings(
                     getOrDefault("useSystemWindowStyle", Boolean::parseBoolean, DEFAULT_SETTINGS.appearance().useSystemWindowStyle()),

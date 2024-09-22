@@ -34,6 +34,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.name = getOrDefault(updateJson, "name", JsonElement::getAsString, instance.props.name);
             instance.props.jvmArgs = getOrDefault(updateJson, "jvmArgs", JsonElement::getAsString, instance.props.jvmArgs);
             instance.props.shellArgs = getOrDefault(updateJson, "shellArgs", JsonElement::getAsString, instance.props.shellArgs);
+            instance.props.programArgs = getOrDefault(updateJson, "programArgs", JsonElement::getAsString, instance.props.programArgs);
 
             Path jreRealPath = instance.props.jrePath;
             if (updateJson.has("jrePath")) {

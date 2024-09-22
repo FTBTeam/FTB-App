@@ -85,6 +85,17 @@
     <small class="text-muted block mb-6 max-w-xl mt-2">
       These arguments are appended to your instances upon start, they are normal java arguments.
     </small>
+
+    <ftb-input
+      label="Program arguments"
+      :value="localSettings.instanceDefaults.programArgs"
+      v-model="localSettings.instanceDefaults.programArgs"
+      placeholder="--fullscreen"
+      @blur="saveMutated"
+    />
+    <small class="text-muted block mb-6 max-w-xl">
+      These arguments are appended to the end of the java command, these are typically arguments Minecraft uses.
+    </small>
     
     <ftb-input
       label="Shell arguments"
@@ -101,7 +112,7 @@
     <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
     
     <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.instanceDefaults.memory">
-      {{localSettings.instanceDefaults.shellArgs}} java -jar minecraft.jar -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.instanceDefaults.memory.toString()) * 1024 * 1000))}} {{localSettings.instanceDefaults.javaArgs}}
+      {{localSettings.instanceDefaults.shellArgs}} java {{localSettings.instanceDefaults.javaArgs}} -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.instanceDefaults.memory.toString()) * 1024 * 1000))}} -jar minecraft.jar {{localSettings.instanceDefaults.programArgs}}
     </code>
   </div>
   <Loader v-else />

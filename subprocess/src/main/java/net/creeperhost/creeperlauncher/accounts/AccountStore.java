@@ -7,12 +7,12 @@ import java.util.UUID;
 public class AccountStore {
     String version;
 
-    public Set<AccountProfile> profiles;
+    public Set<MicrosoftProfile> profiles;
 
     @Nullable
     public UUID activeProfile;
 
-    public AccountStore(Set<AccountProfile> profiles, @Nullable UUID activeProfile) {
+    public AccountStore(Set<MicrosoftProfile> profiles, @Nullable UUID activeProfile) {
         this.version = AccountManager.SPEC_VERSION;
         this.profiles = profiles;
         this.activeProfile = activeProfile;
