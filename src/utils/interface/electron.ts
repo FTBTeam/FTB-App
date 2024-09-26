@@ -372,14 +372,17 @@ const Electron: ElectronOverwolfInterface = {
         logToBoth("Failed to find java folder", eLogger.error)
         throw throwCustomError("Failed to find java folder", "We've not been able to find the Java folder. We can't recover from this.")
       }
-      
-      // Move all of the folders contents to the runtime folder
-      // Then delete the jre folder
+
       const jrePath = path.join(runtimePath, "jre", jreFolder);
       const jreFiles = fs.readdirSync(jrePath);
-      jreFiles.forEach(e => {
-        fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
-      });
+      await retryAttempt(async () => {
+        // Move all of the folders contents to the runtime folder
+        // Then delete the jre folder
+        logToBoth("Moving Java files", eLogger.log, jreFiles)
+        jreFiles.forEach(e => {
+          fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
+        });
+      }, 5);
 
       logAndUpdate("Cleaning up")
       try {
