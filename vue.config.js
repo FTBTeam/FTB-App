@@ -272,6 +272,6 @@ async function signJnilibInJar(context) {
 
     // Update the JAR file with the signed file
     console.info(`Updating ${file} in ${jar}`);
-    execSync(`jar --update --file=${absoluteJar} ${file}`, {cwd: 'tmp'});
+    execSync(`jar --update --file=${absoluteJar} ${file.replace("tmp/", "")}`, {cwd: 'tmp'});
   });
 }
