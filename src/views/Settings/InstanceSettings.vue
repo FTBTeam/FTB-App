@@ -66,6 +66,15 @@
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
+
+    <ui-toggle 
+      label="Disable helper mod injection"
+      desc="The FTB App will inject helper mods into your instance to help the app and your instance work together. Sometimes this can cause issues with Minecraft, Mods, Etc. You can disable this behaviour here." 
+      v-model="localSettings.instanceDefaults.preventMetaModInjection" 
+      class="mb-4" @input="() => {
+        saveMutated()
+      }" />
+    
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
 
     <div class="flex gap-4 items-end">
