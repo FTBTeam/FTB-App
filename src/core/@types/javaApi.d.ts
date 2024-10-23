@@ -751,6 +751,7 @@ export interface InstanceSettings {
     memory: number;
     fullscreen: boolean;
     updateChannel: string;
+    preventMetaModInjection: boolean;
     javaArgs: string;
     shellArgs: string;
     programArgs: string;

@@ -200,6 +200,7 @@ public class Settings {
                     getOrDefault("memory", Integer::parseInt, DEFAULT_SETTINGS.instanceDefaults().memory()),
                     getOrDefault("fullscreen", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().fullscreen()),
                     getOrDefault("updateChannel", DEFAULT_SETTINGS.instanceDefaults().updateChannel()),
+                    getOrDefault("preventMetaModInjection", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().preventMetaModInjection()),
                     getOrDefault("jvmargs", DEFAULT_SETTINGS.instanceDefaults().javaArgs()),
                     getOrDefault("shellArgs", DEFAULT_SETTINGS.instanceDefaults().shellArgs()),
                     "" // There is no existing setting for this

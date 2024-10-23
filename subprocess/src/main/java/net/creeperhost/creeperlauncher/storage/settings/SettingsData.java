@@ -99,6 +99,7 @@ public class SettingsData {
                 computeRecommendedInstanceRam(),
                 false,
                 "release",
+                false,
                 String.join(" ", MOJANG_DEFAULT_ARGS), 
                 "",
                 ""
@@ -200,16 +201,18 @@ public class SettingsData {
         private int memory;
         private boolean fullscreen;
         private String updateChannel;
+        private boolean preventMetaModInjection;
         private String javaArgs;
         private String shellArgs;
         private String programArgs;
 
-        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, String javaArgs, String shellArgs, String programArgs) {
+        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, boolean preventMetaModInjection, String javaArgs, String shellArgs, String programArgs) {
             this.width = width;
             this.height = height;
             this.memory = memory;
             this.fullscreen = fullscreen;
             this.updateChannel = updateChannel;
+            this.preventMetaModInjection = preventMetaModInjection;
             this.javaArgs = javaArgs;
             this.shellArgs = shellArgs;
             this.programArgs = programArgs;
@@ -233,6 +236,10 @@ public class SettingsData {
 
         public String updateChannel() {
             return updateChannel;
+        }
+        
+        public boolean preventMetaModInjection() {
+            return preventMetaModInjection;
         }
 
         public String javaArgs() {
