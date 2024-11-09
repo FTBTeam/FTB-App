@@ -78,6 +78,8 @@ jobs:
     runs-on: windows-latest
     # Only run this job if the previous job was successful
     needs: build-linux
+    # Skip this job if the commit message contains [-skip windows]
+    if: "!contains(github.event.head_commit.message, '[-skip windows]')"
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -117,10 +119,11 @@ jobs:
           release/beta.yml
   build-macos:
     runs-on: macos-latest
+    # Skip this job if the commit message contains [-skip macos]
+    if: "!contains(github.event.head_commit.message, '[-skip macos]')"
     # Only run this job if the previous job was successful
     needs:
       - build-linux
-      - build-windows
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -162,6 +165,8 @@ jobs:
           release/*.blockmap
           release/*-mac.yml
   build-overwolf:
+    # Skip this job if the commit message contains [-skip overwolf]
+    if: "!contains(github.event.head_commit.message, '[-skip overwolf]')"
     needs:
       - build-linux
     runs-on: ubuntu-latest
@@ -204,6 +209,7 @@ jobs:
       - build-linux
       - build-windows
       - build-macos
+    if: "!contains(github.event.head_commit.message, '[-skip release]')"
     runs-on: ubuntu-latest
     steps:
       - name: Download linux releases
@@ -212,11 +218,13 @@ jobs:
           name: release-linux
           path: release/
       - name: Download windows releases
+        if: "!contains(github.event.head_commit.message, '[-skip windows]')"
         uses: actions/download-artifact@v4
         with:
           name: release-windows
           path: release/
       - name: Download macos releases
+        if: "!contains(github.event.head_commit.message, '[-skip macos]')"
         uses: actions/download-artifact@v4
         with:
           name: release-macos
