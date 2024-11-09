@@ -1,12 +1,18 @@
 diff --git a/lib/notarytool.js b/lib/notarytool.js
-index 76d3556e3b4ed304ef29a3166cb9554edf6b83b8..e577662a94718d47207beb8dba679375c5a4889e 100644
+index 76d3556e3b4ed304ef29a3166cb9554edf6b83b8..80de04bc012737dd8490865eb25c96f058105158 100644
 --- a/lib/notarytool.js
 +++ b/lib/notarytool.js
-@@ -110,6 +110,7 @@ function notarizeAndWaitForNotaryTool(opts) {
+@@ -110,7 +110,12 @@ function notarizeAndWaitForNotaryTool(opts) {
                  'json',
              ];
              const result = yield (0, spawn_1.spawn)('xcrun', notarizeArgs);
-+            console.log('notarization result', result.output);
-             const parsed = JSON.parse(result.output.trim());
+-            const parsed = JSON.parse(result.output.trim());
++            let parsed = null;
++            try { parsed = JSON.parse(result.output.trim()); }
++            catch (e) {
++              console.log('notarization result', result.output);
++              throw e;
++            }
              if (result.code !== 0 || !parsed.status || parsed.status !== 'Accepted') {
                  try {
+                     if (parsed && parsed.id) {

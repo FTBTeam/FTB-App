@@ -13,7 +13,7 @@ overrides:
 
 patchedDependencies:
   '@electron/notarize@2.3.0':
-    hash: 5b2qqlfwxozofzlfcgsr5pflaq
+    hash: t6hd5acteo47umnzcrk6bcr6nq
     path: patches/@electron__notarize@2.3.0.patch
   terser-webpack-plugin@1.4.5:
     hash: ra2x2visp7ftkcqwvqllfxzxzq
@@ -86,7 +86,7 @@ importers:
     devDependencies:
       '@electron/notarize':
         specifier: ^2.3.0
-        version: 2.3.0(patch_hash=5b2qqlfwxozofzlfcgsr5pflaq)
+        version: 2.3.0(patch_hash=t6hd5acteo47umnzcrk6bcr6nq)
       '@fortawesome/fontawesome-svg-core':
         specifier: ^6.1.1
         version: 6.3.0
@@ -8558,7 +8558,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/notarize@2.3.0(patch_hash=5b2qqlfwxozofzlfcgsr5pflaq)':
+  '@electron/notarize@2.3.0(patch_hash=t6hd5acteo47umnzcrk6bcr6nq)':
     dependencies:
       debug: 4.3.4(supports-color@6.1.0)
       fs-extra: 9.1.0
