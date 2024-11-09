@@ -13,7 +13,7 @@ overrides:
 
 patchedDependencies:
   '@electron/notarize@2.3.0':
-    hash: doxxbqv4pejseoalzxzcnfbsri
+    hash: 5b2qqlfwxozofzlfcgsr5pflaq
     path: patches/@electron__notarize@2.3.0.patch
   terser-webpack-plugin@1.4.5:
     hash: ra2x2visp7ftkcqwvqllfxzxzq
@@ -86,7 +86,7 @@ importers:
     devDependencies:
       '@electron/notarize':
         specifier: ^2.3.0
-        version: 2.3.0(patch_hash=doxxbqv4pejseoalzxzcnfbsri)
+        version: 2.3.0(patch_hash=5b2qqlfwxozofzlfcgsr5pflaq)
       '@fortawesome/fontawesome-svg-core':
         specifier: ^6.1.1
         version: 6.3.0
@@ -8558,7 +8558,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/notarize@2.3.0(patch_hash=doxxbqv4pejseoalzxzcnfbsri)':
+  '@electron/notarize@2.3.0(patch_hash=5b2qqlfwxozofzlfcgsr5pflaq)':
     dependencies:
       debug: 4.3.4(supports-color@6.1.0)
       fs-extra: 9.1.0
@@ -8716,7 +8716,7 @@ snapshots:
   '@jest/core@24.9.0(utf-8-validate@5.0.10)':
     dependencies:
       '@jest/console': 24.9.0
-      '@jest/reporters': 24.9.0(utf-8-validate@5.0.10)
+      '@jest/reporters': 24.9.0
       '@jest/test-result': 24.9.0
       '@jest/transform': 24.9.0
       '@jest/types': 24.9.0
@@ -8835,7 +8835,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@jest/reporters@24.9.0(utf-8-validate@5.0.10)':
+  '@jest/reporters@24.9.0':
     dependencies:
       '@jest/environment': 24.9.0
       '@jest/test-result': 24.9.0
@@ -8859,9 +8859,7 @@ snapshots:
       source-map: 0.6.1
       string-length: 2.0.0
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@jest/reporters@29.5.0':
     dependencies:
@@ -13374,7 +13372,7 @@ snapshots:
       jest-environment-jsdom: 24.9.0(utf-8-validate@5.0.10)
       jest-environment-node: 24.9.0
       jest-get-type: 24.9.0
-      jest-jasmine2: 24.9.0(utf-8-validate@5.0.10)
+      jest-jasmine2: 24.9.0
       jest-regex-util: 24.9.0
       jest-resolve: 24.9.0
       jest-util: 24.9.0
@@ -13540,7 +13538,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  jest-jasmine2@24.9.0(utf-8-validate@5.0.10):
+  jest-jasmine2@24.9.0:
     dependencies:
       '@babel/traverse': 7.24.0
       '@jest/environment': 24.9.0
@@ -13559,9 +13557,7 @@ snapshots:
       pretty-format: 24.9.0
       throat: 4.1.0
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   jest-leak-detector@24.9.0:
     dependencies:
@@ -13681,7 +13677,7 @@ snapshots:
       jest-config: 24.9.0(utf-8-validate@5.0.10)
       jest-docblock: 24.9.0
       jest-haste-map: 24.9.0
-      jest-jasmine2: 24.9.0(utf-8-validate@5.0.10)
+      jest-jasmine2: 24.9.0
       jest-leak-detector: 24.9.0
       jest-message-util: 24.9.0
       jest-resolve: 24.9.0
