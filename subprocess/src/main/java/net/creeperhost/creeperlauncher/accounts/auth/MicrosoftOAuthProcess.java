@@ -95,12 +95,15 @@ public class MicrosoftOAuthProcess {
 
         // Validate the entitlements
         var hasGame = validateEntitlements(entitlements.unwrap());
-        if (!hasGame) {
-            return Result.err(CodedError.MISSING_ENTITLEMENTS.toError());
-        }
-
         var profile = MicrosoftRequests.queryProfile(minecraftAccessToken);
+        
         if (profile.isErr()) {
+            // Default to an entitlement error if we don't have the game and the profile request failed
+            if (!hasGame) {
+                return Result.err(CodedError.MISSING_ENTITLEMENTS.toError());
+            }
+            
+            // Otherwise, return the profile error, this means they have the game but have never logged in
             return Result.err(profile.unwrapErr());
         }
         
