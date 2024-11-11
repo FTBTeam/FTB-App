@@ -98,7 +98,7 @@ export default class UiButton extends Vue {
   }
   
   &.small {
-    padding: 0.4em .6em;
+    padding: 0.6em .6em;
     font-size: 0.875em;
     &.wider {
       padding: 0.4em 1.8em;

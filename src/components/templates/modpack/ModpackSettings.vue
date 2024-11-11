@@ -152,7 +152,7 @@
         class="mb-6" />
 
       <section class="flex-1 mb-4">
-        <label class="block tracking-wide text-white-700 mb-2">Java Version</label>
+        <label class="block tracking-wide text-white-700 font-bold mb-2">Java Version</label>
         <div class="flex items-center gap-4">
           <select
             class="appearance-none block flex-1 bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
@@ -175,23 +175,42 @@
         </div>
       </section>
       
-      <div class="flex gap-4 items-end">
-        <ftb-input
-          label="Java runtime arguments"
+      <div class="flex gap-4 flex-col mb-6">
+        <label class="block tracking-wide text-white-700 font-bold">
+          Java runtime arguments
+        </label>
+
+        <small class="text-muted block -mt-2 max-w-xl">
+          These arguments are appended to your instances upon start, they are normal java arguments. <em>New lines will be removed.</em>
+        </small>
+
+        <textarea
           placeholder="-TestArgument=120"
           v-model="instanceSettings.jvmArgs"
-          @blur="saveSettings"
-          class="flex-1 mb-0"
+          @blur="() => {
+            // Remove all new lines and trim the string
+            instanceSettings.jvmArgs = instanceSettings.jvmArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
+            saveSettings()
+          }"
+          spellcheck="false"
+          rows="4"
+          class="flex-1 mb-0 appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 focus:outline-none rounded resize-none break-normal font-mono"
         />
-        <ui-button icon="undo" @click="() => {
+        
+        <div class="flex gap-4">
+          <ui-button size="small" icon="undo" @click="() => {
+            instanceSettings.jvmArgs = settingsState.settings.instanceDefaults.javaArgs
+          }">
+            Reset to Instance defaults
+          </ui-button>
+
+          <ui-button size="small" icon="undo" @click="() => {
             instanceSettings.jvmArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
           }">
-          Reset to default
-        </ui-button>
+            Reset to Vanilla defaults
+          </ui-button>
+        </div>
       </div>
-      <small class="text-muted block mb-6 max-w-xl mt-2">
-        These arguments are appended to your instances upon start, they are normal java arguments.
-      </small>
 
       <ftb-input
         label="Program arguments"
@@ -215,7 +234,7 @@
         These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing.
       </p>
       
-      <p class="mb-2">Startup preview</p>
+      <p class="mb-2 font-bold">Startup preview</p>
       <p class="mb-4 block text-sm">This is for illustrative purposes only, this is not a complete example.</p>
 
       <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto select-text" v-if="instanceSettings.memory">

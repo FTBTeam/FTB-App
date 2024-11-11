@@ -5,7 +5,7 @@
         <arance-none leading-normal text-gray-300" v-on:input="$emit('input', $event.target.value)" :value="value" v-on:blur="$emit('blur')"/>
            </div> -->
     <div class="w-full">
-      <label class="block tracking-wide mb-2" v-if="label">
+      <label class="block tracking-wide mb-2 font-bold" v-if="label">
         {{ label }}
       </label>
       <div class="flex flex-row w-full gap-4 items-center">
