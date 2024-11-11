@@ -8,6 +8,7 @@
       @closed="hideModal" 
       :external-contents="true"
       :title="modal.title"
+      style="z-index: 100000"
     >
       <modal-body>
         <div class="break-all overflow-auto" v-html="modal.message" />

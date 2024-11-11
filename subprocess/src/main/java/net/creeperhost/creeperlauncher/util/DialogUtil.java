@@ -6,6 +6,7 @@ import net.creeperhost.creeperlauncher.api.data.other.OpenModalData;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DialogUtil {
 
@@ -43,6 +44,45 @@ public class DialogUtil {
         return result.get();
     }
 
+    public static ConfirmationState confirmOrIgnore(String title, String confirmText, String denyText, String ignoreText, String body) {
+        // Atomic of the ConfirmationState
+        AtomicInteger result = new AtomicInteger();
+
+        OpenModalData.openModal(title, body, List.of(
+            new OpenModalData.ModalButton(confirmText, "success", () -> {
+                result.set(ConfirmationState.CONFIRM.ordinal());
+                synchronized (result) {
+                    WebSocketHandler.sendMessage(new CloseModalData());
+                    result.notify();
+                }
+            }),
+            new OpenModalData.ModalButton(ignoreText, "info", () -> {
+                result.set(ConfirmationState.IGNORE.ordinal());
+                synchronized (result) {
+                    WebSocketHandler.sendMessage(new CloseModalData());
+                    result.notify();
+                }
+            }),
+            new OpenModalData.ModalButton(denyText, "danger", () -> {
+                result.set(ConfirmationState.DENY.ordinal());
+                synchronized (result) {
+                    WebSocketHandler.sendMessage(new CloseModalData());
+                    result.notify();
+                }
+            })
+        ));
+
+        try {
+            synchronized (result) {
+                result.wait();
+            }
+        } catch (InterruptedException ignored) {
+        }
+
+        var state = ConfirmationState.values();
+        return state[result.get()];
+    }
+
     public static void okDialog(String title, String body) {
         Object lock = new Object();
 
@@ -61,5 +101,11 @@ public class DialogUtil {
             }
         } catch (InterruptedException ignored) {
         }
+    }
+    
+    public enum ConfirmationState {
+        CONFIRM,
+        DENY,
+        IGNORE
     }
 }

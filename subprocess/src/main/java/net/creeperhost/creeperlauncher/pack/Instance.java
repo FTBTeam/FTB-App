@@ -277,9 +277,23 @@ public class Instance {
         if (scanner.shouldScan()) {
             scanner.scan();
             if (scanner.isPotentiallyInvalid()) {
-                boolean abort = DialogUtil.confirmDialog("Potentially invalid instance", "Abort", "Launch", "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?");
-                if (abort) {
+                DialogUtil.ConfirmationState abort = DialogUtil.confirmOrIgnore(
+                    "Potentially invalid instance", 
+                    "Abort", 
+                    "Launch",
+                    "Don't show again",
+                    "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?"
+                );
+                
+                if (abort == DialogUtil.ConfirmationState.CONFIRM) {
                     throw new InstanceLaunchException.Abort("Aborted.");
+                } else if (abort == DialogUtil.ConfirmationState.IGNORE) {
+                    props.potentiallyBrokenDismissed = true;
+                    try {
+                        saveJson();
+                    } catch (IOException ex) {
+                        LOGGER.error("Failed to save instance.", ex);
+                    }
                 }
             }
         }
