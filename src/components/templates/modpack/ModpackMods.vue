@@ -6,6 +6,7 @@
         <ui-button type="success" @click="searchingForMods = true" icon="plus" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Add more mods'" :disabled="instance.locked" />
         <ui-button type="info" @click="updateAll" icon="download" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Update all mods'" :disabled="instance.locked || modUpdatesAvailableKeys.length === 0" />
         <ui-button type="info" icon="sync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="getModList(true)" />
+        <ui-button type="info" @click="openModsFolder" icon="folder" data-balloon-length="medium" aria-label="Open mods folder" />
       </template>
     </div>
     
@@ -81,7 +82,14 @@ import FindMods from '@/components/templates/modpack/FindMods.vue';
 import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
 import {ModPack} from '@/modules/modpacks/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {BaseData, CurseMetadata, InstanceJson, ModInfo, UpdateAvailable} from '@/core/@types/javaApi';
+import {
+  BaseData,
+  CurseMetadata,
+  InstanceJson,
+  ModInfo,
+  SugaredInstanceJson,
+  UpdateAvailable
+} from '@/core/@types/javaApi';
 import {containsIgnoreCase, stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/core/ui/UiButton.vue';
@@ -92,6 +100,7 @@ import UiToggle from '@/components/core/ui/UiToggle.vue';
 import {emitter} from '@/utils';
 import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
 import {createLogger} from '@/core/logger';
+import platform from '@/utils/interface/electron-overwolf';
 
 export type ApiMod = {
 	fileId: number;
@@ -259,6 +268,14 @@ export default class ModpackMods extends Vue {
   updateAll() {
     for (const key of this.modUpdatesAvailableKeys) {
       this.updateMod(key).catch(e => this.logger.error(e))
+    }
+  }
+
+  async openModsFolder() {
+    if ((this.instance as SugaredInstanceJson).rootDirs.includes("mods")) {
+      await platform.get.io.openFinder(platform.get.io.pathJoin((this.instance as SugaredInstanceJson).path, "mods"));
+    } else {
+      await platform.get.io.openFinder((this.instance as SugaredInstanceJson).path);
     }
   }
   
