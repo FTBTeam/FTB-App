@@ -2,9 +2,9 @@
   <div class="px-6 py-4" v-if="!loading">
     <template v-if="news.length">
       <h2 class="text-lg font-bold mb-6">Get the latest news from FTB</h2>
-      <div class="news-item mb-10" v-for="(newsItem, index) in news" :key="index">
+      <div class="news-item" v-for="(newsItem, index) in news" :key="index">
         <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="openExternal" v-if="newsItem.feature_image" class="feature-image mb-4 block">
-          <img crossorigin="anonymous" class="rounded shadow-xl" :src="proxyImage(newsItem.feature_image)" alt="Feature image">
+          <img crossorigin="anonymous" class="rounded shadow-xl" :src="newsItem.feature_image" alt="Feature image">
         </a>
         
         <div class="about">
@@ -13,7 +13,7 @@
         </div>
         
         <div class="author-and-info flex items-center gap-4">
-          <img class="avatar rounded shadow-xl" crossorigin="anonymous" width="50" :src="proxyImage(newsItem.primary_author.profile_image)" alt="Avatar">
+          <img class="avatar rounded shadow-xl" crossorigin="anonymous" width="50" :src="newsItem.primary_author.profile_image" alt="Avatar">
           <div class="info">
             <b class="opacity-75">{{ newsItem.primary_author.name }}</b>
             <div class="info opacity-75 text-sm" :title="standardDateTime(newsItem.published_at)">
@@ -21,6 +21,7 @@
             </div>
           </div>
         </div>
+        <hr class="my-8 border-white border-opacity-25"/>
       </div>
     </template>
     <div v-else>
@@ -71,16 +72,6 @@ export default class Blog extends Vue {
       this.loadNews()
         .catch(e => this.logger.error("Failed to load news", e))
     }
-  }
-  
-  proxyImage(image: string) {
-    if (!image) return '';
-    
-    // Yeet the domain
-    const imgPath = image.replace("http://", "https://").replace('https://ghost.ftb.team/content/images/', '');
-    const encodedPath = encodeURIComponent(imgPath);
-    
-    return `${constants.metaApi}/v1/blog/image/${encodedPath}`
   }
   
   get domain() {
