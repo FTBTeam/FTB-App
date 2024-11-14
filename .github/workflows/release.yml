@@ -46,7 +46,7 @@ jobs:
         VUE_APP_PLATFORM: "electron"
         APP_TARGET_PLATFORM: "linux"
       run: |
-        npm install --global pnpm || true
+        npm install --global pnpm@9.12.3 || true
         pnpm config set store-dir .pnpm-store
         pnpm install --no-frozen-lockfile
         pnpm gen:license
@@ -102,7 +102,7 @@ jobs:
         AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
         AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
       run: |
-        npm install --global pnpm || true
+        npm install --global pnpm@9.12.3 || true
         pnpm config set store-dir .pnpm-store
         pnpm install --no-frozen-lockfile
         pnpm gen:license
@@ -149,7 +149,7 @@ jobs:
         APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       run: |
-        npm install --global pnpm || true
+        npm install --global pnpm@9.12.3 || true
         pnpm config set store-dir .pnpm-store
         pnpm install --no-frozen-lockfile
         pnpm gen:license
@@ -194,7 +194,7 @@ jobs:
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/
-          npm install --global pnpm || true
+          npm install --global pnpm@9.12.3 || true
           pnpm config set store-dir .pnpm-store
           pnpm install --no-frozen-lockfile
           pnpm gen:license
