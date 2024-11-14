@@ -12,8 +12,10 @@
       <div class="code font-bold text-4xl py-4 px-6 rounded-lg mb-6 text-center select-text" v-if="userCode && !error">
         <span>{{ userCode }}</span>
       </div>
-
+      
       <UiButton icon="external-link" size="large" :full-width="true" v-if="userCode && !error" @click="copyAndOpen" class="mt-2 w-full" type="primary">Copy and Open</UiButton>
+      
+      <p class="text-center select-text block mt-6 text-white text-opacity-75 hover:text-opacity-100" v-if="verificationUri">If the button above does not work, please navigate to<br /><span class="text-white text-opacity-100">{{ verificationUri }}</span><br />on any device. If your computer is not working, try your phone.</p>
 
       <UiButton type="success" :full-width="true" v-if="error" @click="retryInitialCode" class="mt-6">Retry</UiButton>
 
