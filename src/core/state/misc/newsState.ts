@@ -25,7 +25,7 @@ const actions: ActionTree<NewsState, RootState> = {
     logger.debug("Loading news");
     commit('SET_LOADING', true);
     try {
-      const newsReq = await JavaFetch.create(`${constants.metaApi}/v1/blog/posts`)
+      const newsReq = await JavaFetch.create(`${constants.metaApi}/blog/posts`)
         .execute();
 
       if (!newsReq) {

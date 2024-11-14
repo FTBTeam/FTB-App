@@ -171,9 +171,10 @@
         </div>
         <div
           class="wysiwyg"
-          v-if="packInstance && packInstance.description !== undefined"
+          v-if="packInstance?.provider === 'modpacks.ch' && packInstance && packInstance.description !== undefined"
           v-html="parseMarkdown(packInstance.description)"
         />
+        <div class="description" v-else-if="packInstance?.provider === 'curseforge' && packInstance && packInstance.description !== undefined" v-html="packInstance.description"></div>
         <div v-else>
           <h2>No description available</h2>
         </div>

@@ -33,7 +33,6 @@ public class InstanceSupportMeta {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new Gson();
-    private static final String URL = "https://apps.modpacks.ch/meta.json";
 
     private List<SupportEntry> supportMods = new LinkedList<>();
     private List<SupportEntry> supportAgents = new LinkedList<>();
@@ -57,7 +56,7 @@ public class InstanceSupportMeta {
         }
 
         DownloadTask task = DownloadTask.builder()
-                .url(URL)
+                .url(Constants.META_JSON)
                 .dest(metaFile)
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .build();

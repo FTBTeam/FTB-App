@@ -8,7 +8,6 @@ import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
 import net.creeperhost.creeperlauncher.os.OS;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.*;
-import okhttp3.Cache;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
@@ -34,19 +33,18 @@ public class Constants {
     public static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
     private static final String INNER_DATA_DIR = ".ftba";
     private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), INNER_DATA_DIR);
-
+    
     //Mojang
     public static final String MC_RESOURCES = "https://resources.download.minecraft.net/";
-    public static final String MC_RESOURCES_MIRROR = "https://azuresucks.modpacks.ch/";
     public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
     //API
-    public static final String CREEPERHOST_MODPACK = "https://api.modpacks.ch";
-    public static final String CREEPERHOST_MODPACK_STAGING = "https://staging.api.modpacks.ch";
-    public static final String JSON_PROXY = "https://api.modpacks.ch/public/meta/proxy/";
+    public static final String CREEPERHOST_MODPACK = "https://api.feed-the-beast.com/v1/modpacks";
+    public static final String JSON_PROXY = CREEPERHOST_MODPACK + "/meta/proxy/";
+    public static final String META_JSON = CREEPERHOST_MODPACK + "/public/helpers/meta";
 
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
-    public static final String MC_JSONS = "https://apps.modpacks.ch/versions/minecraftjsons/";
+    public static final String MC_JSONS = CREEPERHOST_MODPACK + "/public/helpers/versions/minecraftjsons/";
 
     public static final String UPLOAD_TRANSFER_HOST = "http://upload.share.modpacks.ch/";
     public static final String TRANSFER_HOST = "https://share.modpacks.ch/get/";
@@ -70,15 +68,7 @@ public class Constants {
     public static final Path VERSIONS_FOLDER_LOC = getDataDir().resolve(Paths.get("bin", "versions"));
     public static final Path INSTANCES_FOLDER_LOC = getDataDir().resolve("instances");
     public static final Path LIBRARY_LOCATION = BIN_LOCATION.resolve("libraries");
-
-    // Microsoft Authentication Dance
-    public static final String MS_OAUTH_XBL_AUTHENTICATE = "https://user.auth.xboxlive.com/user/authenticate";
-    public static final String MS_OAUTH_XSTS_AUTHORIZE = "https://xsts.auth.xboxlive.com/xsts/authorize";
-    public static final String MS_OAUTH_LAUNCHER_LOGIN = "https://api.minecraftservices.com/launcher/login";
-    public static final String MS_OAUTH_CHECK_STORE = "https://api.minecraftservices.com/entitlements/mcstore";
-    public static final String MC_GET_PROFILE = "https://api.minecraftservices.com/minecraft/profile";
-    public static final String MC_CHECK_MIGRATION = "https://api.minecraftservices.com/rollout/v1/msamigration";
-
+    
     //Other
     public static final int WEBSOCKET_PORT = 13377;
     public static final String APPVERSION = "@APPVERSION@";
@@ -91,17 +81,7 @@ public class Constants {
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
     public static final String WEBSOCKET_SECRET = UUID.randomUUID().toString();
-
-    // 50MB cache for DNS.
-    private static final Cache DOH_CACHE = new Cache(getDataDir().resolve(".doh_cache").toFile(), 50 * 1024 * 1024);
-
-    public static final DNSChain DNS_CHAIN = new DNSChain(
-            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.CLOUDFLARE),
-            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.GOOGLE),
-            new DNSChain.DnsOverHttpsStep(DOH_CACHE, DOHHost.CREEPERHOST),
-            new DNSChain.SystemDNSStep()
-    );
-
+    
     public static final CurseMetadataCache CURSE_METADATA_CACHE = new CurseMetadataCache(getDataDir().resolve(".curse_meta.json"));
     public static final ModVersionCache MOD_VERSION_CACHE = new ModVersionCache(getDataDir().resolve(".mod_meta.json"));
 
@@ -125,7 +105,6 @@ public class Constants {
 
     public static void refreshHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .dns(new DNSChain.OkHTTPAdapter(DNS_CHAIN))
                 .connectTimeout(5, TimeUnit.MINUTES)
                 .readTimeout(5, TimeUnit.MINUTES)
                 .connectionPool(new ConnectionPool())

@@ -1,6 +1,6 @@
 <template>
   <div class="changelogEntry wysiwyg select-text">
-    <h2 v-if="showVersion">{{changelog.version}}{{ changelog.title != changelog.version ? ` ${changelog.title}` : "" }}}</h2>
+    <h2 v-if="showVersion">{{changelog.version}}{{ changelog.title != changelog.version ? ` ${changelog.title}` : "" }}</h2>
     <img :src="headingImage" class="heading-image" alt="Heading image" v-if="headingImage" />
     <div v-if="changelog.header" v-html="parseMarkdown(changelog.header)" />
 
@@ -98,7 +98,7 @@ export default class ChangelogEntry extends Vue {
     this.loadingExtendedLogs = true;
     
     for (const version of this.changelog.extends ?? []) {
-      const request = await JavaFetch.create(`${constants.metaApi}/v1/changelogs/app/${version}`).execute();
+      const request = await JavaFetch.create(`${constants.metaApi}/changelogs/app/${version}`).execute();
       const changelog = request?.json<ChangelogData>();
       
       if (changelog) this.extendedLogs.push(changelog);

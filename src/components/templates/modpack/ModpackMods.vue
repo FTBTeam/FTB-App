@@ -167,6 +167,7 @@ export default class ModpackMods extends Vue {
       
       const mods = await toggleBeforeAndAfter(() => JavaFetch.modpacksCh(`modpack/${this.apiPack.id}/${latestVersion.id}/mods`).execute(), s => this.modsLoading = s)
       const apiMods = mods?.json<{ mods: ApiMod[] }>()?.mods;
+      console.log(mods?.json<{ mods: ApiMod[] }>())
       if (!apiMods) {
         return;
       }

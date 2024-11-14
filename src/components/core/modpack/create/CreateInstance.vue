@@ -313,7 +313,7 @@ export default class CreateInstance extends Vue {
     }
     
     return this.vanillaPack.versions
-      .filter(e => e.type.toLowerCase() === "release" || (e.type.toLowerCase() === "snapshot" && this.showVanillaSnapshots))
+      .filter(e => e.type.toLowerCase() === "release" || ((e.type.toLowerCase() === "alpha" || e.type.toLowerCase() === "beta") && this.showVanillaSnapshots))
       .sort((a, b) => b.id - a.id)
       .map(e => ({
         label: e.name,

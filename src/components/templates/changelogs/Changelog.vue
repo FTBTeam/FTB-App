@@ -78,12 +78,12 @@ export default class Changelog extends Vue  {
     if (!lastVersion || lastVersion !== currentVersion) {
       // Get the available versions
       try {
-        const changelogsReq = await fetch(`${constants.metaApi}/v1/changelogs/app`);
+        const changelogsReq = await fetch(`${constants.metaApi}/changelogs/app`);
         const changelogs = await changelogsReq.json();
 
         if (changelogs?.versions?.includes(currentVersion)) {
           const changelogReq = await fetch(
-            `${constants.metaApi}/v1/changelogs/app/${currentVersion}`,
+            `${constants.metaApi}/changelogs/app/${currentVersion}`,
           );
 
           this.changelogData = await changelogReq.json();

@@ -23,7 +23,7 @@ public class ModpacksChUtils {
             return USER_PROVIDED_CREDENTIALS.apiUrl();
         }
         
-        return Constants.IS_DEV_MODE ? Constants.CREEPERHOST_MODPACK_STAGING : Constants.CREEPERHOST_MODPACK;
+        return Constants.CREEPERHOST_MODPACK;
     }
 
     public static String getModEndpoint() {

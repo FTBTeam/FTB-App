@@ -104,6 +104,7 @@ export default class ModloaderSelect extends Vue {
     for (const loader of knownLoaders) {
       const request = await JavaFetch.modpacksCh(`loaders/${mcVersion}/${loader}`).execute()
       if (request?.status !== "success") {
+        console.log(`Failed to fetch loaders for ${loader}`)
         continue;
       }
 

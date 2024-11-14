@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static net.creeperhost.creeperlauncher.Constants.MC_RESOURCES;
-import static net.creeperhost.creeperlauncher.Constants.MC_RESOURCES_MIRROR;
 
 /**
  * Update/downloads assets for a given Minecraft version.
@@ -82,13 +81,9 @@ public class InstallAssetsTask implements Task {
             // Some vanilla assets (.ico files) have the same hash
             // this causes duplicate tasks to be added.
             if (!seen.add(dest)) continue;
-
+            
             DownloadTask task = DownloadTask.builder()
                     .url(MC_RESOURCES + loc)
-                    // TODO This is very temporary. We keep getting download failures on larger assets for no reason.
-                    //      The plan is to replace our HTTP backend with something better (cURL) and hopefully this can
-                    //      the be removed. #azuresucks #iwantawsback
-                    .withMirror(MC_RESOURCES_MIRROR + loc)
                     .dest(dest)
                     .tryResumeDownload()
                     .withValidation(DownloadValidation.of()

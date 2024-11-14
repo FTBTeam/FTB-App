@@ -49,7 +49,7 @@ export default class Changelogs extends Vue {
   
   async getChangelogs() {
     try {
-      const changelogNames = await JavaFetch.create(`${constants.metaApi}/v1/changelogs/app`).execute();
+      const changelogNames = await JavaFetch.create(`${constants.metaApi}/changelogs/app`).execute();
       if (!changelogNames) {
         alertController.error('Failed to load changelogs');
         return;
@@ -86,7 +86,7 @@ export default class Changelogs extends Vue {
   
   async loadChangelog(id: string) {
     try {
-      const changelog = await JavaFetch.create(`${constants.metaApi}/v1/changelogs/app/${id}`).execute();
+      const changelog = await JavaFetch.create(`${constants.metaApi}/changelogs/app/${id}`).execute();
       if (!changelog) {
         alertController.error('Failed to load changelog');
         return;
