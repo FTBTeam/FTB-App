@@ -1,12 +1,10 @@
 package net.creeperhost.creeperlauncher.pack;
 
-import com.google.common.hash.Hashing;
 import com.google.gson.JsonParseException;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
-import net.covers1624.quack.util.HashUtils;
 import net.creeperhost.creeperlauncher.Analytics;
 import net.creeperhost.creeperlauncher.Constants;
 import net.creeperhost.creeperlauncher.CreeperLauncher;
@@ -26,10 +24,8 @@ import net.creeperhost.creeperlauncher.instance.cloud.CloudSaveManager;
 import net.creeperhost.creeperlauncher.minecraft.modloader.forge.ForgeJarModLoader;
 import net.creeperhost.creeperlauncher.storage.settings.Settings;
 import net.creeperhost.creeperlauncher.util.CurseMetadataCache.FileMetadata;
-import net.creeperhost.creeperlauncher.util.DialogUtil;
-import net.creeperhost.creeperlauncher.util.FileUtils;
-import net.creeperhost.creeperlauncher.util.ImageUtils;
-import net.creeperhost.creeperlauncher.util.MiscUtils;
+import net.creeperhost.creeperlauncher.util.*;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -55,7 +51,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public class Instance {
-
     private static final Logger LOGGER = LogManager.getLogger();
 
     public final Path path;
@@ -548,6 +543,10 @@ public class Instance {
             if (!file.getPath().startsWith("./mods") || !isMod(file.getName())) continue;
 
             String sha1 = Objects.toString(file.getSha1OrNull(), null);
+            long murmur = -1;
+            if (file.getHashesOrNull() != null) {
+                murmur = file.getHashesOrNull().cfMurmur;
+            }
 
             ModOverride override = modifications != null ? modifications.findOverride(file.getId()) : null;
             ModpackVersionModsManifest.Mod mod = modsManifest != null ? modsManifest.getMod(file.getId()) : null;
@@ -579,7 +578,8 @@ public class Instance {
                     enabled,
                     file.getSize(),
                     sha1,
-                    rich ? Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, sha1) : null
+                    String.valueOf(murmur),
+                    rich ? Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, String.valueOf(murmur)) : null
             ));
         }
 
@@ -592,7 +592,7 @@ public class Instance {
                 Path file = modsDir.resolve(override.getFileName());
                 CurseMetadata ids;
                 if (rich) {
-                    ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile(), override.getSha1());
+                    ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile());
                 } else {
                     ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
                 }
@@ -603,6 +603,7 @@ public class Instance {
                         override.getState().enabled(),
                         tryGetSize(file),
                         override.getSha1(),
+                        null,
                         ids
                 ));
             }
@@ -622,11 +623,16 @@ public class Instance {
             LOGGER.info("Found unknown mod in Mods folder. {}", fName);
             // We don't know about the mod! We need to add it and create a Modification for it.
 
+            String murmurHash;
             String sha1;
             long size;
             try {
                 size = Files.size(path);
-                sha1 = HashUtils.hash(Hashing.sha1(), path).toString();
+                var fileBytes = Files.readAllBytes(path);     
+                
+                sha1 = DigestUtils.sha1Hex(fileBytes);
+                murmurHash = String.valueOf(HashingUtils.createCurseForgeMurmurHash(fileBytes));
+
             } catch (IOException ex) {
                 LOGGER.error("Error reading file. Unable to process this whilst generating mods list.", ex);
                 continue;
@@ -634,7 +640,7 @@ public class Instance {
 
             long curseProject = -1;
             long curseFile = -1;
-            FileMetadata metadata = Constants.CURSE_METADATA_CACHE.queryMetadata(sha1);
+            FileMetadata metadata = Constants.CURSE_METADATA_CACHE.queryMetadata(murmurHash);
             if (metadata != null) {
                 LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
                 curseProject = metadata.curseProject();
@@ -652,6 +658,7 @@ public class Instance {
                     state.enabled(),
                     size,
                     sha1,
+                    murmurHash,
                     metadata != null ? metadata.toCurseInfo() : null
             ));
 

@@ -58,7 +58,7 @@ public class CurseMetadataCache {
         this.metadata = metadata;
     }
 
-    public @Nullable CurseMetadata getCurseMeta(@Nullable ModpackVersionModsManifest.Mod mod, String sha1) {
+    public @Nullable CurseMetadata getCurseMeta(@Nullable ModpackVersionModsManifest.Mod mod, String murmur) {
         if (mod != null) {
             long projectId = mod.getCurseProject();
             long fileId = mod.getCurseFile();
@@ -69,14 +69,14 @@ public class CurseMetadataCache {
             return CurseMetadata.full(projectId, fileId, name, slug, synopsis, icon);
         }
 
-        FileMetadata metadata = queryMetadata(sha1);
+        FileMetadata metadata = queryMetadata(murmur);
         if (metadata != null) {
             return metadata.toCurseInfo();
         }
         return null;
     }
 
-    public @Nullable CurseMetadata getCurseMeta(long curseProject, long curseFile, String sha1) {
+    public @Nullable CurseMetadata getCurseMeta(long curseProject, long curseFile) {
         ModManifest mod = null;
         try {
             mod = Constants.MOD_VERSION_CACHE.queryMod(curseProject).get();
@@ -113,25 +113,25 @@ public class CurseMetadataCache {
     /**
      * Find or query metadata for the given file hash.
      *
-     * @param sha1 The sha1 to lookup.
+     * @param murmurHash The sha1 to lookup.
      * @return The metadata.
      */
-    public @Nullable FileMetadata queryMetadata(String sha1) {
-        FileMetadata metadata = findMetadata(sha1);
+    public @Nullable FileMetadata queryMetadata(String murmurHash) {
+        FileMetadata metadata = findMetadata(murmurHash);
         if (metadata != null) return metadata;
 
-        if (failedCache.contains(sha1)) return null;
+        if (failedCache.contains(murmurHash)) return null;
 
-        synchronized (sha1.intern()) {
-            metadata = findMetadata(sha1);
+        synchronized (murmurHash.intern()) {
+            metadata = findMetadata(murmurHash);
             if (metadata != null) return metadata;
 
-            metadata = query(sha1);
+            metadata = query(murmurHash);
             if (metadata == null) {
-                failedCache.add(sha1);
+                failedCache.add(murmurHash);
             }
             synchronized (this.metadata) {
-                this.metadata.put(sha1, metadata);
+                this.metadata.put(murmurHash, metadata);
                 save();
             }
             return metadata;
@@ -158,13 +158,13 @@ public class CurseMetadataCache {
         }
     }
 
-    private static @Nullable FileMetadata query(String sha1) {
+    private static @Nullable FileMetadata query(String murmur) {
         StringWriter sw = new StringWriter();
         try {
-            LOGGER.info("Querying metadata for {}", sha1);
+            LOGGER.info("Querying metadata for {}", murmur);
             DownloadAction action = new OkHttpDownloadAction()
                     .setClient(Constants.httpClient())
-                    .setUrl(ModpacksChUtils.getModEndpoint() + "lookup/" + sha1)
+                    .setUrl(ModpacksChUtils.getModEndpoint() + "lookup/" + murmur)
                     .setDest(sw);
             
             ModpacksChUtils.injectBearerHeader(action);
@@ -175,7 +175,7 @@ public class CurseMetadataCache {
 
             return resp.meta;
         } catch (IOException | JsonParseException ex) {
-            LOGGER.warn("Failed to query metadata for {}", sha1, ex);
+            LOGGER.warn("Failed to query metadata for {}", murmur, ex);
             return null;
         }
     }

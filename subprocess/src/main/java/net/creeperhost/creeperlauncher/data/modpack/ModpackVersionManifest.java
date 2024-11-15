@@ -342,6 +342,8 @@ public class ModpackVersionManifest {
         private boolean optional;
         @Nullable
         private String type;
+        @Nullable
+        private FileHashes hashes;
 
         @Nullable // TODO, not sure what this data type is.
         private JsonArray tags;
@@ -375,6 +377,7 @@ public class ModpackVersionManifest {
             type = other.type;
             tags = other.tags != null ? other.tags.deepCopy() : null;
             updated = other.updated;
+            hashes = other.hashes;
         }
 
         public Path toPath(Path root) {
@@ -419,6 +422,7 @@ public class ModpackVersionManifest {
         public String getUrl() { return requireNonNull(url); }
         public List<String> getMirror() { return mirror; }
         public HashCode getSha1() { return requireNonNull(sha1); }
+        @Nullable public FileHashes getHashesOrNull() { return hashes; }
         @Nullable public HashCode getSha1OrNull() { return sha1; }
         public long getSize() { return size; }
         public boolean isClientOnly() { return clientOnly; }
@@ -430,6 +434,20 @@ public class ModpackVersionManifest {
         public void setSha1(HashCode sha1) { this.sha1 = sha1; }
         public void setSize(long size) { this.size = size; }
         // @formatter:on
+    }
+    
+    public static final class FileHashes {
+        @JsonAdapter (HashCodeAdapter.class)
+        public HashCode sha1;
+        
+        @JsonAdapter (HashCodeAdapter.class)
+        public HashCode sha256;
+        
+        @JsonAdapter (HashCodeAdapter.class)
+        public HashCode sha512;
+        
+        public long murmur;
+        public long cfMurmur;
     }
 
     private static final class SpecsSerializer implements JsonDeserializer<Specs>, JsonSerializer<Specs> {

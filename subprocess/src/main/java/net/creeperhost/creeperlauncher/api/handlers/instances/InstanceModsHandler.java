@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
@@ -98,13 +99,13 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
             if (mod.fileId() > 0) {
                 ModpackVersionModsManifest modsManifest = modsManifestFuture.join();
                 ModpackVersionModsManifest.Mod modManifest = modsManifest != null ? modsManifest.getMod(mod.fileId()) : null;
-                meta = Constants.CURSE_METADATA_CACHE.getCurseMeta(modManifest, mod.sha1());
+                meta = Constants.CURSE_METADATA_CACHE.getCurseMeta(modManifest, Objects.requireNonNullElse(mod.murmurHash(), "-1"));
             } else {
                 // TODO: We could in theory lookup the sha1, but I don't think we can actually get into this state in normal operation.
                 return null;
             }
         } else {
-            meta = Constants.CURSE_METADATA_CACHE.getCurseMeta(meta.curseProject(), meta.curseFile(), mod.sha1());
+            meta = Constants.CURSE_METADATA_CACHE.getCurseMeta(meta.curseProject(), meta.curseFile());
         }
         WebSocketHandler.sendMessage(new InstanceModsData.RichModData(data, mod, meta));
         return meta;

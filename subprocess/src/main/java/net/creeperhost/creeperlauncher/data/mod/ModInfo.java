@@ -12,6 +12,7 @@ public record ModInfo(
         boolean enabled,
         long size,
         @Nullable String sha1,
+        @Nullable String murmurHash,
         @Nullable CurseMetadata curse
 ) {
 
