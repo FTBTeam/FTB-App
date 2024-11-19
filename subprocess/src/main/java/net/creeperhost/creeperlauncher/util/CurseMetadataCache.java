@@ -159,6 +159,10 @@ public class CurseMetadataCache {
     }
 
     private static @Nullable FileMetadata query(String murmur) {
+        if (murmur.equals("-1")) {
+            return null;
+        }
+        
         StringWriter sw = new StringWriter();
         try {
             LOGGER.info("Querying metadata for {}", murmur);

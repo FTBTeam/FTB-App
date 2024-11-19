@@ -198,13 +198,15 @@ export default class InstancePage extends Vue {
     }
     
     // TODO: (M#01) Allow to work without this.
-    this.apiPack = await this.getModpack({
-      id: this.instance.id,
-      provider: typeIdToProvider(this.instance.packType)
-    });
-    
-    if (!this.apiPack) {
-      this.activeTab = ModpackPageTabs.MODS;
+    if (this.instance.id !== -1) {
+      this.apiPack = await this.getModpack({
+        id: this.instance.id,
+        provider: typeIdToProvider(this.instance.packType)
+      });
+
+      if (!this.apiPack) {
+        this.activeTab = ModpackPageTabs.MODS;
+      }
     }
 
     this.logger.debug("Loading backups")
@@ -233,6 +235,10 @@ export default class InstancePage extends Vue {
   private async checkForBorkedVersion() {
     this.logger.debug("Checking for borked version")
     if (!this.instance?.versionId || !this.apiPack) {
+      return;
+    }
+    
+    if (this.instance.versionId === -1) {
       return;
     }
 

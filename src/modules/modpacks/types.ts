@@ -10,6 +10,8 @@ export interface ModPack {
   featured: boolean;
   refreshed: number;
   id: number;
+  slug: string;
+  sid: string;
   name: string;
   type: string;
   updated: number;
@@ -19,6 +21,9 @@ export interface ModPack {
   links: ModPackLink[];
   private?: boolean;
   provider: 'modpacks.ch' | 'curseforge'
+  meta?: {
+    supportsWorlds?: boolean;
+  }
 }
 
 export interface ModpackVersion {

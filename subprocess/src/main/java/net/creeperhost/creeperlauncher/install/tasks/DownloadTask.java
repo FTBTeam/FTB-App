@@ -217,6 +217,7 @@ public class DownloadTask implements Task {
                 LOGGER.info(" Resume try {}.", tries);
             }
 
+            LOGGER.info("  Downloading url: {}", url);
             Request.Builder builder = new Request.Builder()
                     .url(url)
                     .addHeader("User-Agent", Constants.USER_AGENT);

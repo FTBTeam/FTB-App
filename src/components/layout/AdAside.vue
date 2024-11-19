@@ -58,7 +58,6 @@ import platform from '@/utils/interface/electron-overwolf';
 import Component from 'vue-class-component';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
-import {JavaFetch} from '@/core/javaFetch';
 import {createLogger} from '@/core/logger';
 import {ns} from '@/core/state/appState';
 import {MineTogetherAccount} from '@/core/@types/javaApi';
@@ -166,9 +165,6 @@ export default class AdAside extends Vue {
     this.ads[id].addEventListener('display_ad_loaded', () => {
       emitPlaceholderUpdate(false);
       this.logger.info(`[AD: ${id}] Display ad loaded and ready`);
-      JavaFetch.modpacksCh("analytics/ads/static")
-        .execute()
-        .catch(e => this.logger.error("Failed to send analytics", e))
     });
     this.ads[id].addEventListener('play', () => {
       emitPlaceholderUpdate(false);
@@ -176,11 +172,6 @@ export default class AdAside extends Vue {
     });
     this.ads[id].addEventListener('complete', () => {
       this.logger.info(`[AD: ${id}] Video ad finished playing`);
-    });
-    this.ads[id].addEventListener('impression', () => {
-      JavaFetch.modpacksCh("analytics/ads/video")
-        .execute()
-        .catch(e => this.logger.error("Failed to send analytics", e))
     });
   }
   
