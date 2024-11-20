@@ -1,6 +1,8 @@
 <template>
   <div class="progress" :class="{'infinite': infinite, 'animated': doProgressAnimation, [type]: true}">
-    <div class="bar" :style="{ width: `${progress * 100}%`, transition: 'width 0.5s ease' }"></div>
+    <div class="bar" :style="{
+      width: inverted ? `${100 - progress * 100}%` : `${progress * 100}%`,
+    }"></div>
   </div>
 </template>
 
@@ -17,6 +19,7 @@ export default class ProgressBar extends Vue {
   @Prop({default: true}) doProgressAnimation!: boolean;
   
   @Prop({default: 'primary'}) type!: ProgressType;
+  @Prop({default: false}) inverted!: boolean;
 }
 </script>
 

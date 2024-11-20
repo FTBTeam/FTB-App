@@ -13,7 +13,9 @@ export function getProfileOrDefaultToActive(profileUuid: string | null = null): 
   if (profileUuid === null) {
     const activeProfile = (store.state["core"] as CoreState).activeProfile;
     if (!activeProfile) {
-      alertController.error("No active profile selected");
+      alertController.error("No active profile selected, please select a profile or login to continue");
+      // Tell the app to open the login window
+      store.dispatch('core/openSignIn').catch(console.error);
       return null;
     }
 

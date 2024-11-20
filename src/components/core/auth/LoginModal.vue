@@ -1,7 +1,7 @@
 <template>
   <modal :open="open" title="Login with Microsoft" @closed="() => onClose()">
     <template v-if="!deviceCodeDone">
-      <p class="text-center mb-6">Login to Minecraft via your Microsoft account. Clicking the button below will open the Microsoft Login page and copy the code to your clipboard.</p>
+      <p class="mb-6">Login to Minecraft via your Microsoft account. Clicking the button below will open the Microsoft Login page and copy the code to your clipboard.</p>
 
       <Loader v-if="loadingCode" />
 
@@ -9,21 +9,31 @@
         {{ error }}
       </message>
 
-      <div class="code font-bold text-4xl py-4 px-6 rounded-lg mb-6 text-center select-text" v-if="userCode && !error">
+      <div class="code font-bold text-4xl py-4 px-6 rounded-lg mb-4 text-center select-text" v-if="userCode && !error">
         <span>{{ userCode }}</span>
+      </div>
+
+      <div v-if="expiresIn && startedFlowAt" class="mb-6">
+        <progress-bar type="muted" :inverted="true" :do-progress-animation="false" :progress="remainingTime / 100" />
+        
+        <p class="text-muted mb-2 text-center mt-2">Token expires {{ startedFlowAt.add(expiresIn, "second").fromNow() }}</p>
       </div>
       
       <UiButton icon="external-link" size="large" :full-width="true" v-if="userCode && !error" @click="copyAndOpen" class="mt-2 w-full" type="primary">Copy and Open</UiButton>
+
+      <hr class="mt-6 border-white border-opacity-25" v-if="verificationUri" />
       
-      <p class="text-center select-text block mt-6 text-white text-opacity-75 hover:text-opacity-100" v-if="verificationUri">If the button above does not work, please navigate to<br /><span class="text-white text-opacity-100">{{ verificationUri }}</span><br />on any device. If your computer is not working, try your phone.</p>
+      <div class="flex items-center gap-6 mt-8" v-if="verificationUri">
+        <div class="bg-white rounded p-2">
+          <img src="@/assets/images/ms-link-qr-code.svg" alt="Microsoft Logo" width="100" />
+        </div>
+        <div class="flex-1">
+          <p class="select-text block text-white text-opacity-75">If the button above does not work, try
+            <a :href="verificationUri" @click="openExternal" class="text-white text-opacity-100 hover:underline cursor-pointer">{{ verificationUri }}</a> on any device.<br/><br/>Or try the QR code on your phone for quicker setup.</p>
+        </div>
+      </div>
 
       <UiButton type="success" :full-width="true" v-if="error" @click="retryInitialCode" class="mt-6">Retry</UiButton>
-
-      <div v-if="expiresIn && startedFlowAt" class="mt-10">
-        <p class="text-muted mb-2 text-center">Token expires {{ startedFlowAt.add(expiresIn, "second").fromNow() }}</p>
-
-        <progress-bar type="muted" :do-progress-animation="false" :progress="remainingTime / 100" />
-      </div>
     </template>
     
     <template v-else>
