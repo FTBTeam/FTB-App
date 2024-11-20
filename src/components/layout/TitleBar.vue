@@ -133,7 +133,7 @@ export default class TitleBar extends Vue {
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  z-index: 50000;
+  z-index: 50001;
   position: relative;
   transition: background-color 0.3s ease-in-out;
 

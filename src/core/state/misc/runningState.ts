@@ -26,6 +26,13 @@ export type InstanceRunningData = {
   uuid: string;
   messages: InstanceMessageData[];
   preInitMessages: Set<string>;
+  preInitProgress: {
+    stepName: string;
+    progress: number;
+    steps: number;
+    step: number;
+    stepExtra?: string;
+  },
   status: {
     crashed: boolean;
     finishedLoading: boolean;
@@ -37,6 +44,7 @@ export type InstanceRunningData = {
       step: number;
       progress: number;
       progressHuman: string;
+      stepProgressHuman?: string;
     },
     bars?: Bar[] | null;
   }
@@ -58,6 +66,12 @@ const emptyStateData = {
   status: {
     crashed: false,
     finishedLoading: false,
+  },
+  preInitProgress: {
+    stepName: '',
+    progress: 0,
+    steps: 0,
+    step: 0,
   },
   startup: {
     step: {
@@ -144,6 +158,20 @@ const mutations: MutationTree<RunningState> = {
       instanceData.messages.push({i: lastMessageIndex, t: "I", v: '[FTB APP][INFO] ' + payload.step.desc});
       lastMessageIndexByUuid.set(payload.uuid, lastMessageIndex + 1);
     }
+    
+    if (payload.step) {
+      instanceData.preInitProgress = {
+        stepName: payload.step.desc,
+        // Progress is a float from 0 to 1, we want it to be a number from 0 to 100
+        progress: payload.step.progress * 100,
+        steps: payload.step.totalSteps,
+        step: payload.step.step
+      }
+      
+      if (payload.step.progressHuman) {
+        instanceData.preInitProgress.stepExtra = payload.step.progressHuman;
+      }
+    }
   },
   FINISHED_LOADING: (state: RunningState, uuid: string) => {
     getOrCreateInstanceData(state, uuid).status.finishedLoading = true;
@@ -168,7 +196,8 @@ const mutations: MutationTree<RunningState> = {
 
 const getters: GetterTree<RunningState, RootState> = {
   instanceData: (state: RunningState) => (uuid: string): InstanceRunningData | undefined => state.instances.find((instance) => instance.uuid === uuid),
-  launchingStatus: (state: RunningState) => state.launchingStatus
+  launchingStatus: (state: RunningState) => state.launchingStatus,
+  preInitProgress: (state: RunningState) => (uuid: string) => getOrCreateInstanceData(state, uuid).preInitProgress,
 }
 
 export const runningStateModule: Module<RunningState, RootState> = {
