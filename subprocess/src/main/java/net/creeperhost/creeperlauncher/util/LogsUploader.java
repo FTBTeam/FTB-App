@@ -65,7 +65,7 @@ public class LogsUploader {
         var appDetails = new JsonObject();
         appDetails.addProperty("app", Constants.APPVERSION);
         appDetails.addProperty("platform", Constants.PLATFORM);
-        appDetails.addProperty("sharedVersion", Constants.SHARED_VERSION);
+        appDetails.addProperty("sharedVersion", Constants.APPVERSION);
         obj.add("appDetails", appDetails);
         
         var systemDetails = new JsonObject();
@@ -91,8 +91,13 @@ public class LogsUploader {
         
         // Collect all the instance logs
         obj.add("instanceLogs", collectInstanceLogs());
+
+        String uploadResult = uploadPaste(GSON.toJson(obj));
+        if (uploadResult == null || uploadResult.equals("failed to upload")) {
+            return null;
+        }
         
-        return uploadPaste(GSON.toJson(obj));
+        return uploadResult;
     }
 
     private static String getFilteredSettings() {

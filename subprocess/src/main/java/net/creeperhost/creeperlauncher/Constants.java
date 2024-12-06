@@ -73,11 +73,10 @@ public class Constants {
     public static final int WEBSOCKET_PORT = 13377;
     public static final String APPVERSION = "@APPVERSION@";
     public static final String BRANCH = "@BRANCH@";
-    public static final String SHARED_VERSION = "@SHAREDVERSION@";
-    public static final String SENTRY_DSN = "@SENTRY@";
+    public static final String COMMIT = "@COMMIT@";
     public static final String PLATFORM = WORKING_DIR.toAbsolutePath().toString().contains("Overwolf") ? "Overwolf" : "Electron";
     
-    public static final String USER_AGENT = "modpacklauncher/" + APPVERSION + " Mozilla/5.0 (" + OS.CURRENT.name() + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.138 Safari/537.36 Vivaldi/1.8.770.56";
+    public static final String USER_AGENT = "ftb-app/" + APPVERSION + " OS/"+ OS.CURRENT.name() + " Platform/" + PLATFORM + " Branch/" + BRANCH + " Commit/" + COMMIT;
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
     public static final String WEBSOCKET_SECRET = UUID.randomUUID().toString();
