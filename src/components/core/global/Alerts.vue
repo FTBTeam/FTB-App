@@ -99,10 +99,11 @@ export default class Alerts extends Vue {
     background-color: #444444;
     padding: .7rem .8rem;
     gap: .6rem;
-    white-space: nowrap;
     border-radius: 5px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     cursor: pointer;
+    
+    max-width: 710px;
     
     svg {
       color: white;
