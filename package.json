@@ -1,7 +1,7 @@
 {
   "productName": "FTB Electron App",
   "name": "ftb-app",
-  "version": "1.26.3",
+  "version": "1.26.4",
   "private": true,
   "main": "background.js",
   "email": "admin@feed-the-beast.com",
@@ -35,8 +35,6 @@
     "yarn": "dont-use-yarn"
   },
   "dependencies": {
-    "@sentry/tracing": "^6.19.7",
-    "@sentry/vue": "^6.19.7",
     "@types/object-inspect": "^1.8.4",
     "adm-zip": "^0.5.10",
     "balloon-css": "^1.2.0",
@@ -60,7 +58,8 @@
     "@babel/traverse": "^7.23.2",
     "class-validator": ">=0.14.0",
     "loader-utils": ">=1.4.1",
-    "ejs": ">=3.1.7"
+    "ejs": ">=3.1.7",
+    "deasync": ">=0.1.30"
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.0",
@@ -69,10 +68,10 @@
     "@fortawesome/free-regular-svg-icons": "^6.1.1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@fortawesome/vue-fontawesome": "^2.0.6",
-    "@ftbapp/vue-cli-plugin-electron-builder": "file:patches/vue-cli-plugin-electron-builder-20.2.0.tgz",
+    "@ftbapp/vue-cli-plugin-electron-builder": "file:patches/ftbapp-vue-cli-plugin-electron-builder-20.2.2.tgz",
     "@overwolf/ow-cli": "0.0.5-0",
-    "@overwolf/ow-electron": "^28.3.7",
-    "@overwolf/ow-electron-builder": "^24.7.0",
+    "@overwolf/ow-electron": "^31.7.3",
+    "@overwolf/ow-electron-builder": "^25.0.6",
     "@overwolf/types": "^3.16.0",
     "@sentry/webpack-plugin": "^1.18.9",
     "@types/adm-zip": "^0.5.5",
