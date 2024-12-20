@@ -91,6 +91,10 @@ jobs:
         run: |
           echo "$APPLE_API_KEY" > apple_api_key.p8
           echo ""
+      - name: Download AzureSignTool from nuget
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          dotnet tool install --global AzureSignTool --version 5.0.0   
       - name: Build frontend
         env:
           VUE_APP_PLATFORM: "electron"
@@ -191,7 +195,7 @@ jobs:
   release-electron:
     name: Publish Electron for ${{ matrix.os }}
     if: |
-      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]')
+      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]') && needs.build-jars.result == 'success'
     runs-on: ubuntu-latest
     needs: build-releases
     strategy:
@@ -218,8 +222,9 @@ jobs:
   # Publish to Overwolf
   release-overwolf:
     name: Publish Overwolf
+    # Don't run if cancelled or if the commit message contains [-skip release], also, don't run if the build-overwolf job was skipped
     if: |
-      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]')
+      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]') && needs.build-overwolf.result == 'success'
     runs-on: ubuntu-latest
     needs: 
       - build-overwolf
