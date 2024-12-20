@@ -59,7 +59,8 @@
     "class-validator": ">=0.14.0",
     "loader-utils": ">=1.4.1",
     "ejs": ">=3.1.7",
-    "deasync": ">=0.1.30"
+    "deasync": ">=0.1.30",
+    "@electron/notarize": "^2.5.0"
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.0",
@@ -112,8 +113,7 @@
   "pnpm": {
     "patchedDependencies": {
       "webpack@4.46.0": "patches/webpack@4.46.0.patch",
-      "terser-webpack-plugin@1.4.5": "patches/terser-webpack-plugin@1.4.5.patch",
-      "@electron/notarize@2.3.0": "patches/@electron__notarize@2.3.0.patch"
+      "terser-webpack-plugin@1.4.5": "patches/terser-webpack-plugin@1.4.5.patch"
     }
   }
 }
