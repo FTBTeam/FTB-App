@@ -1,10 +1,11 @@
-name: Release (Linux & Windows)
+name: Publish
 
 on:
-  push: 
+  push:
     tags:
       - v*
-
+     
+# Apply env to all jobs   
 env:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -14,161 +15,144 @@ env:
   PUBLISH_BUCKET: ${{ secrets.PUBLISH_BUCKET }}
   
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build-jars:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    # Cache for Gradle
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: 21
-    - name: Build subprocess
-      env:
-        SUBPROCESS_SENTRY_DSN: ${{ secrets.SUBPROCESS_SENTRY_DSN }}
-        GITHUB_BRANCH: "release" # TODO: Resolve this properly for alpha and beta releases
-      run: |
-        cd subprocess
-        ./gradlew clean build -si
-    - name: Build App (Windows & Linux)
-      env:
-        VUE_APP_PLATFORM: "electron"
-        APP_TARGET_PLATFORM: "linux"
-      run: |
-        npm install --global pnpm@9.12.3 || true
-        pnpm config set store-dir .pnpm-store
-        pnpm install --no-frozen-lockfile
-        pnpm gen:license
-        pnpm build --publish always -l --x64 --arm64
-    - uses: actions/cache/save@v4
-      id: cache
-      name: Save pnpm modules
-      with:
-        path: .pnpm-store
-        key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-    # Upload the subprocess/build/libs/ directory as an artifact
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: subprocess-jar
-        path: |
-          subprocess/build/libs/
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-linux
-        path: |
-          release/ftb-app-*.deb
-          release/ftb-app-*.AppImage
-          release/ftb-app-*.rpm
-          release/*-linux.yml
-          release/*-linux-*.yml
-  build-windows:
-    runs-on: windows-latest
-    # Only run this job if the previous job was successful
-    needs: build-linux
-    # Skip this job if the commit message contains [-skip windows]
-    if: "!contains(github.event.head_commit.message, '[-skip windows]')"
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('subprocess/settings.gradle', 'subprocess/gradle/wrapper/gradle-wrapper.properties', 'subprocess/build.gradle', 'subprocess/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+      - name: Build subprocess
+        env:
+          GITHUB_BRANCH: "release" # TODO: Resolve this properly for alpha and beta releases
+        run: |
+          cd subprocess
+          ./gradlew clean build -si
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: subprocess-jar-${{ matrix.os }}
+          path: |
+            subprocess/build/libs/
+  
+  # Publish
+  build-releases:
+    name: Prepare releases
+    strategy: 
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: "--x64 --arm64"
+            target: "-l"
+          - os: windows-latest
+            platform: windows
+            arch: "--x64"
+            target: "-w"
+          - os: macos-latest
+            platform: macos
+            arch: "--x64 --arm64"
+            target: "-m"
+    runs-on: ${{ matrix.os }}
+    needs: build-jars
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: subprocess-jar
-        path: subprocess/build/libs/
-    - name: Download AzureSignTool from nuget
-      run: |
-        dotnet tool install --global AzureSignTool --version 5.0.0        
-    - name: Build App (Windows)
-      env:
-        VUE_APP_PLATFORM: "electron"
-        APP_TARGET_PLATFORM: "windows"
-        VUE_APP_TARGET_PLATFORM: "windows"
-        AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
-        AZURE_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_KEY_VAULT_CLIENT_ID }}
-        AZURE_KEY_VAULT_CLIENT_SECRET: ${{ secrets.AZURE_KEY_VAULT_CLIENT_SECRET }}
-        AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
-        AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
-      run: |
-        npm install --global pnpm@9.12.3 || true
-        pnpm config set store-dir .pnpm-store
-        pnpm install --no-frozen-lockfile
-        pnpm gen:license
-        pnpm build --publish always -w --x64
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-windows
-        path: |
-          release/ftb-app-*.exe
-          release/*.blockmap
-          release/latest.yml
-          release/alpha.yml
-          release/beta.yml
-  build-macos:
-    runs-on: macos-latest
-    # Skip this job if the commit message contains [-skip macos]
-    if: "!contains(github.event.head_commit.message, '[-skip macos]')"
-    # Only run this job if the previous job was successful
-    needs:
-      - build-linux
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: subprocess-jar
-        path: subprocess/build/libs/
-    # Needed for signing the jar as we use `jar`
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: 21
-    - name: Build App (MacOS)
-      env:
-        VUE_APP_PLATFORM: "electron"
-        APP_TARGET_PLATFORM: "macos"
-        VUE_APP_TARGET_PLATFORM: "macos"
-        CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-        CSC_LINK: ${{ secrets.CSC_LINK }}
-        APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-        APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-      run: |
-        npm install --global pnpm@9.12.3 || true
-        pnpm config set store-dir .pnpm-store
-        pnpm install --no-frozen-lockfile
-        pnpm gen:license
-        echo "$APPLE_API_KEY" > apple_api_key.p8
-        pnpm build --publish always -m --x64 --arm64
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-macos
-        path: |
-          release/ftb-app-*.dmg
-          release/ftb-app-*.zip
-          release/*.blockmap
-          release/*-mac.yml
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: subprocess-jar-${{ matrix.os }}
+          path: subprocess/build/libs/
+      - name: Ensure jar exists
+        if: ${{ matrix.os == 'macos-latest' || matrix.os == 'linux-latest' }}
+        run: |
+          stat subprocess/build/libs/*.jar || exit 1
+      - name: Ensure jar exists
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          dir subprocess/build/libs/*.jar || exit 1
+      - name: Write apple id
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          echo "$APPLE_API_KEY" > apple_api_key.p8
+          echo ""
+      - name: Build frontend
+        env:
+          VUE_APP_PLATFORM: "electron"
+          APP_TARGET_PLATFORM: ${{ matrix.platform }}
+          SLACK_ENDPOINT: ${{ secrets.SLACK_ENDPOINT }}
+          VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: "./apple_api_key.p8"
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
+          AZURE_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_KEY_VAULT_CLIENT_ID }}
+          AZURE_KEY_VAULT_CLIENT_SECRET: ${{ secrets.AZURE_KEY_VAULT_CLIENT_SECRET }}
+          AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
+          AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
+        run: |
+          npm install --global pnpm@9.15.0 || true
+          pnpm config set store-dir .pnpm-store
+          pnpm install --no-frozen-lockfile
+          pnpm gen:license
+          pnpm build --publish always ${{ matrix.target }} ${{ matrix.arch }}
+      - name: Upload Mac artifacts
+        if: ${{ matrix.os == 'macos-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            release/ftb-app-*.dmg
+            release/ftb-app-*.zip
+            release/*.blockmap
+            release/*-mac.yml
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            release/ftb-app-*.exe
+            release/*.blockmap
+            release/latest.yml
+            release/alpha.yml
+            release/beta.yml
+      - name: Upload Linux artifacts
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            release/ftb-app-*.deb
+            release/ftb-app-*.AppImage
+            release/ftb-app-*.rpm
+            release/*-linux.yml
+            release/*-linux-*.yml
+
   build-overwolf:
+    name: Prepare Overwolf
     # Skip this job if the commit message contains [-skip overwolf]
     if: "!contains(github.event.head_commit.message, '[-skip overwolf]')"
     needs:
-      - build-linux
+      - build-jars
+      - build-releases
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -176,14 +160,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: subprocess-jar
+          name: subprocess-jar-ubuntu-latest
           path: subprocess/build/libs/
-      - name: Restore pnpm
-        uses: actions/cache/restore@v4
-        id: cache
-        with:
-          path: .pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
       - name: Build App (Overwolf)
         env:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
@@ -203,32 +181,27 @@ jobs:
           node overwolf/packageOpk.js
           echo "Signing OPK.."
           pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
-          pnpm ow opk upload -w true overwolf/signed.opk
-  release-artifacts:
-    needs:
-      - build-linux
-      - build-windows
-      - build-macos
-    # Even if one of the previous jobs failed, we still want to run this job
-    if: always() && !cancelled() && !contains(needs.*.result, 'failure') && !contains(github.event.head_commit.message, '[-skip release]')
+      - name: Upload Overwolf artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: overwolf-opk
+          path: overwolf/signed.opk
+
+  # Publish to S3
+  release-electron:
+    name: Publish Electron for ${{ matrix.os }}
+    if: |
+      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]')
     runs-on: ubuntu-latest
+    needs: build-releases
+    strategy:
+      matrix: 
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - name: Download linux releases
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: release-linux
-          path: release/
-      - name: Download windows releases
-        if: "!contains(github.event.head_commit.message, '[-skip windows]')"
-        uses: actions/download-artifact@v4
-        with:
-          name: release-windows
-          path: release/
-      - name: Download macos releases
-        if: "!contains(github.event.head_commit.message, '[-skip macos]')"
-        uses: actions/download-artifact@v4
-        with:
-          name: release-macos
+          name: release-${{ matrix.os }}
           path: release/
       - name: Get B2 client
         shell: bash
@@ -241,3 +214,30 @@ jobs:
           ls -la release
           b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
           b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/app
+          
+  # Publish to Overwolf
+  release-overwolf:
+    name: Publish Overwolf
+    if: |
+      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]')
+    runs-on: ubuntu-latest
+    needs: 
+      - build-overwolf
+      - release-electron # There is no point in releasing Overwolf if the Electron build failed
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: overwolf-opk
+          path: overwolf/
+      - name: Release
+        env:
+          OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
+          OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
+        run: |
+          npm install --global pnpm@9.12.3 || true
+          pnpm config set store-dir .pnpm-store
+          pnpm install --no-frozen-lockfile
+          pnpm ow opk upload -w true overwolf/signed.opk
