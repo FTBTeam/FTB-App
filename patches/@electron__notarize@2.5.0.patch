@@ -1,0 +1,13 @@
+diff --git a/lib/notarytool.js b/lib/notarytool.js
+index 6328fae1185159bfc97c75b61a8776d700c489bc..4cd9cb369628e1939445eaeeca4f18d9ca7a4c12 100644
+--- a/lib/notarytool.js
++++ b/lib/notarytool.js
+@@ -62,7 +62,7 @@ function authorizationArgs(rawOpts) {
+     else if ((0, validate_args_1.isNotaryToolApiKeyCredentials)(opts)) {
+         return [
+             '--key',
+-            (0, helpers_1.makeSecret)(opts.appleApiKey),
++            opts.appleApiKey,
+             '--key-id',
+             (0, helpers_1.makeSecret)(opts.appleApiKeyId),
+             '--issuer',

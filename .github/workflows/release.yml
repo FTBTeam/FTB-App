@@ -193,7 +193,7 @@ jobs:
 
   # Publish to S3
   release-electron:
-    name: Publish Electron for ${{ matrix.os }}
+    name: Publish Electron
     if: |
       !cancelled() && !contains(github.event.head_commit.message, '[-skip release]') && needs.build-jars.result == 'success'
     runs-on: ubuntu-latest
