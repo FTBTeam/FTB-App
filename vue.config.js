@@ -121,26 +121,26 @@ module.exports = {
             fs.writeFileSync(jsFile, file);
           }
         },
-        afterSign: async (context) => {
-          const { electronPlatformName, appOutDir } = context;
-          if (electronPlatformName !== 'darwin') {
-            return;
-          }
-          
-          if (!process.env.APPLE_API_KEY) {
-            console.error("No apple api key found");
-            return;
-          }
-
-          const appName = context.packager.appInfo.productFilename;
-          return await notarize({
-            appBundleId: 'dev.ftb.app',
-            appPath: `${appOutDir}/${appName}.app`,
-            appleApiKey: "./apple_api_key.p8", // Only exists at CI time
-            appleApiKeyId: process.env.APPLE_API_KEY_ID,
-            appleApiIssuer: process.env.APPLE_API_ISSUER,
-          });
-        },
+        // afterSign: async (context) => {
+        //   const { electronPlatformName, appOutDir } = context;
+        //   if (electronPlatformName !== 'darwin') {
+        //     return;
+        //   }
+        //  
+        //   if (!process.env.APPLE_API_KEY) {
+        //     console.error("No apple api key found");
+        //     return;
+        //   }
+        //
+        //   const appName = context.packager.appInfo.productFilename;
+        //   return await notarize({
+        //     appBundleId: 'dev.ftb.app',
+        //     appPath: `${appOutDir}/${appName}.app`,
+        //     appleApiKey: "./apple_api_key.p8", // Only exists at CI time
+        //     appleApiKeyId: process.env.APPLE_API_KEY_ID,
+        //     appleApiIssuer: process.env.APPLE_API_ISSUER,
+        //   });
+        // },
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
           {from: "subprocess/build/libs/java-licenses.json", to: ""},
