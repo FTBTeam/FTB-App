@@ -88,9 +88,11 @@ jobs:
           dir subprocess/build/libs/*.jar || exit 1
       - name: Write apple id
         if: ${{ matrix.os == 'macos-latest' }}
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         run: |
           echo "$APPLE_API_KEY" > apple_api_key.p8
-          echo ""
+          find apple_api_key.p8 -size +0c || exit 1
       - name: Download AzureSignTool from nuget
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
