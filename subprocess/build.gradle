@@ -33,7 +33,7 @@ def packageJson = new JsonSlurper().parse(file("../package.json"))
 def appVersion = packageJson.version
 assert appVersion != null && appVersion != "", "package.json must have a version field"
 
-version = appVersion + "+${details.gitHash}-${branch}"
+version = appVersion
 
 repositories {
     mavenLocal()
