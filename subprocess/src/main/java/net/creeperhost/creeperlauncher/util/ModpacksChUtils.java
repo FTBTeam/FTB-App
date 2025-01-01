@@ -23,7 +23,7 @@ public class ModpacksChUtils {
             return USER_PROVIDED_CREDENTIALS.apiUrl();
         }
         
-        return Constants.CREEPERHOST_MODPACK;
+        return Constants.FTB_MODPACKS_API;
     }
 
     public static String getModEndpoint() {
