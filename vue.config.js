@@ -142,7 +142,7 @@ module.exports = {
         //   });
         // },
         extraResources: [
-          {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
+          {from: "subprocess/build/libs/", to: "", filter: ["app-*.jar"]},
           {from: "subprocess/build/libs/java-licenses.json", to: ""},
           {from: "./licenses.json", to: ""},
           {from: "subprocess/build/libs/meta.json", to: ""},

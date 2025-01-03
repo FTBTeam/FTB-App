@@ -23,8 +23,8 @@ java {
     }
 }
 
-group = "net.creeperhost"
-archivesBaseName = "launcher"
+group = "dev.ftb"
+archivesBaseName = "app"
 
 def details = versionDetails()
 def branch = System.getenv("GITHUB_BRANCH") ?: "release"
@@ -117,12 +117,12 @@ shadowJar {
                 "Specification-Title"   : "Launcher",
                 "Specification-Vendor"  : "Creeperhost LTD",
                 "Specification-Version" : version,
-                "Implementation-Title"  : "CreeperLauncher",
+                "Implementation-Title"  : "AppMain",
                 "Implementation-Version": version,
                 "Implementation-Vendor" : "Creeperhost LTD"
-        ] as LinkedHashMap, "net/creeperhost/creeperlauncher/")
+        ] as LinkedHashMap, "dev/ftb/app/")
         attributes 'Multi-Release': 'true'
-        attributes 'Main-Class': 'net.creeperhost.creeperlauncher.CreeperLauncher'
+        attributes 'Main-Class': 'dev.ftb.app.AppMain'
     }
 }
 assemble.dependsOn 'shadowJar'
@@ -229,8 +229,8 @@ idea.project.settings {
     }
     runConfigurations {
         "Start Backend"(org.jetbrains.gradle.ext.Application) {
-            mainClass = "net.creeperhost.creeperlauncher.CreeperLauncher"
-            moduleName = "creeperlauncher.main"
+            mainClass = "dev.ftb.app.AppMain"
+            moduleName = "ftb-app.main"
             jvmArgs = '-ea '                                             // Enable assertions
             jvmArgs = '-Dconsole.level=ALL '                             // Direct ALL log levels to console.
             jvmArgs += '-DDownloadTask.debug=true '                      // Enable Quack DownloadAction logging from DownloadTask
@@ -271,14 +271,14 @@ tasks.named("generateTypeScript", GenerateTask) {
     outputKind = "module"
     outputFile = project.file("../src/core/@types/javaApi.d.ts")
     classPatterns = [
-            'net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler$SugaredInstanceJson',
-            'net.creeperhost.creeperlauncher.api.data.*',
-            'net.creeperhost.creeperlauncher.api.data.**.*',
-            'net.creeperhost.creeperlauncher.api.data.**.*$*',
-            'net.creeperhost.creeperlauncher.api.handlers.**.*$Request',
-            'net.creeperhost.creeperlauncher.api.handlers.**.*$Reply',
-            'net.creeperhost.creeperlauncher.api.handlers.**.*$Data',
-            'net.creeperhost.creeperlauncher.storage.settings.SettingsData'
+            'dev.ftb.app.api.handlers.instances.InstalledInstancesHandler$SugaredInstanceJson',
+            'dev.ftb.app.api.data.*',
+            'dev.ftb.app.api.data.**.*',
+            'dev.ftb.app.api.data.**.*$*',
+            'dev.ftb.app.api.handlers.**.*$Request',
+            'dev.ftb.app.api.handlers.**.*$Reply',
+            'dev.ftb.app.api.handlers.**.*$Data',
+            'dev.ftb.app.storage.settings.SettingsData'
     ]
     excludeClasses = sharedSettings.excludeClasses
     customTypeMappings = sharedSettings.customTypeMappings
@@ -305,7 +305,7 @@ tasks.named("generateTypeScript", GenerateTask) {
 //    excludeClasses = sharedSettings.excludeClasses
 //    customTypeMappings = sharedSettings.customTypeMappings
 //    classes = [
-//            "net.creeperhost.creeperlauncher.data.InstanceJson",
+//            "dev.ftb.app.data.InstanceJson",
 //    ]
 //}
 

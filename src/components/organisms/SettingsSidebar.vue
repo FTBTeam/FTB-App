@@ -33,7 +33,7 @@
           <span>Privacy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_ADVANCED }" class="item">
-          <font-awesome-icon icon="user-secret" />
+          <font-awesome-icon icon="cogs" />
           <span>Advanced</span>
         </router-link>
       </nav>

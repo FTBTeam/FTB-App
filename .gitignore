@@ -46,7 +46,6 @@ subprocess/.idea
 subprocess/.gradle
 subprocess/build
 subprocess/out
-subprocess/creepernatives
 subprocess/node_modules
 subprocess/wix
 subprocess/jdk
@@ -60,7 +59,6 @@ subprocess/*.class
 subprocess/wix.zip
 subprocess/jpackager.archive
 subprocess/package-lock.json
-subprocess/creeperlauncher.log*
 subprocess/hs_err*
 subprocess/debug.log*
 subprocess/jre.archive
@@ -71,7 +69,6 @@ subprocess/.localCache
 subprocess/launcher.log.lck
 subprocess/launcher.log
 subprocess/test
-subprocess/src/main/java/net/creeperhost/creeperlauncher/VersionTest.java
 subprocess/launcher.log.1
 subprocess/launcher.log.1.lck
 subprocess/tempDMGExtract/
