@@ -12,9 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Created by covers1624 on 1/6/22.
- */
 public class SetInstanceArtHandler implements IMessageHandler<SetInstanceArtData> {
 
     private static final Logger LOGGER = LogManager.getLogger();

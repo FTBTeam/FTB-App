@@ -11,8 +11,6 @@ import java.util.Map;
  * Makes a web request.
  * <p>
  * Cookies will be handled and stored automatically, they will not be persisted.
- * <p>
- * Created by covers1624 on 30/11/22.
  */
 public class WebRequestData extends BaseData {
 

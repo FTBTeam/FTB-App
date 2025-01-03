@@ -4,9 +4,6 @@ import dev.ftb.app.api.data.BaseData;
 
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 12/9/23.
- */
 public class InstanceDisableCloudSavesData extends BaseData {
 
     public UUID instance;

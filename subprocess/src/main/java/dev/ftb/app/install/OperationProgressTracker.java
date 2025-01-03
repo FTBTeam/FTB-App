@@ -6,9 +6,6 @@ import dev.ftb.app.install.tasks.TaskProgressListener;
 
 import java.util.Map;
 
-/**
- * Created by covers1624 on 18/8/23.
- */
 public class OperationProgressTracker {
 
     /**

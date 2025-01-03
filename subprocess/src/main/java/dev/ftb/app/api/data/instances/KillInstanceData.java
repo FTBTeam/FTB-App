@@ -4,9 +4,6 @@ import dev.ftb.app.api.data.BaseData;
 
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 9/2/22.
- */
 public class KillInstanceData extends BaseData {
 
     public UUID uuid;

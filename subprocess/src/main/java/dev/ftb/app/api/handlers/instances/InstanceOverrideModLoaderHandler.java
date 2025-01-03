@@ -14,9 +14,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-/**
- * Created by covers1624 on 6/9/23.
- */
 public class InstanceOverrideModLoaderHandler implements IMessageHandler<InstanceOverrideModLoaderData> {
 
     private static final Logger LOGGER = LogManager.getLogger();

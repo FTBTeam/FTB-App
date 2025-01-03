@@ -4,9 +4,6 @@ import dev.ftb.app.api.data.BaseData;
 
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 30/8/23.
- */
 public class InstanceCloudSyncConflictData extends BaseData {
 
     public final UUID uuid;

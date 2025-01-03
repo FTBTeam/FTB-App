@@ -1,10 +1,10 @@
 package dev.ftb.app.api;
 
 import com.google.gson.Gson;
-import fi.iki.elonen.NanoWSD;
-import net.covers1624.quack.reflect.PrivateLookups;
 import dev.ftb.app.AppMain;
 import dev.ftb.app.api.data.BaseData;
+import fi.iki.elonen.NanoWSD;
+import net.covers1624.quack.reflect.PrivateLookups;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by covers1624 on 11/12/23.
- */
 public class NanoHttpdWebsocketServer extends NanoWSD implements WebsocketServer {
 
     private static final Logger LOGGER = LogManager.getLogger();

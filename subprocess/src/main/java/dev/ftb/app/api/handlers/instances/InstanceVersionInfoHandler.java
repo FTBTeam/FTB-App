@@ -6,9 +6,6 @@ import dev.ftb.app.api.data.instances.InstanceVersionInfoData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.pack.Instance;
 
-/**
- * Created by covers1624 on 2/6/22.
- */
 public class InstanceVersionInfoHandler implements IMessageHandler<InstanceVersionInfoData> {
 
     @Override

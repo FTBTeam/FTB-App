@@ -39,9 +39,6 @@ import static dev.ftb.app.instance.cloud.CloudSaveManager.LAST_MODIFIED_METADATA
 import static dev.ftb.app.instance.cloud.SyncManifest.State.*;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 
-/**
- * Created by covers1624 on 15/3/23.
- */
 public class CloudSyncOperation {
 
     private static final Logger LOGGER = LogManager.getLogger();

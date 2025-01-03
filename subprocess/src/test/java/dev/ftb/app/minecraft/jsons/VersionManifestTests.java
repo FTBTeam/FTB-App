@@ -10,9 +10,6 @@ import java.util.Set;
 import static dev.ftb.app.minecraft.jsons.VersionManifest.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Created by covers1624 on 15/11/21.
- */
 public class VersionManifestTests {
 
     @BeforeAll

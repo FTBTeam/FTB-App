@@ -2,16 +2,16 @@ package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
-import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.util.HashUtils;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
+import net.covers1624.quack.collection.ColUtils;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.util.HashUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +31,6 @@ import java.util.zip.ZipOutputStream;
  * Unlike V2, this can pretty much just extract the universal jar and install the profile.
  * However, we make a good effort to install all libraries and necessary files during the installation process here.
  * <p>
- * Created by covers1624 on 24/1/22.
  */
 public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 

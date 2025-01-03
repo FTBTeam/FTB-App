@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by covers1624 on 19/11/21.
- */
 public class SimpleCookieJar implements CookieJar {
 
     private final List<Cookie> cookies = new LinkedList<>();

@@ -17,8 +17,6 @@ import static dev.ftb.app.Constants.MC_RESOURCES;
 
 /**
  * Update/downloads assets for a given Minecraft version.
- * <p>
- * Created by covers1624 on 17/11/21.
  */
 public class InstallAssetsTask implements Task {
 

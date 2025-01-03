@@ -10,11 +10,9 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
-/**
- * Created by covers1624 on 30/11/22.
- */
 public class WebRequestHandler implements IMessageHandler<WebRequestData> {
     private static final Logger LOGGER = LogManager.getLogger();
         

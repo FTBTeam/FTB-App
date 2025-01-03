@@ -2,7 +2,6 @@ package dev.ftb.app.util;
 
 import com.google.common.collect.Maps;
 import com.google.gson.*;
-import net.covers1624.quack.platform.OperatingSystem;
 import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.accounts.AccountManager;
@@ -10,6 +9,7 @@ import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.os.OS;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.storage.settings.Settings;
+import net.covers1624.quack.platform.OperatingSystem;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -33,9 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
-/**
- * Created by covers1624 on 24/2/21.
- */
 public class LogsUploader {
 
     private static final Logger LOGGER = LogManager.getLogger();

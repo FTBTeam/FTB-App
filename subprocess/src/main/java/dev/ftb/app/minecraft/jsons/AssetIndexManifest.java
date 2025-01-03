@@ -4,9 +4,9 @@ import com.google.common.hash.HashCode;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import net.covers1624.quack.gson.HashCodeAdapter;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.util.GsonUtils;
+import net.covers1624.quack.gson.HashCodeAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,6 @@ import static java.util.Objects.requireNonNull;
 /**
  * Asset index json.
  * <p>
- * Created by covers1624 on 17/11/21.
  */
 public class AssetIndexManifest {
 

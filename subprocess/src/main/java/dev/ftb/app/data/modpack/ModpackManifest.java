@@ -4,13 +4,13 @@ import com.google.common.hash.HashCode;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
+import dev.ftb.app.Constants;
+import dev.ftb.app.util.ModpacksChUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
-import dev.ftb.app.Constants;
-import dev.ftb.app.util.ModpacksChUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +22,6 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Models the <code>modpacks.ch</code> api.
- * Reference: https://modpacksch.docs.apiary.io/#/reference/0/modpacks/modpack-manifest/200?mc=reference%2F0%2Fmodpacks%2Fmodpack-manifest%2F200
- * <p>
- * Created by covers1624 on 16/11/21.
- */
 @SuppressWarnings ("FieldMayBeFinal") // Non-Final for Gson.
 public class ModpackManifest {
 

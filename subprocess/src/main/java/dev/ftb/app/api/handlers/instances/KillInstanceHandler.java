@@ -4,12 +4,9 @@ import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.KillInstanceData;
 import dev.ftb.app.api.handlers.IMessageHandler;
-import dev.ftb.app.pack.InstanceLauncher;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.pack.InstanceLauncher;
 
-/**
- * Created by covers1624 on 9/2/22.
- */
 public class KillInstanceHandler implements IMessageHandler<KillInstanceData> {
 
     @Override

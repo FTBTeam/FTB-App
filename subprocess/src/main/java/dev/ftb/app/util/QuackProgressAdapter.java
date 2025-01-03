@@ -1,11 +1,8 @@
 package dev.ftb.app.util;
 
-import net.covers1624.quack.net.download.DownloadListener;
 import dev.ftb.app.install.tasks.TaskProgressListener;
+import net.covers1624.quack.net.download.DownloadListener;
 
-/**
- * Created by covers1624 on 15/12/21.
- */
 public record QuackProgressAdapter(TaskProgressListener progressListener) implements DownloadListener {
 
     //@formatter:off

@@ -2,17 +2,17 @@ package dev.ftb.app.install.tasks;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
+import dev.ftb.app.Constants;
+import dev.ftb.app.install.FileValidation;
+import dev.ftb.app.pack.CancellationToken;
+import dev.ftb.app.util.SSLUtils;
+import dev.ftb.app.util.X509Formatter;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.net.HttpResponseException;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.covers1624.quack.util.TimeUtils;
-import dev.ftb.app.Constants;
-import dev.ftb.app.install.FileValidation;
-import dev.ftb.app.pack.CancellationToken;
-import dev.ftb.app.util.SSLUtils;
-import dev.ftb.app.util.X509Formatter;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -42,8 +42,6 @@ import static java.net.HttpURLConnection.HTTP_PARTIAL;
 
 /**
  * A task to download a file.
- * <p>
- * Created by covers1624 on 17/11/21.
  */
 public class DownloadTask implements Task {
 

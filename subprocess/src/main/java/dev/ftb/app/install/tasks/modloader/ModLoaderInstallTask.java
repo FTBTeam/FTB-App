@@ -14,9 +14,6 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- * Created by covers1624 on 28/1/22.
- */
 public abstract class ModLoaderInstallTask implements Task {
 
     private static final Logger LOGGER = LogManager.getLogger();

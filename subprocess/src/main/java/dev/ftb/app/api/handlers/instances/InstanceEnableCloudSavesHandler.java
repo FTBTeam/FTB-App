@@ -11,9 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-/**
- * Created by covers1624 on 12/9/23.
- */
 public class InstanceEnableCloudSavesHandler implements IMessageHandler<InstanceEnableCloudSavesData> {
 
     private static final Logger LOGGER = LogManager.getLogger();

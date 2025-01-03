@@ -6,9 +6,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Created by covers1624 on 2/2/22.
- */
 public class ModLoaderInstallTaskTest {
 
     @Test

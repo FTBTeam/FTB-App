@@ -3,13 +3,13 @@ package dev.ftb.app.util;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.net.DownloadAction;
-import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.mod.CurseMetadata;
 import dev.ftb.app.data.mod.ModManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.net.DownloadAction;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +25,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
-/**
- * Created by covers1624 on 13/9/23.
- */
 public class CurseMetadataCache {
 
     private static final Gson GSON = new Gson();

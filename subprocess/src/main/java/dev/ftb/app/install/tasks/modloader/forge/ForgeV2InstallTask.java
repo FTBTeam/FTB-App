@@ -5,6 +5,15 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.Constants;
+import dev.ftb.app.data.forge.installerv2.InstallManifest;
+import dev.ftb.app.install.tasks.DownloadTask;
+import dev.ftb.app.install.tasks.TaskProgressListener;
+import dev.ftb.app.minecraft.jsons.VersionManifest;
+import dev.ftb.app.pack.CancellationToken;
+import dev.ftb.app.pack.Instance;
+import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.util.StreamGobblerLog;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -18,15 +27,6 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.util.HashUtils;
-import dev.ftb.app.Constants;
-import dev.ftb.app.data.forge.installerv2.InstallManifest;
-import dev.ftb.app.install.tasks.DownloadTask;
-import dev.ftb.app.install.tasks.TaskProgressListener;
-import dev.ftb.app.minecraft.jsons.VersionManifest;
-import dev.ftb.app.pack.CancellationToken;
-import dev.ftb.app.pack.Instance;
-import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.StreamGobblerLog;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,9 +39,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Created by covers1624 on 14/1/22.
- */
 @SuppressWarnings ("UnstableApiUsage")
 public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 

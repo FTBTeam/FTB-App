@@ -3,14 +3,14 @@ package dev.ftb.app.data;
 import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import dev.ftb.app.Constants;
+import dev.ftb.app.install.tasks.DownloadTask;
+import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
-import dev.ftb.app.Constants;
-import dev.ftb.app.install.tasks.DownloadTask;
-import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +25,6 @@ import java.util.Locale;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Created by covers1624 on 11/2/22.
- */
 @SuppressWarnings ("FieldMayBeFinal") // Gson
 public class InstanceSupportMeta {
 

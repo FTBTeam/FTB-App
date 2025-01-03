@@ -1,8 +1,5 @@
 package dev.ftb.app.instance.cloud;
 
-/**
- * Created by covers1624 on 22/3/23.
- */
 public class SyncManifest {
 
     public long lastSync;

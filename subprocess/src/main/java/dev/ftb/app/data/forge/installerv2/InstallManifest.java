@@ -2,15 +2,15 @@ package dev.ftb.app.data.forge.installerv2;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import dev.ftb.app.minecraft.jsons.VersionManifest;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
-import dev.ftb.app.minecraft.jsons.VersionManifest;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-/**
- * Created by covers1624 on 17/1/22.
- */
 public class InstallManifest {
     public static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(MavenNotation.class, new MavenNotationAdapter())

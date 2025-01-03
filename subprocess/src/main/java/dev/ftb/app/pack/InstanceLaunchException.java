@@ -3,7 +3,6 @@ package dev.ftb.app.pack;
 /**
  * Thrown when the instance is unable to be launched for a specific reason.
  * <p>
- * Created by covers1624 on 17/11/21.
  */
 public class InstanceLaunchException extends Exception {
 

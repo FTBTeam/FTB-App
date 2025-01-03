@@ -2,9 +2,6 @@ package dev.ftb.app.pack;
 
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Created by covers1624 on 27/12/21.
- */
 public class CancellationToken {
 
     private boolean isCanceled;

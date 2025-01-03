@@ -3,12 +3,6 @@ package dev.ftb.app.instance;
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.util.DataUtils;
-import net.covers1624.quack.util.HashUtils;
-import net.covers1624.quack.util.MultiHasher;
 import dev.ftb.app.Constants;
 import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.accounts.MicrosoftProfile;
@@ -17,6 +11,12 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest.ModpackFile;
 import dev.ftb.app.data.modpack.ShareManifest;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.pack.Instance;
+import net.covers1624.quack.collection.ColUtils;
+import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.util.DataUtils;
+import net.covers1624.quack.util.HashUtils;
+import net.covers1624.quack.util.MultiHasher;
 import okhttp3.*;
 import okio.BufferedSink;
 import okio.Okio;
@@ -38,9 +38,6 @@ import java.util.stream.Stream;
 
 import static dev.ftb.app.Constants.MC_SESSION_SERVER_JOIN;
 
-/**
- * Created by covers1624 on 13/4/22.
- */
 public class InstanceSharer extends InstanceOperation {
 
     /**

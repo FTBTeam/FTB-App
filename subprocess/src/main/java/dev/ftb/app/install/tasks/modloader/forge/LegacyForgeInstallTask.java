@@ -1,6 +1,5 @@
 package dev.ftb.app.install.tasks.modloader.forge;
 
-import net.covers1624.quack.maven.MavenNotation;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
@@ -8,6 +7,7 @@ import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
+import net.covers1624.quack.maven.MavenNotation;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
@@ -19,7 +19,6 @@ import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 /**
  * Forge 'jarmod' versions.
  * <p>
- * Created by covers1624 on 2/2/22.
  */
 // TODO We control the entire launch process now, this can be done _very_ differently.
 public class LegacyForgeInstallTask extends AbstractForgeInstallTask {

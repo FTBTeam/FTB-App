@@ -14,9 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Created by covers1624 on 27/5/22.
- */
 public class PathRequestBody extends RequestBody {
 
     private static final Logger LOGGER = LogManager.getLogger();

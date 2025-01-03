@@ -14,9 +14,6 @@ import java.util.concurrent.Executors;
 
 import static net.covers1624.quack.util.SneakyUtils.unsafeCast;
 
-/**
- * Created by covers1624 on 3/6/22.
- */
 public class LongRunningTaskManager {
 
     private static final Logger LOGGER = LogManager.getLogger();

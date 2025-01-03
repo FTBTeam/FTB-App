@@ -6,6 +6,8 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.install.tasks.DownloadTask;
+import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
@@ -15,8 +17,6 @@ import net.covers1624.quack.maven.MavenNotation;
 import net.covers1624.quack.platform.Architecture;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
-import dev.ftb.app.install.tasks.DownloadTask;
-import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
@@ -33,14 +33,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static dev.ftb.app.Constants.CH_MAVEN;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 
 /**
  * Version manifest for a given game version.
  * <p>
- * Created by covers1624 on 8/11/21.
  */
 @SuppressWarnings ("NotNullFieldNotInitialized")
 public class VersionManifest {

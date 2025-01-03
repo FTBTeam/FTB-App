@@ -1,10 +1,10 @@
 package dev.ftb.app.minecraft.jsons;
 
 import com.google.gson.JsonParseException;
-import net.covers1624.quack.gson.JsonUtils;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import dev.ftb.app.util.GsonUtils;
+import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,6 @@ import static net.covers1624.quack.collection.ColUtils.onlyOrDefault;
 /**
  * Minecraft 'Versions List' manifest.
  * <p>
- * Created by covers1624 on 8/11/21.
  */
 public class VersionListManifest {
 

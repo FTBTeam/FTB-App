@@ -2,8 +2,8 @@ package dev.ftb.app.data.forge;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import dev.ftb.app.Constants;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +27,6 @@ import java.util.Map;
  * version names, Specifically, they had the branch name appended.
  * <p>
  * Forge doesn't appear to generate these version names anymore.
- * <p>
- * Created by covers1624 on 14/2/22.
  */
 public class VersionOverrides {
 

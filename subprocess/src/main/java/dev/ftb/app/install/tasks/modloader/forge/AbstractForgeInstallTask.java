@@ -1,9 +1,6 @@
 package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.gson.JsonObject;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.maven.MavenNotation;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.VersionOverrides;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
@@ -13,6 +10,9 @@ import dev.ftb.app.install.tasks.modloader.ModLoaderInstallTask;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.maven.MavenNotation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
@@ -31,9 +31,6 @@ import java.util.jar.JarFile;
 import static dev.ftb.app.install.tasks.DownloadTask.*;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 
-/**
- * Created by covers1624 on 25/1/22.
- */
 public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
     private static final Logger LOGGER = LogManager.getLogger();

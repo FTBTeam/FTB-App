@@ -2,9 +2,6 @@ package dev.ftb.app.install;
 
 import dev.ftb.app.data.mod.ModManifest;
 
-/**
- * Created by covers1624 on 12/9/23.
- */
 public interface ModCollector {
 
     /**

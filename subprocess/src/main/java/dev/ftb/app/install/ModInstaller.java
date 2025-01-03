@@ -25,9 +25,6 @@ import java.util.Map;
 
 import static dev.ftb.app.data.InstanceModifications.ModOverrideState.*;
 
-/**
- * Created by covers1624 on 12/9/23.
- */
 public class ModInstaller implements ModCollector {
 
     private static final Logger LOGGER = LogManager.getLogger();

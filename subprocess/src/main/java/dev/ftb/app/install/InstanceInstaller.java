@@ -38,9 +38,6 @@ import static dev.ftb.app.data.modpack.ModpackVersionManifest.GSON;
 import static dev.ftb.app.data.modpack.ModpackVersionManifest.Target;
 import static net.covers1624.quack.util.SneakyUtils.nullCons;
 
-/**
- * Created by covers1624 on 3/2/22.
- */
 public class InstanceInstaller extends InstanceOperation {    
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean DEBUG = Boolean.getBoolean("InstanceInstaller.debug");

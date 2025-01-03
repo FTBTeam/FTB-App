@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 
-/**
- * Created by covers1624 on 13/3/23.
- */
 public interface DebugTools extends Closeable {
 
     Logger LOGGER = LogManager.getLogger();

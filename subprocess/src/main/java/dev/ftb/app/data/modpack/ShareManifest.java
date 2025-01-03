@@ -2,10 +2,10 @@ package dev.ftb.app.data.modpack;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import dev.ftb.app.Constants;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
-import dev.ftb.app.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -14,9 +14,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Objects;
 
-/**
- * Created by covers1624 on 1/6/22.
- */
 public class ShareManifest {
 
     private static final Logger LOGGER = LogManager.getLogger();

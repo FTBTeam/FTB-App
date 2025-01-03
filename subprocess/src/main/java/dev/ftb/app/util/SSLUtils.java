@@ -13,7 +13,6 @@ import java.security.cert.X509Certificate;
 /**
  * SSL Utilities for logging and tracing {@link X509Certificate}s.
  * <p>
- * Created by covers1624 on 22/11/22.
  */
 public class SSLUtils {
 

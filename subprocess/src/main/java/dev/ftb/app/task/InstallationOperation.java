@@ -13,9 +13,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * Created by covers1624 on 3/6/22.
- */
 public class InstallationOperation extends LongRunningOperation {
 
     private static final Logger LOGGER = LogManager.getLogger();

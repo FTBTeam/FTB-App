@@ -5,9 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * Created by covers1624 on 19/11/21.
- */
 public class ConstantsTests {
 
     @Test

@@ -11,8 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A Task.
- * <p>
- * Created by covers1624 on 17/11/21.
  */
 public interface Task {
 

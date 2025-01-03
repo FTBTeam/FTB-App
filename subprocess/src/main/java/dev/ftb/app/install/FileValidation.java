@@ -2,10 +2,10 @@ package dev.ftb.app.install;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
+import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
-import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
@@ -18,8 +18,6 @@ import java.util.Objects;
 
 /**
  * Helper for validating file hashes and sizes.
- * <p>
- * Created by covers1624 on 19/1/22.
  */
 public class FileValidation {
 

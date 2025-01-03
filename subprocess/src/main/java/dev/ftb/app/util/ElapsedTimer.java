@@ -2,9 +2,6 @@ package dev.ftb.app.util;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by covers1624 on 13/1/21.
- */
 public class ElapsedTimer {
 
     private final long start;

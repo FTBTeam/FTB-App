@@ -9,9 +9,9 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.data.mod.ModManifest;
 import net.covers1624.quack.annotation.NonNullApi;
 import net.covers1624.quack.gson.JsonUtils;
-import dev.ftb.app.data.mod.ModManifest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +29,6 @@ import java.util.concurrent.*;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
-/**
- * Created by covers1624 on 16/9/23.
- */
 @NonNullApi
 public class ModVersionCache {
 

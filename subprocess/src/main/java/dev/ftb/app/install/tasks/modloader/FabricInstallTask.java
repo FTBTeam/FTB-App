@@ -1,19 +1,16 @@
 package dev.ftb.app.install.tasks.modloader;
 
-import net.covers1624.quack.gson.JsonUtils;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
+import net.covers1624.quack.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- * Created by covers1624 on 28/1/22.
- */
 public abstract class FabricInstallTask extends ModLoaderInstallTask {
 
     private static final String FABRIC_META = "https://meta.fabricmc.net/";

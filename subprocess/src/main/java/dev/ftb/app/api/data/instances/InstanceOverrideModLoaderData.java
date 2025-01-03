@@ -4,9 +4,6 @@ import dev.ftb.app.api.data.BaseData;
 
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 6/9/23.
- */
 public class InstanceOverrideModLoaderData extends BaseData {
 
     public UUID uuid;

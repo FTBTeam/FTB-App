@@ -1,8 +1,5 @@
 package dev.ftb.app.install.tasks;
 
-/**
- * Created by covers1624 on 15/12/21.
- */
 public class TaskProgressAggregator implements TaskProgressListener {
 
     protected final TaskProgressListener parent;

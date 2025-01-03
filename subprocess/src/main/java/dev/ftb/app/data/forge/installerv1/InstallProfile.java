@@ -1,18 +1,18 @@
 package dev.ftb.app.data.forge.installerv1;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import dev.ftb.app.minecraft.jsons.VersionManifest;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
-import dev.ftb.app.minecraft.jsons.VersionManifest;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by covers1624 on 25/1/22.
- */
 public class InstallProfile {
 
     public static final Gson GSON = new GsonBuilder()

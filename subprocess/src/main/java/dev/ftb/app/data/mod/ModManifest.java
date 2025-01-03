@@ -4,14 +4,14 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.net.DownloadAction;
-import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.ModCollector;
 import dev.ftb.app.util.ModpacksChUtils;
+import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.net.DownloadAction;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Created by covers1624 on 30/8/23.
- */
 public class ModManifest {
 
     private static final Logger LOGGER = LogManager.getLogger();

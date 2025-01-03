@@ -2,9 +2,9 @@ package dev.ftb.app.data;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
-import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -14,9 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Created by covers1624 on 5/9/23.
- */
 public class InstanceModifications {
 
     public static final Gson GSON = new Gson();

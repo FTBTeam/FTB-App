@@ -6,9 +6,6 @@ import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 
-/**
- * Created by covers1624 on 29/11/22.
- */
 public class ProxyWithAuth extends Proxy {
 
     @Nullable

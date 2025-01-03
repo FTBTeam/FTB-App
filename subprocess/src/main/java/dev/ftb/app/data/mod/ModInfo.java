@@ -2,9 +2,6 @@ package dev.ftb.app.data.mod;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by covers1624 on 5/9/23.
- */
 public record ModInfo(
         long fileId,
         String fileName,

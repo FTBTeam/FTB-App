@@ -14,9 +14,6 @@ import java.net.*;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Created by covers1624 on 29/11/22.
- */
 public class ProxyUtils {
 
     private static final Logger LOGGER = LogManager.getLogger();

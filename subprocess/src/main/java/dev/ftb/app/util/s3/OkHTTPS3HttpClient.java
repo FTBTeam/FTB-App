@@ -22,7 +22,6 @@ import java.util.function.Supplier;
  * <p>
  * This is likely very horrible, and not overly configurable.
  * <p>
- * Created by covers1624 on 22/3/23.
  */
 public class OkHTTPS3HttpClient implements SdkHttpClient {
 

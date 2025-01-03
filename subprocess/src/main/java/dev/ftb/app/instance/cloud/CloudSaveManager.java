@@ -7,12 +7,6 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
-import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.io.ProgressInputStream;
-import net.covers1624.quack.util.HashUtils;
-import net.covers1624.quack.util.SneakyUtils;
 import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
@@ -31,6 +25,12 @@ import dev.ftb.app.pack.Instance;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.QuackProgressAdapter;
 import dev.ftb.app.util.s3.OkHTTPS3HttpClient;
+import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.io.ProgressInputStream;
+import net.covers1624.quack.util.HashUtils;
+import net.covers1624.quack.util.SneakyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,9 +66,6 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
-/**
- * Created by covers1624 on 23/11/22.
- */
 @SuppressWarnings ("UnstableApiUsage")
 public final class CloudSaveManager {
 

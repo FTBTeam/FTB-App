@@ -2,14 +2,14 @@ package dev.ftb.app.instance;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.util.HashUtils;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.pack.Instance;
+import net.covers1624.quack.collection.ColUtils;
+import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.util.HashUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -21,9 +21,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.stream.Stream;
 
-/**
- * Created by covers1624 on 13/4/22.
- */
 public abstract class InstanceOperation {
 
     protected final Instance instance;

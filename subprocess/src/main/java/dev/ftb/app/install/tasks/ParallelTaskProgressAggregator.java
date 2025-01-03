@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * An implementation of {@link TaskProgressAggregator} capable
  * of safely consuming data from multiple {@link Task}s from
  * multiple threads.
- *
- * Created by covers1624 on 15/12/21.
  */
 public class ParallelTaskProgressAggregator extends TaskProgressAggregator {
 

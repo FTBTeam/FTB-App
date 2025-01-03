@@ -5,9 +5,6 @@ import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.PollCloudInstancesData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 
-/**
- * Created by covers1624 on 15/6/23.
- */
 public class PollCloudInstancesHandler implements IMessageHandler<PollCloudInstancesData> {
 
     @Override

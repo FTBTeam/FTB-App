@@ -5,9 +5,6 @@ import dev.ftb.app.install.OperationProgressTracker;
 
 import java.util.Map;
 
-/**
- * Created by covers1624 on 18/8/23.
- */
 public class OperationProgressUpdateData extends BaseData {
 
     /**

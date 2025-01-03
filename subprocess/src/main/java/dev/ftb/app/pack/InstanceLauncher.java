@@ -2,15 +2,6 @@ package dev.ftb.app.pack;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import net.covers1624.jdkutils.JavaInstall;
-import net.covers1624.jdkutils.JavaVersion;
-import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
-import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.maven.MavenNotation;
-import net.covers1624.quack.net.httpapi.RequestListener;
-import net.covers1624.quack.util.DataUtils;
-import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
-import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import dev.ftb.app.Constants;
 import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.accounts.MicrosoftProfile;
@@ -25,6 +16,15 @@ import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
 import dev.ftb.app.util.StreamGobblerLog;
+import net.covers1624.jdkutils.JavaInstall;
+import net.covers1624.jdkutils.JavaVersion;
+import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
+import net.covers1624.quack.io.IOUtils;
+import net.covers1624.quack.maven.MavenNotation;
+import net.covers1624.quack.net.httpapi.RequestListener;
+import net.covers1624.quack.util.DataUtils;
+import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
+import net.covers1624.quack.util.SneakyUtils.ThrowingRunnable;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,15 +46,14 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static net.covers1624.quack.collection.ColUtils.iterable;
-import static net.covers1624.quack.util.SneakyUtils.sneak;
 import static dev.ftb.app.minecraft.jsons.VersionManifest.LEGACY_ASSETS_VERSION;
 import static dev.ftb.app.util.Log4jMarkers.*;
+import static net.covers1624.quack.collection.ColUtils.iterable;
+import static net.covers1624.quack.util.SneakyUtils.sneak;
 
 /**
  * Responsible for launching a specific instance.
  * <p>
- * Created by covers1624 on 17/11/21.
  */
 public class InstanceLauncher {
 

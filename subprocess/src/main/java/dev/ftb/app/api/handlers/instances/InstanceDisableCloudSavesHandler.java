@@ -12,9 +12,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Created by covers1624 on 12/9/23.
- */
 public class InstanceDisableCloudSavesHandler implements IMessageHandler<InstanceDisableCloudSavesData> {
 
     private static final Logger LOGGER = LogManager.getLogger();

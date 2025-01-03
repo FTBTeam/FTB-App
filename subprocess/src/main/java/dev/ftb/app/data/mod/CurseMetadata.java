@@ -2,9 +2,6 @@ package dev.ftb.app.data.mod;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by covers1624 on 2/10/23.
- */
 public record CurseMetadata(
         Type type,
         long curseProject,

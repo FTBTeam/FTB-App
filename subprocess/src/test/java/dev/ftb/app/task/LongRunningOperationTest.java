@@ -10,9 +10,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Created by covers1624 on 3/6/22.
- */
 @Disabled // Disabled as we don't need to actively test this functionality. It is pretty flaky and timing sensitive.
 public class LongRunningOperationTest {
 

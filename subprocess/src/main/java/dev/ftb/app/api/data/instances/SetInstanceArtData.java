@@ -4,9 +4,6 @@ import dev.ftb.app.api.data.BaseData;
 
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 1/6/22.
- */
 public class SetInstanceArtData extends BaseData {
 
     public UUID uuid;

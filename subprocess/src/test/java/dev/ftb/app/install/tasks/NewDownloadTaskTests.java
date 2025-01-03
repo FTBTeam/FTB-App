@@ -2,14 +2,14 @@ package dev.ftb.app.install.tasks;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
+import dev.ftb.app.install.tasks.NewDownloadTaskTests.EtagTestWebServer.BakedResponse;
+import dev.ftb.app.util.MiscUtils;
 import fi.iki.elonen.NanoHTTPD;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.SneakyUtils;
 import net.covers1624.quack.util.TimeUtils;
-import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
-import dev.ftb.app.install.tasks.NewDownloadTaskTests.EtagTestWebServer.BakedResponse;
-import dev.ftb.app.util.MiscUtils;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -25,9 +25,6 @@ import static fi.iki.elonen.NanoHTTPD.Response.Status.OK;
 import static fi.iki.elonen.NanoHTTPD.Response.Status.PARTIAL_CONTENT;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Created by covers1624 on 14/4/22.
- */
 public class NewDownloadTaskTests {
 
     private static final Random random = new Random();

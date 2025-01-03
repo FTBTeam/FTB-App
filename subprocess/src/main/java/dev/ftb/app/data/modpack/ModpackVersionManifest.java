@@ -5,16 +5,16 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.gson.HashCodeAdapter;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.net.DownloadAction;
-import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.ModpacksChUtils;
 import dev.ftb.app.util.PathRequestBody;
+import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.gson.HashCodeAdapter;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.net.DownloadAction;
+import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -34,12 +34,6 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Models the <code>modpacks.ch</code> api.
- * Reference: https://modpacksch.docs.apiary.io/#/reference/0/modpacks/version-manifest/200?mc=reference%2F0%2Fmodpacks%2Fversion-manifest%2F200
- * <p>
- * Created by covers1624 on 16/11/21.
- */
 @SuppressWarnings ("FieldMayBeFinal") // Non-Final for Gson.
 public class ModpackVersionManifest {
 

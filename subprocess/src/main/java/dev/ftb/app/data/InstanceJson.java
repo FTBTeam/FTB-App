@@ -3,11 +3,11 @@ package dev.ftb.app.data;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
-import net.covers1624.quack.gson.JsonUtils;
-import net.covers1624.quack.gson.PathTypeAdapter;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.storage.settings.Settings;
+import net.covers1624.quack.gson.JsonUtils;
+import net.covers1624.quack.gson.PathTypeAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -15,9 +15,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 9/11/22.
- */
 public class InstanceJson {
 
     private static final Gson GSON = new Gson();

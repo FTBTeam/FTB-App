@@ -17,8 +17,6 @@ import java.util.List;
 
 /**
  * TODO, this is very much a hack, i'd like all these pushed up to the modpack manifests.
- * <p>
- * Created by covers1624 on 24/2/22.
  */
 public class ForgeLegacyLibraryHelper {
 

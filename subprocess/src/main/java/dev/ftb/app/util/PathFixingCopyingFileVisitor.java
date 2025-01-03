@@ -12,7 +12,6 @@ import java.util.function.Predicate;
  *
  * Modified to replace invalid path characters with '_'
  * <p>
- * Created by covers1624 on 14/2/23.
  */
 public class PathFixingCopyingFileVisitor extends SimpleFileVisitor<Path> {
 

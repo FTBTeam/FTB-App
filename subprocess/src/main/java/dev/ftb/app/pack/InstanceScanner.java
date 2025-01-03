@@ -8,12 +8,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import dev.ftb.app.data.modpack.ModpackVersionManifest;
+import dev.ftb.app.data.modpack.ModpackVersionManifest.ModpackFile;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.SneakyUtils;
 import net.covers1624.quack.util.SneakyUtils.ThrowingConsumer;
-import dev.ftb.app.data.modpack.ModpackVersionManifest;
-import dev.ftb.app.data.modpack.ModpackVersionManifest.ModpackFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,9 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Created by covers1624 on 10/2/22.
- */
 public class InstanceScanner {
 
     private static final Logger LOGGER = LogManager.getLogger();

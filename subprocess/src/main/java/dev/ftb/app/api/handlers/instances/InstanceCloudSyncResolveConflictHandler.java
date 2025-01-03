@@ -5,9 +5,6 @@ import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstanceCloudSyncResolveConflictData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 
-/**
- * Created by covers1624 on 1/9/23.
- */
 public class InstanceCloudSyncResolveConflictHandler implements IMessageHandler<InstanceCloudSyncResolveConflictData> {
 
     @Override

@@ -17,7 +17,6 @@ import java.util.List;
  * <p>
  * Vaguely resembles the openssl -text format.
  * <p>
- * Created by covers1624 on 22/11/22.
  */
 public class X509Formatter {
 

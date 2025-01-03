@@ -2,8 +2,6 @@ package dev.ftb.app.install.tasks;
 
 /**
  * Provided to individual tasks to provide progress feedback.
- * <p>
- * Created by covers1624 on 15/12/21.
  */
 public interface TaskProgressListener {
 

@@ -8,9 +8,6 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * Created by covers1624 on 3/1/22.
- */
 public class MiscUtilsTests {
 
     @Test

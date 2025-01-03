@@ -6,9 +6,6 @@ import dev.ftb.app.data.InstanceJson;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 15/8/23.
- */
 public class CloudSavesReloadedData extends BaseData {
 
     public final List<InstanceJson> changedInstances;

@@ -2,9 +2,6 @@ package dev.ftb.app.api.data.instances;
 
 import dev.ftb.app.api.data.BaseData;
 
-/**
- * Created by covers1624 on 15/6/23.
- */
 public class PollCloudInstancesData extends BaseData {
 
     public static class Reply extends BaseData {

@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-/**
- * Created by covers1624 on 2/6/22.
- */
 public class InstanceVersionInfoData extends BaseData {
 
     public UUID uuid;
