@@ -67,8 +67,7 @@ import Platform from '@/utils/interface/electron-overwolf';
 import {IconLookup, IconName} from '@fortawesome/fontawesome-common-types';
 import {DiscordWidget} from '@/types';
 
-import ChLogo from '@/assets/ch-logo.svg';
-import MineTogetherLogo from '@/assets/images/mt-logo.webp';
+import BhLogo from '@/assets/images/branding/bh-logo.svg';
 import {logger} from '@/core/logger';
 
 const endpoint = (goEndpoint: string) => `https://go.ftb.team/${goEndpoint}`;
@@ -131,10 +130,10 @@ const topicList = [
     title: 'Guides',
     items: [
       mkTopic(
-        'CreeperHost',
-        ChLogo,
+        'BisectHosting',
+        BhLogo,
         'creeperhost',
-        "Looking for a server host? Why not try CreeperHost, they've got high quality servers and top-notch support.",
+        "Get a top-notch Minecraft Server with our partner BisectHosting. With 24/7/365 support, 2,000+ Minecraft modpacks, and hosting for over 70+ games, you're in good hands.",
         true,
       ),
       mkTopic(
@@ -142,14 +141,7 @@ const topicList = [
         'book',
         'app-support',
         'Here you can find some useful guides on how to use the app, debugging support with common problems and steps on how to do things like setting up a server and backing up your game.',
-      ),
-      mkTopic(
-        'MineTogether Guides',
-        MineTogetherLogo,
-        'minetogether-guides',
-        'What is MineTogether? How can I use it? Why can I login to it with the app? Check out the documentation behind MineTogether here.',
-        true,
-      ),
+      )
     ],
   },
 ];

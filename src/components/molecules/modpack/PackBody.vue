@@ -92,8 +92,8 @@
 <!--        >-->
 <!--          Public servers-->
 <!--        </div>-->
-        <a class="cta cursor-pointer" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-a-p' : `https://go.ftb.team/ch-app-pack?url=https://www.creeperhost.net/modpack/${packSlug}`)">
-          <img class="ch-logo" src="@/assets/ch-logo.svg" alt="" />
+        <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-a-p' : `https://go.ftb.team/ch-app-pack?url=https://www.creeperhost.net/modpack/${packSlug}`)">
+          <img class="ch-logo" src="@/assets/images/branding/bh-logo.svg" alt="" />
           Order a server
         </a>
       </div>
@@ -425,10 +425,12 @@ export default class PackBody extends Vue {
   }
 
   .cta {
+    position: relative;
     display: flex;
     align-items: center;
     background-color: #1d1d1d;
     padding: 0.45rem 1rem;
+    padding-left: 2rem;
     border-radius: 5px;
     margin-bottom: 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -437,12 +439,15 @@ export default class PackBody extends Vue {
 
     &:hover {
       background-color: #272727;
-      border-color: #8ab839;
+      border-color: #03ddff;
       color: white;
     }
 
     img {
-      max-width: 12px;
+      position: absolute;
+      left: -16px;
+      top: 0;
+      max-width: 36px;
       margin-right: 1rem;
     }
   }
