@@ -150,7 +150,7 @@ module.exports = {
         win: {
           target: ['nsis'],
           artifactName: 'ftb-app-${version}-${arch}.${ext}',
-          sign: './signing/windows-signing.js',
+          sign: './tooling/signing/windows-signing.js',
           signingHashAlgorithms: ["sha256"],
           icon: "./resources/icons/app-icon-windows.ico"
         },

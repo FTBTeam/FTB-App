@@ -52,9 +52,9 @@ build_overwolf: build_shim build_subprocess ensure_licenses
 	cp $(SUBPROCESS_DIR)/build/libs/java-licenses.json $(OVERWOLF_DIR)/ && \
 	cp $(SUBPROCESS_DIR)/build/libs/java-licenses.json $(BUILD_DIR)/ && \
 	pnpm install --frozen-lockfile && \
-	node $(OVERWOLF_DIR)/patchManifest.js && \
+	node $(PWD)/tooling/overwolf/patchManifest.js && \
 	pnpm run vue:build:overwolf && \
-	node $(OVERWOLF_DIR)/packageOpk.js --output $(BUILD_DIR) --zip
+	node $(PWD)/tooling/overwolf/packageOpk.js --output $(BUILD_DIR) --zip
 
 # Clean up after ourselves	
 clean_up:

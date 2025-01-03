@@ -78,3 +78,4 @@ subprocess/debugger
 **/.yarn
 
 frontend
+overwolf/jdk-*/

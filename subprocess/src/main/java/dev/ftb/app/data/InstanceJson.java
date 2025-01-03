@@ -60,7 +60,7 @@ public class InstanceJson {
     public boolean pinned = false;
 
     /**
-     * When enabled, the app will not inject mods from the meta.modpacks.ch system. Sometimes these can 
+     * When enabled, the app will not inject mods from the meta system. Sometimes these can 
      * cause issues, so it's good to let the user have the option to turn them off
      */
     public boolean preventMetaModInjection = Settings.getSettings().instanceDefaults().preventMetaModInjection();

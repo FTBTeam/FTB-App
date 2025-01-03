@@ -181,9 +181,9 @@ jobs:
           pnpm config set store-dir .pnpm-store
           pnpm install --no-frozen-lockfile
           pnpm gen:license
-          node overwolf/patchManifest.js
+          node tooling/overwolf/patchManifest.js
           pnpm overwolf:build
-          node overwolf/packageOpk.js
+          node tooling/overwolf/packageOpk.js
           echo "Signing OPK.."
           pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
       - name: Upload Overwolf artifact
