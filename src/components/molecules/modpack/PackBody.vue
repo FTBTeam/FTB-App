@@ -92,8 +92,8 @@
 <!--        >-->
 <!--          Public servers-->
 <!--        </div>-->
-        <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="Platform.get.utils.openUrl(stringIsEmpty(packSlug) ?  'https://go.ftb.team/ch-a-p' : `https://go.ftb.team/ch-app-pack?url=https://www.creeperhost.net/modpack/${packSlug}`)">
-          <img class="ch-logo" src="@/assets/images/branding/bh-logo.svg" alt="" />
+        <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="Platform.get.utils.openUrl('https://www.bisecthosting.com/')">
+          <img class="" src="@/assets/images/branding/bh-logo.svg" alt="" />
           Order a server
         </a>
       </div>

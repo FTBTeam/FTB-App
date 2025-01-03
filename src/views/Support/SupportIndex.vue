@@ -81,14 +81,15 @@ const mkSocial = (name: string, icon: IconName | IconLookup, goEndpoint: string)
 const mkTopic = (
   name: string,
   icon: IconName | IconLookup | string,
-  goEndpoint: string,
+  goEndpoint: string | undefined,
   desc: string,
   customIcon = false,
+  url?: string
 ) => ({
   name,
   icon,
   desc,
-  link: endpoint(goEndpoint),
+  link: url ? url : endpoint(goEndpoint!),
   customIcon,
 });
 
@@ -132,9 +133,11 @@ const topicList = [
       mkTopic(
         'BisectHosting',
         BhLogo,
-        'creeperhost',
+        undefined,
         "Get a top-notch Minecraft Server with our partner BisectHosting. With 24/7/365 support, 2,000+ Minecraft modpacks, and hosting for over 70+ games, you're in good hands.",
         true,
+        // TODO: Update this link to the correct one
+        'https://www.bisecthosting.com'
       ),
       mkTopic(
         'App guides',
@@ -229,9 +232,8 @@ export default class SupportIndex extends Vue {
 
 .discord-callout {
   padding: 2rem;
-  background: black url('../../assets/backgrounds/discord-callout-bg.svg') no-repeat;
   background-size: 150%;
-  background-position: center bottom -80px;
+  background: black url('../../assets/backgrounds/discord-callout-bg.svg') no-repeat center bottom -80px;
   box-shadow: 0 5px 25px 5px rgba(black, 0.3);
   border-radius: 5px;
   margin-bottom: 2rem;

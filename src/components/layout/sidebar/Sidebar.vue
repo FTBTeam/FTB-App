@@ -105,7 +105,7 @@ export default class Sidebar extends Vue {
   }
 
   public openPromo(): void {
-    platform.get.utils.openUrl('https://go.ftb.team/ch-a-i');
+    platform.get.utils.openUrl('https://www.bisecthosting.com/');
   }
 
   navItemRightClick(event: PointerEvent, item: typeof this.navigation[0]) {

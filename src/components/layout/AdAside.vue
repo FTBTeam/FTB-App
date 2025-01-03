@@ -43,11 +43,6 @@
           </div>
         </div>
       </div>
-      
-      <!-- TODO: Workout what I wanna do here -->
-      <div class="ad-container ads-electron electron" v-if="false" key="adside-ad-type">
-        <ch-ads-area />
-      </div>
     </template>
   </div>
 </template>
