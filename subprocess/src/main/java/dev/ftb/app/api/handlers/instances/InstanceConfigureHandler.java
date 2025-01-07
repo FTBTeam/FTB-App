@@ -2,13 +2,13 @@ package dev.ftb.app.api.handlers.instances;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.covers1624.jdkutils.JavaInstall;
-import net.covers1624.quack.gson.JsonUtils;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstanceConfigureData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.pack.Instance;
+import net.covers1624.jdkutils.JavaInstall;
+import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,7 +52,6 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.height = getOrDefault(updateJson, "height", JsonElement::getAsInt, instance.props.height);
             instance.props.fullscreen = getOrDefault(updateJson, "fullScreen", JsonElement::getAsBoolean, instance.props.fullscreen);
             instance.props.releaseChannel = getOrDefault(updateJson, "releaseChannel", JsonElement::getAsString, instance.props.releaseChannel);
-            instance.props.cloudSaves = getOrDefault(updateJson, "cloudSaves", JsonElement::getAsBoolean, instance.props.cloudSaves);
             instance.props.category = getOrDefault(updateJson, "category", JsonElement::getAsString, instance.props.category);
             instance.props.embeddedJre = jreRealPath == null;
             

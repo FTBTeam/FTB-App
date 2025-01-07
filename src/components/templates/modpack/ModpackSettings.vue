@@ -95,19 +95,6 @@
         <ftb-input class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
       </div>
     </div>
-
-    <ui-toggle
-      :align-right="true"
-      label="Enable cloud sync uploads"
-      desc="You can only use Cloud sync if you have an active paid plan on MineTogether."
-      :disabled="!accountHasPlan || toggleSavesWorking"
-      :value="instanceSettings.cloudSaves"
-      @input="toggleCloudSaves"
-      class="mb-2"
-    />
-
-    <p class="mb-6 text-light-warning" v-if="!accountHasPlan">Cloud syncing / Cloud saves are only available to Premium MineTogether users. Find out more on the <a class="text-blue-500 hover:text-blue-200" @click="openExternal" href="https://minetogether.io">MineTogether website</a>.</p>
-    <span v-else class="block mb-6" />
     
     <h2 class="text-lg mb-4 font-bold text-warning">
       <font-awesome-icon icon="warning" class="mr-2" />
@@ -126,7 +113,7 @@
           :options="channelOptions"
           v-model="instanceSettings.releaseChannel"
           :style="{width: '192px'}"
-          @change="v => saveSettings()"
+          @change="(v) => saveSettings()"
         />
       </div>
 
@@ -356,8 +343,6 @@ export default class ModpackSettings extends Vue {
   javaVersions: JavaVersion[] = [];
   deleting = false;
   
-  toggleSavesWorking = false;
-  
   imageFile: File | null = null;
   resolutionId = "";
   
@@ -384,32 +369,6 @@ export default class ModpackSettings extends Vue {
     }
     
     this.instanceSettings = this.createInstanceSettingsFromInstance(this.instance)
-  }
-  
-  async toggleCloudSaves() {
-    this.toggleSavesWorking = true;
-    const newState = !this.instanceSettings.cloudSaves;
-    
-    if (!newState) {
-      if (!(await dialogsController.createConfirmationDialog("Are you sure", "Disabling Cloudsaves will delete all of your cloudsave data, please make sure you have a backup of this instance if you plan to remove it from your system."))) {
-        this.toggleSavesWorking = false;
-        return;
-      }
-    }
-    
-    const reply = await sendMessage((newState ? "instanceEnableCloudSaves" : "instanceDisableCloudSaves"), {
-      instance: this.instance.uuid,
-    });
-    
-    if (!reply || reply.status !== "success") {
-      alertController.error("Failed to toggle cloud saves");
-      this.toggleSavesWorking = false;
-      return;
-    }
-    
-    this.instanceSettings.cloudSaves = newState;
-    await this.saveSettings();
-    this.toggleSavesWorking = false;
   }
   
   selectResolution(id: string) {
@@ -551,7 +510,6 @@ export default class ModpackSettings extends Vue {
       memory: instance.memory,
       width: instance.width,
       height: instance.height,
-      cloudSaves: instance.cloudSaves,
       fullScreen: instance.fullscreen,
       releaseChannel: instance.releaseChannel,
       category: instance.category,

@@ -50,7 +50,6 @@ public class InstanceJson {
 
     public boolean isModified;
     public boolean isImport;
-    public boolean cloudSaves;
     public boolean hasInstMods;
     public boolean installComplete;
     public String category = "Default";
@@ -104,7 +103,6 @@ public class InstanceJson {
         modLoader = other.modLoader;
         isModified = other.isModified;
         isImport = other.isImport;
-        cloudSaves = other.cloudSaves;
         hasInstMods = other.hasInstMods;
         installComplete = other.installComplete;
         fullscreen = other.fullscreen;

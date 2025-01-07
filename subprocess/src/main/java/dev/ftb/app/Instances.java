@@ -63,8 +63,6 @@ public class Instances {
             LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
         }
 
-        AppMain.CLOUD_SAVE_MANAGER.pollCloudInstances();
-
         LOGGER.info("Finished instance reload in {}", totalTimer.elapsedStr());
     }
 

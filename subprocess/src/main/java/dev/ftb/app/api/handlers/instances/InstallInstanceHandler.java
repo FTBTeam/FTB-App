@@ -1,6 +1,5 @@
 package dev.ftb.app.api.handlers.instances;
 
-import net.covers1624.quack.io.IOUtils;
 import dev.ftb.app.Analytics;
 import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
@@ -13,6 +12,7 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.data.modpack.ShareManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.task.InstallationOperation;
+import net.covers1624.quack.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -164,7 +164,6 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         }
         
         if (data.fullscreen != null && data.fullscreen) instance.props.fullscreen = true;
-        if (data.cloudSaves != null && data.cloudSaves) instance.props.cloudSaves = true;
         if (data.ram != -1) instance.props.memory = data.ram;
         if (data.screenWidth != -1) instance.props.width = data.screenWidth;
         if (data.screenHeight != -1) instance.props.height = data.screenHeight;

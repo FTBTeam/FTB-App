@@ -11,7 +11,6 @@ import dev.ftb.app.api.data.other.CloseModalData;
 import dev.ftb.app.api.data.other.OpenModalData;
 import dev.ftb.app.api.data.other.PingLauncherData;
 import dev.ftb.app.install.tasks.LocalCache;
-import dev.ftb.app.instance.cloud.CloudSaveManager;
 import dev.ftb.app.migration.MigrationsManager;
 import dev.ftb.app.os.OS;
 import dev.ftb.app.storage.CredentialStorage;
@@ -62,7 +61,6 @@ public class AppMain {
 
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
-    public static CloudSaveManager CLOUD_SAVE_MANAGER = new CloudSaveManager();
 
     public static ExecutorService INSTANCE_LAUNCHER_POOL = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Instance Launcher %d").setDaemon(true).build());
 

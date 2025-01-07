@@ -1,6 +1,5 @@
 package dev.ftb.app.api.handlers.other.minetogether;
 
-import dev.ftb.app.AppMain;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
@@ -55,10 +54,6 @@ public class MineTogetherAuthenticationHandler implements IMessageHandler<MineTo
         }
 
         ModpacksChUtils.API_TOKEN = user.data().modpacksToken();
-        
-        if (user.data().s3Credentials() != null) {
-            AppMain.CLOUD_SAVE_MANAGER.configure(user.data().s3Credentials());
-        }
 
         CredentialStorage.getInstance().set("minetogether", token);
         CredentialStorage.getInstance().set("modpacksChApiKey", user.data().modpacksToken());

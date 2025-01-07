@@ -48,11 +48,10 @@ public class LogsUploader {
     public static String uploadUILogs() {
         var obj = new JsonObject();
         
-        obj.addProperty("version", "2.0.1");
+        obj.addProperty("version", "2.0.2");
         
         var metaDetails = new JsonObject();
         metaDetails.addProperty("instanceCount", Instances.allInstances().size());
-        metaDetails.addProperty("cloudInstances", Instances.allInstances().stream().filter(e -> e.props.cloudSaves).count());
         metaDetails.addProperty("today", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         metaDetails.addProperty("time", System.currentTimeMillis());
         metaDetails.addProperty("addedAccounts", AccountManager.get().getProfiles().size());

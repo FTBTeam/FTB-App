@@ -4,10 +4,6 @@
       <div class="artwork-container">
         <img :src="packLogo" alt="Modpack Artwork">
         <div class="notifiers">
-          <div class="notifier is-cloud" v-if="instance.cloudSaves" aria-label="Cloud sync enabled" data-balloon-pos="down-right">
-            <font-awesome-icon icon="cloud" />
-          </div>
-          
           <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-right" v-if="modLoader === 'forge'">
             <img width="30" src="@/assets/images/forge.svg" alt="" />
           </div>
@@ -45,13 +41,10 @@
           </div>
         </div>
         <div class="action-buttons" v-if="!isInstalling" @click.stop>
-          <div class="button flex-1" aria-label="Download from cloud saves" data-balloon-pos="down" :class="{disabled: isUpdating}" v-if="needsSyncing" @click.stop="syncInstance">
-            <font-awesome-icon icon="cloud" />
-          </div>
-          <div class="button" aria-label="Update available!" data-balloon-pos="down-left" :class="{disabled: isUpdating}" v-if="latestVersion && !needsSyncing" @click.stop="updateOpen = true">
+          <div class="button" aria-label="Update available!" data-balloon-pos="down-left" :class="{disabled: isUpdating}" v-if="latestVersion" @click.stop="updateOpen = true">
             <font-awesome-icon icon="download" />
           </div>
-          <div class="play-button button" aria-label="Play" data-balloon-pos="down" v-if="!needsSyncing" :class="{disabled: isUpdating || isRunning}" @click.stop="play">
+          <div class="play-button button" aria-label="Play" data-balloon-pos="down" :class="{disabled: isUpdating || isRunning}" @click.stop="play">
             <font-awesome-icon icon="play" />
           </div>
         </div>
@@ -120,7 +113,7 @@ export default class PackCard2 extends PackCardCommon {
   }
 
   openInstancePage() {
-    if (this.isInstalling || this.needsSyncing) {
+    if (this.isInstalling) {
       return;
     }
 
@@ -137,7 +130,7 @@ export default class PackCard2 extends PackCardCommon {
   }
   
   openInstanceMenu(event: PointerEvent) {
-    if (this.needsSyncing || this.isInstalling || this.isUpdating) {
+    if (this.isInstalling || this.isUpdating) {
       return;
     }
     
@@ -170,10 +163,6 @@ export default class PackCard2 extends PackCardCommon {
   
   get isUpdating() {
     return this.currentInstall?.request?.updatingInstanceUuid === this.instance.uuid;
-  }
-  
-  get needsSyncing() {
-    return this.instance.pendingCloudInstance;
   }
   
   get versionName() {

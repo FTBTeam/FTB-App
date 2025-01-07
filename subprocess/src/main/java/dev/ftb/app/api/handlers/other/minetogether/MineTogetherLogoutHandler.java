@@ -1,6 +1,5 @@
 package dev.ftb.app.api.handlers.other.minetogether;
 
-import dev.ftb.app.AppMain;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
@@ -17,7 +16,6 @@ public class MineTogetherLogoutHandler implements IMessageHandler<BaseData> {
         System.out.println(CredentialStorage.getInstance().getCredentials());
 
         // This will close the save manager
-        AppMain.CLOUD_SAVE_MANAGER.configure(new S3Credentials("", "", "", ""));
         ModpacksChUtils.API_TOKEN = "";
         
         WebSocketHandler.sendMessage(new Reply(data, true));

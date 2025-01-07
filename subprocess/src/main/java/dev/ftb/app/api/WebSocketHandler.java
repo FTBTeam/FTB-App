@@ -62,12 +62,9 @@ public class WebSocketHandler {
         register("saveSettings", SettingsConfigureData.class, new SettingsConfigureHandler());
         register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
         register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
-        register("syncInstance", SyncCloudInstanceData.class, new SyncCloudInstanceHandler());
         register("uploadLogs", UploadLogsData.class, new UploadLogsHandler());
         register("getJavas", GetJavasData.class, new GetJavasHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
-        register("instanceEnableCloudSaves", InstanceEnableCloudSavesData.class, new InstanceEnableCloudSavesHandler());
-        register("instanceDisableCloudSaves", InstanceDisableCloudSavesData.class, new InstanceDisableCloudSavesHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("shareInstance", ShareInstanceData.class, new ShareInstanceHandler());
@@ -78,9 +75,6 @@ public class WebSocketHandler {
         register("instanceGetBackups", InstanceGetBackupsHandler.Request.class, new InstanceGetBackupsHandler());
         register("instanceRestoreBackup", InstanceRestoreBackupHandler.Request.class, new InstanceRestoreBackupHandler());
         register("instanceDeleteBackup", InstanceDeleteBackupHandler.Request.class, new InstanceDeleteBackupHandler());
-
-        register("pollCloudInstances", PollCloudInstancesData.class, new PollCloudInstancesHandler());
-        register("resolveSyncConflict", InstanceCloudSyncResolveConflictData.class, new InstanceCloudSyncResolveConflictHandler());
 
         register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());

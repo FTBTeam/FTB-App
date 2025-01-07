@@ -16,7 +16,6 @@ import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
-import dev.ftb.app.instance.cloud.CloudSaveManager;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
@@ -26,7 +25,6 @@ import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +45,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public class Instance {
@@ -64,8 +61,6 @@ public class Instance {
     public CancellationToken prepareToken;
     private int loadingModPort;
     public ModpackVersionManifest versionManifest;
-
-    private boolean pendingCloudInstance;
 
     private long startTime;
 
@@ -96,14 +91,6 @@ public class Instance {
         this.path = path;
         props = InstanceJson.load(json);
         loadVersionManifest();
-    }
-
-    // Pending cloud save instance.
-    public Instance(Path path, InstanceJson props, ModpackVersionManifest versionManifest) {
-        this.path = path;
-        this.props = props;
-        this.versionManifest = versionManifest;
-        pendingCloudInstance = true;
     }
 
     private void processArt(ModpackManifest modpack, @Nullable String artPath) {
@@ -148,17 +135,7 @@ public class Instance {
         }
     }
 
-    public void syncFinished() throws IOException {
-        pendingCloudInstance = false;
-        props = InstanceJson.load(getDir().resolve("instance.json"));
-        props.cloudSaves = true;
-        loadVersionManifest();
-    }
-
     private void loadVersionManifest() throws IOException {
-        // Do nothing for pending cloud saves.
-        if (pendingCloudInstance) return;
-
         if (props.installComplete) {
             Path versionJson = path.resolve("version.json");
             if (Files.exists(versionJson)) {
@@ -177,10 +154,6 @@ public class Instance {
     }
 
     public void importArt(Path file) throws IOException {
-        if (pendingCloudInstance) {
-            throw new UnsupportedOperationException("Can't import art for pending cloud instances.");
-        }
-
         try (InputStream is = Files.newInputStream(file)) {
             doImportArt(is);
             saveJson();
@@ -199,7 +172,6 @@ public class Instance {
     }
 
     public synchronized void pollVersionManifest() {
-        if (pendingCloudInstance) return; // Do nothing for pending cloud save instances.
         if (props.isImport) return; // Can't update manifests for imports.
         try {
             Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(props.id, props.versionId, props._private, props.packType);
@@ -254,10 +226,6 @@ public class Instance {
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
     public void play(CancellationToken token, String extraArgs, @Nullable String offlineUsername) throws InstanceLaunchException {
-        if (pendingCloudInstance) {
-            // Technically a UI bug, should display Install/Sync instead of Launch.
-            throw new InstanceLaunchException("Cloud instance needs to be installed before it can be launched.");
-        }
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -313,31 +281,6 @@ public class Instance {
                 ctx.extraJVMArgs.add(arg);
             }
         });
-
-        if (AppMain.CLOUD_SAVE_MANAGER.isConfigured() && props.cloudSaves) {
-            launcher.withStartTask(ctx -> {
-                LOGGER.info("Attempting start cloud sync..");
-                try {
-                    CloudSaveManager.SyncResult result = AppMain.CLOUD_SAVE_MANAGER.requestInstanceSync(this)
-                            .get();
-
-                    // Don't error if initial sync is still running, just do nothing.
-                    if (result.type() == CloudSaveManager.SyncResult.ResultType.INITIAL_STILL_RUNNING) {
-                        return;
-                    }
-                    if (result.type() != CloudSaveManager.SyncResult.ResultType.SUCCESS) {
-                        throw new InstanceLaunchException("Pre-start cloud sync failed! " + result.type() + " " + result.reason());
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    throw new InstanceLaunchException("Failed to wait for start cloud sync.", ex);
-                }
-            });
-            launcher.withExitTask(() -> {
-                LOGGER.info("Attempting close cloud sync..");
-                // Don't wait on future here, just let it happen in the background.
-                AppMain.CLOUD_SAVE_MANAGER.requestInstanceSync(this);
-            });
-        }
 
         if (props.hasInstMods) {
             // TODO, Jar Mods can be done differently
@@ -434,10 +377,6 @@ public class Instance {
     }
 
     public boolean uninstall() throws IOException {
-        if (pendingCloudInstance) {
-            // TODO should we wire this up to delete even when not synced?
-            throw new NotImplementedException("Unable to delete non-synced cloud instance.");
-        }
         FileUtils.deleteDirectory(path);
         Instances.refreshInstances();
         return true;
@@ -448,19 +387,14 @@ public class Instance {
     }
     
     public boolean browse(String extraPath) {
-        if (pendingCloudInstance) return false;
-
         return FileUtils.openFolder(path.resolve(extraPath));
     }
 
     public void setModified(boolean state) {
-        if (pendingCloudInstance) throw new UnsupportedOperationException("Can't set un synced cloud instance as modified.");
         props.isModified = state;
     }
 
     public void saveJson() throws IOException {
-        if (pendingCloudInstance) return; // Do nothing for pending cloud save instances.
-
         // When saving the file we:
         // - write to .json__tmp
         // - move .json -> .json.bak
@@ -504,8 +438,6 @@ public class Instance {
 
     @Nullable
     public Instance duplicate(String instanceName, @Nullable String category) throws IOException {
-        if (pendingCloudInstance) throw new UnsupportedOperationException("Can't duplicate un synced cloud instances.");
-
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
@@ -804,6 +736,5 @@ public class Instance {
     public String getMcVersion() { return props.mcVersion; }
     public UUID getUuid() { return props.uuid; }
     @Deprecated public String getModLoader() { return props.modLoader; }
-    public boolean isPendingCloudInstance() { return pendingCloudInstance; }
     // @formatter:on
 }

@@ -4,9 +4,9 @@
       <div class="action-heading">
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && currentInstall) || modloaderUpdating}">
           <div class="play">
-            <ftb-button color="primary" class="py-3 px-8 ftb-play-button" :disabled="isInstalled && !requiresSync && isRunning" @click="() => $emit('mainAction')">
-              <font-awesome-icon :icon="isInstalled ? (requiresSync ? 'download' : 'play') : 'download'" class="mr-4" />
-              {{ isInstalled ? (requiresSync ? 'Sync' : 'Play') : 'Install' }}
+            <ftb-button color="primary" class="py-3 px-8 ftb-play-button" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
+              <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
+              {{ isInstalled ? 'Play' : 'Install' }}
             </ftb-button>
 
             <pack-actions
@@ -324,10 +324,6 @@ export default class PackBody extends Vue {
     return this.instance 
       ? this.instance.modLoader === this.instance.mcVersion
       : this.packInstance?.id === 81;
-  }
-  
-  get requiresSync() {
-    return this.instance?.pendingCloudInstance ?? false;
   }
 
   get packSlug() {

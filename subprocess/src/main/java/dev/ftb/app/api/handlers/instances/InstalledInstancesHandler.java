@@ -1,14 +1,14 @@
 package dev.ftb.app.api.handlers.instances;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.gson.PathTypeAdapter;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstalledInstancesData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.pack.Instance;
+import net.covers1624.quack.collection.FastStream;
+import net.covers1624.quack.gson.PathTypeAdapter;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,20 +31,18 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
 
         Set<String> availableCategories = instanceJsons.stream().map(e -> e.category).collect(Collectors.toSet());
         
-        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, List.of(), availableCategories);
+        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, availableCategories);
         WebSocketHandler.sendMessage(reply);
     }
 
     public static class SugaredInstanceJson extends InstanceJson {
         @JsonAdapter (PathTypeAdapter.class)
         public final Path path;
-        public final boolean pendingCloudInstance;
         public final List<String> rootDirs = new ArrayList<>();
 
-        public SugaredInstanceJson(InstanceJson other, Path path, boolean pendingCloudInstance) {
+        public SugaredInstanceJson(InstanceJson other, Path path) {
             super(other);
             this.path = path;
-            this.pendingCloudInstance = pendingCloudInstance;
 
             try (var files = Files.list(this.path)) {
                 this.rootDirs.addAll(
@@ -57,7 +55,7 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
         }
         
         public SugaredInstanceJson(Instance instance) {
-            this(instance.props, instance.path, instance.isPendingCloudInstance());
+            this(instance.props, instance.path);
         }
     }
 }

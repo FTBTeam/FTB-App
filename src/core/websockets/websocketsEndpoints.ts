@@ -31,10 +31,6 @@ import {
   InstanceConfigureDataReply,
   InstanceDeleteBackupHandlerReply,
   InstanceDeleteBackupHandlerRequest,
-  InstanceDisableCloudSavesData,
-  InstanceDisableCloudSavesDataReply,
-  InstanceEnableCloudSavesData,
-  InstanceEnableCloudSavesDataReply,
   InstanceGetBackupsHandlerReply,
   InstanceGetBackupsHandlerRequest,
   InstanceInstallModData,
@@ -63,8 +59,6 @@ import {
   PingLauncherData,
   PinInstanceHandlerData,
   PinInstanceHandlerReply,
-  PollCloudInstancesData,
-  PollCloudInstancesDataReply,
   PongLauncherData,
   RefreshAuthenticationProfileHandlerData,
   RefreshAuthenticationProfileHandlerReply,
@@ -85,8 +79,6 @@ import {
   StorageGetHandlerReply,
   StoragePutHandlerData,
   StoragePutHandlerReply,
-  SyncCloudInstanceData,
-  SyncCloudInstanceDataReply,
   UninstallInstanceData,
   UninstallInstanceDataReply,
   UpdateInstanceData,
@@ -118,7 +110,6 @@ export type MessageType =
   "saveSettings" |
   "modalCallback" |
   "fileHash" |
-  "syncInstance" |
   "uploadLogs" |
   "getJavas" |
   "instanceMods" |
@@ -132,15 +123,12 @@ export type MessageType =
   "instanceGetBackups" |
   "instanceRestoreBackup" |
   "instanceDeleteBackup" |
-  "pollCloudInstances" |
   "checkShareCode" |
   "checkCurseZip" |
   "profiles.get" |
   "profiles.remove" |
   "profiles.setActiveProfile" |
   "profiles.ms.authenticate" |
-  "instanceEnableCloudSaves" |
-  "instanceDisableCloudSaves" |
   "profiles.refresh" |
   "profiles.is-valid" |
   "storage.put" |
@@ -233,10 +221,6 @@ export type MessagePayload = {
     input: FileHashData,
     output: FileHashDataReply
   }
-  "syncInstance": {
-    input: SyncCloudInstanceData,
-    output: SyncCloudInstanceDataReply
-  }
   "uploadLogs": {
     input: UploadLogsData,
     output: UploadLogsDataReply
@@ -290,10 +274,6 @@ export type MessagePayload = {
     input: InstanceDeleteBackupHandlerRequest,
     output: InstanceDeleteBackupHandlerReply
   }
-  "pollCloudInstances": {
-    input: PollCloudInstancesData,
-    output: PollCloudInstancesDataReply
-  }
   "checkShareCode": {
     input: CheckShareCodeData,
     output: CheckShareCodeDataReply
@@ -345,14 +325,6 @@ export type MessagePayload = {
   "openDebugTools": {
     input: BaseData,
     output: EmptyMessageResponse
-  },
-  "instanceEnableCloudSaves": {
-    input: InstanceEnableCloudSavesData,
-    output: InstanceEnableCloudSavesDataReply
-  },
-  "instanceDisableCloudSaves": {
-    input: InstanceDisableCloudSavesData,
-    output: InstanceDisableCloudSavesDataReply
   },
   "instanceOverrideModLoader": {
     input: InstanceOverrideModLoaderData,

@@ -22,7 +22,7 @@
       </div>
       
       <div class="modloader" v-show="step === 1">
-          <modloader-select :mc-version="selectedMcVersion" @select="v => userModLoader = v ?? null" :show-optional="true" />
+          <modloader-select :mc-version="selectedMcVersion" @select="(v) => userModLoader = v ?? null" :show-optional="true" />
       </div>
       
       <div class="settings" v-show="step === 2">
@@ -66,17 +66,6 @@
         </div>
         <hr />
         
-        <h3 class="mb-4 font-bold">Cloud Sync</h3>
-
-        <ui-toggle
-          :align-right="true"
-          label="Enable cloud sync uploads"
-          desc="You can only use Cloud sync if you have an active paid plan on MineTogether."
-          :disabled="!accountHasPlan"
-          v-model="userCloudSaves"
-        />
-        
-        <p class="mt-4 text-light-warning" v-if="!accountHasPlan">Cloud syncing / Cloud saves are only available to Premium MineTogether users. Find out more on the <a class="text-blue-500 hover:text-blue-200" @click="openExternal" href="https://minetogether.io">MineTogether website</a>.</p>
       </div>
     </modal-body>
     
@@ -170,7 +159,6 @@ export default class CreateInstance extends Vue {
   settingFullscreen = false;
   settingScreenResolution = "";
   settingRam = 0;
-  userCloudSaves = false;
   userHeight = 0;
   userWidth = 0;
   
@@ -270,7 +258,6 @@ export default class CreateInstance extends Vue {
       fullscreen: this.settingFullscreen === this.settingsState.settings.instanceDefaults.fullscreen ? undefined : this.settingFullscreen,
       width: this.userWidth == this.settingsState.settings.instanceDefaults.width ? undefined : this.userWidth,
       height: this.userHeight == this.settingsState.settings.instanceDefaults.height ? undefined : this.userHeight,
-      cloudSaves: this.userCloudSaves,
     }
     
     // Magic

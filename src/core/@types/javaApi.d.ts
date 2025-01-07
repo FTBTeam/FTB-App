@@ -46,15 +46,6 @@ export interface CheckShareCodeDataReply extends CheckShareCodeData {
     success: boolean;
 }
 
-export interface CloudSavesReloadedData extends BaseData {
-    changedInstances: InstanceJson[];
-    removedInstances: string[];
-}
-
-export interface CloudSavesStatsData extends BaseData {
-    bucketSize: number;
-}
-
 export interface InstallInstanceData extends BaseData {
     uuid: string;
     id: number;
@@ -70,7 +61,6 @@ export interface InstallInstanceData extends BaseData {
     ourOwn: boolean;
     ram: number;
     fullscreen: boolean;
-    cloudSaves: boolean;
     screenWidth: number;
     screenHeight: number;
 }
@@ -87,24 +77,7 @@ export interface InstalledInstancesData extends BaseData {
 
 export interface InstalledInstancesDataReply extends BaseData {
     instances: SugaredInstanceJson[];
-    cloudInstances: any[];
     availableCategories: string[];
-}
-
-export interface InstanceCloudSyncConflictData extends BaseData {
-    uuid: string;
-    code: string;
-    message: string;
-}
-
-export interface InstanceCloudSyncResolveConflictData extends BaseData {
-    uuid: string;
-    resolution: SyncDirection;
-}
-
-export interface InstanceCloudSyncResolveConflictDataReply extends BaseData {
-    status: string;
-    message: string;
 }
 
 export interface InstanceConfigureData extends BaseData {
@@ -116,24 +89,6 @@ export interface InstanceConfigureDataReply extends BaseData {
     errorMessage: string;
     status: string;
     instanceJson: SugaredInstanceJson;
-}
-
-export interface InstanceDisableCloudSavesData extends BaseData {
-    instance: string;
-}
-
-export interface InstanceDisableCloudSavesDataReply extends BaseData {
-    status: string;
-    message: string;
-}
-
-export interface InstanceEnableCloudSavesData extends BaseData {
-    instance: string;
-}
-
-export interface InstanceEnableCloudSavesDataReply extends BaseData {
-    status: string;
-    message: string;
 }
 
 export interface InstanceInstallModData extends BaseData {
@@ -266,14 +221,6 @@ export interface OperationProgressUpdateData extends BaseData {
     totalBytes: number;
 }
 
-export interface PollCloudInstancesData extends BaseData {
-}
-
-export interface PollCloudInstancesDataReply extends BaseData {
-    status: string;
-    message: string;
-}
-
 export interface SetInstanceArtData extends BaseData {
     uuid: string;
     artPath: string;
@@ -293,15 +240,6 @@ export interface ShareInstanceDataReply extends BaseData {
     message: string;
     uuid: string;
     code: string;
-}
-
-export interface SyncCloudInstanceData extends BaseData {
-    uuid: string;
-}
-
-export interface SyncCloudInstanceDataReply extends BaseData {
-    status: string;
-    message: string;
 }
 
 export interface UninstallInstanceData extends BaseData {
@@ -450,7 +388,6 @@ export interface GetInstanceFoldersHandlerRequest extends BaseData {
 
 export interface SugaredInstanceJson extends InstanceJson {
     path: string;
-    pendingCloudInstance: boolean;
     rootDirs: string[];
 }
 
@@ -647,7 +584,6 @@ export interface InstanceJson {
     modLoader: string;
     isModified: boolean;
     isImport: boolean;
-    cloudSaves: boolean;
     hasInstMods: boolean;
     installComplete: boolean;
     category: string;
@@ -673,6 +609,7 @@ export interface ModInfo {
     enabled: boolean;
     size: number;
     sha1: string;
+    murmurHash: string;
     curse: CurseMetadata;
 }
 
@@ -845,6 +782,7 @@ export interface ModpackFile {
     serveronly: boolean;
     optional: boolean;
     type: string;
+    hashes: FileHashes;
     tags: any;
     updated: number;
 }
@@ -873,6 +811,14 @@ export interface ChatHash {
     hashShort: string;
 }
 
+export interface FileHashes {
+    sha1: any;
+    sha256: any;
+    sha512: any;
+    murmur: number;
+    cfMurmur: number;
+}
+
 export interface Account {
     identityProvider: string;
     userId: string;
@@ -892,8 +838,6 @@ export interface Customfield {
     translatedName: string;
     value: string;
 }
-
-export type SyncDirection = "UP_TO_DATE" | "DOWNLOAD" | "UPLOAD";
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
 

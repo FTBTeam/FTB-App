@@ -21,7 +21,7 @@ export class InstanceActions {
   }
   
   static canStart(instance: SugaredInstanceJson) {
-    return !instance.pendingCloudInstance;
+    return true;
   }
   
   static async pin(instance: SugaredInstanceJson, pin: boolean) {
