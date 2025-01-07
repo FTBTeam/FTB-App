@@ -74,10 +74,6 @@ module.exports = {
       title: 'FTB App',
       chunks: ['chunk-vendors', 'chunk-common', 'index'],
       sourceMap: false,
-    },
-    chatPage: {
-      entry: 'src/main.ts',
-      sourceMap: false,
     }
   },
   pluginOptions: {

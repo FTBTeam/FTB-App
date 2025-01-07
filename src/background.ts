@@ -116,8 +116,6 @@ let subprocess: ChildProcess | null = null;
 let win: BrowserWindow | null;
 let prelaunchWindow: BrowserWindow | null = null;
 
-// let friendsWindow: BrowserWindow | null;
-
 let protocolURL: string | null;
 
 for (let i = 0; i < process.argv.length; i++) {
@@ -318,10 +316,6 @@ ipcMain.on('quit_app', () => {
 });
 
 ipcMain.on('logout', () => {
-  // if (friendsWindow) {
-  //   friendsWindow.close();
-  // }
-  
   logger.debug("Logging out from the frontend")
 });
 
@@ -565,60 +559,6 @@ ipcMain.handle("startSubprocess", async (event, args) => {
   })
 });
 
-// function createFriendsWindow() {
-//   if (friendsWindow !== null && friendsWindow !== undefined) {
-//     friendsWindow.focus();
-//     if (win) {
-//       win.webContents.send('setFriendsWindow', true);
-//     }
-//     return;
-//   }
-//   friendsWindow = new BrowserWindow({
-//     title: 'FTB App',
-//
-//     // Other
-//     icon: path.join(__static, 'favicon.ico'),
-//     // Size Settings
-//     minWidth: 300,
-//     minHeight: 626,
-//     // maxWidth: 1000,
-//     // maxHeight: 626,
-//     height: 626,
-//     width: 300,
-//     frame: false,
-//     titleBarStyle: 'hidden',
-//     backgroundColor: '#313131',
-//     webPreferences: {
-//       nodeIntegration: true,
-//       contextIsolation: false,
-//       disableBlinkFeatures: 'Auxclick',
-//     },
-//   });
-//
-//   friendsWindow.webContents.setWindowOpenHandler((details) => {
-//     shell.openExternal(details.url);
-//     return { action: 'deny' }
-//   })
-//
-//   if (process.env.WEBPACK_DEV_SERVER_URL) {
-//     friendsWindow.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL as string}#chat`);
-//     if (!process.env.IS_TEST) {
-//       friendsWindow.webContents.openDevTools();
-//     }
-//   } else {
-//     friendsWindow.loadURL('app://./index.html#chat');
-//   }
-//   if (win) {
-//     win.webContents.send('setFriendsWindow', true);
-//   }
-//   friendsWindow.on('closed', () => {
-//     friendsWindow = null;
-//     if (win) {
-//       win.webContents.send('setFriendsWindow', false);
-//     }
-//   });
-// }
-
 async function createPreLaunchWindow(source: string) {
   logger.debug("Creating prelaunch window", source)
   
@@ -813,9 +753,6 @@ async function createWindow(reset = false) {
       subprocess.kill();
     }
     win = null;
-    // if (friendsWindow) {
-    //   friendsWindow.close();
-    // }
   });
 }
 

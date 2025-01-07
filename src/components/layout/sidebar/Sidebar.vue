@@ -113,13 +113,6 @@ export default class Sidebar extends Vue {
       AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {});
     }
   }
-
-  // public openFriends() {
-  //   if (this.disableNav) {
-  //     return;
-  //   }
-  //   platform.get.actions.openFriends();
-  // }
 }
 </script>
 
