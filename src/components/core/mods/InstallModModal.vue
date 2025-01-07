@@ -1,6 +1,6 @@
 <template>
    <modal :open="open" @closed="close" :close-on-background-click="!installing"
-          :title="mod ? mod.name : 'Loading...'" sub-title="Select the version you want to install" :external-contents="true"
+          :title="mod ? mod.name : 'Loading...'" :sub-title="!installing && finishedInstalling ? 'Installed!' : `Select the version you want to install`" :external-contents="true"
    >
      <modal-body v-if="mod">
        <div class="py-6" v-if="!installing && !finishedInstalling">
