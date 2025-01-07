@@ -3,7 +3,7 @@
     <h2 class="text-xl mb-2 font-bold flex items-center">
       Proxy Settings <span class="ml-4 text-sm px-2 py-0-5 bg-orange-500 rounded">Beta</span>
     </h2>
-    <p class="text-muted text-sm mb-4">You can configure the app to use a Proxy Server to route all of the internal network requests though. <em>Please note that this is still in beta and some requests might not be put through the proxy.</em></em></p>
+    <p class="text-muted text-sm mb-4">You can configure the app to use a Proxy Server to route all of the internal network requests though. <em>Please note that this is still in beta and some requests might not be put through the proxy.</em></p>
     
     <div class='switcher'>
       <input id='switcher-none' type='radio' name='type' value='none' v-model='proxyType' />
@@ -68,16 +68,16 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Action, State } from 'vuex-class';
-import { SettingsState } from '@/modules/settings/types';
+import {Component, Vue, Watch} from 'vue-property-decorator';
+import {Action, State} from 'vuex-class';
+import {SettingsState} from '@/modules/settings/types';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/core/ui/UiButton.vue';
 
 @Component({
   components: {UiButton}
 })
-export default class MTIntegration extends Vue {
+export default class ProxySettings extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @State('settings') private settings!: SettingsState;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;

@@ -50,9 +50,6 @@ import {
   LaunchInstanceData,
   LaunchInstanceDataReply,
   MessageClientData,
-  MineTogetherAuthenticationHandlerData,
-  MineTogetherAuthenticationHandlerReply,
-  MineTogetherLogoutHandlerReply,
   ModalCallbackData,
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
@@ -137,9 +134,7 @@ export type MessageType =
   "webRequest" |
   "openDebugTools" |
   "videoCache" |
-  "moveInstances" | 
-  "minetogetherAuthentication" |
-  "minetogetherLogoutHandler" |
+  "moveInstances" |
   "appInit"
 
 export type EmptyMessageResponse = {}
@@ -153,10 +148,6 @@ export type MessagePayload = {
     input: PinInstanceHandlerData,
     output: PinInstanceHandlerReply
   }
-  "minetogetherLogoutHandler": {
-    input: BaseData,
-    output: MineTogetherLogoutHandlerReply
-  },
   "installedInstances": {
     input: InstalledInstancesData,
     output: InstalledInstancesDataReply
@@ -299,7 +290,7 @@ export type MessagePayload = {
     output: AuthenticateMsProfileHandlerReply
   }
   "profiles.refresh": {
-    input: Nullable<RefreshAuthenticationProfileHandlerData, "liveExpires" | "liveAccessToken" | "liveRefreshToken">,
+    input: RefreshAuthenticationProfileHandlerData,
     output: RefreshAuthenticationProfileHandlerReply
   }
   "profiles.is-valid": {
@@ -337,9 +328,5 @@ export type MessagePayload = {
   "moveInstances": {
     input: MoveInstancesHandlerData
     output: MoveInstancesHandlerReply
-  },
-  "minetogetherAuthentication": {
-    input: MineTogetherAuthenticationHandlerData,
-    output: Nullable<MineTogetherAuthenticationHandlerReply, "basicData" | "profile">
   }
 }

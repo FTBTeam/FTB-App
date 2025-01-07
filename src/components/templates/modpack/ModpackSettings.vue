@@ -284,7 +284,7 @@ import platform from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
-import {InstanceJson, MineTogetherAccount, MineTogetherProfile, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
@@ -325,9 +325,6 @@ import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.
 export default class ModpackSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
   @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
-
-  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
@@ -548,15 +545,6 @@ export default class ModpackSettings extends Vue {
     }
     
     return resList;
-  }
-
-  get accountHasPlan() {
-    if (!this.getMtAccount?.activePlan) {
-      return false;
-    }
-    
-    const plan = this.getMtAccount.activePlan;
-    return plan.status === "Active";
   }
 
   get channelOptions() {

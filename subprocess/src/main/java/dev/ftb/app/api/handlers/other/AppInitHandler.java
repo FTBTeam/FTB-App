@@ -5,10 +5,6 @@ import dev.ftb.app.Constants;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
-import dev.ftb.app.api.handlers.other.minetogether.MineTogetherApi;
-import dev.ftb.app.api.handlers.other.minetogether.MineTogetherAuthenticationHandler;
-import dev.ftb.app.api.handlers.other.minetogether.MineTogetherProfile;
-import dev.ftb.app.storage.CredentialStorage;
 import dev.ftb.app.storage.UserApiCredentials;
 import dev.ftb.app.util.ModpacksChUtils;
 import org.jetbrains.annotations.Nullable;
@@ -22,24 +18,8 @@ public class AppInitHandler implements IMessageHandler<AppInitHandler.Data> {
     
     @Override
     public void handle(Data data) {
-        // Attempt login to MT if we have a token saved. If it fails, clear it
-        String mtToken = CredentialStorage.getInstance().get("minetogether");
- 
         boolean success = true;
         Reply.Builder reply = Reply.builder(data);
-        if (mtToken != null && !mtToken.isEmpty()) {
-            var loginResult = MineTogetherAuthenticationHandler.login(CredentialStorage.getInstance().get("minetogether"), true);
-            if (!loginResult.isErr()) {
-                var loginData = loginResult.unwrap();
-                if (loginData.getKey() != null) {
-                    reply.setBasicData(loginData.getKey());
-                }
-                
-                if (loginData.getValue() != null) {
-                    reply.setProfile(loginData.getValue());
-                }
-            }
-        }
         
         UserApiCredentials userApiCredentials = this.loadUserApiCredentials();
         if (userApiCredentials != null) {
@@ -70,8 +50,6 @@ public class AppInitHandler implements IMessageHandler<AppInitHandler.Data> {
     public static class Reply extends Data {
         boolean success = false;
         String errorMessage = "";
-        @Nullable MineTogetherApi.BasicDataAndAccount basicData;
-        @Nullable MineTogetherProfile profile;
         @Nullable UserApiCredentials apiCredentials;
         
         private Reply(Data data) {
@@ -91,15 +69,6 @@ public class AppInitHandler implements IMessageHandler<AppInitHandler.Data> {
                 reply = new Reply(data);
             }
             
-            public Builder setBasicData(MineTogetherApi.BasicDataAndAccount basicData) {
-                reply.basicData = basicData;
-                return this;
-            }
-            
-            public Builder setProfile(MineTogetherProfile profile) {
-                reply.profile = profile;
-                return this;
-            }
             
             public Builder setSuccess(boolean success) {
                 reply.success = success;

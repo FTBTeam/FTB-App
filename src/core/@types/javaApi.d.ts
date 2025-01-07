@@ -443,8 +443,6 @@ export interface AppInitHandlerData extends BaseData {
 export interface AppInitHandlerReply extends AppInitHandlerData {
     success: boolean;
     errorMessage: string;
-    basicData: BasicDataAndAccount;
-    profile: MineTogetherProfile;
     apiCredentials: UserApiCredentials;
 }
 
@@ -455,23 +453,6 @@ export interface VideoCacheHandlerData extends BaseData {
 
 export interface VideoCacheHandlerReply extends VideoCacheHandlerData {
     location: string;
-}
-
-export interface MineTogetherAuthenticationHandlerData extends BaseData {
-    authType: string;
-    apiKey: string;
-    appToken: string;
-}
-
-export interface MineTogetherAuthenticationHandlerReply extends PrivateBaseData {
-    success: boolean;
-    message: string;
-    basicData: BasicDataAndAccount;
-    profile: MineTogetherProfile;
-}
-
-export interface MineTogetherLogoutHandlerReply extends BaseData {
-    success: boolean;
 }
 
 export interface AccountIsValidHandlerData extends BaseData {
@@ -647,21 +628,6 @@ export interface Dimension {
     height: number;
 }
 
-export interface BasicDataAndAccount {
-    data: BasicProfileData;
-    account: MineTogetherAccount;
-}
-
-export interface MineTogetherProfile {
-    hash: Hashes;
-    friendCode: string;
-    chat: Chat;
-    cached: boolean;
-    display: string;
-    hasAccount: boolean;
-    premium: boolean;
-}
-
 export interface UserApiCredentials {
     apiUrl: string;
     apiSecret: string;
@@ -733,34 +699,6 @@ export interface Backup {
     snapshot: boolean;
 }
 
-export interface BasicProfileData {
-    uuid: string;
-    modpacksToken: string;
-    s3Credentials: S3Credentials;
-}
-
-export interface MineTogetherAccount {
-    id: string;
-    username: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    attributes: { [index: string]: string[] };
-    accounts: Account[];
-    mtHash: string;
-    fullMTHash: string;
-    activePlan: ActivePlan;
-}
-
-export interface Hashes {
-    long: string;
-}
-
-export interface Chat {
-    hash: ChatHash;
-    online: boolean;
-}
-
 export interface Target {
     id: number;
     version: string;
@@ -787,56 +725,12 @@ export interface ModpackFile {
     updated: number;
 }
 
-export interface S3Credentials {
-    accessKeyId: string;
-    secretAccessKey: string;
-    bucket: string;
-    host: string;
-}
-
-export interface ActivePlan {
-    id: number;
-    orderid: number;
-    pid: number;
-    name: string;
-    paymentMethod: string;
-    paymentMethodActual: string;
-    nextDueDate: string;
-    status: string;
-    customFields: CustomFields;
-}
-
-export interface ChatHash {
-    medium: string;
-    hashShort: string;
-}
-
 export interface FileHashes {
     sha1: any;
     sha256: any;
     sha512: any;
     murmur: number;
     cfMurmur: number;
-}
-
-export interface Account {
-    identityProvider: string;
-    userId: string;
-    userName: string;
-    mcName: string;
-    accountKey: string;
-    accountSecret: string;
-}
-
-export interface CustomFields {
-    customfield: Customfield[];
-}
-
-export interface Customfield {
-    id: number;
-    name: string;
-    translatedName: string;
-    value: string;
 }
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";

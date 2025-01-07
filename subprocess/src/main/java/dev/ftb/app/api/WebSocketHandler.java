@@ -16,8 +16,6 @@ import dev.ftb.app.api.handlers.instances.backups.InstanceDeleteBackupHandler;
 import dev.ftb.app.api.handlers.instances.backups.InstanceGetBackupsHandler;
 import dev.ftb.app.api.handlers.instances.backups.InstanceRestoreBackupHandler;
 import dev.ftb.app.api.handlers.other.*;
-import dev.ftb.app.api.handlers.other.minetogether.MineTogetherAuthenticationHandler;
-import dev.ftb.app.api.handlers.other.minetogether.MineTogetherLogoutHandler;
 import dev.ftb.app.api.handlers.profiles.*;
 import dev.ftb.app.api.handlers.storage.StorageGetAllHandler;
 import dev.ftb.app.api.handlers.storage.StorageGetHandler;
@@ -86,9 +84,6 @@ public class WebSocketHandler {
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
         
-        register("minetogetherAuthentication", MineTogetherAuthenticationHandler.Data.class, new MineTogetherAuthenticationHandler());
-        register("minetogetherLogoutHandler", BaseData.class, new MineTogetherLogoutHandler());
-
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());

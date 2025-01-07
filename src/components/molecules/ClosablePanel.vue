@@ -29,8 +29,6 @@ import os from 'os';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {adsEnabled} from '@/utils';
-import {ns} from '@/core/state/appState';
-import {MineTogetherAccount} from '@/core/@types/javaApi';
 
 // TODO: (M#02) Remove this component and replace it with a modal that support full screen
 @Component
@@ -65,11 +63,10 @@ export default class ClosablePanel extends Vue {
   isMac = os.type() === 'Darwin';
   
   @State('settings') public settings!: SettingsState;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
   
   get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
+    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
   }
 }
 </script>
