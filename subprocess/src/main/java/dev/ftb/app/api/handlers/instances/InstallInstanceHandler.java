@@ -2,19 +2,16 @@ package dev.ftb.app.api.handlers.instances;
 
 import dev.ftb.app.Analytics;
 import dev.ftb.app.AppMain;
-import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstallInstanceData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
-import dev.ftb.app.data.modpack.ShareManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.task.InstallationOperation;
 import net.covers1624.quack.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +22,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.UUID;
 
 public class InstallInstanceHandler implements IMessageHandler<InstallInstanceData> {
@@ -42,8 +38,6 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         try {
             if (StringUtils.isNotEmpty(data.uuid)) {
                 handleUpdate(data);
-            } else if (StringUtils.isNotEmpty(data.shareCode)) {
-                handleShareImport(data, data.shareCode);
             } else if (StringUtils.isNotEmpty(data.importFrom)) {
                 handleCurseImport(data, data.importFrom);
             } else {
@@ -73,41 +67,6 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             return;
         }
         beginInstallTask(data, instance, manifests.getRight());
-    }
-
-    private void handleShareImport(InstallInstanceData data, String shareCode) throws IOException {
-        ShareManifest shareManifest = ShareManifest.queryManifest(Constants.TRANSFER_HOST + shareCode + "/manifest.json");
-        if (shareManifest == null) {
-            abort(data, "Unable to download manifest for '" + shareCode + "', Share code may have expired.");
-            return;
-        }
-
-        ModpackVersionManifest versionManifest = shareManifest.getVersionManifest();
-        boolean isPrivate = shareManifest.getType() == ShareManifest.Type.PRIVATE;
-        byte packType = shareManifest.getType() == ShareManifest.Type.CURSE ? (byte) 1 : 0;
-        boolean isImport = shareManifest.getType() == ShareManifest.Type.IMPORT;
-
-        ModpackManifest modpackManifest;
-        if (isImport) {
-            modpackManifest = ModpackManifest.fakeManifest(shareManifest.getName());
-        } else {
-            modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), isPrivate, packType);
-            if (modpackManifest == null) {
-                modpackManifest = ModpackManifest.queryManifest(versionManifest.getParent(), !isPrivate, packType);
-            }
-
-            if (modpackManifest == null) {
-                abort(data, "Unable to determine modpack for '" + shareCode + "'.");
-                return;
-            }
-        }
-        // Run substitutions over manifest.
-        StrSubstitutor sub = new StrSubstitutor(Map.of("token", shareCode));
-        for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
-            file.setUrl(sub.replace(file.getUrl()));
-        }
-
-        beginNewInstall(data, modpackManifest, versionManifest, isPrivate, packType, false);
     }
 
     private void handleCurseImport(InstallInstanceData data, String importFrom) throws IOException {

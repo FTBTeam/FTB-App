@@ -36,14 +36,6 @@
 <!--          <p>Import</p>-->
 <!--          <small>Import instances from other launchers</small>-->
 <!--        </div>-->
-        <div class="option share" @click="() => {
-            open = false;
-            shareOpen = true;
-        }">
-          <div class="icon"><font-awesome-icon icon="code" /></div>
-          <p>Share codes</p>
-          <small>Use a share code to import a friends instance</small>
-        </div>
         <div class="option curse" @click="() => {
           open = false;
           curseOpen = true;
@@ -59,7 +51,6 @@
     
     <create-instance :open="createOpen" @close="createOpen = false" />
     <import-instance :open="importOpen" @close="importOpen = false" />
-    <share-code-instance :open="shareOpen" @close="shareOpen = false" />
     <curse-import-instance :open="curseOpen" @close="curseOpen = false" />
   </div>
 </template>
@@ -69,7 +60,6 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 import CreateInstance from '@/components/core/modpack/create/CreateInstance.vue';
 import CurseImportInstance from '@/components/core/modpack/create/CurseImportInstance.vue';
 import ImportInstance from '@/components/core/modpack/create/ImportInstance.vue';
-import ShareCodeInstance from '@/components/core/modpack/create/ShareCodeInstance.vue';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 
@@ -80,7 +70,7 @@ import {RouterNames} from '@/router';
     }
   },
   methods: {safeNavigate},
-  components: {ImportInstance, CurseImportInstance, CreateInstance, ShareCodeInstance}
+  components: {ImportInstance, CurseImportInstance, CreateInstance,}
 })
 export default class SidebarCreate extends Vue {
   @Prop() disabled!: boolean
@@ -89,7 +79,6 @@ export default class SidebarCreate extends Vue {
   
   createOpen = false;
   importOpen = false;
-  shareOpen = false;
   curseOpen = false;
   
   mounted() {

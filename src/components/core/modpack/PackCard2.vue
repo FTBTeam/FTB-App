@@ -60,7 +60,6 @@ import {Component, Prop, Watch} from 'vue-property-decorator';
 import PackCardCommon from '@/components/core/modpack/PackCardCommon.vue';
 import {packUpdateAvailable, resolveArtwork, resolveModloader, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {RouterNames} from '@/router';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import Popover from '@/components/atoms/Popover.vue';
 import ProgressBar from '@/components/atoms/ProgressBar.vue';
@@ -123,10 +122,6 @@ export default class PackCard2 extends PackCardCommon {
         uuid: this.instance.uuid
       }
     })
-  }
-  
-  syncInstance() {
-    instanceInstallController.requestSync(this.instance);
   }
   
   openInstanceMenu(event: PointerEvent) {

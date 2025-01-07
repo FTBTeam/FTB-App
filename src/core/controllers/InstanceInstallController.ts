@@ -24,7 +24,6 @@ export type InstallRequest = {
   logo: string | null;
   updatingInstanceUuid?: string;
   importFrom?: string;
-  shareCode?: string;
   category?: string;
   provider?: PackProviders;
   private: boolean;
@@ -148,45 +147,6 @@ class InstanceInstallController {
     alertController.info(`Import requested for ${path.split('/').pop()}`);
   }
 
-  public async requestShareImport(shareCode: string, category: string) {
-    this.logger.debug('Share import requested', shareCode, category);
-
-    this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(),
-      id: -1,
-      version: -1,
-      name: 'Import',
-      logo: null,
-      category: category,
-      private: false,
-      provider: 'modpacksch',
-      shareCode: shareCode,
-    });
-
-    // Trigger a check queue
-    await this.checkQueue();
-    alertController.info(`Import requested for ${shareCode}`);
-  }
-
-  public async requestSync(instance: InstanceJson | SugaredInstanceJson) {
-    this.logger.debug('Sync requested', instance);
-
-    this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(),
-      id: -1,
-      version: -1,
-      name: instance.name,
-      logo: null,
-      category: 'Default',
-      private: false,
-      provider: 'modpacksch',
-    });
-
-    // Trigger a check queue
-    await this.checkQueue();
-    alertController.info(`Sync requested for ${instance.name}`);
-  }
-
   public async cancelInstall(uuid: string, isInstall = false) {
     this.logger.debug('Cancel requested', uuid);
 
@@ -275,14 +235,13 @@ class InstanceInstallController {
 
     let payload: any = {};
 
-    if (!request.importFrom && !request.shareCode) {
+    if (!request.importFrom) {
       payload = {
         uuid: request.updatingInstanceUuid ?? '', // This flag is what tells the API to update an instance
         id: parseInt(request.id as string, 10),
         version: parseInt(request.version as string, 10),
         _private: request.private,
         packType: !request.provider ? 0 : (request.provider === 'modpacksch' ? 0 : 1), // TODO: (M#01) Support other providers
-        shareCode: '',
         importFrom: null,
         name: request.name,
         artPath: request.logo,
@@ -297,11 +256,6 @@ class InstanceInstallController {
     } else if (request.importFrom) {
       payload = {
         importFrom: request.importFrom,
-        category: request.category ?? 'Default',
-      };
-    } else if (request.shareCode) {
-      payload = {
-        shareCode: request.shareCode,
         category: request.category ?? 'Default',
       };
     }

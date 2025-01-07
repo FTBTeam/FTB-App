@@ -12,8 +12,6 @@ import {
   CancelInstallInstanceDataReply,
   CheckCurseZipData,
   CheckCurseZipDataReply,
-  CheckShareCodeData,
-  CheckShareCodeDataReply,
   DuplicateInstanceHandlerReply,
   DuplicateInstanceHandlerRequest,
   FileHashData,
@@ -120,7 +118,6 @@ export type MessageType =
   "instanceGetBackups" |
   "instanceRestoreBackup" |
   "instanceDeleteBackup" |
-  "checkShareCode" |
   "checkCurseZip" |
   "profiles.get" |
   "profiles.remove" |
@@ -264,10 +261,6 @@ export type MessagePayload = {
   "instanceDeleteBackup": {
     input: InstanceDeleteBackupHandlerRequest,
     output: InstanceDeleteBackupHandlerReply
-  }
-  "checkShareCode": {
-    input: CheckShareCodeData,
-    output: CheckShareCodeDataReply
   }
   "checkCurseZip": {
     input: CheckCurseZipData

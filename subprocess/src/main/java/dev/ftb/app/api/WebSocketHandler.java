@@ -73,8 +73,7 @@ public class WebSocketHandler {
         register("instanceGetBackups", InstanceGetBackupsHandler.Request.class, new InstanceGetBackupsHandler());
         register("instanceRestoreBackup", InstanceRestoreBackupHandler.Request.class, new InstanceRestoreBackupHandler());
         register("instanceDeleteBackup", InstanceDeleteBackupHandler.Request.class, new InstanceDeleteBackupHandler());
-
-        register("checkShareCode", CheckShareCodeData.class, new CheckShareCode());
+        
         register("checkCurseZip", CheckCurseZipData.class, new CheckCurseZip());
 
         register("profiles.get", BaseData.class, new GetProfilesHandler());

@@ -26,12 +26,6 @@
       </ui-button>
 
       <ui-button size="small"
-        :disabled="!getActiveMcProfile"
-        :aria-label="
-          !getActiveMcProfile
-            ? 'You need to be logged in to your Minecraft account to share packs'
-            : 'Share your modpack with friends'
-        "
         @click="shareConfirm = true"
         type="info"
         icon="share"
@@ -275,7 +269,7 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
-import {Action, Getter, State} from 'vuex-class';
+import {Action, State} from 'vuex-class';
 import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
 import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
@@ -324,8 +318,7 @@ import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.
 
 export default class ModpackSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
-  @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
-  
+
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
   

@@ -38,14 +38,6 @@ export interface CheckCurseZipDataReply extends CheckCurseZipData {
     message: string;
 }
 
-export interface CheckShareCodeData extends BaseData {
-    shareCode: string;
-}
-
-export interface CheckShareCodeDataReply extends CheckShareCodeData {
-    success: boolean;
-}
-
 export interface InstallInstanceData extends BaseData {
     uuid: string;
     id: number;
@@ -53,7 +45,6 @@ export interface InstallInstanceData extends BaseData {
     _private: boolean;
     packType: number;
     mcVersion: string;
-    shareCode: string;
     importFrom: string;
     name: string;
     artPath: string;

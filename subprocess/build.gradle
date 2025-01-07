@@ -73,12 +73,7 @@ dependencies {
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
 
     implementation 'com.electronwill.night-config:toml:3.6.4'
-
-    implementation('software.amazon.awssdk:s3:2.20.4') {
-        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
-        exclude group: 'software.amazon.awssdk', module: 'apache-client'
-    }
-
+    
     compileOnly 'org.jetbrains:annotations:22.0.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 

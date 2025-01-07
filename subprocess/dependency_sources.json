@@ -48,27 +48,7 @@
     
     "com.electronwill.night-config:core": "https://github.com/TheElectronWill/night-config",
     "com.electronwill.night-config:toml": "https://github.com/TheElectronWill/night-config",
-    
-    "software.amazon.awssdk:s3": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:aws-xml-protocol": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:aws-query-protocol": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:protocol-core": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:sdk-core": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:annotations": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:http-client-spi": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:utils": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:metrics-spi": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:endpoints-spi": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:profiles": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:json-utils": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:third-party-jackson-core": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:regions": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:arns": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:auth": "https://github.com/aws/aws-sdk-java-v2",
-    "software.amazon.awssdk:aws-core": "https://github.com/aws/aws-sdk-java-v2",
-    "org.reactivestreams:reactive-streams": "https://github.com/reactive-streams/reactive-streams-jvm",
-    "software.amazon.eventstream:eventstream": "https://github.com/awslabs/aws-eventstream-java",
-    
+  
     "org.openjdk.nashorn:nashorn-core": "https://github.com/openjdk/nashorn",
     "org.ow2.asm:asm": "https://gitlab.ow2.org/asm/asm",
     "org.ow2.asm:asm-commons": "https://gitlab.ow2.org/asm/asm",
