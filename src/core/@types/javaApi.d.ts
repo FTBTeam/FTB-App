@@ -382,6 +382,23 @@ export interface SugaredInstanceJson extends InstanceJson {
     rootDirs: string[];
 }
 
+export interface InstanceExportHandlerData extends BaseData {
+    instanceId: string;
+}
+
+export interface InstanceExportHandlerReply extends BaseData {
+    error: string;
+}
+
+export interface InstanceExportPreInfoHandlerData extends BaseData {
+    instanceId: string;
+}
+
+export interface InstanceExportPreInfoHandlerReply extends BaseData {
+    error: string;
+    paths: Node[];
+}
+
 export interface MoveInstancesHandlerData extends BaseData {
     newLocation: string;
 }
@@ -677,6 +694,15 @@ export interface Specs {
     id: number;
     minimum: number;
     recommended: number;
+}
+
+export interface Node {
+    id: number;
+    name: string;
+    size: number;
+    isDirectory: boolean;
+    disabled: boolean;
+    children: Node[];
 }
 
 export interface Backup {

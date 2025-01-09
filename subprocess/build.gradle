@@ -239,32 +239,33 @@ idea.project.settings {
     }
 }
 
-def sharedSettings = [
-        excludeClasses    : [
-                "java.lang.Iterable",
-                "java.lang.Comparable",
-                "java.lang.Cloneable",
-                "java.nio.Watchable",
-                "java.io.Serializable",
-                "com.google.common.hash.HashCode",
-                "com.google.gson.JsonElement",
-                "com.google.gson.JsonArray",
-                "com.google.gson.JsonObject",
-                "java.awt.geom.Dimension2D"
-        ],
-        customTypeMappings: [
-                "java.nio.file.Path:string"
-        ]
-]
+def standardTypescriptSettings = (GenerateTask task, File file) -> {
+    task.jsonLibrary = "gson"
+    task.noFileComment = true
+    task.noTslintDisable = true
+    task.noEslintDisable = true
+    task.tsNoCheck = true
+    task.outputKind = "module"
+    task.outputFile = file
+    task.excludeClasses = [
+        "java.lang.Iterable",
+        "java.lang.Comparable",
+        "java.lang.Cloneable",
+        "java.nio.Watchable",
+        "java.io.Serializable",
+        "com.google.common.hash.HashCode",
+        "com.google.gson.JsonElement",
+        "com.google.gson.JsonArray",
+        "com.google.gson.JsonObject",
+        "java.awt.geom.Dimension2D"
+    ]
+    task.customTypeMappings = [
+        "java.nio.file.Path:string"
+    ]
+}
 
 tasks.named("generateTypeScript", GenerateTask) {
-    jsonLibrary = "gson"
-    noFileComment = true
-    noTslintDisable = true
-    noEslintDisable = true
-    tsNoCheck = true
-    outputKind = "module"
-    outputFile = project.file("../src/core/@types/javaApi.d.ts")
+    standardTypescriptSettings(it, project.file("../src/core/@types/javaApi.d.ts"))
     classPatterns = [
             'dev.ftb.app.api.handlers.instances.InstalledInstancesHandler$SugaredInstanceJson',
             'dev.ftb.app.api.data.*',
@@ -275,8 +276,6 @@ tasks.named("generateTypeScript", GenerateTask) {
             'dev.ftb.app.api.handlers.**.*$Data',
             'dev.ftb.app.storage.settings.SettingsData'
     ]
-    excludeClasses = sharedSettings.excludeClasses
-    customTypeMappings = sharedSettings.customTypeMappings
     customTypeNamingFunction = """
 (name, simpleName) => {
     const prefixTargets = ["Reply", "Progress", "Request", "Data"]
@@ -291,17 +290,3 @@ tasks.named("generateTypeScript", GenerateTask) {
 }
 """
 }
-
-//tasks.register("generateTypeScriptExtras", GenerateTask) {
-//    jsonLibrary = "gson"
-//    outputKind = "module"
-//    nullableAnnotations = ["org.jetbrains.annotations.Nullable"]
-//    outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
-//    excludeClasses = sharedSettings.excludeClasses
-//    customTypeMappings = sharedSettings.customTypeMappings
-//    classes = [
-//            "dev.ftb.app.data.InstanceJson",
-//    ]
-//}
-
-//generateTypeScript.finalizedBy(generateTypeScriptExtras)

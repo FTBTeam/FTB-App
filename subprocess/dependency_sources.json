@@ -21,7 +21,6 @@
 
     "com.squareup.okhttp3:okhttp": "https://github.com/square/okhttp",
     "com.squareup.okio:okio": "https://github.com/square/okio",
-    "com.squareup.okhttp3:okhttp-dnsoverhttps": "https://github.com/square/okhttp",
     "org.jetbrains.kotlin:kotlin-stdlib": "https://github.com/JetBrains/kotlin/tree/master/libraries/stdlib",
     "org.jetbrains.kotlin:kotlin-stdlib-common": "https://github.com/JetBrains/kotlin/tree/master/libraries",
     "org.jetbrains.kotlin:kotlin-stdlib-jdk8": "https://github.com/JetBrains/kotlin/tree/master/libraries",
