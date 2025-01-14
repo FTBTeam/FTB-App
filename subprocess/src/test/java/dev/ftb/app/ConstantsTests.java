@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ConstantsTests {
 
     @Test
-    public void testGetCreeperHostModpackPrefix() {
+    public void testGetModpackPrefix() {
         AppMain.isDevMode = false;
         // Test non private.
         assertEquals("https://api.feed-the-beast.com/v1/modpacks/public/modpack/", ModpacksChUtils.getModpacksEndpoint(false, (byte) 0));

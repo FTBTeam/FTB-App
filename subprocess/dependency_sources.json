@@ -5,9 +5,6 @@
     "org.apache.logging.log4j:log4j-jul": "https://github.com/apache/logging-log4j2",
     "org.slf4j:slf4j-api": "https://github.com/qos-ch/slf4j",
 
-    "io.sentry:sentry": "https://github.com/getsentry/sentry-java",
-    "io.sentry:sentry-log4j2": "https://github.com/getsentry/sentry-java",
-
     "net.sf.jopt-simple:jopt-simple": "https://github.com/jopt-simple/jopt-simple",
 
     "com.google.code.gson:gson": "https://github.com/google/gson",

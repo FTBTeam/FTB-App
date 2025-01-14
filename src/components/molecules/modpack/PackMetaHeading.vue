@@ -43,7 +43,6 @@ import Vue from 'vue';
 import Component from 'vue-class-component';
 import {Prop} from 'vue-property-decorator';
 import {getColorForReleaseType} from '@/utils/colors';
-import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import {Getter} from 'vuex-class';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
@@ -59,9 +58,7 @@ type PackInfo = {
   source: 'remote' | 'local';
 }
 
-@Component({
-  components: { ShareInstanceModal },
-})
+@Component
 export default class PackMetaHeading extends Vue {
   @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
@@ -71,8 +68,6 @@ export default class PackMetaHeading extends Vue {
   @Prop() instance?: SugaredInstanceJson | InstanceJson
 
   getColorForReleaseType = getColorForReleaseType;
-
-  shareConfirm = false;
   
   get packInfo() {
     if (this.instance) return this.getInstanceInfo(this.instance);

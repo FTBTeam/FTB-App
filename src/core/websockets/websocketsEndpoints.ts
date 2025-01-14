@@ -29,10 +29,6 @@ import {
   InstanceConfigureDataReply,
   InstanceDeleteBackupHandlerReply,
   InstanceDeleteBackupHandlerRequest,
-  InstanceExportHandlerData,
-  InstanceExportHandlerReply,
-  InstanceExportPreInfoHandlerData,
-  InstanceExportPreInfoHandlerReply,
   InstanceGetBackupsHandlerReply,
   InstanceGetBackupsHandlerRequest,
   InstanceInstallModData,
@@ -71,8 +67,6 @@ import {
   SettingsConfigureDataReply,
   SettingsInfoData,
   SettingsInfoDataReply,
-  ShareInstanceData,
-  ShareInstanceDataReply,
   StorageGetAllHandlerReply,
   StorageGetHandlerData,
   StorageGetHandlerReply,
@@ -132,7 +126,6 @@ const endpoints = {
   pong:                           io<PongLauncherData, EmptyMessageResponse>(),
   ping:                           io<PingLauncherData, EmptyMessageResponse>(),
   messageClient:                  io<MessageClientData, EmptyMessageResponse>(),
-  shareInstance:                  io<ShareInstanceData, ShareInstanceDataReply>(),
   instanceInstallMod:             io<InstanceInstallModData, InstanceInstallModDataReply>(),
   setInstanceArt:                 io<SetInstanceArtData, SetInstanceArtDataReply>(),
   instanceVersionInfo:            io<InstanceVersionInfoData, InstanceVersionInfoDataReply>(),
@@ -154,8 +147,6 @@ const endpoints = {
   instanceOverrideModLoader:      io<InstanceOverrideModLoaderData, InstanceOverrideModLoaderDataReply>(),
   videoCache:                     io<VideoCacheHandlerData, VideoCacheHandlerReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
-  instanceExport:                 io<InstanceExportHandlerData, InstanceExportHandlerReply>(),
-  instanceExportPreInfo:          io<InstanceExportPreInfoHandlerData, InstanceExportPreInfoHandlerReply>()
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

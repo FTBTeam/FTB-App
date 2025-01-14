@@ -25,14 +25,6 @@
         Open Folder
       </ui-button>
 
-      <ui-button size="small"
-        @click="shareConfirm = true"
-        type="info"
-        icon="share"
-      >
-        Share
-      </ui-button>
-
       <ui-button size="small" icon="copy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
       </ui-button>
@@ -238,8 +230,6 @@
       />
     </modal>
     
-    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
-    
     <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="() => {
       userSelectModLoader = false
       userSelectedLoader = null
@@ -272,7 +262,6 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 import {Action, State} from 'vuex-class';
 import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
-import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
 import platform from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -311,8 +300,7 @@ import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.
     ArtworkSelector,
     Selection2,
     DuplicateInstanceModal,
-    'ftb-slider': FTBSlider,
-    ShareInstanceModal,
+    'ftb-slider': FTBSlider
   },
 })
 
@@ -328,7 +316,6 @@ export default class ModpackSettings extends Vue {
   megabyteSize = megabyteSize
   
   showDuplicate = false;
-  shareConfirm = false;
   jreSelection = '';
   javaVersions: JavaVersion[] = [];
   deleting = false;

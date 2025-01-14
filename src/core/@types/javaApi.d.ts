@@ -222,17 +222,6 @@ export interface SetInstanceArtDataReply extends BaseData {
     message: string;
 }
 
-export interface ShareInstanceData extends BaseData {
-    uuid: string;
-}
-
-export interface ShareInstanceDataReply extends BaseData {
-    status: string;
-    message: string;
-    uuid: string;
-    code: string;
-}
-
 export interface UninstallInstanceData extends BaseData {
     uuid: string;
 }
@@ -380,23 +369,6 @@ export interface GetInstanceFoldersHandlerRequest extends BaseData {
 export interface SugaredInstanceJson extends InstanceJson {
     path: string;
     rootDirs: string[];
-}
-
-export interface InstanceExportHandlerData extends BaseData {
-    instanceId: string;
-}
-
-export interface InstanceExportHandlerReply extends BaseData {
-    error: string;
-}
-
-export interface InstanceExportPreInfoHandlerData extends BaseData {
-    instanceId: string;
-}
-
-export interface InstanceExportPreInfoHandlerReply extends BaseData {
-    error: string;
-    paths: Node[];
 }
 
 export interface MoveInstancesHandlerData extends BaseData {
@@ -694,15 +666,6 @@ export interface Specs {
     id: number;
     minimum: number;
     recommended: number;
-}
-
-export interface Node {
-    id: number;
-    name: string;
-    size: number;
-    isDirectory: boolean;
-    disabled: boolean;
-    children: Node[];
 }
 
 export interface Backup {

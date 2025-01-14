@@ -8,7 +8,6 @@ export type ApiEndpoints = 	"installedInstances" |
 	"webRequest" |
 	"instanceGetBackups" |
 	"instanceDeleteBackup" |
-	"shareInstance" |
 	"storage.put" |
 	"installInstance" |
 	"fileHash" |
@@ -19,7 +18,6 @@ export type ApiEndpoints = 	"installedInstances" |
 	"ping" |
 	"instanceBrowse" |
 	"moveInstances" |
-	"instanceExport" |
 	"checkCurseZip" |
 	"instanceRestoreBackup" |
 	"instanceInstallMod" |
@@ -38,7 +36,6 @@ export type ApiEndpoints = 	"installedInstances" |
 	"openDebugTools" |
 	"getInstanceFolders" |
 	"instanceVersionInfo" |
-	"instanceExportPreInfo" |
 	"instance.kill" |
 	"launchInstance" |
 	"instanceModToggle" |

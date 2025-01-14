@@ -37,8 +37,14 @@ version = appVersion
 
 repositories {
     mavenLocal()
-    maven { url 'https://maven.creeperhost.net' }
     mavenCentral()
+    
+    maven { 
+        url 'https://maven.creeperhost.net'
+        content {
+            includeGroup("net.covers1624")
+        }
+    }
     
     maven { 
         url "https://repo.gradle.org/artifactory/libs-releases/"
@@ -52,7 +58,6 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
     implementation 'org.apache.logging.log4j:log4j-jul:2.17.2'
-    implementation 'io.sentry:sentry-log4j2:5.7.4'
 
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
 
@@ -109,12 +114,12 @@ shadowJar {
     transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
     manifest {
         attributes([
-                "Specification-Title"   : "Launcher",
-                "Specification-Vendor"  : "Creeperhost LTD",
+                "Specification-Title"   : "App",
+                "Specification-Vendor"  : "Feed The Beast LTD",
                 "Specification-Version" : version,
                 "Implementation-Title"  : "AppMain",
                 "Implementation-Version": version,
-                "Implementation-Vendor" : "Creeperhost LTD"
+                "Implementation-Vendor" : "Feed The Beast LTD"
         ] as LinkedHashMap, "dev/ftb/app/")
         attributes 'Multi-Release': 'true'
         attributes 'Main-Class': 'dev.ftb.app.AppMain'

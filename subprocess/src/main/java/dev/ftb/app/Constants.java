@@ -45,9 +45,6 @@ public class Constants {
     public static final String CH_MAVEN = "https://maven.creeperhost.net/";
     public static final String MC_JSONS = FTB_MODPACKS_API + "/public/helpers/versions/minecraftjsons/";
 
-    public static final String UPLOAD_TRANSFER_HOST = "http://upload.share.modpacks.ch/";
-    public static final String TRANSFER_HOST = "https://share.modpacks.ch/get/";
-
     //Paths
     public static final Path BIN_LOCATION_OURS = WORKING_DIR.resolve("bin");
     public static final Path BIN_LOCATION = getDataDir().resolve("bin");
