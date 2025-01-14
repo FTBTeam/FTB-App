@@ -50,7 +50,6 @@
     </div>
     
     <create-instance :open="createOpen" @close="createOpen = false" />
-    <import-instance :open="importOpen" @close="importOpen = false" />
     <curse-import-instance :open="curseOpen" @close="curseOpen = false" />
   </div>
 </template>
@@ -59,7 +58,6 @@
 import {Component, Prop, Vue} from 'vue-property-decorator';
 import CreateInstance from '@/components/core/modpack/create/CreateInstance.vue';
 import CurseImportInstance from '@/components/core/modpack/create/CurseImportInstance.vue';
-import ImportInstance from '@/components/core/modpack/create/ImportInstance.vue';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 
@@ -70,7 +68,7 @@ import {RouterNames} from '@/router';
     }
   },
   methods: {safeNavigate},
-  components: {ImportInstance, CurseImportInstance, CreateInstance,}
+  components: {CurseImportInstance, CreateInstance,}
 })
 export default class SidebarCreate extends Vue {
   @Prop() disabled!: boolean
@@ -78,7 +76,6 @@ export default class SidebarCreate extends Vue {
   open = false
   
   createOpen = false;
-  importOpen = false;
   curseOpen = false;
   
   mounted() {
