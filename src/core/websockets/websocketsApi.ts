@@ -1,6 +1,7 @@
-import {MessagePayload, MessageType} from '@/core/websockets/websocketsEndpoints';
+import {MessagePayload} from '@/core/websockets/websocketsEndpoints';
 import store from '@/modules/store';
 import {BaseData} from '@/core/@types/javaApi';
+import {ApiEndpoints} from '@/core/@types/javaApiEndpoints';
 
 /**
  * Sends a message to the backend and returns the response.
@@ -9,7 +10,7 @@ import {BaseData} from '@/core/@types/javaApi';
  *   If T errors and says it can not be used as an index type, it means the
  *   MessagePayload type does not have a key of MessageType.
  */
-export function sendMessage<T extends MessageType>(
+export function sendMessage<T extends ApiEndpoints>(
   messageType: T, 
   payload?: MessageRaw<MessagePayload[T]["input"]>, 
   timeout = 30_000

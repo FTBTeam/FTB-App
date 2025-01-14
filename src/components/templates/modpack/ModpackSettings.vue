@@ -25,20 +25,6 @@
         Open Folder
       </ui-button>
 
-      <ui-button size="small"
-        :disabled="!getActiveMcProfile"
-        :aria-label="
-          !getActiveMcProfile
-            ? 'You need to be logged in to your Minecraft account to share packs'
-            : 'Share your modpack with friends'
-        "
-        @click="shareConfirm = true"
-        type="info"
-        icon="share"
-      >
-        Share
-      </ui-button>
-
       <ui-button size="small" icon="copy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
       </ui-button>
@@ -95,19 +81,6 @@
         <ftb-input class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
       </div>
     </div>
-
-    <ui-toggle
-      :align-right="true"
-      label="Enable cloud sync uploads"
-      desc="You can only use Cloud sync if you have an active paid plan on MineTogether."
-      :disabled="!accountHasPlan || toggleSavesWorking"
-      :value="instanceSettings.cloudSaves"
-      @input="toggleCloudSaves"
-      class="mb-2"
-    />
-
-    <p class="mb-6 text-light-warning" v-if="!accountHasPlan">Cloud syncing / Cloud saves are only available to Premium MineTogether users. Find out more on the <a class="text-blue-500 hover:text-blue-200" @click="openExternal" href="https://minetogether.io">MineTogether website</a>.</p>
-    <span v-else class="block mb-6" />
     
     <h2 class="text-lg mb-4 font-bold text-warning">
       <font-awesome-icon icon="warning" class="mr-2" />
@@ -126,7 +99,7 @@
           :options="channelOptions"
           v-model="instanceSettings.releaseChannel"
           :style="{width: '192px'}"
-          @change="v => saveSettings()"
+          @change="(v) => saveSettings()"
         />
       </div>
 
@@ -257,8 +230,6 @@
       />
     </modal>
     
-    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
-    
     <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="() => {
       userSelectModLoader = false
       userSelectedLoader = null
@@ -288,16 +259,15 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
-import {Action, Getter, State} from 'vuex-class';
+import {Action, State} from 'vuex-class';
 import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/atoms/input/FTBSlider.vue';
-import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import Platform from '@/utils/interface/electron-overwolf';
 import platform from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
-import {InstanceJson, MineTogetherAccount, MineTogetherProfile, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
@@ -330,18 +300,13 @@ import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.
     ArtworkSelector,
     Selection2,
     DuplicateInstanceModal,
-    'ftb-slider': FTBSlider,
-    ShareInstanceModal,
+    'ftb-slider': FTBSlider
   },
 })
 
 export default class ModpackSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
-  @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
 
-  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
-  
   @Prop() instance!: InstanceJson | SugaredInstanceJson;
   @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
   
@@ -351,12 +316,9 @@ export default class ModpackSettings extends Vue {
   megabyteSize = megabyteSize
   
   showDuplicate = false;
-  shareConfirm = false;
   jreSelection = '';
   javaVersions: JavaVersion[] = [];
   deleting = false;
-  
-  toggleSavesWorking = false;
   
   imageFile: File | null = null;
   resolutionId = "";
@@ -384,32 +346,6 @@ export default class ModpackSettings extends Vue {
     }
     
     this.instanceSettings = this.createInstanceSettingsFromInstance(this.instance)
-  }
-  
-  async toggleCloudSaves() {
-    this.toggleSavesWorking = true;
-    const newState = !this.instanceSettings.cloudSaves;
-    
-    if (!newState) {
-      if (!(await dialogsController.createConfirmationDialog("Are you sure", "Disabling Cloudsaves will delete all of your cloudsave data, please make sure you have a backup of this instance if you plan to remove it from your system."))) {
-        this.toggleSavesWorking = false;
-        return;
-      }
-    }
-    
-    const reply = await sendMessage((newState ? "instanceEnableCloudSaves" : "instanceDisableCloudSaves"), {
-      instance: this.instance.uuid,
-    });
-    
-    if (!reply || reply.status !== "success") {
-      alertController.error("Failed to toggle cloud saves");
-      this.toggleSavesWorking = false;
-      return;
-    }
-    
-    this.instanceSettings.cloudSaves = newState;
-    await this.saveSettings();
-    this.toggleSavesWorking = false;
   }
   
   selectResolution(id: string) {
@@ -551,7 +487,6 @@ export default class ModpackSettings extends Vue {
       memory: instance.memory,
       width: instance.width,
       height: instance.height,
-      cloudSaves: instance.cloudSaves,
       fullScreen: instance.fullscreen,
       releaseChannel: instance.releaseChannel,
       category: instance.category,
@@ -590,15 +525,6 @@ export default class ModpackSettings extends Vue {
     }
     
     return resList;
-  }
-
-  get accountHasPlan() {
-    if (!this.getMtAccount?.activePlan) {
-      return false;
-    }
-    
-    const plan = this.getMtAccount.activePlan;
-    return plan.status === "Active";
   }
 
   get channelOptions() {

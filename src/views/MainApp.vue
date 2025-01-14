@@ -73,10 +73,8 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import os from 'os';
 import {constants} from '@/core/constants';
-import {SetAccountMethod, SetProfileMethod} from '@/core/state/core/mtAuthState';
 import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
 import {adsEnabled, emitter} from '@/utils';
-import {MineTogetherAccount} from '@/core/@types/javaApi';
 import Loader from '@/components/atoms/Loader.vue';
 import Onboarding from '@/components/core/dialogs/Onboarding.vue';
 import UiButton from '@/components/core/ui/UiButton.vue';
@@ -104,12 +102,8 @@ export default class MainApp extends Vue {
   
   @Action("storeWsSecret", ns("v2/app")) storeWsSecret!: (secret: string) => Promise<void>
   
-  @Action("setProfile", ns("v2/mtauth")) setProfile!: SetProfileMethod;
-  @Action("setAccount", ns("v2/mtauth")) setAccount!: SetAccountMethod;
   @Action("storeCredentials", ns("v2/apiCredentials")) storeCredentials!: StoreCredentialsAction;
   @Action("setWasUserSet", ns("v2/apiCredentials")) setWasUserSet!: () => Promise<void>;
-  
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   
   private logger = createLogger("MainApp.vue");
   
@@ -212,24 +206,9 @@ export default class MainApp extends Vue {
         return;
       }
       
+      // TODO: Remove
       this.logger.info("App initialized from the subprocess");
-      const {basicData, profile, apiCredentials} = reply;
-      if (basicData) {
-        this.logger.info("Setting account");
-        await this.setAccount(basicData.account);
-
-        if (basicData.data.modpacksToken && !apiCredentials) {
-          this.logger.info("Setting modpacks token");
-          await this.storeCredentials({
-            apiSecret: basicData.data.modpacksToken,
-          });
-        }
-      }
-      
-      if (profile) {
-        this.logger.info("Setting profile");
-        await this.setProfile(profile);
-      }
+      const {apiCredentials} = reply;
       
       if (apiCredentials) {
         this.logger.info("Setting api credentials");
@@ -442,7 +421,7 @@ export default class MainApp extends Vue {
   }
 
   get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
+    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
   }
 
   get systemBarDisabled() {

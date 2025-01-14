@@ -24,24 +24,13 @@
           <font-awesome-icon icon="shuffle" />
           <span>Proxy</span>
         </router-link>
-        <router-link :to="{ name: RouterNames.SETTINGS_INTEGRATION }" class="item">
-          <font-awesome-icon icon="link" />
-          <span>Integrations</span>
-        </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_PRIVACY }" class="item">
           <font-awesome-icon icon="user-secret" />
           <span>Privacy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_ADVANCED }" class="item">
-          <font-awesome-icon icon="user-secret" />
+          <font-awesome-icon icon="cogs" />
           <span>Advanced</span>
-        </router-link>
-      </nav>
-      <nav v-if="getMtAccount">
-        <div class="heading">Integrations</div>
-        <router-link :to="{ name: RouterNames.SETTINGS_MT_INTEGRATION }" class="item app-info-item">
-          <img src="@/assets/images/mt-logo.webp" alt="" />
-          <span>MineTogether</span>
         </router-link>
       </nav>
       <nav>
@@ -82,15 +71,10 @@
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
-import {Getter} from 'vuex-class';
 import {RouterNames} from '@/router';
-import {ns} from '@/core/state/appState';
-import {MineTogetherAccount} from '@/core/@types/javaApi';
 
 @Component
 export default class SettingsSidebar extends Vue {
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
-
   platform = platform;
   RouterNames = RouterNames;
   

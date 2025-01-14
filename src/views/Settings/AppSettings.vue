@@ -45,14 +45,6 @@
       class="mb-8"
     />
 
-<!--    <ui-toggle-->
-<!--      label="Enable MineTogether Chat"-->
-<!--      desc="Enabled you to use the MineTogether chat from within the app. Currently disabled..."-->
-<!--      :value="false"-->
-<!--      :disabled="true"-->
-<!--      class="mb-8"-->
-<!--    />-->
-
     <p class="block text-white-700 text-lg font-bold mb-4" v-if="platform.isElectron()">Appearance</p>
 
     <ui-toggle

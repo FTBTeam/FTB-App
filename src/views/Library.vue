@@ -184,7 +184,6 @@ export default class Library extends Vue {
   get groupedPacks(): Record<string, SugaredInstanceJson[]> {
     const grouped: Record<string, SugaredInstanceJson[]> = {
       "Pinned": [],
-      "Cloud Saves": [],
     };
 
     for (const instance of this.sortedInstances) {
@@ -212,17 +211,12 @@ export default class Library extends Vue {
         groupKey = "Pinned";
       }
       
-      if (instance.pendingCloudInstance) {
-        groupKey = "Cloud Saves";
-      }
-      
       grouped[groupKey].push(instance);
     }
     
     const sortDirection = this.groupBy.includes("-") ? 'dec' : 'asc';
         
     // Modify the order of the group keys based on the sort direction
-    // Always put cloudsaves at the bottom of the list and installing at the top
     const groupKeys = Object.keys(grouped).sort((a, b) => {
       // Pinned at the top
       if (a === "Pinned") {
@@ -231,14 +225,6 @@ export default class Library extends Vue {
       
       if (b === "Pinned") {
         return 1;
-      }
-      
-      if (a === "Cloud Saves") {
-        return 1;
-      }
-      
-      if (b === "Cloud Saves") {
-        return -1;
       }
       
       if (a === b) {

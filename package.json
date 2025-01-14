@@ -14,9 +14,9 @@
   "scripts": {
     "dev": "pnpm run dev:real-ads --test-ad",
     "dev:real-ads": "cross-env WEBPACK_DEV_SERVER_URL=http://localhost:8080 TARGET_PLATFORM=electron NODE_ENV=development vue-cli-service ow:electron:serve --mode electron",
-    "overwolf:dev": "cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service ow:electron:serve",
+    "overwolf:dev": "node tooling/overwolf/preinit.js && cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service ow:electron:serve",
     "overwolf:build": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=production vue-cli-service build --mode overwolf",
-    "overwolf:serve": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
+    "overwolf:serve": "node tooling/overwolf/preinit.js &&  cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
     "build": "vue-cli-service ow:electron:build",
     "build:bin:all:64": "vue-cli-service ow:electron:build -wl --x64",
     "build:bin:all:arm": "vue-cli-service ow:electron:build -l --arm64",

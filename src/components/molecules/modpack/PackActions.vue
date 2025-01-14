@@ -35,18 +35,13 @@
         <li @click="duplicateConfirm = true">
           <span><font-awesome-icon icon="copy" /></span>Duplicate instance
         </li>
-        <li v-if="getProfiles && getProfiles.length > 0" @click="shareConfirm = true">
-          <span><font-awesome-icon icon="share" /></span>Share instance
-        </li>
         <li class="title" v-if="!isRunning">Danger</li>
         <li @click="deleteInstance" v-if="!isRunning">
           <span><font-awesome-icon icon="trash" /></span>Delete instance
         </li>
       </ul>
     </div>
-
-    <share-instance-modal :open="shareConfirm" @closed="shareConfirm = false" :uuid="instance.uuid" />
-
+    
     <modal
       :open="duplicateConfirm"
       :externalContents="true"
@@ -68,7 +63,6 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import {Prop} from 'vue-property-decorator';
-import ShareInstanceModal from '@/components/organisms/modals/actions/ShareInstanceModal.vue';
 import DuplicateInstanceModal from '@/components/organisms/modals/actions/DuplicateInstanceModal.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
@@ -85,7 +79,6 @@ import {InstanceRunningData} from '@/core/state/misc/runningState';
 
 @Component({
   components: {
-    ShareInstanceModal,
     DuplicateInstanceModal,
   },
 })
@@ -99,7 +92,6 @@ export default class PackActions extends Vue {
   private logger = createLogger("PackActions.vue")
 
   instanceFolders: string[] = [];
-  shareConfirm = false;
   duplicateConfirm = false;
   
   platform = platform;

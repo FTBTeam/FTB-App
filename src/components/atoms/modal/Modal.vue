@@ -30,8 +30,6 @@ import {Component, Prop, Vue} from 'vue-property-decorator';
 import Platform from '../../../utils/interface/electron-overwolf';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
-import {ns} from '@/core/state/appState';
-import {MineTogetherAccount} from '@/core/@types/javaApi';
 import {adsEnabled} from '@/utils';
 
 export enum ModalSizes {
@@ -54,7 +52,6 @@ export default class Modal extends Vue {
   @Prop({ default: false }) externalContents!: boolean;
   
   @State('settings') public settings!: SettingsState;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
   
   get isOverwolf() {
@@ -90,7 +87,7 @@ export default class Modal extends Vue {
   }
   
   get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
+    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
   }
 }
 </script>

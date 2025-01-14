@@ -52,22 +52,6 @@
         },
         "block_top_window_navigation": true,
         "popup_blocker": true
-      },
-      "chat": {
-        "mute": true,
-        "file": "dist/desktop/chatPage.html",
-        "native_window": true,
-        "transparent": true,
-        "resizable": true,
-        "desktop_only": true,
-        "size": {
-          "width": 300,
-          "height": 626
-        },
-        "min_size": {
-          "width": 300,
-          "height": 626
-        }
       }
     },
     "extra-objects": {
