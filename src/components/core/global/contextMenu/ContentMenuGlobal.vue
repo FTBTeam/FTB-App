@@ -64,7 +64,6 @@ export default class ContextMenuGlobal extends Vue {
   }
 
   onOptionClick(option: MenuItem<any>) {
-    (option as MenuItem<any>).action(this.context!())
     this.handleMenuClose()
   }
 

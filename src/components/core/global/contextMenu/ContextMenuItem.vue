@@ -3,11 +3,12 @@
     <div class="item"
          v-for="(option, key) in options"
          :key="key"
-         :class="{[option.color ?? 'normal']: true, 'has-children': option.children}"
-         @click.stop="(event) => $emit('clicked', option)"
+         :class="{[option.color ?? 'normal']: true, 'has-children': option.children, 'separator': 'separator' in option, 'working': working[option.title]}"
+         @click.stop="onItemClicked(option)"
          v-if="!option.predicate || option.predicate(context())">
       <div class="main">
-        <font-awesome-icon :fixed-width="true" v-if="option.icon" :icon="option.icon"/>
+        <font-awesome-icon :fixed-width="true" icon="spinner" spin v-if="working[option.title]" />
+        <font-awesome-icon :fixed-width="true" v-else-if="option.icon" :icon="option.icon"/>
         {{ option.title }}
       </div>
 
@@ -15,7 +16,7 @@
 
       <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
         <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix"
-                                  :open-to-left="openToLeft" @clicked="(data) => $emit('clicked', data)"/>
+                                  :open-to-left="openToLeft" @clicked="onItemClicked"/>
       </div>
     </div>
   </div>
@@ -23,7 +24,7 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
-import {MenuItem} from '@/core/context/menus';
+import {MenuItemOrSeparator, MenuOptions} from '@/core/context/menus';
 
 @Component({
   name: 'ContextMenuItem',
@@ -33,9 +34,40 @@ import {MenuItem} from '@/core/context/menus';
 })
 export default class ContextMenuItem extends Vue {
   @Prop() context!: () => any;
-  @Prop() options!: MenuItem<any>[];
+  @Prop() options!: MenuOptions<any>;
   @Prop() overflowFix!: boolean;
   @Prop({default: false}) openToLeft!: boolean;
+  
+  working: {
+    [key: string]: boolean
+  } = {};
+  
+  async onItemClicked(option: MenuItemOrSeparator<any>) {
+    if ("separator" in option) {
+      return;
+    }
+    
+    if (this.working[option.title]) {
+      return;
+    }
+    
+    this.working = {
+      ...this.working,
+      [option.title]: true
+    }
+    
+    try {
+      await option.action(this.context!())
+      this.$emit('clicked', option);
+    } catch (e) {
+      console.error(e)
+    } finally {
+      this.working = {
+        ...this.working,
+        [option.title]: false
+      }
+    }
+  }
 }
 </script>
 
@@ -95,6 +127,28 @@ export default class ContextMenuItem extends Vue {
       opacity: 1;
       visibility: visible;
     }
+  }
+  
+  &.working {
+    animation: 1.2s ease-in-out infinite fade-in-out;
+    
+    @keyframes fade-in-out {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: .5;
+      }
+    }
+  }
+  
+  &.separator {
+    background: none;
+    cursor: default;
+    border-bottom: 1px solid rgba(white, .15);
+    border-radius: 0;
+    margin-bottom: .5rem;
+    padding-top: 0;
   }
 
   .child {
