@@ -321,7 +321,7 @@ export interface UploadLogsData extends BaseData {
 
 export interface UploadLogsDataReply extends BaseData {
     error: boolean;
-    code: string;
+    path: string;
 }
 
 export interface WebRequestData extends BaseData {

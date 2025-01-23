@@ -25,17 +25,17 @@
       >Software License Information</router-link
       >
     </div>
-    
+
     <!-- <ftb-toggle label="Enable Analytics: " :value="settingsCopy.enableAnalytics" @change="enableAnalytics"
                     onColor="bg-primary"/> -->
-<!--    <ui-toggle-->
-<!--      label="Use the beta channel"-->
-<!--      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."-->
-<!--      :value="localSettings.enablePreview"-->
-<!--      @input="enablePreview"-->
-<!--      class="mb-8"-->
-<!--    />-->
-<!--    -->
+    <!--    <ui-toggle-->
+    <!--      label="Use the beta channel"-->
+    <!--      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."-->
+    <!--      :value="localSettings.enablePreview"-->
+    <!--      @input="enablePreview"-->
+    <!--      class="mb-8"-->
+    <!--    />-->
+    <!--    -->
     <ui-toggle
       v-if="!platform.isElectron()"
       label="Close Overwolf on Exit"
@@ -68,13 +68,13 @@
 
     <div class="section logs mb-6 sm:flex items-center">
       <div class="desc flex-1">
-        <p class="font-bold mb-1">Create app logs</p>
+        <p class="font-bold mb-1">Export app logs</p>
         <p class="text-muted pr-10">
-          If you're having an issue with the app, you can use this to upload the latest logs from the App. You can the
+          If you're having an issue with the app, you can use this to create a ZIP file of the latest logs from the App. You can the
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="upload">Upload App Logs</ui-button>
+      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="file-zipper">Create App Logs ZIP</ui-button>
     </div>
 
     <div class="section cache mb-6 sm:flex items-center">
@@ -124,7 +124,7 @@
           <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
         </div>
       </template>
-    </modal>    
+    </modal>
   </div>
   <Loader v-else />
 </template>
@@ -162,7 +162,7 @@ export default class AppSettings extends Vue {
 
   platform = platform;
   localSettings: SettingsData = {} as SettingsData;
-  
+
   working = false;
   uploadingLogs = false;
 
@@ -170,7 +170,7 @@ export default class AppSettings extends Vue {
   instanceMoveModalStage = "Preparing";
   instanceMoveModalComplete = false;
   instanceMoveLocations = {old: "", new: ""};
-  
+
   async created() {
     await this.loadSettings();
 
@@ -182,26 +182,26 @@ export default class AppSettings extends Vue {
   //   this.localSettings.enablePreview = value;
   //   this.saveSettings(this.localSettings);
   // }
-  
+
   exitOverwolf(value: boolean): void {
     this.localSettings.general.exitOverwolf = value;
     this.saveSettings(this.localSettings);
     platform.get.actions.changeExitOverwolfSetting(value);
   }
-  
+
   toggleSystemStyleWindow(value: boolean): void {
     this.localSettings.appearance.useSystemWindowStyle = value;
     this.saveSettings(this.localSettings);
-    
+
     platform.get.frame.setSystemWindowStyle(value);
   }
-  
+
   openFolder(location: string) {
     switch (location) {
       case 'home':
         toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.appHome()), state => this.working = state)
         break;
-      case 'instances': 
+      case 'instances':
         toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
         break;
       case 'logs':
@@ -218,14 +218,13 @@ export default class AppSettings extends Vue {
     try {
       const result = await sendMessage("uploadLogs", {})
       if (!result.error) {
-        const url = `https://pste.ch/${result.code}`;
-        platform.get.cb.copy(url);
+        await platform.get.io.openFinder(result.path)
         alertController.success('The URL has been copied to your clipboard')
       }
     } catch (e) {
       alertController.error('Failed to upload logs, please try again later')
     }
-    
+
     this.uploadingLogs = false;
   }
 
@@ -237,7 +236,7 @@ export default class AppSettings extends Vue {
     this.localSettings.general.verbose = value;
     this.saveSettings(this.localSettings);
   }
-  
+
   get configData() {
     return platform.get.config
   }

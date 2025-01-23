@@ -1,6 +1,10 @@
 package dev.ftb.app.api.data.other;
 
+import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.api.data.BaseData;
+import net.covers1624.quack.gson.PathTypeAdapter;
+
+import java.nio.file.Path;
 
 public class UploadLogsData extends BaseData {
     public UploadLogsData() {
@@ -9,10 +13,12 @@ public class UploadLogsData extends BaseData {
 
     public static class Reply extends BaseData {
         private final boolean error;
-        private String code;
-        public Reply(String requestId, String code) {
+        @JsonAdapter(PathTypeAdapter.class)
+        private Path path;
+
+        public Reply(String requestId, Path path) {
             this.requestId = requestId;
-            this.code = code;
+            this.path = path;
             this.type = "uploadLogsReply";
             this.error = false;
         }
