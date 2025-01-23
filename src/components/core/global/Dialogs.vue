@@ -52,7 +52,6 @@ import {Action, Getter, State} from 'vuex-class';
 import {adsEnabled, parseMarkdown} from '@/utils';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {SettingsState} from '@/modules/settings/types';
-import {MineTogetherAccount} from '@/core/@types/javaApi';
 
 @Component({
   components: {UiButton}
@@ -86,11 +85,10 @@ export default class Dialogs extends Vue {
   }
   
   @State('settings') public settings!: SettingsState;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
 
   get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
+    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
   }
 }
 </script>

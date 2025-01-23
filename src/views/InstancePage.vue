@@ -286,19 +286,6 @@ export default class InstancePage extends Vue {
     if (this.instance === null) {
       return;
     }
-    
-    if (this.instance.pendingCloudInstance) {
-      this.logger.debug("Launching cloud instance")
-      const result = await sendMessage("syncInstance", {
-        uuid: this.instance.uuid
-      })
-      
-      // TODO: (M#01) Handle errors
-      // TODO: (M#01) Handle some kinda visual state
-      console.log(result)
-      
-      return;
-    }
 
     if (this.instance.memory < this.instance.minMemory) {
       this.logger.debug("Showing low memory warning")

@@ -23,8 +23,8 @@ java {
     }
 }
 
-group = "net.creeperhost"
-archivesBaseName = "launcher"
+group = "dev.ftb"
+archivesBaseName = "app"
 
 def details = versionDetails()
 def branch = System.getenv("GITHUB_BRANCH") ?: "release"
@@ -37,8 +37,14 @@ version = appVersion
 
 repositories {
     mavenLocal()
-    maven { url 'https://maven.creeperhost.net' }
     mavenCentral()
+    
+    maven { 
+        url 'https://maven.creeperhost.net'
+        content {
+            includeGroup("net.covers1624")
+        }
+    }
     
     maven { 
         url "https://repo.gradle.org/artifactory/libs-releases/"
@@ -52,7 +58,6 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
     implementation 'org.apache.logging.log4j:log4j-jul:2.17.2'
-    implementation 'io.sentry:sentry-log4j2:5.7.4'
 
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
 
@@ -73,12 +78,7 @@ dependencies {
     implementation 'org.openjdk.nashorn:nashorn-core:15.3'
 
     implementation 'com.electronwill.night-config:toml:3.6.4'
-
-    implementation('software.amazon.awssdk:s3:2.20.4') {
-        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
-        exclude group: 'software.amazon.awssdk', module: 'apache-client'
-    }
-
+    
     compileOnly 'org.jetbrains:annotations:22.0.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
@@ -114,15 +114,15 @@ shadowJar {
     transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
     manifest {
         attributes([
-                "Specification-Title"   : "Launcher",
-                "Specification-Vendor"  : "Creeperhost LTD",
+                "Specification-Title"   : "App",
+                "Specification-Vendor"  : "Feed The Beast LTD",
                 "Specification-Version" : version,
-                "Implementation-Title"  : "CreeperLauncher",
+                "Implementation-Title"  : "AppMain",
                 "Implementation-Version": version,
-                "Implementation-Vendor" : "Creeperhost LTD"
-        ] as LinkedHashMap, "net/creeperhost/creeperlauncher/")
+                "Implementation-Vendor" : "Feed The Beast LTD"
+        ] as LinkedHashMap, "dev/ftb/app/")
         attributes 'Multi-Release': 'true'
-        attributes 'Main-Class': 'net.creeperhost.creeperlauncher.CreeperLauncher'
+        attributes 'Main-Class': 'dev.ftb.app.AppMain'
     }
 }
 assemble.dependsOn 'shadowJar'
@@ -229,8 +229,8 @@ idea.project.settings {
     }
     runConfigurations {
         "Start Backend"(org.jetbrains.gradle.ext.Application) {
-            mainClass = "net.creeperhost.creeperlauncher.CreeperLauncher"
-            moduleName = "creeperlauncher.main"
+            mainClass = "dev.ftb.app.AppMain"
+            moduleName = "ftb-app.main"
             jvmArgs = '-ea '                                             // Enable assertions
             jvmArgs = '-Dconsole.level=ALL '                             // Direct ALL log levels to console.
             jvmArgs += '-DDownloadTask.debug=true '                      // Enable Quack DownloadAction logging from DownloadTask
@@ -244,44 +244,43 @@ idea.project.settings {
     }
 }
 
-def sharedSettings = [
-        excludeClasses    : [
-                "java.lang.Iterable",
-                "java.lang.Comparable",
-                "java.lang.Cloneable",
-                "java.nio.Watchable",
-                "java.io.Serializable",
-                "com.google.common.hash.HashCode",
-                "com.google.gson.JsonElement",
-                "com.google.gson.JsonArray",
-                "com.google.gson.JsonObject",
-                "java.awt.geom.Dimension2D"
-        ],
-        customTypeMappings: [
-                "java.nio.file.Path:string"
-        ]
-]
+def standardTypescriptSettings = (GenerateTask task, File file) -> {
+    task.jsonLibrary = "gson"
+    task.noFileComment = true
+    task.noTslintDisable = true
+    task.noEslintDisable = true
+    task.tsNoCheck = true
+    task.outputKind = "module"
+    task.outputFile = file
+    task.excludeClasses = [
+        "java.lang.Iterable",
+        "java.lang.Comparable",
+        "java.lang.Cloneable",
+        "java.nio.Watchable",
+        "java.io.Serializable",
+        "com.google.common.hash.HashCode",
+        "com.google.gson.JsonElement",
+        "com.google.gson.JsonArray",
+        "com.google.gson.JsonObject",
+        "java.awt.geom.Dimension2D"
+    ]
+    task.customTypeMappings = [
+        "java.nio.file.Path:string"
+    ]
+}
 
 tasks.named("generateTypeScript", GenerateTask) {
-    jsonLibrary = "gson"
-    noFileComment = true
-    noTslintDisable = true
-    noEslintDisable = true
-    tsNoCheck = true
-    outputKind = "module"
-    outputFile = project.file("../src/core/@types/javaApi.d.ts")
+    standardTypescriptSettings(it, project.file("../src/core/@types/javaApi.d.ts"))
     classPatterns = [
-            'net.creeperhost.creeperlauncher.api.handlers.instances.InstalledInstancesHandler$SugaredInstanceJson',
-            'net.creeperhost.creeperlauncher.api.data.*',
-            'net.creeperhost.creeperlauncher.api.data.**.*',
-            'net.creeperhost.creeperlauncher.api.data.**.*$*',
-            'net.creeperhost.creeperlauncher.api.handlers.**.*$Request',
-            'net.creeperhost.creeperlauncher.api.handlers.**.*$Reply',
-            'net.creeperhost.creeperlauncher.api.handlers.**.*$Data',
-            'net.creeperhost.creeperlauncher.storage.settings.SettingsData'
+            'dev.ftb.app.api.handlers.instances.InstalledInstancesHandler$SugaredInstanceJson',
+            'dev.ftb.app.api.data.*',
+            'dev.ftb.app.api.data.**.*',
+            'dev.ftb.app.api.data.**.*$*',
+            'dev.ftb.app.api.handlers.**.*$Request',
+            'dev.ftb.app.api.handlers.**.*$Reply',
+            'dev.ftb.app.api.handlers.**.*$Data',
+            'dev.ftb.app.storage.settings.SettingsData'
     ]
-    excludeClasses = sharedSettings.excludeClasses
-    customTypeMappings = sharedSettings.customTypeMappings
     customTypeNamingFunction = """
 (name, simpleName) => {
     const prefixTargets = ["Reply", "Progress", "Request", "Data"]
@@ -296,17 +295,3 @@ tasks.named("generateTypeScript", GenerateTask) {
 }
 """
 }
-
-//tasks.register("generateTypeScriptExtras", GenerateTask) {
-//    jsonLibrary = "gson"
-//    outputKind = "module"
-//    nullableAnnotations = ["org.jetbrains.annotations.Nullable"]
-//    outputFile = project.file("../src/core/@types/javaDataTypes.d.ts")
-//    excludeClasses = sharedSettings.excludeClasses
-//    customTypeMappings = sharedSettings.customTypeMappings
-//    classes = [
-//            "net.creeperhost.creeperlauncher.data.InstanceJson",
-//    ]
-//}
-
-//generateTypeScript.finalizedBy(generateTypeScriptExtras)

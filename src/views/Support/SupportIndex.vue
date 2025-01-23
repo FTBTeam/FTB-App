@@ -67,8 +67,7 @@ import Platform from '@/utils/interface/electron-overwolf';
 import {IconLookup, IconName} from '@fortawesome/fontawesome-common-types';
 import {DiscordWidget} from '@/types';
 
-import ChLogo from '@/assets/ch-logo.svg';
-import MineTogetherLogo from '@/assets/images/mt-logo.webp';
+import BhLogo from '@/assets/images/branding/bh-logo.svg';
 import {logger} from '@/core/logger';
 
 const endpoint = (goEndpoint: string) => `https://go.ftb.team/${goEndpoint}`;
@@ -82,14 +81,15 @@ const mkSocial = (name: string, icon: IconName | IconLookup, goEndpoint: string)
 const mkTopic = (
   name: string,
   icon: IconName | IconLookup | string,
-  goEndpoint: string,
+  goEndpoint: string | undefined,
   desc: string,
   customIcon = false,
+  url?: string
 ) => ({
   name,
   icon,
   desc,
-  link: endpoint(goEndpoint),
+  link: url ? url : endpoint(goEndpoint!),
   customIcon,
 });
 
@@ -131,25 +131,20 @@ const topicList = [
     title: 'Guides',
     items: [
       mkTopic(
-        'CreeperHost',
-        ChLogo,
-        'creeperhost',
-        "Looking for a server host? Why not try CreeperHost, they've got high quality servers and top-notch support.",
+        'BisectHosting',
+        BhLogo,
+        undefined,
+        "Get a top-notch Minecraft Server with our partner BisectHosting. With 24/7/365 support, 2,000+ Minecraft modpacks, and hosting for over 70+ games, you're in good hands.",
         true,
+        // TODO: Update this link to the correct one
+        'https://www.bisecthosting.com'
       ),
       mkTopic(
         'App guides',
         'book',
         'app-support',
         'Here you can find some useful guides on how to use the app, debugging support with common problems and steps on how to do things like setting up a server and backing up your game.',
-      ),
-      mkTopic(
-        'MineTogether Guides',
-        MineTogetherLogo,
-        'minetogether-guides',
-        'What is MineTogether? How can I use it? Why can I login to it with the app? Check out the documentation behind MineTogether here.',
-        true,
-      ),
+      )
     ],
   },
 ];
@@ -237,9 +232,8 @@ export default class SupportIndex extends Vue {
 
 .discord-callout {
   padding: 2rem;
-  background: black url('../../assets/backgrounds/discord-callout-bg.svg') no-repeat;
   background-size: 150%;
-  background-position: center bottom -80px;
+  background: black url('../../assets/backgrounds/discord-callout-bg.svg') no-repeat center bottom -80px;
   box-shadow: 0 5px 25px 5px rgba(black, 0.3);
   border-radius: 5px;
   margin-bottom: 2rem;

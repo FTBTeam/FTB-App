@@ -74,10 +74,6 @@ module.exports = {
       title: 'FTB App',
       chunks: ['chunk-vendors', 'chunk-common', 'index'],
       sourceMap: false,
-    },
-    chatPage: {
-      entry: 'src/main.ts',
-      sourceMap: false,
     }
   },
   pluginOptions: {
@@ -142,7 +138,7 @@ module.exports = {
         //   });
         // },
         extraResources: [
-          {from: "subprocess/build/libs/", to: "", filter: ["launcher-*.jar"]},
+          {from: "subprocess/build/libs/", to: "", filter: ["app-*.jar"]},
           {from: "subprocess/build/libs/java-licenses.json", to: ""},
           {from: "./licenses.json", to: ""},
           {from: "subprocess/build/libs/meta.json", to: ""},
@@ -150,7 +146,7 @@ module.exports = {
         win: {
           target: ['nsis'],
           artifactName: 'ftb-app-${version}-${arch}.${ext}',
-          sign: './signing/windows-signing.js',
+          sign: './tooling/signing/windows-signing.js',
           signingHashAlgorithms: ["sha256"],
           icon: "./resources/icons/app-icon-windows.ico"
         },

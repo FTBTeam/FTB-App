@@ -1,6 +1,6 @@
 import {Socket} from '@/modules/websocket/types';
 import {createLogger} from '@/core/logger';
-import {MineTogetherAccount, SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/@types/javaApi';
 
 const logger = createLogger("utils/utilities.ts");
 
@@ -15,17 +15,9 @@ export function debounce(func: () => void, wait: number): () => void {
   };
 }
 
-export function shortenHash(longHash: string): string {
-  return `MT${longHash.substring(0, 28).toUpperCase()}`;
-}
-
-export function adsEnabled(settings: SettingsData, mtAccount: MineTogetherAccount | null, debugMode = false) {
+export function adsEnabled(settings: SettingsData, debugMode = false) {
   if (process.env.NODE_ENV !== "production" && debugMode) {
     return false
-  }
-  
-  if (!mtAccount || !mtAccount?.activePlan || mtAccount.activePlan.status !== "Active") {
-    return true;
   }
   
   // If this fails, show the ads

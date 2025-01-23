@@ -19,9 +19,7 @@ export enum RouterNames {
   SETTINGS_ADVANCED = "advanced-settings",
   SETTINGS_DOWNLOAD = 'download-settings',
   SETTINGS_APP = 'app-settings',
-  SETTINGS_INTEGRATION = 'integrations',
   SETTINGS_APP_LICENSE = 'license',
-  SETTINGS_MT_INTEGRATION = 'MTIntegration',
   SETTINGS_PROXY = 'app-proxy',
   SETTINGS_CHANGELOGS = 'changelogs',
   SETTINGS_PRIVACY = 'privacy',
@@ -80,19 +78,9 @@ const router = new Router({
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppSettings.vue'),
             },
             {
-              path: 'integrations',
-              name: RouterNames.SETTINGS_INTEGRATION,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Integrations.vue'),
-            },
-            {
               path: 'app-info/license',
               name: RouterNames.SETTINGS_APP_LICENSE,
               component: () => import(/* webpackChunkName: "settings" */ './views/Settings/License.vue'),
-            },
-            {
-              path: 'profile',
-              name: RouterNames.SETTINGS_MT_INTEGRATION,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/MTIntegration.vue'),
             },
             {
               path: 'proxy',

@@ -1,6 +1,6 @@
 <template>
   <div class="profile-area" :class="{ disable }">
-    <div class="profile" v-if="(getProfiles && getProfiles.length) || getMtAccount">
+    <div class="profile" v-if="(getProfiles && getProfiles.length)">
       <div class="avatar">
         <img
           :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : null)"
@@ -56,38 +56,6 @@
             <div class="add-button px-4 py-2"><font-awesome-icon icon="plus" /> Add account</div>
           </div>
         </section>
-
-        <section>
-          <div class="mt-area">
-            <div class="headings">
-              <div class="main">
-                <img src="@/assets/mtg-tiny-desat.webp" alt="MineTogether Logo" />
-                MineTogether
-              </div>
-              <router-link :to="{ name: 'integrations' }" v-if="getMtProfile">
-                <font-awesome-icon icon="edit" />
-              </router-link>
-            </div>
-            <div class="account" v-if="getMtProfile">
-              <div class="avatar">
-                <img :src="getMinecraftHead(avatarName)" alt="Profile" class="rounded" />
-              </div>
-              <div class="meta">
-                <div class="name selectable">
-                  {{ getMtProfile.display || getMtAccount.username }}
-                </div>
-                <div class="hash selectable" v-if="getMtProfile.friendCode" title="I'm your friends code 👍">
-                  {{ getMtProfile.friendCode }}
-                </div>
-              </div>
-            </div>
-            <div class="add inline-block" v-else>
-              <router-link :to="{ name: 'integrations' }">
-                <div class="add-button px-4 py-2"><font-awesome-icon icon="sign-in-alt" /> Sign-in to MineTogether</div>
-              </router-link>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
     <popover text="Sign in to your Minecraft account" v-else>
@@ -109,8 +77,6 @@ import {Prop} from 'vue-property-decorator';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import {createLogger} from '@/core/logger';
-import {ns} from '@/core/state/appState';
-import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
 
 @Component({
   methods: {getMinecraftHead}
@@ -123,9 +89,6 @@ export default class SidebarProfile extends Vue {
   
   @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
   @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
-  
-  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
 
   private logger = createLogger("SidebarProfile.vue")
   
@@ -171,10 +134,6 @@ export default class SidebarProfile extends Vue {
     }
 
     this.loading = false;
-  }
-
-  get avatarName() {
-    return this.getMtAccount?.accounts?.find((s) => s.identityProvider === 'mcauth')?.userId
   }
 }
 </script>

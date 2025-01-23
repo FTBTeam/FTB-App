@@ -22,7 +22,7 @@
       </div>
       
       <div class="modloader" v-show="step === 1">
-          <modloader-select :mc-version="selectedMcVersion" @select="v => userModLoader = v ?? null" :show-optional="true" />
+          <modloader-select :mc-version="selectedMcVersion" @select="(v) => userModLoader = v ?? null" :show-optional="true" />
       </div>
       
       <div class="settings" v-show="step === 2">
@@ -66,17 +66,6 @@
         </div>
         <hr />
         
-        <h3 class="mb-4 font-bold">Cloud Sync</h3>
-
-        <ui-toggle
-          :align-right="true"
-          label="Enable cloud sync uploads"
-          desc="You can only use Cloud sync if you have an active paid plan on MineTogether."
-          :disabled="!accountHasPlan"
-          v-model="userCloudSaves"
-        />
-        
-        <p class="mt-4 text-light-warning" v-if="!accountHasPlan">Cloud syncing / Cloud saves are only available to Premium MineTogether users. Find out more on the <a class="text-blue-500 hover:text-blue-200" @click="openExternal" href="https://minetogether.io">MineTogether website</a>.</p>
       </div>
     </modal-body>
     
@@ -102,7 +91,7 @@ import ArtworkSelector from '@/components/core/modpack/components/ArtworkSelecto
 import Selection2, {SelectionOption} from '@/components/core/ui/Selection2.vue';
 import {ns} from '@/core/state/appState';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import {Action, Getter, State} from 'vuex-class';
+import {Action, State} from 'vuex-class';
 import {ModPack} from '@/modules/modpacks/types';
 import UiButton from '@/components/core/ui/UiButton.vue';
 import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -117,7 +106,6 @@ import ModloaderSelect from '@/components/core/modpack/components/ModloaderSelec
 import UiToggle from '@/components/core/ui/UiToggle.vue';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import RamSlider from '@/components/core/modpack/components/RamSlider.vue';
-import {MineTogetherAccount, MineTogetherProfile} from '@/core/@types/javaApi';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 
@@ -136,9 +124,6 @@ export default class CreateInstance extends Vue {
   
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   @State('settings') private settings!: SettingsState;
-
-  @Getter("profile", ns("v2/mtauth")) getMtProfile!: MineTogetherProfile | null;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
 
   @Prop() open!: boolean;
   @Emit() close() {
@@ -170,7 +155,6 @@ export default class CreateInstance extends Vue {
   settingFullscreen = false;
   settingScreenResolution = "";
   settingRam = 0;
-  userCloudSaves = false;
   userHeight = 0;
   userWidth = 0;
   
@@ -270,7 +254,6 @@ export default class CreateInstance extends Vue {
       fullscreen: this.settingFullscreen === this.settingsState.settings.instanceDefaults.fullscreen ? undefined : this.settingFullscreen,
       width: this.userWidth == this.settingsState.settings.instanceDefaults.width ? undefined : this.userWidth,
       height: this.userHeight == this.settingsState.settings.instanceDefaults.height ? undefined : this.userHeight,
-      cloudSaves: this.userCloudSaves,
     }
     
     // Magic
@@ -327,15 +310,6 @@ export default class CreateInstance extends Vue {
       label: `${e.width}x${e.height}`,
       value: `${e.width}x${e.height}`
     }))
-  }
-
-  get accountHasPlan() {
-    if (!this.getMtAccount?.activePlan) {
-      return false;
-    }
-
-    const plan = this.getMtAccount.activePlan;
-    return plan.status === "Active";
   }
 }
 </script>

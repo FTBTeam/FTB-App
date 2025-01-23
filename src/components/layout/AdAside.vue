@@ -43,11 +43,6 @@
           </div>
         </div>
       </div>
-      
-      <!-- TODO: Workout what I wanna do here -->
-      <div class="ad-container ads-electron electron" v-if="false" key="adside-ad-type">
-        <ch-ads-area />
-      </div>
     </template>
   </div>
 </template>
@@ -59,15 +54,12 @@ import Component from 'vue-class-component';
 import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {createLogger} from '@/core/logger';
-import {ns} from '@/core/state/appState';
-import {MineTogetherAccount} from '@/core/@types/javaApi';
 import {adsEnabled} from '@/utils';
 import {Prop} from 'vue-property-decorator';
 
 @Component
 export default class AdAside extends Vue {
   @State('settings') public settings!: SettingsState;
-  @Getter("account", ns("v2/mtauth")) getMtAccount!: MineTogetherAccount | null;
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
   
   @Prop({default: false}) public hideAds!: boolean;
@@ -176,7 +168,7 @@ export default class AdAside extends Vue {
   }
   
   get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.getMtAccount, this.debugDisabledAdAside);
+    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
   }
 
   get isDevEnv() {

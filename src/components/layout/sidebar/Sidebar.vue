@@ -18,14 +18,14 @@
       <sidebar-profile class="block" @signin="openSignIn()" />
     </div>
     
-    <popover text="Setup a server with CreeperHost" class="w-full">
+    <popover text="Setup a server with BisectHosting" class="w-full">
       <img
         @click="openPromo"
-        src="../../../assets/ch-logo.svg"
+        src="../../../assets/images/branding/bh-logo.svg"
         class="my-4 mx-auto w-full cursor-pointer logo-hover"
-        style="height: 30px"
+        style="height: 36px"
         draggable="false"
-        alt="CreeperHost Logo"
+        alt="Bisect Hosting Logo"
       />
     </popover>
   </div>
@@ -105,7 +105,7 @@ export default class Sidebar extends Vue {
   }
 
   public openPromo(): void {
-    platform.get.utils.openUrl('https://go.ftb.team/ch-a-i');
+    platform.get.utils.openUrl('https://www.bisecthosting.com/');
   }
 
   navItemRightClick(event: PointerEvent, item: typeof this.navigation[0]) {
@@ -113,13 +113,6 @@ export default class Sidebar extends Vue {
       AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {});
     }
   }
-
-  // public openFriends() {
-  //   if (this.disableNav) {
-  //     return;
-  //   }
-  //   platform.get.actions.openFriends();
-  // }
 }
 </script>
 

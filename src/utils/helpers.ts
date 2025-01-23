@@ -32,7 +32,7 @@ export const prettyByteFormat = (bytes: number) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const formattedValue = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
 
-  return `${formattedValue}${sizes[i]}`;
+  return `${formattedValue.toFixed(2)} ${sizes[i]}`;
 }
 
 export function computeAspectRatio(width: number, height: number) {

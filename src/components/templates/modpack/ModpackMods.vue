@@ -327,7 +327,8 @@ export default class ModpackMods extends Vue {
         enabled: true,
         size: 0,
         sha1: '',
-        curse: {} as any
+        curse: {} as any,
+        murmurHash: ''
       }]
     }
     
