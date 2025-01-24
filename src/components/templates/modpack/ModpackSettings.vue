@@ -183,6 +183,8 @@
             Reset to Vanilla defaults
           </ui-button>
         </div>
+        
+        <ui-toggle label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked" />
       </div>
 
       <ftb-input
@@ -288,6 +290,8 @@ import {ns} from '@/core/state/appState';
 import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.vue';
 
+const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
+
 @Component({
   methods: {prettyByteFormat, resolveModLoaderVersion, resolveModloader},
   components: {
@@ -303,7 +307,6 @@ import KeyValueEditor from '@/components/core/modpack/components/KeyValueEditor.
     'ftb-slider': FTBSlider
   },
 })
-
 export default class ModpackSettings extends Vue {
   @State('settings') public settingsState!: SettingsState;
 
@@ -505,6 +508,18 @@ export default class ModpackSettings extends Vue {
     await gobbleError(() => this.$router.push({
       name: RouterNames.ROOT_LIBRARY
     }));
+  }
+  
+  preferIPv4Clicked(event: any) {
+    if (!event) {
+      this.instanceSettings.jvmArgs = this.instanceSettings.jvmArgs.replace(preferIPv4Arg, "").trim()
+    } else {
+      this.instanceSettings.jvmArgs = `${this.instanceSettings.jvmArgs} ${preferIPv4Arg}`.trim()
+    }
+  }
+
+  get prefersIPv4() {
+    return this.instanceSettings?.jvmArgs?.includes(preferIPv4Arg)
   }
 
   get resolutionList() {
