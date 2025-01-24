@@ -1,5 +1,7 @@
 package dev.ftb.app.accounts.data;
 
+import java.util.List;
+
 public enum CodedError {
     // Literal request errors
     COMPLETE_REQUEST_FAILURE("auth:99", "Failed to complete request due to an error at the request level"),
@@ -21,6 +23,16 @@ public enum CodedError {
     MISSING_ENTITLEMENTS("auth:71", "No game ownership found for this account"),
     INVALID_PROFILE("auth:72", "Invalid profile data..."),
     ;
+    
+    public static final List<CodedError> REQUEST_ERRORS = List.of(
+        COMPLETE_REQUEST_FAILURE,
+        MISSING_BODY,
+        NOT_SUCCESSFUL,
+        BODY_PARSE_FAILED,
+        VALIDATION_FAILED,
+        WRONG_BODY_TYPE,
+        BODY_READING_FAILED
+    );
     
     public final String code;
     public final String message;

@@ -235,7 +235,7 @@ public class MicrosoftRequests {
     
     private static void logHeaders(String direction, Headers headers) {
         StringBuilder headerString = new StringBuilder();
-        headerString.append(direction).append(" ").append("Headers: ");
+        headerString.append(direction).append(" ").append("Headers: ").append("\n");
         for (int i = 0; i < headers.size(); i++) {
             String name = headers.name(i);
             String value = headers.value(i);

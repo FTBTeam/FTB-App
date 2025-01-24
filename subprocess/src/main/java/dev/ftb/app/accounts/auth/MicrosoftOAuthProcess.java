@@ -14,12 +14,12 @@ public class MicrosoftOAuthProcess {
     public static Result<MinecraftProfileWithAuthData, ErrorWithCode> authWithMinecraft(OAuthTokenHolder xboxTokenHolder) {
         var stepOne = MicrosoftRequests.authenticateWithXbox(xboxTokenHolder.accessToken());
         if (stepOne.isErr()) {
-            return Result.err(stepOne.unwrapErr());
+            return Result.err(stepOne.unwrapErr().extendMessageIfRequestError("Failed to authenticate with Xbox"));
         }
         
         var stepTwo = MicrosoftRequests.authenticateWithXSTS(stepOne.unwrap().get("Token").getAsString());
         if (stepTwo.isErr()) {
-            return Result.err(stepTwo.unwrapErr());
+            return Result.err(stepTwo.unwrapErr().extendMessageIfRequestError("Failed to authenticate with XSTS"));
         }
 
         JsonObject stepTwoData = stepTwo.unwrap();
@@ -44,7 +44,7 @@ public class MicrosoftOAuthProcess {
         );
         
         if (stepThree.isErr()) {
-            return Result.err(stepThree.unwrapErr());
+            return Result.err(stepThree.unwrapErr().extendMessageIfRequestError("Failed to authenticate with Minecraft"));
         }
         
         var minecraftAccessToken = stepThree.unwrap().get("access_token").getAsString();
@@ -90,7 +90,7 @@ public class MicrosoftOAuthProcess {
     public static Result<MinecraftProfileData, ErrorWithCode> checkEntitlementsAndGetProfile(String minecraftAccessToken) {
         var entitlements = MicrosoftRequests.queryEntitlements(minecraftAccessToken);
         if (entitlements.isErr()) {
-            return Result.err(entitlements.unwrapErr());
+            return Result.err(entitlements.unwrapErr().extendMessageIfRequestError("Failed to query entitlements"));
         }
 
         // Validate the entitlements
@@ -104,7 +104,7 @@ public class MicrosoftOAuthProcess {
             }
             
             // Otherwise, return the profile error, this means they have the game but have never logged in
-            return Result.err(profile.unwrapErr());
+            return Result.err(profile.unwrapErr().extendMessageIfRequestError("Failed to query profile"));
         }
         
         try {

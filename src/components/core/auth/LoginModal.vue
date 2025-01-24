@@ -40,9 +40,14 @@
       <Loader title="Logging in ..."  v-if="loggingIn" />
       
       <template v-if="!loggingIn && logInError">
-        <message type="danger">
-          {{ logInErrorCode }}<br/><br/>
-          {{ logInError }}
+        <message type="danger" class="select-text">
+          <b class="mb-2 block">Something has gone wrong!</b>
+          <p>{{ logInError }}</p>
+          
+          <div class="wysiwyg mt-6">
+            <span class="opacity-75 block mb-1">Reference</span>
+            <code class="inline-block">{{ logInErrorCode }}</code>
+          </div>
         </message>
 
         <UiButton type="success" :full-width="true" @click="retryInitialCode" class="mt-6">Retry</UiButton>
