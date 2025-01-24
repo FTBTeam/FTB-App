@@ -31,32 +31,39 @@
           </div>
         </recycle-scroller>
       </template>
+      
       <template v-if="packInstalled">
-        <div class="complex-mod mod" v-for="(file, index) in packMods" :key="index">
+        <recycle-scroller class="complex-mod mod" :items="packMods" :item-size="70" key-field="fileId" v-slot="{ item }">
           <div class="flex gap-6 items-center mb-4">
-            <img v-if="file.curse && file.curse.icon" :src="file.curse.icon" class="rounded" width="40" alt="">
-            <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="file.fileName !== ''"></div>
+            <img v-if="item.curse && item.curse.icon" :src="item.curse.icon" class="rounded" width="40" alt="">
+            <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>
             
-            <div class="main flex-1 transition-opacity duration-200" :class="{'opacity-50': !file.enabled}">
-              <b class="mb-1 block select-text">{{file.curse?.name || file.fileName.replace(".jar", "")}}</b>
-              <p class="only-one-line select-text" v-if="file.curse?.synopsis">{{file.curse?.synopsis}}</p>
-              <p class="only-one-line text-muted italic" v-else>(Not found on CurseForge)</p>
+            <div class="main flex-1 transition-opacity duration-200" :class="{'opacity-50': !item.enabled}">
+              <div class="mb-1 block select-text font-bold">
+                <div v-if="item.curse?.name" class="flex gap-2 items-center">
+                  <a @click="openExternal" class="curse-btn cursor-pointer hover:underline" aria-label="Open on CurseForge" data-balloon-pos="down-left" :href="`https://curseforge.com/minecraft/mc-mods/${item.curse.slug}`">
+                    {{item.curse.name}}
+                  </a>
+                </div>
+                <template v-else>
+                  {{item.fileName}}
+                </template>
+              </div>
+              <p class="text-sm opacity-75 select-text" v-if="item.curse?.name">{{item.fileName}}</p>
+              <p class="text-sm opacity-75 text-muted italic" v-else>(Not found on CurseForge)</p>
             </div>
             
             <div class="meta flex gap-6 items-center">
-              <a @click="openExternal" class="curse-btn cursor-pointer" aria-label="Open on CurseForge" data-balloon-pos="down-right" v-if="file.curse?.slug" :href="`https://curseforge.com/minecraft/mc-mods/${file.curse.slug}`">
-                <img src="../../../assets/curse-logo.svg" width="24" alt="Open on CurseForge" />
-              </a>
-              <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(file.sha1) && !updatingModShas.includes(file.sha1)" :aria-label="`Update available (${modUpdates[file.sha1][0].fileName} -> ${modUpdates[file.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(file.sha1)">
+              <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(item.sha1) && !updatingModShas.includes(item.sha1)" :aria-label="`Update available (${modUpdates[item.sha1][0].fileName} -> ${modUpdates[item.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(item.sha1)">
                 <font-awesome-icon icon="download" :fixed-width="true" />
               </div>
-              <div class="updating" v-if="!instance.locked && updatingModShas.includes(file.sha1)">
+              <div class="updating" v-if="!instance.locked && updatingModShas.includes(item.sha1)">
                 <font-awesome-icon :spin="true" icon="circle-notch" :fixed-width="true" />
               </div>
-              <ui-toggle v-if="file.fileName !== ''" :value="file.enabled" @input="() => toggleMod(file)" :disabled="togglingShas.includes(file.sha1)" />
+              <ui-toggle class="mr-1" v-if="item.fileName !== ''" :value="item.enabled" @input="() => toggleMod(item)" :disabled="togglingShas.includes(item.sha1)" />
             </div>
           </div>
-        </div>
+        </recycle-scroller>
       </template>
     </div>
 
