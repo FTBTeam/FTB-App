@@ -131,6 +131,7 @@ export enum ModpackPageTabs {
   MODS = "mods",
   SETTINGS = "settings",
   BACKUPS = "backups",
+  WORLDS = "worlds",
 }
 
 @Component({

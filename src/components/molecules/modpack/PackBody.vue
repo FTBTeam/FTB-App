@@ -84,14 +84,9 @@
         >
           World Backups
         </div>
-<!--        <div-->
-<!--          v-if="isInstalled && currentVersionObject"-->
-<!--          class="tab"-->
-<!--          :class="{ active: activeTab === tabs.PUBLIC_SERVERS }"-->
-<!--          @click="() => $emit('tabChange', tabs.PUBLIC_SERVERS)"-->
-<!--        >-->
-<!--          Public servers-->
-<!--        </div>-->
+        <div v-if="packInstance && packInstance.meta && packInstance.meta.supportsWorlds" class="tab flex items-center whitespace-no-wrap justify-center" :class="{ active: activeTab === tabs.WORLDS }" @click="() => $emit('tabChange', tabs.WORLDS)">
+          FTB Worlds <span class="bg-yellow-400 rounded px-1 py-0-5 sm:px-2 sm:py-1 text-black text-opacity-75 font-bold ml-4 text-sm italic">New!</span>
+        </div>
         <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="Platform.get.utils.openUrl('https://www.bisecthosting.com/')">
           <img class="" src="@/assets/images/branding/bh-logo.svg" alt="" />
           Order a server
@@ -208,6 +203,12 @@
         :instance="instance"
         :backups="backups"
       />
+      
+      <worlds-tab
+        v-if="activeTab === tabs.WORLDS"
+        :instance="instance"
+        :apiPack="packInstance"
+      />
     </div>
   </div>
   <div class="loading pt-12" v-else>
@@ -239,10 +240,12 @@ import {Getter, State} from 'vuex-class';
 import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {InstanceRunningData} from '@/core/state/misc/runningState';
+import WorldsTab from '@/components/molecules/modpack/WorldsTab.vue';
 
 @Component({
   name: 'pack-body',
   components: {
+    WorldsTab,
     ProgressBar,
     Loader,
     PackUpdateButton,
@@ -274,7 +277,7 @@ export default class PackBody extends Vue {
   Platform = Platform;
 
   tabs = ModpackPageTabs;
-
+  
   get tags() {
     if (!this.packInstance) return [];
     
@@ -399,6 +402,7 @@ export default class PackBody extends Vue {
   margin-bottom: 0.8rem;
   display: flex;
   align-items: center;
+  gap: 1rem;
 
   .tab {
     flex: 1;
@@ -425,8 +429,7 @@ export default class PackBody extends Vue {
     display: flex;
     align-items: center;
     background-color: #1d1d1d;
-    padding: 0.45rem 1rem;
-    padding-left: 2rem;
+    padding: 0.45rem 1rem 0.45rem 2rem;
     border-radius: 5px;
     margin-bottom: 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
