@@ -60,3 +60,7 @@ The FTB App, as of `1.25.0` has officially moved onto Electron. The app is still
 #### Why the move?
 
 As we've already mentioned, we see the FTB App as a community project and with this, we listen to our community. We've had a lot of feedback about our use of the Overwolf Platform and have decided that now Overwolf is supporting, what they call, "Electron Apps", we now have the ability to move to Electron but still have the 'benefit' of being an ad supported app.
+
+## Looking for a Modded Minecraft Server? `Ad`
+
+[![Promotion](https://cdn.feed-the-beast.com/assets/promo/ftb-bh-promo-large.png)](https://bisecthosting.com/ftb)
