@@ -2,9 +2,6 @@ const path = require('path');
 const {globSync} = require("glob");
 const fs = require('fs');
 const {execSync} = require('child_process');
-const {notarize} = require("@electron/notarize");
-
-const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
 const webpackPlugins = [];
 
@@ -145,7 +142,7 @@ module.exports = {
         ],
         win: {
           target: ['nsis'],
-          artifactName: 'ftb-app-${version}-${arch}.${ext}',
+          artifactName: 'ftb-app-win-${version}-${arch}.${ext}',
           sign: './tooling/signing/windows-signing.js',
           signingHashAlgorithms: ["sha256"],
           icon: "./resources/icons/app-icon-windows.ico"
@@ -154,7 +151,7 @@ module.exports = {
           hardenedRuntime: true,
           gatekeeperAssess: false,
           target: ['default'], // We use default in order to allow for updates. DMG only allows installation.
-          artifactName: 'ftb-app-${version}-${arch}.${ext}',
+          artifactName: 'ftb-app-macos-${version}-${arch}.${ext}',
           category: 'public.app-category.games',
           binaries: [
             getPathToLauncher()
@@ -163,7 +160,7 @@ module.exports = {
         linux: {
           target: ['dir', 'AppImage', 'deb', 'rpm'],
           category: 'Game',
-          artifactName: 'ftb-app-${version}-${arch}.${ext}',
+          artifactName: 'ftb-app-linux-${version}-${arch}.${ext}',
           synopsis: 'FTB Desktop App for downloading and managing Modpacks',
         },
         directories: {
