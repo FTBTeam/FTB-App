@@ -84,7 +84,7 @@ module.exports = {
         generateUpdatesFilesForAllChannels: true,
         publish: {
           provider: 'generic',
-          url: "https://piston.feed-the-beast.com/test",
+          url: "https://piston.feed-the-beast.com/app",
         },
         protocols: [
           {
