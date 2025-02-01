@@ -3,7 +3,7 @@
 
 <p align="center">Welcome to the FTB App! Our app is designed to provide our users with a simple and easy way to install, update, and customise their FTB Modpacks. We have built-in support for CurseForge modpacks and mods as well as instance management, pack customisation, and a whole lot more.</p>
 
-![FTB App](./.github/assets/ftb-app-preview.png "FTB App")
+![FTB App](./.github/assets/ftb-app-preview.webp "FTB App")
 
 ## Features
 
