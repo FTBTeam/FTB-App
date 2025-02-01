@@ -203,7 +203,7 @@ function getPathToLauncher() {
     const buildPath = path.resolve(subprocessPath, 'build', "libs");
 
     const files = fs.readdirSync(buildPath);
-    const jarFiles = files.filter(file => file.startsWith('launcher') && file.endsWith('.jar'));
+    const jarFiles = files.filter(file => file.startsWith('app') && file.endsWith('.jar'));
 
     if (jarFiles.length === 0) {
       console.error("No launcher jar found");

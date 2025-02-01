@@ -41,7 +41,7 @@ const fallbackMetaData: MetaData = {
   released: new Date().getTime(),
   runtime: {
     version: "21", // If we're using this, something has gone wrong
-    jar: "launcher.jar", // If we're using this, something has gone wrong
+    jar: "app.jar", // If we're using this, something has gone wrong
     env: [],
     jvmArgs: []
   }
