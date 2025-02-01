@@ -84,7 +84,7 @@ module.exports = {
         generateUpdatesFilesForAllChannels: true,
         publish: {
           provider: 'generic',
-          url: "https://piston.feed-the-beast.com/app"
+          url: "https://piston.feed-the-beast.com/test",
         },
         protocols: [
           {
@@ -145,7 +145,8 @@ module.exports = {
           artifactName: 'ftb-app-win-${version}-${arch}.${ext}',
           sign: './tooling/signing/windows-signing.js',
           signingHashAlgorithms: ["sha256"],
-          icon: "./resources/icons/app-icon-windows.ico"
+          icon: "./resources/icons/app-icon-windows.ico",
+          publisherName: "Feed The Beast Ltd",
         },
         mac: {
           hardenedRuntime: true,
