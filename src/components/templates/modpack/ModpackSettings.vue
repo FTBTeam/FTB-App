@@ -516,6 +516,7 @@ export default class ModpackSettings extends Vue {
     } else {
       this.instanceSettings.jvmArgs = `${this.instanceSettings.jvmArgs} ${preferIPv4Arg}`.trim()
     }
+    this.saveSettings()
   }
 
   get prefersIPv4() {
