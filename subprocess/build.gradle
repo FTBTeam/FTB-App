@@ -7,10 +7,11 @@ import java.time.Instant
 
 plugins {
     id 'java'
-    id "com.github.johnrengelman.shadow" version "8.1.1"
-    id "com.palantir.git-version" version "3.0.0"
+    id 'base'
+    id "com.gradleup.shadow" version "8.3.6"
+    id "com.palantir.git-version" version "3.1.0"
     id "com.github.hierynomus.license-report" version "0.16.1"
-    id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.8"
+    id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.10"
     id 'cz.habarta.typescript-generator' version "3.2.+"
 }
 
@@ -24,7 +25,10 @@ java {
 }
 
 group = "dev.ftb"
-archivesBaseName = "app"
+
+base {
+    archivesName = "app"
+}
 
 def details = versionDetails()
 def branch = System.getenv("GITHUB_BRANCH") ?: "release"
@@ -40,14 +44,14 @@ repositories {
     mavenCentral()
     
     maven { 
-        url 'https://maven.creeperhost.net'
+        url = 'https://maven.creeperhost.net'
         content {
             includeGroup("net.covers1624")
         }
     }
     
     maven { 
-        url "https://repo.gradle.org/artifactory/libs-releases/"
+        url = "https://repo.gradle.org/artifactory/libs-releases/"
         content {
             includeGroupByRegex("net.rubygrapefruit.*")
         }
