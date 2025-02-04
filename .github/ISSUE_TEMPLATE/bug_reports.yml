@@ -22,12 +22,12 @@ body:
         - Linux (Debian)
         - Linux (Arch)
         - Linux (Other)
-  - type: input
+  - type: textarea
     id: debugcode
     attributes:
       label: Debug Code
       description: |
-        Please click the upload logs button located in the FTB App > settings > app tab
+        Please right click on the settings cog on the left hand panel. Select "Export logs zip". This will give you a zip, most likely in your downloads folder, please send that file here by dragging and dropping it into the reply box belo. We can't help you without it. If this file is too big for GitHub, please use a service [Google Drive](https://drive.google.com/) or [DropBox](https://dropbox.com/)
 
         (ONLY IF YOUR APP WONT OPEN)
         If your app wont open please run the following tool and provide the code given 
