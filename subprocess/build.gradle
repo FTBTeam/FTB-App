@@ -236,7 +236,7 @@ idea.project.settings {
             mainClass = "dev.ftb.app.AppMain"
             moduleName = "ftb-app.main"
             jvmArgs = '-ea '                                             // Enable assertions
-            jvmArgs = '-Dconsole.level=ALL '                             // Direct ALL log levels to console.
+            jvmArgs += '-Dconsole.level=ALL '                            // Direct ALL log levels to console.
             jvmArgs += '-DDownloadTask.debug=true '                      // Enable Quack DownloadAction logging from DownloadTask
             jvmArgs += '-DInstanceLauncher.ProgressTracker.debug=true '  // Enable debug logging for InstanceLauncher's ProgressTracker TODO Log4j markers?
             jvmArgs += '-DInstanceInstaller.debug=true '                 // Enable debug logging for InstanceInstaller.
