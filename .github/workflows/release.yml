@@ -9,7 +9,26 @@ on:
       - dev
   
 jobs:
+  patch-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Patch versioning
+        env:
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        # Run the node tool and fail if it fails
+        run: node tooling/patchVersion.js || exit 1
+      - name: Upload version
+        uses: actions/upload-artifact@v4
+        with:
+          name: packageJson
+          path: package.json
+          
   build-jars:
+    needs: patch-version
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -31,12 +50,16 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 21
-      - name: Patch versioning
-        env:
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUILD_NUMBER: ${{ github.run_number }}
-        run: node tooling/patchVersion.js
+      - name: Override packageJson
+        uses: actions/download-artifact@v4
+        with:
+          name: packageJson
+          path: .
+          
+      - name: Print package version
+        run: |
+          cat package.json | jq -r '.version'
+          
       - name: Build subprocess
         env:
           GITHUB_BRANCH: "release" # TODO: Resolve this properly for alpha and beta releases
@@ -101,12 +124,11 @@ jobs:
           dotnet tool install --global AzureSignTool --version 5.0.0
           
       # Patch for correct versioning
-      - name: Patch versioning
-        env:
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUILD_NUMBER: ${{ github.run_number }}
-        run: node tooling/patchVersion.js
+      - name: Override packageJson
+        uses: actions/download-artifact@v4
+        with:
+          name: packageJson
+          path: .
         
       # Setup the PNPM env for all the next steps
       - name: Setup PNPM Env
