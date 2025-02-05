@@ -57,7 +57,6 @@ jobs:
           path: .
       - name: Build subprocess
         env:
-          GITHUB_BRANCH: "release" # TODO: Resolve this properly for alpha and beta releases
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
         run: |
           cd subprocess
@@ -277,7 +276,7 @@ jobs:
         run: |
           ls -la release
           b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
-          b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/tmp
+          b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/app
           
   # Publish to Overwolf
   release-overwolf:
