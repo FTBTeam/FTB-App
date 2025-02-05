@@ -30,13 +30,19 @@ base {
     archivesName = "app"
 }
 
-def details = versionDetails()
-def branch = System.getenv("GITHUB_BRANCH") ?: "release"
-
 def packageJson = new JsonSlurper().parse(file("../package.json"))
 def appVersion = packageJson.version
+
 assert appVersion != null && appVersion != "", "package.json must have a version field"
 
+def branch = "release"
+if (appVersion.contains("beta")) {
+    branch = "beta"
+} else if (appVersion.contains("alpha")) {
+    branch = "alpha"
+}
+
+def details = versionDetails()
 version = appVersion
 
 repositories {
