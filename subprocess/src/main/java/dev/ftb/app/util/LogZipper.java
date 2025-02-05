@@ -44,6 +44,8 @@ public class LogZipper {
      */
     private static final String VERSION = "3.0.0";
 
+    private static final List<String> USER_HOME_POSSIBLE_ENVS = List.of("HOME", "USERPROFILE", "HOMEPATH", "HOMEDRIVE");
+    
     private static final Pattern UUID_REMOVAL = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern JWT_REMOVAL = Pattern.compile("e[yw][A-Za-z0-9-_]+\\.(?:e[yw][A-Za-z0-9-_]+)?\\.[A-Za-z0-9-_]{2,}(?:(?:\\.[A-Za-z0-9-_]{2,}){2})?");
 
@@ -118,19 +120,24 @@ public class LogZipper {
         obj.add("providerInstanceMapping", providerInstanceMapping);
 
         var jsonData = GSON.toJson(obj);
-        var userDownloadsFolder = Path.of(System.getProperty("user.home") + "/Downloads");
-        var outFolder = userDownloadsFolder;
-
-        if (Files.notExists(userDownloadsFolder)) {
-            outFolder = Path.of(System.getProperty("user.home") + "/Desktop");
+        var userHome = locateUserHome();
+        Path userDownloadsFolder = null;
+        
+        if (userHome != null && Files.exists(userHome.resolve("Downloads"))) {
+            userDownloadsFolder = userHome.resolve("Downloads");
+        } else if (userHome != null && Files.exists(userHome.resolve("Desktop"))) {
+            userDownloadsFolder = userHome.resolve("Desktop");
+        } else {
+            LOGGER.warn("User downloads folder does not exist, using data dir instead");
+            userDownloadsFolder = Constants.getDataDir();
         }
-
-        if (Files.notExists(outFolder)) {
-            outFolder = Constants.getDataDir();
+        
+        if (Files.notExists(userDownloadsFolder)) {
+            throw new RuntimeException("User output path not resolvable");
         }
 
         var today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
-        var outFile = outFolder.resolve("ftb-app-logs-" + today + ".zip");
+        var outFile = userDownloadsFolder.resolve("ftb-app-logs-" + today + ".zip");
 
         try (
             var fileOutput = Files.newOutputStream(outFile);
@@ -151,6 +158,15 @@ public class LogZipper {
                 }
             }
         } catch (IOException e) {
+            LOGGER.error("Failed to write logs to zip", e);
+            
+            try {
+                LOGGER.warn("Deleting the file {} as the export failed", outFile);
+                Files.deleteIfExists(outFile);
+            } catch (IOException ex) {
+                LOGGER.error("Failed to delete the file", ex);
+            }
+            
             throw new RuntimeException(e);
         }
 
@@ -413,6 +429,10 @@ public class LogZipper {
     private String filterContents(String contents) {
         var addresses = ipAddresses.get();
         for (String address : addresses) {
+            if (address.equals("127.0.0.1") || address.equals("0:0:0:0:0:0:0:1") || address.equals("localhost")) {
+                continue;
+            }
+            
             contents = contents.replace(address, "//REDACTED-IP//");
         }
 
@@ -454,5 +474,27 @@ public class LogZipper {
         }
 
         return ipAddresses;
+    }
+    
+    private static Path locateUserHome() {
+        // Try the simplest route first
+        var userHome = System.getProperty("user.home");
+        var userHomePath = Path.of(userHome);
+        if (Files.exists(userHomePath)) {
+            return userHomePath;
+        }
+        
+        // Try the environment variables
+        for (String env : USER_HOME_POSSIBLE_ENVS) {
+            var envPath = System.getenv(env);
+            if (envPath != null) {
+                var envPathResolved = Path.of(envPath);
+                if (Files.exists(envPathResolved)) {
+                    return envPathResolved;
+                }
+            }
+        }
+        
+        return null;
     }
 }

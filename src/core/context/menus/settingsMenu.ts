@@ -39,6 +39,7 @@ export class SettingMenu extends ContextMenu<{ }> {
             await platform.get.io.openFinder(result.path);
             alertController.success("Logs exported successfully, you can find them at " + result.path);
           } else {
+            console.log(result);
             alertController.error("Failed to export logs");
           }
         }
