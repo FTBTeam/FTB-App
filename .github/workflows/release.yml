@@ -55,11 +55,6 @@ jobs:
         with:
           name: packageJson
           path: .
-          
-      - name: Print package version
-        run: |
-          cat package.json | jq -r '.version'
-          
       - name: Build subprocess
         env:
           GITHUB_BRANCH: "release" # TODO: Resolve this properly for alpha and beta releases
@@ -267,24 +262,22 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       PUBLISH_BUCKET: ${{ secrets.PUBLISH_BUCKET }}
     steps:
-      - name: Test
-        run: echo "Test"
-#      - name: Download artifacts
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: release-${{ matrix.os }}
-#          path: release/
-#      - name: Get B2 client
-#        shell: bash
-#        run: |
-#          wget -q -O /usr/local/bin/b2 https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux
-#          chmod +x /usr/local/bin/b2
-#      - name: Upload
-#        shell: bash
-#        run: |
-#          ls -la release
-#          b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
-#          b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/app
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: release/
+      - name: Get B2 client
+        shell: bash
+        run: |
+          wget -q -O /usr/local/bin/b2 https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux
+          chmod +x /usr/local/bin/b2
+      - name: Upload
+        shell: bash
+        run: |
+          ls -la release
+          b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
+          b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/tmp
           
   # Publish to Overwolf
   release-overwolf:
@@ -309,9 +302,7 @@ jobs:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
         run: |
-          echo "Uploading to Overwolf.."
-#        run: |
-#          npm install --global pnpm@9.12.3 || true
-#          pnpm config set store-dir .pnpm-store
-#          pnpm install --no-frozen-lockfile
-#          pnpm ow opk upload -w true overwolf/signed.opk
+          npm install --global pnpm@9.12.3 || true
+          pnpm config set store-dir .pnpm-store
+          pnpm install --no-frozen-lockfile
+          pnpm ow opk upload -w true overwolf/signed.opk
