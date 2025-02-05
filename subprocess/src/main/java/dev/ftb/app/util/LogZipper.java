@@ -14,6 +14,8 @@ import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.storage.settings.SettingsData;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.LazyValue;
+import net.rubygrapefruit.platform.Native;
+import net.rubygrapefruit.platform.WindowsRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
@@ -43,8 +45,9 @@ public class LogZipper {
      * Manifest version
      */
     private static final String VERSION = "3.0.0";
-
-    private static final List<String> USER_HOME_POSSIBLE_ENVS = List.of("HOME", "USERPROFILE", "HOMEPATH", "HOMEDRIVE");
+    
+    private static final String DESKTOP_UUID = "754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5";
+    private static final String DOWNLOADS_UUID = "7D83EE9B-2244-4E70-B1F5-5393042AF1E4";
     
     private static final Pattern UUID_REMOVAL = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern JWT_REMOVAL = Pattern.compile("e[yw][A-Za-z0-9-_]+\\.(?:e[yw][A-Za-z0-9-_]+)?\\.[A-Za-z0-9-_]{2,}(?:(?:\\.[A-Za-z0-9-_]{2,}){2})?");
@@ -120,17 +123,7 @@ public class LogZipper {
         obj.add("providerInstanceMapping", providerInstanceMapping);
 
         var jsonData = GSON.toJson(obj);
-        var userHome = locateUserHome();
-        Path userDownloadsFolder = null;
-        
-        if (userHome != null && Files.exists(userHome.resolve("Downloads"))) {
-            userDownloadsFolder = userHome.resolve("Downloads");
-        } else if (userHome != null && Files.exists(userHome.resolve("Desktop"))) {
-            userDownloadsFolder = userHome.resolve("Desktop");
-        } else {
-            LOGGER.warn("User downloads folder does not exist, using data dir instead");
-            userDownloadsFolder = Constants.getDataDir();
-        }
+        Path userDownloadsFolder = locateOutputPath();
         
         if (Files.notExists(userDownloadsFolder)) {
             throw new RuntimeException("User output path not resolvable");
@@ -246,12 +239,20 @@ public class LogZipper {
                 ).toList();
 
             for (var crashlog : crashLogs) {
-                addFileToZipFromPath(writer, "instance/" + packPathName + "/" + crashlog.getFileName().toString(), crashlog);
+                try {
+                    addFileToZipFromPath(writer, "instance/" + packPathName + "/" + crashlog.getFileName().toString(), crashlog);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to write crash log {}", crashlog, e);
+                }
             }
 
             var logFiles = List.of("debug.log", "console.log", "latest.log");
             for (var logFile : logFiles) {
-                addFileToZipFromPath(writer, "instance/" + packPathName + "/" + logFile, instance.getDir().resolve("logs/" + logFile));
+                try {
+                    addFileToZipFromPath(writer, "instance/" + packPathName + "/" + logFile, instance.getDir().resolve("logs/" + logFile));
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to write log {}", logFile, e);
+                }
             }
 
             // Write the json file to the instance folder
@@ -405,7 +406,7 @@ public class LogZipper {
         if (Files.notExists(path) || Files.isDirectory(path)) {
             return;
         }
-
+        
         var contents = Files.readString(path);
         addFileToZip(stream, name, contents, skipFilter);
     }
@@ -476,25 +477,46 @@ public class LogZipper {
         return ipAddresses;
     }
     
-    private static Path locateUserHome() {
+    private static Path locateOutputPath() {
         // Try the simplest route first
         var userHome = System.getProperty("user.home");
         var userHomePath = Path.of(userHome);
-        if (Files.exists(userHomePath)) {
-            return userHomePath;
+        var desktopPath = userHomePath.resolve("Desktop");
+        var downloadsPath = userHomePath.resolve("Downloads");
+        if (Files.exists(desktopPath)) {
+            return desktopPath;
+        } else if (Files.exists(downloadsPath)) {
+            return downloadsPath;
         }
         
-        // Try the environment variables
-        for (String env : USER_HOME_POSSIBLE_ENVS) {
-            var envPath = System.getenv(env);
-            if (envPath != null) {
-                var envPathResolved = Path.of(envPath);
-                if (Files.exists(envPathResolved)) {
-                    return envPathResolved;
+        // Are we on windows
+        if (!OperatingSystem.current().isWindows()) {
+            return Constants.getDataDir();
+        }
+        
+        // We're on windows so let's try and find it from the registry...
+        // WHY IS WINDOWS SO SPECIAL
+        try {
+            WindowsRegistry registry = Native.get(WindowsRegistry.class);
+            String regLocation = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
+            var subKeys = registry.getValueNames(WindowsRegistry.Key.HKEY_CURRENT_USER, regLocation);
+            if (subKeys != null) {
+                for (String subKey : subKeys) {
+                    if (subKey.equals(DOWNLOADS_UUID) || subKey.equals(DESKTOP_UUID)) {
+                        var value = registry.getStringValue(WindowsRegistry.Key.HKEY_CURRENT_USER, regLocation, subKey);
+                        if (value != null) {
+                            var path = Path.of(value);
+                            if (Files.exists(path)) {
+                                return path;
+                            }
+                        }
+                    }
                 }
             }
+        } catch (Throwable e) {
+            LOGGER.warn("Failed to get WindowsRegistry", e);
         }
         
-        return null;
+        return Constants.getDataDir();
     }
 }

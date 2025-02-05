@@ -40,7 +40,7 @@ export class SettingMenu extends ContextMenu<{ }> {
             alertController.success("Logs exported successfully, you can find them at " + result.path);
           } else {
             console.log(result);
-            alertController.error("Failed to export logs");
+            alertController.error("Failed to export logs, please let us know in our Discord / Github");
           }
         }
       },

@@ -216,7 +216,7 @@ export default class AppSettings extends Vue {
     }
   }
 
-  public async uploadLogData(): Promise<void> {
+  public async uploadLogData() {
     this.uploadingLogs = true;
     try {
       const result = await sendMessage("uploadLogs", {})
@@ -224,11 +224,11 @@ export default class AppSettings extends Vue {
         await platform.get.io.openFinder(result.path)
         alertController.success('Logs saved to ' + result.path)
       } else {
-        alertController.error('Failed to upload logs, please try again later')
+        alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
       }
     } catch (e) {
-      this.logger.error("Failed to upload logs", e)
-      alertController.error('Failed to upload logs, please try again later')
+      this.logger.error("Failed to generate logs", e)
+      alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
     }
 
     this.uploadingLogs = false;
