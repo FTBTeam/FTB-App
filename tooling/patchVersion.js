@@ -1,29 +1,28 @@
 const fs = require("fs");
-const assert = require("assert");
 
 const ref = process.env.GITHUB_REF;
-assert(ref, "GITHUB_REF is required");
+testAndExitOnError(ref, "GITHUB_REF is required");
 
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
-assert(packageJson?.version, "package.json version is required");
+testAndExitOnError(packageJson?.version, "package.json version is required");
 
 const version = packageJson.version;
 
 // // Are we a tag? If yes, are we a `v` tag
 if (ref.startsWith("refs/tags/")) {
   const tagName = ref.replace("refs/tags/", "");
-  assert(tagName === `v${version}`, `Tag name ${tagName} does not match package.json version ${version}`);
+  testAndExitOnError(tagName === `v${version}`, `Tag name ${tagName} does not match package.json version ${version}`);
   console.log(`Tag name ${tagName} matches package.json version ${version}`);
   process.exit(0);
 }
 
-assert(process.env.GITHUB_TOKEN, "GITHUB_TOKEN is required");
+testAndExitOnError(process.env.GITHUB_TOKEN, "GITHUB_TOKEN is required");
 
 // If we're not a tag, have we correctly updated the package.json version?
 // This is for new versions, if we've released `1.24.0` and we try and push a 
 // `1.24.0-beta.1` tag, we should fail as this is an old version.
 
-assert(process.env.BUILD_NUMBER, "BUILD_NUMBER is required");
+testAndExitOnError(process.env.BUILD_NUMBER, "BUILD_NUMBER is required");
 const buildNumber = parseInt(process.env.BUILD_NUMBER, 10);
 
 // Find all the tags so we can see if we're trying to push an old version
@@ -48,7 +47,7 @@ const buildNumber = parseInt(process.env.BUILD_NUMBER, 10);
     page++;
   }
   
-  assert(!tags.includes(version), `Version ${version} has already been released`);
+  testAndExitOnError(!tags.includes(version), `Version ${version} has already been released`);
   
   // We now know that the base version is safe, we can attach a beta / alpha tag to the version
   // What branch are we on?
@@ -68,3 +67,10 @@ const buildNumber = parseInt(process.env.BUILD_NUMBER, 10);
   
   console.log("✅ Updated package.json version to", newVersion);
 })().catch((e) => console.error(e));
+
+function testAndExitOnError(expression, message) {
+  if (!expression) {
+    console.error(message);
+    process.exit(1);
+  }
+}
