@@ -46,8 +46,8 @@ public class LogZipper {
      */
     private static final String VERSION = "3.0.0";
     
-    private static final String DESKTOP_UUID = "754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5";
-    private static final String DOWNLOADS_UUID = "7D83EE9B-2244-4E70-B1F5-5393042AF1E4";
+    private static final String DESKTOP_UUID = "{754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5}";
+    private static final String DOWNLOADS_UUID = "{7D83EE9B-2244-4E70-B1F5-5393042AF1E4}";
     
     private static final Pattern UUID_REMOVAL = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern JWT_REMOVAL = Pattern.compile("e[yw][A-Za-z0-9-_]+\\.(?:e[yw][A-Za-z0-9-_]+)?\\.[A-Za-z0-9-_]{2,}(?:(?:\\.[A-Za-z0-9-_]{2,}){2})?");
