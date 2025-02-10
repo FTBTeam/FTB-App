@@ -82,7 +82,7 @@ export default class Selection2 extends Vue {
   
   open = false;
   
-  id = Math.random().toString(36).substr(2, 9);
+  id = Math.random().toString(36).substring(2, 9);
   
   mounted() {
     if (this.options.length) {

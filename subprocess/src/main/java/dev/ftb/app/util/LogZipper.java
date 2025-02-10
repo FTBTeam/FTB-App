@@ -14,6 +14,8 @@ import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.storage.settings.SettingsData;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.LazyValue;
+import net.rubygrapefruit.platform.Native;
+import net.rubygrapefruit.platform.WindowsRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
@@ -43,7 +45,10 @@ public class LogZipper {
      * Manifest version
      */
     private static final String VERSION = "3.0.0";
-
+    
+    private static final String DESKTOP_UUID = "{754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5}";
+    private static final String DOWNLOADS_UUID = "{7D83EE9B-2244-4E70-B1F5-5393042AF1E4}";
+    
     private static final Pattern UUID_REMOVAL = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern JWT_REMOVAL = Pattern.compile("e[yw][A-Za-z0-9-_]+\\.(?:e[yw][A-Za-z0-9-_]+)?\\.[A-Za-z0-9-_]{2,}(?:(?:\\.[A-Za-z0-9-_]{2,}){2})?");
 
@@ -118,19 +123,14 @@ public class LogZipper {
         obj.add("providerInstanceMapping", providerInstanceMapping);
 
         var jsonData = GSON.toJson(obj);
-        var userDownloadsFolder = Path.of(System.getProperty("user.home") + "/Downloads");
-        var outFolder = userDownloadsFolder;
-
+        Path userDownloadsFolder = locateOutputPath();
+        
         if (Files.notExists(userDownloadsFolder)) {
-            outFolder = Path.of(System.getProperty("user.home") + "/Desktop");
-        }
-
-        if (Files.notExists(outFolder)) {
-            outFolder = Constants.getDataDir();
+            throw new RuntimeException("User output path not resolvable");
         }
 
         var today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
-        var outFile = outFolder.resolve("ftb-app-logs-" + today + ".zip");
+        var outFile = userDownloadsFolder.resolve("ftb-app-logs-" + today + ".zip");
 
         try (
             var fileOutput = Files.newOutputStream(outFile);
@@ -151,10 +151,19 @@ public class LogZipper {
                 }
             }
         } catch (IOException e) {
+            LOGGER.error("Failed to write logs to zip", e);
+            
+            try {
+                LOGGER.warn("Deleting the file {} as the export failed", outFile);
+                Files.deleteIfExists(outFile);
+            } catch (IOException ex) {
+                LOGGER.error("Failed to delete the file", ex);
+            }
+            
             throw new RuntimeException(e);
         }
 
-        return outFile;
+        return userDownloadsFolder;
     }
 
     private String getFilteredSettings() {
@@ -230,12 +239,20 @@ public class LogZipper {
                 ).toList();
 
             for (var crashlog : crashLogs) {
-                addFileToZipFromPath(writer, "instance/" + packPathName + "/" + crashlog.getFileName().toString(), crashlog);
+                try {
+                    addFileToZipFromPath(writer, "instance/" + packPathName + "/" + crashlog.getFileName().toString(), crashlog);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to write crash log {}", crashlog, e);
+                }
             }
 
             var logFiles = List.of("debug.log", "console.log", "latest.log");
             for (var logFile : logFiles) {
-                addFileToZipFromPath(writer, "instance/" + packPathName + "/" + logFile, instance.getDir().resolve("logs/" + logFile));
+                try {
+                    addFileToZipFromPath(writer, "instance/" + packPathName + "/" + logFile, instance.getDir().resolve("logs/" + logFile));
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to write log {}", logFile, e);
+                }
             }
 
             // Write the json file to the instance folder
@@ -389,7 +406,7 @@ public class LogZipper {
         if (Files.notExists(path) || Files.isDirectory(path)) {
             return;
         }
-
+        
         var contents = Files.readString(path);
         addFileToZip(stream, name, contents, skipFilter);
     }
@@ -413,6 +430,10 @@ public class LogZipper {
     private String filterContents(String contents) {
         var addresses = ipAddresses.get();
         for (String address : addresses) {
+            if (address.equals("127.0.0.1") || address.equals("0:0:0:0:0:0:0:1") || address.equals("localhost")) {
+                continue;
+            }
+            
             contents = contents.replace(address, "//REDACTED-IP//");
         }
 
@@ -454,5 +475,48 @@ public class LogZipper {
         }
 
         return ipAddresses;
+    }
+    
+    private static Path locateOutputPath() {
+        // Try the simplest route first
+        var userHome = System.getProperty("user.home");
+        var userHomePath = Path.of(userHome);
+        var desktopPath = userHomePath.resolve("Desktop");
+        var downloadsPath = userHomePath.resolve("Downloads");
+        if (Files.exists(desktopPath)) {
+            return desktopPath;
+        } else if (Files.exists(downloadsPath)) {
+            return downloadsPath;
+        }
+        
+        // Are we on windows
+        if (!OperatingSystem.current().isWindows()) {
+            return Constants.getDataDir();
+        }
+        
+        // We're on windows so let's try and find it from the registry...
+        // WHY IS WINDOWS SO SPECIAL
+        try {
+            WindowsRegistry registry = Native.get(WindowsRegistry.class);
+            String regLocation = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
+            var subKeys = registry.getValueNames(WindowsRegistry.Key.HKEY_CURRENT_USER, regLocation);
+            if (subKeys != null) {
+                for (String subKey : subKeys) {
+                    if (subKey.equals(DOWNLOADS_UUID) || subKey.equals(DESKTOP_UUID)) {
+                        var value = registry.getStringValue(WindowsRegistry.Key.HKEY_CURRENT_USER, regLocation, subKey);
+                        if (value != null) {
+                            var path = Path.of(value);
+                            if (Files.exists(path)) {
+                                return path;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable e) {
+            LOGGER.warn("Failed to get WindowsRegistry", e);
+        }
+        
+        return Constants.getDataDir();
     }
 }

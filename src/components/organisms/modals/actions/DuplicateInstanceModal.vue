@@ -87,7 +87,7 @@ export default class DuplicateInstanceModal extends Vue {
       uuid: this.uuid,
       newName: this.newName,
       category: this.newCategory
-    })
+    }, 1_000 * 60 * 5); // 5 minutes (this should be more than long enough!)
     
     if (!result.success) {
       this.working = false;

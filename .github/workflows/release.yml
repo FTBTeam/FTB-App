@@ -3,18 +3,32 @@ name: Publish
 on:
   push:
     tags:
-      - v*
-     
-# Apply env to all jobs   
-env:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  PUBLISH_BUCKET: ${{ secrets.PUBLISH_BUCKET }}
+      - v[0-9]+.[0-9]+.[0-9]+
+    branches:
+      - main
+      - dev
   
 jobs:
+  patch-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Patch versioning
+        env:
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        # Run the node tool and fail if it fails
+        run: node tooling/patchVersion.js || exit 1
+      - name: Upload version
+        uses: actions/upload-artifact@v4
+        with:
+          name: packageJson
+          path: package.json
+          
   build-jars:
+    needs: patch-version
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -36,9 +50,14 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 21
+      - name: Override packageJson
+        uses: actions/download-artifact@v4
+        with:
+          name: packageJson
+          path: .
       - name: Build subprocess
         env:
-          GITHUB_BRANCH: "release" # TODO: Resolve this properly for alpha and beta releases
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false"
         run: |
           cd subprocess
           ./gradlew clean build -si
@@ -57,19 +76,14 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            arch: "--x64 --arm64"
-            target: "-l"
           - os: windows-latest
             platform: windows
-            arch: "--x64"
-            target: "-w"
           - os: macos-latest
             platform: macos
-            arch: "--x64 --arm64"
-            target: "-m"
     runs-on: ${{ matrix.os }}
     needs: build-jars
     steps:
+      # Common setup
       - name: Checkout
         uses: actions/checkout@v4
       - name: Download jar
@@ -77,6 +91,8 @@ jobs:
         with:
           name: subprocess-jar-${{ matrix.os }}
           path: subprocess/build/libs/
+          
+      # Validation of jar
       - name: Ensure jar exists
         if: ${{ matrix.os == 'macos-latest' || matrix.os == 'linux-latest' }}
         run: |
@@ -85,6 +101,8 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           dir subprocess/build/libs/*.jar || exit 1
+          
+      # Apple app signing
       - name: Write apple id
         if: ${{ matrix.os == 'macos-latest' }}
         env:
@@ -92,32 +110,69 @@ jobs:
         run: |
           echo "$APPLE_API_KEY" > apple_api_key.p8
           find apple_api_key.p8 -size +0c || exit 1
+          
+      # Windows app signing
       - name: Download AzureSignTool from nuget
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          dotnet tool install --global AzureSignTool --version 5.0.0   
-      - name: Build frontend
+          dotnet tool install --global AzureSignTool --version 5.0.0
+          
+      # Patch for correct versioning
+      - name: Override packageJson
+        uses: actions/download-artifact@v4
+        with:
+          name: packageJson
+          path: .
+        
+      # Setup the PNPM env for all the next steps
+      - name: Setup PNPM Env
+        run: |
+          npm install --global pnpm@9.15.0 || true
+          pnpm config set store-dir .pnpm-store
+          pnpm install --no-frozen-lockfile
+          pnpm gen:license
+      
+      # Windows build
+      - name: Build frontend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
         env:
           VUE_APP_PLATFORM: "electron"
           APP_TARGET_PLATFORM: ${{ matrix.platform }}
-          SLACK_ENDPOINT: ${{ secrets.SLACK_ENDPOINT }}
           VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_API_KEY: "./apple_api_key.p8"
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
           AZURE_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_KEY_VAULT_CLIENT_ID }}
           AZURE_KEY_VAULT_CLIENT_SECRET: ${{ secrets.AZURE_KEY_VAULT_CLIENT_SECRET }}
           AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
           AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
         run: |
-          npm install --global pnpm@9.15.0 || true
-          pnpm config set store-dir .pnpm-store
-          pnpm install --no-frozen-lockfile
-          pnpm gen:license
-          pnpm build --publish always ${{ matrix.target }} ${{ matrix.arch }}
+          pnpm build --publish always -w --x64
+          
+      # Mac build
+      - name: Build frontend (Macos)
+        if: ${{ matrix.os == 'macos-latest' }}
+        env:
+          VUE_APP_PLATFORM: "electron"
+          APP_TARGET_PLATFORM: ${{ matrix.platform }}
+          VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: "./apple_api_key.p8"
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          pnpm build --publish always -m --x64 --arm64
+          
+      # Linux build
+      - name: Build frontend (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        env:
+          VUE_APP_PLATFORM: "electron"
+          APP_TARGET_PLATFORM: ${{ matrix.platform }}
+          VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
+        run: |
+          pnpm build --publish always -l --x64 --arm64
+          
+      # Upload time
       - name: Upload Mac artifacts
         if: ${{ matrix.os == 'macos-latest' }}
         uses: actions/upload-artifact@v4
@@ -153,8 +208,7 @@ jobs:
 
   build-overwolf:
     name: Prepare Overwolf
-    # Skip this job if the commit message contains [-skip overwolf]
-    if: "!contains(github.event.head_commit.message, '[-skip overwolf]')"
+    if: "!contains(github.event.head_commit.message, '[-skip overwolf]') && startsWith(github.ref, 'refs/tags/v')"
     needs:
       - build-jars
       - build-releases
@@ -202,6 +256,10 @@ jobs:
     strategy:
       matrix: 
         os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      PUBLISH_BUCKET: ${{ secrets.PUBLISH_BUCKET }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4

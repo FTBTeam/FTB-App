@@ -18,6 +18,9 @@ const logger = createLogger('background.ts');
 
 autoUpdater.logger = electronLogger;
 
+// Let the app downgrade if the latest version has been removed from the CDN
+autoUpdater.allowDowngrade = true;
+
 const logAndEmit = (event: string, ...args: any[]) => {
   logger.debug("Emitting downloader event", event, args)
   ipcMain.emit(event, ...args);
@@ -160,7 +163,19 @@ ipcMain.handle("app.change-channel", async (event, data) => {
 })
 
 ipcMain.handle("app.get-channel", async () => {
-  return autoUpdater.channel;
+  const channel = autoUpdater.channel;
+  if (!channel) {
+    const appVersion = autoUpdater.currentVersion.version;
+    if (appVersion.includes("-beta")) {
+      return "beta";
+    } else if (appVersion.includes("-alpha")) {
+      return "alpha";
+    } else {
+      return "stable";
+    }
+  }
+  
+  return channel;
 })
 
 ipcMain.on('openModpack', (event, data) => {

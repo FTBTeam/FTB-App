@@ -146,6 +146,7 @@ import ProgressBar from '@/components/atoms/ProgressBar.vue';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {emitter} from '@/utils';
+import {createLogger} from '@/core/logger';
 
 @Component({
   components: {
@@ -160,6 +161,8 @@ export default class AppSettings extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) saveSettings: any;
   @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
 
+  private logger = createLogger("Blog.vue");
+  
   platform = platform;
   localSettings: SettingsData = {} as SettingsData;
 
@@ -213,16 +216,19 @@ export default class AppSettings extends Vue {
     }
   }
 
-  public async uploadLogData(): Promise<void> {
+  public async uploadLogData() {
     this.uploadingLogs = true;
     try {
       const result = await sendMessage("uploadLogs", {})
-      if (!result.error) {
+      if (result.path) {
         await platform.get.io.openFinder(result.path)
-        alertController.success('The URL has been copied to your clipboard')
+        alertController.success('Logs saved to ' + result.path)
+      } else {
+        alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
       }
     } catch (e) {
-      alertController.error('Failed to upload logs, please try again later')
+      this.logger.error("Failed to generate logs", e)
+      alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
     }
 
     this.uploadingLogs = false;
