@@ -163,7 +163,7 @@ public class LogZipper {
             throw new RuntimeException(e);
         }
 
-        return outFile;
+        return userDownloadsFolder;
     }
 
     private String getFilteredSettings() {

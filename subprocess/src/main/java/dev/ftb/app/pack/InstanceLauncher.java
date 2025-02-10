@@ -487,6 +487,8 @@ public class InstanceLauncher {
             command.addAll(context.extraJVMArgs);
             command.add("-Duser.language=en");
             command.add("-Duser.country=US");
+            // This is literally only required for forge 1.20.3. No clue why, but it does fix the issue :tada:
+            command.add("-DlibraryDirectory=" + librariesDir.toAbsolutePath());
             command.add(getMainClass());
             command.addAll(progArgs);
             command.addAll(context.extraProgramArgs);
@@ -702,28 +704,62 @@ public class InstanceLauncher {
         return classpath;
     }
     
-    private boolean isModernNeoForge() {
-        var neoId = manifests.stream()
+    private boolean neoRequiresDeDupeLibraries() {
+        var neoForgeLibraryId = getLibraryIdFromName("neoforge", 1);
+        if (neoForgeLibraryId == null) {
+            return false;
+        }
+
+        // Modern neo is any version higher than 20.1, this is a safe enough check as it's never going to start with 20.1 if it's higher.
+        return !neoForgeLibraryId.startsWith("20.1");
+    }
+    
+    private boolean forgeRequiresDeDupeLibraries() {
+        // We want the first part of the forge ID
+        var forgeLibraryId = getLibraryIdFromName("forge", 0);
+        if (forgeLibraryId == null) {
+            return false;
+        }
+        
+        if (!forgeLibraryId.startsWith("1.")) {
+            return false;
+        }
+        
+        // Split up the minecraft version
+        var partedNumbers = Arrays.stream(forgeLibraryId.split("\\.")).map(Integer::parseInt).toList();
+        if (partedNumbers.size() < 2) {
+            return false;
+        }
+        
+        // Anything newer than 1.21.3 requires deduping.
+        if (partedNumbers.size() == 2) {
+            return partedNumbers.get(1) > 21;
+        }
+        
+        return partedNumbers.get(1) >= 21 && partedNumbers.get(2) > 3;
+    }
+    
+    @Nullable
+    private String getLibraryIdFromName(String name, int requestedIndex) {
+        var foundName = manifests.stream()
             .map(e -> e.id)
-            .filter(e -> e.contains("neoforge"))
+            .filter(e -> e.contains(name))
             .findFirst();
 
-        if (neoId.isEmpty()) {
-            return false;
+        if (foundName.isEmpty()) {
+            return null;
+        }
+
+        var parted = foundName.get().split("-");
+        if (parted.length < requestedIndex) {
+            return null;
         }
         
-        var parted = neoId.get().split("-");
-        if (parted.length < 2) {
-            return false;
-        }
-        
-        // Modern neo is any version higher than 20.1, this is a safe enough check as it's never going to start with 20.1 if it's higher.
-        var version = parted[1];
-        return !version.startsWith("20.1");
+        return parted[requestedIndex];
     }
     
     private List<VersionManifest.Library> createUniqueLibraryList(List<VersionManifest.Library> libraries) {
-        if (!isModernNeoForge()) {
+        if (!neoRequiresDeDupeLibraries() && !forgeRequiresDeDupeLibraries()) {
             return libraries;
         }
         
