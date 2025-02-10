@@ -5,7 +5,7 @@
       <span>FTB App</span>
     </div>
     <div class="branch-container">
-      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ branch }}</div>
+      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ branch | title }}</div>
     </div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">

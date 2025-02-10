@@ -19,7 +19,10 @@ const logger = createLogger('background.ts');
 autoUpdater.logger = electronLogger;
 
 // Let the app downgrade if the latest version has been removed from the CDN
+const appHome = getAppHome(os.platform(), os.homedir(), path.join);
+
 autoUpdater.allowDowngrade = true;
+autoUpdater.channel = loadChannel();
 
 const logAndEmit = (event: string, ...args: any[]) => {
   logger.debug("Emitting downloader event", event, args)
@@ -60,7 +63,6 @@ function getAppSettings(appSettingsPath: string) {
   }
 }
 
-const appHome = getAppHome(os.platform(), os.homedir(), path.join);
 logger.debug('App home is', appHome)
 
 let cachedProcessData = null as {
@@ -144,6 +146,8 @@ ipcMain.handle("app.change-channel", async (event, data) => {
   logger.debug("Changing app channel", data)
   
   autoUpdater.channel = data;
+  updateChannel(data);
+  
   const updateResult = await autoUpdater.checkForUpdates();
   if (updateResult?.downloadPromise) {
     const version = await updateResult.downloadPromise;
@@ -845,5 +849,52 @@ if (isDevelopment) {
     process.on('SIGTERM', () => {
       app.quit();
     });
+  }
+}
+
+function loadChannel() {
+  try {
+    const channelFile = path.join(appHome, 'storage', 'electron-settings.json');
+    if (!fs.existsSync(channelFile)) {
+      return 'stable';
+    }
+
+    try {
+      const channelData = JSON.parse(fs.readFileSync(channelFile, 'utf-8'));
+      if (channelData.channel) {
+        return channelData.channel;
+      }
+    } catch (e) {
+      logger.error("Failed to load channel data", e)
+    }
+
+  } catch (e) {
+    logger.error("Failed to load channel", e)
+  }
+  
+  return 'stable';
+}
+
+function updateChannel(channel: string) {
+  try {
+    const parent = path.join(appHome, 'storage');
+    const channelFile = path.join(parent, 'electron-settings.json');
+    if (!fs.existsSync(parent)) {
+      fs.mkdirSync(parent, { recursive: true });
+    }
+    
+    let existingData: any | null = null;
+    if (fs.existsSync(channelFile)) {
+      existingData = JSON.parse(fs.readFileSync(channelFile, 'utf-8'));
+    }
+    
+    const newData = {
+      ...existingData,
+      channel
+    };
+    
+    fs.writeFileSync(channelFile, JSON.stringify(newData, null, 2));
+  } catch (e) {
+    logger.error("Failed to update channel", e)
   }
 }
