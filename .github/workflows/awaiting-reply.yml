@@ -12,6 +12,6 @@ jobs:
         with:
           awaiting-label: "Awaiting Reply"
           replied-label: "Replied"
-          ignore-labels: "Blocked,status: confirmed, status: investigate, feature:request,fixed/release,fixed/dev,status: planned,question/discussion,priority/high,priority/medium,priority/low"
+          ignore-labels: "Blocked,status: confirmed,status: investigate,fixed/release,fixed/dev,status: planned,priority/high,priority/medium,priority/low"
           remove-labels: "status: stale"
           ignore-string: "!skip"
