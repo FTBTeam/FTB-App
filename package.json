@@ -30,7 +30,7 @@
     "postuninstall": "ow-electron-builder install-app-deps"
   },
   "engines": {
-    "node": "^18",
+    "node": "^22",
     "npm": "dont-use-npm",
     "yarn": "dont-use-yarn"
   },
@@ -114,6 +114,24 @@
     "patchedDependencies": {
       "webpack@4.46.0": "patches/webpack@4.46.0.patch",
       "terser-webpack-plugin@1.4.5": "patches/terser-webpack-plugin@1.4.5.patch"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "@sentry/cli"
+    ],
+    "onlyBuiltDependencies": [
+      "@fortawesome/fontawesome-common-types",
+      "@fortawesome/fontawesome-svg-core",
+      "@fortawesome/free-brands-svg-icons",
+      "@fortawesome/free-regular-svg-icons",
+      "@fortawesome/free-solid-svg-icons",
+      "@overwolf/ow-cli",
+      "@overwolf/ow-electron",
+      "core-js",
+      "deasync",
+      "electron",
+      "fsevents",
+      "utf-8-validate",
+      "yorkie"
+    ]
   }
 }

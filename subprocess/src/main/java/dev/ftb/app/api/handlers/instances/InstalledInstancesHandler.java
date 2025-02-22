@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,7 +30,9 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
                 .map(SugaredInstanceJson::new)
                 .toList();
 
-        Set<String> availableCategories = instanceJsons.stream().map(e -> e.category).collect(Collectors.toSet());
+        Set<String> availableCategories = new HashSet<>();
+        availableCategories.add("Default");
+        availableCategories.addAll(instanceJsons.stream().map(e -> e.category).toList());
         
         InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, availableCategories);
         WebSocketHandler.sendMessage(reply);
