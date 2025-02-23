@@ -33,7 +33,7 @@
       </template>
       
       <template v-if="packInstalled">
-        <recycle-scroller class="complex-mod mod" :items="packMods" :item-size="70" key-field="fileId" v-slot="{ item }">
+        <recycle-scroller class="complex-mod mod" :items="packMods" :item-size="70" key-field="sha1" v-slot="{ item }">
           <div class="flex gap-6 items-center mb-4">
             <img v-if="item.curse && item.curse.icon" :src="item.curse.icon" class="rounded" width="40" alt="">
             <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>
@@ -172,7 +172,8 @@ export default class ModpackMods extends Vue {
         return;
       }
       
-      const mods = await toggleBeforeAndAfter(() => JavaFetch.modpacksCh(`modpack/${this.apiPack.id}/${latestVersion.id}/mods`).execute(), s => this.modsLoading = s)
+      const provider = this.apiPack.provider === "modpacks.ch" ? "modpack" : "curseforge";
+      const mods = await toggleBeforeAndAfter(() => JavaFetch.modpacksCh(`${provider}/${this.apiPack.id}/${latestVersion.id}/mods`).execute(), s => this.modsLoading = s)
       const apiMods = mods?.json<{ mods: ApiMod[] }>()?.mods;
       console.log(mods?.json<{ mods: ApiMod[] }>())
       if (!apiMods) {

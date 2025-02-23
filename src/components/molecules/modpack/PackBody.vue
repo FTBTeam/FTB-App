@@ -123,7 +123,7 @@
                 <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
               </div>
 
-              <div class="stat" v-if="packInstance.type !== 'Curseforge'">
+              <div class="stat" v-if="packInstance.provider !== 'curseforge'">
                 <div class="name">Plays</div>
                 <div class="value font-sans">{{ packInstance.plays | formatNumber }}</div>
               </div>
