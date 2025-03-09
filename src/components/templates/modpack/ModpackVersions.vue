@@ -98,7 +98,7 @@ export default class ModpackVersions extends Vue {
       .catch(e => this.logger.error(e))
   }
   
-  destoryed() {
+  destroyed() {
     this.changelogs = {};
   }
 
