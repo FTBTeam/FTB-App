@@ -706,7 +706,9 @@ public class InstanceLauncher {
     }
     
     private List<VersionManifest.Library> createUniqueLibraryList(List<VersionManifest.Library> libraries) {
-        if (!requiresLibraryDeDuplication(libraries)) {
+        // Newer versions of Minecraft & Modloaders will sometimes have duplicate libraries, this used to be handled by the modloader
+        // by providing a refinded manifest, this is no longer the case so it's on us to identify and remove duplicates.
+        if (!requiresLibraryDeDuplication()) {
             return libraries;
         }
         
@@ -759,7 +761,7 @@ public class InstanceLauncher {
         return uniqueLibraries;
     }
 
-    private boolean requiresLibraryDeDuplication(List<VersionManifest.Library> libraries) {
+    private boolean requiresLibraryDeDuplication() {
         var modLoader = this.instance.props.modLoader;
         var minecraftVersionRaw = this.instance.props.mcVersion;
         var minecraftVersion = MinecraftVersions.INSTANCE.parse(minecraftVersionRaw);

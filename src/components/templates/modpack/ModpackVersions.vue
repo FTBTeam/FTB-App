@@ -14,7 +14,7 @@
           <div class="font-bold name text-xl">{{ currentVersion.name }}</div>
         </div>
         <div class="buttons flex text-sm gap-2">
-          <ui-button type="info" size="small" icon="server" @click="() => platform.get.utils.openUrl(`https://go.ftb.team/serverfiles`)">Server files</ui-button>
+          <ui-button type="info" size="small" icon="server" v-if="instance && instance.packType === 0" @click="() => platform.get.utils.openUrl(`https://go.ftb.team/serverfiles`)">Server files</ui-button>
           <ui-button
             :wider="true"
             v-if="instance && currentVersion && instance.versionId !== activeLog && currentVersion.type.toLowerCase() !== 'archived'" 
