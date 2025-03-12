@@ -15,6 +15,7 @@
     "com.github.oshi:oshi-core": "https://github.com/oshi/oshi",
     "net.java.dev.jna:jna": "https://github.com/java-native-access/jna",
     "net.java.dev.jna:jna-platform": "https://github.com/java-native-access/jna",
+    "org.semver4j:semver4j": "https://github.com/semver4j/semver4j",
 
     "com.squareup.okhttp3:okhttp": "https://github.com/square/okhttp",
     "com.squareup.okio:okio": "https://github.com/square/okio",

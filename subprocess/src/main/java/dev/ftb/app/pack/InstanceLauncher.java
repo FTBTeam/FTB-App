@@ -16,6 +16,7 @@ import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
 import dev.ftb.app.util.StreamGobblerLog;
+import dev.ftb.app.util.mc.MinecraftVersions;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
@@ -704,62 +705,10 @@ public class InstanceLauncher {
         return classpath;
     }
     
-    private boolean neoRequiresDeDupeLibraries() {
-        var neoForgeLibraryId = getLibraryIdFromName("neoforge", 1);
-        if (neoForgeLibraryId == null) {
-            return false;
-        }
-
-        // Modern neo is any version higher than 20.1, this is a safe enough check as it's never going to start with 20.1 if it's higher.
-        return !neoForgeLibraryId.startsWith("20.1");
-    }
-    
-    private boolean forgeRequiresDeDupeLibraries() {
-        // We want the first part of the forge ID
-        var forgeLibraryId = getLibraryIdFromName("forge", 0);
-        if (forgeLibraryId == null) {
-            return false;
-        }
-        
-        if (!forgeLibraryId.startsWith("1.")) {
-            return false;
-        }
-        
-        // Split up the minecraft version
-        var partedNumbers = Arrays.stream(forgeLibraryId.split("\\.")).map(Integer::parseInt).toList();
-        if (partedNumbers.size() < 2) {
-            return false;
-        }
-        
-        // Anything newer than 1.21.3 requires deduping.
-        if (partedNumbers.size() == 2) {
-            return partedNumbers.get(1) > 21;
-        }
-        
-        return partedNumbers.get(1) >= 21 && partedNumbers.get(2) > 3;
-    }
-    
-    @Nullable
-    private String getLibraryIdFromName(String name, int requestedIndex) {
-        var foundName = manifests.stream()
-            .map(e -> e.id)
-            .filter(e -> e.contains(name))
-            .findFirst();
-
-        if (foundName.isEmpty()) {
-            return null;
-        }
-
-        var parted = foundName.get().split("-");
-        if (parted.length < requestedIndex) {
-            return null;
-        }
-        
-        return parted[requestedIndex];
-    }
-    
     private List<VersionManifest.Library> createUniqueLibraryList(List<VersionManifest.Library> libraries) {
-        if (!neoRequiresDeDupeLibraries() && !forgeRequiresDeDupeLibraries()) {
+        // Newer versions of Minecraft & Modloaders will sometimes have duplicate libraries, this used to be handled by the modloader
+        // by providing a refinded manifest, this is no longer the case so it's on us to identify and remove duplicates.
+        if (!requiresLibraryDeDuplication()) {
             return libraries;
         }
         
@@ -811,7 +760,25 @@ public class InstanceLauncher {
         
         return uniqueLibraries;
     }
-    
+
+    private boolean requiresLibraryDeDuplication() {
+        var modLoader = this.instance.props.modLoader;
+        var minecraftVersionRaw = this.instance.props.mcVersion;
+        var minecraftVersion = MinecraftVersions.INSTANCE.parse(minecraftVersionRaw);
+        
+        if (minecraftVersion == null) {
+            throw new IllegalStateException("Invalid Minecraft version: " + minecraftVersionRaw);
+        }
+        
+        if (modLoader.contains("neoforge")) {
+            return minecraftVersion.semver().satisfies(">1.20.1");
+        } else if (modLoader.contains("fabric")) {
+            return minecraftVersion.semver().satisfies(">=1.21.2");
+        } else {
+            return minecraftVersion.semver().satisfies(">=1.21.4");
+        }
+    }
+
     private String createVersionAgnosticMavenString(VersionManifest.Library library) {
         var name = library.name.group + ":" + library.name.module;
         if (library.name.classifier != null) {

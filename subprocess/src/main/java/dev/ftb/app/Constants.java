@@ -35,6 +35,7 @@ public class Constants {
     private static final Path DATA_DIR = Paths.get(System.getProperty("user.home"), INNER_DATA_DIR);
     
     //Mojang
+    public static final String MC_VERSIONS = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json";
     public static final String MC_RESOURCES = "https://resources.download.minecraft.net/";
     public static final String MC_SESSION_SERVER_JOIN = "https://sessionserver.mojang.com/session/minecraft/join";
 
