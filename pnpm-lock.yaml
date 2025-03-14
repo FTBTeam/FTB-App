@@ -37,6 +37,9 @@ importers:
       dayjs:
         specifier: ^1.11.7
         version: 1.11.7
+      electron-devtools-installer:
+        specifier: ^4.0.0
+        version: 4.0.0
       electron-updater:
         specifier: ^6.3.9
         version: 6.5.0
@@ -173,9 +176,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      electron-devtools-installer:
-        specifier: ^3.2.0
-        version: 3.2.0
       electron-dl:
         specifier: ^3.0.0
         version: 3.5.0
@@ -3269,8 +3269,8 @@ packages:
   electron-builder-squirrel-windows@25.0.5:
     resolution: {integrity: sha512-N2U7LGSdt4hmEhjEeIV2XJbjj2YIrTL6enfsGKfOhGTpL6GEejUmT3gjdKUqKBS5+NBx0GWhnEwD3MpO2P6Nfg==}
 
-  electron-devtools-installer@3.2.0:
-    resolution: {integrity: sha512-t3UczsYugm4OAbqvdImMCImIMVdFzJAHgbwHpkl5jmfu1izVgUcP/mnrPqJIpEeCK1uZGpt+yHgWEN+9EwoYhQ==}
+  electron-devtools-installer@4.0.0:
+    resolution: {integrity: sha512-9Tntu/jtfSn0n6N/ZI6IdvRqXpDyLQiDuuIbsBI+dL+1Ef7C8J2JwByw58P3TJiNeuqyV3ZkphpNWuZK5iSY2w==}
 
   electron-dl@3.5.0:
     resolution: {integrity: sha512-Oj+VSuScVx8hEKM2HEvTQswTX6G3MLh7UoAz/oZuvKyNDfudNi1zY6PK/UnFoK1nCl9DF6k+3PFwElKbtZlDig==}
@@ -8931,7 +8931,7 @@ snapshots:
   '@jest/core@24.9.0(utf-8-validate@5.0.10)':
     dependencies:
       '@jest/console': 24.9.0
-      '@jest/reporters': 24.9.0(utf-8-validate@5.0.10)
+      '@jest/reporters': 24.9.0
       '@jest/test-result': 24.9.0
       '@jest/transform': 24.9.0
       '@jest/types': 24.9.0
@@ -9050,7 +9050,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@jest/reporters@24.9.0(utf-8-validate@5.0.10)':
+  '@jest/reporters@24.9.0':
     dependencies:
       '@jest/environment': 24.9.0
       '@jest/test-result': 24.9.0
@@ -9074,9 +9074,7 @@ snapshots:
       source-map: 0.6.1
       string-length: 2.0.0
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@jest/reporters@29.5.0':
     dependencies:
@@ -12073,11 +12071,8 @@ snapshots:
       - dmg-builder
       - supports-color
 
-  electron-devtools-installer@3.2.0:
+  electron-devtools-installer@4.0.0:
     dependencies:
-      rimraf: 3.0.2
-      semver: 7.6.2
-      tslib: 2.5.0
       unzip-crx-3: 0.2.0
 
   electron-dl@3.5.0:
@@ -13710,7 +13705,7 @@ snapshots:
       jest-environment-jsdom: 24.9.0(utf-8-validate@5.0.10)
       jest-environment-node: 24.9.0
       jest-get-type: 24.9.0
-      jest-jasmine2: 24.9.0(utf-8-validate@5.0.10)
+      jest-jasmine2: 24.9.0
       jest-regex-util: 24.9.0
       jest-resolve: 24.9.0
       jest-util: 24.9.0
@@ -13876,7 +13871,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  jest-jasmine2@24.9.0(utf-8-validate@5.0.10):
+  jest-jasmine2@24.9.0:
     dependencies:
       '@babel/traverse': 7.24.0
       '@jest/environment': 24.9.0
@@ -13895,9 +13890,7 @@ snapshots:
       pretty-format: 24.9.0
       throat: 4.1.0
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   jest-leak-detector@24.9.0:
     dependencies:
@@ -14017,7 +14010,7 @@ snapshots:
       jest-config: 24.9.0(utf-8-validate@5.0.10)
       jest-docblock: 24.9.0
       jest-haste-map: 24.9.0
-      jest-jasmine2: 24.9.0(utf-8-validate@5.0.10)
+      jest-jasmine2: 24.9.0
       jest-leak-detector: 24.9.0
       jest-message-util: 24.9.0
       jest-resolve: 24.9.0

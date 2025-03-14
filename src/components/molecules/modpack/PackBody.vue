@@ -241,7 +241,6 @@ import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {InstanceRunningData} from '@/core/state/misc/runningState';
 import WorldsTab from '@/components/molecules/modpack/WorldsTab.vue';
-import install from 'electron-devtools-installer';
 import { packBlacklist } from '@/core/state/modpacks/modpacksState';
 
 @Component({
@@ -257,7 +256,6 @@ import { packBlacklist } from '@/core/state/modpacks/modpacksState';
     ModpackBackups,
   },
   methods: {
-    install,
     stringIsEmpty
   }
 })
