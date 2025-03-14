@@ -13,6 +13,13 @@ export const packBlacklist = [
   116  // NeoForge
 ]
 
+export const loaderMap = new Map([
+  [81, "Vanilla"],
+  [104, "Forge"],
+  [105, "Fabric"],
+  [116, "NeoForge"]
+])
+
 const state = {
   modpacks: new Map<number, ModPack>(),
   modpackVersions: new Map<number, Versions>(),

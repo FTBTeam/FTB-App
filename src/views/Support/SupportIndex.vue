@@ -137,7 +137,7 @@ const topicList = [
         "Get a top-notch Minecraft Server with our partner BisectHosting. With 24/7/365 support, 2,000+ Minecraft modpacks, and hosting for over 70+ games, you're in good hands.",
         true,
         // TODO: Update this link to the correct one
-        'https://bisecthosting.com/ftb'
+        'https://bisecthosting.com/ftb?r=app-support'
       ),
       mkTopic(
         'App guides',

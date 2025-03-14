@@ -87,7 +87,7 @@
 <!--        <div v-if="packInstance && packInstance.meta && packInstance.meta.supportsWorlds" class="tab flex items-center whitespace-no-wrap justify-center" :class="{ active: activeTab === tabs.WORLDS }" @click="() => $emit('tabChange', tabs.WORLDS)">-->
 <!--          FTB Worlds <span class="bg-yellow-400 rounded px-1 py-0-5 sm:px-2 sm:py-1 text-black text-opacity-75 font-bold ml-4 text-sm italic">New!</span>-->
 <!--        </div>-->
-        <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="Platform.get.utils.openUrl('https://bisecthosting.com/ftb')">
+        <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="Platform.get.utils.openUrl(bisectPromo())">
           <img class="" src="@/assets/images/branding/bh-logo.svg" alt="" />
           Order a server
         </a>
@@ -241,6 +241,8 @@ import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {InstanceRunningData} from '@/core/state/misc/runningState';
 import WorldsTab from '@/components/molecules/modpack/WorldsTab.vue';
+import install from 'electron-devtools-installer';
+import { packBlacklist } from '@/core/state/modpacks/modpacksState';
 
 @Component({
   name: 'pack-body',
@@ -255,6 +257,7 @@ import WorldsTab from '@/components/molecules/modpack/WorldsTab.vue';
     ModpackBackups,
   },
   methods: {
+    install,
     stringIsEmpty
   }
 })
@@ -328,11 +331,6 @@ export default class PackBody extends Vue {
       ? this.instance.modLoader === this.instance.mcVersion
       : this.packInstance?.id === 81;
   }
-
-  get packSlug() {
-    if (!this.packInstance) return '';
-    return `${this.packInstance.id}_${this.packInstance.name.replaceAll(' ', '-').replaceAll(/[^\w|-]+/g, '')}`;
-  }
   
   get modloaderUpdating() {
     return this.currentModloaderUpdate?.some(e => e.instanceId === this.instance.uuid) ?? false;
@@ -346,6 +344,27 @@ export default class PackBody extends Vue {
     } 
     
     return "https://go.ftb.team/support-modpack"
+  }
+  
+  bisectPromo() {
+    const baseUrl = `https://bisecthosting.com/ftb?r=app-modpack-`;
+    if (this.instance.id === -1) {
+      return baseUrl + "private-or-imported";
+    }
+    
+    if (packBlacklist.includes(this.instance.id)) {
+      return baseUrl + "custom-instance"
+    }
+    
+    if (this.instance.packType !== 0) {
+      return baseUrl + "curseforge";
+    }
+    
+    if (this.instance.packType === 0 && this.packInstance) {
+      return baseUrl + this.packInstance.slug;
+    }
+    
+    return baseUrl + this.instance.id;
   }
 }
 </script>
