@@ -474,7 +474,11 @@ ipcMain.handle("startSubprocess", async (event, args) => {
 
     // Kill the subprocess
     if (pid) {
-      process.kill(pid, 'SIGINT');
+      try {
+        process.kill(pid, 'SIGINT');
+      } catch (e) {
+        logger.error("Failed to kill subprocess", e)
+      }
     }
     
     logger.debug("Subprocess is already running, killing it")
