@@ -7,8 +7,12 @@
   </developer>
 
   <name>FTB Electron App</name>
-  <summary>Find, download, and manage your FTB Mod packs!</summary>
+  <summary>Explore and manage FTB modpacks!</summary>
 
+  <branding>
+    <color type="primary" scheme_preference="light">#1c1c1c</color>
+    <color type="primary" scheme_preference="dark">#1c1c1c</color>
+  </branding>
 
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>LGPL-2.1-only</project_license>
@@ -16,6 +20,18 @@
   <categories>
     <category>Game</category>
   </categories>
+
+  <keywords>
+    <keyword>minecraft</keyword>
+    <keyword>modpacks</keyword>
+    <keyword>ftb</keyword>
+    <keyword>curseforge</keyword>
+    <keyword>forge</keyword>
+    <keyword>neoforge</keyword>
+    <keyword>fabric</keyword>
+  </keywords>
+
+
 
   <url type="homepage">https://feed-the-beast.com/</url>
   <url type="bugtracker">https://github.com/FTBTeam/FTB-App/issues</url>
@@ -55,7 +71,7 @@
       <li>Pack Customisation: Customise your modpacks with ease, add more mods from CurseForge, or
         upload your own mods. You can also customise your modpacks settings, such as the amount of
         RAM, Java Version, JVM Arguments, Startup arguments and more.</li>
-      <li>Sharing: Share your modpacks with friends with just a few clicks.</li>
+      <li>Sharing: Share your minecraft modpacks with friends with just a few clicks.</li>
     </ul>
   </description>
 
