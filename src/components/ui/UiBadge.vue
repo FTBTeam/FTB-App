@@ -1,3 +1,30 @@
+<script lang="ts" setup>
+import {
+  colorFromElementColorType,
+  ElementAriaDirection,
+  ElementColorType,
+} from '@/components/ui';
+
+import { computed } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+const {
+  type = 'normal',
+  icon = '',
+  ariaLabel = '',
+  ariaLabelPos = 'down',
+  hoverEffect = false
+} = defineProps<{
+  type: ElementColorType;
+  icon: string;
+  ariaLabel: string;
+  ariaLabelPos: ElementAriaDirection;
+  hoverEffect: boolean
+}>()
+
+const colorFromType = computed(() => colorFromElementColorType(type, !hoverEffect, false));
+</script>
+
 <template>
   <div 
     class="ui-badge" 
@@ -5,29 +32,10 @@
     :aria-label="ariaLabel ? ariaLabel : undefined"
     :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined">
     
-    <font-awesome-icon :fixed-width="true" v-if="icon" :icon="icon" />
+    <FontAwesomeIcon :fixed-width="true" v-if="icon" :icon="icon" />
     <slot />
   </div>
 </template>
-
-<script lang="ts">
-import UiButton, {ElementAriaDirection, ElementColorType} from '@/components/ui/UiButton.vue';
-
-
-@Component
-export default class UiBadge extends Vue {
-  @Prop({default: 'normal'}) type!: ElementColorType;
-  @Prop() icon!: string;
-  @Prop({ default: "" }) ariaLabel!: string;
-  @Prop({ default: "down" as ElementAriaDirection }) ariaLabelPos!: ElementAriaDirection;
-  
-  @Prop({ default: false }) hoverEffect!: boolean;
-  
-  get colorFromType() {
-    return UiButton.colorFromElementColorType(this.type, !this.hoverEffect, false);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .ui-badge {

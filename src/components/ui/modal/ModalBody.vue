@@ -4,12 +4,6 @@
   </div>
 </template>
 
-<script lang="ts">
-
-@Component
-export default class ModalBody extends Vue {}
-</script>
-
 <style lang="scss" scoped>
 .modal-body {
   padding: 0 1rem 1rem 1.3rem;

@@ -1,3 +1,61 @@
+<script lang="ts" setup>
+import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
+import { computed } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
+export type ElementAriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
+export type ElementStandardSizing = 'small' | 'normal' | 'large';
+
+const {
+  type = 'normal',
+  size = 'normal',
+  disabled,
+  working = false,
+  icon,
+  fullWidth = false,
+  wider = false,
+  ariaLabel = '',
+  ariaLabelPos = 'down'
+} = defineProps<{
+  type: ElementColorType;
+  size: ElementStandardSizing;
+  disabled: boolean;
+  working: boolean;
+  icon: IconDefinition;
+  fullWidth: boolean;
+  wider: boolean;
+  ariaLabel: string;
+  ariaLabelPos: ElementAriaDirection;
+}>()
+
+const emit = defineEmits<{
+  (e: 'click', event: MouseEvent): void
+}>()
+
+function click(event: MouseEvent) {
+  if (disabled || working) {
+    return;
+  }
+
+  emit('click', event);
+}
+
+const colorFromType = computed(() => colorFromElementColorType(type, disabled, working);
+
+export function colorFromElementColorType(type: ElementColorType, disabled: boolean = false, working = false) {
+  switch (type) {
+    case 'primary': return 'bg-indigo-600' + (!disabled && !working ? ' hover:bg-indigo-500' : '');
+    case 'secondary': return 'bg-green-600' + (!disabled && !working ? ' hover:bg-green-500' : '');
+    case 'success': return 'bg-primary' + (!disabled && !working ? ' hover:bg-light-primary' : '');
+    case 'danger': return 'bg-danger' + (!disabled && !working ? ' hover:bg-light-danger' : '');
+    case 'warning': return 'bg-warning' + (!disabled && !working ? ' hover:bg-light-warning' : '');
+    case 'info': return 'bg-info' + (!disabled && !working ? ' hover:bg-light-info' : '');
+    case 'normal': return 'bg-gray-600' + (!disabled && !working ? ' hover:bg-gray-500' : '');
+  }
+}
+</script>
+
 <template>
   <div class="ui-button-holder" :aria-label="ariaLabel ? ariaLabel : undefined" :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined" :class="{'disabled': working || disabled}">
     <div 
@@ -5,64 +63,17 @@
       @click="click"
     >
       <span :class="{'opacity-0': working}">
-        <font-awesome-icon :fixedWidth="true" v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
+        <FontAwesomeIcon :fixedWidth="true" v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
         <slot />
       </span>
       <transition name="fade">
         <span v-if="working" class="absolute inset-0 flex items-center justify-center">
-          <font-awesome-icon :fixedWidth="true" icon="spinner" spin />
+          <FontAwesomeIcon :fixedWidth="true" icon="spinner" spin />
         </span>
       </transition>
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
-
-export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
-export type ElementAriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
-export type ElementStandardSizing = 'small' | 'normal' | 'large';
-
-@Component
-export default class UiButton extends Vue {
-  @Prop({ default: 'normal' }) type!: ElementColorType;
-  @Prop({ default: 'normal' }) size!: ElementStandardSizing;
-  @Prop() disabled!: boolean;
-  @Prop() working!: boolean;
-  @Prop() icon!: IconDefinition;
-  
-  @Prop({ default: false }) fullWidth!: boolean;
-  @Prop({ default: false }) wider!: boolean;
-  
-  @Prop({ default: "" }) ariaLabel!: string;
-  @Prop({ default: "down" as ElementAriaDirection }) ariaLabelPos!: ElementAriaDirection;
-  
-  click(event: MouseEvent) {
-    if (this.disabled || this.working) {
-      return;
-    }
-    
-    this.$emit('click', event);
-  }
-  
-  get colorFromType() {
-    return UiButton.colorFromElementColorType(this.type, this.disabled, this.working);
-  }
-  
-  public static colorFromElementColorType(type: ElementColorType, disabled: boolean = false, working = false) {
-    switch (type) {
-      case 'primary': return 'bg-indigo-600' + (!disabled && !working ? ' hover:bg-indigo-500' : '');
-      case 'secondary': return 'bg-green-600' + (!disabled && !working ? ' hover:bg-green-500' : '');
-      case 'success': return 'bg-primary' + (!disabled && !working ? ' hover:bg-light-primary' : '');
-      case 'danger': return 'bg-danger' + (!disabled && !working ? ' hover:bg-light-danger' : '');
-      case 'warning': return 'bg-warning' + (!disabled && !working ? ' hover:bg-light-warning' : '');
-      case 'info': return 'bg-info' + (!disabled && !working ? ' hover:bg-light-info' : '');
-      case 'normal': return 'bg-gray-600' + (!disabled && !working ? ' hover:bg-gray-500' : '');
-    }
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .ui-button-holder {

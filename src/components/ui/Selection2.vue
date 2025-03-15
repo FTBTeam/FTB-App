@@ -1,3 +1,104 @@
+<script lang="ts" setup>
+import {createLogger} from '@/core/logger';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+
+export type SelectionOptions = SelectionOption[];
+export type SelectionOption = {
+  label: string;
+  value: any;
+  badge?: {
+    color?: string;
+    text: string;
+    icon?: string | string[];
+  };
+  meta?: any;
+};
+
+const logger = createLogger(`Selection2.vue`);
+const {
+  label = '',
+  icon = null,
+  direction = 'left',
+  minWidth = 0,
+  placeholder = 'Select option',
+  options = [],
+  badgeEnd = false,
+  allowDeselect = false,
+  openUp = false,
+  disabled = false,
+  value = null,
+} = defineProps<{
+  label: string;
+  icon: string | string[] | null;
+  direction: 'left' | 'right';
+  minWidth: number;
+  placeholder: string;
+  options: SelectionOptions;
+  badgeEnd: boolean;
+  allowDeselect: boolean;
+  openUp: boolean;
+  disabled: boolean;
+  value: any;
+}>()
+
+const emit = defineEmits<{
+  (e: 'change', value: any): void
+  (e: 'input', value: any): void
+}>()
+
+const open = ref(false);
+const selectionRef = useTemplateRef('selection')
+const id = Math.random().toString(36).substring(2, 9);
+
+onMounted(() => {
+  if (options.length) {
+    // Check for duplicate keys and warn
+    const keys = options.map(o => o.value);
+    const uniqueKeys = new Set(keys);
+    if (keys.length !== uniqueKeys.size) {
+      logger.warn("Duplicate keys detected in selection options for: " + label);
+    }
+  }
+
+  document.addEventListener('click', handleDocumentClick);
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClick);
+})
+
+const selected = computed(() => options.find(o => o.value === value) ?? null);
+
+function handleDocumentClick(event: any) {
+  // Check if the click was inside the selection box and that selection box has the same id as this one
+  const closest = event.target.closest('.selection');
+  if (closest && closest.id === id) {
+    return;
+  }
+
+  open.value = false;
+}
+
+function select(option: SelectionOption) {
+  if (option.value === value) {
+    if (allowDeselect) {
+      emit('input', null)
+      emit('change', null)
+    }
+    
+    open.value = false;
+    selectionRef.value?.blur();
+    return;
+  }
+
+  emit('input', option.value)
+  emit('change', option.value)
+  open.value = false;
+  selectionRef.value?.blur();
+}
+</script>
+
 <template>
   <div class="select-box" :class="{disabled}">
     <div class="label" v-if="label && !icon">{{ label }}</div>
@@ -16,17 +117,17 @@
           <div class="meta" v-if="selected.meta">{{ selected.meta }}</div>
         </div>
 
-        <font-awesome-icon class="arrow" icon="chevron-down" />
+        <FontAwesomeIcon class="arrow" icon="chevron-down" />
       </div>
       
       <div class="main-icon" v-else>
-        <font-awesome-icon :fixed-width="true" :icon="icon" />
+        <FontAwesomeIcon :fixed-width="true" :icon="icon" />
       </div>
 
       <div class="dropdown" @click.stop :class="{'open-up': openUp, [direction]: true}" :style="{width: (minWidth === 0 ? undefined : minWidth + 'px')}">
         <div class="item list-item" :class="{'no-badge': !option.badge}" v-for="(option, index) in options" :key="index" @click="() => select(option)">
           <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
-            <font-awesome-icon v-if="option.badge.icon" :icon="option.badge.icon" class="mr-1" />
+            <FontAwesomeIcon v-if="option.badge.icon" :icon="option.badge.icon" class="mr-1" />
             {{ option.badge.text }}
           </div>
           <div class="text">{{ option.label }}</div>
@@ -40,100 +141,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {createLogger} from '@/core/logger';
-
-export type SelectionOptions = SelectionOption[];
-export type SelectionOption = {
-  label: string;
-  value: any;
-  badge?: {
-    color?: string;
-    text: string;
-    icon?: string | string[];
-  };
-  meta?: any;
-};
-
-@Component
-export default class Selection2 extends Vue {
-  private logger = createLogger(`Selection2.vue`);
-  
-  @Prop() label!: string;
-  @Prop({default: null}) icon!: string | string[] | null;
-  @Prop({default: 'left'}) direction!: 'left' | 'right';
-  @Prop({default: 0}) minWidth!: number;
-  
-  @Prop({ default: 'Select option' }) placeholder!: string;
-  @Prop({ default: () => [] }) options!: SelectionOptions;
-  
-  @Prop({ default: false }) badgeEnd!: boolean;
-  @Prop({default: false}) allowDeselect!: boolean;
-  
-  @Prop({default: false}) openUp!: boolean;
-  @Prop({default: false}) disabled!: boolean;
-  
-  @Prop({default: null}) value!: any;
-  @Emit() change(value: any) {
-    return value;
-  }
-  
-  open = false;
-  
-  id = Math.random().toString(36).substring(2, 9);
-  
-  mounted() {
-    if (this.options.length) {
-      // Check for duplicate keys and warn
-      const keys = this.options.map(o => o.value);
-      const uniqueKeys = new Set(keys);
-      if (keys.length !== uniqueKeys.size) {
-        this.logger.warn( "Duplicate keys detected in selection options for: " + this.label ?? "unknown");
-      }
-    }
-    
-    document.addEventListener('click', this.handleDocumentClick);
-  }
-
-  handleDocumentClick(event: any) {
-    // Check if the click was inside the selection box and that selection box has the same id as this one
-    const closest = event.target.closest('.selection');
-    if (closest && closest.id === this.id) {
-      return;
-    }
-    
-    this.open = false;
-  }
-  
-  destroyed() {
-    document.removeEventListener('click', this.handleDocumentClick);
-  }
-  
-  select(option: SelectionOption) {
-    if (option.value === this.value) {
-      if (this.allowDeselect) {
-        this.$emit('input', null)
-        this.$emit('change', null)
-      }
-      this.open = false;
-      // Forcefully deselect the dropdown
-      (this.$refs['selection'] as any).blur();
-      return;
-    }
-
-    this.$emit('input', option.value)
-    this.$emit('change', option.value)
-    this.open = false;
-    // Forcefully deselect the dropdown
-    (this.$refs['selection'] as any).blur();
-  }
-  
-  get selected() {
-    return this.options.find(o => o.value === this.value) ?? null;
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .select-box {

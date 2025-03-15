@@ -1,3 +1,20 @@
+<script lang="ts" setup>
+
+const { disabled, label, desc, alignRight = false, value } = defineProps<{
+  disabled: boolean;
+  label: string;
+  desc: string;
+  alignRight: boolean;
+  value: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'input', value: boolean): void;
+}>();
+
+const hasText = label || desc;
+</script>
+
 <template>
   <div class="ui-toggle" @click="!disabled && input(!value)" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
     <div class="toggle" :class="{active: value}">
@@ -10,24 +27,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-
-@Component
-export default class UiToggle extends Vue {
-  @Prop() disabled!: boolean;
-  @Prop() label!: string;
-  @Prop() desc!: string;
-  @Prop({default: false}) alignRight!: boolean;
-  
-  @Prop() value!: boolean;
-  @Emit() input(value: boolean) {}
-  
-  get hasText() {
-    return this.label || this.desc;
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .ui-toggle {

@@ -10,12 +10,11 @@
   </div>
 </template>
 
-<script lang="ts">
-@Component
-export default class Loader extends Vue {
-  @Prop({ default: 'Loading' }) title!: string;
-  @Prop({ default: "Shouldn't be a moment" }) subTitle!: string | null;
-}
+<script lang="ts" setup>
+const { title = 'Loading', subTitle = 'Shouldn\'t be a moment' } = defineProps<{
+  title: string;
+  subTitle: string | null;
+}>()
 </script>
 
 <style lang="scss" scoped>

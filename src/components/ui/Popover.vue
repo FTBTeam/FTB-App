@@ -1,3 +1,17 @@
+<script lang="ts" setup>
+import { defineProps } from 'vue';
+
+const {
+  text = '',
+  leftShift = 110,
+  position = 'middle',
+} = defineProps<{
+  text: string;
+  leftShift: number;
+  position: 'middle' | 'bottom';
+}>();
+</script>
+
 <template>
   <div class="popover-wrapper">
     <slot></slot>
@@ -9,17 +23,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-
-@Component
-export default class Popover extends Vue {
-  @Prop({ default: '' }) text!: string;
-  @Prop({ default: 110 }) leftShift!: string;
-
-  @Prop({ default: 'middle' }) position!: string;
-}
-</script>
 
 <style scoped lang="scss">
 .popover-wrapper {

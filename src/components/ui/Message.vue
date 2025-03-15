@@ -1,7 +1,7 @@
 <template>
   <article class="message" :class="{ [type]: true }">
     <div class="message-header" v-if="hasHeader">
-      <font-awesome-icon class="icon" v-if="icon" :icon="icon"></font-awesome-icon>
+      <FontAwesomeIcon class="icon" v-if="icon" :icon="icon" />
       <div class="heading">
         <slot name="header" v-if="$slots.header" />
         <template v-else>{{ header }}</template>
@@ -13,27 +13,33 @@
   </article>
 </template>
 
-<script lang="ts">
-import Vue from 'vue';
+<script lang="ts" setup>
 import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed, useSlots } from 'vue';
 
+const slots = useSlots()
+
+const {
+  type = MessageType.NORMAL,
+  icon = null,
+  header = '',
+} = defineProps<{
+  type: MessageType;
+  icon: IconDefinition | null;
+  header: string;
+}>()
+
+const hasHeader = computed(() => slots.header || header)
+</script>
+
+<script lang="ts">
 export enum MessageType {
   NORMAL = 'normal',
   SUCCESS = 'success',
   INFO = 'info',
   WARNING = 'warning',
   DANGER = 'danger',
-}
-
-@Component
-export default class Message extends Vue {
-  @Prop({ default: MessageType.NORMAL }) type!: MessageType;
-  @Prop({ default: null }) icon!: null | IconDefinition;
-  @Prop({ default: '' }) header!: string;
-
-  get hasHeader() {
-    return this.$slots.header || this.header;
-  }
 }
 </script>
 
