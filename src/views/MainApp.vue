@@ -65,7 +65,7 @@ import {SocketState} from '@/modules/websocket/types';
 import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import AdAside from '@/components/layout/AdAside.vue';
-import GlobalComponents from '@/components/templates/GlobalComponents.vue';
+import GlobalComponents from '@/components/layout/GlobalComponents.vue';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';
 import {createLogger} from '@/core/logger';
@@ -73,11 +73,10 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import os from 'os';
 import {constants} from '@/core/constants';
-import {StoreCredentialsAction} from '@/core/state/core/apiCredentialsState';
 import {adsEnabled, emitter} from '@/utils';
-import Loader from '@/components/atoms/Loader.vue';
-import Onboarding from '@/components/core/dialogs/Onboarding.vue';
-import UiButton from '@/components/core/ui/UiButton.vue';
+import Loader from '@/components/ui/Loader.vue';
+import Onboarding from '@/components/modals/Onboarding.vue';
+import UiButton from '@/components/ui/UiButton.vue';
 import {alertController} from '@/core/controllers/alertController';
 
 @Component({
@@ -101,9 +100,6 @@ export default class MainApp extends Vue {
   @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
   
   @Action("storeWsSecret", ns("v2/app")) storeWsSecret!: (secret: string) => Promise<void>
-  
-  @Action("storeCredentials", ns("v2/apiCredentials")) storeCredentials!: StoreCredentialsAction;
-  @Action("setWasUserSet", ns("v2/apiCredentials")) setWasUserSet!: () => Promise<void>;
   
   private logger = createLogger("MainApp.vue");
   
@@ -206,15 +202,7 @@ export default class MainApp extends Vue {
         return;
       }
       
-      // TODO: Remove
       this.logger.info("App initialized from the subprocess");
-      const {apiCredentials} = reply;
-      
-      if (apiCredentials) {
-        this.logger.info("Setting api credentials");
-        await this.storeCredentials(apiCredentials);
-        await this.setWasUserSet();
-      }
     } catch (e) {
       console.error(e);
     }

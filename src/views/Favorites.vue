@@ -35,8 +35,8 @@ import {Component, Vue} from 'vue-property-decorator';
 import {Action, Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {UserFavorite} from '@/core/state/misc/userFavouritesState';
-import PackPreview from '@/components/core/modpack/PackPreview.vue';
-import UiButton from '@/components/core/ui/UiButton.vue';
+import PackPreview from '@/components/groups/modpack/PackPreview.vue';
+import UiButton from '@/components/ui/UiButton.vue';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {RouterNames} from '@/router';
 

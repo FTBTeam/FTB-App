@@ -22,9 +22,9 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {JavaFetch} from '@/core/javaFetch';
 import {alertController} from '@/core/controllers/alertController';
-import {ChangelogData} from '@/components/templates/changelogs/Changelog.vue';
-import UiButton from '@/components/core/ui/UiButton.vue';
-import ChangelogEntry from '@/components/templates/changelogs/ChangelogEntry.vue';
+import {ChangelogData} from '@/components/groups/changelogs/Changelog.vue';
+import UiButton from '@/components/ui/UiButton.vue';
+import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import {constants} from '@/core/constants';
 
 type ChangelogList = {

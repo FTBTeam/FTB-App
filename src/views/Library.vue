@@ -65,18 +65,18 @@
 
 <script lang="ts">
 import {Component, Vue, Watch} from 'vue-property-decorator';
-import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
+import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {Action, Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import PackCard2 from '@/components/core/modpack/PackCard2.vue';
+import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
-import Loader from '@/components/atoms/Loader.vue';
-import Selection2, {SelectionOptions} from '@/components/core/ui/Selection2.vue';
+import Loader from '@/components/ui/Loader.vue';
+import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
-import UiButton from '@/components/core/ui/UiButton.vue';
-import InstallQueue from '@/components/core/modpack/InstallQueue/InstallQueue.vue';
-import PackPreview from '@/components/core/modpack/PackPreview.vue';
+import UiButton from '@/components/ui/UiButton.vue';
+import InstallQueue from '@/components/groups/modpack/InstallQueue/InstallQueue.vue';
+import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import {RouterNames} from '@/router';
 
 const groupOptions = [

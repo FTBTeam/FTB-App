@@ -72,7 +72,7 @@ import {Component, Vue, Watch} from 'vue-property-decorator';
 import {Action, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {alertController} from '@/core/controllers/alertController';
-import UiButton from '@/components/core/ui/UiButton.vue';
+import UiButton from '@/components/ui/UiButton.vue';
 
 @Component({
   components: {UiButton}

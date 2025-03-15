@@ -22,9 +22,9 @@
 
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
-import UiButton from '@/components/core/ui/UiButton.vue';
+import UiButton from '@/components/ui/UiButton.vue';
 import platform from '@/utils/interface/electron-overwolf';
-import Link from '@/components/core/ui/Link.vue';
+import Link from '@/components/ui/Link.vue';
 
 @Component({
   components: {UiButton, Link}

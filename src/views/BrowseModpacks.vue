@@ -60,17 +60,17 @@
 <script lang="ts">
 import {Component, Vue, Watch} from 'vue-property-decorator';
 import {Action, Getter} from 'vuex-class';
-import FTBSearchBar from '@/components/atoms/input/FTBSearchBar.vue';
+import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {PackProviders} from '@/modules/modpacks/types';
 import {Route} from 'vue-router';
 import {debounce} from '@/utils';
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import Loader from '@/components/atoms/Loader.vue';
-import PackPreview from '@/components/core/modpack/PackPreview.vue';
+import Loader from '@/components/ui/Loader.vue';
+import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
-import UiPagination from '@/components/core/ui/UiPagination.vue';
+import UiPagination from '@/components/ui/UiPagination.vue';
 import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 import {createLogger} from '@/core/logger';
 import {RouterNames} from '@/router';

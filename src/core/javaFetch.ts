@@ -3,6 +3,7 @@ import {HttpMethod} from '@/core/@types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
 import {WebRequestData} from '@/core/@types/javaApi';
 import {createLogger} from '@/core/logger';
+import { constants } from '@/core/constants';
 
 interface FetchResponseRaw {
   status: string;
@@ -84,41 +85,14 @@ export class JavaFetch {
   
   //#region helper methods
   public static modpacksCh(endpoint: string) {
-    const credentials = store.state["v2/apiCredentials"];
-    const {apiUrl, usesBearerAuth} = credentials;
-    
-    const url = `${apiUrl}${usesBearerAuth ? "" : "/public"}/${endpoint}`;
-    return JavaFetch.create(url)
+    return JavaFetch.create(constants.modpacksApi + "/" + endpoint)
   }
   
   public static modpacksChPrivate(endpoint: string) {
-    const credentials = store.state["v2/apiCredentials"];
-    const {apiUrl, apiSecret, supportsPublicPrefix, usesBearerAuth, wasUserSet} = credentials;
-    
-    // Compute the correct url
-    let url;
-    if (!wasUserSet) {
-      url = `${apiUrl}/${apiSecret ?? 'public'}/${endpoint}`; 
-    } else {
-      if (supportsPublicPrefix && !usesBearerAuth) {
-        url = `${apiUrl}/${apiSecret ?? "public"}/${endpoint}`;
-      } else {
-        url = `${apiUrl}/${endpoint}`;
-      }
-    }
-    
-    const fetcher = JavaFetch.create(url);
-    
-    if (wasUserSet && usesBearerAuth && apiSecret) {
-      fetcher.header("Authorization", `Bearer ${apiSecret}`)
-    }
-    
-    return fetcher
+    // TODO: Implement private api key
+    return JavaFetch.create(constants.modpacksApi + "/" + endpoint)
   }
   
-  private static apiKey() {
-    return store.state["v2/apiCredentials"].apiSecret ?? "public"
-  }
   //#endregion
   
   public method(method: HttpMethod) {
@@ -161,8 +135,7 @@ export class JavaFetch {
   }
   
   async execute(): Promise<FetchResponse | null> {
-    const cleanUrl = JavaFetch.apiKey() === "public" ? this._url : this._url.replace(JavaFetch.apiKey(), "********")
-    this.logger.debug(`Executing request to ${this._method}::${cleanUrl}`)
+    this.logger.debug(`Executing request to ${this._method}::${this._url}`)
 
     const payload: Nullable<MessageRaw<WebRequestData>, "body"> = {
       url: this._url,

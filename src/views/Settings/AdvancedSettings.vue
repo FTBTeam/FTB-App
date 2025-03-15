@@ -61,12 +61,12 @@ import {Component, Vue} from 'vue-property-decorator';
 import {SettingsState} from '@/modules/settings/types';
 import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import UiToggle from '@/components/core/ui/UiToggle.vue';
-import UiButton from '@/components/core/ui/UiButton.vue';
+import UiToggle from '@/components/ui/UiToggle.vue';
+import UiButton from '@/components/ui/UiButton.vue';
 import {SettingsData} from '@/core/@types/javaApi';
-import Loader from '@/components/atoms/Loader.vue';
-import ProgressBar from '@/components/atoms/ProgressBar.vue';
-import Selection2 from '@/components/core/ui/Selection2.vue';
+import Loader from '@/components/ui/Loader.vue';
+import ProgressBar from '@/components/ui/ProgressBar.vue';
+import Selection2 from '@/components/ui/Selection2.vue';
 import {ReleaseChannelOptions} from '@/utils/commonOptions';
 
 type ReleaseChannel = 'release' | 'beta' | 'alpha';

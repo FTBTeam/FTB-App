@@ -167,7 +167,7 @@ import {Component, Vue, Watch} from 'vue-property-decorator';
 import {ModPack} from '@/modules/modpacks/types';
 import {Getter, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
-import ProgressBar from '@/components/atoms/ProgressBar.vue';
+import ProgressBar from '@/components/ui/ProgressBar.vue';
 import {SettingsState} from '@/modules/settings/types';
 import {RouterNames} from '@/router';
 import Router from 'vue-router';

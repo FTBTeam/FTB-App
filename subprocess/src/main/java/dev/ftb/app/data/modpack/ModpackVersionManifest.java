@@ -158,7 +158,7 @@ public class ModpackVersionManifest {
         LOGGER.info("Converting pack '{}'.", manifest);
 
         Request.Builder builder = new Request.Builder()
-                .url(ModpacksChUtils.getPublicApi() + "curseforge/import")
+                .url(ModpacksChUtils.getModpacksApi() + "curseforge/import")
                 .put(new PathRequestBody(manifest));
         
         ModpacksChUtils.injectBearerHeader(builder);
@@ -166,12 +166,12 @@ public class ModpackVersionManifest {
         try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
             if (body == null) {
-                LOGGER.error("Request returned empty body. Status code: " + response.code());
+                LOGGER.error("Request returned empty body. Status code: {}", response.code());
                 return null;
             }
             ModpackVersionManifest versionManifest = JsonUtils.parse(GSON, body.string(), ModpackVersionManifest.class);
             if (versionManifest.getStatus().equals("error")) {
-                LOGGER.error("Failed to convert pack. Got error: " + versionManifest.getMessage());
+                LOGGER.error("Failed to convert pack. Got error: {}", versionManifest.getMessage());
                 return null;
             }
             return versionManifest;

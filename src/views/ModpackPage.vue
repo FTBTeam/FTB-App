@@ -60,17 +60,17 @@
 import {Component, Vue} from 'vue-property-decorator';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {Action} from 'vuex-class';
-import PackMetaHeading from '@/components/molecules/modpack/PackMetaHeading.vue';
-import PackTitleHeader from '@/components/molecules/modpack/PackTitleHeader.vue';
+import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
-import ModpackVersions from '@/components/templates/modpack/ModpackVersions.vue';
-import PackBody from '@/components/molecules/modpack/PackBody.vue';
-import ClosablePanel from '@/components/molecules/ClosablePanel.vue';
-import ModpackInstallModal from '@/components/core/modpack/modals/ModpackInstallModal.vue';
+import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
+import PackBody from '@/components/groups/modpack/PackBody.vue';
+import ClosablePanel from '@/components/ui/ClosablePanel.vue';
+import ModpackInstallModal from '@/components/modals/ModpackInstallModal.vue';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {ns} from '@/core/state/appState';
 import {GetModpack, GetModpackVersion} from '@/core/state/modpacks/modpacksState';
-import Loader from '@/components/atoms/Loader.vue';
+import Loader from '@/components/ui/Loader.vue';
 import {createLogger} from '@/core/logger';
 
 @Component({
