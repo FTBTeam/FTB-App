@@ -1,3 +1,21 @@
+<script lang="ts" setup>
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+const {
+  value,
+  placeholder = 'Search',
+  min = -1,
+  darkMode = false,
+  alpha = false,
+} = defineProps<{
+  value: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'input', value: string): void;
+}>();
+</script>
+
 <template>
   <div
     class="flex flex-row items-center relative shadow rounded ftb-search"
@@ -7,31 +25,15 @@
       class="block w-full p-3 rounded-tl rounded-bl appearance-none leading-normal text-gray-300"
       :value="value"
       :placeholder="placeholder"
-      @focusout="emit"
-      @keydown.enter="emit"
-      @input="emit"
+      @focusout="emit('input', value)"
+      @keydown.enter="emit('input', value)"
+      @input="emit('input', value)"
     />
     <div class="search-button p-3 cursor-pointer rounded-tr rounded-br">
-      <font-awesome-icon icon="search" />
+      <FontAwesomeIcon icon="search" />
     </div>
   </div>
 </template>
-
-<script lang="ts">
-@Component
-export default class FTBSearchBar extends Vue {
-  @Prop() value!: string;
-  @Prop() placeholder!: string;
-  @Prop({ default: -1 }) min!: number;
-
-  @Prop({ default: false }) darkMode!: boolean;
-  @Prop({ default: false }) alpha!: boolean;
-
-  emit(event: any) {
-    this.$emit('input', event.target.value);
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .shadow-error {

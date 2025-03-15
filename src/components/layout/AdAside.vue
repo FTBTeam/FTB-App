@@ -1,3 +1,118 @@
+<script lang="ts" setup>
+import Platform from '@/utils/interface/electron-overwolf';
+import {SettingsState} from '@/modules/settings/types';
+import {createLogger} from '@/core/logger';
+import { onMounted, useTemplateRef } from 'vue';
+import { useAttachDomEvent } from '@/composables';
+
+// TODO: [Port] fixme
+// @State('settings') public settings!: SettingsState;
+// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+const settings = ref<SettingsState | null>(null);
+// const debugDisabledAdAside = ref(false);
+
+const logger = createLogger("AdAside.vue");
+
+const { hideAds = false } = defineProps<{
+  hideAds: boolean;
+}>()
+
+const ads = ref<Record<string, any>>({});
+const showAdOnePlaceholder = ref(true);
+const showAdTwoPlaceholder = ref(true);
+const disableSmallerAd = ref(false);
+
+const adOneRef = useTemplateRef('adRef');
+const adTwoRef = useTemplateRef('adRefSecond');
+
+const platform = Platform
+const isElectron = platform.isElectron();
+
+const isSmallDisplay = computed(() => (window as any)?.ftbFlags?.smallMonitor);
+
+useAttachDomEvent<UIEvent>('resize', onResize);
+
+onMounted(() => {
+  logger.info('Loaded ad sidebar widget');
+  onResize()
+  
+  if (isElectron) {
+    return;
+  }
+
+  setTimeout(() => {
+    loadAds("ad-1", (value) => showAdOnePlaceholder.value = value, adOneRef.value?.adRef, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
+    if (!(window as any)?.ftbFlags?.smallMonitor) {
+      loadAds("ad-2", (value) => showAdTwoPlaceholder.value = value, adTwoRef.value?.adRefSecond, {
+        size: {
+          width: 300,
+          height: 250
+        }
+      });
+    }
+  }, 1500);
+})
+
+function onResize() {
+  if (window.outerHeight < 890 && !disableSmallerAd.value) {
+    disableSmallerAd.value = true;
+  }
+
+  if (window.outerHeight > 890 && disableSmallerAd.value) {
+    disableSmallerAd.value = false;
+  }
+}
+
+// TODO: [Port] fixme
+const advertsEnabled = true; // return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
+const isDevEnv = process.env.NODE_ENV !== 'production';
+
+async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => void, elm: any, options?: any) {
+  emitPlaceholderUpdate(true);
+
+  if (isDevEnv) {
+    return;
+  }
+
+  logger.info(`[AD: ${id}] Loading advert system for ${id}`);
+
+  if (typeof OwAd === 'undefined' || !OwAd) {
+    emitPlaceholderUpdate(true);
+    logger.info(`[AD: ${id}] No advert object available`);
+    return;
+  }
+
+  logger.info(`[AD: ${id}] Created advert object`);
+
+  ads.value[id] = new OwAd(elm, options);
+
+  const win = window as any;
+  if (!win.ads) {
+    win.ads = {};
+  }
+
+  win.ads[id] = ads.value[id];
+  ads.value[id].addEventListener('error', (error: any) => {
+    emitPlaceholderUpdate(true);
+    logger.info(`[AD: ${id}] Failed to load ad`, error);
+  });
+  ads.value[id].addEventListener('player_loaded', () => {
+    logger.info(`[AD: ${id}] Player loaded`);
+  });
+  ads.value[id].addEventListener('display_ad_loaded', () => {
+    emitPlaceholderUpdate(false);
+    logger.info(`[AD: ${id}] Display ad loaded and ready`);
+  });
+  ads.value[id].addEventListener('play', () => {
+    emitPlaceholderUpdate(false);
+    logger.info(`[AD: ${id}] Ad ready and loaded`);
+  });
+  ads.value[id].addEventListener('complete', () => {
+    this.logger.info(`[AD: ${id}] Video ad finished playing`);
+  });
+}
+</script>
+
 <template>
   <div class="ad-aside" :class="{ 'electron': isElectron }">
     <template v-if="!hideAds">
@@ -46,132 +161,6 @@
     </template>
   </div>
 </template>
-
-<script lang="ts">
-import platform from '@/utils/interface/electron-overwolf';
-import {SettingsState} from '@/modules/settings/types';
-import {createLogger} from '@/core/logger';
-import {adsEnabled} from '@/utils';
-
-@Component
-export default class AdAside extends Vue {
-  @State('settings') public settings!: SettingsState;
-  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-  
-  @Prop({default: false}) public hideAds!: boolean;
-  
-  private logger = createLogger("AdAside.vue");
-
-  ads: Record<string, any> = {};
-  platform = platform;
-  showAdOnePlaceholder = true;
-  showAdTwoPlaceholder = true;
-  
-  disableSmallerAd = false;
-
-  get isElectron() {
-    return platform.isElectron();
-  }
-
-  get isSmallDisplay() {
-    return (window as any)?.ftbFlags?.smallMonitor;
-  }
-  
-  async mounted() {
-    this.logger.info('Loaded ad sidebar widget');
-    
-    // On windows reload
-    window.addEventListener("resize", this.onResize);
-    
-    // Trigger initial mount
-    this.onResize();
-    
-    // Kinda dirty hack for this file
-    if (this.isElectron) {
-      return;
-    }
-    
-    setTimeout(() => {
-      this.loadAds("ad-1", (value) => this.showAdOnePlaceholder = value, this.$refs.adRef, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
-      if (!(window as any)?.ftbFlags?.smallMonitor) {
-        this.loadAds("ad-2", (value) => this.showAdTwoPlaceholder = value, this.$refs.adRefSecond, {
-          size: {
-            width: 300,
-            height: 250
-          }
-        });
-      }
-    }, 1500);
-  }
-  
-  destroyed() {
-    window.removeEventListener("resize", this.onResize);
-  }
-  
-  onResize() {
-    if (window.outerHeight < 890 && !this.disableSmallerAd) {
-      this.disableSmallerAd = true;
-    }
-
-    if (window.outerHeight > 890 && this.disableSmallerAd) {
-      this.disableSmallerAd = false;
-    }
-  }
-
-  async loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => void, elm: any, options?: any) {
-    emitPlaceholderUpdate(true);
-
-    if (this.isDevEnv) {
-      return;
-    }
-
-    this.logger.info(`[AD: ${id}] Loading advert system for ${id}`);
-
-    if (typeof OwAd === 'undefined' || !OwAd) {
-      emitPlaceholderUpdate(true);
-      this.logger.info(`[AD: ${id}] No advert object available`);
-      return;
-    }
-
-    this.logger.info(`[AD: ${id}] Created advert object`);
-
-    this.ads[id] = new OwAd(elm, options);
-    
-    const win = window as any;
-    if (!win.ads) {
-      win.ads = {};
-    } 
-    
-    win.ads[id] = this.ads[id];
-    this.ads[id].addEventListener('error', (error: any) => {
-      emitPlaceholderUpdate(true);
-      this.logger.info(`[AD: ${id}] Failed to load ad`, error);
-    });
-    this.ads[id].addEventListener('player_loaded', () => {
-      this.logger.info(`[AD: ${id}] Player loaded`);
-    });
-    this.ads[id].addEventListener('display_ad_loaded', () => {
-      emitPlaceholderUpdate(false);
-      this.logger.info(`[AD: ${id}] Display ad loaded and ready`);
-    });
-    this.ads[id].addEventListener('play', () => {
-      emitPlaceholderUpdate(false);
-      this.logger.info(`[AD: ${id}] Ad ready and loaded`);
-    });
-    this.ads[id].addEventListener('complete', () => {
-      this.logger.info(`[AD: ${id}] Video ad finished playing`);
-    });
-  }
-  
-  get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-  }
-
-  get isDevEnv() {
-    return process.env.NODE_ENV !== 'production';
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .ad-aside {

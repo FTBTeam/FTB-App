@@ -1,3 +1,59 @@
+<script lang="ts" setup>
+
+const {
+  label = '',
+  maxValue = 100,
+  minValue = 0,
+  currentValue = 0,
+  unit = '',
+  description = '',
+  cssClass = '',
+  rawStyle = '',
+  small = '',
+  dark = false,
+  visualMax,
+  step,
+  value = 0,
+} = defineProps<{
+  label: string;
+  maxValue: number;
+  minValue: number;
+  currentValue: number;
+  unit: string;
+  description: string;
+  cssClass: string;
+  rawStyle: string;
+  small: string;
+  dark: boolean;
+  visualMax: number;
+  step: number;
+  value: number;
+}>()
+
+function formatValue(value: number, dontShowThreads = false) {
+  if (unit === 's') {
+    if (value > 3600) {
+      return value > 86400 ? (value / 86400).toFixed(2) + ' Days' : (value / 3600).toFixed(2) + ' Hours';
+    }
+
+    return value + ' Seconds';
+  }
+
+  if (value == 0) {
+    return 'Unlimited';
+  }
+
+  if (value > 1024) {
+    return (
+      (value / 1024).toFixed(2) +
+      (unit === ' threads' && !dontShowThreads ? ' threads' : unit === 'MB' ? 'GB' : unit)
+    );
+  }
+
+  return value + (unit === 'threads' && dontShowThreads ? '' : ' ' + this.unit);
+}
+</script>
+
 <template>
   <div class="flex flex-col ftb-slider" :class="{ dark }">
     <div class="w-full">
@@ -37,51 +93,6 @@
     <small class="text-muted mt-4" v-if="small">{{ small }}</small>
   </div>
 </template>
-
-<script lang="ts">
-
-@Component
-export default class FTBSlider extends Vue {
-  @Prop({ default: '' }) label!: string;
-  @Prop({ default: 100 }) maxValue!: number;
-  @Prop({ default: 0 }) minValue!: number;
-  @Prop({ default: 0 }) currentValue!: number;
-  @Prop({ default: '' }) unit!: string;
-  @Prop({ default: '' }) description!: string;
-  @Prop({ default: '' }) cssClass!: string;
-  @Prop({ default: '' }) rawStyle!: string;
-  @Prop({ default: '' }) small!: string;
-
-  @Prop({ default: '' }) dark!: boolean;
-  @Prop() visualMax!: number;
-  @Prop() maxValueLabel!: string;
-  @Prop() step!: number;
-  @Prop({ default: 0 }) value!: number;
-
-  formatValue(value: number, dontShowThreads = false) {
-    if (this.unit === 's') {
-      if (value > 3600) {
-        return value > 86400 ? (value / 86400).toFixed(2) + ' Days' : (value / 3600).toFixed(2) + ' Hours';
-      }
-
-      return value + ' Seconds';
-    }
-
-    if (value == 0) {
-      return 'Unlimited';
-    }
-
-    if (value > 1024) {
-      return (
-        (value / 1024).toFixed(2) +
-        (this.unit === ' threads' && !dontShowThreads ? ' threads' : this.unit === 'MB' ? 'GB' : this.unit)
-      );
-    }
-
-    return value + (this.unit === 'threads' && dontShowThreads ? '' : ' ' + this.unit);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .ftb-slider {

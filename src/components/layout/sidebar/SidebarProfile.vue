@@ -1,3 +1,75 @@
+<script lang="ts" setup>
+import {AuthProfile} from '@/modules/core/core.types';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import {createLogger} from '@/core/logger';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import Popover from '@/components/ui/Popover.vue';
+
+const { disabled = false } = defineProps<{
+  disable: boolean
+}>()
+
+// TODO: [port] fix me
+// @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
+// @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
+//
+// @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
+// @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
+const editMode = ref(false);
+const loading = ref(false);
+
+const getProfiles = ref<AuthProfile[]>([]);
+const getActiveProfile = ref<AuthProfile | null>(null);
+
+const openSignIn = async () => {}
+const loadProfiles = async () => {}
+
+// TODO: Likely redefined on every render
+const logger = createLogger("SidebarProfile.vue")
+
+async function removeProfile(profile: AuthProfile) {
+  loading.value = true;
+
+  try {
+    logger.debug(`Removing profile ${profile.uuid}`)
+    const data = await sendMessage("profiles.remove", {
+      uuid: profile.uuid
+    })
+
+    if (data.success) {
+      await loadProfiles();
+    } else {
+      logger.debug('Failed to remove profile');
+    }
+  } catch (error) {
+    logger.debug('Failed to remove profile due to message errors', error);
+  }
+
+  loading.value = false;
+}
+
+async function setActiveProfile(profile: AuthProfile) {
+  loading.value = true;
+  try {
+    logger.debug(`Setting active profile ${profile.uuid}`)
+    const data = await sendMessage("profiles.setActiveProfile", {
+      uuid: profile.uuid
+    })
+
+    if (data.success) {
+      await loadProfiles();
+    } else {
+      logger.debug('Failed to set active profile');
+    }
+  } catch (error) {
+    logger.debug('Failed to set active profile due to message errors', error);
+  }
+
+  loading.value = false;
+}
+</script>
+
 <template>
   <div class="profile-area" :class="{ disable }">
     <div class="profile" v-if="(getProfiles && getProfiles.length)">
@@ -18,7 +90,7 @@
               <img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />
               Accounts
             </div>
-            <font-awesome-icon
+            <FontAwesomeIcon
               class="cursor-pointer"
               v-if="getProfiles.length"
               :icon="editMode ? 'times' : 'edit'"
@@ -58,81 +130,15 @@
         </section>
       </div>
     </div>
-    <popover text="Sign in to your Minecraft account" v-else>
+    <Popover text="Sign in to your Minecraft account" v-else>
       <div class="profile-placeholder" @click="$emit('signin')">
         <div class="fake-avatar">
           <font-awesome-icon icon="question" />
         </div>
       </div>
-    </popover>
+    </Popover>
   </div>
 </template>
-
-<script lang="ts">
-import {AuthProfile} from '@/modules/core/core.types';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
-import {createLogger} from '@/core/logger';
-
-@Component({
-  methods: {getMinecraftHead}
-})
-export default class SidebarProfile extends Vue {
-  @Prop({ default: false }) disable!: boolean;
-
-  @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
-  @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
-  
-  @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
-  @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
-
-  private logger = createLogger("SidebarProfile.vue")
-  
-  editMode = false;
-  loading = false;
-
-  async removeProfile(profile: AuthProfile) {
-    this.loading = true;
-
-    try {
-      this.logger.debug(`Removing profile ${profile.uuid}`)
-      const data = await sendMessage("profiles.remove", {
-        uuid: profile.uuid
-      })
-
-      if (data.success) {
-        this.loadProfiles();
-      } else {
-        this.logger.debug('Failed to remove profile');
-      }
-    } catch (error) {
-      this.logger.debug('Failed to remove profile due to message errors', error);
-    }
-
-    this.loading = false;
-  }
-
-  async setActiveProfile(profile: AuthProfile) {
-    this.loading = true;
-    try {
-      this.logger.debug(`Setting active profile ${profile.uuid}`)
-      const data = await sendMessage("profiles.setActiveProfile", {
-        uuid: profile.uuid
-      })
-
-      if (data.success) {
-        this.loadProfiles();
-      } else {
-        this.logger.debug('Failed to set active profile');
-      }
-    } catch (error) {
-      this.logger.debug('Failed to set active profile due to message errors', error);
-    }
-
-    this.loading = false;
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .selectable {

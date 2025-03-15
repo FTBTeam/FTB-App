@@ -1,5 +1,44 @@
+<script lang="ts" setup>
+import {InstanceRunningData} from '@/core/state/misc/runningState';
+import {InstanceJson} from '@/core/@types/javaApi';
+import {RouterNames} from '@/router';
+import { useTemplateRef } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAttachDomEvent } from '@/composables';
+
+const router = useRouter()
+
+// TODO: [port] fix me
+// @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
+// @State("instances", ns("v2/instances")) public instances!: InstanceJson[]
+const runningInstances = ref<InstanceRunningData[]>([])
+const instances = ref<InstanceJson[]>([])
+
+const panelOpen = ref(false);
+const elm = useTemplateRef('root');
+
+useAttachDomEvent<MouseEvent>('click', (event) => {
+  if (!elm.value?.contains(event.target)) {
+    panelOpen.value = false;
+  }
+})
+
+async function showRunningInstance(uuid: string) {
+  if (this.$route.fullPath === `/running/${uuid}`) return;
+
+  await router.push({ name: RouterNames.ROOT_RUNNING_INSTANCE, params: { uuid } });
+}
+
+const firstLoadedInstance = computed(() => runningWithData[0])
+const runningWithData = computed(() => runningInstances.value
+  .map(e => ({
+    ...e,
+    instance: instances.find(i => i.uuid === e.uuid)
+  })))
+</script>
+
 <template>
- <div class="sidebarRunningInstances flex justify-center mt-4" @click="panelOpen = !panelOpen" v-if="runningWithData.length > 0">
+ <div class="sidebarRunningInstances flex justify-center mt-4" @click="panelOpen = !panelOpen" v-if="runningWithData.length > 0" ref="root">
    <div class="relative cursor-pointer" style="max-width: 40px; max-height: 40px;">
      <img class="rounded border border-gray-700" v-if="firstLoadedInstance.instance" :src="firstLoadedInstance.instance.art" />
      <div class="bg-gray-600 bg-opacity-75 font-bold rounded text-xs absolute text-center" style="min-width: 1.5em; bottom: -.25rem; right: -.25rem;">{{runningWithData.length}}</div>
@@ -19,54 +58,6 @@
    </div>
  </div>
 </template>
-
-<script lang="ts">
-import {ns} from '@/core/state/appState';
-import {InstanceRunningData} from '@/core/state/misc/runningState';
-import {InstanceJson} from '@/core/@types/javaApi';
-import {RouterNames} from '@/router';
-
-@Component
-export default class SidebarRunningInstances extends Vue {
-  @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
-  @State("instances", ns("v2/instances")) public instances!: InstanceJson[]
-
-  panelOpen = false;
-  
-  mounted() {
-    document.addEventListener('click', this.clickOffHandler);
-  }
-  
-  destroyed() {
-    document.removeEventListener('click', this.clickOffHandler);
-  }
-  
-  clickOffHandler(event: any) {
-    if (!this.$el.contains(event.target)) {
-      this.panelOpen = false;
-    }
-  }
-  
-  async showRunningInstance(uuid: string) {
-    console.log('showRunningInstance', uuid)
-    if (this.$route.fullPath === `/running/${uuid}`) return;
-    
-    await this.$router.push({ name: RouterNames.ROOT_RUNNING_INSTANCE, params: { uuid } });
-  }
-  
-  get firstLoadedInstance() {
-    return this.runningWithData[0]
-  }
-  
-  get runningWithData(): ({ instance: InstanceJson | undefined } & InstanceRunningData)[] {
-    return  this.runningInstances
-      .map(e => ({
-        ...e,
-        instance: this.instances.find(i => i.uuid === e.uuid)
-      }))
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .instance-popout {

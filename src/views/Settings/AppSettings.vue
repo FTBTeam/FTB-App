@@ -96,7 +96,7 @@
       button="true"
       buttonText="Relocate / Move"
       buttonColor="primary"
-      :buttonClick="moveInstances"
+      @click="moveInstances"
     />
     <small class="text-muted block max-w-xl"
     >Changing your instance location with instances installed will cause your instances to be moved to the new

@@ -1,3 +1,72 @@
+<script lang="ts" setup>
+import platform from '@/utils/interface/electron-overwolf';
+import {SettingsState} from '@/modules/settings/types';
+import os from 'os';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
+import {createLogger} from '@/core/logger';
+import { useAttachDomEvent } from '@/composables';
+import { onMounted } from 'vue';
+
+const logger = createLogger('TitleBar.vue');
+
+const blurred = ref(false);
+const isMac = ref(false); // TODO: [Port] fixme
+const windowId = ref<string | null>(null);
+
+useAttachDomEvent<FocusEvent>('focus', windowFocusChanged)
+useAttachDomEvent<FocusEvent>('blur', windowFocusChanged)
+
+onMounted(async () => {
+  windowId.value = await platform.get.frame.getWindowId();
+})
+
+function windowFocusChanged(event: FocusEvent) {
+  blurred.value = event.type === 'blur';
+}
+
+// TODO: [Port] fixme
+// @Action('disconnect') public disconnect: any;
+// @State('settings') private settings!: SettingsState;
+// @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
+// @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
+function disconnect() {}
+function saveSettings() {}
+function toggleDebugDisableAdAside() {}
+const settings = ref<SettingsState | null>(null);
+
+function startDragging(event: any) {
+  platform.get.frame.handleDrag(event, windowId.value);
+}
+
+function close(): void {
+  // Callback only on overwolf
+  platform.get.frame.close(windowId.value, () => {
+    saveSettings(settings.value?.settings);
+    disconnect();
+  });
+}
+
+function minMax() {
+  platform.get.frame.max(windowId.value);
+}
+
+function minimise() {
+  platform.get.frame.min(windowId.value);
+}
+
+function max() {
+  platform.get.frame.max(windowId.value);
+}
+
+function goToSettings() {
+  safeNavigate(RouterNames.SETTINGS_APP);
+}
+
+const branch = computed(() => platform.get?.config?.branch);
+const isUnix = computed(() => !platform.isOverwolf());
+</script>
+
 <template>
   <div class="titlebar" :class="{ isMac, isUnix }" @mousedown="startDragging" @dblclick="minMax">
     <div class="spacer" v-if="isMac"></div>
@@ -41,85 +110,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import platform from '@/utils/interface/electron-overwolf';
-import {SettingsState} from '@/modules/settings/types';
-import os from 'os';
-import {safeNavigate} from '@/utils';
-import {RouterNames} from '@/router';
-import {createLogger} from '@/core/logger';
-
-@Component
-export default class TitleBar extends Vue {
-  @Action('disconnect') public disconnect: any;
-  @State('settings') private settings!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
-  @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
-  
-  private logger = createLogger('TitleBar.vue'); 
-  private windowId: string | null = null;
-  
-  isMac: boolean = false;
-
-  blurred = false;
-  
-  async mounted() {
-    this.isMac = os.type() === 'Darwin';
-    
-    this.windowId = await platform.get.frame.getWindowId();
-    this.logger.debug('Window ID', this.windowId)
-    
-    window.addEventListener('blur', this.windowFocusChanged);
-    window.addEventListener('focus', this.windowFocusChanged);
-  }
-  
-  destroyed() {
-    window.removeEventListener('blur', this.windowFocusChanged);
-    window.removeEventListener('focus', this.windowFocusChanged);
-  }
-  
-  windowFocusChanged(event: any) {
-    this.blurred = event.type === 'blur';
-  }
-
-  public startDragging(event: any) {
-    platform.get.frame.handleDrag(event, this.windowId);
-  }
-
-  public close(): void {
-    // Callback only on overwolf
-    platform.get.frame.close(this.windowId, () => {
-      this.saveSettings(this.settings?.settings);
-      this.disconnect();
-    });
-  }
-
-  minMax() {
-    platform.get.frame.max(this.windowId);
-  }
-
-  public minimise(): void {
-    platform.get.frame.min(this.windowId);
-  }
-
-  public max(): void {
-    platform.get.frame.max(this.windowId);
-  }
-  
-  get branch() {
-    return platform.get?.config?.branch
-  }
-
-  goToSettings() {
-    safeNavigate(RouterNames.SETTINGS_APP)
-  }
-  
-  get isUnix() {
-    return !platform.isOverwolf()
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .titlebar {

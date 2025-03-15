@@ -1,58 +1,52 @@
-<template>
- <div class="dev-tools-actions" v-if="devModeEnabled">
-     <div class="trigger cursor-pointer" @click="open = !open">
-       <font-awesome-icon icon="code" />
-     </div>
-     <div class="options flex items-center gap-4" v-show="open">
-       <div class="divider ml-4" />
-       <router-link class="item" :to="{ name: 'home' }">
-         <font-awesome-icon icon="home" />
-       </router-link>
-       <font-awesome-icon class="item" icon="fire" @click="openDebugger"/>
-       <font-awesome-icon class="bars" icon="bars" @click="toggleDebugDisableAdAside" />
-       <font-awesome-icon icon="wrench" @click="openDevTools" />
-     </div>
- </div>
-</template>
-
-<script lang="ts">
+<script lang="ts" setup>
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import platform from '@/utils/interface/electron-overwolf';
+import Platform from '@/utils/interface/electron-overwolf';
+import { useAttachDomEvent } from '@/composables';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-@Component
-export default class DevToolsActions extends Vue {
-  @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
-  
-  open = false;
-  platform = platform;
-  
-  mounted() {
-    document.addEventListener('click', this.onBackgroundClick)
-  }
-  
-  destroyed() {
-    document.removeEventListener('click', this.onBackgroundClick)
-  }
-  
-  onBackgroundClick(event: any) {
-    if (event.target.closest('.dev-tools-actions')) return;
-    this.open = false;
-  }
-  
-  openDebugger() {
-    gobbleError(() => sendMessage("openDebugTools", {}))
-  }
-
-  openDevTools() {
-    this.platform.get.utils.openDevTools();
-  }
-  
-  get devModeEnabled() {
-    return process.env.NODE_ENV === 'development';
-  }
+// TODO: [port] fixme
+// @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
+const toggleDebugDisableAdAside = () => {
+  console.log('toggleDebugDisableAdAside');
 }
+
+useAttachDomEvent<MouseEvent>('click', (event) => {
+  if (event.target.closest('.dev-tools-actions')) return;
+  open.value = false;
+})
+
+const open = ref(false)
+const platform = Platform
+
+function openDebugger() {
+  gobbleError(() => sendMessage("openDebugTools", {}))
+}
+
+function openDevTools() {
+  platform.get.utils.openDevTools();
+}
+
+// TODO: [port] this should likely use import.meta.env
+const devModeEnabled = process.env.NODE_ENV === 'development';
 </script>
+
+<template>
+ <div class="dev-tools-actions" v-if="devModeEnabled">
+   <div class="trigger cursor-pointer" @click="open = !open">
+     <FontAwesomeIcon icon="code" />
+   </div>
+   <div class="options flex items-center gap-4" v-show="open">
+     <div class="divider ml-4" />
+     <router-link class="item" :to="{ name: 'home' }">
+       <FontAwesomeIcon icon="home" />
+     </router-link>
+     <FontAwesomeIcon class="item" icon="fire" @click="openDebugger"/>
+     <FontAwesomeIcon class="bars" icon="bars" @click="toggleDebugDisableAdAside" />
+     <FontAwesomeIcon icon="wrench" @click="openDevTools" />
+   </div>
+ </div>
+</template>
 
 <style lang="scss" scoped>
 .dev-tools-actions {
