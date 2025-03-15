@@ -4,68 +4,61 @@
       <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
       
       <div class="recently-played pack-card-grid mb-5">
-        <pack-card2 class="pack-card" v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
+        <PackCard2 class="pack-card" v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
       </div>
     </template>
     
     <div class="featured-packs">
       <h2 class="text-lg font-bold text-white mb-4">Featured packs</h2>
-      <pack-preview v-if="featuredPacksIds.length" v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
-      <message type="warning" v-if="!featuredPacksIds.length && !loadingFeatured">
+      <PackPreview v-if="featuredPacksIds.length" v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
+      <Message type="warning" v-if="!featuredPacksIds.length && !loadingFeatured">
         <p>No featured packs available at the moment</p>
-      </message>
+      </Message>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Action, Getter} from 'vuex-class';
-import FtbButton from '@/components/ui/input/FTBButton.vue';
-import Loader from '@/components/ui/Loader.vue';
-import {ns} from '@/core/state/appState';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
+<script lang="ts" setup>
+// import {ns} from '@/core/state/appState';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
+import Message from '@/components/ui/Message.vue';
+import { computed, onMounted, ref } from 'vue';
+import { SugaredInstanceJson } from '@/core/@types/javaApi';
 
-@Component({
-  components: {
-    PackCard2,
-    PackPreview,
-    Loader,
-    FtbButton,
-  },
-})
-export default class Home extends Vue {
-  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
-  
-  @Getter("featuredPacks", ns("v2/modpacks")) featuredPacksIds!: number[];
-  @Action("getFeaturedPacks", ns("v2/modpacks")) getFeaturedPacks!: () => Promise<number[]>;
-  
-  loadingFeatured = false;
-  
-  mounted() {
-    this.loadFeaturedPacks();
-  }
-  
-  async loadFeaturedPacks() {
-    this.loadingFeatured = true;
-    await this.getFeaturedPacks();
-    this.loadingFeatured = false;
-  }
-  
-  get recentInstances() {
-    return this.instances
-      .sort((a, b) => {
-        // If either lastPlayed is 0, put it at the end
-        if (!a.lastPlayed) return 1;
-        if (!b.lastPlayed) return -1;
-        
-        return b.lastPlayed - a.lastPlayed;
-      })
-      .slice(0, 6)
-  }
-}
+// @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
+//
+// @Getter("featuredPacks", ns("v2/modpacks")) featuredPacksIds!: number[];
+// @Action("getFeaturedPacks", ns("v2/modpacks")) getFeaturedPacks!: () => Promise<number[]>;
+
+// TODO: State fix me
+const instances = ref<SugaredInstanceJson[]>([]);
+const featuredPacksIds = ref([]);
+const getFeaturedPacks = async () => [];
+
+const loadingFeatured = ref(false);
+
+const loadFeaturedPacks = async () => {
+  loadingFeatured.value = true;
+  await getFeaturedPacks();
+  loadingFeatured.value = false;
+};
+
+const recentInstances = computed(() => {
+  return instances.value
+    .sort((a, b) => {
+      // If either lastPlayed is 0, put it at the end
+      if (!a.lastPlayed) return 1;
+      if (!b.lastPlayed) return -1;
+
+      return b.lastPlayed - a.lastPlayed;
+    })
+    .slice(0, 6);
+});
+
+onMounted(() => {
+  loadFeaturedPacks();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -78,9 +71,9 @@ export default class Home extends Vue {
     }
     
     @media (max-width: 1458px) {
-        &:nth-child(6) {
-          display: none;
-        }
+      &:nth-child(6) {
+        display: none;
+      }
     }
   }
 }

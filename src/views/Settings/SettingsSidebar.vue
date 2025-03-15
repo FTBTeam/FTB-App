@@ -69,12 +69,11 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {RouterNames} from '@/router';
 
-@Component
-export default class SettingsSidebar extends Vue {
+// @Component
+export default class SettingsSidebar {// extends Vue {
   platform = platform;
   RouterNames = RouterNames;
   

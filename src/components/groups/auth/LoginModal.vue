@@ -61,7 +61,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import dayjs, {Dayjs} from 'dayjs';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import platform from '@/utils/interface/electron-overwolf';
@@ -71,7 +70,6 @@ import Loader from '@/components/ui/Loader.vue';
 import {JavaFetch} from '@/core/javaFetch';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
-import {Action} from 'vuex-class';
 
 @Component({
   components: {Loader, UiButton, ProgressBar}

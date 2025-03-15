@@ -68,16 +68,14 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue, Watch} from 'vue-property-decorator';
-import {Action, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/ui/UiButton.vue';
 
-@Component({
-  components: {UiButton}
-})
-export default class ProxySettings extends Vue {
+// @Component({
+//   components: {UiButton}
+// })
+export default class ProxySettings {// extends Vue {
   @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
   @State('settings') private settings!: SettingsState;
   @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;

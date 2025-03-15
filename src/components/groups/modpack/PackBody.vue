@@ -218,9 +218,6 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Prop} from 'vue-property-decorator';
 import {ModPack} from '@/modules/modpacks/types';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/groups/instance/ModpackMods.vue';
@@ -236,7 +233,6 @@ import {parseMarkdown} from '@/utils';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import {ns} from '@/core/state/appState';
 import {InstallStatus} from '@/core/controllers/InstanceInstallController';
-import {Getter, State} from 'vuex-class';
 import {ModLoaderUpdateState} from '@/core/@types/states/appState';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {InstanceRunningData} from '@/core/state/misc/runningState';

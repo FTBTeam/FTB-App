@@ -52,9 +52,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {SettingsState} from '@/modules/settings/types';
-import {Action, State} from 'vuex-class';
 import FTBSlider from '@/components/ui/input/FTBSlider.vue';
 import {SettingsData} from '@/core/@types/javaApi';
 import Loader from '@/components/ui/Loader.vue';

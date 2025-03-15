@@ -60,9 +60,6 @@
 </template>
 
 <script lang="ts">
-import Component from 'vue-class-component';
-import Vue from 'vue';
-import {Prop} from 'vue-property-decorator';
 import DuplicateInstanceModal from '@/components/modals/actions/DuplicateInstanceModal.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
@@ -71,7 +68,6 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {createLogger} from '@/core/logger';
-import {Getter, State} from 'vuex-class';
 import {AuthProfile} from '@/modules/core/core.types';
 import platform from '@/utils/interface/electron-overwolf';
 import {ns} from '@/core/state/appState';

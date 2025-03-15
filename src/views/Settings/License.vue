@@ -49,7 +49,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 
 import platform from '@/utils/interface/electron-overwolf';
 import UiButton from '@/components/ui/UiButton.vue';

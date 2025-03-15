@@ -1,4 +1,3 @@
-import {MutationTree} from 'vuex';
 import {Resolution, SettingsState} from './types';
 import {SettingsData} from '@/core/@types/javaApi';
 

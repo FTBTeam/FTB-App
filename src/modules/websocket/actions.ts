@@ -1,4 +1,3 @@
-import {ActionContext, ActionTree} from 'vuex';
 import {SocketState} from './types';
 import {RootState} from '@/types';
 import Vue from 'vue';

@@ -4,22 +4,15 @@
   </a>
 </template>
 
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
+<script lang="ts" setup>
 import platform from '@/utils/interface/electron-overwolf';
 
-@Component
-export default class Link extends Vue {
-  @Prop() url!: string;
-  platform = platform;
-  
-  open(e: any) {
-    e.preventDefault();
-    platform.get.utils.openUrl(this.url);
-  }
+const props = defineProps<{
+  url: string;
+}>()
+
+function open(e: any) {
+  e.preventDefault();
+  platform.get.utils.openUrl(props.url);
 }
 </script>
-
-<style lang="scss" scoped>
-
-</style>

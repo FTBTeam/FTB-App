@@ -31,8 +31,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Action, Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {UserFavorite} from '@/core/state/misc/userFavouritesState';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';

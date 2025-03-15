@@ -69,11 +69,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Action, Getter} from 'vuex-class';
 import {AuthProfile} from '@/modules/core/core.types';
-import {Prop} from 'vue-property-decorator';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import {createLogger} from '@/core/logger';

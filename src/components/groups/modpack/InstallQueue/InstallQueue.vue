@@ -23,8 +23,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue, Watch} from 'vue-property-decorator';
-import {Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
 import InstallQueueRow from '@/components/groups/modpack/InstallQueue/InstallQueueRow.vue';

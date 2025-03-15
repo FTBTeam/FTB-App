@@ -142,9 +142,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 
-import {Action, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {alertController} from '@/core/controllers/alertController';
 import Selection2 from '@/components/ui/Selection2.vue';

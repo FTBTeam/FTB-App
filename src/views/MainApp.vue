@@ -59,8 +59,6 @@
 <script lang="ts">
 import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
-import {Component, Vue, Watch} from 'vue-property-decorator';
-import {Action, Getter, State} from 'vuex-class';
 import {SocketState} from '@/modules/websocket/types';
 import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';

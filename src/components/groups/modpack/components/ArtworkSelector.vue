@@ -25,7 +25,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {InstanceJson} from '@/core/@types/javaApi';
 import {ModPack} from '@/modules/modpacks/types';

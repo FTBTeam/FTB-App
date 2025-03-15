@@ -46,7 +46,6 @@
 
 <script lang="ts">
 import {ModPack, Versions} from '@/modules/modpacks/types';
-import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import platform from '@/utils/interface/electron-overwolf';
 import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';

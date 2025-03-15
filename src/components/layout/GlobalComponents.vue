@@ -35,9 +35,6 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Action, Getter, State} from 'vuex-class';
 import Changelog from '@/components/groups/changelogs/Changelog.vue';
 import Dialogs from '@/components/groups/global/Dialogs.vue';
 import Alerts from '@/components/groups/global/Alerts.vue';

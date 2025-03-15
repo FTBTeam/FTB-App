@@ -37,8 +37,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Action, Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {InstanceRunningData, LaunchingStatus} from '@/core/state/misc/runningState';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';

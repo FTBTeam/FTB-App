@@ -38,7 +38,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import Loader from '@/components/ui/Loader.vue';
 import UiButton from '@/components/ui/UiButton.vue';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';

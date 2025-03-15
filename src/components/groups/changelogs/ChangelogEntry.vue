@@ -21,7 +21,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import {parseMarkdown} from '@/utils';
 import {ChangelogData} from '@/components/groups/changelogs/Changelog.vue';
 import {JavaFetch} from '@/core/javaFetch';

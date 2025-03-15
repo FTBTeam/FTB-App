@@ -57,9 +57,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
-import {Action} from 'vuex-class';
 import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';

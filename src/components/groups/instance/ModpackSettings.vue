@@ -260,8 +260,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-import {Action, State} from 'vuex-class';
 import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/ui/input/FTBSlider.vue';
 import Platform from '@/utils/interface/electron-overwolf';

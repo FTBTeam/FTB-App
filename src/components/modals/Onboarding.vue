@@ -25,7 +25,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import UiButton from '@/components/ui/UiButton.vue';
 import platform from '@/utils/interface/electron-overwolf';
 

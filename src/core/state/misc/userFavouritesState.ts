@@ -1,4 +1,3 @@
-import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
 import {PackProviders} from '@/modules/modpacks/types';
 

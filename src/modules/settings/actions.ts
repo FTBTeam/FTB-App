@@ -1,4 +1,3 @@
-import {ActionTree} from 'vuex';
 import {SettingsState} from './types';
 import {RootState} from '@/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';

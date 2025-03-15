@@ -1,4 +1,3 @@
-import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
 import {initStateProcessor, lastMessageIndexByUuid} from '@/core/state/misc/runningStateProcessor';
 

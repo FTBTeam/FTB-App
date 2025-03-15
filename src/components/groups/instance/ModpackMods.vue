@@ -82,9 +82,6 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Prop} from 'vue-property-decorator';
 import FindMods from '@/components/groups/instance/FindMods.vue';
 import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {ModPack} from '@/modules/modpacks/types';

@@ -99,9 +99,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {ModPack, Versions} from '@/modules/modpacks/types';
-import {Action, Getter, State} from 'vuex-class';
 import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
 import ModpackSettings from '@/components/groups/instance/ModpackSettings.vue';
 import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';

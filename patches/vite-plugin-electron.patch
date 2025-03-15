@@ -1,0 +1,13 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 50ba407d2aa615d693dc0e41d0435e956872d0af..7608162cb4673288a1af5dcb576181133cf12127 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -216,7 +216,7 @@ function electron(options) {
+ }
+ async function startup(argv = [".", "--no-sandbox"], options, customElectronPkg) {
+   const { spawn } = await import("node:child_process");
+-  const electron2 = await import(customElectronPkg ?? "electron");
++  const electron2 = await import(customElectronPkg ?? "@overwolf/ow-electron");
+   const electronPath = electron2.default ?? electron2;
+   await startup.exit();
+   process.electronApp = spawn(electronPath, argv, { stdio: "inherit", ...options });

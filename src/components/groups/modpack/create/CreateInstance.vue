@@ -86,12 +86,10 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import Selection2, {SelectionOption} from '@/components/ui/Selection2.vue';
 import {ns} from '@/core/state/appState';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import {Action, State} from 'vuex-class';
 import {ModPack} from '@/modules/modpacks/types';
 import UiButton from '@/components/ui/UiButton.vue';
 import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';

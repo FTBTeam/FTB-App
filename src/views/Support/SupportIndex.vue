@@ -62,17 +62,16 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import Platform from '@/utils/interface/electron-overwolf';
-import {IconLookup, IconName} from '@fortawesome/fontawesome-common-types';
 import {DiscordWidget} from '@/types';
 
 import BhLogo from '@/assets/images/branding/bh-logo.svg';
 import {logger} from '@/core/logger';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 
 const endpoint = (goEndpoint: string) => `https://go.ftb.team/${goEndpoint}`;
 
-const mkSocial = (name: string, icon: IconName | IconLookup, goEndpoint: string) => ({
+const mkSocial = (name: string, icon: IconDefinition, goEndpoint: string) => ({
   name,
   icon,
   link: endpoint(goEndpoint),
@@ -80,7 +79,7 @@ const mkSocial = (name: string, icon: IconName | IconLookup, goEndpoint: string)
 
 const mkTopic = (
   name: string,
-  icon: IconName | IconLookup | string,
+  icon: IconDefinition | string,
   goEndpoint: string | undefined,
   desc: string,
   customIcon = false,

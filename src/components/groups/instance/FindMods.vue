@@ -110,7 +110,6 @@
 <script lang="ts">
 import {Mod} from '@/types';
 import {debounce} from '@/utils';
-import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
 import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import ModCard from '@/components/groups/modpack/ModCard.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';

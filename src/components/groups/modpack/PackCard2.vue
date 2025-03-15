@@ -56,7 +56,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Watch} from 'vue-property-decorator';
 import PackCardCommon from '@/components/groups/modpack/PackCardCommon.vue';
 import {packUpdateAvailable, resolveArtwork, resolveModloader, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {RouterNames} from '@/router';
@@ -69,7 +68,6 @@ import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from '@/core/context/contextMenus';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {createLogger} from '@/core/logger';
-import {State} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {InstanceRunningData} from '@/core/state/misc/runningState';
 

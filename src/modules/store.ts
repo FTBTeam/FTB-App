@@ -1,5 +1,4 @@
 import Vue from 'vue';
-import Vuex, {MutationTree, StoreOptions} from 'vuex';
 import {RootState} from '@/types';
 import {websocket} from './websocket';
 import {settings} from './settings';

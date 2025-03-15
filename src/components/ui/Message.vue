@@ -14,10 +14,8 @@
 </template>
 
 <script lang="ts">
-import Component from 'vue-class-component';
 import Vue from 'vue';
-import { Prop } from 'vue-property-decorator';
-import { IconLookup, IconName } from '@fortawesome/fontawesome-common-types';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 
 export enum MessageType {
   NORMAL = 'normal',
@@ -30,7 +28,7 @@ export enum MessageType {
 @Component
 export default class Message extends Vue {
   @Prop({ default: MessageType.NORMAL }) type!: MessageType;
-  @Prop({ default: null }) icon!: null | IconName | IconLookup;
+  @Prop({ default: null }) icon!: null | IconDefinition;
   @Prop({ default: '' }) header!: string;
 
   get hasHeader() {

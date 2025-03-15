@@ -47,7 +47,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
 import UiButton from '@/components/ui/UiButton.vue';
 
 export type KV = {

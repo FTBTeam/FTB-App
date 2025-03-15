@@ -1,4 +1,3 @@
-import {Module} from 'vuex';
 import {RootState} from '@/types';
 import {AuthProfile, CoreMutations, CoreState} from '@/modules/core/core.types';
 import {sendMessage} from '@/core/websockets/websocketsApi';

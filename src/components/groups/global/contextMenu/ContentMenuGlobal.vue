@@ -12,7 +12,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {emitter} from '@/utils';
 import {ContextMenu, MenuItem} from '@/core/context/menus/contextMenu';
 import ContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';

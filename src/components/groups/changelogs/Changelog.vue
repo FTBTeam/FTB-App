@@ -16,9 +16,6 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import {SocketState} from '@/modules/websocket/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';

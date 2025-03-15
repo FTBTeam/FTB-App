@@ -16,10 +16,8 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {Action} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 
 @Component

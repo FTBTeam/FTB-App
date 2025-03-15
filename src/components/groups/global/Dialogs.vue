@@ -45,10 +45,8 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {Dialog} from '@/core/state/misc/dialogsState';
 import {ns} from '@/core/state/appState';
-import {Action, Getter, State} from 'vuex-class';
 import {adsEnabled, parseMarkdown} from '@/utils';
 import UiButton from '@/components/ui/UiButton.vue';
 import {SettingsState} from '@/modules/settings/types';

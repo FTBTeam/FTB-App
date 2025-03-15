@@ -1,6 +1,4 @@
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Action, Getter} from 'vuex-class';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {ns} from '@/core/state/appState';

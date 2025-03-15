@@ -40,8 +40,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Action, Getter} from 'vuex-class';
 import Loader from '@/components/ui/Loader.vue';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/@types/commonTypes';

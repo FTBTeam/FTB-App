@@ -15,9 +15,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 import {ns} from '@/core/state/appState';
-import {Getter} from 'vuex-class';
 import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
 import UiButton from '@/components/ui/UiButton.vue';
 import {alertController} from '@/core/controllers/alertController';

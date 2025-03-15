@@ -1,44 +1,9 @@
-@tailwind base;
-@tailwind utilities;
-
-@import "~balloon-css/src/balloon";
-
 $primary: #27AE60;
 $secondary: #27AE60;
 $success: #27AE60;
 $info: #008BF8;
 $warning: #ff801e;
 $danger: #D00000;
-
-.theme-dark {
-  --color-sidebar-item: #313131;
-  --color-sidebar-item-active: #2A2A2A;
-  --color-background: #2A2A2A;
-  --color-navbar: #313131;
-
-  --color-primary-button: #27AE60;
-  --color-secondary-button: #27AE60;
-  --color-success-button: #27AE60;
-  --color-info-button: #008BF8;
-  --color-warning-button: #ff801e;
-  --color-danger-button: #D00000;
-
-  --color-light-primary-button: #36d278;
-  --color-light-secondary-button: #36d278;
-  --color-light-success-button: #36d278;
-  --color-light-info-button: #2ca2ff;
-  --color-light-warning-button: #ff9d51;
-  --color-light-danger-button: #ff0404;
-
-  --color-text: #FFFFFF;
-  --color-text-muted: #bbbbbb;
-  --color-background-lighten: rgba(68, 68, 68, 0.2);
-}
-
-input, button, textarea, :focus {
-  outline: none; // You should add some other style for :focus to help UX/a11y
-}
-
 
 /* width */
 ::-webkit-scrollbar {
@@ -64,26 +29,4 @@ input, button, textarea, :focus {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
-}
-
-.list-enter-active, .list-leave-active {
-  transition: all 1s;
-  transition-delay: .2s;
-}
-
-.list-enter, .list-leave-to /* .list-leave-active below version 2.1.8 */
-{
-  opacity: 0;
-  transform: scale(0.8);
-}
-
-.text-muted {
-  color: var(--color-text-muted);
-}
-
-.bg-input {
-  background-color: #252525;
-}
-.border-input {
-  border-color: #1b1b1b;
 }

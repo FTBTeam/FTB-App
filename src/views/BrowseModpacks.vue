@@ -58,8 +58,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue, Watch} from 'vue-property-decorator';
-import {Action, Getter} from 'vuex-class';
 import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {PackProviders} from '@/modules/modpacks/types';
 import {Route} from 'vue-router';

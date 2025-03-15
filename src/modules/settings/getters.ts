@@ -1,4 +1,3 @@
-import {GetterTree} from 'vuex';
 import {SettingsState} from './types';
 import {RootState} from '@/types';
 

@@ -1,56 +1,51 @@
 <template>
-  <modal :open="open" @closed="close" title="Install instance" :sub-title="packName" :external-contents="true">
-    <modal-body>
+  <Modal :open="open" @closed="close" title="Install instance" :sub-title="packName" :external-contents="true">
+    <ModalBody>
       <template v-if="apiModpack">
-        <artwork-selector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
-        <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
+        <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
+        <FTBInput label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
         
-        <category-selector class="mb-4" v-model="selectedCategory" />
+        <CategorySelector class="mb-4" v-model="selectedCategory" />
 
-        <ui-toggle label="Show advanced options" v-model="useAdvanced" />
-        <selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4 mt-6" />
+        <UiToggle label="Show advanced options" v-model="useAdvanced" />
+        <Selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4 mt-6" />
         
-        <ui-toggle
+        <UiToggle
           v-if="useAdvanced && hasUnstableVersions"
           v-model="allowPreRelease"
           label="Show pre-release builds (Stable by default)" 
           desc="Feeling risky? Enable pre-release builds to get access to Alpha and Beta versions of the Modpack"
         />
       </template>
-    </modal-body>
-    <modal-footer class="flex justify-end">
-      <ui-button :wider="true" type="success" icon="download" @click="install">
+    </ModalBody>
+    <ModalFooter class="flex justify-end">
+      <UiButton :wider="true" type="success" icon="download" @click="install">
         Install
-      </ui-button>
-    </modal-footer>
-  </modal>
+      </UiButton>
+    </ModalFooter>
+  </Modal>
 </template>
 
-<script lang="ts">
-import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
+<script lang="ts" setup>
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {ns} from '@/core/state/appState';
-import {Action, Getter} from 'vuex-class';
 import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import Selection2 from '@/components/ui/Selection2.vue';
 import {timeFromNow} from '@/utils/helpers/dateHelpers';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
-import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
-import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
+import {isValidVersion} from '@/utils/helpers/packHelpers';
 import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import platform from '@/utils/interface/electron-overwolf';
 import {RouterNames} from '@/router';
 import UiButton from '@/components/ui/UiButton.vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import UiToggle from '@/components/ui/UiToggle.vue';
+import ModalFooter from '@/components/ui/modal/ModalFooter.vue';
+import Selection2 from '@/components/ui/Selection2.vue';
+import FTBInput from '@/components/ui/input/FTBInput.vue';
+import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
+import ModalBody from '@/components/ui/modal/ModalBody.vue';
 
-@Component({
-  components: {UiToggle, CategorySelector, UiButton, ArtworkSelector, Selection2},
-  methods: {
-    resolveArtwork
-  }
-})
 export default class ModpackInstallModal extends Vue {
   @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
   @Getter("categories", ns("v2/instances")) categories!: string[];

@@ -1,5 +1,4 @@
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import platform, {PlatformType} from '@/utils/interface/electron-overwolf';
 
 @Component

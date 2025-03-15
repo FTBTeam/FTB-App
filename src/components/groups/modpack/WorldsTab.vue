@@ -47,7 +47,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import {ModPack} from '@/modules/modpacks/types';
 import {faCheckDouble, faGlobe, faLock, faSave, faSliders, faUpload} from '@fortawesome/free-solid-svg-icons';

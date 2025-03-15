@@ -1,4 +1,3 @@
-import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {RootState} from '@/types';
 import {JavaFetch} from '@/core/javaFetch';
 import {BlogPost} from '@/core/@types/external/metaApi.types';

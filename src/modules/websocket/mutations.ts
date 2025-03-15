@@ -1,4 +1,3 @@
-import {MutationTree} from 'vuex';
 import {SocketState} from './types';
 import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';

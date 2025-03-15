@@ -8,15 +8,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
 import SettingsSidebar from '@/views/Settings/SettingsSidebar.vue';
 
-@Component({
-  components: {
-    SettingsSidebar,
-  },
-})
-export default class SettingsPage extends Vue {
+// @Component({
+//   components: {
+//     SettingsSidebar,
+//   },
+// })
+export default class SettingsPage {// extends Vue {
   
 }
 </script>

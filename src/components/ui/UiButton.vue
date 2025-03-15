@@ -19,7 +19,6 @@
 
 <script lang="ts">
 import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
-import {Component, Prop, Vue} from 'vue-property-decorator';
 
 export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
 export type ElementAriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";

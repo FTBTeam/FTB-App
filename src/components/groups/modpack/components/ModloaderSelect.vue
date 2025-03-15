@@ -39,7 +39,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
 import Selection2, {SelectionOption} from '@/components/ui/Selection2.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {ModLoadersResponse, ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';

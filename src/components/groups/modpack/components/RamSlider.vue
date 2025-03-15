@@ -42,9 +42,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 import {SettingsState} from '@/modules/settings/types';
-import {State} from 'vuex-class';
 import UiButton from '@/components/ui/UiButton.vue';
 import {megabyteSize, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/ui/UiToggle.vue';

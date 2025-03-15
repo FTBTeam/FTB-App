@@ -57,9 +57,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {SettingsState} from '@/modules/settings/types';
-import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import UiButton from '@/components/ui/UiButton.vue';

@@ -1,4 +1,3 @@
-import {ActionTree, GetterTree, Module, MutationTree} from 'vuex';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {InstanceJson} from '@/core/@types/javaApi';
 import {RootState} from '@/types';

@@ -43,8 +43,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Action, State} from 'vuex-class';
 import platform from '@/utils/interface/electron-overwolf';
 import {SettingsState} from '@/modules/settings/types';
 import os from 'os';

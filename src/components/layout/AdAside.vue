@@ -48,14 +48,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
 import platform from '@/utils/interface/electron-overwolf';
-import Component from 'vue-class-component';
-import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {createLogger} from '@/core/logger';
 import {adsEnabled} from '@/utils';
-import {Prop} from 'vue-property-decorator';
 
 @Component
 export default class AdAside extends Vue {

@@ -48,7 +48,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
 import ModalBody from '@/components/ui/modal/ModalBody.vue';
 import Modal from '@/components/ui/modal/Modal.vue';
 import {prettyByteFormat} from '@/utils';

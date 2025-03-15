@@ -21,8 +21,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {State} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {InstanceRunningData} from '@/core/state/misc/runningState';
 import {InstanceJson} from '@/core/@types/javaApi';

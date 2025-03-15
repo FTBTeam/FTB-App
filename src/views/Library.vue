@@ -64,9 +64,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue, Watch} from 'vue-property-decorator';
 import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
-import {Action, Getter} from 'vuex-class';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';

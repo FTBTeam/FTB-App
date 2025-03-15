@@ -26,9 +26,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
 import Platform from '../../../utils/interface/electron-overwolf';
-import {Getter, State} from 'vuex-class';
 import {SettingsState} from '@/modules/settings/types';
 import {adsEnabled} from '@/utils';
 

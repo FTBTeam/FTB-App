@@ -40,10 +40,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Prop} from 'vue-property-decorator';
 import {getColorForReleaseType} from '@/utils/colors';
-import {Getter} from 'vuex-class';
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import store from '@/modules/store';

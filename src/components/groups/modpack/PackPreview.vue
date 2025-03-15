@@ -17,13 +17,9 @@
           <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
         </div>
       </div>
-      <div class="actions flex gap-2">
-        <div class="fav-btn" :class="{'is-fav': alreadyFavourited}" @click.stop="favourite" :aria-label="alreadyFavourited ? `Remove favourite` : `Save for later`" data-balloon-pos="up-right">
-          <font-awesome-icon icon="star" />
-        </div>
-        
+      <div class="actions flex gap-2">        
         <div class="install-btn" @click.stop="install" aria-label="Install modpack" data-balloon-pos="up-right">
-          <font-awesome-icon icon="download" />
+          <FontAwesomeIcon icon="download" />
         </div>
       </div>
     </div>
@@ -37,129 +33,89 @@
         </div>
       </div>
     </div>
-    <modpack-install-modal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :provider="provider" />
+    <ModpackInstallModal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :provider="provider" />
   </div>
 </template>
 
-<script lang="ts">
-import {Component, Prop} from 'vue-property-decorator';
-import PackCardCommon from '@/components/groups/modpack/PackCardCommon.vue';
+<script lang="ts" setup>
 import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
-import {PackProviders} from '@/modules/modpacks/types';
+import { PackProviders } from '@/modules/modpacks/types';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {stringOrDefault} from '@/utils/helpers/stringHelpers';
 import {RouterNames} from '@/router';
 import ModpackInstallModal from '@/components/modals/ModpackInstallModal.vue';
 import {dialogsController} from '@/core/controllers/dialogsController';
-import {Action, Getter} from 'vuex-class';
-import {ns} from '@/core/state/appState';
-import {UserFavorite} from '@/core/state/misc/userFavouritesState';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed, onMounted, ref } from 'vue';
+import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
+import { InstallStatus } from '@/core/controllers/InstanceInstallController.ts';
 
-@Component({
-  components: {ModpackInstallModal},
-  methods: {
-    stringOrDefault
+const RouteNames = RouterNames;
+const props = defineProps<{
+  packId?: number;
+  partialPack?: SearchResultPack;
+  provider?: PackProviders;
+}>()
+
+const showInstall = ref(false);
+const { apiModpack, fetchModpack } = useFetchingPack();
+
+//@Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
+// TOOD: [port] Fix me
+const currentInstall = ref<InstallStatus | null>(null);
+
+onMounted(() => {
+  if (!props.partialPack && !props.packId) {
+    throw new Error("No packId or partialPack provided");
+  }
+
+  if (!props.partialPack && props.packId) {
+    fetchModpack(props.packId, props.provider);
   }
 })
-export default class PackPreview extends PackCardCommon {
-  @Getter('favourites', ns("v2/userFavourites")) favourites!: UserFavorite[];
-  @Action('addFavourite', { namespace: 'v2/userFavourites' }) addFavourite!: (favourite: UserFavorite) => void;
-  @Action('removeFavourite', { namespace: 'v2/userFavourites' }) removeFavourite!: (favourite: UserFavorite) => void;
-  
-  @Prop() packId?: number;
-  @Prop() partialPack?: SearchResultPack;
-  @Prop({default: "modpacksch" as PackProviders}) provider!: PackProviders;
-  
-  RouteNames = RouterNames;
-  showInstall = false;
-  
-  mounted() {
-    if (!this.partialPack && !this.packId) {
-      throw new Error("No packId or partialPack provided");
-    }
-    
-    if (!this.partialPack && this.packId) {
-      this.fetchModpack(this.packId, this.provider);
+
+const packData = computed<SearchResultPack | null>(() => {
+  if (props.partialPack) {
+    return props.partialPack;
+  }
+
+  if (!apiModpack.value) {
+    return null;
+  }
+
+  return {
+    platform: props.provider,
+    name: apiModpack.value.name,
+    art: apiModpack.value.art,
+    authors: apiModpack.value.authors,
+    tags: apiModpack.value.tags,
+    synopsis: apiModpack.value.synopsis,
+    id: apiModpack.value.id,
+    updated: apiModpack.value.updated,
+    private: apiModpack.value.private ?? false
+  } as SearchResultPack;
+});
+
+function install() {
+  if (isInstalling.value) {
+    if (!dialogsController.createConfirmationDialog("Are you sure?", "This modpack is already installing, are you sure you want to install another one?")) {
+      return;
     }
   }
 
-  async install() {
-    if (this.isInstalling) {
-      if (!(await dialogsController.createConfirmationDialog("Are you sure?", "This modpack is already installing, are you sure you want to install another one?"))) {
-        return;
-      }
-    }
-    
-    this.showInstall = true;
-  }
-  
-  async favourite() {
-    if (this.alreadyFavourited) {
-      this.removeFavourite({
-        packId: "" + this.packData?.id,
-        provider: this.provider
-      });
-    } else {
-      this.addFavourite({
-        packId: "" + this.packData?.id,
-        provider: this.provider
-      });
-    }
-  }
-  
-  get artwork() {
-    return resolveArtwork(this.packData, "splash");
-  }
-  
-  get logo() {
-    return resolveArtwork(this.packData, "square");
-  }
-
-  get alreadyFavourited() {
-    return this.favourites.some((fav) => fav.packId === "" + this.packData?.id && fav.provider === this.provider);
-  }
-  
-  /**
-   * Provides a consistent data structure for the pack data
-   */
-  get packData(): SearchResultPack | null {
-    if (this.partialPack) {
-      return this.partialPack;
-    }
-    
-    if (!this.apiModpack) {
-      return null;
-    }
-    
-    return {
-      platform: this.provider,
-      name: this.apiModpack.name,
-      art: this.apiModpack.art,
-      authors: this.apiModpack.authors,
-      tags: this.apiModpack.tags,
-      synopsis: this.apiModpack.synopsis,
-      id: this.apiModpack.id,
-      updated: this.apiModpack.updated,
-      private: this.apiModpack.private ?? false
-    }
-  }
-
-  get packTags() {
-    return this.packData?.tags?.slice(0, 5) ?? [];
-  }
-  
-  /**
-   * This is mostly a visual thing so people don't install a modpack multiple times
-   * because they think it's not installing.
-   */
-  get isInstalling() {
-    if (!this.currentInstall) {
-      return false;
-    }
-    
-    return this.currentInstall?.request.id === this.apiModpack?.id && !this.currentInstall?.request?.updatingInstanceUuid;
-  }
+  showInstall.value = true;
 }
+
+const artwork = computed(() => resolveArtwork(packData.value, "splash"));
+const logo = computed(() => resolveArtwork(packData.value, "square"));
+const packTags = computed(() => packData.value?.tags?.slice(0, 5) ?? []);
+const isInstalling = computed(() => {
+  if (!currentInstall.value) {
+    return false;
+  }
+
+  return currentInstall.value.request.id === apiModpack.value?.id && !currentInstall.value.request.updatingInstanceUuid;
+});
 </script>
 
 <style lang="scss" scoped>

@@ -72,9 +72,6 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Prop} from 'vue-property-decorator';
 import {prettyByteFormat} from '@/utils';
 import {Backup, InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';

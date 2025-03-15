@@ -19,7 +19,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {JavaFetch} from '@/core/javaFetch';
 import {alertController} from '@/core/controllers/alertController';
 import {ChangelogData} from '@/components/groups/changelogs/Changelog.vue';

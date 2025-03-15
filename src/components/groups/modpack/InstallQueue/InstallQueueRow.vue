@@ -21,7 +21,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
 import {InstallRequest, InstallStatus, instanceInstallController} from '@/core/controllers/InstanceInstallController';
 import UiButton from '@/components/ui/UiButton.vue';
 

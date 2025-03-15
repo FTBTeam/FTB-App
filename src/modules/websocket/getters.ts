@@ -1,4 +1,3 @@
-import {GetterTree} from 'vuex';
 import {SocketState} from './types';
 import {RootState} from '@/types';
 

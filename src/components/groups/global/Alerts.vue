@@ -14,7 +14,6 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
 import {Alert} from '@/core/controllers/alertController';
 import {Queue} from '@/utils/std/queue';
 import {emitter} from '@/utils';
