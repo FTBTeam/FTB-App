@@ -1,10 +1,7 @@
-import Vue from 'vue';
-import Router from 'vue-router';
 import Home from '@/views/Home.vue';
 import MainApp from './views/MainApp.vue';
 import {createLogger} from '@/core/logger';
-
-Vue.use(Router);
+import { createRouter, createWebHashHistory } from 'vue-router';
 
 export enum RouterNames {
   HOME = 'home',
@@ -26,8 +23,8 @@ export enum RouterNames {
   SUPPORT = 'support-index',
 }
 
-const router = new Router({
-  mode: 'hash',
+const router = createRouter({
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/',
@@ -52,11 +49,6 @@ const router = new Router({
           path: '/blog',
           name: RouterNames.ROOT_BLOG,
           component: () => import(/* webpackChunkName: "blog" */ './views/Blog.vue'),
-        },
-        {
-          path: '/favorites',
-          name: RouterNames.ROOT_FAVORITES,
-          component: () => import(/* webpackChunkName: "favorites" */ './views/Favorites.vue'),
         },
         {
           path: '/settings',
@@ -133,10 +125,10 @@ const router = new Router({
       ],
     },
     // Fallback route for 404
-    {
-      path: '*',
-      redirect: '/',
-    }
+    // {
+    //   path: '*',
+    //   redirect: '/',
+    // }
   ],
   scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) {

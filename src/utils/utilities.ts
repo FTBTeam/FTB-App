@@ -1,6 +1,6 @@
 import {Socket} from '@/modules/websocket/types';
 import {createLogger} from '@/core/logger';
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 
 const logger = createLogger("utils/utilities.ts");
 

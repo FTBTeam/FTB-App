@@ -1,7 +1,7 @@
 import store from '@/modules/store';
-import {HttpMethod} from '@/core/@types/commonTypes';
+import {HttpMethod} from '@/core/types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
-import {WebRequestData} from '@/core/@types/javaApi';
+import {WebRequestData} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { constants } from '@/core/constants';
 

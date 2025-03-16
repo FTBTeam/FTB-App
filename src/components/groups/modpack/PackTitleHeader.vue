@@ -1,3 +1,23 @@
+<script lang="ts" setup>
+import {ModPack} from '@/modules/modpacks/types';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+
+const {
+  packInstance,
+  packName,
+  isInstalled = false,
+  instance,
+} = defineProps<{
+  packInstance: ModPack | null;
+  packName: string;
+  isInstalled: boolean;
+  instance: SugaredInstanceJson | InstanceJson;
+}>()
+
+const provider = typeIdToProvider(packInstance?.id ?? 0);
+</script>
+
 <template>
   <div class="pack-info">
     <div class="info">
@@ -18,25 +38,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {ModPack} from '@/modules/modpacks/types';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
-
-@Component
-export default class PackTitleHeader extends Vue {
-  @Prop() packInstance?: ModPack | null;
-  @Prop() packName!: string;
-  @Prop({ default: false }) isInstalled!: boolean;
-
-  @Prop() instance!: SugaredInstanceJson | InstanceJson;
-  
-  get provider() {
-    return typeIdToProvider(this.packInstance?.id ?? 0);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .pack-info {

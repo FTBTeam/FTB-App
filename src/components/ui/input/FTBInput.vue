@@ -4,7 +4,6 @@ import { onUnmounted } from 'vue';
 
 const {
   type = 'text',
-  value,
   disabled = false,
   placeholder = '',
   button = false,
@@ -15,13 +14,12 @@ const {
   copyable = false,
 } = defineProps<{
   type: string;
-  value: string;
   disabled: boolean;
   placeholder: string;
-  label: string;
+  label?: string;
   noSpacing: boolean;
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
   copyable: boolean;
 }>();
 
@@ -30,6 +28,8 @@ defineEmits<{
   (e: 'blur'): void;
   (e: 'click'): void;
 }>()
+
+const value = defineModel<string>();
 
 const copied = ref(false);
 const timoutRef = ref<number | undefined>(undefined);

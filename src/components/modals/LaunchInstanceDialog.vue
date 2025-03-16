@@ -1,5 +1,66 @@
+<script lang="ts" setup>
+import {InstanceRunningData, LaunchingStatus} from '@/core/state/misc/runningState';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import { Loader, UiButton, Modal } from '@/components/ui';
+
+// TODO: [port] fixme
+// @Getter("instances", ns("v2/instances")) public instances!: (SugaredInstanceJson | InstanceJson)[];
+// @Getter("launchingStatus", ns("v2/running")) public launchingStatus!: LaunchingStatus | null;
+// @Getter("preInitProgress", ns("v2/running")) public preInitMessages!: (uuid: string) => InstanceRunningData["preInitProgress"] | null | undefined;
+// @Action("clearLaunchingStatus", ns("v2/running")) public clearStatus!: () => void;
+
+function instances(): (SugaredInstanceJson | InstanceJson)[] {}
+function launchingStatus(): LaunchingStatus | null {}
+function preInitMessages(uuid: string): InstanceRunningData["preInitProgress"] | null | undefined {}
+function clearStatus() {}
+
+async function clearLaunchingStatus() {
+  console.log("Cleaning launching status");
+  // TODO: [port] fixme
+  // await store.dispatch('v2/running/stopped', this.instance?.uuid);
+  clearStatus();
+}
+
+function title() {
+  if (instance) {
+    return `Launching ${instance.name}`;
+  }
+
+  return "Launching Instance";
+}
+
+function subtitle() {
+  if (!launchingStatus) {
+    return "Launching...";
+  }
+
+  if (launchingStatus.error) {
+    return "Error launching instance";
+  }
+
+  return launchingStatus.step;
+}
+
+function instance() {
+  if (!launchingStatus) return null;
+  return instances.find(i => i.uuid === launchingStatus?.uuid);
+}
+
+function latestPreInitProgress() {
+  if (!instance) return null;
+  const preInit = preInitMessages(instance.uuid);
+  if (!preInit) return null;
+
+  return preInit;
+}
+
+function numberToFixed(num: number) {
+  return num.toFixed(2);
+}
+</script>
+
 <template>
-  <modal :permanent="!launchingStatus?.error" :open="launchingStatus !== null" :title="title" :sub-title="subtitle" @closed="() => clearLaunchingStatus()">
+  <Modal :permanent="!launchingStatus?.error" :open="launchingStatus !== null" :title="title" :sub-title="subtitle" @closed="() => clearLaunchingStatus()">
     <template v-if="launchingStatus">
       <div v-if="!launchingStatus.error">
         <loader :title="launchingStatus?.starting ? 'Starting...' : 'Logging in...'" />
@@ -33,72 +94,5 @@
       </div>
     </template>
     <span v-else>This shouldn't be possible</span>
-  </modal>
+  </Modal>
 </template>
-
-<script lang="ts">
-import {ns} from '@/core/state/appState';
-import {InstanceRunningData, LaunchingStatus} from '@/core/state/misc/runningState';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import Loader from '@/components/ui/Loader.vue';
-import UiButton from '@/components/ui/UiButton.vue';
-import store from '@/modules/store';
-
-@Component({
-  components: {UiButton, Loader}
-})
-export default class LaunchInstanceDialog extends Vue {
-  @Getter("instances", ns("v2/instances")) public instances!: (SugaredInstanceJson | InstanceJson)[];
-  @Getter("launchingStatus", ns("v2/running")) public launchingStatus!: LaunchingStatus | null;
-  @Getter("preInitProgress", ns("v2/running")) public preInitMessages!: (uuid: string) => InstanceRunningData["preInitProgress"] | null | undefined;
-  
-  @Action("clearLaunchingStatus", ns("v2/running")) public clearStatus!: () => void;
-  
-  async clearLaunchingStatus() {
-    console.log("Cleaning launching status");
-    await store.dispatch('v2/running/stopped', this.instance?.uuid);
-    this.clearStatus();
-  }
-  
-  get title() {
-    if (this.instance) {
-      return `Launching ${this.instance.name}`;
-    }
-    
-    return "Launching Instance";
-  }
-  
-  get subtitle() {
-    if (!this.launchingStatus) {
-      return "Launching...";
-    }
-    
-    if (this.launchingStatus.error) {
-      return "Error launching instance";
-    }
-    
-    return this.launchingStatus.step;
-  }
-  
-  get instance() {
-    if (!this.launchingStatus) return null;
-    return this.instances.find(i => i.uuid === this.launchingStatus?.uuid);
-  }
-  
-  get latestPreInitProgress() {
-    if (!this.instance) return null;
-    const preInit = this.preInitMessages(this.instance.uuid);
-    if (!preInit) return null;
-    
-    return preInit;
-  }
-  
-  numberToFixed(num: number) {
-    return num.toFixed(2);
-  }
-}
-</script>
-
-<style lang="scss" scoped>
-
-</style>

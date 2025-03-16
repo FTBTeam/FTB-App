@@ -3,10 +3,6 @@ import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
 import { computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
-export type ElementAriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
-export type ElementStandardSizing = 'small' | 'normal' | 'large';
-
 const {
   type = 'normal',
   size = 'normal',
@@ -41,7 +37,13 @@ function click(event: MouseEvent) {
   emit('click', event);
 }
 
-const colorFromType = computed(() => colorFromElementColorType(type, disabled, working);
+const colorFromType = computed(() => colorFromElementColorType(type, disabled, working));
+</script>
+
+<script lang="ts">
+export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
+export type ElementAriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
+export type ElementStandardSizing = 'small' | 'normal' | 'large';
 
 export function colorFromElementColorType(type: ElementColorType, disabled: boolean = false, working = false) {
   switch (type) {

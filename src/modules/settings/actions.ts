@@ -1,7 +1,7 @@
 import {SettingsState} from './types';
 import {RootState} from '@/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 
 export const actions: ActionTree<SettingsState, RootState> = {
   async loadSettings({ dispatch, commit }) {

@@ -1,3 +1,114 @@
+<script lang="ts" setup>
+import {emitter} from '@/utils';
+import {ContextMenu, MenuItem} from '@/core/context/menus/contextMenu';
+import ContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
+import { useAttachDomEvent } from '@/composables';
+import { nextTick, onMounted, onUnmounted } from 'vue';
+
+type ContextMenuEventContext = {
+  context: () => any,
+  menu: ContextMenu<any>,
+  pointer: PointerEvent
+}
+
+const menu = ref<ContextMenu<any> | null>(null);
+const menuX = ref(0);
+const menuY = ref(0);
+
+const openToLeft = ref(false);
+
+const context = ref<(() => any) | null>(null);
+const overflowFix = ref(false);
+
+const elmRef = useTemplateRef("elmRef");
+
+useAttachDomEvent<MouseEvent>('click', handleOutOfClick)
+
+onMounted(() => {
+  emitter.on("context-menu-open", handleMenuOpen as any)
+})
+
+onUnmounted(() => {
+  emitter.off('context-menu-open', handleMenuOpen as any)
+})
+
+function handleOutOfClick(event: MouseEvent) {
+  if ((elmRef.value as any).contains(event.target)) {
+    return;
+  }
+
+  handleMenuClose()
+}
+
+function handleMenuOpen(context: ContextMenuEventContext) {
+  menu.value = context.menu;
+  context.valu3 = context.context;
+
+  nextTick(() => {
+    placeMenu(context.pointer);
+  })
+}
+
+function onOptionClick(option: MenuItem<any>) {
+  handleMenuClose()
+}
+
+function handleMenuClose() {
+  menuX.value = 0;
+  menuY.value = 0;
+  menu.value = null;
+  context.value = null;
+  overflowFix.value = false;
+  openToLeft.value = false;
+}
+
+function placeMenu(pointer: PointerEvent) {
+  overflowFix.value = false;
+  openToLeft.value = false;
+  const bodyBound = document.body.getBoundingClientRect();
+
+  const elmBound = (elmRef.value as any)?.getBoundingClientRect();
+  const elmHeight = elmBound?.height ?? 0;
+  const elmWidth = calculateWidth.value();
+  const realElmWidth = elmBound?.width ?? 0;
+
+  menuX.value = pointer.clientX + 5;
+  menuY.value = pointer.clientY + 5;
+
+  if ((menuY.value + elmHeight) > (bodyBound.height - 20)) {
+    menuY.value = menuY.value - elmHeight;
+    overflowFix.value = true;
+  }
+
+  if ((menuX.value + elmWidth) > bodyBound.width) {
+    menuX.value = menuX.value - realElmWidth;
+    openToLeft.value = true;
+  }
+
+  if ((elmHeight + 50) > bodyBound.height) {
+    menuY.value = 28.8;
+  }
+}
+
+/**
+ * This method is limited to a single child, this might need to be addressed if this ever changes
+ */
+function calculateWidth() {
+  const containingElement = (elmRef.value as any);
+
+  let minWidth = containingElement.getBoundingClientRect().width;
+  const itemsWithChildren = containingElement.querySelectorAll('.item > .child');
+  for (let i = 0; i < itemsWithChildren.length; i++) {
+    const item = itemsWithChildren[i];
+    const itemWidth = item.getBoundingClientRect().width;
+    const newWidth = minWidth + itemWidth;
+    minWidth = Math.max(newWidth, minWidth);
+  }
+
+  return minWidth
+}
+</script>
+
 <template>
   <div class="context-menu-container">
     <transition name="slide-up">
@@ -10,118 +121,6 @@
     </transition>
   </div>
 </template>
-
-<script lang="ts">
-import {emitter} from '@/utils';
-import {ContextMenu, MenuItem} from '@/core/context/menus/contextMenu';
-import ContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
-
-type ContextMenuEventContext = {
-  context: () => any,
-  menu: ContextMenu<any>,
-  pointer: PointerEvent
-}
-
-@Component({
-  components: {ContextMenuItem}
-})
-export default class ContextMenuGlobal extends Vue {
-  menu: ContextMenu<any> | null = null;
-  menuX = 0;
-  menuY = 0;
-  
-  openToLeft = false;
-
-  context: (() => any) | null = null;
-  overflowFix = false;
-
-  mounted() {
-    emitter.on("context-menu-open", this.handleMenuOpen as any)
-    window.addEventListener('click', this.handleOutOfClick)
-  }
-
-  destroyed() {
-    emitter.off('context-menu-open', this.handleMenuOpen as any)
-    window.removeEventListener('click', this.handleOutOfClick)
-  }
-
-  handleOutOfClick(event: MouseEvent) {
-    if ((this.$refs.elmRef as any).contains(event.target)) {
-      return;
-    }
-
-    this.handleMenuClose()
-  }
-
-  handleMenuOpen(context: ContextMenuEventContext) {
-    this.menu = context.menu;
-    this.context = context.context;
-
-    this.$nextTick(() => {
-      this.placeMenu(context.pointer);
-    })
-  }
-
-  onOptionClick(option: MenuItem<any>) {
-    this.handleMenuClose()
-  }
-
-  handleMenuClose() {
-    this.menuX = 0;
-    this.menuY = 0;
-    this.menu = null;
-    this.context = null;
-    this.overflowFix = false;
-    this.openToLeft = false;
-  }
-
-  placeMenu(pointer: PointerEvent) {
-    this.overflowFix = false;
-    this.openToLeft = false;
-    const bodyBound = document.body.getBoundingClientRect();
-
-    const elmBound = (this.$refs.elmRef as any)?.getBoundingClientRect();
-    const elmHeight = elmBound?.height ?? 0;
-    const elmWidth = this.calculateWidth();
-    const realElmWidth = elmBound?.width ?? 0;
-    
-    this.menuX = pointer.clientX + 5;
-    this.menuY = pointer.clientY + 5;
-
-    if ((this.menuY + elmHeight) > (bodyBound.height - 20)) {
-      this.menuY = this.menuY - elmHeight;
-      this.overflowFix = true;
-    }
-
-    if ((this.menuX + elmWidth) > bodyBound.width) {
-      this.menuX = this.menuX - realElmWidth;
-      this.openToLeft = true;
-    }
-
-    if ((elmHeight + 50) > bodyBound.height) {
-      this.menuY = 28.8;
-    }
-  }
-
-  /**
-   * This method is limited to a single child, this might need to be addressed if this ever changes
-   */
-  calculateWidth() {
-    const containingElement = (this.$refs.elmRef as any);
-    
-    let minWidth = containingElement.getBoundingClientRect().width;
-    const itemsWithChildren = containingElement.querySelectorAll('.item > .child');
-    for (let i = 0; i < itemsWithChildren.length; i++) {
-      const item = itemsWithChildren[i];
-      const itemWidth = item.getBoundingClientRect().width;
-      const newWidth = minWidth + itemWidth;
-      minWidth = Math.max(newWidth, minWidth);
-    }
-    
-    return minWidth
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .context-menu {

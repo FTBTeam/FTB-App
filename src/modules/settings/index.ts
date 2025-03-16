@@ -3,7 +3,7 @@ import {actions} from './actions';
 import {mutations} from './mutations';
 import {SettingsState} from './types';
 import {RootState} from '@/types';
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 
 export const state: SettingsState = {
   settings: {} as SettingsData,

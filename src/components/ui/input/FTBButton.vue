@@ -2,9 +2,9 @@
 
 const {
   disabled = false,
-  color,
-  cssClass,
-  noPadding,
+  color = '',
+  cssClass = '',
+  noPadding = false,
   isRounded = true,
 } = defineProps<{
   disabled: boolean;

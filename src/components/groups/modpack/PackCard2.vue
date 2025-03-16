@@ -1,3 +1,134 @@
+<script lang="ts" setup>
+import {packUpdateAvailable, resolveArtwork, resolveModloader, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {RouterNames} from '@/router';
+import {SugaredInstanceJson} from '@/core/types/javaApi';
+import ProgressBar from '@/components/ui/ProgressBar.vue';
+import {Versions} from '@/modules/modpacks/types';
+import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
+import {AppContextController} from '@/core/context/contextController';
+import {ContextMenus} from '@/core/context/contextMenus';
+import {InstanceActions} from '@/core/actions/instanceActions';
+import {createLogger} from '@/core/logger';
+import {InstanceRunningData} from '@/core/state/misc/runningState';
+import { watch, ref, onMounted } from 'vue';
+import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
+import { useRouter } from 'vue-router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+const router = useRouter()
+
+const logger = createLogger('PackCard2.vue');
+
+const {instance} = defineProps<{
+  instance: SugaredInstanceJson;
+}>()
+
+// TODO: [port] Fix me
+// @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
+// @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
+
+const runningInstances = ref<InstanceRunningData[]>([]);
+const currentInstall = ref<InstallStatus | null>(null);
+
+const latestVersion = ref<Versions | null>(null);
+const updateOpen = ref(false);
+
+const {loading, apiModpack, fetchModpack} = useFetchingPack()
+const isInstalling = computed(() => {
+  if (!currentInstall) {
+    return false;
+  }
+
+  return currentInstall?.forInstanceUuid === instance.uuid
+})
+
+onMounted(() => {
+  fetchModpack(instance.packId, typeIdToProvider(instance.typeId));
+})
+
+watch(apiModpack, (newValue) => {
+  if (newValue) {
+    latestVersion.value = packUpdateAvailable(instance, newValue) ?? null;
+  }
+})
+
+watch(() => instance, () => {
+  if (!instance || !apiModpack.value) {
+    return;
+  }
+
+  latestVersion.value = packUpdateAvailable(instance, apiModpack.value) ?? null
+});
+
+function play() {
+  InstanceActions.start(instance);
+}
+
+function openInstancePage() {
+  if (isInstalling.value) {
+    return;
+  }
+
+  router.push({
+    name: RouterNames.ROOT_LOCAL_PACK,
+    params: {
+      uuid: instance.uuid
+    }
+  })
+}
+
+function openInstanceMenu(event: PointerEvent) {
+  if (isInstalling.value || isUpdating.value) {
+    return;
+  }
+
+  AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, () => {
+    return {
+      instance: instance
+    }
+  });
+}
+
+const modloader = computed(() => resolveModloader(instance));
+const packLogo = computed(() => resolveArtwork(instance, "square", apiModpack.value))
+const isRunning = computed(() => runningInstances.value.some(e => e.uuid === instance.uuid));
+const isUpdating = computed(() => currentInstall?.request?.updatingInstanceUuid === instance.uuid);
+const versionName = computed(() => _versionName().trim());
+
+function _versionName() {
+  let version = instance.version;
+
+  if (version.length > 16) {
+    // Test to see if we have a v1.0.0 like version in the string
+    const semverLike = /v[\d.]+/i;
+    if (semverLike.test(version)) {
+      // Remove the v1.0.0 like version from the string
+      version = semverLike.exec(version)![0] ?? version;
+    }
+
+    const packName = instance.name.split(' ');
+    if (packName.some(name => version.toLowerCase().includes(name.toLowerCase()))) {
+      const splitPackName = packName[0].split('-')[0];
+      version = version.toLowerCase().replace(splitPackName.toLowerCase(), "").trim();
+    }
+
+    version = version.replace(".zip", "").trim()
+    if (version.startsWith("-")) {
+      version = version.substring(1);
+    } else if (version.endsWith("-")) {
+      version = version.substring(0, version.length - 1);
+    }
+
+    if (version.length > 16) {
+      // Return the last 10 characters
+      return "..." + version.substring(version.length - 16);
+    }
+  }
+
+  return version;
+}
+</script>
+
 <template>
   <div>
     <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="openInstancePage" @click.right="openInstanceMenu">
@@ -25,7 +156,7 @@
             <small class="text-center opacity-75" v-if="currentInstall.stage === 'Mod loader'">This may take a minute</small>
             <transition name="transition-fade" duration="250">
               <div class="files text-sm" v-if="currentInstall.speed">
-                <font-awesome-icon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
+                <FontAwesomeIcon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
               </div>
             </transition>
             <progress-bar class="progress" :progress="parseFloat(currentInstall?.progress ?? '0') / 100" />
@@ -37,15 +168,15 @@
           <div class="name">{{ instance.name }}</div>
           <div class="version text-sm opacity-75">
             <template v-if="!isInstalling">{{ versionName }}</template>
-            <template v-else><font-awesome-icon icon="circle-notch" spin class="mr-2" /> Installing</template>
+            <template v-else><FontAwesomeIcon icon="circle-notch" spin class="mr-2" /> Installing</template>
           </div>
         </div>
         <div class="action-buttons" v-if="!isInstalling" @click.stop>
           <div class="button" aria-label="Update available!" data-balloon-pos="down-left" :class="{disabled: isUpdating}" v-if="latestVersion" @click.stop="updateOpen = true">
-            <font-awesome-icon icon="download" />
+            <FontAwesomeIcon icon="download" />
           </div>
           <div class="play-button button" aria-label="Play" data-balloon-pos="down" :class="{disabled: isUpdating || isRunning}" @click.stop="play">
-            <font-awesome-icon icon="play" />
+            <FontAwesomeIcon icon="play" />
           </div>
         </div>
       </div>
@@ -54,148 +185,6 @@
     <update-confirm-modal v-if="latestVersion" :local-instance="instance" :latest-version="latestVersion" :open="updateOpen" @close="updateOpen = false" />
   </div>
 </template>
-
-<script lang="ts">
-import PackCardCommon from '@/components/groups/modpack/PackCardCommon.vue';
-import {packUpdateAvailable, resolveArtwork, resolveModloader, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {RouterNames} from '@/router';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import Popover from '@/components/ui/Popover.vue';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
-import {Versions} from '@/modules/modpacks/types';
-import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
-import {AppContextController} from '@/core/context/contextController';
-import {ContextMenus} from '@/core/context/contextMenus';
-import {InstanceActions} from '@/core/actions/instanceActions';
-import {createLogger} from '@/core/logger';
-import {ns} from '@/core/state/appState';
-import {InstanceRunningData} from '@/core/state/misc/runningState';
-
-const logger = createLogger('PackCard2.vue');
-
-@Component({
-  components: {
-    UpdateConfirmModal,
-    ProgressBar,
-    Popover
-  }
-})
-export default class PackCard2 extends PackCardCommon {
-  @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
-  
-  @Prop() instance!: SugaredInstanceJson;
-  
-  latestVersion: Versions | null = null;
-  updateOpen = false;
-  
-  async mounted() {
-    // Always fetch the modpack from the API so we can see if updates are available
-    await this.fetchModpack(this.instance.id, typeIdToProvider(this.instance.packType));
-    if (this.apiModpack) {
-      this.latestVersion = packUpdateAvailable(this.instance, this.apiModpack) ?? null
-    }
-  }
-  
-  @Watch('instance')
-  onInstanceChange() {
-    if (!this.instance || !this.apiModpack) {
-      return;
-    }
-    
-    this.latestVersion = packUpdateAvailable(this.instance, this.apiModpack) ?? null
-  }
-  
-  play() {
-    InstanceActions.start(this.instance);
-  }
-
-  openInstancePage() {
-    if (this.isInstalling) {
-      return;
-    }
-
-    this.$router.push({
-      name: RouterNames.ROOT_LOCAL_PACK,
-      params: {
-        uuid: this.instance.uuid
-      }
-    })
-  }
-  
-  openInstanceMenu(event: PointerEvent) {
-    if (this.isInstalling || this.isUpdating) {
-      return;
-    }
-    
-    AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, () => {
-      return {
-        instance: this.instance
-      }
-    });
-  }
-  
-  get modLoader() {
-    return resolveModloader(this.instance);
-  }
-  
-  get packLogo() {
-    return resolveArtwork(this.instance, "square", this.apiModpack)
-  }
-  
-  get isRunning() {
-    return this.runningInstances.some(e => e.uuid === this.instance.uuid);
-  }
-
-  get isInstalling() {
-    if (!this.currentInstall) {
-      return false;
-    }
-
-    return this.currentInstall?.forInstanceUuid === this.instance.uuid
-  }
-  
-  get isUpdating() {
-    return this.currentInstall?.request?.updatingInstanceUuid === this.instance.uuid;
-  }
-  
-  get versionName() {
-    return this._versionName().trim();
-  }
-  
-  _versionName() {
-    let version = this.instance.version;
-    
-    if (version.length > 16) {
-      // Test to see if we have a v1.0.0 like version in the string
-      const semverLike = /v[\d.]+/i;
-      if (semverLike.test(version)) {
-        // Remove the v1.0.0 like version from the string
-        version = semverLike.exec(version)![0] ?? version;
-      }
-      
-      const packName = this.instance.name.split(' ');
-      if (packName.some(name => version.toLowerCase().includes(name.toLowerCase()))) {
-        const splitPackName = packName[0].split('-')[0];
-        version = version.toLowerCase().replace(splitPackName.toLowerCase(), "").trim();
-      }
-
-      version = version.replace(".zip", "").trim()
-      if (version.startsWith("-")) {
-        version = version.substring(1);
-      } else if (version.endsWith("-")) {
-        version = version.substring(0, version.length - 1);
-      }
-      
-      if (version.length > 16) {
-        // Return the last 10 characters
-        return "..." + version.substring(version.length - 16);
-      }
-    }
-    
-    return version;
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .pack-card-v2 {

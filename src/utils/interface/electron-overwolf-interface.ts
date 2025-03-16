@@ -1,4 +1,4 @@
-import {JavaLicenses, JavascriptLicenses} from '@/core/@types/external/licenses.types';
+import {JavaLicenses, JavascriptLicenses} from '@/core/types/external/licenses.types';
 
 /**
  * This isn't my final form, I should be more unified and less hacky on some of

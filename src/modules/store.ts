@@ -1,6 +1,5 @@
-import Vue from 'vue';
 import {RootState} from '@/types';
-import {websocket} from './websocket';
+// import {websocket} from './websocket';
 import {settings} from './settings';
 import {core} from '@/modules/core/core';
 import {modpackStateModule} from '@/core/state/modpacks/modpacksState';
@@ -12,8 +11,6 @@ import {coreAppStateModule} from '@/core/state/core/coreAppState';
 import {apiCredentialsStateModule} from '@/core/state/core/apiCredentialsState';
 import {userFavouritesModule} from '@/core/state/misc/userFavouritesState';
 import {runningStateModule} from '@/core/state/misc/runningState';
-
-Vue.use(Vuex);
 
 export const mutations: MutationTree<RootState> = {
   HIDE_MODAL(state: any) {
@@ -31,7 +28,7 @@ const store: StoreOptions<RootState> = {
   mutations,
   modules: {
     core,
-    websocket,
+    // websocket,
     settings,
     // discovery,
     "v2/app": coreAppStateModule,
@@ -46,4 +43,6 @@ const store: StoreOptions<RootState> = {
   }
 };
 
-export default new Vuex.Store<RootState>(store);
+export default store;
+
+// export default new Vuex.Store<RootState>(store);

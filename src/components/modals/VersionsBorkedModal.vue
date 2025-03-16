@@ -1,6 +1,22 @@
+<script lang="ts" setup>
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { FTBButton, ModalBody, ModalFooter } from '@/components/ui';
+
+const {
+  isDowngrade = true,
+  fixedVersion,
+  notification,
+} = defineProps<{
+  isDowngrade: boolean;
+  fixedVersion: number | null;
+  notification: string;
+}>()
+</script>
+
+
 <template>
   <div>
-    <modal-body>
+    <ModalBody>
       <p v-if="fixedVersion">
         The version of the modpack you are currently on has been archived. This means something has gone wrong with this
         version in an unrecoverable way. In this instance, we recommend you
@@ -19,37 +35,27 @@
         <b class="font-bold mb-1 block">Message from developer</b>
         <p>{{ notification }}</p>
       </div>
-    </modal-body>
-    <modal-footer class="flex justify-end">
-      <ftb-button
+    </ModalBody>
+    <ModalFooter class="flex justify-end">
+      <FTBButton
         class="py-2 px-4"
         :color="fixedVersion != null ? 'danger' : 'warning'"
         css-class="text-center text-l"
         @click="$emit('closed')"
       >
-        <font-awesome-icon icon="times" class="mr-2" size="1x" />
+        <FontAwesomeIcon icon="times" class="mr-2" size="1x" />
         {{ fixedVersion !== null ? 'Ignore' : 'Close' }}
-      </ftb-button>
-      <ftb-button
+      </FTBButton>
+      <FTBButton
         v-if="fixedVersion != null"
         class="py-2 px-8 ml-4"
         color="primary"
         css-class="text-center text-l"
         @click="$emit('action', fixedVersion)"
       >
-        <font-awesome-icon icon="check" class="mr-2" size="1x" />
+        <FontAwesomeIcon icon="check" class="mr-2" size="1x" />
         {{ isDowngrade ? 'Downgrade pack' : 'Update pack' }}
-      </ftb-button>
-    </modal-footer>
+      </FTBButton>
+    </ModalFooter>
   </div>
 </template>
-
-<script lang="ts">
-
-@Component
-export default class VersionsBorkedModal extends Vue {
-  @Prop({ default: true }) isDowngrade!: boolean;
-  @Prop() fixedVersion!: number | null;
-  @Prop() notification!: string;
-}
-</script>

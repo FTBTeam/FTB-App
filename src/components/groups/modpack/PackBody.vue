@@ -1,3 +1,126 @@
+<script lang="ts" setup>
+import {ModPack} from '@/modules/modpacks/types';
+import {ModpackPageTabs} from '@/views/InstancePage.vue';
+import ModpackMods from '@/components/groups/instance/ModpackMods.vue';
+import ModpackSettings from '@/components/groups/instance/ModpackSettings.vue';
+import PackActions from '@/components/groups/modpack/PackActions.vue';
+import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
+import Platform from '@/utils/interface/electron-overwolf';
+import {Backup, SugaredInstanceJson} from '@/core/types/javaApi';
+import Loader from '@/components/ui/Loader.vue';
+import {parseMarkdown} from '@/utils';
+import ProgressBar from '@/components/ui/ProgressBar.vue';
+import {InstallStatus} from '@/core/controllers/InstanceInstallController';
+import {ModLoaderUpdateState} from '@/core/types/states/appState';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {InstanceRunningData} from '@/core/state/misc/runningState';
+import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
+import { packBlacklist } from '@/core/state/modpacks/modpacksState';
+import { computed } from 'vue';
+
+const {
+  instance = null,
+  packInstance,
+  isInstalled = false,
+  activeTab = ModpackPageTabs.OVERVIEW,
+  allowOffline = false,
+} = defineProps<{
+  instance: SugaredInstanceJson;
+  packInstance: ModPack;
+  isInstalled: boolean;
+  activeTab: ModpackPageTabs;
+  allowOffline: boolean;
+}>()
+
+
+// TODO: [port] Fix me
+// @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
+// @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
+// @Getter("currentModloaderUpdate", ns("v2/install")) currentModloaderUpdate!: ModLoaderUpdateState[] | null;
+const runningInstances = ref<InstanceRunningData[]>([]);
+const currentInstall = ref<InstallStatus | null>(null);
+const currentModloaderUpdate = ref<ModLoaderUpdateState[] | null>(null);
+
+const tabs = ModpackPageTabs;
+const tags = computed(() => {
+  if (!packInstance) return [];
+
+  if (packInstance.tags === undefined) return [];
+  return packInstance.tags.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) ?? [];
+})
+
+function computeTime(second: number) {
+  second = second / 1000;
+  const days = Math.floor(second / (3600 * 24));
+  const hours = Math.floor((second % (3600 * 24)) / 3600);
+  const minutes = Math.floor((second % 3600) / 60);
+  const seconds = Math.floor(second % 60);
+
+  return {
+    days: days > 0 ? days + 'd' : '',
+    hours: hours > 0 ? hours + 'h' : '',
+    minutes: minutes > 0 ? minutes + 'm' : '',
+    seconds: seconds > 0 ? seconds + 's' : '',
+  };
+}
+
+const isInstalling = computed(() => {
+  if (!currentInstall) {
+    return false;
+  }
+
+  return currentInstall?.forInstanceUuid === instance.uuid
+})
+
+const isRunning = computed(() => {
+  if (!isInstalled || !instance) return false;
+
+  return runningInstances.value.some(e => e.uuid === instance.uuid);
+})
+
+const isVanilla = computed(() => {
+  // This should likely be done a smarter way
+  return instance
+    ? instance.modLoader === instance.mcVersion
+    : packInstance?.id === 81;
+});
+
+const modloaderUpdating = computed(() => {
+  return currentModloaderUpdate?.some(e => e.instanceId === instance.uuid) ?? false;
+})
+
+const issueTracker = computed(() => {
+  if (!instance) return '';
+
+  if (typeIdToProvider(instance.packType) === "curseforge" && packInstance) {
+    return packInstance.links.find(e => e.type === "issues")?.link ?? '';
+  }
+
+  return "https://go.ftb.team/support-modpack"
+});
+  
+function bisectPromo() {
+  const baseUrl = `https://bisecthosting.com/ftb?r=app-modpack-`;
+  if (instance.id === -1) {
+    return baseUrl + "private-or-imported";
+  }
+
+  if (packBlacklist.includes(instance.id)) {
+    return baseUrl + "custom-instance"
+  }
+
+  if (instance.packType !== 0) {
+    return baseUrl + "curseforge";
+  }
+
+  if (instance.packType === 0 && packInstance) {
+    return baseUrl + packInstance.slug;
+  }
+
+  return baseUrl + instance.id;
+}
+</script>
+
 <template>
   <div class="tab-actions-body" v-if="instance || packInstance">
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
@@ -75,14 +198,6 @@
         </div>
         <div v-if="!isVanilla" class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
           Mods
-        </div>
-        <div
-          v-if="isInstalled && backups.length > 0"
-          class="tab"
-          :class="{ active: activeTab === tabs.BACKUPS }"
-          @click="() => $emit('tabChange', tabs.BACKUPS)"
-        >
-          World Backups
         </div>
 <!--        <div v-if="packInstance && packInstance.meta && packInstance.meta.supportsWorlds" class="tab flex items-center whitespace-no-wrap justify-center" :class="{ active: activeTab === tabs.WORLDS }" @click="() => $emit('tabChange', tabs.WORLDS)">-->
 <!--          FTB Worlds <span class="bg-yellow-400 rounded px-1 py-0-5 sm:px-2 sm:py-1 text-black text-opacity-75 font-bold ml-4 text-sm italic">New!</span>-->
@@ -167,7 +282,7 @@
         <div
           class="wysiwyg"
           v-if="packInstance?.provider === 'modpacks.ch' && packInstance && packInstance.description !== undefined"
-          v-html="parseMarkdown(packInstance.description)"
+          v-html="parseMarkdown(packInstance.description ?? '')"
         />
         <div class="description" v-else-if="packInstance?.provider === 'curseforge' && packInstance && packInstance.description !== undefined" v-html="packInstance.description"></div>
         <div v-else>
@@ -196,13 +311,6 @@
 <!--        :current-version="currentVersionObject.mtgID"-->
 <!--        :pack-instance="packInstance"-->
 <!--      />-->
-
-      <modpack-backups
-        @backupsChanged="$emit('backupsChanged')"
-        v-if="activeTab === tabs.BACKUPS"
-        :instance="instance"
-        :backups="backups"
-      />
       
       <worlds-tab
         v-if="activeTab === tabs.WORLDS"
@@ -216,152 +324,6 @@
     <loader />
   </div>
 </template>
-
-<script lang="ts">
-import {ModPack} from '@/modules/modpacks/types';
-import {ModpackPageTabs} from '@/views/InstancePage.vue';
-import ModpackMods from '@/components/groups/instance/ModpackMods.vue';
-import ModpackSettings from '@/components/groups/instance/ModpackSettings.vue';
-import PackActions from '@/components/groups/modpack/PackActions.vue';
-import ModpackBackups from '@/components/groups/instance/ModpackBackups.vue';
-import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
-import Platform from '@/utils/interface/electron-overwolf';
-import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
-import Loader from '@/components/ui/Loader.vue';
-import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
-import {parseMarkdown} from '@/utils';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
-import {ns} from '@/core/state/appState';
-import {InstallStatus} from '@/core/controllers/InstanceInstallController';
-import {ModLoaderUpdateState} from '@/core/@types/states/appState';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {InstanceRunningData} from '@/core/state/misc/runningState';
-import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
-import { packBlacklist } from '@/core/state/modpacks/modpacksState';
-
-@Component({
-  name: 'pack-body',
-  components: {
-    WorldsTab,
-    ProgressBar,
-    Loader,
-    PackUpdateButton,
-    ModpackSettings,
-    ModpackMods,
-    PackActions,
-    ModpackBackups,
-  },
-  methods: {
-    stringIsEmpty
-  }
-})
-export default class PackBody extends Vue {
-  // The stored instance for an installed pack
-  @Prop({ default: null }) instance!: SugaredInstanceJson;
-  @Prop({ default: false }) packLoading!: boolean;
-  // Pack Instance is the modpack api response
-  @Prop() packInstance?: ModPack;
-  @Prop() isInstalled!: boolean;
-  @Prop() activeTab!: ModpackPageTabs;
-  @Prop({ default: false }) allowOffline!: boolean;
-
-  @Prop({ default: () => [] }) backups!: Backup[];
-
-  @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
-  @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
-  @Getter("currentModloaderUpdate", ns("v2/install")) currentModloaderUpdate!: ModLoaderUpdateState[] | null;
-  
-  Platform = Platform;
-
-  tabs = ModpackPageTabs;
-  
-  get tags() {
-    if (!this.packInstance) return [];
-    
-    if (this.packInstance.tags === undefined) return [];
-    return this.packInstance.tags.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) ?? [];
-  }
-
-  parseMarkdown(input: string) {
-    if (!input) {
-      return '';
-    }
-
-    return parseMarkdown(input);
-  }
-
-  computeTime(second: number) {
-    second = second / 1000;
-    const days = Math.floor(second / (3600 * 24));
-    const hours = Math.floor((second % (3600 * 24)) / 3600);
-    const minutes = Math.floor((second % 3600) / 60);
-    const seconds = Math.floor(second % 60);
-
-    return {
-      days: days > 0 ? days + 'd' : '',
-      hours: hours > 0 ? hours + 'h' : '',
-      minutes: minutes > 0 ? minutes + 'm' : '',
-      seconds: seconds > 0 ? seconds + 's' : '',
-    };
-  }
-
-  get isInstalling() {
-    if (!this.currentInstall) {
-      return false;
-    }
-
-    return this.currentInstall?.forInstanceUuid === this.instance.uuid
-  }
-  
-  get isRunning() {
-    if (!this.isInstalled || !this.instance) return false;
-    
-    return this.runningInstances.some(e => e.uuid === this.instance.uuid);    
-  }
-
-  get isVanilla() {
-    // This should likely be done a smarter way
-    return this.instance 
-      ? this.instance.modLoader === this.instance.mcVersion
-      : this.packInstance?.id === 81;
-  }
-  
-  get modloaderUpdating() {
-    return this.currentModloaderUpdate?.some(e => e.instanceId === this.instance.uuid) ?? false;
-  }
-  
-  get issueTracker() {
-    if (!this.instance) return '';
-    
-    if (typeIdToProvider(this.instance.packType) === "curseforge" && this.packInstance) {
-      return this.packInstance.links.find(e => e.type === "issues")?.link ?? '';
-    } 
-    
-    return "https://go.ftb.team/support-modpack"
-  }
-  
-  bisectPromo() {
-    const baseUrl = `https://bisecthosting.com/ftb?r=app-modpack-`;
-    if (this.instance.id === -1) {
-      return baseUrl + "private-or-imported";
-    }
-    
-    if (packBlacklist.includes(this.instance.id)) {
-      return baseUrl + "custom-instance"
-    }
-    
-    if (this.instance.packType !== 0) {
-      return baseUrl + "curseforge";
-    }
-    
-    if (this.instance.packType === 0 && this.packInstance) {
-      return baseUrl + this.packInstance.slug;
-    }
-    
-    return baseUrl + this.instance.id;
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .action-heading {

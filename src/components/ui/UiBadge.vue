@@ -3,7 +3,7 @@ import {
   colorFromElementColorType,
   ElementAriaDirection,
   ElementColorType,
-} from '@/components/ui';
+} from '@/components/ui/UiButton.vue';
 
 import { computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';

@@ -1,4 +1,4 @@
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import store from '@/modules/store';

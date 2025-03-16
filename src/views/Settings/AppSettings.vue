@@ -138,7 +138,7 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {InstanceActions} from '@/core/actions/instanceActions';
-import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/@types/javaApi';
+import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/types/javaApi';
 import Loader from '@/components/ui/Loader.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import {dialogsController} from '@/core/controllers/dialogsController';

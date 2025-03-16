@@ -90,9 +90,6 @@
       "fsevents",
       "utf-8-validate",
       "yorkie"
-    ],
-    "patchedDependencies": {
-      "vite-plugin-electron": "patches/vite-plugin-electron.patch"
-    }
+    ]
   }
 }

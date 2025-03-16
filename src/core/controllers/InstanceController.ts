@@ -1,4 +1,4 @@
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import store from '@/modules/store';
 import {createLogger} from '@/core/logger';

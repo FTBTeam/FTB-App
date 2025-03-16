@@ -2,8 +2,8 @@ import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
 
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {SearchResultPack} from '@/core/types/modpacks/packSearch';
 import store from '@/modules/store';
 import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 

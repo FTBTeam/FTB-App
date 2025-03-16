@@ -1,3 +1,121 @@
+<script lang="ts" setup>
+import {ModPack, Versions} from '@/modules/modpacks/types';
+import platform from '@/utils/interface/electron-overwolf';
+import {getColorForReleaseType, parseMarkdown} from '@/utils';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {InstanceJson} from '@/core/types/javaApi';
+import {RouterNames} from '@/router';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
+import dayjs from 'dayjs';
+import {alertController} from '@/core/controllers/alertController';
+import UiButton from '@/components/ui/UiButton.vue';
+import {createLogger} from '@/core/logger';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { services } from '@/bootstrap.ts';
+
+const logger = createLogger("ModpackVersions.vue")
+
+const {
+  versions,
+  packInstance,
+  instance
+} = defineProps<{
+  versions: Versions[];
+  packInstance: ModPack;
+  instance: InstanceJson;
+}>()
+
+const router = useRouter();
+
+const changelogs = ref<Record<string, string>>({});
+const currentVersion = ref<Versions | null>(null);
+const activeLog = ref(-1);
+const loading = ref(true);
+const version = ref<number | string>(-1);
+
+onMounted(() => {
+  const sortedVersion = versions.sort((a, b) => b.id - a.id);
+
+  const currentId = instance?.versionId ?? packInstance?.versions[0]?.id ?? -1;
+  const lcurrent = sortedVersion.find(e => e.id === currentId)?.id ?? sortedVersion[0].id;
+  version.value = lcurrent;
+
+  // get the first log
+  fetchLog(lcurrent)
+    .then((data) => {
+      changelogs['' + lcurrent] = data;
+      setActive(lcurrent);
+    })
+    .catch(e => logger.error(e))
+})
+
+onUnmounted(() => {
+  changelogs.value = {};
+})
+
+watch(version, async (newValue) => {
+  if (changelogs.value['' + newValue]) {
+    setActive(newValue);
+    return;
+  }
+
+  changelogs.value['' + newValue] = await fetchLog(newValue);
+  setActive(newValue);
+});
+
+function setActive(versionId: number) {
+  activeLog.value = versionId;
+  currentVersion.value = versions.find((e) => e.id === activeLog.value) ?? null;
+}
+
+async function fetchLog(versionId: number) {
+  try {
+    const changelog = await toggleBeforeAndAfter(
+      () => modpackApi.modpacks.getChangelog(packInstance.id, versionId, isCursePack ? "curseforge" : "modpacksch"),
+      state => loading.value = state
+    )
+
+    return changelog?.content ?? `No changelog available for this version`;
+  } catch (e) {
+    logger.error(e)
+    alertController.warning("Unable to load changelog")
+    return "Unable to locate changelog for this version";
+  }
+}
+
+function isOlderVersion(version: number) {
+  return instance?.versionId > version ?? false;
+}
+
+function update() {
+  if (!instance || !currentVersion.value) {
+    // Non-instances can't be updated
+    return;
+  }
+
+  services.instanceInstallController.requestUpdate(instance, currentVersion.value, typeIdToProvider(instance.packType));
+  router.push({
+    name: RouterNames.ROOT_LIBRARY
+  })
+}
+
+const packVersions = computed(() => {
+  return [...versions].sort((a, b) => b.id - a.id).map(e => ({
+    value: e.id,
+    label: e.name + (instance?.versionId === e.id ? ' (Current)' : ''),
+    meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"),
+    badge: {color: getColorForReleaseType(e.type), text: e.type}
+  })) ?? []
+});
+
+const isCursePack = computed(() => {
+  return packInstance.type.toLowerCase() == "curseforge" || packInstance.id > 1000;
+})
+</script>
+
 <template>
   <div class="pack-versions">
     <div class="aside mb-6">
@@ -43,128 +161,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {ModPack, Versions} from '@/modules/modpacks/types';
-import platform from '@/utils/interface/electron-overwolf';
-import {getColorForReleaseType, parseMarkdown} from '@/utils';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import {InstanceJson} from '@/core/@types/javaApi';
-import {RouterNames} from '@/router';
-import {modpackApi} from '@/core/pack-api/modpackApi';
-import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
-import dayjs from 'dayjs';
-import {alertController} from '@/core/controllers/alertController';
-import UiButton from '@/components/ui/UiButton.vue';
-import {createLogger} from '@/core/logger';
-
-@Component({
-  components: {UiButton, Selection2}
-})
-export default class ModpackVersions extends Vue {
-  private logger = createLogger("ModpackVersions.vue")
-  
-  @Prop() versions!: Versions[];
-  @Prop() packInstance!: ModPack;
-  @Prop() instance!: InstanceJson;
-
-  platform = platform;
-
-  changelogs: Record<string, string> = {};
-  currentVersion: Versions | null = null;
-  activeLog: number = -1;
-  loading = true;
-
-  version: number | string = -1;
-  
-  parseMarkdown = parseMarkdown;
-
-  mounted() {
-    const sortedVersion = this.versions.sort((a, b) => b.id - a.id);
-    
-    const currentId = this.instance?.versionId ?? this.packInstance?.versions[0]?.id ?? -1;
-    const lcurrent = sortedVersion.find(e => e.id === currentId)?.id ?? sortedVersion[0].id;
-    this.version = lcurrent;
-    
-    // get the first log
-    this.fetchLog(lcurrent)
-      .then((data) => {
-        this.changelogs['' + lcurrent] = data;
-        this.setActive(lcurrent);
-      })
-      .catch(e => this.logger.error(e))
-  }
-  
-  destroyed() {
-    this.changelogs = {};
-  }
-
-  @Watch('version')
-  async loadChanges(versionId: number) {
-    if (this.changelogs['' + versionId]) {
-      this.setActive(versionId);
-      return;
-    }
-    
-    this.changelogs['' + versionId] = await this.fetchLog(versionId);
-    this.setActive(versionId);
-  }
-
-  setActive(versionId: number) {
-    this.activeLog = versionId;
-    this.currentVersion = this.versions.find((e) => e.id === this.activeLog) ?? null;
-  }
-
-  async fetchLog(versionId: number) {    
-    try {
-      const changelog = await toggleBeforeAndAfter(
-        () => modpackApi.modpacks.getChangelog(this.packInstance.id, versionId, this.isCursePack ? "curseforge" : "modpacksch"),
-        state => this.loading = state
-      )
-
-      return changelog?.content ?? `No changelog available for this version`;
-    } catch (e) {
-      this.logger.error(e)
-      alertController.warning("Unable to load changelog")
-      return "Unable to locate changelog for this version";
-    }
-  }
-
-  public isOlderVersion(version: number) {
-    return this.instance?.versionId > version ?? false;
-  }
-
-  public update(): void {
-    if (!this.instance || !this.currentVersion) {
-      // Non-instances can't be updated
-      return;
-    }
-    
-    instanceInstallController.requestUpdate(this.instance, this.currentVersion, typeIdToProvider(this.instance.packType));
-    this.$router.push({
-      name: RouterNames.ROOT_LIBRARY
-    })
-  }
-  
-  get packVersions(): SelectionOptions {
-    return [...this.versions].sort((a, b) => b.id - a.id).map(e => ({
-      value: e.id, 
-      label: e.name + (this.instance?.versionId === e.id ? ' (Current)' : ''), 
-      meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"), 
-      badge: {color: getColorForReleaseType(e.type), text: e.type} 
-    })) ?? []
-  }
-  
-  get isCursePack() {
-    // TODO: (M#01) Fix this once the api has been updated to support a `provider` field
-    // TODO: (M#01) > 1000 isn't a great option here but it's the only way to ensure this still works once the
-    //       provider field is added and the type is set correctly
-    return this.packInstance.type.toLowerCase() == "curseforge" || this.packInstance.id > 1000;
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .pack-versions {

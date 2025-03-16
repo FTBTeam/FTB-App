@@ -1,5 +1,5 @@
-const production = process.env.NODE_ENV === "production";
-const platform = process.env.VUE_APP_PLATFORM
+const production = import.meta.env.NODE_ENV === "production";
+const platform = import.meta.env.VITE_RUNTIME_PLATFORM
   
 const useStaging = false;
 

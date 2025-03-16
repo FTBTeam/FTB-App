@@ -1,3 +1,356 @@
+<script lang="ts" setup>
+import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
+import TitleBar from '@/components/layout/TitleBar.vue';
+import {SocketState} from '@/modules/websocket/types';
+import {SettingsState} from '@/modules/settings/types';
+import platform from '@/utils/interface/electron-overwolf';
+import AdAside from '@/components/layout/AdAside.vue';
+// import GlobalComponents from '@/components/layout/GlobalComponents.vue';
+import {ns} from '@/core/state/appState';
+import {AsyncFunction} from '@/core/types/commonTypes';
+import {createLogger} from '@/core/logger';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {constants} from '@/core/constants';
+import {adsEnabled, emitter} from '@/utils';
+import Loader from '@/components/ui/Loader.vue';
+import Onboarding from '@/components/modals/Onboarding.vue';
+import UiButton from '@/components/ui/UiButton.vue';
+import {alertController} from '@/core/controllers/alertController';
+import { onMounted, ref, computed } from 'vue';
+
+// TODO: [port] Fix me
+// @State('websocket') websockets!: SocketState;
+// @State('settings') settings!: SettingsState;
+// @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
+// @Action('registerPingCallback') registerPingCallback: any;
+// @Action('loadProfiles', { namespace: 'core' }) loadProfiles!: AsyncFunction;
+// @Action('loadInstances', ns("v2/instances")) loadInstances!: AsyncFunction;
+// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
+//
+// @Action("storeWsSecret", ns("v2/app")) storeWsSecret!: (secret: string) => Promise<void>
+// const websockets: SocketState = null;
+const settings: SettingsState = null;
+const loadSettings: any = null;
+function registerPingCallback(callback: any) {}
+const loadProfiles: AsyncFunction = null;
+const loadInstances: AsyncFunction = null;
+const debugDisabledAdAside: boolean = false;
+const storeWsSecret: (secret: string) => Promise<void> = null;
+
+const logger = createLogger("MainApp.vue");
+
+// App runtime
+const loading = ref(true);
+const hasInitialized = ref(false);
+const isMac = ref(false);
+
+// App init
+const appStarting = ref(true);
+const appLoaded = ref(false);
+const appInstalling = ref(false);
+const appInstallStage = ref("");
+
+// App install
+const appInstallFailed = ref(false);
+const appStartupFailed = ref(false);
+const appInstallError = ref("");
+
+// Onboarding
+const showOnboarding = ref(false);
+
+const startupJobs = ref([
+  {
+    name: "Settings",
+    done: false,
+    action: () => loadSettings()
+  },
+  {
+    name: "Init App",
+    done: false,
+    action: () => initApp()
+  }
+])
+
+const postStartupJobs = ref([
+  {
+    name: "Profiles",
+    done: false,
+    action: () => loadProfiles()
+  },
+  {
+    name: "Loading Installed Instances",
+    done: false,
+    action: () => loadInstances()
+  },
+])
+
+function allJobsDone() {
+  return startupJobs.value.every(job => job.done)
+}
+
+onMounted(async () => {
+  useSystemBar().catch(console.error)
+  startNetworkMonitor();
+  
+  logger.info("App started on ", constants.platform)
+  isMac.value = false// os.type() === 'Darwin'; // TODO: [port] Fix me
+
+  appStarting.value = true;
+  appLoaded.value = false;
+
+  logger.info("Mounted MainApp for ", constants.platform);
+
+  // Check if the app is installed
+  let installed = true;
+  if (!platform.isOverwolf() && constants.isProduction) {
+    installed = await platform.get.app.runtimeAvailable();
+
+    logger.info("App installed", installed);
+    if (!installed) {
+      // We need to install the app
+      try {
+        await installApp();
+      } catch (e: any) {
+        appInstallFailed.value = true;
+        appInstallError.value = e?.customMessage || "The app has failed to install the necessary files, please try again or contact support...";
+        logger.error("Failed to install app", e);
+      }
+    }
+  }
+
+  await startApp();
+  appLoaded.value = true;
+
+  emitter.on("ws.message", (data: any) => {
+    if (data?.type === "refreshInstancesRequest") {
+      loadInstances();
+    }
+  })
+})
+
+async function initApp() {
+  logger.info("Initializing app");
+  try {
+    logger.debug("Sending appInit message");
+    const reply = await sendMessage("appInit", {});
+    logger.debug("Received appInit reply", reply);
+    if (!reply?.success) {
+      logger.error("Failed to initialize app", reply);
+      return;
+    }
+
+    logger.info("App initialized from the subprocess");
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function installApp() {
+  appInstalling.value = true;
+  logger.info("Installing app");
+
+  await platform.get.app.installApp((stage: any) => appInstallStage.value = stage, () => {}, false)
+
+  appInstalling.value = false;
+}
+
+async function startApp() {
+  appStarting.value = false;
+  logger.info("Starting app");
+
+  if (!constants.isProduction) {
+    logger.info("Starting production app");
+
+    // If we're in dev, we just default to localhost
+    await connectToWebsockets();
+    return;
+  }
+
+  logger.info("Sending start subprocess message");
+  try {
+    let appData: any = await platform.get.app.startSubprocess();
+
+    // False means update
+    if (!appData) {
+      try {
+        await platform.get.app.updateApp(
+          (stage: any) => appInstallStage.value = stage,
+          () => logger.info("Update complete")
+        );
+      } catch (e: any) {
+        appInstallFailed.value = true;
+        appInstallError.value = e?.customMessage || "The app has failed to update, please try again or contact support...";
+        logger.error("Failed to update app", e);
+      }
+
+      appData = await platform.get.app.startSubprocess();
+    }
+
+    logger.info("Started app subprocess", appData);
+    if (!appData.port || !appData.secret) {
+      appStartupFailed.value = true;
+      appInstallError.value = "The app has failed to start due to connection issues, please try again or contact support...";
+      logger.error("Failed to start subprocess due to connection issues", appData);
+      return;
+    }
+
+    // Finally we need to get the app to connect to the subprocess
+    await connectToWebsockets(appData.port, appData.secret);
+  } catch (e: any) {
+    // Same as the install, grab the custom error if possible
+    appStartupFailed.value = true;
+    appInstallError.value = e?.customMessage || "The app has failed to start, please try again or contact support...";
+    logger.error("Failed to start subprocess", e);
+  }
+}
+
+async function connectToWebsockets(port: number = 13377, secret: string = "") {
+  // Store the secret
+  logger.info("Starting websocket connection on port", port, "with secret", secret);
+  await storeWsSecret(secret);
+  
+  // TODO: Fix me plz
+  // $connect('ws://localhost:' + port);
+}
+
+async function setupApp() {
+  if (!hasInitialized.value) {
+    await fetchStartData();
+
+    logger.debug("Starting ping poll");
+    registerPingCallback((data: any) => {
+      if (data.type === 'ping') {
+        gobbleError(() => sendMessage("pong", {}, 500))
+      }
+    });
+
+    hasInitialized.value = true;
+
+    checkForFirstRun()
+      .then(() => logger.info("Finished checking for first run"))
+      .catch(error => logger.error("Failed to check for first run", error));
+
+    for (const job of postStartupJobs.value) {
+      logger.info(`Starting post ${job.name}`)
+      await job.action();
+    }
+  }
+
+  platform.get.actions.onAppReady();
+
+  logger.debug("Notifying all controllers of connected status")
+}
+
+async function fetchStartData() {
+  logger.info("Starting startup jobs");
+  for (const job of startupJobs.value) {
+    logger.info(`Starting ${job.name}`)
+    await job.action();
+    // TOOD: likely not reactive
+    job.done = true;
+    logger.info(`Finished ${job.name}`)
+  }
+}
+
+// TODO: [port] Fix me
+  // @Watch('websockets', { deep: true })
+  // public async onWebsocketsChange(newVal: SocketState) {
+  //   if (newVal.socket.isConnected && this.loading) {
+  //     logger.info("Websockets connected, loading app");
+  //     this.loading = false;
+  //     await this.setupApp();
+  //     logger.info("Finished loading app");
+  //   }
+  //
+  //   if (!newVal.socket.isConnected && !this.loading) {
+  //     logger.warn("Websockets disconnected, unloading app");
+  //     logger.debug("Notifying all controllers of disconnected status")
+  //     this.loading = true;
+  //   }
+  // }
+
+async function checkForFirstRun() {
+  if (!platform.isElectron()) {
+    return;
+  }
+
+  if (await platform.get.app.cpm.required() && await platform.get.app.cpm.isFirstLaunch()) {
+    showOnboarding.value = true;
+  }
+}
+
+function startNetworkMonitor() {
+  if (!navigator.onLine) {
+    alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
+  }
+
+  window.addEventListener("offline", () => {
+    alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
+  });
+
+  window.addEventListener("online", () => {
+    alertController.success("You're back online, the app should be working as expected");
+  });
+}
+
+async function restartApp() {
+  platform.get.actions.restartApp();
+}
+
+async function useSystemBar() {
+  // Wait until we see the loaded class on the body or after 5 seconds
+  await new Promise(res => {
+    let timeout: any = null;
+    let interval: any = null;
+
+    timeout = setTimeout(() => {
+      if (interval) clearInterval(interval)
+      if (timeout) clearTimeout(timeout)
+      res(null)
+    }, 5000) // fail after 5 seconds
+
+    interval = setInterval(() => {
+      if (document.body.classList.contains("loaded")) {
+        if (interval) clearInterval(interval)
+        if (timeout) clearTimeout(timeout)
+        res(null)
+      }
+    }, 100)
+  })
+
+  const useSystemBarRaw = localStorage.getItem("useSystemFrame") ?? "false"
+  const useSystemBar = useSystemBarRaw === "true";
+
+  if (useSystemBar) {
+    if (!document.body.classList.contains("system-frame")) {
+      document.body.classList.add("system-frame")
+    }
+  }
+}
+
+const appConnecting = computed(() => true)// !websockets.socket.isConnected) // TODO: [port] fixme
+const reconnectAttempts = computed(() => 0)// websockets.reconnects) // TODO: [port] fixme
+const isReconnecting = computed(() => appConnecting.value) //&& !websockets.firstStart) // TODO: [port] fixme
+const appReadyToGo = computed(() => !appStarting.value && appLoaded.value && !appInstalling && !isReconnecting && !appConnecting.value && allJobsDone())
+const advertsEnabled = computed(() => adsEnabled(settings.settings, debugDisabledAdAside))
+const systemBarDisabled = computed(() => !settings.settings.appearance.useSystemWindowStyle)
+
+const status = computed(() => {
+  if (appStarting.value && !appInstalling) {
+    return "Starting up"
+  } else if (appInstalling) {
+    return "Installing"
+  } else if (appConnecting.value && !isReconnecting && !appInstalling) {
+    return "Connecting..."
+  } else if (!appStarting && !appInstalling && isReconnecting) {
+    return "Reconnecting..."
+  }
+})
+
+const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/settings'))
+</script>
+
 <template>
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
@@ -35,7 +388,7 @@
       </main>
     </div>
     
-    <global-components v-if="appReadyToGo" />
+    <GlobalComponents v-if="appReadyToGo" />
     <onboarding v-if="showOnboarding" @accepted="showOnboarding = false" />
     
     <modal :open="appInstallFailed || appStartupFailed" title="Something's gone wrong!" sub-title="Looks like there might be a problem...">
@@ -55,382 +408,6 @@
     </modal>
   </div>
 </template>
-
-<script lang="ts">
-import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
-import TitleBar from '@/components/layout/TitleBar.vue';
-import {SocketState} from '@/modules/websocket/types';
-import {SettingsState} from '@/modules/settings/types';
-import platform from '@/utils/interface/electron-overwolf';
-import AdAside from '@/components/layout/AdAside.vue';
-import GlobalComponents from '@/components/layout/GlobalComponents.vue';
-import {ns} from '@/core/state/appState';
-import {AsyncFunction} from '@/core/@types/commonTypes';
-import {createLogger} from '@/core/logger';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import os from 'os';
-import {constants} from '@/core/constants';
-import {adsEnabled, emitter} from '@/utils';
-import Loader from '@/components/ui/Loader.vue';
-import Onboarding from '@/components/modals/Onboarding.vue';
-import UiButton from '@/components/ui/UiButton.vue';
-import {alertController} from '@/core/controllers/alertController';
-
-@Component({
-  components: {
-    UiButton,
-    Onboarding,
-    Loader,
-    GlobalComponents,
-    Sidebar,
-    TitleBar,
-    AdAside,
-  },
-})
-export default class MainApp extends Vue {
-  @State('websocket') websockets!: SocketState;
-  @State('settings') settings!: SettingsState;
-  @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
-  @Action('registerPingCallback') registerPingCallback: any;
-  @Action('loadProfiles', { namespace: 'core' }) loadProfiles!: AsyncFunction;
-  @Action('loadInstances', ns("v2/instances")) loadInstances!: AsyncFunction;
-  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
-  
-  @Action("storeWsSecret", ns("v2/app")) storeWsSecret!: (secret: string) => Promise<void>
-  
-  private logger = createLogger("MainApp.vue");
-  
-  // App runtime
-  loading: boolean = true;
-  platform = platform;
-  hasInitialized = false;
-  isMac: boolean = false;
-
-  // App init
-  appStarting = true;
-  appLoaded = false;
-  appInstalling = false;
-  appInstallStage = "";
-  
-  appInstallFailed = false;
-  appStartupFailed = false;
-  appInstallError = "";
-
-  showOnboarding = false;
-
-  startupJobs = [
-    {
-      name: "Settings",
-      done: false,
-      action: () => this.loadSettings()
-    },
-    {
-      name: "Init App",
-      done: false,
-      action: () => this.initApp()
-    }
-  ]
-  
-  postStartupJobs = [
-    {
-      name: "Profiles",
-      done: false,
-      action: () => this.loadProfiles()
-    },
-    {
-      name: "Loading Installed Instances",
-      done: false,
-      action: () => this.loadInstances()
-    },
-  ]
-
-  allJobsDone() {
-    return this.startupJobs.every(job => job.done)
-  }
-  
-  async mounted() {
-    this.useSystemBar().catch(console.error)
-    
-    this.startNetworkMonitor();
-    this.logger.info("App started on ", constants.platform)
-    this.isMac = os.type() === 'Darwin';
-
-    this.appStarting = true;
-    this.appLoaded = false;
-    
-    this.logger.info("Mounted MainApp for ", constants.platform);
-    
-    // Check if the app is installed
-    let installed = true;
-    if (!this.platform.isOverwolf() && constants.isProduction) {
-      installed = await platform.get.app.runtimeAvailable();
-      
-      this.logger.info("App installed", installed);
-      if (!installed) {
-        // We need to install the app
-        try {
-          await this.installApp();
-        } catch (e: any) {
-          this.appInstallFailed = true;
-          this.appInstallError = e?.customMessage || "The app has failed to install the necessary files, please try again or contact support...";
-          this.logger.error("Failed to install app", e);
-        }
-      }
-    }
-
-    await this.startApp();
-    this.appLoaded = true;
-    
-    emitter.on("ws.message", (data: any) => {
-      if (data?.type === "refreshInstancesRequest") {
-        this.loadInstances();
-      }
-    })
-  }
-  
-  async initApp() {
-    this.logger.info("Initializing app");
-    try {
-      this.logger.debug("Sending appInit message");
-      const reply = await sendMessage("appInit", {});
-      this.logger.debug("Received appInit reply", reply);
-      if (!reply?.success) {
-        this.logger.error("Failed to initialize app", reply);
-        return;
-      }
-      
-      this.logger.info("App initialized from the subprocess");
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async installApp() {
-    this.appInstalling = true;
-    this.logger.info("Installing app");
-    
-    await this.platform.get.app.installApp((stage: any) => this.appInstallStage = stage, () => {}, false)
-    
-    this.appInstalling = false;
-  }
-  
-  async startApp() {
-    this.appStarting = false;
-    this.logger.info("Starting app");
-    
-    if (!constants.isProduction) {
-      this.logger.info("Starting production app");
-
-      // If we're in dev, we just default to localhost
-      await this.connectToWebsockets();
-      return;
-    }
-
-    this.logger.info("Sending start subprocess message");
-    try {
-      let appData: any = await platform.get.app.startSubprocess();
-      
-      // False means update
-      if (!appData) {
-        try {
-          await this.platform.get.app.updateApp(
-            (stage: any) => this.appInstallStage = stage,
-            () => this.logger.info("Update complete")
-          );
-        } catch (e: any) {
-          this.appInstallFailed = true;
-          this.appInstallError = e?.customMessage || "The app has failed to update, please try again or contact support...";
-          this.logger.error("Failed to update app", e);
-        }
-        
-        appData = await platform.get.app.startSubprocess();
-      }
-      
-      this.logger.info("Started app subprocess", appData);
-      if (!appData.port || !appData.secret) {
-        this.appStartupFailed = true;
-        this.appInstallError = "The app has failed to start due to connection issues, please try again or contact support...";
-        this.logger.error("Failed to start subprocess due to connection issues", appData);
-        return;
-      }
-
-      // Finally we need to get the app to connect to the subprocess
-      await this.connectToWebsockets(appData.port, appData.secret);
-    } catch (e: any) {
-      // Same as the install, grab the custom error if possible
-      this.appStartupFailed = true;
-      this.appInstallError = e?.customMessage || "The app has failed to start, please try again or contact support...";
-      this.logger.error("Failed to start subprocess", e);
-    }
-  }
-  
-  async connectToWebsockets(port: number = 13377, secret: string = "") {    
-    // Store the secret
-    this.logger.info("Starting websocket connection on port", port, "with secret", secret);
-    await this.storeWsSecret(secret);
-    this.$connect('ws://localhost:' + port);
-  }
-
-  async setupApp() {
-    if (!this.hasInitialized) {
-      await this.fetchStartData();
-      
-      this.logger.debug("Starting ping poll");
-      this.registerPingCallback((data: any) => {
-        if (data.type === 'ping') {
-          gobbleError(() => sendMessage("pong", {}, 500))
-        }
-      });
-      
-      this.hasInitialized = true;
-
-      this.checkForFirstRun()
-        .then(() => this.logger.info("Finished checking for first run"))
-        .catch(error => this.logger.error("Failed to check for first run", error));
-      
-      for (const job of this.postStartupJobs) {
-        this.logger.info(`Starting post ${job.name}`)
-        await job.action();
-      }
-    }
-    
-    this.platform.get.actions.onAppReady();
-
-    this.logger.debug("Notifying all controllers of connected status")
-  }
-
-  public async fetchStartData() {
-    this.logger.info("Starting startup jobs");
-    for (const job of this.startupJobs) {
-      this.logger.info(`Starting ${job.name}`)
-      await job.action();
-      job.done = true;
-      this.logger.info(`Finished ${job.name}`)
-    }
-  }
-  
-  @Watch('websockets', { deep: true })
-  public async onWebsocketsChange(newVal: SocketState) {
-    if (newVal.socket.isConnected && this.loading) {
-      this.logger.info("Websockets connected, loading app");
-      this.loading = false;
-      await this.setupApp();
-      this.logger.info("Finished loading app");
-    }
-
-    if (!newVal.socket.isConnected && !this.loading) {
-      this.logger.warn("Websockets disconnected, unloading app");
-      this.logger.debug("Notifying all controllers of disconnected status")
-      this.loading = true;
-    }
-  }
-  
-  async checkForFirstRun() {
-    if (!this.platform.isElectron()) {
-      return;
-    }
-    
-    if (await this.platform.get.app.cpm.required() && await this.platform.get.app.cpm.isFirstLaunch()) {
-     this.showOnboarding = true;
-    }
-  }
-  
-  startNetworkMonitor() {
-    if (!navigator.onLine) {
-      alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
-    }
-    
-    window.addEventListener("offline", () => {
-      alertController.warning("It looks like you've lost your internet connection, the app may not work as expected");
-    });
-
-    window.addEventListener("online", () => {
-      alertController.success("You're back online, the app should be working as expected");
-    });
-  }
-
-  async restartApp() {
-    this.platform.get.actions.restartApp();
-  }
-  
-  async useSystemBar() {
-    // Wait until we see the loaded class on the body or after 5 seconds
-    await new Promise(res => {
-      let timeout: any = null;
-      let interval: any = null;
-      
-      timeout = setTimeout(() => {
-        if (interval) clearInterval(interval)
-        if (timeout) clearTimeout(timeout)
-        res(null)
-      }, 5000) // fail after 5 seconds
-      
-      interval = setInterval(() => {
-        if (document.body.classList.contains("loaded")) {
-          if (interval) clearInterval(interval)
-          if (timeout) clearTimeout(timeout)
-          res(null)
-        }
-      }, 100)
-    })
-    
-    const useSystemBarRaw = localStorage.getItem("useSystemFrame") ?? "false"
-    const useSystemBar = useSystemBarRaw === "true";
-    
-    if (useSystemBar) {      
-      if (!document.body.classList.contains("system-frame")) {
-        document.body.classList.add("system-frame")
-      }
-    }
-  }
-  
-  get appConnecting() {
-    return !this.websockets.socket.isConnected
-  }
-  
-  get reconnectAttempts() {
-    return this.websockets.reconnects
-  }
-  
-  get isReconnecting() {
-    return this.appConnecting && !this.websockets.firstStart
-  }
-
-  get appReadyToGo() {
-    return !this.appStarting
-      && this.appLoaded
-      && !this.appInstalling
-      && !this.isReconnecting
-      && !this.appConnecting
-      && this.allJobsDone()
-  }
-
-  get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-  }
-
-  get systemBarDisabled() {
-    return !this.settings?.settings?.appearance?.useSystemWindowStyle ?? false;
-  }
-  
-  get status() {
-    if (this.appStarting && !this.appInstalling) {
-      return "Starting up"
-    } else if (this.appInstalling) {
-      return "Installing"
-    } else if (this.appConnecting && !this.isReconnecting && !this.appInstalling) {
-      return "Connecting..."
-    } else if (!this.appStarting && !this.appInstalling && this.isReconnecting) {
-      return "Reconnecting..."
-    }
-  }
-
-  get showSidebar() {
-    return !this.$route.path.startsWith('/settings');
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .app-container {

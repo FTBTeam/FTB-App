@@ -1,3 +1,9 @@
 import mitt from 'mitt';
 
-export const emitter = mitt();
+const emitter = mitt();
+
+export function mockInit() {}
+
+export {
+  emitter,
+}

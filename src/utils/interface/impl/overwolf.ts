@@ -1,7 +1,6 @@
-import ElectronOverwolfInterface from './electron-overwolf-interface';
-import os from 'os';
-import {handleAction} from '@/core/protocol/protocolActions';
-import {createLogger, logger} from '@/core/logger';
+import ElectronOverwolfInterface from '../electron-overwolf-interface.ts';
+import {handleAction} from '@/core/protocol/protocolActions.ts';
+import {createLogger, logger} from '@/core/logger.ts';
 
 declare global {
   var overwolf: any;
@@ -74,7 +73,7 @@ const Overwolf: ElectronOverwolfInterface = {
     },
 
     getOsArch() {
-      return os.arch();
+      return 'x64'// os.arch(); // TODO: [port] fixme
     },
 
     async getPlatformVersion() {

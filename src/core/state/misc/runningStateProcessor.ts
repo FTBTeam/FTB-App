@@ -1,7 +1,7 @@
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
-import {emitter} from '@/utils';
-import {ClientLaunchDataReply, LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/@types/javaApi';
+// import {emitter} from '@/utils';
+import {ClientLaunchDataReply, LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/types/javaApi';
 import store from '@/modules/store';
 import {createLogger} from '@/core/logger';
 import {InstanceMessageData, RunningState} from '@/core/state/misc/runningState';
@@ -143,5 +143,6 @@ async function lazyLogChecker(uuid: string, messages: string[]) {
 }
 
 export function initStateProcessor() {
-  emitter.on('ws.message', onLaunchData);
+  // TODO: [Port] fix me
+  // emitter.on('ws.message', onLaunchData);
 }

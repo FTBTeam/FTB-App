@@ -1,6 +1,6 @@
 import {RootState} from '@/types';
 import {JavaFetch} from '@/core/javaFetch';
-import {BlogPost} from '@/core/@types/external/metaApi.types';
+import {BlogPost} from '@/core/types/external/metaApi.types';
 import {constants} from '@/core/constants';
 import {createLogger} from '@/core/logger';
 

@@ -81,9 +81,9 @@ import {
   VideoCacheHandlerReply,
   WebRequestData,
   WebRequestDataResponse
-} from '@/core/@types/javaApi';
+} from '@/core/types/javaApi';
 import {Nullable} from '@/core/websockets/websocketsApi';
-import {ApiEndpoints} from '@/core/@types/javaApiEndpoints';
+import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
 
 export type EndpointDefinition<Input, Output> = {
   input: Input;

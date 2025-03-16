@@ -116,7 +116,7 @@ async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => vo
 <template>
   <div class="ad-aside" :class="{ 'electron': isElectron }">
     <template v-if="!hideAds">
-      <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type">
+      <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type-ow">
         <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd">
           <div
             v-if="!isElectron"

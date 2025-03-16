@@ -1,22 +1,24 @@
 <script lang="ts" setup>
 
-const { disabled, label, desc, alignRight = false, value } = defineProps<{
+const { disabled = false, label = undefined, desc = undefined, alignRight = false } = defineProps<{
   disabled: boolean;
   label: string;
   desc: string;
   alignRight: boolean;
-  value: boolean;
 }>();
 
-const emit = defineEmits<{
-  (e: 'input', value: boolean): void;
-}>();
-
+const value = defineModel<boolean>()
 const hasText = label || desc;
+
+function toggle() {
+  if (!disabled) {
+    value.value = !value.value;
+  }
+}
 </script>
 
 <template>
-  <div class="ui-toggle" @click="!disabled && input(!value)" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
+  <div class="ui-toggle" @click="toggle" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
     <div class="toggle" :class="{active: value}">
       <div class="inner" />
     </div>

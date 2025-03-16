@@ -1,5 +1,5 @@
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {InstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson} from '@/core/types/javaApi';
 import {RootState} from '@/types';
 import {createLogger} from '@/core/logger';
 

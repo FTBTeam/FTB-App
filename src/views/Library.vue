@@ -66,7 +66,7 @@
 <script lang="ts">
 import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {ns} from '@/core/state/appState';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import {SugaredInstanceJson} from '@/core/types/javaApi';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import Loader from '@/components/ui/Loader.vue';

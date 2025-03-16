@@ -1,4 +1,4 @@
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 
 export interface Hardware {
   totalMemory: number;

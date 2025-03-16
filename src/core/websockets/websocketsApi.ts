@@ -1,7 +1,7 @@
 import {MessagePayload} from '@/core/websockets/websocketsEndpoints';
 import store from '@/modules/store';
-import {BaseData} from '@/core/@types/javaApi';
-import {ApiEndpoints} from '@/core/@types/javaApiEndpoints';
+import {BaseData} from '@/core/types/javaApi';
+import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
 
 /**
  * Sends a message to the backend and returns the response.

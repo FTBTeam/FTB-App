@@ -54,7 +54,7 @@
 <script lang="ts">
 import {SettingsState} from '@/modules/settings/types';
 import FTBSlider from '@/components/ui/input/FTBSlider.vue';
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 import Loader from '@/components/ui/Loader.vue';
 
 @Component({

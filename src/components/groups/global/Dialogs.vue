@@ -1,3 +1,39 @@
+<script lang="ts" setup>
+import {Dialog} from '@/core/state/misc/dialogsState';
+import {ns} from '@/core/state/appState';
+import {adsEnabled, parseMarkdown} from '@/utils';
+import UiButton from '@/components/ui/UiButton.vue';
+import {SettingsState} from '@/modules/settings/types';
+import { useAttachDomEvent } from '@/composables';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+// TODO: [port] Fix me
+// @Getter("dialogs", ns("v2/dialogs")) dialogs!: Dialog[];
+// @Action("closeDialog", ns("v2/dialogs")) closeDialog!: (dialog: Dialog) => void;
+// @State('settings') public settings!: SettingsState;
+// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+const dialogs: Dialog[] = [];
+const settings: SettingsState = {};
+const debugDisabledAdAside: boolean = false;
+function closeDialog(dialog: Dialog) {}
+
+useAttachDomEvent<KeyboardEvent>('keydown', (event) => {
+  if (event.key !== 'Escape') {
+    return;
+  }
+
+  closeTopDialog();
+})
+
+function closeTopDialog() {
+  if (dialogs.length) {
+    closeDialog(dialogs[dialogs.length - 1]);
+  }
+}
+
+const advertsEnabled = adsEnabled(settings, debugDisabledAdAside);
+</script>
+
 <template>
   <transition name="transition-fade" duration="250">
     <div class="dialog-container" :class="{ads: advertsEnabled}" v-if="dialogs.length" @click.self="closeTopDialog">
@@ -19,7 +55,7 @@
                 <div class="subtitle" v-if="dialog.subTitle">{{ dialog.subTitle }}</div>
               </div>
               <div class="modal-closer" @click="() => closeTopDialog()">
-                <font-awesome-icon class="closer" icon="times" />
+                <FontAwesomeIcon class="closer" icon="times" />
               </div>
             </div>
             
@@ -27,14 +63,14 @@
               
             <div class="modal-footer">
               <div class="buttons">
-                <ui-button v-for="(button, index) in dialog.buttons"
+                <UiButton v-for="(button, index) in dialog.buttons"
                             :working="dialog.working"
                             :key="index"
                             :type="button.type === 'error' ? 'danger' : button.type"
                             :icon="button.icon"
                             @click="button.action">
                     {{ button.text }}
-                </ui-button>
+                </UiButton>
               </div>
             </div>
           </div>
@@ -43,53 +79,6 @@
     </div>
   </transition>
 </template>
-
-<script lang="ts">
-import {Dialog} from '@/core/state/misc/dialogsState';
-import {ns} from '@/core/state/appState';
-import {adsEnabled, parseMarkdown} from '@/utils';
-import UiButton from '@/components/ui/UiButton.vue';
-import {SettingsState} from '@/modules/settings/types';
-
-@Component({
-  components: {UiButton}
-})
-export default class Dialogs extends Vue {
-  @Getter("dialogs", ns("v2/dialogs")) dialogs!: Dialog[];
-  @Action("closeDialog", ns("v2/dialogs")) closeDialog!: (dialog: Dialog) => void;
-
-  parseMarkdown = parseMarkdown
-
-  mounted() {
-    document.addEventListener('keydown', this.onEsc)
-  }
-
-  destroyed() {
-    document.removeEventListener('keydown', this.onEsc)
-  }
-
-  onEsc(event: any) {
-    if (event.key !== 'Escape') {
-      return;
-    }
-
-    this.closeTopDialog();
-  }
-  
-  closeTopDialog() {
-    if (this.dialogs.length) {
-      this.closeDialog(this.dialogs[this.dialogs.length - 1]);
-    }
-  }
-  
-  @State('settings') public settings!: SettingsState;
-  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-
-  get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .dialog-container {
@@ -107,7 +96,6 @@ export default class Dialogs extends Vue {
     width: calc(100% - 400px);
   }
   
-
   .stacker {
     position: relative;
     z-index: 500;

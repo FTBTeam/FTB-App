@@ -6,7 +6,7 @@ import {SocketState} from '@/modules/websocket/types';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/ui/UiButton.vue';
-import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
+import {ModalButton, OpenModalData} from '@/core/types/javaApi.d.ts';
 import DevToolsActions from '@/components/layout/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMenuGlobal.vue';
 import LoginModal from '@/components/groups/auth/LoginModal.vue';

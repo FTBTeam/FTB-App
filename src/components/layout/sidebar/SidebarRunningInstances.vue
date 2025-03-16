@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {InstanceRunningData} from '@/core/state/misc/runningState';
-import {InstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import { useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';

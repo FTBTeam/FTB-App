@@ -1,12 +1,11 @@
 <script lang="ts" setup>
 import platform from '@/utils/interface/electron-overwolf';
 import {SettingsState} from '@/modules/settings/types';
-import os from 'os';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import {createLogger} from '@/core/logger';
 import { useAttachDomEvent } from '@/composables';
-import { onMounted } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 
 const logger = createLogger('TitleBar.vue');
 

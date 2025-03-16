@@ -1,45 +1,45 @@
+<script lang="ts" setup>
+import {ModPack, Versions} from '@/modules/modpacks/types';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {packUpdateAvailable} from '@/utils/helpers/packHelpers';
+import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
+import { FTBButton } from '@/components/ui';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ref, watch } from 'vue';
+
+const {
+  instance,
+  localInstance,
+} = defineProps<{
+  instance: ModPack;
+  localInstance: InstanceJson | SugaredInstanceJson;
+}>()
+
+const showConfirm = ref(false);
+const latestVersion = ref<Versions | null>(null);
+
+function updateAvailablePacks() {
+  if (!instance || !localInstance) {
+    return;
+  }
+
+  latestVersion.value = packUpdateAvailable(localInstance, instance) ?? null;
+}
+
+watch(() => instance, () => updateAvailablePacks)
+watch(() => localInstance, () => updateAvailablePacks)
+</script>
+
 <template>
   <div class="update" v-if="instance && localInstance && latestVersion">
-    <ftb-button color="warning" class="update-btn px-4 py-1" @click="showConfirm = true">
+    <FTBButton color="warning" class="update-btn px-4 py-1" @click="showConfirm = true">
       <span class="hidden sm:inline-block">Update available</span>
-      <font-awesome-icon icon="cloud-download-alt" class="sm:ml-2" />
-    </ftb-button>
+      <FontAwesomeIcon icon="cloud-download-alt" class="sm:ml-2" />
+    </FTBButton>
 
-    <update-confirm-modal v-if="localInstance && instance" :local-instance="localInstance" :latest-version="latestVersion" :open="showConfirm" @close="showConfirm = false" />
+    <UpdateConfirmModal v-if="localInstance && instance" :local-instance="localInstance" :latest-version="latestVersion" :open="showConfirm" @close="showConfirm = false" />
   </div>
 </template>
-
-<script lang="ts">
-import {ModPack, Versions} from '@/modules/modpacks/types';
-import Loader from '@/components/ui/Loader.vue';
-import {parseMarkdown} from '@/utils';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {packUpdateAvailable} from '@/utils/helpers/packHelpers';
-import UiButton from '@/components/ui/UiButton.vue';
-import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
-
-@Component({
-  methods: {parseMarkdown},
-  components: {UpdateConfirmModal, UiButton, Loader },
-})
-export default class PackUpdateButton extends Vue {
-  @Prop() instance!: ModPack;
-  @Prop() localInstance!: InstanceJson | SugaredInstanceJson;
-
-  showConfirm = false;
-  latestVersion = null as Versions | null;
-  
-  @Watch('instance')
-  @Watch('localInstance')
-  onInstanceChange() {
-    if (!this.instance || !this.localInstance) {
-      return;
-    }
-
-    this.latestVersion = packUpdateAvailable(this.localInstance, this.instance) ?? null;
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .update-btn {

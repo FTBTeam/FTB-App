@@ -1,6 +1,6 @@
 import path from 'path';
 import os from 'os';
-import {Arg} from '@/utils/interface/electron';
+import {Arg} from '@/utils/interface/impl/electron.ts';
 import {getAppHome} from '@/nuturalHelpers';
 
 export function electronAppHome() {

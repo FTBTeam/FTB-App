@@ -1,5 +1,5 @@
 import {Resolution, SettingsState} from './types';
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 
 export const mutations: MutationTree<SettingsState> = {
   loadSettings(state, payload: SettingsData) {

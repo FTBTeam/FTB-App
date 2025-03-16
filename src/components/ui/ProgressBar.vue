@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { defineProps } from 'vue';
 type ProgressType = "primary" | "muted"
 
 const {

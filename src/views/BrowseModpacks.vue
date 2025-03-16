@@ -62,7 +62,7 @@ import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {PackProviders} from '@/modules/modpacks/types';
 import {Route} from 'vue-router';
 import {debounce} from '@/utils';
-import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
+import {SearchResultPack} from '@/core/types/modpacks/packSearch';
 import {ns} from '@/core/state/appState';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import Loader from '@/components/ui/Loader.vue';

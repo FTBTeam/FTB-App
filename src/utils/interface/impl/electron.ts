@@ -1,16 +1,16 @@
 // @ts-ignore no typescript package available
 import {clipboard, ipcRenderer} from 'electron';
-import ElectronOverwolfInterface from './electron-overwolf-interface';
+import ElectronOverwolfInterface from '../electron-overwolf-interface.ts';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import {handleAction} from '@/core/protocol/protocolActions';
+import {handleAction} from '@/core/protocol/protocolActions.ts';
 import log from 'electron-log';
-import {createLogger} from '@/core/logger';
-import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers';
+import {createLogger} from '@/core/logger.ts';
+import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers.ts';
 import {execSync} from 'child_process';
-import {FSLogger} from '@/utils/interface/electron/utils/fsLogger';
-import {getAppHome} from '@/nuturalHelpers';
+import {FSLogger} from '@/utils/interface/electron/utils/fsLogger.ts';
+import {getAppHome} from '@/nuturalHelpers.ts';
 
 export type Arg = string | {
   key?: string;

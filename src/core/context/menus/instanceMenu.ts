@@ -1,7 +1,7 @@
 import {ContextMenu, MenuItem, MenuOptions} from '@/core/context/menus/contextMenu';
 import {faCog, faFolder, faLocationPin, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
 import platform from '@/utils/interface/electron-overwolf';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
+import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import {dialogsController} from '@/core/controllers/dialogsController';

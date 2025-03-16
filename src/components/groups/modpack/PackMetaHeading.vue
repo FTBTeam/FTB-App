@@ -1,7 +1,80 @@
+<script lang="ts" setup>
+import { computed } from 'vue';
+import {getColorForReleaseType} from '@/utils/colors';
+import {ModPack, PackProviders} from '@/modules/modpacks/types';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import store from '@/modules/store';
+import {resolveModloader, sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {packBlacklist} from '@/core/state/modpacks/modpacksState';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+type PackInfo = {
+  id: number;
+  modloader: string;
+  provider: PackProviders;
+  isImport: boolean;
+  source: 'remote' | 'local';
+}
+
+const {
+  hidePackDetails,
+  versionType,
+  apiPack,
+  instance
+} = defineProps<{
+  hidePackDetails: boolean;
+  versionType: string;
+  apiPack?: ModPack;
+  instance?: SugaredInstanceJson | InstanceJson;
+}>()
+
+const packInfo = computed(() => {
+  if (instance) return getInstanceInfo(instance);
+  if (apiPack) return getApiPackInfo(apiPack);
+
+  return null;
+})
+
+function getInstanceInfo(instance: SugaredInstanceJson | InstanceJson): PackInfo {
+  return {
+    id: instance.id,
+    modloader: this.modloader,
+    provider: typeIdToProvider(instance.packType ?? 0),
+    isImport: instance.isImport ?? false,
+    source: 'local'
+  }
+}
+
+function getApiPackInfo(apiPack: ModPack): PackInfo {
+  return {
+    id: apiPack.id,
+    modloader: this.modloader,
+    provider: sourceProviderToProvider(apiPack.provider),
+    isImport: false,
+    source: 'remote'
+  }
+}
+
+const modloader = computed(() => {
+  return resolveModloader((instance || apiPack) ?? null).toLowerCase()
+})
+
+const isVanilla = computed(() => apiPack?.id === 81 && !modloader)
+
+const isLoader = computed(() => {
+  if (!instance) {
+    if (apiPack) {
+      return packBlacklist.includes(apiPack.id);
+    }
+    return false;
+  }
+})
+</script>
+
 <template>
   <div class="meta-heading" :class="{ bolder: hidePackDetails }">
     <div class="back" @click="() => $emit('back')">
-      <font-awesome-icon icon="chevron-left" class="mr-2" />
+      <FontAwesomeIcon icon="chevron-left" class="mr-2" />
       Back to {{ hidePackDetails ? 'instance' : 'library' }}
     </div>
 
@@ -37,97 +110,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import Vue from 'vue';
-import {getColorForReleaseType} from '@/utils/colors';
-import {ModPack, PackProviders} from '@/modules/modpacks/types';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import store from '@/modules/store';
-import {resolveModloader, sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {packBlacklist} from '@/core/state/modpacks/modpacksState';
-
-type PackInfo = {
-  id: number;
-  modloader: string;
-  provider: PackProviders;
-  isImport: boolean;
-  source: 'remote' | 'local';
-}
-
-@Component
-export default class PackMetaHeading extends Vue {
-  @Getter('getActiveProfile', { namespace: 'core' }) public getActiveMcProfile!: any;
-
-  @Prop() hidePackDetails!: boolean;
-  @Prop() versionType!: string;
-  @Prop() apiPack?: ModPack;
-  @Prop() instance?: SugaredInstanceJson | InstanceJson
-
-  getColorForReleaseType = getColorForReleaseType;
-  
-  get packInfo() {
-    if (this.instance) return this.getInstanceInfo(this.instance);
-    if (this.apiPack) return this.getApiPackInfo(this.apiPack);
-    
-    return null;
-  }
-
-  getInstanceInfo(instance: SugaredInstanceJson | InstanceJson): PackInfo {
-    return {
-      id: instance.id,
-      modloader: this.modloader,
-      provider: typeIdToProvider(instance.packType ?? 0),
-      isImport: instance.isImport ?? false,
-      source: 'local'
-    }
-  }
-
-  getApiPackInfo(apiPack: ModPack): PackInfo {
-    return {
-      id: apiPack.id,
-      modloader: this.modloader,
-      provider: sourceProviderToProvider(apiPack.provider),
-      isImport: false,
-      source: 'remote'
-    }
-  }
-  
-  get modloader() {
-    return resolveModloader((this.instance || this.apiPack) ?? null).toLowerCase()
-  }
-
-  loaderFromApiPack() {
-    if (!this.apiPack) {
-      return 'vanilla';
-    }
-    
-    const releaseChannel = store.state.settings?.settings.instanceDefaults.updateChannel ?? 'release';
-    const sortedVersions = this.apiPack.versions
-      .sort((a, b) => b.id - a.id);
-    
-    const latest = sortedVersions
-      .find((v) => v.type.toLowerCase() === releaseChannel);
-    
-    return (latest ?? sortedVersions[0])?.targets.find(e => e.type === "modloader")?.name ?? 'vanilla';
-  }
-  
-  get isVanilla() {
-    return this.apiPack?.id === 81 && !this.modloader;
-  }
-  
-  get isLoader() {
-    if (!this.instance) {
-      if (this.apiPack) {
-        return packBlacklist.includes(this.apiPack.id);
-      }
-      return false;
-    }
-    
-    return packBlacklist.includes(this.instance.id);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .meta-heading {

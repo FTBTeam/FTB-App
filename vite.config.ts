@@ -3,6 +3,7 @@ import path from 'node:path'
 import electron from 'vite-plugin-electron/simple'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import { SpawnOptions } from 'node:child_process';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -21,6 +22,10 @@ export default defineConfig({
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
+        
+        onstart: (args) => {
+          args.startup(['.', '--no-sandbox'], {}, '@overwolf/ow-electron')
+        }
       },
       // preload: {
       //   // Shortcut of `build.rollupOptions.input`.
@@ -34,6 +39,8 @@ export default defineConfig({
         // https://github.com/electron-vite/vite-plugin-electron-renderer/issues/78#issuecomment-2053600808
         ? undefined
         : {},
+      
+      
     }),
   ],
   css: {

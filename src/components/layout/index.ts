@@ -1,4 +1,11 @@
-export * from './DevToolsActions.vue'
-export * from './GlobalComponents.vue'
-export * from './TitleBar.vue'
-export * from './AdAside.vue'
+import DevToolsActions from './DevToolsActions.vue'
+import GlobalComponents from './GlobalComponents.vue'
+import TitleBar from './TitleBar.vue'
+import AdAside from './AdAside.vue'
+
+export {
+  DevToolsActions,
+  GlobalComponents,
+  TitleBar,
+  AdAside
+}

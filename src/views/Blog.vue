@@ -42,8 +42,8 @@
 <script lang="ts">
 import Loader from '@/components/ui/Loader.vue';
 import {ns} from '@/core/state/appState';
-import {AsyncFunction} from '@/core/@types/commonTypes';
-import {BlogPost} from '@/core/@types/external/metaApi.types';
+import {AsyncFunction} from '@/core/types/commonTypes';
+import {BlogPost} from '@/core/types/external/metaApi.types';
 import dayjs from 'dayjs';
 import {standardDateTime} from '@/utils/helpers/dateHelpers';
 import {constants} from '@/core/constants';

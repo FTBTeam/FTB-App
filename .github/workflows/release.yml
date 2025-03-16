@@ -136,7 +136,7 @@ jobs:
       - name: Build frontend (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
         env:
-          VUE_APP_PLATFORM: "electron"
+          VITE_RUNTIME_PLATFORM: "electron"
           APP_TARGET_PLATFORM: ${{ matrix.platform }}
           VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
           AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
@@ -151,7 +151,7 @@ jobs:
       - name: Build frontend (Macos)
         if: ${{ matrix.os == 'macos-latest' }}
         env:
-          VUE_APP_PLATFORM: "electron"
+          VITE_RUNTIME_PLATFORM: "electron"
           APP_TARGET_PLATFORM: ${{ matrix.platform }}
           VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -166,7 +166,7 @@ jobs:
       - name: Build frontend (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
         env:
-          VUE_APP_PLATFORM: "electron"
+          VITE_RUNTIME_PLATFORM: "electron"
           APP_TARGET_PLATFORM: ${{ matrix.platform }}
           VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
         run: |
@@ -227,7 +227,7 @@ jobs:
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
           APP_TARGET_PLATFORM: "overwolf"
           VUE_APP_TARGET_PLATFORM: "overwolf"
-          VUE_APP_PLATFORM: "overwolf"
+          VITE_RUNTIME_PLATFORM: "overwolf"
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/

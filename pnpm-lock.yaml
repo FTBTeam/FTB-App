@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  vite-plugin-electron:
-    hash: d83bc040b2e244f322fd4b7357826834e06584c3b310ac1eefe6b437a432ec99
-    path: patches/vite-plugin-electron.patch
-
 importers:
 
   .:
@@ -136,7 +131,7 @@ importers:
         version: 5.4.14(@types/node@22.13.10)(lightningcss@1.29.2)(sass@1.85.1)
       vite-plugin-electron:
         specifier: ^0.28.6
-        version: 0.28.8(patch_hash=d83bc040b2e244f322fd4b7357826834e06584c3b310ac1eefe6b437a432ec99)(vite-plugin-electron-renderer@0.14.6)
+        version: 0.28.8(vite-plugin-electron-renderer@0.14.6)
       vite-plugin-electron-renderer:
         specifier: ^0.14.5
         version: 0.14.6
@@ -5862,7 +5857,7 @@ snapshots:
 
   vite-plugin-electron-renderer@0.14.6: {}
 
-  vite-plugin-electron@0.28.8(patch_hash=d83bc040b2e244f322fd4b7357826834e06584c3b310ac1eefe6b437a432ec99)(vite-plugin-electron-renderer@0.14.6):
+  vite-plugin-electron@0.28.8(vite-plugin-electron-renderer@0.14.6):
     optionalDependencies:
       vite-plugin-electron-renderer: 0.14.6
 

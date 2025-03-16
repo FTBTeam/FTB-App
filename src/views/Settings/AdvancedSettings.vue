@@ -61,7 +61,7 @@ import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import UiButton from '@/components/ui/UiButton.vue';
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 import Loader from '@/components/ui/Loader.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import Selection2 from '@/components/ui/Selection2.vue';

@@ -8,13 +8,14 @@ import {
   OperationProgressUpdateData,
   Stage,
   SugaredInstanceJson
-} from '@/core/@types/javaApi';
+} from '@/core/types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {PackProviders, Versions} from '@/modules/modpacks/types';
 import {alertController} from '@/core/controllers/alertController';
 import platform from '@/utils/interface/electron-overwolf';
 import {createLogger} from '@/core/logger';
+import { Emitter } from 'mitt';
 
 export type InstallRequest = {
   uuid: string;
@@ -72,11 +73,11 @@ const betterStageNames: Map<Stage, string> = new Map([
 /**
  * Instance install controller backed by a vuex store queue
  */
-class InstanceInstallController {
+export class InstanceInstallController {
   private logger = createLogger('InstanceInstallController.ts');
   private installLock = false;
 
-  constructor() {
+  constructor(private readonly emitter: Emitter) {
     emitter.on('ws.message', async (data: any) => {
       if (data.type === 'instanceOverrideModLoaderReply') {
         const typedData = data as InstanceOverrideModLoaderDataReply;
@@ -445,5 +446,3 @@ class InstanceInstallController {
     }
   }
 }
-
-export const instanceInstallController = new InstanceInstallController();

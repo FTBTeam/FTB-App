@@ -1,5 +1,8 @@
 import "./styles.css"
 import platform from '@/utils/interface/electron-overwolf';
+import { earlyForceLoad } from '@/bootstrap.ts';
+earlyForceLoad();
+
 import { createApp } from 'vue'
 import App from './App.vue';
 import router from './router';
@@ -18,7 +21,6 @@ import 'balloon-css/balloon.css';
 import '@/assets/liboverrides.scss';
 
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
-import '@/core/controllers/InstanceInstallController';
 
 import store from './modules/store';
 // import FTBButton from '@/components/ui/input/FTBButton.vue';
@@ -86,6 +88,7 @@ const appSetup = async () => {
   // });
 
   createApp(App)
+    .use(router)
     .mount('#app')
     .$nextTick(() => {
       // Use contextBridge

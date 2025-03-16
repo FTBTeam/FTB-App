@@ -1,44 +1,5 @@
-<template>
-  <div class="pack-preview-container">
-    <div class="pack-preview" v-if="packData" @click="$router.push({
-      name: RouteNames.ROOT_PREVIEW_PACK,
-      query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
-    })">
-      <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
-      <div class="logo">
-        <img :src="logo" :alt="`Pack art for ${packData.name}`" />
-      </div>
-      <div class="pack-main">
-        <div class="name">{{ packData.name }} <span v-if="packData.authors.length">by</span> {{ provider === "modpacksch" && packTags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1 ? "FTB Team" : packData.authors.map((e) => e.name).join(', ') }}</div>
-        <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
-          {{ packData.synopsis }}
-        </div>
-        <div class="tags">
-          <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
-        </div>
-      </div>
-      <div class="actions flex gap-2">        
-        <div class="install-btn" @click.stop="install" aria-label="Install modpack" data-balloon-pos="up-right">
-          <FontAwesomeIcon icon="download" />
-        </div>
-      </div>
-    </div>
-    <div class="pack-preview preview-shadow" v-else>
-      <div class="logo-shadow shadow square" />
-      <div class="main">
-        <div class="shadow text shadow-small"></div>
-        <div class="shadow text shadow-large"></div>
-        <div class="tags-shadow">
-          <div class="shadow text tag-shadow" v-for="i in 5" :key="i"></div>
-        </div>
-      </div>
-    </div>
-    <ModpackInstallModal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :provider="provider" />
-  </div>
-</template>
-
 <script lang="ts" setup>
-import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
+import {SearchResultPack} from '@/core/types/modpacks/packSearch';
 import { PackProviders } from '@/modules/modpacks/types';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {stringOrDefault} from '@/utils/helpers/stringHelpers';
@@ -117,6 +78,45 @@ const isInstalling = computed(() => {
   return currentInstall.value.request.id === apiModpack.value?.id && !currentInstall.value.request.updatingInstanceUuid;
 });
 </script>
+
+<template>
+  <div class="pack-preview-container">
+    <div class="pack-preview" v-if="packData" @click="$router.push({
+      name: RouteNames.ROOT_PREVIEW_PACK,
+      query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
+    })">
+      <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
+      <div class="logo">
+        <img :src="logo" :alt="`Pack art for ${packData.name}`" />
+      </div>
+      <div class="pack-main">
+        <div class="name">{{ packData.name }} <span v-if="packData.authors.length">by</span> {{ provider === "modpacksch" && packTags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1 ? "FTB Team" : packData.authors.map((e) => e.name).join(', ') }}</div>
+        <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
+          {{ packData.synopsis }}
+        </div>
+        <div class="tags">
+          <div class="tag" v-for="(tag, index) in packTags" :key="index">{{ tag.name }}</div>
+        </div>
+      </div>
+      <div class="actions flex gap-2">        
+        <div class="install-btn" @click.stop="install" aria-label="Install modpack" data-balloon-pos="up-right">
+          <FontAwesomeIcon icon="download" />
+        </div>
+      </div>
+    </div>
+    <div class="pack-preview preview-shadow" v-else>
+      <div class="logo-shadow shadow square" />
+      <div class="main">
+        <div class="shadow text shadow-small"></div>
+        <div class="shadow text shadow-large"></div>
+        <div class="tags-shadow">
+          <div class="shadow text tag-shadow" v-for="i in 5" :key="i"></div>
+        </div>
+      </div>
+    </div>
+    <ModpackInstallModal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :provider="provider" />
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .pack-preview {

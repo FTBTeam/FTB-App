@@ -24,7 +24,7 @@ import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import Message from '@/components/ui/Message.vue';
 import { computed, onMounted, ref } from 'vue';
-import { SugaredInstanceJson } from '@/core/@types/javaApi';
+import { SugaredInstanceJson } from '@/core/types/javaApi';
 
 // @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
 //

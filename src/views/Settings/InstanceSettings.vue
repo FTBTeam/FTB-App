@@ -150,16 +150,14 @@ import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import {computeAspectRatio, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import {SettingsData} from '@/core/@types/javaApi';
+import {SettingsData} from '@/core/types/javaApi';
 import UiButton from '@/components/ui/UiButton.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import Loader from '@/components/ui/Loader.vue';
-import KeyValueEditor from '@/components/groups/modpack/components/KeyValueEditor.vue';
 
 @Component({
   methods: {prettyByteFormat},
   components: {
-    KeyValueEditor,
     Loader,
     ProgressBar,
     UiButton,

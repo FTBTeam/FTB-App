@@ -1,41 +1,311 @@
+<script lang="ts" setup>
+import {JavaVersion, SettingsState} from '@/modules/settings/types';
+import Platform from '@/utils/interface/electron-overwolf';
+import platform from '@/utils/interface/electron-overwolf';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {RouterNames} from '@/router';
+import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
+import {alertController} from '@/core/controllers/alertController';
+import DuplicateInstanceModal from '@/components/modals/actions/DuplicateInstanceModal.vue';
+import {ReleaseChannelOptions} from '@/utils/commonOptions';
+import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
+import {resolveModloader, resolveModLoaderVersion, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
+import {computeAspectRatio, megabyteSize, prettyByteFormat} from '@/utils';
+import ModloaderSelect from '@/components/groups/modpack/components/ModloaderSelect.vue';
+import {ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
+import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
+import {ModLoaderUpdateState} from '@/core/types/states/appState';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { FTBInput, Modal, UiToggle, Selection2, UiButton } from '@/components/ui';
+import { services } from '@/bootstrap.ts';
+
+const emit = defineEmits<{
+  (event: 'back'): void;
+}>()
+
+const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
+
+// TODO: [port] Fix me
+// @State('settings') public settingsState!: SettingsState;
+// @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
+const settingsState = {} as SettingsState;
+function addModloaderUpdate(request: ModLoaderUpdateState) {}
+
+const {
+  instance
+} = defineProps<{
+  instance: SugaredInstanceJson;
+}>()
+
+const router = useRouter();
+
+const instanceSettings = ref<SaveJson>({} as any);
+const previousSettings = ref<SaveJson>({} as any);
+
+const showDuplicate = ref(false);
+const jreSelection = ref('');
+const javaVersions = ref<JavaVersion[]>([]);
+const deleting = ref(false);
+
+const imageFile = ref<File | null>(null);
+const resolutionId = ref("");
+
+const userSelectModLoader = ref(false);
+const userSelectedLoader = ref<[string, ModLoaderWithPackId] | null>(null);
+
+onMounted(async () => {
+  const javas = await sendMessage("getJavas");
+  javaVersions.value = javas.javas;
+  
+  if (!instance.embeddedJre) {
+    // Java version not in our list, thus it must be custom so flag it as custom
+    if (!javas.javas.find((e) =>  e.path === instance.jrePath)) {
+      jreSelection.value = '-1';
+    } else {
+      jreSelection.value = instance.jrePath;
+    }
+  }
+  
+  previousSettings.value = {
+    ...instanceSettings.value
+  }
+})
+
+function selectedResolution() {
+  const selected = settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
+  if (!selected) {
+    return;
+  }
+
+  instanceSettings.value.width = selected.width;
+  instanceSettings.value.height = selected.height;
+  
+  saveSettings();
+}
+
+function browseForJava() {
+  Platform.get.io.selectFileDialog((path) => {
+    if (typeof path !== 'undefined' && path == null) {
+      alertController.error('Unable to set Java location as the path was not found')
+      return;
+    } else if (!path) {
+      return;
+    }
+
+    const javaVersion = javaVersions.value.find((e) => e.path === path);
+    jreSelection.value = !javaVersion ? '-1' : javaVersion.path;
+
+    instanceSettings.value.jrePath = path;
+    saveSettings();
+  });
+}
+
+function updateJrePath(value: any) {
+  instanceSettings.value.jrePath = value.target.value;
+  saveSettings();
+}
+
+async function repairInstance() {
+  if (!(await dialogsController.createConfirmationDialog("Are you sure?", "We will attempt to repair this instance by reinstalling the modpack around your existing files. Even though this shouldn't remove any of your data, we recommend you make a backup of this instance before continuing."))) {
+    return;
+  }
+
+  await services.instanceInstallController.requestUpdate(this.instance, this.instance.versionId, typeIdToProvider(this.instance.packType));
+  emit("back")
+}
+
+async function installModLoader() {
+  if (!userSelectedLoader) {
+    return;
+  }
+  
+  const result = await sendMessage("instanceOverrideModLoader", {
+    uuid: this.instance.uuid,
+    modLoaderId: parseInt(this.userSelectedLoader[1].packId, 10),
+    modLoaderVersion: this.userSelectedLoader[1].id,
+  });  
+  if (result.status !== "error") {
+    userSelectModLoader.value = false;
+    userSelectedLoader.value = null;
+
+    if (result.status === "prepare") {
+      addModloaderUpdate({
+        instanceId: instance.uuid,
+        packetId: result.requestId
+      })
+    }
+
+    emit("back");
+  }
+}
+
+async function toggleLock() {
+  const newState = !instanceSettings.value.locked;
+  if (!newState && !(await dialogsController.createConfirmationDialog("Are you sure?", "Unlocking this instance will allow you to add extra mods and modify the instance in other ways. This can allow for destructive actions!\n\nAre you sure you want to unlock this instance?"))) {
+    return;
+  }
+  
+  instanceSettings.value.locked = newState;
+  await saveSettings(); 
+}
+
+async function saveSettings() {
+  if (JSON.stringify(previousSettings.value) === JSON.stringify(instanceSettings.value)) {
+    return;
+  }
+  
+  const result = await InstanceController.from(instance)
+    .updateInstance(this.instanceSettings);
+
+  if (result) {
+    alertController.success("Settings saved!")
+
+    // Update the previous settings
+    instanceSettings.value = createInstanceSettingsFromInstance(result.instanceJson)
+    previousSettings.value = {
+      ...instanceSettings.value
+    }
+  } else {
+    alertController.error("Failed to save settings")
+  }
+}
+
+async function browseInstance() {
+  await gobbleError(async () => {
+    if ("path" in instance) {
+      await platform.get.io.openFinder(instance.path)
+      return;
+    }
+  })
+}
+
+function confirmDelete() {
+  const dialogRef = dialogsController.createDialog(
+    dialog("Are you sure?")
+      .withContent(`Are you absolutely sure you want to delete \`${instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
+      .withType("warning")
+      .withButton(button("Delete")
+        .withAction(async () => {
+          dialogRef.setWorking(true)
+          await deleteInstance()
+          dialogRef.close();
+        })
+        .withIcon("trash")
+        .withType("error")
+        .build())
+      .build()
+  )
+}
+
+function createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
+  resolutionId.value = this.resolutionList
+    .find((e) => e.value === `${instance.width ?? ''}|${instance.height ?? ''}`)
+    ?.value ?? "";
+
+  return {
+    name: instance.name,
+    jvmArgs: instance.jvmArgs,
+    jrePath: instance.jrePath,
+    memory: instance.memory,
+    width: instance.width,
+    height: instance.height,
+    fullScreen: instance.fullscreen,
+    releaseChannel: instance.releaseChannel,
+    category: instance.category,
+    locked: instance.locked,
+    shellArgs: instance.shellArgs,
+    programArgs: instance.programArgs,
+    preventMetaModInjection: instance.preventMetaModInjection,
+  }
+}
+
+async function deleteInstance() {
+  deleting.value = true;
+
+  const controller = InstanceController.from(instance);
+  await toggleBeforeAndAfter(() => controller.deleteInstance(), state => deleting.value = state);
+  await gobbleError(() => router.push({
+    name: RouterNames.ROOT_LIBRARY
+  }));
+}
+
+function preferIPv4Clicked(event: any) {
+  if (!event) {
+    instanceSettings.value.jvmArgs = instanceSettings.value.jvmArgs.replace(preferIPv4Arg, "").trim()
+  } else {
+    instanceSettings.value.jvmArgs = `${instanceSettings.value.jvmArgs} ${preferIPv4Arg}`.trim()
+  }
+  
+  saveSettings()
+}
+
+const preferIPv4 = computed(() => instanceSettings.value.jvmArgs.includes(preferIPv4Arg))
+const channelOptions = computed(() => ReleaseChannelOptions(true));
+const hasModloader = computed(() => instance?.modLoader !== instance.mcVersion);
+const resolutionList = computed(() => {
+  const resList = [];
+  resList.push({
+    value: "",
+    label: "Custom",
+    meta: "Custom"
+  });
+
+  for (const res of settingsState.hardware.supportedResolutions) {
+    resList.push({
+      value: `${res.width}|${res.height}`,
+      label: `${res.width} x ${res.height}`,
+      // Calculate the aspect ratio in the form of a 16:9 for example
+      meta: computeAspectRatio(res.width, res.height)
+    })
+  }
+
+  return resList;
+});
+</script>
+
 <template>
   <div class="pack-settings">
-    <artwork-selector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" @change="(v) => {
+    <ArtworkSelector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" @change="(v) => {
       instanceSettings.instanceImage = v ? v.path : null;
       saveSettings();
     }" />
     
-    <ftb-input
+    <FTBInput
       label="Instance Name"
       v-model="instanceSettings.name"
       @blur="saveSettings"
       class="mb-4"
     >
       <template #extra>
-        <ui-button :icon="instanceSettings.locked ? 'unlock' : 'lock'" @click="toggleLock">
+        <UiButton :icon="instanceSettings.locked ? 'unlock' : 'lock'" @click="toggleLock">
           {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
-        </ui-button>
+        </UiButton>
       </template>
-    </ftb-input>
+    </FTBInput>
   
-    <category-selector :open-down="true" class="mb-6" v-model="instanceSettings.category" @input="() => saveSettings()" />
+    <CategorySelector :open-down="true" class="mb-6" v-model="instanceSettings.category" @input="() => saveSettings()" />
 
     <div class="buttons flex gap-4 mb-8">
-      <ui-button size="small" type="info" icon="folder" @click="browseInstance()">
+      <UiButton size="small" type="info" icon="folder" @click="browseInstance()">
         Open Folder
-      </ui-button>
+      </UiButton>
 
-      <ui-button size="small" icon="copy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
+      <UiButton size="small" icon="copy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
-      </ui-button>
+      </UiButton>
       
-      <ui-button v-if="instance.id != -1" size="small" icon="wrench" type="warning" aria-label="Something not looking right? This might help!" @click="repairInstance">
+      <UiButton v-if="instance.id != -1" size="small" icon="wrench" type="warning" aria-label="Something not looking right? This might help!" @click="repairInstance">
         Repair
-      </ui-button>
+      </UiButton>
       
-      <ui-button size="small" type="danger" icon="trash" @click="confirmDelete">
+      <UiButton size="small" type="danger" icon="trash" @click="confirmDelete">
         Delete instance
-      </ui-button>
+      </UiButton>
     </div>
 
     <ram-slider class="mb-6" v-model="instanceSettings.memory" @change="saveSettings" />
@@ -110,8 +380,8 @@
           <small class="block text-muted mr-6 mt-2">At any point you can update / down grade your mod loader for any modpack. This can sometimes be a destructive action and we recommend only doing this when you know what you're doing.</small>
           
           <div class="buttons flex gap-2 mt-4" v-if="!instance.locked">
-            <ui-button v-if="!hasModloader" size="small" type="info" icon="download" @click="userSelectModLoader = true">Install Modloader</ui-button>
-            <ui-button v-else size="small" type="info" icon="pen" @click="userSelectModLoader = true">Update Modloader</ui-button>
+            <UiButton v-if="!hasModloader" size="small" type="info" icon="download" @click="userSelectModLoader = true">Install Modloader</UiButton>
+            <UiButton v-else size="small" type="info" icon="pen" @click="userSelectModLoader = true">Update Modloader</UiButton>
           </div>
         </div>
       </div>
@@ -144,7 +414,7 @@
             </option>
           </select>
 
-          <ui-button type="success" icon="folder" @click="browseForJava">Browse</ui-button>
+          <UiButton type="success" icon="folder" @click="browseForJava">Browse</UiButton>
         </div>
       </section>
       
@@ -171,17 +441,17 @@
         />
         
         <div class="flex gap-4">
-          <ui-button size="small" icon="undo" @click="() => {
+          <UiButton size="small" icon="undo" @click="() => {
             instanceSettings.jvmArgs = settingsState.settings.instanceDefaults.javaArgs
           }">
             Reset to Instance defaults
-          </ui-button>
+          </UiButton>
 
-          <ui-button size="small" icon="undo" @click="() => {
+          <UiButton size="small" icon="undo" @click="() => {
             instanceSettings.jvmArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
           }">
             Reset to Vanilla defaults
-          </ui-button>
+          </UiButton>
         </div>
         
         <ui-toggle label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked" />
@@ -217,7 +487,7 @@
       </code>
     </div>
 
-    <modal
+    <Modal
       :open="showDuplicate"
       :externalContents="true"
       @closed="showDuplicate = false"
@@ -230,9 +500,9 @@
         :instanceName="instance.name"
         :category="instance.category"
       />
-    </modal>
+    </Modal>
     
-    <modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="() => {
+    <Modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="() => {
       userSelectModLoader = false
       userSelectedLoader = null
     }">
@@ -248,308 +518,16 @@
       
       <template #footer>
         <div class="flex justify-end gap-4">
-          <ui-button type="warning" icon="times" @click="() => {
+          <UiButton type="warning" icon="times" @click="() => {
             userSelectModLoader = false
             userSelectedLoader = null
-          }">Close</ui-button>
-          <ui-button type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null" @click="installModloader">Install</ui-button>
+          }">Close</UiButton>
+          <UiButton type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null" @click="installModloader">Install</UiButton>
         </div>
       </template>
-    </modal>
+    </Modal>
   </div>
 </template>
-
-<script lang="ts">
-import {JavaVersion, SettingsState} from '@/modules/settings/types';
-import FTBSlider from '@/components/ui/input/FTBSlider.vue';
-import Platform from '@/utils/interface/electron-overwolf';
-import platform from '@/utils/interface/electron-overwolf';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {RouterNames} from '@/router';
-import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
-import {alertController} from '@/core/controllers/alertController';
-import DuplicateInstanceModal from '@/components/modals/actions/DuplicateInstanceModal.vue';
-import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import Selection2 from '@/components/ui/Selection2.vue';
-import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
-import UiButton from '@/components/ui/UiButton.vue';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import {resolveModloader, resolveModLoaderVersion, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
-import {computeAspectRatio, megabyteSize, prettyByteFormat} from '@/utils';
-import UiToggle from '@/components/ui/UiToggle.vue';
-import ModloaderSelect from '@/components/groups/modpack/components/ModloaderSelect.vue';
-import {ModLoaderWithPackId} from '@/core/@types/modpacks/modloaders';
-import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import {ns} from '@/core/state/appState';
-import {ModLoaderUpdateState} from '@/core/@types/states/appState';
-import KeyValueEditor from '@/components/groups/modpack/components/KeyValueEditor.vue';
-
-const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
-
-@Component({
-  methods: {prettyByteFormat, resolveModLoaderVersion, resolveModloader},
-  components: {
-    KeyValueEditor,
-    RamSlider,
-    ModloaderSelect,
-    UiToggle,
-    CategorySelector,
-    UiButton,
-    ArtworkSelector,
-    Selection2,
-    DuplicateInstanceModal,
-    'ftb-slider': FTBSlider
-  },
-})
-export default class ModpackSettings extends Vue {
-  @State('settings') public settingsState!: SettingsState;
-
-  @Prop() instance!: InstanceJson | SugaredInstanceJson;
-  @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
-  
-  instanceSettings: SaveJson = {} as any;
-  previousSettings: SaveJson = {} as any;
-
-  megabyteSize = megabyteSize
-  
-  showDuplicate = false;
-  jreSelection = '';
-  javaVersions: JavaVersion[] = [];
-  deleting = false;
-  
-  imageFile: File | null = null;
-  resolutionId = "";
-  
-  userSelectModLoader = false;
-  userSelectedLoader: [string, ModLoaderWithPackId] | null = null;
-
-  platform = platform;
-  
-  async mounted() {
-    const javas = await sendMessage("getJavas");
-    this.javaVersions = javas.javas;
-    
-    if (!this.instance.embeddedJre) {
-      // Java version not in our list, thus it must be custom so flag it as custom
-      if (!javas.javas.find((e) =>  e.path === this.instance.jrePath)) {
-        this.jreSelection = '-1';
-      } else {
-        this.jreSelection = this.instance.jrePath;
-      }
-    }
-
-    this.previousSettings = {
-      ...this.instanceSettings
-    }
-    
-    this.instanceSettings = this.createInstanceSettingsFromInstance(this.instance)
-  }
-  
-  selectResolution(id: string) {
-    const selected = this.settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
-    if (!selected) {
-      return;
-    }
-
-    this.instanceSettings.width = selected.width;
-    this.instanceSettings.height = selected.height;
-    this.saveSettings();
-  }
-
-  browseForJava() {
-    Platform.get.io.selectFileDialog((path) => {
-      if (typeof path !== 'undefined' && path == null) {
-        alertController.error('Unable to set Java location as the path was not found')
-        return;
-      } else if (!path) {
-        return;
-      }
-
-      const javaVersion = this.javaVersions.find((e) => e.path === path);
-      this.jreSelection = !javaVersion ? '-1' : javaVersion.path;
-
-      this.instanceSettings.jrePath = path;
-      this.saveSettings();
-    });
-  }
-
-  updateJrePath(value: any) {
-    this.instanceSettings.jrePath = value.target.value;
-    this.saveSettings();
-  }
-
-  async repairInstance() {
-    if (!(await dialogsController.createConfirmationDialog("Are you sure?", "We will attempt to repair this instance by reinstalling the modpack around your existing files. Even though this shouldn't remove any of your data, we recommend you make a backup of this instance before continuing."))) {
-      return;
-    }
-
-    await instanceInstallController.requestUpdate(this.instance, this.instance.versionId, typeIdToProvider(this.instance.packType));
-    this.$emit("back")
-  }
-
-  async installModloader() {
-    if (!this.userSelectedLoader) {
-      return;
-    }
-    
-    const result = await sendMessage("instanceOverrideModLoader", {
-      uuid: this.instance.uuid,
-      modLoaderId: parseInt(this.userSelectedLoader[1].packId, 10),
-      modLoaderVersion: this.userSelectedLoader[1].id,
-    });
-    
-    if (result.status !== "error") {
-      this.userSelectModLoader = false;
-      this.userSelectedLoader = null;
-      
-      if (result.status === "prepare") {
-        this.addModloaderUpdate({
-          instanceId: this.instance.uuid,
-          packetId: result.requestId
-        })
-      }
-      
-      this.$emit("back");
-    }
-  }
-
-  async toggleLock() {
-    const newState = !this.instanceSettings.locked;
-    if (!newState && !(await dialogsController.createConfirmationDialog("Are you sure?", "Unlocking this instance will allow you to add extra mods and modify the instance in other ways. This can allow for destructive actions!\n\nAre you sure you want to unlock this instance?"))) {
-      return;
-    }
-    this.instanceSettings.locked = newState;
-    await this.saveSettings();
-  }
-  
-  public async saveSettings() {
-    // Compare the previous settings to the current settings
-    // Yes... this is really how we do it...
-    if (JSON.stringify(this.previousSettings) === JSON.stringify(this.instanceSettings)) {
-      return;
-    }
-    
-    const result = await InstanceController.from(this.instance)
-      .updateInstance(this.instanceSettings);
-
-    if (result) {
-      alertController.success("Settings saved!")
-      
-      // Update the previous settings
-      this.instanceSettings = this.createInstanceSettingsFromInstance(result.instanceJson)
-      this.previousSettings = {
-        ...this.instanceSettings
-      }
-    } else {
-      alertController.error("Failed to save settings")
-    }
-  }
-
-  async browseInstance() {
-    await gobbleError(async () => {
-      if ("path" in this.instance) {
-        await this.platform.get.io.openFinder(this.instance.path)
-        return;
-      }
-    })
-  }
-
-  public confirmDelete() {
-    const dialogRef = dialogsController.createDialog(
-      dialog("Are you sure?")
-        .withContent(`Are you absolutely sure you want to delete \`${this.instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
-        .withType("warning")
-        .withButton(button("Delete")
-          .withAction(async () => {
-            dialogRef.setWorking(true)
-            await this.deleteInstance()
-            dialogRef.close();
-          })
-          .withIcon("trash")
-          .withType("error")
-          .build())
-        .build()
-    )
-  }
-  
-  createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
-    this.resolutionId = this.resolutionList
-      .find((e) => e.value === `${instance.width ?? ''}|${instance.height ?? ''}`)
-      ?.value ?? "";
-    
-    return {
-      name: instance.name,
-      jvmArgs: instance.jvmArgs,
-      jrePath: instance.jrePath,
-      memory: instance.memory,
-      width: instance.width,
-      height: instance.height,
-      fullScreen: instance.fullscreen,
-      releaseChannel: instance.releaseChannel,
-      category: instance.category,
-      locked: instance.locked,
-      shellArgs: instance.shellArgs,
-      programArgs: instance.programArgs,
-      preventMetaModInjection: instance.preventMetaModInjection,
-    }
-  }
-  
-  public async deleteInstance() {
-    this.deleting = true;
-    
-    const controller = InstanceController.from(this.instance);
-    await toggleBeforeAndAfter(() => controller.deleteInstance(), state => this.deleting = state);
-    await gobbleError(() => this.$router.push({
-      name: RouterNames.ROOT_LIBRARY
-    }));
-  }
-  
-  preferIPv4Clicked(event: any) {
-    if (!event) {
-      this.instanceSettings.jvmArgs = this.instanceSettings.jvmArgs.replace(preferIPv4Arg, "").trim()
-    } else {
-      this.instanceSettings.jvmArgs = `${this.instanceSettings.jvmArgs} ${preferIPv4Arg}`.trim()
-    }
-    this.saveSettings()
-  }
-
-  get prefersIPv4() {
-    return this.instanceSettings?.jvmArgs?.includes(preferIPv4Arg)
-  }
-
-  get resolutionList() {
-    const resList = [];
-    resList.push({
-      value: "",
-      label: "Custom",
-      meta: "Custom"
-    });
-    
-    for (const res of this.settingsState.hardware.supportedResolutions) {
-      resList.push({
-        value: `${res.width}|${res.height}`,
-        label: `${res.width} x ${res.height}`,
-        // Calculate the aspect ratio in the form of a 16:9 for example
-        meta: computeAspectRatio(res.width, res.height)
-      })
-    }
-    
-    return resList;
-  }
-
-  get channelOptions() {
-    return ReleaseChannelOptions(true);
-  }
-  
-  get hasModloader() {
-    return this.instance?.modLoader !== this.instance.mcVersion;
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .pack-settings {
