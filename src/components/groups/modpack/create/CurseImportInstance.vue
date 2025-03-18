@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import {prettyByteFormat} from '@/utils';
-import UiButton from '@/components/ui/UiButton.vue';
 import {alertController} from '@/core/controllers/alertController';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
@@ -8,13 +7,14 @@ import {RouterNames} from '@/router';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { ModalFooter, ModalBody, Modal } from '@/components/ui';
+import { ModalFooter, ModalBody, Modal, UiButton } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
+import { ref } from 'vue';
 
 const router = useRouter()
 
 const { open } = defineProps<{
-  open: boolean;
+  open?: boolean;
 }>()
 
 const emit = defineEmits<{
@@ -61,12 +61,12 @@ async function  installZip() {
     })
   })
 
-  close();
+  emit('close')
 }
 </script>
 
 <template>
-  <modal :open="open" @closed="close" :external-contents="true" title="Import from CurseForge" sub-title="Import instances from a CurseForge .zip export file">
+  <modal :open="open" @closed="emit('close')" :external-contents="true" title="Import from CurseForge" sub-title="Import instances from a CurseForge .zip export file">
     <ModalBody>
       <div
         class="drop-area"

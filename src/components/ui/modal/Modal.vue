@@ -13,13 +13,13 @@ const {
   externalContents = false,
 } = defineProps<{
   title: string;
-  subTitle: string;
-  hasCloser: boolean;
+  subTitle?: string;
+  hasCloser?: boolean;
   open: boolean;
-  size: ModalSizes;
-  permanent: boolean;
-  closeOnBackgroundClick: boolean;
-  externalContents: boolean;
+  size?: ModalSizes;
+  permanent?: boolean;
+  closeOnBackgroundClick?: boolean;
+  externalContents?: boolean;
 }>()
 
 const emit = defineEmits<{

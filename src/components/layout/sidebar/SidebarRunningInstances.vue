@@ -2,7 +2,7 @@
 import {InstanceRunningData} from '@/core/state/misc/runningState';
 import {InstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
-import { useTemplateRef } from 'vue';
+import { useTemplateRef, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAttachDomEvent } from '@/composables';
 

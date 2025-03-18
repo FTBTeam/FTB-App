@@ -2,7 +2,7 @@
 import Platform from '@/utils/interface/electron-overwolf';
 import {SettingsState} from '@/modules/settings/types';
 import {createLogger} from '@/core/logger';
-import { onMounted, useTemplateRef } from 'vue';
+import { onMounted, useTemplateRef, ref, computed } from 'vue';
 import { useAttachDomEvent } from '@/composables';
 
 // TODO: [Port] fixme
@@ -108,7 +108,7 @@ async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => vo
     logger.info(`[AD: ${id}] Ad ready and loaded`);
   });
   ads.value[id].addEventListener('complete', () => {
-    this.logger.info(`[AD: ${id}] Video ad finished playing`);
+    logger.info(`[AD: ${id}] Video ad finished playing`);
   });
 }
 </script>

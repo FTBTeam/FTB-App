@@ -12,8 +12,8 @@
 
 <script lang="ts" setup>
 const { title = 'Loading', subTitle = 'Shouldn\'t be a moment' } = defineProps<{
-  title: string;
-  subTitle: string | null;
+  title?: string;
+  subTitle?: string | null;
 }>()
 </script>
 

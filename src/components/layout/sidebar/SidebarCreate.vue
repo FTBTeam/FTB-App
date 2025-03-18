@@ -8,7 +8,7 @@ import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const { disabled } = defineProps<{
-  disabled: boolean;
+  disabled?: boolean;
 }>()
 
 const open = ref(false)

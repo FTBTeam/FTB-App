@@ -1,6 +1,7 @@
 import ElectronOverwolfInterface from './electron-overwolf-interface';
 import {createLogger} from '@/core/logger';
 import {constants} from '@/core/constants';
+import SelectedPlatform from "@platform";
 
 /**
  * Creates a simple way of abstracting the logic between overwolf and electron into a
@@ -14,9 +15,9 @@ class Platform {
   
   constructor() {}
 
-  public async setup() {
+  public setup() {
     this.logger.info('Setting up platform', this.platformProvider);
-    this.inter = ((await import(`./impl/${this.platformProvider}.ts`)).default as unknown) as ElectronOverwolfInterface;
+    this.inter = SelectedPlatform; //((await import(`./impl/${this.platformProvider}.ts`)).default as unknown) as ElectronOverwolfInterface;
     this.logger.info(`Platform setup complete for ${this.platformProvider ?? "electron"}`);
   }
 

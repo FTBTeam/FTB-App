@@ -1,3 +1,23 @@
+<script lang="ts" setup>
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed, useSlots } from 'vue';
+
+const slots = useSlots()
+
+const {
+  type = MessageType.NORMAL,
+  icon = null,
+  header = '',
+} = defineProps<{
+  type?: MessageType;
+  icon?: IconDefinition | null;
+  header?: string;
+}>()
+
+const hasHeader = computed(() => slots.header || header)
+</script>
+
 <template>
   <article class="message" :class="{ [type]: true }">
     <div class="message-header" v-if="hasHeader">
@@ -12,26 +32,6 @@
     </div>
   </article>
 </template>
-
-<script lang="ts" setup>
-import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, useSlots } from 'vue';
-
-const slots = useSlots()
-
-const {
-  type = MessageType.NORMAL,
-  icon = null,
-  header = '',
-} = defineProps<{
-  type: MessageType;
-  icon: IconDefinition | null;
-  header: string;
-}>()
-
-const hasHeader = computed(() => slots.header || header)
-</script>
 
 <script lang="ts">
 export enum MessageType {

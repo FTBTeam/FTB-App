@@ -143,6 +143,8 @@ function select(option: SelectionOption) {
 </template>
 
 <style scoped lang="scss">
+@use "sass:color";
+
 .select-box {
   &.disabled {
     opacity: 0.5;
@@ -197,7 +199,7 @@ function select(option: SelectionOption) {
       width: 100%;
       border-radius: 5px;
       box-shadow: 0 5px 0.5rem rgba(black, 0.2);
-      border: 1px solid lighten(black, 10);
+      border: 1px solid color.adjust(black, $lightness: 10%);
       z-index: 1000;
       padding: 1rem;
       max-height: 240px;

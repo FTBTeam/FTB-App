@@ -1,14 +1,23 @@
-import { InstanceInstallController } from '@/core/controllers/InstanceInstallController.ts';
 import mitt from 'mitt';
+import { InstanceInstallController } from '@/core/controllers/InstanceInstallController.ts';
+import { WebsocketController } from '@/core/controllers/websocketController.ts';
 
-const emitter = mitt();
+export type EmitEvents = {
+  "ws/connected": void,
+  "ws/disconnected": void
+  "ws/message": string
+}
+
+const emitter = mitt<EmitEvents>();
+const websocketController = new WebsocketController(emitter);
 
 const services = {
   emitter,
-  instanceInstallController: new InstanceInstallController(emitter)
+  websocket: websocketController,
+  instanceInstallController: new InstanceInstallController(emitter, websocketController)
 }
 
-export function earlyForceLoad() {}
+export function bootstrapLoad() {}
 
 export {
   services

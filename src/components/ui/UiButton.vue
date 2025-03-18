@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 const {
   type = 'normal',
   size = 'normal',
-  disabled,
+  disabled = false,
   working = false,
   icon,
   fullWidth = false,
@@ -14,15 +14,15 @@ const {
   ariaLabel = '',
   ariaLabelPos = 'down'
 } = defineProps<{
-  type: ElementColorType;
-  size: ElementStandardSizing;
-  disabled: boolean;
-  working: boolean;
-  icon: IconDefinition;
-  fullWidth: boolean;
-  wider: boolean;
-  ariaLabel: string;
-  ariaLabelPos: ElementAriaDirection;
+  type?: ElementColorType;
+  size?: ElementStandardSizing;
+  disabled?: boolean;
+  working?: boolean;
+  icon?: IconDefinition;
+  fullWidth?: boolean;
+  wider?: boolean;
+  ariaLabel?: string;
+  ariaLabelPos?: ElementAriaDirection;
 }>()
 
 const emit = defineEmits<{

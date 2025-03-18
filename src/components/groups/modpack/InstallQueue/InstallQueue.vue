@@ -14,7 +14,7 @@ const installQueue = ref<InstallRequest[]>([]);
 const open = ref(false)
 const rootElm = useTemplateRef("root");
 
-watch(() => currentInstall, () => {)
+watch(() => currentInstall, () => {
   if (installQueue.length === 0 && currentInstall.value) {
     open.value = true;
   }

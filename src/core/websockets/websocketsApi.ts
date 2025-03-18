@@ -2,6 +2,7 @@ import {MessagePayload} from '@/core/websockets/websocketsEndpoints';
 import store from '@/modules/store';
 import {BaseData} from '@/core/types/javaApi';
 import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
+import { services } from '@/bootstrap.ts';
 
 /**
  * Sends a message to the backend and returns the response.
@@ -21,15 +22,15 @@ export function sendMessage<T extends ApiEndpoints>(
     }, timeout);
 
     // This should be the only type this dispatch is ever used
-    const messageId = await store.dispatch('sendMessage', {
-      payload: {
+    const messageId = await services.websocket.send({
+      // payload: {
         type: messageType,
         ...payload,
-      },
-      callback: (data: MessagePayload[T]["output"]) => {
-        clearTimeout(timer);
-        resolve({...data, messageId: messageId ?? "unknown"});
-      },
+      // },
+      // callback: (data: MessagePayload[T]["output"]) => {
+      //   clearTimeout(timer);
+      //   resolve({...data, messageId: messageId ?? "unknown"});
+      // },
     });
   });
 }

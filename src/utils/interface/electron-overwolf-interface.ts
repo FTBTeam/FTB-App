@@ -105,5 +105,5 @@ export default interface ElectronOverwolfInterface {
   config: Config;
   io: InputOutput;
   app: App;
-  setupApp: (vm: any) => void;
+  setupApp: () => void;
 }

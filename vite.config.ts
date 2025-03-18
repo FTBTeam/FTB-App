@@ -11,7 +11,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      electron: "@overwolf/ow-electron"
+      // electron: "@overwolf/ow-electron",
+      "@platform": path.resolve(__dirname, 'src/utils/interface/impl/electron.ts'),
     },
   },
   plugins: [

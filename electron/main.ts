@@ -17,10 +17,26 @@ let win: BrowserWindow | null
 
 function createWindow() {
   win = new BrowserWindow({
+    title: 'FTB App',
     // icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     // webPreferences: {
     //   preload: path.join(__dirname, 'preload.mjs'),
     // },
+    autoHideMenuBar: true,
+    titleBarStyle: "hidden",
+    minWidth: 1220,
+    minHeight: 895,
+    width: 1545,
+    height: 900,
+    frame: false,
+    webPreferences: {
+      // TODO: Stop doing all of this
+      nodeIntegration: true,
+      contextIsolation: false,
+      // contextIsolation: false,
+      // disableBlinkFeatures: 'Auxclick',
+      // webSecurity: false,
+    },
   })
 
   // Test active push message to Renderer-process.

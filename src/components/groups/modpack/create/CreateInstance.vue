@@ -16,7 +16,7 @@ import UiToggle from '@/components/ui/UiToggle.vue';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, watch, ref } from 'vue';
 import { ModalBody, Modal, FTBInput, ModalFooter } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { services } from '@/bootstrap.ts';
@@ -26,7 +26,7 @@ import { services } from '@/bootstrap.ts';
 // @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
 // @State('settings') private settings!: SettingsState;
 const settingsState = ref<SettingsState>({} as SettingsState)
-const getModpack = ref<GetModpack>(() => {})
+const getModpack = async () => {}
 const settings = ref<SettingsState>({} as SettingsState)
 
 const { open } = defineProps<{ open: boolean }>()
@@ -91,20 +91,20 @@ watch(() => open, async (newValue) => {
 })
 
 async function loadInitialState() {
-  vanillaPack.value = await toggleBeforeAndAfter(() => getModpack({
-    id: 81,
-    provider: "modpacksch"
-  }) ?? null, state => loadingVanilla.value = state);
-
-  if (!vanillaPack) {
-    alertController.error("Failed to load Minecraft versions")
-    fatalError.value = true;
-    return;
-  }
-
-  const vanillaLatest = vanillaVersions[0];
-  userPackName.value = `Minecraft ${vanillaLatest.label}`;
-  userVanillaVersion.value = vanillaLatest.value;
+  // vanillaPack.value = await toggleBeforeAndAfter(() => getModpack({
+  //   id: 81,
+  //   provider: "modpacksch"
+  // }) ?? null, state => loadingVanilla.value = state);
+  //
+  // if (!vanillaPack) {
+  //   alertController.error("Failed to load Minecraft versions")
+  //   fatalError.value = true;
+  //   return;
+  // }
+  //
+  // const vanillaLatest = vanillaVersions[0];
+  // userPackName.value = `Minecraft ${vanillaLatest.label}`;
+  // userVanillaVersion.value = vanillaLatest.value;
 }
 
 watch(userVanillaVersion, (newValue) => {

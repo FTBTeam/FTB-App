@@ -5,7 +5,7 @@ import {SocketState} from '@/modules/websocket/types';
 import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import AdAside from '@/components/layout/AdAside.vue';
-// import GlobalComponents from '@/components/layout/GlobalComponents.vue';
+import GlobalComponents from '@/components/layout/GlobalComponents.vue';
 import {ns} from '@/core/state/appState';
 import {AsyncFunction} from '@/core/types/commonTypes';
 import {createLogger} from '@/core/logger';
@@ -15,28 +15,27 @@ import {constants} from '@/core/constants';
 import {adsEnabled, emitter} from '@/utils';
 import Loader from '@/components/ui/Loader.vue';
 import Onboarding from '@/components/modals/Onboarding.vue';
-import UiButton from '@/components/ui/UiButton.vue';
+import { UiButton, Modal } from '@/components/ui';
 import {alertController} from '@/core/controllers/alertController';
 import { onMounted, ref, computed } from 'vue';
+import { services } from '@/bootstrap.ts';
+import { useRouter } from 'vue-router';
 
 // TODO: [port] Fix me
-// @State('websocket') websockets!: SocketState;
 // @State('settings') settings!: SettingsState;
 // @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
 // @Action('registerPingCallback') registerPingCallback: any;
 // @Action('loadProfiles', { namespace: 'core' }) loadProfiles!: AsyncFunction;
 // @Action('loadInstances', ns("v2/instances")) loadInstances!: AsyncFunction;
 // @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
-//
-// @Action("storeWsSecret", ns("v2/app")) storeWsSecret!: (secret: string) => Promise<void>
-// const websockets: SocketState = null;
-const settings: SettingsState = null;
+
+const router = useRouter()
+
+const settings: SettingsState = {} as any;
 const loadSettings: any = null;
-function registerPingCallback(callback: any) {}
 const loadProfiles: AsyncFunction = null;
 const loadInstances: AsyncFunction = null;
 const debugDisabledAdAside: boolean = false;
-const storeWsSecret: (secret: string) => Promise<void> = null;
 
 const logger = createLogger("MainApp.vue");
 
@@ -44,6 +43,8 @@ const logger = createLogger("MainApp.vue");
 const loading = ref(true);
 const hasInitialized = ref(false);
 const isMac = ref(false);
+
+const appConnected = ref(false);
 
 // App init
 const appStarting = ref(true);
@@ -90,60 +91,74 @@ function allJobsDone() {
 }
 
 onMounted(async () => {
-  useSystemBar().catch(console.error)
+  logger.info("App started on ", constants.platform)
+  useSystemBar().catch(logger.error)
   startNetworkMonitor();
   
-  logger.info("App started on ", constants.platform)
-  isMac.value = false// os.type() === 'Darwin'; // TODO: [port] Fix me
-
-  appStarting.value = true;
-  appLoaded.value = false;
-
-  logger.info("Mounted MainApp for ", constants.platform);
-
-  // Check if the app is installed
-  let installed = true;
-  if (!platform.isOverwolf() && constants.isProduction) {
-    installed = await platform.get.app.runtimeAvailable();
-
-    logger.info("App installed", installed);
-    if (!installed) {
-      // We need to install the app
-      try {
-        await installApp();
-      } catch (e: any) {
-        appInstallFailed.value = true;
-        appInstallError.value = e?.customMessage || "The app has failed to install the necessary files, please try again or contact support...";
-        logger.error("Failed to install app", e);
-      }
-    }
-  }
-
-  await startApp();
-  appLoaded.value = true;
-
-  emitter.on("ws.message", (data: any) => {
-    if (data?.type === "refreshInstancesRequest") {
-      loadInstances();
-    }
-  })
+  // Technically not possible to error but we have to make the lint happy
+  initApp().catch(logger.error)
+  
+  // useSystemBar().catch(console.error)
+  // startNetworkMonitor();
+  //
+  // logger.info("App started on ", constants.platform)
+  // isMac.value = false// os.type() === 'Darwin'; // TODO: [port] Fix me
+  //
+  // appStarting.value = true;
+  // appLoaded.value = false;
+  //
+  // logger.info("Mounted MainApp for ", constants.platform);
+  //
+  // // Check if the app is installed
+  // let installed = true;
+  // if (!platform.isOverwolf() && constants.isProduction) {
+  //   installed = await platform.get.app.runtimeAvailable();
+  //
+  //   logger.info("App installed", installed);
+  //   if (!installed) {
+  //     // We need to install the app
+  //     try {
+  //       await installApp();
+  //     } catch (e: any) {
+  //       appInstallFailed.value = true;
+  //       appInstallError.value = e?.customMessage || "The app has failed to install the necessary files, please try again or contact support...";
+  //       logger.error("Failed to install app", e);
+  //     }
+  //   }
+  // }
+  //
+  // await startApp();
+  // appLoaded.value = true;
+  //
+  // emitter.on("ws.message", (data: any) => {
+  //   if (data?.type === "refreshInstancesRequest") {
+  //     loadInstances();
+  //   }
+  // })
 })
 
 async function initApp() {
-  logger.info("Initializing app");
-  try {
-    logger.debug("Sending appInit message");
-    const reply = await sendMessage("appInit", {});
-    logger.debug("Received appInit reply", reply);
-    if (!reply?.success) {
-      logger.error("Failed to initialize app", reply);
-      return;
-    }
+  console.log("Init app")
+  await waitForSocket()
+  
+  console.log("Connected")
+  appConnected.value = true
+  console.log(appConnected.value)
+}
 
-    logger.info("App initialized from the subprocess");
-  } catch (e) {
-    console.error(e);
-  }
+async function waitForSocket() {
+  // Wait for websocket
+  await new Promise((res) => {
+    function check() {
+      if (services.websocket.isAlive()) {
+        res(null);
+      } else {
+        setTimeout(check, 1000);
+      }
+    }
+    
+    check();
+  });
 }
 
 async function installApp() {
@@ -208,10 +223,23 @@ async function startApp() {
 async function connectToWebsockets(port: number = 13377, secret: string = "") {
   // Store the secret
   logger.info("Starting websocket connection on port", port, "with secret", secret);
-  await storeWsSecret(secret);
+  // await storeWsSecret(secret);
   
   // TODO: Fix me plz
   // $connect('ws://localhost:' + port);
+  await new Promise((res, rej) => {
+    function check() {
+      if (services.websocket.isAlive()) {
+        res(null);
+      } else {
+        setTimeout(check, 1000);
+      }
+    }
+    
+    check();
+  })
+  
+  console.log("Connected to websocket")
 }
 
 async function setupApp() {
@@ -332,7 +360,7 @@ async function useSystemBar() {
 const appConnecting = computed(() => true)// !websockets.socket.isConnected) // TODO: [port] fixme
 const reconnectAttempts = computed(() => 0)// websockets.reconnects) // TODO: [port] fixme
 const isReconnecting = computed(() => appConnecting.value) //&& !websockets.firstStart) // TODO: [port] fixme
-const appReadyToGo = computed(() => !appStarting.value && appLoaded.value && !appInstalling && !isReconnecting && !appConnecting.value && allJobsDone())
+const appReadyToGo = appConnected.value //computed(() => !appStarting.value && appLoaded.value && !appInstalling && !isReconnecting && !appConnecting.value && allJobsDone())
 const advertsEnabled = computed(() => adsEnabled(settings.settings, debugDisabledAdAside))
 const systemBarDisabled = computed(() => !settings.settings.appearance.useSystemWindowStyle)
 
@@ -355,7 +383,7 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
     
-    <div class="app-container relative flex justify-center items-center" v-if="!appReadyToGo">
+    <div class="app-container relative flex justify-center items-center" v-if="!appConnected">
       <div class="text-center">
         <loader :title="status" sub-title="We're just getting some things ready... This shouldn't take long!" />
         
@@ -378,7 +406,7 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
     </div>
     
     <!-- App has connected and is ready to use -->
-    <div class="app-container" v-if="appReadyToGo">
+    <div class="app-container" v-if="appConnected">
       <main class="main">
         <sidebar v-if="showSidebar" />
         <div class="app-content relative">
@@ -397,12 +425,12 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
       <p>Sometimes these things happen, it could be a random failure, try restarting the app and if that doesn't work, try reaching out on our Discord (linked below)</p>
       <template #footer>
         <div class="flex gap-4 justify-end items-center">
-          <ui-button size="small" type="danger" class="mr-auto" @click="() => {
+          <UiButton size="small" type="danger" class="mr-auto" @click="() => {
             appInstallFailed = false
             appStartupFailed = false
-          }">Let me in anyway...</ui-button>
-          <ui-button type="info" :icon="['fab', 'discord']" @click="platform.get.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</ui-button>
-          <ui-button type="success" icon="power-off" @click="restartApp">Restart</ui-button>
+          }">Let me in anyway...</UiButton>
+          <UiButton type="info" :icon="['fab', 'discord']" @click="platform.get.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</UiButton>
+          <UiButton type="success" icon="power-off" @click="restartApp">Restart</UiButton>
         </div>
       </template>
     </modal>

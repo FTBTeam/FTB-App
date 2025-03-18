@@ -119,6 +119,8 @@ const isInstalling = computed(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "sass:color";
+
 .pack-preview {
   position: relative;
   z-index: 1;
@@ -250,7 +252,7 @@ const isInstalling = computed(() => {
     
     &:hover, &.is-fav {
       background-color: #ffD700;
-      color: darken(#ffD700, 30%)
+      color: color.adjust(#ffD700, $lightness: -30%)
     }
     
     &.is-fav:hover {

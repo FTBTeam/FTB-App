@@ -5,9 +5,10 @@ import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import {createLogger} from '@/core/logger';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Popover from '@/components/ui/Popover.vue';
+import {ref, computed} from 'vue';
 
 const { disabled = false } = defineProps<{
-  disable: boolean
+  disabled?: boolean
 }>()
 
 // TODO: [port] fix me
@@ -71,7 +72,7 @@ async function setActiveProfile(profile: AuthProfile) {
 </script>
 
 <template>
-  <div class="profile-area" :class="{ disable }">
+  <div class="profile-area" :class="{ disabled }">
     <div class="profile" v-if="(getProfiles && getProfiles.length)">
       <div class="avatar">
         <img
@@ -83,7 +84,7 @@ async function setActiveProfile(profile: AuthProfile) {
         />
       </div>
 
-      <div class="profile-switch" v-show="!disable">
+      <div class="profile-switch" v-show="!disabled">
         <section>
           <div class="headings">
             <div class="main">

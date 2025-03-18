@@ -58,9 +58,10 @@ if (fs.existsSync(electronFrontendLogFile)) {
     eLogger.error("Failed to clear electron frontend log file", e)
   }
 }
-log.transports.file.resolvePath = () =>
-  electronFrontendLogFile;
-Object.assign(console, log.functions);
+// TODO: [port] fixme
+// log.transports.file.resolvePath = () =>
+//   electronFrontendLogFile;
+// Object.assign(console, log.functions);
 
 const resourcesPath = process.resourcesPath
 

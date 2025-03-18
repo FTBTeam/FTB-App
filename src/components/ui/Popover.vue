@@ -5,9 +5,9 @@ const {
   leftShift = 110,
   position = 'middle',
 } = defineProps<{
-  text: string;
-  leftShift: number;
-  position: 'middle' | 'bottom';
+  text?: string;
+  leftShift?: number;
+  position?: 'middle' | 'bottom';
 }>();
 </script>
 
