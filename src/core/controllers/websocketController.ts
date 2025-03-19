@@ -4,6 +4,7 @@ import { createLogger } from '@/core/logger.ts';
 
 export class WebsocketController {
   private websocket: WebSocket | null = null;
+  private callbackQueue: { [key: string]: (data: any) => void } = {};
   
   constructor(
     private readonly emitter: Emitter<EmitEvents>,
@@ -49,17 +50,49 @@ export class WebsocketController {
   }
   
   private handleMessage(message: MessageEvent) {
-    console.log(message);
-    // this.emitter.emit("ws/message", message.data);
+    const rawMessage = message.data;
+    if (!rawMessage.startsWith("{")) {
+      this.logger.warn("Received invalid message", rawMessage);
+      return;
+    }
+    
+    const messageData = JSON.parse(rawMessage);
+    this.emitter.emit("ws/message", messageData);
+    
+    console.log("Received message", messageData);
+    if (this.callbackQueue[messageData.requestId]) {
+      console.log("Triggering callback for", messageData.requestId);
+      this.callbackQueue[messageData.requestId](messageData);
+      delete this.callbackQueue[messageData.requestId];
+    }
   }
   
-  public send(json: object) {
+  public send(requestId: string, request: {
+    payload: any,
+    callback: (data: any) => void
+  }) {
     if (!this.websocket) {
       console.error("Websocket not connected, unable to send message");
       return;
     }
     
-    this.websocket.send(JSON.stringify(json));
+    // Attach the request ID to the payload
+    request.payload.requestId = requestId;
+    request.payload.secret = "no-implemented";
+    
+    this.websocket.send(JSON.stringify(request.payload));
+    this.callbackQueue[requestId] = request.callback;
+    console.log("Registered callback for", requestId);
+    console.log("Making request", request.payload);
+    return requestId;
+  }
+  
+  public clearCallback(requestId: string) {
+    if (!this.callbackQueue[requestId]) {
+      return;
+    }
+    
+    delete this.callbackQueue[requestId];
   }
   
   public isAlive() {

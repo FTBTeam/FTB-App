@@ -1,3 +1,121 @@
+<script lang="ts" setup>
+import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
+import { PackProviders } from '@/modules/modpacks/types';
+import { useRouter } from 'vue-router';
+import { debounce, safeNavigate } from '@/utils';
+import { SearchResultPack } from '@/core/types/modpacks/packSearch';
+import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers';
+import Loader from '@/components/ui/Loader.vue';
+import PackPreview from '@/components/groups/modpack/PackPreview.vue';
+import { modpackApi } from '@/core/pack-api/modpackApi';
+import UiPagination from '@/components/ui/UiPagination.vue';
+import { packBlacklist } from '@/core/state/modpacks/modpacksState';
+import { createLogger } from '@/core/logger';
+import { RouterNames } from '@/router';
+import { onMounted, ref, watch } from 'vue';
+
+const logger = createLogger("BrowseModpacks.vue")
+const router = useRouter();
+
+const searchValue = ref('');
+const currentTab = ref<PackProviders>('modpacksch');
+const searchResults = ref<SearchResultPack[]>([]);
+const loading = ref(false);
+const error = ref('');
+const loadingInitialPacks = ref(false);
+const ourPackIds = ref<number[]>([]);
+const currentPage = ref(1);
+const visiblePacks = ref<number[]>([]);
+
+onMounted(() => {
+  if (router.currentRoute.value.query.provider) {
+    currentTab.value = router.currentRoute.value.query.provider as PackProviders;
+  }
+  
+  if (router.currentRoute.value.query.search) {
+    searchValue.value = router.currentRoute.value.query.search as string;
+    searchPacks();
+    return;
+  }
+  
+  try {
+    toggleBeforeAndAfter(async () => {
+      const data = await Promise.all([
+        await modpackApi.modpacks.getModpacks(),
+        await modpackApi.modpacks.getPrivatePacks()
+      ])
+
+      const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
+      ourPackIds.value = [...allPackIds].sort((a, b) => b - a);
+
+      // remove the modloader packs
+      ourPackIds.value = ourPackIds.value.filter(e => !packBlacklist.includes(e));
+
+      visiblePacks.value = ourPackIds.value.slice(0, 10);
+    }, (state) => loadingInitialPacks.value = state);
+  } catch (error) {
+    logger.error("Failed to load packs", error);
+  }
+})
+
+function scrollToTop() {
+  // Smooth scroll to top
+  document.querySelector('.app-content')?.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+watch(currentPage, () => visiblePacks.value = ourPackIds.value.slice((currentPage.value - 1) * 10, ((currentPage.value - 1) * 10 + 10)))
+watch(() => router.currentRoute.value.query.search, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
+    searchValue.value = newValue as string;
+    searchPacks();
+  }
+})
+
+const debouncedSearch = debounce(() => {
+  searchPacks();
+}, 500);
+
+async function changeTab(tab: PackProviders) {
+  // Update the route
+  await safeNavigate(RouterNames.ROOT_BROWSE_PACKS, { provider: tab })
+
+  currentTab.value = tab;
+  searchResults.value = [];
+  await searchPacks();
+}
+
+watch(searchValue, () => {
+  loading.value = true;
+  searchResults.value = [];
+
+  if (searchValue.value === '') {
+    loading.value = false;
+    error.value = '';
+    return;
+  }
+
+  error.value = '';
+  debouncedSearch();
+});
+
+async function searchPacks() {
+  if (searchValue.value.length < 2) {
+    return;
+  }
+
+  try {
+    const results = await toggleBeforeAndAfter(() => modpackApi.search.search(searchValue.value, currentTab.value), v => loading.value = v);
+    searchResults.value = results?.packs ?? [];
+  } catch (resError: any) {
+    logger.error("Failed to search packs", resError);
+    error.value = 'Failed to search packs';
+  }
+}
+</script>
+
 <template>
   <div class="px-6 py-4 h-full search-container">
     <div class="search-and-switcher mb-4">
@@ -40,8 +158,8 @@
       <p>No packs available</p>
     </message>
 
-    <div class="result-cards pb-2" v-if="!error && results.length > 0">
-      <pack-preview v-for="(pack, index) in results" :partial-pack="pack" :key="index" :provider="currentTab" />
+    <div class="result-cards pb-2" v-if="!error && searchResults.length > 0">
+      <pack-preview v-for="(pack, index) in searchResults" :partial-pack="pack" :key="index" :provider="currentTab" />
     </div>
     
     <div class="latest-packs" v-if="searchValue === '' && !loading">
@@ -56,155 +174,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
-import {PackProviders} from '@/modules/modpacks/types';
-import {Route} from 'vue-router';
-import {debounce} from '@/utils';
-import {SearchResultPack} from '@/core/types/modpacks/packSearch';
-import {ns} from '@/core/state/appState';
-import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import Loader from '@/components/ui/Loader.vue';
-import PackPreview from '@/components/groups/modpack/PackPreview.vue';
-import {modpackApi} from '@/core/pack-api/modpackApi';
-import UiPagination from '@/components/ui/UiPagination.vue';
-import {packBlacklist} from '@/core/state/modpacks/modpacksState';
-import {createLogger} from '@/core/logger';
-import {RouterNames} from '@/router';
-
-@Component({
-  components: {
-    UiPagination,
-    PackPreview,
-    Loader,
-    FTBSearchBar
-  },
-})
-export default class BrowseModpacks extends Vue {
-  @Getter("latestPacks", ns("v2/modpacks")) latestPacks!: number[];
-  @Action('getLatestModpacks', ns("v2/modpacks")) getLatestPacks!: () => Promise<number[]>;
-  
-  private logger = createLogger("BrowseModpacks.vue")
-
-  searchValue: string = '';
-  currentTab: PackProviders = 'modpacksch';
-
-  searchResults: SearchResultPack[] = [];
-
-  loading = false;
-  
-  error = '';
-  
-  loadingInitialPacks = false;
-  
-  ourPackIds: number[] = [];
-  currentPage = 1;
-  visiblePacks: number[] = [];
-
-  async mounted() {
-    // Update the current tab based on the route
-    if (this.$route.query.provider) {
-      this.currentTab = this.$route.query.provider as PackProviders;
-    }
-    
-    if (this.$route.query.search) {
-      this.searchValue = this.$route.query.search as string;
-      await this.searchPacks();
-      return;
-    }
-
-    try {
-      await toggleBeforeAndAfter(async () => {
-        const data = await Promise.all([
-          await modpackApi.modpacks.getModpacks(),
-          await modpackApi.modpacks.getPrivatePacks()
-        ])
-
-        const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));
-        this.ourPackIds = [...allPackIds].sort((a, b) => b - a);
-
-        // remove the modloader packs
-        this.ourPackIds = this.ourPackIds.filter(e => !packBlacklist.includes(e));
-
-        this.visiblePacks = this.ourPackIds.slice(0, 10);
-      }, (state) => this.loadingInitialPacks = state);
-    } catch (error) {
-      this.logger.error("Failed to load packs", error);
-    }
-  }
-
-  scrollToTop() {
-    // Smooth scroll to top
-    document.querySelector('.app-content')?.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }
-  
-  @Watch('currentPage')
-  onPageChange() {
-    this.visiblePacks = this.ourPackIds.slice((this.currentPage - 1) * 10, ((this.currentPage - 1) * 10 + 10));
-  }
-  
-  @Watch('$route')
-  public async onPropertyChanged(value: Route, oldValue: Route) {
-    if (value.query.search !== oldValue.query.search) {
-      this.searchValue = value.query.search as string;
-      await this.searchPacks();
-    }
-  }
-
-  private debounceSearch = debounce(() => {
-    this.searchPacks();
-  }, 500);
-
-  async changeTab(tab: PackProviders) {
-    // Update the route
-    gobbleError(() => this.$router.push({ name: RouterNames.ROOT_BROWSE_PACKS, query: { provider: tab } }))
-      .catch(e => this.logger.error("Failed to update route", e));
-    
-    this.currentTab = tab;
-    this.searchResults = [];
-    await this.searchPacks();
-  }
-
-  @Watch('searchValue')
-  onSearch() {
-    this.loading = true;
-    this.searchResults = [];
-    
-    if (this.searchValue === '') {
-      this.loading = false;
-      this.error = '';
-      return;
-    }
-
-    this.error = '';
-    this.debounceSearch();
-  }
-
-  async searchPacks() {
-    if (this.searchValue.length < 2) {
-      return;
-    }
-
-    this.loading = true;
-    
-    try {
-      const results = await toggleBeforeAndAfter(() => modpackApi.search.search(this.searchValue, this.currentTab), v => this.loading = v);
-      this.searchResults = results?.packs ?? [];
-    } catch (error) {
-      this.logger.error("Failed to search packs", error);
-      this.error = 'Failed to search packs';
-    }
-  }
-
-  get results(): SearchResultPack[] {
-    return this.searchResults;
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .result-cards {

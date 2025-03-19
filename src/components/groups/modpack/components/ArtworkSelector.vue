@@ -4,7 +4,7 @@ import {InstanceJson} from '@/core/types/javaApi';
 import {ModPack} from '@/modules/modpacks/types';
 import { UiButton } from '@/components/ui';
 import { useAttachDomEvent } from '@/composables';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const allowedFileTypes = [
@@ -19,8 +19,8 @@ const {
   allowRemove = true,
   pack
 } = defineProps<{
-  allowRemove: boolean;
-  pack?: InstanceJson | ModPack;
+  allowRemove?: boolean;
+  pack: InstanceJson | ModPack;
 }>()
 
 const isDraggingOver = ref(false)
@@ -56,7 +56,7 @@ function drop(event: DragEvent) {
 function processFileList(files: File[]) {
   let firstValidFile: File | null = null;
   for (const file of files) {
-    if (this.allowedFileTypes.includes(file.type)) {
+    if (allowedFileTypes.includes(file.type)) {
       firstValidFile = file;
       break;
     }

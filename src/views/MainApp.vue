@@ -20,6 +20,7 @@ import {alertController} from '@/core/controllers/alertController';
 import { onMounted, ref, computed } from 'vue';
 import { services } from '@/bootstrap.ts';
 import { useRouter } from 'vue-router';
+import { useInstanceStore } from '@/store/instancesStore.ts';
 
 // TODO: [port] Fix me
 // @State('settings') settings!: SettingsState;
@@ -38,6 +39,7 @@ const loadInstances: AsyncFunction = null;
 const debugDisabledAdAside: boolean = false;
 
 const logger = createLogger("MainApp.vue");
+const instanceStore = useInstanceStore();
 
 // App runtime
 const loading = ref(true);
@@ -143,6 +145,7 @@ async function initApp() {
   
   console.log("Connected")
   appConnected.value = true
+  await instanceStore.loadInstances();
   console.log(appConnected.value)
 }
 

@@ -2,14 +2,18 @@
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const {
-  value,
   placeholder = 'Search',
   min = -1,
   darkMode = false,
   alpha = false,
 } = defineProps<{
-  value: string;
+  placeholder?: string;
+  min?: number;
+  darkMode?: boolean;
+  alpha?: boolean;
 }>();
+
+const value = defineModel<string>()
 
 const emit = defineEmits<{
   (e: 'input', value: string): void;

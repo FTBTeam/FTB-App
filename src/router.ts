@@ -113,14 +113,8 @@ const router = createRouter({
         },
         {
           path: '/support',
-          component: () => import(/* webpackChunkName: "support" */ './views/Support/SupportBase.vue'),
-          children: [
-            {
-              path: '',
-              name: RouterNames.SUPPORT,
-              component: () => import(/* webpackChunkName: "support" */ './views/Support/SupportIndex.vue'),
-            },
-          ],
+          name: RouterNames.SUPPORT,
+          component: () => import(/* webpackChunkName: "support" */ './views/Support.vue'),
         },
       ],
     },

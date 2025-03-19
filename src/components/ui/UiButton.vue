@@ -18,7 +18,7 @@ const {
   size?: ElementStandardSizing;
   disabled?: boolean;
   working?: boolean;
-  icon?: IconDefinition;
+  icon?: IconDefinition | string;
   fullWidth?: boolean;
   wider?: boolean;
   ariaLabel?: string;

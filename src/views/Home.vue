@@ -10,8 +10,8 @@
     
     <div class="featured-packs">
       <h2 class="text-lg font-bold text-white mb-4">Featured packs</h2>
-      <PackPreview v-if="featuredPacksIds.length" v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
-      <Message type="warning" v-if="!featuredPacksIds.length && !loadingFeatured">
+      <PackPreview v-if="modpackStore.featuredPackIds.length" v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="modpacksch" />
+      <Message type="warning" v-if="!modpackStore.featuredPackIds.length && !loadingFeatured">
         <p>No featured packs available at the moment</p>
       </Message>
     </div>
@@ -19,33 +19,27 @@
 </template>
 
 <script lang="ts" setup>
-// import {ns} from '@/core/state/appState';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import Message from '@/components/ui/Message.vue';
 import { computed, onMounted, ref } from 'vue';
-import { SugaredInstanceJson } from '@/core/types/javaApi';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 
-// @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
-//
-// @Getter("featuredPacks", ns("v2/modpacks")) featuredPacksIds!: number[];
-// @Action("getFeaturedPacks", ns("v2/modpacks")) getFeaturedPacks!: () => Promise<number[]>;
-
-// TODO: State fix me
-const instances = ref<SugaredInstanceJson[]>([]);
-const featuredPacksIds = ref([]);
-const getFeaturedPacks = async () => [];
+const instanceStore = useInstanceStore();
+const modpackStore = useModpackStore();
 
 const loadingFeatured = ref(false);
 
 const loadFeaturedPacks = async () => {
-  loadingFeatured.value = true;
-  await getFeaturedPacks();
-  loadingFeatured.value = false;
+  await toggleBeforeAndAfter(async () => {
+    await modpackStore.getFeaturedPacks();
+  }, v => loadingFeatured.value = v);
 };
 
 const recentInstances = computed(() => {
-  return instances.value
+  return instanceStore.instances
     .sort((a, b) => {
       // If either lastPlayed is 0, put it at the end
       if (!a.lastPlayed) return 1;

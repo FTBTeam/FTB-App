@@ -8,16 +8,14 @@ import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
 import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from '@/core/context/contextMenus';
 import {InstanceActions} from '@/core/actions/instanceActions';
-import {createLogger} from '@/core/logger';
 import {InstanceRunningData} from '@/core/state/misc/runningState';
-import { watch, ref, onMounted } from 'vue';
+import { watch, ref, onMounted, computed } from 'vue';
 import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { InstallStatus } from '@/core/controllers/InstanceInstallController.ts';
 
 const router = useRouter()
-
-const logger = createLogger('PackCard2.vue');
 
 const {instance} = defineProps<{
   instance: SugaredInstanceJson;
@@ -33,17 +31,17 @@ const currentInstall = ref<InstallStatus | null>(null);
 const latestVersion = ref<Versions | null>(null);
 const updateOpen = ref(false);
 
-const {loading, apiModpack, fetchModpack} = useFetchingPack()
+const {apiModpack, fetchModpack} = useFetchingPack()
 const isInstalling = computed(() => {
   if (!currentInstall) {
     return false;
   }
 
-  return currentInstall?.forInstanceUuid === instance.uuid
+  return currentInstall.value?.forInstanceUuid === instance.uuid
 })
 
 onMounted(() => {
-  fetchModpack(instance.packId, typeIdToProvider(instance.typeId));
+  fetchModpack(instance.id, typeIdToProvider(instance.packType));
 })
 
 watch(apiModpack, (newValue) => {
@@ -92,7 +90,7 @@ function openInstanceMenu(event: PointerEvent) {
 const modloader = computed(() => resolveModloader(instance));
 const packLogo = computed(() => resolveArtwork(instance, "square", apiModpack.value))
 const isRunning = computed(() => runningInstances.value.some(e => e.uuid === instance.uuid));
-const isUpdating = computed(() => currentInstall?.request?.updatingInstanceUuid === instance.uuid);
+const isUpdating = computed(() => currentInstall.value?.request?.updatingInstanceUuid === instance.uuid);
 const versionName = computed(() => _versionName().trim());
 
 function _versionName() {
@@ -135,26 +133,26 @@ function _versionName() {
       <div class="artwork-container">
         <img :src="packLogo" alt="Modpack Artwork">
         <div class="notifiers">
-          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-right" v-if="modLoader === 'forge'">
+          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-right" v-if="modloader === 'forge'">
             <img width="30" src="../../../assets/images/forge.svg" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down-right" v-if="modLoader === 'fabric'">
+          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down-right" v-if="modloader === 'fabric'">
             <img width="30" src="../../../assets/images/fabric.webp" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-right" v-if="modLoader === 'neoforge'">
+          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-right" v-if="modloader === 'neoforge'">
             <img width="30" src="../../../assets/images/neoforge.png" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-right" v-if="modLoader === 'quilt'">
+          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-right" v-if="modloader === 'quilt'">
             <img width="30" src="../../../assets/images/quiltmc.svg" alt="" />
           </div>
         </div>
         
-        <transition name="transition-fade" duration="250">
+        <transition name="transition-fade" :duration="250">
           <div class="install-progress" v-if="isInstalling && currentInstall">
             <div class="percent">{{currentInstall.progress}}<span>%</span></div>
             <b>{{currentInstall.stage ?? "??"}}</b>
             <small class="text-center opacity-75" v-if="currentInstall.stage === 'Mod loader'">This may take a minute</small>
-            <transition name="transition-fade" duration="250">
+            <transition name="transition-fade" :duration="250">
               <div class="files text-sm" v-if="currentInstall.speed">
                 <FontAwesomeIcon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
               </div>

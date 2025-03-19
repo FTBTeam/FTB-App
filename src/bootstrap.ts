@@ -1,4 +1,4 @@
-import mitt from 'mitt';
+import mitt, {Emitter} from 'mitt';
 import { InstanceInstallController } from '@/core/controllers/InstanceInstallController.ts';
 import { WebsocketController } from '@/core/controllers/websocketController.ts';
 
@@ -8,16 +8,22 @@ export type EmitEvents = {
   "ws/message": string
 }
 
-const emitter = mitt<EmitEvents>();
-const websocketController = new WebsocketController(emitter);
+let services: {
+  emitter: Emitter<EmitEvents>,
+  websocket: WebsocketController,
+  instanceInstallController: InstanceInstallController
+};
 
-const services = {
-  emitter,
-  websocket: websocketController,
-  instanceInstallController: new InstanceInstallController(emitter, websocketController)
+export function bootstrapLoad() {
+  const emitter = mitt<EmitEvents>();
+  const websocketController = new WebsocketController(emitter);
+  
+  services = {
+    emitter,
+    websocket: websocketController,
+    instanceInstallController: new InstanceInstallController(emitter, websocketController)
+  }
 }
-
-export function bootstrapLoad() {}
 
 export {
   services

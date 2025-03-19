@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import {ModPack, PackProviders} from '@/modules/modpacks/types';
-import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {timeFromNow} from '@/utils/helpers/dateHelpers';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -8,32 +7,25 @@ import {isValidVersion} from '@/utils/helpers/packHelpers';
 import platform from '@/utils/interface/electron-overwolf';
 import {RouterNames} from '@/router';
 import { ModalBody, Modal, FTBInput, UiToggle, Selection2, ModalFooter, UiButton } from '@/components/ui';
-import { watch, ref } from 'vue';
+import { watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { services } from '@/bootstrap.ts';
+import { useModpackStore } from '@/store/modpackStore.ts';
 
-// TODO: [port] fixme
-// @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
-// @Getter("categories", ns("v2/instances")) categories!: string[];
-function getModpack(): GetModpack {}
-function categories(): string[] {}
-
+const modpackStore = useModpackStore();
 const router = useRouter();
 
 const {
   open,
   packId,
-  uuid,
   provider = "modpacksch",
 } = defineProps<{
   open: boolean;
   packId: number;
-  uuid?: string;
   provider: PackProviders;
 }>()
-
 
 const apiModpack = ref<ModPack | null>(null);
 const selectedVersionId = ref("");
@@ -45,12 +37,13 @@ const useAdvanced = ref(false);
 const userPackName = ref("");
 const userSelectedArtwork = ref<File | null>(null);
 
-watch(() => open, async (newValue, oldValue) => {
+const emit = defineEmits<{
+  (event: 'close'): void;
+}>()
+
+watch(() => open, async (newValue) => {
   if (newValue && !apiModpack.value) {
-    apiModpack.value = await getModpack({
-      id: packId,
-      provider
-    });
+    apiModpack.value = await modpackStore.getModpack(packId, provider);
 
     userPackName.value = apiModpack.value?.name ?? "";
 
@@ -76,9 +69,9 @@ function install() {
     provider,
   })
 
-  close();
+  emit('close')
 
-  if (router.currentRoute.name !== RouterNames.ROOT_LIBRARY) {
+  if (router.currentRoute.value.name !== RouterNames.ROOT_LIBRARY) {
     router.push({
       name: RouterNames.ROOT_LIBRARY
     })
@@ -114,7 +107,7 @@ const hasUnstableVersions = computed(() => {
 })
 
 function versions() {
-  return restrictedVersions
+  return restrictedVersions.value
     .sort((a, b) => b.id - a.id)
     .map(e => ({
       value: e.id.toString(),
@@ -129,7 +122,7 @@ function versions() {
 </script>
 
 <template>
-  <Modal :open="open" @closed="close" title="Install instance" :sub-title="packName" :external-contents="true">
+  <Modal :open="open" @closed="emit('close')" title="Install instance" :sub-title="packName" :external-contents="true">
     <ModalBody>
       <template v-if="apiModpack">
         <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
@@ -138,7 +131,7 @@ function versions() {
         <CategorySelector class="mb-4" v-model="selectedCategory" />
 
         <UiToggle label="Show advanced options" v-model="useAdvanced" />
-        <Selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4 mt-6" />
+        <Selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions()" v-model="selectedVersionId" class="mb-4 mt-6" />
         
         <UiToggle
           v-if="useAdvanced && hasUnstableVersions"

@@ -3,7 +3,6 @@ import path from 'node:path'
 import electron from 'vite-plugin-electron/simple'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
-import { SpawnOptions } from 'node:child_process';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -25,7 +24,7 @@ export default defineConfig({
         entry: 'electron/main.ts',
         
         onstart: (args) => {
-          args.startup(['.', '--no-sandbox'], {}, '@overwolf/ow-electron')
+          args.startup(['.', '--no-sandbox', '--test-ad'], {}, '@overwolf/ow-electron')
         }
       },
       // preload: {

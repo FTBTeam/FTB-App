@@ -17,6 +17,7 @@ import {createLogger} from '@/core/logger';
 import { WebsocketController } from '@/core/controllers/websocketController.ts';
 import { Emitter } from 'mitt';
 import { EmitEvents } from '@/bootstrap.ts';
+import { useInstallStore } from '@/store/installStore.ts';
 
 export type InstallRequest = {
   uuid: string;
@@ -80,7 +81,8 @@ export class InstanceInstallController {
 
   constructor(
     private readonly emitter: Emitter<EmitEvents>,
-    private readonly websocket: WebsocketController
+    private readonly websocket: WebsocketController,
+    private readonly installStore = useInstallStore()
   ) {
     this.emitter.on('ws.message', async (data: any) => {
       if (data.type === 'instanceOverrideModLoaderReply') {
@@ -157,7 +159,7 @@ export class InstanceInstallController {
 
     if (isInstall) {
       // Get the current install request
-      const currentInstall = store.state['v2/install'].currentInstall;
+      const currentInstall = this.installStore.currentInstall;
       if (currentInstall == null) {
         return;
       }
@@ -206,7 +208,7 @@ export class InstanceInstallController {
 
     this.logger.debug('Checking queue');
     this.logger.debug('Queue items', this.queue.length);
-    const request = await store.dispatch('v2/install/popInstallQueue', {root: true}) as InstallRequest | null;
+    const request = this.installStore.popInstallQueue()
     if (request == null) {
       this.logger.debug('Queue is empty');
       return;
@@ -408,11 +410,11 @@ export class InstanceInstallController {
   }
 
   private updateInstallStatus(status: InstallStatus | null) {
-    store.commit('v2/install/SET_CURRENT_INSTALL', status);
+    this.installStore.currentInstall = status;
   }
 
   private get queue() {
-    return store.state['v2/install'].installQueue;
+    return this.installStore.installQueue;
   }
 
   /**
@@ -428,15 +430,15 @@ export class InstanceInstallController {
     if (status === 'error' || status === 'success') {
       const packetId = typedData.requestId;
 
-      const updateFromPacketId = store.state['v2/install'].currentModloaderUpdate.find(e => e.packetId === packetId);
+      const updateFromPacketId = this.installStore.currentModloaderUpdate.find(e => e.packetId === packetId);
       if (!updateFromPacketId) {
         return;
       }
 
       const instance = store.state['v2/instances'].instances.find(e => e.uuid === updateFromPacketId.instanceId);
 
-      // Rmeove the modloader update
-      store.commit('v2/install/REMOVE_MODLOADER_UPDATE', packetId);
+      // remove the modloader update
+      this.installStore.removeModloaderUpdate(packetId)
 
       if (status === 'error') {
         alertController.error(`Failed to update modloader due to ${typedData.message ?? 'an unknown error'}`);

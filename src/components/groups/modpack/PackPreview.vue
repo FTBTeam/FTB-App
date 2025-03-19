@@ -10,6 +10,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, ref } from 'vue';
 import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
 import { InstallStatus } from '@/core/controllers/InstanceInstallController.ts';
+import { useInstallStore } from '@/store/installStore.ts';
+import { useRouter } from 'vue-router';
 
 const RouteNames = RouterNames;
 const props = defineProps<{
@@ -20,10 +22,8 @@ const props = defineProps<{
 
 const showInstall = ref(false);
 const { apiModpack, fetchModpack } = useFetchingPack();
-
-//@Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
-// TOOD: [port] Fix me
-const currentInstall = ref<InstallStatus | null>(null);
+const installStore = useInstallStore();
+const router = useRouter()
 
 onMounted(() => {
   if (!props.partialPack && !props.packId) {
@@ -71,17 +71,17 @@ const artwork = computed(() => resolveArtwork(packData.value, "splash"));
 const logo = computed(() => resolveArtwork(packData.value, "square"));
 const packTags = computed(() => packData.value?.tags?.slice(0, 5) ?? []);
 const isInstalling = computed(() => {
-  if (!currentInstall.value) {
+  if (!installStore.currentInstall) {
     return false;
   }
 
-  return currentInstall.value.request.id === apiModpack.value?.id && !currentInstall.value.request.updatingInstanceUuid;
+  return installStore.currentInstall.request.id === apiModpack.value?.id && !installStore.currentInstall.request.updatingInstanceUuid;
 });
 </script>
 
 <template>
   <div class="pack-preview-container">
-    <div class="pack-preview" v-if="packData" @click="$router.push({
+    <div class="pack-preview" v-if="packData" @click="router.push({
       name: RouteNames.ROOT_PREVIEW_PACK,
       query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
     })">

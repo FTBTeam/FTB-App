@@ -1,10 +1,71 @@
+<script lang="ts" setup>
+import Loader from '@/components/ui/Loader.vue';
+import {ns} from '@/core/state/appState';
+import {AsyncFunction} from '@/core/types/commonTypes';
+import {BlogPost} from '@/core/types/external/metaApi.types';
+import dayjs from 'dayjs';
+import {standardDateTime} from '@/utils/helpers/dateHelpers';
+import {constants} from '@/core/constants';
+import {createLogger} from '@/core/logger';
+import { onMounted, ref } from 'vue';
+import { JavaFetch } from '@/core/javaFetch.ts';
+import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
+
+const logger = createLogger("blog.vue");
+const loading = ref(false);
+const news = ref<BlogPost[]>([]);
+
+onMounted(async () => {
+  const storeKey = "news";
+
+  if (localStorage.getItem(storeKey)) {
+    const data = JSON.parse(localStorage.getItem(storeKey) || "{}");
+    if (data.posts) {
+      // Check if the data we hold is up-to-date enough
+      if (Date.now() - data.storedAt < 1000 * 60 * 10) { // 10 minutes
+        news.value = data.posts;
+        return;
+      }
+    }
+  }
+  
+  // Otherwise, fetch the news
+  const newsRes = await toggleBeforeAndAfter(async () => {
+    try {
+      const newsReq = await JavaFetch.create(`${constants.metaApi}/blog/posts`)
+        .execute();
+
+      if (!newsReq) {
+        return null;
+      }
+
+      return newsReq.json<{posts: BlogPost[]}>();
+    } catch (e) {
+      logger.error("Failed to load news", e);
+      return null;
+    }
+  }, v => loading.value = v);
+  
+  if (newsRes) {
+    localStorage.setItem(storeKey, JSON.stringify({
+      posts: newsRes.posts,
+      storedAt: Date.now()
+    }));
+    
+    news.value = newsRes.posts;
+  }
+})
+
+const domain = constants.ftbDomain;
+</script>
+
 <template>
   <div class="px-6 py-4" v-if="!loading">
     <template v-if="news.length">
       <h2 class="text-lg font-bold mb-6">Get the latest news from FTB</h2>
       <div class="news-item" v-for="(newsItem, index) in news" :key="index">
         <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="openExternal" v-if="newsItem.feature_image" class="feature-image mb-4 block">
-          <img crossorigin="anonymous" class="rounded shadow-xl" :src="newsItem.feature_image" alt="Feature image">
+          <img class="rounded shadow-xl" :src="newsItem.feature_image" alt="Feature image">
         </a>
         
         <div class="about">
@@ -13,7 +74,7 @@
         </div>
         
         <div class="author-and-info flex items-center gap-4">
-          <img class="avatar rounded shadow-xl" crossorigin="anonymous" width="50" :src="newsItem.primary_author.profile_image" alt="Avatar">
+          <img class="avatar rounded shadow-xl" crossorigin="anonymous" width="50" :src="newsItem.primary_author.profile_image" alt="Avatar" />  
           <div class="info">
             <b class="opacity-75">{{ newsItem.primary_author.name }}</b>
             <div class="info opacity-75 text-sm" :title="standardDateTime(newsItem.published_at)">
@@ -38,45 +99,6 @@
     <loader />
   </div>
 </template>
-
-<script lang="ts">
-import Loader from '@/components/ui/Loader.vue';
-import {ns} from '@/core/state/appState';
-import {AsyncFunction} from '@/core/types/commonTypes';
-import {BlogPost} from '@/core/types/external/metaApi.types';
-import dayjs from 'dayjs';
-import {standardDateTime} from '@/utils/helpers/dateHelpers';
-import {constants} from '@/core/constants';
-import {createLogger} from '@/core/logger';
-
-@Component({
-  components: {
-    Loader,
-  },
-  methods: {
-    dayjs,
-    standardDateTime
-  }
-})
-export default class Blog extends Vue {
-  @Action('loadNews', ns("v2/news")) loadNews!: AsyncFunction;
-  @Getter('news', ns("v2/news")) news!: BlogPost[];
-  @Getter('loading', ns("v2/news")) loading!: boolean;
-  
-  private logger = createLogger("Blog.vue");
-  
-  public mounted() {
-    if (this.news === null || this.news.length < 1) {
-      this.loadNews()
-        .catch(e => this.logger.error("Failed to load news", e))
-    }
-  }
-  
-  get domain() {
-    return constants.ftbDomain
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .news-item {

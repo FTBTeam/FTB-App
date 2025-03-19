@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 
 const { disabled = false, label = undefined, desc = undefined, alignRight = false } = defineProps<{
-  disabled: boolean;
-  label: string;
-  desc: string;
-  alignRight: boolean;
+  disabled?: boolean;
+  label?: string;
+  desc?: string;
+  alignRight?: boolean;
 }>();
 
 const value = defineModel<boolean>()

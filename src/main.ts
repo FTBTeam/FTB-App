@@ -39,7 +39,6 @@ const logger = createLogger("main.ts");
 logger.info("Starting app");
 
 const pinia = createPinia();
-bootstrapLoad();
 
 platform.setup();
 (window as any).platform = platform;
@@ -60,6 +59,7 @@ createApp(App)
   .use(VueVirtualScroller)
   .mount('#app')
   .$nextTick(() => {
+    bootstrapLoad();
     // Use contextBridge
     // window.ipcRenderer.on('main-process-message', (_event, message) => {
     //   console.log(message)

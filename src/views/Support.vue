@@ -1,73 +1,19 @@
-<template>
-  <div class="px-6 py-4">
-    <div class="flex justify-between mb-6">
-      <div class="main-head">
-        <h1 class="font-bold text-2xl">Support</h1>
-        <p class="text-muted">Looking for a little help? We're here for you!</p>
-      </div>
-
-      <div class="socials flex items-center gap-4">
-        <div
-          v-for="social in socials"
-          class="item p-0-5 opacity-75 hover:opacity-100 ease-in-out duration-200 transition-opacity"
-          :aria-label="social.name"
-          data-balloon-pos="down-right"
-          @click="() => platform.get.utils.openUrl(social.link)"
-        >
-          <font-awesome-icon :icon="social.icon" />
-        </div>
-      </div>
-    </div>
-
-    <div class="discord-callout">
-      <div class="body">
-        <h2 class="font-bold text-xl mb-4">
-          <font-awesome-icon class="mr-4" :icon="['fab', 'discord']" /> Give our Discord a try
-        </h2>
-        <p>
-          Our Discord server is typically a great first place to ask questions and find answers to common questions or
-          issues. Why not give it a go? We've got thousands of active members and our team is always lurking around.
-        </p>
-      </div>
-      <div class="discord-btn" @click="platform.get.utils.openUrl('https://go.ftb.team/discord')">
-        <span>Join Discord</span>
-        <span v-if="discordWidgetData">·</span>
-        <span v-if="discordWidgetData">{{ discordWidgetData.presence_count.toLocaleString() }} online</span>
-      </div>
-    </div>
-
-    <div class="support-area">
-      <div class="topic-collection" v-for="(topic, index) in topicList" :key="index">
-        <div class="name">{{ topic.title }}</div>
-        <div class="items">
-          <div
-            class="item"
-            v-for="(topicItem, i) in topic.items"
-            :key="i"
-            @click="platform.get.utils.openUrl(topicItem.link)"
-          >
-            <div class="icon">
-              <font-awesome-icon v-if="!topicItem.customIcon" fixedWidth :icon="topicItem.icon" />
-              <img v-else :src="topicItem.icon" alt="Icon" />
-            </div>
-            <div class="body">
-              <h2>{{ topicItem.name }}</h2>
-              <p>{{ topicItem.desc }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script lang="ts">
-import Platform from '@/utils/interface/electron-overwolf';
-import {DiscordWidget} from '@/types';
+<script lang="ts" setup>
+import platform from '@/utils/interface/electron-overwolf.ts';
+import {DiscordWidget} from '@/types.ts';
 
 import BhLogo from '@/assets/images/branding/bh-logo.svg';
-import {logger} from '@/core/logger';
-import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+import {logger} from '@/core/logger.ts';
+import {
+  faDiscord, faFacebook, faGithub,
+  faInstagram,
+  faTwitch,
+  faXTwitter,
+  faYoutube,
+  IconDefinition,
+} from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted, ref } from 'vue';
 
 const endpoint = (goEndpoint: string) => `https://go.ftb.team/${goEndpoint}`;
 
@@ -93,13 +39,13 @@ const mkTopic = (
 });
 
 const socials = [
-  mkSocial('FTB Discord', { iconName: 'discord', prefix: 'fab' }, 'discord'),
-  mkSocial('FTB Twitter', { iconName: 'twitter', prefix: 'fab' }, 'twitter'),
-  mkSocial('FTB Instagram', { iconName: 'instagram', prefix: 'fab' }, 'instagram'),
-  mkSocial('FTB Twitch', { iconName: 'twitch', prefix: 'fab' }, 'twitch'),
-  mkSocial('FTB Youtube', { iconName: 'youtube', prefix: 'fab' }, 'youtube'),
-  mkSocial('FTB Facebook', { iconName: 'facebook', prefix: 'fab' }, 'facebook'),
-  mkSocial('FTB Github', { iconName: 'github', prefix: 'fab' }, 'github'),
+  mkSocial('FTB Discord', faDiscord, 'discord'),
+  mkSocial('FTB Twitter', faXTwitter, 'twitter'),
+  mkSocial('FTB Instagram', faInstagram, 'instagram'),
+  mkSocial('FTB Twitch', faTwitch, 'twitch'),
+  mkSocial('FTB Youtube', faYoutube, 'youtube'),
+  mkSocial('FTB Facebook', faFacebook, 'facebook'),
+  mkSocial('FTB Github', faGithub, 'github'),
 ];
 
 const topicList = [
@@ -135,7 +81,6 @@ const topicList = [
         undefined,
         "Get a top-notch Minecraft Server with our partner BisectHosting. With 24/7/365 support, 2,000+ Minecraft modpacks, and hosting for over 70+ games, you're in good hands.",
         true,
-        // TODO: Update this link to the correct one
         'https://bisecthosting.com/ftb?r=app-support'
       ),
       mkTopic(
@@ -148,25 +93,81 @@ const topicList = [
   },
 ];
 
-@Component
-export default class SupportIndex extends Vue {
-  platform = Platform;
-  socials = socials;
-  topicList = topicList;
+const discordWidgetData = ref<DiscordWidget | null>(null);
 
-  discordWidgetData: DiscordWidget | null = null;
-
-  async mounted() {
-    // Fetch the widget data from discord, we don't care if this doesn't load so just log and move on
-    try {
-      const req = await fetch('https://discord.com/api/guilds/372448486723158016/widget.json');
-      this.discordWidgetData = (await req.json()) as DiscordWidget;
-    } catch (error: any) {
-      logger.error('Failed to load discord data, maybe their api is offline?', error);
-    }
+onMounted(async () => {
+  // Fetch the widget data from discord, we don't care if this doesn't load so just log and move on
+  try {
+    const req = await fetch('https://discord.com/api/guilds/372448486723158016/widget.json');
+    discordWidgetData.value = (await req.json()) as DiscordWidget;
+  } catch (error: any) {
+    logger.error('Failed to load discord data, maybe their api is offline?', error);
   }
-}
+})
 </script>
+
+<template>
+  <div class="px-6 py-4">
+    <div class="flex justify-between mb-6">
+      <div class="main-head">
+        <h1 class="font-bold text-2xl">Support</h1>
+        <p class="text-muted">Looking for a little help? We're here for you!</p>
+      </div>
+
+      <div class="socials flex items-center gap-4">
+        <div
+          v-for="social in socials"
+          class="item p-0-5 opacity-75 hover:opacity-100 ease-in-out duration-200 transition-opacity"
+          :aria-label="social.name"
+          data-balloon-pos="down-right"
+          @click="() => platform.get.utils.openUrl(social.link)"
+        >
+          <FontAwesomeIcon :icon="social.icon" />
+        </div>
+      </div>
+    </div>
+
+    <div class="discord-callout">
+      <div class="body">
+        <h2 class="font-bold text-xl mb-4">
+          <FontAwesomeIcon class="mr-4" :icon="['fab', 'discord']" /> Give our Discord a try
+        </h2>
+        <p>
+          Our Discord server is typically a great first place to ask questions and find answers to common questions or
+          issues. Why not give it a go? We've got thousands of active members and our team is always lurking around.
+        </p>
+      </div>
+      <div class="discord-btn" @click="platform.get.utils.openUrl('https://go.ftb.team/discord')">
+        <span>Join Discord</span>
+        <span v-if="discordWidgetData">·</span>
+        <span v-if="discordWidgetData">{{ discordWidgetData.presence_count.toLocaleString() }} online</span>
+      </div>
+    </div>
+
+    <div class="support-area">
+      <div class="topic-collection" v-for="(topic, index) in topicList" :key="index">
+        <div class="name">{{ topic.title }}</div>
+        <div class="items">
+          <div
+            class="item"
+            v-for="(topicItem, i) in topic.items"
+            :key="i"
+            @click="platform.get.utils.openUrl(topicItem.link)"
+          >
+            <div class="icon">
+              <FontAwesomeIcon v-if="!topicItem.customIcon" fixedWidth :icon="topicItem.icon" />
+              <img v-else :src="topicItem.icon" alt="Icon" />
+            </div>
+            <div class="body">
+              <h2>{{ topicItem.name }}</h2>
+              <p>{{ topicItem.desc }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .support-area {
@@ -232,7 +233,7 @@ export default class SupportIndex extends Vue {
 .discord-callout {
   padding: 2rem;
   background-size: 150%;
-  background: black url('../../assets/backgrounds/discord-callout-bg.svg') no-repeat center bottom -80px;
+  background: black url('../assets/backgrounds/discord-callout-bg.svg') no-repeat center bottom -80px;
   box-shadow: 0 5px 25px 5px rgba(black, 0.3);
   border-radius: 5px;
   margin-bottom: 2rem;

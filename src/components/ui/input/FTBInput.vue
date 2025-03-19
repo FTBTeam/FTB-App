@@ -1,30 +1,28 @@
 <script lang="ts" setup>
 import platform from '@/utils/interface/electron-overwolf';
-import { onUnmounted } from 'vue';
+import { onUnmounted, ref } from 'vue';
 
 const {
   type = 'text',
   disabled = false,
   placeholder = '',
-  button = false,
-  label,
+  label = undefined,
   noSpacing = false,
   min,
   max,
   copyable = false,
 } = defineProps<{
-  type: string;
-  disabled: boolean;
-  placeholder: string;
+  type?: string;
+  disabled?: boolean;
+  placeholder?: string;
   label?: string;
-  noSpacing: boolean;
+  noSpacing?: boolean;
   min?: number;
   max?: number;
-  copyable: boolean;
+  copyable?: boolean;
 }>();
 
-defineEmits<{
-  (e: 'input', value: string): void;
+const emit = defineEmits<{
   (e: 'blur'): void;
   (e: 'click'): void;
 }>()
@@ -63,14 +61,14 @@ onUnmounted(() => {
             :disabled="disabled"
             :min="min"
             :max="max"
-            @input="$emit('input', $event.target.value)"
-            @blur="$emit('blur')"
-            @click="$emit('click')"
+            @input="value = $event.target?.value"
+            @blur="emit('blur')"
+            @click="emit('click')"
           />
           <transition name="transition-fade">
             <div
               class="copy-btn bg-blue-700 hover:bg-blue-500 rounded px-3 py-1 text-sm cursor-pointer"
-              v-show="value.length > 0"
+              v-show="value?.length > 0"
               v-if="copyable"
               @click="copy"
             >

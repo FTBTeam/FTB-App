@@ -29,17 +29,17 @@ const {
   disabled = false,
   value = null,
 } = defineProps<{
-  label: string;
-  icon: string | string[] | null;
-  direction: 'left' | 'right';
-  minWidth: number;
-  placeholder: string;
-  options: SelectionOptions;
-  badgeEnd: boolean;
-  allowDeselect: boolean;
-  openUp: boolean;
-  disabled: boolean;
-  value: any;
+  label?: string;
+  icon?: string | string[] | null;
+  direction?: 'left' | 'right';
+  minWidth?: number;
+  placeholder?: string;
+  options?: SelectionOptions;
+  badgeEnd?: boolean;
+  allowDeselect?: boolean;
+  openUp?: boolean;
+  disabled?: boolean;
+  value?: any;
 }>()
 
 const emit = defineEmits<{

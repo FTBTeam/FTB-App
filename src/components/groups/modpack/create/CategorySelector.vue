@@ -3,17 +3,17 @@ import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
 import { UiButton, Modal, FTBInput } from '@/components/ui';
 import {alertController} from '@/core/controllers/alertController';
 import {stringListContainsIgnoreCase} from '@/utils/helpers/arrayHelpers';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { ref, computed } from 'vue';
 
-// TODO: [port] fixme
-// @Getter('categories', ns('v2/instances')) categories!: string[];
-const categories: string[] = [];
+const instanceStore = useInstanceStore();
 
 const {
-  label,
-  openDown,
+  label = undefined,
+  openDown = false,
 } = defineProps<{
   label?: string;
-  openDown: boolean;
+  openDown?: boolean;
 }>()
 
 const value = defineModel<string>()
@@ -32,7 +32,7 @@ function valueChanged(newValue: string) {
 
 function addCategory() {
   if (extraCategory.value === "") return;
-  if (stringListContainsIgnoreCase(categories, extraCategory.value)) {
+  if (stringListContainsIgnoreCase(instanceStore.instanceCategories, extraCategory.value)) {
     alertController.warning("A category with that name already exists.")
     return;
   }
@@ -42,7 +42,7 @@ function addCategory() {
 }
 
 const _options = computed(() => {
-  const categories: SelectionOptions = (categories ?? []).map(e => ({ value: e, label: e }));
+  const categories: SelectionOptions = (instanceStore.instanceCategories ?? []).map(e => ({ value: e, label: e }));
   if (extraCategory.value !== "") {
     categories.push({ value: extraCategory.value, label: extraCategory.value });
     categories.push({
