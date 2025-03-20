@@ -3,7 +3,7 @@ import {emitter} from '@/utils';
 import {ContextMenu, MenuItem} from '@/core/context/menus/contextMenu';
 import ContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
 import { useAttachDomEvent } from '@/composables';
-import { nextTick, onMounted, onUnmounted } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 
 type ContextMenuEventContext = {
   context: () => any,
@@ -40,9 +40,9 @@ function handleOutOfClick(event: MouseEvent) {
   handleMenuClose()
 }
 
-function handleMenuOpen(context: ContextMenuEventContext) {
-  menu.value = context.menu;
-  context.valu3 = context.context;
+function handleMenuOpen(givenContext: ContextMenuEventContext) {
+  menu.value = givenContext.menu;
+  context.value = givenContext.context;
 
   nextTick(() => {
     placeMenu(context.pointer);

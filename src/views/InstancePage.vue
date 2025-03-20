@@ -4,16 +4,14 @@ import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
 import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
 import PackBody from '@/components/groups/modpack/PackBody.vue';
-import {AuthProfile} from '@/modules/core/core.types';
 import {RouterNames} from '@/router';
 import VersionsBorkedModal from '@/components/modals/VersionsBorkedModal.vue';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
-import {GetModpack} from '@/core/state/modpacks/modpacksState';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
-import { UiButton, ClosablePanel } from '@/components/ui';
+import { UiButton, ClosablePanel, Modal } from '@/components/ui';
 import {waitForWebsockets} from '@/utils';
 import {createLogger} from '@/core/logger';
 import {SocketState} from '@/modules/websocket/types';
@@ -21,21 +19,15 @@ import {InstanceController} from '@/core/controllers/InstanceController';
 import { useRouter } from 'vue-router';
 import { computed, onMounted, ref } from 'vue';
 import { services } from '@/bootstrap.ts';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { useAccountsStore } from '@/store/accountsStore.ts';
 
 const router = useRouter()
 
-// TODO: [port] Fix me
-// @State('websocket') public websockets!: SocketState;
-// @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
-// @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
-//
-// @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
-// @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
-const websockets = ref<SocketState>(null);
-const instances = ref<SugaredInstanceJson[]>([]);
-const getModpack = ref<GetModpack>(null);
-const authProfiles = ref<AuthProfile[]>([]);
-const getActiveProfile = ref<any>(null);
+const modpackStore = useModpackStore();
+const instancesStore = useInstanceStore();
+const accountsStore = useAccountsStore()
 
 const logger = createLogger("InstancePage.vue");
 
@@ -44,6 +36,7 @@ const tabs = ModpackPageTabs;
 const activeTab = ref<ModpackPageTabs>(ModpackPageTabs.OVERVIEW);
 
 const apiPack = ref<ModPack | null>(null);
+const hidingPackDetails = ref(false);
 
 const showVersions = ref(false);
 const offlineMessageOpen = ref(false);
@@ -55,18 +48,24 @@ const borkedVersionDowngradeId = ref<number | null>(null);
 const borkedVersionIsDowngrade = ref(false);
 
 const packUuid = computed(() => router.currentRoute.value.params.uuid);
-const instance = computed<SugaredInstanceJson>(() => {
-  logger.debug(`Getting instance ${packUuid}`)
-  return instances.find(e => e.uuid === packUuid) ?? null;
+const instance = computed<SugaredInstanceJson | null>(() => {
+  if (!packUuid.value) {
+    return null;
+  }
+  
+  logger.debug(`Getting instance ${packUuid.value}`)
+  return instancesStore.instances.find(e => e.uuid === packUuid.value) ?? null;
 })
 
 onMounted(async () => {
+  // TODO: [port] fix me
   logger.debug("Mounted instance page, waiting for websockets")
-  await waitForWebsockets("instancePage", websockets.socket)
+  // await waitForWebsockets("instancePage", websockets.socket)
 
   logger.debug("Websockets ready, loading instance")
+  console.log(router.currentRoute.value)
   if (instance.value == null) {
-    logger.error(`Instance not found ${packUuid}`)
+    logger.error(`Instance not found ${packUuid.value}`)
     await router.push(RouterNames.ROOT_LIBRARY);
     return;
   }
@@ -84,12 +83,9 @@ onMounted(async () => {
 
   // TODO: (M#01) Allow to work without this.
   if (instance.value.id !== -1) {
-    apiPack.value = await getModpack({
-      id: instance.value.id,
-      provider: typeIdToProvider(instance.value.packType)
-    });
+    apiPack.value = await modpackStore.getModpack(instance.value.id, typeIdToProvider(instance.value.packType));
 
-    if (!this.apiPack) {
+    if (!apiPack.value) {
       activeTab.value = ModpackPageTabs.MODS;
     }
   }
@@ -99,7 +95,7 @@ onMounted(async () => {
   // Throwaway error, don't block
   checkForBorkedVersion().catch(e => logger.error(e))
 
-  if (getActiveProfile.value) {
+  if (accountsStore.mcActiveProfile) {
     logger.debug("Active profile found, allowing offline")
     offlineAllowed.value = true;
   }
@@ -109,7 +105,7 @@ onMounted(async () => {
     offlineMessageOpen.value = true;
   }
 
-  offlineUserName.value = this.getActiveProfile.value?.username;  
+  offlineUserName.value = accountsStore.mcActiveProfile?.username ?? "MinecraftPlayer";  
 })
 
 /**
@@ -307,7 +303,7 @@ export enum ModpackPageTabs {
     </div>
     <p v-else>No modpack found...</p>
     
-    <modal
+    <Modal
       :open="offlineMessageOpen"
       :title="$route.query.presentOffline ? 'Unable to update your profile' : 'Play offline'"
       subTitle="Would you like to play in Offline Mode?"
@@ -329,7 +325,7 @@ export enum ModpackPageTabs {
           <ui-button icon="play" type="success" @click="playOffline">Play offline</ui-button>
         </div>
       </template>
-    </modal>
+    </Modal>
 
     <modal
       :open="borkedVersionNotification != null"

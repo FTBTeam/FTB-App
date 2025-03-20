@@ -8,11 +8,11 @@ const {
   type = 'primary',
   inverted = false,
 } = defineProps<{
-  progress: number;
-  infinite: boolean;
-  doProgressAnimation: boolean;
-  type: ProgressType;
-  inverted: boolean;
+  progress?: number;
+  infinite?: boolean;
+  doProgressAnimation?: boolean;
+  type?: ProgressType;
+  inverted?: boolean;
 }>()
 </script>
 

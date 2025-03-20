@@ -1,11 +1,10 @@
-import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
-
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {SearchResultPack} from '@/core/types/modpacks/packSearch';
-import store from '@/modules/store';
 import {packBlacklist} from '@/core/state/modpacks/modpacksState';
+import { ModPack, PackProviders, Versions } from '@/core/types/appTypes.ts';
+import { useAppStore } from '@/store/appStore.ts';
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all" | "hotfix";
@@ -161,7 +160,8 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
     return undefined;
   }
   
-  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (store.state.settings?.settings.instanceDefaults.updateChannel ?? "release");
+  const appStore = useAppStore();
+  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (appStore.backendSettings?.instanceDefaults.updateChannel ?? "release");
   const allowedTypes: VersionTypes[] = channel === "release" ? ["release"] : (channel === "beta" ? ["release", "beta"] : ["release", "beta", "alpha"]);
   
   const packVersions = apiPack.versions.sort((a, b) => b.id - a.id);

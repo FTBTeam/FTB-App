@@ -18,11 +18,11 @@ import {computeAspectRatio, megabyteSize, prettyByteFormat} from '@/utils';
 import ModloaderSelect from '@/components/groups/modpack/components/ModloaderSelect.vue';
 import {ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import {ModLoaderUpdateState} from '@/core/types/states/appState';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { FTBInput, Modal, UiToggle, Selection2, UiButton } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
+import { ModLoaderUpdateState } from '@/core/types/appTypes.ts';
 
 const emit = defineEmits<{
   (event: 'back'): void;

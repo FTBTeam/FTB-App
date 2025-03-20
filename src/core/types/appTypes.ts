@@ -125,3 +125,8 @@ export interface ModPackTag {
   id: number;
   name: string;
 }
+
+export type ModLoaderUpdateState = {
+  instanceId: string;
+  packetId: string;
+}

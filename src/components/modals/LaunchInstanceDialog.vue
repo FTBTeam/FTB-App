@@ -2,6 +2,12 @@
 import {InstanceRunningData, LaunchingStatus} from '@/core/state/misc/runningState';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import { Loader, UiButton, Modal } from '@/components/ui';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { computed } from 'vue';
+
+const runningInstancesStore = useRunningInstancesStore();
+const instancesStore = useInstanceStore();
 
 // TODO: [port] fixme
 // @Getter("instances", ns("v2/instances")) public instances!: (SugaredInstanceJson | InstanceJson)[];
@@ -9,50 +15,47 @@ import { Loader, UiButton, Modal } from '@/components/ui';
 // @Getter("preInitProgress", ns("v2/running")) public preInitMessages!: (uuid: string) => InstanceRunningData["preInitProgress"] | null | undefined;
 // @Action("clearLaunchingStatus", ns("v2/running")) public clearStatus!: () => void;
 
-function instances(): (SugaredInstanceJson | InstanceJson)[] {}
-function launchingStatus(): LaunchingStatus | null {}
-function preInitMessages(uuid: string): InstanceRunningData["preInitProgress"] | null | undefined {}
-function clearStatus() {}
+const instance = computed(() => {
+  if (!runningInstancesStore.launchingStatus) return null;
+  return instancesStore.instances.find(i => i.uuid === runningInstancesStore.launchingStatus?.uuid);
+})
 
 async function clearLaunchingStatus() {
   console.log("Cleaning launching status");
-  // TODO: [port] fixme
-  // await store.dispatch('v2/running/stopped', this.instance?.uuid);
-  clearStatus();
+  
+  if (!instance.value) return;
+  
+  runningInstancesStore.stopped(instance.value?.uuid)
+  runningInstancesStore.clearLaunchingStatus();
 }
 
 function title() {
   if (instance) {
-    return `Launching ${instance.name}`;
+    return `Launching ${instance.value?.name}`;
   }
 
   return "Launching Instance";
 }
 
 function subtitle() {
-  if (!launchingStatus) {
+  if (!runningInstancesStore.launchingStatus) {
     return "Launching...";
   }
 
-  if (launchingStatus.error) {
+  if (runningInstancesStore.launchingStatus.error) {
     return "Error launching instance";
   }
 
-  return launchingStatus.step;
+  return runningInstancesStore.launchingStatus.step;
 }
 
-function instance() {
-  if (!launchingStatus) return null;
-  return instances.find(i => i.uuid === launchingStatus?.uuid);
-}
-
-function latestPreInitProgress() {
+const latestPreInitProgress = computed<InstanceRunningData["preInitProgress"] | null>(() => {
   if (!instance) return null;
-  const preInit = preInitMessages(instance.uuid);
+  const preInit = runningInstancesStore.instances.find(e => e.uuid === instance.value?.uuid)?.preInitProgress
   if (!preInit) return null;
 
   return preInit;
-}
+})
 
 function numberToFixed(num: number) {
   return num.toFixed(2);
@@ -60,10 +63,10 @@ function numberToFixed(num: number) {
 </script>
 
 <template>
-  <Modal :permanent="!launchingStatus?.error" :open="launchingStatus !== null" :title="title" :sub-title="subtitle" @closed="() => clearLaunchingStatus()">
-    <template v-if="launchingStatus">
-      <div v-if="!launchingStatus.error">
-        <loader :title="launchingStatus?.starting ? 'Starting...' : 'Logging in...'" />
+  <Modal :permanent="!runningInstancesStore.launchingStatus?.error" :open="runningInstancesStore.launchingStatus !== null" :title="title" :sub-title="subtitle" @closed="() => clearLaunchingStatus()">
+    <template v-if="runningInstancesStore.launchingStatus">
+      <div v-if="!runningInstancesStore.launchingStatus.error">
+        <loader :title="runningInstancesStore.launchingStatus?.starting ? 'Starting...' : 'Logging in...'" />
         <div v-if="latestPreInitProgress" class="mt-6 pt-6 border-t border-white border-opacity-25">
           <p class="text-muted font-bold mb-4">Running pre-startup tasks...</p>
           
@@ -86,8 +89,8 @@ function numberToFixed(num: number) {
       <div v-else>
         <p class="bold text-lg text-red-500 font-bold mb-3">Instance failed to launch!</p>
         
-        <code class="whitespace-pre overflow-auto block bg-black p-2 rounded mb-6" style="max-height: 300px" v-if="launchingStatus.error">
-          {{launchingStatus.error}}
+        <code class="whitespace-pre overflow-auto block bg-black p-2 rounded mb-6" style="max-height: 300px" v-if="runningInstancesStore.launchingStatus.error">
+          {{runningInstancesStore.launchingStatus.error}}
         </code>
         
         <ui-button :full-width="true" @click="() => clearLaunchingStatus()">Close</ui-button>

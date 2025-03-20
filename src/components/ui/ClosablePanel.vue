@@ -28,8 +28,8 @@ import { computed, onMounted, onUnmounted } from 'vue';
 const { subtitle = '', scrollable = true } = defineProps<{
   open: boolean;
   title: string;
-  subtitle: string;
-  scrollable: boolean;
+  subtitle?: string;
+  scrollable?: boolean;
 }>()
 
 const emit = defineEmits<{

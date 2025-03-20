@@ -1,6 +1,7 @@
 import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
 import {RootState} from '@/types';
-import {ModLoaderUpdateState} from '@/core/types/states/appState';
+
+import { ModLoaderUpdateState } from '@/core/types/appTypes.ts';
 
 export type InstallState = typeof state;
 

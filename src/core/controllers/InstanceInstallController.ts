@@ -1,4 +1,3 @@
-import store from '@/modules/store';
 import {
   CancelInstallInstanceDataReply,
   InstallInstanceDataReply,
@@ -10,7 +9,6 @@ import {
 } from '@/core/types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {PackProviders, Versions} from '@/modules/modpacks/types';
 import {alertController} from '@/core/controllers/alertController';
 import platform from '@/utils/interface/electron-overwolf';
 import {createLogger} from '@/core/logger';
@@ -18,6 +16,8 @@ import { WebsocketController } from '@/core/controllers/websocketController.ts';
 import { Emitter } from 'mitt';
 import { EmitEvents } from '@/bootstrap.ts';
 import { useInstallStore } from '@/store/installStore.ts';
+import { PackProviders, Versions } from '@/core/types/appTypes.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
 
 export type InstallRequest = {
   uuid: string;
@@ -84,7 +84,7 @@ export class InstanceInstallController {
     private readonly websocket: WebsocketController,
     private readonly installStore = useInstallStore()
   ) {
-    this.emitter.on('ws.message', async (data: any) => {
+    this.emitter.on('ws/message', async (data: any) => {
       if (data.type === 'instanceOverrideModLoaderReply') {
         const typedData = data as InstanceOverrideModLoaderDataReply;
         this.handleOverrideState(typedData);
@@ -271,6 +271,7 @@ export class InstanceInstallController {
 
     let knownInstanceUuid = '';
     let continuePast = false;
+    const instanceStore = useInstanceStore();
 
     // Make the installation request!
     this.logger.debug('Attempting to install instance');
@@ -286,7 +287,7 @@ export class InstanceInstallController {
 
       if (installResponse.instanceData && !isUpdate) {
         // Don't add if it's an update otherwise we'll have two instances
-        store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+        instanceStore.addInstance(installResponse.instanceData)
       }
 
       knownInstanceUuid = installResponse.instanceData.uuid;
@@ -316,7 +317,7 @@ export class InstanceInstallController {
 
       const instanceInstaller = (data: InstallInstanceDataReply | OperationProgressUpdateData) => {
         const finish = (result: InstallResult) => {
-          this.emitter.off('ws.message', instanceInstaller as any);
+          this.emitter.off('ws/message', instanceInstaller as any);
           this.updateInstallStatus(null);
           resolve(result);
         };
@@ -381,26 +382,24 @@ export class InstanceInstallController {
         }
       };
 
-      this.emitter.on('ws.message', instanceInstaller as any);
+      this.emitter.on('ws/message', instanceInstaller as any);
     });
 
     this.logger.debug('Install result', installRequest);
     console.log(installRequest)
     if (installRequest.success && installRequest.instance) {
       // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
-      store.dispatch(`v2/instances/updateInstance`, installRequest.instance, {root: true});
+      instanceStore.updateInstance(installRequest.instance)
       alertController.success(`Successfully installed ${request.name}`);
     } else if (installRequest.success && !installRequest.instance) {
       alertController.success(`Successfully synced ${request.name}`);
-      store.dispatch('v2/instances/loadInstances', undefined, {
-        root: true
-      });
+      instanceStore.loadInstances();
     } else if (!installRequest.success && installRequest.cancel) {
       alertController.info(`Cancelled install for ${request.name}`);
     } else {
       alertController.error(`Failed to install ${request.name} due to an unknown error`);
       if (knownInstanceUuid && installRequest.shouldRemove) {
-        store.dispatch(`v2/instances/removeInstance`, knownInstanceUuid, {root: true});
+        instanceStore.removeInstance(knownInstanceUuid)
       }
     }
 
@@ -429,13 +428,14 @@ export class InstanceInstallController {
 
     if (status === 'error' || status === 'success') {
       const packetId = typedData.requestId;
+      const instanceStore = useInstanceStore();
 
       const updateFromPacketId = this.installStore.currentModloaderUpdate.find(e => e.packetId === packetId);
       if (!updateFromPacketId) {
         return;
       }
 
-      const instance = store.state['v2/instances'].instances.find(e => e.uuid === updateFromPacketId.instanceId);
+      const instance = instanceStore.instances.find(e => e.uuid === updateFromPacketId.instanceId);
 
       // remove the modloader update
       this.installStore.removeModloaderUpdate(packetId)

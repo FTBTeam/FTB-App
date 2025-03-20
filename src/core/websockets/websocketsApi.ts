@@ -1,5 +1,4 @@
 import {MessagePayload} from '@/core/websockets/websocketsEndpoints';
-import store from '@/modules/store';
 import {BaseData} from '@/core/types/javaApi';
 import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
 import { services } from '@/bootstrap.ts';

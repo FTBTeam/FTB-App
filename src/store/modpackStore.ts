@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ModPack, ModpackVersion, PackProviders } from '@/modules/modpacks/types.ts';
+import { ModPack, ModpackVersion, PackProviders } from '@/modules/modpacks/appTypes.ts';
 import { createLogger } from '@/core/logger.ts';
 import { modpackApi } from '@/core/pack-api/modpackApi.ts';
 

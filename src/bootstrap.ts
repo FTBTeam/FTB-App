@@ -1,11 +1,12 @@
 import mitt, {Emitter} from 'mitt';
 import { InstanceInstallController } from '@/core/controllers/InstanceInstallController.ts';
 import { WebsocketController } from '@/core/controllers/websocketController.ts';
+import { initStateProcessor } from '@/core/state/misc/runningStateProcessor.ts';
 
 export type EmitEvents = {
   "ws/connected": void,
   "ws/disconnected": void
-  "ws/message": string
+  "ws/message": any
 }
 
 let services: {
@@ -23,6 +24,8 @@ export function bootstrapLoad() {
     websocket: websocketController,
     instanceInstallController: new InstanceInstallController(emitter, websocketController)
   }
+
+  initStateProcessor();
 }
 
 export {

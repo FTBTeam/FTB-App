@@ -1,4 +1,4 @@
-import { ModPack, PackProviders } from '@/modules/modpacks/types.ts';
+import { ModPack, PackProviders } from '@/modules/modpacks/appTypes.ts';
 import { ref } from 'vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';

@@ -14,6 +14,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Modal } from '@/components/ui';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 
 const {
   instance,
@@ -24,17 +25,12 @@ const {
 }>()
 
 const router = useRouter();
-
-// @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
-// @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
+const runningInstancesStore = useRunningInstancesStore();
 
 const emit = defineEmits<{
   (event: 'playOffline'): void;
   (event: 'openSettings'): void;
 }>()
-
-const runningInstances = ref<InstanceRunningData[]>([]);
-const getProfiles = ref<AuthProfile[]>([]);
 
 const logger = createLogger("PackActions.vue")
 const instanceFolders = ref<string[]>([]);
@@ -56,14 +52,14 @@ async function openInstanceFolder(folder: string) {
 }
 
 function folderExists(path: string) {
-  if (path === '' || !instanceFolders.length) {
+  if (path === '' || !instanceFolders.value.length) {
     return false;
   }
 
-  return instanceFolders.findIndex((e) => e === path) !== -1;
+  return instanceFolders.value.findIndex((e) => e === path) !== -1;
 }
 
-const isRunning = computed(() => runningInstances.some(e => e.uuid === instance.uuid))
+const isRunning = computed(() => runningInstancesStore.instances.some(e => e.uuid === instance.uuid))
 
 function deleteInstance() {
   logger.debug("Asking user to confirm instance deletion", instance)

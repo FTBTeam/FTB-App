@@ -4,6 +4,7 @@ import {Queue} from '@/utils/std/queue';
 import {emitter} from '@/utils';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 
 type AlertWithUuid = Alert & { uuid: string }
 

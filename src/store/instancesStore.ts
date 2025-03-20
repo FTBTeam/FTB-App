@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { SugaredInstanceJson } from '@/core/types/javaApi';
+import { InstanceJson, SugaredInstanceJson } from '@/core/types/javaApi';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { sendMessage } from '@/core/websockets/websocketsApi.ts';
 
@@ -32,6 +32,31 @@ export const useInstanceStore = defineStore("instance", {
       } catch (error) {
         console.error("Failed to load instances", error);
       }
+    },
+    
+    addInstance(instance: SugaredInstanceJson | InstanceJson) {
+      this.instances.push(instance as SugaredInstanceJson);
+      this.instanceCategories = Array.from(new Set(this.instances.map(i => i.category)));
+    },
+    
+    updateInstance(instance: SugaredInstanceJson) {
+      const index = this.instances.findIndex(i => i.uuid === instance.uuid);
+      if (index === -1) {
+        return;
+      }
+      
+      this.instances[index] = instance;
+      this.instanceCategories = Array.from(new Set(this.instances.map(i => i.category)));
+    },
+    
+    removeInstance(uuid: string) {
+      const index = this.instances.findIndex(i => i.uuid === uuid);
+      if (index === -1) {
+        return;
+      }
+      
+      this.instances.splice(index, 1);
+      this.instanceCategories = Array.from(new Set(this.instances.map(i => i.category)));
     }
   }
 })

@@ -1,24 +1,20 @@
 <script lang="ts" setup>
 import platform from '@/utils/interface/electron-overwolf';
-import {SocketState} from '@/modules/websocket/types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {constants} from '@/core/constants';
 import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import {createLogger} from '@/core/logger';
-import {waitForWebsockets} from '@/utils';
-import { onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import {Modal, Message} from '@/components/ui';
+import { useAppStore } from '@/store/appStore.ts';
 
-// TODO: [port] Fix me
-//@State('websocket') public websockets!: SocketState;
-const websockets: SocketState = null;
-
+const appStore = useAppStore();
 const logger = createLogger("Changelog.vue")
 
 const changelogData = ref<ChangelogData | null>(null);
 
-onMounted(async () => {
-  await waitForWebsockets("changelog", this.websockets.socket);
+watch(() => appStore.ready, async (newValue) => {
+  if (!newValue) return;
 
   await checkForUpdate().catch((e) => {
     logger.error('Unable to find any changelog data, maybe the servers down?', e);

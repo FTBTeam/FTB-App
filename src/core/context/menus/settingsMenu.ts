@@ -1,10 +1,10 @@
 import {ContextMenu, MenuOptions} from '@/core/context/menus/contextMenu';
 import {faArrowRotateRight, faDatabase, faFileZipper, faFolder} from '@fortawesome/free-solid-svg-icons';
 import platform from '@/utils/interface/electron-overwolf';
-import store from '@/modules/store';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
+import { useAppStore } from '@/store/appStore.ts';
 
 export class SettingMenu extends ContextMenu<{ }> {
   name(): String {
@@ -24,7 +24,8 @@ export class SettingMenu extends ContextMenu<{ }> {
         title: "Open instance folder",
         icon: faFolder,
         async action() {
-          const settings = store.state.settings?.settings.instanceLocation;
+          const appStore = useAppStore();
+          const settings = appStore.backendSettings?.instanceLocation;
           if (settings) {
             await platform.get.io.openFinder(settings);
           }

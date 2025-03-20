@@ -6,13 +6,9 @@ import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
 import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from '@/core/context/contextMenus';
 import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
-import { ref } from 'vue';
 import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-
-// TODO: [port] Fix this
-// @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
-const openSignIn = ref(false);
+import { useAccountsStore } from '@/store/accountsStore.ts';
 
 const navigation = [
   {
@@ -75,7 +71,7 @@ function navItemRightClick(event: PointerEvent, item: typeof navigation[0]): voi
     </div>
 
     <div class="nav-items">
-      <SidebarProfile class="block" @signin="openSignIn()" />
+      <SidebarProfile class="block" />
     </div>
     
     <Popover text="Setup a server with BisectHosting" class="w-full">

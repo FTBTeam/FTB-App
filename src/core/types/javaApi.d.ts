@@ -423,7 +423,6 @@ export interface AppInitHandlerData extends BaseData {
 export interface AppInitHandlerReply extends AppInitHandlerData {
     success: boolean;
     errorMessage: string;
-    apiCredentials: UserApiCredentials;
 }
 
 export interface VideoCacheHandlerData extends BaseData {

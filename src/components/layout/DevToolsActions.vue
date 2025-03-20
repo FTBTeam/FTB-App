@@ -4,6 +4,7 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import Platform from '@/utils/interface/electron-overwolf';
 import { useAttachDomEvent } from '@/composables';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ref } from 'vue';
 
 // TODO: [port] fixme
 // @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
@@ -12,7 +13,7 @@ const toggleDebugDisableAdAside = () => {
 }
 
 useAttachDomEvent<MouseEvent>('click', (event) => {
-  if (event.target.closest('.dev-tools-actions')) return;
+  if ((event.target as any)?.closest('.dev-tools-actions')) return;
   open.value = false;
 })
 
@@ -28,7 +29,8 @@ function openDevTools() {
 }
 
 // TODO: [port] this should likely use import.meta.env
-const devModeEnabled = process.env.NODE_ENV === 'development';
+// console.log(import.meta.env.NODE_ENV)
+const devModeEnabled = true // = import.meta.env.NODE_ENV === 'development';
 </script>
 
 <template>

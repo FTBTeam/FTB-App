@@ -5,25 +5,20 @@ import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import {createLogger} from '@/core/logger';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Popover from '@/components/ui/Popover.vue';
-import {ref, computed} from 'vue';
+import {ref} from 'vue';
+import { useAccountsStore } from '@/store/accountsStore.ts';
+
+const accountsStore = useAccountsStore();
 
 const { disabled = false } = defineProps<{
   disabled?: boolean
 }>()
 
 // TODO: [port] fix me
-// @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
-// @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
-//
-// @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
 // @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
 const editMode = ref(false);
 const loading = ref(false);
 
-const getProfiles = ref<AuthProfile[]>([]);
-const getActiveProfile = ref<AuthProfile | null>(null);
-
-const openSignIn = async () => {}
 const loadProfiles = async () => {}
 
 // TODO: Likely redefined on every render
@@ -69,14 +64,19 @@ async function setActiveProfile(profile: AuthProfile) {
 
   loading.value = false;
 }
+
+function openSignIn() {
+  console.log("lmoa")
+  accountsStore.openSignIn(true);
+}
 </script>
 
 <template>
   <div class="profile-area" :class="{ disabled }">
-    <div class="profile" v-if="(getProfiles && getProfiles.length)">
+    <div class="profile" v-if="(accountsStore.mcProfiles && accountsStore.mcProfiles.length)">
       <div class="avatar">
         <img
-          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : null)"
+          :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -93,16 +93,16 @@ async function setActiveProfile(profile: AuthProfile) {
             </div>
             <FontAwesomeIcon
               class="cursor-pointer"
-              v-if="getProfiles.length"
+              v-if="accountsStore.mcProfiles.length"
               :icon="editMode ? 'times' : 'edit'"
               @click="editMode = !editMode"
             />
           </div>
-          <div class="accounts" v-if="getProfiles && getProfiles.length">
+          <div class="accounts" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
             <div
               class="account hoverable"
-              :class="{ loading, active: getActiveProfile.uuid === item.uuid }"
-              v-for="(item, key) in getProfiles"
+              :class="{ loading, active: accountsStore.mcActiveProfile?.uuid === item.uuid }"
+              v-for="(item, key) in accountsStore.mcProfiles"
               :key="key"
               @click="() => setActiveProfile(item)"
             >
@@ -112,7 +112,7 @@ async function setActiveProfile(profile: AuthProfile) {
               <div class="name selectable">
                 <div class="username-container" :title="`${item.username} - Click to set as active profile`">
                   <div class="username">{{ item.username }}</div>
-                  <span class="opacity-50" v-if="getActiveProfile.uuid === item.uuid">(active)</span>
+                  <span class="opacity-50" v-if="accountsStore.mcActiveProfile?.uuid === item.uuid">(active)</span>
                 </div>
                 <div
                   class="trash bg-red-500 hover:bg-red-600 transition-colors"
@@ -125,14 +125,14 @@ async function setActiveProfile(profile: AuthProfile) {
             </div>
           </div>
 
-          <div class="add-new" @click="openSignIn()">
+          <div class="add-new" @click="() => openSignIn()">
             <div class="add-button px-4 py-2"><font-awesome-icon icon="plus" /> Add account</div>
           </div>
         </section>
       </div>
     </div>
     <Popover text="Sign in to your Minecraft account" v-else>
-      <div class="profile-placeholder" @click="$emit('signin')">
+      <div class="profile-placeholder" @click="() => openSignIn()">
         <div class="fake-avatar">
           <font-awesome-icon icon="question" />
         </div>

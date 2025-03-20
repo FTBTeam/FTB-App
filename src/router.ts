@@ -9,7 +9,7 @@ export enum RouterNames {
   ROOT_BROWSE_PACKS = 'browseModpacks',
   ROOT_BLOG = 'blog',
   ROOT_FAVORITES = 'favorites',
-  ROOT_LOCAL_PACK = 'instancepage',
+  ROOT_LOCAL_PACK = 'instance',
   ROOT_PREVIEW_PACK = 'modpackpage',
   ROOT_RUNNING_INSTANCE = 'running-instance',
   SETTINGS_INSTANCE = 'instance-settings',
@@ -97,7 +97,7 @@ const router = createRouter({
           ],
         },
         {
-          path: '/instancepage',
+          path: '/instance/:uuid',
           name: RouterNames.ROOT_LOCAL_PACK,
           component: () => import(/* webpackChunkName: "instancepage" */ './views/InstancePage.vue'),
         },

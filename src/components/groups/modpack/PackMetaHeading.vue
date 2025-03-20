@@ -1,12 +1,11 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import {getColorForReleaseType} from '@/utils/colors';
-import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
-import store from '@/modules/store';
 import {resolveModloader, sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
 
 type PackInfo = {
   id: number;
@@ -35,10 +34,14 @@ const packInfo = computed(() => {
   return null;
 })
 
+const modloader = computed(() => {
+  return resolveModloader((instance || apiPack) ?? null).toLowerCase()
+})
+
 function getInstanceInfo(instance: SugaredInstanceJson | InstanceJson): PackInfo {
   return {
     id: instance.id,
-    modloader: this.modloader,
+    modloader: modloader,
     provider: typeIdToProvider(instance.packType ?? 0),
     isImport: instance.isImport ?? false,
     source: 'local'
@@ -48,16 +51,12 @@ function getInstanceInfo(instance: SugaredInstanceJson | InstanceJson): PackInfo
 function getApiPackInfo(apiPack: ModPack): PackInfo {
   return {
     id: apiPack.id,
-    modloader: this.modloader,
+    modloader: modloader,
     provider: sourceProviderToProvider(apiPack.provider),
     isImport: false,
     source: 'remote'
   }
 }
-
-const modloader = computed(() => {
-  return resolveModloader((instance || apiPack) ?? null).toLowerCase()
-})
 
 const isVanilla = computed(() => apiPack?.id === 81 && !modloader)
 

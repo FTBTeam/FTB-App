@@ -1,10 +1,10 @@
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
-// import {emitter} from '@/utils';
 import {ClientLaunchDataReply, LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/types/javaApi';
-import store from '@/modules/store';
 import {createLogger} from '@/core/logger';
-import {InstanceMessageData, RunningState} from '@/core/state/misc/runningState';
+import {InstanceMessageData} from '@/core/state/misc/runningState';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { services } from '@/bootstrap.ts';
 
 const logger = createLogger("runningStateProcessor.ts");
 
@@ -20,6 +20,8 @@ const lastMessageTypeByUuid = new Map<string, string>()
 export const lastMessageIndexByUuid = new Map<string, number>()
 
 async function onLaunchData(data: any) {
+  const runningInstancesStore = useRunningInstancesStore();
+  
   if (data.type === 'launchInstance.logs') {
     const typedData = data as Logs;
 
@@ -29,51 +31,40 @@ async function onLaunchData(data: any) {
     const messages = typedData.messages
       .map(e => formatMessage(instanceUuid, e))
       .filter(e => e !== undefined && e !== null) as InstanceMessageData[];
-    
-    await store.dispatch('v2/running/pushMessages', {uuid: instanceUuid, messages: messages});
+
+    runningInstancesStore.pushMessages(instanceUuid, messages)
   }
 
   if (data.type === 'launchInstance.status') {
     const typedData = data as Status;
     const instanceUuid = typedData.uuid;
     
-    await store.dispatch('v2/running/updateStatus', {
-      uuid: instanceUuid, 
-      step: {
-        desc: typedData.stepDesc,
-        totalSteps: typedData.totalSteps,
-        step: typedData.step,
-        progress: typedData.stepProgress,
-        progressHuman: typedData.stepProgressHuman,
-      }
-    });
+    runningInstancesStore.updateStatus(instanceUuid, {
+      desc: typedData.stepDesc,
+      totalSteps: typedData.totalSteps,
+      step: typedData.step,
+      progress: typedData.stepProgress,
+      progressHuman: typedData.stepProgressHuman,
+    })
   }
 
   if (data.type === 'clientLaunchData') {
     const typedData = data as ClientLaunchDataReply;
     const instance = typedData.instance;
     
-    const currentInstance = (store.state["v2/running"] as RunningState).instances.find((i) => i.uuid === instance);
+    const currentInstance = runningInstancesStore.instances.find(e => e.uuid == instance)
     if (!currentInstance) {
       return;
     }
     
     logger.info("Client launch data", typedData)
     if (typedData.messageType === 'message') {
-      await store.dispatch('v2/running/updateBars', {
-        uuid: instance,
-        bars: typedData.message === 'init' ? [] : undefined
-      });
+      runningInstancesStore.updateBars(instance, typedData.message === 'init' ? [] : undefined)
     } else if (typedData.messageType === 'progress') {
-      if (typedData.clientData.bars) {
-        await store.dispatch('v2/running/updateBars', {
-          uuid: instance,
-          bars: typedData.clientData.bars
-        });
-      }
+      runningInstancesStore.updateBars(instance, typedData.clientData.bars)
     } else if (typedData.messageType === 'clientDisconnect' || (typedData.messageType === 'message' && typedData.message === 'done')) {
       console.log("Disconnecting client", instance)
-      await store.dispatch('v2/running/finishedLoading', instance);
+      runningInstancesStore.finishedLoading(instance)
     }
   }
 
@@ -83,7 +74,7 @@ async function onLaunchData(data: any) {
   ) {
     if (data.type === "launchInstance.stopped") {
       const typeData = data as Stopped;
-      await store.dispatch('v2/running/stopped', typeData.instanceId);
+      runningInstancesStore.stopped(typeData.instanceId)
       return;
     }
     
@@ -95,14 +86,15 @@ async function onLaunchData(data: any) {
       )
 
       const uuid = (data as Stopped).instanceId ?? (data as LaunchInstanceDataReply).uuid;
-      await store.dispatch('v2/running/crashed', uuid);
-      await store.dispatch('v2/running/stopped', uuid);
+      runningInstancesStore.crashed(uuid)
+      runningInstancesStore.stopped(uuid)
     }
   }
 }
 
 function formatMessage(uuid: string, message: string): InstanceMessageData | undefined {
-  const instance = (store.state["v2/running"] as RunningState).instances.find((instance) => instance.uuid === uuid);
+  const runningInstancesStore = useRunningInstancesStore();
+  const instance = runningInstancesStore.instances.find((instance) => instance.uuid === uuid);
   if (!instance) {
     return;
   }
@@ -122,8 +114,9 @@ function formatMessage(uuid: string, message: string): InstanceMessageData | und
 }
 
 async function lazyLogChecker(uuid: string, messages: string[]) {
-  const stateData = (store.state["v2/running"] as RunningState).instances.find((instance) => instance.uuid === uuid);
-  if (stateData?.status.finishedLoading) {
+  const runningInstancesStore = useRunningInstancesStore();
+  const storeData = runningInstancesStore.instances.find(instance => instance.uuid === uuid);
+  if (storeData?.status.finishedLoading) {
     return;
   }
 
@@ -131,18 +124,17 @@ async function lazyLogChecker(uuid: string, messages: string[]) {
   for (const message of messages) {    
     if (message.includes("Created:") && message.includes("minecraft:textures/atlas")) {
       console.log("Created assets", uuid)
-      await store.dispatch('v2/running/finishedLoading', uuid);
+      runningInstancesStore.finishedLoading(uuid);
     }
 
     // This also tends to happen relatively late in the startup process so we can use it as a marker as well
     if (message.includes("Sound engine started")) {
       console.log("Sound engine started", uuid)
-      await store.dispatch('v2/running/finishedLoading', uuid);
+      runningInstancesStore.finishedLoading(uuid)
     }
   }
 }
 
 export function initStateProcessor() {
-  // TODO: [Port] fix me
-  // emitter.on('ws.message', onLaunchData);
+  services.emitter.on('ws/message', onLaunchData);
 }

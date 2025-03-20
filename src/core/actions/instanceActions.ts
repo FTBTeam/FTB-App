@@ -1,13 +1,15 @@
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
-import store from '@/modules/store';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {InstanceController} from '@/core/controllers/InstanceController';
-import {RunningState} from '@/core/state/misc/runningState';
+import { useInstallStore } from '@/store/installStore.ts';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
 
 export class InstanceActions {
   private static logger = createLogger("InstanceActions.ts");
@@ -20,7 +22,7 @@ export class InstanceActions {
     return true;
   }
   
-  static canStart(instance: SugaredInstanceJson) {
+  static canStart(_: SugaredInstanceJson) {
     return true;
   }
   
@@ -32,18 +34,21 @@ export class InstanceActions {
     
     if (result.success) {
       // Update the store
-      await store.dispatch(`v2/instances/updateInstance`, result.instance, {root: true});
+      const instancesStore = useInstanceStore();
+      instancesStore.updateInstance(result.instance)
     }
     
     return result.success;
   }
   
   static isUpdating(instance: SugaredInstanceJson) {
-    return store.state["v2/install"].currentInstall?.forInstanceUuid === instance.uuid;
+    const installStore = useInstallStore();
+    return installStore.currentInstall?.forInstanceUuid === instance.uuid;
   }
   
   static isRunning(instance: SugaredInstanceJson) {
-    return (store.state["v2/running"] as RunningState).instances.some(i => i.uuid === instance.uuid);
+    const runningInstancesStore = useRunningInstancesStore();
+    return runningInstancesStore.instances.some(i => i.uuid === instance.uuid);
   }
   
   static async openSettings(instance: SugaredInstanceJson) {
@@ -52,13 +57,12 @@ export class InstanceActions {
   
   static async clearInstanceCache(announce = true) {
     InstanceActions.logger.debug("Clearing instance cache")
-    await store.dispatch("v2/modpacks/clearModpacks", undefined, {
-      root: true
-    });
     
-    await store.dispatch("v2/instances/loadInstances", undefined, {
-      root: true
-    }); // Reload instances
+    const modpacksStore = useModpackStore();
+    const instancesStore = useInstanceStore();
+    
+    await modpacksStore.clearModpacks();
+    await instancesStore.loadInstances();
     
     if (announce) {
       alertController.success("Cache cleared");

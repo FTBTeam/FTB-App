@@ -12,7 +12,8 @@ import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMen
 import LoginModal from '@/components/groups/auth/LoginModal.vue';
 import LaunchInstanceDialog from '@/components/modals/LaunchInstanceDialog.vue';
 import { computed } from 'vue';
-import { Modal, ModalFooter } from '@/components/ui'
+import { Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { useAccountsStore } from '@/store/accountsStore.ts';
 
 // TODO: [port] fixme
 // @Action('hideModal') hideModal: any;
@@ -20,9 +21,9 @@ import { Modal, ModalFooter } from '@/components/ui'
 // @Action('closeSignIn', { namespace: 'core' }) closeSignIn: any;
 // @State('websocket') websocket?: SocketState;
 
+const accountStore = useAccountsStore();
+
 function hideModal() {}
-const getSignInOpened = false;
-function closeSignIn() {}
 
 const websocket: SocketState = null;
 
@@ -50,9 +51,9 @@ function modalFeedback(button: ModalButton) {
       :title="activeModal.title"
       style="z-index: 50000"
     >
-      <ModalButton>
+      <ModalBody>
         <div class="break-all overflow-auto" v-html="activeModal.message" />
-      </ModalButton>
+      </ModalBody>
       <ModalFooter>
         <div class="flex justify-end gap-4">
           <UiButton v-for="(button, index) in activeModal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type">
@@ -61,8 +62,8 @@ function modalFeedback(button: ModalButton) {
         </div>
       </ModalFooter>
     </Modal>
-        
-    <LoginModal :open="getSignInOpened" @closed="() => closeSignIn()" />
+    
+    <LoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)" />
 
     <!-- Only checks for an update once during startup -->
     <changelog />

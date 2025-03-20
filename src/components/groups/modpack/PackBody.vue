@@ -6,17 +6,16 @@ import ModpackSettings from '@/components/groups/instance/ModpackSettings.vue';
 import PackActions from '@/components/groups/modpack/PackActions.vue';
 import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
 import Platform from '@/utils/interface/electron-overwolf';
-import {Backup, SugaredInstanceJson} from '@/core/types/javaApi';
+import {SugaredInstanceJson} from '@/core/types/javaApi';
 import Loader from '@/components/ui/Loader.vue';
 import {parseMarkdown} from '@/utils';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
-import {InstallStatus} from '@/core/controllers/InstanceInstallController';
-import {ModLoaderUpdateState} from '@/core/types/states/appState';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {InstanceRunningData} from '@/core/state/misc/runningState';
 import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
 import { packBlacklist } from '@/core/state/modpacks/modpacksState';
 import { computed } from 'vue';
+import { useInstallStore } from '@/store/installStore.ts';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 
 const {
   instance = null,
@@ -32,14 +31,8 @@ const {
   allowOffline: boolean;
 }>()
 
-
-// TODO: [port] Fix me
-// @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
-// @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
-// @Getter("currentModloaderUpdate", ns("v2/install")) currentModloaderUpdate!: ModLoaderUpdateState[] | null;
-const runningInstances = ref<InstanceRunningData[]>([]);
-const currentInstall = ref<InstallStatus | null>(null);
-const currentModloaderUpdate = ref<ModLoaderUpdateState[] | null>(null);
+const installStore = useInstallStore();
+const runningInstancesStore = useRunningInstancesStore();
 
 const tabs = ModpackPageTabs;
 const tags = computed(() => {
@@ -65,17 +58,17 @@ function computeTime(second: number) {
 }
 
 const isInstalling = computed(() => {
-  if (!currentInstall) {
+  if (!installStore.currentInstall) {
     return false;
   }
 
-  return currentInstall?.forInstanceUuid === instance.uuid
+  return installStore.currentInstall?.forInstanceUuid === instance?.uuid
 })
 
 const isRunning = computed(() => {
   if (!isInstalled || !instance) return false;
 
-  return runningInstances.value.some(e => e.uuid === instance.uuid);
+  return runningInstancesStore.instances.some(e => e.uuid === instance.uuid);
 })
 
 const isVanilla = computed(() => {
@@ -86,7 +79,7 @@ const isVanilla = computed(() => {
 });
 
 const modloaderUpdating = computed(() => {
-  return currentModloaderUpdate?.some(e => e.instanceId === instance.uuid) ?? false;
+  return installStore.currentModloaderUpdate?.some(e => e.instanceId === instance?.uuid) ?? false;
 })
 
 const issueTracker = computed(() => {
@@ -101,6 +94,10 @@ const issueTracker = computed(() => {
   
 function bisectPromo() {
   const baseUrl = `https://bisecthosting.com/ftb?r=app-modpack-`;
+  if (!instance) {
+    return baseUrl + "help-me";
+  }
+  
   if (instance.id === -1) {
     return baseUrl + "private-or-imported";
   }
@@ -125,7 +122,7 @@ function bisectPromo() {
   <div class="tab-actions-body" v-if="instance || packInstance">
     <div class="body-heading" v-if="activeTab !== tabs.SETTINGS">
       <div class="action-heading">
-        <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && currentInstall) || modloaderUpdating}">
+        <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
             <ftb-button color="primary" class="py-3 px-8 ftb-play-button" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
               <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
@@ -143,7 +140,7 @@ function bisectPromo() {
 
           <div class="options">
             <PackUpdateButton
-              v-if="isInstalled"
+              v-if="isInstalled && instance"
               :instance="packInstance"
               :localInstance="instance"
               @update="$emit('update')"
@@ -160,21 +157,21 @@ function bisectPromo() {
         </div>
 
         <transition name="transition-fade" duration="250">
-          <div class="install-progress" v-if="isInstalling && currentInstall">
+          <div class="install-progress" v-if="isInstalling && installStore.currentInstall">
             <div class="status flex gap-4 mb-4">
-              <div class="percent">{{currentInstall.progress}}<span>%</span></div>
-              <b>{{currentInstall.stage ?? "??"}}</b>
-              <transition name="transition-fade" duration="250">
-                <div class="files text-sm" v-if="currentInstall.speed">
-                  <font-awesome-icon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
+              <div class="percent">{{installStore.currentInstall.progress}}<span>%</span></div>
+              <b>{{installStore.currentInstall.stage ?? "??"}}</b>
+              <transition name="transition-fade" :duration="250">
+                <div class="files text-sm" v-if="installStore.currentInstall.speed">
+                  <font-awesome-icon icon="bolt" class="mr-2" />({{(installStore.currentInstall.speed / 12500000).toFixed(2)}}) Mbps
                 </div>
               </transition>
             </div>
-            <progress-bar class="progress" :progress="parseFloat(currentInstall?.progress ?? '0') / 100" />
+            <progress-bar class="progress" :progress="parseFloat(installStore.currentInstall?.progress ?? '0') / 100" />
           </div>
         </transition>
         
-        <transition name="transition-fade" duration="250">
+        <transition name="transition-fade" :duration="250">
           <div class="install-progress" v-if="modloaderUpdating">
             <div class="status flex gap-4 items-center">
               <font-awesome-icon spin icon="circle-notch" class="mr-2" />

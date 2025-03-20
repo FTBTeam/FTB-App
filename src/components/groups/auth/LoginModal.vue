@@ -6,7 +6,7 @@ import {DeviceAuthResponse} from '@/components/groups/auth/LoginTypes';
 import {JavaFetch} from '@/core/javaFetch';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
-import { onUnmounted, watch } from 'vue';
+import { onUnmounted, watch, ref } from 'vue';
 
 // TODO: [port] fixme
 // @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;

@@ -298,17 +298,17 @@ export default class AppSettings extends Vue {
             // It's broken
             this.instanceMoveModalShow = false;
             alertController.error(typedData.error);
-            emitter.off("ws.message", onMoveProgress);
+            emitter.off("ws/message", onMoveProgress);
             res(false);
           } else {
             this.instanceMoveModalComplete = true;
-            emitter.off("ws.message", onMoveProgress);
+            emitter.off("ws/message", onMoveProgress);
             res(true);
           }
         }
       }
 
-      emitter.on("ws.message", onMoveProgress);
+      emitter.on("ws/message", onMoveProgress);
     })
 
     if (migrationResult) {

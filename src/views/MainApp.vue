@@ -1,18 +1,15 @@
 <script lang="ts" setup>
 import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
-import {SocketState} from '@/modules/websocket/types';
 import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/layout/GlobalComponents.vue';
-import {ns} from '@/core/state/appState';
-import {AsyncFunction} from '@/core/types/commonTypes';
 import {createLogger} from '@/core/logger';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {constants} from '@/core/constants';
-import {adsEnabled, emitter} from '@/utils';
+import {adsEnabled} from '@/utils';
 import Loader from '@/components/ui/Loader.vue';
 import Onboarding from '@/components/modals/Onboarding.vue';
 import { UiButton, Modal } from '@/components/ui';
@@ -21,6 +18,7 @@ import { onMounted, ref, computed } from 'vue';
 import { services } from '@/bootstrap.ts';
 import { useRouter } from 'vue-router';
 import { useInstanceStore } from '@/store/instancesStore.ts';
+import { DevToolsActions } from '@/components/layout';
 
 // TODO: [port] Fix me
 // @State('settings') settings!: SettingsState;
@@ -34,8 +32,8 @@ const router = useRouter()
 
 const settings: SettingsState = {} as any;
 const loadSettings: any = null;
-const loadProfiles: AsyncFunction = null;
-const loadInstances: AsyncFunction = null;
+const loadProfiles = null;
+const loadInstances = null;
 const debugDisabledAdAside: boolean = false;
 
 const logger = createLogger("MainApp.vue");
@@ -419,8 +417,9 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
       </main>
     </div>
     
-    <GlobalComponents v-if="appReadyToGo" />
     <onboarding v-if="showOnboarding" @accepted="showOnboarding = false" />
+    <dev-tools-actions />
+    <GlobalComponents v-if="appConnected" />
     
     <modal :open="appInstallFailed || appStartupFailed" title="Something's gone wrong!" sub-title="Looks like there might be a problem...">
       <p class="mb-1">{{appInstallError}}</p>
