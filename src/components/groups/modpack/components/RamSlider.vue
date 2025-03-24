@@ -1,12 +1,10 @@
 <script lang="ts" setup>
-import {SettingsState} from '@/modules/settings/types';
 import {megabyteSize, prettyByteFormat} from '@/utils';
 import { computed, onMounted, ref } from 'vue';
 import { FTBInput, UiToggle } from '@/components/ui';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
 
-// TODO: [port] fixme
-// @State('settings') public settingsState!: SettingsState;
-const settingsState: SettingsState = null;
+const appSettingsStore = useAppSettings();
 
 const {
   min = 0,
@@ -15,6 +13,7 @@ const {
 }>()
 
 const value = defineModel<number>()
+
 const emit = defineEmits<{
   (e: 'change', value: number): void;
 }>()
@@ -24,8 +23,8 @@ const allowDangerous = ref(false)
 const hidden = ref(true)
 
 onMounted(() => {
-  const maxRam = Math.min(1024 * 10, settingsState.hardware.totalMemory);
-  if (value.value > maxRam) {
+  const maxRam = Math.min(1024 * 10, (appSettingsStore.systemHardware?.totalMemory ?? 0));
+  if (value?.value > maxRam) {
     allowDangerous.value = true;
   }
 })
@@ -41,8 +40,8 @@ function updateValue(newValue: number) {
     return;
   }
   
-  if (newValue > settingsState.hardware.totalMemory) {
-    value.value = settingsState.hardware.totalMemory;
+  if (newValue > (appSettingsStore.systemHardware?.totalMemory ?? 0)) {
+    value.value = appSettingsStore.systemHardware?.totalMemory;
     return;
   }
   
@@ -50,17 +49,17 @@ function updateValue(newValue: number) {
 }
 
 function resetMax() {
-  if (value.value > maxRam) {
-    value.value = maxRam;
+  if (value?.value > maxRam.value) {
+    value.value = maxRam.value;
   }
 }
 
 const maxRam = computed(() => {
-  return allowDangerous.value ? settingsState.hardware.totalMemory : Math.min(1024 * 10, settingsState.hardware.totalMemory);
+  return allowDangerous.value ? (appSettingsStore.systemHardware?.totalMemory ?? 0) : Math.min(1024 * 10, appSettingsStore.systemHardware?.totalMemory ?? 0);
 })
 
 const valueAsByteReadable = computed(() => {
-  return prettyByteFormat(Math.floor(parseInt(value.value.toString()) * megabyteSize));
+  return prettyByteFormat(Math.floor(parseInt((value.value ?? 0).toString()) * megabyteSize));
 });
 
 const valueAsPercentage = computed(() => {
@@ -68,7 +67,7 @@ const valueAsPercentage = computed(() => {
   if (isNaN(v)) return 0;
   if (v == 0) return 6;
 
-  return Math.min(Math.max(10, v / maxRam.value * 100), 86);
+  return Math.min(Math.max(10, v / (maxRam.value ?? 0) * 100), 86);
 });
 </script>
 
@@ -107,11 +106,11 @@ const valueAsPercentage = computed(() => {
      </div>
      
      <div class="value-input gap-2 flex items-center">
-       <FTBInput @blur="change(parseInt(value.toString()))" type="number" style="width: 120px" :value="value.toString()" @input="v => updateValue(parseInt(v))" @change="change(parseInt(value.toString()));" />
+       <FTBInput @blur="emit('change', parseInt(value.toString()))" type="number" style="width: 120px" :value="(value ?? 0).toString()" @input="v => updateValue(parseInt(v))" @change="emit('change', parseInt((value ?? 0).toString()));" />
      </div>
    </div>
    
-   <UiToggle v-if="maxRam <= settingsState.hardware.totalMemory" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
+   <UiToggle v-if="maxRam <= appSettingsStore.systemHardware?.totalMemory" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
  </div>
 </template>
 

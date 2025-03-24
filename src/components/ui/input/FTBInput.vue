@@ -27,13 +27,13 @@ const emit = defineEmits<{
   (e: 'click'): void;
 }>()
 
-const value = defineModel<string>();
+const value = defineModel<string | number>();
 
 const copied = ref(false);
 const timoutRef = ref<number | undefined>(undefined);
 
 function copy() {
-  platform.get.cb.copy(value);
+  platform.get.cb.copy("" + value);
   copied.value = true;
   timoutRef.value = setTimeout(() => (copied.value = false), 700) as any;
 }

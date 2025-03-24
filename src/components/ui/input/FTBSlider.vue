@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
 const {
   label = '',
   maxValue = 100,
@@ -12,23 +14,23 @@ const {
   small = '',
   dark = false,
   visualMax,
-  step,
-  value = 0,
+  step = 1,
 } = defineProps<{
-  label: string;
-  maxValue: number;
-  minValue: number;
-  currentValue: number;
-  unit: string;
-  description: string;
-  cssClass: string;
-  rawStyle: string;
-  small: string;
-  dark: boolean;
-  visualMax: number;
-  step: number;
-  value: number;
+  label?: string;
+  maxValue?: number;
+  minValue?: number;
+  currentValue?: number;
+  unit?: string;
+  description?: string;
+  cssClass?: string;
+  rawStyle?: string;
+  small?: string;
+  dark?: boolean;
+  visualMax?: number;
+  step?: number;
 }>()
+
+const value = defineModel<number>()
 
 function formatValue(value: number, dontShowThreads = false) {
   if (unit === 's') {
@@ -50,7 +52,7 @@ function formatValue(value: number, dontShowThreads = false) {
     );
   }
 
-  return value + (unit === 'threads' && dontShowThreads ? '' : ' ' + this.unit);
+  return value + (unit === 'threads' && dontShowThreads ? '' : ' ' + unit);
 }
 </script>
 
@@ -65,7 +67,7 @@ function formatValue(value: number, dontShowThreads = false) {
           data-balloon-length="medium"
           :aria-label="description"
           data-balloon-pos="up"
-          ><font-awesome-icon icon="info-circle"
+          ><FontAwesomeIcon icon="info-circle"
         /></span>
       </label>
       <div class="slider-area">
@@ -76,13 +78,9 @@ function formatValue(value: number, dontShowThreads = false) {
         </div>
         <input
           type="range"
-          :value="value"
           :min="minValue"
           :max="maxValue"
-          @change="$emit('input', $event.target.value)"
-          @input="$emit('input', $event.target.value)"
-          @blur="$emit('blur')"
-          @mouseup="$emit('blur')"
+          v-model="value"
           class="slider"
           :class="cssClass"
           :step="step === undefined ? 1 : step"
@@ -163,16 +161,8 @@ function formatValue(value: number, dontShowThreads = false) {
     appearance: none;
     width: 20px; /* Set a specific slider handle width */
     height: 20px; /* Slider handle height */
-    background: var(--color-primary-button);
     cursor: pointer; /* Cursor on hover */
-  }
-
-  .slider::-moz-range-thumb {
-    width: 20px; /* Set a specific slider handle width */
-    height: 20px; /* Slider handle height */
-    @apply bg-primary;
-    cursor: pointer; /* Cursor on hover */
-    border-radius: 50%;
+    background: oklch(0.627 0.194 149.214);
   }
 
   .memory {

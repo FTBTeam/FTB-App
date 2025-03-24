@@ -1,3 +1,86 @@
+<script lang="ts" setup>
+import {alertController} from '@/core/controllers/alertController';
+import {ReleaseChannelOptions} from '@/utils/commonOptions';
+import {computeAspectRatio, prettyByteFormat} from '@/utils';
+import UiToggle from '@/components/ui/UiToggle.vue';
+import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
+import {SettingsData} from '@/core/types/javaApi';
+import { Loader, UiButton, Selection2, FTBInput } from '@/components/ui';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { computed, onMounted, ref } from 'vue';
+
+const appSettingsStore = useAppSettings();
+
+const localSettings = ref({} as SettingsData);
+const lastSettings = ref("")
+
+const loadedSettings = ref(false);
+
+const resolutionId = ref("");
+const usePresets = ref(false);
+
+onMounted(async () => {
+  await appSettingsStore.loadSettings();
+  loadedSettings.value = true;
+
+  // Make a copy of the settings so we don't mutate the vuex state
+  localSettings.value = { ...appSettingsStore.rootSettings } as SettingsData;
+  lastSettings.value = JSON.stringify(localSettings.value)
+
+  resolutionId.value = resolutionList.value
+    .find((e) => e.value === `${localSettings.value.instanceDefaults.width ?? ''}|${localSettings.value.instanceDefaults.height ?? ''}`)
+    ?.value ?? "";
+
+  if (resolutionId.value !== "") {
+    usePresets.value = true;
+  }
+})
+
+function saveMutated() {
+  // Compare the last settings to the current settings, if they are the same, don't save
+  if (lastSettings.value === JSON.stringify(localSettings.value)) {
+    return;
+  }
+
+  alertController.success("Settings saved")
+  appSettingsStore.saveSettings(localSettings.value);
+  lastSettings.value = JSON.stringify(localSettings.value)
+}
+
+function selectResolution(id: string) {
+  const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
+  if (!selected) {
+    return;
+  }
+
+  localSettings.value.instanceDefaults.width = selected.width;
+  localSettings.value.instanceDefaults.height = selected.height;
+  saveMutated();
+}
+
+const resolutionList = computed(() => {
+  const resList = [];
+  resList.push({
+    value: "",
+    label: "Custom",
+    meta: "Custom"
+  });
+
+  for (const res of (appSettingsStore.systemHardware?.supportedResolutions ?? [])) {
+    resList.push({
+      value: `${res.width}|${res.height}`,
+      label: `${res.width} x ${res.height}`,
+      // Calculate the aspect ratio in the form of a 16:9 for example
+      meta: computeAspectRatio(res.width, res.height)
+    })
+  }
+
+  return resList;
+})
+
+const channelOptions = computed(() => ReleaseChannelOptions());
+</script>
+
 <template>
   <div class="instance-settings" v-if="localSettings.spec">
     <div class="mb-6">
@@ -52,14 +135,14 @@
               <b>Width</b>
               <small class="text-muted block mt-2">The Minecraft windows screen width</small>
             </div>
-            <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />
+            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />
           </div>
           <div class="flex items-center">
             <div class="block flex-1 mr-2">
               <b>Height</b>
               <small class="text-muted block mt-2">The Minecraft windows screen height</small>
             </div>
-            <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />
+            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />
           </div>
         </template>
       </div>
@@ -109,7 +192,7 @@
       </div>
     </div>
 
-    <ftb-input
+    <FTBInput
       label="Program arguments"
       :value="localSettings.instanceDefaults.programArgs"
       v-model="localSettings.instanceDefaults.programArgs"
@@ -120,7 +203,7 @@
       These arguments are appended to the end of the java command, these are typically arguments Minecraft uses.
     </small>
     
-    <ftb-input
+    <FTBInput
       label="Shell arguments"
       :value="localSettings.instanceDefaults.shellArgs"
       v-model="localSettings.instanceDefaults.shellArgs"
@@ -140,109 +223,6 @@
   </div>
   <Loader v-else />
 </template>
-
-<script lang="ts">
-
-import {SettingsState} from '@/modules/settings/types';
-import {alertController} from '@/core/controllers/alertController';
-import Selection2 from '@/components/ui/Selection2.vue';
-import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import {computeAspectRatio, prettyByteFormat} from '@/utils';
-import UiToggle from '@/components/ui/UiToggle.vue';
-import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import {SettingsData} from '@/core/types/javaApi';
-import UiButton from '@/components/ui/UiButton.vue';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
-import Loader from '@/components/ui/Loader.vue';
-
-@Component({
-  methods: {prettyByteFormat},
-  components: {
-    Loader,
-    ProgressBar,
-    UiButton,
-    RamSlider,
-    UiToggle,
-    Selection2
-  },
-})
-export default class InstanceSettings extends Vue {
-  @State('settings') public settingsState!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  
-  localSettings: SettingsData = {} as SettingsData;
-  lastSettings: string = ""
-
-  loadedSettings = false;
-
-  resolutionId = "";
-  usePresets = false;
-  
-  async created() {
-    await this.loadSettings();
-    this.loadedSettings = true;
-
-    // Make a copy of the settings so we don't mutate the vuex state
-    this.localSettings = { ...this.settingsState.settings };
-    this.lastSettings = JSON.stringify(this.localSettings)
-
-    this.resolutionId = this.resolutionList
-      .find((e) => e.value === `${this.localSettings.instanceDefaults.width ?? ''}|${this.localSettings.instanceDefaults.height ?? ''}`)
-      ?.value ?? "";
-    
-    if (this.resolutionId !== "") {
-      this.usePresets = true;
-    }
-  }
-  
-  saveMutated() {
-    // Compare the last settings to the current settings, if they are the same, don't save
-    if (this.lastSettings === JSON.stringify(this.localSettings)) {
-      return;
-    }
-    
-    alertController.success("Settings saved")
-    this.saveSettings(this.localSettings);
-    this.lastSettings = JSON.stringify(this.localSettings)
-  }
-  
-  selectResolution(id: string) {
-    const selected = this.settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
-    if (!selected) {
-      return;
-    }
-    
-    this.localSettings.instanceDefaults.width = selected.width;
-    this.localSettings.instanceDefaults.height = selected.height;
-    this.saveMutated();
-  }
-
-  get resolutionList() {
-    const resList = [];
-    resList.push({
-      value: "",
-      label: "Custom",
-      meta: "Custom"
-    });
-
-    for (const res of this.settingsState.hardware.supportedResolutions) {
-      resList.push({
-        value: `${res.width}|${res.height}`,
-        label: `${res.width} x ${res.height}`,
-        // Calculate the aspect ratio in the form of a 16:9 for example
-        meta: computeAspectRatio(res.width, res.height)
-      })
-    }
-
-    return resList;
-  }
-  
-  get channelOptions() {
-    return ReleaseChannelOptions();
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .flex-1 {

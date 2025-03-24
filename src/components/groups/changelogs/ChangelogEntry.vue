@@ -4,8 +4,8 @@ import {ChangelogData} from '@/components/groups/changelogs/Changelog.vue';
 import {JavaFetch} from '@/core/javaFetch';
 import {constants} from '@/core/constants';
 import NestedChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
-import { onMounted, watch } from 'vue';
-import { toTitleCase } from '../../../utils/helpers/stringHelpers.ts';
+import { onMounted, watch, ref, computed } from 'vue';
+import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 
 const {
   changelog,
@@ -13,8 +13,8 @@ const {
   showVersion = false,
 } = defineProps<{
   changelog: ChangelogData;
-  useExtended: boolean;
-  showVersion: boolean;
+  useExtended?: boolean;
+  showVersion?: boolean;
 }>()
 
 const extendedLogs = ref<ChangelogData[]>([]);
@@ -36,12 +36,12 @@ watch(() => useExtended, (newValue, oldValue) => {
 })
 
 async function loadExtended() {
-  if (!this.changelog) return;
-  if (!this.useExtended) return;
+  if (!changelog) return;
+  if (!useExtended) return;
 
-  if (!this.changelog.extends) return;
+  if (!changelog.extends) return;
 
-  await this.loadExtendedChangelogs();
+  await loadExtendedChangelogs();
 }
 
 const headings = {
@@ -80,7 +80,7 @@ function markdown(changeList: string[]) {
 async function loadExtendedChangelogs() {
   loadingExtendedLogs.value = true;
 
-  for (const version of changelog.value.extends ?? []) {
+  for (const version of changelog.extends ?? []) {
     const request = await JavaFetch.create(`${constants.metaApi}/changelogs/app/${version}`).execute();
     const changelog = request?.json<ChangelogData>();
 
@@ -91,7 +91,7 @@ async function loadExtendedChangelogs() {
 }
 
 const headingImage = computed(() => {
-  const image = this.changelog?.media?.find((e) => e.heading && e.type === 'image');
+  const image = changelog?.media?.find((e) => e.heading && e.type === 'image');
   return image ? image.source : null;
 })
 </script>

@@ -44,6 +44,12 @@ export const useAppSettings = defineStore("appSettings", {
       }
     },
     
+    async loadIfNeeded() {
+      if (!this.rootSettings) {
+        await this.loadSettings();
+      }
+    },
+    
     async saveSettings(settings: SettingsData) {
       const saveResult = await sendMessage("saveSettings", { settings })
       if (saveResult.settings) {
