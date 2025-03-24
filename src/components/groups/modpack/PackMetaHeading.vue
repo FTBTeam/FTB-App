@@ -3,9 +3,9 @@ import { computed } from 'vue';
 import {getColorForReleaseType} from '@/utils/colors';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {resolveModloader, sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {packBlacklist} from '@/core/state/modpacks/modpacksState';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
+import { packBlacklist } from '@/store/modpackStore.ts';
 
 type PackInfo = {
   id: number;
@@ -41,7 +41,7 @@ const modloader = computed(() => {
 function getInstanceInfo(instance: SugaredInstanceJson | InstanceJson): PackInfo {
   return {
     id: instance.id,
-    modloader: modloader,
+    modloader: modloader.value,
     provider: typeIdToProvider(instance.packType ?? 0),
     isImport: instance.isImport ?? false,
     source: 'local'
@@ -51,7 +51,7 @@ function getInstanceInfo(instance: SugaredInstanceJson | InstanceJson): PackInfo
 function getApiPackInfo(apiPack: ModPack): PackInfo {
   return {
     id: apiPack.id,
-    modloader: modloader,
+    modloader: modloader.value,
     provider: sourceProviderToProvider(apiPack.provider),
     isImport: false,
     source: 'remote'

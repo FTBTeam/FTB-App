@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
-import { PackProviders } from '@/modules/modpacks/types';
 import { useRouter } from 'vue-router';
 import { debounce, safeNavigate } from '@/utils';
 import { SearchResultPack } from '@/core/types/modpacks/packSearch';
@@ -9,10 +8,11 @@ import Loader from '@/components/ui/Loader.vue';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import { modpackApi } from '@/core/pack-api/modpackApi';
 import UiPagination from '@/components/ui/UiPagination.vue';
-import { packBlacklist } from '@/core/state/modpacks/modpacksState';
 import { createLogger } from '@/core/logger';
 import { RouterNames } from '@/router';
 import { onMounted, ref, watch } from 'vue';
+import { packBlacklist } from '@/store/modpackStore.ts';
+import { PackProviders } from '@/core/types/appTypes.ts';
 
 const logger = createLogger("BrowseModpacks.vue")
 const router = useRouter();

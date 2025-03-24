@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import {AuthProfile} from '@/modules/core/core.types';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import {createLogger} from '@/core/logger';
@@ -7,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Popover from '@/components/ui/Popover.vue';
 import {ref} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
+import { AuthProfile } from '@/core/types/appTypes.ts';
 
 const accountsStore = useAccountsStore();
 
@@ -14,12 +14,8 @@ const { disabled = false } = defineProps<{
   disabled?: boolean
 }>()
 
-// TODO: [port] fix me
-// @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
 const editMode = ref(false);
 const loading = ref(false);
-
-const loadProfiles = async () => {}
 
 // TODO: Likely redefined on every render
 const logger = createLogger("SidebarProfile.vue")
@@ -34,7 +30,7 @@ async function removeProfile(profile: AuthProfile) {
     })
 
     if (data.success) {
-      await loadProfiles();
+      await accountsStore.loadProfiles()
     } else {
       logger.debug('Failed to remove profile');
     }
@@ -54,7 +50,7 @@ async function setActiveProfile(profile: AuthProfile) {
     })
 
     if (data.success) {
-      await loadProfiles();
+      await accountsStore.loadProfiles()
     } else {
       logger.debug('Failed to set active profile');
     }
@@ -66,7 +62,6 @@ async function setActiveProfile(profile: AuthProfile) {
 }
 
 function openSignIn() {
-  console.log("lmoa")
   accountsStore.openSignIn(true);
 }
 </script>

@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import Selection2, {SelectionOption} from '@/components/ui/Selection2.vue';
-import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import {ModPack} from '@/modules/modpacks/types';
 import UiButton from '@/components/ui/UiButton.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 import {SettingsState} from '@/modules/settings/types';
@@ -20,13 +18,14 @@ import { computed, onMounted, watch, ref } from 'vue';
 import { ModalBody, Modal, FTBInput, ModalFooter } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { services } from '@/bootstrap.ts';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { ModPack } from '@/core/types/appTypes.ts';
 
 // TODO: [port] fixme
 // @State('settings') public settingsState!: SettingsState;
-// @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
 // @State('settings') private settings!: SettingsState;
-const settingsState = ref<SettingsState>({} as SettingsState)
-const getModpack = async () => {}
+
+const modpackStore = useModpackStore();
 const settings = ref<SettingsState>({} as SettingsState)
 
 const { open } = defineProps<{ open: boolean }>()
@@ -91,20 +90,17 @@ watch(() => open, async (newValue) => {
 })
 
 async function loadInitialState() {
-  // vanillaPack.value = await toggleBeforeAndAfter(() => getModpack({
-  //   id: 81,
-  //   provider: "modpacksch"
-  // }) ?? null, state => loadingVanilla.value = state);
-  //
-  // if (!vanillaPack) {
-  //   alertController.error("Failed to load Minecraft versions")
-  //   fatalError.value = true;
-  //   return;
-  // }
-  //
-  // const vanillaLatest = vanillaVersions[0];
-  // userPackName.value = `Minecraft ${vanillaLatest.label}`;
-  // userVanillaVersion.value = vanillaLatest.value;
+  vanillaPack.value = await toggleBeforeAndAfter(() => modpackStore.getModpack(81, "modpacksch") ?? null, state => loadingVanilla.value = state);
+
+  if (!vanillaPack) {
+    alertController.error("Failed to load Minecraft versions")
+    fatalError.value = true;
+    return;
+  }
+
+  const vanillaLatest = vanillaVersions.value[0];
+  userPackName.value = `Minecraft ${vanillaLatest.label}`;
+  userVanillaVersion.value = vanillaLatest.value;
 }
 
 watch(userVanillaVersion, (newValue) => {
@@ -112,14 +108,14 @@ watch(userVanillaVersion, (newValue) => {
     return;
   }
 
-  const version = vanillaPack.versions.find(e => e.id === newValue);
+  const version = vanillaPack.value?.versions.find(e => e.id === newValue);
   if (!version) {
     return;
   }
 
-  const lastVersion = vanillaPack.versions.find(e => e.id === newValue);
+  const lastVersion = vanillaPack.value?.versions.find(e => e.id === newValue);
   // Update pack name
-  if (userPackName === `Minecraft ${lastVersion?.name}`) {
+  if (userPackName.value === `Minecraft ${lastVersion?.name}`) {
     userPackName.value = `Minecraft ${version.name}`;
   }
 })
@@ -129,9 +125,9 @@ function canProceed() {
     return false;
   }
 
-  switch (step) {
+  switch (step.value) {
     case 0:
-      return !stringIsEmpty(userPackName) && userVanillaVersion !== -1;
+      return !stringIsEmpty(userPackName.value) && userVanillaVersion.value !== -1;
     case 1:
     case 2:
       return true;
@@ -150,7 +146,7 @@ function canProceed() {
 function createInstance() {
   const sharedData = {
     name: userPackName.value,
-    logo: userSelectedArtwork?.path ?? "",
+    logo: userSelectedArtwork.value?.path ?? "",
     versionName: "",
     private: false,
     category: userCategory.value,
@@ -163,21 +159,21 @@ function createInstance() {
   }
 
   // Magic
-  if (!userModLoader) {
+  if (!userModLoader.value) {
     services.instanceInstallController.requestInstall({
       id: 81, // Vanilla pack id
-      version: userVanillaVersion ?? 0,
+      version: userVanillaVersion.value ?? 0,
       ...sharedData
     })
   } else {
     // We're working with a modloader
     const request = {
-      id: userModLoader[1].packId,
-      version: userModLoader[1].id,
+      id: userModLoader.value[1].packId,
+      version: userModLoader.value[1].id,
       ...sharedData,
     } as any;
 
-    if (userModLoader[0] === "fabric") {
+    if (userModLoader.value[0] === "fabric") {
       request["mcVersion"] = selectedMcVersion;
     }
 
@@ -189,33 +185,36 @@ function createInstance() {
 }
 
 const selectedMcVersion = computed(() => {
-  if (!vanillaPack || userVanillaVersion === -1) {
+  if (!vanillaPack || userVanillaVersion.value === -1) {
     return "unknown";
   }
 
-  return vanillaPack.versions.find(e => e.id === userVanillaVersion)?.name ?? "unknown";
+  return vanillaPack.value?.versions.find(e => e.id === userVanillaVersion.value)?.name ?? "unknown";
 })
 
-const vanillaVersions = computed(() => {
+const vanillaVersions = computed<SelectionOption[]>(() => {
   if (!vanillaPack) {
     return []
   }
   
-  return vanillaPack.versions
+  return vanillaPack.value?.versions
     .filter(e => e.type.toLowerCase() === "release" || ((e.type.toLowerCase() === "alpha" || e.type.toLowerCase() === "beta") && showVanillaSnapshots))
     .sort((a, b) => b.id - a.id)
     .map(e => ({
       label: e.name,
       value: e.id,
       meta: e.type
-    })) as SelectionOption[]
+    })) as SelectionOption[] ?? []
 })
 
-const screenResolutions = computed(() => {
-  return settings.hardware.supportedResolutions.map(e => ({
-    label: `${e.width}x${e.height}`,
-    value: `${e.width}x${e.height}`
-  }))
+const screenResolutions = computed(() => () => {
+  // TODO: [port] fixme
+  // return settings.hardware.supportedResolutions.map(e => ({
+  //   label: `${e.width}x${e.height}`,
+  //   value: `${e.width}x${e.height}`
+  // }))
+  
+  return []
 })
 </script>
 

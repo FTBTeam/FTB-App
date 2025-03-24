@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { lastMessageIndexByUuid } from '@/core/state/misc/runningStateProcessor.ts';
+import { lastMessageIndexByUuid } from '@/core/controllers/runningStateProcessor.ts';
 
 /**
  * Shorthand vars to save on memory footprint

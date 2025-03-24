@@ -22,10 +22,6 @@ import '@/assets/liboverrides.scss';
 
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 
-// import {localiseNumber, toTitleCase} from '@/utils/helpers/stringHelpers';
-// import {standardDate, standardDateTime, timeFromNow} from '@/utils/helpers/dateHelpers';
-// import VueMixins from '@/core/vueMixins.vue';
-
 import VueVirtualScroller from 'vue-virtual-scroller';
 import {createLogger} from '@/core/logger';
 
@@ -42,14 +38,6 @@ const pinia = createPinia();
 
 platform.setup();
 (window as any).platform = platform;
-
-  // Vue.mixin(VueMixins);
-  //
-  // Vue.filter('dayjs', standardDate);
-  // Vue.filter('dayjsFull', standardDateTime);
-  // Vue.filter('dayjsFromNow', timeFromNow);
-  // Vue.filter('formatNumber', localiseNumber);
-  // Vue.filter('title', toTitleCase);
 
 logger.info("Creating vue instance");
 

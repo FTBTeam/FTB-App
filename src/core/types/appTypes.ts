@@ -1,3 +1,9 @@
+export interface AuthProfile {
+  username: string;
+  uuid: string;
+  avatar?: string;
+}
+
 export interface ModPack {
   kind: 'modpack';
   synopsis: string;

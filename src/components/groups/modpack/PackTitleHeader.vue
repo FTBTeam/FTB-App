@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import {ModPack} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import { ModPack } from '@/core/types/appTypes.ts';
 
 const {
   packInstance,
@@ -11,8 +11,8 @@ const {
 } = defineProps<{
   packInstance: ModPack | null;
   packName: string;
-  isInstalled: boolean;
-  instance: SugaredInstanceJson | InstanceJson;
+  isInstalled?: boolean;
+  instance?: SugaredInstanceJson | InstanceJson;
 }>()
 
 const provider = typeIdToProvider(packInstance?.id ?? 0);

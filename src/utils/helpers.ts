@@ -1,17 +1,15 @@
-// import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it';
 import Router, {RouterNames} from '@/router';
+import platform from '@/utils/interface/electron-overwolf.ts';
 
-// TODO: [port] fixme
-const markdownParser = {} as any;
-
-// const markdownParser = new MarkdownIt();
-// markdownParser.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-//   tokens[idx].attrSet('onclick', 'event.preventDefault(); window.platform.get.utils.openUrl(this.href);');
-//   return self.renderToken(tokens, idx, options);
-// }
+const markdownParser = new MarkdownIt();
+markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {
+  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.platform.get.utils.openUrl(this.href);');
+  return self.renderToken(tokens, idx, options);
+}
 
 export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
-  if (Router.currentRoute.name === name) {
+  if (Router.currentRoute.value.name === name) {
     return;
   }
   
@@ -20,6 +18,19 @@ export async function safeNavigate(name: RouterNames, params?: any, query?: any)
   } catch (e) {
     // Ignore
   }
+}
+
+// TODO: fix typings
+export async function safeLinkOpen(event: any) {
+  event.preventDefault();
+  let urlTarget = event.target;
+
+  if (event.target?.tagName !== 'A') {
+    // Get the closest parent link
+    urlTarget = event.target?.closest('a');
+  }
+
+  platform.get.utils.openUrl(urlTarget.href);
 }
 
 // Sizes of various byte amounts

@@ -8,7 +8,6 @@ export enum RouterNames {
   ROOT_LIBRARY = 'modpacks',
   ROOT_BROWSE_PACKS = 'browseModpacks',
   ROOT_BLOG = 'blog',
-  ROOT_FAVORITES = 'favorites',
   ROOT_LOCAL_PACK = 'instance',
   ROOT_PREVIEW_PACK = 'modpackpage',
   ROOT_RUNNING_INSTANCE = 'running-instance',
@@ -124,7 +123,7 @@ const router = createRouter({
     //   redirect: '/',
     // }
   ],
-  scrollBehavior: (to, from, savedPosition) => {
+  scrollBehavior: (to, _, savedPosition) => {
     if (savedPosition) {
       return {
         ...savedPosition,

@@ -23,6 +23,7 @@ import { useRouter } from 'vue-router';
 import { FTBInput, Modal, UiToggle, Selection2, UiButton } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
 import { ModLoaderUpdateState } from '@/core/types/appTypes.ts';
+import { toTitleCase } from '../../../utils/helpers/stringHelpers.ts';
 
 const emit = defineEmits<{
   (event: 'back'): void;
@@ -507,7 +508,7 @@ const resolutionList = computed(() => {
       userSelectedLoader = null
     }">
       <div class="current mb-6 grid grid-cols-2 gap-y-2 wysiwyg items-center">
-        <b>Current Modloader</b> <code>{{(hasModloader ? resolveModloader(instance) : 'Vanilla') | title}}</code>
+        <b>Current Modloader</b> <code>{{ toTitleCase(hasModloader ? resolveModloader(instance) : 'Vanilla') }}</code>
         <b>Current version</b> <code>{{resolveModLoaderVersion(instance)}}</code>
       </div>
       

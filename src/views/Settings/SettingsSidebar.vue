@@ -1,7 +1,17 @@
+<script lang="ts" setup>
+import platform from '@/utils/interface/electron-overwolf';
+import {RouterNames} from '@/router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
+
+const configData = platform.get.config;
+</script>
+
+
 <template>
   <div class="settings-sidebar">
     <router-link to="/" class="back">
-      <font-awesome-icon icon="arrow-left" class="mr-2" />
+      <FontAwesomeIcon icon="arrow-left" class="mr-2" />
       Back to app
     </router-link>
 
@@ -9,27 +19,27 @@
       <nav>
         <div class="heading">Settings</div>
         <router-link :to="{ name: RouterNames.SETTINGS_APP }" class="item">
-          <font-awesome-icon icon="rocket" />
+          <FontAwesomeIcon icon="rocket" />
           <span>App</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_INSTANCE }" class="item">
-          <font-awesome-icon icon="gamepad" />
+          <FontAwesomeIcon icon="gamepad" />
           <span>Instance Defaults</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
-          <font-awesome-icon icon="cloud-download-alt" />
+          <FontAwesomeIcon icon="cloud-download-alt" />
           <span>Downloads</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_PROXY }" class="item">
-          <font-awesome-icon icon="shuffle" />
+          <FontAwesomeIcon icon="shuffle" />
           <span>Proxy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_PRIVACY }" class="item">
-          <font-awesome-icon icon="user-secret" />
+          <FontAwesomeIcon icon="user-secret" />
           <span>Privacy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_ADVANCED }" class="item">
-          <font-awesome-icon icon="cogs" />
+          <FontAwesomeIcon icon="cogs" />
           <span>Advanced</span>
         </router-link>
       </nav>
@@ -37,7 +47,7 @@
         <div class="heading">Info</div>
 
         <router-link :to="{ name: RouterNames.SETTINGS_CHANGELOGS }" class="item app-info-item">
-          <font-awesome-icon icon="info" />
+          <FontAwesomeIcon icon="info" />
           <span>Changelogs</span>
         </router-link>
       </nav>
@@ -51,7 +61,7 @@
           <div class="version">
             <div class="field">
               <div class="head">Released</div>
-              <div class="value copyable" :title="configData.dateCompiled | dayjsFull">{{ configData.dateCompiled | dayjsFromNow }}</div>
+              <div class="value copyable" :title="standardDateTime(configData.dateCompiled)">{{ timeFromNow(configData.dateCompiled) }}</div>
             </div>
             <div class="field">
               <div class="head">Branch</div>
@@ -67,23 +77,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import platform from '@/utils/interface/electron-overwolf';
-import {RouterNames} from '@/router';
-
-// @Component
-export default class SettingsSidebar {// extends Vue {
-  platform = platform;
-  RouterNames = RouterNames;
-  
-  changesHistoryOpen: boolean = false;
-  
-  get configData() {
-    return platform.get.config;
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .settings-sidebar {

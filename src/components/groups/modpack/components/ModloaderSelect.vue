@@ -5,6 +5,7 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import { UiToggle, Message, Loader, Selection2 } from '@/components/ui';
 import { computed, onMounted, ref, watch } from 'vue';
+import { toTitleCase } from '../../../../utils/helpers/stringHelpers.ts';
 
 const {
   mcVersion,
@@ -13,9 +14,9 @@ const {
   provideLatestOption = true
 } = defineProps<{
   mcVersion: string;
-  showNone: boolean;
-  showOptional: boolean;
-  provideLatestOption: boolean;
+  showNone?: boolean;
+  showOptional?: boolean;
+  provideLatestOption?: boolean;
 }>()
 
 const availableLoaders = ref<Record<string, ModLoaderWithPackId[]>>({});
@@ -126,7 +127,7 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
 
      <div class="loaders mb-6">
        <div class="loader" :class="{active: userLoaderProvider === index}" v-for="(_, index) in availableLoaders" :key="index" @click="userLoaderProvider = index">
-         {{ index | title }}
+         {{ toTitleCase(index) }}
        </div>
        <div class="loader" v-if="showNone" :class="{active: userLoaderProvider === ''}" @click="userLoaderProvider = ''">None</div>
      </div>

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 // import FindMods from '@/components/groups/instance/FindMods.vue';
 // import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
-// import {ModPack} from '@/modules/modpacks/types';
 // import {sendMessage} from '@/core/websockets/websocketsApi';
 // import {
 //   BaseData,
@@ -312,7 +311,7 @@ export type ApiMod = {
 <!--              </div>-->
 <!--            </div>-->
 <!--            <div>-->
-<!--              <a @click="openExternal" class="curse-btn cursor-pointer" aria-label="Open on CurseForge" data-balloon-pos="down-right" v-if="item.curseSlug" :href="`https://curseforge.com/minecraft/mc-mods/${item.curseSlug}`">-->
+<!--              <a @click="safeLinkOpen" class="curse-btn cursor-pointer" aria-label="Open on CurseForge" data-balloon-pos="down-right" v-if="item.curseSlug" :href="`https://curseforge.com/minecraft/mc-mods/${item.curseSlug}`">-->
 <!--                <img src="../../../assets/curse-logo.svg" width="24" alt="Open on CurseForge" />-->
 <!--              </a>-->
 <!--            </div>-->
@@ -329,7 +328,7 @@ export type ApiMod = {
 <!--            <div class="main flex-1 transition-opacity duration-200" :class="{'opacity-50': !item.enabled}">-->
 <!--              <div class="mb-1 block select-text font-bold">-->
 <!--                <div v-if="item.curse?.name" class="flex gap-2 items-center">-->
-<!--                  <a @click="openExternal" class="curse-btn cursor-pointer hover:underline" aria-label="Open on CurseForge" data-balloon-pos="down-left" :href="`https://curseforge.com/minecraft/mc-mods/${item.curse.slug}`">-->
+<!--                  <a @click="safeLinkOpen" class="curse-btn cursor-pointer hover:underline" aria-label="Open on CurseForge" data-balloon-pos="down-left" :href="`https://curseforge.com/minecraft/mc-mods/${item.curse.slug}`">-->
 <!--                    {{item.curse.name}}-->
 <!--                  </a>-->
 <!--                </div>-->

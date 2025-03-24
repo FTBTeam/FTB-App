@@ -17,8 +17,6 @@ import { useAccountsStore } from '@/store/accountsStore.ts';
 
 // TODO: [port] fixme
 // @Action('hideModal') hideModal: any;
-// @Getter('getSignInOpened', { namespace: 'core' }) getSignInOpened: any;
-// @Action('closeSignIn', { namespace: 'core' }) closeSignIn: any;
 // @State('websocket') websocket?: SocketState;
 
 const accountStore = useAccountsStore();

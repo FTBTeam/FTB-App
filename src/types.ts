@@ -1,21 +1,3 @@
-import {SettingsState} from './modules/settings/types';
-import {AppState} from '@/core/state/appState';
-
-export namespace App {
-  export interface MsgBox {
-    title: string;
-    content: string;
-    type: string;
-    okAction: () => void;
-    cancelAction: () => void;
-  }
-}
-
-export type RootState = {
-  settings: SettingsState | null;
-} & AppState
-
-
 export interface ModalBox {
   id: string;
   title: string;
@@ -27,32 +9,6 @@ export interface Button {
   name: string;
   message: string;
   colour: string;
-}
-
-export interface Messages {
-  [index: string]: Message[];
-}
-
-export interface UnreadMessages {
-  [index: string]: number;
-}
-
-export interface Message {
-  content: string;
-  author: string;
-  date: number;
-  read: boolean;
-}
-
-declare module 'vue/types/vue' {
-  interface Vue {
-    $connect: (url?: string, options?: any) => {};
-    $socket: any;
-    $disconnect: () => {};
-  }
-  interface VueConstructor {
-    _installedPlugins: any;
-  }
 }
 
 /**

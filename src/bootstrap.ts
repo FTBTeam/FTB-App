@@ -1,7 +1,7 @@
 import mitt, {Emitter} from 'mitt';
 import { InstanceInstallController } from '@/core/controllers/InstanceInstallController.ts';
 import { WebsocketController } from '@/core/controllers/websocketController.ts';
-import { initStateProcessor } from '@/core/state/misc/runningStateProcessor.ts';
+import { initStateProcessor } from '@/core/controllers/runningStateProcessor.ts';
 
 export type EmitEvents = {
   "ws/connected": void,

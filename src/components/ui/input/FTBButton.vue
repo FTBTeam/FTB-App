@@ -7,11 +7,11 @@ const {
   noPadding = false,
   isRounded = true,
 } = defineProps<{
-  disabled: boolean;
-  color: string;
-  cssClass: string;
-  noPadding: boolean;
-  isRounded: boolean;
+  disabled?: boolean;
+  color?: string;
+  cssClass?: string;
+  noPadding?: boolean;
+  isRounded?: boolean;
 }>();
 
 const emit = defineEmits<{

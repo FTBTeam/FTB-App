@@ -7,9 +7,10 @@ import {JavaFetch} from '@/core/javaFetch';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import { onUnmounted, watch, ref } from 'vue';
+import { safeLinkOpen } from '@/utils';
+import { useAccountsStore } from '@/store/accountsStore.ts';
 
-// TODO: [port] fixme
-// @Action('loadProfiles', { namespace: 'core' }) public loadProfiles!: () => Promise<void>;
+const accountStore = useAccountsStore();
 
 const {
   open
@@ -246,7 +247,7 @@ async function continueTokenFlow(data: any) {
       return;
     }
 
-    await loadProfiles();
+    await accountStore.loadProfiles();
   } catch (e) {
     alertController.error("Failed to login, please try again.");
     logInError.value = "Failed to login, please try again.";
@@ -324,7 +325,7 @@ function expiresInAsPercentage() {
         </div>
         <div class="flex-1">
           <p class="select-text block text-white text-opacity-75">If the button above does not work, try
-            <a :href="verificationUri" @click="openExternal" class="text-white text-opacity-100 hover:underline cursor-pointer">{{ verificationUri }}</a> on any device.<br/><br/>Or try the QR code on your phone for quicker setup.</p>
+            <a :href="verificationUri" @click="safeLinkOpen" class="text-white text-opacity-100 hover:underline cursor-pointer">{{ verificationUri }}</a> on any device.<br/><br/>Or try the QR code on your phone for quicker setup.</p>
         </div>
       </div>
 

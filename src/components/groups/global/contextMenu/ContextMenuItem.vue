@@ -2,6 +2,7 @@
 import {MenuItemOrSeparator, MenuOptions} from '@/core/context/menus';
 import NestedContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ref } from 'vue';
 
 const {
   context,
@@ -51,25 +52,30 @@ async function onItemClicked(option: MenuItemOrSeparator<any>) {
 
 <template>
   <div class="items">
-    <div class="item"
+    <template
          v-for="(option, key) in options"
          :key="key"
-         :class="{[option.color ?? 'normal']: true, 'has-children': option.children, 'separator': 'separator' in option, 'working': working[option.title]}"
-         @click.stop="onItemClicked(option)"
-         v-if="!option.predicate || option.predicate(context())">
-      <div class="main">
-        <FontAwesomeIcon :fixed-width="true" icon="spinner" spin v-if="working[option.title]" />
-        <FontAwesomeIcon :fixed-width="true" v-else-if="option.icon" :icon="option.icon"/>
-        {{ option.title }}
+    >
+      <div v-if="'separator' in option" class="item separator" />
+      <div class="item"
+           v-else
+           :class="{[option.color ?? 'normal']: true, 'has-children': option.children, 'working': working[option.title]}"
+           @click.stop="onItemClicked(option)"
+           v-if="!option.predicate || option.predicate(context())">
+        <div class="main">
+          <FontAwesomeIcon :fixed-width="true" icon="spinner" spin v-if="working[option.title]" />
+          <FontAwesomeIcon :fixed-width="true" v-else-if="option.icon" :icon="option.icon"/>
+          {{ option.title }}
+        </div>
+  
+        <FontAwesomeIcon class="chevron" v-if="option.children" icon="chevron-right"/>
+  
+        <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
+          <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix"
+                                    :open-to-left="openToLeft" @clicked="onItemClicked"/>
+        </div>
       </div>
-
-      <FontAwesomeIcon class="chevron" v-if="option.children" icon="chevron-right"/>
-
-      <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
-        <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix"
-                                  :open-to-left="openToLeft" @clicked="onItemClicked"/>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 

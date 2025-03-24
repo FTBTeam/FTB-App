@@ -6,6 +6,7 @@ import {RouterNames} from '@/router';
 import {createLogger} from '@/core/logger';
 import { useAttachDomEvent } from '@/composables';
 import { onMounted, ref, computed } from 'vue';
+import { toTitleCase } from '../../utils/helpers/stringHelpers.ts';
 
 const logger = createLogger('TitleBar.vue');
 
@@ -73,7 +74,7 @@ const isUnix = computed(() => !platform.isOverwolf());
       <span>FTB App</span>
     </div>
     <div class="branch-container">
-      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ branch | title }}</div>
+      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ toTitleCase(branch) }}</div>
     </div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">

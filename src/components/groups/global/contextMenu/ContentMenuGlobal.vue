@@ -45,11 +45,11 @@ function handleMenuOpen(givenContext: ContextMenuEventContext) {
   context.value = givenContext.context;
 
   nextTick(() => {
-    placeMenu(context.pointer);
+    placeMenu(givenContext.pointer);
   })
 }
 
-function onOptionClick(option: MenuItem<any>) {
+function onOptionClick(_: MenuItem<any>) {
   handleMenuClose()
 }
 
@@ -69,7 +69,7 @@ function placeMenu(pointer: PointerEvent) {
 
   const elmBound = (elmRef.value as any)?.getBoundingClientRect();
   const elmHeight = elmBound?.height ?? 0;
-  const elmWidth = calculateWidth.value();
+  const elmWidth = calculateWidth();
   const realElmWidth = elmBound?.width ?? 0;
 
   menuX.value = pointer.clientX + 5;
@@ -116,7 +116,7 @@ function calculateWidth() {
         top: menuY + 'px',
         left: menuX + 'px'
       }">
-        <context-menu-item v-if="menu" :context="context" :open-to-left="openToLeft" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
+        <ContextMenuItem v-if="menu" :context="context" :open-to-left="openToLeft" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
       </div>
     </transition>
   </div>

@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import {ModPack, Versions} from '@/modules/modpacks/types';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {packUpdateAvailable} from '@/utils/helpers/packHelpers';
 import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
 import { FTBButton } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ref, watch } from 'vue';
+import { ModPack, Versions } from '@/core/types/appTypes.ts';
 
 const {
   instance,
@@ -32,6 +32,7 @@ watch(() => localInstance, () => updateAvailablePacks)
 
 <template>
   <div class="update" v-if="instance && localInstance && latestVersion">
+<!--    TODO: Replace with ui-button -->
     <FTBButton color="warning" class="update-btn px-4 py-1" @click="showConfirm = true">
       <span class="hidden sm:inline-block">Update available</span>
       <FontAwesomeIcon icon="cloud-download-alt" class="sm:ml-2" />

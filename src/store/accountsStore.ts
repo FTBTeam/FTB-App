@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { AuthProfile } from '@/modules/core/core.types.ts';
+import { sendMessage } from '@/core/websockets/websocketsApi.ts';
+import { AuthProfile } from '@/core/types/appTypes.ts';
 
 type AccountsState = {
   mcProfiles: AuthProfile[];
@@ -20,6 +21,22 @@ export const useAccountsStore = defineStore("accounts", {
   actions: {
     openSignIn(open = true) {
       this.signInOpen = open;
+    },
+    async loadProfiles() {
+      const result = await sendMessage("profiles.get", {});
+
+      const profiles = result.profiles.map(
+        (a) => ({username: a.minecraftName, uuid: a.uuid} as AuthProfile),
+      );
+
+      if (result.activeProfile) {
+        this.mcActiveProfile = {
+          username: result.activeProfile.minecraftName,
+          uuid: result.activeProfile.uuid,
+        };
+      }
+      
+      this.mcProfiles = profiles
     }
   }
 })

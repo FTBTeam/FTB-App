@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {InstanceJson} from '@/core/types/javaApi';
-import {ModPack} from '@/modules/modpacks/types';
 import { UiButton } from '@/components/ui';
 import { useAttachDomEvent } from '@/composables';
 import { computed, ref } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ModPack } from '@/core/types/appTypes.ts';
 
 const allowedFileTypes = [
   "image/png",
@@ -17,10 +17,10 @@ const value = defineModel<File | null>()
 
 const {
   allowRemove = true,
-  pack
+  pack = null
 } = defineProps<{
   allowRemove?: boolean;
-  pack: InstanceJson | ModPack;
+  pack?: InstanceJson | ModPack;
 }>()
 
 const isDraggingOver = ref(false)
@@ -32,7 +32,9 @@ useAttachDomEvent<DragEvent>('drop', drop)
 function onDragStart(event: DragEvent) {
   event.preventDefault();
   event.stopPropagation();
-  event.dataTransfer.dropEffect = 'copy';
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy';
+  }
   isDraggingOver.value = true;
 }
 
@@ -49,8 +51,19 @@ function drop(event: DragEvent) {
   event.stopPropagation();
   
   isDraggingOver.value = false;
-  const files = event.dataTransfer.files;
-  processFileList(files);
+  const files = event.dataTransfer?.files;
+  if (!files?.length) {
+    return;
+  }
+  
+  const fileList: File[] = [];
+  for (const item of files) {
+    if (item instanceof File) {
+      fileList.push(item);
+    }
+  }
+  
+  processFileList(fileList);
 }
 
 function processFileList(files: File[]) {
@@ -89,7 +102,7 @@ const hovering = isDraggingOver.value;
     <img width="120" :src="getArtwork" alt="" />
     <div class="actions flex flex-col items-start">
       <label>
-        <input hidden="hidden" type="file" :accept="allowedFileTypes.join(',')"  @change="processFileList($event.target.files)" />
+        <input hidden="hidden" type="file" :accept="allowedFileTypes.join(',')"  @change="processFileList(($event.target as any)?.files)" />
         <UiButton type="info" icon="upload">
           Upload image
         </UiButton>

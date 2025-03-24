@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import {ModPack, Versions} from '@/modules/modpacks/types';
 import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
 import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
 import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
@@ -12,9 +11,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import { UiButton, ClosablePanel, Modal } from '@/components/ui';
-import {waitForWebsockets} from '@/utils';
 import {createLogger} from '@/core/logger';
-import {SocketState} from '@/modules/websocket/types';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import { useRouter } from 'vue-router';
 import { computed, onMounted, ref } from 'vue';
@@ -22,6 +19,7 @@ import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
+import { ModPack } from '@/core/types/appTypes.ts';
 
 const router = useRouter()
 
@@ -36,7 +34,6 @@ const tabs = ModpackPageTabs;
 const activeTab = ref<ModpackPageTabs>(ModpackPageTabs.OVERVIEW);
 
 const apiPack = ref<ModPack | null>(null);
-const hidingPackDetails = ref(false);
 
 const showVersions = ref(false);
 const offlineMessageOpen = ref(false);

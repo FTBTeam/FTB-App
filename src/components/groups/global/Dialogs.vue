@@ -1,21 +1,18 @@
 <script lang="ts" setup>
-import {Dialog} from '@/core/state/misc/dialogsState';
-import {ns} from '@/core/state/appState';
 import {adsEnabled, parseMarkdown} from '@/utils';
 import UiButton from '@/components/ui/UiButton.vue';
 import {SettingsState} from '@/modules/settings/types';
 import { useAttachDomEvent } from '@/composables';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { useDialogsStore } from '@/store/dialogStore.ts';
+
+const dialogStore = useDialogsStore();
 
 // TODO: [port] Fix me
-// @Getter("dialogs", ns("v2/dialogs")) dialogs!: Dialog[];
-// @Action("closeDialog", ns("v2/dialogs")) closeDialog!: (dialog: Dialog) => void;
 // @State('settings') public settings!: SettingsState;
 // @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-const dialogs: Dialog[] = [];
 const settings: SettingsState = {};
 const debugDisabledAdAside: boolean = false;
-function closeDialog(dialog: Dialog) {}
 
 useAttachDomEvent<KeyboardEvent>('keydown', (event) => {
   if (event.key !== 'Escape') {
@@ -26,8 +23,8 @@ useAttachDomEvent<KeyboardEvent>('keydown', (event) => {
 })
 
 function closeTopDialog() {
-  if (dialogs.length) {
-    closeDialog(dialogs[dialogs.length - 1]);
+  if (dialogStore.dialogs.length) {
+    dialogStore.closeDialog(dialogStore.dialogs[dialogStore.dialogs.length - 1]);
   }
 }
 
@@ -35,19 +32,19 @@ const advertsEnabled = adsEnabled(settings, debugDisabledAdAside);
 </script>
 
 <template>
-  <transition name="transition-fade" duration="250">
-    <div class="dialog-container" :class="{ads: advertsEnabled}" v-if="dialogs.length" @click.self="closeTopDialog">
-      <transition-group class="stacker" tag="div" name="transition-fade" duration="250">
+  <transition name="transition-fade" :duration="250">
+    <div class="dialog-container" :class="{ads: advertsEnabled}" v-if="dialogStore.dialogs.length" @click.self="closeTopDialog">
+      <transition-group class="stacker" tag="div" name="transition-fade" :duration="250">
         <div
-          v-for="(dialog, index) in dialogs"
+          v-for="(dialog, index) in dialogStore.dialogs"
           :key="`dialog-${index}`"
           class="dialog"
-          :class="{[dialog.type]: true, 'active': index === dialogs.length - 1}"
+          :class="{[dialog.type as string]: true, 'active': index === dialogStore.dialogs.length - 1}"
         >
           <div class="modal-contents" :style="`
-            z-index: ${(501 + (dialogs.length - 1) - ((dialogs.length - 1) - index))};
-            transform: scale(${1 - (((dialogs.length - 1) - index) * .1)}) translateX(-${15 * ((dialogs.length - 1) - index)}px);
-            opacity: ${1 - ((dialogs.length - 1) - index) * 0.2};
+            z-index: ${(501 + (dialogStore.dialogs.length - 1) - ((dialogStore.dialogs.length - 1) - index))};
+            transform: scale(${1 - (((dialogStore.dialogs.length - 1) - index) * .1)}) translateX(-${15 * ((dialogStore.dialogs.length - 1) - index)}px);
+            opacity: ${1 - ((dialogStore.dialogs.length - 1) - index) * 0.2};
           `">
             <div class="modal-header" :class="{'no-subtitle': !dialog.subTitle}">
               <div class="modal-heading">

@@ -1,5 +1,4 @@
-import store from '@/modules/store';
-import {Dialog, DialogButton} from '@/core/state/misc/dialogsState';
+import { Dialog, DialogButton, useDialogsStore } from '@/store/dialogStore.ts';
 
 class DialogHolder {
   private readonly _dialog: Dialog;
@@ -10,11 +9,14 @@ class DialogHolder {
   
   setWorking(working: boolean) {
     this._dialog.working = working;
-    store.dispatch('v2/dialogs/updateDialog', this._dialog);
+    const dialogStore = useDialogsStore();
+    dialogStore.updateDialog(this._dialog)
   }
   
   close() {
-    store.dispatch('v2/dialogs/closeDialog', this._dialog);
+
+    const dialogStore = useDialogsStore();
+    dialogStore.closeDialog(this._dialog)
   }
   
   get dialog() {
@@ -48,12 +50,14 @@ class DialogsController {
           .build())
         .build());
 
-      store.dispatch('v2/dialogs/openDialog', holder.dialog);
+      const dialogStore = useDialogsStore();
+      dialogStore.openDialog(holder.dialog)
     })
   }
   
   createDialog(dialog: Dialog) {
-    store.dispatch('v2/dialogs/openDialog', dialog);
+    const dialogStore = useDialogsStore();
+    dialogStore.openDialog(dialog)
     return new DialogHolder(dialog);
   }
 }

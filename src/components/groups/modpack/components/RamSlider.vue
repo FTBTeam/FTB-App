@@ -11,7 +11,7 @@ const settingsState: SettingsState = null;
 const {
   min = 0,
 } = defineProps<{
-  min: number;
+  min?: number;
 }>()
 
 const value = defineModel<number>()

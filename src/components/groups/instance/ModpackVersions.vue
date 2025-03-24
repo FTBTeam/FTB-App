@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import {ModPack, Versions} from '@/modules/modpacks/types';
 import platform from '@/utils/interface/electron-overwolf';
 import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
@@ -7,7 +6,7 @@ import {InstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
+import Selection2 from '@/components/ui/Selection2.vue';
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
 import UiButton from '@/components/ui/UiButton.vue';
@@ -15,6 +14,7 @@ import {createLogger} from '@/core/logger';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { services } from '@/bootstrap.ts';
+import { ModPack, Versions } from '@/core/types/appTypes.ts';
 
 const logger = createLogger("ModpackVersions.vue")
 
@@ -46,7 +46,7 @@ onMounted(() => {
   // get the first log
   fetchLog(lcurrent)
     .then((data) => {
-      changelogs['' + lcurrent] = data;
+      changelogs.value['' + lcurrent] = data;
       setActive(lcurrent);
     })
     .catch(e => logger.error(e))
@@ -57,6 +57,7 @@ onUnmounted(() => {
 })
 
 watch(version, async (newValue) => {
+  newValue = parseInt(newValue as string);
   if (changelogs.value['' + newValue]) {
     setActive(newValue);
     return;
@@ -87,7 +88,7 @@ async function fetchLog(versionId: number) {
 }
 
 function isOlderVersion(version: number) {
-  return instance?.versionId > version ?? false;
+  return instance?.versionId > version;
 }
 
 function update() {

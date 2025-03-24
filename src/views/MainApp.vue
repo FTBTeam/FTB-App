@@ -19,21 +19,16 @@ import { services } from '@/bootstrap.ts';
 import { useRouter } from 'vue-router';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { DevToolsActions } from '@/components/layout';
+import { useAccountsStore } from '@/store/accountsStore.ts';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
 
 // TODO: [port] Fix me
-// @State('settings') settings!: SettingsState;
-// @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
-// @Action('registerPingCallback') registerPingCallback: any;
-// @Action('loadProfiles', { namespace: 'core' }) loadProfiles!: AsyncFunction;
-// @Action('loadInstances', ns("v2/instances")) loadInstances!: AsyncFunction;
 // @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
 
 const router = useRouter()
+const accountStore = useAccountsStore();
+const appSettingsStore = useAppSettings();
 
-const settings: SettingsState = {} as any;
-const loadSettings: any = null;
-const loadProfiles = null;
-const loadInstances = null;
 const debugDisabledAdAside: boolean = false;
 
 const logger = createLogger("MainApp.vue");
@@ -60,35 +55,6 @@ const appInstallError = ref("");
 // Onboarding
 const showOnboarding = ref(false);
 
-const startupJobs = ref([
-  {
-    name: "Settings",
-    done: false,
-    action: () => loadSettings()
-  },
-  {
-    name: "Init App",
-    done: false,
-    action: () => initApp()
-  }
-])
-
-const postStartupJobs = ref([
-  {
-    name: "Profiles",
-    done: false,
-    action: () => loadProfiles()
-  },
-  {
-    name: "Loading Installed Instances",
-    done: false,
-    action: () => loadInstances()
-  },
-])
-
-function allJobsDone() {
-  return startupJobs.value.every(job => job.done)
-}
 
 onMounted(async () => {
   logger.info("App started on ", constants.platform)
@@ -143,8 +109,23 @@ async function initApp() {
   
   console.log("Connected")
   appConnected.value = true
-  await instanceStore.loadInstances();
+  await appSettingsStore.loadSettings();
+  
+  await Promise.all([
+    accountStore.loadProfiles(),
+    instanceStore.loadInstances()
+  ])
   console.log(appConnected.value)
+
+  // Remove the old one if needed (typically app restarts (soft))
+  services.emitter.off("ws/message", refreshHandler)
+  services.emitter.on("ws/message", refreshHandler)
+}
+
+function refreshHandler(data: any) {
+  if (data?.type === "refreshInstancesRequest") {
+    instanceStore.loadInstances();
+  }
 }
 
 async function waitForSocket() {
@@ -259,11 +240,6 @@ async function setupApp() {
     checkForFirstRun()
       .then(() => logger.info("Finished checking for first run"))
       .catch(error => logger.error("Failed to check for first run", error));
-
-    for (const job of postStartupJobs.value) {
-      logger.info(`Starting post ${job.name}`)
-      await job.action();
-    }
   }
 
   platform.get.actions.onAppReady();
@@ -362,8 +338,7 @@ const appConnecting = computed(() => true)// !websockets.socket.isConnected) // 
 const reconnectAttempts = computed(() => 0)// websockets.reconnects) // TODO: [port] fixme
 const isReconnecting = computed(() => appConnecting.value) //&& !websockets.firstStart) // TODO: [port] fixme
 const appReadyToGo = appConnected.value //computed(() => !appStarting.value && appLoaded.value && !appInstalling && !isReconnecting && !appConnecting.value && allJobsDone())
-const advertsEnabled = computed(() => adsEnabled(settings.settings, debugDisabledAdAside))
-const systemBarDisabled = computed(() => !settings.settings.appearance.useSystemWindowStyle)
+const advertsEnabled = computed(() => adsEnabled(appSettingsStore.rootSettings!, debugDisabledAdAside))
 
 const status = computed(() => {
   if (appStarting.value && !appInstalling) {

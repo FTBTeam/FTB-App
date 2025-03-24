@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import {SugaredInstanceJson} from '@/core/types/javaApi';
-import {ModPack} from '@/modules/modpacks/types';
 import {faCheckDouble, faGlobe, faLock, faSave, faSliders, faUpload} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ModPack } from '@/core/types/appTypes.ts';
 
 const features = [{
   title: 'Multiple worlds',
@@ -45,7 +45,6 @@ const priceFeatures = [{
 }];
 
 const {
-  instance,
   apiPack
 } = defineProps<{
   instance?: SugaredInstanceJson;

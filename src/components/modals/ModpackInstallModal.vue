@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import {ModPack, PackProviders} from '@/modules/modpacks/types';
 import {timeFromNow} from '@/utils/helpers/dateHelpers';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
@@ -13,6 +12,7 @@ import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelec
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
+import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
 
 const modpackStore = useModpackStore();
 const router = useRouter();

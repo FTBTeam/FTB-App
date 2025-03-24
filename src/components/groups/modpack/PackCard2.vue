@@ -3,41 +3,36 @@ import {packUpdateAvailable, resolveArtwork, resolveModloader, typeIdToProvider}
 import {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
-import {Versions} from '@/modules/modpacks/types';
 import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
 import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from '@/core/context/contextMenus';
 import {InstanceActions} from '@/core/actions/instanceActions';
-import {InstanceRunningData} from '@/core/state/misc/runningState';
 import { watch, ref, onMounted, computed } from 'vue';
 import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { InstallStatus } from '@/core/controllers/InstanceInstallController.ts';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { useInstallStore } from '@/store/installStore.ts';
+import { Versions } from '@/core/types/appTypes.ts';
 
 const router = useRouter()
+const runningInstancesStore = useRunningInstancesStore();
+const installStore = useInstallStore()
 
 const {instance} = defineProps<{
   instance: SugaredInstanceJson;
 }>()
-
-// TODO: [port] Fix me
-// @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
-// @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
-
-const runningInstances = ref<InstanceRunningData[]>([]);
-const currentInstall = ref<InstallStatus | null>(null);
 
 const latestVersion = ref<Versions | null>(null);
 const updateOpen = ref(false);
 
 const {apiModpack, fetchModpack} = useFetchingPack()
 const isInstalling = computed(() => {
-  if (!currentInstall) {
+  if (!installStore.currentInstall) {
     return false;
   }
 
-  return currentInstall.value?.forInstanceUuid === instance.uuid
+  return installStore.currentInstall?.forInstanceUuid === instance.uuid
 })
 
 onMounted(() => {
@@ -75,7 +70,7 @@ function openInstancePage() {
   })
 }
 
-function openInstanceMenu(event: PointerEvent) {
+function openInstanceMenu(event: MouseEvent) {
   if (isInstalling.value || isUpdating.value) {
     return;
   }
@@ -89,8 +84,8 @@ function openInstanceMenu(event: PointerEvent) {
 
 const modloader = computed(() => resolveModloader(instance));
 const packLogo = computed(() => resolveArtwork(instance, "square", apiModpack.value))
-const isRunning = computed(() => runningInstances.value.some(e => e.uuid === instance.uuid));
-const isUpdating = computed(() => currentInstall.value?.request?.updatingInstanceUuid === instance.uuid);
+const isRunning = computed(() => runningInstancesStore.instances.some(e => e.uuid === instance.uuid));
+const isUpdating = computed(() => installStore.currentInstall?.request?.updatingInstanceUuid === instance.uuid);
 const versionName = computed(() => _versionName().trim());
 
 function _versionName() {
@@ -129,7 +124,7 @@ function _versionName() {
 
 <template>
   <div>
-    <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="openInstancePage" @click.right="openInstanceMenu">
+    <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="() => openInstancePage()" @click.right="(e) => openInstanceMenu(e)">
       <div class="artwork-container">
         <img :src="packLogo" alt="Modpack Artwork">
         <div class="notifiers">
@@ -148,16 +143,16 @@ function _versionName() {
         </div>
         
         <transition name="transition-fade" :duration="250">
-          <div class="install-progress" v-if="isInstalling && currentInstall">
-            <div class="percent">{{currentInstall.progress}}<span>%</span></div>
-            <b>{{currentInstall.stage ?? "??"}}</b>
-            <small class="text-center opacity-75" v-if="currentInstall.stage === 'Mod loader'">This may take a minute</small>
+          <div class="install-progress" v-if="isInstalling && installStore.currentInstall">
+            <div class="percent">{{installStore.currentInstall.progress}}<span>%</span></div>
+            <b>{{installStore.currentInstall.stage ?? "??"}}</b>
+            <small class="text-center opacity-75" v-if="installStore.currentInstall.stage === 'Mod loader'">This may take a minute</small>
             <transition name="transition-fade" :duration="250">
-              <div class="files text-sm" v-if="currentInstall.speed">
-                <FontAwesomeIcon icon="bolt" class="mr-2" />({{(currentInstall.speed / 12500000).toFixed(2)}}) Mbps
+              <div class="files text-sm" v-if="installStore.currentInstall.speed">
+                <FontAwesomeIcon icon="bolt" class="mr-2" />({{(installStore.currentInstall.speed / 12500000).toFixed(2)}}) Mbps
               </div>
             </transition>
-            <progress-bar class="progress" :progress="parseFloat(currentInstall?.progress ?? '0') / 100" />
+            <progress-bar class="progress" :progress="parseFloat(installStore.currentInstall?.progress ?? '0') / 100" />
           </div>
         </transition>
       </div>

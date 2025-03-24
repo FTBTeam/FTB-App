@@ -3,7 +3,6 @@ import Loader from '@/components/ui/Loader.vue';
 import UiButton from '@/components/ui/UiButton.vue';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {parseMarkdown} from '@/utils';
-import {Versions} from '@/modules/modpacks/types';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {alertController} from '@/core/controllers/alertController';
@@ -11,6 +10,7 @@ import {createLogger} from '@/core/logger';
 import { ref, watch } from 'vue';
 import { Message, Modal, ModalBody, ModalFooter } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
+import { Versions } from '@/core/types/appTypes.ts';
 
 const logger = createLogger("UpdateConfirmModal.vue");
 
@@ -40,7 +40,7 @@ function close() {
   emit('close');
 }
 
-watch(() => open, (newValue, oldValue) => {
+watch(() => open, (newValue) => {
   if (!newValue) {
     return;
   }
@@ -83,7 +83,7 @@ async function loadChanges() {
     .then(packReq => {
       changes.value = packReq?.content ?? ""
     })
-    .catch(e => alertController.error("Failed to load changelog..."))
+    .catch(_ => alertController.error("Failed to load changelog..."))
 }
 </script>
 

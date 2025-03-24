@@ -1,24 +1,16 @@
+<script lang="ts" setup>
+import SettingsSidebar from '@/views/Settings/SettingsSidebar.vue';
+
+</script>
+
 <template>
   <div class="settings">
-    <settings-sidebar />
+    <SettingsSidebar />
     <main>
       <router-view />
     </main>
   </div>
 </template>
-
-<script lang="ts">
-import SettingsSidebar from '@/views/Settings/SettingsSidebar.vue';
-
-// @Component({
-//   components: {
-//     SettingsSidebar,
-//   },
-// })
-export default class SettingsPage {// extends Vue {
-  
-}
-</script>
 
 <style scoped lang="scss">
 .settings {

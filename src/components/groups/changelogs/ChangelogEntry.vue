@@ -5,6 +5,7 @@ import {JavaFetch} from '@/core/javaFetch';
 import {constants} from '@/core/constants';
 import NestedChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import { onMounted, watch } from 'vue';
+import { toTitleCase } from '../../../utils/helpers/stringHelpers.ts';
 
 const {
   changelog,
@@ -103,7 +104,7 @@ const headingImage = computed(() => {
 
     <template v-for="(heading, key) in headings">
       <template v-if="changelog.changes[key]">
-        <h3 :style="{ color: heading.color, 'word-spacing': '.5rem' }">{{ heading.heading | title }}</h3>
+        <h3 :style="{ color: heading.color, 'word-spacing': '.5rem' }">{{ toTitleCase(heading.heading) }}</h3>
         <div v-html="markdown(changelog.changes[key])" />
       </template>
     </template>

@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import {InstanceRunningData, LaunchingStatus} from '@/core/state/misc/runningState';
-import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {InstanceRunningData} from '@/core/state/misc/runningState';
 import { Loader, UiButton, Modal } from '@/components/ui';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
@@ -8,12 +7,6 @@ import { computed } from 'vue';
 
 const runningInstancesStore = useRunningInstancesStore();
 const instancesStore = useInstanceStore();
-
-// TODO: [port] fixme
-// @Getter("instances", ns("v2/instances")) public instances!: (SugaredInstanceJson | InstanceJson)[];
-// @Getter("launchingStatus", ns("v2/running")) public launchingStatus!: LaunchingStatus | null;
-// @Getter("preInitProgress", ns("v2/running")) public preInitMessages!: (uuid: string) => InstanceRunningData["preInitProgress"] | null | undefined;
-// @Action("clearLaunchingStatus", ns("v2/running")) public clearStatus!: () => void;
 
 const instance = computed(() => {
   if (!runningInstancesStore.launchingStatus) return null;
@@ -63,7 +56,7 @@ function numberToFixed(num: number) {
 </script>
 
 <template>
-  <Modal :permanent="!runningInstancesStore.launchingStatus?.error" :open="runningInstancesStore.launchingStatus !== null" :title="title" :sub-title="subtitle" @closed="() => clearLaunchingStatus()">
+  <Modal :permanent="!runningInstancesStore.launchingStatus?.error" :open="runningInstancesStore.launchingStatus !== null" :title="title()" :sub-title="subtitle()" @closed="() => clearLaunchingStatus()">
     <template v-if="runningInstancesStore.launchingStatus">
       <div v-if="!runningInstancesStore.launchingStatus.error">
         <loader :title="runningInstancesStore.launchingStatus?.starting ? 'Starting...' : 'Logging in...'" />

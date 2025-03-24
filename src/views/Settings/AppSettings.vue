@@ -1,3 +1,164 @@
+<script lang="ts" setup>
+import platform from '@/utils/interface/electron-overwolf';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {alertController} from '@/core/controllers/alertController';
+import {InstanceActions} from '@/core/actions/instanceActions';
+import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/types/javaApi';
+import { ProgressBar, Loader, Modal, UiToggle, UiButton, FTBInput } from '@/components/ui';
+import {dialogsController} from '@/core/controllers/dialogsController';
+import {toTitleCase} from '@/utils/helpers/stringHelpers';
+import {emitter} from '@/utils';
+import {createLogger} from '@/core/logger';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted, ref } from 'vue';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
+
+const appSettingsStore = useAppSettings();
+
+const logger = createLogger("AppSettings.vue");
+const localSettings = ref<SettingsData>({} as SettingsData);
+
+const working = ref(false);
+const uploadingLogs = ref(false);
+
+const instanceMoveModalShow = ref(false);
+const instanceMoveModalStage = ref("Preparing");
+const instanceMoveModalComplete = ref(false);
+const instanceMoveLocations = ref({old: "", new: ""});
+
+onMounted(async () => {
+  await appSettingsStore.loadSettings()
+  // Make a copy of the settings so we don't mutate the vuex state
+  localSettings.value = { ...appSettingsStore.rootSettings } as any; // TODO: Fix typings
+})
+
+function exitOverwolf(value: boolean): void {
+  localSettings.value.general.exitOverwolf = value;
+  appSettingsStore.saveSettings(localSettings.value);
+  platform.get.actions.changeExitOverwolfSetting(value);
+}
+
+function toggleSystemStyleWindow(value: boolean): void {
+  localSettings.value.appearance.useSystemWindowStyle = value;
+  appSettingsStore.saveSettings(localSettings.value);
+
+  platform.get.frame.setSystemWindowStyle(value);
+}
+
+function openFolder(location: string) {
+  switch (location) {
+    case 'home':
+      toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.appHome()), state => working.value = state)
+      break;
+    case 'instances':
+      toggleBeforeAndAfter(() => platform.get.io.openFinder(localSettings.value.instanceLocation), state => working.value = state)
+      break;
+    case 'logs':
+      toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.pathJoin(platform.get.io.appHome(), 'logs')), state => working.value = state)
+      break;
+    default:
+      toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => working.value = state)
+      break;
+  }
+}
+
+async function uploadLogData() {
+  uploadingLogs.value = true;
+
+  try {
+    const result = await sendMessage("uploadLogs", {})
+    if (result.path) {
+      await platform.get.io.openFinder(result.path)
+      alertController.success('Logs saved to ' + result.path)
+    } else {
+      alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
+    }
+  } catch (e) {
+    logger.error("Failed to generate logs", e)
+    alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
+  }
+}
+
+async function refreshCachePlz() {
+  await InstanceActions.clearInstanceCache()
+}
+
+const configData = platform.get.config
+
+async function moveInstances() {
+  const location: string | null = await new Promise(resolve => {
+    platform.get.io.selectFolderDialog(localSettings.value.instanceLocation, (path) => {
+      if (path == null) {
+        return;
+      }
+
+      resolve(path);
+    });
+  })
+
+  if (!location) {
+    return;
+  }
+
+  if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
+    return;
+  }
+
+  const result = await sendMessage("moveInstances", {
+    newLocation: location
+  })
+
+  if (result.state === "error") {
+    return alertController.error(result.error);
+  }
+
+  if (result.state === "processing") {
+    instanceMoveModalShow.value = true;
+    instanceMoveModalStage.value = "Preparing";
+    instanceMoveModalComplete.value = false;
+    instanceMoveLocations.value = {
+      old: localSettings.value.instanceLocation,
+      new: location
+    }
+  }
+
+  const migrationResult = await new Promise((res) => {
+    const onMoveProgress = (data: any) => {
+      if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
+      if (data.type === "operationUpdate") {
+        const typedData = data as OperationProgressUpdateData;
+        if (typedData.stage === "FINISHED") {
+          // It's done
+        } else {
+          instanceMoveModalStage.value = toTitleCase(typedData.stage.toString().replace("_", " "));
+        }
+      } else {
+        const typedData = data as MoveInstancesHandlerReply;
+        if (typedData.state !== "success") {
+          // It's broken
+          instanceMoveModalShow.value = false;
+          alertController.error(typedData.error);
+          emitter.off("ws/message", onMoveProgress);
+          res(false);
+        } else {
+          instanceMoveModalComplete.value = true;
+          emitter.off("ws/message", onMoveProgress);
+          res(true);
+        }
+      }
+    }
+
+    emitter.on("ws/message", onMoveProgress);
+  })
+
+  if (migrationResult) {
+    localSettings.value.instanceLocation = location;
+    await InstanceActions.clearInstanceCache(false)
+  }
+}
+</script>
+
 <template>
   <div class="app-settings" v-if="localSettings.spec">
     <div class="app-info-section mb-8">
@@ -5,10 +166,10 @@
         <div class="title-value mr-10">
           <div class="title text-muted mb-1">App Version</div>
           <div class="value">
-            <span class="select-text">{{ configData.version }}</span>
+            <span class="select-text">{{ configData?.version }}</span>
             <div class="copy-me inline-block" aria-label="Click to copy" data-balloon-pos="up">
-              <font-awesome-icon
-                @click="copyToClipboard(configData.version)"
+              <FontAwesomeIcon
+                @click="platform.get.cb.copy(configData?.version)"
                 class="ml-2 cursor-pointer"
                 icon="copy"
                 size="1x"
@@ -89,7 +250,7 @@
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>
-    <ftb-input
+    <FTBInput
       label="Relocate instances"
       :value="localSettings.instanceLocation + ' (Current)'"
       :disabled="true"
@@ -103,7 +264,7 @@
       location automatically.</small
     >
 
-    <modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
+    <Modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
       <template v-if="!instanceMoveModalComplete">
         <div class="wysiwyg mb-6">
           <p>This may take a while, please wait.</p>
@@ -124,200 +285,10 @@
           <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
         </div>
       </template>
-    </modal>
+    </Modal>
   </div>
   <Loader v-else />
 </template>
-
-<script lang="ts">
-import {SettingsState} from '@/modules/settings/types';
-import platform from '@/utils/interface/electron-overwolf';
-import UiToggle from '@/components/ui/UiToggle.vue';
-import UiButton from '@/components/ui/UiButton.vue';
-import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {alertController} from '@/core/controllers/alertController';
-import {InstanceActions} from '@/core/actions/instanceActions';
-import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/types/javaApi';
-import Loader from '@/components/ui/Loader.vue';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
-import {dialogsController} from '@/core/controllers/dialogsController';
-import {toTitleCase} from '@/utils/helpers/stringHelpers';
-import {emitter} from '@/utils';
-import {createLogger} from '@/core/logger';
-
-@Component({
-  components: {
-    ProgressBar,
-    Loader,
-    UiButton,
-    UiToggle,
-  },
-})
-export default class AppSettings extends Vue {
-  @State('settings') settingsState!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) saveSettings: any;
-  @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
-
-  private logger = createLogger("Blog.vue");
-  
-  platform = platform;
-  localSettings: SettingsData = {} as SettingsData;
-
-  working = false;
-  uploadingLogs = false;
-
-  instanceMoveModalShow = false;
-  instanceMoveModalStage = "Preparing";
-  instanceMoveModalComplete = false;
-  instanceMoveLocations = {old: "", new: ""};
-
-  async created() {
-    await this.loadSettings();
-
-    // Make a copy of the settings so we don't mutate the vuex state
-    this.localSettings = { ...this.settingsState.settings };
-  }
-
-  // enablePreview(value: boolean): void {
-  //   this.localSettings.enablePreview = value;
-  //   this.saveSettings(this.localSettings);
-  // }
-
-  exitOverwolf(value: boolean): void {
-    this.localSettings.general.exitOverwolf = value;
-    this.saveSettings(this.localSettings);
-    platform.get.actions.changeExitOverwolfSetting(value);
-  }
-
-  toggleSystemStyleWindow(value: boolean): void {
-    this.localSettings.appearance.useSystemWindowStyle = value;
-    this.saveSettings(this.localSettings);
-
-    platform.get.frame.setSystemWindowStyle(value);
-  }
-
-  openFolder(location: string) {
-    switch (location) {
-      case 'home':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.appHome()), state => this.working = state)
-        break;
-      case 'instances':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
-        break;
-      case 'logs':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.pathJoin(platform.get.io.appHome(), 'logs')), state => this.working = state)
-        break;
-      default:
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => this.working = state)
-        break;
-    }
-  }
-
-  public async uploadLogData() {
-    this.uploadingLogs = true;
-    try {
-      const result = await sendMessage("uploadLogs", {})
-      if (result.path) {
-        await platform.get.io.openFinder(result.path)
-        alertController.success('Logs saved to ' + result.path)
-      } else {
-        alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
-      }
-    } catch (e) {
-      this.logger.error("Failed to generate logs", e)
-      alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
-    }
-
-    this.uploadingLogs = false;
-  }
-
-  public async refreshCachePlz() {
-    await InstanceActions.clearInstanceCache()
-  }
-
-  public enableVerbose(value: boolean): void {
-    this.localSettings.general.verbose = value;
-    this.saveSettings(this.localSettings);
-  }
-
-  get configData() {
-    return platform.get.config
-  }
-
-  async moveInstances() {
-    const location: string | null = await new Promise(resolve => {
-      platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
-        if (path == null) {
-          return;
-        }
-
-        resolve(path);
-      });
-    })
-
-    if (!location) {
-      return;
-    }
-
-    if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
-      return;
-    }
-
-    const result = await sendMessage("moveInstances", {
-      newLocation: location
-    })
-
-    if (result.state === "error") {
-      return alertController.error(result.error);
-    }
-
-    if (result.state === "processing") {
-      this.instanceMoveModalShow = true;
-      this.instanceMoveModalStage = "Preparing";
-      this.instanceMoveModalComplete = false;
-      this.instanceMoveLocations = {
-        old: this.localSettings.instanceLocation,
-        new: location
-      }
-    }
-
-    const migrationResult = await new Promise((res) => {
-      const onMoveProgress = (data: any) => {
-        if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
-        if (data.type === "operationUpdate") {
-          const typedData = data as OperationProgressUpdateData;
-          if (typedData.stage === "FINISHED") {
-            // It's done
-          } else {
-            this.instanceMoveModalStage = toTitleCase(typedData.stage.toString().replaceAll("_", " "));
-          }
-        } else {
-          const typedData = data as MoveInstancesHandlerReply;
-          if (typedData.state !== "success") {
-            // It's broken
-            this.instanceMoveModalShow = false;
-            alertController.error(typedData.error);
-            emitter.off("ws/message", onMoveProgress);
-            res(false);
-          } else {
-            this.instanceMoveModalComplete = true;
-            emitter.off("ws/message", onMoveProgress);
-            res(true);
-          }
-        }
-      }
-
-      emitter.on("ws/message", onMoveProgress);
-    })
-
-    if (migrationResult) {
-      this.localSettings.instanceLocation = location;
-      await InstanceActions.clearInstanceCache(false)
-    }
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .app-info-section {

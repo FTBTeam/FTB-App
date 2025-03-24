@@ -1,21 +1,17 @@
 <script lang="ts" setup>
-import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
 import { computed, ref, useTemplateRef, watch } from 'vue';
 import { useAttachDomEvent } from '@/composables';
 import InstallQueueRow from '@/components/groups/modpack/InstallQueue/InstallQueueRow.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { useInstallStore } from '@/store/installStore.ts';
 
-// TODO: [port] Fix me
-// @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
-// @Getter("installQueue", ns("v2/install")) installQueue!: InstallRequest[];
-const currentInstall = ref<InstallStatus | null>(null);
-const installQueue = ref<InstallRequest[]>([]);
+const installStore = useInstallStore();
 
 const open = ref(false)
 const rootElm = useTemplateRef("root");
 
-watch(() => currentInstall, () => {
-  if (installQueue.length === 0 && currentInstall.value) {
+watch(() => installStore.currentInstall, () => {
+  if (installStore.installQueue?.length === 0 && installStore.currentInstall) {
     open.value = true;
   }
 })
@@ -29,13 +25,13 @@ function close(event: MouseEvent) {
 }
 
 const onlyQueue = computed(() => {
-  return installQueue.value.filter(e => e.uuid !== currentInstall.value?.request.uuid)
+  return installStore.installQueue.filter(e => e.uuid !== installStore.currentInstall?.request.uuid)
 })
 </script>
 
 <template>
   <transition name="transition-fade">
-    <div class="app-install" v-if="currentInstall || installQueue.length > 0" ref="root">
+    <div class="app-install" v-if="installStore.currentInstall || installStore.installQueue.length > 0" ref="root">
       <div class="btn flex gap-2 items-center bg-green-500" @click="open = !open">
         <FontAwesomeIcon icon="circle-notch" spin />
         Downloading
@@ -43,9 +39,9 @@ const onlyQueue = computed(() => {
 
       <transition name="transition-fade-and-up">
         <div class="dropdown" v-if="open">
-          <div class="group" v-if="currentInstall">
+          <div class="group" v-if="installStore.currentInstall">
             <div class="name">Installing</div>
-            <InstallQueueRow class="row" :item="currentInstall" :is-install="true" />
+            <InstallQueueRow class="row" :item="installStore.currentInstall" :is-install="true" />
           </div>
           <div class="group" v-if="onlyQueue.length > 0">
             <div class="name">Queue</div>

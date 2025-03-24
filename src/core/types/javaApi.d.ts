@@ -302,6 +302,7 @@ export interface SettingsConfigureData extends BaseData {
 
 export interface SettingsConfigureDataReply extends BaseData {
     status: string;
+    settings: SettingsData;
 }
 
 export interface SettingsInfoData extends BaseData {
@@ -605,13 +606,6 @@ export interface Stage {
 export interface Dimension {
     width: number;
     height: number;
-}
-
-export interface UserApiCredentials {
-    apiUrl: string;
-    apiSecret: string;
-    supportsPublicPrefix: boolean;
-    usesBearerAuth: boolean;
 }
 
 export interface SharableData {

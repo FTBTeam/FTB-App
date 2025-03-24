@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import {ModPack} from '@/modules/modpacks/types';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import ModpackMods from '@/components/groups/instance/ModpackMods.vue';
 import ModpackSettings from '@/components/groups/instance/ModpackSettings.vue';
@@ -8,27 +7,31 @@ import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
 import Platform from '@/utils/interface/electron-overwolf';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import Loader from '@/components/ui/Loader.vue';
-import {parseMarkdown} from '@/utils';
+import { parseMarkdown, safeLinkOpen } from '@/utils';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
-import { packBlacklist } from '@/core/state/modpacks/modpacksState';
 import { computed } from 'vue';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { localiseNumber } from '@/utils/helpers/stringHelpers.ts';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ModPack } from '@/core/types/appTypes.ts';
+import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
+import { packBlacklist } from '@/store/modpackStore.ts';
 
 const {
-  instance = null,
   packInstance,
+  instance,
   isInstalled = false,
   activeTab = ModpackPageTabs.OVERVIEW,
   allowOffline = false,
 } = defineProps<{
-  instance: SugaredInstanceJson;
+  instance?: SugaredInstanceJson;
   packInstance: ModPack;
-  isInstalled: boolean;
-  activeTab: ModpackPageTabs;
-  allowOffline: boolean;
+  isInstalled?: boolean;
+  activeTab?: ModpackPageTabs;
+  allowOffline?: boolean;
 }>()
 
 const installStore = useInstallStore();
@@ -156,7 +159,7 @@ function bisectPromo() {
           </div>
         </div>
 
-        <transition name="transition-fade" duration="250">
+        <transition name="transition-fade" :duration="250">
           <div class="install-progress" v-if="isInstalling && installStore.currentInstall">
             <div class="status flex gap-4 mb-4">
               <div class="percent">{{installStore.currentInstall.progress}}<span>%</span></div>
@@ -216,15 +219,15 @@ function bisectPromo() {
         <div class="stats-and-links">
           <div class="stats">
             <template v-if="isInstalled">
-              <div class="stat" v-if="instance.lastPlayed !== 0">
+              <div class="stat" v-if="instance?.lastPlayed && instance?.lastPlayed !== 0">
                 <div class="name">Last played</div>
-                <div class="value">{{ instance.lastPlayed | dayjsFromNow }}</div>
+                <div class="value">{{ timeFromNow(instance?.lastPlayed) }}</div>
               </div>
-              <div class="stat" v-if="instance.totalPlayTime !== 0">
+              <div class="stat" v-if="instance?.totalPlayTime && instance?.totalPlayTime !== 0">
                 <div class="name">Total Playtime</div>
-                <div class="value">
-                <span v-for="(unit, index) in computeTime(instance.totalPlayTime)" :key="index">
-                  <template v-if="unit !== ''"> {{ unit }} </template>
+                <div class="value flex gap-2 justify-start">
+                <span v-for="(unit, index) in computeTime(instance?.totalPlayTime)" :key="index" :class="{'hidden': unit === ''}">
+                  <template v-if="unit !== ''">{{ unit }}</template>
                 </span>
                 </div>
               </div>
@@ -232,36 +235,36 @@ function bisectPromo() {
             <template v-else-if="packInstance">
               <div class="stat">
                 <div class="name">Installs</div>
-                <div class="value font-sans">{{ packInstance.installs | formatNumber }}</div>
+                <div class="value font-sans">{{ localiseNumber(packInstance.installs) }}</div>
               </div>
 
               <div class="stat" v-if="packInstance.provider !== 'curseforge'">
                 <div class="name">Plays</div>
-                <div class="value font-sans">{{ packInstance.plays | formatNumber }}</div>
+                <div class="value font-sans">{{ localiseNumber(packInstance.plays) }}</div>
               </div>
             </template>
 
             <div
               class="stat"
               v-if="(!isInstalled || (instance && !instance.lastPlayed)) && packInstance && packInstance.released !== 'unknown'"
-              :title="(packInstance.released || packInstance.updated) | dayjsFull"
+              :title="standardDateTime(packInstance.released || packInstance.updated)"
             >
               <div class="name">Released</div>
-              <div class="value font-sans">{{ (packInstance.released || packInstance.updated) | dayjsFromNow }}</div>
+              <div class="value font-sans">{{ standardDateTime(packInstance.released || packInstance.updated) }}</div>
             </div>
             <div
               class="stat"
               v-if="(!isInstalled || (instance && !instance.lastPlayed)) && packInstance && packInstance.versions && packInstance.versions[0]"
-              :title="packInstance.versions[0].updated | dayjsFull"
+              :title="standardDateTime(packInstance.versions[0].updated)"
             >
               <div class="name">Updated</div>
-              <div class="value font-sans">{{ packInstance.versions[0].updated | dayjsFromNow }}</div>
+              <div class="value font-sans">{{ standardDateTime(packInstance.versions[0].updated) }}</div>
             </div>
           </div>
           
           <div class="links" v-if="packInstance && instance && isInstalled">
-            <a :href="issueTracker" @click="openExternal" class="link" v-if="issueTracker">
-              <font-awesome-icon :icon="['fab', 'github']" />
+            <a :href="issueTracker" @click="safeLinkOpen" class="link" v-if="issueTracker">
+              <FontAwesomeIcon :icon="['fab', 'github']" />
               Report issue
             </a>
           </div>

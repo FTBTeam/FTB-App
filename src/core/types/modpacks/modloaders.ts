@@ -1,4 +1,4 @@
-import {Art} from '@/modules/modpacks/types';
+import { Art } from '@/core/types/appTypes.ts';
 
 export type ModLoadersResponse = {
   id: string;

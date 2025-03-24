@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import {SearchResultPack} from '@/core/types/modpacks/packSearch';
-import { PackProviders } from '@/modules/modpacks/types';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {stringOrDefault} from '@/utils/helpers/stringHelpers';
 import {RouterNames} from '@/router';
@@ -9,9 +8,9 @@ import {dialogsController} from '@/core/controllers/dialogsController';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, ref } from 'vue';
 import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
-import { InstallStatus } from '@/core/controllers/InstanceInstallController.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useRouter } from 'vue-router';
+import { PackProviders } from '@/core/types/appTypes.ts';
 
 const RouteNames = RouterNames;
 const props = defineProps<{

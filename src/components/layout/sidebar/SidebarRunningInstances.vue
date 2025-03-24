@@ -1,39 +1,35 @@
 <script lang="ts" setup>
-import {InstanceRunningData} from '@/core/state/misc/runningState';
-import {InstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import { useTemplateRef, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAttachDomEvent } from '@/composables';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
 
 const router = useRouter()
-
-// TODO: [port] fix me
-// @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
-// @State("instances", ns("v2/instances")) public instances!: InstanceJson[]
-const runningInstances = ref<InstanceRunningData[]>([])
-const instances = ref<InstanceJson[]>([])
+const runningInstancesStore = useRunningInstancesStore();
+const instanceStore = useInstanceStore();
 
 const panelOpen = ref(false);
 const elm = useTemplateRef('root');
 
 useAttachDomEvent<MouseEvent>('click', (event) => {
-  if (!elm.value?.contains(event.target)) {
+  if (event.target && !elm.value?.contains(event.target as any)) {
     panelOpen.value = false;
   }
 })
 
 async function showRunningInstance(uuid: string) {
-  if (this.$route.fullPath === `/running/${uuid}`) return;
+  if (router.currentRoute.value.fullPath === `/running/${uuid}`) return;
 
   await router.push({ name: RouterNames.ROOT_RUNNING_INSTANCE, params: { uuid } });
 }
 
-const firstLoadedInstance = computed(() => runningWithData[0])
-const runningWithData = computed(() => runningInstances.value
+const firstLoadedInstance = computed(() => runningWithData.value[0])
+const runningWithData = computed(() => runningInstancesStore.instances
   .map(e => ({
     ...e,
-    instance: instances.find(i => i.uuid === e.uuid)
+    instance: instanceStore.instances.find(i => i.uuid === e.uuid)
   })))
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import Loader from '@/components/ui/Loader.vue';
+import { Loader, Message } from '@/components/ui';
 import {BlogPost} from '@/core/types/external/metaApi.types';
 import dayjs from 'dayjs';
 import {standardDateTime} from '@/utils/helpers/dateHelpers';
@@ -8,6 +8,7 @@ import {createLogger} from '@/core/logger';
 import { onMounted, ref } from 'vue';
 import { JavaFetch } from '@/core/javaFetch.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
+import { safeLinkOpen } from '@/utils';
 
 const logger = createLogger("blog.vue");
 const loading = ref(false);
@@ -62,12 +63,12 @@ const domain = constants.ftbDomain;
     <template v-if="news.length">
       <h2 class="text-lg font-bold mb-6">Get the latest news from FTB</h2>
       <div class="news-item" v-for="(newsItem, index) in news" :key="index">
-        <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="openExternal" v-if="newsItem.feature_image" class="feature-image mb-4 block">
+        <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="safeLinkOpen" v-if="newsItem.feature_image" class="feature-image mb-4 block">
           <img class="rounded shadow-xl" :src="newsItem.feature_image" alt="Feature image">
         </a>
         
         <div class="about">
-          <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="openExternal" class="title block mb-2 font-bold text-lg">{{ newsItem.title }}</a>
+          <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="safeLinkOpen" class="title block mb-2 font-bold text-lg">{{ newsItem.title }}</a>
           <p class="mb-4 max-lines-4">{{ newsItem.custom_excerpt ? newsItem.custom_excerpt : newsItem.excerpt }}</p>
         </div>
         
@@ -85,12 +86,12 @@ const domain = constants.ftbDomain;
     </template>
     <div v-else>
       <h2 class="text-lg font-bold mb-6">Oh no... 🔥 Something's not right!</h2>
-      <message type="warning">
+      <Message type="warning">
         <p>Something went wrong while loading the news.</p>
         <p class="mb-4">Please try again later.</p>
         
-        <b>You can find our latest blog posts on our <a :href="`${domain}/blog`" @click="openExternal">website</a></b>
-      </message>
+        <b>You can find our latest blog posts on our <a :href="`${domain}/blog`" @click="safeLinkOpen">website</a></b>
+      </Message>
     </div>
   </div>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
