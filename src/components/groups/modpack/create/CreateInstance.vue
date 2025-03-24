@@ -3,7 +3,6 @@ import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelec
 import Selection2, {SelectionOption} from '@/components/ui/Selection2.vue';
 import UiButton from '@/components/ui/UiButton.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
-import {SettingsState} from '@/modules/settings/types';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import Loader from '@/components/ui/Loader.vue';
@@ -20,13 +19,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack } from '@/core/types/appTypes.ts';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
 
-// TODO: [port] fixme
-// @State('settings') public settingsState!: SettingsState;
-// @State('settings') private settings!: SettingsState;
-
+const appSettingsStore = useAppSettings();
 const modpackStore = useModpackStore();
-const settings = ref<SettingsState>({} as SettingsState)
 
 const { open } = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
@@ -67,12 +63,11 @@ function close() {
 onMounted(async () => {
   await loadInitialState();
   
-  // TODO: [port] fixme
-  // this.settingFullscreen = this.settings.settings.instanceDefaults.fullscreen;
-  // this.settingScreenResolution = this.settings.settings.instanceDefaults.width + "x" + this.settings.settings.instanceDefaults.height;
-  // this.settingRam = this.settings.settings.instanceDefaults.memory;
-  // this.userWidth = this.settings.settings.instanceDefaults.width;
-  // this.userHeight = this.settings.settings.instanceDefaults.height;
+  settingFullscreen.value = appSettingsStore.rootSettings?.instanceDefaults.fullscreen ?? false;
+  settingScreenResolution.value = (appSettingsStore.rootSettings?.instanceDefaults.width ?? 0) + "x" + (appSettingsStore.rootSettings?.instanceDefaults.height ?? 0);
+  settingRam.value = appSettingsStore.rootSettings?.instanceDefaults.memory ?? 0;
+  userWidth.value = appSettingsStore.rootSettings?.instanceDefaults.width ?? 0;
+  userHeight.value = appSettingsStore.rootSettings?.instanceDefaults.height ?? 0;
 })
 
 function onScreenResolutionChange(newVal: string) {
@@ -207,14 +202,11 @@ const vanillaVersions = computed<SelectionOption[]>(() => {
     })) as SelectionOption[] ?? []
 })
 
-const screenResolutions = computed(() => () => {
-  // TODO: [port] fixme
-  // return settings.hardware.supportedResolutions.map(e => ({
-  //   label: `${e.width}x${e.height}`,
-  //   value: `${e.width}x${e.height}`
-  // }))
-  
-  return []
+const screenResolutions = computed( () => {
+  return appSettingsStore.systemHardware?.supportedResolutions.map(e => ({
+    label: `${e.width}x${e.height}`,
+    value: `${e.width}x${e.height}`
+  })) ?? []
 })
 </script>
 
@@ -307,7 +299,6 @@ const screenResolutions = computed(() => () => {
 
 <style lang="scss" scoped>
 .steps {
-  
   .step {
     display: flex;
     align-items: center;
@@ -318,6 +309,7 @@ const screenResolutions = computed(() => () => {
       color: var(--color-light-info-button);
       
       span {
+        @apply bg-pink-400;
         background: var(--color-info-button);
       }
     }

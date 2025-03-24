@@ -11,7 +11,7 @@ const {
   header = '',
 } = defineProps<{
   type?: MessageType;
-  icon?: IconDefinition | null;
+  icon?: IconDefinition | string | null;
   header?: string;
 }>()
 

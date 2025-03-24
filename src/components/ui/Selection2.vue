@@ -68,7 +68,9 @@ onUnmounted(() => {
   document.removeEventListener('click', handleDocumentClick);
 })
 
-const selected = computed(() => options.find(o => o.value === value) ?? null);
+const selected = computed(() => {
+  return (options ?? []).find(o => o.value === value) ?? null
+});
 
 function handleDocumentClick(event: any) {
   // Check if the click was inside the selection box and that selection box has the same id as this one

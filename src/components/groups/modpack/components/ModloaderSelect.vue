@@ -5,7 +5,7 @@ import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
 import { UiToggle, Message, Loader, Selection2 } from '@/components/ui';
 import { computed, onMounted, ref, watch } from 'vue';
-import { toTitleCase } from '../../../../utils/helpers/stringHelpers.ts';
+import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 
 const {
   mcVersion,
@@ -43,7 +43,7 @@ function select(loader: string | null, version: string | null): [string, ModLoad
     return null;
   }
 
-  const loaderProvider = this.availableLoaders[loader];
+  const loaderProvider = availableLoaders.value[loader];
   if (!loaderProvider) {
     return null;
   }
@@ -54,10 +54,11 @@ function select(loader: string | null, version: string | null): [string, ModLoad
   }
 
   emit("select", [loader, modLoader]);
+  return [loader, modLoader];
 }
 
 async function loadLoaders() {
-  await toggleBeforeAndAfter(() => loadAvailableLoaders(this.mcVersion), state => loadingModloaders.value = state);
+  await toggleBeforeAndAfter(() => loadAvailableLoaders(mcVersion), state => loadingModloaders.value = state);
 }
 
 async function loadAvailableLoaders(mcVersion: string) {
@@ -89,14 +90,14 @@ watch(userLoaderProvider, (newValue, oldValue) => {
     return;
   }
 
-  if (this.userLoaderProvider === "") {
-    this.userLoaderVersion = "";
-    this.select(null, null)
+  if (userLoaderProvider.value === "") {
+    userLoaderVersion.value = "";
+    select(null, null)
     return;
   }
 
-  this.userLoaderVersion = this.loaderVersions[0]?.value ?? "";
-  this.select(this.userLoaderProvider, this.userLoaderVersion)
+  userLoaderVersion.value = loaderVersions.value[0]?.value ?? "";
+  select(userLoaderProvider.value, userLoaderVersion.value)
 })
 
 const loaderVersions = computed(() => {

@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+:root {
+    --color-navbar: #313131;
+    --color-background: #2A2A2A;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 8px;
+    border-radius: 40%;
+    z-index: 10;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: var(--color-navbar);
+    z-index: 10;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #494949;
+    border-radius: 25px;
+    z-index: 10;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

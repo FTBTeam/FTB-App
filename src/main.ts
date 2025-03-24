@@ -1,4 +1,10 @@
 import "./styles.css"
+import '@/assets/fonts.scss';
+import '@/assets/global.scss';
+import 'wysiwyg.css/wysiwyg.css';
+import 'balloon-css/balloon.css';
+import '@/assets/liboverrides.scss';
+
 import platform from '@/utils/interface/electron-overwolf';
 import { bootstrapLoad } from '@/bootstrap.ts';
 
@@ -12,13 +18,6 @@ import {fas} from '@fortawesome/free-solid-svg-icons';
 import {fab} from '@fortawesome/free-brands-svg-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-
-import '@/assets/fonts.scss';
-import '@/assets/global.scss';
-import '@/assets/tailwind.scss';
-import 'wysiwyg.css/wysiwyg.css';
-import 'balloon-css/balloon.css';
-import '@/assets/liboverrides.scss';
 
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 
