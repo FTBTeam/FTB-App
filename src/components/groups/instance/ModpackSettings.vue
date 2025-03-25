@@ -1,11 +1,10 @@
 <script lang="ts" setup>
-import {JavaVersion, SettingsState} from '@/modules/settings/types';
 import Platform from '@/utils/interface/electron-overwolf';
 import platform from '@/utils/interface/electron-overwolf';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
-import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import { InstanceJson, JavaInstall, SugaredInstanceJson } from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
@@ -22,20 +21,13 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { FTBInput, Modal, UiToggle, Selection2, UiButton } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
-import { ModLoaderUpdateState } from '@/core/types/appTypes.ts';
-import { toTitleCase } from '../../../utils/helpers/stringHelpers.ts';
+import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
+import { useInstallStore } from '@/store/installStore.ts';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
 
-const emit = defineEmits<{
-  (event: 'back'): void;
-}>()
-
-const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
-
-// TODO: [port] Fix me
-// @State('settings') public settingsState!: SettingsState;
-// @Action("addModloaderUpdate", ns("v2/install")) addModloaderUpdate!: (request: ModLoaderUpdateState) => void;
-const settingsState = {} as SettingsState;
-function addModloaderUpdate(request: ModLoaderUpdateState) {}
+const router = useRouter();
+const installStore = useInstallStore();
+const appSettingsStore = useAppSettings();
 
 const {
   instance
@@ -43,14 +35,18 @@ const {
   instance: SugaredInstanceJson;
 }>()
 
-const router = useRouter();
+const emit = defineEmits<{
+  (event: 'back'): void;
+}>()
+
+const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
 
 const instanceSettings = ref<SaveJson>({} as any);
 const previousSettings = ref<SaveJson>({} as any);
 
 const showDuplicate = ref(false);
 const jreSelection = ref('');
-const javaVersions = ref<JavaVersion[]>([]);
+const javaVersions = ref<JavaInstall[]>([]);
 const deleting = ref(false);
 
 const imageFile = ref<File | null>(null);
@@ -78,7 +74,7 @@ onMounted(async () => {
 })
 
 function selectedResolution() {
-  const selected = settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
+  const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
   if (!selected) {
     return;
   }
@@ -116,26 +112,27 @@ async function repairInstance() {
     return;
   }
 
-  await services.instanceInstallController.requestUpdate(this.instance, this.instance.versionId, typeIdToProvider(this.instance.packType));
+  await services.instanceInstallController.requestUpdate(instance, instance.versionId, typeIdToProvider(instance.packType));
   emit("back")
 }
 
 async function installModLoader() {
-  if (!userSelectedLoader) {
+  if (!userSelectedLoader.value) {
     return;
   }
   
   const result = await sendMessage("instanceOverrideModLoader", {
-    uuid: this.instance.uuid,
-    modLoaderId: parseInt(this.userSelectedLoader[1].packId, 10),
-    modLoaderVersion: this.userSelectedLoader[1].id,
+    uuid: instance.uuid,
+    modLoaderId: parseInt(userSelectedLoader.value[1].packId, 10),
+    modLoaderVersion: userSelectedLoader.value[1].id,
   });  
+  
   if (result.status !== "error") {
     userSelectModLoader.value = false;
     userSelectedLoader.value = null;
 
     if (result.status === "prepare") {
-      addModloaderUpdate({
+      installStore.addModloaderUpdate({
         instanceId: instance.uuid,
         packetId: result.requestId
       })
@@ -161,7 +158,7 @@ async function saveSettings() {
   }
   
   const result = await InstanceController.from(instance)
-    .updateInstance(this.instanceSettings);
+    .updateInstance(instanceSettings.value);
 
   if (result) {
     alertController.success("Settings saved!")
@@ -204,7 +201,7 @@ function confirmDelete() {
 }
 
 function createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
-  resolutionId.value = this.resolutionList
+  resolutionId.value = resolutionList.value
     .find((e) => e.value === `${instance.width ?? ''}|${instance.height ?? ''}`)
     ?.value ?? "";
 
@@ -245,7 +242,7 @@ function preferIPv4Clicked(event: any) {
   saveSettings()
 }
 
-const preferIPv4 = computed(() => instanceSettings.value.jvmArgs.includes(preferIPv4Arg))
+const prefersIPv4 = computed(() => instanceSettings.value?.jvmArgs?.includes(preferIPv4Arg))
 const channelOptions = computed(() => ReleaseChannelOptions(true));
 const hasModloader = computed(() => instance?.modLoader !== instance.mcVersion);
 const resolutionList = computed(() => {
@@ -256,7 +253,11 @@ const resolutionList = computed(() => {
     meta: "Custom"
   });
 
-  for (const res of settingsState.hardware.supportedResolutions) {
+  if (!appSettingsStore.systemHardware) {
+    return resList;
+  }
+  
+  for (const res of appSettingsStore.systemHardware?.supportedResolutions) {
     resList.push({
       value: `${res.width}|${res.height}`,
       label: `${res.width} x ${res.height}`,
@@ -503,7 +504,7 @@ const resolutionList = computed(() => {
       />
     </Modal>
     
-    <Modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? this.instance.modLoader : 'Vanilla'}`" @closed="() => {
+    <Modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? instance.modLoader : 'Vanilla'}`" @closed="() => {
       userSelectModLoader = false
       userSelectedLoader = null
     }">
@@ -523,7 +524,7 @@ const resolutionList = computed(() => {
             userSelectModLoader = false
             userSelectedLoader = null
           }">Close</UiButton>
-          <UiButton type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null" @click="installModloader">Install</UiButton>
+          <UiButton type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null" @click="() => installModloader()">Install</UiButton>
         </div>
       </template>
     </Modal>

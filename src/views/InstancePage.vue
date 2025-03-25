@@ -19,7 +19,7 @@ import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
-import { ModPack } from '@/core/types/appTypes.ts';
+import { ModPack, Versions } from '@/core/types/appTypes.ts';
 
 const router = useRouter()
 
@@ -55,12 +55,6 @@ const instance = computed<SugaredInstanceJson | null>(() => {
 })
 
 onMounted(async () => {
-  // TODO: [port] fix me
-  logger.debug("Mounted instance page, waiting for websockets")
-  // await waitForWebsockets("instancePage", websockets.socket)
-
-  logger.debug("Websockets ready, loading instance")
-  console.log(router.currentRoute.value)
   if (instance.value == null) {
     logger.error(`Instance not found ${packUuid.value}`)
     await router.push(RouterNames.ROOT_LIBRARY);
@@ -192,6 +186,7 @@ function launch() {
 
 function playOffline() {
   logger.debug("Launching instance in offline mode")
+  
   // TODO: Fix me
   // this.$router.push({
   //   name: RouterNames.ROOT_LAUNCH_PACK,
@@ -231,7 +226,7 @@ function closeOfflineModel() {
 }
 
 const packSplashArt = resolveArtwork(apiPack.value, 'splash');
-const hidePackDetails = activeTab.value === ModpackPageTabs.SETTINGS;
+const hidePackDetails = computed(() => activeTab.value === ModpackPageTabs.SETTINGS);
 const versionType = apiPack.value?.versions?.find((e) => e.id === instance.value?.versionId)?.type.toLowerCase() ?? 'release';
 </script>
 

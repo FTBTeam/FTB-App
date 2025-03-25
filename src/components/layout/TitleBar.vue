@@ -1,39 +1,31 @@
 <script lang="ts" setup>
 import platform from '@/utils/interface/electron-overwolf';
-import {SettingsState} from '@/modules/settings/types';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
-import {createLogger} from '@/core/logger';
 import { useAttachDomEvent } from '@/composables';
 import { onMounted, ref, computed } from 'vue';
-import { toTitleCase } from '../../utils/helpers/stringHelpers.ts';
-
-const logger = createLogger('TitleBar.vue');
+import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 
 const blurred = ref(false);
-const isMac = ref(false); // TODO: [Port] fixme
+const isMac = ref(false);
 const windowId = ref<string | null>(null);
 
 useAttachDomEvent<FocusEvent>('focus', windowFocusChanged)
 useAttachDomEvent<FocusEvent>('blur', windowFocusChanged)
 
 onMounted(async () => {
-  windowId.value = await platform.get.frame.getWindowId();
+  const [windowIdRes, osType] = await Promise.all([
+    platform.get.frame.getWindowId(),
+    platform.get.utils.getOsType()
+  ])
+  
+  windowId.value = windowIdRes
+  isMac.value = osType === "mac"
 })
 
 function windowFocusChanged(event: FocusEvent) {
   blurred.value = event.type === 'blur';
 }
-
-// TODO: [Port] fixme
-// @Action('disconnect') public disconnect: any;
-// @State('settings') private settings!: SettingsState;
-// @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
-// @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
-function disconnect() {}
-function saveSettings() {}
-function toggleDebugDisableAdAside() {}
-const settings = ref<SettingsState | null>(null);
 
 function startDragging(event: any) {
   platform.get.frame.handleDrag(event, windowId.value);
@@ -42,8 +34,6 @@ function startDragging(event: any) {
 function close(): void {
   // Callback only on overwolf
   platform.get.frame.close(windowId.value, () => {
-    saveSettings(settings.value?.settings);
-    disconnect();
   });
 }
 

@@ -211,24 +211,25 @@ app.on('open-url', async (event, customSchemeData) => {
   win?.webContents.send('parseProtocolURL', customSchemeData);
 });
 
-ipcMain.handle('selectFolder', async (event, data) => {
-  if (win === null) {
-    logger.debug("Win is null, unable to select folder")
-    return;
-  }
-
-  const result: any = await dialog.showOpenDialog(win, {
-    properties: ['openDirectory'],
-    defaultPath: data,
-  });
-
-  if (result.filePaths.length > 0) {
-    return result.filePaths[0];
-  } else {
-    logger.debug("No file paths returned from dialog, this could be an error or just a cancel")
-    return null;
-  }
-});
+// MOVED
+// ipcMain.handle('selectFolder', async (event, data) => {
+//   if (win === null) {
+//     logger.debug("Win is null, unable to select folder")
+//     return;
+//   }
+//
+//   const result: any = await dialog.showOpenDialog(win, {
+//     properties: ['openDirectory'],
+//     defaultPath: data,
+//   });
+//
+//   if (result.filePaths.length > 0) {
+//     return result.filePaths[0];
+//   } else {
+//     logger.debug("No file paths returned from dialog, this could be an error or just a cancel")
+//     return null;
+//   }
+// });
 
 const reloadMainWindow = async () => {
   if (!win) {

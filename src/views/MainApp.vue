@@ -1,18 +1,12 @@
 <script lang="ts" setup>
 import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
-import {SettingsState} from '@/modules/settings/types';
 import platform from '@/utils/interface/electron-overwolf';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/layout/GlobalComponents.vue';
 import {createLogger} from '@/core/logger';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {sendMessage} from '@/core/websockets/websocketsApi';
 import {constants} from '@/core/constants';
-import {adsEnabled} from '@/utils';
-import Loader from '@/components/ui/Loader.vue';
 import Onboarding from '@/components/modals/Onboarding.vue';
-import { UiButton, Modal } from '@/components/ui';
 import {alertController} from '@/core/controllers/alertController';
 import { onMounted, ref, computed } from 'vue';
 import { services } from '@/bootstrap.ts';
@@ -21,40 +15,22 @@ import { useInstanceStore } from '@/store/instancesStore.ts';
 import { DevToolsActions } from '@/components/layout';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
-
-// TODO: [port] Fix me
-// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) debugDisabledAdAside!: boolean;
+import { useAds } from '@/composables/useAds.ts';
+import { Loader } from '@/components/ui';
 
 const router = useRouter()
 const accountStore = useAccountsStore();
 const appSettingsStore = useAppSettings();
-
-const debugDisabledAdAside: boolean = false;
+const ads = useAds()
 
 const logger = createLogger("MainApp.vue");
 const instanceStore = useInstanceStore();
 
-// App runtime
-const loading = ref(true);
-const hasInitialized = ref(false);
 const isMac = ref(false);
-
-const appConnected = ref(false);
-
-// App init
-const appStarting = ref(true);
-const appLoaded = ref(false);
-const appInstalling = ref(false);
-const appInstallStage = ref("");
-
-// App install
-const appInstallFailed = ref(false);
-const appStartupFailed = ref(false);
-const appInstallError = ref("");
+const loadingEssentialData = ref(true);
 
 // Onboarding
 const showOnboarding = ref(false);
-
 
 onMounted(async () => {
   logger.info("App started on ", constants.platform)
@@ -63,6 +39,7 @@ onMounted(async () => {
   
   // Technically not possible to error but we have to make the lint happy
   initApp().catch(logger.error)
+  isMac.value = await platform.get.utils.getOsType() === "mac"
   
   // useSystemBar().catch(console.error)
   // startNetworkMonitor();
@@ -105,17 +82,15 @@ onMounted(async () => {
 
 async function initApp() {
   console.log("Init app")
-  await waitForSocket()
-  
-  console.log("Connected")
-  appConnected.value = true
+  loadingEssentialData.value = true;
   await appSettingsStore.loadSettings();
   
   await Promise.all([
     accountStore.loadProfiles(),
     instanceStore.loadInstances()
   ])
-  console.log(appConnected.value)
+  
+  loadingEssentialData.value = false;
 
   // Remove the old one if needed (typically app restarts (soft))
   services.emitter.off("ws/message", refreshHandler)
@@ -128,152 +103,84 @@ function refreshHandler(data: any) {
   }
 }
 
-async function waitForSocket() {
-  // Wait for websocket
-  await new Promise((res) => {
-    function check() {
-      if (services.websocket.isAlive()) {
-        res(null);
-      } else {
-        setTimeout(check, 1000);
-      }
-    }
-    
-    check();
-  });
-}
-
 async function installApp() {
-  appInstalling.value = true;
-  logger.info("Installing app");
-
-  await platform.get.app.installApp((stage: any) => appInstallStage.value = stage, () => {}, false)
-
-  appInstalling.value = false;
+  // TODO: [port] move to #app
+  // appInstalling.value = true;
+  // logger.info("Installing app");
+  //
+  // await platform.get.app.installApp((stage: any) => appInstallStage.value = stage, () => {}, false)
+  //
+  // appInstalling.value = false;
 }
 
 async function startApp() {
-  appStarting.value = false;
-  logger.info("Starting app");
-
-  if (!constants.isProduction) {
-    logger.info("Starting production app");
-
-    // If we're in dev, we just default to localhost
-    await connectToWebsockets();
-    return;
-  }
-
-  logger.info("Sending start subprocess message");
-  try {
-    let appData: any = await platform.get.app.startSubprocess();
-
-    // False means update
-    if (!appData) {
-      try {
-        await platform.get.app.updateApp(
-          (stage: any) => appInstallStage.value = stage,
-          () => logger.info("Update complete")
-        );
-      } catch (e: any) {
-        appInstallFailed.value = true;
-        appInstallError.value = e?.customMessage || "The app has failed to update, please try again or contact support...";
-        logger.error("Failed to update app", e);
-      }
-
-      appData = await platform.get.app.startSubprocess();
-    }
-
-    logger.info("Started app subprocess", appData);
-    if (!appData.port || !appData.secret) {
-      appStartupFailed.value = true;
-      appInstallError.value = "The app has failed to start due to connection issues, please try again or contact support...";
-      logger.error("Failed to start subprocess due to connection issues", appData);
-      return;
-    }
-
-    // Finally we need to get the app to connect to the subprocess
-    await connectToWebsockets(appData.port, appData.secret);
-  } catch (e: any) {
-    // Same as the install, grab the custom error if possible
-    appStartupFailed.value = true;
-    appInstallError.value = e?.customMessage || "The app has failed to start, please try again or contact support...";
-    logger.error("Failed to start subprocess", e);
-  }
-}
-
-async function connectToWebsockets(port: number = 13377, secret: string = "") {
-  // Store the secret
-  logger.info("Starting websocket connection on port", port, "with secret", secret);
-  // await storeWsSecret(secret);
-  
-  // TODO: Fix me plz
-  // $connect('ws://localhost:' + port);
-  await new Promise((res, rej) => {
-    function check() {
-      if (services.websocket.isAlive()) {
-        res(null);
-      } else {
-        setTimeout(check, 1000);
-      }
-    }
-    
-    check();
-  })
-  
-  console.log("Connected to websocket")
+  // TODO: [port] move to #app
+  // appStarting.value = false;
+  // logger.info("Starting app");
+  //
+  // if (!constants.isProduction) {
+  //   logger.info("Starting production app");
+  //
+  //   // If we're in dev, we just default to localhost
+  //   await connectToWebsockets();
+  //   return;
+  // }
+  //
+  // logger.info("Sending start subprocess message");
+  // try {
+  //   let appData: any = await platform.get.app.startSubprocess();
+  //
+  //   // False means update
+  //   if (!appData) {
+  //     try {
+  //       await platform.get.app.updateApp(
+  //         (stage: any) => appInstallStage.value = stage,
+  //         () => logger.info("Update complete")
+  //       );
+  //     } catch (e: any) {
+  //       appInstallFailed.value = true;
+  //       appInstallError.value = e?.customMessage || "The app has failed to update, please try again or contact support...";
+  //       logger.error("Failed to update app", e);
+  //     }
+  //
+  //     appData = await platform.get.app.startSubprocess();
+  //   }
+  //
+  //   logger.info("Started app subprocess", appData);
+  //   if (!appData.port || !appData.secret) {
+  //     appStartupFailed.value = true;
+  //     appInstallError.value = "The app has failed to start due to connection issues, please try again or contact support...";
+  //     logger.error("Failed to start subprocess due to connection issues", appData);
+  //     return;
+  //   }
+  //
+  //   // Finally we need to get the app to connect to the subprocess
+  //   await connectToWebsockets(appData.port, appData.secret);
+  // } catch (e: any) {
+  //   // Same as the install, grab the custom error if possible
+  //   appStartupFailed.value = true;
+  //   appInstallError.value = e?.customMessage || "The app has failed to start, please try again or contact support...";
+  //   logger.error("Failed to start subprocess", e);
+  // }
 }
 
 async function setupApp() {
-  if (!hasInitialized.value) {
-    await fetchStartData();
-
-    logger.debug("Starting ping poll");
-    registerPingCallback((data: any) => {
-      if (data.type === 'ping') {
-        gobbleError(() => sendMessage("pong", {}, 500))
-      }
-    });
-
-    hasInitialized.value = true;
-
-    checkForFirstRun()
-      .then(() => logger.info("Finished checking for first run"))
-      .catch(error => logger.error("Failed to check for first run", error));
-  }
-
-  platform.get.actions.onAppReady();
-
-  logger.debug("Notifying all controllers of connected status")
-}
-
-async function fetchStartData() {
-  logger.info("Starting startup jobs");
-  for (const job of startupJobs.value) {
-    logger.info(`Starting ${job.name}`)
-    await job.action();
-    // TOOD: likely not reactive
-    job.done = true;
-    logger.info(`Finished ${job.name}`)
-  }
-}
-
-// TODO: [port] Fix me
-  // @Watch('websockets', { deep: true })
-  // public async onWebsocketsChange(newVal: SocketState) {
-  //   if (newVal.socket.isConnected && this.loading) {
-  //     logger.info("Websockets connected, loading app");
-  //     this.loading = false;
-  //     await this.setupApp();
-  //     logger.info("Finished loading app");
-  //   }
+  // TODO: [port] move to #app
+  // if (!hasInitialized.value) {
   //
-  //   if (!newVal.socket.isConnected && !this.loading) {
-  //     logger.warn("Websockets disconnected, unloading app");
-  //     logger.debug("Notifying all controllers of disconnected status")
-  //     this.loading = true;
-  //   }
+  //   logger.debug("Starting ping poll");
+  //
+  //   hasInitialized.value = true;
+  //
+  //   checkForFirstRun()
+  //     .then(() => logger.info("Finished checking for first run"))
+  //     .catch(error => logger.error("Failed to check for first run", error));
   // }
+  //
+  // platform.get.actions.onAppReady();
+  //
+  // logger.debug("Notifying all controllers of connected status")
+}
 
 async function checkForFirstRun() {
   if (!platform.isElectron()) {
@@ -334,22 +241,16 @@ async function useSystemBar() {
   }
 }
 
-const appConnecting = computed(() => true)// !websockets.socket.isConnected) // TODO: [port] fixme
-const reconnectAttempts = computed(() => 0)// websockets.reconnects) // TODO: [port] fixme
-const isReconnecting = computed(() => appConnecting.value) //&& !websockets.firstStart) // TODO: [port] fixme
-const appReadyToGo = appConnected.value //computed(() => !appStarting.value && appLoaded.value && !appInstalling && !isReconnecting && !appConnecting.value && allJobsDone())
-const advertsEnabled = computed(() => adsEnabled(appSettingsStore.rootSettings!, debugDisabledAdAside))
-
 const status = computed(() => {
-  if (appStarting.value && !appInstalling) {
-    return "Starting up"
-  } else if (appInstalling) {
-    return "Installing"
-  } else if (appConnecting.value && !isReconnecting && !appInstalling) {
-    return "Connecting..."
-  } else if (!appStarting && !appInstalling && isReconnecting) {
-    return "Reconnecting..."
-  }
+  // if (appStarting.value && !appInstalling) {
+  //   return "Starting up"
+  // } else if (appInstalling) {
+  //   return "Installing"
+  // } else if (appConnecting.value && !isReconnecting && !appInstalling) {
+  //   return "Connecting..."
+  // } else if (!appStarting && !appInstalling && isReconnecting) {
+  //   return "Reconnecting..."
+  // }
 })
 
 const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/settings'))
@@ -359,58 +260,60 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
   <div id="app" class="theme-dark" :class="{'macos': isMac}">
     <title-bar />
     
-    <div class="app-container relative flex justify-center items-center" v-if="!appConnected">
-      <div class="text-center">
-        <loader :title="status" sub-title="We're just getting some things ready... This shouldn't take long!" />
-        
-        <p v-if="appInstalling" class="text-center mt-2">
-          {{appInstallStage}}
-        </p>
-        
-        <div class="debug font-mono font-bold flex gap-6 items-center">
-          <div class="debug-item" :class="{active: appReadyToGo}">R</div>
-          <div class="debug-item" :class="{active: appStarting}">S</div>
-          <div class="debug-item" :class="{active: appLoaded}">L</div>
-          <div class="debug-item" :class="{active: appInstalling}">I</div>
-          <div class="debug-item" :class="{active: appConnecting}">C</div>
-          <div class="debug-item" :class="{active: isReconnecting}">RE</div>
-          <div class="opacity-25">
-            Attempts {{reconnectAttempts}}
-          </div>
-        </div>
-      </div>
-    </div>
+<!--    <div class="app-container relative flex justify-center items-center" v-if="!appConnected">-->
+<!--      <div class="text-center">-->
+<!--        <loader :title="status" sub-title="We're just getting some things ready... This shouldn't take long!" />-->
+<!--        -->
+<!--        <p v-if="appInstalling" class="text-center mt-2">-->
+<!--          {{appInstallStage}}-->
+<!--        </p>-->
+<!--        -->
+<!--        <div class="debug font-mono font-bold flex gap-6 items-center">-->
+<!--          <div class="debug-item" :class="{active: appReadyToGo}">R</div>-->
+<!--          <div class="debug-item" :class="{active: appStarting}">S</div>-->
+<!--          <div class="debug-item" :class="{active: appLoaded}">L</div>-->
+<!--          <div class="debug-item" :class="{active: appInstalling}">I</div>-->
+<!--          <div class="debug-item" :class="{active: appConnecting}">C</div>-->
+<!--          <div class="debug-item" :class="{active: isReconnecting}">RE</div>-->
+<!--          <div class="opacity-25">-->
+<!--            Attempts {{reconnectAttempts}}-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
     
     <!-- App has connected and is ready to use -->
-    <div class="app-container" v-if="appConnected">
+    <div class="app-container">
       <main class="main">
         <sidebar v-if="showSidebar" />
         <div class="app-content relative">
-          <router-view />
+          <router-view v-if="!loadingEssentialData" />
+          <loader v-else />
         </div>
-        <ad-aside v-show="advertsEnabled" :hide-ads="showOnboarding" />
+        <ad-aside v-show="ads.adsEnabled" :hide-ads="showOnboarding" />
       </main>
     </div>
     
     <onboarding v-if="showOnboarding" @accepted="showOnboarding = false" />
     <dev-tools-actions />
-    <GlobalComponents v-if="appConnected" />
+    <GlobalComponents />
     
-    <modal :open="appInstallFailed || appStartupFailed" title="Something's gone wrong!" sub-title="Looks like there might be a problem...">
-      <p class="mb-1">{{appInstallError}}</p>
-      
-      <p>Sometimes these things happen, it could be a random failure, try restarting the app and if that doesn't work, try reaching out on our Discord (linked below)</p>
-      <template #footer>
-        <div class="flex gap-4 justify-end items-center">
-          <UiButton size="small" type="danger" class="mr-auto" @click="() => {
-            appInstallFailed = false
-            appStartupFailed = false
-          }">Let me in anyway...</UiButton>
-          <UiButton type="info" :icon="['fab', 'discord']" @click="platform.get.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</UiButton>
-          <UiButton type="success" icon="power-off" @click="restartApp">Restart</UiButton>
-        </div>
-      </template>
-    </modal>
+<!--  TODO: [port] move to #app  -->
+<!--    <modal :open="appInstallFailed || appStartupFailed" title="Something's gone wrong!" sub-title="Looks like there might be a problem...">-->
+<!--      <p class="mb-1">{{appInstallError}}</p>-->
+<!--      -->
+<!--      <p>Sometimes these things happen, it could be a random failure, try restarting the app and if that doesn't work, try reaching out on our Discord (linked below)</p>-->
+<!--      <template #footer>-->
+<!--        <div class="flex gap-4 justify-end items-center">-->
+<!--          <UiButton size="small" type="danger" class="mr-auto" @click="() => {-->
+<!--            appInstallFailed = false-->
+<!--            appStartupFailed = false-->
+<!--          }">Let me in anyway...</UiButton>-->
+<!--          <UiButton type="info" :icon="['fab', 'discord']" @click="platform.get.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</UiButton>-->
+<!--          <UiButton type="success" icon="power-off" @click="restartApp">Restart</UiButton>-->
+<!--        </div>-->
+<!--      </template>-->
+<!--    </modal>-->
   </div>
 </template>
 

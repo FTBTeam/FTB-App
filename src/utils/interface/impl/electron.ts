@@ -96,8 +96,20 @@ const Electron: ElectronOverwolfInterface = {
       ipcRenderer.send('openLink', url);
     },
 
-    getOsArch() {
+    async getOsArch() {
       return os.arch();
+    },
+    
+    async getOsType() {
+      switch (os.type()) {
+        case 'Darwin':
+          return 'mac';
+        case 'Linux':
+          return 'linux';
+        default:
+          return 'windows';
+      }
+      // return await window.ipcRenderer.invoke("os/platform");
     },
 
     async getPlatformVersion() {
@@ -245,7 +257,7 @@ const Electron: ElectronOverwolfInterface = {
       const appPath = appHome;
       return fs.existsSync(jreLocation(appPath));
     },
-    async installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate = false) {
+    async installApp(onStageChange: (stage: string) => void, _: (data: any) => void, isUpdate = false) {
       const fsLogger = new FSLogger("ftb-app-installer");
       fsLogger.clearLog();
       

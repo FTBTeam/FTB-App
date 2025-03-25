@@ -5,12 +5,9 @@ import Platform from '@/utils/interface/electron-overwolf';
 import { useAttachDomEvent } from '@/composables';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ref } from 'vue';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
 
-// TODO: [port] fixme
-// @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
-const toggleDebugDisableAdAside = () => {
-  console.log('toggleDebugDisableAdAside');
-}
+const appSettings = useAppSettings();
 
 useAttachDomEvent<MouseEvent>('click', (event) => {
   if ((event.target as any)?.closest('.dev-tools-actions')) return;
@@ -28,9 +25,7 @@ function openDevTools() {
   platform.get.utils.openDevTools();
 }
 
-// TODO: [port] this should likely use import.meta.env
-// console.log(import.meta.env.NODE_ENV)
-const devModeEnabled = true // = import.meta.env.NODE_ENV === 'development';
+const devModeEnabled = !import.meta.env.PROD;
 </script>
 
 <template>
@@ -44,7 +39,7 @@ const devModeEnabled = true // = import.meta.env.NODE_ENV === 'development';
        <FontAwesomeIcon icon="home" />
      </router-link>
      <FontAwesomeIcon class="item" icon="fire" @click="openDebugger"/>
-     <FontAwesomeIcon class="bars" icon="bars" @click="toggleDebugDisableAdAside" />
+     <FontAwesomeIcon class="bars" icon="bars" @click="() => appSettings.toggleDebugAds()" />
      <FontAwesomeIcon icon="wrench" @click="openDevTools" />
    </div>
  </div>

@@ -23,7 +23,8 @@
 <script lang="ts" setup>
 // TODO: (M#02) Remove this component and replace it with a modal that support full screen
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import platform from '@/utils/interface/electron-overwolf'
 
 const { subtitle = '', scrollable = true } = defineProps<{
   open: boolean;
@@ -36,11 +37,11 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-// TODO: [port] Fix me
-const isMac = false;
+const isMac = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('keydown', onEsc)
+  isMac.value = await platform.get.utils.getOsType() === "mac"
 })
 
 onUnmounted(() => {

@@ -6,10 +6,8 @@ import {JavaLicenses, JavascriptLicenses} from '@/core/types/external/licenses.t
  * methods. Not super ideal. Working for now
  */
 export interface Util {
-  /**
-   * @deprecated don't use
-   */
-  getOsArch: () => string;
+  getOsArch: () => Promise<string>;
+  getOsType: () => Promise<string>;
   getPlatformVersion: () => Promise<string>;
   openUrl: (e: string) => void;
   crypto: {

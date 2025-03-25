@@ -72,8 +72,12 @@ const Overwolf: ElectronOverwolfInterface = {
       overwolf.utils.openUrlInDefaultBrowser(url);
     },
 
-    getOsArch() {
-      return 'x64'// os.arch(); // TODO: [port] fixme
+    async getOsArch() {
+      return 'x64'
+    },
+    
+    async getOsType() {
+      return 'windows'
     },
 
     async getPlatformVersion() {
@@ -281,7 +285,7 @@ const Overwolf: ElectronOverwolfInterface = {
       // Don't use this on overwolf
       throw new Error("Don't use app.updateApp() on Overwolf")
     },
-    async changeAppChannel(channel: string) {
+    async changeAppChannel(_: string) {
       return;
     },
     async appChannel() {
@@ -382,23 +386,20 @@ const Overwolf: ElectronOverwolfInterface = {
           (window as any).ftbFlags.smallMonitor = true;
         }
       })
-      
+    
     //@ts-ignore
-    if (window.isChat === undefined || !window.isChat) {
-      //@ts-ignore
-      overwolf.extensions.onAppLaunchTriggered.addListener(function (event) {
-        if (event.origin === 'urlscheme') {
-          let protocolURL = event.parameter;
-          if (protocolURL === undefined) {
-            return;
-          }
-          protocolURL = decodeURIComponent(protocolURL);
-          parseAndHandleURL(protocolURL);
+    overwolf.extensions.onAppLaunchTriggered.addListener(function (event) {
+      if (event.origin === 'urlscheme') {
+        let protocolURL = event.parameter;
+        if (protocolURL === undefined) {
+          return;
         }
-      });
+        protocolURL = decodeURIComponent(protocolURL);
+        parseAndHandleURL(protocolURL);
+      }
+    });
 
-      addWindowListener().catch(owLogger.error);
-    }
+    addWindowListener().catch(owLogger.error);
 
     async function addWindowListener() {
       let ourWindowID = await new Promise((resolve) => {
@@ -438,17 +439,6 @@ const Overwolf: ElectronOverwolfInterface = {
         }
       });
     }
-
-    //@ts-ignore
-    // if (window.isChat) {
-    //   router.push('/chat');
-    //   //@ts-ignore
-    //   overwolf.windows.getMainWindow().addCallback((data: any) => {
-    //     if (data.token) {
-    //       store.dispatch('auth/setSessionID', data.token, { root: true });
-    //     }
-    //   });
-    // }
   },
 };
 

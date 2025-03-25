@@ -1,18 +1,13 @@
 <script lang="ts" setup>
-import {adsEnabled, parseMarkdown} from '@/utils';
+import {parseMarkdown} from '@/utils';
 import UiButton from '@/components/ui/UiButton.vue';
-import {SettingsState} from '@/modules/settings/types';
 import { useAttachDomEvent } from '@/composables';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useDialogsStore } from '@/store/dialogStore.ts';
+import { useAds } from '@/composables/useAds.ts';
 
 const dialogStore = useDialogsStore();
-
-// TODO: [port] Fix me
-// @State('settings') public settings!: SettingsState;
-// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-const settings: SettingsState = {};
-const debugDisabledAdAside: boolean = false;
+const ads = useAds()
 
 useAttachDomEvent<KeyboardEvent>('keydown', (event) => {
   if (event.key !== 'Escape') {
@@ -27,13 +22,11 @@ function closeTopDialog() {
     dialogStore.closeDialog(dialogStore.dialogs[dialogStore.dialogs.length - 1]);
   }
 }
-
-const advertsEnabled = adsEnabled(settings, debugDisabledAdAside);
 </script>
 
 <template>
   <transition name="transition-fade" :duration="250">
-    <div class="dialog-container" :class="{ads: advertsEnabled}" v-if="dialogStore.dialogs.length" @click.self="closeTopDialog">
+    <div class="dialog-container" :class="{ads: ads.adsEnabled}" v-if="dialogStore.dialogs.length" @click.self="closeTopDialog">
       <transition-group class="stacker" tag="div" name="transition-fade" :duration="250">
         <div
           v-for="(dialog, index) in dialogStore.dialogs"

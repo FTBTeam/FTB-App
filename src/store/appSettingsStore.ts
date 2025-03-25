@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { SettingsData } from '@/core/types/javaApi';
 import { sendMessage } from '@/core/websockets/websocketsApi.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
+import { constants } from '@/core/constants.ts';
 
 export interface Resolution {
   width: number;
@@ -19,14 +20,28 @@ type AppState = {
   rootSettings: SettingsData | null;
   rootSettingsLoading: boolean;
   systemHardware: Hardware | null;
+  debugAdsDisabled?: boolean;
 }
+
+const debugSettingsKey = "app-debug-settings";
 
 export const useAppSettings = defineStore("appSettings", {
   state: (): AppState => {
+    const isProd = constants.isProduction
+    let debugAdsDisabled = false;
+    if (!isProd) {
+      const debugSettings = localStorage.getItem(debugSettingsKey);
+      if (debugSettings) {
+        const settings = JSON.parse(debugSettings);
+        debugAdsDisabled = settings?.debugAdsDisabled ?? false;
+      }
+    }
+    
     return {
       rootSettings: null,
       rootSettingsLoading: false,
-      systemHardware: null
+      systemHardware: null,
+      debugAdsDisabled: debugAdsDisabled
     }
   },
 
@@ -55,6 +70,16 @@ export const useAppSettings = defineStore("appSettings", {
       if (saveResult.settings) {
         this.rootSettings = saveResult.settings;
       }
+    },
+    
+    toggleDebugAds() {
+      const isProd = constants.isProduction
+      if (isProd) {
+        return
+      }
+      
+      this.debugAdsDisabled = !this.debugAdsDisabled;
+      localStorage.setItem(debugSettingsKey, JSON.stringify({ debugAdsDisabled: this.debugAdsDisabled }));
     }
   }
 })

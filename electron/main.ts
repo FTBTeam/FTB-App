@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from 'electron'
+import './events.ts'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -19,24 +20,18 @@ function createWindow() {
   win = new BrowserWindow({
     title: 'FTB App',
     // icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
-    // webPreferences: {
-    //   preload: path.join(__dirname, 'preload.mjs'),
-    // },
+    webPreferences: {
+      // preload: path.join(__dirname, 'preload.mjs'),
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
     minWidth: 1220,
     minHeight: 895,
     width: 1545,
     height: 900,
-    frame: false,
-    webPreferences: {
-      // TODO: Stop doing all of this
-      nodeIntegration: true,
-      contextIsolation: false,
-      // contextIsolation: false,
-      // disableBlinkFeatures: 'Auxclick',
-      // webSecurity: false,
-    },
+    frame: false
   })
 
   // Test active push message to Renderer-process.

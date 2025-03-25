@@ -146,11 +146,10 @@ function createInstance() {
     private: false,
     category: userCategory.value,
     ourOwn: true,
-    // TODO: [port] fixme
-    // ram: settingRam == settingsState.settings.instanceDefaults.memory ? -1 : settingRam,
-    // fullscreen: settingFullscreen === settingsState.settings.instanceDefaults.fullscreen ? undefined : settingFullscreen,
-    // width: userWidth == settingsState.settings.instanceDefaults.width ? undefined : userWidth,
-    // height: userHeight == settingsState.settings.instanceDefaults.height ? undefined : userHeight,
+    ram: settingRam.value == appSettingsStore.rootSettings?.instanceDefaults.memory ? -1 : settingRam.value,
+    fullscreen: settingFullscreen.value === appSettingsStore.rootSettings?.instanceDefaults.fullscreen ? undefined : settingFullscreen.value,
+    width: userWidth.value == appSettingsStore.rootSettings?.instanceDefaults.width ? undefined : userWidth.value,
+    height: userHeight.value == appSettingsStore.rootSettings?.instanceDefaults.height ? undefined : userHeight.value,
   }
 
   // Magic

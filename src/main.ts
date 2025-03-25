@@ -6,7 +6,6 @@ import 'balloon-css/balloon.css';
 import '@/assets/liboverrides.scss';
 
 import platform from '@/utils/interface/electron-overwolf';
-import { bootstrapLoad } from '@/bootstrap.ts';
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -46,7 +45,6 @@ createApp(App)
   .use(VueVirtualScroller)
   .mount('#app')
   .$nextTick(() => {
-    bootstrapLoad();
     // Use contextBridge
     // window.ipcRenderer.on('main-process-message', (_event, message) => {
     //   console.log(message)

@@ -1,17 +1,14 @@
 <script lang="ts" setup>
 import Platform from '@/utils/interface/electron-overwolf';
-import {SettingsState} from '@/modules/settings/types';
 import {createLogger} from '@/core/logger';
 import { onMounted, useTemplateRef, ref, computed } from 'vue';
 import { useAttachDomEvent } from '@/composables';
-
-// TODO: [Port] fixme
-// @State('settings') public settings!: SettingsState;
-// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-const settings = ref<SettingsState | null>(null);
-// const debugDisabledAdAside = ref(false);
+import { constants } from '@/core/constants.ts';
+import { useAds } from '@/composables/useAds.ts';
+import OwAdViewWrapper from '@/components/ui/OwAdViewWrapper.vue';
 
 const logger = createLogger("AdAside.vue");
+const adsHook = useAds();
 
 const { hideAds = false } = defineProps<{
   hideAds: boolean;
@@ -63,9 +60,7 @@ function onResize() {
   }
 }
 
-// TODO: [Port] fixme
-const advertsEnabled = true; // return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-const isDevEnv = process.env.NODE_ENV !== 'production';
+const isDevEnv = constants.isDevelopment;
 
 async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => void, elm: any, options?: any) {
   emitPlaceholderUpdate(true);
@@ -120,7 +115,7 @@ async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => vo
         <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd">
           <div
             v-if="!isElectron"
-            v-show="advertsEnabled ?? true"
+            v-show="adsHook.adsEnabled ?? true"
             id="ow-ad-second"
             ref="adRefSecond"
             style="max-width: 300px; max-height: 250px;"
@@ -131,7 +126,7 @@ async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => vo
         <div class="ad-holder">
           <div
             v-if="!isElectron"
-            v-show="advertsEnabled ?? true"
+            v-show="adsHook.adsEnabled ?? true"
             id="ow-ad"
             ref="adRef"
             style="max-width: 400px; max-height: 600px;"
@@ -148,13 +143,13 @@ async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => vo
       <div class="ad-container ads" v-else key="adside-ad-type">
         <div class="ad-holder small" v-if="!disableSmallerAd">
           <div style="width: 300px; height: 250px; background: transparent;">
-            <owadview />
+            <OwAdViewWrapper />
           </div>
         </div>
         
         <div class="ad-holder">
           <div style="width: 400px; height: 600px; background: transparent;">
-            <owadview />
+            <OwAdViewWrapper />
           </div>
         </div>
       </div>

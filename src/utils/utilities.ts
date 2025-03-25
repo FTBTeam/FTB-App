@@ -1,6 +1,5 @@
 import {Socket} from '@/modules/websocket/types';
 import {createLogger} from '@/core/logger';
-import {SettingsData} from '@/core/types/javaApi';
 
 const logger = createLogger("utils/utilities.ts");
 
@@ -13,15 +12,6 @@ export function debounce(func: () => void, wait: number): () => void {
       func();
     }, wait);
   };
-}
-
-export function adsEnabled(settings: SettingsData, debugMode = false) {
-  if (process.env.NODE_ENV !== "production" && debugMode) {
-    return false
-  }
-  
-  // If this fails, show the ads
-  return settings?.appearance?.showAds ?? true;
 }
 
 export async function waitForWebsockets(user: string, websockets: Socket) {
@@ -67,33 +57,3 @@ export async function waitForWebsocketsAndData(user: string, websockets: Socket,
     }, 100);
   });
 }
-
-// export function queryServer(serverInfo: string): Promise<MCProtocol | undefined> {
-//   return new Promise((resolve, reject) => {
-//     if (serverInfo.includes(':')) {
-//       const address = serverInfo.split(':');
-//       const serverIP = address[0];
-//       const serverPort = address[1];
-//
-//       const query = new mcQuery.MinecraftServer(serverIP, serverPort);
-//
-//       query.ping(5000, (err: any, res: any) => {
-//         if (err) {
-//           reject(err);
-//           return;
-//         }
-//
-//         resolve(res);
-//       });
-//     } else {
-//       const query = new mcQuery.MinecraftServer(serverInfo);
-//       query.ping(5000, 5, (err: any, res: any) => {
-//         if (err) {
-//           reject(err);
-//           return;
-//         }
-//         resolve(res);
-//       });
-//     }
-//   });
-// }
