@@ -1,10 +1,10 @@
 import {ContextMenu, MenuOptions} from '@/core/context/menus/contextMenu';
 import {faArrowRotateRight, faDatabase, faFileZipper, faFolder} from '@fortawesome/free-solid-svg-icons';
-import platform from '@/utils/interface/electron-overwolf';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
-import { useAppStore } from '@/store/appStore.ts';
+import appPlatform from "@platform"
+import { useAppSettings } from '@/store/appSettingsStore.ts';
 
 export class SettingMenu extends ContextMenu<{ }> {
   name(): String {
@@ -17,17 +17,17 @@ export class SettingMenu extends ContextMenu<{ }> {
         title: 'Open App folder',
         icon: faFolder,
         async action() {
-          await platform.get.io.openFinder(platform.get.io.appHome());
+          await appPlatform.io.openFinder(appPlatform.io.appHome());
         }
       },
       {
         title: "Open instance folder",
         icon: faFolder,
         async action() {
-          const appStore = useAppStore();
-          const settings = appStore.backendSettings?.instanceLocation;
+          const appSettings = useAppSettings();
+          const settings = appSettings.rootSettings?.instanceLocation;
           if (settings) {
-            await platform.get.io.openFinder(settings);
+            await appPlatform.io.openFinder(settings);
           }
         }
       },
@@ -37,7 +37,7 @@ export class SettingMenu extends ContextMenu<{ }> {
         async action() {
           const result = await sendMessage("uploadLogs", {});
           if (result.path) {
-            await platform.get.io.openFinder(result.path);
+            await appPlatform.io.openFinder(result.path);
             alertController.success("Logs exported successfully, you can find them at " + result.path);
           } else {
             console.log(result);
@@ -60,7 +60,7 @@ export class SettingMenu extends ContextMenu<{ }> {
         title: 'Restart app',
         icon: faArrowRotateRight,
         action() {
-          platform.get.actions.restartApp();
+          appPlatform.actions.restartApp();
         },
         color: "danger"
       }

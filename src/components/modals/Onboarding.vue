@@ -1,17 +1,17 @@
 <script lang="ts" setup>
 import { UiButton, Modal } from '@/components/ui';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 
 const emit = defineEmits<{
   (e: 'accepted'): void;
 }>();
 
 function showManageWindow(tab: 'purposes' | 'features' | 'vendors' = 'purposes') {
-  platform.get.app.cpm.openWindow(tab);
+  appPlatform.app.cpm.openWindow(tab);
 }
 
 function accept() {
-  platform.get.app.cpm.setFirstLaunched();
+  appPlatform.app.cpm.setFirstLaunched();
   emit('accepted');
 }
 </script>

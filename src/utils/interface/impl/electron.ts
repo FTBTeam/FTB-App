@@ -83,6 +83,9 @@ try {
 eLogger.info("Meta data", metaData)
 
 const Electron: ElectronOverwolfInterface = {
+  isElectron: true,
+  isOverwolf: false,
+  
   config: {
     version: metaData.appVersion ?? 'Missing Version File',
     commit: metaData.commit ?? 'Missing Version File',

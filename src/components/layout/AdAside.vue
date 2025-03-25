@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import Platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
 import { onMounted, useTemplateRef, ref, computed } from 'vue';
 import { useAttachDomEvent } from '@/composables';
@@ -22,9 +22,7 @@ const disableSmallerAd = ref(false);
 const adOneRef = useTemplateRef('adRef');
 const adTwoRef = useTemplateRef('adRefSecond');
 
-const platform = Platform
-const isElectron = platform.isElectron();
-
+const isElectron = appPlatform.isElectron;
 const isSmallDisplay = computed(() => (window as any)?.ftbFlags?.smallMonitor);
 
 useAttachDomEvent<UIEvent>('resize', onResize);

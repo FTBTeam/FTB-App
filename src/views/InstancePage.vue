@@ -10,7 +10,7 @@ import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
-import { UiButton, ClosablePanel, Modal } from '@/components/ui';
+import { UiButton, ClosablePanel, Modal, Message, FTBInput } from '@/components/ui';
 import {createLogger} from '@/core/logger';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import { useRouter } from 'vue-router';
@@ -310,7 +310,7 @@ export enum ModpackPageTabs {
         </ul> 
       </message>
 
-      <ftb-input placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
+      <FTBInput placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
 
       <template #footer>
         <div class="flex justify-end">

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
@@ -36,29 +36,29 @@ onMounted(async () => {
 function exitOverwolf(value: boolean): void {
   localSettings.value.general.exitOverwolf = value;
   appSettingsStore.saveSettings(localSettings.value);
-  platform.get.actions.changeExitOverwolfSetting(value);
+  appPlatform.actions.changeExitOverwolfSetting(value);
 }
 
 function toggleSystemStyleWindow(value: boolean): void {
   localSettings.value.appearance.useSystemWindowStyle = value;
   appSettingsStore.saveSettings(localSettings.value);
 
-  platform.get.frame.setSystemWindowStyle(value);
+  appPlatform.frame.setSystemWindowStyle(value);
 }
 
 function openFolder(location: string) {
   switch (location) {
     case 'home':
-      toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.appHome()), state => working.value = state)
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(appPlatform.io.appHome()), state => working.value = state)
       break;
     case 'instances':
-      toggleBeforeAndAfter(() => platform.get.io.openFinder(localSettings.value.instanceLocation), state => working.value = state)
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(localSettings.value.instanceLocation), state => working.value = state)
       break;
     case 'logs':
-      toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.pathJoin(platform.get.io.appHome(), 'logs')), state => working.value = state)
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(appPlatform.io.pathJoin(appPlatform.io.appHome(), 'logs')), state => working.value = state)
       break;
     default:
-      toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => working.value = state)
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(location), state => working.value = state)
       break;
   }
 }
@@ -69,7 +69,7 @@ async function uploadLogData() {
   try {
     const result = await sendMessage("uploadLogs", {})
     if (result.path) {
-      await platform.get.io.openFinder(result.path)
+      await appPlatform.io.openFinder(result.path)
       alertController.success('Logs saved to ' + result.path)
     } else {
       alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
@@ -84,11 +84,11 @@ async function refreshCachePlz() {
   await InstanceActions.clearInstanceCache()
 }
 
-const configData = platform.get.config
+const configData = appPlatform.config
 
 async function moveInstances() {
   const location: string | null = await new Promise(resolve => {
-    platform.get.io.selectFolderDialog(localSettings.value.instanceLocation, (path) => {
+    appPlatform.io.selectFolderDialog(localSettings.value.instanceLocation, (path) => {
       if (path == null) {
         return;
       }
@@ -101,7 +101,7 @@ async function moveInstances() {
     return;
   }
 
-  if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
+  if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${localSettings.value.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
     return;
   }
 
@@ -169,7 +169,7 @@ async function moveInstances() {
             <span class="select-text">{{ configData?.version }}</span>
             <div class="copy-me inline-block" aria-label="Click to copy" data-balloon-pos="up">
               <FontAwesomeIcon
-                @click="platform.get.cb.copy(configData?.version)"
+                @click="appPlatform.cb.copy(configData?.version)"
                 class="ml-2 cursor-pointer"
                 icon="copy"
                 size="1x"
@@ -198,7 +198,7 @@ async function moveInstances() {
     <!--    />-->
     <!--    -->
     <ui-toggle
-      v-if="!platform.isElectron()"
+      v-if="!appPlatform.isElectron"
       label="Close Overwolf on Exit"
       desc="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
       :value="localSettings.general.exitOverwolf"
@@ -206,10 +206,10 @@ async function moveInstances() {
       class="mb-8"
     />
 
-    <p class="block text-white-700 text-lg font-bold mb-4" v-if="platform.isElectron()">Appearance</p>
+    <p class="block text-white-700 text-lg font-bold mb-4" v-if="appPlatform.isElectron">Appearance</p>
 
     <ui-toggle
-      v-if="platform.isElectron()"
+      v-if="appPlatform.isElectron"
       label="Use systems window style"
       desc="Instead of using the apps internal Titlebar, we'll use the system's titlebar instead. This setting will restart the app!"
       v-model="localSettings.appearance.useSystemWindowStyle"

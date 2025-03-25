@@ -59,9 +59,7 @@ export class WebsocketController {
     const messageData = JSON.parse(rawMessage);
     this.emitter.emit("ws/message", messageData);
     
-    console.log("Received message", messageData);
     if (this.callbackQueue[messageData.requestId]) {
-      console.log("Triggering callback for", messageData.requestId);
       this.callbackQueue[messageData.requestId](messageData);
       delete this.callbackQueue[messageData.requestId];
     }
@@ -82,8 +80,6 @@ export class WebsocketController {
     
     this.websocket.send(JSON.stringify(request.payload));
     this.callbackQueue[requestId] = request.callback;
-    console.log("Registered callback for", requestId);
-    console.log("Making request", request.payload);
     return requestId;
   }
   

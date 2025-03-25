@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf.ts';
+import appPlatform from '@platform';
 import {DiscordWidget} from '@/types.ts';
 
 import BhLogo from '@/assets/images/branding/bh-logo.svg';
@@ -120,7 +120,7 @@ onMounted(async () => {
           class="item p-0-5 opacity-75 hover:opacity-100 ease-in-out duration-200 transition-opacity"
           :aria-label="social.name"
           data-balloon-pos="down-right"
-          @click="() => platform.get.utils.openUrl(social.link)"
+          @click="() => appPlatform.utils.openUrl(social.link)"
         >
           <FontAwesomeIcon :icon="social.icon" />
         </div>
@@ -137,7 +137,7 @@ onMounted(async () => {
           issues. Why not give it a go? We've got thousands of active members and our team is always lurking around.
         </p>
       </div>
-      <div class="discord-btn" @click="platform.get.utils.openUrl('https://go.ftb.team/discord')">
+      <div class="discord-btn" @click="appPlatform.utils.openUrl('https://go.ftb.team/discord')">
         <span>Join Discord</span>
         <span v-if="discordWidgetData">·</span>
         <span v-if="discordWidgetData">{{ discordWidgetData.presence_count.toLocaleString() }} online</span>
@@ -152,7 +152,7 @@ onMounted(async () => {
             class="item"
             v-for="(topicItem, i) in topic.items"
             :key="i"
-            @click="platform.get.utils.openUrl(topicItem.link)"
+            @click="appPlatform.utils.openUrl(topicItem.link)"
           >
             <div class="icon">
               <FontAwesomeIcon v-if="!topicItem.customIcon" fixedWidth :icon="topicItem.icon" />

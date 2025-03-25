@@ -167,7 +167,6 @@
 </template>
 
 <script lang="ts" setup>
-// import platform from '@/utils/interface/electron-overwolf';
 // import ProgressBar from '@/components/ui/ProgressBar.vue';
 // import {SettingsState} from '@/modules/settings/types';
 // import {RouterNames} from '@/router';

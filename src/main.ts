@@ -5,7 +5,7 @@ import 'wysiwyg.css/wysiwyg.css';
 import 'balloon-css/balloon.css';
 import '@/assets/liboverrides.scss';
 
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -34,9 +34,6 @@ logger.info("Starting app");
 
 const pinia = createPinia();
 
-platform.setup();
-(window as any).platform = platform;
-
 logger.info("Creating vue instance");
 
 createApp(App)
@@ -52,4 +49,4 @@ createApp(App)
     // TODO: [Port] fix me
   }).catch(console.error)
 
-platform.get.setupApp();
+appPlatform.setupApp();

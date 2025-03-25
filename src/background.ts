@@ -142,7 +142,7 @@ ipcMain.on("restartApp", () => {
   reloadMainWindow()
 });
 
-ipcMain.handle("app.change-channel", async (event, data) => {
+ipcMain.handle("app.change-channel", async (_, data) => {
   logger.debug("Changing app channel", data)
   
   autoUpdater.channel = data;
@@ -182,7 +182,7 @@ ipcMain.handle("app.get-channel", async () => {
   return channel;
 })
 
-ipcMain.on('openModpack', (event, data) => {
+ipcMain.on('openModpack', (_, data) => {
   if (win !== null && win !== undefined) {
     logger.debug("Opening modpack", data)
     win.webContents.send('openModpack', data);
@@ -205,7 +205,7 @@ ipcMain.on('expandMeScotty', (event, data) => {
   }
 });
 
-app.on('open-url', async (event, customSchemeData) => {
+app.on('open-url', async (_, customSchemeData) => {
   // event.preventDefault();
 
   win?.webContents.send('parseProtocolURL', customSchemeData);
@@ -255,7 +255,7 @@ const reloadMainWindow = async () => {
   tmpWindow.close();
 }
 
-ipcMain.handle('setSystemWindowStyle', async (event, data) => {
+ipcMain.handle('setSystemWindowStyle', async (_, data) => {
   const typedData = data as boolean;
   
   if (!win) {
@@ -274,7 +274,7 @@ ipcMain.handle('setSystemWindowStyle', async (event, data) => {
   await reloadMainWindow();
 });
 
-ipcMain.handle('openFinder', async (event, data) => {
+ipcMain.handle('openFinder', async (_, data) => {
   try {
     await shell.openPath(data);
     return true;    
@@ -340,8 +340,8 @@ ipcMain.on('logout', () => {
 });
 
 
-ipcMain.on('openLink', (event, data) => {
-  shell.openExternal(data);
+ipcMain.on('openLink', (_, data) => {
+  shell.openExternal(data).catch(console.error)
 });
 
 ipcMain.on('openDevTools', () => {
@@ -398,7 +398,7 @@ function downloadFile(url: string, path: string): Promise<boolean> {
   });
 }
 
-ipcMain.handle("downloadFile", async (event, args) => {
+ipcMain.handle("downloadFile", async (_, args) => {
   const url = args.url;
   const path = args.path;
 
@@ -425,7 +425,7 @@ function extractZip(zipPath: string, outputPath: string) {
   return true;
 }
 
-ipcMain.handle("extractFile", async (event, args) => {
+ipcMain.handle("extractFile", async (_, args) => {
   const input = args.input;
   const output = args.output;
   
@@ -444,21 +444,21 @@ ipcMain.handle("extractFile", async (event, args) => {
   return false
 });
 
-ipcMain.handle("getAppExecutablePath", async (event, args) => {
+ipcMain.handle("getAppExecutablePath", async () => {
   return app.getAppPath();
 });
 
-ipcMain.handle("ow:cpm:is_required", async (event) => {
+ipcMain.handle("ow:cpm:is_required", async () => {
   return (app as any).overwolf.isCMPRequired();
 })
 
-ipcMain.handle("ow:cpm:open_window", async (event, data) => {
+ipcMain.handle("ow:cpm:open_window", async (_, data) => {
   (app as any).overwolf.openCMPWindow({
     tab: data ?? "purposes" 
   });
 });
 
-ipcMain.handle("startSubprocess", async (event, args) => {
+ipcMain.handle("startSubprocess", async (_, args) => {
   if (process.env.NODE_ENV !== 'production') {
     logger.debug("Not starting subprocess in dev mode")
     return;
@@ -793,7 +793,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (!prelaunchWindow && !win) {
-    createPreLaunchWindow("AppActivate");
+    createPreLaunchWindow("AppActivate").catch(console.error)
   }
 });
 

@@ -3,7 +3,7 @@ import {timeFromNow} from '@/utils/helpers/dateHelpers';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {isValidVersion} from '@/utils/helpers/packHelpers';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {RouterNames} from '@/router';
 import { ModalBody, Modal, FTBInput, UiToggle, Selection2, ModalFooter, UiButton } from '@/components/ui';
 import { watch, ref, computed } from 'vue';
@@ -63,7 +63,7 @@ function install() {
     category: selectedCategory.value,
     version: parseInt(selectedVersionId.value ?? sortedApiVersions.value[0].id),
     // Name fallback but it's not really needed
-    name: userPackName.value ?? apiModpack.value?.name ?? "failed-to-name-the-modpack-somehow-" + platform.get.utils.crypto.randomUUID().split("-")[0],
+    name: userPackName.value ?? apiModpack.value?.name ?? "failed-to-name-the-modpack-somehow-" + appPlatform.utils.crypto.randomUUID().split("-")[0],
     logo: userSelectedArtwork.value?.path ?? null, // The backend will default for us.
     private: apiModpack.value?.private ?? false,
     provider,

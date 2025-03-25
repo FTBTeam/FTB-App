@@ -1,6 +1,6 @@
 import {ContextMenu, MenuItem, MenuOptions} from '@/core/context/menus/contextMenu';
 import {faCog, faFolder, faLocationPin, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {InstanceController} from '@/core/controllers/InstanceController';
@@ -59,19 +59,19 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
         title: 'Open folder',
         icon: faFolder,
         async action(context) {
-          await platform.get.io.openFinder(context.instance.path);
+          await appPlatform.io.openFinder(context.instance.path);
         },
         children: [
           {
             title: 'Instance folder',
             async action(context) {
-              await platform.get.io.openFinder(context.instance.path);
+              await appPlatform.io.openFinder(context.instance.path);
             },
           },
           ...paths.map((e) => ({
             title: e[1],
             async action(context) {
-              await platform.get.io.openFinder(platform.get.io.pathJoin(context.instance.path, e[0]));
+              await appPlatform.io.openFinder(appPlatform.io.pathJoin(context.instance.path, e[0]));
             },
             predicate: context => context.instance.rootDirs?.includes(e[0])
           })) as MenuItem<InstanceMenuContext>[]

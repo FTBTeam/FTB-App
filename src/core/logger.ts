@@ -107,9 +107,9 @@ class Logger {
   private levelToMethod(level: LogLevel) {
     switch (level) {
       case LogLevel.SILLY:
-        return console.log
+        return console.debug
       case LogLevel.DEBUG:
-        return console.log
+        return console.debug
       case LogLevel.INFO:
         return console.log
       case LogLevel.WARN:

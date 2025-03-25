@@ -1,10 +1,14 @@
 import MarkdownIt from 'markdown-it';
 import Router, {RouterNames} from '@/router';
-import platform from '@/utils/interface/electron-overwolf.ts';
+import appPlatform from '@platform';
 
 const markdownParser = new MarkdownIt();
 markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {
-  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.platform.get.utils.openUrl(this.href);');
+  if (!(window as any).helperOpenLink) {
+    (window as any).helperOpenLink = safeLinkOpen;
+  }
+  
+  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.helperOpenLink(this.href);');
   return self.renderToken(tokens, idx, options);
 }
 
@@ -30,7 +34,7 @@ export async function safeLinkOpen(event: any) {
     urlTarget = event.target?.closest('a');
   }
 
-  platform.get.utils.openUrl(urlTarget.href);
+  appPlatform.utils.openUrl(urlTarget.href);
 }
 
 // Sizes of various byte amounts

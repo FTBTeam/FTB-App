@@ -4,11 +4,10 @@ import ModpackMods from '@/components/groups/instance/ModpackMods.vue';
 import ModpackSettings from '@/components/groups/instance/ModpackSettings.vue';
 import PackActions from '@/components/groups/modpack/PackActions.vue';
 import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
-import Platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
-import Loader from '@/components/ui/Loader.vue';
+import { FTBButton, Loader, ProgressBar } from '@/components/ui';
 import { parseMarkdown, safeLinkOpen } from '@/utils';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
 import { computed } from 'vue';
@@ -28,7 +27,7 @@ const {
   allowOffline = false,
 } = defineProps<{
   instance?: SugaredInstanceJson;
-  packInstance: ModPack;
+  packInstance: ModPack | null;
   isInstalled?: boolean;
   activeTab?: ModpackPageTabs;
   allowOffline?: boolean;
@@ -127,10 +126,10 @@ function bisectPromo() {
       <div class="action-heading">
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
-            <ftb-button color="primary" class="py-3 px-8 ftb-play-button" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
+            <FTBButton color="primary" class="py-3 px-8 ftb-play-button" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
               <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
               {{ isInstalled ? 'Play' : 'Install' }}
-            </ftb-button>
+            </FTBButton>
 
             <pack-actions
               v-if="instance && isInstalled"
@@ -202,7 +201,7 @@ function bisectPromo() {
 <!--        <div v-if="packInstance && packInstance.meta && packInstance.meta.supportsWorlds" class="tab flex items-center whitespace-no-wrap justify-center" :class="{ active: activeTab === tabs.WORLDS }" @click="() => $emit('tabChange', tabs.WORLDS)">-->
 <!--          FTB Worlds <span class="bg-yellow-400 rounded px-1 py-0-5 sm:px-2 sm:py-1 text-black text-opacity-75 font-bold ml-4 text-sm italic">New!</span>-->
 <!--        </div>-->
-        <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="Platform.get.utils.openUrl(bisectPromo())">
+        <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="appPlatform.utils.openUrl(bisectPromo())">
           <img class="" src="../../../assets/images/branding/bh-logo.svg" alt="" />
           Order a server
         </a>

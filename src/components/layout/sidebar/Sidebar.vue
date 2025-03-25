@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import {RouterNames} from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
@@ -8,7 +8,6 @@ import {ContextMenus} from '@/core/context/contextMenus';
 import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
 import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { useAccountsStore } from '@/store/accountsStore.ts';
 
 const navigation = [
   {
@@ -44,7 +43,7 @@ const navigation = [
 ];
 
 function openPromo(): void {
-  platform.get.utils.openUrl('https://bisecthosting.com/ftb?r=app-icon');
+  appPlatform.utils.openUrl('https://bisecthosting.com/ftb?r=app-icon');
 }
 
 function navItemRightClick(event: PointerEvent, item: typeof navigation[0]): void {

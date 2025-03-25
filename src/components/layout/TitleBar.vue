@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import { useAttachDomEvent } from '@/composables';
@@ -15,8 +15,8 @@ useAttachDomEvent<FocusEvent>('blur', windowFocusChanged)
 
 onMounted(async () => {
   const [windowIdRes, osType] = await Promise.all([
-    platform.get.frame.getWindowId(),
-    platform.get.utils.getOsType()
+    appPlatform.frame.getWindowId(),
+    appPlatform.utils.getOsType()
   ])
   
   windowId.value = windowIdRes
@@ -28,33 +28,33 @@ function windowFocusChanged(event: FocusEvent) {
 }
 
 function startDragging(event: any) {
-  platform.get.frame.handleDrag(event, windowId.value);
+  appPlatform.frame.handleDrag(event, windowId.value);
 }
 
 function close(): void {
   // Callback only on overwolf
-  platform.get.frame.close(windowId.value, () => {
+  appPlatform.frame.close(windowId.value, () => {
   });
 }
 
 function minMax() {
-  platform.get.frame.max(windowId.value);
+  appPlatform.frame.max(windowId.value);
 }
 
 function minimise() {
-  platform.get.frame.min(windowId.value);
+  appPlatform.frame.min(windowId.value);
 }
 
 function max() {
-  platform.get.frame.max(windowId.value);
+  appPlatform.frame.max(windowId.value);
 }
 
 function goToSettings() {
   safeNavigate(RouterNames.SETTINGS_APP);
 }
 
-const branch = computed(() => platform.get?.config?.branch);
-const isUnix = computed(() => !platform.isOverwolf());
+const branch = computed(() => appPlatform.config.branch);
+const isUnix = computed(() => !appPlatform.isOverwolf); // TODO: Fix this. It's not right
 </script>
 
 <template>

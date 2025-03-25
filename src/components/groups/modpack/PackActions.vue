@@ -7,7 +7,7 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -43,7 +43,7 @@ onMounted(() => {
 async function openInstanceFolder(folder: string) {
   logger.debug("Opening instance folder", folder)
   try {
-    await platform.get.io.openFinder(`${instance.path}/${folder}`)
+    await appPlatform.io.openFinder(`${instance.path}/${folder}`)
   } catch (e) {
     logger.error("Failed to open instance folder", e);
   }

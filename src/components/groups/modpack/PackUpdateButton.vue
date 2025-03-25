@@ -11,7 +11,7 @@ const {
   instance,
   localInstance,
 } = defineProps<{
-  instance: ModPack;
+  instance: ModPack | null;
   localInstance: InstanceJson | SugaredInstanceJson;
 }>()
 

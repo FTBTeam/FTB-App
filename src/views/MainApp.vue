@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import AdAside from '@/components/layout/AdAside.vue';
 import GlobalComponents from '@/components/layout/GlobalComponents.vue';
 import {createLogger} from '@/core/logger';
@@ -39,7 +39,7 @@ onMounted(async () => {
   
   // Technically not possible to error but we have to make the lint happy
   initApp().catch(logger.error)
-  isMac.value = await platform.get.utils.getOsType() === "mac"
+  isMac.value = await appPlatform.utils.getOsType() === "mac"
   
   // useSystemBar().catch(console.error)
   // startNetworkMonitor();
@@ -54,8 +54,8 @@ onMounted(async () => {
   //
   // // Check if the app is installed
   // let installed = true;
-  // if (!platform.isOverwolf() && constants.isProduction) {
-  //   installed = await platform.get.app.runtimeAvailable();
+  // if (!appPlatform.isOverwolf && constants.isProduction) {
+  //   installed = await appPlatform.app.runtimeAvailable();
   //
   //   logger.info("App installed", installed);
   //   if (!installed) {
@@ -108,7 +108,7 @@ async function installApp() {
   // appInstalling.value = true;
   // logger.info("Installing app");
   //
-  // await platform.get.app.installApp((stage: any) => appInstallStage.value = stage, () => {}, false)
+  // await appPlatform.app.installApp((stage: any) => appInstallStage.value = stage, () => {}, false)
   //
   // appInstalling.value = false;
 }
@@ -128,12 +128,12 @@ async function startApp() {
   //
   // logger.info("Sending start subprocess message");
   // try {
-  //   let appData: any = await platform.get.app.startSubprocess();
+  //   let appData: any = await appPlatform.app.startSubprocess();
   //
   //   // False means update
   //   if (!appData) {
   //     try {
-  //       await platform.get.app.updateApp(
+  //       await appPlatform.app.updateApp(
   //         (stage: any) => appInstallStage.value = stage,
   //         () => logger.info("Update complete")
   //       );
@@ -143,7 +143,7 @@ async function startApp() {
   //       logger.error("Failed to update app", e);
   //     }
   //
-  //     appData = await platform.get.app.startSubprocess();
+  //     appData = await appPlatform.app.startSubprocess();
   //   }
   //
   //   logger.info("Started app subprocess", appData);
@@ -177,17 +177,17 @@ async function setupApp() {
   //     .catch(error => logger.error("Failed to check for first run", error));
   // }
   //
-  // platform.get.actions.onAppReady();
+  // appPlatform.actions.onAppReady();
   //
   // logger.debug("Notifying all controllers of connected status")
 }
 
 async function checkForFirstRun() {
-  if (!platform.isElectron()) {
+  if (!appPlatform.isElectron) {
     return;
   }
 
-  if (await platform.get.app.cpm.required() && await platform.get.app.cpm.isFirstLaunch()) {
+  if (await appPlatform.app.cpm.required() && await appPlatform.app.cpm.isFirstLaunch()) {
     showOnboarding.value = true;
   }
 }
@@ -207,7 +207,7 @@ function startNetworkMonitor() {
 }
 
 async function restartApp() {
-  platform.get.actions.restartApp();
+  appPlatform.actions.restartApp();
 }
 
 async function useSystemBar() {
@@ -309,7 +309,7 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
 <!--            appInstallFailed = false-->
 <!--            appStartupFailed = false-->
 <!--          }">Let me in anyway...</UiButton>-->
-<!--          <UiButton type="info" :icon="['fab', 'discord']" @click="platform.get.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</UiButton>-->
+<!--          <UiButton type="info" :icon="['fab', 'discord']" @click="appPlatform.utils.openUrl('https://go.ftb.team/ftb-app-support-discord')">Support</UiButton>-->
 <!--          <UiButton type="success" icon="power-off" @click="restartApp">Restart</UiButton>-->
 <!--        </div>-->
 <!--      </template>-->

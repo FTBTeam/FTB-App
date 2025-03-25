@@ -20,7 +20,6 @@
 // import {emitter} from '@/utils';
 // import ClosablePanel from '@/components/ui/ClosablePanel.vue';
 // import {createLogger} from '@/core/logger';
-// import platform from '@/utils/interface/electron-overwolf';
 //
 // @Component({
 //   methods: {stringIsEmpty, containsIgnoreCase},

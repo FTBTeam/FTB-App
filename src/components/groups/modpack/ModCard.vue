@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {Mod} from '@/types';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import UiButton from '@/components/ui/UiButton.vue';
 import {InstanceJson} from '@/core/types/javaApi';
 import UiBadge from '@/components/ui/UiBadge.vue';
@@ -93,7 +93,7 @@ const versions = computed(() => mod.versions
             </div>
           </div>
           
-          <div class="curse-btn" v-if="curseLink.link" @click="() => platform.get.utils.openUrl(curseLink.link)">
+          <div class="curse-btn" v-if="curseLink.link" @click="() => appPlatform.utils.openUrl(curseLink.link)">
             <img src="../../../assets/curse-logo.svg" alt="" />
           </div>
         </div>

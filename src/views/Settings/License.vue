@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import UiButton from '@/components/ui/UiButton.vue';
 import { standardDate } from '@/utils/helpers/dateHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, ref } from 'vue';
 
-type LicenseResponse = Awaited<ReturnType<typeof platform.get.app.getLicenses>>;
+type LicenseResponse = Awaited<ReturnType<typeof appPlatform.app.getLicenses>>;
 
 const licenseData = ref<LicenseResponse | null>(null);
 onMounted(() => {
-  licenseData.value = platform.get.app.getLicenses();
+  licenseData.value = appPlatform.app.getLicenses();
 })
 
-const configData = platform.get.config
+const configData = appPlatform.config
 </script>
 
 <template>

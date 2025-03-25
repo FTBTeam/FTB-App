@@ -12,7 +12,7 @@
 //     if (state.socket.reconnectError) {
 //       state.socket.reconnectError = false;
 //     }
-//     if (platform.isElectron()) {
+//     if (appPlatform.isElectron) {
 //       Vue.prototype.$socket = event.currentTarget;
 //     }
 //     state.socket.isConnected = true;

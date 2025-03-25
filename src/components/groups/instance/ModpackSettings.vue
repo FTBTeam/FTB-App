@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import Platform from '@/utils/interface/electron-overwolf';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform'
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
@@ -24,6 +23,7 @@ import { services } from '@/bootstrap.ts';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const router = useRouter();
 const installStore = useInstallStore();
@@ -86,7 +86,7 @@ function selectedResolution() {
 }
 
 function browseForJava() {
-  Platform.get.io.selectFileDialog((path) => {
+  appPlatform.io.selectFileDialog((path) => {
     if (typeof path !== 'undefined' && path == null) {
       alertController.error('Unable to set Java location as the path was not found')
       return;
@@ -176,7 +176,7 @@ async function saveSettings() {
 async function browseInstance() {
   await gobbleError(async () => {
     if ("path" in instance) {
-      await platform.get.io.openFinder(instance.path)
+      await appPlatform.io.openFinder(instance.path)
       return;
     }
   })
@@ -343,19 +343,19 @@ const resolutionList = computed(() => {
           <b>Width</b>
           <small class="text-muted block mt-2">The Minecraft windows screen width</small>
         </div>
-        <ftb-input class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
+        <FTBInput class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
       </div>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
           <b>Height</b>
           <small class="text-muted block mt-2">The Minecraft windows screen height</small>
         </div>
-        <ftb-input class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
+        <FTBInput class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
       </div>
     </div>
     
     <h2 class="text-lg mb-4 font-bold text-warning">
-      <font-awesome-icon icon="warning" class="mr-2" />
+      <FontAwesomeIcon icon="warning" class="mr-2" />
       Advanced
     </h2>
     
@@ -459,7 +459,7 @@ const resolutionList = computed(() => {
         <ui-toggle label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked" />
       </div>
 
-      <ftb-input
+      <FTBInput
         label="Program arguments"
         :value="instanceSettings.programArgs"
         v-model="instanceSettings.programArgs"
@@ -470,7 +470,7 @@ const resolutionList = computed(() => {
         These arguments are appended to the end of the java command, these are typically arguments Minecraft uses.
       </small>
       
-      <ftb-input
+      <FTBInput
         label="Shell arguments"
         :value="instanceSettings.shellArgs"
         v-model="instanceSettings.shellArgs"

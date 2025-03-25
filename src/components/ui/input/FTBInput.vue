@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import { onUnmounted, ref } from 'vue';
 
 const {
@@ -33,7 +33,7 @@ const copied = ref(false);
 const timoutRef = ref<number | undefined>(undefined);
 
 function copy() {
-  platform.get.cb.copy("" + value);
+  appPlatform.cb.copy("" + value);
   copied.value = true;
   timoutRef.value = setTimeout(() => (copied.value = false), 700) as any;
 }

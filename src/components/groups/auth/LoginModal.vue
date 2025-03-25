@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import dayjs, {Dayjs} from 'dayjs';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import { UiButton, Loader, Message, ProgressBar, Modal } from '@/components/ui';
 import {DeviceAuthResponse} from '@/components/groups/auth/LoginTypes';
 import {JavaFetch} from '@/core/javaFetch';
@@ -57,7 +57,7 @@ onUnmounted(() => {
 
 async function copyAndOpen() {
   await navigator.clipboard.writeText(userCode.value);
-  platform.get.utils.openUrl(verificationUri.value);
+  appPlatform.utils.openUrl(verificationUri.value);
 }
 
 async function retryInitialCode() {

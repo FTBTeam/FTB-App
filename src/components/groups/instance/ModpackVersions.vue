@@ -1,20 +1,20 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {InstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import Selection2 from '@/components/ui/Selection2.vue';
+import { Selection2, UiButton, Message } from '@/components/ui';
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
-import UiButton from '@/components/ui/UiButton.vue';
 import {createLogger} from '@/core/logger';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { services } from '@/bootstrap.ts';
 import { ModPack, Versions } from '@/core/types/appTypes.ts';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const logger = createLogger("ModpackVersions.vue")
 
@@ -133,7 +133,7 @@ const isCursePack = computed(() => {
           <div class="font-bold name text-xl">{{ currentVersion.name }}</div>
         </div>
         <div class="buttons flex text-sm gap-2">
-          <ui-button type="info" size="small" icon="server" v-if="instance && instance.packType === 0" @click="() => platform.get.utils.openUrl(`https://go.ftb.team/serverfiles`)">Server files</ui-button>
+          <ui-button type="info" size="small" icon="server" v-if="instance && instance.packType === 0" @click="() => appPlatform.utils.openUrl(`https://go.ftb.team/serverfiles`)">Server files</ui-button>
           <ui-button
             :wider="true"
             v-if="instance && currentVersion && instance.versionId !== activeLog && currentVersion.type.toLowerCase() !== 'archived'" 
@@ -143,12 +143,12 @@ const isCursePack = computed(() => {
         </div>
       </div>
       <div class="body-contents flex-1 select-text">
-        <div v-if="loading" class="loading"><font-awesome-icon icon="spinner" class="mr-2" spin /> Loading...</div>
+        <div v-if="loading" class="loading"><FontAwesomeIcon icon="spinner" class="mr-2" spin /> Loading...</div>
         <div
           v-else-if="currentVersion && currentVersion.type.toLowerCase() !== 'archived'"
           class="bg-orange-400 text-orange-900 font-bold px-4 py-4 rounded mb-6"
         >         
-          <font-awesome-icon icon="triangle-exclamation" size="xl" class="mr-4" /> Always backup your worlds before updating.
+          <FontAwesomeIcon icon="triangle-exclamation" size="xl" class="mr-4" /> Always backup your worlds before updating.
         </div>
         <message class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-if="currentVersion && currentVersion.type.toLowerCase() === 'archived'">
           <p>

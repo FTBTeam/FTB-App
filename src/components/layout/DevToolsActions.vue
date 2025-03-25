@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import Platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import { useAttachDomEvent } from '@/composables';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ref } from 'vue';
@@ -15,14 +15,13 @@ useAttachDomEvent<MouseEvent>('click', (event) => {
 })
 
 const open = ref(false)
-const platform = Platform
 
 function openDebugger() {
   gobbleError(() => sendMessage("openDebugTools", {}))
 }
 
 function openDevTools() {
-  platform.get.utils.openDevTools();
+  appPlatform.utils.openDevTools();
 }
 
 const devModeEnabled = !import.meta.env.PROD;

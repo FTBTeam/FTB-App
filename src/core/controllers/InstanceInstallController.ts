@@ -10,9 +10,8 @@ import {
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
-import { WebsocketController } from '@/core/controllers/websocketController.ts';
 import { Emitter } from 'mitt';
 import { EmitEvents } from '@/bootstrap.ts';
 import { useInstallStore } from '@/store/installStore.ts';
@@ -81,7 +80,6 @@ export class InstanceInstallController {
 
   constructor(
     private readonly emitter: Emitter<EmitEvents>,
-    private readonly websocket: WebsocketController,
     private readonly installStore = useInstallStore()
   ) {
     this.emitter.on('ws/message', async (data: any) => {
@@ -105,7 +103,7 @@ export class InstanceInstallController {
     this.logger.debug('Install requested', request);
 
     this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(),
+      uuid: appPlatform.utils.crypto.randomUUID(),
       ...request,
     });
 
@@ -118,7 +116,7 @@ export class InstanceInstallController {
     this.logger.debug('Update requested', instance, version, provider);
 
     this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(), // Not the same as the instance uuid
+      uuid: appPlatform.utils.crypto.randomUUID(), // Not the same as the instance uuid
       id: instance.id,
       version: typeof version === 'object' ? version.id : version,
       name: instance.name,
@@ -138,7 +136,7 @@ export class InstanceInstallController {
     this.logger.debug('Import requested', path, category);
 
     this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(),
+      uuid: appPlatform.utils.crypto.randomUUID(),
       id: -1,
       version: -1,
       name: 'Import',

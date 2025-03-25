@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 
 const props = defineProps<{
   url: string;
@@ -13,6 +13,6 @@ const props = defineProps<{
 
 function open(e: any) {
   e.preventDefault();
-  platform.get.utils.openUrl(props.url);
+  appPlatform.utils.openUrl(props.url);
 }
 </script>

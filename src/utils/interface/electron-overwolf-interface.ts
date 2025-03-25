@@ -104,4 +104,6 @@ export default interface ElectronOverwolfInterface {
   io: InputOutput;
   app: App;
   setupApp: () => void;
+  isElectron: boolean;
+  isOverwolf: boolean;
 }

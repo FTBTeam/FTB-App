@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import {SettingsData} from '@/core/types/javaApi';
 import Loader from '@/components/ui/Loader.vue';
@@ -60,7 +60,7 @@ const channelOptions = computed(() => ReleaseChannelOptions(false))
 
 async function getChannel() {
   try {
-    return await platform.get.app.appChannel();
+    return await appPlatform.app.appChannel();
   } catch (e) {
     console.error('Failed to get app channel', e);
     return "release";
@@ -73,7 +73,7 @@ async function setAppChannel() {
   }
   
   try {
-    await toggleBeforeAndAfter(async () => platform.get.app.changeAppChannel(transformToElectronChannel(appChannel.value)), v => checkingForUpdates.value = v);
+    await toggleBeforeAndAfter(async () => appPlatform.app.changeAppChannel(transformToElectronChannel(appChannel.value)), v => checkingForUpdates.value = v);
   } catch (e) {
     console.error('Failed to set app channel', e);
   }
@@ -99,7 +99,7 @@ function transformToElectronChannel(channel: ReleaseChannel) {
       </p>
     </div>
 
-    <div class="mb-4 border-b border-white border-opacity-25 pb-6" v-if="platform.isElectron()">
+    <div class="mb-4 border-b border-white border-opacity-25 pb-6" v-if="appPlatform.isElectron">
       <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">

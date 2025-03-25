@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {RouterNames} from '@/router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
 
-const configData = platform.get.config;
+const configData = appPlatform.config;
 </script>
 
 

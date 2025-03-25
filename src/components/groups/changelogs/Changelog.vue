@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {constants} from '@/core/constants';
 import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
@@ -62,7 +62,7 @@ async function checkForUpdate() {
 }
 
 function getCurrentVersion() {
-    return platform.get.config.version;
+    return appPlatform.config.version;
 }
 </script>
 

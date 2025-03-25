@@ -59,6 +59,9 @@ const getWindowState = (windowId: any) => {
 };
 
 const Overwolf: ElectronOverwolfInterface = {
+  isOverwolf: true,
+  isElectron: false,
+  
   config: {
     version: versionData.appVersion ?? 'Missing Version File',
     commit: versionData.commit ?? 'Missing Version File',
