@@ -52,7 +52,7 @@
 import {Component, Vue} from 'vue-property-decorator';
 
 import platform from '@/utils/interface/electron-overwolf';
-import UiButton from '@/components/core/ui/UiButton.vue';
+import UiButton from '@/components/ui/UiButton.vue';
 
 type LicenseResponse = Awaited<ReturnType<typeof platform.get.app.getLicenses>>;
 

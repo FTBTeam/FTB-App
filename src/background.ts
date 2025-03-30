@@ -474,7 +474,11 @@ ipcMain.handle("startSubprocess", async (event, args) => {
 
     // Kill the subprocess
     if (pid) {
-      process.kill(pid, 'SIGINT');
+      try {
+        process.kill(pid, 'SIGINT');
+      } catch (e) {
+        logger.error("Failed to kill subprocess", e)
+      }
     }
     
     logger.debug("Subprocess is already running, killing it")
@@ -535,30 +539,29 @@ ipcMain.handle("startSubprocess", async (event, args) => {
 
       logger.debug("Subprocess stdout", outputData)
       if (!appCommunicationSetup) {
-        if (data.includes("{T:CI")) {
-          const regex = /{p:([0-9]+);s:([^}]+)}/gi;
-          const matches = regex.exec(data.toString());
+        if (data.includes("Backend Ready! Port=")) {
+          const port = parseInt(outputData.match(/Port=(\d+)/)![1]);
+          const secret = outputData.match(/OneTimeToken=(\w+-\w+-\w+-\w+-\w+)/)![1];
 
-          if (matches !== null) {
-            const [, port, secret] = matches;
-            logger.debug("Found port and secret", port, secret)
+          if (!(!port || !secret || isNaN(port))) {
+            logger.debug('Found port and secret', port, secret);
             appCommunicationSetup = true;
             clearTimeout(timeout);
-            
+
             if (subprocess?.pid) {
               cachedProcessData = {
                 pid: subprocess.pid,
-                port: parseInt(port),
-                secret: secret
+                port: port,
+                secret: secret,
               };
-              
-              logger.debug("Cached process data", cachedProcessData)
+
+              logger.debug('Cached process data', cachedProcessData);
             }
-            
+
             resolve({
               port,
-              secret
-            })
+              secret,
+            });
           }
         }
       }

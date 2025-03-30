@@ -73,20 +73,23 @@ const setup = async () => {
       console.log(output);
       
       if (!finishedSetup) {
-        if (output.includes("{T:CI")) {
-          const regex = /{p:([0-9]+);s:([^}]+)}/gi;
-          const matches = regex.exec(output);
-
-          if (matches !== null) {
-            const [, port, secret] = matches;
-            console.log("Found port and secret", output)
-            
-            wsData = {
-              port: parseInt(port),
-              secret
-            }
-            finishedSetup = true;
+        if (output.includes("Backend Ready! Port=")) {
+          const port = parseInt(output.match(/Port=(\d+)/)[1]);
+          const secret = output.match(/OneTimeToken=(\w+-\w+-\w+-\w+-\w+)/)[1];
+          
+          if (!port || !secret || isNaN(port)) {
+            console.error("Failed to find port or secret", output)
+            return
           }
+          
+          console.log("Found port and secret", output)
+          
+          wsData = {
+            port: port,
+            secret
+          }
+          
+          finishedSetup = true;
         }
       }
     }

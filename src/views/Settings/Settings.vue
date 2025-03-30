@@ -9,7 +9,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import SettingsSidebar from '@/components/organisms/SettingsSidebar.vue';
+import SettingsSidebar from '@/views/Settings/SettingsSidebar.vue';
 
 @Component({
   components: {

@@ -14,8 +14,6 @@ import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.storage.settings.SettingsData;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.LazyValue;
-import net.rubygrapefruit.platform.Native;
-import net.rubygrapefruit.platform.WindowsRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
@@ -45,9 +43,6 @@ public class LogZipper {
      * Manifest version
      */
     private static final String VERSION = "3.0.0";
-    
-    private static final String DESKTOP_UUID = "{754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5}";
-    private static final String DOWNLOADS_UUID = "{7D83EE9B-2244-4E70-B1F5-5393042AF1E4}";
     
     private static final Pattern UUID_REMOVAL = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern JWT_REMOVAL = Pattern.compile("e[yw][A-Za-z0-9-_]+\\.(?:e[yw][A-Za-z0-9-_]+)?\\.[A-Za-z0-9-_]{2,}(?:(?:\\.[A-Za-z0-9-_]{2,}){2})?");
@@ -478,45 +473,15 @@ public class LogZipper {
     }
     
     private static Path locateOutputPath() {
-        // Try the simplest route first
-        var userHome = System.getProperty("user.home");
-        var userHomePath = Path.of(userHome);
-        var desktopPath = userHomePath.resolve("Desktop");
-        var downloadsPath = userHomePath.resolve("Downloads");
-        if (Files.exists(desktopPath)) {
-            return desktopPath;
-        } else if (Files.exists(downloadsPath)) {
-            return downloadsPath;
-        }
-        
-        // Are we on windows
-        if (!OperatingSystem.current().isWindows()) {
-            return Constants.getDataDir();
-        }
-        
-        // We're on windows so let's try and find it from the registry...
-        // WHY IS WINDOWS SO SPECIAL
-        try {
-            WindowsRegistry registry = Native.get(WindowsRegistry.class);
-            String regLocation = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
-            var subKeys = registry.getValueNames(WindowsRegistry.Key.HKEY_CURRENT_USER, regLocation);
-            if (subKeys != null) {
-                for (String subKey : subKeys) {
-                    if (subKey.equals(DOWNLOADS_UUID) || subKey.equals(DESKTOP_UUID)) {
-                        var value = registry.getStringValue(WindowsRegistry.Key.HKEY_CURRENT_USER, regLocation, subKey);
-                        if (value != null) {
-                            var path = Path.of(value);
-                            if (Files.exists(path)) {
-                                return path;
-                            }
-                        }
-                    }
-                }
+        var outputPath = Constants.getDataDir().resolve("log-exports");
+        if (Files.notExists(outputPath)) {
+            try {
+                Files.createDirectories(outputPath);
+            } catch (IOException e) {
+                return Constants.getDataDir();
             }
-        } catch (Throwable e) {
-            LOGGER.warn("Failed to get WindowsRegistry", e);
         }
         
-        return Constants.getDataDir();
+        return outputPath;
     }
 }

@@ -1,4 +1,4 @@
-import {SelectionOptions} from '@/components/core/ui/Selection2.vue';
+import {SelectionOptions} from '@/components/ui/Selection2.vue';
 
 export const ReleaseChannelOptions = (includeUnset = false) => [
   {

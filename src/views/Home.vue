@@ -21,12 +21,12 @@
 <script lang="ts">
 import {Component, Vue} from 'vue-property-decorator';
 import {Action, Getter} from 'vuex-class';
-import FtbButton from '@/components/atoms/input/FTBButton.vue';
-import Loader from '@/components/atoms/Loader.vue';
+import FtbButton from '@/components/ui/input/FTBButton.vue';
+import Loader from '@/components/ui/Loader.vue';
 import {ns} from '@/core/state/appState';
 import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import PackPreview from '@/components/core/modpack/PackPreview.vue';
-import PackCard2 from '@/components/core/modpack/PackCard2.vue';
+import PackPreview from '@/components/groups/modpack/PackPreview.vue';
+import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 
 @Component({
   components: {

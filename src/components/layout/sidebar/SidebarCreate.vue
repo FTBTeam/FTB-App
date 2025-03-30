@@ -56,8 +56,8 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from 'vue-property-decorator';
-import CreateInstance from '@/components/core/modpack/create/CreateInstance.vue';
-import CurseImportInstance from '@/components/core/modpack/create/CurseImportInstance.vue';
+import CreateInstance from '@/components/groups/modpack/create/CreateInstance.vue';
+import CurseImportInstance from '@/components/groups/modpack/create/CurseImportInstance.vue';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 
