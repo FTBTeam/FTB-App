@@ -23,14 +23,14 @@ const provider = typeIdToProvider(packInstance?.id ?? 0);
     <div class="info">
       <div class="name select-text">{{ packName }}</div>
       <div class="desc select-text" v-if="(!instance || !instance.isImport) && !isInstalled">
-        {{ packInstance.name }}
+        {{ packInstance?.name }}
         <template v-if="packInstance && packInstance.authors && packInstance.authors.length">
           by 
           <span v-if='provider === "modpacksch" && packInstance.tags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1'>FTB Team</span>
           <span v-else v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span>
         </template>
         -
-        {{ packInstance.synopsis }}
+        {{ packInstance?.synopsis }}
       </div>
       <div class="select-text pack-version text-xs px-4 py-1 rounded bg-transparent-black inline-block" v-if="instance && !instance.isImport">
         Version {{ instance.version }}

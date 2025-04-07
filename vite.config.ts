@@ -24,7 +24,12 @@ export default defineConfig({
         entry: 'electron/main.ts',
         
         onstart: (args) => {
-          args.startup(['.', '--no-sandbox', '--test-ad'], {}, '@overwolf/ow-electron')
+          const runArgs = ['.', '--no-sandbox']
+          if (process.env.SHOW_ADS !== 'true') {
+            runArgs.push('--test-ad')
+          }
+          
+          args.startup(runArgs, {}, '@overwolf/ow-electron')
         }
       },
       // preload: {

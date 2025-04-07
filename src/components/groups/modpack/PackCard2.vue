@@ -168,7 +168,7 @@ function _versionName() {
           <div class="button" aria-label="Update available!" data-balloon-pos="down-left" :class="{disabled: isUpdating}" v-if="latestVersion" @click.stop="updateOpen = true">
             <FontAwesomeIcon icon="download" />
           </div>
-          <div class="play-button button" aria-label="Play" data-balloon-pos="down" :class="{disabled: isUpdating || isRunning}" @click.stop="play">
+          <div class="play-button button !bg-green-500 hover:!bg-green-400" aria-label="Play" data-balloon-pos="down" :class="{disabled: isUpdating || isRunning}" @click.stop="play">
             <FontAwesomeIcon icon="play" />
           </div>
         </div>
@@ -269,11 +269,6 @@ function _versionName() {
     
     .play-button {
       flex: 1;
-      background-color: var(--color-primary-button);
-      
-      &:hover {
-        background-color: var(--color-light-primary-button);
-      }
     }
   }
   

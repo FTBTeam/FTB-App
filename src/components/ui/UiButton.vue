@@ -9,6 +9,7 @@ const {
   disabled = false,
   working = false,
   icon,
+  innerClass = '',
   fullWidth = false,
   wider = false,
   ariaLabel = '',
@@ -16,6 +17,7 @@ const {
 } = defineProps<{
   type?: ElementColorType;
   size?: ElementStandardSizing;
+  innerClass?: string;
   disabled?: boolean;
   working?: boolean;
   icon?: IconDefinition | string;
@@ -61,7 +63,7 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
 <template>
   <div class="ui-button-holder" :aria-label="ariaLabel ? ariaLabel : undefined" :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined" :class="{'disabled': working || disabled}">
     <div 
-      :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]" 
+      :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size], [innerClass]]" 
       @click="click"
     >
       <span :class="{'opacity-0': working}">

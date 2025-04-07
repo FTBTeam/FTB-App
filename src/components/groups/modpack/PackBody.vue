@@ -6,7 +6,7 @@ import PackActions from '@/components/groups/modpack/PackActions.vue';
 import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
 import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
-import { FTBButton, Loader, ProgressBar } from '@/components/ui';
+import { UiButton, Loader, ProgressBar } from '@/components/ui';
 import { parseMarkdown, safeLinkOpen } from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
@@ -126,10 +126,10 @@ function bisectPromo() {
       <div class="action-heading">
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
-            <FTBButton color="primary" class="py-3 px-8 ftb-play-button" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
+            <UiButton innerClass="py-3 px-8 ftb-play-button" type="secondary" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
               <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
               {{ isInstalled ? 'Play' : 'Install' }}
-            </FTBButton>
+            </UiButton>
 
             <pack-actions
               v-if="instance && isInstalled"
