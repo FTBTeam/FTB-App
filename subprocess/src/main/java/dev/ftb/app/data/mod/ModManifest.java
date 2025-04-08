@@ -64,7 +64,7 @@ public class ModManifest {
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
                 .setClient(Constants.httpClient())
-                .setUrl(ModpacksChUtils.getModpacksApi() + "mod/" + id)
+                .setUrl(ModpacksChUtils.getModpacksApi() + "/mod/" + id)
                 .setDest(sw);
         
         ModpacksChUtils.injectBearerHeader(action);

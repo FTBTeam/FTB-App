@@ -165,7 +165,7 @@ public class CurseMetadataCache {
             LOGGER.info("Querying metadata for {}", murmur);
             DownloadAction action = new OkHttpDownloadAction()
                     .setClient(Constants.httpClient())
-                    .setUrl(ModpacksChUtils.getModpacksApi() + "mod/lookup/" + murmur)
+                    .setUrl(ModpacksChUtils.getModpacksApi() + "/mod/lookup/" + murmur)
                     .setDest(sw);
             
             ModpacksChUtils.injectBearerHeader(action);
