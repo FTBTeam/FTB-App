@@ -2,8 +2,7 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {ClientLaunchDataReply, LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
-import {InstanceMessageData} from '@/core/state/misc/runningState';
-import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { InstanceMessageData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { services } from '@/bootstrap.ts';
 
 const logger = createLogger("runningStateProcessor.ts");
@@ -136,5 +135,5 @@ async function lazyLogChecker(uuid: string, messages: string[]) {
 }
 
 export function initStateProcessor() {
-  services.emitter.on('ws/message', onLaunchData);
+  services().emitter.on('ws/message', onLaunchData);
 }

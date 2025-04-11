@@ -80,7 +80,6 @@ export class InstanceInstallController {
 
   constructor(
     private readonly emitter: Emitter<EmitEvents>,
-    private readonly installStore = useInstallStore()
   ) {
     this.emitter.on('ws/message', async (data: any) => {
       if (data.type === 'instanceOverrideModLoaderReply') {
@@ -154,10 +153,11 @@ export class InstanceInstallController {
 
   public async cancelInstall(uuid: string, isInstall = false) {
     this.logger.debug('Cancel requested', uuid);
+    const installStore = useInstallStore()
 
     if (isInstall) {
       // Get the current install request
-      const currentInstall = this.installStore.currentInstall;
+      const currentInstall = installStore.currentInstall;
       if (currentInstall == null) {
         return;
       }
@@ -200,13 +200,14 @@ export class InstanceInstallController {
   }
 
   private async checkQueue() {
+    const installStore = useInstallStore()
     if (this.queue.length === 0 || this.installLock) {
       return;
     }
 
     this.logger.debug('Checking queue');
     this.logger.debug('Queue items', this.queue.length);
-    const request = this.installStore.popInstallQueue()
+    const request = installStore.popInstallQueue()
     if (request == null) {
       this.logger.debug('Queue is empty');
       return;
@@ -407,17 +408,21 @@ export class InstanceInstallController {
   }
 
   private updateInstallStatus(status: InstallStatus | null) {
-    this.installStore.currentInstall = status;
+    const installStore = useInstallStore()
+    installStore.currentInstall = status;
   }
 
   private get queue() {
-    return this.installStore.installQueue;
+    const installStore = useInstallStore()
+    return installStore.installQueue;
   }
 
   /**
    * Handles modloader overloading state updating
    */
   private handleOverrideState(typedData: InstanceOverrideModLoaderDataReply) {
+    const installStore = useInstallStore()
+    
     const status = typedData.status;
     if (status === 'prepare') {
       this.logger.debug('Preparing modloader update, unable override the state');
@@ -428,7 +433,7 @@ export class InstanceInstallController {
       const packetId = typedData.requestId;
       const instanceStore = useInstanceStore();
 
-      const updateFromPacketId = this.installStore.currentModloaderUpdate.find(e => e.packetId === packetId);
+      const updateFromPacketId = installStore.currentModloaderUpdate.find(e => e.packetId === packetId);
       if (!updateFromPacketId) {
         return;
       }
@@ -436,7 +441,7 @@ export class InstanceInstallController {
       const instance = instanceStore.instances.find(e => e.uuid === updateFromPacketId.instanceId);
 
       // remove the modloader update
-      this.installStore.removeModloaderUpdate(packetId)
+      installStore.removeModloaderUpdate(packetId)
 
       if (status === 'error') {
         alertController.error(`Failed to update modloader due to ${typedData.message ?? 'an unknown error'}`);

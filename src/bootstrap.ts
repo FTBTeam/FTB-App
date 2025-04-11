@@ -9,25 +9,29 @@ export type EmitEvents = {
   "ws/message": any
 }
 
-let services: {
+let ourServices: {
   emitter: Emitter<EmitEvents>,
   websocket: WebsocketController,
   instanceInstallController: InstanceInstallController
 };
 
-export function bootstrapLoad() {
+export function services() {
+  if (!ourServices) {
+    loadServices()
+  }
+  
+  return ourServices;
+}
+
+function loadServices() {
   const emitter = mitt<EmitEvents>();
   const websocketController = new WebsocketController(emitter);
-  
-  services = {
+
+  ourServices = {
     emitter,
     websocket: websocketController,
-    instanceInstallController: new InstanceInstallController(emitter, websocketController)
+    instanceInstallController: new InstanceInstallController(emitter)
   }
 
   initStateProcessor();
-}
-
-export {
-  services
 }

@@ -93,8 +93,8 @@ async function initApp() {
   loadingEssentialData.value = false;
 
   // Remove the old one if needed (typically app restarts (soft))
-  services.emitter.off("ws/message", refreshHandler)
-  services.emitter.on("ws/message", refreshHandler)
+  services().emitter.off("ws/message", refreshHandler)
+  services().emitter.on("ws/message", refreshHandler)
 }
 
 function refreshHandler(data: any) {

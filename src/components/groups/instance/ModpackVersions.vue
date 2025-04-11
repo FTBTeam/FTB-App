@@ -6,7 +6,7 @@ import {InstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import { Selection2, UiButton, Message } from '@/components/ui';
+import { Selection2, UiButton, UiMessage } from '@/components/ui';
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
@@ -97,7 +97,7 @@ function update() {
     return;
   }
 
-  services.instanceInstallController.requestUpdate(instance, currentVersion.value, typeIdToProvider(instance.packType));
+  services().instanceInstallController.requestUpdate(instance, currentVersion.value, typeIdToProvider(instance.packType));
   router.push({
     name: RouterNames.ROOT_LIBRARY
   })
@@ -150,12 +150,16 @@ const isCursePack = computed(() => {
         >         
           <FontAwesomeIcon icon="triangle-exclamation" size="xl" class="mr-4" /> Always backup your worlds before updating.
         </div>
-        <message class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-if="currentVersion && currentVersion.type.toLowerCase() === 'archived'">
+        <UiMessage class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-if="currentVersion && currentVersion.type.toLowerCase() === 'archived'">
           <p>
             This version has been archived! This typically means the update contained a fatal error causing the version
             to be too unstable for players to use.
           </p>
-        </message>
+        </UiMessage>
+        
+        {{changelogs[activeLog]}}
+        
+        {{changelogs}}
         
         <div class="wysiwyg" v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''" v-html="parseMarkdown(changelogs[activeLog])" />
       </div>

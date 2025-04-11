@@ -112,7 +112,7 @@ async function repairInstance() {
     return;
   }
 
-  await services.instanceInstallController.requestUpdate(instance, instance.versionId, typeIdToProvider(instance.packType));
+  await services().instanceInstallController.requestUpdate(instance, instance.versionId, typeIdToProvider(instance.packType));
   emit("back")
 }
 

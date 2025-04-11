@@ -10,7 +10,7 @@ import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
-import { UiButton, ClosablePanel, Modal, Message, FTBInput } from '@/components/ui';
+import { UiButton, ClosablePanel, Modal, UiMessage, FTBInput } from '@/components/ui';
 import {createLogger} from '@/core/logger';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import { useRouter } from 'vue-router';
@@ -202,7 +202,7 @@ function update(version: Versions | null = null): void {
   }
 
   logger.debug(`Requesting update to ${targetVersion.id} ${targetVersion.type}`)
-  services.instanceInstallController.requestUpdate(instance.value, targetVersion, typeIdToProvider(instance.value.packType))
+  services().instanceInstallController.requestUpdate(instance.value, targetVersion, typeIdToProvider(instance.value.packType))
 }
 
 function updateOrDowngrade(versionId: number) {
@@ -301,14 +301,14 @@ export enum ModpackPageTabs {
       subTitle="Would you like to play in Offline Mode?"
       @closed="() => closeOfflineModel()"
     >
-      <message type="warning" class="mb-6 wysiwyg">
+      <UiMessage type="warning" class="mb-6 wysiwyg">
         <p>Please be aware, running in offline mode will mean you can not:</p>
         <ul>
           <li>Play on online servers</li>
           <li>Have a custom skin</li>
           <li>Have any profile specific content in-game</li>
         </ul> 
-      </message>
+      </UiMessage>
 
       <FTBInput placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
 

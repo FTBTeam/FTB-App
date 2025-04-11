@@ -21,7 +21,7 @@ export {
   ClosablePanel,
   Link,
   Loader,
-  Message,
+  Message as UiMessage,
   Popover,
   ProgressBar,
   Selection2,

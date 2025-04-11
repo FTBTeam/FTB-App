@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import dayjs, {Dayjs} from 'dayjs';
 import appPlatform from '@platform';
-import { UiButton, Loader, Message, ProgressBar, Modal } from '@/components/ui';
+import { UiButton, Loader, UiMessage, ProgressBar, Modal } from '@/components/ui';
 import {DeviceAuthResponse} from '@/components/groups/auth/LoginTypes';
 import {JavaFetch} from '@/core/javaFetch';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -301,9 +301,9 @@ function expiresInAsPercentage() {
 
       <Loader v-if="loadingCode" />
 
-      <Message type="danger" v-if="error">
+      <UiMessage type="danger" v-if="error">
         {{ error }}
-      </Message>
+      </UiMessage>
 
       <div class="code font-bold text-4xl py-4 px-6 rounded-lg mb-4 text-center select-text" v-if="userCode && !error">
         <span>{{ userCode }}</span>
@@ -336,7 +336,7 @@ function expiresInAsPercentage() {
       <Loader title="Logging in ..."  v-if="loggingIn" />
       
       <template v-if="!loggingIn && logInError">
-        <Message type="danger" class="select-text">
+        <UiMessage type="danger" class="select-text">
           <b class="mb-2 block">Something has gone wrong!</b>
           <p>{{ logInError }}</p>
           
@@ -344,7 +344,7 @@ function expiresInAsPercentage() {
             <span class="opacity-75 block mb-1">Reference</span>
             <code class="inline-block">{{ logInErrorCode }}</code>
           </div>
-        </Message>
+        </UiMessage>
 
         <UiButton type="success" :full-width="true" @click="retryInitialCode" class="mt-6">Retry</UiButton>
       </template>

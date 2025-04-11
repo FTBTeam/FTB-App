@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import { useRouter } from 'vue-router';
 import { debounce, safeNavigate } from '@/utils';
 import { SearchResultPack } from '@/core/types/modpacks/packSearch';
@@ -7,7 +6,7 @@ import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers';
 import Loader from '@/components/ui/Loader.vue';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import { modpackApi } from '@/core/pack-api/modpackApi';
-import UiPagination from '@/components/ui/UiPagination.vue';
+import { UiPagination, UiMessage, FTBSearchBar } from '@/components/ui';
 import { createLogger } from '@/core/logger';
 import { RouterNames } from '@/router';
 import { onMounted, ref, watch } from 'vue';
@@ -144,19 +143,19 @@ async function searchPacks() {
       />
     </div>
     
-    <message icon="warning" type="danger" class="my-6" v-if="error">
+    <UiMessage icon="warning" type="danger" class="my-6" v-if="error">
       {{ error }}
-    </message>
+    </UiMessage>
 
-    <message icon="info" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
+    <UiMessage icon="info" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
       No results found for '{{ searchValue }}'
-    </message>
+    </UiMessage>
 
     <loader class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
     
-    <message v-if="searchValue === '' && !loading && !loadingInitialPacks && !ourPackIds.length">
+    <UiMessage v-if="searchValue === '' && !loading && !loadingInitialPacks && !ourPackIds.length">
       <p>No packs available</p>
-    </message>
+    </UiMessage>
 
     <div class="result-cards pb-2" v-if="!error && searchResults.length > 0">
       <pack-preview v-for="(pack, index) in searchResults" :partial-pack="pack" :key="index" :provider="currentTab" />

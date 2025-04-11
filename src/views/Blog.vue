@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Loader, Message } from '@/components/ui';
+import { Loader, UiMessage } from '@/components/ui';
 import {BlogPost} from '@/core/types/external/metaApi.types';
 import dayjs from 'dayjs';
 import {standardDateTime} from '@/utils/helpers/dateHelpers';
@@ -86,12 +86,12 @@ const domain = constants.ftbDomain;
     </template>
     <div v-else>
       <h2 class="text-lg font-bold mb-6">Oh no... 🔥 Something's not right!</h2>
-      <Message type="warning">
+      <UiMessage type="warning">
         <p>Something went wrong while loading the news.</p>
         <p class="mb-4">Please try again later.</p>
         
         <b>You can find our latest blog posts on our <a :href="`${domain}/blog`" @click="safeLinkOpen">website</a></b>
-      </Message>
+      </UiMessage>
     </div>
   </div>
   <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>

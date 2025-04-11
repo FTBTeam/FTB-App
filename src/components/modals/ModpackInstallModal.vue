@@ -58,7 +58,7 @@ watch(() => open, async (newValue) => {
 })
 
 function install() {
-  services.instanceInstallController.requestInstall({
+  services().instanceInstallController.requestInstall({
     id: packId,
     category: selectedCategory.value,
     version: parseInt(selectedVersionId.value ?? sortedApiVersions.value[0].id),

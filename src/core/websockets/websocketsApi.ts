@@ -19,12 +19,12 @@ export function sendMessage<T extends ApiEndpoints>(
     const requestId = crypto.randomUUID();
     
     const timer = setTimeout(() => {
-      services.websocket.clearCallback(requestId);
+      services().websocket.clearCallback(requestId);
       reject(`Failed to resolve response from [type: ${messageType}]`);
     }, timeout);
 
     // This should be the only type this dispatch is ever used
-    const messageId = services.websocket.send(requestId, {
+    const messageId = services().websocket.send(requestId, {
       payload: {
         type: messageType,
         ...payload,

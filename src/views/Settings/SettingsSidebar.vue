@@ -3,6 +3,7 @@ import appPlatform from '@platform';
 import {RouterNames} from '@/router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
+import { Popover } from '@/components/ui';
 
 const configData = appPlatform.config;
 </script>
@@ -55,7 +56,7 @@ const configData = appPlatform.config;
 
     <div class="meta">
       <span>App version</span>
-      <popover position="bottom">
+      <Popover position="bottom">
         <div class="value copyable pr-3">{{ configData.version }}</div>
         <template #inner>
           <div class="version">
@@ -73,7 +74,7 @@ const configData = appPlatform.config;
             </div>
           </div>
         </template>
-      </popover>
+      </Popover>
     </div>
   </div>
 </template>

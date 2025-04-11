@@ -52,7 +52,7 @@ async function  installZip() {
     return;
   }
 
-  await services.instanceInstallController.requestImport(activeFile.path, category)
+  await services().instanceInstallController.requestImport(activeFile.path, category)
   activeFile.value = null;
 
   await gobbleError(() => {

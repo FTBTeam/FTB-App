@@ -24,7 +24,7 @@ async function cancelInstall(item: InstallRequest | InstallStatus) {
 
   cancelling.value = true;
   try {
-    await services.instanceInstallController.cancelInstall(uuid, isInstall);
+    await services().instanceInstallController.cancelInstall(uuid, isInstall);
   } catch (e) {
     console.error(e);
   }

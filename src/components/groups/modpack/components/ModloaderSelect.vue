@@ -3,7 +3,7 @@ import {SelectionOption} from '@/components/ui/Selection2.vue';
 import {ModLoadersResponse, ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
-import { UiToggle, Message, Loader, Selection2 } from '@/components/ui';
+import { UiToggle, UiMessage, Loader, Selection2 } from '@/components/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 
@@ -117,9 +117,9 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
 
 <template>
  <div class="modloaderSelect">
-   <Message header="Optional" icon="info" type="info" class="mb-4" v-if="showOptional && hasAvailableLoaders">
+   <UiMessage header="Optional" icon="info" type="info" class="mb-4" v-if="showOptional && hasAvailableLoaders">
      A Mod Loader will allow you to load mods into Minecraft. Each Mod Loader will have different mods available so we recommend looking at <a>CurseForge</a> to see what's available.
-   </Message>
+   </UiMessage>
    
    <Loader v-if="loadingModloaders" />
    
@@ -147,11 +147,11 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
      />
    </template>
 
-   <Message v-else header="No loaders" icon="exclamation" type="warning">
+   <UiMessage v-else header="No loaders" icon="exclamation" type="warning">
      Sadly we were not able to find any mod loaders for Minecraft {{ mcVersion }}. This is likely due to there being no mod loaders available just yet.
      <br><br>
      You can continue to create an instance without a mod loader and set one up later once one is available.
-   </Message>
+   </UiMessage>
  </div>
 </template>
 

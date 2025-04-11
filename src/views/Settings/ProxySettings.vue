@@ -2,7 +2,7 @@
 import {alertController} from '@/core/controllers/alertController';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { onMounted, ref, watch } from 'vue';
-import { FTBInput, Message, UiButton } from '@/components/ui';
+import { FTBInput, UiMessage, UiButton } from '@/components/ui';
 
 const appSettingsStore = useAppSettings();
 
@@ -126,7 +126,7 @@ function save(remove = false) {
     />
     
     <p class='text-muted text-xs italic'>Please be aware that proxy passwords are stored in plain text in the apps settings file. You have been warned!</p>
-    <Message type='warning' class='mt-4 mb-8'>We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</Message>
+    <UiMessage type='warning' class='mt-4 mb-8'>We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</UiMessage>
 
     <div class='action flex justify-end'>
       <ui-button :wider="true" :disabled='proxyType === "none" || isInvalid()' type='success' icon='check' @click='() => save()'>Test & Save</ui-button>

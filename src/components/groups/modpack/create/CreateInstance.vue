@@ -154,7 +154,7 @@ function createInstance() {
 
   // Magic
   if (!userModLoader.value) {
-    services.instanceInstallController.requestInstall({
+    services().instanceInstallController.requestInstall({
       id: 81, // Vanilla pack id
       version: userVanillaVersion.value ?? 0,
       ...sharedData
@@ -171,7 +171,7 @@ function createInstance() {
       request["mcVersion"] = selectedMcVersion;
     }
 
-    services.instanceInstallController.requestInstall(request)
+    services().instanceInstallController.requestInstall(request)
   }
 
   emit('close')

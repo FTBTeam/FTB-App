@@ -2,7 +2,7 @@
 import {JavaFetch} from '@/core/javaFetch';
 import {alertController} from '@/core/controllers/alertController';
 import {ChangelogData} from '@/components/groups/changelogs/Changelog.vue';
-import { UiButton, Message } from '@/components/ui';
+import { UiButton, UiMessage } from '@/components/ui';
 import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import {constants} from '@/core/constants';
 import { computed, onMounted, ref } from 'vue';
@@ -103,8 +103,8 @@ const allLoaded = computed(() => changelogs.value.length === Object.keys(changel
     </div>
   </div>
   <div v-else>
-    <Message type="warning">
+    <UiMessage type="warning">
       <p>{{error}}</p>
-    </Message>
+    </UiMessage>
   </div>
 </template>

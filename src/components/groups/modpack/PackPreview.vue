@@ -113,7 +113,7 @@ const isInstalling = computed(() => {
         </div>
       </div>
     </div>
-    <ModpackInstallModal :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :provider="provider" />
+    <ModpackInstallModal v-if="packData?.id" :open="showInstall" @close="showInstall = false" :pack-id="packData?.id" :provider="provider" />
   </div>
 </template>
 
