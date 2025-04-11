@@ -1,16 +1,12 @@
 // @ts-ignore no typescript package available
-import {clipboard, ipcRenderer} from 'electron';
 import ElectronOverwolfInterface from '../electron-overwolf-interface.ts';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
 import {handleAction} from '@/core/protocol/protocolActions.ts';
-import log from 'electron-log';
 import {createLogger} from '@/core/logger.ts';
 import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers.ts';
-import {execSync} from 'child_process';
 import {FSLogger} from '@/utils/interface/electron/utils/fsLogger.ts';
 import {getAppHome} from '@/nuturalHelpers.ts';
+
+const { fs, os, path } = window.nodeUtils;
 
 export type Arg = string | {
   key?: string;
@@ -51,31 +47,31 @@ const appHome = getAppHome(os.platform(), os.homedir(), path.join);
 
 const eLogger = createLogger("platform/electron.ts");
 const electronFrontendLogFile = path.join(appHome, 'logs', 'ftb-app-frontend.log');
-if (fs.existsSync(electronFrontendLogFile)) {
+if (fs.exists(electronFrontendLogFile)) {
   try {
-    fs.writeFileSync(electronFrontendLogFile, '')
+    fs.writeFile(electronFrontendLogFile, '')
   } catch (e) {
     eLogger.error("Failed to clear electron frontend log file", e)
   }
 }
-// TODO: [port] fixme
-// log.transports.file.resolvePath = () =>
+
+// log.transports.file.resolvePathFn = () =>
 //   electronFrontendLogFile;
 // Object.assign(console, log.functions);
 
-const resourcesPath = process.resourcesPath
+const resourcesPath = "."// process.resourcesPath
 
 eLogger.info("Resources path", resourcesPath)
 
 const metaFilePath = path.join(resourcesPath, "meta.json");
-const metaData = process.env.NODE_ENV === "development" ? fallbackMetaData : JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
+const metaData = process.env.NODE_ENV === "development" ? fallbackMetaData : JSON.parse(fs.readFile(metaFilePath, 'utf-8'));
 
 let licensesData: any = {};
 let javaLicensesData: any = {};
 
 try {
-  licensesData = JSON.parse(fs.readFileSync(path.join(resourcesPath, "licenses.json"), 'utf-8'));
-  javaLicensesData = JSON.parse(fs.readFileSync(path.join(resourcesPath, "java-licenses.json"), 'utf-8'));
+  licensesData = JSON.parse(fs.readFile(path.join(resourcesPath, "licenses.json"), 'utf-8'));
+  javaLicensesData = JSON.parse(fs.readFile(path.join(resourcesPath, "java-licenses.json"), 'utf-8'));
 } catch (e) {
   eLogger.error("Failed to load licenses", e);
 }
@@ -96,23 +92,15 @@ const Electron: ElectronOverwolfInterface = {
   // Tools
   utils: {
     openUrl(url: string) {
-      ipcRenderer.send('openLink', url);
+      window.ipcRenderer.send('action/open-link', url);
     },
 
     async getOsArch() {
-      return os.arch();
+      return await window.ipcRenderer.invoke("os/arch");
     },
     
     async getOsType() {
-      switch (os.type()) {
-        case 'Darwin':
-          return 'mac';
-        case 'Linux':
-          return 'linux';
-        default:
-          return 'windows';
-      }
-      // return await window.ipcRenderer.invoke("os/platform");
+      return await window.ipcRenderer.invoke("os/platform");
     },
 
     async getPlatformVersion() {
@@ -121,31 +109,24 @@ const Electron: ElectronOverwolfInterface = {
     
     crypto: {
       randomUUID(): string {
-        return (crypto as any).randomUUID();
+        // This is a web function, not a node function
+        return crypto.randomUUID();
       }
     },
     
     openDevTools() {
-      ipcRenderer.send('openDevTools');
+      window.ipcRenderer.send('action/open-dev-tools');
     },
   },
 
   // Actions
   actions: {
-    openModpack(payload: { name: string; id: string }) {
-      ipcRenderer.send('openModpack', { name: payload.name, id: payload.id });
-    },
-
-    openFriends() {
-      ipcRenderer.send('showFriends');
-    },
-
     // Obviously do nothing
     changeExitOverwolfSetting() {},    
 
     onAppReady() {
       eLogger.debug("Interface has been told the app is ready")
-      ipcRenderer.send('appReady');
+      window.ipcRenderer.send('event/app-ready');
     },
 
     uploadClientLogs() {},
@@ -153,41 +134,31 @@ const Electron: ElectronOverwolfInterface = {
     restartApp() {
       eLogger.debug("Restarting app")
       // Restart the electron app
-      ipcRenderer.send('restartApp');
+      window.ipcRenderer.send('action/reload-main-window');
     }
   },
 
   // Clipboard
   cb: {
     copy(e: string) {
-      clipboard.writeText(e);
-    },
-    paste(): string {
-      return clipboard.readText();
+      window.ipcRenderer.send("action/write-to-clipboard", e);
     },
   },
 
   // Frame / Chrome / Window / What ever you want to call it
   frame: {
     close() {
-      ipcRenderer.send('windowControls', { action: 'close' });
+      window.ipcRenderer.send('action/control-window', { action: 'close' });
     },
     min() {
-      ipcRenderer.send('windowControls', { action: 'minimize' });
+      window.ipcRenderer.send('action/control-window', { action: 'minimize' });
     },
     max() {
-      ipcRenderer.send('windowControls', { action: 'maximize' });
+      window.ipcRenderer.send('action/control-window', { action: 'maximize' });
     },
 
     quit() {
-      ipcRenderer.send('quit_app');
-    },
-
-    expandWindow() {
-      ipcRenderer.send('expandMeScotty', { width: 800 });
-    },
-    collapseWindow() {
-      ipcRenderer.send('expandMeScotty', { width: 300 });
+      window.ipcRenderer.send('action/quit-app');
     },
 
     // we don't need this on electron because it's not silly
@@ -196,15 +167,15 @@ const Electron: ElectronOverwolfInterface = {
     },
     handleDrag() {},
     setSystemWindowStyle(enabled) {
-      ipcRenderer.invoke('setSystemWindowStyle', enabled);
+      window.ipcRenderer.invoke('setSystemWindowStyle', enabled);
     }
   },
 
   // IO
   io: {
     selectFolderDialog(startPath, cb) {
-      ipcRenderer
-        .invoke('selectFolder', startPath)
+      window.ipcRenderer
+        .invoke('action/select-folder', startPath)
         .then((dir) => cb(dir))
         .catch((e) => {
           eLogger.warn("Failed to select folder from the system", e)
@@ -213,8 +184,8 @@ const Electron: ElectronOverwolfInterface = {
     },
 
     selectFileDialog(cb) {
-      ipcRenderer
-        .invoke('selectFile')
+      window.ipcRenderer
+        .invoke('action/select-file')
         .then((dir) => {
           cb(dir);
         })
@@ -225,15 +196,11 @@ const Electron: ElectronOverwolfInterface = {
     },
     
     openFinder(path: string): Promise<boolean> {
-      return ipcRenderer.invoke('openFinder', path);
+      return window.ipcRenderer.invoke('action/open-finder', path);
     },
     
     pathJoin(...paths: string[]) {
       return path.join(...paths);
-    },
-    
-    getLocalAppData() {
-      return path.join(os.homedir(), "AppData", "Local"); 
     },
     
     appHome() {
@@ -244,11 +211,11 @@ const Electron: ElectronOverwolfInterface = {
   app: {
     async appSettings() {
       const settingsPath = path.join(appHome, "bin", "settings.json");
-      if (!fs.existsSync(settingsPath)) {
+      if (!fs.exists(settingsPath)) {
         return null
       }
 
-      return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+      return JSON.parse(fs.readFile(settingsPath, 'utf-8'));
     },
     async appData(): Promise<string> {
       return path.join(appHome, 'bin');
@@ -258,7 +225,7 @@ const Electron: ElectronOverwolfInterface = {
     },
     async runtimeAvailable(): Promise<boolean> {
       const appPath = appHome;
-      return fs.existsSync(jreLocation(appPath));
+      return fs.exists(jreLocation(appPath));
     },
     async installApp(onStageChange: (stage: string) => void, _: (data: any) => void, isUpdate = false) {
       const fsLogger = new FSLogger("ftb-app-installer");
@@ -332,9 +299,9 @@ const Electron: ElectronOverwolfInterface = {
       
       if (isUpdate) {
         logAndUpdate("Removing old runtime")
-        if (fs.existsSync(runtimePath)) {
+        if (fs.exists(runtimePath)) {
           try {
-            fs.rmSync(runtimePath, {
+            fs.rm(runtimePath, {
               recursive: true
             });
           } catch (e) {
@@ -346,8 +313,8 @@ const Electron: ElectronOverwolfInterface = {
 
       logAndUpdate("Creating runtime folder")
       try {
-        if (!fs.existsSync(runtimePath)) {
-          fs.mkdirSync(runtimePath, {
+        if (!fs.exists(runtimePath)) {
+          fs.rm(runtimePath, {
             recursive: true
           });
         }
@@ -360,7 +327,7 @@ const Electron: ElectronOverwolfInterface = {
       const jreDownloadName = isWindows ? `jre.zip` : `jre.tar.gz`;
       logAndUpdate("Downloading Java from Adoptium")
       try {
-        await ipcRenderer.invoke("downloadFile", {
+        await window.ipcRenderer.invoke("action/download-file", {
           url: link,
           path: path.join(runtimePath, jreDownloadName)
         });
@@ -371,7 +338,7 @@ const Electron: ElectronOverwolfInterface = {
 
       logAndUpdate("Extracting Java")
       try {
-        await ipcRenderer.invoke("extractFile", {
+        await window.ipcRenderer.invoke("action/extract-file", {
           input: path.join(runtimePath, jreDownloadName),
           output: path.join(runtimePath, `jre`)
         });
@@ -383,29 +350,29 @@ const Electron: ElectronOverwolfInterface = {
       // Assuming this worked
       // Does the jre/jdk-* folder exist?
       logAndUpdate("Moving Java to the correct location")
-      const jreFolder = fs.readdirSync(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
+      const jreFolder = fs.readdir(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
       if (jreFolder == null) {
         logToBoth("Failed to find java folder", eLogger.error)
         throw throwCustomError("Failed to find java folder", "We've not been able to find the Java folder. We can't recover from this.")
       }
 
       const jrePath = path.join(runtimePath, "jre", jreFolder);
-      const jreFiles = fs.readdirSync(jrePath);
+      const jreFiles = fs.readdir(jrePath);
       await retryAttempt(async () => {
         // Move all of the folders contents to the runtime folder
         // Then delete the jre folder
         logToBoth("Moving Java files", eLogger.log, jreFiles)
         jreFiles.forEach(e => {
-          fs.renameSync(path.join(jrePath, e), path.join(runtimePath, e));
+          fs.rename(path.join(jrePath, e), path.join(runtimePath, e));
         });
       }, 5);
 
       logAndUpdate("Cleaning up")
       try {
         // It's not fatal if this fails
-        fs.rmdirSync(jrePath);
-        fs.rmdirSync(path.join(runtimePath, 'jre'))
-        fs.rmSync(path.join(runtimePath, jreDownloadName));
+        fs.rm(jrePath, { recursive: true });
+        fs.rm(path.join(runtimePath, 'jre'), { recursive: true });
+        fs.rm(path.join(runtimePath, jreDownloadName));
       } catch (e) {
         logToBoth("Failed to clean up", eLogger.error, e)
         // Ignore
@@ -414,7 +381,7 @@ const Electron: ElectronOverwolfInterface = {
       logAndUpdate("Finishing up")
       // Touch a file to note down what java version we have
       try {
-        fs.writeFileSync(path.join(runtimePath, ".java-version"), javaVersion);
+        fs.writeFile(path.join(runtimePath, ".java-version"), javaVersion);
       } catch (e) {
         logToBoth("Failed to write java version file", eLogger.error, e)
         throw throwCustomError("Failed to write java version file", "We've not been able to write the java version file. We can't recover from this.")
@@ -423,15 +390,15 @@ const Electron: ElectronOverwolfInterface = {
       logAndUpdate("Checking Java works")
       // Ensure the java version is executable and works
       const jreExecPath = jreLocation(appPath);
-      if (!fs.existsSync(jreExecPath)) {
+      if (!fs.exists(jreExecPath)) {
         logToBoth("Failed to find java executable", eLogger.error)
         throw throwCustomError("Failed to find java executable", "We've not been able to find the java executable. We can't recover from this.")
       }
       
       // Run the java --version command and ensure we get the correct exit code
       try {
-        execSync(`"${jreExecPath}" --version`, {
-          stdio: 'ignore'
+        await window.ipcRenderer.invoke('action/test-java-version', {
+          jreExecPath
         });
       } catch (e) {
         logToBoth("Failed to run java --version", eLogger.error)
@@ -446,13 +413,13 @@ const Electron: ElectronOverwolfInterface = {
       const appPath = appHome;
       const runtimePath = `${appPath}/runtime`;
       
-      if (!fs.existsSync(`${runtimePath}/.java-version`)) {
+      if (!fs.exists(`${runtimePath}/.java-version`)) {
         // How did we get here? Just install it
         return await this.installApp(onStageChange, onUpdate, false);
       }
       
       // Get the original java version
-      const javaVersion = fs.readFileSync(`${runtimePath}/.java-version`, 'utf-8');
+      const javaVersion = fs.readFile(`${runtimePath}/.java-version`, 'utf-8');
       
       if (metaData.runtime.version === javaVersion) {
         // We don't need to update
@@ -467,11 +434,11 @@ const Electron: ElectronOverwolfInterface = {
       const appPath = appHome;
       const runtimePath = `${appPath}/runtime`;
       
-      if (!fs.existsSync(`${runtimePath}/.java-version`)) {
+      if (!fs.exists(`${runtimePath}/.java-version`)) {
         throw new CustomError("Failed to find java version file", "We've not been able to find the java version file. We can't recover from this.");
       }
       
-      const javaVersion = fs.readFileSync(`${runtimePath}/.java-version`, 'utf-8');
+      const javaVersion = fs.readFile(`${runtimePath}/.java-version`, 'utf-8');
       if (!javaVersion) {
         throw new CustomError("Failed to read java version file", "We've not been able to read the java version file. We can't recover from this.");
       }
@@ -483,7 +450,7 @@ const Electron: ElectronOverwolfInterface = {
       
       // Start the subprocess
       const jreExecPath = jreLocation(appPath);
-      if (!fs.existsSync(jreExecPath)) {
+      if (!fs.exists(jreExecPath)) {
         throw new Error("Failed to find java executable");
       }
       
@@ -494,7 +461,7 @@ const Electron: ElectronOverwolfInterface = {
       
       try {
         return await retryAttempt(async () => {
-          const {port, secret} = await ipcRenderer.invoke("startSubprocess", {
+          const {port, secret} = await window.ipcRenderer.invoke("startSubprocess", {
             javaPath: jreExecPath,
             args: [
               ...jvmArgs,
@@ -518,10 +485,10 @@ const Electron: ElectronOverwolfInterface = {
       }
     },
     async appChannel() {
-      return await ipcRenderer.invoke("app.get-channel");
+      return await window.ipcRenderer.invoke("action/app/get-channel");
     },
     async changeAppChannel(channel: string) {
-      return await ipcRenderer.invoke("app.change-channel", channel);
+      return await window.ipcRenderer.invoke("action/app/change-channel", channel);
     },
     getLicenses() {
       return {
@@ -532,24 +499,24 @@ const Electron: ElectronOverwolfInterface = {
     cpm: {
       async required() {
         // Required for OW Ads 
-        return await ipcRenderer.invoke("ow:cpm:is_required");
+        return await window.ipcRenderer.invoke("ow/cpm/is-required");
       },
       async openWindow(arg = "purposes") {
         // Required for OW Ads
-        await ipcRenderer.invoke("ow:cpm:open_window", arg);
+        await window.ipcRenderer.invoke("ow/cpm/open-window", arg);
       },
       async isFirstLaunch() {
-        return !fs.existsSync(path.join(appHome, "bin", ".first-launch"));
+        return !fs.exists(path.join(appHome, "bin", ".first-launch"));
       },
       async setFirstLaunched() {
         // Create parents
-        if (!fs.existsSync(path.join(appHome, "bin"))) {
-          fs.mkdirSync(path.join(appHome, "bin"), {
+        if (!fs.exists(path.join(appHome, "bin"))) {
+          fs.mkdir(path.join(appHome, "bin"), {
             recursive: true
           });
         }
         
-        fs.writeFileSync(path.join(appHome, "bin", ".first-launch"), "");
+        fs.writeFile(path.join(appHome, "bin", ".first-launch"), "");
       }
     }
   },
@@ -557,43 +524,8 @@ const Electron: ElectronOverwolfInterface = {
   setupApp() {
     eLogger.debug("Setting up the app from the interface on electron")
     
-    ipcRenderer.on('parseProtocolURL', (event, data) => {
+    window.ipcRenderer.on('parseProtocolURL', (_, data) => {
       handleAction(data);
-      // TODO: (M#01) Reimplement missing protocol systems
-      // let protocolURL = data;
-      // if (protocolURL === undefined) {
-      //   return;
-      // }
-      // protocolURL = protocolURL.substring(6, protocolURL.length);
-      // const parts = protocolURL.split('/');
-      // const command = parts[0];
-      // const args = parts.slice(1, parts.length);
-      // if (command === 'modpack') {
-      //   if (args.length === 0) {
-      //     return;
-      //   }
-      //   logVerbose(store.state, 'Received modpack protocol message', args);
-      //   const modpackID = args[0];
-      //   if (args.length === 1) {
-      //     // Navigate to page for modpack
-      //     logVerbose(store.state, 'Navigating to page for modpack', modpackID);
-      //     router.push({ name: 'modpackpage', query: { modpackid: modpackID } });
-      //   } else if (args.length === 2) {
-      //     if (args[1] === 'install') {
-      //       // Popup install for modpack
-      //       logVerbose(store.state, 'Popping up install for modpack', modpackID);
-      //       router.push({ name: 'modpackpage', query: { modpackid: modpackID, showInstall: 'true' } });
-      //     }
-      //   } else if (args.length === 3) {
-      //     if (args[2] === 'install') {
-      //       // Popup install for modpack with version default selected
-      //       router.push({
-      //         name: 'modpackpage',
-      //         query: { modpackid: modpackID, showInstall: 'true', version: args[1] },
-      //       });
-      //     }
-      //   }
-      // }
     });
   },
 };

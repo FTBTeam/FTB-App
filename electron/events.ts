@@ -1,5 +1,17 @@
-import { ipcMain } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron';
 import os from 'os';
+import { appHome, reloadMainWindow, updateApp } from './main';
+import fs from 'fs';
+import https from 'https';
+import { execSync } from 'child_process';
+import AdmZip from 'adm-zip';
+import { autoUpdater } from 'electron-updater';
+import path from 'path';
+
+const logger = createLogger('events.ts');
+import { createLogger } from '../src/core/logger.ts';
+
+let checkUpdaterLock = false;
 
 ipcMain.handle("os/platform", async () => {
   switch (os.type()) {
@@ -15,3 +27,314 @@ ipcMain.handle("os/platform", async () => {
 ipcMain.handle("os/arch", async () => {
   return os.arch();
 });
+
+ipcMain.on('action/quit-app', () => {
+  console.debug("Quitting app")
+  process.exit(1);
+});
+
+ipcMain.on('action/open-link', (_, data) => {
+  shell.openExternal(data).catch(console.error)
+});
+
+ipcMain.on("action/reload-main-window", async () => {
+  await reloadMainWindow()
+});
+
+ipcMain.on("action/write-to-clipboard", async (_, data) => {
+  clipboard.writeText(data);
+});
+
+ipcMain.on('action/open-dev-tools', (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (!window) {
+    return;
+  }
+  
+  if (window) {
+    // If dev tools is already open, focus it
+    if (window.webContents.isDevToolsOpened()) {
+      window.webContents.closeDevTools();
+      window.webContents.openDevTools();
+    } else {
+      window.webContents.openDevTools();
+    }
+  }
+});
+
+ipcMain.on('action/control-window', (event, data) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (window) {
+    switch (data.action) {
+      case 'close':
+        window.close();
+        if (process.env.NODE_ENV !== 'production') {
+          window.webContents.closeDevTools();
+        }
+
+        break;
+      case 'minimize':
+        window.minimize();
+        break;
+      case 'maximize':
+        if (!window.isMaximized()) {
+          window.maximize();
+        } else {
+          window.unmaximize();
+        }
+        break;
+    }
+  }
+});
+
+ipcMain.handle('action/select-file', async (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (!window) {
+    return null;
+  }
+
+  console.debug("Selecting file using the frontend")
+  const result = await dialog.showOpenDialog(window, {
+    properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
+    filters: [
+      {
+        name: 'Java',
+        extensions: ['*'],
+      },
+    ],
+  });
+
+  if (result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+});
+
+ipcMain.handle('action/open-finder', async (_, data) => {
+  try {
+    await shell.openPath(data);
+    return true;
+  } catch (e) {
+    console.error("Failed to open finder", e)
+    return false;
+  }
+});
+
+ipcMain.handle('action/select-folder', async (event, data) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (!window) {
+    console.debug("Win is null, unable to select folder")
+    return null;
+  }
+
+  const result: any = await dialog.showOpenDialog(window, {
+    properties: ['openDirectory'],
+    defaultPath: data,
+  });
+
+  if (result.filePaths.length > 0) {
+    return result.filePaths[0];
+  } else {
+    console.debug("No file paths returned from dialog, this could be an error or just a cancel")
+    return null;
+  }
+});
+
+ipcMain.handle("action/download-file", async (_, args) => {
+  const url = args.url;
+  const path = args.path;
+
+  // Node fetch no work and other libraries are too big or require esm
+  return await downloadFile(url, path);
+});
+
+ipcMain.handle("action/app/get-channel", async () => {
+  const channel = autoUpdater.channel;
+  if (!channel) {
+    const appVersion = autoUpdater.currentVersion.version;
+    if (appVersion.includes("-beta")) {
+      return "beta";
+    } else if (appVersion.includes("-alpha")) {
+      return "alpha";
+    } else {
+      return "stable";
+    }
+  }
+
+  return channel;
+})
+
+ipcMain.handle("action/app/change-channel", async (_, data) => {
+  logger.debug("Changing app channel", data)
+
+  autoUpdater.channel = data;
+  updateChannel(data);
+
+  const updateResult = await autoUpdater.checkForUpdates();
+  if (updateResult?.downloadPromise) {
+    const version = await updateResult.downloadPromise;
+    // Ask the user if they want to update
+    logger.debug("Update downloaded", version)
+
+    const latestVersion = autoUpdater.currentVersion.version;
+    const currentVersion = app.getVersion();
+
+    logger.debug("Latest version", latestVersion)
+    logger.debug("Current version", currentVersion)
+
+    if (confirm(`A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`)) {
+      updateApp("ChannelChange");
+    }
+  }
+})
+
+ipcMain.handle("action/extract-file", async (_, args) => {
+  const input = args.input;
+  const output = args.output;
+
+  if (!fs.existsSync(output)) {
+    fs.mkdirSync(output, { recursive: true });
+  }
+
+  console.log("Extracting file", input, output)
+
+  if (input.endsWith(".tar.gz")) {
+    return extractTarball(input, output);
+  } else if (input.endsWith(".zip")) {
+    return extractZip(input, output);
+  }
+
+  return false
+});
+
+ipcMain.handle("action/test-java-version", async (_, args) => {
+  const { jreExecPath } = args;
+  if (!jreExecPath) {
+    return false;
+  }
+  
+  try {
+    execSync(`"${jreExecPath}" --version`, { stdio: 'ignore' });
+  } catch (e) {
+    console.error("Failed to execute java version command", e)
+    return false;
+  }
+});
+
+ipcMain.handle('updater:check-for-update', async () => {
+  if (checkUpdaterLock) {
+    logger.debug("Updater is already checking for updates, returning")
+    return false;
+  }
+
+  checkUpdaterLock = true;
+  const result = await autoUpdater.checkForUpdates();
+
+  if (result?.downloadPromise) {
+    logger.debug("Waiting for download promise")
+    const version = await result.downloadPromise;
+    logger.debug("Download promise resolved", version)
+    checkUpdaterLock = false;
+    return true;
+  }
+
+  checkUpdaterLock = false;
+  return false;
+})
+
+// OW Electron stuff
+ipcMain.handle("ow/cpm/is-required", async () => {
+  return (app as any).overwolf.isCMPRequired();
+})
+
+ipcMain.handle("ow/cpm/open-window", async (_, data) => {
+  (app as any).overwolf.openCMPWindow({
+    tab: data ?? "purposes"
+  });
+});
+
+// TODO: Moves these somewhere else plz
+
+/**
+ * Download method that uses native node modules and supports redirects
+ */
+function downloadFile(url: string, path: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(path);
+
+    const download = (url: string, redirects = 0) => {
+      if (redirects > 10) {
+        reject(`Too many redirects for '${url}'`);
+        return;
+      }
+
+      https.get(url, function(response: any) {
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          // If it's a redirect, make a request to the redirect location
+          download(response.headers.location, redirects + 1);
+        } else if (response.statusCode !== 200) {
+          // If the status code is not 200, reject the promise
+          reject(new Error(`Failed to get '${url}' (${response.statusCode})`));
+        } else {
+          // Otherwise, pipe the response into the file
+          response.pipe(file);
+
+          file.on('finish', function() {
+            file.close();
+            resolve(true);
+          });
+
+          file.on('error', (err) => {
+            reject(err);
+          });
+        }
+      }).on('error', (err) => {
+        reject(err);
+      });
+    };
+
+    download(url);
+  });
+}
+
+function extractTarball(tarballPath: string, outputPath: string) {
+  // It looks like tar is available on all platforms, so we can just use that `tar -xzf`
+  // But let's redirect the contents to the output path
+  // And capture the output so we can log it
+  const command = `tar -xzf "${tarballPath}" -C "${outputPath}"`;
+  logger.debug("Extracting tarball", command)
+  const output = execSync(command).toString();
+  logger.debug("Tarball extraction output", output)
+
+  return true;
+}
+
+function extractZip(zipPath: string, outputPath: string) {
+  const zip = new AdmZip(zipPath);
+  zip.extractAllTo(outputPath, true);
+
+  return true;
+}
+
+function updateChannel(channel: string) {
+  try {
+    const parent = path.join(appHome, 'storage');
+    const channelFile = path.join(parent, 'electron-settings.json');
+    if (!fs.existsSync(parent)) {
+      fs.mkdirSync(parent, { recursive: true });
+    }
+
+    let existingData: any | null = null;
+    if (fs.existsSync(channelFile)) {
+      existingData = JSON.parse(fs.readFileSync(channelFile, 'utf-8'));
+    }
+
+    const newData = {
+      ...existingData,
+      channel
+    };
+
+    fs.writeFileSync(channelFile, JSON.stringify(newData, null, 2));
+  } catch (e) {
+    logger.error("Failed to update channel", e)
+  }
+}

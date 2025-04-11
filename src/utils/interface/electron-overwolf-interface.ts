@@ -17,8 +17,6 @@ export interface Util {
 }
 
 export interface Actions {
-  openModpack: (payload: { name: string; id: string }) => void;
-  openFriends: () => void;
   uploadClientLogs: () => void;
 
   // Res only used on overwolf
@@ -30,7 +28,6 @@ export interface Actions {
 
 export interface CB {
   copy: (e: string) => void;
-  paste: () => string;
 }
 
 export interface Frame {
@@ -38,11 +35,7 @@ export interface Frame {
   min: (windowId: any) => void;
   max: (windowId: any) => void;
   quit: () => void;
-
-  expandWindow: () => void;
-  collapseWindow: () => void;
-
-  
+    
   // Overwolf specific
   getWindowId: () => Promise<string>;
   handleDrag: (event: any, windowId: any) => void;
@@ -63,7 +56,6 @@ export interface InputOutput {
   openFinder(path: string): Promise<boolean>;
   pathJoin(...paths: string[]) : string;
   
-  getLocalAppData: () => string;
   appHome: () => string;
 }
 

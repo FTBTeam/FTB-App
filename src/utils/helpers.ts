@@ -1,16 +1,8 @@
-import MarkdownIt from 'markdown-it';
+
 import Router, {RouterNames} from '@/router';
 import appPlatform from '@platform';
 
-const markdownParser = new MarkdownIt();
-markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {
-  if (!(window as any).helperOpenLink) {
-    (window as any).helperOpenLink = safeLinkOpen;
-  }
-  
-  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.helperOpenLink(this.href);');
-  return self.renderToken(tokens, idx, options);
-}
+const markdownParser = window.nodeUtils.markdown.parse
 
 export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
   if (Router.currentRoute.value.name === name) {
@@ -66,4 +58,4 @@ export function computeAspectRatio(width: number, height: number) {
   return `${simplifiedWidth}:${simplifiedHeight}`;
 }
 
-export const parseMarkdown = (input: string) => markdownParser.render(input);
+export const parseMarkdown = (input: string) => markdownParser(input);

@@ -59,7 +59,7 @@
     "@overwolf/types": "^3.16.0",
     "@types/adm-zip": "^0.5.5",
     "@types/jest": "^29.4.0",
-    "@types/markdown-it": "^12.2.3",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.13.10",
     "@types/semver": "^7.2.0",
     "@vitejs/plugin-vue": "^5.0.4",

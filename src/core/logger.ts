@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import {constants} from '@/core/constants';
+import {constants} from './constants.ts';
 import inspect from 'object-inspect';
 
 enum LogLevel {

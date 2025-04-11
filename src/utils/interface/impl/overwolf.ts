@@ -102,19 +102,6 @@ const Overwolf: ElectronOverwolfInterface = {
 
   // Actions
   actions: {
-    openModpack(payload) {
-      owLogger.debug("Opening modpack", payload)
-      overwolf.utils.openUrlInDefaultBrowser(`ftb://modpack/${payload.id}`);
-    },
-
-    openFriends() {
-      overwolf.windows.obtainDeclaredWindow('chat', (result: any) => {
-        if (result.success && !result.window.isVisible) {
-          overwolf.windows.restore(result.window.id);
-        }
-      });
-    },
-
     changeExitOverwolfSetting(value: boolean) {
       overwolf.settings.setExtensionSettings({ exit_overwolf_on_exit: value }, () => {});
     },
@@ -143,15 +130,6 @@ const Overwolf: ElectronOverwolfInterface = {
   cb: {
     copy(e: string) {
       overwolf.utils.placeOnClipboard(e);
-    },
-    paste(): string {
-      let str = '';
-
-      overwolf.utils.getFromClipboard((clipboard: string) => {
-        str = clipboard;
-      });
-
-      return str ?? '';
     },
   },
 
@@ -196,22 +174,6 @@ const Overwolf: ElectronOverwolfInterface = {
 
       overwolf.windows.dragMove(windowId);
     },
-    expandWindow() {
-      overwolf.windows.getCurrentWindow((result: any) => {
-        if (result && result.status === 'success' && result.window && result.window.id) {
-          //@ts-ignore
-          overwolf.windows.changeSize(result.window.id, 800, result.window.height);
-        }
-      });
-    },
-    collapseWindow() {
-      overwolf.windows.getCurrentWindow((result: any) => {
-        if (result && result.status === 'success' && result.window && result.window.id) {
-          //@ts-ignore
-          overwolf.windows.changeSize(result.window.id, 300, result.window.height);
-        }
-      });
-    },
     quit() {
       overwolf.windows.getCurrentWindow((result: any) => {
         if (result.success) {
@@ -252,10 +214,6 @@ const Overwolf: ElectronOverwolfInterface = {
     pathJoin(...paths: string[]) {
       // Because we're on windows we need to use backslashes
       return paths.join('\\');
-    },
-    
-    getLocalAppData() {
-      return overwolf.io.paths.localAppData;
     },
     
     appHome() {
