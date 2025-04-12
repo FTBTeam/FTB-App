@@ -247,7 +247,7 @@ export class InstanceInstallController {
         id: parseInt(request.id as string, 10),
         version: parseInt(request.version as string, 10),
         _private: request.private,
-        packType: !request.provider ? 0 : (request.provider === 'modpacksch' ? 0 : 1), // TODO: (M#01) Support other providers
+        packType: !request.provider ? 0 : (request.provider === 'modpacksch' ? 0 : 1),
         importFrom: null,
         name: request.name,
         artPath: request.logo,

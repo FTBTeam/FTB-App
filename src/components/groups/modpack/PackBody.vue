@@ -118,6 +118,20 @@ function bisectPromo() {
 
   return baseUrl + instance.id;
 }
+
+function cursePackBody() {
+  if (!packInstance) return '';
+
+  let description = packInstance.description ?? '';
+  
+  // Replace the curseforge linkout with the full URL
+  description = description?.replaceAll('/linkout?remoteUrl=', 'https://curseforge.com/linkout?remoteUrl=') ?? ''
+  
+  // Force all urls to open in a new tab
+  description = description?.replaceAll(/<a href="(.*?)"/g, '<a href="$1" target="_blank" rel="noopener noreferrer"') ?? ''
+  
+  return description;
+}
 </script>
 
 <template>
@@ -283,7 +297,7 @@ function bisectPromo() {
           v-if="packInstance?.provider === 'modpacks.ch' && packInstance && packInstance.description !== undefined"
           v-html="parseMarkdown(packInstance.description ?? '')"
         />
-        <div class="description" v-else-if="packInstance?.provider === 'curseforge' && packInstance && packInstance.description !== undefined" v-html="packInstance.description"></div>
+        <div class="description" v-else-if="packInstance?.provider === 'curseforge' && packInstance && packInstance.description !== undefined" v-html="cursePackBody()"></div>
         <div v-else>
           <h2>No description available</h2>
         </div>

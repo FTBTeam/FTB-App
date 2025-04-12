@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { autoUpdater } from 'electron-updater';
@@ -169,6 +169,26 @@ async function createWindow() {
     // win.loadFile('dist/index.html')
     await win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
+
+  win.webContents.setWindowOpenHandler((data) => {
+    const {url} = data;
+    if (url.startsWith(protocolSpace)) {
+      return { action: 'allow' };
+    }
+    
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  
+  // A failsafe for if the main window ever isn't on localhost, it'll be redirected pack
+  win.webContents.on('did-navigate', (_, url) => {
+    if (!VITE_DEV_SERVER_URL) {
+      if (!url.startsWith(protocolSpace)) {
+        win?.loadFile(path.join(RENDERER_DIST, 'index.html')).catch(logger.error)
+        console.log("Redirecting to app URL");
+      }
+    }
+  });
 }
 
 export async function reloadMainWindow() {

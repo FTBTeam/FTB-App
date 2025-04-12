@@ -25,7 +25,7 @@ const {
 } = defineProps<{
   versions: Versions[];
   packInstance: ModPack;
-  instance: InstanceJson;
+  instance?: InstanceJson;
 }>()
 
 const router = useRouter();
@@ -75,7 +75,7 @@ function setActive(versionId: number) {
 async function fetchLog(versionId: number) {
   try {
     const changelog = await toggleBeforeAndAfter(
-      () => modpackApi.modpacks.getChangelog(packInstance.id, versionId, isCursePack ? "curseforge" : "modpacksch"),
+      () => modpackApi.modpacks.getChangelog(packInstance.id, versionId, isCursePack.value ? "curseforge" : "modpacksch"),
       state => loading.value = state
     )
 
@@ -156,10 +156,6 @@ const isCursePack = computed(() => {
             to be too unstable for players to use.
           </p>
         </UiMessage>
-        
-        {{changelogs[activeLog]}}
-        
-        {{changelogs}}
         
         <div class="wysiwyg" v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''" v-html="parseMarkdown(changelogs[activeLog])" />
       </div>

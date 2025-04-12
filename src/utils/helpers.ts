@@ -16,7 +16,6 @@ export async function safeNavigate(name: RouterNames, params?: any, query?: any)
   }
 }
 
-// TODO: fix typings
 export async function safeLinkOpen(event: any) {
   event.preventDefault();
   let urlTarget = event.target;

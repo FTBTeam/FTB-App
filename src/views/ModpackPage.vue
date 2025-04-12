@@ -112,7 +112,7 @@ const packType = typeIdToProvider(packTypeId.value);
         </div>
       </div>
       <closable-panel v-if="currentModpack" :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
-        <modpack-versions
+        <ModpackVersions
           :versions="currentModpack.versions"
           :pack-instance="currentModpack"
           :instance="null"

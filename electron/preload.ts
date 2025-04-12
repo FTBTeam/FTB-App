@@ -6,21 +6,8 @@ import MarkdownIt from 'markdown-it';
 
 const markdownParser = new MarkdownIt();
 markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {
-  if (!(window as any).helperOpenLink) {
-    (window as any).helperOpenLink = function (event: any) {
-      event.preventDefault();
-      let urlTarget = event.target;
-
-      if (event.target?.tagName !== 'A') {
-        // Get the closest parent link
-        urlTarget = event.target?.closest('a');
-      }
-      
-      ipcRenderer.send('action/open-link', urlTarget.href);
-    }
-  }
-
-  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.helperOpenLink(this.href);');
+  // Ensure the link is opened in a new tab
+  tokens[idx].attrPush(['target', '_blank']);
   return self.renderToken(tokens, idx, options);
 }
 

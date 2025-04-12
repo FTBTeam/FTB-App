@@ -167,7 +167,6 @@ async function checkForToken() {
       }
 
       if (data.error === "invalid_scope") {
-        // TODO: Support links
         error.value = "It looks like the FTB Apps client hasn't been setup correctly, please create an issue on our Github (https://github.com/FTBTeam/FTB-App/issues)";
         stopPolling();
         return;

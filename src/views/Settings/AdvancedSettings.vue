@@ -35,7 +35,7 @@ onMounted(async () => {
   ])
 
   // Make a copy of the settings so we don't mutate the vuex state
-  localSettings.value = { ...appSettingsStore.rootSettings } as SettingsData; // TODO: fix typing
+  localSettings.value = { ...appSettingsStore.rootSettings } as SettingsData;
 
   // Fix for when the setting does not exist in the initial state
   if (!localSettings.value.workaround) {

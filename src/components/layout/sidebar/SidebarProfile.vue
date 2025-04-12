@@ -17,7 +17,6 @@ const { disabled = false } = defineProps<{
 const editMode = ref(false);
 const loading = ref(false);
 
-// TODO: Likely redefined on every render
 const logger = createLogger("SidebarProfile.vue")
 
 async function removeProfile(profile: AuthProfile) {

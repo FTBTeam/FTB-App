@@ -1,9 +1,8 @@
 // @ts-ignore no typescript package available
 import ElectronOverwolfInterface from '../electron-overwolf-interface.ts';
 import {handleAction} from '@/core/protocol/protocolActions.ts';
-import {createLogger} from '@/core/logger.ts';
+import { createLogger, logger } from '@/core/logger.ts';
 import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers.ts';
-import {FSLogger} from '@/utils/interface/electron/utils/fsLogger.ts';
 import {getAppHome} from '@/nuturalHelpers.ts';
 
 const { fs, os, path } = window.nodeUtils;
@@ -228,16 +227,13 @@ const Electron: ElectronOverwolfInterface = {
       return fs.exists(jreLocation(appPath));
     },
     async installApp(onStageChange: (stage: string) => void, _: (data: any) => void, isUpdate = false) {
-      const fsLogger = new FSLogger("ftb-app-installer");
-      fsLogger.clearLog();
-      
       const logAndUpdate = (message: string) => {
-        fsLogger.log(message);
+        logger.log(message);
         onStageChange(message);
       }
       
       const logToBoth = (message: string, normalLogger: any, ...args: any) => {
-        fsLogger.log(message, args);
+        logger.log(message, args);
         normalLogger.bind(eLogger)(message, args);
       }
       
@@ -406,7 +402,6 @@ const Electron: ElectronOverwolfInterface = {
       }
 
       logAndUpdate("Starting subprocess")
-      // fsLogger.deleteLog();
     },
     async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
       // Get the runtime
