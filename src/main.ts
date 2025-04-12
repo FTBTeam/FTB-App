@@ -18,9 +18,9 @@ import {fab} from '@fortawesome/free-brands-svg-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
+// TODO: This might be able to be removed
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 
-import VueVirtualScroller from 'vue-virtual-scroller';
 import {createLogger} from '@/core/logger';
 
 // Use the relative time module from dayjs

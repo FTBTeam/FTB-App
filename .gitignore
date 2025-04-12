@@ -80,3 +80,4 @@ subprocess/debugger
 frontend
 overwolf/jdk-*/
 dist-electron
+*storybook.log

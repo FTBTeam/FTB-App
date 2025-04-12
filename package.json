@@ -23,7 +23,9 @@
     "gen:license": "license-checker --excludePrivatePackages --json --production > licenses.json",
     "overwolf:dev": "node tooling/overwolf/preinit.js && cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service ow:electron:serve",
     "overwolf:build": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=production vue-cli-service build --mode overwolf",
-    "overwolf:serve": "node tooling/overwolf/preinit.js &&  cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf"
+    "overwolf:serve": "node tooling/overwolf/preinit.js &&  cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "engines": {
     "node": "^22"
@@ -47,6 +49,7 @@
     "wysiwyg.css": "^0.0.4"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^3",
     "@electron/notarize": "^2.3.0",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
     "@fortawesome/free-brands-svg-icons": "^6.1.1",
@@ -57,12 +60,22 @@
     "@overwolf/ow-electron": "^31.7.6",
     "@overwolf/ow-electron-builder": "^25.0.8",
     "@overwolf/types": "^3.16.0",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-onboarding": "^8.6.12",
+    "@storybook/blocks": "^8.6.12",
+    "@storybook/builder-vite": "^8.6.12",
+    "@storybook/experimental-addon-test": "^8.6.12",
+    "@storybook/test": "^8.6.12",
+    "@storybook/vue3": "^8.6.12",
+    "@storybook/vue3-vite": "^8.6.12",
     "@types/adm-zip": "^0.5.5",
     "@types/jest": "^29.4.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.13.10",
     "@types/semver": "^7.2.0",
     "@vitejs/plugin-vue": "^5.0.4",
+    "@vitest/browser": "^3.1.1",
+    "@vitest/coverage-v8": "^3.1.1",
     "archiver": "^5.3.1",
     "cross-env": "^7.0.3",
     "electron": "^31.7.7",
@@ -70,11 +83,14 @@
     "electron-log": "^5.3.2",
     "glob": "^10.3.10",
     "license-checker": "25.0.1",
+    "playwright": "^1.51.1",
     "sass": "^1.85.1",
+    "storybook": "^8.6.12",
     "typescript": "^5.8.2",
     "vite": "^5.1.6",
     "vite-plugin-electron": "^0.28.6",
     "vite-plugin-electron-renderer": "^0.14.5",
+    "vitest": "^3.1.1",
     "vue-tsc": "^2.0.26"
   },
   "pnpm": {
