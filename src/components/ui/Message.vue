@@ -5,13 +5,15 @@ import { computed, useSlots } from 'vue';
 
 const slots = useSlots()
 
+type MessageType = 'normal' | 'success' | 'info' | 'warning' | 'danger';
+
 const {
-  type = MessageType.NORMAL,
+  type = 'normal',
   icon = null,
   header = '',
 } = defineProps<{
   type?: MessageType;
-  icon?: IconDefinition | string | null;
+  icon?: IconDefinition | null;
   header?: string;
 }>()
 
@@ -32,16 +34,6 @@ const hasHeader = computed(() => slots.header || header)
     </div>
   </article>
 </template>
-
-<script lang="ts">
-export enum MessageType {
-  NORMAL = 'normal',
-  SUCCESS = 'success',
-  INFO = 'info',
-  WARNING = 'warning',
-  DANGER = 'danger',
-}
-</script>
 
 <style lang="scss" scoped>
 .message {

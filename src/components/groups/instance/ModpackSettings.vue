@@ -24,6 +24,16 @@ import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {
+  faCopy,
+  faDownload,
+  faFolder,
+  faPen, faTimes,
+  faTrash,
+  faUndo,
+  faWarning,
+  faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 
 const router = useRouter();
 const installStore = useInstallStore();
@@ -293,19 +303,19 @@ const resolutionList = computed(() => {
     <CategorySelector :open-down="true" class="mb-6" v-model="instanceSettings.category" @input="() => saveSettings()" />
 
     <div class="buttons flex gap-4 mb-8">
-      <UiButton size="small" type="info" icon="folder" @click="browseInstance()">
+      <UiButton size="small" type="info" :icon="faFolder" @click="browseInstance()">
         Open Folder
       </UiButton>
 
-      <UiButton size="small" icon="copy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
+      <UiButton size="small" :icon="faCopy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
       </UiButton>
       
-      <UiButton v-if="instance.id != -1" size="small" icon="wrench" type="warning" aria-label="Something not looking right? This might help!" @click="repairInstance">
+      <UiButton v-if="instance.id != -1" size="small" :icon="faWrench" type="warning" aria-label="Something not looking right? This might help!" @click="repairInstance">
         Repair
       </UiButton>
       
-      <UiButton size="small" type="danger" icon="trash" @click="confirmDelete">
+      <UiButton size="small" type="danger" :icon="faTrash" @click="confirmDelete">
         Delete instance
       </UiButton>
     </div>
@@ -355,7 +365,7 @@ const resolutionList = computed(() => {
     </div>
     
     <h2 class="text-lg mb-4 font-bold text-warning">
-      <FontAwesomeIcon icon="warning" class="mr-2" />
+      <FontAwesomeIcon :icon="faWarning" class="mr-2" />
       Advanced
     </h2>
     
@@ -382,8 +392,8 @@ const resolutionList = computed(() => {
           <small class="block text-muted mr-6 mt-2">At any point you can update / down grade your mod loader for any modpack. This can sometimes be a destructive action and we recommend only doing this when you know what you're doing.</small>
           
           <div class="buttons flex gap-2 mt-4" v-if="!instance.locked">
-            <UiButton v-if="!hasModloader" size="small" type="info" icon="download" @click="userSelectModLoader = true">Install Modloader</UiButton>
-            <UiButton v-else size="small" type="info" icon="pen" @click="userSelectModLoader = true">Update Modloader</UiButton>
+            <UiButton v-if="!hasModloader" size="small" type="info" :icon="faDownload" @click="userSelectModLoader = true">Install Modloader</UiButton>
+            <UiButton v-else size="small" type="info" :icon="faPen" @click="userSelectModLoader = true">Update Modloader</UiButton>
           </div>
         </div>
       </div>
@@ -416,7 +426,7 @@ const resolutionList = computed(() => {
             </option>
           </select>
 
-          <UiButton type="success" icon="folder" @click="browseForJava">Browse</UiButton>
+          <UiButton type="success" :icon="faFolder" @click="browseForJava">Browse</UiButton>
         </div>
       </section>
       
@@ -443,13 +453,14 @@ const resolutionList = computed(() => {
         />
         
         <div class="flex gap-4">
-          <UiButton size="small" icon="undo" @click="() => {
+          <UiButton size="small" :icon="faUndo" @click="() => {
+            // TODO: Fix me
             instanceSettings.jvmArgs = settingsState.settings.instanceDefaults.javaArgs
           }">
             Reset to Instance defaults
           </UiButton>
 
-          <UiButton size="small" icon="undo" @click="() => {
+          <UiButton size="small" :icon="faUndo" @click="() => {
             instanceSettings.jvmArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
           }">
             Reset to Vanilla defaults
@@ -520,11 +531,11 @@ const resolutionList = computed(() => {
       
       <template #footer>
         <div class="flex justify-end gap-4">
-          <UiButton type="warning" icon="times" @click="() => {
+          <UiButton type="warning" :icon="faTimes" @click="() => {
             userSelectModLoader = false
             userSelectedLoader = null
           }">Close</UiButton>
-          <UiButton type="success" :wider="true" icon="download" :disabled="userSelectedLoader === null" @click="() => installModloader()">Install</UiButton>
+          <UiButton type="success" :wider="true" :icon="faDownload" :disabled="userSelectedLoader === null" @click="() => installModloader()">Install</UiButton>
         </div>
       </template>
     </Modal>

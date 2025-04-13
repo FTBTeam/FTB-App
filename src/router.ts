@@ -123,6 +123,7 @@ const router = createRouter({
     //   redirect: '/',
     // }
   ],
+  // TODO: Verify this still works after layout updates
   scrollBehavior: (to, _, savedPosition) => {
     if (savedPosition) {
       return {

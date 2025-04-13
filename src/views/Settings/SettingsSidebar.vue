@@ -4,6 +4,14 @@ import {RouterNames} from '@/router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
 import { Popover } from '@/components/ui';
+import {
+  faArrowLeft, faCogs,
+  faDownload,
+  faGamepad, faInfo,
+  faRocket,
+  faShuffle,
+  faUserSecret,
+} from '@fortawesome/free-solid-svg-icons';
 
 const configData = appPlatform.config;
 </script>
@@ -12,7 +20,7 @@ const configData = appPlatform.config;
 <template>
   <div class="settings-sidebar">
     <router-link to="/" class="back">
-      <FontAwesomeIcon icon="arrow-left" class="mr-2" />
+      <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
       Back to app
     </router-link>
 
@@ -20,27 +28,27 @@ const configData = appPlatform.config;
       <nav>
         <div class="heading">Settings</div>
         <router-link :to="{ name: RouterNames.SETTINGS_APP }" class="item">
-          <FontAwesomeIcon icon="rocket" />
+          <FontAwesomeIcon :icon="faRocket" />
           <span>App</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_INSTANCE }" class="item">
-          <FontAwesomeIcon icon="gamepad" />
+          <FontAwesomeIcon :icon="faGamepad" />
           <span>Instance Defaults</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
-          <FontAwesomeIcon icon="cloud-download-alt" />
+          <FontAwesomeIcon :icon="faDownload" />
           <span>Downloads</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_PROXY }" class="item">
-          <FontAwesomeIcon icon="shuffle" />
+          <FontAwesomeIcon :icon="faShuffle" />
           <span>Proxy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_PRIVACY }" class="item">
-          <FontAwesomeIcon icon="user-secret" />
+          <FontAwesomeIcon :icon="faUserSecret" />
           <span>Privacy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_ADVANCED }" class="item">
-          <FontAwesomeIcon icon="cogs" />
+          <FontAwesomeIcon :icon="faCogs" />
           <span>Advanced</span>
         </router-link>
       </nav>
@@ -48,7 +56,7 @@ const configData = appPlatform.config;
         <div class="heading">Info</div>
 
         <router-link :to="{ name: RouterNames.SETTINGS_CHANGELOGS }" class="item app-info-item">
-          <FontAwesomeIcon icon="info" />
+          <FontAwesomeIcon :icon="faInfo" />
           <span>Changelogs</span>
         </router-link>
       </nav>

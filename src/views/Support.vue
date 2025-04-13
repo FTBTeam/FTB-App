@@ -25,7 +25,7 @@ const mkSocial = (name: string, icon: IconDefinition, goEndpoint: string) => ({
 
 const mkTopic = (
   name: string,
-  icon: IconDefinition | string,
+  icon: IconDefinition,
   goEndpoint: string | undefined,
   desc: string,
   customIcon = false,

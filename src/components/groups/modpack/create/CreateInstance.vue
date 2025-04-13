@@ -20,6 +20,7 @@ import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack } from '@/core/types/appTypes.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { faArrowLeft, faArrowRight, faBoxes, faInfo, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 
 const appSettingsStore = useAppSettings();
 const modpackStore = useModpackStore();
@@ -214,9 +215,9 @@ const screenResolutions = computed( () => {
     <ModalBody>
       <header>
         <div class="steps flex gap-6 pt-4 pb-6">
-          <div class="step flex-1" :class="{active: step === 0, done: step > 0}"><FontAwesomeIcon fixedWidth icon="info" /> About <span /></div>
-          <div class="step flex-1" :class="{active: step === 1, done: step > 1}"><FontAwesomeIcon fixedWidth icon="boxes" /> Mod Loader <span /></div>
-          <div class="step flex-1" :class="{active: step === 2}"><FontAwesomeIcon fixedWidth icon="puzzle-piece" /> Settings <span /></div>
+          <div class="step flex-1" :class="{active: step === 0, done: step > 0}"><FontAwesomeIcon fixedWidth :icon="faInfo" /> About <span /></div>
+          <div class="step flex-1" :class="{active: step === 1, done: step > 1}"><FontAwesomeIcon fixedWidth :icon="faBoxes" /> Mod Loader <span /></div>
+          <div class="step flex-1" :class="{active: step === 2}"><FontAwesomeIcon fixedWidth :icon="faPuzzlePiece" /> Settings <span /></div>
         </div>
       </header>
       <div class="about" v-show="step === 0">
@@ -282,13 +283,13 @@ const screenResolutions = computed( () => {
     
     <ModalFooter>
       <div class="flex justify-end">
-        <UiButton v-if="step > 0" icon="arrow-left" class="mr-2" @click="step --">
+        <UiButton v-if="step > 0" :icon="faArrowLeft" class="mr-2" @click="step --">
           Back
         </UiButton>
-        <UiButton :wider="true" type="success" v-if="step < 2" :disabled="!canProceed()" icon="arrow-right" @click="step ++">
+        <UiButton :wider="true" type="success" v-if="step < 2" :disabled="!canProceed()" :icon="faArrowRight" @click="step ++">
           Next
         </UiButton>
-        <UiButton :wider="true" type="success" v-if="step === 2" icon="arrow-right" @click="createInstance">
+        <UiButton :wider="true" type="success" v-if="step === 2" :icon="faArrowRight" @click="createInstance">
           Create
         </UiButton>
       </div>

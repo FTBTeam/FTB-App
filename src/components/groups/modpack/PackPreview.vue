@@ -11,6 +11,7 @@ import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts'
 import { useInstallStore } from '@/store/installStore.ts';
 import { useRouter } from 'vue-router';
 import { PackProviders } from '@/core/types/appTypes.ts';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 const RouteNames = RouterNames;
 const props = defineProps<{
@@ -99,7 +100,7 @@ const isInstalling = computed(() => {
       </div>
       <div class="actions flex gap-2">        
         <div class="install-btn" @click.stop="install" aria-label="Install modpack" data-balloon-pos="up-right">
-          <FontAwesomeIcon icon="download" />
+          <FontAwesomeIcon :icon="faDownload" />
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {stringListContainsIgnoreCase} from '@/utils/helpers/arrayHelpers';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { ref, computed } from 'vue';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 const instanceStore = useInstanceStore();
 
@@ -75,16 +76,16 @@ const _options = computed(() => {
 
 <template>
   <div>
-    <selection2 :open-up="!openDown" :label="label ?? 'Category'" :options="_options"
+    <Selection2 :open-up="!openDown" :label="label ?? 'Category'" :options="_options"
                 :value="value" @input="v => valueChanged(v)" class="flex-1"/>
     
-    <modal :open="showCreate" title="New category" @closed="showCreate = false">
+    <Modal :open="showCreate" title="New category" @closed="showCreate = false">
       <FTBInput v-model="extraCategory" placeholder="FTB Packs" label="Category name" />
       <template #footer>
         <div class="flex justify-end">
-          <ui-button @click="addCategory" type="success" icon="plus">Create</ui-button>
+          <UiButton @click="addCategory" type="success" :icon="faPlus">Create</UiButton>
         </div>
       </template>
-    </modal>
+    </Modal>
   </div>
 </template>

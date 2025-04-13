@@ -60,15 +60,14 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 autoUpdater.on('checking-for-update', () => logAndEmit('updater:checking-for-update'));
-autoUpdater.on("update-cancelled", () => logAndEmit('updater:update-cancelled'));
-autoUpdater.on('update-available', () => logAndEmit('updater:update-available'));
-autoUpdater.on('update-not-available', () => logAndEmit('updater:update-not-available'));
-autoUpdater.on('error', (error) => logAndEmit('updater:error', JSON.stringify(error)));
+autoUpdater.on("update-cancelled", (info) => logAndEmit('updater:update-cancelled', info));
+autoUpdater.on('update-available', (info) => logAndEmit('updater:update-available', info));
+autoUpdater.on('update-not-available', (info) => logAndEmit('updater:update-not-available', info));
+autoUpdater.on('error', (error, message) => logAndEmit('updater:error', JSON.stringify(error), message));
 autoUpdater.on('download-progress', (progress) => logAndEmit('updater:download-progress', progress));
-autoUpdater.on('update-downloaded', (info) => {
-  logger.debug("Update downloaded", info)
+autoUpdater.on('update-downloaded', (event) => {
+  logger.debug("Update downloaded", event)
   ipcMain.emit('updater:update-downloaded');
-  updateApp("UpdateDownloaded");
 });
 
 logger.debug('App home is', appHome)
@@ -80,7 +79,7 @@ let subprocess: ChildProcess | null = null;
 let win: BrowserWindow | null;
 let prelaunchWindow: BrowserWindow | null = null;
 
-ipcMain.handle('app:launch', async () => {
+ipcMain.handle('action/launch-app', async () => {
   logger.debug("Launching app")
   if (win) {
     // This shouldn't happen, but if it does, just close the window
@@ -94,17 +93,17 @@ ipcMain.handle('app:launch', async () => {
   }
 })
 
-async function createPreLaunchWindow(source: string) {
-  logger.debug("Creating prelaunch window", source)
+async function createPreLaunchWindow() {
+  logger.debug("Creating prelaunch window")
 
   prelaunchWindow = new BrowserWindow({
     title: 'FTB Launch',
-    minWidth: 300,
-    minHeight: 400,
-    width: 300,
-    height: 400,
-    maxWidth: 300,
-    maxHeight: 400,
+    minWidth: 380,
+    minHeight: 510,
+    width: 380,
+    height: 510,
+    maxWidth: 380,
+    maxHeight: 510,
     resizable: false,
     frame: false,
     titleBarStyle: 'hidden',
@@ -114,24 +113,18 @@ async function createPreLaunchWindow(source: string) {
     closable: false,
     minimizable: false,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: path.join(__dirname, 'preload.mjs'),
+      contextIsolation: true,
+      sandbox: false
     },
   });
 
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    logger.debug("Loading dev server url")
-    await prelaunchWindow.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL as string}/prelaunch.html`);
-
-    if (process.env.NODE_ENV !== "production") {
-      logger.debug("Opening dev tools for prelaunch window")
-      prelaunchWindow.webContents.openDevTools({
-        mode: 'detach',
-      });
-    }
+  if (VITE_DEV_SERVER_URL) {
+    await prelaunchWindow.loadURL(VITE_DEV_SERVER_URL + "/prelaunch.html")
+    
   } else {
-    logger.debug("Loading app from built files")
-    await prelaunchWindow.loadURL(`${protocolSpace}://./prelaunch.html`);
+    // win.loadFile('dist/index.html')
+    await prelaunchWindow.loadFile(path.join(RENDERER_DIST, 'prelaunch.html'))
   }
 
   prelaunchWindow.on("ready-to-show", () => {
@@ -189,6 +182,15 @@ async function createWindow() {
       }
     }
   });
+
+  // TODO: Add back
+  win.on('closed', () => {
+    // Kill the subprocess if it's running
+    // if (subprocess !== null && !preserveSubprocess) {
+    //   subprocess.kill();
+    // }
+    // win = null;
+  });
 }
 
 export async function reloadMainWindow() {
@@ -231,11 +233,11 @@ app.on('activate', async () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    await createWindow()
+    await createPreLaunchWindow()
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(createPreLaunchWindow)
 app.on("open-url", async (_, customSchemeData) => {
   if (win) {
     win.webContents.send('parseProtocolURL', customSchemeData);

@@ -5,6 +5,7 @@ import { useAttachDomEvent } from '@/composables';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useDialogsStore } from '@/store/dialogStore.ts';
 import { useAds } from '@/composables/useAds.ts';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const dialogStore = useDialogsStore();
 const ads = useAds()
@@ -45,7 +46,7 @@ function closeTopDialog() {
                 <div class="subtitle" v-if="dialog.subTitle">{{ dialog.subTitle }}</div>
               </div>
               <div class="modal-closer" @click="() => closeTopDialog()">
-                <FontAwesomeIcon class="closer" icon="times" />
+                <FontAwesomeIcon class="closer" :icon="faTimes" />
               </div>
             </div>
             

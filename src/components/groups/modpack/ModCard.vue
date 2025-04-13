@@ -7,6 +7,7 @@ import UiBadge from '@/components/ui/UiBadge.vue';
 import {prettyNumber} from '@/utils/helpers/stringHelpers.ts';
 import { computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCheck, faDownload, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 const {
   mod,
@@ -74,20 +75,20 @@ const versions = computed(() => mod.versions
       <div class="main">
         <div class="content">
           <div class="about">
-            <div class="name flex gap-4 items-center">{{ mod.name }} <ui-badge type="success" v-if="projectInstalled" icon="check" aria-label="This mod is already installed in your pack, installing again will cause the mod to update."> Installed</ui-badge></div>
+            <div class="name flex gap-4 items-center">{{ mod.name }} <ui-badge type="success" v-if="projectInstalled" :icon="faCheck" aria-label="This mod is already installed in your pack, installing again will cause the mod to update."> Installed</ui-badge></div>
             <div class="desc pr-10 mb-3">{{ mod.synopsis }}</div>
           </div>
-          <ui-button type="success" icon="download" @click="$emit('install')">Install</ui-button>
+          <ui-button type="success" :icon="faDownload" @click="$emit('install')">Install</ui-button>
         </div>
 
         <div class="numbers">
           <div class="stat" :aria-label="mod.installs.toLocaleString() + ' Downloads'" data-balloon-pos="down">
-            <FontAwesomeIcon icon="download" />
+            <FontAwesomeIcon :icon="faDownload" />
             <div class="value is-value">{{ prettyNumber(mod.installs) }}</div>
           </div>
 
           <div class="stat" aria-label="Authors" data-balloon-pos="down">
-            <FontAwesomeIcon icon="users" />
+            <FontAwesomeIcon :icon="faUsers" />
             <div class="value authors">
               {{ mod.authors.slice(0, 3).map((e) => e.name).join(', ') }}
             </div>

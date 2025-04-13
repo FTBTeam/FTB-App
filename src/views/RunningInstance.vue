@@ -16,6 +16,14 @@ import { useRouter } from 'vue-router';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {
+  faArrowLeft,
+  faCircleNotch,
+  faEllipsisVertical,
+  faEye,
+  faFolderOpen,
+  faSkullCrossbones,
+} from '@fortawesome/free-solid-svg-icons';
 
 type InstanceActionCategory = {
   title: string;
@@ -404,7 +412,7 @@ function toggleEnabledLog(type: string) {
                   aria-label="If this takes more than 5 minutes, kill the instance and try again."
                   data-balloon-pos="down-left"
                 >
-                  <FontAwesomeIcon spin icon="circle-notch" class="mr-4" />
+                  <FontAwesomeIcon spin :icon="faCircleNotch" class="mr-4" />
                 </div>
                 {{ progressMessage }}
               </div>
@@ -416,7 +424,7 @@ function toggleEnabledLog(type: string) {
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
               color="primary"
             >
-              <FontAwesomeIcon icon="folder-open" class="mr-2" />
+              <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
               Open instance folder
             </FTBButton>
 
@@ -424,7 +432,7 @@ function toggleEnabledLog(type: string) {
               @click="cancelLoading"
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
             >
-              <FontAwesomeIcon icon="skull-crossbones" class="mr-2" />
+              <FontAwesomeIcon :icon="faSkullCrossbones" class="mr-2" />
               Kill instance
             </FTBButton>
           </div>
@@ -445,14 +453,14 @@ function toggleEnabledLog(type: string) {
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
               color="info"
             >
-              <FontAwesomeIcon icon="folder-open" class="mr-2" />
+              <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
               Open instance folder
             </FTBButton>
             <FTBButton
               @click="leavePage"
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
             >
-              <FontAwesomeIcon icon="arrow-left" class="mr-2" />
+              <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
               Exit
             </FTBButton>
           </div>
@@ -486,20 +494,20 @@ function toggleEnabledLog(type: string) {
           data-balloon-length="xlarge"
           v-if="!instance?.preventMetaModInjection"
         >
-          <FontAwesomeIcon icon="eye" class="" />
+          <FontAwesomeIcon :icon="faEye" class="" />
         </FTBButton>
         <FTBButton
           @click="cancelLoading"
           class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-red-600 border border-solid hover:bg-red-600 hover:text-white"
         >
-          <FontAwesomeIcon icon="skull-crossbones" class="mr-2" />
+          <FontAwesomeIcon :icon="faSkullCrossbones" class="mr-2" />
           Kill instance
         </FTBButton>
         <FTBButton
           @click="showOptions = true"
           class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-orange-600 border border-solid hover:bg-orange-600 hover:text-white"
         >
-          <FontAwesomeIcon icon="ellipsis-vertical" />
+          <FontAwesomeIcon :icon="faEllipsisVertical" />
         </FTBButton>
       </div>
     </div>

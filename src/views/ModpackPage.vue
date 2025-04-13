@@ -12,6 +12,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ModPack } from '@/core/types/appTypes.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
+import { faWarning } from '@fortawesome/free-solid-svg-icons';
 
 const modpackStore = useModpackStore();
 
@@ -73,7 +74,7 @@ const packType = typeIdToProvider(packTypeId.value);
   <div class="pack-container" v-if="!loading">
     <div class="pack-page">
       <div v-if="!currentModpack && !loading">
-        <UiMessage icon="warning" type="danger" class="m-6">
+        <UiMessage :icon="faWarning" type="danger" class="m-6">
           {{ error ? error : 'Something has gone wrong...' }}
         </UiMessage>
       </div>

@@ -13,6 +13,7 @@ import CategorySelector from '@/components/groups/modpack/create/CategorySelecto
 import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 const modpackStore = useModpackStore();
 const router = useRouter();
@@ -142,7 +143,7 @@ function versions() {
       </template>
     </ModalBody>
     <ModalFooter class="flex justify-end">
-      <UiButton :wider="true" type="success" icon="download" @click="install">
+      <UiButton :wider="true" type="success" :icon="faDownload" @click="install">
         Install
       </UiButton>
     </ModalFooter>

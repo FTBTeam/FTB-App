@@ -9,7 +9,7 @@
           </div>
           <div class="closer" @click="emit('close')">
             Close
-            <FontAwesomeIcon icon="times" />
+            <FontAwesomeIcon :icon="faTimes" />
           </div>
         </div>
         <div class="content" :class="{ scrollable }">
@@ -25,6 +25,7 @@
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import appPlatform from '@platform'
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const { subtitle = '', scrollable = true } = defineProps<{
   open: boolean;

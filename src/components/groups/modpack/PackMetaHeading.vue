@@ -6,6 +6,7 @@ import {resolveModloader, sourceProviderToProvider, typeIdToProvider} from '@/ut
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
 type PackInfo = {
   id: number;
@@ -73,7 +74,7 @@ const isLoader = computed(() => {
 <template>
   <div class="meta-heading" :class="{ bolder: hidePackDetails }">
     <div class="back" @click="() => $emit('back')">
-      <FontAwesomeIcon icon="chevron-left" class="mr-2" />
+      <FontAwesomeIcon :icon="faChevronLeft" class="mr-2" />
       Back to {{ hidePackDetails ? 'instance' : 'library' }}
     </div>
 

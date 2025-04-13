@@ -18,7 +18,6 @@ export default defineConfig({
     vue(),
     tailwindcss(),
     electron({
-      
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
@@ -44,15 +43,21 @@ export default defineConfig({
         // https://github.com/electron-vite/vite-plugin-electron-renderer/issues/78#issuecomment-2053600808
         ? undefined
         : {},
-      
-      
     }),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        index: path.join(__dirname, 'index.html'),
+        prelaunch: path.join(__dirname, 'prelaunch.html'),
+      },
+    },
+  },
   css: {
     preprocessorOptions: {
       scss: {
         api: 'modern-compiler' // or "modern"
       }
     }
-  }
+  },
 })

@@ -8,6 +8,7 @@ import {SettingsData} from '@/core/types/javaApi';
 import { Loader, UiButton, Selection2, FTBInput } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { computed, onMounted, ref } from 'vue';
+import { faUndo } from '@fortawesome/free-solid-svg-icons';
 
 const appSettingsStore = useAppSettings();
 
@@ -183,12 +184,12 @@ const channelOptions = computed(() => ReleaseChannelOptions());
       />
 
       <div class="flex gap-4">
-        <ui-button size="small" icon="undo" @click="() => {
+        <UiButton size="small" :icon="faUndo" @click="() => {
             localSettings.instanceDefaults.javaArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
             saveMutated()
           }">
           Reset to Vanilla defaults
-        </ui-button>
+        </UiButton>
       </div>
     </div>
 

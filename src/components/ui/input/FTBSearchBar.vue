@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
 
 const {
   placeholder = 'Search',
@@ -34,7 +35,7 @@ const emit = defineEmits<{
       @input="emit('input', value)"
     />
     <div class="search-button p-3 cursor-pointer rounded-tr rounded-br">
-      <FontAwesomeIcon icon="search" />
+      <FontAwesomeIcon :icon="faSearch" />
     </div>
   </div>
 </template>

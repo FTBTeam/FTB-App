@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const {
   label = '',
@@ -67,7 +68,7 @@ function formatValue(value: number, dontShowThreads = false) {
           data-balloon-length="medium"
           :aria-label="description"
           data-balloon-pos="up"
-          ><FontAwesomeIcon icon="info-circle"
+          ><FontAwesomeIcon :icon="faInfoCircle"
         /></span>
       </label>
       <div class="slider-area">

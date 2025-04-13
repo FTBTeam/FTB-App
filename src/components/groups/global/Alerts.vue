@@ -5,15 +5,16 @@ import {emitter} from '@/utils';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
+import { faCheckCircle, faExclamationCircle, faInfoCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 type AlertWithUuid = Alert & { uuid: string }
 
 const router = useRouter();
 const typeIcons = {
-  success: "check-circle",
-  error: "times-circle",
-  warning: "exclamation-circle",
-  info: "info-circle",
+  success: faCheckCircle,
+  error: faTimesCircle,
+  warning: faExclamationCircle,
+  info: faInfoCircle,
 }
 
 const alerts = ref<AlertWithUuid[]>([]);

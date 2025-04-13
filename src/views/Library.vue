@@ -15,6 +15,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faChevronDown, faFolder, faSearch, faSort } from '@fortawesome/free-solid-svg-icons';
 
 const groupOptions = [
   ['Category', 'category'],
@@ -200,8 +201,8 @@ watch(groupBy, onSortChange)
       <header class="flex gap-4 mb-6 items-center">
         <FTBSearchBar v-model="searchTerm" placeholder="Search" class="flex-1" />
         
-        <selection2 v-if="Object.keys(groupedPacks).length > 1" icon="folder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
-        <selection2 icon="sort" direction="right" :min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
+        <selection2 v-if="Object.keys(groupedPacks).length > 1" :icon="faFolder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
+        <selection2 :icon="faSort" direction="right" :min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
         
         <InstallQueue />
       </header>
@@ -213,7 +214,7 @@ watch(groupBy, onSortChange)
               <h2>{{ index }}</h2>
               <span />
               <div class="collapse" @click="collapseGroup(index)">
-                <FontAwesomeIcon icon="chevron-down" />
+                <FontAwesomeIcon :icon="faChevronDown" />
               </div>
             </header>
             <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
@@ -239,10 +240,10 @@ watch(groupBy, onSortChange)
         </p>
         <div class="flex gap-6 mb-8">
           <router-link to="/browseModpacks">
-            <ui-button :wider="true" type="info" icon="search">Browse FTB Modpacks</ui-button>
+            <UiButton :wider="true" type="info" :icon="faSearch">Browse FTB Modpacks</UiButton>
           </router-link>
           <router-link :to="{ name: RouterNames.ROOT_BROWSE_PACKS, query: { provider: 'curseforge' } }">
-            <ui-button icon="search">Browse CurseForge Modpacks</ui-button>
+            <UiButton :icon="faSearch">Browse CurseForge Modpacks</UiButton>
           </router-link>
         </div>
         

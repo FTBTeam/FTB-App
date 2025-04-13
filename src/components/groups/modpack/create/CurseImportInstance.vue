@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModalFooter, ModalBody, Modal, UiButton } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
 import { ref } from 'vue';
+import { faFileZipper, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 const router = useRouter()
 
@@ -77,7 +78,7 @@ async function  installZip() {
         @dragover.prevent
         @drop.prevent="fileAttach($event)"
       >
-        <FontAwesomeIcon icon="upload" class="mr-2" size="2x" />
+        <FontAwesomeIcon :icon="faUpload" class="mr-2" size="2x" />
         <p>Drag & Drop a file or select a file</p>
         <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />
       </div>
@@ -86,9 +87,9 @@ async function  installZip() {
         <p v-if="activeFile" class="font-bold mt-4 text-base mb-2">Selected file</p>
       </transition>
       
-      <transition name="transition-fade" duration="250">
+      <transition name="transition-fade" :duration="250">
         <div class="file flex items-center p-4 pl-6" v-if="activeFile">
-          <FontAwesomeIcon icon="file-zipper" size="2x" class="mr-6" />
+          <FontAwesomeIcon :icon="faFileZipper" size="2x" class="mr-6" />
           <div class="text flex-1">
             <div class="name font-bold">{{ activeFile.name }}</div>
             <div class="size opacity-75">
@@ -96,7 +97,7 @@ async function  installZip() {
             </div>
           </div>
           <div class="delete" @click="activeFile = null">
-            <font-awesome-icon icon="trash" />
+            <FontAwesomeIcon :icon="faTrash" />
           </div>
         </div>
       </transition>
@@ -106,7 +107,7 @@ async function  installZip() {
     
     <ModalFooter>
       <div class="flex justify-end">
-        <UiButton :wider="true" :disabled="!activeFile" type="success" icon="upload" @click="installZip">
+        <UiButton :wider="true" :disabled="!activeFile" type="success" :icon="faUpload" @click="installZip">
           Install
         </UiButton>
       </div>

@@ -8,37 +8,38 @@ import {ContextMenus} from '@/core/context/contextMenus';
 import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
 import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faBookOpen, faCog, faHome, faInfoCircle, faRss, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 const navigation = [
   {
     name: 'Home',
     to: RouterNames.HOME,
-    icon: 'home',
+    icon: faHome,
   },
   {
     name: 'Library',
     to: RouterNames.ROOT_LIBRARY,
-    icon: 'book-open',
+    icon: faBookOpen,
   },
   {
     name: 'Browse',
     to: RouterNames.ROOT_BROWSE_PACKS,
-    icon: 'search',
+    icon: faSearch,
   },
   {
     name: 'Blog',
     to: RouterNames.ROOT_BLOG,
-    icon: 'rss',
+    icon: faRss,
   },
   {
     name: 'Support',
     to: RouterNames.SUPPORT,
-    icon: 'info-circle',
+    icon: faInfoCircle,
   },
   {
     name: 'Settings',
     to: RouterNames.SETTINGS_APP,
-    icon: 'cog',
+    icon: faCog,
   },
 ];
 

@@ -14,6 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { Versions } from '@/core/types/appTypes.ts';
+import { faBolt, faCircleNotch, faDownload, faPlay } from '@fortawesome/free-solid-svg-icons';
 
 const router = useRouter()
 const runningInstancesStore = useRunningInstancesStore();
@@ -149,7 +150,7 @@ function _versionName() {
             <small class="text-center opacity-75" v-if="installStore.currentInstall.stage === 'Mod loader'">This may take a minute</small>
             <transition name="transition-fade" :duration="250">
               <div class="files text-sm" v-if="installStore.currentInstall.speed">
-                <FontAwesomeIcon icon="bolt" class="mr-2" />({{(installStore.currentInstall.speed / 12500000).toFixed(2)}}) Mbps
+                <FontAwesomeIcon :icon="faBolt" class="mr-2" />({{(installStore.currentInstall.speed / 12500000).toFixed(2)}}) Mbps
               </div>
             </transition>
             <progress-bar class="progress" :progress="parseFloat(installStore.currentInstall?.progress ?? '0') / 100" />
@@ -161,15 +162,15 @@ function _versionName() {
           <div class="name">{{ instance.name }}</div>
           <div class="version text-sm opacity-75">
             <template v-if="!isInstalling">{{ versionName }}</template>
-            <template v-else><FontAwesomeIcon icon="circle-notch" spin class="mr-2" /> Installing</template>
+            <template v-else><FontAwesomeIcon :icon="faCircleNotch" spin class="mr-2" /> Installing</template>
           </div>
         </div>
         <div class="action-buttons" v-if="!isInstalling" @click.stop>
           <div class="button" aria-label="Update available!" data-balloon-pos="down-left" :class="{disabled: isUpdating}" v-if="latestVersion" @click.stop="updateOpen = true">
-            <FontAwesomeIcon icon="download" />
+            <FontAwesomeIcon :icon="faDownload" />
           </div>
           <div class="play-button button !bg-green-500 hover:!bg-green-400" aria-label="Play" data-balloon-pos="down" :class="{disabled: isUpdating || isRunning}" @click.stop="play">
-            <FontAwesomeIcon icon="play" />
+            <FontAwesomeIcon :icon="faPlay" />
           </div>
         </div>
       </div>

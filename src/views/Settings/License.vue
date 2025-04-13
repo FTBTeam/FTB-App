@@ -4,6 +4,7 @@ import UiButton from '@/components/ui/UiButton.vue';
 import { standardDate } from '@/utils/helpers/dateHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, ref } from 'vue';
+import { faArrowLeft, faInfo } from '@fortawesome/free-solid-svg-icons';
 
 type LicenseResponse = Awaited<ReturnType<typeof appPlatform.app.getLicenses>>;
 
@@ -18,7 +19,7 @@ const configData = appPlatform.config
 <template>
   <div class="flex flex-col ">
     <router-link :to="{ name: 'app-settings' }">
-      <ui-button icon="arrow-left" type="success" :wider="true">Back</ui-button>
+      <ui-button :icon="faArrowLeft" type="success" :wider="true">Back</ui-button>
     </router-link>
     
     <div class="flex flex-col mt-4" v-if="licenseData && licenseData.javascript">
@@ -34,7 +35,7 @@ const configData = appPlatform.config
     </div>
     <div class="disclaimer mt-2 mb-6">
       <small class="text-muted">
-        <FontAwesomeIcon icon="info" class="mr-4" />
+        <FontAwesomeIcon :icon="faInfo" class="mr-4" />
         The information on this page was valid as of {{ standardDate(configData.dateCompiled) }}
       </small>
     </div>
@@ -57,7 +58,7 @@ const configData = appPlatform.config
       </div>
       <div class="disclaimer mt-2 mb-6">
         <small class="text-muted">
-          <FontAwesomeIcon icon="info" class="mr-4" />
+          <FontAwesomeIcon :icon="faInfo" class="mr-4" />
           The information on this page was valid as of {{ standardDate(configData.dateCompiled) }}
         </small>
       </div>

@@ -13,6 +13,7 @@ import {createLogger} from '@/core/logger';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, ref } from 'vue';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { faCheck, faCopy, faFileZipper, faFolderOpen, faSync } from '@fortawesome/free-solid-svg-icons';
 
 const appSettingsStore = useAppSettings();
 
@@ -171,12 +172,12 @@ async function moveInstances() {
               <FontAwesomeIcon
                 @click="appPlatform.cb.copy(configData?.version)"
                 class="ml-2 cursor-pointer"
-                icon="copy"
+                :icon="faCopy"
                 size="1x"
               />
             </div>
             <a class="cursor-pointer hover:underline" href="https://go.ftb.team/app-feedback" target="_blank"
-            ><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
+            ><FontAwesomeIcon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
             /></a>
           </div>
         </div>
@@ -222,9 +223,9 @@ async function moveInstances() {
 
     <p class="block text-white-700 font-bold mb-4">Common Folders</p>
     <div class="flex items-center gap-4 mb-6">
-      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('home')" :working="working">Home</ui-button>
-      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('instances')" :working="working">Instances</ui-button>
-      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('logs')" :working="working">Logs</ui-button>
+      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('home')" :working="working">Home</UiButton>
+      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('instances')" :working="working">Instances</UiButton>
+      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('logs')" :working="working">Logs</UiButton>
     </div>
 
     <div class="section logs mb-6 sm:flex items-center">
@@ -235,7 +236,7 @@ async function moveInstances() {
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="file-zipper">Create App Logs ZIP</ui-button>
+      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" :icon="faFileZipper">Create App Logs ZIP</ui-button>
     </div>
 
     <div class="section cache mb-6 sm:flex items-center">
@@ -246,7 +247,7 @@ async function moveInstances() {
           the cache, it'll make sure you're running the latest version of all available data.
         </p>
       </div>
-      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" icon="sync">Refresh Cache</ui-button>
+      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" :icon="faSync">Refresh Cache</ui-button>
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>
@@ -282,7 +283,7 @@ async function moveInstances() {
 
       <template #footer v-if="instanceMoveModalComplete">
         <div class="flex justify-end">
-          <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
+          <ui-button @click="instanceMoveModalShow = false" type="success" :icon="faCheck">Done</ui-button>
         </div>
       </template>
     </Modal>

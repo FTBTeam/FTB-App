@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { FTBButton, ModalBody, ModalFooter } from '@/components/ui';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const {
   isDowngrade = true,
@@ -43,7 +44,7 @@ const {
         css-class="text-center text-l"
         @click="$emit('closed')"
       >
-        <FontAwesomeIcon icon="times" class="mr-2" size="1x" />
+        <FontAwesomeIcon :icon="faTimes" class="mr-2" size="1x" />
         {{ fixedVersion !== null ? 'Ignore' : 'Close' }}
       </FTBButton>
       <FTBButton
@@ -53,7 +54,7 @@ const {
         css-class="text-center text-l"
         @click="$emit('action', fixedVersion)"
       >
-        <FontAwesomeIcon icon="check" class="mr-2" size="1x" />
+        <FontAwesomeIcon :icon="faCheck" class="mr-2" size="1x" />
         {{ isDowngrade ? 'Downgrade pack' : 'Update pack' }}
       </FTBButton>
     </ModalFooter>

@@ -20,6 +20,7 @@ import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { ModPack, Versions } from '@/core/types/appTypes.ts';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
 
 const router = useRouter()
 
@@ -314,7 +315,7 @@ export enum ModpackPageTabs {
 
       <template #footer>
         <div class="flex justify-end">
-          <ui-button icon="play" type="success" @click="playOffline">Play offline</ui-button>
+          <ui-button :icon="faPlay" type="success" @click="playOffline">Play offline</ui-button>
         </div>
       </template>
     </Modal>

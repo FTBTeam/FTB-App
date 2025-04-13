@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, onUnmounted } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const {
   title,
@@ -83,7 +84,7 @@ export enum ModalSizes {
             <div class="subtitle" v-if="subTitle">{{ subTitle }}</div>
           </div>
           <div class="modal-closer" v-if="!permanent && hasCloser" @click="() => close(false)">
-            <FontAwesomeIcon class="closer" icon="times" />
+            <FontAwesomeIcon class="closer" :icon="faTimes" />
           </div>
         </div>
         <slot v-if="externalContents"></slot>

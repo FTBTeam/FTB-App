@@ -2,6 +2,7 @@
 import {createLogger} from '@/core/logger';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
 export type SelectionOptions = SelectionOption[];
 export type SelectionOption = {
@@ -119,7 +120,7 @@ function select(option: SelectionOption) {
           <div class="meta" v-if="selected.meta">{{ selected.meta }}</div>
         </div>
 
-        <FontAwesomeIcon class="arrow" icon="chevron-down" />
+        <FontAwesomeIcon class="arrow" :icon="faChevronDown" />
       </div>
       
       <div class="main-icon" v-else>

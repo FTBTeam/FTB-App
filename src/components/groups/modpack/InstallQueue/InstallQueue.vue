@@ -4,6 +4,7 @@ import { useAttachDomEvent } from '@/composables';
 import InstallQueueRow from '@/components/groups/modpack/InstallQueue/InstallQueueRow.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useInstallStore } from '@/store/installStore.ts';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 const installStore = useInstallStore();
 
@@ -33,7 +34,7 @@ const onlyQueue = computed(() => {
   <transition name="transition-fade">
     <div class="app-install" v-if="installStore.currentInstall || installStore.installQueue.length > 0" ref="root">
       <div class="btn flex gap-2 items-center bg-green-500" @click="open = !open">
-        <FontAwesomeIcon icon="circle-notch" spin />
+        <FontAwesomeIcon :icon="faCircleNotch" spin />
         Downloading
       </div>
 

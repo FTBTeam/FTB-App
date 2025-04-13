@@ -12,6 +12,7 @@ import { RouterNames } from '@/router';
 import { onMounted, ref, watch } from 'vue';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { PackProviders } from '@/core/types/appTypes.ts';
+import { faInfo, faWarning } from '@fortawesome/free-solid-svg-icons';
 
 const logger = createLogger("BrowseModpacks.vue")
 const router = useRouter();
@@ -143,11 +144,11 @@ async function searchPacks() {
       />
     </div>
     
-    <UiMessage icon="warning" type="danger" class="my-6" v-if="error">
+    <UiMessage :icon="faWarning" type="danger" class="my-6" v-if="error">
       {{ error }}
     </UiMessage>
 
-    <UiMessage icon="info" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
+    <UiMessage :icon="faInfo" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
       No results found for '{{ searchValue }}'
     </UiMessage>
 

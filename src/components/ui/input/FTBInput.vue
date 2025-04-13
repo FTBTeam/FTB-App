@@ -27,7 +27,7 @@ const emit = defineEmits<{
   (e: 'click'): void;
 }>()
 
-const value = defineModel<string | number>();
+const value = defineModel<string>();
 
 const copied = ref(false);
 const timoutRef = ref<number | undefined>(undefined);
@@ -46,38 +46,36 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col ftb-input" :class="{ disabled, 'my-2': !noSpacing }">
-    <div class="w-full">
-      <label class="block tracking-wide mb-2 font-bold" v-if="label">
-        {{ label }}
-      </label>
-      <div class="flex flex-row w-full gap-4 items-center">
-        <div class="input-area block flex-1">
-          <input
-            class="appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded"
-            :type="type"
-            :placeholder="placeholder"
-            :value="value"
-            :disabled="disabled"
-            :min="min"
-            :max="max"
-            @input="value = $event.target?.value"
-            @blur="emit('blur')"
-            @click="emit('click')"
-          />
-          <transition name="transition-fade">
-            <div
-              class="copy-btn bg-blue-700 hover:bg-blue-500 rounded px-3 py-1 text-sm cursor-pointer"
-              v-show="value?.length > 0"
-              v-if="copyable"
-              @click="copy"
-            >
-              {{ !copied ? 'Copy' : 'Copied!' }}
-            </div>
-          </transition>
-        </div>
-        <slot name="extra"></slot>
+  <div class="flex flex-col ftb-input w-full" :class="{ disabled, 'my-2': !noSpacing }">
+    <label class="text-xs text-white/80 mb-2 block uppercase font-bold" v-if="label">
+      {{ label }}
+    </label>
+    <div class="flex flex-row w-full gap-4 items-center">
+      <div class="flex-1 bg-black border-white/40 rounded border px-3 py-1 relative">
+        <input
+          class="appearance-none w-full"
+          :type="type"
+          :placeholder="placeholder"
+          :value="value"
+          :disabled="disabled"
+          :min="min"
+          :max="max"
+          v-model="value"
+          @blur="emit('blur')"
+          @click="emit('click')"
+        />
+        <transition name="transition-fade">
+          <div
+            class="copy-btn bg-blue-700 hover:bg-blue-500 rounded px-3 py-1 text-sm cursor-pointer"
+            v-show="(value?.length ?? 0) > 0"
+            v-if="copyable"
+            @click="copy"
+          >
+            {{ !copied ? 'Copy' : 'Copied!' }}
+          </div>
+        </transition>
       </div>
+      <slot name="extra"></slot>
     </div>
   </div>
 </template>

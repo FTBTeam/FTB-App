@@ -7,9 +7,7 @@ import { execSync } from 'child_process';
 import AdmZip from 'adm-zip';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
-
-const logger = createLogger('events.ts');
-import { createLogger } from '../src/core/logger.ts';
+import { JavaVerifier } from './javaVerifier.ts';
 
 let checkUpdaterLock = false;
 
@@ -163,8 +161,17 @@ ipcMain.handle("action/app/get-channel", async () => {
   return channel;
 })
 
+ipcMain.handle("action/java/verify", async () => [
+  const verifier = new JavaVerifier();
+  const result = await verifier.verifyJava();
+])
+
+ipcMain.handle("action/app/update", async () => {
+  updateApp("Auto updater")
+})
+
 ipcMain.handle("action/app/change-channel", async (_, data) => {
-  logger.debug("Changing app channel", data)
+  console.debug("Changing app channel", data)
 
   autoUpdater.channel = data;
   updateChannel(data);
@@ -173,13 +180,13 @@ ipcMain.handle("action/app/change-channel", async (_, data) => {
   if (updateResult?.downloadPromise) {
     const version = await updateResult.downloadPromise;
     // Ask the user if they want to update
-    logger.debug("Update downloaded", version)
+    console.debug("Update downloaded", version)
 
     const latestVersion = autoUpdater.currentVersion.version;
     const currentVersion = app.getVersion();
 
-    logger.debug("Latest version", latestVersion)
-    logger.debug("Current version", currentVersion)
+    console.debug("Latest version", latestVersion)
+    console.debug("Current version", currentVersion)
 
     if (confirm(`A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`)) {
       updateApp("ChannelChange");
@@ -222,7 +229,7 @@ ipcMain.handle("action/test-java-version", async (_, args) => {
 
 ipcMain.handle('updater:check-for-update', async () => {
   if (checkUpdaterLock) {
-    logger.debug("Updater is already checking for updates, returning")
+    console.debug("Updater is already checking for updates, returning")
     return false;
   }
 
@@ -230,9 +237,9 @@ ipcMain.handle('updater:check-for-update', async () => {
   const result = await autoUpdater.checkForUpdates();
 
   if (result?.downloadPromise) {
-    logger.debug("Waiting for download promise")
+    console.debug("Waiting for download promise")
     const version = await result.downloadPromise;
-    logger.debug("Download promise resolved", version)
+    console.debug("Download promise resolved", version)
     checkUpdaterLock = false;
     return true;
   }
@@ -301,9 +308,9 @@ function extractTarball(tarballPath: string, outputPath: string) {
   // But let's redirect the contents to the output path
   // And capture the output so we can log it
   const command = `tar -xzf "${tarballPath}" -C "${outputPath}"`;
-  logger.debug("Extracting tarball", command)
+  console.debug("Extracting tarball", command)
   const output = execSync(command).toString();
-  logger.debug("Tarball extraction output", output)
+  console.debug("Tarball extraction output", output)
 
   return true;
 }
@@ -335,6 +342,6 @@ function updateChannel(channel: string) {
 
     fs.writeFileSync(channelFile, JSON.stringify(newData, null, 2));
   } catch (e) {
-    logger.error("Failed to update channel", e)
+    console.error("Failed to update channel", e)
   }
 }

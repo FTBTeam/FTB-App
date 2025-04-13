@@ -6,6 +6,7 @@ import {JavaFetch} from '@/core/javaFetch';
 import { UiToggle, UiMessage, Loader, Selection2 } from '@/components/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
+import { faExclamation, faInfo } from '@fortawesome/free-solid-svg-icons';
 
 const {
   mcVersion,
@@ -117,7 +118,7 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
 
 <template>
  <div class="modloaderSelect">
-   <UiMessage header="Optional" icon="info" type="info" class="mb-4" v-if="showOptional && hasAvailableLoaders">
+   <UiMessage header="Optional" :icon="faInfo" type="info" class="mb-4" v-if="showOptional && hasAvailableLoaders">
      A Mod Loader will allow you to load mods into Minecraft. Each Mod Loader will have different mods available so we recommend looking at <a>CurseForge</a> to see what's available.
    </UiMessage>
    
@@ -147,7 +148,7 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
      />
    </template>
 
-   <UiMessage v-else header="No loaders" icon="exclamation" type="warning">
+   <UiMessage v-else header="No loaders" :icon="faExclamation" type="warning">
      Sadly we were not able to find any mod loaders for Minecraft {{ mcVersion }}. This is likely due to there being no mod loaders available just yet.
      <br><br>
      You can continue to create an instance without a mod loader and set one up later once one is available.

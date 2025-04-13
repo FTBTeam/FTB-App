@@ -6,6 +6,7 @@ import { FTBButton } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ref, watch } from 'vue';
 import { ModPack, Versions } from '@/core/types/appTypes.ts';
+import { faCloudDownloadAlt } from '@fortawesome/free-solid-svg-icons';
 
 const {
   instance,
@@ -35,7 +36,7 @@ watch(() => localInstance, () => updateAvailablePacks)
 <!--    TODO: Replace with ui-button -->
     <FTBButton color="warning" class="update-btn px-4 py-1" @click="showConfirm = true">
       <span class="hidden sm:inline-block">Update available</span>
-      <FontAwesomeIcon icon="cloud-download-alt" class="sm:ml-2" />
+      <FontAwesomeIcon :icon="faCloudDownloadAlt" class="sm:ml-2" />
     </FTBButton>
 
     <UpdateConfirmModal v-if="localInstance && instance" :local-instance="localInstance" :latest-version="latestVersion" :open="showConfirm" @close="showConfirm = false" />

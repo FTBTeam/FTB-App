@@ -13,6 +13,14 @@ import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Modal } from '@/components/ui';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import {
+  faChevronRight,
+  faCog,
+  faCopy,
+  faEllipsisVertical,
+  faFolderOpen,
+  faPlay, faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 
 const {
   instance,
@@ -87,21 +95,21 @@ function deleteInstance() {
   <div class="pack-actions-holder">
     <div class="pack-actions" tabindex="0">
       <div class="icon">
-        <FontAwesomeIcon icon="ellipsis-vertical" />
+        <FontAwesomeIcon :icon="faEllipsisVertical" />
       </div>
 
       <ul class="actions">
         <li class="title">Tools</li>
         <li v-if="allowOffline && !isRunning" @click="emit('playOffline')">
-          <span><FontAwesomeIcon icon="play" /></span> Play Offline
+          <span><FontAwesomeIcon :icon="faPlay" /></span> Play Offline
         </li>
         <li @click="emit('openSettings')">
-          <span><FontAwesomeIcon icon="cog" /></span>Settings
+          <span><FontAwesomeIcon :icon="faCog" /></span>Settings
         </li>
         <li tabindex="1">
-          <span><FontAwesomeIcon icon="folder-open" /></span>Open...
+          <span><FontAwesomeIcon :icon="faFolderOpen" /></span>Open...
           <span class="submenu">
-            <FontAwesomeIcon icon="chevron-right" />
+            <FontAwesomeIcon :icon="faChevronRight" />
           </span>
           <ul>
             <li @click="openInstanceFolder('')">Instance folder</li>
@@ -118,11 +126,11 @@ function deleteInstance() {
           </ul>
         </li>
         <li @click="duplicateConfirm = true">
-          <span><FontAwesomeIcon icon="copy" /></span>Duplicate instance
+          <span><FontAwesomeIcon :icon="faCopy" /></span>Duplicate instance
         </li>
         <li class="title" v-if="!isRunning">Danger</li>
         <li @click="deleteInstance" v-if="!isRunning">
-          <span><FontAwesomeIcon icon="trash" /></span>Delete instance
+          <span><FontAwesomeIcon :icon="faTrash" /></span>Delete instance
         </li>
       </ul>
     </div>

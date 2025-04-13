@@ -6,6 +6,7 @@ import {RouterNames} from '@/router';
 import { onMounted, onUnmounted, ref } from 'vue';
 import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCirclePlus, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 const { disabled } = defineProps<{
   disabled?: boolean;
@@ -37,7 +38,7 @@ function close(event: any) {
           open = true
         }
       }">
-        <FontAwesomeIcon icon="plus" />
+        <FontAwesomeIcon :icon="faPlus" />
       </div>
     </Popover>
     <div class="dropdown" :class="{active: open}">
@@ -46,7 +47,7 @@ function close(event: any) {
            open = false;
            createOpen = true;
         }">
-          <div class="icon"><FontAwesomeIcon icon="circle-plus" /></div>
+          <div class="icon"><FontAwesomeIcon :icon="faCirclePlus" /></div>
           <p>Create instance</p>
           <small>Build your own vanilla or modded experience</small>
         </div>
@@ -54,7 +55,7 @@ function close(event: any) {
           safeNavigate(RouterNames.ROOT_BROWSE_PACKS)
           open = false;
         }">
-          <div class="icon"><FontAwesomeIcon icon="search" /></div>
+          <div class="icon"><FontAwesomeIcon :icon="faSearch" /></div>
           <p>Search for Modpack</p>
           <small>Search FTB Modpacks or CurseForge</small>
         </div>

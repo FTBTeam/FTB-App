@@ -9,11 +9,13 @@ import '@/assets/liboverrides.scss';
 const preview: Preview = {
   parameters: {
     backgrounds: {
+      values: [
+        { name: 'Dark', value: '#2A2A2A' },
+      ],
       default: 'dark',
     },
     controls: {
       matchers: {
-       color: /(background|color)$/i,
        date: /Date$/i,
       },
     },

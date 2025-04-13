@@ -6,6 +6,7 @@ import { useAttachDomEvent } from '@/composables';
 import { computed, ref } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModPack } from '@/core/types/appTypes.ts';
+import { faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 const allowedFileTypes = [
   "image/png",
@@ -95,7 +96,7 @@ const hovering = isDraggingOver.value;
   <div class="artwork-selector flex items-center gap-6" :class="{'is-hovering': hovering}">
     <div class="drop-indicator" v-if="hovering">
       <div class="text flex flex-col gap-4">
-        <FontAwesomeIcon icon="upload" size="lg" />
+        <FontAwesomeIcon :icon="faUpload" size="lg" />
         <b>Drop artwork here</b>
       </div>
     </div>
@@ -103,11 +104,11 @@ const hovering = isDraggingOver.value;
     <div class="actions flex flex-col items-start">
       <label>
         <input hidden="hidden" type="file" :accept="allowedFileTypes.join(',')"  @change="processFileList(($event.target as any)?.files)" />
-        <UiButton type="info" icon="upload">
+        <UiButton type="info" :icon="faUpload">
           Upload image
         </UiButton>
       </label>
-      <UiButton icon="trash" size="small" class="mt-3" type="warning" v-if="value && allowRemove" @click="value = null">
+      <UiButton :icon="faTrash" size="small" class="mt-3" type="warning" v-if="value && allowRemove" @click="value = null">
         Remove
       </UiButton>
     </div>

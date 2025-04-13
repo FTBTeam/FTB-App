@@ -9,6 +9,7 @@ import { equalsIgnoreCase } from '@/utils/helpers/stringHelpers';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { onMounted, ref } from 'vue';
 import { safeNavigate } from '@/utils';
+import { faCopy, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 const {
   instanceName,
@@ -104,11 +105,11 @@ function getDuplicateNameCount() {
         @click="duplicate"
       >
         <template v-if="!working && !done">
-          <FontAwesomeIcon icon="copy" class="mr-2" size="1x" />
+          <FontAwesomeIcon :icon="faCopy" class="mr-2" size="1x" />
           Duplicate
         </template>
         <template v-else>
-          <FontAwesomeIcon icon="spinner" class="mr-2" spin size="1x" />
+          <FontAwesomeIcon :icon="faSpinner" class="mr-2" spin size="1x" />
           {{ status }}
         </template>
       </FTBButton>

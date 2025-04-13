@@ -11,6 +11,7 @@ import { ref, watch } from 'vue';
 import { UiMessage, Modal, ModalBody, ModalFooter } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
 import { Versions } from '@/core/types/appTypes.ts';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 const logger = createLogger("UpdateConfirmModal.vue");
 
@@ -119,9 +120,9 @@ async function loadChanges() {
       </div>
     </ModalBody>
     <ModalFooter class="flex justify-end">
-      <ui-button :wider="true" icon="check" @click="update" type="success">
+      <UiButton :wider="true" :icon="faCheck" @click="update" type="success">
         Confirm
-      </ui-button>
+      </UiButton>
     </ModalFooter>
   </Modal>
 </template>

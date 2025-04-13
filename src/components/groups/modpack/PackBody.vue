@@ -18,6 +18,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModPack } from '@/core/types/appTypes.ts';
 import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import { faBolt, faCircleNotch, faCodeBranch, faCogs, faInfo } from '@fortawesome/free-solid-svg-icons';
 
 const {
   packInstance,
@@ -141,7 +143,7 @@ function cursePackBody() {
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
             <UiButton innerClass="py-3 px-8 ftb-play-button" type="secondary" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
-              <font-awesome-icon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
+              <FontAwesomeIcon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
               {{ isInstalled ? 'Play' : 'Install' }}
             </UiButton>
 
@@ -163,11 +165,11 @@ function cursePackBody() {
             />
             <div class="option" v-if="packInstance && !isVanilla" @click="() => $emit('showVersion')">
               Versions
-              <font-awesome-icon icon="code-branch" class="ml-2" />
+              <FontAwesomeIcon :icon="faCodeBranch" class="ml-2" />
             </div>
             <div class="option" @click="() => $emit('tabChange', tabs.SETTINGS)" v-if="isInstalled">
               Settings
-              <font-awesome-icon icon="cogs" class="ml-2" />
+              <FontAwesomeIcon :icon="faCogs" class="ml-2" />
             </div>
           </div>
         </div>
@@ -179,7 +181,7 @@ function cursePackBody() {
               <b>{{installStore.currentInstall.stage ?? "??"}}</b>
               <transition name="transition-fade" :duration="250">
                 <div class="files text-sm" v-if="installStore.currentInstall.speed">
-                  <font-awesome-icon icon="bolt" class="mr-2" />({{(installStore.currentInstall.speed / 12500000).toFixed(2)}}) Mbps
+                  <FontAwesomeIcon :icon="faBolt" class="mr-2" />({{(installStore.currentInstall.speed / 12500000).toFixed(2)}}) Mbps
                 </div>
               </transition>
             </div>
@@ -190,7 +192,7 @@ function cursePackBody() {
         <transition name="transition-fade" :duration="250">
           <div class="install-progress" v-if="modloaderUpdating">
             <div class="status flex gap-4 items-center">
-              <font-awesome-icon spin icon="circle-notch" class="mr-2" />
+              <FontAwesomeIcon spin :icon="faCircleNotch" class="mr-2" />
               <div class="message">
                 <b class="block">Updating Modloader</b>
                 <small class="text-muted">This may take a moment</small>
@@ -224,7 +226,7 @@ function cursePackBody() {
 
     <div class="body-contents">
       <div class="alert py-2 px-4 mb-4 bg-warning rounded" v-if="packInstance && packInstance.notification">
-        <font-awesome-icon icon="info" class="mr-2" />
+        <FontAwesomeIcon :icon="faInfo" class="mr-2" />
         {{ packInstance.notification }}
       </div>
 
@@ -277,7 +279,7 @@ function cursePackBody() {
           
           <div class="links" v-if="packInstance && instance && isInstalled">
             <a :href="issueTracker" @click="safeLinkOpen" class="link" v-if="issueTracker">
-              <FontAwesomeIcon :icon="['fab', 'github']" />
+              <FontAwesomeIcon :icon="faGithub" />
               Report issue
             </a>
           </div>

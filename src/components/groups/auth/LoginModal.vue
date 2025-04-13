@@ -9,6 +9,7 @@ import {alertController} from '@/core/controllers/alertController';
 import { onUnmounted, watch, ref } from 'vue';
 import { safeLinkOpen } from '@/utils';
 import { useAccountsStore } from '@/store/accountsStore.ts';
+import { faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
 const accountStore = useAccountsStore();
 
@@ -314,7 +315,7 @@ function expiresInAsPercentage() {
         <p class="text-muted mb-2 text-center mt-2">Token expires {{ startedFlowAt.add(expiresIn, "second").fromNow() }}</p>
       </div>
       
-      <UiButton icon="external-link" size="large" :full-width="true" v-if="userCode && !error" @click="copyAndOpen" class="mt-2 w-full" type="primary">Copy and Open</UiButton>
+      <UiButton :icon="faExternalLink" size="large" :full-width="true" v-if="userCode && !error" @click="copyAndOpen" class="mt-2 w-full" type="primary">Copy and Open</UiButton>
 
       <hr class="mt-6 border-white border-opacity-25" v-if="verificationUri" />
       

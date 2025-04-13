@@ -7,6 +7,7 @@ import Popover from '@/components/ui/Popover.vue';
 import {ref} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
+import { faEdit, faPlus, faQuestion, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const accountsStore = useAccountsStore();
 
@@ -88,7 +89,7 @@ function openSignIn() {
             <FontAwesomeIcon
               class="cursor-pointer"
               v-if="accountsStore.mcProfiles.length"
-              :icon="editMode ? 'times' : 'edit'"
+              :icon="editMode ? faTimes : faEdit"
               @click="editMode = !editMode"
             />
           </div>
@@ -113,14 +114,14 @@ function openSignIn() {
                   :class="{ active: editMode }"
                   @click.stop="() => removeProfile(item)"
                 >
-                  <font-awesome-icon icon="trash" />
+                  <FontAwesomeIcon :icon="faTrash" />
                 </div>
               </div>
             </div>
           </div>
 
           <div class="add-new" @click="() => openSignIn()">
-            <div class="add-button px-4 py-2"><font-awesome-icon icon="plus" /> Add account</div>
+            <div class="add-button px-4 py-2"><FontAwesomeIcon :icon="faPlus" /> Add account</div>
           </div>
         </section>
       </div>
@@ -128,7 +129,7 @@ function openSignIn() {
     <Popover text="Sign in to your Minecraft account" v-else>
       <div class="profile-placeholder" @click="() => openSignIn()">
         <div class="fake-avatar">
-          <font-awesome-icon icon="question" />
+          <FontAwesomeIcon :icon="faQuestion" />
         </div>
       </div>
     </Popover>

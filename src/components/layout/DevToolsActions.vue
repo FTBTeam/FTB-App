@@ -6,6 +6,7 @@ import { useAttachDomEvent } from '@/composables';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ref } from 'vue';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { faBars, faCode, faFire, faHome, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 const appSettings = useAppSettings();
 
@@ -30,16 +31,16 @@ const devModeEnabled = !import.meta.env.PROD;
 <template>
  <div class="dev-tools-actions" v-if="devModeEnabled">
    <div class="trigger cursor-pointer" @click="open = !open">
-     <FontAwesomeIcon icon="code" />
+     <FontAwesomeIcon :icon="faCode" />
    </div>
    <div class="options flex items-center gap-4" v-show="open">
      <div class="divider ml-4" />
      <router-link class="item" :to="{ name: 'home' }">
-       <FontAwesomeIcon icon="home" />
+       <FontAwesomeIcon :icon="faHome" />
      </router-link>
-     <FontAwesomeIcon class="item" icon="fire" @click="openDebugger"/>
-     <FontAwesomeIcon class="bars" icon="bars" @click="() => appSettings.toggleDebugAds()" />
-     <FontAwesomeIcon icon="wrench" @click="openDevTools" />
+     <FontAwesomeIcon class="item" :icon="faFire" @click="openDebugger"/>
+     <FontAwesomeIcon class="bars" :icon="faBars" @click="() => appSettings.toggleDebugAds()" />
+     <FontAwesomeIcon :icon="faWrench" @click="openDevTools" />
    </div>
  </div>
 </template>

@@ -2,6 +2,7 @@
 import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { services } from '@/bootstrap.ts';
+import { faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const {
   item,
@@ -63,8 +64,8 @@ const status = computed(() => {
     </div>
     <div class="actions">
       <div class="btn">
-        <FontAwesomeIcon icon="times" @click="cancelInstall(item)" v-if="!cancelling" />
-        <FontAwesomeIcon icon="circle-notch" spin v-else />
+        <FontAwesomeIcon :icon="faTimes" @click="cancelInstall(item)" v-if="!cancelling" />
+        <FontAwesomeIcon :icon="faCircleNotch" spin v-else />
       </div>
     </div>
   </div>

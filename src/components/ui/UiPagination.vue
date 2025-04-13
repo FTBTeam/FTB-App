@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed } from 'vue';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 const { total, perPage } = defineProps<{
   total: number;
@@ -17,7 +18,7 @@ const currentPage = value ?? 0
  <div class="ui-pagination">
     <ul class="flex gap-2">
       <li v-if="currentPage > 1" @click="value = currentPage - 1" aria-label="Previous page" data-balloon-pos="up-left">
-        <FontAwesomeIcon icon="chevron-left" />
+        <FontAwesomeIcon :icon="faChevronLeft" />
       </li>
 
       <template v-if="currentPage > 3">
@@ -39,7 +40,7 @@ const currentPage = value ?? 0
       </template>
       
       <li v-if="currentPage < pages" @click="value = currentPage + 1" aria-label="Next page" data-balloon-pos="up-right">
-        <font-awesome-icon icon="chevron-right" />
+        <FontAwesomeIcon :icon="faChevronRight" />
       </li>
     </ul>
  </div>

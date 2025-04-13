@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
@@ -20,7 +20,7 @@ const {
   innerClass?: string;
   disabled?: boolean;
   working?: boolean;
-  icon?: IconDefinition | string;
+  icon?: IconDefinition;
   fullWidth?: boolean;
   wider?: boolean;
   ariaLabel?: string;
@@ -72,7 +72,7 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
       </span>
       <transition name="fade">
         <span v-if="working" class="absolute inset-0 flex items-center justify-center">
-          <FontAwesomeIcon :fixedWidth="true" icon="spinner" spin />
+          <FontAwesomeIcon :fixedWidth="true" :icon="faCircleNotch" spin />
         </span>
       </transition>
     </div>
