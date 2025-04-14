@@ -230,22 +230,6 @@ const Overwolf: ElectronOverwolfInterface = {
       // Don't use this on overwolf
       throw new Error("Don't use app.appData() on Overwolf")
     },
-    async appRuntimes() {
-      // Don't use this on overwolf
-      throw new Error("Don't use app.appRuntimes() on Overwolf")
-    },
-    async runtimeAvailable() {
-      // Don't use this on overwolf
-      throw new Error("Don't use app.runtimeAvailable() on Overwolf")
-    },
-    async installApp() {
-      // Don't use this on overwolf
-      throw new Error("Don't use app.installApp() on Overwolf")
-    },
-    async updateApp() {
-      // Don't use this on overwolf
-      throw new Error("Don't use app.updateApp() on Overwolf")
-    },
     async changeAppChannel(_: string) {
       return;
     },

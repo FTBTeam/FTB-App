@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { ProgressInfo, BasicUpdateInfo } from '@/prelaunch/app';
 
 /**
@@ -36,6 +36,10 @@ onMounted(() => {
   window.ipcRenderer.on("updater:error", progressToJavaCheck)
   
   window.ipcRenderer.on("java/message", onJavaVerifyMessage)
+  
+  nextTick(() => {
+    window.ipcRenderer.send("prelaunch/im-ready")
+  })
 })
 
 onUnmounted(() => {
@@ -61,13 +65,20 @@ async function checkForJava() {
   updateProgress.value = 0;
   checkingForUpdates.value = false;
   
-  await window.ipcRenderer.invoke("action/java/verify")
+  const result = await window.ipcRenderer.invoke("action/java/verify")
+  if (result) {
+    startApp()
+    return;
+  }
   
-  // Finally, start the app
-  startApp();
+  console.log('Total failure, java not installed');
+  
+  // If we get here, java is not installed
+  totalFailure.value = true;
 }
 
 function startApp() {
+  console.log('Starting app');
   window.ipcRenderer.send('action/launch-app');
 }
 
@@ -131,6 +142,8 @@ function progressToJavaCheck(_: any) {
 }
 
 async function attemptCheckJava() {
+  console.info("Attempting to check for Java");
+  
   let attempts = 0;
   while (attempts++ < 10) {
     try {
@@ -155,6 +168,8 @@ async function attemptCheckJava() {
     <div id="status">
       We're just getting things ready
     </div>
+    
+    <p v-if="javaCheckStatus">{{ javaCheckStatus }}</p>
 
     <div id="bypass-button" class="hidden">
       Skip

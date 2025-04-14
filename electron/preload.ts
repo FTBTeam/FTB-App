@@ -1,8 +1,9 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import MarkdownIt from 'markdown-it';
+import { fallbackMetaData, loadApplicationMetaData } from '../src/nuturalHelpers.ts';
 
 const markdownParser = new MarkdownIt();
 markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {
@@ -34,6 +35,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 const nodeUtils = {
   path: {
     join: path.join, // Expose the `join` function from `path` module.
+    resourcesPath: process.resourcesPath
   },
   // @deprecated we shouldn't give fs to renderer process
   fs: {
@@ -44,7 +46,7 @@ const nodeUtils = {
     readdir: fs.readdirSync,
     stat: fs.statSync,
     rm: fs.rmSync,
-    rename: fs.renameSync
+    rename: fs.renameSync,
   },
   os: {
     platform: os.platform,
@@ -57,6 +59,36 @@ const nodeUtils = {
   markdown: {
     parse(text: string) {
       return markdownParser.render(text)
+    }
+  },
+  app: {
+    getMetaData() {
+      if (process.env.NODE_ENV === "development") {
+        return fallbackMetaData;
+      }
+      
+      return loadApplicationMetaData(process.resourcesPath, path.join, (path) => fs.readFileSync(path, "utf-8"))
+    },
+    getLicenses() {
+      let frontendLicenses: any = {};
+      let javaLicenses: any = {};
+      
+      try {
+        frontendLicenses = JSON.parse(fs.readFileSync(path.join(process.resourcesPath, "licenses.json"), 'utf-8'));
+      } catch (e) {
+        console.warn("Failed to load frontend licenses", e);
+      }
+      
+      try {
+        javaLicenses = JSON.parse(fs.readFileSync(path.join(process.resourcesPath, "java-licenses.json"), 'utf-8'));
+      } catch (e) {
+        console.warn("Failed to load java licenses", e);
+      }
+      
+      return {
+        frontend: frontendLicenses,
+        java: javaLicenses
+      }
     }
   }
 }

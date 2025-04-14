@@ -1,9 +1,9 @@
 // @ts-ignore no typescript package available
 import ElectronOverwolfInterface from '../electron-overwolf-interface.ts';
-import {handleAction} from '@/core/protocol/protocolActions.ts';
-import { createLogger, logger } from '@/core/logger.ts';
-import {computeArch, computeOs, jreLocation, parseArgs} from '@/utils/interface/electron-helpers.ts';
-import {getAppHome} from '@/nuturalHelpers.ts';
+import { handleAction } from '@/core/protocol/protocolActions.ts';
+import { parseArgs } from '@/utils/interface/electron-helpers.ts';
+import { getAppHome, jreHome } from '@/nuturalHelpers.ts';
+import { retrying } from '@/utils/helpers/asyncHelpers.ts';
 
 const { fs, os, path } = window.nodeUtils;
 
@@ -29,53 +29,24 @@ export type MetaData = {
   };
 }
 
-const fallbackMetaData: MetaData = {
-  appVersion: "Unknown",
-  commit: "Unknown",
-  branch: "release",
-  released: new Date().getTime(),
-  runtime: {
-    version: "21", // If we're using this, something has gone wrong
-    jar: "app.jar", // If we're using this, something has gone wrong
-    env: [],
-    jvmArgs: []
-  }
-}
-
 const appHome = getAppHome(os.platform(), os.homedir(), path.join);
 
-const eLogger = createLogger("platform/electron.ts");
-const electronFrontendLogFile = path.join(appHome, 'logs', 'ftb-app-frontend.log');
-if (fs.exists(electronFrontendLogFile)) {
-  try {
-    fs.writeFile(electronFrontendLogFile, '')
-  } catch (e) {
-    eLogger.error("Failed to clear electron frontend log file", e)
-  }
-}
+// const electronFrontendLogFile = path.join(appHome, 'logs', 'ftb-app-frontend.log');
+// if (fs.exists(electronFrontendLogFile)) {
+//   try {
+//     fs.writeFile(electronFrontendLogFile, '')
+//   } catch (e) {
+//     console.error("Failed to clear electron frontend log file", e)
+//   }
+// }
 
-// log.transports.file.resolvePathFn = () =>
-//   electronFrontendLogFile;
-// Object.assign(console, log.functions);
+const metaData = window.nodeUtils.app.getMetaData();
+console.info("Metadata", metaData)
 
-const resourcesPath = "."// process.resourcesPath
+const licenses = window.nodeUtils.app.getLicenses();
 
-eLogger.info("Resources path", resourcesPath)
-
-const metaFilePath = path.join(resourcesPath, "meta.json");
-const metaData = process.env.NODE_ENV === "development" ? fallbackMetaData : JSON.parse(fs.readFile(metaFilePath, 'utf-8'));
-
-let licensesData: any = {};
-let javaLicensesData: any = {};
-
-try {
-  licensesData = JSON.parse(fs.readFile(path.join(resourcesPath, "licenses.json"), 'utf-8'));
-  javaLicensesData = JSON.parse(fs.readFile(path.join(resourcesPath, "java-licenses.json"), 'utf-8'));
-} catch (e) {
-  eLogger.error("Failed to load licenses", e);
-}
-
-eLogger.info("Meta data", metaData)
+const licensesData: any = licenses.frontend;
+const javaLicensesData: any = licenses.java;
 
 const Electron: ElectronOverwolfInterface = {
   isElectron: true,
@@ -84,7 +55,7 @@ const Electron: ElectronOverwolfInterface = {
   config: {
     version: metaData.appVersion ?? 'Missing Version File',
     commit: metaData.commit ?? 'Missing Version File',
-    dateCompiled: metaData.released ?? new Date().getTime(),
+    dateCompiled: metaData.released.toString() ?? new Date().getTime(),
     branch: metaData.branch ?? 'release'
   },
 
@@ -124,14 +95,14 @@ const Electron: ElectronOverwolfInterface = {
     changeExitOverwolfSetting() {},    
 
     onAppReady() {
-      eLogger.debug("Interface has been told the app is ready")
+      console.debug("Interface has been told the app is ready")
       window.ipcRenderer.send('event/app-ready');
     },
 
     uploadClientLogs() {},
 
     restartApp() {
-      eLogger.debug("Restarting app")
+      console.debug("Restarting app")
       // Restart the electron app
       window.ipcRenderer.send('action/reload-main-window');
     }
@@ -177,7 +148,7 @@ const Electron: ElectronOverwolfInterface = {
         .invoke('action/select-folder', startPath)
         .then((dir) => cb(dir))
         .catch((e) => {
-          eLogger.warn("Failed to select folder from the system", e)
+          console.warn("Failed to select folder from the system", e)
           cb(null)
         });
     },
@@ -189,7 +160,7 @@ const Electron: ElectronOverwolfInterface = {
           cb(dir);
         })
         .catch((e) => {
-          eLogger.warn("Failed to select file from the system", e)
+          console.warn("Failed to select file from the system", e)
           cb(null)
         });
     },
@@ -219,211 +190,6 @@ const Electron: ElectronOverwolfInterface = {
     async appData(): Promise<string> {
       return path.join(appHome, 'bin');
     },
-    async appRuntimes(): Promise<string> {
-      return path.join(appHome, 'runtime');
-    },
-    async runtimeAvailable(): Promise<boolean> {
-      const appPath = appHome;
-      return fs.exists(jreLocation(appPath));
-    },
-    async installApp(onStageChange: (stage: string) => void, _: (data: any) => void, isUpdate = false) {
-      const logAndUpdate = (message: string) => {
-        logger.log(message);
-        onStageChange(message);
-      }
-      
-      const logToBoth = (message: string, normalLogger: any, ...args: any) => {
-        logger.log(message, args);
-        normalLogger.bind(eLogger)(message, args);
-      }
-      
-      logAndUpdate("Locating Java");
-
-      /**
-       * Procedure:
-       * - Figure out the system architecture and platform type (mac, windows, linux)
-       * - Locate the java version from the adoptium api
-       * - Download the java version
-       * - Extract the tar or the zip
-       * - Move the java version to the runtime folder
-       * - Ensure the java version is executable and works (run java -version)
-       * - If it doesn't work, try again
-       * - If it still doesn't work, throw an error
-       * - If it does work, continue
-       * - Try and start the backend (Call to different method procedure)
-       * - If it fails, try again
-       * - If it fails more than 3 times, throw an error
-       */
-      
-      const platformData = {
-        arch: os.arch(),
-        platform: os.platform(),
-      };
-
-      const ourOs = computeOs(platformData.platform);
-      const ourArch = computeArch(platformData.arch)
-
-      const javaVersion = metaData.runtime.version;
-      
-      // Attempt to get the java
-      const url = `https://api.adoptium.net/v3/assets/latest/${javaVersion}/hotspot?architecture=${ourArch}&image_type=jre&os=${ourOs}`;
-      
-      logToBoth("Downloading java from", eLogger.log, url);
-      logAndUpdate("Downloading Java")
-      
-      let adopiumRes;
-      try {
-        adopiumRes = await retryAttempt(async () => {
-          const adopiumRequest = await fetch(url);
-          return await adopiumRequest.json();
-        });
-      } catch (e) {
-        logToBoth("Failed to download java", eLogger.error, e)
-        throw throwCustomError("Failed to download java", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
-      }
-      
-      const binary = adopiumRes.find((e: any) => e.binary)?.binary;
-      if (!binary) {
-        logToBoth("Failed to find java binary", eLogger.error, adopiumRes)
-        throw throwCustomError("Failed to find java binary", "We've not been able to find a Java binary for you system. Please ensure you are using a supported system.")
-      }
-      
-      const link = binary.package.link;
-
-      const appPath = appHome;
-      const runtimePath = `${appPath}/runtime`;
-      
-      if (isUpdate) {
-        logAndUpdate("Removing old runtime")
-        if (fs.exists(runtimePath)) {
-          try {
-            fs.rm(runtimePath, {
-              recursive: true
-            });
-          } catch (e) {
-            logToBoth("Failed to remove runtime folder", eLogger.error, e)
-            throw throwCustomError("Failed to remove runtime folder", "We've not been able to remove the runtime folder. Please ensure the app has the correct permissions to remove folders.")
-          }
-        }
-      }
-
-      logAndUpdate("Creating runtime folder")
-      try {
-        if (!fs.exists(runtimePath)) {
-          fs.rm(runtimePath, {
-            recursive: true
-          });
-        }
-      } catch (e) {
-        logToBoth("Failed to create runtime folder", eLogger.error, e)
-        throw throwCustomError("Failed to create runtime folder", "We've not been able to create the runtime folder. Please ensure the app has the correct permissions to create folders.")
-      }
-      
-      const isWindows = os.platform() === "win32";
-      const jreDownloadName = isWindows ? `jre.zip` : `jre.tar.gz`;
-      logAndUpdate("Downloading Java from Adoptium")
-      try {
-        await window.ipcRenderer.invoke("action/download-file", {
-          url: link,
-          path: path.join(runtimePath, jreDownloadName)
-        });
-      } catch (e) {
-        logToBoth("Failed to download java from endpoint", eLogger.error, e)
-        throw throwCustomError("Failed to download java from endpoint", "We've not been able to download Java, this could be because of networking issues. Please ensure you can access https://adoptium.net/")
-      }
-
-      logAndUpdate("Extracting Java")
-      try {
-        await window.ipcRenderer.invoke("action/extract-file", {
-          input: path.join(runtimePath, jreDownloadName),
-          output: path.join(runtimePath, `jre`)
-        });
-      } catch (e) {
-        logToBoth("Failed to extract java", eLogger.error, e)
-        throw throwCustomError("Failed to extract java", "We've not been able to extract Java... We can't recover from this.")
-      }
-      
-      // Assuming this worked
-      // Does the jre/jdk-* folder exist?
-      logAndUpdate("Moving Java to the correct location")
-      const jreFolder = fs.readdir(path.join(runtimePath, "jre")).find(e => e.startsWith("jdk-"));
-      if (jreFolder == null) {
-        logToBoth("Failed to find java folder", eLogger.error)
-        throw throwCustomError("Failed to find java folder", "We've not been able to find the Java folder. We can't recover from this.")
-      }
-
-      const jrePath = path.join(runtimePath, "jre", jreFolder);
-      const jreFiles = fs.readdir(jrePath);
-      await retryAttempt(async () => {
-        // Move all of the folders contents to the runtime folder
-        // Then delete the jre folder
-        logToBoth("Moving Java files", eLogger.log, jreFiles)
-        jreFiles.forEach(e => {
-          fs.rename(path.join(jrePath, e), path.join(runtimePath, e));
-        });
-      }, 5);
-
-      logAndUpdate("Cleaning up")
-      try {
-        // It's not fatal if this fails
-        fs.rm(jrePath, { recursive: true });
-        fs.rm(path.join(runtimePath, 'jre'), { recursive: true });
-        fs.rm(path.join(runtimePath, jreDownloadName));
-      } catch (e) {
-        logToBoth("Failed to clean up", eLogger.error, e)
-        // Ignore
-      }
-
-      logAndUpdate("Finishing up")
-      // Touch a file to note down what java version we have
-      try {
-        fs.writeFile(path.join(runtimePath, ".java-version"), javaVersion);
-      } catch (e) {
-        logToBoth("Failed to write java version file", eLogger.error, e)
-        throw throwCustomError("Failed to write java version file", "We've not been able to write the java version file. We can't recover from this.")
-      }
-
-      logAndUpdate("Checking Java works")
-      // Ensure the java version is executable and works
-      const jreExecPath = jreLocation(appPath);
-      if (!fs.exists(jreExecPath)) {
-        logToBoth("Failed to find java executable", eLogger.error)
-        throw throwCustomError("Failed to find java executable", "We've not been able to find the java executable. We can't recover from this.")
-      }
-      
-      // Run the java --version command and ensure we get the correct exit code
-      try {
-        await window.ipcRenderer.invoke('action/test-java-version', {
-          jreExecPath
-        });
-      } catch (e) {
-        logToBoth("Failed to run java --version", eLogger.error)
-        throw throwCustomError("Failed to run java --version", "We've not been able to run the java --version command. We can't recover from this.")
-      }
-
-      logAndUpdate("Starting subprocess")
-    },
-    async updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void) {
-      // Get the runtime
-      const appPath = appHome;
-      const runtimePath = `${appPath}/runtime`;
-      
-      if (!fs.exists(`${runtimePath}/.java-version`)) {
-        // How did we get here? Just install it
-        return await this.installApp(onStageChange, onUpdate, false);
-      }
-      
-      // Get the original java version
-      const javaVersion = fs.readFile(`${runtimePath}/.java-version`, 'utf-8');
-      
-      if (metaData.runtime.version === javaVersion) {
-        // We don't need to update
-        return;
-      }
-      
-      // We need to update
-      return await this.installApp(onStageChange, onUpdate, true);
-    },
     async startSubprocess() {
       // Get the runtime
       const appPath = appHome;
@@ -444,7 +210,7 @@ const Electron: ElectronOverwolfInterface = {
       }
       
       // Start the subprocess
-      const jreExecPath = jreLocation(appPath);
+      const jreExecPath = jreHome(appPath, path.join, os.platform() === "win32", os.platform() === "darwin");
       if (!fs.exists(jreExecPath)) {
         throw new Error("Failed to find java executable");
       }
@@ -455,13 +221,13 @@ const Electron: ElectronOverwolfInterface = {
       const jarName = metaData.runtime.jar;
       
       try {
-        return await retryAttempt(async () => {
+        return await retrying(async () => {
           const {port, secret} = await window.ipcRenderer.invoke("startSubprocess", {
             javaPath: jreExecPath,
             args: [
               ...jvmArgs,
               "-jar",
-              `${resourcesPath}/${jarName}`,
+              `${window.nodeUtils.path.resourcesPath}/${jarName}`,
             ],
             env: envVars
           });
@@ -517,7 +283,7 @@ const Electron: ElectronOverwolfInterface = {
   },
   
   setupApp() {
-    eLogger.debug("Setting up the app from the interface on electron")
+    console.debug("Setting up the app from the interface on electron")
     
     window.ipcRenderer.on('parseProtocolURL', (_, data) => {
       handleAction(data);
@@ -525,33 +291,9 @@ const Electron: ElectronOverwolfInterface = {
   },
 };
 
-/**
- * Retries a promise a number of times with a delay
- * @param fn
- * @param attempts
- */
-async function retryAttempt<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
-  let attempt = 0;
-  while (attempt < attempts) {
-    try {
-      return await fn();
-    } catch (e) {
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for a second
-      attempt++;
-    }
-  }
-
-  throw new Error("Failed to retry attempt")
-}
-
-function throwCustomError(message: string, customMessage: string) {
-  eLogger.error(message);
-  throw new CustomError(message, customMessage);
-}
-
 class CustomError extends Error {
   customMessage: string;
-  
+
   constructor(message: string, customMessage: string) {
     super(message);
     this.name = "CustomError";

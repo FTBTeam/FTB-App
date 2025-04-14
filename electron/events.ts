@@ -161,10 +161,15 @@ ipcMain.handle("action/app/get-channel", async () => {
   return channel;
 })
 
-ipcMain.handle("action/java/verify", async () => [
+ipcMain.handle("action/java/verify", async () => {
   const verifier = new JavaVerifier();
-  const result = await verifier.verifyJava();
-])
+  try {
+    return await verifier.verifyJava();
+  } catch (e) {
+    console.error(e)
+    return false;
+  }
+})
 
 ipcMain.handle("action/app/update", async () => {
   updateApp("Auto updater")

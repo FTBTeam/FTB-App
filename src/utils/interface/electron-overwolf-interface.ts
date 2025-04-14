@@ -62,10 +62,7 @@ export interface InputOutput {
 export interface App {
   appData(): Promise<string>;
   appSettings(): Promise<any | null>;
-  appRuntimes(): Promise<string>;
-  runtimeAvailable(): Promise<boolean>;
-  installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate: boolean): Promise<void>;
-  updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void): Promise<void>;
+  
   startSubprocess(): Promise<{ 
     port: number;
     secret: string;
