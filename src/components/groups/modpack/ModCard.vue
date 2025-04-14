@@ -53,7 +53,7 @@ const {
 //   return !trimReverse ? ("..." + replacedName.substring(0, trim)) : (replacedName.substring(replacedName.length - trim) + "...")
 // }
 
-const projectInstalled = computed(() => installedMods.value.findIndex((e) => e[0] === mod.id) !== -1);
+const projectInstalled = computed(() => installedMods.findIndex((e) => e[0] === mod.id) !== -1);
 const art = computed(() => mod.art[0]?.url ?? 'broken');
 const latest = computed(() => mod.versions[mod.versions.length - 1] ? mod.versions[mod.versions.length - 1].name : 'Unknown');
 const curseLink = computed(() => mod.links.find((e) => e.type === 'curseforge'));
@@ -94,7 +94,7 @@ const versions = computed(() => mod.versions
             </div>
           </div>
           
-          <div class="curse-btn" v-if="curseLink.link" @click="() => appPlatform.utils.openUrl(curseLink.link)">
+          <div class="curse-btn" v-if="curseLink?.link" @click="() => appPlatform.utils.openUrl(curseLink?.link ?? '')">
             <img src="../../../assets/curse-logo.svg" alt="" />
           </div>
         </div>

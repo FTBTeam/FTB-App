@@ -61,7 +61,7 @@ function navItemRightClick(event: PointerEvent, item: typeof navigation[0]): voi
     <div class="nav-items nav-main mt-2">      
       <Popover :text="item.name" v-for="(item, index) in navigation" :key="index">
         <RouterLink :to="{ name: item.to }">
-          <div class="nav-item" @click.right="e => navItemRightClick(e, item)">
+          <div class="nav-item" @click.right="(e) => navItemRightClick(e, item)">
             <div class="icon"><FontAwesomeIcon :icon="item.icon" class="mr-3" /></div>
           </div>
         </RouterLink>

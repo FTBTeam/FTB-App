@@ -328,7 +328,7 @@ function cursePackBody() {
 <!--      />-->
       
       <worlds-tab
-        v-if="activeTab === tabs.WORLDS"
+        v-if="activeTab === tabs.WORLDS && packInstance"
         :instance="instance"
         :apiPack="packInstance"
       />

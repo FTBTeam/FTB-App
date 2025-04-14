@@ -1,4 +1,6 @@
 import { Dialog, DialogButton, useDialogsStore } from '@/store/dialogStore.ts';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 class DialogHolder {
   private readonly _dialog: Dialog;
@@ -35,14 +37,14 @@ class DialogsController {
         .withType("warning")
         .withButton(button("Cancel")
           .withType("error")
-          .withIcon("times")
+          .withIcon(faTimes)
           .withAction(() => {
             holder.close();
           })
           .build())
         .withButton(button("Confirm")
           .withType("success")
-          .withIcon("check")
+          .withIcon(faCheck)
           .withAction(() => {
             resolve(true);
             holder.close(); // The close action will also do this but this will just make sure
@@ -202,7 +204,7 @@ export class FormBuilder {
  */
 export class ButtonBuilder {
   action?: () => void;
-  icon?: string;
+  icon?: IconDefinition;
   type?: "error" | "warning" | "info" | "success";
   
   private constructor(
@@ -218,7 +220,7 @@ export class ButtonBuilder {
     return this;
   }
   
-  withIcon(icon: string) {
+  withIcon(icon: IconDefinition) {
     this.icon = icon;
     return this;
   }

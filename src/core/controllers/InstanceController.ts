@@ -1,12 +1,11 @@
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {createLogger} from '@/core/logger';
-import {LaunchingStatus} from '@/core/state/misc/runningState';
 import {getProfileOrDefaultToActive} from '@/core/auth/authProfileSelector';
 import {safeCheckProfileActive} from '@/core/auth/authValidChecker';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
-import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { LaunchingStatus, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 

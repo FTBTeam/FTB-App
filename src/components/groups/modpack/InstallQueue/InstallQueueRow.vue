@@ -3,6 +3,7 @@ import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallC
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { services } from '@/bootstrap.ts';
 import { faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { computed, ref } from 'vue';
 
 const {
   item,

@@ -8,7 +8,7 @@ const {
   subTitle = '',
   hasCloser = true,
   open,
-  size = ModalSizes.SMALL,
+  size = 'small',
   permanent = false,
   closeOnBackgroundClick = true,
   externalContents = false,
@@ -44,7 +44,7 @@ function onEsc(event: any) {
     return;
   }
 
-  this.close(true);
+  close(true);
 }
 
 function close(background = false): void {
@@ -67,11 +67,7 @@ const advertsEnabled = true;
 </script>
 
 <script lang="ts">
-export enum ModalSizes {
-  SMALL = 'small',
-  MEDIUM = 'medium',
-  LARGE = 'large',
-}
+export type ModalSizes = 'small' | 'medium' | 'large';
 </script>
 
 <template>

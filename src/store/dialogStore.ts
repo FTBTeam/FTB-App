@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { DialogForm } from '@/core/controllers/dialogsController.ts';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 
 export type Dialog = {
   title: string;
@@ -15,7 +16,7 @@ export type Dialog = {
 export type DialogButton = {
   action: () => void;
   text: string;
-  icon?: string;
+  icon?: IconDefinition;
   type?: "error" | "warning" | "info" | "success";
 }
 

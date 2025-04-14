@@ -31,7 +31,7 @@ const activeModal = computed(() => {
 
 function modalFeedback(button: ModalButton) {
   gobbleError(() => sendMessage("modalCallback", {
-    id: this.modal?.id ?? "",
+    // id: modal?.id ?? "",
     message: button.message
   }))
 }
@@ -54,7 +54,7 @@ function modalFeedback(button: ModalButton) {
       </ModalBody>
       <ModalFooter>
         <div class="flex justify-end gap-4">
-          <UiButton v-for="(button, index) in activeModal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type">
+          <UiButton v-for="(button, index) in activeModal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type as any">
             {{ button.name }}            
           </UiButton>
         </div>

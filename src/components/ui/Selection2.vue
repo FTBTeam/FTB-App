@@ -3,6 +3,7 @@ import {createLogger} from '@/core/logger';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 
 export type SelectionOptions = SelectionOption[];
 export type SelectionOption = {
@@ -31,7 +32,7 @@ const {
   value = null,
 } = defineProps<{
   label?: string;
-  icon?: string | string[] | null;
+  icon?: IconDefinition | null;
   direction?: 'left' | 'right';
   minWidth?: number;
   placeholder?: string;

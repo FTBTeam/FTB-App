@@ -10,7 +10,7 @@ const {
 } = defineProps<{
   isDowngrade: boolean;
   fixedVersion: number | null;
-  notification: string;
+  notification?: string;
 }>()
 </script>
 

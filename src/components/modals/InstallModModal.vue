@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="ts" setup>
 // import UiButton from '@/components/ui/UiButton.vue';
 // import Selection2 from '@/components/ui/Selection2.vue';
 // import {emitter, getColorForReleaseType, prettyByteFormat} from '@/utils';

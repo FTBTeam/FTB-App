@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import {InstanceRunningData} from '@/core/state/misc/runningState';
 import { Loader, UiButton, Modal } from '@/components/ui';
-import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { InstanceRunningData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { computed } from 'vue';
 

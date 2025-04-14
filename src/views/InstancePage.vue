@@ -333,7 +333,7 @@ export enum ModpackPageTabs {
         @action="(e) => updateOrDowngrade(e)"
         :is-downgrade="borkedVersionIsDowngrade"
         :fixed-version="borkedVersionDowngradeId"
-        :notification="borkedVersionNotification"
+        :notification="borkedVersionNotification ?? undefined"
       />
     </modal>
   </div>

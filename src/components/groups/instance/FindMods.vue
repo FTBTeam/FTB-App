@@ -1,115 +1,4 @@
-<template>
-<!-- // TODO: [port] fixme  -->
-  <div>Add me back please</div>
-<!--  <div class="find-mods">-->
-<!--    <div class="header flex items-center mt-2">-->
-<!--      <ftb-search :alpha="true" class="w-full flex-1" placeholder="Search for a mod" min="3" v-model="search" />-->
-<!--    </div>-->
-<!--    <div class="body pt-6">-->
-<!--      <div class="stats-bar" v-if="resultingIds.length">-->
-<!--        <div class="stat">-->
-<!--          <div class="text">Buffered</div>-->
-<!--          <div class="value">{{ resultsBuffer.length }}</div>-->
-<!--        </div>-->
-<!--        <div class="stat">-->
-<!--          <div class="text">Loaded in</div>-->
-<!--          <div class="value">{{ initialTimeTaken.toLocaleString() }}ms</div>-->
-<!--        </div>-->
-<!--        <div class="stat">-->
-<!--          <div class="text">Total Load</div>-->
-<!--          <div class="value">{{ timeTaken.toLocaleString() }}ms</div>-->
-<!--        </div>-->
-<!--        <div class="stat">-->
-<!--          <div class="text">Results</div>-->
-<!--          <div class="value">{{ results.length }} / {{ resultingIds.length }}</div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div class="results">-->
-<!--        <template v-if="results.length">-->
-<!--          <mod-card-->
-<!--            v-for="(mod, index) in results"-->
-<!--            :key="index"-->
-<!--            :mod="mod"-->
-<!--            :instance="instance"-->
-<!--            :installed-mods="installedMods"-->
-<!--            :target="target"-->
-<!--            @install="selectedMod = mod"-->
-<!--          />-->
-<!--        </template>-->
-<!--        &lt;!&ndash; This is so over the top &ndash;&gt;-->
-<!--        <div class="loading" v-else-if="search !== '' && (loadingTerm || visualLoadingFull)">-->
-<!--          <font-awesome-icon spin icon="spinner" />-->
-<!--          <p>Loading results</p>-->
-<!--        </div>-->
-<!--        <div-->
-<!--          class="no-results"-->
-<!--          v-else-if="search !== '' && !loadingTerm && !visualLoadingFull && !results.length"-->
-<!--        >-->
-<!--          <div-->
-<!--            class="fancy"-->
-<!--            data-balloon-length="large"-->
-<!--            aria-label="I'm a missing texture if you didn't know... Get it?"-->
-<!--            data-balloon-blunt-->
-<!--            data-balloon-pos="down"-->
-<!--          >-->
-<!--            <svg viewBox="0 0 268 298" fill="none" xmlns="http://www.w3.org/2000/svg" class="missing-box">-->
-<!--              <path d="M134 134L0 67V230L134 298V134Z" class="inverse" />-->
-<!--              <path d="M134 133.645L67 100V181.853L134 216V133.645Z" class="prim-light" />-->
-<!--              <path d="M67 181.645L0 148V230L67 264V181.645Z" class="prim-light" />-->
-<!--              <path d="M134 134L268 67V230L134 298V134Z" class="inverse" />-->
-<!--              <path d="M134 215.645L201 182V264L134 298V215.645Z" class="prim-dark" />-->
-<!--              <path d="M201 100.645L268 67V148.853L201 182V100.645Z" class="prim-dark" />-->
-<!--              <path d="M134 134L0 67L134 0L268 67L134 134Z" class="inverse" />-->
-<!--              <path d="M67 101L0 67L67 33.5L134 67.5L67 101Z" class="prim-light" />-->
-<!--              <path d="M201 101L134 67.5L201 33.5L268 67L201 101Z" class="prim-light" />-->
-<!--            </svg>-->
-<!--          </div>-->
-<!--          <div class="text">-->
-<!--            <p class="title">No results found 😢</p>-->
-<!--            <div>-->
-<!--              Looks like nothing was found for <code>{{ search }}</code-->
-<!--              >, try a different search term.-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--        <div class="make-a-search" v-else>-->
-<!--          <div class="search-prompt">-->
-<!--            <div class="icon-container">-->
-<!--              <font-awesome-icon icon="search" class="primary" />-->
-<!--              <font-awesome-icon icon="search" class="secondary" />-->
-<!--            </div>-->
-<!--            <p v-if="!loadingExtra && !loading">Use the search box above to find new mods</p>-->
-<!--            <p v-else>Searching...</p>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div class="more-btn flex justify-center">-->
-<!--        <ftb-button-->
-<!--          v-if="results.length > 0"-->
-<!--          color="info"-->
-<!--          :disabled="!hasResults || loadingExtra"-->
-<!--          @click="loadMore"-->
-<!--          class="px-10 py-2 inline-block"-->
-<!--        >-->
-<!--          <font-awesome-icon spin icon="spinner" class="mr-2" v-if="hasResults && loadingExtra" />-->
-<!--          {{ !hasResults ? 'No more results' : `${loadingExtra ? 'Loading' : 'Load'} more results` }}-->
-<!--        </ftb-button>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    -->
-<!--    <install-mod-modal-->
-<!--      :open="selectedMod !== null"-->
-<!--      @close="selectedMod = null"-->
-<!--      :mod="selectedMod ?? undefined"-->
-<!--      :mc-version="target" -->
-<!--      :mod-loader="modLoader"-->
-<!--      :instance="instance"-->
-<!--      @installed="$emit('modInstalled')"-->
-<!--    />-->
-<!--  </div>-->
-</template>
-
-<script lang="ts">
+<script lang="ts" setup>
 // import {Mod} from '@/types';
 // import {debounce} from '@/utils';
 // import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
@@ -317,6 +206,117 @@
 //   }
 // }
 </script>
+
+<template>
+<!-- // TODO: [port] fixme  -->
+  <div>Add me back please</div>
+<!--  <div class="find-mods">-->
+<!--    <div class="header flex items-center mt-2">-->
+<!--      <ftb-search :alpha="true" class="w-full flex-1" placeholder="Search for a mod" min="3" v-model="search" />-->
+<!--    </div>-->
+<!--    <div class="body pt-6">-->
+<!--      <div class="stats-bar" v-if="resultingIds.length">-->
+<!--        <div class="stat">-->
+<!--          <div class="text">Buffered</div>-->
+<!--          <div class="value">{{ resultsBuffer.length }}</div>-->
+<!--        </div>-->
+<!--        <div class="stat">-->
+<!--          <div class="text">Loaded in</div>-->
+<!--          <div class="value">{{ initialTimeTaken.toLocaleString() }}ms</div>-->
+<!--        </div>-->
+<!--        <div class="stat">-->
+<!--          <div class="text">Total Load</div>-->
+<!--          <div class="value">{{ timeTaken.toLocaleString() }}ms</div>-->
+<!--        </div>-->
+<!--        <div class="stat">-->
+<!--          <div class="text">Results</div>-->
+<!--          <div class="value">{{ results.length }} / {{ resultingIds.length }}</div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div class="results">-->
+<!--        <template v-if="results.length">-->
+<!--          <mod-card-->
+<!--            v-for="(mod, index) in results"-->
+<!--            :key="index"-->
+<!--            :mod="mod"-->
+<!--            :instance="instance"-->
+<!--            :installed-mods="installedMods"-->
+<!--            :target="target"-->
+<!--            @install="selectedMod = mod"-->
+<!--          />-->
+<!--        </template>-->
+<!--        &lt;!&ndash; This is so over the top &ndash;&gt;-->
+<!--        <div class="loading" v-else-if="search !== '' && (loadingTerm || visualLoadingFull)">-->
+<!--          <font-awesome-icon spin icon="spinner" />-->
+<!--          <p>Loading results</p>-->
+<!--        </div>-->
+<!--        <div-->
+<!--          class="no-results"-->
+<!--          v-else-if="search !== '' && !loadingTerm && !visualLoadingFull && !results.length"-->
+<!--        >-->
+<!--          <div-->
+<!--            class="fancy"-->
+<!--            data-balloon-length="large"-->
+<!--            aria-label="I'm a missing texture if you didn't know... Get it?"-->
+<!--            data-balloon-blunt-->
+<!--            data-balloon-pos="down"-->
+<!--          >-->
+<!--            <svg viewBox="0 0 268 298" fill="none" xmlns="http://www.w3.org/2000/svg" class="missing-box">-->
+<!--              <path d="M134 134L0 67V230L134 298V134Z" class="inverse" />-->
+<!--              <path d="M134 133.645L67 100V181.853L134 216V133.645Z" class="prim-light" />-->
+<!--              <path d="M67 181.645L0 148V230L67 264V181.645Z" class="prim-light" />-->
+<!--              <path d="M134 134L268 67V230L134 298V134Z" class="inverse" />-->
+<!--              <path d="M134 215.645L201 182V264L134 298V215.645Z" class="prim-dark" />-->
+<!--              <path d="M201 100.645L268 67V148.853L201 182V100.645Z" class="prim-dark" />-->
+<!--              <path d="M134 134L0 67L134 0L268 67L134 134Z" class="inverse" />-->
+<!--              <path d="M67 101L0 67L67 33.5L134 67.5L67 101Z" class="prim-light" />-->
+<!--              <path d="M201 101L134 67.5L201 33.5L268 67L201 101Z" class="prim-light" />-->
+<!--            </svg>-->
+<!--          </div>-->
+<!--          <div class="text">-->
+<!--            <p class="title">No results found 😢</p>-->
+<!--            <div>-->
+<!--              Looks like nothing was found for <code>{{ search }}</code-->
+<!--              >, try a different search term.-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="make-a-search" v-else>-->
+<!--          <div class="search-prompt">-->
+<!--            <div class="icon-container">-->
+<!--              <font-awesome-icon icon="search" class="primary" />-->
+<!--              <font-awesome-icon icon="search" class="secondary" />-->
+<!--            </div>-->
+<!--            <p v-if="!loadingExtra && !loading">Use the search box above to find new mods</p>-->
+<!--            <p v-else>Searching...</p>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div class="more-btn flex justify-center">-->
+<!--        <ftb-button-->
+<!--          v-if="results.length > 0"-->
+<!--          color="info"-->
+<!--          :disabled="!hasResults || loadingExtra"-->
+<!--          @click="loadMore"-->
+<!--          class="px-10 py-2 inline-block"-->
+<!--        >-->
+<!--          <font-awesome-icon spin icon="spinner" class="mr-2" v-if="hasResults && loadingExtra" />-->
+<!--          {{ !hasResults ? 'No more results' : `${loadingExtra ? 'Loading' : 'Load'} more results` }}-->
+<!--        </ftb-button>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    -->
+<!--    <install-mod-modal-->
+<!--      :open="selectedMod !== null"-->
+<!--      @close="selectedMod = null"-->
+<!--      :mod="selectedMod ?? undefined"-->
+<!--      :mc-version="target" -->
+<!--      :mod-loader="modLoader"-->
+<!--      :instance="instance"-->
+<!--      @installed="$emit('modInstalled')"-->
+<!--    />-->
+<!--  </div>-->
+</template>
 
 <style lang="scss" scoped>
 .find-mods {

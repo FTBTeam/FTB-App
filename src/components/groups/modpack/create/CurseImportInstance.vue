@@ -53,7 +53,7 @@ async function  installZip() {
     return;
   }
 
-  await services().instanceInstallController.requestImport(activeFile.path, category)
+  await services().instanceInstallController.requestImport(activeFile.value.path, category.value)
   activeFile.value = null;
 
   await gobbleError(() => {
@@ -83,7 +83,7 @@ async function  installZip() {
         <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />
       </div>
 
-      <transition name="transition-fade" duration="250">
+      <transition name="transition-fade" :duration="250">
         <p v-if="activeFile" class="font-bold mt-4 text-base mb-2">Selected file</p>
       </transition>
       

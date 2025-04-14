@@ -89,7 +89,7 @@ async function fetchLog(versionId: number) {
 }
 
 function isOlderVersion(version: number) {
-  return instance?.versionId > version;
+  return (instance?.versionId ?? 0) > version;
 }
 
 function update() {

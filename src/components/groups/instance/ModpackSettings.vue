@@ -27,10 +27,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
   faCopy,
   faDownload,
-  faFolder,
+  faFolder, faLock,
   faPen, faTimes,
   faTrash,
-  faUndo,
+  faUndo, faUnlock,
   faWarning,
   faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -203,7 +203,7 @@ function confirmDelete() {
           await deleteInstance()
           dialogRef.close();
         })
-        .withIcon("trash")
+        .withIcon(faTrash)
         .withType("error")
         .build())
       .build()
@@ -294,7 +294,7 @@ const resolutionList = computed(() => {
       class="mb-4"
     >
       <template #extra>
-        <UiButton :icon="instanceSettings.locked ? 'unlock' : 'lock'" @click="toggleLock">
+        <UiButton :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock">
           {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
         </UiButton>
       </template>
@@ -381,7 +381,7 @@ const resolutionList = computed(() => {
           :options="channelOptions"
           v-model="instanceSettings.releaseChannel"
           :style="{width: '192px'}"
-          @change="(v) => saveSettings()"
+          @change="() => saveSettings()"
         />
       </div>
 
@@ -419,10 +419,10 @@ const resolutionList = computed(() => {
             </option>
             <option
               v-for="index in Object.keys(javaVersions)"
-              :value="javaVersions[index].path"
-              :key="javaVersions[index].name"
+              :value="javaVersions[index as number].path"
+              :key="javaVersions[index as number].name"
             >
-              {{ javaVersions[index].name }}
+              {{ javaVersions[index as number].name }}
             </option>
           </select>
 
@@ -455,7 +455,7 @@ const resolutionList = computed(() => {
         <div class="flex gap-4">
           <UiButton size="small" :icon="faUndo" @click="() => {
             // TODO: Fix me
-            instanceSettings.jvmArgs = settingsState.settings.instanceDefaults.javaArgs
+            instanceSettings.jvmArgs = appSettingsStore.rootSettings?.instanceDefaults.instanceDefaults.javaArgs
           }">
             Reset to Instance defaults
           </UiButton>

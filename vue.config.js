@@ -5,46 +5,6 @@ const {execSync} = require('child_process');
 
 const webpackPlugins = [];
 
-// This is required, the amount of times the IDE will import this just for using the variable is insane
-if (process.env.GITHUB_REF_NAME) {
-  console.log("Checking for bad imports")
-  const start = Date.now();
-  const badStrings = [
-    "import * as process from 'process'",
-    "import * as process from \"process\"",
-    "import process from 'process'",
-    "import process from \"process\"",
-  ]
-  
-  // Don't allow a build if "import * as process from 'process'" exists in any file
-  const sourceFiles = globSync('src/**/*.{ts,js,vue}', {ignore: ['node_modules/**']});
-  for (const file of sourceFiles) {
-    // Stream the file for performance
-    const stream = fs.createReadStream(file);
-    let found = false;
-    let buffer = Buffer.alloc(0);
-    stream.on('data', (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
-      for (const badString of badStrings) {
-        if (buffer.includes(badString)) {
-          found = true;
-          stream.close();
-          break;
-        }
-      }
-    });
-    
-    stream.on('close', () => {
-      if (found) {
-        console.error(`Found "import * as process from 'process'" in ${file}`);
-        process.exit(1);
-      }
-    });
-  }
-  
-  console.log(`Checked for bad imports in ${Date.now() - start}ms`);
-}
-
 let hasRepackedJar = false;
 
 module.exports = {
@@ -114,26 +74,6 @@ module.exports = {
             fs.writeFileSync(jsFile, file);
           }
         },
-        // afterSign: async (context) => {
-        //   const { electronPlatformName, appOutDir } = context;
-        //   if (electronPlatformName !== 'darwin') {
-        //     return;
-        //   }
-        //  
-        //   if (!process.env.APPLE_API_KEY) {
-        //     console.error("No apple api key found");
-        //     return;
-        //   }
-        //
-        //   const appName = context.packager.appInfo.productFilename;
-        //   return await notarize({
-        //     appBundleId: 'dev.ftb.app',
-        //     appPath: `${appOutDir}/${appName}.app`,
-        //     appleApiKey: "./apple_api_key.p8", // Only exists at CI time
-        //     appleApiKeyId: process.env.APPLE_API_KEY_ID,
-        //     appleApiIssuer: process.env.APPLE_API_ISSUER,
-        //   });
-        // },
         extraResources: [
           {from: "subprocess/build/libs/", to: "", filter: ["app-*.jar"]},
           {from: "subprocess/build/libs/java-licenses.json", to: ""},

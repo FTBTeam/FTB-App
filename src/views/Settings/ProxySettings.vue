@@ -3,6 +3,7 @@ import {alertController} from '@/core/controllers/alertController';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { onMounted, ref, watch } from 'vue';
 import { FTBInput, UiMessage, UiButton } from '@/components/ui';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 const appSettingsStore = useAppSettings();
 
@@ -129,7 +130,7 @@ function save(remove = false) {
     <UiMessage type='warning' class='mt-4 mb-8'>We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</UiMessage>
 
     <div class='action flex justify-end'>
-      <ui-button :wider="true" :disabled='proxyType === "none" || isInvalid()' type='success' icon='check' @click='() => save()'>Test & Save</ui-button>
+      <UiButton :wider="true" :disabled='proxyType === "none" || isInvalid()' type='success' :icon='faCheck' @click='() => save()'>Test & Save</UiButton>
     </div>
   </div>
 </template>

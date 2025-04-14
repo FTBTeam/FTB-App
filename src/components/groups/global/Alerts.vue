@@ -63,7 +63,7 @@ const hiddenSidebar = computed(() => {
 </script>
 
 <template>
-  <transition-group name="jump-in" duration="150" class="alerts-container" :class="{'no-sidebar': hiddenSidebar}" v-if="alerts.length" tag="div">
+  <transition-group name="jump-in" :duration="150" class="alerts-container" :class="{'no-sidebar': hiddenSidebar}" v-if="alerts.length" tag="div">
     <div class="alert"
          v-for="(alert, index) in alerts"
          :key="alert.uuid"

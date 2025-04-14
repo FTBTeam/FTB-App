@@ -11,7 +11,7 @@ const { total, perPage } = defineProps<{
 const value = defineModel<number>()
 
 const pages = computed(() => Math.ceil(total / perPage));
-const currentPage = value ?? 0
+const currentPage = value.value ?? 0
 </script>
 
 <template>

@@ -116,7 +116,7 @@ const packType = typeIdToProvider(packTypeId.value);
         <ModpackVersions
           :versions="currentModpack.versions"
           :pack-instance="currentModpack"
-          :instance="null"
+          :instance="undefined"
           :current="null"
           @close="showVersions = false"
         />

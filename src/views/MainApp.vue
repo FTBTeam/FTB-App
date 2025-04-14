@@ -41,35 +41,9 @@ onMounted(async () => {
   initApp().catch(logger.error)
   isMac.value = await appPlatform.utils.getOsType() === "mac"
   
-  // useSystemBar().catch(console.error)
-  // startNetworkMonitor();
-  //
-  // logger.info("App started on ", constants.platform)
-  // isMac.value = false// os.type() === 'Darwin'; // TODO: [port] Fix me
-  //
   // appStarting.value = true;
   // appLoaded.value = false;
-  //
-  // logger.info("Mounted MainApp for ", constants.platform);
-  //
-  // // Check if the app is installed
-  // let installed = true;
-  // if (!appPlatform.isOverwolf && constants.isProduction) {
-  //   installed = await appPlatform.app.runtimeAvailable();
-  //
-  //   logger.info("App installed", installed);
-  //   if (!installed) {
-  //     // We need to install the app
-  //     try {
-  //       await installApp();
-  //     } catch (e: any) {
-  //       appInstallFailed.value = true;
-  //       appInstallError.value = e?.customMessage || "The app has failed to install the necessary files, please try again or contact support...";
-  //       logger.error("Failed to install app", e);
-  //     }
-  //   }
-  // }
-  //
+
   // await startApp();
   // appLoaded.value = true;
   //
@@ -102,19 +76,8 @@ function refreshHandler(data: any) {
     instanceStore.loadInstances();
   }
 }
-
-async function installApp() {
-  // TODO: [port] move to #app
-  // appInstalling.value = true;
-  // logger.info("Installing app");
-  //
-  // await appPlatform.app.installApp((stage: any) => appInstallStage.value = stage, () => {}, false)
-  //
-  // appInstalling.value = false;
-}
-
-async function startApp() {
-  // TODO: [port] move to #app
+// TODO: [port] Add back 
+// async function startApp() {
   // appStarting.value = false;
   // logger.info("Starting app");
   //
@@ -162,10 +125,10 @@ async function startApp() {
   //   appInstallError.value = e?.customMessage || "The app has failed to start, please try again or contact support...";
   //   logger.error("Failed to start subprocess", e);
   // }
-}
+// }
 
-async function setupApp() {
-  // TODO: [port] move to #app
+  // TODO: [port] Add back 
+// async function setupApp() {
   // if (!hasInitialized.value) {
   //
   //   logger.debug("Starting ping poll");
@@ -180,17 +143,18 @@ async function setupApp() {
   // appPlatform.actions.onAppReady();
   //
   // logger.debug("Notifying all controllers of connected status")
-}
+// }
 
-async function checkForFirstRun() {
-  if (!appPlatform.isElectron) {
-    return;
-  }
-
-  if (await appPlatform.app.cpm.required() && await appPlatform.app.cpm.isFirstLaunch()) {
-    showOnboarding.value = true;
-  }
-}
+// TODO: [port] Add back 
+// async function checkForFirstRun() {
+//   if (!appPlatform.isElectron) {
+//     return;
+//   }
+//
+//   if (await appPlatform.app.cpm.required() && await appPlatform.app.cpm.isFirstLaunch()) {
+//     showOnboarding.value = true;
+//   }
+// }
 
 function startNetworkMonitor() {
   if (!navigator.onLine) {
@@ -204,10 +168,6 @@ function startNetworkMonitor() {
   window.addEventListener("online", () => {
     alertController.success("You're back online, the app should be working as expected");
   });
-}
-
-async function restartApp() {
-  appPlatform.actions.restartApp();
 }
 
 async function useSystemBar() {
@@ -241,17 +201,19 @@ async function useSystemBar() {
   }
 }
 
-const status = computed(() => {
-  // if (appStarting.value && !appInstalling) {
-  //   return "Starting up"
-  // } else if (appInstalling) {
-  //   return "Installing"
-  // } else if (appConnecting.value && !isReconnecting && !appInstalling) {
-  //   return "Connecting..."
-  // } else if (!appStarting && !appInstalling && isReconnecting) {
-  //   return "Reconnecting..."
-  // }
-})
+// TODO: [port] Add back
+// const status = computed(() => {
+//   return "Loading..."
+//   // if (appStarting.value && !appInstalling) {
+//   //   return "Starting up"
+//   // } else if (appInstalling) {
+//   //   return "Installing"
+//   // } else if (appConnecting.value && !isReconnecting && !appInstalling) {
+//   //   return "Connecting..."
+//   // } else if (!appStarting && !appInstalling && isReconnecting) {
+//   //   return "Reconnecting..."
+//   // }
+// })
 
 const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/settings'))
 </script>

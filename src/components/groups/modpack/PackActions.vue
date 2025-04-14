@@ -83,7 +83,7 @@ function deleteInstance() {
           }));
           dialogRef.close();
         })
-        .withIcon("trash")
+        .withIcon(faTrash)
         .withType("error")
         .build())
       .build()

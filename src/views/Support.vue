@@ -14,28 +14,13 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, ref } from 'vue';
-
-const endpoint = (goEndpoint: string) => `https://go.ftb.team/${goEndpoint}`;
+import { faBook, faBox, faCubesStacked, faRocket } from '@fortawesome/free-solid-svg-icons';
+import { topicBuilder } from '@/views/supportTopicBuilder.ts';
 
 const mkSocial = (name: string, icon: IconDefinition, goEndpoint: string) => ({
   name,
   icon,
-  link: endpoint(goEndpoint),
-});
-
-const mkTopic = (
-  name: string,
-  icon: IconDefinition,
-  goEndpoint: string | undefined,
-  desc: string,
-  customIcon = false,
-  url?: string
-) => ({
-  name,
-  icon,
-  desc,
-  link: url ? url : endpoint(goEndpoint!),
-  customIcon,
+  link: `https://go.ftb.team/${goEndpoint}`,
 });
 
 const socials = [
@@ -52,43 +37,31 @@ const topicList = [
   {
     title: 'Trackers',
     items: [
-      mkTopic(
-        'App Support',
-        'rocket',
-        'app-feedback',
-        'Something not working in the app? Want to make a feature request? Report it on our Github!',
-      ),
-      mkTopic(
-        'Modpack Support',
-        'cubes-stacked',
-        'support-modpack',
-        'Looking to report an issue with one of our Modpacks or wanna suggest something cool? This is the place for you.',
-      ),
-      mkTopic(
-        'Mod Support',
-        'box',
-        'support-mod-issue',
-        "Found an issue with an *FTB* Mod? Let us know and we'll get it sorted out.",
-      ),
+      topicBuilder("App support", 'Something not working in the app? Want to make a feature request? Report it on our Github!')
+        .goEndpoint("app-feedback")
+        .icon(faRocket)
+        .build(),
+      topicBuilder("Modpack support", 'Looking to report an issue with one of our Modpacks or wanna suggest something cool? This is the place for you.')
+        .goEndpoint("support-modpack")
+        .icon(faCubesStacked)
+        .build(),
+      topicBuilder("Mod support", 'Found an issue with an *FTB* Mod? Let us know and we\'ll get it sorted out.')
+        .goEndpoint("support-mod-issue")
+        .icon(faBox)
+        .build(),
     ],
   },
   {
     title: 'Guides',
     items: [
-      mkTopic(
-        'BisectHosting',
-        BhLogo,
-        undefined,
-        "Get a top-notch Minecraft Server with our partner BisectHosting. With 24/7/365 support, 2,000+ Minecraft modpacks, and hosting for over 70+ games, you're in good hands.",
-        true,
-        'https://bisecthosting.com/ftb?r=app-support'
-      ),
-      mkTopic(
-        'App guides',
-        'book',
-        'app-support',
-        'Here you can find some useful guides on how to use the app, debugging support with common problems and steps on how to do things like setting up a server and backing up your game.',
-      )
+      topicBuilder("BisectHosting", "Get a top-notch Minecraft Server with our partner BisectHosting. With 24/7/365 support, 2,000+ Minecraft modpacks, and hosting for over 70+ games, you're in good hands.")
+        .url("https://bisecthosting.com/ftb?r=app-support")
+        .customIcon(BhLogo)
+        .build(),
+      topicBuilder("App Guides", 'Here you can find some useful guides on how to use the app, debugging support with common problems and steps on how to do things like setting up a server and backing up your game.')
+        .goEndpoint("app-support")
+        .icon(faBook)
+        .build(),
     ],
   },
 ];
@@ -155,8 +128,8 @@ onMounted(async () => {
             @click="appPlatform.utils.openUrl(topicItem.link)"
           >
             <div class="icon">
-              <FontAwesomeIcon v-if="!topicItem.customIcon" fixedWidth :icon="topicItem.icon" />
-              <img v-else :src="topicItem.icon" alt="Icon" />
+              <FontAwesomeIcon v-if="topicItem.icon" fixedWidth :icon="topicItem.icon" />
+              <img v-if="topicItem.customIcon" :src="topicItem.customIcon" alt="Icon" />
             </div>
             <div class="body">
               <h2>{{ topicItem.name }}</h2>

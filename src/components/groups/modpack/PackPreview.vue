@@ -13,8 +13,11 @@ import { useRouter } from 'vue-router';
 import { PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
-const RouteNames = RouterNames;
-const props = defineProps<{
+const {
+  packId,
+  partialPack,
+  provider = "modpacksch"
+} = defineProps<{
   packId?: number;
   partialPack?: SearchResultPack;
   provider?: PackProviders;
@@ -26,18 +29,18 @@ const installStore = useInstallStore();
 const router = useRouter()
 
 onMounted(() => {
-  if (!props.partialPack && !props.packId) {
+  if (!partialPack && !packId) {
     throw new Error("No packId or partialPack provided");
   }
 
-  if (!props.partialPack && props.packId) {
-    fetchModpack(props.packId, props.provider);
+  if (!partialPack && packId) {
+    fetchModpack(packId, provider);
   }
 })
 
 const packData = computed<SearchResultPack | null>(() => {
-  if (props.partialPack) {
-    return props.partialPack;
+  if (partialPack) {
+    return partialPack;
   }
 
   if (!apiModpack.value) {
@@ -45,7 +48,7 @@ const packData = computed<SearchResultPack | null>(() => {
   }
 
   return {
-    platform: props.provider,
+    platform: provider,
     name: apiModpack.value.name,
     art: apiModpack.value.art,
     authors: apiModpack.value.authors,

@@ -7,16 +7,17 @@ import {
 
 import { computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 
 const {
   type = 'normal',
-  icon = '',
+  icon,
   ariaLabel = '',
   ariaLabelPos = 'down',
   hoverEffect = false
 } = defineProps<{
   type: ElementColorType;
-  icon: string;
+  icon?: IconDefinition;
   ariaLabel: string;
   ariaLabelPos: ElementAriaDirection;
   hoverEffect: boolean
