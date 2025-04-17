@@ -6,7 +6,7 @@ import type { Configuration } from "electron-builder";
 
 let hasRepackedJar = false;
 
-export const config: Configuration = {
+const config: Configuration = {
   productName: 'FTB Electron App',
   asar: true,
   appId: 'dev.ftb.app',
@@ -173,3 +173,5 @@ async function signJnilibInJar(context) {
     execSync(`jar --update --file=${absoluteJar} ${file.replace("tmp/", "")}`, {cwd: 'tmp'});
   });
 }
+
+export default config;
