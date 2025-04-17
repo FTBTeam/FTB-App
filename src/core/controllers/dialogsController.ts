@@ -64,7 +64,6 @@ class DialogsController {
   }
 }
 
-// TOOD: Move to services
 export const dialogsController = new DialogsController();
 
 export class DialogBuilder {

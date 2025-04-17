@@ -1,31 +1,10 @@
-<template>
-  <transition name="slide-in-out" :duration="250">
-    <div v-if="open" class="closable-panel" :class="{'is-mac': isMac, ads: advertsEnabled }" @click.self="emit('close')" >
-      <div class="panel-container">
-        <div class="heading">
-          <div class="main">
-            <div class="title">{{ title }}</div>
-            <div class="sub-title">{{ subtitle }}</div>
-          </div>
-          <div class="closer" @click="emit('close')">
-            Close
-            <FontAwesomeIcon :icon="faTimes" />
-          </div>
-        </div>
-        <div class="content" :class="{ scrollable }">
-          <slot />
-        </div>
-      </div>
-    </div>
-  </transition>
-</template>
-
 <script lang="ts" setup>
 // TODO: (M#02) Remove this component and replace it with a modal that support full screen
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import appPlatform from '@platform'
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { useAds } from '@/composables/useAds.ts';
 
 const { subtitle = '', scrollable = true } = defineProps<{
   open: boolean;
@@ -38,6 +17,7 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const ads = useAds()
 const isMac = ref(false);
 
 onMounted(async () => {
@@ -56,16 +36,29 @@ function onEsc(event: any) {
 
   emit('close')
 }
-
-// TODO: [port] Fix me
-// @State('settings') public settings!: SettingsState;
-// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-//
-// get advertsEnabled(): boolean {
-//   return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-// }
-const advertsEnabled = computed(() => true)
 </script>
+
+<template>
+  <transition name="slide-in-out" :duration="250">
+    <div v-if="open" class="closable-panel" :class="{'is-mac': isMac, ads: ads.adsEnabled }" @click.self="emit('close')" >
+      <div class="panel-container">
+        <div class="heading">
+          <div class="main">
+            <div class="title">{{ title }}</div>
+            <div class="sub-title">{{ subtitle }}</div>
+          </div>
+          <div class="closer" @click="emit('close')">
+            Close
+            <FontAwesomeIcon :icon="faTimes" />
+          </div>
+        </div>
+        <div class="content" :class="{ scrollable }">
+          <slot />
+        </div>
+      </div>
+    </div>
+  </transition>
+</template>
 
 <style scoped lang="scss">
 .closable-panel {

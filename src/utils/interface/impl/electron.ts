@@ -1,4 +1,3 @@
-// @ts-ignore no typescript package available
 import ElectronOverwolfInterface from '../electron-overwolf-interface.ts';
 import { handleAction } from '@/core/protocol/protocolActions.ts';
 import { parseArgs } from '@/utils/interface/electron-helpers.ts';

@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { useAds } from '@/composables/useAds.ts';
 
 const {
   title,
@@ -27,9 +28,7 @@ const emit = defineEmits<{
   (e: 'closed'): void;
 }>();
 
-// TODO: [Port] fixme
-// @State('settings') public settings!: SettingsState;
-// @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
+const ads = useAds();
 
 onMounted(() => {
   document.addEventListener('keydown', onEsc)
@@ -58,12 +57,6 @@ function close(background = false): void {
 
   emit('closed');
 }
-
-// TODO: [Port] fixme
-const advertsEnabled = true;
-// get advertsEnabled(): boolean {
-//   return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-// }
 </script>
 
 <script lang="ts">
@@ -72,7 +65,7 @@ export type ModalSizes = 'small' | 'medium' | 'large';
 
 <template>
   <Transition name="fade-and-grow">
-    <div v-if="open" class="modal-container" :class="{ads: advertsEnabled}" @mousedown.self="() => close(true)">      
+    <div v-if="open" class="modal-container" :class="{ads: ads.adsEnabled}" @mousedown.self="() => close(true)">      
       <div class="modal-contents" :class="`${size}`">
         <div class="modal-header" :class="{'no-subtitle': !subTitle}">
           <div class="modal-heading">
