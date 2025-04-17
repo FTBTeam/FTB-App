@@ -12,10 +12,10 @@ import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { services } from '@/bootstrap.ts';
 import { ModPack, Versions } from '@/core/types/appTypes.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faDownload, faServer, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
 const logger = createLogger("ModpackVersions.vue")
 
@@ -30,6 +30,7 @@ const {
 }>()
 
 const router = useRouter();
+const appStore = useAppStore();
 
 const changelogs = ref<Record<string, string>>({});
 const currentVersion = ref<Versions | null>(null);
@@ -98,7 +99,7 @@ function update() {
     return;
   }
 
-  services().instanceInstallController.requestUpdate(instance, currentVersion.value, typeIdToProvider(instance.packType));
+  appStore.controllers.install.requestUpdate(instance, currentVersion.value, typeIdToProvider(instance.packType));
   router.push({
     name: RouterNames.ROOT_LIBRARY
   })

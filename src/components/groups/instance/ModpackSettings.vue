@@ -19,7 +19,6 @@ import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { FTBInput, Modal, UiToggle, Selection2, UiButton } from '@/components/ui';
-import { services } from '@/bootstrap.ts';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
@@ -35,8 +34,10 @@ import {
   faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import UiNumberInput from '@/components/ui/UiNumberInput.vue';
+import { useAppStore } from '@/store/appStore.ts';
 
 const router = useRouter();
+const appStore = useAppStore();
 const installStore = useInstallStore();
 const appSettingsStore = useAppSettings();
 
@@ -123,7 +124,7 @@ async function repairInstance() {
     return;
   }
 
-  await services().instanceInstallController.requestUpdate(instance, instance.versionId, typeIdToProvider(instance.packType));
+  await appStore.controllers.install.requestUpdate(instance, instance.versionId, typeIdToProvider(instance.packType));
   emit("back")
 }
 

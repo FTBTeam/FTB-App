@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { autoUpdater } from 'electron-updater';
-import { getAppHome } from '../src/nuturalHelpers.ts';
+import { getAppHome } from '../src/utils/nuturalHelpers.ts';
 import os from 'os';
 import fs from 'fs';
 import { ChildProcess, spawn } from 'child_process';

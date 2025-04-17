@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import mitt, {type Emitter} from 'mitt';
+import { InstanceInstallController } from '@/core/controllers/InstanceInstallController.ts';
 
 // TODO: Better typings
 export type EmitEvents = {
@@ -12,6 +13,9 @@ export type EmitEvents = {
 
 type AppState = {
   emitter: Emitter<EmitEvents>;
+  controllers: {
+    install: InstanceInstallController
+  }
 }
 
 export const useAppStore = defineStore("app", {
@@ -20,6 +24,9 @@ export const useAppStore = defineStore("app", {
     
     return {
       emitter: emitter,
+      controllers: {
+        install: new InstanceInstallController()
+      }
     }
   },
   

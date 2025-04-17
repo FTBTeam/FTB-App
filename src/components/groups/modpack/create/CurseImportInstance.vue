@@ -8,11 +8,12 @@ import CategorySelector from '@/components/groups/modpack/create/CategorySelecto
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModalFooter, ModalBody, Modal, UiButton } from '@/components/ui';
-import { services } from '@/bootstrap.ts';
 import { ref, useTemplateRef } from 'vue';
 import { faFileZipper, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
 const router = useRouter()
+const appStore = useAppStore();
 
 const { open } = defineProps<{
   open?: boolean;
@@ -55,7 +56,7 @@ async function  installZip() {
     return;
   }
 
-  await services().instanceInstallController.requestImport(activeFile.value.path, category.value)
+  await appStore.controllers.install.requestImport(activeFile.value.path, category.value)
   activeFile.value = null;
 
   await gobbleError(() => {

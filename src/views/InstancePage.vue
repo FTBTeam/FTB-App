@@ -15,12 +15,12 @@ import {createLogger} from '@/core/logger';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import { useRouter } from 'vue-router';
 import { computed, onMounted, ref } from 'vue';
-import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { ModPack, Versions } from '@/core/types/appTypes.ts';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
 const router = useRouter()
 
@@ -202,8 +202,9 @@ function update(version: Versions | null = null): void {
     return;
   }
 
+  const appStore = useAppStore();
   logger.debug(`Requesting update to ${targetVersion.id} ${targetVersion.type}`)
-  services().instanceInstallController.requestUpdate(instance.value, targetVersion, typeIdToProvider(instance.value.packType))
+  appStore.controllers.install.requestUpdate(instance.value, targetVersion, typeIdToProvider(instance.value.packType))
 }
 
 function updateOrDowngrade(versionId: number) {

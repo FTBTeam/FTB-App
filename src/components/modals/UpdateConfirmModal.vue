@@ -9,9 +9,9 @@ import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 import { ref, watch } from 'vue';
 import { UiMessage, Modal, ModalBody, ModalFooter } from '@/components/ui';
-import { services } from '@/bootstrap.ts';
 import { Versions } from '@/core/types/appTypes.ts';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
 const logger = createLogger("UpdateConfirmModal.vue");
 
@@ -28,6 +28,8 @@ const {
 const emit = defineEmits<{
   (e: 'close'): void;
 }>()
+
+const appStore = useAppStore();
 
 const isUnstable = ref(false);
 const showConfirm = ref(false);
@@ -64,8 +66,8 @@ function update() {
     logger.error("No latest version provided, can't update")
     return;
   }
-
-  services().instanceInstallController.requestUpdate(
+  
+  appStore.controllers.install.requestUpdate(
     localInstance,
     latestVersion,
     typeIdToProvider(localInstance.packType)

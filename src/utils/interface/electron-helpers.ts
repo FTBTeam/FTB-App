@@ -1,5 +1,5 @@
 import {Arg} from '@/utils/interface/impl/electron.ts';
-import { computeArch, computeOs } from '@/nuturalHelpers';
+import { computeArch, computeOs } from '@/utils/nuturalHelpers';
 
 const { os } = window.nodeUtils;
 

@@ -1,4 +1,4 @@
-import { computeArch, computeOs, getAppHome, jreHome, loadApplicationMetaData } from '../src/nuturalHelpers.ts';
+import { computeArch, computeOs, getAppHome, jreHome, loadApplicationMetaData } from '../src/utils/nuturalHelpers.ts';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';

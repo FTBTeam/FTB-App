@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { services } from '@/bootstrap.ts';
 import { faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { computed, ref } from 'vue';
+import { useAppStore } from '@/store/appStore.ts';
 
 const {
   item,
@@ -14,6 +14,8 @@ const {
   isInstall: boolean;
   isNext?: boolean;
 }>()
+
+const appStore = useAppStore();
 
 const cancelling = ref(false);
 
@@ -26,7 +28,7 @@ async function cancelInstall(item: InstallRequest | InstallStatus) {
 
   cancelling.value = true;
   try {
-    await services().instanceInstallController.cancelInstall(uuid, isInstall);
+    await appStore.controllers.install.cancelInstall(uuid, isInstall);
   } catch (e) {
     console.error(e);
   }

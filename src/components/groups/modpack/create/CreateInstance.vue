@@ -16,13 +16,14 @@ import {RouterNames} from '@/router';
 import { computed, onMounted, watch, ref } from 'vue';
 import { ModalBody, Modal, FTBInput, ModalFooter } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack } from '@/core/types/appTypes.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { faArrowLeft, faArrowRight, faBoxes, faInfo, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import UiNumberInput from '@/components/ui/UiNumberInput.vue';
+import { useAppStore } from '@/store/appStore.ts';
 
+const appStore = useAppStore();
 const appSettingsStore = useAppSettings();
 const modpackStore = useModpackStore();
 
@@ -156,7 +157,7 @@ function createInstance() {
 
   // Magic
   if (!userModLoader.value) {
-    services().instanceInstallController.requestInstall({
+    appStore.controllers.install.requestInstall({
       id: 81, // Vanilla pack id
       version: userVanillaVersion.value ?? 0,
       ...sharedData
@@ -173,7 +174,7 @@ function createInstance() {
       request["mcVersion"] = selectedMcVersion;
     }
 
-    services().instanceInstallController.requestInstall(request)
+    appStore.controllers.install.requestInstall(request)
   }
 
   emit('close')

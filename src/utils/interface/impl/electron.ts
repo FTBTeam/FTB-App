@@ -2,7 +2,7 @@
 import ElectronOverwolfInterface from '../electron-overwolf-interface.ts';
 import { handleAction } from '@/core/protocol/protocolActions.ts';
 import { parseArgs } from '@/utils/interface/electron-helpers.ts';
-import { getAppHome, jreHome } from '@/nuturalHelpers.ts';
+import { getAppHome, jreHome } from '@/utils/nuturalHelpers.ts';
 import { retrying } from '@/utils/helpers/asyncHelpers.ts';
 
 const { fs, os, path } = window.nodeUtils;

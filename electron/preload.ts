@@ -3,7 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import MarkdownIt from 'markdown-it';
-import { fallbackMetaData, loadApplicationMetaData } from '../src/nuturalHelpers.ts';
+import { fallbackMetaData, loadApplicationMetaData } from '../src/utils/nuturalHelpers.ts';
 
 const markdownParser = new MarkdownIt();
 markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {

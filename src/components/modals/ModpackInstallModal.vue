@@ -10,13 +10,14 @@ import { watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
-import { services } from '@/bootstrap.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
 const modpackStore = useModpackStore();
 const router = useRouter();
+const appStore = useAppStore();
 
 const {
   open,
@@ -59,7 +60,7 @@ watch(() => open, async (newValue) => {
 })
 
 function install() {
-  services().instanceInstallController.requestInstall({
+  appStore.controllers.install.requestInstall({
     id: packId,
     category: selectedCategory.value,
     version: parseInt(selectedVersionId.value ?? sortedApiVersions.value[0].id),
