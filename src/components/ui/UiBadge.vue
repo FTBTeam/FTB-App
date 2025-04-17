@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 
 const {
-  type = 'normal',
+  type = 'secondary',
   icon,
   ariaLabel = '',
   ariaLabelPos = 'down',
@@ -18,9 +18,9 @@ const {
 } = defineProps<{
   type: ElementColorType;
   icon?: IconDefinition;
-  ariaLabel: string;
-  ariaLabelPos: ElementAriaDirection;
-  hoverEffect: boolean
+  ariaLabel?: string;
+  ariaLabelPos?: ElementAriaDirection;
+  hoverEffect?: boolean
 }>()
 
 const colorFromType = computed(() => colorFromElementColorType(type, !hoverEffect, false));

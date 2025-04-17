@@ -1,15 +1,17 @@
 <script lang="ts" setup>
 import {Alert} from '@/core/controllers/alertController';
 import {Queue} from '@/utils/std/queue';
-import {emitter} from '@/utils';
 import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import { faCheckCircle, faExclamationCircle, faInfoCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
 type AlertWithUuid = Alert & { uuid: string }
 
 const router = useRouter();
+const appStore = useAppStore();
+
 const typeIcons = {
   success: faCheckCircle,
   error: faTimesCircle,
@@ -21,11 +23,11 @@ const alerts = ref<AlertWithUuid[]>([]);
 const alertsQueue = ref<Queue<AlertWithUuid>>(new Queue());
 
 onMounted(() => {
-  (emitter as any).on("alert.simple", onSimpleAlert);
+  appStore.emitter.on("alert/simple", onSimpleAlert);
 })
 
 onBeforeUnmount(() => {
-  (emitter as any).off("alert.simple", onSimpleAlert);
+  appStore.emitter.off("alert/simple", onSimpleAlert);
 })
 
 function onSimpleAlert(data: Alert) {

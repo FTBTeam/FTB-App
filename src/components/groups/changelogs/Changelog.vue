@@ -6,14 +6,14 @@ import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import {createLogger} from '@/core/logger';
 import { ref, watch } from 'vue';
 import {Modal, UiMessage} from '@/components/ui';
-import { useAppStore } from '@/store/appStore.ts';
+import { useWsStore } from '@/store/wsStore.ts';
 
-const appStore = useAppStore();
+const wsStore = useWsStore();
 const logger = createLogger("Changelog.vue")
 
 const changelogData = ref<ChangelogData | null>(null);
 
-watch(() => appStore.ready, async (newValue) => {
+watch(() => wsStore.ready, async (newValue) => {
   if (!newValue) return;
 
   await checkForUpdate().catch((e) => {

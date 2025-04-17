@@ -16,7 +16,7 @@ import {computeAspectRatio, megabyteSize, prettyByteFormat} from '@/utils';
 import ModloaderSelect from '@/components/groups/modpack/components/ModloaderSelect.vue';
 import {ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { FTBInput, Modal, UiToggle, Selection2, UiButton } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
@@ -34,6 +34,7 @@ import {
   faWarning,
   faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 
 const router = useRouter();
 const installStore = useInstallStore();
@@ -83,7 +84,7 @@ onMounted(async () => {
   }
 })
 
-function selectedResolution() {
+function selectResolution(id: string) {
   const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
   if (!selected) {
     return;
@@ -278,14 +279,18 @@ const resolutionList = computed(() => {
 
   return resList;
 });
+
+watch(imageFile, (value) => {
+  if (value) {
+    instanceSettings.value.instanceImage = value.path;
+    saveSettings();
+  }
+})
 </script>
 
 <template>
   <div class="pack-settings">
-    <ArtworkSelector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" @change="(v) => {
-      instanceSettings.instanceImage = v ? v.path : null;
-      saveSettings();
-    }" />
+    <ArtworkSelector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" />
     
     <FTBInput
       label="Instance Name"
@@ -353,14 +358,14 @@ const resolutionList = computed(() => {
           <b>Width</b>
           <small class="text-muted block mt-2">The Minecraft windows screen width</small>
         </div>
-        <FTBInput class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
+        <UiNumberInput class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
       </div>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
           <b>Height</b>
           <small class="text-muted block mt-2">The Minecraft windows screen height</small>
         </div>
-        <FTBInput class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
+        <UiNumberInput class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
       </div>
     </div>
     
@@ -419,10 +424,10 @@ const resolutionList = computed(() => {
             </option>
             <option
               v-for="index in Object.keys(javaVersions)"
-              :value="javaVersions[index as number].path"
-              :key="javaVersions[index as number].name"
+              :value="(javaVersions as any)[index].path"
+              :key="(javaVersions as any)[index].name"
             >
-              {{ javaVersions[index as number].name }}
+              {{ (javaVersions as any)[index].name }}
             </option>
           </select>
 
@@ -455,7 +460,7 @@ const resolutionList = computed(() => {
         <div class="flex gap-4">
           <UiButton size="small" :icon="faUndo" @click="() => {
             // TODO: Fix me
-            instanceSettings.jvmArgs = appSettingsStore.rootSettings?.instanceDefaults.instanceDefaults.javaArgs
+            instanceSettings.jvmArgs = appSettingsStore.rootSettings?.instanceDefaults.javaArgs ?? ''
           }">
             Reset to Instance defaults
           </UiButton>
@@ -535,7 +540,7 @@ const resolutionList = computed(() => {
             userSelectModLoader = false
             userSelectedLoader = null
           }">Close</UiButton>
-          <UiButton type="success" :wider="true" :icon="faDownload" :disabled="userSelectedLoader === null" @click="() => installModloader()">Install</UiButton>
+          <UiButton type="success" :wider="true" :icon="faDownload" :disabled="userSelectedLoader === null" @click="() => installModLoader()">Install</UiButton>
         </div>
       </template>
     </Modal>

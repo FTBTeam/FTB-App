@@ -3,7 +3,7 @@ import {alertController} from '@/core/controllers/alertController';
 import {ClientLaunchDataReply, LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { InstanceMessageData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
-import { services } from '@/bootstrap.ts';
+import { useAppStore } from '@/store/appStore.ts';
 
 const logger = createLogger("runningStateProcessor.ts");
 
@@ -135,5 +135,6 @@ async function lazyLogChecker(uuid: string, messages: string[]) {
 }
 
 export function initStateProcessor() {
-  services().emitter.on('ws/message', onLaunchData);
+  const appStore = useAppStore();
+  appStore.emitter.on('ws/message', onLaunchData);
 }

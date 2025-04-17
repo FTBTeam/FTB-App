@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const {
-  type = 'normal',
+  type = 'secondary',
   size = 'normal',
   disabled = false,
   working = false,
@@ -43,19 +43,18 @@ const colorFromType = computed(() => colorFromElementColorType(type, disabled, w
 </script>
 
 <script lang="ts">
-export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'normal';
+export type ElementColorType = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
 export type ElementAriaDirection = "up" | "down" | "left" | "right" | "up-left" | "up-right" | "down-left" | "down-right";
 export type ElementStandardSizing = 'small' | 'normal' | 'large';
 
 export function colorFromElementColorType(type: ElementColorType, disabled: boolean = false, working = false) {
   switch (type) {
     case 'primary': return 'bg-indigo-600' + (!disabled && !working ? ' hover:bg-indigo-500' : '');
-    case 'secondary': return 'bg-green-600' + (!disabled && !working ? ' hover:bg-green-500' : '');
-    case 'success': return 'bg-primary' + (!disabled && !working ? ' hover:bg-light-primary' : '');
-    case 'danger': return 'bg-danger' + (!disabled && !working ? ' hover:bg-light-danger' : '');
-    case 'warning': return 'bg-warning' + (!disabled && !working ? ' hover:bg-light-warning' : '');
-    case 'info': return 'bg-info' + (!disabled && !working ? ' hover:bg-light-info' : '');
-    case 'normal': return 'bg-gray-600' + (!disabled && !working ? ' hover:bg-gray-500' : '');
+    case 'secondary': return 'bg-slate-600' + (!disabled && !working ? ' hover:bg-slate-500' : '');
+    case 'success': return 'bg-green-600' + (!disabled && !working ? ' hover:bg-green-500' : '');
+    case 'danger': return 'bg-red-600' + (!disabled && !working ? ' hover:bg-red-500' : '');
+    case 'warning': return 'bg-orange-600' + (!disabled && !working ? ' hover:bg-orange-500' : '');
+    case 'info': return 'bg-blue-600' + (!disabled && !working ? ' hover:bg-blue-500' : '');
   }
 }
 </script>

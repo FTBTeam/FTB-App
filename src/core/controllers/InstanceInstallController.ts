@@ -12,11 +12,10 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
-import { Emitter } from 'mitt';
-import { EmitEvents } from '@/bootstrap.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { PackProviders, Versions } from '@/core/types/appTypes.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
+import { useAppStore } from '@/store/appStore.ts';
 
 export type InstallRequest = {
   uuid: string;
@@ -79,9 +78,10 @@ export class InstanceInstallController {
   private installLock = false;
 
   constructor(
-    private readonly emitter: Emitter<EmitEvents>,
   ) {
-    this.emitter.on('ws/message', async (data: any) => {
+    const appStore = useAppStore();
+
+    appStore.emitter.on('ws/message', async (data: any) => {
       if (data.type === 'instanceOverrideModLoaderReply') {
         const typedData = data as InstanceOverrideModLoaderDataReply;
         this.handleOverrideState(typedData);
@@ -315,8 +315,10 @@ export class InstanceInstallController {
       let lastKnownSpeed: number = 0;
 
       const instanceInstaller = (data: InstallInstanceDataReply | OperationProgressUpdateData) => {
+        const appStore = useAppStore();
+        
         const finish = (result: InstallResult) => {
-          this.emitter.off('ws/message', instanceInstaller as any);
+          appStore.emitter.off('ws/message', instanceInstaller as any);
           this.updateInstallStatus(null);
           resolve(result);
         };
@@ -381,7 +383,8 @@ export class InstanceInstallController {
         }
       };
 
-      this.emitter.on('ws/message', instanceInstaller as any);
+      const appStore = useAppStore();
+      appStore.emitter.on('ws/message', instanceInstaller as any);
     });
 
     this.logger.debug('Install result', installRequest);

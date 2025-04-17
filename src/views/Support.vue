@@ -103,7 +103,7 @@ onMounted(async () => {
     <div class="discord-callout">
       <div class="body">
         <h2 class="font-bold text-xl mb-4">
-          <FontAwesomeIcon class="mr-4" :icon="['fab', 'discord']" /> Give our Discord a try
+          <FontAwesomeIcon class="mr-4" :icon="faDiscord" /> Give our Discord a try
         </h2>
         <p>
           Our Discord server is typically a great first place to ask questions and find answers to common questions or

@@ -1,5 +1,4 @@
 import Home from '@/views/Home.vue';
-import MainApp from './views/MainApp.vue';
 import {createLogger} from '@/core/logger';
 import { createRouter, createWebHashHistory } from 'vue-router';
 
@@ -27,96 +26,91 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      component: MainApp,
+      name: RouterNames.HOME,
+      component: Home,
+    },
+    {
+      path: '/modpacks',
+      name: RouterNames.ROOT_LIBRARY,
+      component: () => import(/* webpackChunkName: "library" */ './views/Library.vue'),
+    },
+    {
+      path: '/browseModpacks/:search?',
+      name: RouterNames.ROOT_BROWSE_PACKS,
+      component: () => import(/* webpackChunkName: "search" */ './views/BrowseModpacks.vue'),
+    },
+    {
+      path: '/blog',
+      name: RouterNames.ROOT_BLOG,
+      component: () => import(/* webpackChunkName: "blog" */ './views/Blog.vue'),
+    },
+    {
+      path: '/settings',
+      component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Settings.vue'),
       children: [
         {
-          path: '/',
-          name: RouterNames.HOME,
-          component: Home,
+          path: '',
+          name: RouterNames.SETTINGS_INSTANCE,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/InstanceSettings.vue'),
         },
         {
-          path: '/modpacks',
-          name: RouterNames.ROOT_LIBRARY,
-          component: () => import(/* webpackChunkName: "library" */ './views/Library.vue'),
+          path: 'download-settings',
+          name: RouterNames.SETTINGS_DOWNLOAD,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/DownloadSettings.vue'),
         },
         {
-          path: '/browseModpacks/:search?',
-          name: RouterNames.ROOT_BROWSE_PACKS,
-          component: () => import(/* webpackChunkName: "search" */ './views/BrowseModpacks.vue'),
+          path: 'app-settings',
+          name: RouterNames.SETTINGS_APP,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppSettings.vue'),
         },
         {
-          path: '/blog',
-          name: RouterNames.ROOT_BLOG,
-          component: () => import(/* webpackChunkName: "blog" */ './views/Blog.vue'),
+          path: 'app-info/license',
+          name: RouterNames.SETTINGS_APP_LICENSE,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/License.vue'),
         },
         {
-          path: '/settings',
-          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Settings.vue'),
-          children: [
-            {
-              path: '',
-              name: RouterNames.SETTINGS_INSTANCE,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/InstanceSettings.vue'),
-            },
-            {
-              path: 'download-settings',
-              name: RouterNames.SETTINGS_DOWNLOAD,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/DownloadSettings.vue'),
-            },
-            {
-              path: 'app-settings',
-              name: RouterNames.SETTINGS_APP,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AppSettings.vue'),
-            },
-            {
-              path: 'app-info/license',
-              name: RouterNames.SETTINGS_APP_LICENSE,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/License.vue'),
-            },
-            {
-              path: 'proxy',
-              name: RouterNames.SETTINGS_PROXY,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/ProxySettings.vue'),
-            },
-            {
-              path: 'changelogs',
-              name: RouterNames.SETTINGS_CHANGELOGS,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Changelogs.vue'),
-            },
-            {
-              path: 'privacy',
-              name: RouterNames.SETTINGS_PRIVACY,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Privacy.vue'),
-            },
-            {
-              path: 'advanced',
-              name: RouterNames.SETTINGS_ADVANCED,
-              component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AdvancedSettings.vue'),
-            }
-          ],
+          path: 'proxy',
+          name: RouterNames.SETTINGS_PROXY,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/ProxySettings.vue'),
         },
         {
-          path: '/instance/:uuid',
-          name: RouterNames.ROOT_LOCAL_PACK,
-          component: () => import(/* webpackChunkName: "instancepage" */ './views/InstancePage.vue'),
+          path: 'changelogs',
+          name: RouterNames.SETTINGS_CHANGELOGS,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Changelogs.vue'),
         },
         {
-          path: '/modpackpage',
-          name: RouterNames.ROOT_PREVIEW_PACK,
-          component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
+          path: 'privacy',
+          name: RouterNames.SETTINGS_PRIVACY,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Privacy.vue'),
         },
         {
-          path: '/running/:uuid',
-          name: RouterNames.ROOT_RUNNING_INSTANCE,
-          component: () => import(/* webpackChunkName: "launchingpage" */ './views/RunningInstance.vue'),
-        },
-        {
-          path: '/support',
-          name: RouterNames.SUPPORT,
-          component: () => import(/* webpackChunkName: "support" */ './views/Support.vue'),
-        },
+          path: 'advanced',
+          name: RouterNames.SETTINGS_ADVANCED,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AdvancedSettings.vue'),
+        }
       ],
     },
+    {
+      path: '/instance/:uuid',
+      name: RouterNames.ROOT_LOCAL_PACK,
+      component: () => import(/* webpackChunkName: "instancepage" */ './views/InstancePage.vue'),
+    },
+    {
+      path: '/modpackpage',
+      name: RouterNames.ROOT_PREVIEW_PACK,
+      component: () => import(/* webpackChunkName: "modpackpage" */ './views/ModpackPage.vue'),
+    },
+    {
+      path: '/running/:uuid',
+      name: RouterNames.ROOT_RUNNING_INSTANCE,
+      component: () => import(/* webpackChunkName: "launchingpage" */ './views/RunningInstance.vue'),
+    },
+    {
+      path: '/support',
+      name: RouterNames.SUPPORT,
+      component: () => import(/* webpackChunkName: "support" */ './views/Support.vue'),
+    },
+    // TODO: Add a 404 page
     // Fallback route for 404
     // {
     //   path: '*',

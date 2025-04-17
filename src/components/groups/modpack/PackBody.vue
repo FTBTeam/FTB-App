@@ -19,7 +19,15 @@ import { ModPack } from '@/core/types/appTypes.ts';
 import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
-import { faBolt, faCircleNotch, faCodeBranch, faCogs, faInfo } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBolt,
+  faCircleNotch,
+  faCodeBranch,
+  faCogs,
+  faDownload,
+  faInfo,
+  faPlay,
+} from '@fortawesome/free-solid-svg-icons';
 
 const {
   packInstance,
@@ -143,7 +151,7 @@ function cursePackBody() {
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
             <UiButton innerClass="py-3 px-8 ftb-play-button" type="secondary" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
-              <FontAwesomeIcon :icon="isInstalled ? 'play' : 'download'" class="mr-4" />
+              <FontAwesomeIcon :icon="isInstalled ? faPlay : faDownload" class="mr-4" />
               {{ isInstalled ? 'Play' : 'Install' }}
             </UiButton>
 

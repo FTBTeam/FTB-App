@@ -15,7 +15,14 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faChevronDown, faFolder, faSearch, faSort } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowDownAZ,
+  faArrowDownZA,
+  faChevronDown,
+  faFolder,
+  faSearch,
+  faSort,
+} from '@fortawesome/free-solid-svg-icons';
 
 const groupOptions = [
   ['Category', 'category'],
@@ -34,7 +41,7 @@ function createOrderedOptions(options: string[][]): SelectionOptions {
     [`${label}`, value, 'Asc'],
     [`${label}`, `-${value}`, 'Des']
   ])
-    .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? "arrow-down-a-z" : "arrow-down-z-a"}}))
+    .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? faArrowDownAZ : faArrowDownZA}}))
 }
 
 const sortByOptions = createOrderedOptions(sortOptions)

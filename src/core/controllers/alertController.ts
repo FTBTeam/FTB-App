@@ -1,5 +1,5 @@
-import {emitter} from '@/utils';
 import {createLogger} from '@/core/logger';
+import { useAppStore } from '@/store/appStore.ts';
 
 export type Alert = {
   type: "success" | "error" | "warning" | "info";
@@ -28,7 +28,9 @@ class AlertController {
   }
   
   createAlert(message: string, type: "success" | "error" | "warning" | "info") {
-    (emitter).emit("alert.simple", {message, type} as Alert)
+    const appStore = useAppStore();
+    
+    appStore.emitter.emit("alert/simple", {message, type} as Alert)
   }
 }
 

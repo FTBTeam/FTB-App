@@ -9,7 +9,7 @@ import { useRouter } from 'vue-router';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModalFooter, ModalBody, Modal, UiButton } from '@/components/ui';
 import { services } from '@/bootstrap.ts';
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 import { faFileZipper, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 const router = useRouter()
@@ -24,6 +24,8 @@ const emit = defineEmits<{
 
 const activeFile = ref<any>(null);
 const category = ref("Default");
+
+const inputRef = useTemplateRef('fileInputRef');
 
 async function fileAttach(event: any) {
   const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
@@ -72,7 +74,7 @@ async function  installZip() {
       <div
         class="drop-area"
         :class="{'has-file': activeFile}"
-        @click="$refs.fileInputRef.click()"
+        @click="inputRef?.click()"
         @dragenter.prevent
         @dragleave.prevent
         @dragover.prevent

@@ -9,6 +9,7 @@ import { Loader, UiButton, Selection2, FTBInput } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { computed, onMounted, ref } from 'vue';
 import { faUndo } from '@fortawesome/free-solid-svg-icons';
+import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 
 const appSettingsStore = useAppSettings();
 
@@ -136,14 +137,16 @@ const channelOptions = computed(() => ReleaseChannelOptions());
               <b>Width</b>
               <small class="text-muted block mt-2">The Minecraft windows screen width</small>
             </div>
-            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />
+            <UiNumberInput v-model="localSettings.instanceDefaults.width" />
+<!--            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />-->
           </div>
           <div class="flex items-center">
             <div class="block flex-1 mr-2">
               <b>Height</b>
               <small class="text-muted block mt-2">The Minecraft windows screen height</small>
             </div>
-            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />
+            <UiNumberInput v-model="localSettings.instanceDefaults.height" />
+<!--            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />-->
           </div>
         </template>
       </div>

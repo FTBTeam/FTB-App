@@ -21,6 +21,7 @@ import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack } from '@/core/types/appTypes.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { faArrowLeft, faArrowRight, faBoxes, faInfo, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 
 const appSettingsStore = useAppSettings();
 const modpackStore = useModpackStore();
@@ -265,14 +266,14 @@ const screenResolutions = computed( () => {
                 <b>Width</b>
                 <small class="text-muted block mt-2">The Minecraft windows screen width</small>
               </div>
-              <FTBInput class="mb-0" v-model="userWidth" />
+              <UiNumberInput class="mb-0" v-model="userWidth" />
             </div>
             <div class="flex items-center">
               <div class="block flex-1 mr-2">
                 <b>Height</b>
                 <small class="text-muted block mt-2">The Minecraft windows screen height</small>
               </div>
-              <FTBInput class="mb-0" v-model="userHeight" />
+              <UiNumberInput v-model="userHeight" class="mb-0" />
             </div>
           </div>
         </div>

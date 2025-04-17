@@ -2,7 +2,6 @@
 import {Mod} from '@/types';
 import appPlatform from '@platform';
 import UiButton from '@/components/ui/UiButton.vue';
-import {InstanceJson} from '@/core/types/javaApi';
 import UiBadge from '@/components/ui/UiBadge.vue';
 import {prettyNumber} from '@/utils/helpers/stringHelpers.ts';
 import { computed } from 'vue';
@@ -11,13 +10,13 @@ import { faCheck, faDownload, faUsers } from '@fortawesome/free-solid-svg-icons'
 
 const {
   mod,
-  instance,
-  target,
+  // instance,
+  // target,
   installedMods,
 } = defineProps<{
   mod: Mod;
-  instance: InstanceJson;
-  target: string;
+  // instance: InstanceJson;
+  // target: string;
   installedMods: [number, number][];
 }>()
 
@@ -55,14 +54,14 @@ const {
 
 const projectInstalled = computed(() => installedMods.findIndex((e) => e[0] === mod.id) !== -1);
 const art = computed(() => mod.art[0]?.url ?? 'broken');
-const latest = computed(() => mod.versions[mod.versions.length - 1] ? mod.versions[mod.versions.length - 1].name : 'Unknown');
+// const latest = computed(() => mod.versions[mod.versions.length - 1] ? mod.versions[mod.versions.length - 1].name : 'Unknown');
 const curseLink = computed(() => mod.links.find((e) => e.type === 'curseforge'));
-const versions = computed(() => mod.versions
-  .filter(
-    (e) =>
-      e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === target) !== -1,
-  )
-  .sort((a, b) => b.id - a.id) ?? []);
+// const versions = computed(() => mod.versions
+//   .filter(
+//     (e) =>
+//       e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === target) !== -1,
+//   )
+//   .sort((a, b) => b.id - a.id) ?? []);
 </script>
 
 <template>

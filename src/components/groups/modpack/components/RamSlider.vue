@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import {megabyteSize, prettyByteFormat} from '@/utils';
 import { computed, onMounted, ref } from 'vue';
-import { FTBInput, UiToggle } from '@/components/ui';
+import { UiToggle } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
+import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 
 const appSettingsStore = useAppSettings();
 
@@ -24,32 +25,13 @@ const hidden = ref(true)
 
 onMounted(() => {
   const maxRam = Math.min(1024 * 10, (appSettingsStore.systemHardware?.totalMemory ?? 0));
-  if (value?.value > maxRam) {
+  if ((value?.value ?? 0) > maxRam) {
     allowDangerous.value = true;
   }
 })
 
-function updateValue(newValue: number) {
-  if (isNaN(newValue)) {
-    value.value = min;
-    return;
-  }
-  
-  if (newValue < min) {
-    value.value = min;
-    return;
-  }
-  
-  if (newValue > (appSettingsStore.systemHardware?.totalMemory ?? 0)) {
-    value.value = appSettingsStore.systemHardware?.totalMemory;
-    return;
-  }
-  
-  value.value = newValue;
-}
-
 function resetMax() {
-  if (value?.value > maxRam.value) {
+  if ((value?.value ?? 0) > maxRam.value) {
     value.value = maxRam.value;
   }
 }
@@ -84,13 +66,11 @@ const valueAsPercentage = computed(() => {
          type="range"
          class="w-full"
          :value="value"
-         @input="v => value = v.target.value"
-         @change="v => value = v.target.value"
          @focus="hidden = false"
          @blur="hidden = true"
          @mouseup="() => {
            hidden = true;
-           value = parseInt(value.toString()) 
+           // value.value = parseInt(value.toString()) 
          }"
          @mousedown="hidden = false"
          :min="min"
@@ -106,11 +86,11 @@ const valueAsPercentage = computed(() => {
      </div>
      
      <div class="value-input gap-2 flex items-center">
-       <FTBInput @blur="emit('change', parseInt(value.toString()))" type="number" style="width: 120px" :value="(value ?? 0).toString()" @input="v => updateValue(parseInt(v))" @change="emit('change', parseInt((value ?? 0).toString()));" />
+       <UiNumberInput @blur="emit('change', parseInt((value ?? 0).toString()))" style="width: 120px" v-model="value" :min="0" :max="appSettingsStore.systemHardware?.totalMemory ?? 0" />
      </div>
    </div>
    
-   <UiToggle v-if="maxRam <= appSettingsStore.systemHardware?.totalMemory" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
+   <UiToggle v-if="maxRam <= (appSettingsStore.systemHardware?.totalMemory ?? 0)" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
  </div>
 </template>
 

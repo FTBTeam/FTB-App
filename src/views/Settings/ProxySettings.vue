@@ -4,6 +4,7 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { onMounted, ref, watch } from 'vue';
 import { FTBInput, UiMessage, UiButton } from '@/components/ui';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 
 const appSettingsStore = useAppSettings();
 
@@ -98,14 +99,21 @@ function save(remove = false) {
         v-model="proxyHost"
       />
 
-      <FTBInput
-        :disabled='proxyType === "none"'
+      <UiNumberInput
+        :disabled="proxyType === 'none'"
         label="Proxy Port*"
         placeholder="9040"
-        type="number"
         :value="proxyPort"
-        v-model="proxyPort"
       />
+      
+<!--      <FTBInput-->
+<!--        :disabled='proxyType === "none"'-->
+<!--        label="Proxy Port*"-->
+<!--        placeholder="9040"-->
+<!--        type="number"-->
+<!--        :value="proxyPort"-->
+<!--        v-model="proxyPort"-->
+<!--      />-->
     </div>
 
     <FTBInput

@@ -47,7 +47,7 @@ function openPromo(): void {
   appPlatform.utils.openUrl('https://bisecthosting.com/ftb?r=app-icon');
 }
 
-function navItemRightClick(event: PointerEvent, item: typeof navigation[0]): void {
+function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void {
   if (item.to === RouterNames.SETTINGS_APP) {
     AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {});
   }

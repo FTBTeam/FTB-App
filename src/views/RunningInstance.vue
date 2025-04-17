@@ -2,7 +2,6 @@
 import { FTBButton, ProgressBar, Modal } from '@/components/ui';
 import Router, {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
-import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -13,7 +12,6 @@ import platform from '@platform';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { InstanceMessageData, InstanceRunningData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useRouter } from 'vue-router';
-import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
@@ -21,9 +19,10 @@ import {
   faCircleNotch,
   faEllipsisVertical,
   faEye,
-  faFolderOpen,
-  faSkullCrossbones,
+  faFolderOpen, faMoon,
+  faSkullCrossbones, faSun,
 } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 
 type InstanceActionCategory = {
   title: string;
@@ -32,7 +31,7 @@ type InstanceActionCategory = {
 
 type InstanceAction = {
   title: string;
-  icon: string;
+  icon: IconDefinition;
   action: (instance: SugaredInstanceJson, router: typeof Router) => void;
   condition?: (context: ConditionContext) => boolean;
   color?: string;
@@ -55,7 +54,7 @@ function folderExists(path: string, folders: string[]) {
 function openFolderAction(name: string, path: string): InstanceAction {
   return {
     title: `${name}`,
-    icon: "folder-open",
+    icon: faFolderOpen,
     condition: ({instanceFolders}) => folderExists(path, instanceFolders),
     action: (instance) => {
       gobbleError(async () => {
@@ -71,7 +70,7 @@ const instanceActions: InstanceActionCategory[] = [
     actions: [
       {
         title: "Instance folder",
-        icon: "folder-open",
+        icon: faFolderOpen,
         action: (instance) => {
           gobbleError(() => {
             platform.io.openFinder(`${instance.path}`)
@@ -95,7 +94,7 @@ const instanceActions: InstanceActionCategory[] = [
     actions: [
       {
         title: "Kill instance",
-        icon: "skull-crossbones",
+        icon: faSkullCrossbones,
         color: "danger",
         action: (instance) => {
           gobbleError(() => {
@@ -120,7 +119,6 @@ export interface Bar {
 const logger = createLogger("LaunchingPage.vue");
 
 const router = useRouter();
-const modpackStore = useModpackStore();
 const instanceStore = useInstanceStore();
 const runningInstanceStore = useRunningInstancesStore();
 
@@ -164,13 +162,6 @@ onMounted(async () => {
   if (localStorage.getItem("enabledLogTypes")) {
     enabledLogTypes.value = localStorage.getItem("enabledLogTypes")!.split(",");
   }
-
-  logger.debug("Mounted Launch page, waiting for websockets...");
-  // TODO: fix me
-  // await waitForWebsocketsAndData("Launch page", this.websockets.socket, () => {
-  //   // This should get resolved quickly but it's possible it wont
-  //   return this.instance != null;
-  // })
 
   logger.debug("Websockets ready, loading instance")
 
@@ -337,14 +328,6 @@ const launchStatus = computed(() => {
   return 'Running %s';
 });
 
-const artLogo = computed(async () => {
-  if (!instance.value) {
-    return null;
-  }
-
-  return resolveArtwork(instance.value, "square", await modpackStore.getModpack(instance.value.id) ?? null)
-})
-
 const logMessages = computed(() => {
   if (enabledLogTypes.value.length === 0) {
     return [{
@@ -387,7 +370,7 @@ function toggleEnabledLog(type: string) {
 <template>
   <div class="pack-loading" :class="{ 'dark-mode': darkMode }">
     <header class="flex">
-      <img v-if="artLogo" :src="artLogo" class="art rounded-2xl shadow mr-8" width="135" alt="" />
+      <img v-if="instance" :src="instance.art" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">
@@ -484,7 +467,7 @@ function toggleEnabledLog(type: string) {
           data-balloon-pos="down"
           @click="darkMode = !darkMode"
         >
-          <FontAwesomeIcon :icon="['fas', darkMode ? 'sun' : 'moon']" />
+          <FontAwesomeIcon :icon="['fas', darkMode ? faSun : faMoon]" />
         </div>
         <FTBButton
           @click="showInstance"

@@ -1,16 +1,3 @@
-export interface ModalBox {
-  id: string;
-  title: string;
-  message: string;
-  buttons: Button[];
-}
-
-export interface Button {
-  name: string;
-  message: string;
-  colour: string;
-}
-
 /**
  * This is basically the same as the Vuex type for modpacks but I don't trust that code so here we go again :D
  */

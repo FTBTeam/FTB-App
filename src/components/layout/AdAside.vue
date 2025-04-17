@@ -36,9 +36,9 @@ onMounted(() => {
   }
 
   setTimeout(() => {
-    loadAds("ad-1", (value) => showAdOnePlaceholder.value = value, adOneRef.value?.adRef, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
+    loadAds("ad-1", (value) => showAdOnePlaceholder.value = value, adOneRef.value, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }]});
     if (!(window as any)?.ftbFlags?.smallMonitor) {
-      loadAds("ad-2", (value) => showAdTwoPlaceholder.value = value, adTwoRef.value?.adRefSecond, {
+      loadAds("ad-2", (value) => showAdTwoPlaceholder.value = value, adTwoRef.value, {
         size: {
           width: 300,
           height: 250

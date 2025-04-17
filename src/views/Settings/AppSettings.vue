@@ -8,14 +8,16 @@ import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} fr
 import { ProgressBar, Loader, Modal, UiToggle, UiButton, FTBInput } from '@/components/ui';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
-import {emitter} from '@/utils';
 import {createLogger} from '@/core/logger';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, ref } from 'vue';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { faCheck, faCopy, faFileZipper, faFolderOpen, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
 const appSettingsStore = useAppSettings();
+const appStore = useAppStore();
 
 const logger = createLogger("AppSettings.vue");
 const localSettings = ref<SettingsData>({} as SettingsData);
@@ -38,13 +40,6 @@ function exitOverwolf(value: boolean): void {
   localSettings.value.general.exitOverwolf = value;
   appSettingsStore.saveSettings(localSettings.value);
   appPlatform.actions.changeExitOverwolfSetting(value);
-}
-
-function toggleSystemStyleWindow(value: boolean): void {
-  localSettings.value.appearance.useSystemWindowStyle = value;
-  appSettingsStore.saveSettings(localSettings.value);
-
-  appPlatform.frame.setSystemWindowStyle(value);
 }
 
 function openFolder(location: string) {
@@ -140,17 +135,17 @@ async function moveInstances() {
           // It's broken
           instanceMoveModalShow.value = false;
           alertController.error(typedData.error);
-          emitter.off("ws/message", onMoveProgress);
+          appStore.emitter.off("ws/message", onMoveProgress);
           res(false);
         } else {
           instanceMoveModalComplete.value = true;
-          emitter.off("ws/message", onMoveProgress);
+          appStore.emitter.off("ws/message", onMoveProgress);
           res(true);
         }
       }
     }
 
-    emitter.on("ws/message", onMoveProgress);
+    appStore.emitter.on("ws/message", onMoveProgress);
   })
 
   if (migrationResult) {
@@ -177,7 +172,7 @@ async function moveInstances() {
               />
             </div>
             <a class="cursor-pointer hover:underline" href="https://go.ftb.team/app-feedback" target="_blank"
-            ><FontAwesomeIcon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
+            ><FontAwesomeIcon class="ml-2 cursor-pointer" :icon="faGithub" size="1x"
             /></a>
           </div>
         </div>
@@ -206,19 +201,7 @@ async function moveInstances() {
       @input="exitOverwolf"
       class="mb-8"
     />
-
-    <p class="block text-white-700 text-lg font-bold mb-4" v-if="appPlatform.isElectron">Appearance</p>
-
-    <ui-toggle
-      v-if="appPlatform.isElectron"
-      label="Use systems window style"
-      desc="Instead of using the apps internal Titlebar, we'll use the system's titlebar instead. This setting will restart the app!"
-      v-model="localSettings.appearance.useSystemWindowStyle"
-      @input="toggleSystemStyleWindow"
-      class="mb-8"
-    />
-
-
+    
     <p class="block text-white-700 text-lg font-bold mb-4">Actions</p>
 
     <p class="block text-white-700 font-bold mb-4">Common Folders</p>

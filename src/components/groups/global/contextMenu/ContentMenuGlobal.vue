@@ -1,15 +1,17 @@
 <script lang="ts" setup>
-import {emitter} from '@/utils';
 import {ContextMenu, MenuItem} from '@/core/context/menus/contextMenu';
 import ContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
 import { useAttachDomEvent } from '@/composables';
 import { nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { useAppStore } from '@/store/appStore.ts';
 
 type ContextMenuEventContext = {
   context: () => any,
   menu: ContextMenu<any>,
   pointer: PointerEvent
 }
+
+const appStore = useAppStore();
 
 const menu = ref<ContextMenu<any> | null>(null);
 const menuX = ref(0);
@@ -25,11 +27,11 @@ const elmRef = useTemplateRef("elmRef");
 useAttachDomEvent<MouseEvent>('click', handleOutOfClick)
 
 onMounted(() => {
-  emitter.on("context-menu-open", handleMenuOpen as any)
+  appStore.emitter.on("action/context-menu-open", handleMenuOpen as any)
 })
 
 onUnmounted(() => {
-  emitter.off('context-menu-open', handleMenuOpen as any)
+  appStore.emitter.off('action/context-menu-open', handleMenuOpen as any)
 })
 
 function handleOutOfClick(event: MouseEvent) {
@@ -116,7 +118,7 @@ function calculateWidth() {
         top: menuY + 'px',
         left: menuX + 'px'
       }">
-        <ContextMenuItem v-if="menu" :context="context" :open-to-left="openToLeft" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
+        <ContextMenuItem v-if="menu && context" :context="context" :open-to-left="openToLeft" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
       </div>
     </transition>
   </div>

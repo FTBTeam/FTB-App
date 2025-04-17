@@ -12,7 +12,7 @@ export type SelectionOption = {
   badge?: {
     color?: string;
     text: string;
-    icon?: string | string[];
+    icon?: IconDefinition
   };
   meta?: any;
 };

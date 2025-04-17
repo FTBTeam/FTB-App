@@ -2,38 +2,32 @@
 import Changelog from '@/components/groups/changelogs/Changelog.vue';
 import Dialogs from '@/components/groups/global/Dialogs.vue';
 import Alerts from '@/components/groups/global/Alerts.vue';
-import {SocketState} from '@/modules/websocket/types';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/ui/UiButton.vue';
-import type {ModalButton, OpenModalData} from '@/core/types/javaApi.d.ts';
 import DevToolsActions from '@/components/layout/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMenuGlobal.vue';
 import LoginModal from '@/components/groups/auth/LoginModal.vue';
 import LaunchInstanceDialog from '@/components/modals/LaunchInstanceDialog.vue';
-import { computed } from 'vue';
 import { Modal, ModalBody, ModalFooter } from '@/components/ui';
 import { useAccountsStore } from '@/store/accountsStore.ts';
+import { useModalStore } from '@/store/modalStore.ts';
+import { ModalButton } from '@/core/types/javaApi';
 
-// TODO: [port] fixme
-// @Action('hideModal') hideModal: any;
-// @State('websocket') websocket?: SocketState;
-
+const modalStore = useModalStore();
 const accountStore = useAccountsStore();
 
-function hideModal() {}
-
-const websocket: SocketState = null;
-
-const activeModal = computed(() => {
-  return websocket?.modal as OpenModalData | null | undefined;
-})
-
 function modalFeedback(button: ModalButton) {
-  gobbleError(() => sendMessage("modalCallback", {
-    // id: modal?.id ?? "",
-    message: button.message
-  }))
+  gobbleError(async () => {
+    if (!modalStore.modal) {
+      return;
+    }
+
+    await sendMessage("modalCallback", {
+      id: modalStore.modal.id,
+      message: button.message
+    })
+  })
 }
 </script>
 
@@ -42,19 +36,19 @@ function modalFeedback(button: ModalButton) {
     <content-menu-global />
     
     <Modal 
-      v-if="activeModal" 
-      :open="!!activeModal"
-      @closed="hideModal" 
+      v-if="modalStore.modal" 
+      :open="!!modalStore.modal"
+      @closed="() => modalStore.closeModal()" 
       :external-contents="true"
-      :title="activeModal.title"
+      :title="modalStore.modal.title"
       style="z-index: 50000"
     >
       <ModalBody>
-        <div class="break-all overflow-auto" v-html="activeModal.message" />
+        <div class="break-all overflow-auto" v-html="modalStore.modal.message" />
       </ModalBody>
       <ModalFooter>
         <div class="flex justify-end gap-4">
-          <UiButton v-for="(button, index) in activeModal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type as any">
+          <UiButton v-for="(button, index) in modalStore.modal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type as any">
             {{ button.name }}            
           </UiButton>
         </div>

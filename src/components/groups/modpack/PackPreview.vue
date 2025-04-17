@@ -2,7 +2,6 @@
 import {SearchResultPack} from '@/core/types/modpacks/packSearch';
 import {resolveArtwork} from '@/utils/helpers/packHelpers';
 import {stringOrDefault} from '@/utils/helpers/stringHelpers';
-import {RouterNames} from '@/router';
 import ModpackInstallModal from '@/components/modals/ModpackInstallModal.vue';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -12,6 +11,7 @@ import { useInstallStore } from '@/store/installStore.ts';
 import { useRouter } from 'vue-router';
 import { PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { RouterNames } from '@/router';
 
 const {
   packId,
@@ -85,7 +85,7 @@ const isInstalling = computed(() => {
 <template>
   <div class="pack-preview-container">
     <div class="pack-preview" v-if="packData" @click="router.push({
-      name: RouteNames.ROOT_PREVIEW_PACK,
+      name: RouterNames.ROOT_PREVIEW_PACK,
       query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
     })">
       <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />

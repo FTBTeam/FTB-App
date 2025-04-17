@@ -14,11 +14,9 @@ const {
   alpha?: boolean;
 }>();
 
-const value = defineModel<string>()
-
-const emit = defineEmits<{
-  (e: 'input', value: string): void;
-}>();
+const value = defineModel<string>({
+  default: ''
+})
 </script>
 
 <template>
@@ -30,9 +28,6 @@ const emit = defineEmits<{
       class="block w-full p-3 rounded-tl rounded-bl appearance-none leading-normal text-gray-300"
       :value="value"
       :placeholder="placeholder"
-      @focusout="emit('input', value)"
-      @keydown.enter="emit('input', value)"
-      @input="emit('input', value)"
     />
     <div class="search-button p-3 cursor-pointer rounded-tr rounded-br">
       <FontAwesomeIcon :icon="faSearch" />

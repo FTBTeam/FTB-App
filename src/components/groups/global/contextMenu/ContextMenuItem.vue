@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {MenuItemOrSeparator, MenuOptions} from '@/core/context/menus';
+import { MenuItem, MenuOptions } from '@/core/context/menus';
 import NestedContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ref } from 'vue';
@@ -20,10 +20,10 @@ const {
 const working = ref<Record<string, boolean>>({});
 
 const emit = defineEmits<{
-  (e: 'clicked', option: MenuItemOrSeparator<any>): void;
+  (e: 'clicked', option: MenuItem<any>): void;
 }>()
 
-async function onItemClicked(option: MenuItemOrSeparator<any>) {
+async function onItemClicked(option: MenuItem<any>) {
   if ("separator" in option) {
     return;
   }

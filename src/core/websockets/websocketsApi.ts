@@ -1,7 +1,7 @@
 import {MessagePayload} from '@/core/websockets/websocketsEndpoints';
 import {BaseData} from '@/core/types/javaApi';
 import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
-import { services } from '@/bootstrap.ts';
+import { useWsStore } from '@/store/wsStore.ts';
 
 /**
  * Sends a message to the backend and returns the response.
@@ -16,15 +16,16 @@ export function sendMessage<T extends ApiEndpoints>(
   timeout = 30_000
 ): Promise<MessagePayload[T]["output"] & { messageId: string }> {
   return new Promise(async (resolve, reject) => {
+    const wsStore = useWsStore();
     const requestId = crypto.randomUUID();
     
     const timer = setTimeout(() => {
-      services().websocket.clearCallback(requestId);
+      wsStore.clearCallback(requestId);
       reject(`Failed to resolve response from [type: ${messageType}]`);
     }, timeout);
 
     // This should be the only type this dispatch is ever used
-    const messageId = services().websocket.send(requestId, {
+    const messageId = wsStore.sendMessage(requestId, {
       payload: {
         type: messageType,
         ...payload,
