@@ -20,7 +20,6 @@ export type DialogButton = {
   type?: "error" | "warning" | "info" | "success";
 }
 
-
 type DialogState = {
   dialogs: Dialog[]
 }
