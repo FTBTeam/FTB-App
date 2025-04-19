@@ -15,9 +15,6 @@ import router from './router';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
-// TODO: This might be able to be removed
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
-
 // TODO: Don't do this
 // new Promise(async () => {
 //   const config = await client.discovery(new URL("https://identity.feed-the-beast.com/realms/FTB"), "ftb-app");
@@ -26,6 +23,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 // }).catch(e => console.error(e))
 
 import {createLogger} from '@/core/logger';
+import { initStateProcessor } from '@/core/controllers/runningStateProcessor.ts';
 
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
@@ -41,5 +39,8 @@ createApp(App)
   .use(router)
   .use(pinia)
   .mount('#app')
+  .$nextTick(() => {
+    initStateProcessor();
+  }).catch(console.error)
 
 appPlatform.setupApp();

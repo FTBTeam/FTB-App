@@ -46,7 +46,7 @@
     "tailwindcss": "^4.0.14",
     "vue": "^3.4.21",
     "vue-router": "^4.5.0",
-    "vue-virtual-scroller": "^2.0.0-beta.8",
+    "vue-virtual-scroller": "2.0.0-beta.8",
     "wysiwyg.css": "^0.0.4"
   },
   "devDependencies": {

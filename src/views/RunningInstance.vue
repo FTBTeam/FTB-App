@@ -7,9 +7,8 @@ import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {safeNavigate} from '@/utils';
 import {createLogger} from '@/core/logger';
-import { RecycleScroller } from 'vue-virtual-scroller'
 import platform from '@platform';
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { InstanceMessageData, InstanceRunningData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useRouter } from 'vue-router';
 import { useInstanceStore } from '@/store/instancesStore.ts';
@@ -23,6 +22,9 @@ import {
   faSkullCrossbones, faSun,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+// @ts-ignore (Literally no types :tada:)
+import { RecycleScroller } from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 type InstanceActionCategory = {
   title: string;
@@ -149,6 +151,7 @@ const showOptions = ref(false);
 const scrollIntervalRef = ref<any>(null);
 
 const instance = computed(() => instanceStore.instances.find(e => e.uuid === router.currentRoute.value.params.uuid) ?? null);
+const runningInstance = computed(() => runningInstanceStore.instances.find(e => e.uuid === router.currentRoute.value.params.uuid) ?? null);
 
 onMounted(async () => {
   loading.value = false;
@@ -173,9 +176,8 @@ onMounted(async () => {
   }
 
   // Sync from any previous data
-  const runningData = runningInstanceStore.instances.find(e => e.uuid === instance.value?.uuid)
-  if (runningData) {
-    syncDataFromRunningData(runningData)
+  if (runningInstance.value) {
+    syncDataFromRunningData()
   }
 
   sendMessage("getInstanceFolders", {
@@ -192,31 +194,20 @@ onUnmounted(() => {
   clearInterval(scrollIntervalRef.value)
 })
 
-watch(() => router.currentRoute.value.params.uuid, async (newValue) => {
-  logger.log("Route changed", newValue)
-  messages.value = [];
-  nextTick(() => {
-    const runningData = runningInstanceStore.instances.find(e => e.uuid === instance.value?.uuid)
-    if (runningData) {
-      logger.log("Sycning data")
-      syncDataFromRunningData(runningData)
-    } else {
-      logger.log("Instance not found, redirecting to library")
-    }
-  })
-})
-
-watch(() => runningInstanceStore.instances, async (newData) => {
-  const runningData = newData.find((e) => e.uuid === instance.value?.uuid);
-  if (!runningData) {
-    await safeNavigate(RouterNames.ROOT_LIBRARY);
+watch(() => runningInstance, (value) => {
+  if (!value) {
     return;
   }
+  
+  syncDataFromRunningData()
+})
 
-  syncDataFromRunningData(runningData);
-}, { deep: true });
-
-function syncDataFromRunningData(data: InstanceRunningData) {
+function syncDataFromRunningData() {
+  if (!runningInstance.value) {
+    return;
+  }
+  
+  const data = runningInstance.value;
   hasCrashed.value = data.status.crashed;
   finishedLoading.value = data.status.finishedLoading;
   launchProgress.value = data.startup.bars;
@@ -339,10 +330,10 @@ const logMessages = computed(() => {
 
   // Don't filter. 
   if (enabledLogTypes.value.length === logTypes.value.length) {
-    return messages.value;
+    return [...messages.value];
   }
 
-  return messages.value.filter((e) => includeLog(e.t));
+  return [...messages.value].filter((e) => includeLog(e.t));
 });
 
 function includeLog(type: string) {
@@ -467,7 +458,7 @@ function toggleEnabledLog(type: string) {
           data-balloon-pos="down"
           @click="darkMode = !darkMode"
         >
-          <FontAwesomeIcon :icon="['fas', darkMode ? faSun : faMoon]" />
+          <FontAwesomeIcon :icon="darkMode ? faSun : faMoon" />
         </div>
         <FTBButton
           @click="showInstance"

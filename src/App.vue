@@ -133,8 +133,8 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
     <title-bar />
     <div class="app-container">
       <main class="main">
-        <div v-if="!wsStore.ready">
-          Loading...
+        <div v-if="!wsStore.ready" class="flex items-center justify-center w-full">
+          <Loader sub-title="Connecting to backend"  />
         </div>
         
         <template v-else>

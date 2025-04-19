@@ -124,6 +124,11 @@ const router = createRouter({
           path: 'globals',
           name: 'globals',
           component: () => import(/* webpackChunkName: "dev" */ './views/dev/DevGlobals.vue'),
+        },
+        {
+          path: 'scroller',
+          name: 'scroller',
+          component: () => import(/* webpackChunkName: "dev" */ './views/dev/DevScroller.vue'),
         }
       ]
     }
