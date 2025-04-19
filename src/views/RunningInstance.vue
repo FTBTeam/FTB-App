@@ -193,15 +193,15 @@ onUnmounted(() => {
 })
 
 watch(() => router.currentRoute.value.params.uuid, async (newValue) => {
-  console.log("Route changed", newValue)
+  logger.log("Route changed", newValue)
   messages.value = [];
   nextTick(() => {
     const runningData = runningInstanceStore.instances.find(e => e.uuid === instance.value?.uuid)
     if (runningData) {
-      console.log("Sycning data")
+      logger.log("Sycning data")
       syncDataFromRunningData(runningData)
     } else {
-      console.log("Instance not found, redirecting to library")
+      logger.log("Instance not found, redirecting to library")
     }
   })
 })

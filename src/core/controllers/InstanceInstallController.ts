@@ -15,7 +15,8 @@ import {createLogger} from '@/core/logger';
 import { useInstallStore } from '@/store/installStore.ts';
 import { PackProviders, Versions } from '@/core/types/appTypes.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
-import { useAppStore } from '@/store/appStore.ts';
+import { EmitEvents } from '@/store/appStore.ts';
+import { Emitter } from 'mitt';
 
 export type InstallRequest = {
   uuid: string;
@@ -78,10 +79,9 @@ export class InstanceInstallController {
   private installLock = false;
 
   constructor(
+    private readonly emitter: Emitter<EmitEvents>
   ) {
-    const appStore = useAppStore();
-
-    appStore.emitter.on('ws/message', async (data: any) => {
+    this.emitter.on('ws/message', async (data: any) => {
       if (data.type === 'instanceOverrideModLoaderReply') {
         const typedData = data as InstanceOverrideModLoaderDataReply;
         this.handleOverrideState(typedData);
@@ -315,10 +315,8 @@ export class InstanceInstallController {
       let lastKnownSpeed: number = 0;
 
       const instanceInstaller = (data: InstallInstanceDataReply | OperationProgressUpdateData) => {
-        const appStore = useAppStore();
-        
         const finish = (result: InstallResult) => {
-          appStore.emitter.off('ws/message', instanceInstaller as any);
+          this.emitter.off('ws/message', instanceInstaller as any);
           this.updateInstallStatus(null);
           resolve(result);
         };
@@ -382,13 +380,11 @@ export class InstanceInstallController {
           });
         }
       };
-
-      const appStore = useAppStore();
-      appStore.emitter.on('ws/message', instanceInstaller as any);
+      
+      this.emitter.on('ws/message', instanceInstaller as any);
     });
 
     this.logger.debug('Install result', installRequest);
-    console.log(installRequest)
     if (installRequest.success && installRequest.instance) {
       // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
       instanceStore.updateInstance(installRequest.instance)

@@ -19,6 +19,7 @@ export enum RouterNames {
   SETTINGS_CHANGELOGS = 'changelogs',
   SETTINGS_PRIVACY = 'privacy',
   SUPPORT = 'support-index',
+  DEV_HOME = 'dev-home',
 }
 
 const router = createRouter({
@@ -110,6 +111,22 @@ const router = createRouter({
       name: RouterNames.SUPPORT,
       component: () => import(/* webpackChunkName: "support" */ './views/Support.vue'),
     },
+    {
+      path: '/dev',
+      component: () => import(/* webpackChunkName: "dev" */ './views/dev/DevRoot.vue'),
+      children: [
+        {
+          path: '',
+          name: RouterNames.DEV_HOME,
+          component: () => import(/* webpackChunkName: "dev" */ './views/dev/DevHome.vue'),
+        },
+        {
+          path: 'globals',
+          name: 'globals',
+          component: () => import(/* webpackChunkName: "dev" */ './views/dev/DevGlobals.vue'),
+        }
+      ]
+    }
     // TODO: Add a 404 page
     // Fallback route for 404
     // {

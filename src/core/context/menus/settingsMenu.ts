@@ -5,6 +5,9 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import appPlatform from "@platform"
 import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { createLogger } from '@/core/logger.ts';
+
+const logger = createLogger("settingsMenu.ts")
 
 export class SettingMenu extends ContextMenu<{ }> {
   name(): String {
@@ -40,7 +43,7 @@ export class SettingMenu extends ContextMenu<{ }> {
             await appPlatform.io.openFinder(result.path);
             alertController.success("Logs exported successfully, you can find them at " + result.path);
           } else {
-            console.log(result);
+            logger.log(result);
             alertController.error("Failed to export logs, please let us know in our Discord / Github");
           }
         }

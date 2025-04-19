@@ -8,6 +8,7 @@ import AdmZip from 'adm-zip';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import { JavaVerifier } from './javaVerifier.ts';
+import log from 'electron-log/main';
 
 let checkUpdaterLock = false;
 
@@ -27,12 +28,12 @@ ipcMain.handle("os/arch", async () => {
 });
 
 ipcMain.on('action/quit-app', () => {
-  console.debug("Quitting app")
+  log.debug("Quitting app")
   process.exit(1);
 });
 
 ipcMain.on('action/open-link', (_, data) => {
-  shell.openExternal(data).catch(console.error)
+  shell.openExternal(data).catch(log.error)
 });
 
 ipcMain.on("action/reload-main-window", async () => {
@@ -66,7 +67,7 @@ ipcMain.on('action/control-window', (event, data) => {
     switch (data.action) {
       case 'close':
         window.close();
-        if (process.env.NODE_ENV !== 'production') {
+        if (!import.meta.env.PROD) {
           window.webContents.closeDevTools();
         }
 
@@ -91,7 +92,7 @@ ipcMain.handle('action/select-file', async (event) => {
     return null;
   }
 
-  console.debug("Selecting file using the frontend")
+  log.debug("Selecting file using the frontend")
   const result = await dialog.showOpenDialog(window, {
     properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
     filters: [
@@ -112,7 +113,7 @@ ipcMain.handle('action/open-finder', async (_, data) => {
     await shell.openPath(data);
     return true;
   } catch (e) {
-    console.error("Failed to open finder", e)
+    log.error("Failed to open finder", e)
     return false;
   }
 });
@@ -120,7 +121,7 @@ ipcMain.handle('action/open-finder', async (_, data) => {
 ipcMain.handle('action/select-folder', async (event, data) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (!window) {
-    console.debug("Win is null, unable to select folder")
+    log.debug("Win is null, unable to select folder")
     return null;
   }
 
@@ -132,7 +133,7 @@ ipcMain.handle('action/select-folder', async (event, data) => {
   if (result.filePaths.length > 0) {
     return result.filePaths[0];
   } else {
-    console.debug("No file paths returned from dialog, this could be an error or just a cancel")
+    log.debug("No file paths returned from dialog, this could be an error or just a cancel")
     return null;
   }
 });
@@ -166,7 +167,7 @@ ipcMain.handle("action/java/verify", async () => {
   try {
     return await verifier.verifyJava();
   } catch (e) {
-    console.error(e)
+    log.error(e)
     return false;
   }
 })
@@ -176,7 +177,7 @@ ipcMain.handle("action/app/update", async () => {
 })
 
 ipcMain.handle("action/app/change-channel", async (_, data) => {
-  console.debug("Changing app channel", data)
+  log.debug("Changing app channel", data)
 
   autoUpdater.channel = data;
   updateChannel(data);
@@ -185,13 +186,13 @@ ipcMain.handle("action/app/change-channel", async (_, data) => {
   if (updateResult?.downloadPromise) {
     const version = await updateResult.downloadPromise;
     // Ask the user if they want to update
-    console.debug("Update downloaded", version)
+    log.debug("Update downloaded", version)
 
     const latestVersion = autoUpdater.currentVersion.version;
     const currentVersion = app.getVersion();
 
-    console.debug("Latest version", latestVersion)
-    console.debug("Current version", currentVersion)
+    log.debug("Latest version", latestVersion)
+    log.debug("Current version", currentVersion)
 
     if (confirm(`A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`)) {
       updateApp("ChannelChange");
@@ -207,7 +208,7 @@ ipcMain.handle("action/extract-file", async (_, args) => {
     fs.mkdirSync(output, { recursive: true });
   }
 
-  console.log("Extracting file", input, output)
+  log.log("Extracting file", input, output)
 
   if (input.endsWith(".tar.gz")) {
     return extractTarball(input, output);
@@ -227,14 +228,14 @@ ipcMain.handle("action/test-java-version", async (_, args) => {
   try {
     execSync(`"${jreExecPath}" --version`, { stdio: 'ignore' });
   } catch (e) {
-    console.error("Failed to execute java version command", e)
+    log.error("Failed to execute java version command", e)
     return false;
   }
 });
 
 ipcMain.handle('updater:check-for-update', async () => {
   if (checkUpdaterLock) {
-    console.debug("Updater is already checking for updates, returning")
+    log.debug("Updater is already checking for updates, returning")
     return false;
   }
 
@@ -242,9 +243,9 @@ ipcMain.handle('updater:check-for-update', async () => {
   const result = await autoUpdater.checkForUpdates();
 
   if (result?.downloadPromise) {
-    console.debug("Waiting for download promise")
+    log.debug("Waiting for download promise")
     const version = await result.downloadPromise;
-    console.debug("Download promise resolved", version)
+    log.debug("Download promise resolved", version)
     checkUpdaterLock = false;
     return true;
   }
@@ -313,9 +314,9 @@ function extractTarball(tarballPath: string, outputPath: string) {
   // But let's redirect the contents to the output path
   // And capture the output so we can log it
   const command = `tar -xzf "${tarballPath}" -C "${outputPath}"`;
-  console.debug("Extracting tarball", command)
+  log.debug("Extracting tarball", command)
   const output = execSync(command).toString();
-  console.debug("Tarball extraction output", output)
+  log.debug("Tarball extraction output", output)
 
   return true;
 }
@@ -323,7 +324,6 @@ function extractTarball(tarballPath: string, outputPath: string) {
 function extractZip(zipPath: string, outputPath: string) {
   const zip = new AdmZip(zipPath);
   zip.extractAllTo(outputPath, true);
-
   return true;
 }
 
@@ -347,6 +347,6 @@ function updateChannel(channel: string) {
 
     fs.writeFileSync(channelFile, JSON.stringify(newData, null, 2));
   } catch (e) {
-    console.error("Failed to update channel", e)
+    log.error("Failed to update channel", e)
   }
 }

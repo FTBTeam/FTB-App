@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { ProgressInfo, BasicUpdateInfo } from '@/prelaunch/app';
+import log from 'electron-log/renderer'
 
 /**
  * Prelaunch flow
@@ -25,7 +26,7 @@ const javaCheckStatus = ref('Checking for Java');
 const totalFailure = ref(false);
 
 onMounted(() => {
-  console.log('Prelauncher mounted');
+  log.log('Prelauncher mounted');
 
   window.ipcRenderer.on("updater:checking-for-update", onCheckingForUpdate)
   window.ipcRenderer.on('updater:download-progress', onDownloadProgress);
@@ -43,7 +44,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  console.log('Prelauncher unmounted');
+  log.log('Prelauncher unmounted');
   window.ipcRenderer.off("updater:checking-for-update", onCheckingForUpdate)
   window.ipcRenderer.off('updater:download-progress', onDownloadProgress);
   window.ipcRenderer.off("updater:update-downloaded", onUpdateComplete);
@@ -71,14 +72,14 @@ async function checkForJava() {
     return;
   }
   
-  console.log('Total failure, java not installed');
+  log.log('Total failure, java not installed');
   
   // If we get here, java is not installed
   totalFailure.value = true;
 }
 
 function startApp() {
-  console.log('Starting app');
+  log.log('Starting app');
   window.ipcRenderer.send('action/launch-app');
 }
 
@@ -97,7 +98,7 @@ function onUpdateComplete(_: any) {
   updating.value = false;
   checkingForUpdates.value = false;
   updateProgress.value = 0;
-  console.log('Update complete');
+  log.log('Update complete');
   
   let secondsPassed = 0;
   const interval = setInterval(() => {
@@ -132,24 +133,24 @@ function progressToJavaCheck(_: any) {
   updating.value = false;
   checkingForUpdates.value = false;
   updateProgress.value = 0;
-  console.log('No updates available');
+  log.log('No updates available');
   
   // Check for java
   attemptCheckJava().catch(e => {
-    console.log(e);
+    log.log(e);
     totalFailure.value = true
   })
 }
 
 async function attemptCheckJava() {
-  console.info("Attempting to check for Java");
+  log.info("Attempting to check for Java");
   
   let attempts = 0;
   while (attempts++ < 10) {
     try {
       await checkForJava()
     } catch (e) {
-      console.error(e)
+      log.error(e)
 
       javaCheckStatus.value = `Java check failed, retrying... (${attempts}/10)`
       // Wait 2 seconds before trying again

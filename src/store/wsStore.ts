@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import { useAppStore } from '@/store/appStore.ts';
 import { useModalStore } from '@/store/modalStore.ts';
+import { createLogger } from '@/core/logger.ts';
+
+const logger = createLogger("wsStore.ts")
 
 type WsStore = {
   ready: boolean;
@@ -12,12 +15,12 @@ export const useWsStore = defineStore("ws", {
   state: (): WsStore => {
     const wsController = new WebSocketController(
       (ws: WebSocket) => {
-        console.log("Websocket connected", ws);
+        logger.log("Websocket connected", ws);
         const appStore = useWsStore();
         appStore.ready = true;
       },
       () => {
-        console.log("Websocket disconnected");
+        logger.log("Websocket disconnected");
 
         const appStore = useWsStore();
         appStore.ready = false;
@@ -63,7 +66,8 @@ class WebSocketController {
   private dataQueue: any[] = [];
   
   private connectingLock = false;
-
+  private port: number = 13377;
+  
   /**
    * Custom hooks to pass back to the main store to avoid non-reactive
    * data being stored in this class
@@ -72,10 +76,10 @@ class WebSocketController {
     private readonly onConnect: (ws: WebSocket) => void,
     private readonly onDisconnect: () => void,
   ) {
-    this.setup();
   }
   
-  private setup() {
+  public setup(port: number) {
+    this.port = port;
     this.connect()
     this.callbackQueue = {};
   }
@@ -91,10 +95,10 @@ class WebSocketController {
     
     this.connectingLock = true;
     try {
-      this.ws = new WebSocket("ws://localhost:13377");
+      this.ws = new WebSocket(`ws://localhost:${this.port}`);
       this.attachEvents(this.ws);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       setTimeout(() => this.connect(attempts ++), 5000);
     } finally {
       this.connectingLock = false;
@@ -102,7 +106,7 @@ class WebSocketController {
   }
   
   private reconnect(reason = "unknown") {
-    console.log("Reconnecting to websocket", reason);
+    logger.log("Reconnecting to websocket", reason);
     
     this.onDisconnect();
     if (this.ws) {
@@ -118,7 +122,7 @@ class WebSocketController {
   
   private attachEvents(ws: WebSocket) {
     ws.onerror = () => {
-      console.warn("Websocket error, reconnecting");
+      logger.warn("Websocket error, reconnecting");
     }
     
     ws.onclose = (event) => {
@@ -141,7 +145,7 @@ class WebSocketController {
     
     const rawMessage = message.data;
     if (!rawMessage.startsWith("{")) {
-      console.warn("Received invalid message", rawMessage);
+      logger.warn("Received invalid message", rawMessage);
       return;
     }
 
@@ -152,7 +156,7 @@ class WebSocketController {
     }
     
     if (!messageData?.notViableForLogging) {
-      console.debug(`Recieved message: [${messageData.requestId ?? 'unknown'}::${messageData.type}]`, messageData);
+      // logger.debug(`Recieved message: [${messageData.requestId ?? 'unknown'}::${messageData.type}]`, messageData);
     }
     
     appStore.emitter.emit("ws/message", messageData);
@@ -181,7 +185,7 @@ class WebSocketController {
   
   public addCallback(requestId: string, callback: (data: any) => void) {
     if (this.callbackQueue[requestId]) {
-      console.warn(`Callback for requestId ${requestId} already exists`);
+      logger.warn(`Callback for requestId ${requestId} already exists`);
       return;
     }
 

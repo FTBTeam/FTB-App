@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "cross-env TARGET_PLATFORM=electron NODE_ENV=development vite",
     "dev:ads": "cross-env SHOW_ADS=true pnpm run dev",
-    "build": "vue-tsc && vite build && electron-builder",
+    "build": "cross-env NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build && electron-builder",
     "build:bin:all:64": "pnpm run build -wl --x64",
     "build:bin:all:arm": "pnpm run build -l --arm64",
     "build:bin:mac:64": "pnpm run build -m --x64",

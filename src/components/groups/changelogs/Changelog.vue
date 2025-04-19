@@ -4,14 +4,29 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {constants} from '@/core/constants';
 import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import {createLogger} from '@/core/logger';
-import { ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import {Modal, UiMessage} from '@/components/ui';
 import { useWsStore } from '@/store/wsStore.ts';
+import { useAppStore } from '@/store/appStore.ts';
+import { alertController } from '@/core/controllers/alertController.ts';
 
 const wsStore = useWsStore();
+const appStore = useAppStore();
 const logger = createLogger("Changelog.vue")
 
 const changelogData = ref<ChangelogData | null>(null);
+
+onMounted(() => {
+  appStore.emitter.on("action/force-changelog-open", forceChangelog);
+})
+
+onUnmounted(() => {
+  appStore.emitter.off("action/force-changelog-open", forceChangelog);
+})
+
+function forceChangelog(version: string) {
+  showChangelog(version, true).catch(console.error)
+}
 
 watch(() => wsStore.ready, async (newValue) => {
   if (!newValue) return;
@@ -34,30 +49,42 @@ async function checkForUpdate() {
   // No held last version meaning we should find a changelog
   if (!lastVersion || lastVersion !== currentVersion) {
     // Get the available versions
-    try {
-      const changelogsReq = await fetch(`${constants.metaApi}/changelogs/app`);
-      const changelogs = await changelogsReq.json();
-
-      if (changelogs?.versions?.includes(currentVersion)) {
-        const changelogReq = await fetch(
-          `${constants.metaApi}/changelogs/app/${currentVersion}`,
-        );
-
-        changelogData.value = await changelogReq.json();
-
-        // Attempt to update the lastVersion to prevent the modal showing again
-        await sendMessage("storage.put", {
-          key: 'lastVersion',
-          value: currentVersion,
-        })
-      }
-    } catch (e) {
-      logger.debug('caught error', e);
-      // Stop here, don't do anything, something is wrong, we'll try again next launch.
-      return;
-    }
+    await showChangelog(currentVersion)
   } else {
     logger.debug('No changelog to show, already seen it')
+  }
+}
+
+async function showChangelog(currentVersion: string, forced = false) {
+  try {
+    const changelogsReq = await fetch(`${constants.metaApi}/changelogs/app`);
+    const changelogs = await changelogsReq.json();
+
+    if (changelogs?.versions?.includes(currentVersion)) {
+      const changelogReq = await fetch(
+        `${constants.metaApi}/changelogs/app/${currentVersion}`,
+      );
+
+      changelogData.value = await changelogReq.json();
+
+      if (forced) {
+        return;
+      }
+      
+      // Attempt to update the lastVersion to prevent the modal showing again
+      await sendMessage("storage.put", {
+        key: 'lastVersion',
+        value: currentVersion,
+      })
+    } else {
+      if (forced) {
+        alertController.error(`No changelog available for version ${currentVersion}`);
+      }
+    }
+  } catch (e) {
+    logger.debug('caught error', e);
+    // Stop here, don't do anything, something is wrong, we'll try again next launch.
+    return;
   }
 }
 

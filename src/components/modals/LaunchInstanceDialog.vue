@@ -3,6 +3,9 @@ import { Loader, UiButton, Modal } from '@/components/ui';
 import { InstanceRunningData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { computed } from 'vue';
+import { createLogger } from '@/core/logger.ts';
+
+const logger = createLogger("LaunchInstanceDialog.vue")
 
 const runningInstancesStore = useRunningInstancesStore();
 const instancesStore = useInstanceStore();
@@ -13,7 +16,7 @@ const instance = computed(() => {
 })
 
 async function clearLaunchingStatus() {
-  console.log("Cleaning launching status");
+  logger.log("Cleaning launching status");
   
   if (!instance.value) return;
   

@@ -1,14 +1,15 @@
 <script lang="ts" setup>
 import appPlatform from '@platform';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
-import {RouterNames} from '@/router';
+import { RouterNames } from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
-import {AppContextController} from '@/core/context/contextController';
-import {ContextMenus} from '@/core/context/contextMenus';
+import { AppContextController } from '@/core/context/contextController';
+import { ContextMenus } from '@/core/context/contextMenus';
 import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
 import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faBookOpen, faCog, faHome, faInfoCircle, faRss, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faBookOpen, faCode, faCog, faHome, faInfoCircle, faRss, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { constants } from '@/core/constants.ts';
 
 const navigation = [
   {
@@ -42,6 +43,14 @@ const navigation = [
     icon: faCog,
   },
 ];
+
+if (constants.isDevelopment) {
+  navigation.push({
+    name: 'Dev',
+    to: RouterNames.DEV_HOME,
+    icon: faCode,
+  });
+}
 
 function openPromo(): void {
   appPlatform.utils.openUrl('https://bisecthosting.com/ftb?r=app-icon');

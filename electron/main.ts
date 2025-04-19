@@ -6,19 +6,22 @@ import { getAppHome } from '../src/utils/nuturalHelpers.ts';
 import os from 'os';
 import fs from 'fs';
 import { ChildProcess, spawn } from 'child_process';
+import log from 'electron-log/main';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export const appHome = getAppHome(os.platform(), os.homedir(), path.join);
 
 // const console = createLogger('main.ts');
-// autoUpdater.console = electronLogger;
+autoUpdater.logger = log;
+log.transports.file.resolvePathFn = () => path.join(appHome, 'logs', 'electron-main.log');
+log.initialize();
 
-console.log("FTB App starting...")
+log.log("FTB App starting...")
 import './events.ts'
 
 const protocolSpace = 'ftb';
-if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
+if (!import.meta.env.PROD && process.platform === 'win32') {
   app.setAsDefaultProtocolClient(protocolSpace, process.execPath, [path.resolve(process.argv[1])]);
 } else {
   app.setAsDefaultProtocolClient(protocolSpace);
@@ -34,6 +37,7 @@ let cachedProcessData = null as {
 } | null;
 
 let appCommunicationSetup = false;
+let preserveSubprocess = false;
 
 /**
  * Fix for SUID sandbox issues on Linux
@@ -66,11 +70,11 @@ autoUpdater.on('update-not-available', (info) => logAndEmit('updater:update-not-
 autoUpdater.on('error', (error, message) => logAndEmit('updater:error', JSON.stringify(error), message));
 autoUpdater.on('download-progress', (progress) => logAndEmit('updater:download-progress', progress));
 autoUpdater.on('update-downloaded', (event) => {
-  console.debug("Update downloaded", event)
+  log.debug("Update downloaded", event)
   ipcMain.emit('updater:update-downloaded');
 });
 
-console.debug('App home is', appHome)
+log.debug('App home is', appHome)
 
 autoUpdater.allowDowngrade = true;
 autoUpdater.channel = loadChannel();
@@ -80,13 +84,13 @@ export let win: BrowserWindow | null;
 export let prelaunchWindow: BrowserWindow | null = null;
 
 ipcMain.on('action/launch-app', async () => {
-  console.debug("Launching app")
+  log.debug("Launching app")
   if (win) {
     // This shouldn't happen, but if it does, just close the window
     win.close();
   }
 
-  createWindow().catch(e => console.error("Failed to create window", e));
+  createWindow().catch(e => log.error("Failed to create window", e));
   // Kill the prelaunch window
   if (prelaunchWindow) {
     prelaunchWindow.destroy()
@@ -97,10 +101,10 @@ async function createPreLaunchWindow() {
   if (prelaunchWindow) {
     prelaunchWindow.destroy();
     prelaunchWindow = null;
-    console.log("Prelaunch window already exists, closing it")
+    log.log("Prelaunch window already exists, closing it")
   }
   
-  console.debug("Creating prelaunch window")
+  log.debug("Creating prelaunch window")
   
   prelaunchWindow = new BrowserWindow({
     title: 'FTB Launch',
@@ -127,10 +131,10 @@ async function createPreLaunchWindow() {
   });
 
   if (VITE_DEV_SERVER_URL) {
-    prelaunchWindow.loadURL(VITE_DEV_SERVER_URL + "prelaunch.html").catch(console.warn)
+    prelaunchWindow.loadURL(VITE_DEV_SERVER_URL + "prelaunch.html").catch(log.warn)
   } else {
     // win.loadFile('dist/index.html')
-    prelaunchWindow.loadFile(path.join(RENDERER_DIST, 'prelaunch.html')).catch(console.warn)
+    prelaunchWindow.loadFile(path.join(RENDERER_DIST, 'prelaunch.html')).catch(log.warn)
   }
 
   prelaunchWindow.on("ready-to-show", () => {
@@ -141,7 +145,7 @@ async function createPreLaunchWindow() {
     }
     
     if (VITE_DEV_SERVER_URL) {
-      console.log("Opening dev tools")
+      log.log("Opening dev tools")
       prelaunchWindow?.webContents.openDevTools();
     }
   });
@@ -157,12 +161,11 @@ ipcMain.on("prelaunch/im-ready", async () => {
     return;
   }
   
-  // Check for updates
-  // TODO: Add a way to disable this
+  autoUpdater.checkForUpdates()
 });
 
 async function createWindow() {
-  console.log("Creating main window")
+  log.log("Creating main window")
   win = new BrowserWindow({
     title: 'FTB App',
     // icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
@@ -202,18 +205,17 @@ async function createWindow() {
   win.webContents.on('did-navigate', (_, url) => {
     if (!VITE_DEV_SERVER_URL) {
       if (!url.startsWith(protocolSpace)) {
-        win?.loadFile(path.join(RENDERER_DIST, 'index.html')).catch(console.error)
-        console.log("Redirecting to app URL");
+        win?.loadFile(path.join(RENDERER_DIST, 'index.html')).catch(log.error)
+        log.log("Redirecting to app URL");
       }
     }
   });
 
-  // TODO: Add back
   win.on('closed', () => {
     // Kill the subprocess if it's running
-    // if (subprocess !== null && !preserveSubprocess) {
-    //   subprocess.kill();
-    // }
+    if (subprocess !== null && !preserveSubprocess) {
+      subprocess.kill();
+    }
     win = null;
   });
 }
@@ -223,9 +225,8 @@ export async function reloadMainWindow() {
     return;
   }
 
-  // TODO: Add back
-  // preserveSubprocess = true;
-  console.info("Reloading main window")
+  preserveSubprocess = true;
+  log.info("Reloading main window")
 
   // Create a tmp window to keep the app alive
   const tmpWindow = new BrowserWindow({
@@ -233,8 +234,7 @@ export async function reloadMainWindow() {
   });
 
   // Reset the port and secret scanning
-  // TODO: Add back
-  // appCommunicationSetup = false;
+  appCommunicationSetup = false;
 
   // Enable the windows frame
   win.destroy()
@@ -259,7 +259,7 @@ app.on('activate', async () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    console.log("Activated")
+    log.log("Activated")
     await createPreLaunchWindow()
   }
 })
@@ -273,22 +273,22 @@ app.on("open-url", async (_, customSchemeData) => {
 
 // app.on('activate', () => {
 //   if (!prelaunchWindow && !win) {
-//     createPreLaunchWindow("AppActivate").catch(console.error)
+//     createPreLaunchWindow("AppActivate").catch(log.error)
 //   }
 // });
 
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
-  console.debug("Preventing extra windows of the app from loading", process.env.NODE_ENV)
-  if (process.env.NODE_ENV === 'production') {
+  log.debug("Preventing extra windows of the app from loading", import.meta.env.MODE)
+  if (!import.meta.env.PROD) {
     app.quit();
   }
 } else {
-  console.debug("Lock found, let's try and focus the app")
+  log.debug("Lock found, let's try and focus the app")
   app.on('second-instance', (event, commandLine) => {
     // Someone tried to run a second instance, we should focus our window.
-    console.info(`Event: ${event}, commandLine: ${commandLine}`);
+    log.info(`Event: ${event}, commandLine: ${commandLine}`);
     if (prelaunchWindow) {
       if (prelaunchWindow.isMinimized()) {
         prelaunchWindow.restore()
@@ -300,14 +300,14 @@ if (!gotTheLock) {
     } else {
       if (win) {
         if (win.isMinimized()) {
-          console.debug("Window is minimized, restoring")
+          log.debug("Window is minimized, restoring")
           win.restore();
         }
         win.focus();
         commandLine.forEach((c) => {
-          console.debug("Command line arg", c)
+          log.debug("Command line arg", c)
           if (c.indexOf('ftb://') !== -1) {
-            console.debug("Sending protocol url to frontend")
+            log.debug("Sending protocol url to frontend")
             // @ts-ignore
             win.webContents.send('parseProtocolURL', c);
           }
@@ -318,10 +318,13 @@ if (!gotTheLock) {
 }
 
 ipcMain.handle("startSubprocess", async (_, args) => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.debug("Not starting subprocess in dev mode")
+  log.debug("Starting subprocess")
+  if (!import.meta.env.PROD) {
+    log.debug("Not starting subprocess in dev mode")
     return;
   }
+  
+  log.log("Starting subprocess")
 
   const javaPath = args.javaPath;
   const argsList = args.args as string[]
@@ -337,11 +340,11 @@ ipcMain.handle("startSubprocess", async (_, args) => {
       try {
         process.kill(pid, 'SIGINT');
       } catch (e) {
-        console.error("Failed to kill subprocess", e)
+        log.error("Failed to kill subprocess", e)
       }
     }
 
-    console.debug("Subprocess is already running, killing it")
+    log.debug("Subprocess is already running, killing it")
   }
 
   if (subprocess && cachedProcessData !== null) {
@@ -352,7 +355,7 @@ ipcMain.handle("startSubprocess", async (_, args) => {
   }
 
   const correctedPath = javaPath.replace(/\\/g, "/");
-  console.debug("Starting subprocess", correctedPath, argsList)
+  log.debug("Starting subprocess", correctedPath, argsList)
 
   const electronPid = process.pid;
   argsList.push(...["--pid", "" + electronPid])
@@ -369,8 +372,8 @@ ipcMain.handle("startSubprocess", async (_, args) => {
       return curr;
     }, {} as Record<string, string>)
 
-    console.debug("Mapped env", mappedEnv)
-    console.debug("Args list", argsList)
+    log.debug("Mapped env", mappedEnv)
+    log.debug("Args list", argsList)
 
     appCommunicationSetup = false;
     subprocess = spawn(correctedPath, argsList, {
@@ -388,7 +391,7 @@ ipcMain.handle("startSubprocess", async (_, args) => {
       if (outputData.endsWith("\n")) {
         outputData = outputData.slice(0, -1);
       }
-      console.debug("Subprocess stderr", outputData)
+      log.debug("Subprocess stderr", outputData)
     });
 
     subprocess.stdout?.on('data', (data) => {
@@ -397,14 +400,14 @@ ipcMain.handle("startSubprocess", async (_, args) => {
         outputData = outputData.slice(0, -1);
       }
 
-      console.debug("Subprocess stdout", outputData)
+      log.debug("Subprocess stdout", outputData)
       if (!appCommunicationSetup) {
         if (data.includes("Backend Ready! Port=")) {
           const port = parseInt(outputData.match(/Port=(\d+)/)![1]);
           const secret = outputData.match(/OneTimeToken=(\w+-\w+-\w+-\w+-\w+)/)![1];
 
           if (!(!port || !secret || isNaN(port))) {
-            console.debug('Found port and secret', port, secret);
+            log.debug('Found port and secret', port, secret);
             appCommunicationSetup = true;
             clearTimeout(timeout);
 
@@ -415,7 +418,7 @@ ipcMain.handle("startSubprocess", async (_, args) => {
                 secret: secret,
               };
 
-              console.debug('Cached process data', cachedProcessData);
+              log.debug('Cached process data', cachedProcessData);
             }
 
             resolve({
@@ -428,21 +431,21 @@ ipcMain.handle("startSubprocess", async (_, args) => {
     });
 
     subprocess?.on('error', (err) => {
-      console.error("Subprocess error", err)
+      log.error("Subprocess error", err)
     });
 
     subprocess.on('exit', (code, signal) => {
-      console.debug("Subprocess exited", code, signal)
+      log.debug("Subprocess exited", code, signal)
     });
 
     subprocess?.on('close', (code) => {
-      console.debug("Subprocess closed", code)
+      log.debug("Subprocess closed", code)
     });
   })
 });
 
 function logAndEmit(event: string, ...args: any[]) {
-  console.debug("Emitting downloader event", event, args)
+  log.debug("Emitting downloader event", event, args)
   if (prelaunchWindow) {
     prelaunchWindow.webContents.send(event, ...args);
   }
@@ -465,30 +468,30 @@ function loadChannel() {
         return channelData.channel;
       }
     } catch (e) {
-      console.error("Failed to load channel data", e)
+      log.error("Failed to load channel data", e)
     }
 
   } catch (e) {
-    console.error("Failed to load channel", e)
+    log.error("Failed to load channel", e)
   }
 
   return 'stable';
 }
 
 export function updateApp(source: string) {
-  console.debug("Quitting and installing app from: ", source)
+  log.debug("Quitting and installing app from: ", source)
 
   // Get all known windows and close them
-  console.debug("Removing all listeners and closing windows");
+  log.debug("Removing all listeners and closing windows");
   app.removeAllListeners('window-all-closed');
 
-  console.debug("Closing all windows")
+  log.debug("Closing all windows")
   BrowserWindow.getAllWindows().forEach((window) => {
-    console.debug("Closing window", window.id)
+    log.debug("Closing window", window.id)
     window.removeAllListeners('close');
     window.destroy();
   });
 
-  console.debug("Quitting app")
+  log.debug("Quitting app")
   autoUpdater.quitAndInstall();
 }

@@ -17,6 +17,9 @@ import { constants } from '@/core/constants.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
+import { createLogger } from '@/core/logger.ts';
+
+const logger = createLogger("App.vue")
 
 const appStore = useAppStore();
 const wsStore = useWsStore();
@@ -27,11 +30,13 @@ const instanceStore = useInstanceStore();
 const ads = useAds()
 
 const isMac = ref(false);
+const startingSubprocess = ref(false)
 const requiredDataLoading = ref(false)
 const showOnboarding = ref(false)
 
 onMounted(() => {
-  console.info("App started on ", constants.platform)
+  logger.info("App started on ", constants.platform)
+  startApplication().catch(logger.error)
 
   startNetworkMonitor()
   appPlatform.utils.getOsType().then(e => isMac.value = e === "mac")
@@ -41,11 +46,42 @@ onMounted(() => {
   appStore.emitter.on("ws/message", refreshHandler)
 })
 
+async function startApplication() {
+  logger.debug(constants)
+  
+  let port = 13377;
+  if (constants.isProduction) {
+    logger.debug("Production mode, starting subprocess")
+    startingSubprocess.value = true;
+    try {
+      const result = await appPlatform.app.startSubprocess();
+      if (!result) {
+        logger.debug("Failed to start the subprocess?")
+        // TODO: Handle this properly
+        return;
+      }
+      
+      wsStore.wsSecret = result.secret;
+      port = result.port;
+    } catch (e) {
+      logger.error("Unable to start subprocess", e);
+      alertController.error("Unable to start subprocess, please restart the app");
+    } finally {
+      startingSubprocess.value = false;
+    }
+  } else {
+    logger.debug("Development mode, using default port")
+  }
+  
+  logger.log("Starting websocket connection on port", port);
+  wsStore.controller.setup(port)
+}
+
 watch(() => wsStore.ready, (value) => {
   if (value) {
     requiredDataLoading.value = true;
     initAppLoad()
-      .then(() => checkForFirstRun().catch(console.error))
+      .then(() => checkForFirstRun().catch(logger.error))
       .finally(() => requiredDataLoading.value = false)
   }
 })

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import MarkdownIt from 'markdown-it';
 import { fallbackMetaData, loadApplicationMetaData } from '../src/utils/nuturalHelpers.ts';
+import log from 'electron-log/main'
 
 const markdownParser = new MarkdownIt();
 markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {
@@ -63,7 +64,7 @@ const nodeUtils = {
   },
   app: {
     getMetaData() {
-      if (process.env.NODE_ENV === "development") {
+      if (!import.meta.env.PROD) {
         return fallbackMetaData;
       }
       
@@ -73,16 +74,20 @@ const nodeUtils = {
       let frontendLicenses: any = {};
       let javaLicenses: any = {};
       
+      if (!import.meta.env.PROD) {
+        return {frontend: {}, java: {}}
+      }
+      
       try {
         frontendLicenses = JSON.parse(fs.readFileSync(path.join(process.resourcesPath, "licenses.json"), 'utf-8'));
       } catch (e) {
-        console.warn("Failed to load frontend licenses", e);
+        log.warn("Failed to load frontend licenses", e);
       }
       
       try {
         javaLicenses = JSON.parse(fs.readFileSync(path.join(process.resourcesPath, "java-licenses.json"), 'utf-8'));
       } catch (e) {
-        console.warn("Failed to load java licenses", e);
+        log.warn("Failed to load java licenses", e);
       }
       
       return {

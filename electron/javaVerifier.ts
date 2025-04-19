@@ -7,6 +7,7 @@ import { MetaData } from '@platform';
 import { retrying } from '../src/utils/helpers/asyncHelpers.ts';
 import { prelaunchWindow } from './main.ts';
 import AdmZip from 'adm-zip';
+import log from 'electron-log/main'
 
 export class JavaVerifier {
   private readonly metaData: MetaData;
@@ -17,7 +18,7 @@ export class JavaVerifier {
 
   async verifyJava() {
     this.emitUpdate("Checking for Java installation...");
-    console.log("Checking for Java installation...");
+    log.log("Checking for Java installation...");
     const installed = await this.isInstalled();
     if (!installed) {
       await this.installJava();
@@ -25,12 +26,12 @@ export class JavaVerifier {
       this.emitUpdate("Testing Java installation...");
       const validationResult = await this.testJavaInstallation();
       if (!validationResult) {
-        console.error("Java installation failed");
+        log.error("Java installation failed");
         this.emitUpdate("Java installation failed");
         return false;
       }
       
-      console.log("Java installation succeeded");
+      log.log("Java installation succeeded");
       this.emitUpdate("Java installation succeeded");
       this.writeJavaVersion(this.metaData.runtime.version)
       return true;
@@ -43,7 +44,7 @@ export class JavaVerifier {
   async installJava() {
     const binaryLocation = await this.downloadJava();
     if (!binaryLocation) {
-      console.error("Failed to download Java");
+      log.error("Failed to download Java");
       return;
     }
 
@@ -52,7 +53,7 @@ export class JavaVerifier {
     // Extract the binary
     const result = this.extractFile(binaryLocation, this.runtimeHome());
     if (!result) {
-      console.error("Failed to extract Java binary");
+      log.error("Failed to extract Java binary");
       return;
     }
 
@@ -61,7 +62,7 @@ export class JavaVerifier {
       .filter(file => file.startsWith("jdk-") && fs.statSync(path.join(this.runtimeHome(), file)).isDirectory());
 
     if (files.length === 0) {
-      console.error("Failed to find jdk directory");
+      log.error("Failed to find jdk directory");
       return;
     }
 
@@ -87,7 +88,7 @@ export class JavaVerifier {
       } catch (e) {
         // We can ask the user to remove it if we fail
         // TODO: Ask the user to remove it
-        console.warn("Failed to remove existing java installation", e);
+        log.warn("Failed to remove existing java installation", e);
       }
     }
     
@@ -103,7 +104,7 @@ export class JavaVerifier {
         return Buffer.from(await response.arrayBuffer());
       }, 10, 3000); // Try 10 times, 3 seconds apart
     } catch (e) {
-      console.error("Failed to fetch from Adoptium API", e);
+      log.error("Failed to fetch from Adoptium API", e);
       return;
     }
 
@@ -116,7 +117,7 @@ export class JavaVerifier {
 
       fs.writeFileSync(binaryPath, binary);
     } catch (e) {
-      console.error("Failed to write java binary", e);
+      log.error("Failed to write java binary", e);
       return;
     }
     
@@ -126,7 +127,7 @@ export class JavaVerifier {
   private async testJavaInstallation() {
     const javaPath = this.jreHome();
     if (!fs.existsSync(javaPath)) {
-      console.error("Java is not installed");
+      log.error("Java is not installed");
       return false;
     }
     
@@ -134,7 +135,7 @@ export class JavaVerifier {
       execSync(`"${javaPath}" --version`, { stdio: 'ignore' });
       return true;
     } catch (e) {
-      console.error("Failed to execute java version command", e);
+      log.error("Failed to execute java version command", e);
     }
     
     return false;
@@ -143,27 +144,27 @@ export class JavaVerifier {
   private async isInstalled(): Promise<boolean> {
     const javaPath = this.jreHome();
     if (!fs.existsSync(javaPath)) {
-      console.log(`${javaPath} does not exist`);
+      log.log(`${javaPath} does not exist`);
       return false
     }
     
     const javaVersion = await this.tryLoadJavaVersion();
     if (!javaVersion) {
-      console.log("Unable to load java version");
+      log.log("Unable to load java version");
       return false
     }
     
     // Check if the java version is actually correct for the installed version of the app
     const runtimeVersion = this.metaData.runtime.version;
-    console.log(`Comparing java version ${javaVersion} with runtime version ${runtimeVersion}`);
+    log.log(`Comparing java version ${javaVersion} with runtime version ${runtimeVersion}`);
     
     if (javaVersion !== runtimeVersion) {
-      console.log(`Java version mismatch: ${javaVersion} != ${runtimeVersion}`);
+      log.log(`Java version mismatch: ${javaVersion} != ${runtimeVersion}`);
       this.emitUpdate(`Java update required: ${javaVersion} -> ${runtimeVersion}`);
       return false;
     }
     
-    console.log("Java is installed and up to date");
+    log.log("Java is installed and up to date");
     return true;
   }
   
@@ -197,7 +198,7 @@ export class JavaVerifier {
         return await adopiumRequest.json();
       }, 10, 3000); // Try 10 times, 3 seconds apart
     } catch (e) {
-      console.error("Failed to fetch from Adoptium API", e);
+      log.error("Failed to fetch from Adoptium API", e);
     }
     
     if (!adopiumRes) {
@@ -206,7 +207,7 @@ export class JavaVerifier {
 
     const binary = adopiumRes.find((e: any) => e.binary)?.binary;
     if (!binary) {
-      console.error("Failed to find binary in Adoptium API response");
+      log.error("Failed to find binary in Adoptium API response");
       return null;
     }
     
@@ -222,7 +223,7 @@ export class JavaVerifier {
         const data = fs.readFileSync(versionIdentifier, "utf-8");
         return data.trim();
       } catch (e) {
-        console.warn("Failed to read java version file", e);
+        log.warn("Failed to read java version file", e);
       }
     }
     
@@ -248,7 +249,7 @@ export class JavaVerifier {
         return version;
       }
     } catch (e) {
-      console.warn("Failed to execute java version command", e);
+      log.warn("Failed to execute java version command", e);
     }
     
     // It's not installed
@@ -266,13 +267,13 @@ export class JavaVerifier {
       
       fs.writeFileSync(versionIdentifier, version, "utf-8");
     } catch (e) {
-      console.warn("Failed to write java version file", e);
+      log.warn("Failed to write java version file", e);
     }
   }
 
   extractFile(filePath: string, outputPath: string) {
     if (!fs.existsSync(filePath)) {
-      console.error("File does not exist", filePath);
+      log.error("File does not exist", filePath);
       return false;
     }
     
@@ -280,7 +281,7 @@ export class JavaVerifier {
       try {
         fs.mkdirSync(outputPath, { recursive: true });
       } catch (e) {
-        console.error("Failed to create output directory", e);
+        log.error("Failed to create output directory", e);
         return false;
       }
     }
@@ -299,9 +300,9 @@ export class JavaVerifier {
     // But let's redirect the contents to the output path
     // And capture the output so we can log it
     const command = `tar -xzf "${tarballPath}" -C "${outputPath}"`;
-    console.debug("Extracting tarball", command)
+    log.debug("Extracting tarball", command)
     const output = execSync(command).toString();
-    console.debug("Tarball extraction output", output)
+    log.debug("Tarball extraction output", output)
 
     return true;
   }

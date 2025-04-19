@@ -8,6 +8,7 @@ export type EmitEvents = {
   "ws/disconnected": void
   "ws/message": any,
   "action/context-menu-open": any;
+  "action/force-changelog-open": string
   "alert/simple": any;
 }
 
@@ -25,7 +26,7 @@ export const useAppStore = defineStore("app", {
     return {
       emitter: emitter,
       controllers: {
-        install: new InstanceInstallController()
+        install: new InstanceInstallController(emitter)
       }
     }
   },

@@ -6,7 +6,7 @@ let metaData: MetaData | null = null;
 
 // Lazy loading basically
 export function loadApplicationMetaData(resourcesPath: string, joiner: Joiner, reader: (path: string) => string): MetaData {
-  if (process.env.NODE_ENV === "development") {
+  if (!import.meta.env.PROD) {
     return fallbackMetaData;
   }
   

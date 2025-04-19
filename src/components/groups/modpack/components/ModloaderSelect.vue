@@ -7,6 +7,9 @@ import { UiToggle, UiMessage, Loader, Selection2 } from '@/components/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { faExclamation, faInfo } from '@fortawesome/free-solid-svg-icons';
+import { createLogger } from '@/core/logger.ts';
+
+const logger = createLogger("ModloaderSelect.vue")
 
 const {
   mcVersion,
@@ -69,7 +72,7 @@ async function loadAvailableLoaders(mcVersion: string) {
   for (const loader of knownLoaders) {
     const request = await JavaFetch.modpacksCh(`loaders/${mcVersion}/${loader}`).execute()
     if (request?.status !== "success") {
-      console.log(`Failed to fetch loaders for ${loader}`)
+      logger.log(`Failed to fetch loaders for ${loader}`)
       continue;
     }
 

@@ -62,7 +62,7 @@ async function onLaunchData(data: any) {
     } else if (typedData.messageType === 'progress') {
       runningInstancesStore.updateBars(instance, typedData.clientData.bars)
     } else if (typedData.messageType === 'clientDisconnect' || (typedData.messageType === 'message' && typedData.message === 'done')) {
-      console.log("Disconnecting client", instance)
+      logger.log("Disconnecting client", instance)
       runningInstancesStore.finishedLoading(instance)
     }
   }
@@ -122,13 +122,13 @@ async function lazyLogChecker(uuid: string, messages: string[]) {
   // Make an educated guess that when this shows, we're likely good to assume it's loaded
   for (const message of messages) {    
     if (message.includes("Created:") && message.includes("minecraft:textures/atlas")) {
-      console.log("Created assets", uuid)
+      logger.log("Created assets", uuid)
       runningInstancesStore.finishedLoading(uuid);
     }
 
     // This also tends to happen relatively late in the startup process so we can use it as a marker as well
     if (message.includes("Sound engine started")) {
-      console.log("Sound engine started", uuid)
+      logger.log("Sound engine started", uuid)
       runningInstancesStore.finishedLoading(uuid)
     }
   }
