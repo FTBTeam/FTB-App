@@ -64,6 +64,9 @@ class FetchResponse implements FetchResponseRaw {
   }
 }
 
+/**
+ * @deprecated Don't use.
+ */
 export class JavaFetch {
   private readonly logger = createLogger("JavaFetch.ts")
   
@@ -144,13 +147,8 @@ export class JavaFetch {
     };
     
     if (this._body !== null) {
-      const byteArray = [];
-      const buff = Buffer.from(this._body as string);
-      
-      for (let i = 0; i < buff.length; i++) {
-        byteArray.push(buff[i])
-      }
-      
+      const byteArray = Array.from(new TextEncoder().encode(this._body as string));
+
       payload.body = {
         contentType: this._contentType,
         // Create a byte array of the content body (u8)

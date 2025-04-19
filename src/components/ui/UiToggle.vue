@@ -19,6 +19,7 @@ function toggle() {
 
 <template>
   <div class="ui-toggle" @click="toggle" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
+    {{value ? 'On' : 'Off'}}
     <div class="toggle" :class="{active: value}">
       <div class="inner" />
     </div>

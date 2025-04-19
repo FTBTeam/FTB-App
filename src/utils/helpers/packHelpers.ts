@@ -38,16 +38,24 @@ function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | Mo
     // It's an instance
     const instance = packOrInstance as SugaredInstanceJson;
     const fallbackArt = fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
-    if (instance.art === "") {
+    if (instance.artworkFile === "") {
       return fallbackArt;
     }
 
-    return instance.art ?? fallbackArt;
+    return artworkFileOrElse(instance, fallbackArt)
   }
 
   // It's a modpack
   const pack = packOrInstance as ModPack | SearchResultPack;
   return pack.art.find(e => e.type === artworkType)?.url ?? fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
+}
+
+export function artworkFileOrElse(instance: SugaredInstanceJson, orElse: string = defaultArtwork["square"]) {
+  if (instance.artworkFile) {
+    return "ftb://load-pack-asset/" + instance.artworkFile + "?instancePath=" + instance.path;
+  }
+  
+  return orElse;
 }
 
 const knownModloaders = [

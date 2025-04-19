@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { net, protocol, app, BrowserWindow, ipcMain, shell } from 'electron';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { autoUpdater } from 'electron-updater';
@@ -264,7 +264,29 @@ app.on('activate', async () => {
   }
 })
 
-app.whenReady().then(createPreLaunchWindow)
+app.whenReady().then(() => {
+  createPreLaunchWindow();
+  
+  protocol.handle(protocolSpace, async (event) => {
+    if (event.url) {
+      if (event.url.startsWith(protocolSpace + "://load-pack-asset/")) {
+        // Parse and get the query data
+        const url = new URL(event.url);
+        const instancePath = url.searchParams.get("instancePath");
+        if (!instancePath) {
+          log.error("No instance path found in URL")
+          return new Response(null);
+        }
+
+        return await net.fetch(`file://${encodeURI(instancePath)}${url.pathname}`)
+      }
+    }
+
+    // TODO: Fuck knows what else I do here...
+    
+    return new Response(null);
+  })
+})
 app.on("open-url", async (_, customSchemeData) => {
   if (win) {
     win.webContents.send('parseProtocolURL', customSchemeData);

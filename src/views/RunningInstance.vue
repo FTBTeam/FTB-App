@@ -25,6 +25,7 @@ import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 // @ts-ignore (Literally no types :tada:)
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import { artworkFileOrElse } from '@/utils/helpers/packHelpers.ts';
 
 type InstanceActionCategory = {
   title: string;
@@ -361,7 +362,7 @@ function toggleEnabledLog(type: string) {
 <template>
   <div class="pack-loading" :class="{ 'dark-mode': darkMode }">
     <header class="flex">
-      <img v-if="instance" :src="instance.art" class="art rounded-2xl shadow mr-8" width="135" alt="" />
+      <img v-if="instance" :src="artworkFileOrElse(instance)" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">

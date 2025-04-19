@@ -17,6 +17,7 @@ import { PackProviders, Versions } from '@/core/types/appTypes.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { EmitEvents } from '@/store/appStore.ts';
 import { Emitter } from 'mitt';
+import { artworkFileOrElse } from '@/utils/helpers/packHelpers.ts';
 
 export type InstallRequest = {
   uuid: string;
@@ -119,7 +120,7 @@ export class InstanceInstallController {
       id: instance.id,
       version: typeof version === 'object' ? version.id : version,
       name: instance.name,
-      logo: instance.art,
+      logo: artworkFileOrElse(instance as SugaredInstanceJson),
       updatingInstanceUuid: instance.uuid,
       category: instance.category,
       provider,

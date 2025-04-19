@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import { useAttachDomEvent } from '@/composables';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
+import { artworkFileOrElse } from '@/utils/helpers/packHelpers.ts';
 
 const router = useRouter()
 const runningInstancesStore = useRunningInstancesStore();
@@ -36,14 +37,14 @@ const runningWithData = computed(() => runningInstancesStore.instances
 <template>
  <div class="sidebarRunningInstances flex justify-center mt-4" @click="panelOpen = !panelOpen" v-if="runningWithData.length > 0" ref="root">
    <div class="relative cursor-pointer" style="max-width: 40px; max-height: 40px;">
-     <img class="rounded border border-gray-700" v-if="firstLoadedInstance.instance" :src="firstLoadedInstance.instance.art" />
+     <img class="rounded border border-gray-700" v-if="firstLoadedInstance.instance" :src="artworkFileOrElse(firstLoadedInstance.instance)" />
      <div class="bg-gray-600 bg-opacity-75 font-bold rounded text-xs absolute text-center" style="min-width: 1.5em; bottom: -.25rem; right: -.25rem;">{{runningWithData.length}}</div>
      
      <div class="absolute z-50 instance-popout p-4 rounded cursor-default" :class="{'open': panelOpen}" style="max-height: 400px" @click.stop>
        <p class="font-bold mb-6 text-lg">Running instances</p>
        <div class="flex flex-col gap-6">
          <div v-for="(running, index) in runningWithData" :key="index" class="item cursor-pointer" @click="() => showRunningInstance(running.uuid)">
-           <div class="img"><img class="rounded" v-if="running.instance" :src="running.instance.art" width="50" alt="Pack art"/></div>
+           <div class="img"><img class="rounded" v-if="running.instance" :src="artworkFileOrElse(running.instance)" width="50" alt="Pack art"/></div>
            <div class="flex flex-col">
              <div class="font-bold name">{{ running.instance?.name }}</div>
              <p class="text-muted text-sm">{{ running.status.finishedLoading ? 'Loaded' : 'Loading...' }}</p>

@@ -1,8 +1,10 @@
 package dev.ftb.app.migration;
 
 import dev.ftb.app.Constants;
+import dev.ftb.app.migration.migrations.MigrateInstanceFilesToMetaFolder;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToInstances;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToSettingsDefaults;
+import dev.ftb.app.migration.migrations.MigrateRemoveLegacyInjectedMods;
 import dev.ftb.app.util.GsonUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -21,7 +23,9 @@ public enum MigrationsManager {
     
     private static final List<Migration> migrations = List.of(
         new MigrateJVMDefaultsToInstances(),
-        new MigrateJVMDefaultsToSettingsDefaults()
+        new MigrateJVMDefaultsToSettingsDefaults(),
+        new MigrateInstanceFilesToMetaFolder(),
+        new MigrateRemoveLegacyInjectedMods()
     );
     
     private List<String> existingMigrations = new ArrayList<>();

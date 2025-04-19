@@ -18,7 +18,6 @@ export class InstanceActions {
     if (!this.canStart(instance) || this.isUpdating(instance)) return false;
     
     await InstanceController.from(instance).play()
-    // await safeNavigate(RouterNames.ROOT_LAUNCH_PACK, undefined, {uuid: instance.uuid})
     return true;
   }
   

@@ -26,7 +26,7 @@ const value = defineModel<string>({
   >
     <input
       class="block w-full p-3 rounded-tl rounded-bl appearance-none leading-normal text-gray-300"
-      :value="value"
+      v-model="value"
       :placeholder="placeholder"
     />
     <div class="search-button p-3 cursor-pointer rounded-tr rounded-br">

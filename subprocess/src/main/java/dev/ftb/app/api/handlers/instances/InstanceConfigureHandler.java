@@ -61,11 +61,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             
             var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
             if (instanceImage != null) {
-                try {
-                    instance.importArt(Path.of(instanceImage));
-                } catch (IOException e) {
-                    LOGGER.error("Failed to import instance image.", e);
-                }
+                instance.updateArtwork(Path.of(instanceImage));
             }
 
             if (jreRealPath != null) {

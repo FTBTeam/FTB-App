@@ -68,6 +68,7 @@ function drop(event: DragEvent) {
 }
 
 function processFileList(files: File[]) {
+  console.log(files)
   let firstValidFile: File | null = null;
   for (const file of files) {
     if (allowedFileTypes.includes(file.type)) {
@@ -76,14 +77,15 @@ function processFileList(files: File[]) {
     }
   }
   
+  console.log(firstValidFile, firstValidFile?.path)
   if (firstValidFile) {
     value.value = firstValidFile;
   }
 }
 
 const getArtwork = computed(() => {
-  if (value.value && "path" in value.value) {
-    return "file://" + value.value.path;
+  if (value.value) {
+    return "file://" + value.value.arrayBuffer;
   }
 
   return resolveArtwork(pack ?? null);
@@ -105,7 +107,7 @@ const hovering = isDraggingOver.value;
       <label>
         <input hidden="hidden" type="file" :accept="allowedFileTypes.join(',')"  @change="processFileList(($event.target as any)?.files)" />
         <UiButton type="info" :icon="faUpload">
-          Upload image
+          Update artwork
         </UiButton>
       </label>
       <UiButton :icon="faTrash" size="small" class="mt-3" type="warning" v-if="value && allowRemove" @click="value = null">
