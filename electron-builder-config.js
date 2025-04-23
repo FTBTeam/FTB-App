@@ -2,11 +2,13 @@ import { globSync } from 'glob';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import type { Configuration } from "electron-builder";
 
 let hasRepackedJar = false;
 
-const config: Configuration = {
+/**
+ * @type {import("electron-builder").Configuration}
+ */
+const config = {
   productName: 'FTB Electron App',
   asar: true,
   appId: 'dev.ftb.app',
@@ -31,13 +33,13 @@ const config: Configuration = {
     }
 
     // Remove the sourcemaps before packing as we only need them for sentry upload
-    const sourceMapFiles = globSync(`${__dirname}/dist_electron/**/*.js.map`, {ignore: ['node_modules/**']});
+    const sourceMapFiles = globSync(`./dist_electron/**/*.js.map`, {ignore: ['node_modules/**']});
     for (const sourceMapFile of sourceMapFiles) {
       fs.unlinkSync(sourceMapFile);
     }
 
     // Quickly patch all the .js files to remove their //# sourceMappingURL=
-    const jsFiles = globSync(`${__dirname}/dist_electron/**/*.js`, {ignore: ['node_modules/**']});
+    const jsFiles = globSync(`./dist_electron/**/*.js`, {ignore: ['node_modules/**']});
     for (const jsFile of jsFiles) {
       let file = fs.readFileSync(jsFile, 'utf-8');
       file = file.replace(/^\/\/# sourceMappingURL=.*\.js\.map$/gm, '');
